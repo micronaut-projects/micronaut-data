@@ -94,7 +94,9 @@
         
         <div class="toc-item" style="margin-left:0px" id="toc-item-introduction"><a href="#introduction"><strong>1</strong><span>Introduction</span></a></div>
         
-        <div class="toc-item" style="margin-left:10px" id="toc-item-releaseHistory"><a href="#releaseHistory"><strong>1.1</strong><span>Release History</span></a></div>
+        <div class="toc-item" style="margin-left:10px" id="toc-item-whatsNew"><a href="#whatsNew"><strong>1.1</strong><span>What's New?</span></a></div>
+        
+        <div class="toc-item" style="margin-left:10px" id="toc-item-releaseHistory"><a href="#releaseHistory"><strong>1.2</strong><span>Release History</span></a></div>
         
         <div class="toc-item" style="margin-left:0px" id="toc-item-quickStart"><a href="#quickStart"><strong>2</strong><span>Quick Start</span></a></div>
         
@@ -150,13 +152,17 @@
         
         <div class="toc-item" style="margin-left:0px" id="toc-item-sql"><a href="#sql"><strong>8</strong><span>Micronaut Data with SQL</span></a></div>
         
-        <div class="toc-item" style="margin-left:10px" id="toc-item-jdbc"><a href="#jdbc"><strong>8.1</strong><span>Micronaut Data JDBC</span></a></div>
+        <div class="toc-item" style="margin-left:10px" id="toc-item-dbc"><a href="#dbc"><strong>8.1</strong><span>Micronaut Data JDBC / R2DBC</span></a></div>
         
-        <div class="toc-item" style="margin-left:20px" id="toc-item-jdbcQuickStart"><a href="#jdbcQuickStart"><strong>8.1.1</strong><span>JDBC Quick Start</span></a></div>
+        <div class="toc-item" style="margin-left:20px" id="toc-item-dbcQuickStart"><a href="#dbcQuickStart"><strong>8.1.1</strong><span>Quick Start</span></a></div>
         
-        <div class="toc-item" style="margin-left:20px" id="toc-item-jdbcConfiguration"><a href="#jdbcConfiguration"><strong>8.1.2</strong><span>JDBC Configuration</span></a></div>
+        <div class="toc-item" style="margin-left:30px" id="toc-item-jdbcQuickStart"><a href="#jdbcQuickStart"><strong>8.1.1.1</strong><span>JDBC</span></a></div>
         
-        <div class="toc-item" style="margin-left:20px" id="toc-item-jdbcRepositories"><a href="#jdbcRepositories"><strong>8.1.3</strong><span>JDBC Repositories</span></a></div>
+        <div class="toc-item" style="margin-left:30px" id="toc-item-r2dbcQuickStart"><a href="#r2dbcQuickStart"><strong>8.1.1.2</strong><span>R2DBC</span></a></div>
+        
+        <div class="toc-item" style="margin-left:20px" id="toc-item-dbcConfiguration"><a href="#dbcConfiguration"><strong>8.1.2</strong><span>Configuration</span></a></div>
+        
+        <div class="toc-item" style="margin-left:20px" id="toc-item-dbcRepositories"><a href="#dbcRepositories"><strong>8.1.3</strong><span>Repositories</span></a></div>
         
         <div class="toc-item" style="margin-left:30px" id="toc-item-sqlInserts"><a href="#sqlInserts"><strong>8.1.3.1</strong><span>Inserts and Updates</span></a></div>
         
@@ -188,21 +194,21 @@
         
         <div class="toc-item" style="margin-left:30px" id="toc-item-kotlinData"><a href="#kotlinData"><strong>8.1.4.11</strong><span>Support for Kotlin immutable data classes</span></a></div>
         
-        <div class="toc-item" style="margin-left:20px" id="toc-item-jdbcJoinQueries"><a href="#jdbcJoinQueries"><strong>8.1.5</strong><span>JDBC Join Queries</span></a></div>
+        <div class="toc-item" style="margin-left:20px" id="toc-item-dbcDataTypes"><a href="#dbcDataTypes"><strong>8.1.5</strong><span>Data Types</span></a></div>
         
-        <div class="toc-item" style="margin-left:20px" id="toc-item-jdbcDataTypes"><a href="#jdbcDataTypes"><strong>8.1.6</strong><span>JDBC Data Types</span></a></div>
+        <div class="toc-item" style="margin-left:20px" id="toc-item-dbcAttributeConverter"><a href="#dbcAttributeConverter"><strong>8.1.6</strong><span>Using Attribute Converter</span></a></div>
         
-        <div class="toc-item" style="margin-left:20px" id="toc-item-jdbcNativeQueries"><a href="#jdbcNativeQueries"><strong>8.1.7</strong><span>Explicit JDBC Queries</span></a></div>
+        <div class="toc-item" style="margin-left:20px" id="toc-item-dbcJoinQueries"><a href="#dbcJoinQueries"><strong>8.1.7</strong><span>Join Queries</span></a></div>
         
-        <div class="toc-item" style="margin-left:10px" id="toc-item-r2dbc"><a href="#r2dbc"><strong>8.2</strong><span>Micronaut Data R2DBC</span></a></div>
+        <div class="toc-item" style="margin-left:20px" id="toc-item-dbcNativeQueries"><a href="#dbcNativeQueries"><strong>8.1.8</strong><span>Explicit Queries</span></a></div>
         
-        <div class="toc-item" style="margin-left:20px" id="toc-item-r2querying"><a href="#r2querying"><strong>8.2.1</strong><span>Writing Queries</span></a></div>
+        <div class="toc-item" style="margin-left:20px" id="toc-item-r2dbc"><a href="#r2dbc"><strong>8.1.9</strong><span>R2DBC specifics</span></a></div>
         
-        <div class="toc-item" style="margin-left:20px" id="toc-item-r2crud"><a href="#r2crud"><strong>8.2.2</strong><span>Performing CRUD Operations</span></a></div>
+        <div class="toc-item" style="margin-left:30px" id="toc-item-r2querying"><a href="#r2querying"><strong>8.1.9.1</strong><span>Reactive repositories</span></a></div>
         
-        <div class="toc-item" style="margin-left:20px" id="toc-item-r2transactionManagement"><a href="#r2transactionManagement"><strong>8.2.3</strong><span>Micronaut Data Transactions with R2DBC</span></a></div>
+        <div class="toc-item" style="margin-left:30px" id="toc-item-r2transactionManagement"><a href="#r2transactionManagement"><strong>8.1.9.2</strong><span>Transactions</span></a></div>
         
-        <div class="toc-item" style="margin-left:20px" id="toc-item-r2entityEvents"><a href="#r2entityEvents"><strong>8.2.4</strong><span>Reactive &amp; Entity Events</span></a></div>
+        <div class="toc-item" style="margin-left:30px" id="toc-item-r2entityEvents"><a href="#r2entityEvents"><strong>8.1.9.3</strong><span>Reactive Entity Events</span></a></div>
         
         <div class="toc-item" style="margin-left:0px" id="toc-item-graal"><a href="#graal"><strong>9</strong><span>Going Native with GraalVM</span></a></div>
         
@@ -419,7 +425,81 @@ fun testAnnotationMetadata() {
 </table>
 </div>
 
-<h2 id="releaseHistory"><a class="anchor" href="#releaseHistory"></a>1.1 Release History</h2>
+<h2 id="whatsNew"><a class="anchor" href="#whatsNew"></a>1.1 What's New?</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/whatsNew.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="sect2">
+<h3 id="_micronaut_data_3_1">Micronaut Data 3.1</h3>
+<div class="ulist">
+<ul>
+<li>
+<p>Kotlin&#8217;s coroutines support. New repository interface <code>CoroutineCrudRepository</code>.</p>
+</li>
+<li>
+<p>Support for <a href="#dbcAttributeConverter"><code>AttributeConverter</code></a></p>
+</li>
+<li>
+<p>R2DBC upgraded to <code>Borca-M2</code></p>
+</li>
+<li>
+<p>JPA Criteria specifications</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_micronaut_data_3_0">Micronaut Data 3.0</h3>
+<div class="ulist">
+<ul>
+<li>
+<p>Micronaut 3.0</p>
+</li>
+<li>
+<p>Hibernate optimizations</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_micronaut_data_2_5_0">Micronaut Data 2.5.0</h3>
+<div class="ulist">
+<ul>
+<li>
+<p>Repositories now support batch insert/update/delete even with a custom query</p>
+</li>
+<li>
+<p>Rewritten entity mapper allows more complex mapping for JDBC/R2DBC entities</p>
+</li>
+<li>
+<p>Support for <code>@JoinTable</code> and <code>@JoinColumn</code> annotations</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_micronaut_data_2_4_0">Micronaut Data 2.4.0</h3>
+<div class="ulist">
+<ul>
+<li>
+<p>Full support for immutable entities. You can use Java 16 records or Kotlin immutable data classes</p>
+</li>
+<li>
+<p>Integrated support for R2DBC, now the <code>data-r2dbc</code> module is a part of the data project and shares the same code with JDBC</p>
+</li>
+<li>
+<p>Optimistic locking for JDBC/R2DBC</p>
+</li>
+</ul>
+</div>
+</div>
+
+<h2 id="releaseHistory"><a class="anchor" href="#releaseHistory"></a>1.2 Release History</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/introduction/releaseHistory.adoc"'>
@@ -451,7 +531,7 @@ fun testAnnotationMetadata() {
 <p>        <div class="listingblock multi-language-sample">
 <div class="title"></div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">annotationProcessor(<span class="hljs-string">"io.micronaut.data:micronaut-data-processor:3.0.2-SNAPSHOT")</span></code></pre>
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">annotationProcessor(<span class="hljs-string">"io.micronaut.data:micronaut-data-processor:3.1.0-SNAPSHOT")</span></code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -461,7 +541,7 @@ fun testAnnotationMetadata() {
     &lt;path&gt;
         &lt;groupId&gt;io.micronaut.data&lt;/groupId&gt;
         &lt;artifactId&gt;micronaut-data-processor&lt;/artifactId&gt;
-        &lt;version&gt;3.0.2-SNAPSHOT&lt;/version&gt;
+        &lt;version&gt;3.1.0-SNAPSHOT&lt;/version&gt;
     &lt;/path&gt;
 &lt;/annotationProcessorPaths&gt;</code></pre>
 </div>
@@ -487,7 +567,7 @@ For Kotlin the dependency should be in the <code>kapt</code> scope and for Groov
 <p>        <div class="listingblock multi-language-sample">
 <div class="title"></div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">implementation(<span class="hljs-string">"io.micronaut.data:micronaut-data-hibernate-jpa:3.0.2-SNAPSHOT")</span></code></pre>
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">implementation(<span class="hljs-string">"io.micronaut.data:micronaut-data-hibernate-jpa:3.1.0-SNAPSHOT")</span></code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -495,7 +575,7 @@ For Kotlin the dependency should be in the <code>kapt</code> scope and for Groov
 <pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="maven">&lt;dependency&gt;
     &lt;groupId&gt;io.micronaut.data&lt;/groupId&gt;
     &lt;artifactId&gt;micronaut-data-hibernate-jpa&lt;/artifactId&gt;
-    &lt;version&gt;3.0.2-SNAPSHOT&lt;/version&gt;
+    &lt;version&gt;3.1.0-SNAPSHOT&lt;/version&gt;
 &lt;/dependency&gt;</code></pre>
 </div>
 </div>
@@ -813,7 +893,7 @@ bookRepository.save(book)</code></pre>
 <p>        <div class="listingblock multi-language-sample">
 <div class="title"></div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">annotationProcessor(<span class="hljs-string">"io.micronaut.data:micronaut-data-processor:3.0.2-SNAPSHOT")</span></code></pre>
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">annotationProcessor(<span class="hljs-string">"io.micronaut.data:micronaut-data-processor:3.1.0-SNAPSHOT")</span></code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -823,7 +903,7 @@ bookRepository.save(book)</code></pre>
     &lt;path&gt;
         &lt;groupId&gt;io.micronaut.data&lt;/groupId&gt;
         &lt;artifactId&gt;micronaut-data-processor&lt;/artifactId&gt;
-        &lt;version&gt;3.0.2-SNAPSHOT&lt;/version&gt;
+        &lt;version&gt;3.1.0-SNAPSHOT&lt;/version&gt;
     &lt;/path&gt;
 &lt;/annotationProcessorPaths&gt;</code></pre>
 </div>
@@ -4214,26 +4294,26 @@ You can add additional method candidates by creating a library that depends on <
 
 
 <div class="paragraph">
-<p>In addition to JPA, Micronaut Data supports the generation of repositories that use native SQL. The implementation is general enough that any transport can use be used for executing the SQL queries, as of this writing JDBC is the only supported implementation for executing SQL queries, however this may change in the future.</p>
+<p>In addition to JPA, Micronaut Data supports the generation of repositories that use native SQL. The implementation is general enough that any transport can use be used for executing the SQL queries, as of this writing JDBC and R2DBC are supported implementations for executing SQL queries.</p>
 </div>
 
-<h2 id="jdbc"><a class="anchor" href="#jdbc"></a>8.1 Micronaut Data JDBC</h2>
+<h2 id="dbc"><a class="anchor" href="#dbc"></a>8.1 Micronaut Data JDBC / R2DBC</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/dbc.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
 
 
 <div class="paragraph">
-<p>Micronaut Data JDBC is an implementation that pre-computes native SQL queries (given a particular database dialect) and provides a repository implementation that is a simple data mapper between a JDBC <code>ResultSet</code> and an object.</p>
+<p>Micronaut Data JDBC / R2DBC is an implementation that pre-computes native SQL queries (given a particular database dialect) and provides a repository implementation that is a simple data mapper between a native result set and an an entity.</p>
 </div>
 <div class="paragraph">
-<p>Micronaut Data JDBC supports all of the features of Micronaut Data for JPA including <a href="#criteria">dynamic finders</a>, <a href="#pagination">pagination</a>, <a href="#projections">projections</a>, <a href="#dto">Data Transfer Objects (DTO)</a>, <a href="#dataUpdates">Batch Updates</a> and so on.</p>
+<p>Micronaut Data JDBC / R2DBC supports all of the features of Micronaut Data for JPA including <a href="#criteria">dynamic finders</a>, <a href="#pagination">pagination</a>, <a href="#projections">projections</a>, <a href="#dto">Data Transfer Objects (DTO)</a>, <a href="#dataUpdates">Batch Updates</a>, <a href="#optimisticLocking">Optimistic locking</a> and so on.</p>
 </div>
 <div class="paragraph">
-<p>However, Micronaut Data JDBC is not a Object Relational Mapping (ORM) implementation and does not and will not include any of the following concepts:</p>
+<p>However, Micronaut Data JDBC / R2DBC is not a Object Relational Mapping (ORM) implementation and does not and will not include any of the following concepts:</p>
 </div>
 <div class="ulist">
 <ul>
@@ -4252,7 +4332,7 @@ You can add additional method candidates by creating a library that depends on <
 </ul>
 </div>
 <div class="paragraph">
-<p>Micronaut Data JDBC is designed for users who prefer a lower-level experience and working directly with SQL.</p>
+<p>Micronaut Data JDBC / R2DBC is designed for users who prefer a lower-level experience and working directly with SQL.</p>
 </div>
 <div class="admonitionblock note">
 <table>
@@ -4261,29 +4341,59 @@ You can add additional method candidates by creating a library that depends on <
 <i class="fa icon-note" title="Note"></i>
 </td>
 <td class="content">
-Micronaut Data JDBC is useful for implementing the majority of the simple SQL queries that exist in a typical application and does not include any runtime query building DSLs. For more complex queries Micronaut Data JDBC can be paired with one of the many great existing Java SQL DSLs out there like <a href="https://www.jooq.org">JOOQ</a>, <a href="http://www.querydsl.com">QueryDSL</a>, <a href="https://github.com/requery/requery">Requery</a> or even JPA.
+Micronaut Data JDBC / R2DBC is useful for implementing the majority of the simple SQL queries that exist in a typical application and does not include any runtime query building DSLs. For more complex queries Micronaut Data JDBC / R2DBC can be paired with one of the many great existing Java SQL DSLs out there like <a href="https://www.jooq.org">JOOQ</a>, <a href="http://www.querydsl.com">QueryDSL</a>, <a href="https://github.com/requery/requery">Requery</a> or even JPA.
 </td>
 </tr>
 </table>
 </div>
 
-<h2 id="jdbcQuickStart"><a class="anchor" href="#jdbcQuickStart"></a>8.1.1 JDBC Quick Start</h2>
+<h2 id="dbcQuickStart"><a class="anchor" href="#dbcQuickStart"></a>8.1.1 Quick Start</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc/jdbcQuickStart.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/dbc/dbcQuickStart.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
 
 
 <div class="paragraph">
-<p>To get started with Micronaut Data and SQL/JDBC add the following dependency to your annotation processor path:</p>
+<p>The quickest way to get started is to create a new Micronaut application with <a href="https://micronaut.io/launch/">Micronaut Launch</a> and choose the <code>data-jdbc</code> or <code>data-r2dbc</code>, a database driver and a database migration framework features. This can also be done via the Micronaut 2.2 and above CLI:</p>
+</div>
+<div class="listingblock">
+<div class="title">Creating an application with the CLI</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash"># For Maven add: --build maven
+$ mn create-app --lang java example --features data-jdbc,flyway,mysql</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Or via <code>curl</code>:</p>
+</div>
+<div class="listingblock">
+<div class="title">Creating an application with <code>curl</code></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash"># For Maven add to the URL: &amp;build=maven
+$ curl https://launch.micronaut.io/demo.zip?lang=java&amp;features=data-jdbc,flyway,mysql -o demo.zip &amp;&amp; unzip demo.zip -d demo &amp;&amp; cd demo</code></pre>
+</div>
+</div>
+
+<h2 id="jdbcQuickStart"><a class="anchor" href="#jdbcQuickStart"></a>8.1.1.1 JDBC</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/dbc/dbcQuickStart/jdbcQuickStart.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>To get started with Micronaut Data JDBC add the following dependency to your annotation processor path:</p>
 </div>
 <div class="paragraph">
 <p>        <div class="listingblock multi-language-sample">
 <div class="title"></div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">annotationProcessor(<span class="hljs-string">"io.micronaut.data:micronaut-data-processor:3.0.2-SNAPSHOT")</span></code></pre>
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">annotationProcessor(<span class="hljs-string">"io.micronaut.data:micronaut-data-processor:3.1.0-SNAPSHOT")</span></code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -4293,7 +4403,7 @@ Micronaut Data JDBC is useful for implementing the majority of the simple SQL qu
     &lt;path&gt;
         &lt;groupId&gt;io.micronaut.data&lt;/groupId&gt;
         &lt;artifactId&gt;micronaut-data-processor&lt;/artifactId&gt;
-        &lt;version&gt;3.0.2-SNAPSHOT&lt;/version&gt;
+        &lt;version&gt;3.1.0-SNAPSHOT&lt;/version&gt;
     &lt;/path&gt;
 &lt;/annotationProcessorPaths&gt;</code></pre>
 </div>
@@ -4319,7 +4429,7 @@ For Kotlin the dependency should be in the <code>kapt</code> scope and for Groov
 <p>        <div class="listingblock multi-language-sample">
 <div class="title"></div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">implementation(<span class="hljs-string">"io.micronaut.data:micronaut-data-jdbc:3.0.2-SNAPSHOT")</span></code></pre>
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">implementation(<span class="hljs-string">"io.micronaut.data:micronaut-data-jdbc:3.1.0-SNAPSHOT")</span></code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -4327,7 +4437,7 @@ For Kotlin the dependency should be in the <code>kapt</code> scope and for Groov
 <pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="maven">&lt;dependency&gt;
     &lt;groupId&gt;io.micronaut.data&lt;/groupId&gt;
     &lt;artifactId&gt;micronaut-data-jdbc&lt;/artifactId&gt;
-    &lt;version&gt;3.0.2-SNAPSHOT&lt;/version&gt;
+    &lt;version&gt;3.1.0-SNAPSHOT&lt;/version&gt;
 &lt;/dependency&gt;</code></pre>
 </div>
 </div>
@@ -4730,20 +4840,357 @@ fun update(@Id id: Long?, title: String)</code></pre>
 </div>
 </div>
 
-<h2 id="jdbcConfiguration"><a class="anchor" href="#jdbcConfiguration"></a>8.1.2 JDBC Configuration</h2>
+<h2 id="r2dbcQuickStart"><a class="anchor" href="#r2dbcQuickStart"></a>8.1.1.2 R2DBC</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc/jdbcConfiguration.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/dbc/dbcQuickStart/r2dbcQuickStart.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
 
 
 <div class="paragraph">
+<p>Let&#8217;s generate a new Micronaut application with <a href="https://micronaut.io/launch/">Micronaut Launch</a> and choose the <code>data-r2dbc</code>, <code>mysql</code> and <code>flyway</code> features.</p>
+</div>
+<div class="paragraph">
+<p>The generated application will use MySQL since we passed the <code>mysql</code> feature adding dependency on the R2DBC driver for MySQL:</p>
+</div>
+<div class="paragraph">
+<p>        <div class="listingblock multi-language-sample">
+<div class="title"></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">runtimeOnly(<span class="hljs-string">"dev.miku:r2dbc-mysql")</span></code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="maven">&lt;dependency&gt;
+    &lt;groupId&gt;dev.miku&lt;/groupId&gt;
+    &lt;artifactId&gt;r2dbc-mysql&lt;/artifactId&gt;
+    &lt;scope&gt;runtime&lt;/scope&gt;
+&lt;/dependency&gt;</code></pre>
+</div>
+</div>
+</p>
+</div>
+<div class="paragraph">
+<p>And for flyway the JDBC driver:</p>
+</div>
+<div class="paragraph">
+<p>        <div class="listingblock multi-language-sample">
+<div class="title"></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">runtimeOnly(<span class="hljs-string">"mysql:mysql-connector-java")</span></code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="maven">&lt;dependency&gt;
+    &lt;groupId&gt;mysql&lt;/groupId&gt;
+    &lt;artifactId&gt;mysql-connector-java&lt;/artifactId&gt;
+    &lt;scope&gt;runtime&lt;/scope&gt;
+&lt;/dependency&gt;</code></pre>
+</div>
+</div>
+</p>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+To create configurations for other drivers you can select the appropriate feature: <code>oracle</code>, <code>postgres</code>, <code>sqlserver</code>, <code>h2</code> or <code>mariadb</code>.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Now define a SQL script that creates your initial schema in <code>src/main/resources/db/migration</code>. For example:</p>
+</div>
+<div class="listingblock">
+<div class="title">Example <code>V1__create-schema.sql</code></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-sql hljs" data-lang="sql">CREATE TABLE book(id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY, title VARCHAR(255), pages INT, author_id BIGINT NOT NULL);
+CREATE TABLE author(id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255));</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>You can now configure your application to connect to the database using <code>src/main/resources/application.yml</code> which contains the application configuration:</p>
+</div>
+<div class="listingblock">
+<div class="title">Example <code>application.yml</code></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">flyway: <i class="conum" data-value="1"></i><b>(1)</b>
+  datasources:
+    default:
+      enabled: true
+datasources:
+  default: <i class="conum" data-value="2"></i><b>(2)</b>
+    url: jdbc:mysql://localhost:3306/mydatabase
+r2dbc:
+  datasources:
+    default: <i class="conum" data-value="3"></i><b>(3)</b>
+      url: r2dbc:mysql:///mydatabase</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>The Flyway configuration ensures the schema migration is applied. See <a href="https://micronaut-projects.github.io/micronaut-flyway/latest/guide/index.html">Micronaut Flyway</a> for more information.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>The Flyway configuration needs a JDBC datasource configured, this setting configures one. See <a href="#dbcConfiguration">datasource configuration</a> for more information.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td>The property <code>r2dbc.datasources.default.url</code> is used to configure the default R2DBC <code>ConnectionFactory</code></td>
+</tr>
+</table>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+The R2DBC <code>ConnectionFactory</code> object can be injected anywhere in your code with dependency injection.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Now define a <code>@MappedEntity</code> that maps to the <code>author</code> table defined in the schema:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">package example;
+
+import io.micronaut.data.annotation.*;
+
+@MappedEntity
+public class Author {
+    @GeneratedValue
+    @Id
+    private Long id;
+    private final String name;
+
+    public Author(String name) {
+        this.name = name;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">package example
+
+import io.micronaut.data.annotation.*
+
+@MappedEntity
+class Author {
+    @GeneratedValue
+    @Id
+    Long id
+    final String name
+
+    Author(String name) {
+        this.name = name
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">package example
+
+import io.micronaut.data.annotation.GeneratedValue
+import io.micronaut.data.annotation.Id
+import io.micronaut.data.annotation.MappedEntity
+
+@MappedEntity
+data class Author(val name: String) {
+    @GeneratedValue
+    @Id
+    var id: Long? = null
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>And a repository interface to access the database that extends from <code>ReactiveStreamsRepository</code>:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">package example;
+
+import io.micronaut.core.annotation.NonNull;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.r2dbc.annotation.R2dbcRepository;
+import io.micronaut.data.repository.reactive.ReactiveStreamsCrudRepository;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+
+import javax.validation.constraints.NotNull;
+
+@R2dbcRepository(dialect = Dialect.MYSQL) <b class="conum">(1)</b>
+public interface AuthorRepository extends ReactiveStreamsCrudRepository&lt;Author, Long&gt; {
+    @NonNull
+    @Override
+    Mono&lt;Author&gt; findById(@NonNull @NotNull Long aLong); <b class="conum">(2)</b>
+
+    @NonNull
+    @Override
+    Flux&lt;Author&gt; findAll();
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">package example
+
+import io.micronaut.core.annotation.NonNull
+import io.micronaut.data.model.query.builder.sql.Dialect
+import io.micronaut.data.r2dbc.annotation.R2dbcRepository
+import io.micronaut.data.repository.reactive.ReactiveStreamsCrudRepository
+import reactor.core.publisher.Flux
+import reactor.core.publisher.Mono
+
+import javax.validation.constraints.NotNull
+
+@R2dbcRepository(dialect = Dialect.MYSQL) <b class="conum">(1)</b>
+interface AuthorRepository extends ReactiveStreamsCrudRepository&lt;Author, Long&gt; {
+    @NonNull
+    @Override
+    Mono&lt;Author&gt; findById(@NonNull @NotNull Long aLong) <b class="conum">(2)</b>
+
+    @NonNull
+    @Override
+    Flux&lt;Author&gt; findAll()
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">package example
+
+import io.micronaut.data.model.query.builder.sql.Dialect
+import io.micronaut.data.r2dbc.annotation.R2dbcRepository
+import io.micronaut.data.repository.reactive.ReactiveStreamsCrudRepository
+import reactor.core.publisher.Flux
+import reactor.core.publisher.Mono
+import javax.validation.constraints.NotNull
+
+@R2dbcRepository(dialect = Dialect.MYSQL) <b class="conum">(1)</b>
+interface AuthorRepository : ReactiveStreamsCrudRepository&lt;Author, Long&gt; {
+    override fun findById(id: @NotNull Long): Mono&lt;Author&gt; <b class="conum">(2)</b>
+    override fun findAll(): Flux&lt;Author&gt;
+}</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>The <a href="../api/io/micronaut/data/r2dbc/annotation/R2dbcRepository.html">@R2dbcRepository</a> annotation can be used to specify the datasource and dialect</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>You can override methods from the super interface to specialize the default <a href="https://www.reactive-streams.org/reactive-streams-1.0.3-javadoc/org/reactivestreams/Publisher.html">Publisher</a> return type with a concrete implementation</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>You can now inject this interface into controllers and use it to perform R2DBC queries:</p>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>By returning a reactive type that emits many items you can stream data (either <a href="http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/Flowable.html">Flowable</a> or <code>Flux</code>)</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>By returning a reactive type that emits a single item you return the entire response (either <a href="http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/Single.html">Single</a> or <code>Mono</code>)</td>
+</tr>
+</table>
+</div>
+
+<h2 id="dbcConfiguration"><a class="anchor" href="#dbcConfiguration"></a>8.1.2 Configuration</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/dbc/dbcConfiguration.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="sect2">
+<h3 id="_jdbc_driver">JDBC driver</h3>
+<div class="paragraph">
 <p>Micronaut Data JDBC requires that an appropriate <code>java.sql.DataSource</code> bean is configured.</p>
 </div>
 <div class="paragraph">
 <p>You can either do this manually or use the <a href="https://micronaut-projects.github.io/micronaut-sql/latest/guide/#jdbc">Micronaut JDBC</a> module which provides out-of-the-box support for configuring connection pooling with either Tomcat JDBC, Hikari, Commons DBCP or Oracle UCP.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_r2dbc_driver">R2DBC driver</h3>
+<div class="paragraph">
+<p>Micronaut Data R2DBC requires driver configuration using <a href="https://micronaut-projects.github.io/micronaut-r2dbc/latest/guide/#jdbc">Micronaut R2DBC</a></p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<caption class="title">Table 1. The following drivers are available as of this writing.</caption>
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Database</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Dependency</strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The H2 database</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>io.r2dbc:r2dbc-h2</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">MySQL</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>org.mariadb:r2dbc-mariadb</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">MariaDB</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>dev.miku:r2dbc-mysql</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Postgres</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>io.r2dbc:r2dbc-postgresql</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">SQL Server</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>io.r2dbc:r2dbc-mssql</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Oracle</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>com.oracle.database.r2dbc:oracle-r2dbc</code></p></td>
+</tr>
+</tbody>
+</table>
 </div>
 <div class="sect2">
 <h3 id="_sql_logging">SQL Logging</h3>
@@ -4768,6 +5215,18 @@ fun update(@Id id: Long?, title: String)</code></pre>
 <div class="paragraph">
 <p>If you want to quickly test out Micronaut Data then you can set the <code>schema-generate</code> option of the data source to <code>create-drop</code> as well as the appropriate schema name:</p>
 </div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+Most of the database migration tools use JDBC driver to make DB changes. If you use R2DBC you would need to separately configure JDBC data source.
+</td>
+</tr>
+</table>
+</div>
 <div class="listingblock">
 <div class="title">Using <code>schema-generate</code></div>
 <div class="content">
@@ -4791,7 +5250,7 @@ fun update(@Id id: Long?, title: String)</code></pre>
 <p>As seen in the YAML above you should also configure the dialect. Although queries are precomputed in the repository some cases (like pagination) still require the dialect to specified. The following table summarizes the supported dialects:</p>
 </div>
 <table class="tableblock frame-all grid-all spread">
-<caption class="title">Table 1. Supported JDBC Dialects</caption>
+<caption class="title">Table 2. Supported JDBC / R2DBC Dialects</caption>
 <colgroup>
 <col style="width: 50%;">
 <col style="width: 50%;">
@@ -4830,24 +5289,24 @@ fun update(@Id id: Long?, title: String)</code></pre>
 <i class="fa icon-important" title="Important"></i>
 </td>
 <td class="content">
-The dialect setting in configuration does <strong>not</strong> replace the need to ensure the correct dialect is set at the repository. If the dialect is H2 in configuration, the repository should have <code>@JdbcRepository(dialect = Dialect.H2)</code>. Because repositories are computed at compile time, the configuration value is not known at that time.
+The dialect setting in configuration does <strong>not</strong> replace the need to ensure the correct dialect is set at the repository. If the dialect is H2 in configuration, the repository should have <code>@JdbcRepository(dialect = Dialect.H2)</code> / <code>@R2dbcRepository(dialect = Dialect.H2)</code>. Because repositories are computed at compile time, the configuration value is not known at that time.
 </td>
 </tr>
 </table>
 </div>
 </div>
 
-<h2 id="jdbcRepositories"><a class="anchor" href="#jdbcRepositories"></a>8.1.3 JDBC Repositories</h2>
+<h2 id="dbcRepositories"><a class="anchor" href="#dbcRepositories"></a>8.1.3 Repositories</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc/jdbcRepositories.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/dbc/dbcRepositories.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
 
 
 <div class="paragraph">
-<p>As seen in the <a href="#jdbcQuickStart">Quick Start</a> JDBC repositories in Micronaut Data are defined as interfaces that are annotated with the <a href="../api/io/micronaut/data/jdbc/annotation/JdbcRepository.html">@JdbcRepository</a> annotation.</p>
+<p>As seen in the <a href="#jdbcQuickStart">Quick Start</a> JDBC / R2DBC repositories in Micronaut Data are defined as interfaces that are annotated with the <a href="../api/io/micronaut/data/jdbc/annotation/JdbcRepository.html">@JdbcRepository</a> annotation, <a href="../api/io/micronaut/data/r2dbc/annotation/R2dbcRepository.html">@R2dbcRepository</a> accordingly.</p>
 </div>
 <div class="paragraph">
 <p>In multiple datasource scenario, the @io.micronaut.data.annotation.Repository annotation can be used to specify the datasource configuration to use. By default Micronaut Data will look for the default datasource.</p>
@@ -5024,14 +5483,14 @@ You could also inject whichever other tool you wish to use to handle more comple
 <h2 id="sqlInserts"><a class="anchor" href="#sqlInserts"></a>8.1.3.1 Inserts and Updates</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc/jdbcRepositories/sqlInserts.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/dbc/dbcRepositories/sqlInserts.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
 
 
 <div class="paragraph">
-<p>Unlike JPA/Hibernate, Micronaut Data JDBC is stateless and has no notion of a persistence session that requires state management.</p>
+<p>Unlike JPA/Hibernate, Micronaut Data JDBC / R2DBC is stateless and has no notion of a persistence session that requires state management.</p>
 </div>
 <div class="paragraph">
 <p>Since there is no session, features like dirty checking are not supported. This has implications when defining repository methods for inserts and updates.</p>
@@ -5070,7 +5529,7 @@ fun update(@Id id: Long?, title: String)</code></pre>
 <h2 id="optimisticLocking"><a class="anchor" href="#optimisticLocking"></a>8.1.3.2 Optimistic locking</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc/jdbcRepositories/optimisticLocking.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/dbc/dbcRepositories/optimisticLocking.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -5179,7 +5638,7 @@ interface StudentRepository : CrudRepository&lt;Student, Long&gt; {
 <h2 id="pessimisticLocking"><a class="anchor" href="#pessimisticLocking"></a>8.1.3.3 Pessimistic Locking</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc/jdbcRepositories/pessimisticLocking.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/dbc/dbcRepositories/pessimisticLocking.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -5262,17 +5721,17 @@ The semantics of the <code>FOR UPDATE</code> clause may vary depending on the da
 <h2 id="sqlMapping"><a class="anchor" href="#sqlMapping"></a>8.1.4 Mapping Entities</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc/sqlMapping.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/dbc/sqlMapping.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
 
 
 <div class="paragraph">
-<p>As mentioned in the <a href="#jdbcQuickStart">Quick Start</a> section, if you need to customize how entities map to the table and column names of the database you can use JPA annotations to do so or Micronaut Datas own annotations in the <code>io.micronaut.data.annotation</code> package.</p>
+<p>As mentioned in the <a href="#dbcQuickStart">Quick Start</a> section, if you need to customize how entities map to the table and column names of the database you can use JPA annotations to do so or Micronaut Datas own annotations in the <code>io.micronaut.data.annotation</code> package.</p>
 </div>
 <div class="paragraph">
-<p>An important aspect of Micronaut Data JDBC is that regardless whether you use JPA annotations or Micronaut Data annotations the entity classes must be compiled with Micronaut Data.</p>
+<p>An important aspect of Micronaut Data JDBC / R2DBC is that regardless whether you use JPA annotations or Micronaut Data annotations the entity classes must be compiled with Micronaut Data.</p>
 </div>
 <div class="paragraph">
 <p>This is because Micronaut Data pre-computes the persistence model (the relationships between entities, the class/property name to table/column name mappings) at compilation time, which is one of the reasons Micronaut Data JDBC can startup so fast.</p>
@@ -5346,7 +5805,7 @@ public class Country {
 <h2 id="sqlAnnotations"><a class="anchor" href="#sqlAnnotations"></a>8.1.4.1 SQL Annotations</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc/sqlMapping/sqlAnnotations.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/dbc/sqlMapping/sqlAnnotations.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -5463,13 +5922,13 @@ Micronaut Data supports both <code>javax.persistence</code> and <code>jakarta.pe
 </table>
 </div>
 <div class="paragraph">
-<p>Again Micronaut Data JDBC is not an ORM, but instead a simple data mapper so many of the concepts in JPA simply don&#8217;t apply, however for users familiar with these annotations it is handy being able to use them.</p>
+<p>Again Micronaut Data JDBC / R2DBC is not an ORM, but instead a simple data mapper so many of the concepts in JPA simply don&#8217;t apply, however for users familiar with these annotations it is handy being able to use them.</p>
 </div>
 
 <h2 id="sqlIdGenerator"><a class="anchor" href="#sqlIdGenerator"></a>8.1.4.2 ID Generation</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc/sqlMapping/sqlIdGenerator.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/dbc/sqlMapping/sqlIdGenerator.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -5491,7 +5950,7 @@ Micronaut Data supports both <code>javax.persistence</code> and <code>jakarta.pe
 <h2 id="sqlCompositeId"><a class="anchor" href="#sqlCompositeId"></a>8.1.4.3 Composite Primary Keys</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc/sqlMapping/sqlCompositeId.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/dbc/sqlMapping/sqlCompositeId.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -5677,14 +6136,14 @@ To alter the column mappings for the ID, you may use the <code>@Column</code> an
 <h2 id="sqlConstructorArguments"><a class="anchor" href="#sqlConstructorArguments"></a>8.1.4.4 Constructor Arguments</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc/sqlMapping/sqlConstructorArguments.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/dbc/sqlMapping/sqlConstructorArguments.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
 
 
 <div class="paragraph">
-<p>Micronaut Data JDBC also allows the definition of immutable objects using constructor arguments instead of getters/setters. If you define multiple constructors then the one used to create the object from the database should be annotated with <code>io.micronaut.core.annotation.Creator</code>.</p>
+<p>Micronaut Data JDBC / R2DBC also allows the definition of immutable objects using constructor arguments instead of getters/setters. If you define multiple constructors then the one used to create the object from the database should be annotated with <code>io.micronaut.core.annotation.Creator</code>.</p>
 </div>
 <div class="paragraph">
 <p>For example:</p>
@@ -5768,7 +6227,7 @@ data class Manufacturer(
 <h2 id="sqlNaming"><a class="anchor" href="#sqlNaming"></a>8.1.4.5 SQL Naming Strategies</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc/sqlMapping/sqlNaming.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/dbc/sqlMapping/sqlNaming.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -5827,7 +6286,7 @@ public class CountryRegion {
 <h2 id="sqlAssociationMapping"><a class="anchor" href="#sqlAssociationMapping"></a>8.1.4.6 Association Mapping</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc/sqlMapping/sqlAssociationMapping.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/dbc/sqlMapping/sqlAssociationMapping.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -5917,7 +6376,7 @@ You can use JPA&#8217;s equivalent annotations <a href="../api/io/micronaut/data
 <h2 id="sqlAssociationFetching"><a class="anchor" href="#sqlAssociationFetching"></a>8.1.4.7 Association Fetching</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc/sqlMapping/sqlAssociationFetching.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/dbc/sqlMapping/sqlAssociationFetching.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -5930,7 +6389,7 @@ You can use JPA&#8217;s equivalent annotations <a href="../api/io/micronaut/data
 <p>You must instead specify ahead of time what data you want to fetch. You cannot map an association as being eager or lazy. The reason for this design choice is simple, even in the JPA world accessing lazy associations or lazy initialization collections is considered bad practice due to the N+1 query issue and the recommendation is always to write an optimized join query.</p>
 </div>
 <div class="paragraph">
-<p>Micronaut Data JDBC takes this a step further by simply not supporting those features considered bad practice anyway. However, it does impact how you may model an association. For example, if you define an association in a constructor argument such as the following entity:</p>
+<p>Micronaut Data JDBC / R2DBC takes this a step further by simply not supporting those features considered bad practice anyway. However, it does impact how you may model an association. For example, if you define an association in a constructor argument such as the following entity:</p>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
@@ -6032,7 +6491,7 @@ data class Product(
 <h2 id="columnTransformer"><a class="anchor" href="#columnTransformer"></a>8.1.4.8 Using @ColumnTransformer</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc/sqlMapping/columnTransformer.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/dbc/sqlMapping/columnTransformer.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -6080,7 +6539,7 @@ private String name;</code></pre>
 <h2 id="sqlJsonType"><a class="anchor" href="#sqlJsonType"></a>8.1.4.9 JSON Column Support</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc/sqlMapping/sqlJsonType.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/dbc/sqlMapping/sqlJsonType.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -6114,14 +6573,14 @@ To allow JSON to be serialized and deserialized in entity properties you must ha
 <h2 id="javaRecords"><a class="anchor" href="#javaRecords"></a>8.1.4.10 Support for Java 16 Records</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc/javaRecords.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/dbc/javaRecords.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
 
 
 <div class="paragraph">
-<p>Since 2.3.0, Micronaut Data JDBC has support for using Java 16 records to model entities.</p>
+<p>Since 2.3.0, Micronaut Data JDBC / R2DBC has support for using Java 16 records to model entities.</p>
 </div>
 <div class="paragraph">
 <p>The following record class demonstrates this capability:</p>
@@ -6171,14 +6630,14 @@ book = bookRepository.save(book);</code></pre>
 <h2 id="kotlinData"><a class="anchor" href="#kotlinData"></a>8.1.4.11 Support for Kotlin immutable data classes</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc/kotlinData.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/dbc/kotlinData.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
 
 
 <div class="paragraph">
-<p>Micronaut Data JDBC supports using immutable Kotlin data classes as model entities.
+<p>Micronaut Data JDBC / R2DBC supports using immutable Kotlin data classes as model entities.
 The implementation is the same as for Java 16 records: to modify an entity a copy-constructor will be used and every modification means a new entity instance.</p>
 </div>
 <div class="listingblock">
@@ -6218,167 +6677,17 @@ Generated values and relations that cannot be created during the entity initiali
 </table>
 </div>
 
-<h2 id="jdbcJoinQueries"><a class="anchor" href="#jdbcJoinQueries"></a>8.1.5 JDBC Join Queries</h2>
+<h2 id="dbcDataTypes"><a class="anchor" href="#dbcDataTypes"></a>8.1.5 Data Types</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc/jdbcJoinQueries.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/dbc/dbcDataTypes.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
 
 
 <div class="paragraph">
-<p>As discussed in the previous section, Micronaut Data JDBC doesn&#8217;t support associations in the traditional ORM sense. There is no lazy loading or support for proxies.</p>
-</div>
-<div class="paragraph">
-<p>Consider a <code>Product</code> entity from the previous section that has an association to a <code>Manufacturer</code> entity:</p>
-</div>
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlight"><code class="language-java" data-lang="java">package example;
-
-import io.micronaut.core.annotation.Creator;
-
-import javax.persistence.*;
-
-@Entity
-public class Manufacturer {
-    @Id
-    @GeneratedValue
-    private Long id;
-    private String name;
-
-    @Creator
-    public Manufacturer(String name) {
-        this.name = name;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-}</code></pre>
-</div>
-</div>
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlight"><code class="language-groovy" data-lang="groovy">package example
-
-import io.micronaut.core.annotation.Creator
-
-import javax.persistence.*
-
-@Entity
-class Manufacturer {
-    @Id
-    @GeneratedValue
-    Long id
-    final String name
-
-    @Creator
-    Manufacturer(String name) {
-        this.name = name
-    }
-}</code></pre>
-</div>
-</div>
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">package example
-
-import javax.persistence.*
-
-@Entity
-data class Manufacturer(
-    @Id
-    @GeneratedValue
-    var id: Long?,
-    val name: String
-)</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>Say you query for <code>Product</code> instances, what happens is that by default Micronaut Data JDBC will only query for and fetch the simple properties. In the case of single ended associations like the above Micronaut Data will only retrieve the ID and assign it if is possible (In the case of entities that require constructor arguments this is not even possible).</p>
-</div>
-<div class="paragraph">
-<p>If you need to fetch the association too then you can use the <a href="../api/io/micronaut/data/annotation/Join.html">@Join</a> annotation on your repository interface to specify that a <code>INNER JOIN</code> (or whichever join types is more appropriate) should be executed to retrieve the associated <code>Manufacturer</code>.</p>
-</div>
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlight"><code class="language-java" data-lang="java">@JdbcRepository(dialect = Dialect.H2)
-public interface ProductRepository extends CrudRepository&lt;Product, Long&gt; {
-    @Join(value = "manufacturer", type = Join.Type.FETCH) <b class="conum">(1)</b>
-    List&lt;Product&gt; list();
-}</code></pre>
-</div>
-</div>
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlight"><code class="language-groovy" data-lang="groovy">@JdbcRepository(dialect = Dialect.H2)
-public interface ProductRepository extends CrudRepository&lt;Product, Long&gt; {
-    @Join(value = "manufacturer", type = Join.Type.FETCH) <b class="conum">(1)</b>
-    List&lt;Product&gt; list();
-}</code></pre>
-</div>
-</div>
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">@JdbcRepository(dialect = Dialect.H2)
-interface ProductRepository : CrudRepository&lt;Product, Long&gt; {
-    @Join(value = "manufacturer", type = Join.Type.FETCH) <b class="conum">(1)</b>
-    fun list(): List&lt;Product&gt;
-}</code></pre>
-</div>
-</div>
-<div class="colist arabic">
-<table>
-<tr>
-<td><i class="conum" data-value="1"></i><b>1</b></td>
-<td>The <a href="../api/io/micronaut/data/annotation/Join.html">@Join</a> is used to indicate a <code>INNER JOIN</code> clause should be included.</td>
-</tr>
-</table>
-</div>
-<div class="paragraph">
-<p>Note that the <a href="../api/io/micronaut/data/annotation/Join.html">@Join</a> annotation is repeatable and hence can be specified multiple time for different associations. In addition, the <code>type</code> member of the annotation can be used to specify the join type, for example <code>LEFT</code>, <code>INNER</code> or <code>RIGHT</code>.</p>
-</div>
-<div class="paragraph">
-<p>Finally, by default Micronaut Data will generate aliases to use for selecting columns in joins and querying. However, if at any point you experience a conflict you can specify an alias for a particular join using the <code>alias</code> member of the <a href="../api/io/micronaut/data/annotation/Join.html">@Join</a> annotation. You can override the default entity alias using the <code>alias</code> member of the <a href="../api/io/micronaut/data/annotation/MappedEntity.html">@MappedEntity</a> annotation.</p>
-</div>
-<div class="admonitionblock warning">
-<table>
-<tr>
-<td class="icon">
-<i class="fa icon-warning" title="Warning"></i>
-</td>
-<td class="content">
-Some databases like Oracle limit the length of alias names in SQL queries so another reason you may want to set custom aliases is to avoid exceeding the alias name length restriction in Oracle.
-</td>
-</tr>
-</table>
-</div>
-<div class="paragraph">
-<p>If you need to do anything more complex than the join options Micronaut Data has to offer then you may need a native query.</p>
-</div>
-
-<h2 id="jdbcDataTypes"><a class="anchor" href="#jdbcDataTypes"></a>8.1.6 JDBC Data Types</h2>
-
-<div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc/jdbcDataTypes.adoc"'>
-        <i class='fa fa-pencil-square-o'></i> Improve this doc
-    </button>
-</div>
-
-
-<div class="paragraph">
-<p>Micronaut Data JDBC supports most common Java data types. The following properties types are supported by default:</p>
+<p>Micronaut Data JDBC / R2DBC supports most common Java data types. The following properties types are supported by default:</p>
 </div>
 <div class="ulist">
 <ul>
@@ -6404,6 +6713,19 @@ Some databases like Oracle limit the length of alias names in SQL queries so ano
 </div>
 <div class="paragraph">
 <p>If you wish to define a custom data type then you can do so by defining a class that is annotated with <a href="../api/io/micronaut/data/annotation/TypeDef.html">@TypeDef</a>.</p>
+</div>
+
+<h2 id="dbcAttributeConverter"><a class="anchor" href="#dbcAttributeConverter"></a>8.1.6 Using Attribute Converter</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/dbc/dbcAttributeConverter.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>There are cases where you would like to represent the attribute differently in the database than in the entity.</p>
 </div>
 <div class="paragraph">
 <p>Consider the following example entity:</p>
@@ -6669,10 +6991,160 @@ It&#8217;s possible to define the converter using <a href="../api/io/micronaut/d
 </table>
 </div>
 
-<h2 id="jdbcNativeQueries"><a class="anchor" href="#jdbcNativeQueries"></a>8.1.7 Explicit JDBC Queries</h2>
+<h2 id="dbcJoinQueries"><a class="anchor" href="#dbcJoinQueries"></a>8.1.7 Join Queries</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc/jdbcNativeQueries.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/dbc/dbcJoinQueries.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>As discussed in the previous section, Micronaut Data JDBC doesn&#8217;t support associations in the traditional ORM sense. There is no lazy loading or support for proxies.</p>
+</div>
+<div class="paragraph">
+<p>Consider a <code>Product</code> entity from the previous section that has an association to a <code>Manufacturer</code> entity:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">package example;
+
+import io.micronaut.core.annotation.Creator;
+
+import javax.persistence.*;
+
+@Entity
+public class Manufacturer {
+    @Id
+    @GeneratedValue
+    private Long id;
+    private String name;
+
+    @Creator
+    public Manufacturer(String name) {
+        this.name = name;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">package example
+
+import io.micronaut.core.annotation.Creator
+
+import javax.persistence.*
+
+@Entity
+class Manufacturer {
+    @Id
+    @GeneratedValue
+    Long id
+    final String name
+
+    @Creator
+    Manufacturer(String name) {
+        this.name = name
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">package example
+
+import javax.persistence.*
+
+@Entity
+data class Manufacturer(
+    @Id
+    @GeneratedValue
+    var id: Long?,
+    val name: String
+)</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Say you query for <code>Product</code> instances, what happens is that by default Micronaut Data JDBC will only query for and fetch the simple properties. In the case of single ended associations like the above Micronaut Data will only retrieve the ID and assign it if is possible (In the case of entities that require constructor arguments this is not even possible).</p>
+</div>
+<div class="paragraph">
+<p>If you need to fetch the association too then you can use the <a href="../api/io/micronaut/data/annotation/Join.html">@Join</a> annotation on your repository interface to specify that a <code>INNER JOIN</code> (or whichever join types is more appropriate) should be executed to retrieve the associated <code>Manufacturer</code>.</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">@JdbcRepository(dialect = Dialect.H2)
+public interface ProductRepository extends CrudRepository&lt;Product, Long&gt; {
+    @Join(value = "manufacturer", type = Join.Type.FETCH) <b class="conum">(1)</b>
+    List&lt;Product&gt; list();
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">@JdbcRepository(dialect = Dialect.H2)
+public interface ProductRepository extends CrudRepository&lt;Product, Long&gt; {
+    @Join(value = "manufacturer", type = Join.Type.FETCH) <b class="conum">(1)</b>
+    List&lt;Product&gt; list();
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">@JdbcRepository(dialect = Dialect.H2)
+interface ProductRepository : CrudRepository&lt;Product, Long&gt; {
+    @Join(value = "manufacturer", type = Join.Type.FETCH) <b class="conum">(1)</b>
+    fun list(): List&lt;Product&gt;
+}</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>The <a href="../api/io/micronaut/data/annotation/Join.html">@Join</a> is used to indicate a <code>INNER JOIN</code> clause should be included.</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Note that the <a href="../api/io/micronaut/data/annotation/Join.html">@Join</a> annotation is repeatable and hence can be specified multiple time for different associations. In addition, the <code>type</code> member of the annotation can be used to specify the join type, for example <code>LEFT</code>, <code>INNER</code> or <code>RIGHT</code>.</p>
+</div>
+<div class="paragraph">
+<p>Finally, by default Micronaut Data will generate aliases to use for selecting columns in joins and querying. However, if at any point you experience a conflict you can specify an alias for a particular join using the <code>alias</code> member of the <a href="../api/io/micronaut/data/annotation/Join.html">@Join</a> annotation. You can override the default entity alias using the <code>alias</code> member of the <a href="../api/io/micronaut/data/annotation/MappedEntity.html">@MappedEntity</a> annotation.</p>
+</div>
+<div class="admonitionblock warning">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-warning" title="Warning"></i>
+</td>
+<td class="content">
+Some databases like Oracle limit the length of alias names in SQL queries so another reason you may want to set custom aliases is to avoid exceeding the alias name length restriction in Oracle.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>If you need to do anything more complex than the join options Micronaut Data has to offer then you may need a native query.</p>
+</div>
+
+<h2 id="dbcNativeQueries"><a class="anchor" href="#dbcNativeQueries"></a>8.1.8 Explicit Queries</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/dbc/dbcNativeQueries.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -6766,39 +7238,30 @@ It is necessary to use the "logical name" of the field in the <code>@Join</code>
 </div>
 </div>
 
-<h2 id="r2dbc"><a class="anchor" href="#r2dbc"></a>8.2 Micronaut Data R2DBC</h2>
+<h2 id="r2dbc"><a class="anchor" href="#r2dbc"></a>8.1.9 R2DBC specifics</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/r2dbc.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/dbc/r2dbc.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
 
 
 <div class="paragraph">
-<p>The R2DBC module features support for defining reactive Micronaut Data repositories that use the underlying R2DBC driver to automatically implement queries for your at compilation time.</p>
+<p>The R2DBC implementation is fully reactive and bring some differences comparing to JPA or Micronaut Data JDBC.</p>
 </div>
 
-<h2 id="r2querying"><a class="anchor" href="#r2querying"></a>8.2.1 Writing Queries</h2>
+<h2 id="r2querying"><a class="anchor" href="#r2querying"></a>8.1.9.1 Reactive repositories</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/r2dbc/r2querying.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/dbc/r2dbc/r2querying.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
 
 
 <div class="paragraph">
-<p>To write queries with Micronaut Data R2DBC you can use all the same patterns as defined in the <a href="#querying">Writing Queries</a> section.</p>
-</div>
-<div class="paragraph">
-<p>The Reactive return type is used to figure out whether the query is for a single result or multiple. If you use for example <a href="http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/Single.html">Single</a> or Reactor&#8217;s <code>Mono</code> type a single result will be returned, whilst a <a href="http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/Flowable.html">Flowable</a> or Reactor <code>Flux</code> will return multiple records.</p>
-</div>
-<div class="paragraph">
-<p>You can pass a <a href="../api/io/micronaut/data/model/Pageable.html">Pageable</a> instance to any query to paginate results, although note that the <a href="../api/io/micronaut/data/model/Page.html">Page</a> return type is not supported since it is an implicitly blocking API.</p>
-</div>
-<div class="paragraph">
-<p>The following table summarizes the repository interfaces that come with Micronaut Data:</p>
+<p>The following table summarizes the reactive repository interfaces that come with Micronaut Data and are recommended to be used with R2DBC:</p>
 </div>
 <table class="tableblock frame-all grid-all spread">
 <caption class="title">Table 1. Builtin Reactive Repository Interfaces</caption>
@@ -6830,152 +7293,10 @@ It is necessary to use the "logical name" of the field in the <code>@Join</code>
 </tbody>
 </table>
 
-<h2 id="r2crud"><a class="anchor" href="#r2crud"></a>8.2.2 Performing CRUD Operations</h2>
+<h2 id="r2transactionManagement"><a class="anchor" href="#r2transactionManagement"></a>8.1.9.2 Transactions</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/r2dbc/r2crud.adoc"'>
-        <i class='fa fa-pencil-square-o'></i> Improve this doc
-    </button>
-</div>
-
-
-<div class="paragraph">
-<p>The <a href="../api/io/micronaut/data/repository/reactive/ReactiveStreamsCrudRepository.html">ReactiveStreamsCrudRepository</a> interface exposes methods to perform Create, Read, Update and Delete (CRUD) operations reactively.</p>
-</div>
-<div class="paragraph">
-<p>To create a new instance you can use the <a href="../api/io/micronaut/data/repository/reactive/.html#ReactiveStreamsCrudRepository#save-S-">save</a> method:</p>
-</div>
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlight"><code class="language-java" data-lang="java">@Post("/")
-Mono&lt;Book&gt; create(@Valid Book book) {
-    return Mono.from(bookRepository.save(book));
-}</code></pre>
-</div>
-</div>
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlight"><code class="language-groovy" data-lang="groovy">@Post("/")
-Mono&lt;Book&gt; create(@Valid Book book) {
-    return Mono.from(bookRepository.save(book))
-}</code></pre>
-</div>
-</div>
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">@Post("/")
-suspend fun create(book: @Valid Book): Book {
-    return bookRepository.save(book)
-}</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>To read objects you can use <a href="../api/io/micronaut/data/repository/reactive/.html#ReactiveStreamsCrudRepository#findAll--">findAll</a> or <a href="../api/io/micronaut/data/repository/reactive/.html#ReactiveStreamsCrudRepository#findById-ID-">findById</a>:</p>
-</div>
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlight"><code class="language-java" data-lang="java">@Get("/")
-Flux&lt;Book&gt; all() {
-    return bookRepository.findAll(); <b class="conum">(1)</b>
-}
-
-@Get("/{id}")
-Mono&lt;Book&gt; show(Long id) {
-    return bookRepository.findById(id); <b class="conum">(2)</b>
-}</code></pre>
-</div>
-</div>
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlight"><code class="language-groovy" data-lang="groovy">@Get("/")
-Flux&lt;Book&gt; all() {
-    return bookRepository.findAll() <b class="conum">(1)</b>
-}
-
-@Get("/{id}")
-Mono&lt;Book&gt; show(Long id) {
-    return bookRepository.findById(id) <b class="conum">(2)</b>
-}</code></pre>
-</div>
-</div>
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">@Get("/")
-fun all(): Flow&lt;Book&gt; {
-    return bookRepository.findAll() <b class="conum">(1)</b>
-}
-
-@Get("/{id}")
-suspend fun show(id: Long): Book? {
-    return bookRepository.findById(id) <b class="conum">(2)</b>
-}</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>To perform an update you can use the <a href="../api/io/micronaut/data/repository/reactive/.html#ReactiveStreamsCrudRepository#update-S-">update</a> method:</p>
-</div>
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlight"><code class="language-java" data-lang="java">@Put("/{id}")
-Mono&lt;Book&gt; update(@NotNull Long id, @Valid Book book) {
-    return Mono.from(bookRepository.update(book));
-}</code></pre>
-</div>
-</div>
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlight"><code class="language-groovy" data-lang="groovy">@Put("/{id}")
-Mono&lt;Book&gt; update(@NotNull Long id, @Valid Book book) {
-    return Mono.from(bookRepository.update(book))
-}</code></pre>
-</div>
-</div>
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">@Put("/{id}")
-suspend fun update(id: Long, book: @Valid Book): Book {
-    return bookRepository.update(book)
-}</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>Finally to delete an instance you can use thBasicTypese <a href="../api/io/micronaut/data/repository/reactive/.html#ReactiveStreamsCrudRepository#deleteById-ID-">deleteById</a> method:</p>
-</div>
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlight"><code class="language-java" data-lang="java">@Delete("/{id}")
-Mono&lt;HttpResponse&lt;?&gt;&gt; delete(@NotNull Long id) {
-    return Mono.from(bookRepository.deleteById(id))
-            .map(deleted -&gt; deleted &gt; 0 ? HttpResponse.noContent() : HttpResponse.notFound());
-}</code></pre>
-</div>
-</div>
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlight"><code class="language-groovy" data-lang="groovy">@Delete("/{id}")
-Mono&lt;HttpResponse&lt;?&gt;&gt; delete(@NotNull Long id) {
-    return Mono.from(bookRepository.deleteById(id))
-            .map(deleted -&gt; deleted &gt; 0 ? HttpResponse.noContent() : HttpResponse.notFound())
-}</code></pre>
-</div>
-</div>
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">@Delete("/{id}")
-suspend fun delete(id: Long): HttpResponse&lt;*&gt; {
-    val deleted = bookRepository.deleteById(id)
-    return if (deleted &gt; 0) HttpResponse.noContent&lt;Any&gt;() else HttpResponse.notFound&lt;Any&gt;()
-}</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>For more information on the possible write operations, see the documentation on <a href="#dataUpdates">Data updates</a> in the Micronaut Data documentation which also apply to R2DBC.</p>
-</div>
-
-<h2 id="r2transactionManagement"><a class="anchor" href="#r2transactionManagement"></a>8.2.3 Micronaut Data Transactions with R2DBC</h2>
-
-<div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/r2dbc/r2transactionManagement.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/dbc/r2dbc/r2transactionManagement.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -7251,10 +7572,10 @@ override fun &lt;S : Book&gt; saveAll(entities: Iterable&lt;S&gt;): Flow&lt;S&gt
 </table>
 </div>
 
-<h2 id="r2entityEvents"><a class="anchor" href="#r2entityEvents"></a>8.2.4 Reactive & Entity Events</h2>
+<h2 id="r2entityEvents"><a class="anchor" href="#r2entityEvents"></a>8.1.9.3 Reactive Entity Events</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/r2dbc/r2entityEvents.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/dbc/r2dbc/r2entityEvents.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -7321,7 +7642,7 @@ override fun &lt;S : Book&gt; saveAll(entities: Iterable&lt;S&gt;): Flow&lt;S&gt
 <p>        <div class="listingblock multi-language-sample">
 <div class="title"></div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">implementation(<span class="hljs-string">"io.micronaut.data:micronaut-data-spring:3.0.2-SNAPSHOT")</span></code></pre>
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">implementation(<span class="hljs-string">"io.micronaut.data:micronaut-data-spring:3.1.0-SNAPSHOT")</span></code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -7329,7 +7650,7 @@ override fun &lt;S : Book&gt; saveAll(entities: Iterable&lt;S&gt;): Flow&lt;S&gt
 <pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="maven">&lt;dependency&gt;
     &lt;groupId&gt;io.micronaut.data&lt;/groupId&gt;
     &lt;artifactId&gt;micronaut-data-spring&lt;/artifactId&gt;
-    &lt;version&gt;3.0.2-SNAPSHOT&lt;/version&gt;
+    &lt;version&gt;3.1.0-SNAPSHOT&lt;/version&gt;
 &lt;/dependency&gt;</code></pre>
 </div>
 </div>
@@ -7396,7 +7717,7 @@ override fun &lt;S : Book&gt; saveAll(entities: Iterable&lt;S&gt;): Flow&lt;S&gt
 <p>        <div class="listingblock multi-language-sample">
 <div class="title"></div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">implementation(<span class="hljs-string">"io.micronaut.data:micronaut-data-spring-jpa:3.0.2-SNAPSHOT")</span></code></pre>
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">implementation(<span class="hljs-string">"io.micronaut.data:micronaut-data-spring-jpa:3.1.0-SNAPSHOT")</span></code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -7404,7 +7725,7 @@ override fun &lt;S : Book&gt; saveAll(entities: Iterable&lt;S&gt;): Flow&lt;S&gt
 <pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="maven">&lt;dependency&gt;
     &lt;groupId&gt;io.micronaut.data&lt;/groupId&gt;
     &lt;artifactId&gt;micronaut-data-spring-jpa&lt;/artifactId&gt;
-    &lt;version&gt;3.0.2-SNAPSHOT&lt;/version&gt;
+    &lt;version&gt;3.1.0-SNAPSHOT&lt;/version&gt;
 &lt;/dependency&gt;</code></pre>
 </div>
 </div>
