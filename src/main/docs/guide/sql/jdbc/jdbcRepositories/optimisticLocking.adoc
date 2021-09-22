@@ -7,6 +7,14 @@ To enable optimistic locking for your entity add ann:data.annotation.Version[] a
 - `java.lang.Short`
 - Date-time type extending `java.time.Temporal`
 
+If you´re using Kotlin, be sure to use the Nullable types:
+
+- `Int?`
+- `Long?`
+- `Short?`
+
+(Otherwise they will be translated to their primitive types on the JVM and an exception containing `Unsupported @Version type: ...` will be thrown)
+
 The field is going to be incremented (for number types) or replaced (for date types) on an update operation.
 
 Micronaut Data will generate `UPDATE`/`DELETE` SQL queries with a version match: `... WHERE rec.version = :currentVersion ...` and if the update/delete doesn't produce any result api:data.exceptions.OptimisticLockException[] will be thrown.
