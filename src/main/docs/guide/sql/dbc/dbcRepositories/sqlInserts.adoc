@@ -1,4 +1,4 @@
-Unlike JPA/Hibernate, Micronaut Data JDBC is stateless and has no notion of a persistence session that requires state management.
+Unlike JPA/Hibernate, Micronaut Data JDBC / R2DBC is stateless and has no notion of a persistence session that requires state management.
 
 Since there is no session, features like dirty checking are not supported. This has implications when defining repository methods for inserts and updates.
 

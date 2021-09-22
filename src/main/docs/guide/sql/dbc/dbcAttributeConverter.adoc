@@ -1,13 +1,4 @@
-Micronaut Data JDBC supports most common Java data types. The following properties types are supported by default:
-
-* All primitive types and their wrappers (`int`, `java.lang.Integer` etc.)
-* `CharSequence`, `String` etc.
-* Date types like `java.util.Date`, `java.time.LocalDate` etc.
-* Enum types (by name only)
-* Entity References. In the case of `@ManyToOne` the foreign key column name is computed to be the name of the association plus a suffix of `_id`. You can alter this with either `@Column(name="..")` or by providing a `NamingStrategy.mappedName(..)` implementation.
-* Collections of Entity. In the case of `@OneToMany` and if `mappedBy` is specified then it is expected that the inverse property exists defining the column, otherwise a join table mapping is created.
-
-If you wish to define a custom data type then you can do so by defining a class that is annotated with ann:data.annotation.TypeDef[].
+There are cases where you would like to represent the attribute differently in the database than in the entity.
 
 Consider the following example entity:
 

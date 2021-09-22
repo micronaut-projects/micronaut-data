@@ -1,4 +1,4 @@
-Micronaut Data JDBC supports using immutable Kotlin data classes as model entities.
+Micronaut Data JDBC / R2DBC supports using immutable Kotlin data classes as model entities.
 The implementation is the same as for Java 16 records: to modify an entity a copy-constructor will be used and every modification means a new entity instance.
 
 [source, kotlin]
