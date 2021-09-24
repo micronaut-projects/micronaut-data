@@ -1,5 +1,7 @@
 # Contributing Code or Documentation to Micronaut
 
+Sign the [Contributor License Agreement (CLA)](https://cla-assistant.io/micronaut-projects/micronaut-data). This is required before any of your code or pull-requests are accepted.
+
 ## Finding Issues to Work on
 
 If you are interested in contributing to Micronaut and are looking for issues to work on, take a look at the issues tagged with [help wanted](https://github.com/micronaut-projects/micronaut-data/issues?q=is%3Aopen+is%3Aissue+label%3A%22status%3A+help+wanted%22).
