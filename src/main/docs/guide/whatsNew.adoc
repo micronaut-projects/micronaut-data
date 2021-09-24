@@ -1,7 +1,7 @@
 === Micronaut Data 3.1
 - Kotlin's coroutines support. New repository interface `CoroutineCrudRepository`.
 - Support for <<dbcAttributeConverter, `AttributeConverter`>>
-- R2DBC upgraded to `Borca-M2`
+- R2DBC upgraded to `Arabba-SR11`
 - JPA Criteria specifications
 
 === Micronaut Data 3.0
