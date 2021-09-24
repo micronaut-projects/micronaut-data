@@ -33,7 +33,12 @@ dependencies {
 
     if (JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_11)) {
         // oracle
-        testImplementation "com.oracle.database.r2dbc:oracle-r2dbc"
+        def oracleVersion = project.ext.r2dbcOracleVersion
+        if (oracleVersion) {
+            testImplementation "com.oracle.database.r2dbc:oracle-r2dbc:$oracleVersion"
+        } else {
+            testImplementation "com.oracle.database.r2dbc:oracle-r2dbc"
+        }
     }
     testImplementation "org.testcontainers:oracle-xe"
 
@@ -57,7 +62,8 @@ dependencies {
     testImplementation 'io.r2dbc:r2dbc-mssql'
 
     // postgres
-    testImplementation 'org.postgresql:r2dbc-postgresql'
+//    testImplementation 'org.postgresql:r2dbc-postgresql'
+    testImplementation 'io.r2dbc:r2dbc-postgresql'
     testImplementation "org.testcontainers:postgresql"
     testImplementation 'org.postgresql:postgresql'
 }
