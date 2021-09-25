@@ -245,17 +245,18 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                             continue;
                         }
                         RuntimePersistentProperty<Object> identity = childPersistentEntity.getIdentity();
-                        if (identity.getProperty().get(child) == null) {
-                            continue;
-                        }
-
                         JdbcEntityOperations<Object> op = new JdbcEntityOperations<>(childPersistentEntity, child);
-
-                        updateOne(connection,
-                                cascadeManyOp.annotationMetadata,
-                                cascadeManyOp.repositoryType,
-                                childSqlUpdateOperation, associations, persisted, op);
-
+                        if (identity.getProperty().get(child) == null) {
+                            persistOne(connection,
+                            cascadeManyOp.annotationMetadata,
+                            cascadeManyOp.repositoryType,
+                            childSqlPersistOperation, associations, persisted, op);
+                        } else {
+                            updateOne(connection,
+                            cascadeManyOp.annotationMetadata,
+                            cascadeManyOp.repositoryType,
+                            childSqlUpdateOperation, associations, persisted, op);
+                        }
                         iterator.set(op.entity);
                     }
                 } else if (cascadeType == Relation.Cascade.PERSIST) {
