@@ -6,7 +6,7 @@ buildscript {
         gradlePluginPortal()
     }
     dependencies {
-        classpath "io.micronaut.build.internal:micronaut-gradle-plugins:4.1.1"
+        classpath "io.micronaut.build.internal:micronaut-gradle-plugins:4.1.5"
     }
 }
 
