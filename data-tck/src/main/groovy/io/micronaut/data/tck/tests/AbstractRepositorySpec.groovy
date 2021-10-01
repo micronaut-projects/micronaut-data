@@ -1210,9 +1210,25 @@ abstract class AbstractRepositorySpec extends Specification {
         result3.pages.find {page -> page.num = 33}
 
         when:
+        def newBook = new Book()
+        newBook.title = "added"
+        author.getBooks().add(newBook)
+        authorRepository.update(author)
+
+        then:
+        newBook.id
+        bookRepository.findById(newBook.id).isPresent()
+
+        when:
+        author = authorRepository.findById(author.id).get()
+
+        then:
+        author.getBooks().size() == 4
+
+        when:
         authorRepository.delete(author)
         then:
-        author.getBooks().size() == 3
+        author.getBooks().size() == 4
         author.getBooks()[0].postLoad == 1
         author.getBooks()[0].prePersist == 0
         author.getBooks()[0].postPersist == 0
