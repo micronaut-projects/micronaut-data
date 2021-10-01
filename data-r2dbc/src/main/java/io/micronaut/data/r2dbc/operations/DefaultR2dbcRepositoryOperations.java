@@ -247,21 +247,33 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                     if (LOG.isDebugEnabled()) {
                         LOG.debug("Cascading UPDATE for '{}' association: '{}'", persistentEntity.getName(), cascadeOp.ctx.associations);
                     }
-                    DBOperation childSqlUpdateOperation = resolveEntityUpdate(annotationMetadata, repositoryType, childPersistentEntity.getIntrospection().getBeanType(), childPersistentEntity);
-
+                    DBOperation childSqlUpdateOperation = null;
+                    DBOperation childSqlInsertOperation = null;
                     Flux<Object> childrenFlux = Flux.empty();
                     for (Object child : cascadeManyOp.children) {
-                        if (persisted.contains(child) || childPersistentEntity.getIdentity().getProperty().get(child) == null) {
-                            childrenFlux = childrenFlux.concatWith(Mono.just(child));
+                        if (persisted.contains(child)) {
                             continue;
                         }
 
                         R2dbcEntityOperations<Object> op = new R2dbcEntityOperations<>(childPersistentEntity, child);
 
-                        updateOne(connection,
-                                cascadeManyOp.annotationMetadata,
-                                cascadeManyOp.repositoryType,
-                                childSqlUpdateOperation, associations, persisted, op);
+                        if (childPersistentEntity.getIdentity().getProperty().get(child) == null) {
+                            if (childSqlInsertOperation == null) {
+                                childSqlInsertOperation = resolveEntityInsert(annotationMetadata, repositoryType, childPersistentEntity.getIntrospection().getBeanType(), childPersistentEntity);
+                            }
+                            persistOne(connection,
+                                    cascadeManyOp.annotationMetadata,
+                                    cascadeManyOp.repositoryType,
+                                    childSqlInsertOperation, associations, persisted, op);
+                        } else {
+                            if (childSqlUpdateOperation == null) {
+                                childSqlUpdateOperation = resolveEntityUpdate(annotationMetadata, repositoryType, childPersistentEntity.getIntrospection().getBeanType(), childPersistentEntity);
+                            }
+                            updateOne(connection,
+                                    cascadeManyOp.annotationMetadata,
+                                    cascadeManyOp.repositoryType,
+                                    childSqlUpdateOperation, associations, persisted, op);
+                        }
 
                         childrenFlux = childrenFlux.concatWith(op.getEntity());
                     }
