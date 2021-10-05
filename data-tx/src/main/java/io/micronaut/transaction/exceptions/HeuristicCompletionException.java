@@ -33,7 +33,7 @@ public class HeuristicCompletionException extends TransactionException {
     /**
      * Possible state outcomes.
      */
-    enum State {
+    public enum State {
         /**
          * Unknown outcome state.
          */
