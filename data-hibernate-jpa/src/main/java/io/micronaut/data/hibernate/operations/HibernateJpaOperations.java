@@ -261,19 +261,14 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
                 Class<?> argumentType = argument.getType();
                 if (Collection.class.isAssignableFrom(argumentType)) {
                     Type valueType = sessionFactory.getTypeHelper().heuristicType(argument.getFirstTypeVariable().orElse(Argument.OBJECT_ARGUMENT).getType().getName());
-                    if (valueType != null) {
+                    if (valueType != null)
                         q.setParameterList(parameterName, value == null ? Collections.emptyList() : (Collection<?>) value, valueType);
-                        return;
-                    }
                 } else if (Object[].class.isAssignableFrom(argumentType)) {
                     q.setParameterList(parameterName, value == null ? ArrayUtils.EMPTY_OBJECT_ARRAY : (Object[]) value);
-                    return;
                 } else if (value == null) {
                     Type type = sessionFactory.getTypeHelper().heuristicType(argumentType.getName());
-                    if (type != null) {
+                    if (type != null)
                         q.setParameter(parameterName, null, type);
-                        return;
-                    }
                 }
             }
             q.setParameter(parameterName, value);
