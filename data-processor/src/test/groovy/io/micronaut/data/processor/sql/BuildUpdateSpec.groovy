@@ -285,10 +285,10 @@ interface BookRepository extends CrudRepository<Book, Long> {
         when:
             def updateAuthorMethod = repository.findPossibleMethods("updateAuthor").findFirst().get()
         then:
-            updateAuthorMethod.stringValue(Query).get() == 'UPDATE `book` SET `author_id`=? WHERE (`id` = ?)'
-            updateAuthorMethod.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING) == ["-1", "0"] as String[]
-            updateAuthorMethod.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING_PATHS) == ["1.id", ""] as String[]
-            updateAuthorMethod.enumValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_TYPE_DEFS, DataType) == [DataType.LONG, DataType.LONG]
+            updateAuthorMethod.stringValue(Query).get() == 'UPDATE `book` SET `author_id`=?,`last_updated`=? WHERE (`id` = ?)'
+            updateAuthorMethod.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING) == ["-1", "-1", "0"] as String[]
+            updateAuthorMethod.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING_PATHS) == ["1.id", "", ""] as String[]
+            updateAuthorMethod.enumValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_TYPE_DEFS, DataType) == [DataType.LONG, DataType.TIMESTAMP, DataType.LONG]
 
     }
 }
