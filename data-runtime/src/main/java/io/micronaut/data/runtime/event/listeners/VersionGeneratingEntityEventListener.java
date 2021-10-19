@@ -63,10 +63,9 @@ public class VersionGeneratingEntityEventListener implements EntityEventListener
 
     @Override
     public boolean prePersist(@NonNull EntityEventContext<Object> context) {
-        final Object entity = context.getEntity();
         final BeanProperty<Object, Object> property = (BeanProperty<Object, Object>) context.getPersistentEntity().getVersion().getProperty();
         Object newVersion = init(property.getType());
-        property.set(entity, newVersion);
+        context.setProperty(property, newVersion);
         return true;
     }
 
@@ -75,7 +74,7 @@ public class VersionGeneratingEntityEventListener implements EntityEventListener
         final Object entity = context.getEntity();
         final BeanProperty<Object, Object> property = (BeanProperty<Object, Object>) context.getPersistentEntity().getVersion().getProperty();
         Object newVersion = increment(property.get(entity), property.getType());
-        property.set(entity, newVersion);
+        context.setProperty(property, newVersion);
         return true;
     }
 

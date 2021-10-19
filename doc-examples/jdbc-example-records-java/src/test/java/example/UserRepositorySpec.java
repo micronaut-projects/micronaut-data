@@ -22,13 +22,18 @@ class UserRepositorySpec {
         user = userRepository.save(user);
 
         assertNotNull(user.id());
+        assertNotNull(user.version());
+        assertEquals(0, user.version());
         assertNotNull(user.address().id());
         assertNotNull(user.address().city().id());
+
+        userRepository.update(user);
 
         user = userRepository.findById(user.id()).orElse(null);
 
         assertNotNull(user);
         assertNotNull(user.id());
+        assertEquals(1, user.version());
         assertEquals("Jack", user.name());
         assertNotNull(user.address().id());
         assertEquals("Parizska", user.address().street());
