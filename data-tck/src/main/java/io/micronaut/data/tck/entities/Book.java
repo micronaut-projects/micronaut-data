@@ -15,10 +15,27 @@
  */
 package io.micronaut.data.tck.entities;
 
+import io.micronaut.data.annotation.DateUpdated;
+
+import javax.persistence.CascadeType;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
+import javax.persistence.PostLoad;
+import javax.persistence.PostPersist;
+import javax.persistence.PostRemove;
+import javax.persistence.PostUpdate;
+import javax.persistence.PrePersist;
+import javax.persistence.PreRemove;
+import javax.persistence.PreUpdate;
+import javax.persistence.Transient;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-
-import javax.persistence.*;
 
 @Entity
 public class Book {
@@ -39,6 +56,9 @@ public class Book {
 
     @Transient
     public int prePersist, postPersist, preUpdate, postUpdate, preRemove, postRemove, postLoad;
+
+    @DateUpdated
+    private LocalDateTime lastUpdated;
 
     @PrePersist
     protected void onPrePersist() {
@@ -137,5 +157,13 @@ public class Book {
 
     public void setPublisher(Publisher publisher) {
         this.publisher = publisher;
+    }
+
+    public LocalDateTime getLastUpdated() {
+        return lastUpdated;
+    }
+
+    public void setLastUpdated(LocalDateTime lastUpdated) {
+        this.lastUpdated = lastUpdated;
     }
 }

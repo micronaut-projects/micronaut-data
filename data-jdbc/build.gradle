@@ -7,8 +7,9 @@ dependencies {
     implementation "io.micronaut:micronaut-http"
     implementation "io.micronaut.sql:micronaut-jdbc"
     compileOnly project(":data-hibernate-jpa")
-    testImplementation project(":data-tck")
+    compileOnly "com.oracle.database.jdbc:ojdbc8:$oracleDriverVersion"
 
+    testImplementation project(":data-tck")
     testAnnotationProcessor "io.micronaut:micronaut-inject-java"
     testAnnotationProcessor project(":data-processor")
     testCompileOnly "io.micronaut:micronaut-inject-groovy"

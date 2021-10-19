@@ -232,7 +232,18 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
 
                 Tuple tuple = first(q.list().iterator());
                 if (tuple != null) {
-                    return ((BeanIntrospectionMapper<Tuple, R>) Tuple::get).map(tuple, resultType);
+                    return (new BeanIntrospectionMapper<Tuple, R>() {
+                        @Override
+                        public Object read(Tuple tuple1, String alias) {
+                            return tuple1.get(alias);
+                        }
+
+                        @Override
+                        public ConversionService<?> getConversionService() {
+                            return dataConversionService;
+                        }
+
+                    }).map(tuple, resultType);
                 }
                 return null;
             } else {
@@ -397,11 +408,20 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
                 return q.stream()
                         .map(tuple -> {
                             Set<String> properties = tuple.getElements().stream().map(TupleElement::getAlias).collect(Collectors.toCollection(() -> new TreeSet<>(String.CASE_INSENSITIVE_ORDER)));
-                            return ((BeanIntrospectionMapper<Tuple, R>) (tuple1, alias) -> {
-                                if (!properties.contains(alias)) {
-                                    return null;
+                            return (new BeanIntrospectionMapper<Tuple, R>() {
+                                @Override
+                                public Object read(Tuple tuple1, String alias) {
+                                    if (!properties.contains(alias)) {
+                                        return null;
+                                    }
+                                    return tuple1.get(alias);
                                 }
-                                return tuple1.get(alias);
+
+                                @Override
+                                public ConversionService<?> getConversionService() {
+                                    return dataConversionService;
+                                }
+
                             }).map(tuple, preparedQuery.getResultType());
                         })
                         .collect(Collectors.toList());
@@ -675,7 +695,18 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
                 bindParameters(q, preparedQuery, query);
                 bindPageable(q, pageable);
                 return q.stream()
-                        .map(tuple -> ((BeanIntrospectionMapper<Tuple, R>) Tuple::get).map(tuple, resultType));
+                        .map(tuple -> (new BeanIntrospectionMapper<Tuple, R>() {
+                            @Override
+                            public Object read(Tuple tuple1, String alias) {
+                                return tuple1.get(alias);
+                            }
+
+                            @Override
+                            public ConversionService<?> getConversionService() {
+                                return dataConversionService;
+                            }
+
+                        }).map(tuple, resultType));
 
             } else {
 

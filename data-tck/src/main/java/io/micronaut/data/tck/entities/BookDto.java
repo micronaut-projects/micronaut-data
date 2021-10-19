@@ -17,11 +17,14 @@ package io.micronaut.data.tck.entities;
 
 import io.micronaut.core.annotation.Introspected;
 
+import java.time.LocalDateTime;
+
 @Introspected
 public class BookDto {
 
     private String title;
     private int totalPages;
+    private LocalDateTime lastUpdated;
 
     public BookDto() {
     }
@@ -45,5 +48,13 @@ public class BookDto {
 
     public void setTotalPages(int totalPages) {
         this.totalPages = totalPages;
+    }
+
+    public LocalDateTime getLastUpdated() {
+        return lastUpdated;
+    }
+
+    public void setLastUpdated(LocalDateTime lastUpdated) {
+        this.lastUpdated = lastUpdated;
     }
 }

@@ -19,10 +19,8 @@ import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.beans.exceptions.IntrospectionException;
-import io.micronaut.core.convert.ArgumentConversionContext;
 import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.core.convert.ConversionError;
-import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.convert.exceptions.ConversionErrorException;
 import io.micronaut.core.reflect.exception.InstantiationException;
 import io.micronaut.core.type.Argument;
@@ -49,12 +47,12 @@ import java.util.Optional;
 public interface BeanIntrospectionMapper<D, R> extends TypeMapper<D, R> {
 
     @Override
-    default @NonNull R map(@NonNull D object, @NonNull Class<R> type) throws InstantiationException {
+    default @NonNull
+    R map(@NonNull D object, @NonNull Class<R> type) throws InstantiationException {
         ArgumentUtils.requireNonNull("resultSet", object);
         ArgumentUtils.requireNonNull("type", type);
         try {
             BeanIntrospection<R> introspection = BeanIntrospection.getIntrospection(type);
-            ConversionService<?> conversionService = getConversionService();
             Argument<?>[] arguments = introspection.getConstructorArguments();
             R instance;
             if (ArrayUtils.isEmpty(arguments)) {
@@ -76,16 +74,7 @@ public interface BeanIntrospectionMapper<D, R> extends TypeMapper<D, R> {
                             } else {
                                 convertFrom = o;
                             }
-                            ArgumentConversionContext<?> acc = ConversionContext.of(argument);
-                            args[i] = conversionService.convert(convertFrom, acc).orElseThrow(() -> {
-                                        Optional<ConversionError> lastError = acc.getLastError();
-                                        return lastError.<RuntimeException>map(conversionError -> new ConversionErrorException(argument, conversionError))
-                                                .orElseGet(() ->
-                                                        new IllegalArgumentException("Cannot convert object type " + o.getClass() + " to required type: " + argument.getType())
-                                                );
-                                    }
-
-                            );
+                            args[i] = convert(convertFrom, argument);
                         }
                     }
                 }
@@ -108,12 +97,12 @@ public interface BeanIntrospectionMapper<D, R> extends TypeMapper<D, R> {
                         } else if (value instanceof Iterable) {
                             List list = new ArrayList(CollectionUtils.iterableToList((Iterable) value));
                             list.add(v);
-                            property.convertAndSet(instance, list);
+                            property.set(instance, convert(list, property.asArgument()));
                         } else {
-                            property.convertAndSet(instance, Collections.singleton(v));
+                            property.set(instance, convert(Collections.singleton(v), property.asArgument()));
                         }
                     } else {
-                        property.convertAndSet(instance, v);
+                        property.set(instance, convert(v, property.asArgument()));
                     }
                 }
             }
@@ -122,5 +111,21 @@ public interface BeanIntrospectionMapper<D, R> extends TypeMapper<D, R> {
         } catch (IntrospectionException | InstantiationException e) {
             throw new DataAccessException("Error instantiating type [" + type.getName() + "] from introspection: " + e.getMessage(), e);
         }
+    }
+
+    default Object convert(Object value, Argument<?> argument) {
+        if (value == null) {
+            return null;
+        }
+        ConversionContext acc = ConversionContext.of(argument);
+        Optional<?> result = getConversionService().convert(value, argument);
+        if (!result.isPresent()) {
+            Optional<ConversionError> lastError = acc.getLastError();
+            if (lastError.isPresent()) {
+                throw new ConversionErrorException(argument, lastError.get());
+            }
+            throw new IllegalArgumentException("Cannot convert object type " + value.getClass() + " to required type: " + argument.getType());
+        }
+        return result.get();
     }
 }

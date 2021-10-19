@@ -75,6 +75,11 @@ public class DTOMapper<T, S, R> implements BeanIntrospectionMapper<S, R> {
         this.jsonCodec = jsonCodec;
     }
 
+    @Override
+    public DataConversionService<?> getConversionService() {
+        return conversionService;
+    }
+
     @Nullable
     @Override
     public Object read(@NonNull S object, @NonNull String name) throws ConversionErrorException {

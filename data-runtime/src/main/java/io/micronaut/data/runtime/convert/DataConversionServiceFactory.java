@@ -15,9 +15,15 @@
  */
 package io.micronaut.data.runtime.convert;
 
+import io.micronaut.context.BeanContext;
+import io.micronaut.context.BeanRegistration;
 import io.micronaut.context.annotation.Bean;
 import io.micronaut.context.annotation.Factory;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.annotation.Nullable;
+import io.micronaut.core.convert.TypeConverter;
+import io.micronaut.core.convert.TypeConverterRegistrar;
+import io.micronaut.core.type.Argument;
 import jakarta.inject.Singleton;
 
 import java.math.BigDecimal;
@@ -32,6 +38,7 @@ import java.time.ZonedDateTime;
 import java.time.chrono.ChronoLocalDate;
 import java.util.Collection;
 import java.util.Date;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -47,13 +54,8 @@ final class DataConversionServiceFactory {
 
     @Singleton
     @Bean(typed = DataConversionService.class)
-    DataConversionServiceImpl build() {
-        DataConversionServiceImpl dataConversionService = new DataConversionServiceImpl();
-        initialize(dataConversionService);
-        return dataConversionService;
-    }
-
-    private void initialize(DataConversionService<?> conversionService) {
+    DataConversionServiceImpl build(@Nullable BeanContext beanContext) {
+        DataConversionServiceImpl conversionService = new DataConversionServiceImpl();
         conversionService.addConverter(Enum.class, Number.class, Enum::ordinal);
         conversionService.addConverter(Number.class, Enum.class, (index, targetType, context) -> {
             Enum[] enumConstants = targetType.getEnumConstants();
@@ -388,6 +390,27 @@ final class DataConversionServiceFactory {
         conversionService.addConverter(OffsetDateTime.class, LocalDateTime.class, OffsetDateTime::toLocalDateTime);
         conversionService.addConverter(OffsetDateTime.class, Long.class, offsetDateTime ->
                 offsetDateTime.toInstant().toEpochMilli());
+
+        if (beanContext != null) {
+            Collection<BeanRegistration<DataTypeConverter>> typeConverters = beanContext.getBeanRegistrations(DataTypeConverter.class);
+            for (BeanRegistration<DataTypeConverter> typeConverterRegistration : typeConverters) {
+                TypeConverter typeConverter = typeConverterRegistration.getBean();
+                List<Argument<?>> typeArguments = typeConverterRegistration.getBeanDefinition().getTypeArguments(TypeConverter.class);
+                if (typeArguments.size() == 2) {
+                    Class source = typeArguments.get(0).getType();
+                    Class target = typeArguments.get(1).getType();
+                    if (source != null && target != null && !(source == Object.class && target == Object.class)) {
+                        conversionService.addConverter(source, target, typeConverter);
+                    }
+                }
+            }
+            Collection<TypeConverterRegistrar> registrars = beanContext.getBeansOfType(TypeConverterRegistrar.class);
+            for (TypeConverterRegistrar registrar : registrars) {
+                registrar.register(conversionService);
+            }
+        }
+
+        return conversionService;
     }
 
     private Integer asInteger(Object value, DataConversionService<?> dataConversionService) {
