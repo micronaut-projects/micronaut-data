@@ -20,6 +20,7 @@ import io.micronaut.context.BeanRegistration;
 import io.micronaut.context.annotation.Bean;
 import io.micronaut.context.annotation.Factory;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.convert.TypeConverter;
 import io.micronaut.core.convert.TypeConverterRegistrar;
 import io.micronaut.core.type.Argument;
@@ -53,7 +54,7 @@ final class DataConversionServiceFactory {
 
     @Singleton
     @Bean(typed = DataConversionService.class)
-    DataConversionServiceImpl build(BeanContext beanContext) {
+    DataConversionServiceImpl build(@Nullable BeanContext beanContext) {
         DataConversionServiceImpl conversionService = new DataConversionServiceImpl();
         conversionService.addConverter(Enum.class, Number.class, Enum::ordinal);
         conversionService.addConverter(Number.class, Enum.class, (index, targetType, context) -> {
@@ -390,21 +391,23 @@ final class DataConversionServiceFactory {
         conversionService.addConverter(OffsetDateTime.class, Long.class, offsetDateTime ->
                 offsetDateTime.toInstant().toEpochMilli());
 
-        Collection<BeanRegistration<DataTypeConverter>> typeConverters = beanContext.getBeanRegistrations(DataTypeConverter.class);
-        for (BeanRegistration<DataTypeConverter> typeConverterRegistration : typeConverters) {
-            TypeConverter typeConverter = typeConverterRegistration.getBean();
-            List<Argument<?>> typeArguments = typeConverterRegistration.getBeanDefinition().getTypeArguments(TypeConverter.class);
-            if (typeArguments.size() == 2) {
-                Class source = typeArguments.get(0).getType();
-                Class target = typeArguments.get(1).getType();
-                if (source != null && target != null && !(source == Object.class && target == Object.class)) {
-                    conversionService.addConverter(source, target, typeConverter);
+        if (beanContext != null) {
+            Collection<BeanRegistration<DataTypeConverter>> typeConverters = beanContext.getBeanRegistrations(DataTypeConverter.class);
+            for (BeanRegistration<DataTypeConverter> typeConverterRegistration : typeConverters) {
+                TypeConverter typeConverter = typeConverterRegistration.getBean();
+                List<Argument<?>> typeArguments = typeConverterRegistration.getBeanDefinition().getTypeArguments(TypeConverter.class);
+                if (typeArguments.size() == 2) {
+                    Class source = typeArguments.get(0).getType();
+                    Class target = typeArguments.get(1).getType();
+                    if (source != null && target != null && !(source == Object.class && target == Object.class)) {
+                        conversionService.addConverter(source, target, typeConverter);
+                    }
                 }
             }
-        }
-        Collection<TypeConverterRegistrar> registrars = beanContext.getBeansOfType(TypeConverterRegistrar.class);
-        for (TypeConverterRegistrar registrar : registrars) {
-            registrar.register(conversionService);
+            Collection<TypeConverterRegistrar> registrars = beanContext.getBeansOfType(TypeConverterRegistrar.class);
+            for (TypeConverterRegistrar registrar : registrars) {
+                registrar.register(conversionService);
+            }
         }
 
         return conversionService;
