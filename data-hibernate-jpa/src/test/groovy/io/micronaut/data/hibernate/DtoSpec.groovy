@@ -71,7 +71,6 @@ class DtoSpec extends Specification {
     void "test no entity graph"() {
         when:
         def results = bookRepository.findAllByTitleStartingWith("The")
-        println "GOT RESULTS"
 
         then:
         results.every({ Book b -> !Hibernate.isInitialized(b.author)})

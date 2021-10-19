@@ -2,21 +2,19 @@ package io.micronaut.data.jdbc.h2
 
 import io.micronaut.context.ApplicationContext
 import io.micronaut.core.annotation.Introspected
-import io.micronaut.data.annotation.GeneratedValue
-import io.micronaut.data.annotation.Id
-import io.micronaut.data.annotation.MappedEntity
-import io.micronaut.data.annotation.NamingStrategy
-import io.micronaut.data.annotation.Query
+import io.micronaut.data.annotation.*
 import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.model.naming.NamingStrategies
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.repository.CrudRepository
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
+import jakarta.inject.Inject
 import spock.lang.AutoCleanup
 import spock.lang.Shared
 import spock.lang.Specification
 
-import jakarta.inject.Inject
+import java.time.LocalDateTime
+import java.time.LocalTime
 
 @MicronautTest
 class H2DtoSpec extends Specification implements H2TestPropertyProvider {
@@ -41,6 +39,8 @@ class H2DtoSpec extends Specification implements H2TestPropertyProvider {
             things.size() == 1
             things[0].thingId == thing.id
             things[0].thingName == "Test"
+            things[0].thingUpdatedAt
+            things[0].thingUpdatedAtTime
     }
 
 }
@@ -49,7 +49,7 @@ class H2DtoSpec extends Specification implements H2TestPropertyProvider {
 interface ThingRepository extends CrudRepository<Thing, Long> {
 
     @Query("""
-      SELECT thing.id AS thingId, thing.name AS thingName
+      SELECT thing.id AS thingId, thing.name AS thingName, thing.updatedAt as thingUpdatedAt, thing.updatedAt as thingUpdatedAtTime
       FROM the_things thing
       WHERE thing.id = :id
     """)
@@ -65,6 +65,8 @@ class Thing {
     String name
     Integer score
     String site
+    @DateUpdated
+    LocalDateTime updatedAt
 }
 
 @Introspected
@@ -72,4 +74,6 @@ class Thing {
 class ThingDTO {
     Integer thingId
     String thingName
+    LocalDateTime thingUpdatedAt
+    LocalTime thingUpdatedAtTime
 }
