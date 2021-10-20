@@ -41,9 +41,6 @@ public class ConverterAnnotationMapper implements NamedAnnotationMapper {
 
     @Override
     public List<AnnotationValue<?>> map(AnnotationValue<Annotation> annotation, VisitorContext visitorContext) {
-        if (annotation.booleanValue("autoApply").orElse(false)) {
-            visitorContext.fail("Unsupported auto apply for " + getName(), null);
-        }
         return Collections.singletonList(
                 AnnotationValue.builder(Singleton.class).build()
         );
