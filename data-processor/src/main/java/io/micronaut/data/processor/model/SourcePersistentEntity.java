@@ -15,19 +15,30 @@
  */
 package io.micronaut.data.processor.model;
 
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
-import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.StringUtils;
-import io.micronaut.data.annotation.*;
+import io.micronaut.data.annotation.Embeddable;
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.Relation;
+import io.micronaut.data.annotation.Transient;
+import io.micronaut.data.annotation.Version;
 import io.micronaut.data.exceptions.MappingException;
-import io.micronaut.data.model.*;
+import io.micronaut.data.model.AbstractPersistentEntity;
+import io.micronaut.data.model.DataType;
+import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.PropertyElement;
 import io.micronaut.inject.ast.TypedElement;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 
 /**
@@ -86,7 +97,7 @@ public class SourcePersistentEntity extends AbstractPersistentEntity implements 
                 SourcePersistentProperty prop;
                 if (propertyElement.hasAnnotation(Relation.class)) {
                     if (isEmbedded(propertyElement)) {
-                        if (!propertyElement.getType().hasStereotype(Embeddable.class)) {
+                        if (!propertyElement.getType().hasAnnotation(Embeddable.class)) {
                             throw new MappingException("Type [" + propertyElement.getType().getName() + "] of property [" + propertyElement.getName() + "] of entity [" + getName() + "] is missing @Embeddable annotation. @Embedded fields can only be applied to types annotated with @Embeddable");
                         }
                         prop = new SourceEmbedded(this, propertyElement, entityResolver);

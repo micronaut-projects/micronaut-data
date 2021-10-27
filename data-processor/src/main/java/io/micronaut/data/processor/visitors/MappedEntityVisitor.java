@@ -101,6 +101,12 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
 
     @Override
     public void visitClass(ClassElement element, VisitorContext context) {
+        System.out.println("Visiting: " + element.getName() + " " + element.getAnnotationMetadata().getAnnotationNames() + " " + element.getAnnotationMetadata().getDeclaredAnnotationNames());
+        for (PropertyElement propertyElement : element.getBeanProperties()) {
+            System.out.println("prop: " + propertyElement.getName() + " " + propertyElement.getAnnotationMetadata().getAnnotationNames() + " " + propertyElement.getAnnotationMetadata().getDeclaredAnnotationNames());
+            System.out.println("prop type: " + propertyElement.getName() + " " + propertyElement.getType().getAnnotationMetadata().getAnnotationNames() + " " + propertyElement.getType().getAnnotationMetadata().getDeclaredAnnotationNames());
+        }
+
         NamingStrategy namingStrategy = resolveNamingStrategy(element);
         Optional<String> targetName = element.stringValue(MappedEntity.class);
         SourcePersistentEntity entity = entityResolver.apply(element);
@@ -124,7 +130,7 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
                 .collect(Collectors.toList());
 
         if (!indexes.isEmpty()) {
-           element.annotate(Indexes.class, builder -> builder.values(indexes.toArray(new AnnotationValue[]{})));
+            element.annotate(Indexes.class, builder -> builder.values(indexes.toArray(new AnnotationValue[]{})));
         }
 
         for (PersistentProperty property : properties) {
@@ -152,6 +158,7 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
 
     /**
      * Resolves the configured data types.
+     *
      * @param element The element
      * @return The data types
      */
@@ -173,6 +180,7 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
 
     /**
      * Resolves the configured data converters.
+     *
      * @param element The element
      * @return The data converters
      */
@@ -183,13 +191,13 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
             typeDefinition.stringValue("converter")
                     .filter(c -> !Object.class.getName().equals(c))
                     .ifPresent(converter -> {
-                String[] values = typeDefinition.stringValues("classes");
-                String[] names = typeDefinition.stringValues("names");
-                String[] concated = ArrayUtils.concat(values, names);
-                for (String s : concated) {
-                    dataConverters.put(s, converter);
-                }
-            });
+                        String[] values = typeDefinition.stringValues("classes");
+                        String[] names = typeDefinition.stringValues("names");
+                        String[] concated = ArrayUtils.concat(values, names);
+                        for (String s : concated) {
+                            dataConverters.put(s, converter);
+                        }
+                    });
         }
         return dataConverters;
     }
@@ -247,7 +255,7 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
 
         if (dataType == DataType.ENTITY && !isRelation) {
             propertyElement = (PropertyElement) propertyElement.annotate(Relation.class, builder ->
-                builder.value(Relation.Kind.MANY_TO_ONE)
+                    builder.value(Relation.Kind.MANY_TO_ONE)
             );
         } else if (isRelation) {
             Relation.Kind kind = propertyElement.enumValue(Relation.class, Relation.Kind.class).orElse(Relation.Kind.MANY_TO_ONE);
@@ -279,7 +287,7 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
                 }
 
                 propertyElement.annotate(MappedProperty.class, builder ->
-                    builder.member(MappedProperty.EMBEDDED_PROPERTIES, embeddedProperties.toArray(new AnnotationValue[0]))
+                        builder.member(MappedProperty.EMBEDDED_PROPERTIES, embeddedProperties.toArray(new AnnotationValue[0]))
                 );
             }
         }
