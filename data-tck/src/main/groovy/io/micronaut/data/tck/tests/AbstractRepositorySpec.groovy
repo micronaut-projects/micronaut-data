@@ -219,6 +219,25 @@ abstract class AbstractRepositorySpec extends Specification {
         personRepository.deleteAll()
     }
 
+    void "order by joined collection"() {
+        given:
+            cleanupData()
+            saveSampleBooks()
+
+        when:
+            def books1 = bookRepository.listPageableCustomQuery(Pageable.from(0).order("author.name").order("title")).getContent()
+            def books2 = bookRepository.findAll(Pageable.from(0).order("author.name").order("title")).getContent()
+
+        then:
+            books1.size() == 6
+            books2.size() == 6
+            books1[0].title == "The Border"
+            books2[0].title == "The Border"
+
+        cleanup:
+            cleanupData()
+    }
+
     protected boolean skipCustomSchemaAndCatalogTest() {
         return false
     }

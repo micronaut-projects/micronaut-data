@@ -226,10 +226,10 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             encodeInExpression(whereClause, placeholder);
         });
 
-        addCriterionHandler(QueryModel.NotIn.class, (ctx, notIn) -> handleSubQuery(ctx, notIn,  " NOT IN ("));
+        addCriterionHandler(QueryModel.NotIn.class, (ctx, notIn) -> handleSubQuery(ctx, notIn, " NOT IN ("));
     }
 
-    private <T extends QueryModel.PropertyCriterion> CriterionHandler<T> valueComparison(Supplier<String> prefix, Supplier<String>  suffix) {
+    private <T extends QueryModel.PropertyCriterion> CriterionHandler<T> valueComparison(Supplier<String> prefix, Supplier<String> suffix) {
         return (ctx, propertyCriterion) -> {
             QueryPropertyPath propertyPath = ctx.getRequiredProperty(propertyCriterion);
             String placeholder = ctx.addParameter(propertyPath.getProperty(), propertyPath.getPath(), (QueryParameter) propertyCriterion.getValue());
@@ -1007,10 +1007,10 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
     /**
      * Appends the SET=? call to the query string.
      *
-     * @param sb            The string builder
-     * @param alias         The alias
-     * @param prop          The property
-     * @param placeholder   The parameter
+     * @param sb          The string builder
+     * @param alias       The alias
+     * @param prop        The property
+     * @param placeholder The parameter
      */
     protected void appendUpdateSetParameter(StringBuilder sb, String alias, PersistentProperty prop, String placeholder) {
         sb.append(getDataTransformerWriteValue(alias, prop).orElse(placeholder));
@@ -1184,59 +1184,42 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             throw new IllegalArgumentException("Sort is empty");
         }
 
-
         StringBuilder buff = new StringBuilder(ORDER_BY_CLAUSE);
         Iterator<Sort.Order> i = orders.iterator();
         while (i.hasNext()) {
             Sort.Order order = i.next();
             String property = order.getProperty();
-            PersistentProperty persistentProperty = entity.getPropertyByPath(property)
-                    .orElseThrow(() -> new IllegalArgumentException("Cannot sort on non-existent property path: " + property));
-
-            String aliasName;
-            if (persistentProperty instanceof Association) {
-                Association association = (Association) persistentProperty;
-
-                aliasName = getAliasName(new JoinPath(property, new Association[]{association}, Join.Type.DEFAULT, null));
-            } else {
-                final int j = property.indexOf('.');
-                if (j > -1) {
-                    final String associationName = property.substring(0, j);
-                    final PersistentProperty assProp = entity.getPropertyByName(associationName);
-                    if (assProp instanceof Association) {
-                        Association association = (Association) assProp;
-                        persistentProperty = association.getAssociatedEntity().getPropertyByName(property.substring(j + 1));
-                        if (persistentProperty != null) {
-                            aliasName = getAliasName(
-                                    new JoinPath(
-                                            associationName,
-                                            new Association[]{association},
-                                            Join.Type.DEFAULT,
-                                            null
-                                    )
-                            );
-                        } else {
-                            throw new IllegalArgumentException("Cannot sort on non-existent property path: " + property);
-                        }
-                    } else {
-                        throw new IllegalArgumentException("Cannot sort on non-existent property path: " + property);
-                    }
-                } else {
-                    aliasName = getAliasName(entity);
-                }
+            PersistentPropertyPath path = entity.getPropertyPath(property);
+            if (path == null) {
+                throw new IllegalArgumentException("Cannot sort on non-existent property path: " + property);
             }
             boolean ignoreCase = order.isIgnoreCase();
             if (ignoreCase) {
                 buff.append("LOWER(");
             }
-            buff.append(aliasName)
-                    .append(DOT);
-            buff.append(getColumnName(persistentProperty));
+            if (!computePropertyPaths()) {
+                buff.append(getAliasName(entity));
+                for (Association association : path.getAssociations()) {
+                    buff.append(DOT).append(association.getName());
+                }
+                buff.append(DOT).append(path.getProperty().getName());
+            } else {
+                if (!path.getAssociations().isEmpty()) {
+                    StringJoiner joiner = new StringJoiner(".");
+                    for (Association association : path.getAssociations()) {
+                        joiner.add(association.getName());
+                    }
+                    buff.append(getAliasName(new JoinPath(joiner.toString(), path.getAssociations().toArray(new Association[0]), Join.Type.DEFAULT, null)))
+                            .append(DOT)
+                            .append(getColumnName(path.getProperty()));
+                } else {
+                    buff.append(getAliasName(entity)).append(DOT).append(getColumnName(path.getProperty()));
+                }
+            }
             if (ignoreCase) {
                 buff.append(")");
             }
-            buff.append(SPACE)
-                    .append(order.getDirection());
+            buff.append(SPACE).append(order.getDirection());
             if (i.hasNext()) {
                 buff.append(",");
             }
@@ -1401,9 +1384,9 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
     /**
      * Adds criterion handler.
      *
-     * @param clazz The handler class
+     * @param clazz   The handler class
      * @param handler The handler
-     * @param <T> The criterion type
+     * @param <T>     The criterion type
      */
     protected <T extends QueryModel.Criterion> void addCriterionHandler(Class<T> clazz, CriterionHandler<T> handler) {
         queryHandlers.put(clazz, handler);
@@ -1411,6 +1394,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
 
     /**
      * A criterion handler.
+     *
      * @param <T> The criterion type
      */
     protected interface CriterionHandler<T extends QueryModel.Criterion> {

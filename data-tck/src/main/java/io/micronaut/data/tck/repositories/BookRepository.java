@@ -41,6 +41,9 @@ public abstract class BookRepository implements PageableRepository<Book, Long> {
     @Join(value = "author", alias = "auth")
     public abstract Book queryByTitle(String title);
 
+    @Query(value = "SELECT book_.* FROM book book_ LEFT JOIN author book_author_ ON book_.author_id = book_author_.id", countQuery = "SELECT count(*) FROM book book_ ")
+    public abstract Page<Book> listPageableCustomQuery(Pageable pageable);
+
     @NonNull
     @Override
     @Join("author")

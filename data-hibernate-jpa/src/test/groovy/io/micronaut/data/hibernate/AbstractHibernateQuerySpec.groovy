@@ -16,6 +16,7 @@
 package io.micronaut.data.hibernate
 
 import io.micronaut.data.hibernate.entities.Rating
+import io.micronaut.data.model.Pageable
 import io.micronaut.data.tck.entities.Author
 import io.micronaut.data.tck.entities.EntityIdClass
 import io.micronaut.data.tck.entities.EntityWithIdClass
@@ -118,7 +119,17 @@ abstract class AbstractHibernateQuerySpec extends AbstractQuerySpec {
             studentRepository.deleteAll()
     }
 
+    void "order by joined collection"() {
+        when:
+            def books1 = bookRepository.listPageableCustomQuery(Pageable.from(0).order("author.name").order("title")).getContent()
+            def books2 = bookRepository.findAll(Pageable.from(0).order("author.name").order("title")).getContent()
 
+        then:
+            books1.size() == 6
+            books2.size() == 6
+            books1[0].title == "The Border"
+            books2[0].title == "The Border"
+    }
 
     void "author find by id with joins"() {
         when:
