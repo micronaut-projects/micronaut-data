@@ -15,10 +15,17 @@
  */
 package io.micronaut.data.model.query;
 
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.naming.Named;
 import io.micronaut.core.util.ArgumentUtils;
+import io.micronaut.data.model.Association;
+import io.micronaut.data.model.DataType;
+import io.micronaut.data.model.PersistentProperty;
+import io.micronaut.data.model.PersistentPropertyPath;
+import io.micronaut.data.model.query.builder.QueryParameterBinding;
 
-import io.micronaut.core.annotation.NonNull;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -27,12 +34,13 @@ import java.util.Objects;
  * @author graemerocher
  * @since 1.0
  */
-public class QueryParameter implements Named {
+public class QueryParameter implements Named, BindingParameter {
 
     private final String name;
 
     /**
      * Default constructor.
+     *
      * @param name The parameter name
      */
     public QueryParameter(@NonNull String name) {
@@ -65,10 +73,46 @@ public class QueryParameter implements Named {
 
     /**
      * Creates a new query parameter for the given name.
+     *
      * @param name The name
      * @return The parameter
      */
-    public static @NonNull QueryParameter of(@NonNull String name) {
+    public static @NonNull
+    QueryParameter of(@NonNull String name) {
         return new QueryParameter(name);
+    }
+
+    @Override
+    public QueryParameterBinding bind(BindingContext bindingContext) {
+        String name = bindingContext.getName() == null ? String.valueOf(bindingContext.getIndex()) : bindingContext.getName();
+        PersistentPropertyPath outgoingQueryParameterProperty = bindingContext.getOutgoingQueryParameterProperty();
+        return new QueryParameterBinding() {
+            @Override
+            public String getKey() {
+                return name;
+            }
+
+            @Override
+            public String[] getPropertyPath() {
+                return asStringPath(outgoingQueryParameterProperty.getAssociations(), outgoingQueryParameterProperty.getProperty());
+            }
+
+            @Override
+            public DataType getDataType() {
+                return outgoingQueryParameterProperty.getProperty().getDataType();
+            }
+        };
+    }
+
+    private String[] asStringPath(List<Association> associations, PersistentProperty property) {
+        if (associations.isEmpty()) {
+            return new String[]{property.getName()};
+        }
+        List<String> path = new ArrayList<>(associations.size() + 1);
+        for (Association association : associations) {
+            path.add(association.getName());
+        }
+        path.add(property.getName());
+        return path.toArray(new String[0]);
     }
 }

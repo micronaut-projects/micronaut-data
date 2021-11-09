@@ -34,7 +34,7 @@ public interface Criteria  {
      *
      * @return The criteria
      */
-    @NonNull Criteria idEq(QueryParameter parameter);
+    @NonNull Criteria idEq(Object parameter);
 
     /**
      * Creates that restricts the version to the given value.
@@ -43,7 +43,7 @@ public interface Criteria  {
      *
      * @return The criteria
      */
-    @NonNull Criteria versionEq(QueryParameter parameter);
+    @NonNull Criteria versionEq(Object parameter);
 
     /**
      * Creates a criterion that asserts the given property is empty (such as a blank string).
@@ -101,7 +101,7 @@ public interface Criteria  {
      *
      * @return The criteria
      */
-    @NonNull Criteria eq(String propertyName, QueryParameter parameter);
+    @NonNull Criteria eq(String propertyName, Object parameter);
 
     /**
      * Creates a "not equals" Criterion based on the specified property name and value.
@@ -111,7 +111,7 @@ public interface Criteria  {
      *
      * @return The criteria
      */
-    @NonNull Criteria ne(@NonNull String propertyName, @NonNull QueryParameter parameter);
+    @NonNull Criteria ne(@NonNull String propertyName, @NonNull Object parameter);
 
     /**
      * Restricts the results by the given property value range (inclusive).
@@ -122,7 +122,7 @@ public interface Criteria  {
      * @param finish The end of the range
      * @return The criteria
      */
-    @NonNull Criteria between(@NonNull String propertyName, @NonNull QueryParameter start, @NonNull QueryParameter finish);
+    @NonNull Criteria between(@NonNull String propertyName, @NonNull Object start, @NonNull Object finish);
 
     /**
      * Used to restrict a value to be greater than or equal to the given value.
@@ -130,7 +130,7 @@ public interface Criteria  {
      * @param parameter The parameter that provides the value
      * @return The Criterion instance
      */
-    @NonNull Criteria gte(@NonNull String property, @NonNull QueryParameter parameter);
+    @NonNull Criteria gte(@NonNull String property, @NonNull Object parameter);
 
     /**
      * Used to restrict a value to be greater than or equal to the given value.
@@ -138,7 +138,7 @@ public interface Criteria  {
      * @param parameter The parameter that provides the value
      * @return The Criterion instance
      */
-    @NonNull Criteria ge(@NonNull String property, @NonNull QueryParameter parameter);
+    @NonNull Criteria ge(@NonNull String property, @NonNull Object parameter);
 
     /**
      * Used to restrict a value to be greater than or equal to the given value.
@@ -146,7 +146,7 @@ public interface Criteria  {
      * @param parameter The parameter that provides the value
      * @return The Criterion instance
      */
-    @NonNull Criteria gt(@NonNull String property, @NonNull QueryParameter parameter);
+    @NonNull Criteria gt(@NonNull String property, @NonNull Object parameter);
 
     /**
      * Used to restrict a value to be less than or equal to the given value.
@@ -154,7 +154,7 @@ public interface Criteria  {
      * @param parameter The parameter that provides the value
      * @return The Criterion instance
      */
-    @NonNull Criteria lte(@NonNull String property, @NonNull QueryParameter parameter);
+    @NonNull Criteria lte(@NonNull String property, @NonNull Object parameter);
 
     /**
      * Used to restrict a value to be less than or equal to the given value.
@@ -162,7 +162,7 @@ public interface Criteria  {
      * @param parameter The parameter that provides the value
      * @return The Criterion instance
      */
-    @NonNull Criteria le(@NonNull String property, @NonNull QueryParameter parameter);
+    @NonNull Criteria le(@NonNull String property, @NonNull Object parameter);
 
     /**
      * Used to restrict a value to be less than or equal to the given value.
@@ -170,7 +170,7 @@ public interface Criteria  {
      * @param parameter The parameter that provides the value
      * @return The Criterion instance
      */
-    @NonNull Criteria lt(@NonNull String property, @NonNull QueryParameter parameter);
+    @NonNull Criteria lt(@NonNull String property, @NonNull Object parameter);
 
     /**
      * Creates a like Criterion based on the specified property name and value.
@@ -180,7 +180,7 @@ public interface Criteria  {
      *
      * @return The criteria
      */
-    @NonNull Criteria like(@NonNull String propertyName, @NonNull QueryParameter parameter);
+    @NonNull Criteria like(@NonNull String propertyName, @NonNull Object parameter);
 
     /**
      * Restricts the property match to strings starting with the given value.
@@ -190,7 +190,7 @@ public interface Criteria  {
      *
      * @return The criteria
      */
-    @NonNull Criteria startsWith(@NonNull String propertyName, @NonNull QueryParameter parameter);
+    @NonNull Criteria startsWith(@NonNull String propertyName, @NonNull Object parameter);
 
     /**
      * Restricts the property match to strings ending with the given value.
@@ -200,7 +200,7 @@ public interface Criteria  {
      *
      * @return The criteria
      */
-    @NonNull Criteria endsWith(@NonNull String propertyName, @NonNull QueryParameter parameter);
+    @NonNull Criteria endsWith(@NonNull String propertyName, @NonNull Object parameter);
 
     /**
      * Restricts the property match to strings containing with the given value.
@@ -210,7 +210,7 @@ public interface Criteria  {
      *
      * @return The criteria
      */
-    @NonNull Criteria contains(@NonNull String propertyName, @NonNull QueryParameter parameter);
+    @NonNull Criteria contains(@NonNull String propertyName, @NonNull Object parameter);
 
     /**
      * Creates an ilike Criterion based on the specified property name and value. Unlike a like condition, ilike is case insensitive.
@@ -220,7 +220,7 @@ public interface Criteria  {
      *
      * @return The criteria
      */
-    @NonNull Criteria ilike(@NonNull String propertyName, @NonNull QueryParameter parameter);
+    @NonNull Criteria ilike(@NonNull String propertyName, @NonNull Object parameter);
 
     /**
      * Creates an rlike Criterion based on the specified property name and value.
@@ -230,7 +230,7 @@ public interface Criteria  {
      *
      * @return The criteria
      */
-    @NonNull Criteria rlike(@NonNull String propertyName, @NonNull QueryParameter parameter);
+    @NonNull Criteria rlike(@NonNull String propertyName, @NonNull Object parameter);
 
     /**
      * Creates a logical conjunction.
@@ -274,7 +274,7 @@ public interface Criteria  {
      *
      * @return The criteria
      */
-    @NonNull Criteria inList(@NonNull String propertyName, @NonNull QueryParameter parameter);
+    @NonNull Criteria inList(@NonNull String propertyName, @NonNull Object parameter);
 
     /**
      * Creates a negated "in" Criterion using a subquery.
@@ -294,7 +294,7 @@ public interface Criteria  {
      *
      * @return This criteria
      */
-    @NonNull Criteria sizeEq(@NonNull String propertyName, @NonNull QueryParameter size) ;
+    @NonNull Criteria sizeEq(@NonNull String propertyName, @NonNull Object size) ;
 
     /**
      * Creates a Criterion that constrains a collection property to be greater than the given size.
@@ -304,7 +304,7 @@ public interface Criteria  {
      *
      * @return This criteria
      */
-    @NonNull Criteria sizeGt(@NonNull String propertyName, @NonNull QueryParameter size);
+    @NonNull Criteria sizeGt(@NonNull String propertyName, @NonNull Object size);
 
     /**
      * Creates a Criterion that constrains a collection property to be greater than or equal to the given size.
@@ -314,7 +314,7 @@ public interface Criteria  {
      *
      * @return This criteria
      */
-    @NonNull Criteria sizeGe(@NonNull String propertyName, @NonNull QueryParameter size);
+    @NonNull Criteria sizeGe(@NonNull String propertyName, @NonNull Object size);
 
     /**
      * Creates a Criterion that constrains a collection property to be less than or equal to the given size.
@@ -324,7 +324,7 @@ public interface Criteria  {
      *
      * @return This criteria
      */
-    @NonNull Criteria sizeLe(@NonNull String propertyName, @NonNull QueryParameter size);
+    @NonNull Criteria sizeLe(@NonNull String propertyName, @NonNull Object size);
 
     /**
      * Creates a Criterion that constrains a collection property to be less than to the given size.
@@ -334,7 +334,7 @@ public interface Criteria  {
      *
      * @return This criteria
      */
-    @NonNull Criteria sizeLt(@NonNull String propertyName, @NonNull QueryParameter size);
+    @NonNull Criteria sizeLt(@NonNull String propertyName, @NonNull Object size);
 
     /**
      * Creates a Criterion that constrains a collection property to be not equal to the given size.
@@ -344,7 +344,7 @@ public interface Criteria  {
      *
      * @return This criteria
      */
-    @NonNull Criteria sizeNe(@NonNull String propertyName, @NonNull QueryParameter size);
+    @NonNull Criteria sizeNe(@NonNull String propertyName, @NonNull Object size);
 
     /**
      * Constrains a property to be equal to a specified other property.
@@ -408,7 +408,7 @@ public interface Criteria  {
      * @return Criterion
      *
      */
-    @NonNull Criteria allEq(@NonNull Map<String, QueryParameter> propertyValues);
+    @NonNull Criteria allEq(@NonNull Map<String, Object> propertyValues);
 
     //===== Subquery methods
 

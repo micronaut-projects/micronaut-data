@@ -21,7 +21,6 @@ import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.reflect.InstantiationUtils;
-import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.data.annotation.Index;
 import io.micronaut.data.annotation.Indexes;
 import io.micronaut.data.annotation.MappedEntity;
@@ -51,6 +50,9 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static io.micronaut.data.processor.visitors.Utils.getConfiguredDataConverters;
+import static io.micronaut.data.processor.visitors.Utils.getConfiguredDataTypes;
 
 /**
  * A {@link TypeElementVisitor} that pre-computes mappings to columns based on the configured naming strategy.
@@ -114,7 +116,6 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
         Map<String, DataType> dataTypes = getConfiguredDataTypes(element);
         Map<String, String> dataConverters = getConfiguredDataConverters(element);
 
-
         List<SourcePersistentProperty> properties = entity.getPersistentProperties();
 
         final List<AnnotationValue<Index>> indexes = properties.stream()
@@ -148,50 +149,6 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
 
     private boolean isMappedEntity() {
         return mappedEntity;
-    }
-
-    /**
-     * Resolves the configured data types.
-     * @param element The element
-     * @return The data types
-     */
-    static Map<String, DataType> getConfiguredDataTypes(ClassElement element) {
-        List<AnnotationValue<TypeDef>> typeDefinitions = element.getAnnotationValuesByType(TypeDef.class);
-        Map<String, DataType> dataTypes = new HashMap<>(typeDefinitions.size());
-        for (AnnotationValue<TypeDef> typeDefinition : typeDefinitions) {
-            typeDefinition.enumValue("type", DataType.class).ifPresent(dataType -> {
-                String[] values = typeDefinition.stringValues("classes");
-                String[] names = typeDefinition.stringValues("names");
-                String[] concated = ArrayUtils.concat(values, names);
-                for (String s : concated) {
-                    dataTypes.put(s, dataType);
-                }
-            });
-        }
-        return dataTypes;
-    }
-
-    /**
-     * Resolves the configured data converters.
-     * @param element The element
-     * @return The data converters
-     */
-    static Map<String, String> getConfiguredDataConverters(ClassElement element) {
-        List<AnnotationValue<TypeDef>> typeDefinitions = element.getAnnotationValuesByType(TypeDef.class);
-        Map<String, String> dataConverters = new HashMap<>(typeDefinitions.size());
-        for (AnnotationValue<TypeDef> typeDefinition : typeDefinitions) {
-            typeDefinition.stringValue("converter")
-                    .filter(c -> !Object.class.getName().equals(c))
-                    .ifPresent(converter -> {
-                String[] values = typeDefinition.stringValues("classes");
-                String[] names = typeDefinition.stringValues("names");
-                String[] concated = ArrayUtils.concat(values, names);
-                for (String s : concated) {
-                    dataConverters.put(s, converter);
-                }
-            });
-        }
-        return dataConverters;
     }
 
     private void computeMappingDefaults(

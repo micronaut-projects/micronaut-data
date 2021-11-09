@@ -15,15 +15,16 @@
  */
 package io.micronaut.data.processor.visitors.finders;
 
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
-import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.reflect.ClassUtils;
 import io.micronaut.core.reflect.ReflectionUtils;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.TypeDef;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.Slice;
+import io.micronaut.data.processor.visitors.MatchContext;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.MethodElement;
 import io.micronaut.inject.ast.ParameterElement;
@@ -39,7 +40,13 @@ import java.time.Year;
 import java.time.YearMonth;
 import java.time.chrono.ChronoLocalDate;
 import java.time.temporal.Temporal;
-import java.util.*;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Optional;
+import java.util.TimeZone;
+import java.util.UUID;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Future;
 import java.util.stream.Stream;
@@ -242,11 +249,49 @@ public class TypeUtils {
      * @param methodElement The method element
      * @return True if is valid
      */
-    static boolean isValidBatchUpdateReturnType(MethodElement methodElement) {
+    public static boolean isValidBatchUpdateReturnType(MethodElement methodElement) {
         return doesReturnVoid(methodElement) ||
                 doesReturnNumber(methodElement) ||
                 (isReactiveOrFuture(methodElement.getReturnType()) &&
                         isVoidOrNumberArgument(methodElement.getReturnType()));
+    }
+
+    /**
+     * Checks whether the return type is supported.
+     *
+     * @param matchContext The match context
+     * @return True if it is supported
+     */
+    public static boolean isValidCountReturnType(MatchContext matchContext) {
+        return TypeUtils.doesReturnNumber(matchContext.getMethodElement()) ||
+                (TypeUtils.isReactiveOrFuture(matchContext.getReturnType()) &&
+                        TypeUtils.isNumber(matchContext.getReturnType().getFirstTypeArgument().orElse(null)));
+    }
+
+    /**
+     * Checks whether the return type is supported.
+     *
+     * @param matchContext The match context
+     * @return True if it is supported
+     */
+    public static boolean isValidFindAllReturnType(MatchContext matchContext) {
+        ClassElement returnType = matchContext.getMethodElement().getGenericReturnType();
+        if (TypeUtils.isReactiveType(returnType)) {
+            return TypeUtils.isEntity(matchContext.getReturnType().getFirstTypeArgument().orElse(null));
+        }
+        if (TypeUtils.isFutureType(returnType)) {
+            returnType = returnType.getFirstTypeArgument().orElse(null);
+            if (returnType != null && returnType.isAssignable(Iterable.class)) {
+                // TODO:
+                //  <S extends T> CompletableFuture<? extends Iterable<S>> findAll
+                // getFirstTypeArgument of the Iterable is also Iterable ???
+                return true;
+            }
+        }
+        if (matchContext.getMethodElement().isSuspend()) {
+            return true;
+        }
+        return TypeUtils.isIterableOfEntity(returnType);
     }
 
     /**

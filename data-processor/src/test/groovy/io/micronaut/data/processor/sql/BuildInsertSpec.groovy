@@ -15,8 +15,8 @@
  */
 package io.micronaut.data.processor.sql
 
-import io.micronaut.data.annotation.Query
-import io.micronaut.data.intercept.annotation.DataMethod
+
+import io.micronaut.data.model.DataType
 import io.micronaut.data.model.entities.Person
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
@@ -27,6 +27,8 @@ import io.micronaut.inject.ast.ClassElement
 import io.micronaut.inject.writer.BeanDefinitionVisitor
 import spock.lang.PendingFeature
 import spock.lang.Unroll
+
+import static io.micronaut.data.processor.visitors.TestUtils.*
 
 class BuildInsertSpec extends AbstractDataSpec {
 
@@ -119,8 +121,7 @@ class Test {
 
 """)
         expect:
-        beanDefinition.getRequiredMethod("save", String)
-                .stringValue(Query).get() == query
+        getQuery(beanDefinition.getRequiredMethod("save", String)) == query
 
         where:
         dialect            | query
@@ -221,10 +222,8 @@ class Test {
 
 """)
         expect:
-        beanDefinition.getRequiredMethod("save", String)
-                .stringValue(Query).get() == query
-        beanDefinition.getRequiredMethod("findById", UUID)
-                .stringValues(DataMethod, "parameterTypeDefs") == ['UUID'] as String[]
+        getQuery(beanDefinition.getRequiredMethod("save", String)) == query
+        getDataTypes(beanDefinition.getRequiredMethod("findById", UUID)) == [DataType.UUID]
 
         where:
         dialect            | query
@@ -282,9 +281,7 @@ class TableRatings {
         def method = beanDefinition.findPossibleMethods("save").findFirst().get()
 
         expect:
-        method
-                .stringValue(Query)
-                .orElse(null) == 'INSERT INTO "T-Table-Ratings" ("T-Rating") VALUES (?)'
+        getQuery(method) == 'INSERT INTO "T-Table-Ratings" ("T-Rating") VALUES (?)'
     }
 
     void "test build SQL insert statement"() {
@@ -307,11 +304,8 @@ interface MyInterface extends CrudRepository<Person, Long> {
         def method = beanDefinition.getRequiredMethod("save", Person)
 
         expect:
-        method
-                .stringValue(Query)
-                .orElse(null) == 'INSERT INTO "person" ("name","age","enabled","public_id") VALUES (?,?,?,?)'
-        method.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING + "Paths") ==
-                ['name', 'age', 'enabled', 'publicId'] as String[]
+        getQuery(method) == 'INSERT INTO "person" ("name","age","enabled","public_id") VALUES (?,?,?,?)'
+        getParameterPropertyPaths(method) == ['name', 'age', 'enabled', 'publicId'] as String[]
     }
 
     @PendingFeature(reason = "Bug in Micronaut core. Fixed by https://github.com/micronaut-projects/micronaut-core/commit/f6a488677d587be309d5b0abd8925c9a098cfdf9")
@@ -337,10 +331,8 @@ interface TestBookPageRepository extends io.micronaut.data.tck.repositories.Book
         def method = beanDefinition.findPossibleMethods("save").findFirst().get()
         expect:
 
-            method.stringValue(Query)
-                .orElse(null) == 'INSERT INTO "shelf_book" ("shelf_id","book_id") VALUES (?,?)'
-            method.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING + "Paths") ==
-                    ['name', 'age', 'enabled', 'publicId'] as String[]
+        getQuery(method) == 'INSERT INTO "shelf_book" ("shelf_id","book_id") VALUES (?,?)'
+        getParameterPropertyPaths(method) == ['name', 'age', 'enabled', 'publicId'] as String[]
     }
 
     void "test build SQL update"() {
@@ -364,10 +356,8 @@ interface MyInterface extends CrudRepository<Food, UUID> {
         def method = beanDefinition.findPossibleMethods("update").findFirst().get()
         expect:
 
-            method.stringValue(Query)
-                .orElse(null) == 'UPDATE "food" SET "key"=?,"carbohydrates"=?,"portion_grams"=?,"updated_on"=?,"fk_meal_id"=?,"fk_alt_meal"=? WHERE ("fid" = ?)'
-            method.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING + "Paths") ==
-                    ["key", "carbohydrates", "portionGrams", "updatedOn", "meal.mid", "alternativeMeal.mid", ""] as String[]
+        getQuery(method) == 'UPDATE "food" SET "key"=?,"carbohydrates"=?,"portion_grams"=?,"updated_on"=?,"fk_meal_id"=?,"fk_alt_meal"=? WHERE ("fid" = ?)'
+        getParameterPropertyPaths(method) == ["key", "carbohydrates", "portionGrams", "updatedOn", "meal.mid", "alternativeMeal.mid", "fid"] as String[]
     }
 
     void "test build custom SQL insert"() {
@@ -397,12 +387,12 @@ interface MyInterface extends CrudRepository<Food, UUID> {
         when:
         def saveCustom = beanDefinition.findPossibleMethods("saveCustom").findFirst().get()
         then:
-        saveCustom.stringValue(Query, "rawQuery").orElse(null) == 'INSERT INTO food(key, carbohydrates) VALUES (?, ?)'
-        saveCustom.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING_PATHS) == ["key", "carbohydrates"] as String[]
+        getRawQuery(saveCustom) == 'INSERT INTO food(key, carbohydrates) VALUES (?, ?)'
+        getParameterPropertyPaths(saveCustom) == ["key", "carbohydrates"] as String[]
         when:
         def saveCustomSingle = beanDefinition.findPossibleMethods("saveCustomSingle").findFirst().get()
         then:
-        saveCustomSingle.stringValue(Query, "rawQuery").orElse(null) == 'INSERT INTO food(key, carbohydrates) VALUES (?, ?)'
-        saveCustomSingle.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING_PATHS) == ["key", "carbohydrates"] as String[]
+        getRawQuery(saveCustomSingle) == 'INSERT INTO food(key, carbohydrates) VALUES (?, ?)'
+        getParameterPropertyPaths(saveCustomSingle) == ["key", "carbohydrates"] as String[]
     }
 }

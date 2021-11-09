@@ -15,9 +15,11 @@
  */
 package io.micronaut.data.processor.sql
 
-import io.micronaut.data.intercept.annotation.DataMethod
+import io.micronaut.data.model.DataType
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.processor.visitors.AbstractDataSpec
+
+import static io.micronaut.data.processor.visitors.TestUtils.*
 
 class SqlParameterBindingSpec extends AbstractDataSpec {
 
@@ -42,7 +44,7 @@ interface SaleRepository extends CrudRepository<Sale, Long> {
 
         expect:"The repository compiles"
         repository != null
-        method.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_TYPE_DEFS) == ['JSON', 'LONG'] as String[]
+        getDataTypes(method) == [DataType.JSON, DataType.LONG]
     }
 
     void "test compile repository"() {
@@ -66,8 +68,8 @@ interface ProjectRepository extends CrudRepository<Project, ProjectId> {
 
         expect:"The repository compiles"
         repository != null
-        method.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_TYPE_DEFS) == ['STRING', 'STRING'] as String[]
-        method.getValue(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING, int[].class).get() == [0, 1] as int[]
+        getDataTypes(method) == [DataType.STRING, DataType.STRING]
+        getParameterBindingIndexes(method) == ["0", "1"]
     }
 
     void "test non-sql compile repository"() {
@@ -91,11 +93,9 @@ interface ProjectRepository extends CrudRepository<Project, ProjectId> {
 
         expect:"The repository compiles"
         repository != null
-        findMethod.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_TYPE_DEFS) == [] as String[]
-        def names = findMethod.getValue(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING + "Names", String[].class)
-        names.get() == ["p1", "p2"] as String[]
-        def parameterIndex = findMethod.getValue(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING, int[].class)
-        parameterIndex.get() == [0, 1] as int[]
+        getDataTypes(findMethod) == []
+        getParameterBindingIndexes(findMethod) == ["0", "1"]
+        getQueryParameterNames(findMethod) == ["p1", "p2"]
     }
 
     void "test compile non-sql repository 2"() {
@@ -107,12 +107,10 @@ interface CompanyRepository extends io.micronaut.data.tck.repositories.CompanyRe
 }
 """)
         def updateMethod = repository.findPossibleMethods("update").findFirst().get()
-        def updatePaths = updateMethod.getValue(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING_PATHS, String[].class).get()
-        def autoPopulatedPropertyPaths = updateMethod.getValue(DataMethod, DataMethod.META_MEMBER_PARAMETER_AUTO_POPULATED_PROPERTY_PATHS, String[].class).get()
 
         expect:"The repository compiles"
         repository != null
-        updatePaths == ['', "", ""] as String[]
-        autoPopulatedPropertyPaths == ['', "lastUpdated", ""] as String[]
+        getParameterPropertyPaths(updateMethod) == ["name", "lastUpdated", "myId"]
+        getParameterAutoPopulatedProperties(updateMethod) == ["", "lastUpdated", ""]
     }
 }

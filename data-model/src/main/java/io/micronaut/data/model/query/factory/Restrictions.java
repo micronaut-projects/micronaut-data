@@ -16,7 +16,6 @@
 package io.micronaut.data.model.query.factory;
 
 import io.micronaut.data.model.query.QueryModel;
-import io.micronaut.data.model.query.QueryParameter;
 
 /**
  * Factory for creating criterion instances.
@@ -32,7 +31,7 @@ public class Restrictions {
      * @param parameter The parameter that provides the value
      * @return An instance of Query.Equals
      */
-    public static QueryModel.Equals eq(String property, QueryParameter parameter) {
+    public static QueryModel.Equals eq(String property, Object parameter) {
         return new QueryModel.Equals(property, parameter);
     }
 
@@ -41,7 +40,7 @@ public class Restrictions {
      * @param parameter The parameter that provides the value
      * @return An instance of Query.Equals
      */
-    public static QueryModel.IdEquals idEq(QueryParameter parameter) {
+    public static QueryModel.IdEquals idEq(Object parameter) {
         return new QueryModel.IdEquals(parameter);
     }
 
@@ -50,7 +49,7 @@ public class Restrictions {
      * @param parameter The parameter that provides the value
      * @return An instance of Query.Equals
      */
-    public static QueryModel.VersionEquals versionEq(QueryParameter parameter) {
+    public static QueryModel.VersionEquals versionEq(Object parameter) {
         return new QueryModel.VersionEquals(parameter);
     }
 
@@ -61,7 +60,7 @@ public class Restrictions {
      * @return An instance of Query.Equals
      */
 
-    public static QueryModel.NotEquals ne(String property, QueryParameter parameter) {
+    public static QueryModel.NotEquals ne(String property, Object parameter) {
         return new QueryModel.NotEquals(property, parameter);
     }
 
@@ -71,7 +70,7 @@ public class Restrictions {
      * @param parameter The parameter that provides the value
      * @return An instance of Query.In
      */
-    public static QueryModel.In in(String property, QueryParameter parameter) {
+    public static QueryModel.In in(String property, Object parameter) {
         return new QueryModel.In(property, parameter);
     }
 
@@ -101,7 +100,7 @@ public class Restrictions {
      * @param expression The expression
      * @return An instance of Query.Like
      */
-    public static QueryModel.Like like(String property, QueryParameter expression) {
+    public static QueryModel.Like like(String property, Object expression) {
         return new QueryModel.Like(property, expression);
     }
 
@@ -112,7 +111,7 @@ public class Restrictions {
      * @param expression The expression
      * @return An instance of Query.StartsWith
      */
-    public static QueryModel.StartsWith startsWith(String property, QueryParameter expression) {
+    public static QueryModel.StartsWith startsWith(String property, Object expression) {
         return new QueryModel.StartsWith(property, expression);
     }
 
@@ -123,7 +122,7 @@ public class Restrictions {
      * @param expression The expression
      * @return An instance of Query.Constains
      */
-    public static QueryModel.Contains contains(String property, QueryParameter expression) {
+    public static QueryModel.Contains contains(String property, Object expression) {
         return new QueryModel.Contains(property, expression);
     }
 
@@ -134,7 +133,7 @@ public class Restrictions {
      * @param expression The expression
      * @return An instance of Query.EndsWith
      */
-    public static QueryModel.EndsWith endsWith(String property, QueryParameter expression) {
+    public static QueryModel.EndsWith endsWith(String property, Object expression) {
         return new QueryModel.EndsWith(property, expression);
     }
 
@@ -145,7 +144,7 @@ public class Restrictions {
      * @param expression The expression
      * @return An ILike expression
      */
-    public static QueryModel.ILike ilike(String property, QueryParameter expression) {
+    public static QueryModel.ILike ilike(String property, Object expression) {
         return new QueryModel.ILike(property, expression);
     }
 
@@ -156,7 +155,7 @@ public class Restrictions {
      * @param expression The expression
      * @return An instance of Query.RLike
      */
-    public static QueryModel.RLike rlike(String property, QueryParameter expression) {
+    public static QueryModel.RLike rlike(String property, Object expression) {
         return new QueryModel.RLike(property, expression);
     }
 
@@ -188,7 +187,7 @@ public class Restrictions {
      * @param end The end of the range
      * @return The Between instance
      */
-    public static QueryModel.Between between(String property, QueryParameter start, QueryParameter end) {
+    public static QueryModel.Between between(String property, Object start, Object end) {
         return new QueryModel.Between(property, start, end);
     }
 
@@ -198,7 +197,7 @@ public class Restrictions {
      * @param parameter The parameter that provides the value
      * @return The GreaterThan instance
      */
-    public static QueryModel.GreaterThan gt(String property, QueryParameter parameter) {
+    public static QueryModel.GreaterThan gt(String property, Object parameter) {
         return new QueryModel.GreaterThan(property, parameter);
     }
 
@@ -208,7 +207,7 @@ public class Restrictions {
      * @param parameter The parameter that provides the value
      * @return The LessThan instance
      */
-    public static QueryModel.LessThan lt(String property, QueryParameter parameter) {
+    public static QueryModel.LessThan lt(String property, Object parameter) {
         return new QueryModel.LessThan(property, parameter);
     }
 
@@ -218,7 +217,7 @@ public class Restrictions {
      * @param parameter The parameter that provides the value
      * @return The LessThan instance
      */
-    public static QueryModel.GreaterThanEquals gte(String property, QueryParameter parameter) {
+    public static QueryModel.GreaterThanEquals gte(String property, Object parameter) {
         return new QueryModel.GreaterThanEquals(property, parameter);
     }
 
@@ -228,7 +227,7 @@ public class Restrictions {
      * @param parameter The parameter that provides the value
      * @return The LessThan instance
      */
-    public static QueryModel.LessThanEquals lte(String property, QueryParameter parameter) {
+    public static QueryModel.LessThanEquals lte(String property, Object parameter) {
         return new QueryModel.LessThanEquals(property, parameter);
     }
 
@@ -299,7 +298,7 @@ public class Restrictions {
      * @param size The size to restrict
      * @return The result
      */
-    public static QueryModel.SizeEquals sizeEq(String property, QueryParameter size) {
+    public static QueryModel.SizeEquals sizeEq(String property, Object size) {
         return new QueryModel.SizeEquals(property, size);
     }
 
@@ -310,7 +309,7 @@ public class Restrictions {
      * @param size The size to restrict
      * @return The result
      */
-    public static QueryModel.SizeGreaterThan sizeGt(String property, QueryParameter size) {
+    public static QueryModel.SizeGreaterThan sizeGt(String property, Object size) {
         return new QueryModel.SizeGreaterThan(property, size);
     }
 
@@ -321,7 +320,7 @@ public class Restrictions {
      * @param size The size to restrict
      * @return The result
      */
-    public static QueryModel.SizeGreaterThanEquals sizeGe(String property, QueryParameter size) {
+    public static QueryModel.SizeGreaterThanEquals sizeGe(String property, Object size) {
         return new QueryModel.SizeGreaterThanEquals(property, size);
     }
 
@@ -333,7 +332,7 @@ public class Restrictions {
      *
      * @return A Criterion instance
      */
-    public static QueryModel.SizeLessThanEquals sizeLe(String property, QueryParameter size) {
+    public static QueryModel.SizeLessThanEquals sizeLe(String property, Object size) {
         return new QueryModel.SizeLessThanEquals(property, size);
     }
 
@@ -345,7 +344,7 @@ public class Restrictions {
      *
      * @return A Criterion instance
      */
-    public static QueryModel.SizeLessThan sizeLt(String property, QueryParameter size) {
+    public static QueryModel.SizeLessThan sizeLt(String property, Object size) {
         return new QueryModel.SizeLessThan(property, size);
     }
 
@@ -357,7 +356,7 @@ public class Restrictions {
      *
      * @return A Criterion instance
      */
-    public static QueryModel.SizeNotEquals sizeNe(String property, QueryParameter size) {
+    public static QueryModel.SizeNotEquals sizeNe(String property, Object size) {
         return new QueryModel.SizeNotEquals(property, size);
     }
 

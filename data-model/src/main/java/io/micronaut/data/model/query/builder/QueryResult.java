@@ -44,24 +44,14 @@ public interface QueryResult {
      * @return The map
      */
     default @NonNull Map<String, String> getParameters() {
-        return getParameterBindings().stream().collect(Collectors.toMap(QueryParameterBinding::getKey, p -> {
-            if (p.getQueryParameter() != null) {
-                return p.getQueryParameter().getName();
-            }
-            return p.getPath();
-        }));
+        return getParameterBindings().stream().collect(Collectors.toMap(QueryParameterBinding::getKey, p -> String.join(".", p.getPropertyPath())));
     }
 
     /**
      * @return The computed parameter types.
      */
     default @NonNull Map<String, DataType> getParameterTypes() {
-        return getParameterBindings().stream().collect(Collectors.toMap(p -> {
-            if (p.getQueryParameter() != null) {
-                return p.getQueryParameter().getName();
-            }
-            return p.getPath();
-            }, QueryParameterBinding::getDataType, (d1, d2) -> d1));
+        return getParameterBindings().stream().collect(Collectors.toMap(p -> String.join(".", p.getPropertyPath()), QueryParameterBinding::getDataType, (d1, d2) -> d1));
     }
 
     /**
@@ -77,6 +67,14 @@ public interface QueryResult {
      * @return the additional required parameters
      */
     Map<String, String> getAdditionalRequiredParameters();
+
+    default int getMax() {
+        return -1;
+    }
+
+    default long getOffset() {
+        return 0;
+    }
 
     /**
      * Creates a new encoded query.
@@ -96,6 +94,57 @@ public interface QueryResult {
         ArgumentUtils.requireNonNull("additionalRequiredParameters", additionalRequiredParameters);
 
         return new QueryResult() {
+            @NonNull
+            @Override
+            public String getQuery() {
+                return query;
+            }
+
+            @Override
+            public List<QueryParameterBinding> getParameterBindings() {
+                return parameterBindings;
+            }
+
+            @Override
+            public Map<String, String> getAdditionalRequiredParameters() {
+                return additionalRequiredParameters;
+            }
+        };
+    }
+
+    /**
+     * Creates a new encoded query.
+     *
+     * @param query                        The query
+     * @param parameterBindings            The parameters binding
+     * @param additionalRequiredParameters Additional required parameters to execute the query
+     * @param max                          The query limit
+     * @param offset                       The query offset
+     * @return The query
+     */
+    static @NonNull
+    QueryResult of(
+            @NonNull String query,
+            @NonNull List<QueryParameterBinding> parameterBindings,
+            @NonNull Map<String, String> additionalRequiredParameters,
+            int max,
+            long offset) {
+        ArgumentUtils.requireNonNull("query", query);
+        ArgumentUtils.requireNonNull("parameterBindings", parameterBindings);
+        ArgumentUtils.requireNonNull("additionalRequiredParameters", additionalRequiredParameters);
+
+        return new QueryResult() {
+
+            @Override
+            public int getMax() {
+                return max;
+            }
+
+            @Override
+            public long getOffset() {
+                return offset;
+            }
+
             @NonNull
             @Override
             public String getQuery() {

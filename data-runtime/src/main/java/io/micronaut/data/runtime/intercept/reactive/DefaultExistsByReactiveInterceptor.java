@@ -15,11 +15,10 @@
  */
 package io.micronaut.data.runtime.intercept.reactive;
 
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.aop.MethodInvocationContext;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.async.publisher.Publishers;
 import io.micronaut.data.intercept.RepositoryMethodKey;
-import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.intercept.reactive.ExistsByReactiveInterceptor;
 import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.operations.RepositoryOperations;
@@ -42,9 +41,7 @@ public class DefaultExistsByReactiveInterceptor extends AbstractReactiveIntercep
 
     @Override
     public Object intercept(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Object> context) {
-        Class idType = context.classValue(DataMethod.class, DataMethod.META_MEMBER_ID_TYPE)
-                .orElseGet(() -> getRequiredRootEntity(context));
-        PreparedQuery<?, Boolean> preparedQuery = prepareQuery(methodKey, context, idType);
+        PreparedQuery<?, Boolean> preparedQuery = prepareQuery(methodKey, context, null);
         return Publishers.convertPublisher(reactiveOperations.exists(preparedQuery), context.getReturnType().getType());
     }
 }

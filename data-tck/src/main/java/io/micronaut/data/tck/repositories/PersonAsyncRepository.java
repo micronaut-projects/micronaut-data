@@ -20,6 +20,7 @@ import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.repository.async.AsyncCrudRepository;
+import io.micronaut.data.repository.jpa.async.AsyncJpaSpecificationExecutor;
 import io.micronaut.data.tck.entities.Person;
 import io.micronaut.data.tck.entities.PersonDto;
 
@@ -27,7 +28,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
-public interface PersonAsyncRepository extends AsyncCrudRepository<Person, Long> {
+public interface PersonAsyncRepository extends AsyncCrudRepository<Person, Long>, AsyncJpaSpecificationExecutor<Person> {
 
     CompletionStage<Person> save(String name, int age);
 

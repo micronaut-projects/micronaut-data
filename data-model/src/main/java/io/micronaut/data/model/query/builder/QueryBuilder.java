@@ -15,9 +15,10 @@
  */
 package io.micronaut.data.model.query.builder;
 
-import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Introspected;
+import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.beans.BeanIntrospector;
 import io.micronaut.core.reflect.exception.InstantiationException;
 import io.micronaut.core.type.Argument;
@@ -27,11 +28,10 @@ import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.query.QueryModel;
-
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder;
 
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 /**
@@ -97,12 +97,34 @@ public interface QueryBuilder {
     /**
      * Encode the given query into the encoded query instance.
      *
+     * @param query The query
+     * @param propertiesToUpdate The property names to update
+     * @return The encoded query
+     */
+    @NonNull
+    default QueryResult buildUpdate(@NonNull QueryModel query, @NonNull Map<String, Object> propertiesToUpdate) {
+        return buildUpdate(AnnotationMetadata.EMPTY_METADATA, query, propertiesToUpdate);
+    }
+
+    /**
+     * Encode the given query into the encoded query instance.
+     *
      * @param annotationMetadata The annotation metadata
      * @param query The query
      * @param propertiesToUpdate The property names to update
      * @return The encoded query
      */
     QueryResult buildUpdate(@NonNull AnnotationMetadata annotationMetadata, @NonNull QueryModel query, @NonNull List<String> propertiesToUpdate);
+
+    /**
+     * Encode the given query into the encoded query instance.
+     *
+     * @param annotationMetadata The annotation metadata
+     * @param query The query
+     * @param propertiesToUpdate The property names to update
+     * @return The encoded query
+     */
+    QueryResult buildUpdate(@NonNull AnnotationMetadata annotationMetadata, @NonNull QueryModel query, @NonNull Map<String, Object> propertiesToUpdate);
 
     /**
      * Encode the given query into the encoded query instance.

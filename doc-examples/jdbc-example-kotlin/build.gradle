@@ -25,12 +25,16 @@ dependencies {
     kapt project(":data-processor")
 
     implementation 'io.micronaut.rxjava2:micronaut-rxjava2'
+    implementation 'io.micronaut.reactor:micronaut-reactor'
+
     implementation "io.micronaut:micronaut-http-client"
     implementation project(":data-jdbc")
     implementation "io.micronaut.sql:micronaut-jdbc-tomcat"
-    implementation "jakarta.persistence:jakarta.persistence-api:2.2.3"
+    compileOnly "javax.persistence:javax.persistence-api:$javaxPersistenceVersion"
+    implementation "jakarta.persistence:jakarta.persistence-api:$jakartaPersistenceVersion"
     implementation 'jakarta.transaction:jakarta.transaction-api:1.3.3'
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-reactive"
 
     runtimeOnly "ch.qos.logback:logback-classic"
     runtimeOnly "com.h2database:h2"

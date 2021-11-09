@@ -17,15 +17,27 @@ package io.micronaut.data.tck.tests
 
 import io.micronaut.context.ApplicationContext
 import io.micronaut.data.model.Pageable
+import io.micronaut.data.model.Sort
+import io.micronaut.data.repository.jpa.criteria.DeleteSpecification
+import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
+import io.micronaut.data.repository.jpa.criteria.QuerySpecification
+import io.micronaut.data.repository.jpa.criteria.UpdateSpecification
 import io.micronaut.data.tck.entities.Person
 import io.micronaut.data.tck.entities.PersonDto
 import io.micronaut.data.tck.entities.Student
 import io.micronaut.data.tck.repositories.PersonReactiveRepository
 import io.micronaut.data.tck.repositories.StudentReactiveRepository
+import jakarta.persistence.criteria.CriteriaBuilder
+import jakarta.persistence.criteria.CriteriaUpdate
+import jakarta.persistence.criteria.Predicate
+import jakarta.persistence.criteria.Root
 import spock.lang.AutoCleanup
 import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Stepwise
+
+import static io.micronaut.data.repository.jpa.criteria.QuerySpecification.where
+import static io.micronaut.data.tck.repositories.PersonRepository.Specifications.nameEquals
 
 @Stepwise
 abstract class AbstractReactiveRepositorySpec extends Specification {
@@ -456,6 +468,122 @@ abstract class AbstractReactiveRepositorySpec extends Specification {
         then:
         deleted == 1
         people.size() == 3
+    }
+
+    void "test criteria" () {
+        when:
+            personRepository.deleteAll().blockingGet()
+            savePersons(["Jeff", "James"])
+        then:
+            personRepository.findOne(nameEquals("Jeff")).blockOptional().isPresent()
+            !personRepository.findOne(nameEquals("Denis")).blockOptional().isPresent()
+            personRepository.findOne(where(nameEquals("Jeff"))).blockOptional().isPresent()
+            !personRepository.findOne(where(nameEquals("Denis"))).blockOptional().isPresent()
+        then:
+            personRepository.findAll(nameEquals("Jeff")).collectList().block().size() == 1
+            personRepository.findAll(where(nameEquals("Jeff"))).collectList().block().size() == 1
+            personRepository.findAll(nameEquals("Denis")).collectList().block().size() == 0
+            personRepository.findAll(null as QuerySpecification).collectList().block().size() == 2
+            personRepository.findAll(null as PredicateSpecification).collectList().block().size() == 2
+            personRepository.findAll(nameEquals("Jeff").or(nameEquals("Denis"))).collectList().block().size() == 1
+            personRepository.findAll(nameEquals("Jeff").and(nameEquals("Denis"))).collectList().block().size() == 0
+            personRepository.findAll(nameEquals("Jeff").and(nameEquals("Jeff"))).collectList().block().size() == 1
+            personRepository.findAll(nameEquals("Jeff").or(nameEquals("James"))).collectList().block().size() == 2
+            personRepository.findAll(where(nameEquals("Jeff")).or(nameEquals("Denis"))).collectList().block().size() == 1
+            personRepository.findAll(where(nameEquals("Jeff")).and(nameEquals("Denis"))).collectList().block().size() == 0
+            personRepository.findAll(where(nameEquals("Jeff")).and(nameEquals("Jeff"))).collectList().block().size() == 1
+            personRepository.findAll(where(nameEquals("Jeff")).or(nameEquals("James"))).collectList().block().size() == 2
+            personRepository.findAll(where(nameEquals("Jeff")).or(nameEquals("James")), Sort.of(Sort.Order.desc("name"))).collectList().block()[1].name == "James"
+            personRepository.findAll(where(nameEquals("Jeff")).or(nameEquals("James")), Sort.of(Sort.Order.asc("name"))).collectList().block()[1].name == "Jeff"
+//        when:
+//            def unpaged = personRepository.findAll(nameEquals("Jeff").or(nameEquals("James")), Pageable.UNPAGED)
+//        then:
+//            unpaged.content.size() == 2
+//            unpaged.totalSize == 2
+//        when:
+//            def unpagedSortedDesc = personRepository.findAll(nameEquals("Jeff").or(nameEquals("James")), Pageable.UNPAGED.order(Sort.Order.desc("name")))
+//            def unpagedSortedAsc = personRepository.findAll(nameEquals("Jeff").or(nameEquals("James")), Pageable.UNPAGED.order(Sort.Order.asc("name")))
+//        then:
+//            unpagedSortedDesc.content.size() == 2
+//            unpagedSortedDesc.content[1].name == "James"
+//            unpagedSortedAsc.content.size() == 2
+//            unpagedSortedAsc.content[1].name == "Jeff"
+//        when:
+//            def paged = personRepository.findAll(nameEquals("Jeff").or(nameEquals("James")), Pageable.from(0, 1))
+//        then:
+//            paged.content.size() == 1
+//            paged.pageNumber == 0
+//            paged.totalPages == 2
+//            paged.totalSize == 2
+//        when:
+//            def pagedSortedDesc = personRepository.findAll(nameEquals("Jeff").or(nameEquals("James")), Pageable.from(0, 1).order(Sort.Order.desc("name")))
+//        then:
+//            pagedSortedDesc.content.size() == 1
+//            pagedSortedDesc.content[0].name == "Jeff"
+//            pagedSortedDesc.pageNumber == 0
+//            pagedSortedDesc.totalPages == 2
+//            pagedSortedDesc.totalSize == 2
+//        when:
+//            def pagedSortedAsc = personRepository.findAll(where(nameEquals("Jeff")).or(nameEquals("James")), Pageable.from(0, 1).order(Sort.Order.asc("name")))
+//        then:
+//            pagedSortedAsc.content.size() == 1
+//            pagedSortedAsc.content[0].name == "James"
+//            pagedSortedAsc.pageNumber == 0
+//            pagedSortedAsc.totalPages == 2
+//            pagedSortedAsc.totalSize == 2
+        when:
+            def countAllByPredicateSpec = personRepository.count(nameEquals("Jeff").or(nameEquals("James"))).block()
+        then:
+            countAllByPredicateSpec == 2
+        when:
+            def countOneByPredicateSpec = personRepository.count(nameEquals("Jeff")).block()
+        then:
+            countOneByPredicateSpec == 1
+        when:
+            def countAllByQuerySpec = personRepository.count(where(nameEquals("Jeff").or(nameEquals("James")))).block()
+        then:
+            countAllByQuerySpec == 2
+        when:
+            def countOneByQuerySpec = personRepository.count(where(nameEquals("Jeff"))).block()
+        then:
+            countOneByQuerySpec == 1
+        when:
+            def countAppByNullByPredicateSpec = personRepository.count(null as PredicateSpecification).block()
+            def countAppByNullByQuerySpec = personRepository.count(null as QuerySpecification).block()
+        then:
+            countAppByNullByPredicateSpec == 2
+            countAppByNullByQuerySpec == 2
+        when:
+            def deleted = personRepository.deleteAll(nameEquals("Jeff")).block()
+            def all = personRepository.findAll().toList().blockingGet()
+        then:
+            deleted == 1
+            all.size() == 1
+            all[0].name == "James"
+        when:
+            deleted = personRepository.deleteAll(null as DeleteSpecification).block()
+            all = personRepository.findAll().toList().blockingGet()
+        then:
+            deleted == 1
+            all.size() == 0
+        when:
+            savePersons(["Jeff", "James"])
+            def updated = personRepository.updateAll(new UpdateSpecification<Person>() {
+                @Override
+                Predicate toPredicate(Root<Person> root, CriteriaUpdate<?> query, CriteriaBuilder criteriaBuilder) {
+                    query.set("name", "Xyz")
+                    return criteriaBuilder.equal(root.get("name"), "Jeff")
+                }
+            }).block()
+        then:
+            updated == 1
+            personRepository.count(nameEquals("Xyz")).block() == 1
+            personRepository.count(nameEquals("Jeff")).block() == 0
+        when:
+            deleted = personRepository.deleteAll(DeleteSpecification.where(nameEquals("Xyz"))).block()
+        then:
+            deleted == 1
+            personRepository.count(nameEquals("Xyz")).block() == 0
     }
 
     protected void savePersons(List<String> names) {

@@ -35,11 +35,11 @@ public interface QueryModel extends Criteria {
 
     @NonNull
     @Override
-    QueryModel idEq(QueryParameter parameter);
+    QueryModel idEq(Object parameter);
 
     @NonNull
     @Override
-    QueryModel versionEq(QueryParameter parameter);
+    QueryModel versionEq(Object parameter);
 
     @NonNull
     @Override
@@ -67,63 +67,63 @@ public interface QueryModel extends Criteria {
 
     @NonNull
     @Override
-    QueryModel eq(String propertyName, QueryParameter parameter);
+    QueryModel eq(String propertyName, Object parameter);
 
     @NonNull
     @Override
-    QueryModel ne(@NonNull String propertyName, @NonNull QueryParameter parameter);
+    QueryModel ne(@NonNull String propertyName, @NonNull Object parameter);
 
     @NonNull
     @Override
-    QueryModel between(@NonNull String propertyName, @NonNull QueryParameter start, @NonNull QueryParameter finish);
+    QueryModel between(@NonNull String propertyName, @NonNull Object start, @NonNull Object finish);
 
     @NonNull
     @Override
-    QueryModel gte(@NonNull String property, @NonNull QueryParameter parameter);
+    QueryModel gte(@NonNull String property, @NonNull Object parameter);
 
     @NonNull
     @Override
-    QueryModel ge(@NonNull String property, @NonNull QueryParameter parameter);
+    QueryModel ge(@NonNull String property, @NonNull Object parameter);
 
     @NonNull
     @Override
-    QueryModel gt(@NonNull String property, @NonNull QueryParameter parameter);
+    QueryModel gt(@NonNull String property, @NonNull Object parameter);
 
     @NonNull
     @Override
-    QueryModel lte(@NonNull String property, @NonNull QueryParameter parameter);
+    QueryModel lte(@NonNull String property, @NonNull Object parameter);
 
     @NonNull
     @Override
-    QueryModel le(@NonNull String property, @NonNull QueryParameter parameter);
+    QueryModel le(@NonNull String property, @NonNull Object parameter);
 
     @NonNull
     @Override
-    QueryModel lt(@NonNull String property, @NonNull QueryParameter parameter);
+    QueryModel lt(@NonNull String property, @NonNull Object parameter);
 
     @NonNull
     @Override
-    QueryModel like(@NonNull String propertyName, @NonNull QueryParameter parameter);
+    QueryModel like(@NonNull String propertyName, @NonNull Object parameter);
 
     @NonNull
     @Override
-    QueryModel startsWith(@NonNull String propertyName, @NonNull QueryParameter parameter);
+    QueryModel startsWith(@NonNull String propertyName, @NonNull Object parameter);
 
     @NonNull
     @Override
-    QueryModel endsWith(@NonNull String propertyName, @NonNull QueryParameter parameter);
+    QueryModel endsWith(@NonNull String propertyName, @NonNull Object parameter);
 
     @NonNull
     @Override
-    QueryModel contains(@NonNull String propertyName, @NonNull QueryParameter parameter);
+    QueryModel contains(@NonNull String propertyName, @NonNull Object parameter);
 
     @NonNull
     @Override
-    QueryModel ilike(@NonNull String propertyName, @NonNull QueryParameter parameter);
+    QueryModel ilike(@NonNull String propertyName, @NonNull Object parameter);
 
     @NonNull
     @Override
-    QueryModel rlike(@NonNull String propertyName, @NonNull QueryParameter parameter);
+    QueryModel rlike(@NonNull String propertyName, @NonNull Object parameter);
 
     @NonNull
     @Override
@@ -143,7 +143,7 @@ public interface QueryModel extends Criteria {
 
     @NonNull
     @Override
-    QueryModel inList(@NonNull String propertyName, @NonNull QueryParameter parameter);
+    QueryModel inList(@NonNull String propertyName, @NonNull Object parameter);
 
     @NonNull
     @Override
@@ -151,27 +151,27 @@ public interface QueryModel extends Criteria {
 
     @NonNull
     @Override
-    QueryModel sizeEq(@NonNull String propertyName, @NonNull QueryParameter size);
+    QueryModel sizeEq(@NonNull String propertyName, @NonNull Object size);
 
     @NonNull
     @Override
-    QueryModel sizeGt(@NonNull String propertyName, @NonNull QueryParameter size);
+    QueryModel sizeGt(@NonNull String propertyName, @NonNull Object size);
 
     @NonNull
     @Override
-    QueryModel sizeGe(@NonNull String propertyName, @NonNull QueryParameter size);
+    QueryModel sizeGe(@NonNull String propertyName, @NonNull Object size);
 
     @NonNull
     @Override
-    QueryModel sizeLe(@NonNull String propertyName, @NonNull QueryParameter size);
+    QueryModel sizeLe(@NonNull String propertyName, @NonNull Object size);
 
     @NonNull
     @Override
-    QueryModel sizeLt(@NonNull String propertyName, @NonNull QueryParameter size);
+    QueryModel sizeLt(@NonNull String propertyName, @NonNull Object size);
 
     @NonNull
     @Override
-    QueryModel sizeNe(@NonNull String propertyName, @NonNull QueryParameter size);
+    QueryModel sizeNe(@NonNull String propertyName, @NonNull Object size);
 
     @NonNull
     @Override
@@ -199,7 +199,7 @@ public interface QueryModel extends Criteria {
 
     @NonNull
     @Override
-    QueryModel allEq(@NonNull Map<String, QueryParameter> propertyValues);
+    QueryModel allEq(@NonNull Map<String, Object> propertyValues);
 
     @NonNull
     @Override
@@ -828,7 +828,7 @@ public interface QueryModel extends Criteria {
          * @param name The property name
          * @param parameter The parameter
          */
-        public Equals(String name, QueryParameter parameter) {
+        public Equals(String name, Object parameter) {
             super(name, parameter);
         }
     }
@@ -842,7 +842,7 @@ public interface QueryModel extends Criteria {
          * @param name The property name
          * @param parameter The parameter
          */
-        public SizeEquals(String name, QueryParameter parameter) {
+        public SizeEquals(String name, Object parameter) {
             super(name, parameter);
         }
     }
@@ -856,7 +856,7 @@ public interface QueryModel extends Criteria {
          * @param name The property name
          * @param parameter The parameter
          */
-        public SizeNotEquals(String name, QueryParameter parameter) {
+        public SizeNotEquals(String name, Object parameter) {
             super(name, parameter);
         }
     }
@@ -870,7 +870,7 @@ public interface QueryModel extends Criteria {
          * @param name The property name
          * @param parameter The parameter
          */
-        public SizeGreaterThan(String name, QueryParameter parameter) {
+        public SizeGreaterThan(String name, Object parameter) {
             super(name, parameter);
         }
     }
@@ -884,7 +884,7 @@ public interface QueryModel extends Criteria {
          * @param name The property name
          * @param parameter The parameter
          */
-        public SizeGreaterThanEquals(String name, QueryParameter parameter) {
+        public SizeGreaterThanEquals(String name, Object parameter) {
             super(name, parameter);
         }
     }
@@ -898,7 +898,7 @@ public interface QueryModel extends Criteria {
          * @param name The property name
          * @param parameter The parameter
          */
-        public SizeLessThanEquals(String name, QueryParameter parameter) {
+        public SizeLessThanEquals(String name, Object parameter) {
             super(name, parameter);
         }
     }
@@ -912,7 +912,7 @@ public interface QueryModel extends Criteria {
          * @param name The property name
          * @param parameter The parameter
          */
-        public SizeLessThan(String name, QueryParameter parameter) {
+        public SizeLessThan(String name, Object parameter) {
             super(name, parameter);
         }
     }
@@ -928,7 +928,7 @@ public interface QueryModel extends Criteria {
          * Default constructor.
          * @param value The parameter
          */
-        public IdEquals(QueryParameter value) {
+        public IdEquals(Object value) {
             super(ID, value);
         }
     }
@@ -944,7 +944,7 @@ public interface QueryModel extends Criteria {
          * Default constructor.
          * @param value The parameter
          */
-        public VersionEquals(QueryParameter value) {
+        public VersionEquals(Object value) {
             super(VERSION, value);
         }
     }
@@ -959,7 +959,7 @@ public interface QueryModel extends Criteria {
          * @param name The property name
          * @param value The parameter
          */
-        public NotEquals(String name, QueryParameter value) {
+        public NotEquals(String name, Object value) {
             super(name, value);
         }
 
@@ -976,7 +976,7 @@ public interface QueryModel extends Criteria {
          * @param name The name
          * @param parameter The parameter
          */
-        public In(String name, QueryParameter parameter) {
+        public In(String name, Object parameter) {
             super(name, parameter);
         }
 
@@ -1090,7 +1090,7 @@ public interface QueryModel extends Criteria {
          * @param name The property name
          * @param value The parameter
          */
-        public GreaterThan(String name, QueryParameter value) {
+        public GreaterThan(String name, Object value) {
             super(name, value);
         }
     }
@@ -1104,7 +1104,7 @@ public interface QueryModel extends Criteria {
          * @param name The property name
          * @param value The parameter
          */
-        public GreaterThanEquals(String name, QueryParameter value) {
+        public GreaterThanEquals(String name, Object value) {
             super(name, value);
         }
     }
@@ -1118,7 +1118,7 @@ public interface QueryModel extends Criteria {
          * @param name The property name
          * @param value The parameter
          */
-        public LessThan(String name, QueryParameter value) {
+        public LessThan(String name, Object value) {
             super(name, value);
         }
     }
@@ -1132,7 +1132,7 @@ public interface QueryModel extends Criteria {
          * @param name The property name
          * @param value The parameter
          */
-        public LessThanEquals(String name, QueryParameter value) {
+        public LessThanEquals(String name, Object value) {
             super(name, value);
         }
     }
@@ -1142,8 +1142,8 @@ public interface QueryModel extends Criteria {
      */
     class Between extends PropertyCriterion {
         private String property;
-        private QueryParameter from;
-        private QueryParameter to;
+        private Object from;
+        private Object to;
 
         /**
          * Default constructor.
@@ -1151,7 +1151,7 @@ public interface QueryModel extends Criteria {
          * @param from The from parameter
          * @param to The to parameter
          */
-        public Between(String property, QueryParameter from, QueryParameter to) {
+        public Between(String property, Object from, Object to) {
             super(property, from);
             this.property = property;
             this.from = from;
@@ -1166,14 +1166,14 @@ public interface QueryModel extends Criteria {
         /**
          * @return The from parameter
          */
-        public QueryParameter getFrom() {
+        public Object getFrom() {
             return from;
         }
 
         /**
          * @return The to parameter
          */
-        public QueryParameter getTo() {
+        public Object getTo() {
             return to;
         }
     }
@@ -1187,7 +1187,7 @@ public interface QueryModel extends Criteria {
          * @param name The property name
          * @param expression The parameter
          */
-        public Like(String name, QueryParameter expression) {
+        public Like(String name, Object expression) {
             super(name, expression);
         }
     }
@@ -1201,7 +1201,7 @@ public interface QueryModel extends Criteria {
          * @param name The property name
          * @param expression The parameter
          */
-        public StartsWith(String name, QueryParameter expression) {
+        public StartsWith(String name, Object expression) {
             super(name, expression);
         }
     }
@@ -1215,7 +1215,7 @@ public interface QueryModel extends Criteria {
          * @param name The property name
          * @param expression The parameter
          */
-        public Contains(String name, QueryParameter expression) {
+        public Contains(String name, Object expression) {
             super(name, expression);
         }
     }
@@ -1229,7 +1229,7 @@ public interface QueryModel extends Criteria {
          * @param name The property name
          * @param expression The parameter
          */
-        public EndsWith(String name, QueryParameter expression) {
+        public EndsWith(String name, Object expression) {
             super(name, expression);
         }
     }
@@ -1243,7 +1243,7 @@ public interface QueryModel extends Criteria {
          * @param name The property name
          * @param expression The parameter
          */
-        public ILike(String name, QueryParameter expression) {
+        public ILike(String name, Object expression) {
             super(name, expression);
         }
     }
@@ -1257,7 +1257,7 @@ public interface QueryModel extends Criteria {
          * @param name The property name
          * @param expression The parameter
          */
-        public RLike(String name, QueryParameter expression) {
+        public RLike(String name, Object expression) {
             super(name, expression);
         }
 
@@ -1353,6 +1353,21 @@ public interface QueryModel extends Criteria {
     }
 
     /**
+     * A projection of a simple literal.
+     */
+    class LiteralProjection extends Projection {
+        private final Object value;
+
+        public LiteralProjection(Object value) {
+            this.value = value;
+        }
+
+        public Object getValue() {
+            return value;
+        }
+    }
+
+    /**
      * Used to count the results of a query.
      */
     class CountProjection extends Projection {
@@ -1395,6 +1410,10 @@ public interface QueryModel extends Criteria {
         public PropertyProjection aliased() {
             this.alias = propertyName;
             return this;
+        }
+
+        public void setAlias(String alias) {
+            this.alias = alias;
         }
 
         /**

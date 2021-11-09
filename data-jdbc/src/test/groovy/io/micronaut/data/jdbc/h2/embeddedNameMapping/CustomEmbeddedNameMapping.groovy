@@ -87,7 +87,7 @@ class CustomEmbeddedNameMapping extends Specification implements H2TestPropertyP
             QueryBuilder encoder = new SqlQueryBuilder()
             def entity = getRuntimePersistentEntity(MyBook)
             def res = encoder.buildUpdate(
-                    QueryModel.from(entity).idEq(new QueryParameter("xyz")),
+                    QueryModel.from(entity).idEq(new QueryParameter("id")),
                     ['id', 'author.firstName', 'author.lastName', 'author.detailsIncluded.numberAge']
             )
 
@@ -98,7 +98,7 @@ class CustomEmbeddedNameMapping extends Specification implements H2TestPropertyP
                     '2':'author.firstName',
                     '3':'author.lastName',
                     '4':'author.detailsIncluded.numberAge',
-                    '5':'xyz'
+                    '5':'id'
             ]
     }
 

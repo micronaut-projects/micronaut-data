@@ -131,10 +131,10 @@ class ManyToManyJoinTableSpec extends Specification implements H2TestPropertyPro
             QueryBuilder encoder = new SqlQueryBuilder()
             def queryModel = QueryModel.from(getRuntimePersistentEntity(Student))
             queryModel.join("courses", Join.Type.FETCH, null)
-            def q = encoder.buildQuery(queryModel.idEq(new QueryParameter("xyz")))
+            def q = encoder.buildQuery(queryModel.idEq(new QueryParameter("id")))
         then:
             q.query == 'SELECT student_."id",student_."name",student_courses_."id" AS courses_id,student_courses_."name" AS courses_name FROM "m2m_student" student_ INNER JOIN "m2m_student_course_association" student_courses_m2m_student_course_association_ ON student_."id"=student_courses_m2m_student_course_association_."st_id"  INNER JOIN "m2m_course" student_courses_ ON student_courses_m2m_student_course_association_."cs_id"=student_courses_."id" WHERE (student_."id" = ?)'
-            q.parameters == ['1': 'xyz']
+            q.parameters == ['1': 'id']
     }
 
     void "test build Student select with ratings"() {
@@ -142,10 +142,10 @@ class ManyToManyJoinTableSpec extends Specification implements H2TestPropertyPro
             QueryBuilder encoder = new SqlQueryBuilder()
             def queryModel = QueryModel.from(getRuntimePersistentEntity(Student))
             queryModel.join("ratings", Join.Type.FETCH, null)
-            def q = encoder.buildQuery(queryModel.idEq(new QueryParameter("xyz")))
+            def q = encoder.buildQuery(queryModel.idEq(new QueryParameter("id")))
         then:
             q.query == 'SELECT student_."id",student_."name",student_ratings_."id" AS ratings_id,student_ratings_."student_id" AS ratings_student_id,student_ratings_."course_id" AS ratings_course_id,student_ratings_."rating" AS ratings_rating FROM "m2m_student" student_ INNER JOIN "m2m_course_rating" student_ratings_ ON student_."id"=student_ratings_."student_id" WHERE (student_."id" = ?)'
-            q.parameters == ['1': 'xyz']
+            q.parameters == ['1': 'id']
     }
 
     void "test build insert"() {

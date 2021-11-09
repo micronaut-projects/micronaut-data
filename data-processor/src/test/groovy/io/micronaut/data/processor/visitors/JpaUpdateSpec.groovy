@@ -18,8 +18,6 @@ package io.micronaut.data.processor.visitors
 import io.micronaut.annotation.processing.TypeElementVisitorProcessor
 import io.micronaut.annotation.processing.test.AbstractTypeElementSpec
 import io.micronaut.annotation.processing.test.JavaParser
-import io.micronaut.data.annotation.TypeRole
-import io.micronaut.data.annotation.Query
 import io.micronaut.data.intercept.UpdateInterceptor
 import io.micronaut.data.intercept.annotation.DataMethod
 import io.micronaut.data.model.PersistentEntity
@@ -32,6 +30,8 @@ import io.micronaut.inject.visitor.TypeElementVisitor
 import io.micronaut.inject.writer.BeanDefinitionVisitor
 
 import javax.annotation.processing.SupportedAnnotationTypes
+
+import static io.micronaut.data.processor.visitors.TestUtils.*
 
 class JpaUpdateSpec extends AbstractTypeElementSpec {
 
@@ -63,23 +63,26 @@ interface MyInterface extends GenericRepository<Person, Long> {
         def updateMethod = beanDefinition.getRequiredMethod("update", Long, String)
         def updateByMethod = beanDefinition.getRequiredMethod("updateByName", String, String)
         def updateAnn = updateMethod.synthesize(DataMethod)
-        def updateQuery = updateMethod.synthesize(Query)
         def updateByAnn = updateByMethod.synthesize(DataMethod)
-        def updateByQuery = updateByMethod.synthesize(Query)
 
         then: "It was correctly compiled"
         updateAnn.interceptor() == UpdateInterceptor
-        updateQuery.value() == "UPDATE $Person.name ${alias} SET ${alias}.name=:p1 WHERE (${alias}.id = :p2)"
+        getQuery(updateMethod) == "UPDATE $Person.name ${alias} SET ${alias}.name=:p1 WHERE (${alias}.id = :p2)"
         updateAnn.id() == 'myId'
-        updateMethod.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING + "Names") == ['p1', 'p2'] as String[]
-        updateMethod.getValue(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING, int[].class).get() == [1,0] as int[]
+        getQueryParameterNames(updateMethod) == ['p1', 'p2'] as String[]
+        getParameterBindingIndexes(updateMethod) == ['1', '0'] as String[]
+        getParameterBindingPaths(updateMethod) == ['', ''] as String[]
+        getParameterPropertyPaths(updateMethod) == ['name', 'id'] as String[]
+        getParameterAutoPopulatedProperties(updateMethod) == ['', ''] as String[]
 
         updateByAnn.interceptor() == UpdateInterceptor
-        updateByQuery.value() == "UPDATE $Person.name ${alias} SET ${alias}.name=:p1 WHERE (${alias}.name = :p2)"
-        updateByMethod.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING + "Names") == ['p1', 'p2'] as String[]
-        updateByMethod.getValue(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING, int[].class).get() == [1,0] as int[]
+        getQuery(updateByMethod) == "UPDATE $Person.name ${alias} SET ${alias}.name=:p1 WHERE (${alias}.name = :p2)"
+        getQueryParameterNames(updateByMethod) == ['p1', 'p2'] as String[]
+        getParameterBindingIndexes(updateByMethod) == ['1', '0'] as String[]
+        getParameterBindingPaths(updateByMethod) == ['', ''] as String[]
+        getParameterPropertyPaths(updateByMethod) == ['name', 'name'] as String[]
+        getParameterAutoPopulatedProperties(updateByMethod) == ['', ''] as String[]
     }
-
 
     void "test update with last updated property"() {
         given:
@@ -110,25 +113,25 @@ interface MyInterface extends GenericRepository<Company, Long> {
         def updateMethod = beanDefinition.getRequiredMethod("update", Long, String)
         def updateByMethod = beanDefinition.getRequiredMethod("updateByName", String, String)
         def updateAnn = updateMethod.synthesize(DataMethod)
-        def updateQuery = updateMethod.synthesize(Query)
         def updateByAnn = updateByMethod.synthesize(DataMethod)
-        def updateByQuery = updateByMethod.synthesize(Query)
 
         then: "It was correctly compiled"
         updateAnn.interceptor() == UpdateInterceptor
-        updateQuery.value() == "UPDATE $Company.name ${alias} SET ${alias}.name=:p1,${alias}.lastUpdated=:p2 WHERE (${alias}.myId = :p3)"
+        getQuery(updateMethod) == "UPDATE $Company.name ${alias} SET ${alias}.name=:p1,${alias}.lastUpdated=:p2 WHERE (${alias}.myId = :p3)"
         updateAnn.id() == 'myId'
-        updateMethod.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING + "Names") == ['p1', 'p2', 'p3'] as String[]
-        updateMethod.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING_PATHS) == ['', '', ''] as String[]
-        updateMethod.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_AUTO_POPULATED_PROPERTY_PATHS) == ['', 'lastUpdated', ''] as String[]
-        updateMethod.getValue(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING, int[].class).get() == [1,-1,0] as int[]
+        getQueryParameterNames(updateMethod) == ['p1', 'p2', 'p3'] as String[]
+        getParameterBindingIndexes(updateMethod) == ['1', '-1', '0'] as String[]
+        getParameterBindingPaths(updateMethod) == ['', '', ''] as String[]
+        getParameterPropertyPaths(updateMethod) == ['name', 'lastUpdated', 'myId'] as String[]
+        getParameterAutoPopulatedProperties(updateMethod) == ['', 'lastUpdated', ''] as String[]
 
         updateByAnn.interceptor() == UpdateInterceptor
-        updateByQuery.value() == "UPDATE $Company.name ${alias} SET ${alias}.name=:p1,${alias}.lastUpdated=:p2 WHERE (${alias}.name = :p3)"
-        updateByMethod.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING + "Names") == ['p1', 'p2', 'p3'] as String[]
-        updateByMethod.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING_PATHS) == ['', '', ''] as String[]
-        updateByMethod.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_AUTO_POPULATED_PROPERTY_PATHS) == ['', 'lastUpdated', ''] as String[]
-        updateByMethod.getValue(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING, int[].class).get() == [1,-1,0] as int[]
+        getQuery(updateByMethod) == "UPDATE $Company.name ${alias} SET ${alias}.name=:p1,${alias}.lastUpdated=:p2 WHERE (${alias}.name = :p3)"
+        getQueryParameterNames(updateByMethod) == ['p1', 'p2', 'p3'] as String[]
+        getParameterBindingIndexes(updateMethod) == ['1', '-1', '0'] as String[]
+        getParameterBindingPaths(updateMethod) == ['', '', ''] as String[]
+        getParameterPropertyPaths(updateMethod) == ['name', 'lastUpdated', 'myId'] as String[]
+        getParameterAutoPopulatedProperties(updateMethod) == ['', 'lastUpdated', ''] as String[]
     }
 
     @Override

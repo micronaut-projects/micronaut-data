@@ -40,6 +40,7 @@ public interface PreparedQuery<E, R> extends PagedQuery<E>, StoredQuery<E, R>, P
      * @return The named parameter values
      */
     @NonNull
+    @Deprecated
     Map<String, Object> getParameterValues();
 
     /**

@@ -17,7 +17,7 @@ package io.micronaut.data.processor.visitors
 
 import io.micronaut.data.annotation.Query
 import io.micronaut.data.intercept.DeleteAllInterceptor
-import io.micronaut.data.intercept.FindOneInterceptor
+import io.micronaut.data.intercept.DeleteOneInterceptor
 import io.micronaut.data.intercept.annotation.DataMethod
 import io.micronaut.data.model.entities.Person
 import spock.lang.Unroll
@@ -37,10 +37,13 @@ class DeleteBySpec extends AbstractDataMethodSpec {
         query == expectedQuery
 
         where:
-        returnType | method         | arguments     | interceptor          | expectedQuery
-        "void"     | "deleteByName" | "String name" | DeleteAllInterceptor | "DELETE $Person.name  AS person_ WHERE (person_.name = :p1)"
-        "int"      | "deleteByName" | "String name" | DeleteAllInterceptor | "DELETE $Person.name  AS person_ WHERE (person_.name = :p1)"
-        "Long"     | "deleteByName" | "String name" | DeleteAllInterceptor | "DELETE $Person.name  AS person_ WHERE (person_.name = :p1)"
-        "Number"   | "deleteByName" | "String name" | DeleteAllInterceptor | "DELETE $Person.name  AS person_ WHERE (person_.name = :p1)"
+        returnType | method                              | arguments       | interceptor          | expectedQuery
+        "void"     | "deleteByName"                      | "String name"   | DeleteAllInterceptor | "DELETE $Person.name  AS person_ WHERE (person_.name = :p1)"
+        "int"      | "deleteByName"                      | "String name"   | DeleteAllInterceptor | "DELETE $Person.name  AS person_ WHERE (person_.name = :p1)"
+        "Long"     | "deleteByName"                      | "String name"   | DeleteAllInterceptor | "DELETE $Person.name  AS person_ WHERE (person_.name = :p1)"
+        "Number"   | "deleteByName"                      | "String name"   | DeleteAllInterceptor | "DELETE $Person.name  AS person_ WHERE (person_.name = :p1)"
+        "Number"   | "deleteByNameIsEmptyOrNameIsNull"   | "String name"   | DeleteAllInterceptor | "DELETE io.micronaut.data.model.entities.Person  AS person_ WHERE ((person_.name IS NULL OR person_.name = ''  OR person_.name IS NULL ))"
+        "Number"   | "deleteByNameIsEmptyOrNameIsNull"   | "Person person" | DeleteOneInterceptor | "DELETE io.micronaut.data.model.entities.Person  AS person_ WHERE ((person_.name IS NULL OR person_.name = ''  OR person_.name IS NULL ))"
+        "Number"   | "deleteByNameIsEmptyOrNameIsNull"   | ""              | DeleteAllInterceptor | "DELETE io.micronaut.data.model.entities.Person  AS person_ WHERE ((person_.name IS NULL OR person_.name = ''  OR person_.name IS NULL ))"
     }
 }

@@ -20,6 +20,7 @@ import io.micronaut.context.annotation.Parameter;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.model.Pageable;
+import io.micronaut.data.repository.jpa.reactive.ReactorJpaSpecificationExecutor;
 import io.micronaut.data.repository.reactive.RxJavaCrudRepository;
 import io.micronaut.data.tck.entities.Person;
 import io.micronaut.data.tck.entities.PersonDto;
@@ -27,7 +28,7 @@ import io.reactivex.*;
 
 import java.util.List;
 
-public interface PersonReactiveRepository extends RxJavaCrudRepository<Person, Long> {
+public interface PersonReactiveRepository extends RxJavaCrudRepository<Person, Long>, ReactorJpaSpecificationExecutor<Person> {
 
     Single<Person> save(String name, int age);
 

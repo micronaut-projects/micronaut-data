@@ -15,12 +15,11 @@
  */
 package io.micronaut.data.processor.model;
 
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.exceptions.MappingException;
 import io.micronaut.data.model.Association;
-import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.PropertyElement;
 
@@ -33,7 +32,7 @@ import java.util.function.Function;
  * @since 1.0.0
  */
 @Internal
-class SourceAssociation extends SourcePersistentProperty implements Association {
+public class SourceAssociation extends SourcePersistentProperty implements Association {
 
     private final Function<ClassElement, SourcePersistentEntity> entityResolver;
     private final Relation.Kind kind;
@@ -63,7 +62,7 @@ class SourceAssociation extends SourcePersistentProperty implements Association 
 
     @Override
     @NonNull
-    public PersistentEntity getAssociatedEntity() {
+    public SourcePersistentEntity getAssociatedEntity() {
         ClassElement type = getType();
         switch (getKind()) {
             case ONE_TO_MANY:

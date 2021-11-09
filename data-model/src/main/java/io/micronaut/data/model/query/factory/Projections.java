@@ -46,6 +46,15 @@ public class Projections {
     }
 
     /**
+     * A projection that projects a simple literal.
+     * @param value The literal value
+     * @return The LiteralProjection instance
+     */
+    public static QueryModel.LiteralProjection literal(Object value) {
+        return new QueryModel.LiteralProjection(value);
+    }
+
+    /**
      * A projection that obtains the value of a property of an entity.
      * @param name The name of the property
      * @return The PropertyProjection instance

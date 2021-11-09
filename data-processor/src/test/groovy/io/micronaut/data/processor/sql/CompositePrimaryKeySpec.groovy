@@ -16,20 +16,17 @@
 package io.micronaut.data.processor.sql
 
 import io.micronaut.core.annotation.AnnotationMetadata
-import io.micronaut.data.annotation.Query
-import io.micronaut.data.intercept.annotation.DataMethod
+import io.micronaut.data.model.DataType
 import io.micronaut.data.model.query.QueryModel
 import io.micronaut.data.model.query.QueryParameter
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
 import io.micronaut.data.processor.model.SourcePersistentEntity
 import io.micronaut.data.processor.visitors.AbstractDataSpec
-import io.micronaut.data.tck.entities.User
-import io.micronaut.inject.ExecutableMethod
-import spock.lang.IgnoreIf
-import spock.lang.Requires
 import spock.lang.Shared
 
-@IgnoreIf({ !jvm.isJava8() })
+import static io.micronaut.data.processor.visitors.TestUtils.*
+
+//@IgnoreIf({ !jvm.isJava8() })
 class CompositePrimaryKeySpec extends AbstractDataSpec {
 
     @Shared SourcePersistentEntity entity
@@ -49,13 +46,11 @@ interface CompanyRepository extends io.micronaut.data.tck.repositories.CompanyRe
 }
 """)
         def updateMethod = repository.findPossibleMethods("update").findFirst().get()
-        def updatePaths = updateMethod.getValue(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING_PATHS, String[].class).get()
-        def autoPopulatedPropertyPaths = updateMethod.getValue(DataMethod, DataMethod.META_MEMBER_PARAMETER_AUTO_POPULATED_PROPERTY_PATHS, String[].class).get()
 
         expect:"The repository compiles"
         repository != null
-        updatePaths == ['', "", ""] as String[]
-        autoPopulatedPropertyPaths == ['', "lastUpdated", ""] as String[]
+        getParameterPropertyPaths(updateMethod) == ["name", "lastUpdated", "myId"] as String[]
+        getParameterAutoPopulatedProperties(updateMethod) == ['', "lastUpdated", ""] as String[]
     }
 
     void "test compile repository"() {
@@ -77,19 +72,18 @@ interface ProjectRepository extends CrudRepository<Project, ProjectId>{
 """)
         def findByIdMethod = repository.findPossibleMethods("findById").findFirst().get()
         def updateMethod = repository.findPossibleMethods("update").findFirst().get()
-        def paths = findByIdMethod.getValue(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING + "Paths", String[].class).get()
-        def updatePaths = updateMethod.getValue(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING + "Paths", String[].class).get()
 
         expect:"The repository compiles"
         repository != null
-        findByIdMethod.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_TYPE_DEFS) == ['INTEGER', 'INTEGER'] as String[]
-        findByIdMethod.getValue(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING, int[].class).get() == [-1,-1] as int[]
+        getDataTypes(findByIdMethod) == [DataType.INTEGER, DataType.INTEGER]
+        getParameterBindingIndexes(findByIdMethod) == ["0", "0"]
+        getParameterPropertyPaths(findByIdMethod) == ["projectId.departmentId", "projectId.projectId"] as String[]
+        getParameterBindingPaths(findByIdMethod) == ["departmentId", "projectId"] as String[]
 
-        and:"include paths for embedded parameters"
-        paths == ["0.departmentId", "0.projectId"] as String[]
-
-        and:"Don't include paths for regular parameters that are not the embedded id"
-        updatePaths == ['', "0.departmentId", "0.projectId"] as String[]
+        and:
+        getParameterBindingIndexes(updateMethod) == ["1", "0", "0"]
+        getParameterPropertyPaths(updateMethod) == ["name", "projectId.departmentId", "projectId.projectId"] as String[]
+        getParameterBindingPaths(updateMethod) == ["", "departmentId", "projectId"] as String[]
     }
 
     void "test compile repo with composite key relations"() {
@@ -126,14 +120,50 @@ interface UserRoleRepository extends GenericRepository<UserRole, UserRoleId> {
 """)
 
         when:
-        def method = repository.findPossibleMethods(methodName).findFirst().get()
+        def findRoleByUserMethod = repository.findPossibleMethods("findRoleByUser").findFirst().get()
 
         then:
-        method.stringValue(Query).get() == query
+        getQuery(findRoleByUserMethod) == 'SELECT user_role_id_role_."id",user_role_id_role_."name" FROM "user_role" user_role_ INNER JOIN "role" user_role_id_role_ ON user_role_."id_role_id"=user_role_id_role_."id" WHERE (user_role_."id_user_id" = ?)'
+        getParameterBindingIndexes(findRoleByUserMethod) == ["0"]
+        getParameterPropertyPaths(findRoleByUserMethod) == ["id.user.id"] as String[]
+        getParameterBindingPaths(findRoleByUserMethod) == ["id"] as String[]
 
-        where:
-        methodName               | query
-        'findRoleByUser'         | 'SELECT user_role_id_role_."id",user_role_id_role_."name" FROM "user_role" user_role_ INNER JOIN "role" user_role_id_role_ ON user_role_."id_role_id"=user_role_id_role_."id" WHERE (user_role_."id_user_id" = ?)'
+        when:
+        def deleteByIdMethod = repository.findPossibleMethods("deleteById").findFirst().get()
+
+        then:
+        getQuery(deleteByIdMethod) == 'DELETE  FROM "user_role"  WHERE ("id_user_id" = ? AND "id_role_id" = ?)'
+        getParameterBindingIndexes(deleteByIdMethod) == ["0", "0"]
+        getParameterPropertyPaths(deleteByIdMethod) == ["id.user.id", "id.role.id"] as String[]
+        getParameterBindingPaths(deleteByIdMethod) == ["user", "role"] as String[]
+    }
+
+    void "test compile repo with composite key relations2"() {
+        given:
+        def repository = buildRepository('test.EntityWithIdClassRepository', """
+import javax.persistence.Entity;
+import javax.persistence.EmbeddedId;
+import javax.persistence.Column;
+import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder;
+import io.micronaut.data.tck.entities.*;
+import io.micronaut.data.repository.CrudRepository;
+
+@Repository
+@RepositoryConfiguration(queryBuilder=JpaQueryBuilder.class, implicitQueries = true, namedParameters = true)
+@io.micronaut.context.annotation.Executable
+interface EntityWithIdClassRepository extends CrudRepository<EntityWithIdClass, EntityIdClass> {
+        
+}
+""")
+
+        when:
+        def findByIdMethod = repository.findPossibleMethods("findById").findFirst().get()
+
+        then:
+        getQuery(findByIdMethod) == 'SELECT entityWithIdClass_ FROM io.micronaut.data.tck.entities.EntityWithIdClass AS entityWithIdClass_ WHERE (entityWithIdClass_.id1 = :p1 AND entityWithIdClass_.id2 = :p2)'
+        getParameterBindingIndexes(findByIdMethod) == ["0", "0"]
+        getParameterPropertyPaths(findByIdMethod) == ["id1", "id2"] as String[]
+        getParameterBindingPaths(findByIdMethod) == ["id1", "id2"] as String[]
     }
 
     void "test create table"() {

@@ -286,7 +286,7 @@ interface MyRepository {
         mappedName == 'some_id'
         encodedQuery.query ==
                 "SELECT $columns FROM \"person\" person_ WHERE (person_.\"${mappedName}\" $operator ?)"
-        encodedQuery.parameters == ['1': 'test']
+        encodedQuery.parameters == ['1': 'someId']
 
         where:
         type   | method | property | operator
@@ -314,7 +314,7 @@ interface MyRepository {
         encodedQuery != null
         encodedQuery.query ==
                 "SELECT ${projection.toUpperCase()}($aliasName.\"$property\") FROM \"person\" $aliasName WHERE ($aliasName.\"$property\" $operator ?)"
-        encodedQuery.parameters == ['1': 'test']
+        encodedQuery.parameters == ['1': 'name']
 
         where:
         type   | method | property | operator | projection
@@ -487,13 +487,13 @@ interface MyRepository {
     void "test build composite id query"() {
         when:
             QueryBuilder encoder = new SqlQueryBuilder()
-            def q = encoder.buildQuery(QueryModel.from(getRuntimePersistentEntity(Project)).idEq(new QueryParameter("xyz")))
+            def q = encoder.buildQuery(QueryModel.from(getRuntimePersistentEntity(Project)).idEq(new QueryParameter("projectId")))
 
         then:
             q.query == 'SELECT project_."project_id_department_id",project_."project_id_project_id",LOWER(project_.name) AS name,project_.name AS db_name,UPPER(project_.org) AS org FROM "project" project_ WHERE (project_."project_id_department_id" = ? AND project_."project_id_project_id" = ?)'
             q.parameters == [
-                    '1': 'xyz.departmentId',
-                    '2': 'xyz.projectId'
+                    '1': 'projectId.departmentId',
+                    '2': 'projectId.projectId'
             ]
     }
 

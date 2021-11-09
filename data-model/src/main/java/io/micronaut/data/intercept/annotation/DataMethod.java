@@ -155,6 +155,11 @@ public @interface DataMethod {
     String META_MEMBER_PARAMETER_CONVERTERS = "parameterConverters";
 
     /**
+     * Meta member for storing the parameters.
+     */
+    String META_MEMBER_PARAMETERS = "parameters";
+
+    /**
      * @return The child interceptor to use for the method execution.
      */
     Class<? extends DataInterceptor> interceptor();
@@ -226,4 +231,9 @@ public @interface DataMethod {
      * @return The offset
      */
     long pageIndex() default 0;
+
+    /**
+     * @return The query parameters
+     */
+    DataMethodQueryParameter[] parameters() default {};
 }

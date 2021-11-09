@@ -17,6 +17,7 @@ package io.micronaut.data.runtime.operations.internal;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.model.runtime.QueryParameterBinding;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 
 import java.util.Map;
@@ -80,7 +81,7 @@ public abstract class DBOperation {
      * @param <T>              The entity type
      * @return collected values
      */
-    public <T> Map<String, Object> collectAutoPopulatedPreviousValues(RuntimePersistentEntity<T> persistentEntity, T entity) {
+    public <T> Map<QueryParameterBinding, Object> collectAutoPopulatedPreviousValues(RuntimePersistentEntity<T> persistentEntity, T entity) {
         return null;
     }
 
@@ -102,6 +103,6 @@ public abstract class DBOperation {
                                                     PS stmt,
                                                     RuntimePersistentEntity<T> persistentEntity,
                                                     T entity,
-                                                    Map<String, Object> previousValues);
+                                                    Map<QueryParameterBinding, Object> previousValues);
 
 }
