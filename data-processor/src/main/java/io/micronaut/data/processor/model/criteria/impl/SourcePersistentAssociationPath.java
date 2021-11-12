@@ -16,6 +16,8 @@
 package io.micronaut.data.processor.model.criteria.impl;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.annotation.Nullable;
+import io.micronaut.data.annotation.Join;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.jpa.criteria.PersistentAssociationPath;
 import io.micronaut.data.model.jpa.criteria.impl.SelectionVisitor;
@@ -41,11 +43,41 @@ final class SourcePersistentAssociationPath<Owner, E> extends AbstractSourcePers
     private final Path<?> parentRoot;
     private final SourceAssociation association;
     private final List<Association> associations;
+    private io.micronaut.data.annotation.Join.Type associationJoinType;
+    @Nullable
+    private String alias;
 
-    SourcePersistentAssociationPath(Path<?> parentRoot, SourceAssociation association, List<Association> associations) {
+    SourcePersistentAssociationPath(Path<?> parentRoot,
+                                    SourceAssociation association,
+                                    List<Association> associations,
+                                    Join.Type associationJoinType,
+                                    String alias) {
         this.parentRoot = parentRoot;
         this.association = association;
         this.associations = associations;
+        this.associationJoinType = associationJoinType;
+        this.alias = alias;
+    }
+
+    @Override
+    public Join.Type getAssociationJoinType() {
+        return associationJoinType;
+    }
+
+    @Override
+    public void setAssociationJoinType(@Nullable Join.Type type) {
+        this.associationJoinType = type;
+    }
+
+    @Override
+    @Nullable
+    public String getAlias() {
+        return alias;
+    }
+
+    @Override
+    public void setAlias(String alias) {
+        this.alias = alias;
     }
 
     @Override

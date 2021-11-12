@@ -260,6 +260,7 @@ interface MyRepository {
 
         def query = QueryModel.from(entity)
                 .eq("author.nickName", new QueryParameter("test"))
+        query.join("author", Join.Type.DEFAULT, null)
 
         def result = encoder.buildQuery(query)
 

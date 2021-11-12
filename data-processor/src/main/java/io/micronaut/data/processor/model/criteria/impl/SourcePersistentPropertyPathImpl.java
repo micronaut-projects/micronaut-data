@@ -19,6 +19,7 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentPropertyPath;
 import io.micronaut.data.processor.model.SourcePersistentProperty;
+import jakarta.persistence.criteria.Path;
 
 import java.util.List;
 
@@ -32,11 +33,18 @@ import java.util.List;
 @Internal
 final class SourcePersistentPropertyPathImpl<T> extends AbstractPersistentPropertyPath<T> implements SourcePersistentPropertyPath<T> {
 
+    private final Path<?> parentPath;
     private final SourcePersistentProperty sourcePersistentProperty;
 
-    public SourcePersistentPropertyPathImpl(SourcePersistentProperty persistentProperty, List<Association> path) {
+    public SourcePersistentPropertyPathImpl(Path<?> parentPath, List<Association> path, SourcePersistentProperty persistentProperty) {
         super(persistentProperty, path);
+        this.parentPath = parentPath;
         this.sourcePersistentProperty = persistentProperty;
+    }
+
+    @Override
+    public Path<?> getParentPath() {
+        return parentPath;
     }
 
     @Override

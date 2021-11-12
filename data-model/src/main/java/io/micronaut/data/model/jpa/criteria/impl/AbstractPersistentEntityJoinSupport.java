@@ -16,6 +16,8 @@
 package io.micronaut.data.model.jpa.criteria.impl;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
@@ -38,8 +40,7 @@ import jakarta.persistence.metamodel.PluralAttribute;
 import jakarta.persistence.metamodel.SetAttribute;
 import jakarta.persistence.metamodel.SingularAttribute;
 
-import java.util.Collection;
-import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -58,11 +59,13 @@ import static io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils.notSupport
 @Internal
 public abstract class AbstractPersistentEntityJoinSupport<J, E> implements PersistentEntityFrom<J, E>, SelectionVisitable {
 
-    protected final Map<String, Joined> joins = new LinkedHashMap<>();
+    protected final Map<String, PersistentAssociationPath> joins = new LinkedHashMap<>();
 
     public abstract PersistentEntity getPersistentEntity();
 
-    protected abstract <X, Y> PersistentAssociationPath<X, Y> createJoinAssociation(Association association);
+    protected abstract <X, Y> PersistentAssociationPath<X, Y> createJoinAssociation(@NonNull Association association,
+                                                                                    @Nullable io.micronaut.data.annotation.Join.Type type,
+                                                                                    @Nullable String alias);
 
     @Override
     public Path<?> getParentPath() {
@@ -90,27 +93,20 @@ public abstract class AbstractPersistentEntityJoinSupport<J, E> implements Persi
             throw new IllegalStateException("Expected an association for attribute name: " + attributeName);
         }
 
-        Joined joined = joins.computeIfAbsent(attributeName, a -> new Joined(
-                createJoinAssociation((Association) persistentProperty),
-                type,
-                alias));
+        PersistentAssociationPath path = joins.computeIfAbsent(attributeName, a -> createJoinAssociation((Association) persistentProperty, type, alias));
 
         if (type != null && type != io.micronaut.data.annotation.Join.Type.DEFAULT) {
-            joined.type = type;
+            path.setAssociationJoinType(type);
         }
         if (alias != null) {
-            joined.alias = alias;
+            path.setAlias(alias);
         }
-        return (PersistentAssociationPath<X, Y>) joined.association;
+        return (PersistentAssociationPath<X, Y>) path;
     }
 
     @Override
     public Set<Join<E, ?>> getJoins() {
-        return Collections.unmodifiableSet((Set) joins);
-    }
-
-    public final Collection<Joined> getJoinsInternal() {
-        return joins.values();
+        return new HashSet(joins.values());
     }
 
     @Override
@@ -276,43 +272,6 @@ public abstract class AbstractPersistentEntityJoinSupport<J, E> implements Persi
     @Override
     public Class<? extends E> getJavaType() {
         throw notSupportedOperation();
-    }
-
-
-    /**
-     * The data structure representing a join.
-     */
-    @Internal
-    public static final class Joined {
-        private final PersistentAssociationPath<?, ?> association;
-        private io.micronaut.data.annotation.Join.Type type;
-        private String alias;
-
-        public Joined(PersistentAssociationPath<?, ?> association, io.micronaut.data.annotation.Join.Type type, String alias) {
-            this.association = association;
-            this.type = type;
-            this.alias = alias;
-        }
-
-        public PersistentAssociationPath<?, ?> getAssociation() {
-            return association;
-        }
-
-        public io.micronaut.data.annotation.Join.Type getType() {
-            return type;
-        }
-
-        public void setType(io.micronaut.data.annotation.Join.Type type) {
-            this.type = type;
-        }
-
-        public String getAlias() {
-            return alias;
-        }
-
-        public void setAlias(String alias) {
-            this.alias = alias;
-        }
     }
 
 }

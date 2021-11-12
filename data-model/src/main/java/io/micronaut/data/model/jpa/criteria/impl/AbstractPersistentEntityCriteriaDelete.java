@@ -16,12 +16,14 @@
 package io.micronaut.data.model.jpa.criteria.impl;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.data.annotation.Join;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.jpa.criteria.IExpression;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaDelete;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.ConjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.query.QueryModelPredicateVisitor;
+import io.micronaut.data.model.jpa.criteria.impl.util.Joiner;
 import io.micronaut.data.model.query.QueryModel;
 import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.QueryResult;
@@ -32,7 +34,9 @@ import jakarta.persistence.metamodel.EntityType;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -55,23 +59,21 @@ public abstract class AbstractPersistentEntityCriteriaDelete<T> implements Persi
             throw new IllegalStateException("The root entity must be specified!");
         }
         QueryModel qm = QueryModel.from(entityRoot.getPersistentEntity());
+        Joiner joiner = new Joiner();
         if (predicate instanceof PredicateVisitable) {
-            ((PredicateVisitable) predicate).accept(new QueryModelPredicateVisitor(qm));
+            PredicateVisitable predicate = (PredicateVisitable) this.predicate;
+            predicate.accept(new QueryModelPredicateVisitor(qm));
+            predicate.accept(joiner);
         }
-        join(qm, (AbstractPersistentEntityJoinSupport<?, ?>) entityRoot);
+        for (Map.Entry<String, Joiner.Joined> e : joiner.getJoins().entrySet()) {
+            qm.join(e.getKey(), Optional.ofNullable(e.getValue().getType()).orElse(Join.Type.DEFAULT), e.getValue().getAlias());
+        }
         return qm;
     }
 
     @Override
     public QueryResult buildQuery(QueryBuilder queryBuilder) {
         return queryBuilder.buildDelete(getQueryModel());
-    }
-
-    private void join(QueryModel qm, AbstractPersistentEntityJoinSupport<?, ?> joinEntityRoot) {
-        for (AbstractPersistentEntityJoinSupport.Joined join : joinEntityRoot.getJoinsInternal()) {
-            qm.join(join.getAssociation().getPathAsString(), join.getType(), join.getAlias());
-            join(qm, (AbstractPersistentEntityJoinSupport<?, ?>) join.getAssociation());
-        }
     }
 
     @Override

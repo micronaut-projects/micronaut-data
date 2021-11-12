@@ -43,9 +43,9 @@ interface RuntimePersistentEntityPath<T> extends PersistentEntityPath<T> {
             List<Association> newAssociations = new ArrayList<>(associations.size() + 1);
             newAssociations.addAll(associations);
             newAssociations.add(associationPath.getAssociation());
-            return new RuntimePersistentPropertyPathImpl<>(property, newAssociations);
+            return new RuntimePersistentPropertyPathImpl<>(this, newAssociations, property);
         }
-        return new RuntimePersistentPropertyPathImpl<>(property, Collections.emptyList());
+        return new RuntimePersistentPropertyPathImpl<>(this, Collections.emptyList(), property);
     }
 
 }

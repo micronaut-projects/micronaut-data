@@ -578,11 +578,6 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
 
     @Nullable
     protected final <T> io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<Object> findProperty(PersistentEntityRoot<T> root, String propertyName) {
-        return findProperty(root, propertyName, false);
-    }
-
-    @Nullable
-    protected final <T> io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<Object> findProperty(PersistentEntityRoot<T> root, String propertyName, boolean join) {
         propertyName = NameUtils.decapitalize(propertyName);
         PersistentEntity entity = root.getPersistentEntity();
         PersistentProperty prop = entity.getPropertyByName(propertyName);
@@ -604,19 +599,11 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
 
         PersistentEntityFrom<?, ?> path = root;
         for (Association association : pp.getAssociations()) {
-            if (join) {
-                path = path.join(association.getName(), Join.Type.DEFAULT);
-            } else {
-                path = path.join(association.getName());
-            }
+            path = path.join(association.getName());
         }
         Path<Object> exp;
         if (pp.getProperty() instanceof Association && ((Association) pp.getProperty()).getKind() != Relation.Kind.EMBEDDED) {
-            if (join) {
-                exp = path.join(pp.getProperty().getName(), Join.Type.DEFAULT);
-            } else {
-                exp = path.join(pp.getProperty().getName());
-            }
+            exp = path.join(pp.getProperty().getName());
         } else {
             exp = path.get(pp.getProperty().getName());
         }

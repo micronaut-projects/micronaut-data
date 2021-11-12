@@ -112,7 +112,7 @@ interface MyInterface extends GenericRepository<Book, Long> {
                 "SELECT ${alias} FROM $Book.name AS ${alias} JOIN FETCH ${alias}.author $authorAlias WHERE (${alias}.title = :p1)"
 
         repository.getRequiredMethod("getByTitle", String).synthesize(Query).value() ==
-                "SELECT ${alias} FROM $Book.name AS ${alias} JOIN FETCH ${alias}.publisher $publisherAlias JOIN FETCH ${alias}.author $authorAlias WHERE (${alias}.title = :p1)"
+                "SELECT ${alias} FROM $Book.name AS ${alias} JOIN FETCH ${alias}.author $authorAlias JOIN FETCH ${alias}.publisher $publisherAlias WHERE (${alias}.title = :p1)"
 
     }
 }

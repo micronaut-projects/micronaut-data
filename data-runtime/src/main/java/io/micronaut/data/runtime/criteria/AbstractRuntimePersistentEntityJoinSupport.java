@@ -27,8 +27,10 @@ abstract class AbstractRuntimePersistentEntityJoinSupport<T, J> extends Abstract
     protected abstract List<Association> getCurrentPath();
 
     @Override
-    protected <X, Y> PersistentAssociationPath<X, Y> createJoinAssociation(Association association) {
-        return new RuntimePersistentAssociationPath<>(this, (RuntimeAssociation) association, getCurrentPath());
+    protected <X, Y> PersistentAssociationPath<X, Y> createJoinAssociation(Association association,
+                                                                           io.micronaut.data.annotation.Join.Type associationJoinType,
+                                                                           String alias) {
+        return new RuntimePersistentAssociationPath<>(this, (RuntimeAssociation) association, getCurrentPath(), associationJoinType, alias);
     }
 
 }
