@@ -67,6 +67,7 @@ public class ColumnIndexR2dbcResultReader implements ResultReader<Row, Integer> 
         switch (dataType) {
             case STRING:
             case UUID:
+                return readUUID(resultSet, index);
             case JSON:
                 return readString(resultSet, index);
             case LONG:
