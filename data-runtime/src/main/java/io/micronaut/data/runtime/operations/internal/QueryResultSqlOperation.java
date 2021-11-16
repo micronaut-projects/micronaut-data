@@ -19,7 +19,7 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.reflect.ClassUtils;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.query.builder.QueryResult;
-import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.runtime.QueryParameterBinding;
 
 import java.util.stream.Collectors;
@@ -33,15 +33,15 @@ public class QueryResultSqlOperation extends StoredSqlOperation {
     /**
      * Creates a new instance.
      *
-     * @param dialect            The dialect
+     * @param queryBuilder       The queryBuilder
      * @param queryResult        The query result
      */
-    public QueryResultSqlOperation(Dialect dialect, QueryResult queryResult) {
-        super(dialect,
+    public QueryResultSqlOperation(SqlQueryBuilder queryBuilder, QueryResult queryResult) {
+        super(queryBuilder,
                 queryResult.getQuery(),
+                queryResult.getParameterBindings().stream().anyMatch(io.micronaut.data.model.query.builder.QueryParameterBinding::isExpandable) ? queryResult.getQueryParts().toArray(new String[0]) : null,
                 queryResult.getParameterBindings().stream().map(QueryResultSqlOperation::map).collect(Collectors.toList()),
-                false
-        );
+                false);
     }
 
     private static QueryParameterBinding map(io.micronaut.data.model.query.builder.QueryParameterBinding binding) {

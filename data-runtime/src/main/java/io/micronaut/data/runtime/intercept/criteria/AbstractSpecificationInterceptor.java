@@ -157,18 +157,24 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
             );
         }
 
+        String[] queryParts = queryParameters.stream().anyMatch(QueryParameterBinding::isExpandable) ? queryResult.getQueryParts().toArray(new String[0]) : null;
+
         StoredQuery<E, QR> storedQuery;
         if (type == Type.COUNT) {
-            storedQuery = (StoredQuery<E, QR>) createCountStoredQuery(context, rootEntity, query, queryParameters);
+            storedQuery = (StoredQuery<E, QR>) createCountStoredQuery(context, rootEntity, query, queryParts, queryParameters);
         } else if (type == Type.FIND_ALL) {
-            storedQuery = createFindAllStoredQuery(context, rootEntity, query, queryParameters, !pageable.isUnpaged());
+            storedQuery = createFindAllStoredQuery(context, rootEntity, query, queryParts, queryParameters, !pageable.isUnpaged());
         } else {
-            storedQuery = createFindOneStoredQuery(context, rootEntity, query, queryParameters);
+            storedQuery = createFindOneStoredQuery(context, rootEntity, query, queryParts, queryParameters);
         }
         return new DefaultPreparedQuery<E, QR>(context, storedQuery, query, pageable, false);
     }
 
-    private <E, QR> StoredQuery<E, QR> createFindOneStoredQuery(MethodInvocationContext<T, R> context, Class<Object> rootEntity, String query, List<QueryParameterBinding> queryParameters) {
+    private <E, QR> StoredQuery<E, QR> createFindOneStoredQuery(MethodInvocationContext<T, R> context,
+                                                                Class<Object> rootEntity,
+                                                                String query,
+                                                                String[] queryParts,
+                                                                List<QueryParameterBinding> queryParameters) {
         return new StoredQuery<E, QR>() {
             @Override
             public Class<E> getRootEntity() {
@@ -183,6 +189,11 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
             @Override
             public String getQuery() {
                 return query;
+            }
+
+            @Override
+            public String[] getExpandableQueryParts() {
+                return queryParts;
             }
 
             @Override
@@ -234,7 +245,12 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
         };
     }
 
-    private <E, QR> StoredQuery<E, QR> createFindAllStoredQuery(MethodInvocationContext<T, R> context, Class<Object> rootEntity, String query, List<QueryParameterBinding> queryParameters, boolean hasPageable) {
+    private <E, QR> StoredQuery<E, QR> createFindAllStoredQuery(MethodInvocationContext<T, R> context,
+                                                                Class<Object> rootEntity,
+                                                                String query,
+                                                                String[] queryParts,
+                                                                List<QueryParameterBinding> queryParameters,
+                                                                boolean hasPageable) {
         return new StoredQuery<E, QR>() {
             @Override
             public Class<E> getRootEntity() {
@@ -249,6 +265,11 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
             @Override
             public String getQuery() {
                 return query;
+            }
+
+            @Override
+            public String[] getExpandableQueryParts() {
+                return queryParts;
             }
 
             @Override
@@ -300,7 +321,11 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
         };
     }
 
-    private StoredQuery<Object, Long> createCountStoredQuery(MethodInvocationContext<T, R> context, Class<Object> rootEntity, String query, List<QueryParameterBinding> queryParameters) {
+    private StoredQuery<Object, Long> createCountStoredQuery(MethodInvocationContext<T, R> context,
+                                                             Class<Object> rootEntity,
+                                                             String query,
+                                                             String[] queryParts,
+                                                             List<QueryParameterBinding> queryParameters) {
         return new StoredQuery<Object, Long>() {
 
             @Override
@@ -316,6 +341,11 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
             @Override
             public String getQuery() {
                 return query;
+            }
+
+            @Override
+            public String[] getExpandableQueryParts() {
+                return queryParts;
             }
 
             @Override
@@ -507,6 +537,11 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
                 previousInitialized = true;
             }
             return previousPopulatedValueParameter;
+        }
+
+        @Override
+        public boolean isExpandable() {
+            return p.isExpandable();
         }
     }
 }

@@ -357,10 +357,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     }
 
     @Override
-    protected void prepareStatement(Connection connection, String query, DBOperation1<PreparedStatement, SQLException> fn) throws SQLException {
-        try (PreparedStatement stmt = connection.prepareStatement(query)) {
-            fn.process(stmt);
-        }
+    protected AutoCloseable autoCloseable(PreparedStatement preparedStatement) {
+        return preparedStatement;
     }
 
     @Override
@@ -672,7 +670,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             RuntimePersistentEntity<T> persistentEntity = getEntity(operation.getRootEntity());
             if (isSupportsBatchDelete(persistentEntity, dialect)) {
                 JdbcEntitiesOperations<T> op = new JdbcEntitiesOperations<>(getEntity(operation.getRootEntity()), operation);
-                StoredSqlOperation dbOperation = new StoredQuerySqlOperation(dialect, operation.getStoredQuery());
+                StoredSqlOperation dbOperation = new StoredQuerySqlOperation(queryBuilder, operation.getStoredQuery());
                 deleteInBatch(status.getConnection(), op, dbOperation);
                 return op.rowsUpdated;
             }
@@ -680,8 +678,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                     operation.split().stream()
                             .map(deleteOp -> {
                                 JdbcEntityOperations<T> op = new JdbcEntityOperations<>(getEntity(deleteOp.getRootEntity()), deleteOp.getEntity());
-                                StoredSqlOperation dbOperation = new StoredQuerySqlOperation(dialect, operation.getStoredQuery());
-                                deleteOne(status.getConnection(), op, dbOperation, queryBuilder);
+                                StoredSqlOperation dbOperation = new StoredQuerySqlOperation(queryBuilder, operation.getStoredQuery());
+                                deleteOne(status.getConnection(), op, dbOperation);
                                 return op.rowsUpdated;
                             })
             );
@@ -690,12 +688,11 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
 
     @Override
     public <T> int delete(@NonNull DeleteOperation<T> operation) {
-        SqlQueryBuilder sqlQueryBuilder = queryBuilders.getOrDefault(operation.getRepositoryType(), DEFAULT_SQL_BUILDER);
-        Dialect dialect = sqlQueryBuilder.dialect();
+        SqlQueryBuilder queryBuilder = queryBuilders.getOrDefault(operation.getRepositoryType(), DEFAULT_SQL_BUILDER);
         return transactionOperations.executeWrite(status -> {
             JdbcEntityOperations<T> op = new JdbcEntityOperations<>(getEntity(operation.getRootEntity()), operation.getEntity());
-            StoredSqlOperation dbOperation = new StoredQuerySqlOperation(dialect, operation.getStoredQuery());
-            deleteOne(status.getConnection(), op, dbOperation, sqlQueryBuilder);
+            StoredSqlOperation dbOperation = new StoredQuerySqlOperation(queryBuilder, operation.getStoredQuery());
+            deleteOne(status.getConnection(), op, dbOperation);
             return op;
         }).rowsUpdated;
     }
@@ -706,8 +703,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         final AnnotationMetadata annotationMetadata = operation.getAnnotationMetadata();
         final Set<Object> persisted = new HashSet<>(10);
         final Class<?> repositoryType = operation.getRepositoryType();
-        final Dialect dialect = queryBuilders.getOrDefault(repositoryType, DEFAULT_SQL_BUILDER).dialect();
-        StoredSqlOperation dbOperation = new StoredQuerySqlOperation(dialect, operation.getStoredQuery());
+        SqlQueryBuilder queryBuilder = queryBuilders.getOrDefault(repositoryType, DEFAULT_SQL_BUILDER);
+        StoredSqlOperation dbOperation = new StoredQuerySqlOperation(queryBuilder, operation.getStoredQuery());
         return transactionOperations.executeWrite(status -> {
             JdbcEntityOperations<T> op = new JdbcEntityOperations<>(getEntity(operation.getRootEntity()), operation.getEntity());
             updateOne(status.getConnection(), annotationMetadata, repositoryType, dbOperation, Collections.emptyList(), persisted, op);
@@ -722,10 +719,10 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             final AnnotationMetadata annotationMetadata = operation.getAnnotationMetadata();
             final Set<Object> persisted = new HashSet<>(10);
             final Class<?> repositoryType = operation.getRepositoryType();
-            final Dialect dialect = queryBuilders.getOrDefault(repositoryType, DEFAULT_SQL_BUILDER).dialect();
+            SqlQueryBuilder queryBuilder = queryBuilders.getOrDefault(repositoryType, DEFAULT_SQL_BUILDER);
             final RuntimePersistentEntity<T> persistentEntity = getEntity(operation.getRootEntity());
-            StoredSqlOperation dbOperation = new StoredQuerySqlOperation(dialect, operation.getStoredQuery());
-            if (!isSupportsBatchUpdate(persistentEntity, dialect)) {
+            StoredSqlOperation dbOperation = new StoredQuerySqlOperation(queryBuilder, operation.getStoredQuery());
+            if (!isSupportsBatchUpdate(persistentEntity, queryBuilder.dialect())) {
                 return operation.split()
                         .stream()
                         .map(updateOp -> {
@@ -746,8 +743,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     public <T> T persist(@NonNull InsertOperation<T> operation) {
         final AnnotationMetadata annotationMetadata = operation.getAnnotationMetadata();
         final Class<?> repositoryType = operation.getRepositoryType();
-        final Dialect dialect = queryBuilders.getOrDefault(repositoryType, DEFAULT_SQL_BUILDER).dialect();
-        StoredSqlOperation dbOperation = new StoredQuerySqlOperation(dialect, operation.getStoredQuery());
+        SqlQueryBuilder queryBuilder = queryBuilders.getOrDefault(repositoryType, DEFAULT_SQL_BUILDER);
+        StoredSqlOperation dbOperation = new StoredQuerySqlOperation(queryBuilder, operation.getStoredQuery());
         return transactionOperations.executeWrite((status) -> {
             JdbcEntityOperations<T> op = new JdbcEntityOperations<>(getEntity(operation.getRootEntity()), operation.getEntity());
             persistOne(status.getConnection(), annotationMetadata, repositoryType, dbOperation, Collections.emptyList(), new HashSet<>(5), op);
@@ -788,11 +785,12 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         return transactionOperations.executeWrite(status -> {
             final AnnotationMetadata annotationMetadata = operation.getAnnotationMetadata();
             final Class<?> repositoryType = operation.getRepositoryType();
-            final Dialect dialect = queryBuilders.getOrDefault(repositoryType, DEFAULT_SQL_BUILDER).dialect();
-            StoredSqlOperation dbOperation = new StoredQuerySqlOperation(dialect, operation.getStoredQuery());
+            SqlQueryBuilder sqlQueryBuilder = queryBuilders.getOrDefault(repositoryType, DEFAULT_SQL_BUILDER);
+            final Dialect dialect = sqlQueryBuilder.dialect();
+            StoredSqlOperation dbOperation = new StoredQuerySqlOperation(sqlQueryBuilder, operation.getStoredQuery());
             final RuntimePersistentEntity<T> persistentEntity = getEntity(operation.getRootEntity());
             final HashSet<Object> persisted = new HashSet<>(5);
-            if (!isSupportsBatchInsert(persistentEntity, dialect)) {
+            if (!isSupportsBatchInsert(persistentEntity, sqlQueryBuilder.dialect())) {
                 return operation.split().stream()
                         .map(persistOp -> {
                             JdbcEntityOperations<T> op = new JdbcEntityOperations<>(persistentEntity, persistOp.getEntity());
@@ -1009,10 +1007,11 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         }
 
         @Override
-        protected void checkForParameterToBeExpanded(DBOperation sqlOperation, SqlQueryBuilder queryBuilder) {
+        protected PreparedStatement prepare(Connection connection, DBOperation sqlOperation) throws SQLException {
             if (StoredSqlOperation.class.isInstance(sqlOperation)) {
-                ((StoredSqlOperation) sqlOperation).checkForParameterToBeExpanded(persistentEntity, entity, queryBuilder);
+                ((StoredSqlOperation) sqlOperation).checkForParameterToBeExpanded(persistentEntity, entity);
             }
+            return connection.prepareStatement(sqlOperation.getQuery());
         }
 
         @Override
@@ -1129,6 +1128,11 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                 }
                 d.previousValues = sqlOperation.collectAutoPopulatedPreviousValues(persistentEntity, d.entity);
             }
+        }
+
+        @Override
+        protected PreparedStatement prepare(Connection connection, DBOperation sqlOperation) throws SQLException {
+            return connection.prepareStatement(sqlOperation.getQuery());
         }
 
         @Override

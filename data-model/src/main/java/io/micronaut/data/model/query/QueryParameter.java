@@ -101,6 +101,11 @@ public class QueryParameter implements Named, BindingParameter {
             public DataType getDataType() {
                 return outgoingQueryParameterProperty.getProperty().getDataType();
             }
+
+            @Override
+            public boolean isExpandable() {
+                return bindingContext.isExpandable();
+            }
         };
     }
 

@@ -40,14 +40,19 @@ import java.lang.annotation.Inherited;
 public @interface DataMethod {
 
     /**
+     * The member that holds expandable query parts.
+     */
+    String META_MEMBER_EXPANDABLE_QUERY = "expandableQuery";
+
+    /**
+     * The member that holds expandable count query parts.
+     */
+    String META_MEMBER_EXPANDABLE_COUNT_QUERY = "expandableCountQuery";
+
+    /**
      * The member that holds the count query.
      */
     String META_MEMBER_COUNT_QUERY = "countQuery";
-
-    /**
-     * The member that holds the count parameters.
-     */
-    String META_MEMBER_COUNT_PARAMETERS = "countParameters";
 
     /**
      * The member name that holds the result type.

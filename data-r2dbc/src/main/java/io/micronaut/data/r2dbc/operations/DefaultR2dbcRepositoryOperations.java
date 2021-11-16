@@ -129,6 +129,7 @@ import java.util.stream.Stream;
 @Internal
 final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperations<Connection, Row, Statement, RuntimeException> implements BlockingReactorRepositoryOperations, R2dbcRepositoryOperations, R2dbcOperations, ReactiveTransactionOperations<Connection> {
     private static final Logger LOG = LoggerFactory.getLogger(DefaultR2dbcRepositoryOperations.class);
+    private static final AutoCloseable NOOP = () -> { };
     private final ConnectionFactory connectionFactory;
     private final ReactorReactiveRepositoryOperations reactiveOperations;
     private final String dataSourceName;
@@ -374,8 +375,8 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
     }
 
     @Override
-    protected void prepareStatement(Connection connection, String query, DBOperation1<Statement, RuntimeException> fn) {
-        fn.process(connection.createStatement(query));
+    protected AutoCloseable autoCloseable(Statement statement) {
+        return NOOP;
     }
 
     @Override
@@ -821,11 +822,10 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         @Override
         public <T> Mono<Number> delete(@NonNull DeleteOperation<T> operation) {
             SqlQueryBuilder queryBuilder = queryBuilders.getOrDefault(operation.getRepositoryType(), DEFAULT_SQL_BUILDER);
-            Dialect dialect = queryBuilder.dialect();
             return Flux.<Number>from(withNewOrExistingTransaction(operation, true, status -> {
                 R2dbcEntityOperations<T> op = new R2dbcEntityOperations<>(getEntity(operation.getRootEntity()), operation.getEntity());
-                StoredSqlOperation dbOperation = new StoredQuerySqlOperation(dialect, operation.getStoredQuery());
-                deleteOne(status.getConnection(), op, dbOperation, queryBuilder);
+                StoredSqlOperation dbOperation = new StoredQuerySqlOperation(queryBuilder, operation.getStoredQuery());
+                deleteOne(status.getConnection(), op, dbOperation);
                 return op.getRowsUpdated();
             })).as(DefaultR2dbcRepositoryOperations::toSingleResult);
         }
@@ -836,11 +836,11 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             return Flux.from(withNewOrExistingTransaction(operation, true, status -> {
                 final AnnotationMetadata annotationMetadata = operation.getAnnotationMetadata();
                 final Class<?> repositoryType = operation.getRepositoryType();
-                final Dialect dialect = queryBuilders.getOrDefault(repositoryType, DEFAULT_SQL_BUILDER).dialect();
-                final DBOperation sqlOperation = new StoredQuerySqlOperation(dialect, operation.getStoredQuery());
+                SqlQueryBuilder queryBuilder = queryBuilders.getOrDefault(repositoryType, DEFAULT_SQL_BUILDER);
+                final DBOperation sqlOperation = new StoredQuerySqlOperation(queryBuilder, operation.getStoredQuery());
                 final RuntimePersistentEntity<T> persistentEntity = getEntity(operation.getRootEntity());
                 final HashSet<Object> persisted = new HashSet<>(5);
-                if (!isSupportsBatchInsert(persistentEntity, dialect)) {
+                if (!isSupportsBatchInsert(persistentEntity, queryBuilder.dialect())) {
                     return concatMono(
                             operation.split().stream()
                                     .map(persistOp -> {
@@ -882,9 +882,9 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         @Override
         public <T> Mono<T> persist(@NonNull InsertOperation<T> operation) {
             final AnnotationMetadata annotationMetadata = operation.getAnnotationMetadata();
-            final Dialect dialect = queryBuilders.getOrDefault(operation.getRepositoryType(), DEFAULT_SQL_BUILDER).dialect();
+            SqlQueryBuilder queryBuilder = queryBuilders.getOrDefault(operation.getRepositoryType(), DEFAULT_SQL_BUILDER);
             final Set<Object> persisted = new HashSet<>(10);
-            StoredSqlOperation dbOperation = new StoredQuerySqlOperation(dialect, operation.getStoredQuery());
+            StoredSqlOperation dbOperation = new StoredQuerySqlOperation(queryBuilder, operation.getStoredQuery());
             return Flux.from(withNewOrExistingTransaction(operation, true, status -> {
                 R2dbcEntityOperations<T> op = new R2dbcEntityOperations<>(getEntity(operation.getRootEntity()), operation.getEntity());
                 persistOne(status.getConnection(), annotationMetadata, operation.getRepositoryType(), dbOperation, Collections.emptyList(), persisted, op);
@@ -896,8 +896,8 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         @Override
         public <T> Mono<T> update(@NonNull UpdateOperation<T> operation) {
             final AnnotationMetadata annotationMetadata = operation.getAnnotationMetadata();
-            final Dialect dialect = queryBuilders.getOrDefault(operation.getRepositoryType(), DEFAULT_SQL_BUILDER).dialect();
-            StoredSqlOperation dbOperation = new StoredQuerySqlOperation(dialect, operation.getStoredQuery());
+            SqlQueryBuilder queryBuilder = queryBuilders.getOrDefault(operation.getRepositoryType(), DEFAULT_SQL_BUILDER);
+            StoredSqlOperation dbOperation = new StoredQuerySqlOperation(queryBuilder, operation.getStoredQuery());
             final Set<Object> persisted = new HashSet<>(10);
             final Class<?> repositoryType = operation.getRepositoryType();
             return Flux.from(withNewOrExistingTransaction(operation, true, status -> {
@@ -985,11 +985,10 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         public <T> Mono<Number> deleteAll(DeleteBatchOperation<T> operation) {
             return Flux.<Number>from(withNewOrExistingTransaction(operation, true, status -> {
                 SqlQueryBuilder queryBuilder = queryBuilders.getOrDefault(operation.getRepositoryType(), DEFAULT_SQL_BUILDER);
-                Dialect dialect = queryBuilder.dialect();
                 RuntimePersistentEntity<T> persistentEntity = getEntity(operation.getRootEntity());
-                if (isSupportsBatchDelete(persistentEntity, dialect)) {
+                if (isSupportsBatchDelete(persistentEntity, queryBuilder.dialect())) {
                     R2dbcEntitiesOperations<T> op = new R2dbcEntitiesOperations<>(persistentEntity, operation);
-                    StoredSqlOperation dbOperation = new StoredQuerySqlOperation(dialect, operation.getStoredQuery());
+                    StoredSqlOperation dbOperation = new StoredQuerySqlOperation(queryBuilder, operation.getStoredQuery());
                     deleteInBatch(status.getConnection(), op, dbOperation);
                     return op.getRowsUpdated();
                 }
@@ -997,8 +996,8 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                         operation.split().stream()
                                 .map(deleteOp -> {
                                     R2dbcEntityOperations<T> op = new R2dbcEntityOperations<>(persistentEntity, deleteOp.getEntity());
-                                    StoredSqlOperation dbOperation = new StoredQuerySqlOperation(dialect, operation.getStoredQuery());
-                                    deleteOne(status.getConnection(), op, dbOperation, queryBuilder);
+                                    StoredSqlOperation dbOperation = new StoredQuerySqlOperation(queryBuilder, operation.getStoredQuery());
+                                    deleteOne(status.getConnection(), op, dbOperation);
                                     return op.getRowsUpdated();
                                 })
                 );
@@ -1012,10 +1011,10 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                 final AnnotationMetadata annotationMetadata = operation.getAnnotationMetadata();
                 final Set<Object> persisted = new HashSet<>(10);
                 final Class<?> repositoryType = operation.getRepositoryType();
-                final Dialect dialect = queryBuilders.getOrDefault(repositoryType, DEFAULT_SQL_BUILDER).dialect();
+                SqlQueryBuilder queryBuilder = queryBuilders.getOrDefault(repositoryType, DEFAULT_SQL_BUILDER);
                 final RuntimePersistentEntity<T> persistentEntity = getEntity(operation.getRootEntity());
-                StoredSqlOperation dbOperation = new StoredQuerySqlOperation(dialect, operation.getStoredQuery());
-                if (!isSupportsBatchUpdate(persistentEntity, dialect)) {
+                StoredSqlOperation dbOperation = new StoredQuerySqlOperation(queryBuilder, operation.getStoredQuery());
+                if (!isSupportsBatchUpdate(persistentEntity, queryBuilder.dialect())) {
                     return concatMono(
                             operation.split().stream()
                                     .map(updateOp -> {
@@ -1117,16 +1116,17 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         }
 
         @Override
-        protected void checkForParameterToBeExpanded(DBOperation sqlOperation, SqlQueryBuilder queryBuilder) {
+        protected Statement prepare(Connection connection, DBOperation sqlOperation) throws RuntimeException {
             if (StoredSqlOperation.class.isInstance(sqlOperation)) {
                 data = data.map(d -> {
                     if (d.vetoed) {
                         return d;
                     }
-                    ((StoredSqlOperation) sqlOperation).checkForParameterToBeExpanded(persistentEntity, d.entity, queryBuilder);
+                    ((StoredSqlOperation) sqlOperation).checkForParameterToBeExpanded(persistentEntity, d.entity);
                     return d;
                 });
             }
+            return connection.createStatement(sqlOperation.getQuery());
         }
 
         @Override
@@ -1269,6 +1269,11 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                 d.previousValues = dbOperation.collectAutoPopulatedPreviousValues(persistentEntity, d.entity);
                 return d;
             });
+        }
+
+        @Override
+        protected Statement prepare(Connection connection, DBOperation sqlOperation) throws RuntimeException {
+            return connection.createStatement(sqlOperation.getQuery());
         }
 
         @Override

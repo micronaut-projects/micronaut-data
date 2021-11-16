@@ -16,6 +16,7 @@
 package io.micronaut.data.runtime.operations.internal;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.beans.BeanWrapper;
 import io.micronaut.core.type.Argument;
@@ -35,11 +36,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -50,26 +49,34 @@ public class StoredSqlOperation extends DBOperation {
 
     protected final List<QueryParameterBinding> queryParameterBindings;
     protected final boolean isOptimisticLock;
-
-    protected boolean expandedQuery;
+    protected final String[] expandableQueryParts;
+    protected final boolean expandableQuery;
+    protected final SqlQueryBuilder queryBuilder;
 
     /**
      * Creates a new instance.
      *
-     * @param dialect                The dialect.
+     * @param queryBuilder           The queryBuilder.
      * @param query                  The query
      * @param queryParameterBindings The query parameters
      * @param isOptimisticLock       Is optimistic locking
      */
-    protected StoredSqlOperation(Dialect dialect,
+    protected StoredSqlOperation(SqlQueryBuilder queryBuilder,
                                  String query,
+                                 @Nullable String[] expandableQueryParts,
                                  List<QueryParameterBinding> queryParameterBindings,
                                  boolean isOptimisticLock) {
-        super(query, dialect);
+        super(query, queryBuilder.dialect());
+        this.queryBuilder = queryBuilder;
         Objects.requireNonNull(query, "Query cannot be null");
         Objects.requireNonNull(dialect, "Dialect cannot be null");
         this.queryParameterBindings = queryParameterBindings;
         this.isOptimisticLock = isOptimisticLock;
+        this.expandableQueryParts = expandableQueryParts;
+        this.expandableQuery = expandableQueryParts != null && expandableQueryParts.length > 1;
+        if (expandableQuery && expandableQueryParts.length != queryParameterBindings.size() + 1) {
+            throw new IllegalStateException("Expandable query parts size should be the same as parameters size + 1. " + expandableQueryParts.length + " != 1 + " + queryParameterBindings.size() + " " + query + " " + Arrays.toString(expandableQueryParts));
+        }
     }
 
     @Override
@@ -106,49 +113,63 @@ public class StoredSqlOperation extends DBOperation {
      *
      * @param persistentEntity The persistentEntity
      * @param entity           The entity instance
-     * @param queryBuilder     The queryBuilder
      * @param <T>              The entity type
      */
-    public <T> void checkForParameterToBeExpanded(RuntimePersistentEntity<T> persistentEntity, T entity, SqlQueryBuilder queryBuilder) {
-        Iterator<Object> valuesIt = new Iterator<Object>() {
-
-            final Iterator<QueryParameterBinding> queryBindingIterator = queryParameterBindings.iterator();
-
-            @Override
-            public boolean hasNext() {
-                return queryBindingIterator.hasNext();
-            }
-
-            @Override
-            public Object next() {
-                String[] stringPropertyPath = queryBindingIterator.next().getRequiredPropertyPath();
-                PersistentPropertyPath propertyPath = persistentEntity.getPropertyPath(stringPropertyPath);
-                if (propertyPath == null) {
-                    throw new IllegalStateException("Unrecognized path: " + String.join(".", stringPropertyPath));
-                }
-                Object value = entity;
-                for (Association association : propertyPath.getAssociations()) {
-                    RuntimePersistentProperty<?> property = (RuntimePersistentProperty) association;
-                    BeanProperty beanProperty = property.getProperty();
-                    value = beanProperty.get(value);
-                    if (value == null) {
-                        break;
+    public <T> void checkForParameterToBeExpanded(RuntimePersistentEntity<T> persistentEntity, T entity) {
+        if (expandableQuery) {
+            String positionalParameterFormat = queryBuilder.positionalParameterFormat();
+            StringBuilder q = new StringBuilder(expandableQueryParts[0]);
+            int queryParamIndex = 1;
+            int inx = 1;
+            for (QueryParameterBinding parameter : queryParameterBindings) {
+                DataType dataType = parameter.getDataType();
+                if (dataType != null && dataType.isArray() && dataType != DataType.BYTE_ARRAY) {
+                    q.append(String.format(positionalParameterFormat, inx++));
+                } else {
+                    int size = Math.max(1, getQueryParameterValueSize(parameter, persistentEntity, entity));
+                    for (int k = 0; k < size; k++) {
+                        q.append(String.format(positionalParameterFormat, inx++));
+                        if (k + 1 != size) {
+                            q.append(",");
+                        }
                     }
                 }
-                RuntimePersistentProperty<?> property = (RuntimePersistentProperty<?>) propertyPath.getProperty();
-                if (value != null) {
-                    BeanProperty beanProperty = property.getProperty();
-                    value = beanProperty.get(value);
-                }
-                return value;
+                q.append(expandableQueryParts[queryParamIndex++]);
             }
-
-        };
-        String q = expandMultipleValues(queryParameterBindings.size(), valuesIt, query, queryBuilder);
-        if (q != query) {
-            expandedQuery = true;
-            query = q;
+            this.query = q.toString();
         }
+    }
+
+    /**
+     * Get parameter value size.
+     *
+     * @param parameter        The parameter
+     * @param persistentEntity The persistent entity
+     * @param entity           The entity object
+     * @param <T>              The type
+     * @return The size of the value
+     */
+    protected <T> int getQueryParameterValueSize(QueryParameterBinding parameter, RuntimePersistentEntity<T> persistentEntity, T entity) {
+        String[] stringPropertyPath = parameter.getRequiredPropertyPath();
+        PersistentPropertyPath propertyPath = persistentEntity.getPropertyPath(stringPropertyPath);
+        if (propertyPath == null) {
+            throw new IllegalStateException("Unrecognized path: " + String.join(".", stringPropertyPath));
+        }
+        Object value = entity;
+        for (Association association : propertyPath.getAssociations()) {
+            RuntimePersistentProperty<?> property = (RuntimePersistentProperty) association;
+            BeanProperty beanProperty = property.getProperty();
+            value = beanProperty.get(value);
+            if (value == null) {
+                break;
+            }
+        }
+        RuntimePersistentProperty<?> property = (RuntimePersistentProperty<?>) propertyPath.getProperty();
+        if (value != null) {
+            BeanProperty beanProperty = property.getProperty();
+            value = beanProperty.get(value);
+        }
+        return sizeOf(value);
     }
 
     @Override
@@ -199,12 +220,13 @@ public class StoredSqlOperation extends DBOperation {
                 type = identity.getDataType();
             }
             value = context.convert(connection, value, property);
+
             index = setStatementParameter(context, stmt, index, type, value, dialect);
         }
     }
 
     private <PS> int setStatementParameter(OpContext<?, PS> context, PS preparedStatement, int index, DataType dataType, Object value, Dialect dialect) {
-        if (expandedQuery) {
+        if (expandableQuery) {
             List<Object> values = expandValue(value, dataType);
             if (values != null && values.isEmpty()) {
                 value = null;
@@ -251,53 +273,16 @@ public class StoredSqlOperation extends DBOperation {
         }
     }
 
-    @SuppressWarnings("DesignForExtension")
-    String expandMultipleValues(int parametersSize, Iterator<Object> valuesIt, String query, SqlQueryBuilder queryBuilder) {
-        int[] parametersListSizes = null;
-        for (int i = 0; i < parametersSize; i++) {
-            if (!valuesIt.hasNext()) {
-                continue;
-            }
-            Object value = valuesIt.next();
-            if (value == null || value instanceof byte[]) {
-                continue;
-            }
-            int size = sizeOf(value);
-            if (size == 1) {
-                continue;
-            }
-            if (parametersListSizes == null) {
-                parametersListSizes = new int[parametersSize];
-                Arrays.fill(parametersListSizes, 1);
-            }
-            parametersListSizes[i] = size;
-        }
-        if (parametersListSizes != null) {
-            String positionalParameterFormat = queryBuilder.positionalParameterFormat();
-            Pattern positionalParameterPattern = queryBuilder.positionalParameterPattern();
-            String[] queryParametersSplit = positionalParameterPattern.split(query);
-            StringBuilder sb = new StringBuilder(queryParametersSplit[0]);
-            int inx = 1;
-            for (int i = 0; i < parametersSize; i++) {
-                int parameterSetSize = parametersListSizes[i];
-                sb.append(String.format(positionalParameterFormat, inx));
-                for (int sx = 1; sx < parameterSetSize; sx++) {
-                    sb.append(",").append(String.format(positionalParameterFormat, inx + sx));
-                }
-                sb.append(queryParametersSplit[inx++]);
-            }
-            return sb.toString();
-        }
-        return query;
-    }
-
     /**
      * Compute the size of the given object.
      *
      * @param value The value
      * @return The size
      */
-    private int sizeOf(Object value) {
+    protected int sizeOf(Object value) {
+        if (value == null) {
+            return 1;
+        }
         if (value instanceof Collection) {
             return ((Collection) value).size();
         } else if (value instanceof Iterable) {

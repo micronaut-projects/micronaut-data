@@ -1018,6 +1018,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                 "VALUES (" + String.join(String.valueOf(COMMA), values) + CLOSE_BRACKET;
         return QueryResult.of(
                 builder,
+                Collections.emptyList(),
                 parameterBindings,
                 Collections.emptyMap()
         );
@@ -1102,11 +1103,13 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
             return QueryResult.of(
                     builder.toString(),
                     Collections.emptyList(),
+                    Collections.emptyList(),
                     Collections.emptyMap()
             );
         } else {
             return QueryResult.of(
                     "",
+                    Collections.emptyList(),
                     Collections.emptyList(),
                     Collections.emptyMap()
             );

@@ -147,11 +147,10 @@ public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends E
             boolean isUpdate,
             boolean isSingleResult) throws Exc {
         SqlQueryBuilder queryBuilder = queryBuilders.getOrDefault(preparedQuery.getRepositoryType(), DEFAULT_SQL_BUILDER);
-        final Dialect dialect = queryBuilder.getDialect();
         RuntimePersistentEntity<T> persistentEntity = getEntity(preparedQuery.getRootEntity());
 
-        PreparedQueryDBOperation pqSqlOperation = new PreparedQueryDBOperation(preparedQuery, dialect);
-        pqSqlOperation.checkForParameterToBeExpanded(persistentEntity, null, queryBuilder);
+        PreparedQueryDBOperation pqSqlOperation = new PreparedQueryDBOperation(preparedQuery, queryBuilder);
+        pqSqlOperation.checkForParameterToBeExpanded(persistentEntity, null);
         if (!isUpdate) {
             pqSqlOperation.attachPageable(preparedQuery.getPageable(), isSingleResult, persistentEntity, queryBuilder);
         }
@@ -241,7 +240,7 @@ public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends E
             final SqlQueryBuilder queryBuilder = queryBuilders.getOrDefault(repositoryType, DEFAULT_SQL_BUILDER);
             final QueryResult queryResult = queryBuilder.buildInsert(annotationMetadata, persistentEntity);
 
-            return new QueryResultSqlOperation(queryBuilder.getDialect(), queryResult);
+            return new QueryResultSqlOperation(queryBuilder, queryResult);
         });
     }
 
@@ -308,7 +307,7 @@ public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends E
                     updateProperties
             );
 
-            return new QueryResultSqlOperation(queryBuilder.getDialect(), queryResult);
+            return new QueryResultSqlOperation(queryBuilder, queryResult);
         });
     }
 

@@ -17,6 +17,7 @@ package io.micronaut.data.processor.model.criteria.impl;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.annotation.AutoPopulated;
+import io.micronaut.data.annotation.Expandable;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.PersistentProperty;
@@ -88,6 +89,7 @@ public final class SourceParameterExpressionImpl extends ParameterExpressionImpl
             Objects.requireNonNull(parameterElement);
             int index = Arrays.asList(parameters).indexOf(parameterElement);
             DataType dataType = getDataType(null, parameterElement);
+            boolean isExpandable = isExpandable(bindingContext, dataType);
             return new QueryParameterBinding() {
                 @Override
                 public String getKey() {
@@ -104,6 +106,10 @@ public final class SourceParameterExpressionImpl extends ParameterExpressionImpl
                     return dataType;
                 }
 
+                @Override
+                public boolean isExpandable() {
+                    return isExpandable;
+                }
             };
         }
         boolean autopopulated = propertyPath.getProperty()
@@ -116,6 +122,7 @@ public final class SourceParameterExpressionImpl extends ParameterExpressionImpl
         String[] path = asStringPath(outgoingQueryParameterProperty.getAssociations(), outgoingQueryParameterProperty.getProperty());
         String[] parameterBindingPath = index != -1 ? getBindingPath(incomingMethodParameterProperty, outgoingQueryParameterProperty) : null;
         boolean requiresPrevValue = index == -1 && autopopulated && !isUpdate;
+        boolean isExpandable = isExpandable(bindingContext, dataType);
         return new QueryParameterBinding() {
             @Override
             public String getKey() {
@@ -157,7 +164,24 @@ public final class SourceParameterExpressionImpl extends ParameterExpressionImpl
                 return requiresPrevValue;
             }
 
+            @Override
+            public boolean isExpandable() {
+                return isExpandable;
+            }
         };
+    }
+
+    private boolean isExpandable(BindingContext bindingContext, DataType dataType) {
+        if (bindingContext.isExpandable()) {
+            return true;
+        }
+        if (parameterElement != null && parameterElement.isAnnotationPresent(Expandable.class)) {
+            return true;
+        }
+        if (!dataType.isArray() && (parameterElement == null || parameterElement.getType().isAssignable(Iterable.class.getName()))) {
+            return true;
+        }
+        return false;
     }
 
     private String[] getBindingPath(PersistentPropertyPath parameterProperty, PersistentPropertyPath bindedPath) {

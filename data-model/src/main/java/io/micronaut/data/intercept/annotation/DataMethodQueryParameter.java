@@ -82,6 +82,11 @@ public @interface DataMethodQueryParameter {
     String META_MEMBER_REQUIRES_PREVIOUS_POPULATED_VALUES = "requiresPreviousPopulatedValue";
 
     /**
+     * The member name that holds expandable.
+     */
+    String META_MEMBER_EXPANDABLE = "expandable";
+
+    /**
      * @return The query parameter name
      */
     String name() default "";

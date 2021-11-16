@@ -34,11 +34,11 @@ public class DefaultQuery implements QueryModel {
 
     private final PersistentEntity entity;
 
-    private QueryModel.Junction criteria = new QueryModel.Conjunction();
-    private DefaultProjectionList projections = new DefaultProjectionList();
+    private final QueryModel.Junction criteria = new QueryModel.Conjunction();
+    private final DefaultProjectionList projections = new DefaultProjectionList();
+    private final Map<String, JoinPath> joinPaths = new HashMap<>(2);
     private int max = -1;
     private long offset = 0;
-    private Map<String, JoinPath> joinPaths = new HashMap<>(2);
     private Sort sort = Sort.unsorted();
     private boolean forUpdate;
 

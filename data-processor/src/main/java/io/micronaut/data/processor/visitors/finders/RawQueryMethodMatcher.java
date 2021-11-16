@@ -25,7 +25,6 @@ import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.intercept.DataInterceptor;
 import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.query.BindingParameter.BindingContext;
-import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.QueryParameterBinding;
 import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
@@ -44,6 +43,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.regex.Pattern;
 
 /**
  * Finder with custom defied query used to return a single result.
@@ -57,6 +57,8 @@ public class RawQueryMethodMatcher implements MethodMatcher {
     private static final String DELETE = "delete";
     private static final String UPDATE = "update";
     private static final String INSERT = "insert";
+
+    private static final Pattern VARIABLE_PATTERN = Pattern.compile("([^:]*)((?<![:]):([a-zA-Z0-9]+))([^:]*)");
 
     /**
      * Default constructor.
@@ -196,7 +198,6 @@ public class RawQueryMethodMatcher implements MethodMatcher {
         List<ParameterElement> parameters = Arrays.asList(matchContext.getParameters());
         boolean namedParameters = matchContext.getRepositoryClass()
                 .booleanValue(RepositoryConfiguration.class, "namedParameters").orElse(true);
-        java.util.regex.Matcher matcher = QueryBuilder.VARIABLE_PATTERN.matcher(queryString);
 
         ParameterElement entityParam = null;
         SourcePersistentEntity persistentEntity = null;
@@ -208,10 +209,42 @@ public class RawQueryMethodMatcher implements MethodMatcher {
             persistentEntity = matchContext.getEntity(entitiesParameter.getGenericType().getFirstTypeArgument().get());
         }
 
+        QueryResult queryResult = getQueryResult(matchContext, queryString, parameters, namedParameters, entityParam, persistentEntity);
+        String cq = matchContext.getAnnotationMetadata().stringValue(Query.class, "countQuery")
+                .orElse(null);
+        QueryResult countQueryResult = cq == null ? null : getQueryResult(matchContext, cq, parameters, namedParameters, entityParam, persistentEntity);
+        boolean encodeEntityParameters = persistentEntity != null || operationType == MethodMatchInfo.OperationType.INSERT;
+        methodMatchInfo
+                .isRawQuery(true)
+                .encodeEntityParameters(encodeEntityParameters)
+                .queryResult(queryResult)
+                .countQueryResult(countQueryResult);
+    }
+
+    private QueryResult getQueryResult(MethodMatchContext matchContext,
+                                       String queryString,
+                                       List<ParameterElement> parameters,
+                                       boolean namedParameters,
+                                       ParameterElement entityParam,
+                                       SourcePersistentEntity persistentEntity) {
+        java.util.regex.Matcher matcher = VARIABLE_PATTERN.matcher(queryString);
         List<QueryParameterBinding> parameterBindings = new ArrayList<>(parameters.size());
-        if (namedParameters) {
-            while (matcher.find()) {
-                String name = matcher.group(3);
+        List<String> queryParts = new ArrayList<>();
+        boolean requiresEnd = true;
+        int index = 1;
+        while (matcher.find()) {
+            requiresEnd = true;
+            String start = matcher.group(1);
+            if (!start.isEmpty()) {
+                queryParts.add(start);
+            }
+            String end = matcher.group(4);
+            if (!end.isEmpty()) {
+                requiresEnd = false;
+                queryParts.add(end);
+            }
+            String name = matcher.group(3);
+            if (namedParameters) {
                 Optional<ParameterElement> element = parameters.stream()
                         .filter(p -> p.stringValue(Parameter.class).orElse(p.getName()).equals(name))
                         .findFirst();
@@ -236,11 +269,7 @@ public class RawQueryMethodMatcher implements MethodMatcher {
                 } else {
                     throw new MatchFailedException("No method parameter found for named Query parameter: " + name);
                 }
-            }
-        } else {
-            int index = 1;
-            while (matcher.find()) {
-                String name = matcher.group(3);
+            } else {
                 Optional<ParameterElement> element = parameters.stream()
                         .filter(p -> p.stringValue(Parameter.class).orElse(p.getName()).equals(name))
                         .findFirst();
@@ -267,26 +296,32 @@ public class RawQueryMethodMatcher implements MethodMatcher {
                 }
             }
         }
-        boolean encodeEntityParameters = persistentEntity != null || operationType == MethodMatchInfo.OperationType.INSERT;
-        methodMatchInfo
-                .isRawQuery(true)
-                .encodeEntityParameters(encodeEntityParameters)
-                .queryResult(new QueryResult() {
-                    @Override
-                    public String getQuery() {
-                        return queryString;
-                    }
+        if (queryParts.isEmpty()) {
+            queryParts.add(queryString);
+        } else if (requiresEnd) {
+            queryParts.add("");
+        }
+        return new QueryResult() {
+            @Override
+            public String getQuery() {
+                return queryString;
+            }
 
-                    @Override
-                    public List<QueryParameterBinding> getParameterBindings() {
-                        return parameterBindings;
-                    }
+            @Override
+            public List<String> getQueryParts() {
+                return queryParts;
+            }
 
-                    @Override
-                    public Map<String, String> getAdditionalRequiredParameters() {
-                        return Collections.emptyMap();
-                    }
-                });
+            @Override
+            public List<QueryParameterBinding> getParameterBindings() {
+                return parameterBindings;
+            }
+
+            @Override
+            public Map<String, String> getAdditionalRequiredParameters() {
+                return Collections.emptyMap();
+            }
+        };
     }
 
     private SourceParameterExpressionImpl bindingParameter(MethodMatchContext matchContext, ParameterElement element) {
