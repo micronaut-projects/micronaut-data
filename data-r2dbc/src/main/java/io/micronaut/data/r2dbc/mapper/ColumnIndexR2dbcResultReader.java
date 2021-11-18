@@ -65,9 +65,9 @@ public class ColumnIndexR2dbcResultReader implements ResultReader<Row, Integer> 
     @Override
     public Object readDynamic(@NonNull Row resultSet, @NonNull Integer index, @NonNull DataType dataType) {
         switch (dataType) {
-            case STRING:
             case UUID:
                 return readUUID(resultSet, index);
+            case STRING:
             case JSON:
                 return readString(resultSet, index);
             case LONG:

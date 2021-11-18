@@ -22,4 +22,6 @@ import java.util.UUID;
 
 public interface UuidRepository extends CrudRepository<UuidEntity, UUID> {
 
+    UUID findUuidByName(String name);
+
 }
