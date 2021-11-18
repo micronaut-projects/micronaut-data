@@ -302,7 +302,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
 
                 element.annotate(Query.class, (builder) -> builder.member(DataMethod.META_MEMBER_RAW_QUERY,
                         element.stringValue(Query.class)
-                                .map(q -> addRawQueryParameterPlaceholders(queryEncoder, queryResult.getQueryParts()))
+                                .map(q -> addRawQueryParameterPlaceholders(queryEncoder, queryResult.getQuery(), queryResult.getQueryParts()))
                                 .orElse(null)));
 
                 ClassElement genericReturnType = methodMatchContext.getReturnType();
@@ -313,7 +313,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                     } else {
                         element.annotate(
                                 Query.class,
-                                (builder) -> builder.member(DataMethod.META_MEMBER_RAW_COUNT_QUERY, addRawQueryParameterPlaceholders(queryEncoder, countQueryResult.getQueryParts()))
+                                (builder) -> builder.member(DataMethod.META_MEMBER_RAW_COUNT_QUERY, addRawQueryParameterPlaceholders(queryEncoder, countQueryResult.getQuery(), countQueryResult.getQueryParts()))
                         );
                     }
                 }
@@ -480,23 +480,22 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
         }
     }
 
-    private String addRawQueryParameterPlaceholders(QueryBuilder queryEncoder, List<String> queryParts) {
-        Iterator<String> iterator = queryParts.iterator();
-        String first = iterator.next();
-        if (queryParts.size() < 2) {
-            return first;
-        }
+    private String addRawQueryParameterPlaceholders(QueryBuilder queryEncoder, String query, List<String> queryParts) {
         if (queryEncoder instanceof SqlQueryBuilder) {
-            SqlQueryBuilder sqlQueryBuilder = (SqlQueryBuilder) queryEncoder;
+            Iterator<String> iterator = queryParts.iterator();
+            String first = iterator.next();
+            if (queryParts.size() < 2) {
+                return first;
+            }
             StringBuilder sb = new StringBuilder(first);
             int i = 1;
             while (iterator.hasNext()) {
-                sb.append(sqlQueryBuilder.formatParameter(i++).getName());
+                sb.append(((SqlQueryBuilder) queryEncoder).formatParameter(i++).getName());
                 sb.append(iterator.next());
             }
             return sb.toString();
         }
-        return first;
+        return query;
     }
 
     @Nullable
