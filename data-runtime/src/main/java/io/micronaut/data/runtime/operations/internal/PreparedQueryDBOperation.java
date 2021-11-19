@@ -32,7 +32,6 @@ import io.micronaut.data.model.runtime.QueryParameterBinding;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -43,44 +42,19 @@ import java.util.Map;
 public final class PreparedQueryDBOperation extends StoredSqlOperation {
 
     private final PreparedQuery<?, ?> preparedQuery;
-    private boolean queryExpanded;
 
-    protected PreparedQueryDBOperation(@NonNull PreparedQuery<?, ?> preparedQuery, Dialect dialect) {
-        super(dialect, preparedQuery.getQuery(), preparedQuery.getQueryBindings(), false);
+    protected PreparedQueryDBOperation(@NonNull PreparedQuery<?, ?> preparedQuery, SqlQueryBuilder queryBuilder) {
+        super(queryBuilder, preparedQuery.getQuery(), preparedQuery.getExpandableQueryParts(), preparedQuery.getQueryBindings(), false);
         this.preparedQuery = preparedQuery;
     }
 
-    public <K> void checkForParameterToBeExpanded(RuntimePersistentEntity<K> persistentEntity, K entity, SqlQueryBuilder queryBuilder) {
-        Object[] parameterArray = preparedQuery.getParameterArray();
-        Iterator<Object> valuesIterator = new Iterator<Object>() {
-
-            int i;
-
-            @Override
-            public boolean hasNext() {
-                if (i >= queryParameterBindings.size()) {
-                    return false;
-                }
-                QueryParameterBinding queryParameterBinding = queryParameterBindings.get(i);
-                int parameterIndex = queryParameterBinding.getParameterIndex();
-                DataType dataType = queryParameterBinding.getDataType();
-                // We want to expand collections with byte array convertible values
-                if (parameterIndex == -1 || dataType.isArray() && dataType != DataType.BYTE_ARRAY) {
-                    i++;
-                    return hasNext();
-                }
-                return true;
-            }
-
-            @Override
-            public Object next() {
-                return parameterArray[queryParameterBindings.get(i).getParameterIndex()];
-            }
-        };
-
-        String expandedQuery = expandMultipleValues(queryParameterBindings.size(), valuesIterator, this.query, queryBuilder);
-        this.queryExpanded = !query.equals(expandedQuery);
-        this.query = expandedQuery;
+    @Override
+    protected <T> int getQueryParameterValueSize(QueryParameterBinding parameter, RuntimePersistentEntity<T> persistentEntity, T entity) {
+        int parameterIndex = parameter.getParameterIndex();
+        if (parameterIndex == -1) {
+            return 1;
+        }
+        return sizeOf(preparedQuery.getParameterArray()[parameterIndex]);
     }
 
     public <K> void attachPageable(Pageable pageable,

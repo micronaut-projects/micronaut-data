@@ -846,6 +846,11 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
                     public String[] getPropertyPath() {
                         return asStringPath(outgoingQueryParameterProperty.getAssociations(), outgoingQueryParameterProperty.getProperty());
                     }
+
+                    @Override
+                    public boolean isExpandable() {
+                        return bindingContext.isExpandable();
+                    }
                 };
             }
         };

@@ -33,32 +33,60 @@ public interface QueryParameterBinding {
      */
     String getKey();
 
+    /**
+     * @return The data type
+     */
     DataType getDataType();
 
+    /**
+     * @return The converter class name
+     */
     @Nullable
     default String getConverterClassName() {
         return null;
     }
 
+    /**
+     * @return The parameter index
+     */
     default int getParameterIndex() {
         return -1;
     }
 
+    /**
+     * @return The parameter binding path
+     */
     @Nullable
     default String[] getParameterBindingPath() {
         return null;
     }
 
+    /**
+     * @return The property path
+     */
     @Nullable
     default String[] getPropertyPath() {
         return null;
     }
 
+    /**
+     * @return Is auto populated
+     */
     default boolean isAutoPopulated() {
         return false;
     }
 
+    /**
+     * @return Is requires previous populated value
+     */
     default boolean isRequiresPreviousPopulatedValue() {
+        return false;
+    }
+
+    /**
+     * @return Is expandable parameter
+     */
+    default boolean isExpandable() {
         return false;
     }
 

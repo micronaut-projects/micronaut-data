@@ -90,7 +90,15 @@ public interface BindingParameter {
          * @return this context
          */
         @NonNull
-        BindingContext outgoingQueryParameterProperty(@Nullable PersistentPropertyPath propertyPath);
+        BindingContext  outgoingQueryParameterProperty(@Nullable PersistentPropertyPath propertyPath);
+
+        /**
+         * Mark the property as expandable.
+         *
+         * @return this context
+         */
+        @NonNull
+        BindingContext expandable();
 
         /**
          * The position of the parameter in the query.
@@ -116,6 +124,11 @@ public interface BindingParameter {
          */
         @Nullable
         PersistentPropertyPath getOutgoingQueryParameterProperty();
+
+        /**
+         * @return Is expandable
+         */
+        boolean isExpandable();
 
     }
 

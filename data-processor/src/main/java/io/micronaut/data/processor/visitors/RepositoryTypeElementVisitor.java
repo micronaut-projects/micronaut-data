@@ -66,14 +66,12 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
-import java.util.regex.Matcher;
 import java.util.stream.Collectors;
-
-import static io.micronaut.data.model.query.builder.QueryBuilder.VARIABLE_PATTERN;
 
 /**
  * The main {@link TypeElementVisitor} that visits interfaces annotated with {@link Repository}
@@ -293,28 +291,27 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
         List<QueryParameterBinding> parameterBinding = null;
         boolean encodeEntityParameters = false;
         boolean supportsImplicitQueries = methodMatchContext.supportsImplicitQueries();
-        if (methodInfo.getQueryResult() != null) {
+        QueryResult queryResult = methodInfo.getQueryResult();
+        if (queryResult != null) {
             if (methodInfo.isRawQuery()) {
                 // no need to annotation since already annotated, just replace the
                 // the computed parameter names
-                parameterBinding = methodInfo.getQueryResult().getParameterBindings();
+                parameterBinding = queryResult.getParameterBindings();
 
                 element.annotate(Query.class, (builder) -> builder.member(DataMethod.META_MEMBER_RAW_QUERY,
                         element.stringValue(Query.class)
-                                .map(q -> replaceNamedParameters(queryEncoder, q))
+                                .map(q -> addRawQueryParameterPlaceholders(queryEncoder, queryResult.getQuery(), queryResult.getQueryParts()))
                                 .orElse(null)));
 
                 ClassElement genericReturnType = methodMatchContext.getReturnType();
                 if (methodMatchContext.isTypeInRole(genericReturnType, TypeRole.PAGE) || element.isPresent(Query.class, "countQuery")) {
-                    String cq = methodMatchContext.getAnnotationMetadata().stringValue(Query.class, "countQuery")
-                            .orElse(null);
-
-                    if (StringUtils.isEmpty(cq)) {
+                    QueryResult countQueryResult = methodInfo.getCountQueryResult();
+                    if (countQueryResult == null) {
                         throw new MatchFailedException("Query returns a Page and does not specify a 'countQuery' member.", element);
                     } else {
                         element.annotate(
                                 Query.class,
-                                (builder) -> builder.member(DataMethod.META_MEMBER_RAW_COUNT_QUERY, replaceNamedParameters(queryEncoder, cq))
+                                (builder) -> builder.member(DataMethod.META_MEMBER_RAW_COUNT_QUERY, addRawQueryParameterPlaceholders(queryEncoder, countQueryResult.getQuery(), countQueryResult.getQueryParts()))
                         );
                     }
                 }
@@ -323,23 +320,21 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
             } else {
 
                 encodeEntityParameters = methodInfo.isEncodeEntityParameters();
-                QueryResult encodedQuery = methodInfo.getQueryResult();
-                if (encodedQuery != null) {
-                    parameterBinding = encodedQuery.getParameterBindings();
-                    bindAdditionalParameters(methodMatchContext, entity, parameterBinding, parameters, encodedQuery.getAdditionalRequiredParameters());
+                QueryResult encodedQuery = queryResult;
+                parameterBinding = encodedQuery.getParameterBindings();
+                bindAdditionalParameters(methodMatchContext, entity, parameterBinding, parameters, encodedQuery.getAdditionalRequiredParameters());
 
-                    QueryResult preparedCount = methodInfo.getCountQueryResult();
-                    if (preparedCount != null) {
-                        element.annotate(Query.class, annotationBuilder -> {
-                                    annotationBuilder.value(encodedQuery.getQuery());
-                                    annotationBuilder.member(DataMethod.META_MEMBER_COUNT_QUERY, preparedCount.getQuery());
-                                }
-                        );
-                    } else {
-                        element.annotate(Query.class, annotationBuilder ->
-                                annotationBuilder.value(encodedQuery.getQuery())
-                        );
-                    }
+                QueryResult preparedCount = methodInfo.getCountQueryResult();
+                if (preparedCount != null) {
+                    element.annotate(Query.class, annotationBuilder -> {
+                                annotationBuilder.value(encodedQuery.getQuery());
+                                annotationBuilder.member(DataMethod.META_MEMBER_COUNT_QUERY, preparedCount.getQuery());
+                            }
+                    );
+                } else {
+                    element.annotate(Query.class, annotationBuilder ->
+                            annotationBuilder.value(encodedQuery.getQuery())
+                    );
                 }
             }
         }
@@ -379,12 +374,20 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
             }
             annotationBuilder.member(DataMethod.META_MEMBER_INTERCEPTOR, new AnnotationClassValue<>(runtimeInterceptor.getName()));
 
-            if (methodInfo.getQueryResult() != null) {
-                int max = methodInfo.getQueryResult().getMax();
+            if (queryResult != null) {
+                if (finalParameterBinding.stream().anyMatch(QueryParameterBinding::isExpandable)) {
+                    annotationBuilder.member(DataMethod.META_MEMBER_EXPANDABLE_QUERY, queryResult.getQueryParts().toArray(new String[0]));
+                    QueryResult preparedCount = methodInfo.getCountQueryResult();
+                    if (preparedCount != null) {
+                        annotationBuilder.member(DataMethod.META_MEMBER_EXPANDABLE_COUNT_QUERY, preparedCount.getQueryParts().toArray(new String[0]));
+                    }
+                }
+
+                int max = queryResult.getMax();
                 if (max > -1) {
                     annotationBuilder.member(DataMethod.META_MEMBER_PAGE_SIZE, max);
                 }
-                long offset = methodInfo.getQueryResult().getOffset();
+                long offset = queryResult.getOffset();
                 if (offset > 0) {
                     annotationBuilder.member(DataMethod.META_MEMBER_PAGE_INDEX, offset);
                 }
@@ -435,6 +438,9 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
             if (p.isRequiresPreviousPopulatedValue()) {
                 builder.member(DataMethodQueryParameter.META_MEMBER_REQUIRES_PREVIOUS_POPULATED_VALUES, true);
             }
+            if (p.isExpandable()) {
+                builder.member(DataMethodQueryParameter.META_MEMBER_EXPANDABLE, true);
+            }
             if (supportsImplicitQueries) {
                 builder.member(DataMethodQueryParameter.META_MEMBER_NAME, p.getKey());
             }
@@ -472,22 +478,20 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
         }
     }
 
-    private String replaceNamedParameters(QueryBuilder queryEncoder, String query) {
-        if (queryEncoder instanceof SqlQueryBuilder && StringUtils.isNotEmpty(query)) {
-            SqlQueryBuilder sqlQueryBuilder = (SqlQueryBuilder) queryEncoder;
-            Matcher matcher = VARIABLE_PATTERN.matcher(query);
-            boolean result = matcher.find();
-            int i = 1;
-            if (result) {
-                StringBuffer sb = new StringBuffer();
-                do {
-                    String name = sqlQueryBuilder.formatParameter(i++).getName();
-                    matcher.appendReplacement(sb, "$1" + Matcher.quoteReplacement(name));
-                    result = matcher.find();
-                } while (result);
-                matcher.appendTail(sb);
-                return sb.toString();
+    private String addRawQueryParameterPlaceholders(QueryBuilder queryEncoder, String query, List<String> queryParts) {
+        if (queryEncoder instanceof SqlQueryBuilder) {
+            Iterator<String> iterator = queryParts.iterator();
+            String first = iterator.next();
+            if (queryParts.size() < 2) {
+                return first;
             }
+            StringBuilder sb = new StringBuilder(first);
+            int i = 1;
+            while (iterator.hasNext()) {
+                sb.append(((SqlQueryBuilder) queryEncoder).formatParameter(i++).getName());
+                sb.append(iterator.next());
+            }
+            return sb.toString();
         }
         return query;
     }

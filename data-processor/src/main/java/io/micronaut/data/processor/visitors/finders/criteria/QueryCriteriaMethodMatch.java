@@ -374,7 +374,7 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
             querySequence = querySequence.substring("Distinct".length());
         }
         if (StringUtils.isNotEmpty(querySequence)) {
-            io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> propertyPath = findProperty(root, querySequence, true);
+            io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> propertyPath = findProperty(root, querySequence);
             if (propertyPath != null) {
                 query.multiselect(propertyPath);
                 return "";

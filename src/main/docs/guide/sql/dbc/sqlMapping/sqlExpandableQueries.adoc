@@ -1,0 +1,7 @@
+In some cases, the query needs to be expanded to accommodate all of the parameter's values. The query with a parameter which is a collection or an array: `WHERE value IN (?)` would be expanded to: `WHERE value IN (?, ?, ?, ?)`
+
+Micronaut Data will store additional information about the query at the build-time if one of the parameters is expandable, that eliminates the need to parse the query at runtime.
+
+By default, all parameters of a type that extends `java.lang.Iterable` are automatically expandable. You can mark a parameter as expandable by annotating it with ann:data.annotation.Expandable[], for example, you might want to do it if the parameter is an array.
+
+NOTE: It's better to use the array type if your targeted database supports it. For example, in Postgres you can use `WHERE value = ANY (:myValues)` where `myValues` is of type `@TypeDef(type = DataType.STRING_ARRAY)`.

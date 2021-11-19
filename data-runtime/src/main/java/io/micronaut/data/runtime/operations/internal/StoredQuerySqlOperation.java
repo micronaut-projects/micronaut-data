@@ -16,7 +16,7 @@
 package io.micronaut.data.runtime.operations.internal;
 
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.runtime.StoredQuery;
 
 /**
@@ -28,15 +28,15 @@ public class StoredQuerySqlOperation extends StoredSqlOperation {
     /**
      * Creates a new instance.
      *
-     * @param dialect            The dialect
-     * @param storedQuery        The store query
+     * @param queryBuilder The queryBuilder
+     * @param storedQuery  The store query
      */
-    public StoredQuerySqlOperation(Dialect dialect, StoredQuery<?, ?> storedQuery) {
-        super(dialect,
+    public StoredQuerySqlOperation(SqlQueryBuilder queryBuilder, StoredQuery<?, ?> storedQuery) {
+        super(queryBuilder,
                 storedQuery.getQuery(),
+                storedQuery.getExpandableQueryParts(),
                 storedQuery.getQueryBindings(),
-                storedQuery.isOptimisticLock()
-        );
+                storedQuery.isOptimisticLock());
     }
 
 }

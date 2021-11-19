@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.model.jpa.criteria.impl;
 
+import io.micronaut.data.annotation.Join;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.jpa.criteria.IExpression;
@@ -27,6 +28,7 @@ import io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyBin
 import io.micronaut.data.model.jpa.criteria.impl.query.QueryModelPredicateVisitor;
 import io.micronaut.data.model.jpa.criteria.impl.query.QueryModelSelectionVisitor;
 import io.micronaut.data.model.jpa.criteria.impl.selection.CompoundSelection;
+import io.micronaut.data.model.jpa.criteria.impl.util.Joiner;
 import io.micronaut.data.model.query.QueryModel;
 import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.QueryResult;
@@ -42,15 +44,15 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
-import java.util.TreeMap;
 import java.util.stream.Collectors;
 
-import static io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils.*;
+import static io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils.hasVersionPredicate;
+import static io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils.notSupportedOperation;
 import static io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils.requireProperty;
 
 /**
@@ -84,25 +86,27 @@ public abstract class AbstractPersistentEntityCriteriaQuery<T> implements Persis
             throw new IllegalStateException("The root entity must be specified!");
         }
         QueryModel qm = QueryModel.from(entityRoot.getPersistentEntity());
+        Joiner joiner = new Joiner();
         if (predicate instanceof PredicateVisitable) {
-            ((PredicateVisitable) predicate).accept(new QueryModelPredicateVisitor(qm));
+            PredicateVisitable predicate = (PredicateVisitable) this.predicate;
+            predicate.accept(new QueryModelPredicateVisitor(qm));
+            predicate.accept(joiner);
         }
         if (selection instanceof SelectionVisitable) {
-            ((SelectionVisitable) selection).accept(new QueryModelSelectionVisitor(qm, distinct));
+            SelectionVisitable selection = (SelectionVisitable) this.selection;
+            selection.accept(new QueryModelSelectionVisitor(qm, distinct));
+            selection.accept(joiner);
+            SelectionVisitable entityRoot = (SelectionVisitable) this.entityRoot;
+            entityRoot.accept(joiner);
         } else {
-            ((SelectionVisitable) entityRoot).accept(new QueryModelSelectionVisitor(qm, distinct));
+            SelectionVisitable entityRoot = (SelectionVisitable) this.entityRoot;
+            entityRoot.accept(new QueryModelSelectionVisitor(qm, distinct));
+            entityRoot.accept(joiner);
         }
-        Map<String, AbstractPersistentEntityJoinSupport.Joined> joins = new TreeMap<>(
-                Comparator.comparingInt(String::length).thenComparing(String::compareTo)
-        );
-        join((AbstractPersistentEntityJoinSupport<?, ?>) entityRoot, joins);
-        for (Map.Entry<String, AbstractPersistentEntityJoinSupport.Joined> e : joins.entrySet()) {
-            qm.join(e.getKey(), e.getValue().getType(), e.getValue().getAlias());
-        }
-
         if (orders != null && !orders.isEmpty()) {
             List<Sort.Order> sortOrders = orders.stream().map(o -> {
                 PersistentPropertyPath<?> propertyPath = requireProperty(o.getExpression());
+                joiner.joinIfNeeded(propertyPath);
                 String name = propertyPath.getProperty().getName();
                 //todo  path
                 if (o.isAscending()) {
@@ -112,21 +116,16 @@ public abstract class AbstractPersistentEntityCriteriaQuery<T> implements Persis
             }).collect(Collectors.toList());
             qm.sort(Sort.of(sortOrders));
         }
+        for (Map.Entry<String, Joiner.Joined> e : joiner.getJoins().entrySet()) {
+            qm.join(e.getKey(), Optional.ofNullable(e.getValue().getType()).orElse(Join.Type.DEFAULT), e.getValue().getAlias());
+        }
+
         qm.max(max);
         qm.offset(offset);
         if (forUpdate) {
             qm.forUpdate();
         }
         return qm;
-    }
-
-    private void join(AbstractPersistentEntityJoinSupport<?, ?> joinEntityRoot, Map<String, AbstractPersistentEntityJoinSupport.Joined> joins) {
-        for (AbstractPersistentEntityJoinSupport.Joined join : joinEntityRoot.getJoinsInternal()) {
-            if (join.getType() != null) {
-                joins.put(join.getAssociation().getPathAsString(), join);
-                join((AbstractPersistentEntityJoinSupport<?, ?>) join.getAssociation(), joins);
-            }
-        }
     }
 
     @Override

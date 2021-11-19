@@ -39,7 +39,6 @@ import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.query.builder.sql.Dialect;
-import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
 import io.micronaut.data.model.runtime.QueryParameterBinding;
 import io.micronaut.data.model.runtime.RuntimeAssociation;
@@ -134,14 +133,11 @@ public abstract class AbstractRepositoryOperations<Cnt, PS, Exc extends Exceptio
     }
 
     /**
-     * Prepare a statement and run a function.
-     *
-     * @param connection The connection.
-     * @param query      The query
-     * @param fn         The function to be run with a statement
-     * @throws Exc The exception type
+     * Closing operation of the prepared statement.
+     * @param ps The statement
+     * @return an auto closeable
      */
-    protected abstract void prepareStatement(Cnt connection, String query, DBOperation1<PS, Exc> fn) throws Exc;
+    protected abstract AutoCloseable autoCloseable(PS ps);
 
     /**
      * Prepare a statement and run a function.
@@ -367,10 +363,9 @@ public abstract class AbstractRepositoryOperations<Cnt, PS, Exc extends Exceptio
      * @param connection         The connection
      * @param op                 The entity operation
      * @param dbOperation        The db operation
-     * @param queryBuilder       The queryBuilder
      * @param <T>                The entity type
      */
-    protected <T> void deleteOne(Cnt connection, EntityOperations<T> op, DBOperation dbOperation, SqlQueryBuilder queryBuilder) {
+    protected <T> void deleteOne(Cnt connection, EntityOperations<T> op, DBOperation dbOperation) {
         op.collectAutoPopulatedPreviousValues(dbOperation);
         boolean vetoed = op.triggerPreRemove();
         if (vetoed) {
@@ -381,8 +376,8 @@ public abstract class AbstractRepositoryOperations<Cnt, PS, Exc extends Exceptio
             if (QUERY_LOG.isDebugEnabled()) {
                 QUERY_LOG.debug("Executing SQL DELETE: {}", dbOperation.getQuery());
             }
-            op.checkForParameterToBeExpanded(dbOperation, queryBuilder);
-            prepareStatement(connection, dbOperation.getQuery(), ps -> {
+            PS ps = op.prepare(connection, dbOperation);
+            try (AutoCloseable ignore = autoCloseable(ps)) {
                 op.setParameters(this, connection, ps, dbOperation);
                 op.executeUpdate(ps, (entries, deleted) -> {
                     if (QUERY_LOG.isTraceEnabled()) {
@@ -392,7 +387,7 @@ public abstract class AbstractRepositoryOperations<Cnt, PS, Exc extends Exceptio
                         checkOptimisticLocking(entries, deleted);
                     }
                 });
-            });
+            }
             op.triggerPostRemove();
         } catch (OptimisticLockException ex) {
             throw ex;
@@ -420,7 +415,8 @@ public abstract class AbstractRepositoryOperations<Cnt, PS, Exc extends Exceptio
             if (QUERY_LOG.isDebugEnabled()) {
                 QUERY_LOG.debug("Executing Batch SQL DELETE: {}", dbOperation.getQuery());
             }
-            prepareStatement(connection, dbOperation.getQuery(), ps -> {
+            PS ps = op.prepare(connection, dbOperation);
+            try (AutoCloseable ignore = autoCloseable(ps)) {
                 op.setParameters(this, connection, ps, dbOperation);
                 op.executeUpdate(ps, (entries, deleted) -> {
                     if (QUERY_LOG.isTraceEnabled()) {
@@ -430,7 +426,7 @@ public abstract class AbstractRepositoryOperations<Cnt, PS, Exc extends Exceptio
                         checkOptimisticLocking(entries, deleted);
                     }
                 });
-            });
+            }
             op.triggerPostRemove();
         } catch (OptimisticLockException ex) {
             throw ex;
@@ -445,7 +441,7 @@ public abstract class AbstractRepositoryOperations<Cnt, PS, Exc extends Exceptio
      * @param connection         The connection
      * @param annotationMetadata The annotationMetadata
      * @param repositoryType     The repositoryType
-     * @param sqlOperation       The sql operation
+     * @param dbOperation       The sql operation
      * @param associations       The associations
      * @param persisted          Already persisted values
      * @param op                 The operation
@@ -454,33 +450,34 @@ public abstract class AbstractRepositoryOperations<Cnt, PS, Exc extends Exceptio
     protected <T> void updateOne(Cnt connection,
                                  AnnotationMetadata annotationMetadata,
                                  Class<?> repositoryType,
-                                 DBOperation sqlOperation,
+                                 DBOperation dbOperation,
                                  List<Association> associations,
                                  Set<Object> persisted,
                                  EntityOperations<T> op) {
-        op.collectAutoPopulatedPreviousValues(sqlOperation);
+        op.collectAutoPopulatedPreviousValues(dbOperation);
         boolean vetoed = op.triggerPreUpdate();
         if (vetoed) {
             return;
         }
-        op.cascadePre(Relation.Cascade.UPDATE, connection, sqlOperation.dialect, annotationMetadata, repositoryType, associations, persisted);
+        op.cascadePre(Relation.Cascade.UPDATE, connection, dbOperation.dialect, annotationMetadata, repositoryType, associations, persisted);
         try {
             if (QUERY_LOG.isDebugEnabled()) {
-                QUERY_LOG.debug("Executing SQL UPDATE: {}", sqlOperation.getQuery());
+                QUERY_LOG.debug("Executing SQL UPDATE: {}", dbOperation.getQuery());
             }
-            prepareStatement(connection, sqlOperation.getQuery(), ps -> {
-                op.setParameters(this, connection, ps, sqlOperation);
+            PS ps = op.prepare(connection, dbOperation);
+            try (AutoCloseable ignore = autoCloseable(ps)) {
+                op.setParameters(this, connection, ps, dbOperation);
                 op.executeUpdate(ps, (entries, rowsUpdated) -> {
                     if (QUERY_LOG.isTraceEnabled()) {
                         QUERY_LOG.trace("Update operation updated {} records", rowsUpdated);
                     }
-                    if (sqlOperation.isOptimisticLock()) {
+                    if (dbOperation.isOptimisticLock()) {
                         checkOptimisticLocking(entries, rowsUpdated);
                     }
                 });
-            });
+            }
             op.triggerPostUpdate();
-            op.cascadePost(Relation.Cascade.UPDATE, connection, sqlOperation.dialect, annotationMetadata, repositoryType, associations, persisted);
+            op.cascadePost(Relation.Cascade.UPDATE, connection, dbOperation.dialect, annotationMetadata, repositoryType, associations, persisted);
         } catch (OptimisticLockException ex) {
             throw ex;
         } catch (Exception e) {
@@ -494,7 +491,7 @@ public abstract class AbstractRepositoryOperations<Cnt, PS, Exc extends Exceptio
      * @param connection         The connection
      * @param annotationMetadata The annotationMetadata
      * @param repositoryType     The repositoryType
-     * @param sqlOperation       The sql operation
+     * @param dbOperation        The db operation
      * @param associations       The associations
      * @param persisted          Already persisted values
      * @param op                 The operation
@@ -503,29 +500,30 @@ public abstract class AbstractRepositoryOperations<Cnt, PS, Exc extends Exceptio
     protected <T> void updateInBatch(Cnt connection,
                                      AnnotationMetadata annotationMetadata,
                                      Class<?> repositoryType,
-                                     StoredSqlOperation sqlOperation,
+                                     DBOperation dbOperation,
                                      List<Association> associations,
                                      Set<Object> persisted,
                                      EntitiesOperations<T> op) {
-        op.collectAutoPopulatedPreviousValues(sqlOperation);
+        op.collectAutoPopulatedPreviousValues(dbOperation);
         op.triggerPreUpdate();
         try {
             if (QUERY_LOG.isDebugEnabled()) {
-                QUERY_LOG.debug("Executing Batch SQL Update: {}", sqlOperation.getQuery());
+                QUERY_LOG.debug("Executing Batch SQL Update: {}", dbOperation.getQuery());
             }
-            op.cascadePre(Relation.Cascade.UPDATE, connection, sqlOperation.dialect, annotationMetadata, repositoryType, associations, persisted);
-            prepareStatement(connection, sqlOperation.getQuery(), ps -> {
-                op.setParameters(this, connection, ps, sqlOperation);
+            op.cascadePre(Relation.Cascade.UPDATE, connection, dbOperation.dialect, annotationMetadata, repositoryType, associations, persisted);
+            PS ps = op.prepare(connection, dbOperation);
+            try (AutoCloseable ignore = autoCloseable(ps)) {
+                op.setParameters(this, connection, ps, dbOperation);
                 op.executeUpdate(ps, (expected, updated) -> {
                     if (QUERY_LOG.isTraceEnabled()) {
                         QUERY_LOG.trace("Update batch operation updated {} records", updated);
                     }
-                    if (sqlOperation.isOptimisticLock()) {
+                    if (dbOperation.isOptimisticLock()) {
                         checkOptimisticLocking(expected, updated);
                     }
                 });
-            });
-            op.cascadePost(Relation.Cascade.UPDATE, connection, sqlOperation.dialect, annotationMetadata, repositoryType, associations, persisted);
+            }
+            op.cascadePost(Relation.Cascade.UPDATE, connection, dbOperation.dialect, annotationMetadata, repositoryType, associations, persisted);
             op.triggerPostUpdate();
         } catch (OptimisticLockException ex) {
             throw ex;
@@ -654,12 +652,13 @@ public abstract class AbstractRepositoryOperations<Cnt, PS, Exc extends Exceptio
                                                    Object parent,
                                                    BaseOperations<T> op) {
         RuntimePersistentEntity<Object> entity = getEntity((Class<Object>) parent.getClass());
-        DBOperation sqlInsertOperation = resolveSqlInsertAssociation(repositoryType, dialect, (RuntimeAssociation) association, entity, parent);
+        DBOperation dbInsertOperation = resolveSqlInsertAssociation(repositoryType, dialect, (RuntimeAssociation) association, entity, parent);
         try {
-            prepareStatement(connection, sqlInsertOperation.getQuery(), ps -> {
-                op.setParameters(this, connection, ps, sqlInsertOperation);
+            PS ps = op.prepare(connection, dbInsertOperation);
+            try (AutoCloseable ignore = autoCloseable(ps)) {
+                op.setParameters(this, connection, ps, dbInsertOperation);
                 op.executeUpdate(ps);
-            });
+            }
         } catch (Exception e) {
             throw new DataAccessException("SQL error executing INSERT: " + e.getMessage(), e);
         }
@@ -974,13 +973,14 @@ public abstract class AbstractRepositoryOperations<Cnt, PS, Exc extends Exceptio
         protected abstract void collectAutoPopulatedPreviousValues(DBOperation sqlOperation);
 
         /**
-         * Delegate to SQL operation to check if query needs to be changed to allow for expanded parameters.
+         * Prepares the statement.
          *
-         * @param sqlOperation The sqlOperation
-         * @param queryBuilder The queryBuilder
+         * @param connection The connection
+         * @param operation  The operation
+         * @return The statement
+         * @throws Exc The exception type
          */
-        protected void checkForParameterToBeExpanded(DBOperation sqlOperation, SqlQueryBuilder queryBuilder) {
-        }
+        protected abstract PS prepare(Cnt connection, DBOperation operation) throws Exc;
 
         /**
          * Set sql parameters.

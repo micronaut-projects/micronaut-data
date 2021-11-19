@@ -1018,6 +1018,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                 "VALUES (" + String.join(String.valueOf(COMMA), values) + CLOSE_BRACKET;
         return QueryResult.of(
                 builder,
+                Collections.emptyList(),
                 parameterBindings,
                 Collections.emptyMap()
         );
@@ -1102,11 +1103,13 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
             return QueryResult.of(
                     builder.toString(),
                     Collections.emptyList(),
+                    Collections.emptyList(),
                     Collections.emptyMap()
             );
         } else {
             return QueryResult.of(
                     "",
+                    Collections.emptyList(),
                     Collections.emptyList(),
                     Collections.emptyMap()
             );
@@ -1192,28 +1195,33 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     }
 
     @Override
-    protected void appendUpdateSetParameter(StringBuilder sb, String alias, PersistentProperty prop, String placeholder) {
+    protected void appendUpdateSetParameter(StringBuilder sb, String alias, PersistentProperty prop, Runnable appendParameter) {
         String transformed = getDataTransformerWriteValue(alias, prop).orElse(null);
         if (transformed != null) {
-            sb.append(transformed);
+            appendTransformed(sb, transformed, appendParameter);
             return;
         }
         if (prop.getDataType() == DataType.JSON) {
             switch (dialect) {
                 case H2:
-                    sb.append(placeholder).append(" FORMAT JSON");
+                    appendParameter.run();
+                    sb.append(" FORMAT JSON");
                     break;
                 case MYSQL:
-                    sb.append("CONVERT(").append(placeholder).append(" USING UTF8MB4)");
+                    sb.append("CONVERT(");
+                    appendParameter.run();
+                    sb.append(" USING UTF8MB4)");
                     break;
                 case POSTGRES:
-                    sb.append("to_json(").append(placeholder).append("::json)");
+                    sb.append("to_json(");
+                    appendParameter.run();
+                    sb.append("::json)");
                     break;
                 default:
-                    super.appendUpdateSetParameter(sb, alias, prop, placeholder);
+                    super.appendUpdateSetParameter(sb, alias, prop, appendParameter);
             }
         } else {
-            super.appendUpdateSetParameter(sb, alias, prop, placeholder);
+            super.appendUpdateSetParameter(sb, alias, prop, appendParameter);
         }
     }
 

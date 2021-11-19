@@ -44,6 +44,10 @@ class TestUtils {
         return metadata.getAnnotation(Query).stringValue().get()
     }
 
+    static String[] getQueryParts(AnnotationMetadataProvider metadata) {
+        return metadata.getAnnotationMetadata().stringValues(DataMethod.class, DataMethod.META_MEMBER_EXPANDABLE_QUERY)
+    }
+
     static String getRawQuery(AnnotationMetadataProvider metadata) {
         return metadata.getAnnotation(Query).stringValue( "rawQuery").get()
     }

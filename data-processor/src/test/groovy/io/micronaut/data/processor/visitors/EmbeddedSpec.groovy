@@ -16,7 +16,6 @@
 package io.micronaut.data.processor.visitors
 
 import io.micronaut.data.annotation.Query
-import spock.lang.PendingFeature
 
 class EmbeddedSpec extends AbstractDataSpec {
 
@@ -249,6 +248,62 @@ interface LikeRepository extends CrudRepository<Like, LikeId> {
         repository != null
         repository.getRequiredMethod("countByLikeIdImageIdentifier", UUID).stringValue(Query).get() ==
             'SELECT COUNT(*) FROM "likes" like_ WHERE (like_."like_id_image_identifier" = ?)'
+    }
+
+    void "test jdbc compile embedded id count query"() {
+        given:
+        def repository = buildRepository('test.LikeRepository', """
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
+
+@javax.persistence.Entity
+@javax.persistence.Table(name = "likes")
+class Like{
+    @javax.persistence.EmbeddedId private LikeId likeId;
+    
+    public void setLikeId(LikeId likeId) {
+        this.likeId = likeId;
+    }        
+    
+    public LikeId getLikeId() {
+        return likeId;
+    }
+}
+
+@javax.persistence.Embeddable
+class LikeId {
+    private UUID imageIdentifier;
+    private UUID userIdentifier;
+        
+    public UUID getImageIdentifier() {
+        return imageIdentifier;
+    }
+    
+    public void setImageIdentifier(UUID uuid) {
+        imageIdentifier = uuid;
+    }
+    
+    public UUID getUserIdentifier() {
+        return userIdentifier;
+    }
+    
+    public void setUserIdentifier(UUID uuid) {
+        userIdentifier = uuid;
+    }
+}
+
+@io.micronaut.data.jdbc.annotation.JdbcRepository
+@io.micronaut.context.annotation.Executable
+interface LikeRepository extends CrudRepository<Like, LikeId> {
+    long countByLikeIdImageIdentifier(UUID likeIdImageIdentifier);
+}
+
+"""
+        )
+
+        expect:
+        repository != null
+        repository.getRequiredMethod("deleteAll", Iterable).stringValue(Query).get() ==
+                    'DELETE  FROM "likes"  WHERE ("like_id_image_identifier" = ? AND "like_id_user_identifier" = ?)'
     }
 
 }

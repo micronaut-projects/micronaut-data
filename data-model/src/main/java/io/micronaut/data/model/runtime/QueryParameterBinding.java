@@ -103,4 +103,11 @@ public interface QueryParameterBinding {
      */
     @Nullable
     QueryParameterBinding getPreviousPopulatedValueParameter();
+
+    /**
+     * @return Is expandable parameter
+     */
+    default boolean isExpandable() {
+        return false;
+    }
 }

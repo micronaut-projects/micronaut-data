@@ -38,19 +38,27 @@ public interface QueryResult {
     String getQuery();
 
     /**
+     * @return A string parts representation of the original query.
+     */
+    @NonNull
+    List<String> getQueryParts();
+
+    /**
      * A map containing the parameter names and the references to the {@link io.micronaut.core.type.Argument} names which define the values.
      * These can be used to resolve the runtime values to bind to the prepared statement.
      *
      * @return The map
      */
-    default @NonNull Map<String, String> getParameters() {
+    default @NonNull
+    Map<String, String> getParameters() {
         return getParameterBindings().stream().collect(Collectors.toMap(QueryParameterBinding::getKey, p -> String.join(".", p.getPropertyPath())));
     }
 
     /**
      * @return The computed parameter types.
      */
-    default @NonNull Map<String, DataType> getParameterTypes() {
+    default @NonNull
+    Map<String, DataType> getParameterTypes() {
         return getParameterBindings().stream().collect(Collectors.toMap(p -> String.join(".", p.getPropertyPath()), QueryParameterBinding::getDataType, (d1, d2) -> d1));
     }
 
@@ -80,6 +88,7 @@ public interface QueryResult {
      * Creates a new encoded query.
      *
      * @param query                        The query
+     * @param queryParts                   The queryParts
      * @param parameterBindings            The parameters binding
      * @param additionalRequiredParameters Additional required parameters to execute the query
      * @return The query
@@ -87,6 +96,7 @@ public interface QueryResult {
     static @NonNull
     QueryResult of(
             @NonNull String query,
+            @NonNull List<String> queryParts,
             @NonNull List<QueryParameterBinding> parameterBindings,
             @NonNull Map<String, String> additionalRequiredParameters) {
         ArgumentUtils.requireNonNull("query", query);
@@ -98,6 +108,11 @@ public interface QueryResult {
             @Override
             public String getQuery() {
                 return query;
+            }
+
+            @Override
+            public List<String> getQueryParts() {
+                return queryParts;
             }
 
             @Override
@@ -116,6 +131,7 @@ public interface QueryResult {
      * Creates a new encoded query.
      *
      * @param query                        The query
+     * @param queryParts                   The queryParts
      * @param parameterBindings            The parameters binding
      * @param additionalRequiredParameters Additional required parameters to execute the query
      * @param max                          The query limit
@@ -125,6 +141,7 @@ public interface QueryResult {
     static @NonNull
     QueryResult of(
             @NonNull String query,
+            @NonNull List<String> queryParts,
             @NonNull List<QueryParameterBinding> parameterBindings,
             @NonNull Map<String, String> additionalRequiredParameters,
             int max,
@@ -149,6 +166,11 @@ public interface QueryResult {
             @Override
             public String getQuery() {
                 return query;
+            }
+
+            @Override
+            public List<String> getQueryParts() {
+                return queryParts;
             }
 
             @Override

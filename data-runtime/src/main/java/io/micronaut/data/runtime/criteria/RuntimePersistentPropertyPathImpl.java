@@ -18,16 +18,24 @@ package io.micronaut.data.runtime.criteria;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentPropertyPath;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
+import jakarta.persistence.criteria.Path;
 
 import java.util.List;
 
 final class RuntimePersistentPropertyPathImpl<I, T> extends AbstractPersistentPropertyPath<T> {
 
+    private final Path<?> parentPath;
     private final RuntimePersistentProperty<I> runtimePersistentProperty;
 
-    public RuntimePersistentPropertyPathImpl(RuntimePersistentProperty<I> persistentProperty, List<Association> path) {
+    public RuntimePersistentPropertyPathImpl(Path<?> parentPath, List<Association> path, RuntimePersistentProperty<I> persistentProperty) {
         super(persistentProperty, path);
+        this.parentPath = parentPath;
         this.runtimePersistentProperty = persistentProperty;
+    }
+
+    @Override
+    public Path<?> getParentPath() {
+        return parentPath;
     }
 
     @Override

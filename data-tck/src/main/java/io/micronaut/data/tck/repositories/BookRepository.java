@@ -15,8 +15,10 @@
  */
 package io.micronaut.data.tck.repositories;
 
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.context.annotation.Parameter;
+import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.annotation.Nullable;
+import io.micronaut.data.annotation.Expandable;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.annotation.Query;
@@ -30,7 +32,6 @@ import io.micronaut.data.tck.entities.AuthorBooksDto;
 import io.micronaut.data.tck.entities.Book;
 import io.micronaut.data.tck.entities.BookDto;
 
-import io.micronaut.core.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -87,7 +88,7 @@ public abstract class BookRepository implements PageableRepository<Book, Long> {
     public abstract List<Book> listNativeBooksWithTitleInCollection(@Nullable Collection<String> arg0);
 
     @Query(value = "select * from book b where b.title IN (:arg0)", nativeQuery = true)
-    public abstract List<Book> listNativeBooksWithTitleInArray(@TypeDef(type = DataType.STRING) @Nullable String[] arg0);
+    public abstract List<Book> listNativeBooksWithTitleInArray(@Expandable @TypeDef(type = DataType.STRING) @Nullable String[] arg0);
 
     @Query(value = "select * from book b where b.title = any (:arg0)", nativeQuery = true)
     public abstract List<Book> listNativeBooksWithTitleAnyCollection(@Nullable Collection<String> arg0);

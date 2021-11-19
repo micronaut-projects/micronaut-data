@@ -155,6 +155,8 @@ class JpaQueryBuilderSpec extends Specification {
         encodedQuery != null
         encodedQuery.query ==
                 "SELECT $alias FROM $entity.name AS $alias WHERE ($alias.$property IN (:p1))"
+        encodedQuery.queryParts ==
+                ["SELECT $alias FROM $entity.name AS $alias WHERE ($alias.$property IN (", "))"]
         encodedQuery.parameters == ['p1': 'name']
 
         where:

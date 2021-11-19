@@ -15,6 +15,8 @@
  */
 package io.micronaut.data.runtime.criteria;
 
+import io.micronaut.core.annotation.Nullable;
+import io.micronaut.data.annotation.Join;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.jpa.criteria.PersistentAssociationPath;
 import io.micronaut.data.model.jpa.criteria.impl.SelectionVisitor;
@@ -31,11 +33,41 @@ final class RuntimePersistentAssociationPath<Owner, E> extends AbstractRuntimePe
     private final Path<?> parentPath;
     private final RuntimeAssociation<Owner> association;
     private final List<Association> associations;
+    private io.micronaut.data.annotation.Join.Type associationJoinType;
+    @Nullable
+    private String alias;
 
-    RuntimePersistentAssociationPath(Path<?> parentPath, RuntimeAssociation<Owner> association, List<Association> associations) {
+    RuntimePersistentAssociationPath(Path<?> parentPath,
+                                     RuntimeAssociation<Owner> association,
+                                     List<Association> associations,
+                                     Join.Type associationJoinType,
+                                     @Nullable String alias) {
         this.parentPath = parentPath;
         this.association = association;
         this.associations = associations;
+        this.associationJoinType = associationJoinType;
+        this.alias = alias;
+    }
+
+    @Override
+    public Join.Type getAssociationJoinType() {
+        return associationJoinType;
+    }
+
+    @Override
+    public void setAssociationJoinType(Join.Type type) {
+        this.associationJoinType = type;
+    }
+
+    @Override
+    @Nullable
+    public String getAlias() {
+        return alias;
+    }
+
+    @Override
+    public void setAlias(String alias) {
+        this.alias = alias;
     }
 
     @Override

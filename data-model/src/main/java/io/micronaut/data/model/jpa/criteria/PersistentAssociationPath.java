@@ -51,6 +51,26 @@ public interface PersistentAssociationPath<OwnerType, AssociatedEntityType> exte
     @NonNull
     Association getAssociation();
 
+    /**
+     * @return The join type
+     */
+    @Nullable
+    io.micronaut.data.annotation.Join.Type getAssociationJoinType();
+
+    /**
+     * Set join type.
+     *
+     * @param type The join type
+     */
+    void setAssociationJoinType(@Nullable io.micronaut.data.annotation.Join.Type type);
+
+    /**
+     * Set join alias.
+     *
+     * @param alias The alias
+     */
+    void setAlias(String alias);
+
     @NonNull
     default List<Association> asPath() {
         List<Association> associations = getAssociations();

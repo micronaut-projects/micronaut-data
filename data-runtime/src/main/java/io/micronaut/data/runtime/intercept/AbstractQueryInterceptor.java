@@ -1034,8 +1034,8 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
         Class<RT> resultType;
         private final @NonNull
         Class<E> rootEntity;
-        private final @NonNull
-        String query;
+        private final @NonNull String query;
+        private final String[] queryParts;
         private final ExecutableMethod<?, ?> method;
         private final boolean isDto;
         private final boolean isOptimisticLock;
@@ -1080,8 +1080,10 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
 
             if (isCount) {
                 this.query = method.stringValue(Query.class, DataMethod.META_MEMBER_RAW_COUNT_QUERY).orElse(query);
+                this.queryParts = method.stringValues(DataMethod.class, DataMethod.META_MEMBER_EXPANDABLE_COUNT_QUERY);
             } else {
                 this.query = method.stringValue(Query.class, DataMethod.META_MEMBER_RAW_QUERY).orElse(query);
+                this.queryParts = method.stringValues(DataMethod.class, DataMethod.META_MEMBER_EXPANDABLE_QUERY);
             }
             this.method = method;
             this.isDto = method.isTrue(DATA_METHOD_ANN_NAME, DataMethod.META_MEMBER_DTO);
@@ -1143,6 +1145,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
                                     av.booleanValue(DataMethodQueryParameter.META_MEMBER_AUTO_POPULATED).orElse(false),
                                     av.booleanValue(DataMethodQueryParameter.META_MEMBER_REQUIRES_PREVIOUS_POPULATED_VALUES).orElse(false),
                                     av.classValue(DataMethodQueryParameter.META_MEMBER_CONVERTER).orElse(null),
+                                    av.booleanValue(DataMethodQueryParameter.META_MEMBER_EXPANDABLE).orElse(false),
                                     queryParameters
                             ));
                 }
@@ -1306,13 +1309,15 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
             return hasPageable;
         }
 
-        /**
-         * @return The query to execute
-         */
         @Override
         @NonNull
         public String getQuery() {
             return query;
+        }
+
+        @Override
+        public String[] getExpandableQueryParts() {
+            return queryParts;
         }
 
         @NonNull
@@ -1406,6 +1411,11 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
             this.storedQuery = storedQuery;
             this.pageable = pageable;
             this.dto = dtoProjection;
+        }
+
+        @Override
+        public String[] getExpandableQueryParts() {
+            return storedQuery.getExpandableQueryParts();
         }
 
         @Override
@@ -1600,6 +1610,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
         private final boolean autoPopulated;
         private final boolean requiresPreviousPopulatedValue;
         private final Class<?> parameterConverterClass;
+        private final boolean expandable;
         private final List<? extends QueryParameterBinding> all;
 
         private boolean previousInitialized;
@@ -1613,6 +1624,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
                                      boolean autoPopulated,
                                      boolean requiresPreviousPopulatedValue,
                                      Class<?> parameterConverterClass,
+                                     boolean expandable,
                                      List<? extends QueryParameterBinding> all) {
             this.name = name;
             this.dataType = dataType;
@@ -1622,6 +1634,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
             this.autoPopulated = autoPopulated;
             this.requiresPreviousPopulatedValue = requiresPreviousPopulatedValue;
             this.parameterConverterClass = parameterConverterClass;
+            this.expandable = expandable;
             this.all = all;
         }
 
@@ -1680,6 +1693,11 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
         }
 
         @Override
+        public boolean isExpandable() {
+            return expandable;
+        }
+
+        @Override
         public String toString() {
             return "StoredQueryParameter{" +
                     "name='" + name + '\'' +
@@ -1690,6 +1708,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
                     ", autoPopulated=" + autoPopulated +
                     ", requiresPreviousPopulatedValue=" + requiresPreviousPopulatedValue +
                     ", previousPopulatedValueParameter=" + previousPopulatedValueParameter +
+                    ", expandable=" + expandable +
                     '}';
         }
     }

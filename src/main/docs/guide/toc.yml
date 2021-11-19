@@ -58,6 +58,7 @@ sql:
     sqlMapping:
       title: Mapping Entities
       sqlAnnotations: SQL Annotations
+      sqlExpandableQueries: Expandable queries
       sqlIdGenerator: ID Generation
       sqlCompositeId: Composite Primary Keys
       sqlConstructorArguments: Constructor Arguments

@@ -58,7 +58,6 @@ ${entity('Movie', [title: String, theLongName: String])}
             'deleteCustomSingle' | 'DELETE FROM movie WHERE title = ?' | ['title'] as String[] | ['-1'] as String[]
     }
 
-    @Unroll
     void  "test build delete query"() {
         given:
             def repository = buildRepository('test.MovieRepository', """
@@ -72,16 +71,13 @@ interface MovieRepository extends CrudRepository<Movie, Integer> {
 
 ${entity('Movie', [title: String, theLongName: String])}
 """)
-            def method = repository.findMethod(methodName, Iterable.class).get()
+            def method = repository.findMethod('deleteAll', Iterable.class).get()
 
         expect:
-            getQuery(method) == query
-            getParameterPropertyPaths(method) == propertyPaths
-            getParameterBindingIndexes(method) == parameterIndexes
-
-        where:
-            methodName  | query                                       | propertyPaths      | parameterIndexes
-            'deleteAll' | 'DELETE  FROM `movie`  WHERE (`id` IN (?))' | ['id'] as String[] | ['-1'] as String[]
+            getQuery(method) == 'DELETE  FROM `movie`  WHERE (`id` IN (?))'
+            getQueryParts(method) == ['DELETE  FROM `movie`  WHERE (`id` IN (', '))']
+            getParameterPropertyPaths(method) == ['id'] as String[]
+            getParameterBindingIndexes(method) == ['-1'] as String[]
     }
 
     void "test build delete relation"() {

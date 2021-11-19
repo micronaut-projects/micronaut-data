@@ -54,9 +54,9 @@ interface SourcePersistentEntityPath<T> extends PersistentEntityPath<T> {
             List<Association> newAssociations = new ArrayList<>(associations.size() + 1);
             newAssociations.addAll(associations);
             newAssociations.add(associationPath.getAssociation());
-            return new SourcePersistentPropertyPathImpl<>(property, newAssociations);
+            return new SourcePersistentPropertyPathImpl<>(this, newAssociations, property);
         }
-        return new SourcePersistentPropertyPathImpl<>(property, Collections.emptyList());
+        return new SourcePersistentPropertyPathImpl<>(this, Collections.emptyList(), property);
     }
 
 }
