@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.r2dbc.oraclexe;
 
+import io.micronaut.data.annotation.Expandable;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.TypeDef;
 import io.micronaut.data.model.DataType;
@@ -37,6 +38,6 @@ public abstract class OracleXEBookRepository extends BookRepository {
     public abstract List<Book> listNativeBooksWithTitleAnyCollection(@Nullable Collection<String> arg0);
 
     @Query(value = "select * from book b where b.title = ANY (:arg0)", nativeQuery = true)
-    public abstract List<Book> listNativeBooksWithTitleAnyArray(@TypeDef(type = DataType.STRING) @Nullable String[] arg0);
+    public abstract List<Book> listNativeBooksWithTitleAnyArray(@Expandable @TypeDef(type = DataType.STRING) @Nullable String[] arg0);
 
 }
