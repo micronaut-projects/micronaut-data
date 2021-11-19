@@ -23,7 +23,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Marks parameter as expandable, which means that the query will be altered during runtime to accommodate adittional values.
+ * Marks parameter as expandable, which means that the query will be altered during runtime to accommodate additional values.
  *
  * @author Denis Stepanov
  * @since 3.2.0
