@@ -73,7 +73,7 @@ public class StoredSqlOperation extends DBOperation {
         this.queryParameterBindings = queryParameterBindings;
         this.isOptimisticLock = isOptimisticLock;
         this.expandableQueryParts = expandableQueryParts;
-        this.expandableQuery = expandableQueryParts != null && expandableQueryParts.length > 1;
+        this.expandableQuery = expandableQueryParts != null && expandableQueryParts.length > 1 && queryParameterBindings.stream().anyMatch(QueryParameterBinding::isExpandable);
         if (expandableQuery && expandableQueryParts.length != queryParameterBindings.size() + 1) {
             throw new IllegalStateException("Expandable query parts size should be the same as parameters size + 1. " + expandableQueryParts.length + " != 1 + " + queryParameterBindings.size() + " " + query + " " + Arrays.toString(expandableQueryParts));
         }
@@ -122,8 +122,7 @@ public class StoredSqlOperation extends DBOperation {
             int queryParamIndex = 1;
             int inx = 1;
             for (QueryParameterBinding parameter : queryParameterBindings) {
-                DataType dataType = parameter.getDataType();
-                if (dataType != null && dataType.isArray() && dataType != DataType.BYTE_ARRAY) {
+                if (!parameter.isExpandable()) {
                     q.append(String.format(positionalParameterFormat, inx++));
                 } else {
                     int size = Math.max(1, getQueryParameterValueSize(parameter, persistentEntity, entity));

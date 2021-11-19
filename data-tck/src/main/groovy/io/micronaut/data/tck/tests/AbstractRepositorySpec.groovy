@@ -293,7 +293,6 @@ abstract class AbstractRepositorySpec extends Specification {
         carRepository.deleteAll()
     }
 
-//    @Ignore("Fix indexed mapping for r2dbc")
     void "test In Native Query function"() {
         given:
         savePersons(["Cemo", "Deniz", "Utku"])

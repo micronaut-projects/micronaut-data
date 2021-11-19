@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.jdbc.postgres;
 
+import io.micronaut.data.annotation.Expandable;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.TypeDef;
 import io.micronaut.data.model.DataType;
@@ -39,5 +40,5 @@ public abstract class PostgresBookRepository extends BookRepository {
     public abstract List<Book> listNativeBooksNullableListSearch(@Nullable List<String> arg0);
 
     @Query(value = "select * from book where (CASE WHEN exists ( select (:arg0) ) THEN title IN (:arg0) ELSE true END)", nativeQuery = true)
-    public abstract List<Book> listNativeBooksNullableArraySearch(@TypeDef(type = DataType.STRING) @Nullable String[] arg0);
+    public abstract List<Book> listNativeBooksNullableArraySearch(@Expandable @TypeDef(type = DataType.STRING) @Nullable String[] arg0);
 }
