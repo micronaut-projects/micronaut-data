@@ -2205,9 +2205,9 @@ abstract class ProductRepository implements CrudRepository&lt;Product, Long&gt;,
 <div class="listingblock multi-language-sample">
 <div class="content">
 <pre class="highlight"><code class="language-kotlin" data-lang="kotlin">@Repository
-abstract class ProductRepository : CrudRepository&lt;Product, Long&gt;, JpaSpecificationExecutor&lt;Product&gt; {
+interface ProductRepository : CrudRepository&lt;Product, Long&gt;, JpaSpecificationExecutor&lt;Product&gt; {
     @Join(value = "manufacturer", type = Join.Type.FETCH) <b class="conum">(1)</b>
-    abstract fun list(): List&lt;Product&gt;
+    fun list(): List&lt;Product&gt;
 }</code></pre>
 </div>
 </div>
@@ -2242,7 +2242,7 @@ abstract List&lt;Product&gt; findAll()</code></pre>
 <div class="listingblock multi-language-sample">
 <div class="content">
 <pre class="highlight"><code class="language-kotlin" data-lang="kotlin">@EntityGraph(attributePaths = ["manufacturer", "title"]) <b class="conum">(1)</b>
-abstract override fun findAll(): List&lt;Product&gt;</code></pre>
+override fun findAll(): List&lt;Product&gt;</code></pre>
 </div>
 </div>
 <div class="colist arabic">
@@ -2603,11 +2603,11 @@ abstract class ProductRepository implements CrudRepository&lt;Product, Long&gt;,
 <div class="listingblock multi-language-sample">
 <div class="content">
 <pre class="highlight"><code class="language-kotlin" data-lang="kotlin">@Repository
-abstract class ProductRepository : CrudRepository&lt;Product, Long&gt;, JpaSpecificationExecutor&lt;Product&gt; {
+interface ProductRepository : CrudRepository&lt;Product, Long&gt;, JpaSpecificationExecutor&lt;Product&gt; {
     @Join("manufacturer")
-    abstract fun findByNameContains(str: String): CompletableFuture&lt;Product&gt;
+    fun findByNameContains(str: String): CompletableFuture&lt;Product&gt;
 
-    abstract fun countByManufacturerName(name: String): CompletableFuture&lt;Long&gt;
+    fun countByManufacturerName(name: String): CompletableFuture&lt;Long&gt;
 }</code></pre>
 </div>
 </div>
@@ -2702,9 +2702,9 @@ abstract Single&lt;Long&gt; countDistinctByManufacturerName(String name)</code><
 <div class="listingblock multi-language-sample">
 <div class="content">
 <pre class="highlight"><code class="language-kotlin" data-lang="kotlin">@Join("manufacturer")
-abstract fun queryByNameContains(str: String): Maybe&lt;Product&gt;
+fun queryByNameContains(str: String): Maybe&lt;Product&gt;
 
-abstract fun countDistinctByManufacturerName(name: String): Single&lt;Long&gt;</code></pre>
+fun countDistinctByManufacturerName(name: String): Single&lt;Long&gt;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -2923,7 +2923,7 @@ abstract class ProductRepository implements CrudRepository&lt;Product, Long&gt;,
 <div class="listingblock multi-language-sample">
 <div class="content">
 <pre class="highlight"><code class="language-kotlin" data-lang="kotlin">@Repository
-abstract class ProductRepository : CrudRepository&lt;Product, Long&gt;, JpaSpecificationExecutor&lt;Product&gt; {
+interface ProductRepository : CrudRepository&lt;Product, Long&gt;, JpaSpecificationExecutor&lt;Product&gt; {
 
     @Transactional
     fun findByName(name: String, caseInsensitive: Boolean, includeBlank: Boolean): List&lt;Product&gt; {
