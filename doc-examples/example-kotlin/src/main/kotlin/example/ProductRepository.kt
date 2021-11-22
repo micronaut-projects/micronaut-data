@@ -14,33 +14,33 @@ import javax.transaction.Transactional
 // tag::async[]
 // tag::specifications[]
 @Repository
-abstract class ProductRepository : CrudRepository<Product, Long>, JpaSpecificationExecutor<Product> {
+interface ProductRepository : CrudRepository<Product, Long>, JpaSpecificationExecutor<Product> {
 // end::join[]
 // end::async[]
 // end::specifications[]
 
     // tag::join[]
     @Join(value = "manufacturer", type = Join.Type.FETCH) // <1>
-    abstract fun list(): List<Product>
+    fun list(): List<Product>
     // end::join[]
 
     // tag::entitygraph[]
     @EntityGraph(attributePaths = ["manufacturer", "title"]) // <1>
-    abstract override fun findAll(): List<Product>
+    override fun findAll(): List<Product>
     // end::entitygraph[]
 
     // tag::async[]
     @Join("manufacturer")
-    abstract fun findByNameContains(str: String): CompletableFuture<Product>
+    fun findByNameContains(str: String): CompletableFuture<Product>
 
-    abstract fun countByManufacturerName(name: String): CompletableFuture<Long>
+    fun countByManufacturerName(name: String): CompletableFuture<Long>
     // end::async[]
 
     // tag::reactive[]
     @Join("manufacturer")
-    abstract fun queryByNameContains(str: String): Maybe<Product>
+    fun queryByNameContains(str: String): Maybe<Product>
 
-    abstract fun countDistinctByManufacturerName(name: String): Single<Long>
+    fun countDistinctByManufacturerName(name: String): Single<Long>
     // end::reactive[]
 
     // tag::specifications[]
