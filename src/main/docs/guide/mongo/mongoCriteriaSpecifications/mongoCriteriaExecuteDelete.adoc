@@ -1,0 +1,38 @@
+To delete an entity or multiple entities you can use one of the following methods from api:data.repository.JpaSpecificationExecutor[] interface:
+
+snippet::example.PersonRepository[project-base="doc-examples/mongo-example",source="main" tags="delete",indent="0"]
+
+As it is for querying, `deleteAll` methods also come in two variations.
+
+First method is expecting api:data.repository.criteria.PredicateSpecification[] which is a the same interface described in <<criteriaExecuteQuery, Querying>> section
+
+The second method comes with api:data.repository.DeleteSpecification[] and is intended only for delete criteria because it includes access to `jakarta.persistence.criteria.CriteriaDelete`.
+
+[source,java]
+----
+import static jakarta.persistence.criteria.*;
+
+public interface DeleteSpecification<T> {
+
+    // <1>
+    @Nullable
+    Predicate toPredicate(@NonNull Root<T> root, // <2>
+                          @NonNull CriteriaDelete<?> query, // <3>
+                          @NonNull CriteriaBuilder criteriaBuilder // <4>
+    );
+
+}
+----
+
+<1> The specification is producing a query limiting predicate
+<2> The entity root
+<3> The criteria delete instance
+<4> The criteria builder
+
+For deleting you can reuse the same predicates as for querying and updating:
+
+snippet::example.PersonRepository[project-base="doc-examples/mongo-example",source="main" tags="specifications",indent="0"]
+
+Simply pass the predicate specification to the `deleteAll` method:
+
+snippet::example.PersonRepositorySpec[project-base="doc-examples/mongo-example",source="test" tags="delete",indent="0"]

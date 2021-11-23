@@ -1,0 +1,5 @@
+The default ID generation for MongoDB is using `ObjectId` as an ID, there are only two supported types: the default `ObjectId` and a simple Java String which will have the hex value of the `ObjectId`.
+
+You can remove the `@GeneratedValue` annotation and in this case the expectation is that you will assign an ID before calling `save()`.
+
+Automatically assigned UUIDs are also supported by adding a property annotated with `@Id` and `@AutoPopulated`.

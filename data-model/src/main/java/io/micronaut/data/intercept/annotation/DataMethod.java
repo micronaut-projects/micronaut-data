@@ -40,6 +40,11 @@ import java.lang.annotation.Inherited;
 public @interface DataMethod {
 
     /**
+     * The annotation name.
+     */
+    String NAME = DataMethod.class.getName();
+
+    /**
      * The member that holds expandable query parts.
      */
     String META_MEMBER_EXPANDABLE_QUERY = "expandableQuery";

@@ -1,0 +1,65 @@
+plugins {
+    id "java"
+    id "org.jetbrains.kotlin.jvm"
+    id "org.jetbrains.kotlin.kapt"
+    id "org.jetbrains.kotlin.plugin.allopen"
+    id "org.jetbrains.kotlin.plugin.jpa"
+    id "io.micronaut.application"
+    id "io.micronaut.build.internal.data-example"
+}
+
+repositories {
+    mavenCentral()
+}
+
+application {
+    mainClass = "example.ApplicationKt"
+}
+
+micronaut {
+    version project.ext.micronautVersion
+    runtime "netty"
+    testRuntime "junit5"
+}
+
+dependencies {
+    kapt projects.dataDocumentProcessor
+
+    implementation 'io.micronaut.rxjava2:micronaut-rxjava2'
+    implementation 'io.micronaut.reactor:micronaut-reactor'
+
+    implementation "io.micronaut:micronaut-http-client"
+    implementation projects.dataMongo
+    implementation libs.mongodb.driver.sync
+
+    compileOnly "javax.persistence:javax.persistence-api:$javaxPersistenceVersion"
+    implementation "jakarta.persistence:jakarta.persistence-api:$jakartaPersistenceVersion"
+    implementation 'jakarta.transaction:jakarta.transaction-api:1.3.3'
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-reactive"
+
+    runtimeOnly "ch.qos.logback:logback-classic"
+
+    testImplementation "org.testcontainers:mongodb"
+}
+
+allOpen {
+    annotation("io.micronaut.aop.Around")
+}
+
+compileKotlin {
+    kotlinOptions {
+        jvmTarget = '1.8'
+    }
+}
+
+compileTestKotlin {
+    kotlinOptions {
+        jvmTarget = '1.8'
+    }
+}
+
+project.afterEvaluate {
+    nativeImage.enabled = false
+    testNativeImage.enabled = false
+}

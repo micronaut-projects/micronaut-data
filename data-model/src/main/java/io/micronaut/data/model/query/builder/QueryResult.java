@@ -16,6 +16,7 @@
 package io.micronaut.data.model.query.builder;
 
 import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.data.model.DataType;
 
@@ -36,6 +37,22 @@ public interface QueryResult {
      */
     @NonNull
     String getQuery();
+
+    /**
+     * @return A string representation of the update part.
+     */
+    @Nullable
+    default String getUpdate() {
+        return null;
+    }
+
+    /**
+     * @return A string representation of the aggregate part.
+     */
+    @Nullable
+    default String getAggregate() {
+        return null;
+    }
 
     /**
      * @return A string parts representation of the original query.
@@ -184,4 +201,5 @@ public interface QueryResult {
             }
         };
     }
+
 }

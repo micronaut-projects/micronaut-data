@@ -15,7 +15,10 @@
  */
 package io.micronaut.data.tck.entities;
 
-import io.micronaut.data.annotation.*;
+import io.micronaut.data.annotation.AutoPopulated;
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.Relation;
 
 import java.util.Set;
 import java.util.UUID;

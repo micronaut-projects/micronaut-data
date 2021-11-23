@@ -15,6 +15,23 @@
  */
 package io.micronaut.transaction.support;
 
+import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.annotation.Nullable;
+import io.micronaut.transaction.SynchronousTransactionManager;
+import io.micronaut.transaction.TransactionCallback;
+import io.micronaut.transaction.TransactionDefinition;
+import io.micronaut.transaction.TransactionStatus;
+import io.micronaut.transaction.exceptions.CannotCreateTransactionException;
+import io.micronaut.transaction.exceptions.IllegalTransactionStateException;
+import io.micronaut.transaction.exceptions.InvalidTimeoutException;
+import io.micronaut.transaction.exceptions.NestedTransactionNotSupportedException;
+import io.micronaut.transaction.exceptions.TransactionException;
+import io.micronaut.transaction.exceptions.TransactionSuspensionNotSupportedException;
+import io.micronaut.transaction.exceptions.TransactionSystemException;
+import io.micronaut.transaction.exceptions.UnexpectedRollbackException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
@@ -22,16 +39,6 @@ import java.lang.reflect.UndeclaredThrowableException;
 import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
-
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
-import io.micronaut.transaction.SynchronousTransactionManager;
-import io.micronaut.transaction.TransactionCallback;
-import io.micronaut.transaction.TransactionDefinition;
-import io.micronaut.transaction.TransactionStatus;
-import io.micronaut.transaction.exceptions.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * NOTICE: This is a fork of Spring's {@code AbstractPlatformTransactionManager} modernizing it
@@ -605,6 +612,7 @@ public abstract class AbstractSynchronousTransactionManager<T> implements Synchr
      * @param transaction The transaction
      * @return The connection.
      */
+    @Nullable
     protected abstract T getConnection(Object transaction);
 
     /**
@@ -1108,6 +1116,7 @@ public abstract class AbstractSynchronousTransactionManager<T> implements Synchr
      * @see #doRollback
      * @see DefaultTransactionStatus#getTransaction
      */
+    @NonNull
     protected abstract Object doGetTransaction() throws TransactionException;
 
     /**
@@ -1125,7 +1134,7 @@ public abstract class AbstractSynchronousTransactionManager<T> implements Synchr
      * @throws TransactionException in case of system errors
      * @see #doGetTransaction
      */
-    protected boolean isExistingTransaction(Object transaction) throws TransactionException {
+    protected boolean isExistingTransaction(@NonNull Object transaction) throws TransactionException {
         return false;
     }
 
@@ -1169,7 +1178,7 @@ public abstract class AbstractSynchronousTransactionManager<T> implements Synchr
      * @throws NestedTransactionNotSupportedException
      * if the underlying transaction does not support nesting
      */
-    protected abstract void doBegin(Object transaction, TransactionDefinition definition)
+    protected abstract void doBegin(@NonNull Object transaction, TransactionDefinition definition)
             throws TransactionException;
 
     /**
@@ -1185,7 +1194,7 @@ public abstract class AbstractSynchronousTransactionManager<T> implements Synchr
      * @throws TransactionException in case of system errors
      * @see #doResume
      */
-    protected Object doSuspend(Object transaction) throws TransactionException {
+    protected @Nullable Object doSuspend(@NonNull Object transaction) throws TransactionException {
         throw new TransactionSuspensionNotSupportedException(
                 "Transaction manager [" + getClass().getName() + "] does not support transaction suspension");
     }
@@ -1203,7 +1212,7 @@ public abstract class AbstractSynchronousTransactionManager<T> implements Synchr
      * @throws TransactionException in case of system errors
      * @see #doSuspend
      */
-    protected void doResume(@Nullable Object transaction, Object suspendedResources) throws TransactionException {
+    protected void doResume(@Nullable Object transaction, @NonNull Object suspendedResources) throws TransactionException {
         throw new TransactionSuspensionNotSupportedException(
                 "Transaction manager [" + getClass().getName() + "] does not support transaction suspension");
     }

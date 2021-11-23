@@ -29,14 +29,10 @@ import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.convert.ArgumentConversionContext;
 import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.core.type.Argument;
-import io.micronaut.data.annotation.Relation;
-import io.micronaut.data.event.EntityEventContext;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.exceptions.NonUniqueResultException;
-import io.micronaut.data.model.Association;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.Page;
-import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
@@ -48,7 +44,6 @@ import io.micronaut.data.model.runtime.InsertBatchOperation;
 import io.micronaut.data.model.runtime.InsertOperation;
 import io.micronaut.data.model.runtime.PagedQuery;
 import io.micronaut.data.model.runtime.PreparedQuery;
-import io.micronaut.data.model.runtime.QueryParameterBinding;
 import io.micronaut.data.model.runtime.RuntimeAssociation;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
@@ -64,15 +59,18 @@ import io.micronaut.data.r2dbc.mapper.R2dbcQueryStatement;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.convert.RuntimePersistentPropertyConversionContext;
 import io.micronaut.data.runtime.date.DateTimeProvider;
-import io.micronaut.data.runtime.event.DefaultEntityEventContext;
 import io.micronaut.data.runtime.mapper.DTOMapper;
 import io.micronaut.data.runtime.mapper.TypeMapper;
 import io.micronaut.data.runtime.mapper.sql.SqlDTOMapper;
 import io.micronaut.data.runtime.mapper.sql.SqlResultEntityTypeMapper;
 import io.micronaut.data.runtime.operations.AsyncFromReactiveAsyncRepositoryOperation;
+import io.micronaut.data.runtime.operations.internal.AbstractReactiveEntitiesOperations;
+import io.micronaut.data.runtime.operations.internal.AbstractReactiveEntityOperations;
 import io.micronaut.data.runtime.operations.internal.AbstractSqlRepositoryOperations;
 import io.micronaut.data.runtime.operations.internal.DBOperation;
 import io.micronaut.data.runtime.operations.internal.OpContext;
+import io.micronaut.data.runtime.operations.internal.OperationContext;
+import io.micronaut.data.runtime.operations.internal.ReactiveCascadeOperations;
 import io.micronaut.data.runtime.operations.internal.StoredQuerySqlOperation;
 import io.micronaut.data.runtime.operations.internal.StoredSqlOperation;
 import io.micronaut.data.runtime.support.AbstractConversionContext;
@@ -101,13 +99,9 @@ import reactor.util.function.Tuples;
 
 import java.io.Serializable;
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
@@ -128,14 +122,16 @@ import java.util.stream.Stream;
  */
 @EachBean(ConnectionFactory.class)
 @Internal
-final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperations<Connection, Row, Statement, RuntimeException> implements BlockingReactorRepositoryOperations, R2dbcRepositoryOperations, R2dbcOperations, ReactiveTransactionOperations<Connection> {
+final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperations<Connection, Row, Statement, RuntimeException>
+        implements BlockingReactorRepositoryOperations, R2dbcRepositoryOperations, R2dbcOperations,
+        ReactiveTransactionOperations<Connection>, ReactiveCascadeOperations.ReactiveCascadeOperationsHelper<DefaultR2dbcRepositoryOperations.R2dbcOperationContext> {
     private static final Logger LOG = LoggerFactory.getLogger(DefaultR2dbcRepositoryOperations.class);
-    private static final AutoCloseable NOOP = () -> { };
     private final ConnectionFactory connectionFactory;
     private final ReactorReactiveRepositoryOperations reactiveOperations;
     private final String dataSourceName;
     private ExecutorService executorService;
     private AsyncRepositoryOperations asyncRepositoryOperations;
+    private final ReactiveCascadeOperations<R2dbcOperationContext> cascadeOperations;
 
     /**
      * Default constructor.
@@ -175,191 +171,71 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         this.executorService = executorService;
         this.reactiveOperations = new DefaultR2dbcReactiveRepositoryOperations();
         this.dataSourceName = dataSourceName;
+        this.cascadeOperations = new ReactiveCascadeOperations<>(conversionService, this);
     }
 
-    private <T> Mono<T> cascadeEntity(T en, RuntimePersistentEntity<T> persistentEntity,
-                                      boolean isPost, Relation.Cascade cascadeType, Connection connection,
-                                      Dialect dialect, AnnotationMetadata annotationMetadata, Class<?> repositoryType,
-                                      List<Association> associations, Set<Object> persisted) {
-        List<CascadeOp> cascadeOps = new ArrayList<>();
+    @Override
+    public <T> Mono<T> persistOne(R2dbcOperationContext ctx, T value, RuntimePersistentEntity<T> persistentEntity) {
+        DBOperation childSqlPersistOperation = resolveEntityInsert(ctx.annotationMetadata, ctx.repositoryType, value.getClass(), persistentEntity);
+        R2dbcEntityOperations<T> op = new R2dbcEntityOperations<>(ctx, childSqlPersistOperation, persistentEntity, value, true);
+        op.persist();
+        return op.getEntity();
+    }
 
-        cascade(dialect, annotationMetadata, repositoryType, isPost, cascadeType, CascadeContext.of(associations, en), persistentEntity, en, cascadeOps);
-
-        Mono<T> entity = Mono.just(en);
-
-        for (CascadeOp cascadeOp : cascadeOps) {
-            if (cascadeOp instanceof CascadeOneOp) {
-                CascadeOneOp cascadeOneOp = (CascadeOneOp) cascadeOp;
-                Object child = cascadeOneOp.child;
-                RuntimePersistentEntity<Object> childPersistentEntity = cascadeOneOp.childPersistentEntity;
-                RuntimeAssociation<Object> association = (RuntimeAssociation) cascadeOp.ctx.getAssociation();
-
-                if (persisted.contains(child)) {
-                    continue;
-                }
-                RuntimePersistentProperty<Object> identity = childPersistentEntity.getIdentity();
-                boolean hasId = identity.getProperty().get(child) != null;
-
-                Mono<Object> childMono;
-                if ((!hasId || identity instanceof Association) && (cascadeType == Relation.Cascade.PERSIST)) {
-                    if (LOG.isDebugEnabled()) {
-                        LOG.debug("Cascading PERSIST for '{}' association: '{}'", persistentEntity.getName(), cascadeOp.ctx.associations);
-                    }
-                    R2dbcEntityOperations<Object> op = new R2dbcEntityOperations<>(childPersistentEntity, child);
-                    DBOperation childSqlPersistOperation = resolveEntityInsert(annotationMetadata, repositoryType, child.getClass(), childPersistentEntity);
-                    persistOne(connection, cascadeOneOp.annotationMetadata, cascadeOneOp.repositoryType, childSqlPersistOperation, associations, persisted, op);
-                    entity = entity.flatMap(e -> op.data.map(childData -> afterCascadedOne(e, cascadeOp.ctx.associations, child, childData.entity)));
-                    childMono = op.data.map(childData -> childData.entity);
-                } else if (hasId && (cascadeType == Relation.Cascade.UPDATE)) {
-                    if (LOG.isDebugEnabled()) {
-                        LOG.debug("Cascading MERGE for '{}' ({}) association: '{}'", persistentEntity.getName(),
-                                persistentEntity.getIdentity().getProperty().get(en), cascadeOp.ctx.associations);
-                    }
-                    R2dbcEntityOperations<Object> op = new R2dbcEntityOperations<>(childPersistentEntity, child);
-                    DBOperation childSqlUpdateOperation = resolveEntityUpdate(annotationMetadata, repositoryType, child.getClass(), childPersistentEntity);
-                    updateOne(connection, cascadeOneOp.annotationMetadata, cascadeOneOp.repositoryType, childSqlUpdateOperation, associations, persisted, op);
-                    entity = entity.flatMap(e -> op.data.map(childData -> afterCascadedOne(e, cascadeOp.ctx.associations, child, childData.entity)));
-                    childMono = op.data.map(childData -> childData.entity);
-                } else {
-                    childMono = Mono.just(child);
-                }
-
-                if (!hasId
-                        && (cascadeType == Relation.Cascade.PERSIST || cascadeType == Relation.Cascade.UPDATE)
-                        && SqlQueryBuilder.isForeignKeyWithJoinTable(association)) {
-                    entity = entity.flatMap(e -> childMono.flatMap(c -> {
-                        if (persisted.contains(c)) {
-                            return Mono.just(e);
-                        }
-                        persisted.add(c);
-                        R2dbcEntityOperations<Object> assocEntityOp = new R2dbcEntityOperations<>(childPersistentEntity, c);
-                        persistJoinTableAssociation(connection, repositoryType, dialect, association, e, assocEntityOp);
-                        return assocEntityOp.getEntity().thenReturn(e);
-                    }));
-                } else {
-                    entity = entity.flatMap(e -> childMono.map(c -> {
-                        persisted.add(c);
-                        return e;
-                    }));
-                }
-            } else if (cascadeOp instanceof CascadeManyOp) {
-                CascadeManyOp cascadeManyOp = (CascadeManyOp) cascadeOp;
-                RuntimePersistentEntity<Object> childPersistentEntity = cascadeManyOp.childPersistentEntity;
-
-                Mono<List<Object>> children;
-                if (cascadeType == Relation.Cascade.UPDATE) {
-                    if (LOG.isDebugEnabled()) {
-                        LOG.debug("Cascading UPDATE for '{}' association: '{}'", persistentEntity.getName(), cascadeOp.ctx.associations);
-                    }
-                    DBOperation childSqlUpdateOperation = null;
-                    DBOperation childSqlInsertOperation = null;
-                    Flux<Object> childrenFlux = Flux.empty();
-                    for (Object child : cascadeManyOp.children) {
-                        if (persisted.contains(child)) {
-                            continue;
-                        }
-
-                        R2dbcEntityOperations<Object> op = new R2dbcEntityOperations<>(childPersistentEntity, child);
-
-                        if (childPersistentEntity.getIdentity().getProperty().get(child) == null) {
-                            if (childSqlInsertOperation == null) {
-                                childSqlInsertOperation = resolveEntityInsert(annotationMetadata, repositoryType, childPersistentEntity.getIntrospection().getBeanType(), childPersistentEntity);
-                            }
-                            persistOne(connection,
-                                    cascadeManyOp.annotationMetadata,
-                                    cascadeManyOp.repositoryType,
-                                    childSqlInsertOperation, associations, persisted, op);
-                        } else {
-                            if (childSqlUpdateOperation == null) {
-                                childSqlUpdateOperation = resolveEntityUpdate(annotationMetadata, repositoryType, childPersistentEntity.getIntrospection().getBeanType(), childPersistentEntity);
-                            }
-                            updateOne(connection,
-                                    cascadeManyOp.annotationMetadata,
-                                    cascadeManyOp.repositoryType,
-                                    childSqlUpdateOperation, associations, persisted, op);
-                        }
-
-                        childrenFlux = childrenFlux.concatWith(op.getEntity());
-                    }
-                    children = childrenFlux.collectList();
-                } else if (cascadeType == Relation.Cascade.PERSIST) {
-                    DBOperation childSqlPersistOperation = resolveEntityInsert(
-                            annotationMetadata,
-                            repositoryType,
-                            childPersistentEntity.getIntrospection().getBeanType(),
-                            childPersistentEntity
-                    );
-                    if (isSupportsBatchInsert(persistentEntity, dialect)) {
-                        R2dbcEntitiesOperations<Object> op = new R2dbcEntitiesOperations<>(childPersistentEntity, cascadeManyOp.children);
-                        op.veto(persisted::contains);
-                        RuntimePersistentProperty<Object> identity = childPersistentEntity.getIdentity();
-                        op.veto(e -> identity.getProperty().get(e) != null && !(identity instanceof Association));
-
-                        if (LOG.isDebugEnabled()) {
-                            LOG.debug("Cascading PERSIST for '{}' association: '{}'", persistentEntity.getName(), cascadeOp.ctx.associations);
-                        }
-
-                        persistInBatch(connection,
-                                cascadeManyOp.annotationMetadata,
-                                cascadeManyOp.repositoryType,
-                                childSqlPersistOperation, associations, persisted, op);
-
-                        children = op.getEntities().collectList();
-                    } else {
-                        if (LOG.isDebugEnabled()) {
-                            LOG.debug("Cascading PERSIST for '{}' association: '{}'", persistentEntity.getName(), cascadeOp.ctx.associations);
-                        }
-
-                        Flux<Object> childrenFlux = Flux.empty();
-                        for (Object child : cascadeManyOp.children) {
-                            if (persisted.contains(child) || childPersistentEntity.getIdentity().getProperty().get(child) != null) {
-                                childrenFlux = childrenFlux.concatWith(Mono.just(child));
-                                continue;
-                            }
-
-                            R2dbcEntityOperations<Object> op = new R2dbcEntityOperations<>(childPersistentEntity, child);
-
-                            persistOne(connection,
-                                    cascadeManyOp.annotationMetadata,
-                                    cascadeManyOp.repositoryType,
-                                    childSqlPersistOperation, associations, persisted, op);
-
-                            childrenFlux = childrenFlux.concatWith(op.getEntity());
-                        }
-                        children = childrenFlux.collectList();
-                    }
-                } else {
-                    continue;
-                }
-                entity = entity.flatMap(e -> children.flatMap(newChildren -> {
-                    T e2 = afterCascadedMany(e, cascadeOp.ctx.associations, cascadeManyOp.children, newChildren);
-                    RuntimeAssociation<Object> association = (RuntimeAssociation) cascadeOp.ctx.getAssociation();
-                    if (SqlQueryBuilder.isForeignKeyWithJoinTable(association)) {
-                        if (dialect.allowBatch()) {
-                            R2dbcEntitiesOperations<Object> assocEntitiesOp = new R2dbcEntitiesOperations<>(childPersistentEntity, newChildren);
-                            assocEntitiesOp.veto(persisted::contains);
-                            persistJoinTableAssociation(connection, repositoryType, dialect, association, cascadeOp.ctx.parent, assocEntitiesOp);
-                            return assocEntitiesOp.entities.collectList().thenReturn(e2);
-                        } else {
-                            Mono<T> res = Mono.just(e2);
-                            for (Object child : newChildren) {
-                                if (persisted.contains(child)) {
-                                    continue;
-                                }
-                                R2dbcEntityOperations<Object> assocEntityOp = new R2dbcEntityOperations<>(childPersistentEntity, child);
-                                persistJoinTableAssociation(connection, repositoryType, dialect, association, cascadeOp.ctx.parent, assocEntityOp);
-                                res = res.flatMap(e3 -> assocEntityOp.getEntity().thenReturn(e3));
-                            }
-                            return res;
-                        }
-                    }
-                    persisted.addAll(newChildren);
-                    return Mono.just(e2);
-                }));
-
-            }
+    @Override
+    public <T> Flux<T> persistBatch(R2dbcOperationContext ctx, Iterable<T> values, RuntimePersistentEntity<T> persistentEntity, Predicate<T> predicate) {
+        DBOperation childSqlPersistOperation = resolveEntityInsert(
+                ctx.annotationMetadata,
+                ctx.repositoryType,
+                persistentEntity.getIntrospection().getBeanType(),
+                persistentEntity
+        );
+        R2dbcEntitiesOperations<T> op = new R2dbcEntitiesOperations<>(ctx, childSqlPersistOperation, persistentEntity, values, true);
+        if (predicate != null) {
+            op.veto(predicate);
         }
-        return entity;
+        op.persist();
+        return op.getEntities();
+    }
+
+    @Override
+    public <T> Mono<T> updateOne(R2dbcOperationContext ctx, T value, RuntimePersistentEntity<T> persistentEntity) {
+        DBOperation childSqlUpdateOperation = resolveEntityUpdate(ctx.annotationMetadata, ctx.repositoryType, value.getClass(), persistentEntity);
+        R2dbcEntityOperations<T> op = new R2dbcEntityOperations<>(ctx, persistentEntity, value, childSqlUpdateOperation);
+        op.update();
+        return op.getEntity();
+    }
+
+    @Override
+    public Mono<Void> persistManyAssociation(R2dbcOperationContext ctx,
+                                             RuntimeAssociation runtimeAssociation,
+                                             Object value, RuntimePersistentEntity<Object> persistentEntity,
+                                             Object child, RuntimePersistentEntity<Object> childPersistentEntity) {
+        DBOperation dbInsertOperation = resolveSqlInsertAssociation(ctx.repositoryType, ctx.dialect, runtimeAssociation, persistentEntity, value);
+        R2dbcEntityOperations<Object> assocEntityOp = new R2dbcEntityOperations<>(ctx, childPersistentEntity, child, dbInsertOperation);
+        try {
+            assocEntityOp.execute();
+        } catch (Exception e1) {
+            throw new DataAccessException("SQL error executing INSERT: " + e1.getMessage(), e1);
+        }
+        return assocEntityOp.getEntity().then();
+    }
+
+    @Override
+    public Mono<Void> persistManyAssociationBatch(R2dbcOperationContext ctx,
+                                                  RuntimeAssociation runtimeAssociation,
+                                                  Object value, RuntimePersistentEntity<Object> persistentEntity,
+                                                  Iterable<Object> child, RuntimePersistentEntity<Object> childPersistentEntity,
+                                                  Predicate<Object> veto) {
+        DBOperation dbInsertOperation = resolveSqlInsertAssociation(ctx.repositoryType, ctx.dialect, runtimeAssociation, persistentEntity, value);
+        R2dbcEntitiesOperations<Object> assocEntitiesOp = new R2dbcEntitiesOperations<>(ctx, childPersistentEntity, child, dbInsertOperation);
+        assocEntitiesOp.veto(veto);
+        try {
+            assocEntitiesOp.execute();
+        } catch (Exception e1) {
+            throw new DataAccessException("SQL error executing INSERT: " + e1.getMessage(), e1);
+        }
+        return assocEntitiesOp.getEntities().then();
     }
 
     @Override
@@ -374,20 +250,6 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             return new ArgumentR2dbcCC(connection, argument);
         }
         return new R2dbcConversionContextImpl(connection);
-    }
-
-    @Override
-    protected AutoCloseable autoCloseable(Statement statement) {
-        return NOOP;
-    }
-
-    @Override
-    protected void prepareStatement(Connection connection, Dialect dialect, PersistentProperty identity, boolean hasGeneratedID, String insertSql, DBOperation1<Statement, RuntimeException> fn) {
-        Statement statement = connection.createStatement(insertSql);
-        if (hasGeneratedID) {
-            statement.returnGeneratedValues(identity.getPersistedName());
-        }
-        fn.process(statement);
     }
 
     private Mono<Integer> sum(Stream<Mono<Integer>> stream) {
@@ -580,6 +442,11 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             }
             return Mono.just(result.get(0));
         });
+    }
+
+    @Override
+    public boolean isSupportsBatchInsert(R2dbcOperationContext context, RuntimePersistentEntity<?> persistentEntity) {
+        return isSupportsBatchInsert(persistentEntity, context.dialect);
     }
 
     /**
@@ -825,9 +692,10 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         public <T> Mono<Number> delete(@NonNull DeleteOperation<T> operation) {
             SqlQueryBuilder queryBuilder = queryBuilders.getOrDefault(operation.getRepositoryType(), DEFAULT_SQL_BUILDER);
             return Flux.<Number>from(withNewOrExistingTransaction(operation, true, status -> {
-                R2dbcEntityOperations<T> op = new R2dbcEntityOperations<>(getEntity(operation.getRootEntity()), operation.getEntity());
+                R2dbcOperationContext ctx = new R2dbcOperationContext(operation.getAnnotationMetadata(), operation.getRepositoryType(), queryBuilder.dialect(), status.getConnection());
                 StoredSqlOperation dbOperation = new StoredQuerySqlOperation(queryBuilder, operation.getStoredQuery());
-                deleteOne(status.getConnection(), op, dbOperation);
+                R2dbcEntityOperations<T> op = new R2dbcEntityOperations<>(ctx, getEntity(operation.getRootEntity()), operation.getEntity(), dbOperation);
+                op.delete();
                 return op.getRowsUpdated();
             })).as(DefaultR2dbcRepositoryOperations::toSingleResult);
         }
@@ -839,36 +707,21 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                 final AnnotationMetadata annotationMetadata = operation.getAnnotationMetadata();
                 final Class<?> repositoryType = operation.getRepositoryType();
                 SqlQueryBuilder queryBuilder = queryBuilders.getOrDefault(repositoryType, DEFAULT_SQL_BUILDER);
-                final DBOperation sqlOperation = new StoredQuerySqlOperation(queryBuilder, operation.getStoredQuery());
+                final DBOperation dbOperation = new StoredQuerySqlOperation(queryBuilder, operation.getStoredQuery());
                 final RuntimePersistentEntity<T> persistentEntity = getEntity(operation.getRootEntity());
-                final HashSet<Object> persisted = new HashSet<>(5);
+                R2dbcOperationContext ctx = new R2dbcOperationContext(annotationMetadata, repositoryType, queryBuilder.dialect(), status.getConnection());
                 if (!isSupportsBatchInsert(persistentEntity, queryBuilder.dialect())) {
                     return concatMono(
                             operation.split().stream()
                                     .map(persistOp -> {
-                                        R2dbcEntityOperations<T> op = new R2dbcEntityOperations<>(persistentEntity, persistOp.getEntity());
-                                        persistOne(
-                                                status.getConnection(),
-                                                annotationMetadata,
-                                                repositoryType,
-                                                sqlOperation,
-                                                Collections.emptyList(),
-                                                persisted,
-                                                op);
+                                        R2dbcEntityOperations<T> op = new R2dbcEntityOperations<>(ctx, dbOperation, persistentEntity, persistOp.getEntity(), true);
+                                        op.persist();
                                         return op.getEntity();
                                     })
                     );
                 } else {
-                    R2dbcEntitiesOperations<T> op = new R2dbcEntitiesOperations<>(persistentEntity, operation);
-                    persistInBatch(
-                            status.getConnection(),
-                            operation.getAnnotationMetadata(),
-                            operation.getRepositoryType(),
-                            sqlOperation,
-                            Collections.emptyList(),
-                            persisted,
-                            op
-                    );
+                    R2dbcEntitiesOperations<T> op = new R2dbcEntitiesOperations<>(ctx, dbOperation, persistentEntity, operation, true);
+                    op.persist();
                     return op.getEntities();
                 }
             }));
@@ -885,11 +738,11 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         public <T> Mono<T> persist(@NonNull InsertOperation<T> operation) {
             final AnnotationMetadata annotationMetadata = operation.getAnnotationMetadata();
             SqlQueryBuilder queryBuilder = queryBuilders.getOrDefault(operation.getRepositoryType(), DEFAULT_SQL_BUILDER);
-            final Set<Object> persisted = new HashSet<>(10);
             StoredSqlOperation dbOperation = new StoredQuerySqlOperation(queryBuilder, operation.getStoredQuery());
             return Flux.from(withNewOrExistingTransaction(operation, true, status -> {
-                R2dbcEntityOperations<T> op = new R2dbcEntityOperations<>(getEntity(operation.getRootEntity()), operation.getEntity());
-                persistOne(status.getConnection(), annotationMetadata, operation.getRepositoryType(), dbOperation, Collections.emptyList(), persisted, op);
+                R2dbcOperationContext ctx = new R2dbcOperationContext(annotationMetadata, operation.getRepositoryType(), queryBuilder.dialect(), status.getConnection());
+                R2dbcEntityOperations<T> op = new R2dbcEntityOperations<>(ctx, dbOperation, getEntity(operation.getRootEntity()), operation.getEntity(), true);
+                op.persist();
                 return op.getEntity();
             })).as(DefaultR2dbcRepositoryOperations::toSingleResult);
         }
@@ -900,11 +753,10 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             final AnnotationMetadata annotationMetadata = operation.getAnnotationMetadata();
             SqlQueryBuilder queryBuilder = queryBuilders.getOrDefault(operation.getRepositoryType(), DEFAULT_SQL_BUILDER);
             StoredSqlOperation dbOperation = new StoredQuerySqlOperation(queryBuilder, operation.getStoredQuery());
-            final Set<Object> persisted = new HashSet<>(10);
-            final Class<?> repositoryType = operation.getRepositoryType();
             return Flux.from(withNewOrExistingTransaction(operation, true, status -> {
-                R2dbcEntityOperations<T> op = new R2dbcEntityOperations<>(getEntity(operation.getRootEntity()), operation.getEntity());
-                updateOne(status.getConnection(), annotationMetadata, repositoryType, dbOperation, Collections.emptyList(), persisted, op);
+                R2dbcOperationContext ctx = new R2dbcOperationContext(annotationMetadata, operation.getRepositoryType(), queryBuilder.dialect(), status.getConnection());
+                R2dbcEntityOperations<T> op = new R2dbcEntityOperations<>(ctx, getEntity(operation.getRootEntity()), operation.getEntity(), dbOperation);
+                op.update();
                 return op.getEntity();
             })).as(DefaultR2dbcRepositoryOperations::toSingleResult);
         }
@@ -988,18 +840,19 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             return Flux.<Number>from(withNewOrExistingTransaction(operation, true, status -> {
                 SqlQueryBuilder queryBuilder = queryBuilders.getOrDefault(operation.getRepositoryType(), DEFAULT_SQL_BUILDER);
                 RuntimePersistentEntity<T> persistentEntity = getEntity(operation.getRootEntity());
+                R2dbcOperationContext ctx = new R2dbcOperationContext(operation.getAnnotationMetadata(), operation.getRepositoryType(), queryBuilder.dialect(), status.getConnection());
                 if (isSupportsBatchDelete(persistentEntity, queryBuilder.dialect())) {
-                    R2dbcEntitiesOperations<T> op = new R2dbcEntitiesOperations<>(persistentEntity, operation);
                     StoredSqlOperation dbOperation = new StoredQuerySqlOperation(queryBuilder, operation.getStoredQuery());
-                    deleteInBatch(status.getConnection(), op, dbOperation);
+                    R2dbcEntitiesOperations<T> op = new R2dbcEntitiesOperations<>(ctx, persistentEntity, operation, dbOperation);
+                    op.delete();
                     return op.getRowsUpdated();
                 }
                 return sum(
                         operation.split().stream()
                                 .map(deleteOp -> {
-                                    R2dbcEntityOperations<T> op = new R2dbcEntityOperations<>(persistentEntity, deleteOp.getEntity());
                                     StoredSqlOperation dbOperation = new StoredQuerySqlOperation(queryBuilder, operation.getStoredQuery());
-                                    deleteOne(status.getConnection(), op, dbOperation);
+                                    R2dbcEntityOperations<T> op = new R2dbcEntityOperations<>(ctx, persistentEntity, deleteOp.getEntity(), dbOperation);
+                                    op.delete();
                                     return op.getRowsUpdated();
                                 })
                 );
@@ -1010,24 +863,23 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         @Override
         public <T> Flux<T> updateAll(@NonNull UpdateBatchOperation<T> operation) {
             return Flux.from(withNewOrExistingTransaction(operation, true, status -> {
-                final AnnotationMetadata annotationMetadata = operation.getAnnotationMetadata();
-                final Set<Object> persisted = new HashSet<>(10);
                 final Class<?> repositoryType = operation.getRepositoryType();
                 SqlQueryBuilder queryBuilder = queryBuilders.getOrDefault(repositoryType, DEFAULT_SQL_BUILDER);
+                R2dbcOperationContext ctx = new R2dbcOperationContext(operation.getAnnotationMetadata(), operation.getRepositoryType(), queryBuilder.dialect(), status.getConnection());
                 final RuntimePersistentEntity<T> persistentEntity = getEntity(operation.getRootEntity());
                 StoredSqlOperation dbOperation = new StoredQuerySqlOperation(queryBuilder, operation.getStoredQuery());
                 if (!isSupportsBatchUpdate(persistentEntity, queryBuilder.dialect())) {
                     return concatMono(
                             operation.split().stream()
                                     .map(updateOp -> {
-                                        R2dbcEntityOperations<T> op = new R2dbcEntityOperations<>(persistentEntity, updateOp.getEntity());
-                                        updateOne(status.getConnection(), annotationMetadata, repositoryType, dbOperation, Collections.emptyList(), persisted, op);
+                                        R2dbcEntityOperations<T> op = new R2dbcEntityOperations<>(ctx, persistentEntity, updateOp.getEntity(), dbOperation);
+                                        op.update();
                                         return op.getEntity();
                                     })
                     );
                 }
-                R2dbcEntitiesOperations<T> op = new R2dbcEntitiesOperations<>(persistentEntity, operation);
-                updateInBatch(status.getConnection(), annotationMetadata, repositoryType, dbOperation, Collections.emptyList(), persisted, op);
+                R2dbcEntitiesOperations<T> op = new R2dbcEntitiesOperations<>(ctx, persistentEntity, operation, dbOperation);
+                op.update();
                 return op.getEntities();
 
             }));
@@ -1065,74 +917,52 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
 
     }
 
-    private final class R2dbcEntityOperations<T> extends EntityOperations<T> {
+    private final class R2dbcEntityOperations<T> extends AbstractReactiveEntityOperations<R2dbcOperationContext, T, RuntimeException> {
 
-        private Mono<Data> data;
+        private final DBOperation dbOperation;
 
-        protected R2dbcEntityOperations(RuntimePersistentEntity<T> persistentEntity, T entity) {
-            super(persistentEntity);
-            Data data = new Data();
-            data.entity = entity;
-            this.data = Mono.just(data);
+        private R2dbcEntityOperations(R2dbcOperationContext ctx, RuntimePersistentEntity<T> persistentEntity, T entity, DBOperation dbOperation) {
+            this(ctx, dbOperation, persistentEntity, entity, false);
+        }
+
+        private R2dbcEntityOperations(R2dbcOperationContext ctx, DBOperation dbOperation, RuntimePersistentEntity<T> persistentEntity, T entity, boolean insert) {
+            super(ctx,
+                    DefaultR2dbcRepositoryOperations.this.cascadeOperations,
+                    DefaultR2dbcRepositoryOperations.this.conversionService,
+                    entityEventRegistry,
+                    persistentEntity, entity, insert);
+            this.dbOperation = dbOperation;
         }
 
         @Override
-        protected void cascadePre(Relation.Cascade cascadeType, Connection connection,
-                                  Dialect dialect, AnnotationMetadata annotationMetadata, Class<?> repositoryType,
-                                  List<Association> associations, Set<Object> persisted) {
-            doCascade(false, cascadeType, connection, dialect, annotationMetadata, repositoryType, associations, persisted);
-        }
-
-        @Override
-        protected void cascadePost(Relation.Cascade cascadeType, Connection connection,
-                                   Dialect dialect, AnnotationMetadata annotationMetadata, Class<?> repositoryType,
-                                   List<Association> associations, Set<Object> persisted) {
-            doCascade(true, cascadeType, connection, dialect, annotationMetadata, repositoryType, associations, persisted);
-        }
-
-        private void doCascade(boolean isPost, Relation.Cascade cascadeType, Connection connection,
-                               Dialect dialect, AnnotationMetadata annotationMetadata, Class<?> repositoryType,
-                               List<Association> associations, Set<Object> persisted) {
-
-            this.data = data.flatMap(d -> {
-                if (d.vetoed) {
-                    return Mono.just(d);
-                }
-                Mono<T> entity = cascadeEntity(d.entity, persistentEntity, isPost, cascadeType, connection, dialect, annotationMetadata, repositoryType, associations, persisted);
-                return entity.map(e -> {
-                    d.entity = e;
-                    return d;
-                });
-            });
-        }
-
-        @Override
-        protected void collectAutoPopulatedPreviousValues(DBOperation sqlOperation) {
+        protected void collectAutoPopulatedPreviousValues() {
             data = data.map(d -> {
                 if (d.vetoed) {
                     return d;
                 }
-                d.previousValues = sqlOperation.collectAutoPopulatedPreviousValues(persistentEntity, d.entity);
+                d.previousValues = dbOperation.collectAutoPopulatedPreviousValues(persistentEntity, d.entity);
                 return d;
             });
         }
 
-        @Override
-        protected Statement prepare(Connection connection, DBOperation sqlOperation) throws RuntimeException {
-            if (StoredSqlOperation.class.isInstance(sqlOperation)) {
+        private Statement prepare(Connection connection) throws RuntimeException {
+            if (StoredSqlOperation.class.isInstance(dbOperation)) {
                 data = data.map(d -> {
                     if (d.vetoed) {
                         return d;
                     }
-                    ((StoredSqlOperation) sqlOperation).checkForParameterToBeExpanded(persistentEntity, d.entity);
+                    ((StoredSqlOperation) dbOperation).checkForParameterToBeExpanded(persistentEntity, d.entity);
                     return d;
                 });
             }
-            return connection.createStatement(sqlOperation.getQuery());
+            Statement statement = connection.createStatement(dbOperation.getQuery());
+            if (hasGeneratedId) {
+                return statement.returnGeneratedValues(persistentEntity.getIdentity().getPersistedName());
+            }
+            return statement;
         }
 
-        @Override
-        protected void setParameters(OpContext<Connection, Statement> context, Connection connection, Statement stmt, DBOperation sqlOperation) {
+        private void setParameters(OpContext<Connection, Statement> context, Connection connection, Statement stmt, DBOperation sqlOperation) {
             data = data.map(d -> {
                 if (d.vetoed) {
                     return d;
@@ -1143,127 +973,65 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         }
 
         @Override
-        protected void executeUpdate(Statement stmt, DBOperation2<Integer, Integer, RuntimeException> fn) {
-            data = data.flatMap(d -> Flux.from(stmt.execute()).flatMap(result -> Flux.from(result.getRowsUpdated()))
-                    .as(DefaultR2dbcRepositoryOperations::toSingleResult)
-                    .map(rowsUpdated -> {
-                        if (d.vetoed) {
-                            return d;
-                        }
-                        d.rowsUpdated = rowsUpdated;
-                        fn.process(1, rowsUpdated);
-                        return d;
-                    }));
-        }
-
-        @Override
-        protected void executeUpdate(Statement stmt) throws RuntimeException {
-            data = data.flatMap(d -> {
-                if (d.vetoed) {
-                    return Mono.just(d);
-                }
-                return Flux.from(stmt.execute()).flatMap(r -> Flux.from(r.getRowsUpdated()))
-                        // Remove in the future: unneeded call "getRowsUpdated" is required for some drivers
-                        .as(DefaultR2dbcRepositoryOperations::toSingleResult)
-                        .thenReturn(d);
-            });
-        }
-
-        @Override
-        protected void executeUpdateSetGeneratedId(Statement stmt) throws RuntimeException {
-            data = data.flatMap(d -> {
-                if (d.vetoed) {
-                    return Mono.just(d);
-                }
-                RuntimePersistentProperty<T> identity = persistentEntity.getIdentity();
-                return Flux.from(stmt.execute()).flatMap(result ->
-                                Flux.from(result.map((row, rowMetadata) ->
-                                        columnIndexResultSetReader.readDynamic(row, 0, identity.getDataType()))))
-                        .as(DefaultR2dbcRepositoryOperations::toSingleResult).map(id -> {
-                            BeanProperty<T, Object> property = (BeanProperty<T, Object>) identity.getProperty();
-                            d.entity = updateEntityId(property, d.entity, id);
-                            return d;
-                        });
-            });
-        }
-
-        @Override
-        protected boolean triggerPre(Function<EntityEventContext<Object>, Boolean> fn) {
-            data = data.map(d -> {
-                if (d.vetoed) {
+        protected void execute() throws RuntimeException {
+            Statement statement = prepare(ctx.connection);
+            setParameters(DefaultR2dbcRepositoryOperations.this, ctx.connection, statement, dbOperation);
+            if (hasGeneratedId) {
+                data = data.flatMap(d -> {
+                    if (d.vetoed) {
+                        return Mono.just(d);
+                    }
+                    RuntimePersistentProperty<T> identity = persistentEntity.getIdentity();
+                    return Flux.from(statement.execute()).flatMap(result ->
+                                    Flux.from(result.map((row, rowMetadata) ->
+                                            columnIndexResultSetReader.readDynamic(row, 0, identity.getDataType()))))
+                            .as(DefaultR2dbcRepositoryOperations::toSingleResult).map(id -> {
+                                BeanProperty<T, Object> property = (BeanProperty<T, Object>) identity.getProperty();
+                                d.entity = updateEntityId(property, d.entity, id);
+                                return d;
+                            });
+                });
+            } else {
+                data = data.flatMap(d -> {
+                    if (d.vetoed) {
+                        return Mono.just(d);
+                    }
+                    return Flux.from(statement.execute()).flatMap(r -> Flux.from(r.getRowsUpdated()))
+                            .as(DefaultR2dbcRepositoryOperations::toSingleResult)
+                            .map(rowsUpdated -> {
+                                d.rowsUpdated = rowsUpdated;
+                                return d;
+                            });
+                });
+            }
+            if (dbOperation.isOptimisticLock()) {
+                data = data.map(d -> {
+                    checkOptimisticLocking(1, d.rowsUpdated);
                     return d;
-                }
-                final DefaultEntityEventContext<T> event = new DefaultEntityEventContext<>(persistentEntity, d.entity);
-                d.vetoed = !fn.apply((EntityEventContext<Object>) event);
-                d.entity = event.getEntity();
-                return d;
-            });
-            return false;
-        }
-
-        @Override
-        protected void triggerPost(Consumer<EntityEventContext<Object>> fn) {
-            data = data.map(d -> {
-                if (d.vetoed) {
-                    return d;
-                }
-                final DefaultEntityEventContext<T> event = new DefaultEntityEventContext<>(persistentEntity, d.entity);
-                fn.accept((EntityEventContext<Object>) event);
-                return d;
-            });
-        }
-
-        @Override
-        protected void veto(Predicate<T> predicate) {
-            data = data.map(d -> {
-                if (d.vetoed) {
-                    return d;
-                }
-                d.vetoed = predicate.test(d.entity);
-                return d;
-            });
-        }
-
-        private boolean notVetoed(Data data) {
-            return !data.vetoed;
-        }
-
-        Mono<T> getEntity() {
-            return data.filter(this::notVetoed).map(d -> d.entity);
-        }
-
-        Mono<Integer> getRowsUpdated() {
-            return data.filter(this::notVetoed).map(d -> d.rowsUpdated).switchIfEmpty(Mono.just(0));
-        }
-
-        class Data {
-            T entity;
-            Map<QueryParameterBinding, Object> previousValues;
-            int rowsUpdated;
-            boolean vetoed = false;
+                });
+            }
         }
     }
 
-    private final class R2dbcEntitiesOperations<T> extends EntitiesOperations<T> {
+    private final class R2dbcEntitiesOperations<T> extends AbstractReactiveEntitiesOperations<R2dbcOperationContext, T, RuntimeException> {
 
-        private Flux<Data> entities;
-        private Mono<Integer> rowsUpdated;
+        private final DBOperation dbOperation;
 
-        private R2dbcEntitiesOperations(RuntimePersistentEntity<T> persistentEntity, Iterable<T> entities) {
-            super(persistentEntity);
-            Objects.requireNonNull(entities, "Entities cannot be null");
-            if (!entities.iterator().hasNext()) {
-                throw new IllegalStateException("Entities cannot be empty");
-            }
-            this.entities = Flux.fromIterable(entities).map(entity -> {
-                Data data = new Data();
-                data.entity = entity;
-                return data;
-            });
+        private R2dbcEntitiesOperations(R2dbcOperationContext ctx, RuntimePersistentEntity<T> persistentEntity, Iterable<T> entities, DBOperation dbOperation) {
+            this(ctx, dbOperation, persistentEntity, entities, false);
+        }
+
+        private R2dbcEntitiesOperations(R2dbcOperationContext ctx, DBOperation dbOperation, RuntimePersistentEntity<T> persistentEntity, Iterable<T> entities, boolean insert) {
+            super(ctx,
+                    DefaultR2dbcRepositoryOperations.this.cascadeOperations,
+                    DefaultR2dbcRepositoryOperations.this.conversionService,
+                    entityEventRegistry,
+                    persistentEntity, entities, insert);
+            this.dbOperation = dbOperation;
         }
 
         @Override
-        protected void collectAutoPopulatedPreviousValues(DBOperation dbOperation) {
+        protected void collectAutoPopulatedPreviousValues() {
             entities = entities.map(d -> {
                 if (d.vetoed) {
                     return d;
@@ -1273,81 +1041,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             });
         }
 
-        @Override
-        protected Statement prepare(Connection connection, DBOperation sqlOperation) throws RuntimeException {
-            return connection.createStatement(sqlOperation.getQuery());
-        }
-
-        @Override
-        protected void cascadePre(Relation.Cascade cascadeType, Connection connection,
-                                  Dialect dialect, AnnotationMetadata annotationMetadata, Class<?> repositoryType,
-                                  List<Association> associations, Set<Object> persisted) {
-            doCascade(false, cascadeType, connection, dialect, annotationMetadata, repositoryType, associations, persisted);
-        }
-
-        @Override
-        protected void cascadePost(Relation.Cascade cascadeType, Connection connection,
-                                   Dialect dialect, AnnotationMetadata annotationMetadata, Class<?> repositoryType,
-                                   List<Association> associations, Set<Object> persisted) {
-            doCascade(true, cascadeType, connection, dialect, annotationMetadata, repositoryType, associations, persisted);
-        }
-
-        private void doCascade(boolean isPost, Relation.Cascade cascadeType, Connection connection,
-                               Dialect dialect, AnnotationMetadata annotationMetadata, Class<?> repositoryType,
-                               List<Association> associations, Set<Object> persisted) {
-
-            this.entities = entities.flatMap(d -> {
-                if (d.vetoed) {
-                    return Mono.just(d);
-                }
-                Mono<T> entity = cascadeEntity(d.entity, persistentEntity, isPost, cascadeType, connection, dialect, annotationMetadata, repositoryType, associations, persisted);
-                return entity.map(e -> {
-                    d.entity = e;
-                    return d;
-                });
-            });
-        }
-
-        @Override
-        protected void veto(Predicate<T> predicate) {
-            entities = entities.map(d -> {
-                if (d.vetoed) {
-                    return d;
-                }
-                d.vetoed = predicate.test(d.entity);
-                return d;
-            });
-        }
-
-        @Override
-        protected boolean triggerPre(Function<EntityEventContext<Object>, Boolean> fn) {
-            entities = entities.map(d -> {
-                if (d.vetoed) {
-                    return d;
-                }
-                final DefaultEntityEventContext<T> event = new DefaultEntityEventContext<>(persistentEntity, d.entity);
-                d.vetoed = !fn.apply((EntityEventContext<Object>) event);
-                d.entity = event.getEntity();
-                return d;
-            });
-            return false;
-        }
-
-        @Override
-        protected void triggerPost(Consumer<EntityEventContext<Object>> fn) {
-            entities = entities.map(d -> {
-                if (d.vetoed) {
-                    return d;
-                }
-                final DefaultEntityEventContext<T> event = new DefaultEntityEventContext<>(persistentEntity, d.entity);
-                fn.accept((EntityEventContext<Object>) event);
-                d.entity = event.getEntity();
-                return d;
-            });
-        }
-
-        @Override
-        protected void setParameters(OpContext<Connection, Statement> context, Connection connection, Statement stmt, DBOperation dbOperation) {
+        private void setParameters(OpContext<Connection, Statement> context, Connection connection, Statement stmt, DBOperation dbOperation) {
             AtomicBoolean isFirst = new AtomicBoolean(true);
             entities = entities.map(d -> {
                 if (d.vetoed) {
@@ -1365,85 +1059,74 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         }
 
         @Override
-        protected void executeUpdate(Statement stmt) {
-            entities = entities.collectList()
-                    .flatMapMany(e -> {
-                        List<Data> notVetoedEntities = e.stream().filter(this::notVetoed).collect(Collectors.toList());
-                        if (notVetoedEntities.isEmpty()) {
-                            return Flux.fromIterable(e);
-                        }
-                        // Remove in the future: unneeded call "getRowsUpdated" is required for some drivers
-                        return Flux.from(stmt.execute()).flatMap(result -> Flux.from(result.getRowsUpdated())).thenMany(Flux.fromIterable(e));
-                    });
-        }
-
-        @Override
-        protected void executeUpdate(Statement stmt, DBOperation2<Integer, Integer, RuntimeException> fn) {
-            Mono<Tuple2<List<Data>, Integer>> entitiesWithRowsUpdated = entities.collectList()
-                    .flatMap(e -> {
-                        List<Data> notVetoedEntities = e.stream().filter(this::notVetoed).collect(Collectors.toList());
-                        if (notVetoedEntities.isEmpty()) {
-                            return Mono.just(Tuples.of(e, 0));
-                        }
-                        return Flux.from(stmt.execute()).flatMap(result -> Flux.from(result.getRowsUpdated())).reduce(0, Integer::sum)
-                                .map(rowsUpdated -> {
-                                    fn.process(notVetoedEntities.size(), rowsUpdated);
-                                    return Tuples.of(e, rowsUpdated);
-                                });
-                    }).cache();
-            entities = entitiesWithRowsUpdated.flatMapMany(t -> Flux.fromIterable(t.getT1()));
-            rowsUpdated = entitiesWithRowsUpdated.map(Tuple2::getT2);
-        }
-
-        @Override
-        protected void executeUpdateSetGeneratedId(Statement stmt) {
-            entities = entities.collectList()
-                    .flatMapMany(e -> {
-                        List<Data> notVetoedEntities = e.stream().filter(this::notVetoed).collect(Collectors.toList());
-                        if (notVetoedEntities.isEmpty()) {
-                            return Flux.fromIterable(notVetoedEntities);
-                        }
-                        Mono<List<Object>> ids = Flux.from(stmt.execute())
-                                .flatMap(result ->
-                                        Flux.from(result.map((row, rowMetadata)
-                                                -> columnIndexResultSetReader.readDynamic(row, 0, persistentEntity.getIdentity().getDataType())))
-                                ).collectList();
-
-                        return ids.flatMapMany(idList -> {
-                            Iterator<Object> iterator = idList.iterator();
-                            ListIterator<Data> resultIterator = notVetoedEntities.listIterator();
-                            RuntimePersistentProperty<T> identity = persistentEntity.getIdentity();
-                            while (resultIterator.hasNext()) {
-                                Data d = resultIterator.next();
-                                if (!iterator.hasNext()) {
-                                    throw new DataAccessException("Failed to generate ID for entity: " + d.entity);
-                                } else {
-                                    Object id = iterator.next();
-                                    d.entity = updateEntityId((BeanProperty<T, Object>) identity.getProperty(), d.entity, id);
-                                }
+        protected void execute() throws RuntimeException {
+            Statement statement;
+            if (hasGeneratedId) {
+                statement = ctx.connection.createStatement(dbOperation.getQuery())
+                        .returnGeneratedValues(persistentEntity.getIdentity().getPersistedName());
+            } else {
+                statement = ctx.connection.createStatement(dbOperation.getQuery());
+            }
+            setParameters(DefaultR2dbcRepositoryOperations.this, ctx.connection, statement, dbOperation);
+            if (hasGeneratedId) {
+                entities = entities.collectList()
+                        .flatMapMany(e -> {
+                            List<Data> notVetoedEntities = e.stream().filter(this::notVetoed).collect(Collectors.toList());
+                            if (notVetoedEntities.isEmpty()) {
+                                return Flux.fromIterable(notVetoedEntities);
                             }
-                            return Flux.fromIterable(e);
+                            Mono<List<Object>> ids = Flux.from(statement.execute())
+                                    .flatMap(result ->
+                                            Flux.from(result.map((row, rowMetadata)
+                                                    -> columnIndexResultSetReader.readDynamic(row, 0, persistentEntity.getIdentity().getDataType())))
+                                    ).collectList();
+
+                            return ids.flatMapMany(idList -> {
+                                Iterator<Object> iterator = idList.iterator();
+                                ListIterator<Data> resultIterator = notVetoedEntities.listIterator();
+                                RuntimePersistentProperty<T> identity = persistentEntity.getIdentity();
+                                while (resultIterator.hasNext()) {
+                                    Data d = resultIterator.next();
+                                    if (!iterator.hasNext()) {
+                                        throw new DataAccessException("Failed to generate ID for entity: " + d.entity);
+                                    } else {
+                                        Object id = iterator.next();
+                                        d.entity = updateEntityId((BeanProperty<T, Object>) identity.getProperty(), d.entity, id);
+                                    }
+                                }
+                                return Flux.fromIterable(e);
+                            });
                         });
-                    });
+            } else {
+                Mono<Tuple2<List<Data>, Integer>> entitiesWithRowsUpdated = entities.collectList()
+                        .flatMap(e -> {
+                            List<Data> notVetoedEntities = e.stream().filter(this::notVetoed).collect(Collectors.toList());
+                            if (notVetoedEntities.isEmpty()) {
+                                return Mono.just(Tuples.of(e, 0));
+                            }
+                            return Flux.from(statement.execute()).flatMap(result -> Flux.from(result.getRowsUpdated())).reduce(0, Integer::sum)
+                                    .map(rowsUpdated -> {
+                                        if (dbOperation.isOptimisticLock()) {
+                                            checkOptimisticLocking(notVetoedEntities.size(), rowsUpdated);
+                                        }
+                                        return Tuples.of(e, rowsUpdated);
+                                    });
+                        }).cache();
+                entities = entitiesWithRowsUpdated.flatMapMany(t -> Flux.fromIterable(t.getT1()));
+                rowsUpdated = entitiesWithRowsUpdated.map(Tuple2::getT2);
+            }
         }
+    }
 
-        private boolean notVetoed(Data data) {
-            return !data.vetoed;
-        }
+    protected static class R2dbcOperationContext extends OperationContext {
 
-        protected Flux<T> getEntities() {
-            return entities.map(d -> d.entity);
-        }
+        private final Connection connection;
+        private final Dialect dialect;
 
-        protected Mono<Integer> getRowsUpdated() {
-            // We need to trigger entities to execute post actions when getting just rows
-            return rowsUpdated.flatMap(rows -> entities.then(Mono.just(rows)));
-        }
-
-        class Data {
-            T entity;
-            Map<QueryParameterBinding, Object> previousValues;
-            boolean vetoed = false;
+        public R2dbcOperationContext(AnnotationMetadata annotationMetadata, Class<?> repositoryType, Dialect dialect, Connection connection) {
+            super(annotationMetadata, repositoryType);
+            this.dialect = dialect;
+            this.connection = connection;
         }
     }
 

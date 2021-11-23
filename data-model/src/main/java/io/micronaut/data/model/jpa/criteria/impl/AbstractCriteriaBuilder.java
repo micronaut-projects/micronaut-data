@@ -1015,6 +1015,12 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
 
     @Override
     @NonNull
+    public Predicate regex(@NonNull Expression<String> x, @NonNull Expression<String> pattern) {
+        return new PersistentPropertyBinaryPredicate<>(requireProperty(x), requirePropertyParameterOrLiteral(pattern), PredicateBinaryOp.REGEX);
+    }
+
+    @Override
+    @NonNull
     public Predicate like(@NonNull Expression<String> x, @NonNull String pattern) {
         return new PersistentPropertyBinaryPredicate<>(requireProperty(x), literal(pattern), PredicateBinaryOp.LIKE);
     }

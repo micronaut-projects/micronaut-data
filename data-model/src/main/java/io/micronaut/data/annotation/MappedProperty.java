@@ -57,6 +57,11 @@ public @interface MappedProperty {
     Class<?> converter() default Object.class;
 
     /**
+     * @return The converter of the property.
+     */
+    Class<?> converterPersistedType() default Object.class;
+
+    /**
      * Used to define the mapping. For example in the case of SQL this would be the column definition. Example: BLOB NOT NULL.
      *
      * @return A string-based definition of the property type.

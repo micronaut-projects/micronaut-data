@@ -1,3 +1,6 @@
+=== Micronaut Data 3.3
+- Support for MongoDB repositories
+
 === Micronaut Data 3.2
 - Repositories with JPA Criteria API specification for Micronaut JDBC/R2DBC
 

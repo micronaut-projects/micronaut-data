@@ -18,6 +18,7 @@ package io.micronaut.data.runtime.intercept;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.type.Argument;
+import io.micronaut.data.annotation.Query;
 import io.micronaut.data.intercept.DeleteAllInterceptor;
 import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.model.runtime.PreparedQuery;
@@ -47,9 +48,14 @@ public class DefaultDeleteAllInterceptor<T> extends AbstractQueryInterceptor<T, 
         Optional<Iterable<Object>> deleteEntities = findEntitiesParameter(context, Object.class);
         Optional<Object> deleteEntity = findEntityParameter(context, Object.class);
         if (!deleteEntity.isPresent() && !deleteEntities.isPresent()) {
-            PreparedQuery<?, Number> preparedQuery = (PreparedQuery<?, Number>) prepareQuery(methodKey, context);
-            Number result = operations.executeDelete(preparedQuery).orElse(0);
-            return convertIfNecessary(resultType, result);
+            if (context.hasAnnotation(Query.class)) {
+                PreparedQuery<?, Number> preparedQuery = (PreparedQuery<?, Number>) prepareQuery(methodKey, context);
+                Number result = operations.executeDelete(preparedQuery).orElse(0);
+                return convertIfNecessary(resultType, result);
+            } else {
+                Number result = operations.deleteAll(getDeleteAllBatchOperation(context)).orElse(0);
+                return convertIfNecessary(resultType, result);
+            }
         } else {
             Number result = operations.deleteAll(getDeleteBatchOperation(context, deleteEntities.get())).orElse(0);
             return convertIfNecessary(resultType, result);

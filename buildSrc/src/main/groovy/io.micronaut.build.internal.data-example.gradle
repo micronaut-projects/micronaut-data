@@ -1,0 +1,3 @@
+if (project.path.contains("groovy") && JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_16)) {
+    test.enabled(false)
+}

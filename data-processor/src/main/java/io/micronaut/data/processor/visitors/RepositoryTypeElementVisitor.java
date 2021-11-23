@@ -320,20 +320,24 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
             } else {
 
                 encodeEntityParameters = methodInfo.isEncodeEntityParameters();
-                QueryResult encodedQuery = queryResult;
-                parameterBinding = encodedQuery.getParameterBindings();
-                bindAdditionalParameters(methodMatchContext, entity, parameterBinding, parameters, encodedQuery.getAdditionalRequiredParameters());
+                parameterBinding = queryResult.getParameterBindings();
+                bindAdditionalParameters(methodMatchContext, entity, parameterBinding, parameters, queryResult.getAdditionalRequiredParameters());
 
                 QueryResult preparedCount = methodInfo.getCountQueryResult();
                 if (preparedCount != null) {
                     element.annotate(Query.class, annotationBuilder -> {
-                                annotationBuilder.value(encodedQuery.getQuery());
+                                annotationBuilder.value(queryResult.getQuery());
                                 annotationBuilder.member(DataMethod.META_MEMBER_COUNT_QUERY, preparedCount.getQuery());
                             }
                     );
                 } else {
-                    element.annotate(Query.class, annotationBuilder ->
-                            annotationBuilder.value(encodedQuery.getQuery())
+                    element.annotate(Query.class, annotationBuilder -> {
+                                annotationBuilder.value(queryResult.getQuery());
+                                String update = queryResult.getUpdate();
+                                if (StringUtils.isNotEmpty(update)) {
+                                    annotationBuilder.member("update", update);
+                                }
+                            }
                     );
                 }
             }

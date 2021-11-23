@@ -355,7 +355,7 @@ public interface PersistentEntity extends PersistentElement {
                         PersistentEntity idEntity = ((Embedded) identity).getAssociatedEntity();
                         pp = idEntity.getPropertyByName(propertyName);
                         if (pp != null) {
-                            return new PersistentPropertyPath(Collections.singletonList((Embedded) identity), pp, identity.getName() + "." + pp.getName());
+                            return PersistentPropertyPath.of(Collections.singletonList((Embedded) identity), pp, identity.getName() + "." + pp.getName());
                         }
                     }
                 }
@@ -366,7 +366,7 @@ public interface PersistentEntity extends PersistentElement {
                     }
                 }
             }
-            return pp == null ? null : new PersistentPropertyPath(Collections.emptyList(), pp, propertyName);
+            return pp == null ? null : PersistentPropertyPath.of(Collections.emptyList(), pp, propertyName);
         } else {
             List<Association> associations = new ArrayList<>(propertyPath.length - 1);
             PersistentEntity startingEntity = this;
@@ -388,7 +388,7 @@ public interface PersistentEntity extends PersistentElement {
             if (prop == null) {
                 return null;
             }
-            return new PersistentPropertyPath(associations, prop);
+            return PersistentPropertyPath.of(associations, prop);
         }
     }
 

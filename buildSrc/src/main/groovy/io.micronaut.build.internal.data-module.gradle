@@ -1,0 +1,4 @@
+plugins {
+    id "io.micronaut.build.internal.data-base"
+    id "io.micronaut.build.internal.module"
+}

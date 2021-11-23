@@ -1,15 +1,12 @@
-javaPlatform {
-    allowDependencies()
+plugins {
+    id 'io.micronaut.build.internal.bom'
 }
-dependencies {
-    constraints {
-        for (Project p : rootProject.subprojects) {
-            if (p.name == "data-bom" || p.name.contains('benchmark') || p.name.contains('example')) {
-            	continue	
-        	} 
-            
-            api "$p.group:micronaut-$p.name:$p.version"
-        }
 
-    }
+group projectGroupId
+version projectVersion
+
+micronautBom {
+    excludeProject.set({ p ->
+        p.name.contains('benchmark') || p.name.contains('example')
+    } as Spec<String>)
 }

@@ -180,6 +180,12 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
                 context.fail("Relation cannot have converter specified", propertyElement);
                 return;
             }
+            ClassElement persistedClassFromConverter = getPersistedClassFromConverter(converter, context);
+            if (persistedClassFromConverter != null) {
+                propertyElement.annotate(MappedProperty.class, builder -> {
+                    builder.member("converterPersistedType", new AnnotationClassValue<>(persistedClassFromConverter.getCanonicalName()));
+                });
+            }
             if (dataType == null) {
                 dataType = getDataTypeFromConverter(propertyElement.getGenericType(), converter, dataTypes, context);
                 if (dataType == null) {
@@ -301,5 +307,19 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
             return dataType;
         }
         return null;
+    }
+
+    private ClassElement getPersistedClassFromConverter(String converter, VisitorContext context) {
+        ClassElement classElement = context.getClassElement(converter).get();
+        ClassElement genericType = classElement.getGenericType();
+
+        Map<String, ClassElement> typeArguments = genericType.getTypeArguments(AttributeConverter.class.getName());
+        if (typeArguments.isEmpty()) {
+            typeArguments = genericType.getTypeArguments("javax.persistence.AttributeConverter");
+        }
+        if (typeArguments.isEmpty()) {
+            typeArguments = genericType.getTypeArguments("jakarta.persistence.AttributeConverter");
+        }
+        return typeArguments.get("Y");
     }
 }

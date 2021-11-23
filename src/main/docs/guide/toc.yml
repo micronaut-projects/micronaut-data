@@ -78,6 +78,28 @@ sql:
       r2querying: Reactive repositories
       r2transactionManagement: Transactions
       r2entityEvents: Reactive Entity Events
+mongo:
+  title: Micronaut Data MongoDB
+  mongoQuickStart: Quick Start
+  mongoRepositories: Repositories
+  mongoMapping:
+    title: Mapping Entities
+    mongoAnnotations: Mapping Annotations
+    mongoIdGenerator: ID Generation
+    mongoCompositeId: Composite Primary Keys
+    mongoConstructorArguments: Constructor Arguments
+    mongoNaming: Naming Strategies
+    mongoAssociationMapping: Association Mapping
+    mongoAssociationFetching: Association Fetching
+  mongoJoinQueries: Join Queries
+  mongoAttributeConverter: Using Attribute Converter
+  mongoCriteriaSpecifications:
+    title: Respositories with Criteria API
+    mongoCriteriaExecuteQuery: Querying
+    mongoCriteriaExecuteUpdate: Updating
+    mongoCriteriaExecuteDelete: Deleting
+    mongoOtherRepositoryVariations: Other repository variations
+  mongoOptimisticLocking: Optimistic locking
 graal:
   title: Going Native with GraalVM
 spring:

@@ -1,3 +1,7 @@
+plugins {
+    id "io.micronaut.build.internal.data-tck"
+}
+
 dependencies {
     annotationProcessor "io.micronaut:micronaut-inject-java"
     annotationProcessor project(":data-processor")
@@ -16,15 +20,3 @@ dependencies {
     implementation "com.fasterxml.jackson.core:jackson-databind"
     implementation "jakarta.persistence:jakarta.persistence-api:$jakartaPersistenceVersion"
 }
-
-tasks.withType(JavaCompile){
-    options.encoding = "UTF-8"
-    options.compilerArgs.add('-parameters')
-}
-
-checkstyleMain.enabled = false
-checkstyleNohttp.enabled = false
-
-
-//compileJava.options.fork = true
-//compileJava.options.forkOptions.jvmArgs = ['-Xdebug', '-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5005']

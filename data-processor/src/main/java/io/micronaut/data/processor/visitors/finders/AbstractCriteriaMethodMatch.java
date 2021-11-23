@@ -136,7 +136,7 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
     @Override
     public final MethodMatchInfo buildMatchInfo(MethodMatchContext matchContext) {
         MethodMatchInfo methodMatchInfo;
-        if (supportedByImplicitQueries() && matchContext.supportsImplicitQueries() && hasNoWhereDeclaration(matchContext)) {
+        if (supportedByImplicitQueries() && matchContext.supportsImplicitQueries() && hasNoWhereAndJoinDeclaration(matchContext)) {
             Map.Entry<ClassElement, Class<? extends DataInterceptor>> entry = resolveReturnTypeAndInterceptor(matchContext);
             methodMatchInfo = new MethodMatchInfo(
                     entry.getKey(),
@@ -519,7 +519,7 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
 
             if (expression instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath) {
                 io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> pp = (io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?>) expression;
-                PersistentPropertyPath propertyPath = new PersistentPropertyPath(pp.getAssociations(), pp.getProperty());
+                PersistentPropertyPath propertyPath = PersistentPropertyPath.of(pp.getAssociations(), pp.getProperty());
                 if (!isValidType(genericType, (SourcePersistentProperty) propertyPath.getProperty())) {
                     SourcePersistentProperty property = (SourcePersistentProperty) propertyPath.getProperty();
                     throw new IllegalArgumentException("Parameter [" + genericType.getType().getName() + " " + parameter.getName() + "] is not compatible with property [" + property.getType().getName() + " " + property.getName() + "] of entity: " + property.getOwner().getName());
@@ -594,7 +594,7 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
                 return null;
             }
         } else {
-            pp = new PersistentPropertyPath(Collections.emptyList(), prop, propertyName);
+            pp = PersistentPropertyPath.of(Collections.emptyList(), prop, propertyName);
         }
 
         PersistentEntityFrom<?, ?> path = root;
@@ -652,7 +652,10 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
         return matchContext.getRepositoryClass().getAnnotationMetadata().getAnnotationValuesByType(Join.class);
     }
 
-    protected final boolean hasNoWhereDeclaration(@NonNull MethodMatchContext matchContext) {
+    protected final boolean hasNoWhereAndJoinDeclaration(@NonNull MethodMatchContext matchContext) {
+        if (matchContext.getMethodElement().hasAnnotation(Join.class)) {
+            return false;
+        }
         final boolean repositoryHasWhere = new AnnotationMetadataHierarchy(matchContext.getRepositoryClass(), matchContext.getMethodElement()).hasAnnotation(Where.class);
         final boolean entityHasWhere = matchContext.getRootEntity().hasAnnotation(Where.class);
         return !repositoryHasWhere && !entityHasWhere;

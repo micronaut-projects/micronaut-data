@@ -17,7 +17,9 @@ package io.micronaut.data.model;
 
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
+import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.data.model.naming.NamingStrategy;
+import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 
 import java.util.List;
 import java.util.ListIterator;
@@ -27,8 +29,8 @@ import java.util.StringJoiner;
 /**
  * The property path representation.
  *
- * @since 2.4.0
  * @author Denis Stepanov
+ * @since 2.4.0
  */
 public class PersistentPropertyPath {
     private final List<Association> associations;
@@ -37,7 +39,8 @@ public class PersistentPropertyPath {
 
     /**
      * Default constructor.
-     *  @param associations The associations
+     *
+     * @param associations The associations
      * @param property     The property
      */
     public PersistentPropertyPath(List<Association> associations, @NonNull PersistentProperty property) {
@@ -46,7 +49,8 @@ public class PersistentPropertyPath {
 
     /**
      * Default constructor.
-     *  @param associations The associations
+     *
+     * @param associations The associations
      * @param property     The property
      * @param path         The path
      */
@@ -54,6 +58,99 @@ public class PersistentPropertyPath {
         this.associations = associations;
         this.property = property;
         this.path = path;
+    }
+
+    /**
+     * Creates {@link PersistentPropertyPath} or {@link PersistentAssociationPath}.
+     *
+     * @param associations The associations
+     * @param property     The property
+     * @return new instance of {@link PersistentPropertyPath} or {@link PersistentAssociationPath}
+     */
+    public static PersistentPropertyPath of(List<Association> associations, @NonNull PersistentProperty property) {
+        return of(associations, property, null);
+    }
+
+    /**
+     * Creates {@link PersistentPropertyPath} or {@link PersistentAssociationPath}.
+     *
+     * @param associations The associations
+     * @param property     The property
+     * @param path         The path
+     * @return new instance of {@link PersistentPropertyPath} or {@link PersistentAssociationPath}
+     */
+    public static PersistentPropertyPath of(List<Association> associations, @NonNull PersistentProperty property, @Nullable String path) {
+        if (property instanceof Association) {
+            return new PersistentAssociationPath(associations, (Association) property, path);
+        }
+        return new PersistentPropertyPath(associations, property, path);
+    }
+
+    /**
+     * Sets property path value.
+     * (Only possible for runtime properties)
+     *
+     * @param bean  The root bean
+     * @param value The value
+     * @return The root bean - possibly modified
+     */
+    public Object setPropertyValue(Object bean, Object value) {
+        if (!(property instanceof RuntimePersistentProperty)) {
+            throw new IllegalStateException("Expected runtime property!");
+        }
+        return setProperty(associations, (RuntimePersistentProperty) property, bean, value);
+    }
+
+    private Object setProperty(List<Association> associations, RuntimePersistentProperty property, Object bean, Object value) {
+        if (associations.isEmpty()) {
+            BeanProperty beanProperty = property.getProperty();
+            return setProperty(beanProperty, bean, value);
+        }
+        Association association = associations.iterator().next();
+        RuntimePersistentProperty<?> p = (RuntimePersistentProperty) association;
+        BeanProperty beanProperty = p.getProperty();
+        Object prevBean = beanProperty.get(bean);
+        Object newBean = setProperty(associations.subList(1, associations.size()), property, prevBean, value);
+        if (prevBean != newBean) {
+            return setProperty(beanProperty, bean, newBean);
+        }
+        return bean;
+    }
+
+    private <X, Y> X setProperty(BeanProperty<X, Y> beanProperty, X x, Y y) {
+        if (beanProperty.isReadOnly()) {
+            return beanProperty.withValue(x, y);
+        }
+        beanProperty.set(x, y);
+        return x;
+    }
+
+    /**
+     * Gets property path value.
+     * (Only possible for runtime properties)
+     *
+     * @param bean The root bean
+     * @return The value
+     */
+    public Object getPropertyValue(Object bean) {
+        if (!(property instanceof RuntimePersistentProperty)) {
+            throw new IllegalStateException("Expected runtime property!");
+        }
+        Object value = bean;
+        for (Association association : associations) {
+            RuntimePersistentProperty<?> property = (RuntimePersistentProperty) association;
+            BeanProperty beanProperty = property.getProperty();
+            value = beanProperty.get(value);
+            if (value == null) {
+                return null;
+            }
+        }
+        RuntimePersistentProperty<?> p = (RuntimePersistentProperty<?>) property;
+        if (value != null) {
+            BeanProperty beanProperty = p.getProperty();
+            value = beanProperty.get(value);
+        }
+        return value;
     }
 
     /**

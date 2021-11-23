@@ -1,0 +1,45 @@
+To specify a relation between two entities you need to use ann:data.annotation.Relation[] annotation. The relation kind is specified using enum ann:data.annotation.Relation.Kind[] `value` attribute which is similar to JPA relations annotation names (`@OneToMany`, `@OneToOne` etc.)
+
+.Micronaut Data supported relations:
+[cols=2*]
+|===
+|*Kind*
+|*Description*
+
+|`Kind.ONE_TO_MANY`
+|One to many association
+
+|`Kind.ONE_TO_ONE`
+|One to one association
+
+|`Kind.MANY_TO_MANY`
+|Many to many association
+
+|`Kind.MANY_TO_ONE`
+|Many to one association
+
+|`Kind.EMBEDDED`
+|Embedded association
+|===
+
+Use 'mappedBy' to specify inverse property that this relation is mapped by.
+
+.Micronaut Data supported association cascade types:
+[cols=2*]
+|===
+|*Type*
+|*Description*
+
+|`Cascade.PERSIST`
+|Associated entity or entities are going to be persisted when owning entity is saved
+
+|`Cascade.UPDATE`
+|Associated entity or entities are going to be updated when owning entity is updated
+
+|`Cascade.NONE`
+|(Default) No operation is cascaded
+
+|`Cascade.ALL`
+|All (`Cascade.PERSIST` and `Cascade.UPDATE`) operations are cascaded
+|===
+

@@ -1,3 +1,7 @@
+plugins {
+    id "io.micronaut.build.internal.data-module"
+}
+
 dependencies {
     annotationProcessor "io.micronaut:micronaut-inject-java"
     annotationProcessor "io.micronaut:micronaut-graal"

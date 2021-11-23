@@ -1,0 +1,12 @@
+[versions]
+mongodb = "4.1.1"
+micronaut-serde = "1.0.0-M3"
+
+[libraries]
+mongodb-driver-sync = { module = "org.mongodb:mongodb-driver-sync", version.ref = "mongodb" }
+mongodb-driver-reactivestreams = { module = "org.mongodb:mongodb-driver-reactivestreams", version.ref = "mongodb" }
+
+micronaut-serde-processor = { module = "io.micronaut.serde:micronaut-serde-processor", version.ref = "micronaut-serde" }
+micronaut-serde-bson = { module = "io.micronaut.serde:micronaut-serde-bson", version.ref = "micronaut-serde" }
+micronaut-serde-api = { module = "io.micronaut.serde:micronaut-serde-api", version.ref = "micronaut-serde" }
+micronaut-serde-support = { module = "io.micronaut.serde:micronaut-serde-support", version.ref = "micronaut-serde" }

@@ -1,0 +1,20 @@
+In some cases, you need to build a query programmatically and at the runtime; for that, Micronaut Data implements a subset of Jakarta Persistence Criteria API 3.0, which can be used for Micronaut Data MongoDB features.
+
+To implement queries that cannot be defined at the compile-time Micronaut Data introduces api:data.repository.JpaSpecificationExecutor[] repository interface that can be used to extend your repository interface:
+
+snippet::example.PersonRepository[project-base="doc-examples/mongo-example",source="main" tags="repository",indent="0"]
+
+Each method expects a "specification" which is a functional interface with a set of Criteria API objects intended to build a query programmatically.
+
+Micronaut Criteria API currently implements only a subset of the API. Most of it is internally used to create queries with predicates and projections.
+
+Currently, not supported JPA Criteria API features:
+
+- Joins with custom `ON` expressions and typed join methods like `joinSet` etc
+- Sub-queries
+- Collection operations: `isMember` etc
+- Custom or tuple result type
+- Transformation expressions like concat, substring etc.
+- Cases and functions
+
+More information about Jakarta Persistence Criteria API 3.0 you can find at the https://jakarta.ee/specifications/persistence/3.0/jakarta-persistence-spec-3.0.html#a6925[official API specification]

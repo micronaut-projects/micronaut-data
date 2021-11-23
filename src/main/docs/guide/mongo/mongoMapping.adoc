@@ -1,0 +1,13 @@
+As mentioned in the <<mongoQuickStart, Quick Start>> section, if you need to customize how entities map to the collection and attribute names of the collection you need use Micronaut Data's own annotations in the `io.micronaut.data.annotation` package.
+
+An important aspect of Micronaut Data MongoDB is that the entity classes must be compiled with Micronaut Data. This is because Micronaut Data pre-computes the persistence model (the relationships between entities, the class/property name to collection/attribute name mappings) at compilation time, which is one of the reasons Micronaut Data MongoDB can startup so fast.
+
+An example of mapping with Micronaut Data annotations can be seen below:
+
+.Micronaut Data Annotation Mapping Example
+snippet::example.Country[project-base="doc-examples/mongo-example", source="main", tags="country"]
+
+<1> The class is marked as a mapped entity that should be persisted in the `country` collection
+<2> The id is defined as MongoDB's `ObjectId`
+<3> The `regions` are stored in a separate collection represented by `CountryRegion`
+<4> The `name` field that should be persisted in a collection

@@ -1,0 +1,16 @@
+plugins {
+    id "io.micronaut.build.internal.data-tck"
+}
+
+dependencies {
+    annotationProcessor mn.micronaut.inject.java
+    annotationProcessor projects.dataDocumentProcessor
+
+    compileOnly mn.micronaut.inject.groovy
+    implementation projects.dataModel
+    implementation "io.projectreactor:reactor-core"
+
+    implementation "io.micronaut.test:micronaut-test-spock"
+    implementation "io.micronaut.test:micronaut-test-core"
+    implementation "jakarta.persistence:jakarta.persistence-api:$jakartaPersistenceVersion"
+}

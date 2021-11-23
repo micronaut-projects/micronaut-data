@@ -17,11 +17,9 @@ package io.micronaut.data.runtime.operations.internal;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Nullable;
-import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.beans.BeanWrapper;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.CollectionUtils;
-import io.micronaut.data.model.Association;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.query.builder.sql.Dialect;
@@ -58,6 +56,7 @@ public class StoredSqlOperation extends DBOperation {
      *
      * @param queryBuilder           The queryBuilder.
      * @param query                  The query
+     * @param expandableQueryParts   The expandableQueryParts
      * @param queryParameterBindings The query parameters
      * @param isOptimisticLock       Is optimistic locking
      */
@@ -154,21 +153,7 @@ public class StoredSqlOperation extends DBOperation {
         if (propertyPath == null) {
             throw new IllegalStateException("Unrecognized path: " + String.join(".", stringPropertyPath));
         }
-        Object value = entity;
-        for (Association association : propertyPath.getAssociations()) {
-            RuntimePersistentProperty<?> property = (RuntimePersistentProperty) association;
-            BeanProperty beanProperty = property.getProperty();
-            value = beanProperty.get(value);
-            if (value == null) {
-                break;
-            }
-        }
-        RuntimePersistentProperty<?> property = (RuntimePersistentProperty<?>) propertyPath.getProperty();
-        if (value != null) {
-            BeanProperty beanProperty = property.getProperty();
-            value = beanProperty.get(value);
-        }
-        return sizeOf(value);
+        return sizeOf(propertyPath.getPropertyValue(entity));
     }
 
     @Override
@@ -194,20 +179,8 @@ public class StoredSqlOperation extends DBOperation {
                 }
                 continue;
             }
-            Object value = entity;
-            for (Association association : pp.getAssociations()) {
-                RuntimePersistentProperty<?> property = (RuntimePersistentProperty) association;
-                BeanProperty beanProperty = property.getProperty();
-                value = beanProperty.get(value);
-                if (value == null) {
-                    break;
-                }
-            }
+            Object value = pp.getPropertyValue(entity);
             RuntimePersistentProperty<?> property = (RuntimePersistentProperty<?>) pp.getProperty();
-            if (value != null) {
-                BeanProperty beanProperty = property.getProperty();
-                value = beanProperty.get(value);
-            }
             DataType type = property.getDataType();
             if (value == null && type == DataType.ENTITY) {
                 RuntimePersistentEntity<?> referencedEntity = context.getEntity(property.getType());
@@ -296,4 +269,10 @@ public class StoredSqlOperation extends DBOperation {
         return 1;
     }
 
+    /**
+     * @return The query builder
+     */
+    public SqlQueryBuilder getQueryBuilder() {
+        return queryBuilder;
+    }
 }

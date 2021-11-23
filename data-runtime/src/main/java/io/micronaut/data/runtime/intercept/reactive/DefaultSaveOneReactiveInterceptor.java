@@ -47,7 +47,7 @@ public class DefaultSaveOneReactiveInterceptor extends AbstractReactiveIntercept
     @Override
     public Object intercept(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Object> context) {
         Class<?> rootEntity = getRequiredRootEntity(context);
-        Map<String, Object> parameterValueMap = context.getParameterValueMap();
+        Map<String, Object> parameterValueMap = getParameterValueMap(context);
 
         Flux<Object> publisher = Mono.fromCallable(() -> {
             Object o = instantiateEntity(rootEntity, parameterValueMap);

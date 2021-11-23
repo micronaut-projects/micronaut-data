@@ -1,0 +1,26 @@
+There are cases where you would like to represent the attribute differently in the database than in the entity.
+
+Consider the following example entity:
+
+snippet::example.Sale[project-base="doc-examples/mongo-example", source="main"]
+
+The `Sale` class has a reference to a type `Quantity`. The `Quantity` type is defined as:
+
+snippet::example.Quantity[project-base="doc-examples/mongo-example", source="main"]
+
+As you can see `@MappedProperty(converter = QuantityAttributeConverter.class)` is used to define the `Quantity` converter.
+
+NOTE: Micronaut Data MongoDB doesn't support defining the converter using `@TypeDef`.
+
+The last step is to add custom attribute conversion so that Micronaut Data knows how to read and write the type from an `Integer`:
+
+snippet::example.QuantityAttributeConverter[project-base="doc-examples/mongo-example", source="main"]
+
+<1> The attribute converter implements ann:io.micronaut.data.model.runtime.convert.AttributeConverter[] and must be a bean
+<2> A converter from `Quantity` to `Integer`
+<3> A converter from `Integer` to `Quantity`
+
+NOTE: It's possible to define the converter result type using ann:data.annotation.MappedProperty[]: `@MappedProperty(converterPersistedType = Integer.class)`, in this case the data type will be detected automatically.
+
+
+

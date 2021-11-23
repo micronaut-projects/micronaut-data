@@ -351,10 +351,10 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                 List<String> leftJoinTableColumns = resolveJoinTableJoinColumns(annotationMetadata, isAssociationOwner, entity, namingStrategy);
                 List<String> rightJoinTableColumns = resolveJoinTableJoinColumns(annotationMetadata, !isAssociationOwner, association.getAssociatedEntity(), namingStrategy);
                 traversePersistentProperties(entity.getIdentity(), (associations, property) -> {
-                    leftProperties.add(new PersistentPropertyPath(associations, property, ""));
+                    leftProperties.add(PersistentPropertyPath.of(associations, property, ""));
                 });
                 traversePersistentProperties(associatedEntity.getIdentity(), (associations, property) -> {
-                    rightProperties.add(new PersistentPropertyPath(associations, property, ""));
+                    rightProperties.add(PersistentPropertyPath.of(associations, property, ""));
                 });
                 if (leftJoinTableColumns.size() == leftProperties.size()) {
                     for (int i = 0; i < leftJoinTableColumns.size(); i++) {
@@ -419,7 +419,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         if (identity != null) {
             List<PersistentPropertyPath> ids = new ArrayList<>();
             traversePersistentProperties(identity, (associations, property) -> {
-                ids.add(new PersistentPropertyPath(associations, property, ""));
+                ids.add(PersistentPropertyPath.of(associations, property, ""));
             });
             if (ids.size() > 1) {
                 generatePkAfterColumns = true;

@@ -8,10 +8,10 @@ Each method expects a "specification" which is a functional interface with a set
 
 Micronaut Criteria API currently implements only a subset of the API. Most of it is internally used to create queries with predicates and projections.
 
-Currently no supported JPA Criteria API features:
+Currently, not supported JPA Criteria API features:
 
 - Joins with custom `ON` expressions and typed join methods like `joinSet` etc
-- Subqueries
+- Sub-queries
 - Collection operations: `isMember` etc
 - Custom or tuple result type
 - Transformation expressions like concat, substring etc.

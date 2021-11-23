@@ -1,0 +1,67 @@
+To find an entity or multiple entities you can use one of the following methods from api:data.repository.JpaSpecificationExecutor[] interface:
+
+snippet::example.PersonRepository[project-base="doc-examples/mongo-example",source="main" tags="find",indent="0"]
+
+As you can see, there are two variations of `findOne`/`findAll` methods.
+
+First method is expecting api:data.repository.criteria.PredicateSpecification[] which is a simple specification interface that can be implemented to return a predicate:
+
+[source,java]
+----
+import static jakarta.persistence.criteria.*;
+
+public interface PredicateSpecification<T> {
+
+    // <1>
+    @Nullable
+    Predicate toPredicate(@NonNull Root<T> root, // <2>
+                          @NonNull CriteriaBuilder criteriaBuilder // <3>
+    );
+
+}
+----
+
+<1> The specification is producing a query limiting predicate
+<2> The entity root
+<3> The criteria builder
+
+This interface can also be used for update and delete methods, and it provides `or` and `and` methods for combining multiple predicates.
+
+The second interface is intended only for query criteria because it includes `jakarta.persistence.criteria.CriteriaQuery` as a parameter.
+
+[source,java]
+----
+import static jakarta.persistence.criteria.*;
+
+public interface QuerySpecification<T> {
+
+    // <1>
+    @Nullable
+    Predicate toPredicate(@NonNull Root<T> root, // <2>
+                          @NonNull CriteriaQuery<?> query, // <3>
+                          @NonNull CriteriaBuilder criteriaBuilder // <4>
+    );
+
+}
+----
+
+<1> The specification is producing a query limiting predicate
+<2> The entity root
+<3> The criteria query instance
+<4> The criteria builder
+
+For implementing counting queries following methods can be used:
+
+snippet::example.PersonRepository[project-base="doc-examples/mongo-example",source="main" tags="count",indent="0"]
+
+You can define criteria specification methods that will help you to create a query:
+
+snippet::example.PersonRepository[project-base="doc-examples/mongo-example",source="main" tags="specifications",indent="0"]
+
+Then you can combine them for `find` or `count` queries:
+
+snippet::example.PersonRepositorySpec[project-base="doc-examples/mongo-example",source="test" tags="find",indent="0"]
+
+NOTE: The examples use compile-known values, and in this case, it would be better to create custom repository methods which would come with compile-time generates queries and eliminate runtime overhead.
+It's recommended to use criteria only for dynamic queries where the query structure is not known at the build-time.
+

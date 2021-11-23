@@ -1,0 +1,18 @@
+Optimistic locking is a strategy where you note the actual record state's version and modify the record only when the version is the same.
+
+To enable optimistic locking for your entity add ann:data.annotation.Version[] annotated field with one of the types:
+
+- `java.lang.Integer`
+- `java.lang.Long`
+- `java.lang.Short`
+- Date-time type extending `java.time.Temporal`
+
+The field is going to be incremented (for number types) or replaced (for date types) on an update operation.
+
+Micronaut Data will generate update/delete filter queries with a version match and if the update/delete doesn't produce any result api:data.exceptions.OptimisticLockException[] will be thrown.
+
+snippet::example.Student[project-base="doc-examples/mongo-example", source="main", tags="student", indent="0"]
+
+It's possible to use ann:data.annotation.Version[] in a partial update or a delete method, in this case the version needs to match the version of the stored record.
+
+snippet::example.StudentRepository[project-base="doc-examples/mongo-example", source="main", tags="studentRepository", indent="0"]

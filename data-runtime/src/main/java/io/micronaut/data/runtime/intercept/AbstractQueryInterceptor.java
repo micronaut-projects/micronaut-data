@@ -24,7 +24,6 @@ import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.beans.BeanWrapper;
 import io.micronaut.core.beans.exceptions.IntrospectionException;
-import io.micronaut.core.convert.value.ConvertibleValues;
 import io.micronaut.core.naming.NameUtils;
 import io.micronaut.core.reflect.ClassUtils;
 import io.micronaut.core.reflect.ReflectionUtils;
@@ -32,26 +31,17 @@ import io.micronaut.core.type.Argument;
 import io.micronaut.core.type.MutableArgumentValue;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.ArrayUtils;
-import io.micronaut.core.util.StringUtils;
-import io.micronaut.data.annotation.Join;
 import io.micronaut.data.annotation.Query;
-import io.micronaut.data.annotation.QueryHint;
-import io.micronaut.data.annotation.RepositoryConfiguration;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.exceptions.EmptyResultException;
 import io.micronaut.data.intercept.DataInterceptor;
 import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.intercept.annotation.DataMethod;
-import io.micronaut.data.intercept.annotation.DataMethodQueryParameter;
-import io.micronaut.data.model.Association;
-import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.Sort;
-import io.micronaut.data.model.query.JoinPath;
-import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.runtime.AbstractPreparedDataOperation;
 import io.micronaut.data.model.runtime.BatchOperation;
 import io.micronaut.data.model.runtime.DefaultStoredDataOperation;
@@ -63,28 +53,28 @@ import io.micronaut.data.model.runtime.InsertBatchOperation;
 import io.micronaut.data.model.runtime.InsertOperation;
 import io.micronaut.data.model.runtime.PagedQuery;
 import io.micronaut.data.model.runtime.PreparedQuery;
-import io.micronaut.data.model.runtime.QueryParameterBinding;
 import io.micronaut.data.model.runtime.StoredQuery;
 import io.micronaut.data.model.runtime.UpdateBatchOperation;
 import io.micronaut.data.model.runtime.UpdateOperation;
 import io.micronaut.data.operations.RepositoryOperations;
-import io.micronaut.inject.ExecutableMethod;
+import io.micronaut.data.runtime.query.DefaultPagedQueryResolver;
+import io.micronaut.data.runtime.query.DefaultPreparedQueryResolver;
+import io.micronaut.data.runtime.query.DefaultStoredQueryResolver;
+import io.micronaut.data.runtime.query.PagedQueryResolver;
+import io.micronaut.data.runtime.query.PreparedQueryResolver;
+import io.micronaut.data.runtime.query.StoredQueryResolver;
 
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.stream.Collectors;
 
 import static io.micronaut.data.intercept.annotation.DataMethod.META_MEMBER_PAGE_SIZE;
 
@@ -97,11 +87,12 @@ import static io.micronaut.data.intercept.annotation.DataMethod.META_MEMBER_PAGE
  * @since 1.0
  */
 public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<T, R> {
-    private static final String DATA_METHOD_ANN_NAME = DataMethod.class.getName();
-    private static final int[] EMPTY_INT_ARRAY = new int[0];
     protected final RepositoryOperations operations;
+    protected final PreparedQueryResolver preparedQueryResolver;
     private final ConcurrentMap<RepositoryMethodKey, StoredQuery> countQueries = new ConcurrentHashMap<>(50);
     private final ConcurrentMap<RepositoryMethodKey, StoredQuery> queries = new ConcurrentHashMap<>(50);
+    private final StoredQueryResolver storedQueryResolver;
+    private final PagedQueryResolver pagedQueryResolver;
 
     /**
      * Default constructor.
@@ -111,6 +102,37 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
     protected AbstractQueryInterceptor(@NonNull RepositoryOperations operations) {
         ArgumentUtils.requireNonNull("operations", operations);
         this.operations = operations;
+        this.storedQueryResolver = new DefaultStoredQueryResolver() {
+            @Override
+            protected RepositoryOperations getOperations() {
+                return operations;
+            }
+        };
+        this.preparedQueryResolver = new DefaultPreparedQueryResolver() {
+            @Override
+            protected RepositoryOperations getOperations() {
+                return operations;
+            }
+        };
+        this.pagedQueryResolver = new DefaultPagedQueryResolver();
+    }
+
+    /**
+     * Returns parameter values with respect of {@link Parameter} annotation.
+     *
+     * @param context The method invocation context
+     * @return The parameters value map
+     */
+    protected Map<String, Object> getParameterValueMap(MethodInvocationContext<?, ?> context) {
+        Argument<?>[] arguments = context.getArguments();
+        Object[] parameterValues = context.getParameterValues();
+        Map<String, Object> valueMap = new LinkedHashMap<>(arguments.length);
+        for (int i = 0; i < parameterValues.length; i++) {
+            Object parameterValue = parameterValues[i];
+            Argument arg = arguments[i];
+            valueMap.put(arg.getAnnotationMetadata().stringValue(Parameter.class).orElseGet(arg::getName), parameterValue);
+        }
+        return valueMap;
     }
 
     /**
@@ -174,50 +196,48 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
      * @param resultType The result type
      * @return The query
      */
-    protected final <RT> PreparedQuery<?, RT> prepareQuery(
-            RepositoryMethodKey methodKey,
-            MethodInvocationContext<T, R> context,
-            Class<RT> resultType) {
+    protected final <RT> PreparedQuery<?, RT> prepareQuery(RepositoryMethodKey methodKey,
+                                                           MethodInvocationContext<T, R>
+                                                                   context, Class<RT> resultType) {
+        return prepareQuery(methodKey, context, resultType, false);
+    }
+
+    /**
+     * Prepares a query for the given context.
+     *
+     * @param <RT>       The result generic type
+     * @param methodKey  The method key
+     * @param context    The context
+     * @param resultType The result type
+     * @param isCount    Is count query
+     * @return The query
+     */
+    protected final <RT> PreparedQuery<?, RT> prepareQuery(RepositoryMethodKey methodKey,
+                                                           MethodInvocationContext<T, R> context,
+                                                           Class<RT> resultType,
+                                                           boolean isCount) {
         validateNullArguments(context);
-        StoredQuery<?, RT> storedQuery = findStoreQuery(methodKey, context, resultType);
-
+        StoredQuery<?, RT> storedQuery = findStoreQuery(methodKey, context, resultType, isCount);
         Pageable pageable = storedQuery.hasPageable() ? getPageable(context) : Pageable.UNPAGED;
-        String query = storedQuery.getQuery();
-        return new DefaultPreparedQuery<>(
-                context,
-                storedQuery,
-                query,
-                pageable,
-                storedQuery.isDtoProjection()
-        );
+        return preparedQueryResolver.resolveQuery(context, storedQuery, pageable);
     }
 
-    private <E, RT> StoredQuery<E, RT> findStoreQuery(MethodInvocationContext<?, ?> context) {
+    private <E, RT> StoredQuery<E, RT> findStoreQuery(MethodInvocationContext<?, ?> context, boolean isCount) {
         RepositoryMethodKey key = new RepositoryMethodKey(context.getTarget(), context.getExecutableMethod());
-        return findStoreQuery(key, context, null);
-
+        return findStoreQuery(key, context, null, isCount);
     }
 
-    private <E, RT> StoredQuery<E, RT> findStoreQuery(RepositoryMethodKey methodKey, MethodInvocationContext<?, ?> context, Class<RT> resultType) {
+    private <E, RT> StoredQuery<E, RT> findStoreQuery(RepositoryMethodKey methodKey, MethodInvocationContext<?, ?> context, Class<RT> resultType, boolean isCount) {
         StoredQuery<E, RT> storedQuery = queries.get(methodKey);
         if (storedQuery == null) {
-            Class<E> rootEntity = context.classValue(DATA_METHOD_ANN_NAME, DataMethod.META_MEMBER_ROOT_ENTITY)
+            Class<E> rootEntity = context.classValue(DataMethod.NAME, DataMethod.META_MEMBER_ROOT_ENTITY)
                     .orElseThrow(() -> new IllegalStateException("No root entity present in method"));
             if (resultType == null) {
                 //noinspection unchecked
-                resultType = (Class<RT>) context.classValue(DATA_METHOD_ANN_NAME, DataMethod.META_MEMBER_RESULT_TYPE)
+                resultType = (Class<RT>) context.classValue(DataMethod.NAME, DataMethod.META_MEMBER_RESULT_TYPE)
                         .orElse(rootEntity);
             }
-            String query = context.stringValue(Query.class).orElseThrow(() ->
-                    new IllegalStateException("No query present in method")
-            );
-            storedQuery = new DefaultStoredQuery<>(
-                    context.getExecutableMethod(),
-                    resultType,
-                    rootEntity,
-                    query,
-                    false
-            );
+            storedQuery = storedQueryResolver.resolveQuery(context, rootEntity, resultType);
             queries.put(methodKey, storedQuery);
         }
         return storedQuery;
@@ -231,52 +251,33 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
      * @return The query
      */
     protected final PreparedQuery<?, Number> prepareCountQuery(RepositoryMethodKey methodKey, @NonNull MethodInvocationContext<T, R> context) {
-        ExecutableMethod<T, R> executableMethod = context.getExecutableMethod();
-        StoredQuery<?, Long> storedQuery = countQueries.get(methodKey);
+        StoredQuery storedQuery = countQueries.get(methodKey);
         if (storedQuery == null) {
-
-            String query = context.stringValue(Query.class, DataMethod.META_MEMBER_COUNT_QUERY).orElseThrow(() ->
-                    new IllegalStateException("No query present in method")
-            );
             Class rootEntity = getRequiredRootEntity(context);
-
-            storedQuery = new DefaultStoredQuery<Object, Long>(
-                    executableMethod,
-                    Long.class,
-                    rootEntity,
-                    query,
-                    true
-            );
+            storedQuery = storedQueryResolver.resolveCountQuery(context, rootEntity, Long.class);
             countQueries.put(methodKey, storedQuery);
         }
 
         Pageable pageable = storedQuery.hasPageable() ? getPageable(context) : Pageable.UNPAGED;
         //noinspection unchecked
-        return new DefaultPreparedQuery(
-                context,
-                storedQuery,
-                storedQuery.getQuery(),
-                pageable,
-                false
-        );
+        return preparedQueryResolver.resolveCountQuery(context, storedQuery, pageable);
     }
-
 
     /**
      * Obtains the root entity or throws an exception if it not available.
      *
      * @param context The context
-     * @param <E> The entity type
+     * @param <E>     The entity type
      * @return The root entity type
      * @throws IllegalStateException If the root entity is unavailable
      */
     @NonNull
     protected <E> Class<E> getRequiredRootEntity(MethodInvocationContext context) {
-        Class aClass = context.classValue(DATA_METHOD_ANN_NAME, DataMethod.META_MEMBER_ROOT_ENTITY).orElse(null);
+        Class aClass = context.classValue(DataMethod.NAME, DataMethod.META_MEMBER_ROOT_ENTITY).orElse(null);
         if (aClass != null) {
             return aClass;
         } else {
-            final AnnotationValue<Annotation> ann = context.getDeclaredAnnotation(DATA_METHOD_ANN_NAME);
+            final AnnotationValue<Annotation> ann = context.getDeclaredAnnotation(DataMethod.NAME);
             if (ann != null) {
                 aClass = ann.classValue(DataMethod.META_MEMBER_ROOT_ENTITY).orElse(null);
                 if (aClass != null) {
@@ -360,7 +361,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
      * @return An optional result
      */
     private <RT> Optional<RT> getParameterInRole(MethodInvocationContext<?, ?> context, @NonNull String role, @NonNull Class<RT> type) {
-        return context.stringValue(DATA_METHOD_ANN_NAME, role).flatMap(name -> {
+        return context.stringValue(DataMethod.NAME, role).flatMap(name -> {
             RT parameterValue = null;
             Map<String, MutableArgumentValue<?>> params = context.getParameters();
             MutableArgumentValue<?> arg = params.get(name);
@@ -392,15 +393,15 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
         if (pageable == null) {
             Sort sort = getParameterInRole(context, TypeRole.SORT, Sort.class).orElse(null);
             if (sort != null) {
-                int max = context.intValue(DATA_METHOD_ANN_NAME, META_MEMBER_PAGE_SIZE).orElse(-1);
-                int pageIndex = context.intValue(DATA_METHOD_ANN_NAME, DataMethod.META_MEMBER_PAGE_INDEX).orElse(0);
+                int max = context.intValue(DataMethod.NAME, META_MEMBER_PAGE_SIZE).orElse(-1);
+                int pageIndex = context.intValue(DataMethod.NAME, DataMethod.META_MEMBER_PAGE_INDEX).orElse(0);
                 if (max > 0) {
                     pageable = Pageable.from(pageIndex, max, sort);
                 } else {
                     pageable = Pageable.from(sort);
                 }
             } else {
-                int max = context.intValue(DATA_METHOD_ANN_NAME, META_MEMBER_PAGE_SIZE).orElse(-1);
+                int max = context.intValue(DataMethod.NAME, META_MEMBER_PAGE_SIZE).orElse(-1);
                 if (max > -1) {
                     return Pageable.from(0, max);
                 }
@@ -430,7 +431,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
      */
     protected @NonNull
     Object getRequiredEntity(MethodInvocationContext<T, ?> context) {
-        String entityParam = context.stringValue(DATA_METHOD_ANN_NAME, TypeRole.ENTITY)
+        String entityParam = context.stringValue(DataMethod.NAME, TypeRole.ENTITY)
                 .orElseThrow(() -> new IllegalStateException("No entity parameter specified"));
 
         Object o = context.getParameterValueMap().get(entityParam);
@@ -438,19 +439,6 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
             throw new IllegalArgumentException("Entity argument cannot be null");
         }
         return o;
-    }
-
-    private <RT> Map buildParameterValues(MethodInvocationContext<T, R> context, StoredQuery<?, RT> storedQuery) {
-        Map<String, Object> parameterValueMap = context.getParameterValueMap();
-        Map<?, ?> parameterBinding = storedQuery.getParameterBinding();
-        Map parameterValues = new HashMap<>(parameterBinding.size());
-        for (Map.Entry entry : parameterBinding.entrySet()) {
-            Object name = entry.getKey();
-            String argument = (String) entry.getValue();
-            storeInParameterValues(context, storedQuery, parameterValueMap, name, argument, parameterValues);
-
-        }
-        return parameterValues;
     }
 
     private <RT> void storeInParameterValues(
@@ -582,12 +570,9 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
      * @param <E>     The entity type
      * @return The paged query
      */
-    protected @NonNull
-    <E> PagedQuery<E> getPagedQuery(@NonNull MethodInvocationContext context) {
-        @SuppressWarnings("unchecked") Class<E> rootEntity = (Class<E>) getRequiredRootEntity(context);
-        Pageable pageable = getPageable(context);
-
-        return new DefaultPagedQuery<>(context.getExecutableMethod(), rootEntity, pageable);
+    @NonNull
+    protected <E> PagedQuery<E> getPagedQuery(@NonNull MethodInvocationContext context) {
+        return pagedQueryResolver.resolveQuery(context, getRequiredRootEntity(context), getPageable(context));
     }
 
     /**
@@ -600,7 +585,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
      */
     protected @NonNull
     <E> InsertBatchOperation<E> getInsertBatchOperation(@NonNull MethodInvocationContext context, @NonNull Iterable<E> iterable) {
-        @SuppressWarnings("unchecked") Class<E> rootEntity = (Class<E>) getRequiredRootEntity(context);
+        @SuppressWarnings("unchecked") Class<E> rootEntity = getRequiredRootEntity(context);
         return getInsertBatchOperation(context, rootEntity, iterable);
     }
 
@@ -680,6 +665,19 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
      */
     protected <E> DeleteOperation<E> getDeleteOperation(@NonNull MethodInvocationContext<T, ?> context, @NonNull E entity) {
         return new DefaultDeleteOperation<>(context, entity);
+    }
+
+    /**
+     * Get the delete all batch operation for the given context.
+     *
+     * @param context The context
+     * @param <E>     The entity type
+     * @return The paged query
+     */
+    @NonNull
+    protected <E> DeleteBatchOperation<E> getDeleteAllBatchOperation(@NonNull MethodInvocationContext<T, ?> context) {
+        @SuppressWarnings("unchecked") Class<E> rootEntity = getRequiredRootEntity(context);
+        return new DefaultDeleteAllBatchOperation<>(context, rootEntity);
     }
 
     /**
@@ -859,7 +857,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
                 if (queryString == null) {
                     return null;
                 }
-                storedQuery = findStoreQuery(method);
+                storedQuery = findStoreQuery(method, false);
             }
             return storedQuery;
         }
@@ -913,11 +911,29 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
      *
      * @param <E> The entity type
      */
-    private class DefaultDeleteBatchOperation<E> extends DefaultBatchOperation<E> implements DeleteBatchOperation<E> {
+    private class DefaultDeleteAllBatchOperation<E> extends DefaultBatchOperation<E> implements DeleteBatchOperation<E> {
 
-        DefaultDeleteBatchOperation(MethodInvocationContext<?, ?> method, @NonNull Class<E> rootEntity) {
-            this(method, rootEntity, Collections.emptyList());
+        DefaultDeleteAllBatchOperation(MethodInvocationContext<?, ?> method, @NonNull Class<E> rootEntity) {
+            super(method, rootEntity, Collections.emptyList());
         }
+
+        @Override
+        public boolean all() {
+            return true;
+        }
+
+        @Override
+        public List<DeleteOperation<E>> split() {
+            throw new IllegalStateException("Split is not supported for delete all operation!");
+        }
+    }
+
+    /**
+     * Default implementation of {@link DeleteBatchOperation}.
+     *
+     * @param <E> The entity type
+     */
+    private class DefaultDeleteBatchOperation<E> extends DefaultBatchOperation<E> implements DeleteBatchOperation<E> {
 
         DefaultDeleteBatchOperation(MethodInvocationContext<?, ?> method, @NonNull Class<E> rootEntity, Iterable<E> iterable) {
             super(method, rootEntity, iterable);
@@ -974,742 +990,4 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
 
     }
 
-    /**
-     * Default implementation of {@link PagedQuery}.
-     *
-     * @param <E> The paged query
-     */
-    private static final class DefaultPagedQuery<E> implements PagedQuery<E> {
-
-        private final ExecutableMethod<?, ?> method;
-        private final @NonNull
-        Class<E> rootEntity;
-        private final Pageable pageable;
-
-        /**
-         * Default constructor.
-         *
-         * @param method     The method
-         * @param rootEntity The root entity
-         * @param pageable   The pageable
-         */
-        DefaultPagedQuery(ExecutableMethod<?, ?> method, @NonNull Class<E> rootEntity, Pageable pageable) {
-            this.method = method;
-            this.rootEntity = rootEntity;
-            this.pageable = pageable;
-        }
-
-        @NonNull
-        @Override
-        public Class<E> getRootEntity() {
-            return rootEntity;
-        }
-
-        @NonNull
-        @Override
-        public Pageable getPageable() {
-            return pageable;
-        }
-
-        @NonNull
-        @Override
-        public String getName() {
-            return method.getMethodName();
-        }
-
-        @Override
-        public AnnotationMetadata getAnnotationMetadata() {
-            return method.getAnnotationMetadata();
-        }
-    }
-
-    /**
-     * Represents a prepared query.
-     *
-     * @param <E>  The entity type
-     * @param <RT> The result type
-     */
-    private final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<RT> implements StoredQuery<E, RT> {
-        private final @NonNull
-        Class<RT> resultType;
-        private final @NonNull
-        Class<E> rootEntity;
-        private final @NonNull String query;
-        private final String[] queryParts;
-        private final ExecutableMethod<?, ?> method;
-        private final boolean isDto;
-        private final boolean isOptimisticLock;
-        private final boolean isNative;
-        private final boolean isNumericPlaceHolder;
-        private final boolean hasPageable;
-        private final AnnotationMetadata annotationMetadata;
-        private final boolean isCount;
-        private final DataType[] indexedDataTypes;
-        private final boolean hasResultConsumer;
-        private Map<String, Object> queryHints;
-        private Set<JoinPath> joinFetchPaths = null;
-        private final List<StoredQueryParameter> queryParameters;
-
-        /**
-         * The default constructor.
-         *
-         * @param method     The target method
-         * @param resultType The result type of the query
-         * @param rootEntity The root entity of the query
-         * @param query      The query itself
-         * @param isCount    Is the query a count query
-         */
-        DefaultStoredQuery(
-                @NonNull ExecutableMethod<?, ?> method,
-                @NonNull Class<RT> resultType,
-                @NonNull Class<E> rootEntity,
-                @NonNull String query,
-                boolean isCount) {
-            super(method);
-            this.resultType = ReflectionUtils.getWrapperType(resultType);
-            this.rootEntity = rootEntity;
-            this.annotationMetadata = method.getAnnotationMetadata();
-            this.isNative = method.isTrue(Query.class, "nativeQuery");
-            this.hasResultConsumer = method.stringValue(DATA_METHOD_ANN_NAME, "sqlMappingFunction").isPresent();
-            this.isNumericPlaceHolder = method
-                    .classValue(RepositoryConfiguration.class, "queryBuilder")
-                    .map(c -> c == SqlQueryBuilder.class).orElse(false);
-            this.hasPageable = method.stringValue(DATA_METHOD_ANN_NAME, TypeRole.PAGEABLE).isPresent() ||
-                    method.stringValue(DATA_METHOD_ANN_NAME, TypeRole.SORT).isPresent() ||
-                    method.intValue(DATA_METHOD_ANN_NAME, META_MEMBER_PAGE_SIZE).orElse(-1) > -1;
-
-            if (isCount) {
-                this.query = method.stringValue(Query.class, DataMethod.META_MEMBER_RAW_COUNT_QUERY).orElse(query);
-                this.queryParts = method.stringValues(DataMethod.class, DataMethod.META_MEMBER_EXPANDABLE_COUNT_QUERY);
-            } else {
-                this.query = method.stringValue(Query.class, DataMethod.META_MEMBER_RAW_QUERY).orElse(query);
-                this.queryParts = method.stringValues(DataMethod.class, DataMethod.META_MEMBER_EXPANDABLE_QUERY);
-            }
-            this.method = method;
-            this.isDto = method.isTrue(DATA_METHOD_ANN_NAME, DataMethod.META_MEMBER_DTO);
-            this.isOptimisticLock = method.isTrue(DATA_METHOD_ANN_NAME, DataMethod.META_MEMBER_OPTIMISTIC_LOCK);
-
-            this.isCount = isCount;
-            AnnotationValue<DataMethod> annotation = annotationMetadata.getAnnotation(DataMethod.class);
-            if (method.hasAnnotation(QueryHint.class)) {
-                List<AnnotationValue<QueryHint>> values = method.getAnnotationValuesByType(QueryHint.class);
-                this.queryHints = new HashMap<>(values.size());
-                for (AnnotationValue<QueryHint> value : values) {
-                    String n = value.stringValue("name").orElse(null);
-                    String v = value.stringValue("value").orElse(null);
-                    if (StringUtils.isNotEmpty(n) && StringUtils.isNotEmpty(v)) {
-                        queryHints.put(n, v);
-                    }
-                }
-            }
-            Map<String, Object> queryHints = operations.getQueryHints(this);
-            if (queryHints != Collections.EMPTY_MAP) {
-                if (this.queryHints != null) {
-                    this.queryHints.putAll(queryHints);
-                } else {
-                    this.queryHints = queryHints;
-                }
-            }
-
-            if (isNumericPlaceHolder) {
-                this.indexedDataTypes = annotationMetadata
-                        .getValue(DataMethod.class, DataMethod.META_MEMBER_PARAMETER_TYPE_DEFS, DataType[].class)
-                        .orElse(DataType.EMPTY_DATA_TYPE_ARRAY);
-            } else {
-                this.indexedDataTypes = null;
-            }
-
-            if (annotation == null) {
-                queryParameters = Collections.emptyList();
-            } else {
-                List<AnnotationValue<DataMethodQueryParameter>> params = annotation.getAnnotations(DataMethod.META_MEMBER_PARAMETERS, DataMethodQueryParameter.class);
-                List<StoredQueryParameter> queryParameters = new ArrayList<>(params.size());
-                for (AnnotationValue<DataMethodQueryParameter> av : params) {
-                    String[] propertyPath = av.stringValues(DataMethodQueryParameter.META_MEMBER_PROPERTY_PATH);
-                    if (propertyPath.length == 0) {
-                        propertyPath = av.stringValue(DataMethodQueryParameter.META_MEMBER_PROPERTY)
-                                .map(property -> new String[]{property})
-                                .orElse(null);
-                    }
-                    String[] parameterBindingPath = av.stringValues(DataMethodQueryParameter.META_MEMBER_PARAMETER_BINDING_PATH);
-                    if (parameterBindingPath.length == 0) {
-                        parameterBindingPath = null;
-                    }
-                    queryParameters.add(
-                            new StoredQueryParameter(
-                                    av.stringValue(DataMethodQueryParameter.META_MEMBER_NAME).orElse(null),
-                                    isNumericPlaceHolder ? av.enumValue(DataMethodQueryParameter.META_MEMBER_DATA_TYPE, DataType.class).orElse(DataType.OBJECT) : null,
-                                    av.intValue(DataMethodQueryParameter.META_MEMBER_PARAMETER_INDEX).orElse(-1),
-                                    parameterBindingPath,
-                                    propertyPath,
-                                    av.booleanValue(DataMethodQueryParameter.META_MEMBER_AUTO_POPULATED).orElse(false),
-                                    av.booleanValue(DataMethodQueryParameter.META_MEMBER_REQUIRES_PREVIOUS_POPULATED_VALUES).orElse(false),
-                                    av.classValue(DataMethodQueryParameter.META_MEMBER_CONVERTER).orElse(null),
-                                    av.booleanValue(DataMethodQueryParameter.META_MEMBER_EXPANDABLE).orElse(false),
-                                    queryParameters
-                            ));
-                }
-                this.queryParameters = queryParameters;
-            }
-        }
-
-        @Override
-        public List<QueryParameterBinding> getQueryBindings() {
-            return (List) queryParameters;
-        }
-
-        @Override
-        public String[] getParameterNames() {
-            return StringUtils.EMPTY_STRING_ARRAY;
-        }
-
-        @Override
-        public String[] getIndexedParameterPaths() {
-            return StringUtils.EMPTY_STRING_ARRAY;
-        }
-
-        @NonNull
-        @Override
-        public Set<JoinPath> getJoinFetchPaths() {
-            if (joinFetchPaths == null) {
-                Set<JoinPath> set = method.getAnnotationValuesByType(Join.class).stream().filter(
-                        this::isJoinFetch
-                ).map(av -> {
-                    String path = av.stringValue().orElseThrow(() -> new IllegalStateException("Should not include annotations without a value definition"));
-                    String alias = av.stringValue("alias").orElse(null);
-                    // only the alias and path is needed, don't materialize the rest
-                    return new JoinPath(path, new Association[0], Join.Type.DEFAULT, alias);
-                }).collect(Collectors.toSet());
-                this.joinFetchPaths = set.isEmpty() ? Collections.emptySet() : Collections.unmodifiableSet(set);
-            }
-            return joinFetchPaths;
-        }
-
-        @Override
-        public boolean isSingleResult() {
-            return !isCount() && getJoinFetchPaths().isEmpty();
-        }
-
-        @Override
-        public boolean hasResultConsumer() {
-            return this.hasResultConsumer;
-        }
-
-        private boolean isJoinFetch(AnnotationValue<Join> av) {
-            if (!av.stringValue().isPresent()) {
-                return false;
-            }
-            Optional<String> type = av.stringValue("type");
-            return !type.isPresent() || type.get().contains("FETCH");
-        }
-
-        @Override
-        public boolean isCount() {
-            return isCount;
-        }
-
-        @NonNull
-        @Override
-        public DataType[] getIndexedParameterTypes() {
-            if (indexedDataTypes == null) {
-                return DataType.EMPTY_DATA_TYPE_ARRAY;
-            }
-            return this.indexedDataTypes;
-        }
-
-        @NonNull
-        @Override
-        public int[] getIndexedParameterBinding() {
-            return EMPTY_INT_ARRAY;
-        }
-
-        @NonNull
-        @Override
-        public Map<String, Object> getQueryHints() {
-            if (queryHints != null) {
-                return queryHints;
-            }
-            return Collections.emptyMap();
-        }
-
-        @Override
-        public boolean isNative() {
-            return isNative;
-        }
-
-        /**
-         * Is this a raw SQL query.
-         *
-         * @return The raw sql query.
-         */
-        @Override
-        public boolean useNumericPlaceholders() {
-            return isNumericPlaceHolder;
-        }
-
-        /**
-         * @return Whether the query is a DTO query
-         */
-        @Override
-        public boolean isDtoProjection() {
-            return isDto;
-        }
-
-        /**
-         * @return The result type
-         */
-        @Override
-        @NonNull
-        public Class<RT> getResultType() {
-            return resultType;
-        }
-
-        @NonNull
-        @Override
-        public DataType getResultDataType() {
-            if (isCount) {
-                return DataType.LONG;
-            }
-            return annotationMetadata.enumValue(DATA_METHOD_ANN_NAME, DataMethod.META_MEMBER_RESULT_DATA_TYPE, DataType.class)
-                    .orElse(DataType.OBJECT);
-        }
-
-        /**
-         * @return The ID type
-         */
-        @SuppressWarnings("unchecked")
-        @Override
-        public Optional<Class<?>> getEntityIdentifierType() {
-            Optional o = annotationMetadata.classValue(DATA_METHOD_ANN_NAME, DataMethod.META_MEMBER_ID_TYPE);
-            return o;
-        }
-
-        /**
-         * @return The root entity type
-         */
-        @Override
-        @NonNull
-        public Class<E> getRootEntity() {
-            return rootEntity;
-        }
-
-        /**
-         * Does the query contain an in expression.
-         *
-         * @return True if it does
-         */
-        @Override
-        @Deprecated
-        public boolean hasInExpression() {
-            return false;
-        }
-
-        @Override
-        public boolean hasPageable() {
-            return hasPageable;
-        }
-
-        @Override
-        @NonNull
-        public String getQuery() {
-            return query;
-        }
-
-        @Override
-        public String[] getExpandableQueryParts() {
-            return queryParts;
-        }
-
-        @NonNull
-        @Override
-        public String getName() {
-            return method.getMethodName();
-        }
-
-        @Override
-        @NonNull
-        public Class<?>[] getArgumentTypes() {
-            return method.getArgumentTypes();
-        }
-
-        @NonNull
-        @Override
-        public Map<String, String> getParameterBinding() {
-            return Collections.emptyMap();
-        }
-
-        @Override
-        public String[] getIndexedParameterAutoPopulatedPropertyPaths() {
-            return StringUtils.EMPTY_STRING_ARRAY;
-        }
-
-        @Override
-        public int[] getIndexedParameterAutoPopulatedPreviousPropertyIndexes() {
-            return new int[0];
-        }
-
-        @Override
-        public String[] getIndexedParameterAutoPopulatedPreviousPropertyPaths() {
-            return StringUtils.EMPTY_STRING_ARRAY;
-        }
-
-        @Override
-        public boolean isOptimisticLock() {
-            return isOptimisticLock;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) {
-                return true;
-            }
-            if (o == null || getClass() != o.getClass()) {
-                return false;
-            }
-            DefaultStoredQuery<?, ?> that = (DefaultStoredQuery<?, ?>) o;
-            return resultType.equals(that.resultType) &&
-                    method.equals(that.method);
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(resultType, method);
-        }
-    }
-
-    /**
-     * Represents a prepared query.
-     *
-     * @param <E>  The entity type
-     * @param <RT> The result type
-     */
-    protected final class DefaultPreparedQuery<E, RT> extends DefaultStoredDataOperation<RT> implements PreparedQuery<E, RT> {
-        private final Pageable pageable;
-        private final StoredQuery<E, RT> storedQuery;
-        private final String query;
-        private final boolean dto;
-        private final MethodInvocationContext<T, R> context;
-
-        /**
-         * The default constructor.
-         *
-         * @param context       The execution context
-         * @param storedQuery   The stored query
-         * @param finalQuery    The final query
-         * @param pageable      The pageable
-         * @param dtoProjection Whether the prepared query is a dto projection
-         */
-        public DefaultPreparedQuery(
-                MethodInvocationContext<T, R> context,
-                StoredQuery<E, RT> storedQuery,
-                String finalQuery,
-                @NonNull Pageable pageable,
-                boolean dtoProjection) {
-            super(context);
-            this.context = context;
-            this.query = finalQuery;
-            this.storedQuery = storedQuery;
-            this.pageable = pageable;
-            this.dto = dtoProjection;
-        }
-
-        @Override
-        public String[] getExpandableQueryParts() {
-            return storedQuery.getExpandableQueryParts();
-        }
-
-        @Override
-        public List<QueryParameterBinding> getQueryBindings() {
-            return storedQuery.getQueryBindings();
-        }
-
-        @Override
-        public <RT1> Optional<RT1> getParameterInRole(@NonNull String role, @NonNull Class<RT1> type) {
-            return AbstractQueryInterceptor.this.getParameterInRole(context, role, type);
-        }
-
-        @Override
-        public boolean hasResultConsumer() {
-            return storedQuery.hasResultConsumer();
-        }
-
-        @NonNull
-        @Override
-        public Set<JoinPath> getJoinFetchPaths() {
-            return storedQuery.getJoinFetchPaths();
-        }
-
-        @Override
-        public boolean isSingleResult() {
-            return storedQuery.isSingleResult();
-        }
-
-        @NonNull
-        @Override
-        public Map<String, Object> getQueryHints() {
-            return storedQuery.getQueryHints();
-        }
-
-        @Override
-        public Class<?> getRepositoryType() {
-            return context.getTarget().getClass();
-        }
-
-        @NonNull
-        @Override
-        public Map<String, Object> getParameterValues() {
-            return Collections.emptyMap();
-        }
-
-        @Override
-        public Object[] getParameterArray() {
-            return context.getParameterValues();
-        }
-
-        @Override
-        public Argument[] getArguments() {
-            return context.getArguments();
-        }
-
-        @NonNull
-        @Override
-        public Pageable getPageable() {
-            if (storedQuery.isCount()) {
-                return Pageable.UNPAGED;
-            } else {
-                return pageable;
-            }
-        }
-
-        @Override
-        public boolean isNative() {
-            return storedQuery.isNative();
-        }
-
-        @Override
-        public boolean useNumericPlaceholders() {
-            return storedQuery.useNumericPlaceholders();
-        }
-
-        @Override
-        public boolean isDtoProjection() {
-            return dto;
-        }
-
-        @NonNull
-        @Override
-        public Class<RT> getResultType() {
-            return storedQuery.getResultType();
-        }
-
-        @NonNull
-        @Override
-        public DataType getResultDataType() {
-            return storedQuery.getResultDataType();
-        }
-
-        @Nullable
-        @Override
-        public Optional<Class<?>> getEntityIdentifierType() {
-            return storedQuery.getEntityIdentifierType();
-        }
-
-        @NonNull
-        @Override
-        public Class<E> getRootEntity() {
-            return storedQuery.getRootEntity();
-        }
-
-        @Override
-        @Deprecated
-        public boolean hasInExpression() {
-            return storedQuery.hasInExpression();
-        }
-
-        @Override
-        public boolean hasPageable() {
-            return storedQuery.hasPageable();
-        }
-
-        @NonNull
-        @Override
-        public String getQuery() {
-            return query;
-        }
-
-        @NonNull
-        @Override
-        public Class<?>[] getArgumentTypes() {
-            return storedQuery.getArgumentTypes();
-        }
-
-        @NonNull
-        @Override
-        public Map<String, String> getParameterBinding() {
-            return storedQuery.getParameterBinding();
-        }
-
-        @Override
-        public boolean isCount() {
-            return storedQuery.isCount();
-        }
-
-        @NonNull
-        @Override
-        public String getName() {
-            return storedQuery.getName();
-        }
-
-        @NonNull
-        @Override
-        public ConvertibleValues<Object> getAttributes() {
-            return context.getAttributes();
-        }
-
-        @NonNull
-        @Override
-        public Optional<Object> getAttribute(CharSequence name) {
-            return context.getAttribute(name);
-        }
-
-        @NonNull
-        @Override
-        public <T> Optional<T> getAttribute(CharSequence name, Class<T> type) {
-            return context.getAttribute(name, type);
-        }
-
-        @Nullable
-        @Override
-        public String[] getIndexedParameterAutoPopulatedPropertyPaths() {
-            return storedQuery.getIndexedParameterAutoPopulatedPropertyPaths();
-        }
-
-        @Override
-        public String[] getIndexedParameterAutoPopulatedPreviousPropertyPaths() {
-            return storedQuery.getIndexedParameterAutoPopulatedPreviousPropertyPaths();
-        }
-
-        @Override
-        public int[] getIndexedParameterAutoPopulatedPreviousPropertyIndexes() {
-            return storedQuery.getIndexedParameterAutoPopulatedPreviousPropertyIndexes();
-        }
-
-        @Override
-        public boolean isOptimisticLock() {
-            return storedQuery.isOptimisticLock();
-        }
-    }
-
-    private static final class StoredQueryParameter implements QueryParameterBinding {
-
-        private final String name;
-        private final DataType dataType;
-        private final int parameterIndex;
-        private final String[] parameterBindingPath;
-        private final String[] propertyPath;
-        private final boolean autoPopulated;
-        private final boolean requiresPreviousPopulatedValue;
-        private final Class<?> parameterConverterClass;
-        private final boolean expandable;
-        private final List<? extends QueryParameterBinding> all;
-
-        private boolean previousInitialized;
-        private QueryParameterBinding previousPopulatedValueParameter;
-
-        private StoredQueryParameter(String name,
-                                     DataType dataType,
-                                     int parameterIndex,
-                                     String[] parameterBindingPath,
-                                     String[] propertyPath,
-                                     boolean autoPopulated,
-                                     boolean requiresPreviousPopulatedValue,
-                                     Class<?> parameterConverterClass,
-                                     boolean expandable,
-                                     List<? extends QueryParameterBinding> all) {
-            this.name = name;
-            this.dataType = dataType;
-            this.parameterIndex = parameterIndex;
-            this.parameterBindingPath = parameterBindingPath;
-            this.propertyPath = propertyPath;
-            this.autoPopulated = autoPopulated;
-            this.requiresPreviousPopulatedValue = requiresPreviousPopulatedValue;
-            this.parameterConverterClass = parameterConverterClass;
-            this.expandable = expandable;
-            this.all = all;
-        }
-
-        @Override
-        public String getName() {
-            return name;
-        }
-
-        @Override
-        public DataType getDataType() {
-            return dataType;
-        }
-
-        @Override
-        public Class<?> getParameterConverterClass() {
-            return parameterConverterClass;
-        }
-
-        @Override
-        public int getParameterIndex() {
-            return parameterIndex;
-        }
-
-        @Override
-        public String[] getParameterBindingPath() {
-            return parameterBindingPath;
-        }
-
-        @Override
-        public String[] getPropertyPath() {
-            return propertyPath;
-        }
-
-        @Override
-        public boolean isAutoPopulated() {
-            return autoPopulated;
-        }
-
-        @Override
-        public boolean isRequiresPreviousPopulatedValue() {
-            return requiresPreviousPopulatedValue;
-        }
-
-        @Override
-        public QueryParameterBinding getPreviousPopulatedValueParameter() {
-            if (!previousInitialized) {
-                for (QueryParameterBinding it : all) {
-                    if (it != this && it.getParameterIndex() != -1 && Arrays.equals(propertyPath, it.getPropertyPath())) {
-                        previousPopulatedValueParameter = it;
-                        break;
-                    }
-                }
-                previousInitialized = true;
-            }
-            return previousPopulatedValueParameter;
-        }
-
-        @Override
-        public boolean isExpandable() {
-            return expandable;
-        }
-
-        @Override
-        public String toString() {
-            return "StoredQueryParameter{" +
-                    "name='" + name + '\'' +
-                    ", dataType=" + dataType +
-                    ", parameterIndex=" + parameterIndex +
-                    ", parameterBindingPath=" + Arrays.toString(parameterBindingPath) +
-                    ", propertyPath=" + Arrays.toString(propertyPath) +
-                    ", autoPopulated=" + autoPopulated +
-                    ", requiresPreviousPopulatedValue=" + requiresPreviousPopulatedValue +
-                    ", previousPopulatedValueParameter=" + previousPopulatedValueParameter +
-                    ", expandable=" + expandable +
-                    '}';
-        }
-    }
 }

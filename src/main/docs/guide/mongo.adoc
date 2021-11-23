@@ -1,0 +1,13 @@
+Micronaut Data MongoDB supports most of the things that are possible to do with JPA and JDBC/R2DBC implementations, including:
+
+- <<mongoRepositories, Repositories with compile-time generated filtering, aggregation>> and <<projections, projection>> queries
+- <<mongoAssociationMapping, Entities relations and cascading>>
+- <<transactions, Transactions>>
+- <<mongoJoinQueries, Joining relations>>
+- <<mongoCriteriaSpecifications, JPA Criteria API>>
+- <<mongoAttributeConverter, Attribute converters>>
+- <<mongoOptimisticLocking, Optimistic locking>>
+
+In the first version of Micronaut Data MongoDB only synchronous MongoDB driver is supported.
+
+The interaction between the object layer and MongoDB's driver serialization/deserialization is implemented using https://micronaut-projects.github.io/micronaut-serialization/1.0.x/guide[Micronaut Serialization] and BSON support.

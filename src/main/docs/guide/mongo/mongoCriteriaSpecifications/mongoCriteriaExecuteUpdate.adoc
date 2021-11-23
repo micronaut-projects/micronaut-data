@@ -1,0 +1,38 @@
+To implement the update you can use following method from api:data.repository.JpaSpecificationExecutor[] interface:
+
+snippet::example.PersonRepository[project-base="doc-examples/mongo-example",source="main" tags="update",indent="0"]
+
+This method is expecting api:data.repository.criteria.UpdateSpecification[] which is a variation of specification interface that includes access to `jakarta.persistence.criteria.CriteriaUpdate`:
+
+[source,java]
+----
+import static jakarta.persistence.criteria.*;
+
+public interface UpdateSpecification<T> {
+
+    // <1>
+    @Nullable
+    Predicate toPredicate(@NonNull Root<T> root, // <2>
+                          @NonNull CriteriaUpdate<?> query, // <3>
+                          @NonNull CriteriaBuilder criteriaBuilder // <4>
+    );
+
+}
+----
+
+<1> The specification is producing a query limiting predicate
+<2> The entity root
+<3> The criteria update instance
+<4> The criteria builder
+
+Updating specific properties can be done using `jakarta.persistence.criteria.CriteriaUpdate` interface:
+
+snippet::example.PersonRepository[project-base="doc-examples/mongo-example",source="main" tags="setUpdate",indent="0"]
+
+You can define criteria specification methods including update specification that will help you to create an update query:
+
+snippet::example.PersonRepository[project-base="doc-examples/mongo-example",source="main" tags="allSpecifications",indent="0"]
+
+Then you can use the update specification combined with predicate specifications:
+
+snippet::example.PersonRepositorySpec[project-base="doc-examples/mongo-example",source="test" tags="update",indent="0"]

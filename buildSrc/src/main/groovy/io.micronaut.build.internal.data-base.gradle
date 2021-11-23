@@ -1,0 +1,75 @@
+import java.time.Duration
+
+plugins {
+    id "java-library"
+}
+
+repositories {
+    mavenCentral()
+}
+
+group "io.micronaut.data"
+version projectVersion
+
+java {
+    targetCompatibility = JavaVersion.VERSION_1_8
+    sourceCompatibility = JavaVersion.VERSION_1_8
+}
+
+dependencies {
+    implementation platform("io.micronaut:micronaut-bom:$micronautVersion")
+    testImplementation platform("io.micronaut:micronaut-bom:$micronautVersion")
+    annotationProcessor platform("io.micronaut:micronaut-bom:$micronautVersion")
+    testAnnotationProcessor platform("io.micronaut:micronaut-bom:$micronautVersion")
+
+    testImplementation platform("org.testcontainers:testcontainers-bom:$testContainersVersion")
+    testImplementation "io.micronaut.test:micronaut-test-spock"
+}
+
+configurations {
+    all {
+        resolutionStrategy.force "jakarta.transaction:jakarta.transaction-api:$jakartaTxVersion"
+        resolutionStrategy.force "org.hibernate:hibernate-core:$hibernateVersion"
+        resolutionStrategy.eachDependency { DependencyResolveDetails details ->
+            if (details.requested.name == 'groovy-all') {
+                throw new GradleException("Dependency 'groovy-all' not allowed!")
+            }
+            if (groovyVersion && details.requested.group == 'org.codehaus.groovy') {
+                details.useVersion groovyVersion
+            }
+            if (micronautSqlVersion && details.requested.group == 'io.micronaut.sql') {
+                details.useVersion micronautSqlVersion
+            }
+            if (spockVersion && details.requested.group == 'org.spockframework') {
+                details.useVersion spockVersion
+            }
+            if (details.requested.group == 'io.micronaut') {
+                details.useVersion "$micronautVersion"
+            }
+        }
+        if (micronautTestVersion) {
+            resolutionStrategy.force "io.micronaut.test:micronaut-test-spock:$micronautTestVersion"
+        }
+    }
+}
+
+tasks.withType(JavaCompile) {
+    options.encoding = "UTF-8"
+    options.compilerArgs.addAll([
+            '-parameters',
+            // enables incremental compilation
+            '-Amicronaut.processing.incremental=true',
+            '-Amicronaut.processing.annotations=io.micronaut.data.*,io.micronaut.core.annotation.*,javax.persistence.*,jakarta.persistence.*',
+            "-Amicronaut.processing.group=$project.group",
+            "-Amicronaut.processing.module=$project.name",
+    ])
+}
+
+tasks.withType(Test) {
+    jvmArgs '-Xmx2048m'
+    systemProperty "micronaut.cloud.platform", "OTHER"
+    if (JavaVersion.current() == JavaVersion.VERSION_15) {
+        jvmArgs "--enable-preview"
+    }
+    timeout = Duration.ofHours(1)
+}

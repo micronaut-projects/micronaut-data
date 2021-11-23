@@ -1,0 +1,10 @@
+Composite primary keys can be defined using ann:data.annotation.EmbeddedId[] annotation. A composite ID requires an additional class to represent the key. The class should define fields that correspond to the collection's attribute making up the composite key. For example:
+
+snippet::example.ProjectId[project-base="doc-examples/mongo-example", source="main"]
+
+TIP: It is recommended that the ID class be immutable and implement `equals`/`hashCode`.
+TIP: When using Java, be sure to define getters for the fields making up your composite key.
+
+snippet::example.Project[project-base="doc-examples/mongo-example", source="main"]
+
+TIP: To alter the collection's attribute mappings for the ID, you may use the ann:data.annotation.MappedProperty[] annotation on the fields within the `ProjectId` class
