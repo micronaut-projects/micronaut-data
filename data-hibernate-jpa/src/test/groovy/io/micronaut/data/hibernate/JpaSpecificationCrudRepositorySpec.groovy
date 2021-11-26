@@ -25,6 +25,11 @@ import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Stepwise
 
+import javax.persistence.criteria.CriteriaBuilder
+import javax.persistence.criteria.CriteriaQuery
+import javax.persistence.criteria.Predicate
+import javax.persistence.criteria.Root
+
 @MicronautTest(rollback = false, packages = "io.micronaut.data.tck.entities")
 @Property(name = "datasources.default.name", value = "mydb")
 @Property(name = 'jpa.default.properties.hibernate.hbm2ddl.auto', value = 'create-drop')
@@ -42,11 +47,11 @@ class JpaSpecificationCrudRepositorySpec extends Specification {
     }
 
     void "test save one"() {
-        when:"one is saved"
+        when: "one is saved"
         def person = new Person(name: "Fred", age: 40)
         crudRepository.save(person)
 
-        then:"the instance is persisted"
+        then: "the instance is persisted"
         person.id != null
         crudRepository.findById(person.id).isPresent()
         crudRepository.get(person.id).name == 'Fred'
@@ -55,6 +60,15 @@ class JpaSpecificationCrudRepositorySpec extends Specification {
         crudRepository.count("Fred") == 1
         crudRepository.findAll().size() == 3
         crudRepository.listPeople("Fred").size() == 1
+        when:
+        def page = crudRepository.findAll(new io.micronaut.data.jpa.repository.criteria.Specification<Person>() {
+            @Override
+            Predicate toPredicate(Root<Person> root, CriteriaQuery<?> query, CriteriaBuilder criteriaBuilder) {
+                return null
+            }
+        }, Pageable.from(0, 10))
+        then:
+        page.size() == 3
     }
 
     void "test save many"() {

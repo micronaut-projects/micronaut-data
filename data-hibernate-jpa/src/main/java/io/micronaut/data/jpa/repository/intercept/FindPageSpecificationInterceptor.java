@@ -75,8 +75,8 @@ public class FindPageSpecificationInterceptor extends AbstractSpecificationInter
         Specification specification = getSpecification(context);
         final EntityManager entityManager = jpaOperations.getCurrentEntityManager();
         final CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
-        final CriteriaQuery<Object> query = criteriaBuilder.createQuery((Class<Object>) getRequiredRootEntity(context));
-        final Root<Object> root = query.from((Class<Object>) getRequiredRootEntity(context));
+        final CriteriaQuery<Object> query = criteriaBuilder.createQuery(getRequiredRootEntity(context));
+        final Root<Object> root = query.from(getRequiredRootEntity(context));
         final Predicate predicate = specification.toPredicate(root, query, criteriaBuilder);
         if (predicate != null) {
             query.where(predicate);
@@ -103,7 +103,9 @@ public class FindPageSpecificationInterceptor extends AbstractSpecificationInter
             final CriteriaQuery<Long> countQuery = criteriaBuilder.createQuery(Long.class);
             final Root<?> countRoot = countQuery.from(getRequiredRootEntity(context));
             final Predicate countPredicate = specification.toPredicate(root, query, criteriaBuilder);
-            countQuery.where(countPredicate);
+            if (countPredicate != null) {
+                countQuery.where(countPredicate);
+            }
             countQuery.select(criteriaBuilder.count(countRoot));
 
             return Page.of(
