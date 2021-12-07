@@ -21,6 +21,7 @@ import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.annotation.Where;
 import io.micronaut.data.jpa.annotation.EntityGraph;
+import io.micronaut.data.jpa.repository.JpaSpecificationExecutor;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.tck.entities.Author;
@@ -34,7 +35,7 @@ import java.util.List;
 
 @Repository
 @Transactional
-public abstract class BookRepository extends io.micronaut.data.tck.repositories.BookRepository {
+public abstract class BookRepository extends io.micronaut.data.tck.repositories.BookRepository implements JpaSpecificationExecutor<Book> {
     public BookRepository(AuthorRepository authorRepository) {
         super(authorRepository);
     }

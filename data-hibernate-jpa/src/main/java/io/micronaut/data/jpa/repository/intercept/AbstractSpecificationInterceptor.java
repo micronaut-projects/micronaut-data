@@ -16,6 +16,7 @@
 package io.micronaut.data.jpa.repository.intercept;
 
 import io.micronaut.aop.MethodInvocationContext;
+import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.jpa.repository.criteria.Specification;
 import io.micronaut.data.model.Sort;
 import io.micronaut.data.operations.RepositoryOperations;
@@ -63,7 +64,10 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
     protected final List<Order> getOrders(Sort sort, Root<?> root, CriteriaBuilder cb) {
         List<javax.persistence.criteria.Order> orders = new ArrayList<>();
         for (Sort.Order order : sort.getOrderBy()) {
-            Path<Object> propertyPath = root.get(order.getProperty());
+            Path<Object> propertyPath = (Path<Object>) root;
+            for (String path : StringUtils.splitOmitEmptyStrings(order.getProperty(), '.')) {
+                propertyPath = propertyPath.get(path);
+            }
             orders.add(order.isAscending() ? cb.asc(propertyPath) : cb.desc(propertyPath));
         }
         return orders;
