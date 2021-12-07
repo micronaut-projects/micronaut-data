@@ -16,6 +16,7 @@
 package io.micronaut.data.hibernate
 
 import io.micronaut.data.hibernate.entities.Rating
+import io.micronaut.data.hibernate.entities.UserWithWhere
 import io.micronaut.data.jpa.repository.criteria.Specification
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
@@ -53,6 +54,17 @@ abstract class AbstractHibernateQuerySpec extends AbstractQuerySpec {
     @Shared
     @Inject
     RatingRepository ratingRepository
+
+    @Shared
+    @Inject
+    UserWithWhereRepository userWithWhereRepository
+
+    void "test where with nullable property values"() {
+        when:
+            userWithWhereRepository.update(new UserWithWhere(id: UUID.randomUUID(), email: null, deleted: null))
+        then:
+            noExceptionThrown()
+    }
 
     void "test optimistic locking"() {
         given:
