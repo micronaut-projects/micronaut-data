@@ -75,8 +75,9 @@ public class FindPageSpecificationInterceptor extends AbstractSpecificationInter
         Specification specification = getSpecification(context);
         final EntityManager entityManager = jpaOperations.getCurrentEntityManager();
         final CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
-        final CriteriaQuery<Object> query = criteriaBuilder.createQuery(getRequiredRootEntity(context));
-        final Root<Object> root = query.from(getRequiredRootEntity(context));
+        Class<Object> rootEntity = getRequiredRootEntity(context);
+        final CriteriaQuery<Object> query = criteriaBuilder.createQuery(rootEntity);
+        final Root<Object> root = query.from(rootEntity);
         final Predicate predicate = specification.toPredicate(root, query, criteriaBuilder);
         if (predicate != null) {
             query.where(predicate);
@@ -101,17 +102,18 @@ public class FindPageSpecificationInterceptor extends AbstractSpecificationInter
             typedQuery.setMaxResults(pageable.getSize());
             final List<Object> results = typedQuery.getResultList();
             final CriteriaQuery<Long> countQuery = criteriaBuilder.createQuery(Long.class);
-            final Root<?> countRoot = countQuery.from(getRequiredRootEntity(context));
-            final Predicate countPredicate = specification.toPredicate(root, query, criteriaBuilder);
+            final Root<?> countRoot = countQuery.from(rootEntity);
+            final Predicate countPredicate = specification.toPredicate(countRoot, countQuery, criteriaBuilder);
             if (countPredicate != null) {
                 countQuery.where(countPredicate);
             }
             countQuery.select(criteriaBuilder.count(countRoot));
+            Long singleResult = entityManager.createQuery(countQuery).getSingleResult();
 
             return Page.of(
                     results,
                     pageable,
-                    entityManager.createQuery(countQuery).getSingleResult()
+                    singleResult
             );
         }
 
