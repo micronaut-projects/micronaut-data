@@ -28,7 +28,6 @@ import io.micronaut.data.event.PersistenceEventException;
 import io.micronaut.data.event.QueryEventContext;
 import io.micronaut.data.event.listeners.*;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
-import io.micronaut.data.runtime.event.listeners.VersionGeneratingEntityEventListener;
 import io.micronaut.inject.BeanDefinition;
 import io.micronaut.inject.BeanDefinitionMethodReference;
 import io.micronaut.inject.ExecutableMethod;
@@ -72,9 +71,7 @@ public class EntityEventRegistry implements EntityEventListener<Object>, Executa
         this.beanContext = beanContext;
         //noinspection RedundantCast
         this.allEventListeners = beanContext.getBeanDefinitions(EntityEventListener.class)
-                .stream()
-                .filter(bd -> ((Class) bd.getBeanType()) != (Class) getClass())
-                .filter(bd -> !bd.getBeanType().equals(VersionGeneratingEntityEventListener.class))
+                .stream().filter(bd -> ((Class) bd.getBeanType()) != (Class) getClass())
                 .collect(Collectors.toList());
     }
 

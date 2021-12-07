@@ -56,6 +56,10 @@ public class VersionGeneratingEntityEventListener implements EntityEventListener
         this.conversionService = conversionService;
     }
 
+    private boolean shouldSkip(@NonNull EntityEventContext<Object> context) {
+        return !context.supportsEventSystem();
+    }
+
     @Override
     public boolean supports(RuntimePersistentEntity<Object> entity, Class<? extends Annotation> eventType) {
         return entity.getVersion() != null && SUPPORTED_EVENTS.contains(eventType);
@@ -63,6 +67,9 @@ public class VersionGeneratingEntityEventListener implements EntityEventListener
 
     @Override
     public boolean prePersist(@NonNull EntityEventContext<Object> context) {
+        if (shouldSkip(context)) {
+            return true;
+        }
         final BeanProperty<Object, Object> property = (BeanProperty<Object, Object>) context.getPersistentEntity().getVersion().getProperty();
         Object newVersion = init(property.getType());
         context.setProperty(property, newVersion);
@@ -71,6 +78,9 @@ public class VersionGeneratingEntityEventListener implements EntityEventListener
 
     @Override
     public boolean preUpdate(@NonNull EntityEventContext<Object> context) {
+        if (shouldSkip(context)) {
+            return true;
+        }
         final Object entity = context.getEntity();
         final BeanProperty<Object, Object> property = (BeanProperty<Object, Object>) context.getPersistentEntity().getVersion().getProperty();
         Object newVersion = increment(property.get(entity), property.getType());
