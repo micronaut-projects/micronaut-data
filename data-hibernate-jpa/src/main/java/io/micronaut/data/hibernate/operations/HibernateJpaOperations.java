@@ -23,7 +23,10 @@ import io.micronaut.core.annotation.Creator;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.annotation.TypeHint;
+import io.micronaut.core.beans.BeanIntrospection;
+import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.beans.BeanWrapper;
+import io.micronaut.core.beans.exceptions.IntrospectionException;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.reflect.ReflectionUtils;
 import io.micronaut.core.type.Argument;
@@ -663,7 +666,13 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
 
     private Object getParameterValue(String[] propertyPath, Object value) {
         for (String property : propertyPath) {
-            value = BeanWrapper.getWrapper(value).getRequiredProperty(property, Argument.OBJECT_ARGUMENT);
+            Object finalValue = value;
+            BeanProperty beanProperty = BeanIntrospection.getIntrospection(value.getClass())
+                    .getProperty(property).orElseThrow(() -> new IntrospectionException("Cannot find a property: '" + property + "' on bean: " + finalValue));
+            value = beanProperty.get(value);
+            if (value == null) {
+                return null;
+            }
         }
         return value;
     }
