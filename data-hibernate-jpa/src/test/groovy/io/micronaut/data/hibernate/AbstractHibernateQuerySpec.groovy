@@ -15,22 +15,23 @@
  */
 package io.micronaut.data.hibernate
 
+
 import io.micronaut.data.hibernate.entities.Rating
 import io.micronaut.data.hibernate.entities.UserWithWhere
 import io.micronaut.data.jpa.repository.criteria.Specification
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
 import io.micronaut.data.tck.entities.Author
+import io.micronaut.data.tck.entities.Book
 import io.micronaut.data.tck.entities.EntityIdClass
 import io.micronaut.data.tck.entities.EntityWithIdClass
-import io.micronaut.data.tck.entities.Book
 import io.micronaut.data.tck.entities.Student
 import io.micronaut.data.tck.tests.AbstractQuerySpec
+import jakarta.inject.Inject
 import org.hibernate.LazyInitializationException
 import spock.lang.Issue
 import spock.lang.Shared
 
-import jakarta.inject.Inject
 import javax.persistence.OptimisticLockException
 
 abstract class AbstractHibernateQuerySpec extends AbstractQuerySpec {
