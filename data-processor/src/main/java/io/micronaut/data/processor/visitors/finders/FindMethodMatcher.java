@@ -91,7 +91,8 @@ public final class FindMethodMatcher extends AbstractPatternMethodMatcher {
                                                 @NonNull ClassElement queryResultType) {
                     return hasIdMatch
                             && matchContext.supportsImplicitQueries()
-                            && queryResultType.getName().equals(matchContext.getRootEntity().getName());
+                            && queryResultType.getName().equals(matchContext.getRootEntity().getName())
+                            && hasNoWhereDeclaration(matchContext);
                 }
 
             };

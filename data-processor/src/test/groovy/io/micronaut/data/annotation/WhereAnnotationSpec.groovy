@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.annotation
 
-
+import io.micronaut.data.intercept.annotation.DataMethod
 import io.micronaut.data.processor.visitors.AbstractDataSpec
 import io.micronaut.data.processor.visitors.TestUtils
 import io.micronaut.data.tck.entities.Person
@@ -174,4 +174,184 @@ interface TestRepository extends CrudRepository<Person, Long> {
         repository.getRequiredMethod("countByNameLike", String)
             .stringValue(Query).get() == "SELECT COUNT(person_) FROM $Person.name AS person_ WHERE (person_.name like :p1 AND (person_.age > 18))"
     }
+
+    void "test build @Where on entity and reactive repository"() {
+        given:
+            def repository = buildRepository('test.TestRepository', '''
+import io.micronaut.data.tck.entities.Person;
+import io.micronaut.data.repository.reactive.*;
+
+import javax.persistence.Entity;
+import javax.persistence.Table;
+import java.util.UUID;
+
+@Entity
+@Table(name = "users")
+@Where(value = "@.deleted = false")
+class UserWithWhere {
+    @javax.persistence.Id
+    private UUID id;
+    private String email;
+    private Boolean deleted;
+
+    public UUID getId() {
+        return id;
+    }
+
+    public void setId(UUID id) {
+        this.id = id;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public Boolean getDeleted() {
+        return deleted;
+    }
+
+    public void setDeleted(Boolean deleted) {
+        this.deleted = deleted;
+    }
+}
+
+@Repository
+@io.micronaut.context.annotation.Executable
+interface TestRepository extends ReactiveStreamsCrudRepository<UserWithWhere, UUID> {
+}
+''')
+        expect:
+            repository.getRequiredMethod(method, params as Class[])
+                    .stringValue(DataMethod, DataMethod.META_MEMBER_INTERCEPTOR).get() == interceptor
+        where:
+            method       || params || interceptor
+            "findAll"    || []     || "io.micronaut.data.intercept.reactive.FindAllReactiveInterceptor"
+            "findById"   || [UUID] || "io.micronaut.data.intercept.reactive.FindAllReactiveInterceptor"
+            "deleteById" || [UUID] || "io.micronaut.data.intercept.reactive.DeleteAllReactiveInterceptor"
+            "deleteAll"  || []     || "io.micronaut.data.intercept.reactive.DeleteAllReactiveInterceptor"
+            "count"      || []     || "io.micronaut.data.intercept.reactive.CountReactiveInterceptor"
+    }
+
+    void "test build @Where on entity and reactor reactive repository"() {
+        given:
+            def repository = buildRepository('test.TestRepository', '''
+import io.micronaut.data.repository.reactive.*;
+
+import javax.persistence.Entity;
+import javax.persistence.Table;
+import java.util.UUID;
+
+@Entity
+@Table(name = "users")
+@Where(value = "@.deleted = false")
+class UserWithWhere {
+    @javax.persistence.Id
+    private UUID id;
+    private String email;
+    private Boolean deleted;
+
+    public UUID getId() {
+        return id;
+    }
+
+    public void setId(UUID id) {
+        this.id = id;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public Boolean getDeleted() {
+        return deleted;
+    }
+
+    public void setDeleted(Boolean deleted) {
+        this.deleted = deleted;
+    }
+}
+
+@Repository
+interface TestRepository extends ReactorCrudRepository<UserWithWhere, UUID> {
+}
+''')
+        expect:
+            repository.getRequiredMethod(method, params as Class[])
+                    .stringValue(DataMethod, DataMethod.META_MEMBER_INTERCEPTOR).get() == interceptor
+        where:
+            method       || params || interceptor
+            "findAll"    || []     || "io.micronaut.data.intercept.reactive.FindAllReactiveInterceptor"
+            "findById"   || [UUID] || "io.micronaut.data.intercept.reactive.FindOneReactiveInterceptor"
+            "deleteById" || [UUID] || "io.micronaut.data.intercept.reactive.DeleteAllReactiveInterceptor"
+            "deleteAll"  || []     || "io.micronaut.data.intercept.reactive.DeleteAllReactiveInterceptor"
+            "count"      || []     || "io.micronaut.data.intercept.reactive.CountReactiveInterceptor"
+    }
+
+    void "test build @Where on entity and async repository"() {
+        given:
+            def repository = buildRepository('test.TestRepository', '''
+import io.micronaut.data.repository.async.*;
+
+import javax.persistence.Entity;
+import javax.persistence.Table;
+import java.util.UUID;
+
+@Entity
+@Table(name = "users")
+@Where(value = "@.deleted = false")
+class UserWithWhere {
+    @javax.persistence.Id
+    private UUID id;
+    private String email;
+    private Boolean deleted;
+
+    public UUID getId() {
+        return id;
+    }
+
+    public void setId(UUID id) {
+        this.id = id;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public Boolean getDeleted() {
+        return deleted;
+    }
+
+    public void setDeleted(Boolean deleted) {
+        this.deleted = deleted;
+    }
+}
+
+@Repository
+interface TestRepository extends AsyncCrudRepository<UserWithWhere, UUID> {
+}
+''')
+        expect:
+            repository.getRequiredMethod(method, params as Class[])
+                    .stringValue(DataMethod, DataMethod.META_MEMBER_INTERCEPTOR).get() == interceptor
+        where:
+            method       || params || interceptor
+            "findAll"    || []     || "io.micronaut.data.intercept.async.FindAllAsyncInterceptor"
+            "findById"   || [UUID] || "io.micronaut.data.intercept.async.FindOneAsyncInterceptor"
+            "deleteById" || [UUID] || "io.micronaut.data.intercept.async.DeleteAllAsyncInterceptor"
+            "deleteAll"  || []     || "io.micronaut.data.intercept.async.DeleteAllAsyncInterceptor"
+            "count"      || []     || "io.micronaut.data.intercept.async.CountAsyncInterceptor"
+    }
+
 }

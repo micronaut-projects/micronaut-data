@@ -60,11 +60,27 @@ abstract class AbstractHibernateQuerySpec extends AbstractQuerySpec {
     @Inject
     UserWithWhereRepository userWithWhereRepository
 
-    void "test where with nullable property values"() {
+    void "test @where with nullable property values"() {
         when:
             userWithWhereRepository.update(new UserWithWhere(id: UUID.randomUUID(), email: null, deleted: null))
         then:
             noExceptionThrown()
+    }
+
+    void "test @where on find one"() {
+        when:
+            def e = userWithWhereRepository.save(new UserWithWhere(id: UUID.randomUUID(), email: null, deleted: false))
+            def found = userWithWhereRepository.findById(e.id)
+        then:
+            found.isPresent()
+    }
+
+    void "test @where on find one deleted"() {
+        when:
+            def e = userWithWhereRepository.save(new UserWithWhere(id: UUID.randomUUID(), email: null, deleted: true))
+            def found = userWithWhereRepository.findById(e.id)
+        then:
+            !found.isPresent()
     }
 
     void "test optimistic locking"() {
