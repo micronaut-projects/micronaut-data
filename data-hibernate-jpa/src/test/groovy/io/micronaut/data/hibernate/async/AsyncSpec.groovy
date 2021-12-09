@@ -17,12 +17,14 @@ package io.micronaut.data.hibernate.async
 
 import io.micronaut.context.annotation.Property
 import io.micronaut.data.exceptions.EmptyResultException
-import io.micronaut.data.tck.entities.Person
+import io.micronaut.data.hibernate.entities.UserWithWhere
 import io.micronaut.data.model.Pageable
+import io.micronaut.data.tck.entities.Person
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
+import jakarta.inject.Inject
 import spock.lang.Specification
 
-import jakarta.inject.Inject
+import java.util.concurrent.ExecutionException
 
 @MicronautTest(rollback = false,packages = "io.micronaut.data.tck.entities")
 @Property(name = "datasources.default.name", value = "mydb")
@@ -31,6 +33,33 @@ class AsyncSpec extends Specification {
 
     @Inject
     AsyncPersonRepo asyncCrudRepository
+
+    @Inject
+    AsyncUserWithWhereRepository userWithWhereRepository
+
+    void "test @where with nullable property values"() {
+        when:
+            userWithWhereRepository.update(new UserWithWhere(id: UUID.randomUUID(), email: null, deleted: null)).get()
+        then:
+            noExceptionThrown()
+    }
+
+    void "test @where on find one"() {
+        when:
+            def e = userWithWhereRepository.save(new UserWithWhere(id: UUID.randomUUID(), email: null, deleted: false)).get()
+            def found = userWithWhereRepository.findById(e.id).get()
+        then:
+            found
+    }
+
+    void "test @where on find one deleted"() {
+        when:
+            def e = userWithWhereRepository.save(new UserWithWhere(id: UUID.randomUUID(), email: null, deleted: true)).get()
+            userWithWhereRepository.findById(e.id).get()
+        then:
+            def ex = thrown(ExecutionException)
+            ex.cause instanceof EmptyResultException
+    }
 
     void "test async CRUD"() {
         when:"An entity is saved"

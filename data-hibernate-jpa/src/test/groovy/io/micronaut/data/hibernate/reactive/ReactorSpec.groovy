@@ -16,6 +16,7 @@
 package io.micronaut.data.hibernate.reactive
 
 import io.micronaut.context.annotation.Property
+import io.micronaut.data.hibernate.entities.UserWithWhere
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.tck.entities.Person
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
@@ -29,6 +30,32 @@ class ReactorSpec extends Specification{
 
     @Inject
     ReactorPersonRepo reactiveRepo
+
+    @Inject
+    ReactorUserWithWhereRepository userWithWhereRepository
+
+    void "test @where with nullable property values"() {
+        when:
+            userWithWhereRepository.update(new UserWithWhere(id: UUID.randomUUID(), email: null, deleted: null)).block()
+        then:
+            noExceptionThrown()
+    }
+
+    void "test @where on find one"() {
+        when:
+            def e = userWithWhereRepository.save(new UserWithWhere(id: UUID.randomUUID(), email: null, deleted: false)).block()
+            def found = userWithWhereRepository.findById(e.id).blockOptional()
+        then:
+            found.isPresent()
+    }
+
+    void "test @where on find one deleted"() {
+        when:
+            def e = userWithWhereRepository.save(new UserWithWhere(id: UUID.randomUUID(), email: null, deleted: true)).block()
+            def found = userWithWhereRepository.findById(e.id).blockOptional()
+        then:
+            !found.isPresent()
+    }
 
     void "test reactive reactor CRUD"() {
         when:"An entity is saved"
