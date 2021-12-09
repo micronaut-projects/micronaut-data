@@ -4,6 +4,7 @@ dependencies {
     annotationProcessor "io.micronaut.docs:micronaut-docs-asciidoc-config-props:$micronautDocsVersion"
     implementation "io.micronaut.reactor:micronaut-reactor"
     implementation "io.projectreactor.netty:reactor-netty"
+    compileOnly "io.micronaut:micronaut-management"
 
     implementation platform("io.r2dbc:r2dbc-bom:$r2dbcVersion")
     testImplementation platform("io.r2dbc:r2dbc-bom:$r2dbcVersion")
@@ -22,6 +23,7 @@ dependencies {
 
     testAnnotationProcessor "io.micronaut:micronaut-inject-java"
     testAnnotationProcessor project(":data-processor")
+    testCompileOnly "io.micronaut:micronaut-management"
     testCompileOnly "io.micronaut:micronaut-inject-groovy"
     testCompileOnly project(":data-processor")
     testImplementation "com.fasterxml.jackson.core:jackson-databind"
