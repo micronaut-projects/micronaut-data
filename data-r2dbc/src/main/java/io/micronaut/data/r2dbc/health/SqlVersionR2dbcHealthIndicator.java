@@ -31,17 +31,17 @@ import reactor.core.publisher.Mono;
 import java.util.Collections;
 
 /**
- * Supports ony Postgres, MariaDB, MySQL
+ * Supports ony Postgres, MariaDB, MySQL.
  *
  * @author Anton Kurako (GoodforGod)
  * @since 3.2.2
  */
 @Requires(classes = HealthIndicator.class)
 @Requires(beans = ConnectionFactory.class)
-@Requires(condition = SqlVersionR2DBCHealthCondition.class)
+@Requires(condition = SqlVersionR2dbcHealthCondition.class)
 @Requires(property = HealthEndpoint.PREFIX + ".r2dbc.enabled", value = StringUtils.TRUE, defaultValue = StringUtils.TRUE)
 @Singleton
-public class SqlVersionR2DBCHealthIndicator implements HealthIndicator {
+public class SqlVersionR2dbcHealthIndicator implements HealthIndicator {
 
     private static final String NAME = "r2dbc-connection-factory";
     private static final String QUERY = "SELECT version();";
@@ -49,7 +49,7 @@ public class SqlVersionR2DBCHealthIndicator implements HealthIndicator {
     private final ConnectionFactory connectionFactory;
 
     @Inject
-    public SqlVersionR2DBCHealthIndicator(ConnectionFactory connectionFactory) {
+    public SqlVersionR2dbcHealthIndicator(ConnectionFactory connectionFactory) {
         this.connectionFactory = connectionFactory;
     }
 

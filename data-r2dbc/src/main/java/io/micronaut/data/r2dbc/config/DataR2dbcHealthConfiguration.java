@@ -29,10 +29,16 @@ public class DataR2dbcHealthConfiguration {
 
     private boolean enabled = true;
 
+    /**
+     * @return true if health indicator is enabled
+     */
     public boolean isEnabled() {
         return enabled;
     }
 
+    /**
+     * @param enabled value to set for autoconfiguration
+     */
     void setEnabled(boolean enabled) {
         this.enabled = enabled;
     }

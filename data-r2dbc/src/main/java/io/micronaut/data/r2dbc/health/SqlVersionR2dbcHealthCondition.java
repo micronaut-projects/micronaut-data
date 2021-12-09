@@ -20,12 +20,12 @@ import io.micronaut.context.condition.ConditionContext;
 import io.r2dbc.spi.ConnectionFactory;
 
 /**
- * Supports ony Postgres, MariaDB, MySQL
+ * Supports ony Postgres, MariaDB, MySQL.
  *
  * @author Anton Kurako (GoodforGod)
  * @since 3.2.2
  */
-class SqlVersionR2DBCHealthCondition implements Condition {
+class SqlVersionR2dbcHealthCondition implements Condition {
 
     private static final String POSTGRES = "PostgreSQL";
     private static final String MARIADB = "MariaDB";
