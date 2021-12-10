@@ -196,10 +196,11 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                 if (persisted.contains(child)) {
                     continue;
                 }
-                boolean hasId = childPersistentEntity.getIdentity().getProperty().get(child) != null;
+                RuntimePersistentProperty<Object> identity = childPersistentEntity.getIdentity();
+                boolean hasId = identity.getProperty().get(child) != null;
 
                 Mono<Object> childMono;
-                if (!hasId && (cascadeType == Relation.Cascade.PERSIST)) {
+                if ((!hasId || identity instanceof Association) && (cascadeType == Relation.Cascade.PERSIST)) {
                     if (LOG.isDebugEnabled()) {
                         LOG.debug("Cascading PERSIST for '{}' association: '{}'", persistentEntity.getName(), cascadeOp.ctx.associations);
                     }
@@ -291,7 +292,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                         R2dbcEntitiesOperations<Object> op = new R2dbcEntitiesOperations<>(childPersistentEntity, cascadeManyOp.children);
                         op.veto(persisted::contains);
                         RuntimePersistentProperty<Object> identity = childPersistentEntity.getIdentity();
-                        op.veto(e -> identity.getProperty().get(e) != null);
+                        op.veto(e -> identity.getProperty().get(e) != null && !(identity instanceof Association));
 
                         if (LOG.isDebugEnabled()) {
                             LOG.debug("Cascading PERSIST for '{}' association: '{}'", persistentEntity.getName(), cascadeOp.ctx.associations);
