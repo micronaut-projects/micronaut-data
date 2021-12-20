@@ -460,10 +460,11 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                             } else {
                                 v = readProperty(rs, ctx, prop);
                                 if (v == null) {
-                                    AnnotationMetadata entityAnnotationMetadata = ctx.persistentEntity.getAnnotationMetadata();
-                                    if (entityAnnotationMetadata.hasAnnotation(Embeddable.class) || entityAnnotationMetadata.hasAnnotation(EmbeddedId.class)) {
-                                        return null;
-                                    } else if (!prop.isOptional() && !nullableEmbedded) {
+                                    if (!prop.isOptional() && !nullableEmbedded) {
+                                        AnnotationMetadata entityAnnotationMetadata = ctx.persistentEntity.getAnnotationMetadata();
+                                        if (entityAnnotationMetadata.hasAnnotation(Embeddable.class) || entityAnnotationMetadata.hasAnnotation(EmbeddedId.class)) {
+                                            return null;
+                                        }
                                         throw new DataAccessException("Null value read for non-null constructor argument [" + prop.getName() + "] of type: " + persistentEntity.getName());
                                     } else {
                                         args[i] = null;
