@@ -114,7 +114,7 @@ public final class SourceParameterExpressionImpl extends ParameterExpressionImpl
         }
         boolean autopopulated = propertyPath.getProperty()
                         .findAnnotation(AutoPopulated.class)
-                        .map(ap -> ap.getRequiredValue(AutoPopulated.UPDATEABLE, Boolean.class))
+                        .flatMap(ap -> ap.booleanValue(AutoPopulated.UPDATEABLE))
                         .orElse(false);
         DataType dataType = getDataType(propertyPath, parameterElement);
         String converterClassName = ((SourcePersistentProperty) propertyPath.getProperty()).getConverterClassName();

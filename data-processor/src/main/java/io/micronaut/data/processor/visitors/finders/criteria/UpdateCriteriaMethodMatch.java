@@ -86,7 +86,7 @@ public class UpdateCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
 
         // Add updatable auto-populated parameters
         entity.getPersistentProperties().stream()
-                .filter(p -> p != null && p.findAnnotation(AutoPopulated.class).map(ap -> ap.getRequiredValue(AutoPopulated.UPDATEABLE, Boolean.class)).orElse(false))
+                .filter(p -> p != null && p.findAnnotation(AutoPopulated.class).flatMap(ap -> ap.booleanValue(AutoPopulated.UPDATEABLE)).orElse(false))
                 .forEach(p -> query.set(p.getName(), cb.parameter((ParameterElement) null)));
 
         if (entity.getVersion() != null) {
