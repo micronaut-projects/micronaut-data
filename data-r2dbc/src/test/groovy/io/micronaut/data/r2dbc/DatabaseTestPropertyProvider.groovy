@@ -94,6 +94,11 @@ trait DatabaseTestPropertyProvider implements TestPropertyProvider {
                 "r2dbc.datasources.default.dialect"                  : dialect,
                 "r2dbc.datasources.default.options.connectTimeout"   : Duration.ofMinutes(1).toString()
         ] as Map<String, String>
+        if (dialect == Dialect.ORACLE) {
+            map += [
+                    "r2dbc.datasources.default.database"                 : container == null ? "" : container.getDatabaseName()
+            ]
+        }
         if (usePool()) {
             String poolProtocol
             switch (dialect) {
