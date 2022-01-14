@@ -23,6 +23,7 @@ import io.micronaut.data.tck.entities.Sale;
 import io.micronaut.data.tck.entities.SaleDTO;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -35,6 +36,6 @@ public interface SaleRepository extends CrudRepository<Sale, Long> {
     @Join(value = "items", type = Join.Type.LEFT_FETCH)
     Optional<Sale> findById(@NotNull Long id);
 
-    void updateData(@Id Long id, @Parameter("data") Map<String, String> data);
+    void updateData(@Id Long id, @Parameter("data") Map<String, String> data, @Parameter("dataList") List<String> dataList);
 
 }

@@ -178,6 +178,9 @@ public final class SourceParameterExpressionImpl extends ParameterExpressionImpl
         if (parameterElement != null && parameterElement.isAnnotationPresent(Expandable.class)) {
             return true;
         }
+        if (dataType == DataType.JSON) {
+            return false;
+        }
         if (!dataType.isArray() && (parameterElement == null || parameterElement.getType().isAssignable(Iterable.class.getName()))) {
             return true;
         }

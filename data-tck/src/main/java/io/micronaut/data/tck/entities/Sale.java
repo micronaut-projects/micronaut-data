@@ -16,9 +16,14 @@
 package io.micronaut.data.tck.entities;
 
 import io.micronaut.core.annotation.Nullable;
-import io.micronaut.data.annotation.*;
+import io.micronaut.data.annotation.GeneratedValue;
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.Relation;
+import io.micronaut.data.annotation.TypeDef;
 import io.micronaut.data.model.DataType;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -41,6 +46,10 @@ public class Sale {
     @TypeDef(type = DataType.JSON)
     @Nullable
     private Map<String, Integer> quantities;
+
+    @TypeDef(type = DataType.JSON)
+    @Nullable
+    private List<String> dataList;
 
     @Relation(
         value = Relation.Kind.ONE_TO_MANY,
@@ -93,5 +102,14 @@ public class Sale {
 
     public void setItems(Set<SaleItem> items) {
         this.items = items;
+    }
+
+    @Nullable
+    public List<String> getDataList() {
+        return dataList;
+    }
+
+    public void setDataList(@Nullable List<String> dataList) {
+        this.dataList = dataList;
     }
 }
