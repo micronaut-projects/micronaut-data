@@ -68,7 +68,7 @@ interface PersonRepository extends CrudRepository<Person, Long> {
     @Unroll
     void "test build update with datasource set"() {
         given:
-        def repository = buildRepository('test.MovieRepository', """
+            def repository = buildRepository('test.MovieRepository', """
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 
@@ -76,6 +76,7 @@ import io.micronaut.data.model.query.builder.sql.Dialect;
 @io.micronaut.context.annotation.Executable
 interface MovieRepository extends CrudRepository<Movie, Integer> {
     void updateById(int id, String theLongName, String title);
+    void updateByIdInList(List<Integer> id, String title);
     void updateAll(java.util.List<Movie> movies);
 }
 
@@ -89,10 +90,11 @@ ${entity('Movie', [title: String, theLongName: String])}
         getParameterBindingIndexes(method) == binding
 
         where:
-        methodName   | query                                                             | bindingPaths                               | binding
-        'update'     | 'UPDATE `movie` SET `title`=?,`the_long_name`=? WHERE (`id` = ?)' | ['title', 'theLongName', 'id'] as String[] | ['-1', '-1', '-1'] as String[]
-        'updateById' | 'UPDATE `movie` SET `the_long_name`=?,`title`=? WHERE (`id` = ?)' | ['theLongName', 'title', 'id'] as String[] | ['1', '2', '0'] as String[]
-        'updateAll'  | 'UPDATE `movie` SET `title`=?,`the_long_name`=? WHERE (`id` = ?)' | ['title', 'theLongName', 'id'] as String[] | ['-1', '-1', '-1'] as String[]
+        methodName         | query                                                             | bindingPaths                               | binding
+        'update'           | 'UPDATE `movie` SET `title`=?,`the_long_name`=? WHERE (`id` = ?)' | ['title', 'theLongName', 'id'] as String[] | ['-1', '-1', '-1'] as String[]
+        'updateById'       | 'UPDATE `movie` SET `the_long_name`=?,`title`=? WHERE (`id` = ?)' | ['theLongName', 'title', 'id'] as String[] | ['1', '2', '0'] as String[]
+        'updateAll'        | 'UPDATE `movie` SET `title`=?,`the_long_name`=? WHERE (`id` = ?)' | ['title', 'theLongName', 'id'] as String[] | ['-1', '-1', '-1'] as String[]
+        'updateByIdInList' | 'UPDATE `movie` SET `title`=? WHERE (`id` IN (?))'                | ['title','id'] as String[]                 | ['1', '0'] as String[]
     }
 
     @Unroll
