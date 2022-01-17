@@ -107,6 +107,8 @@ public abstract class BookRepository implements PageableRepository<Book, Long> {
 
     public abstract long updateAuthor(@Parameter("id") @Id Long id, @Parameter("author") Author author);
 
+    public abstract void updateByIdInList(List<Long> id, String title);
+
     public void saveAuthorBooks(List<AuthorBooksDto> authorBooksDtos) {
         List<Author> authors = new ArrayList<>();
         for (AuthorBooksDto dto: authorBooksDtos) {

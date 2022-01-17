@@ -431,6 +431,24 @@ abstract class AbstractRepositorySpec extends Specification {
         peopleUpdated.get(1).name.endsWith(" X")
     }
 
+    void "test update many2"() {
+        given:
+        saveSampleBooks()
+
+        when:
+        def books = bookRepository.findByAuthorName("Stephen King")
+        then:
+        books.size() == 2
+
+        when:
+        bookRepository.updateByIdInList(books.collect { it.id }, "Modified")
+        books = bookRepository.findByAuthorName("Stephen King")
+
+        then:
+        books[0].title == "Modified"
+        books[1].title == "Modified"
+    }
+
     void "test custom insert"() {
         given:
         personRepository.saveCustom([new Person(name: "Abc", age: 12), new Person(name: "Xyz", age: 22)])
