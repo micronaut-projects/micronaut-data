@@ -188,7 +188,7 @@ public class StoredSqlOperation extends DBOperation {
                 if (previousValues != null) {
                     Object previousValue = previousValues.get(binding);
                     if (previousValue != null) {
-                        index = setStatementParameter(context, stmt, index, pp.getProperty().getDataType(), previousValue, dialect);
+                        index = setStatementParameter(context, stmt, index, pp.getProperty().getDataType(), previousValue, dialect, binding.isExpandable());
                         continue;
                     }
                 }
@@ -220,13 +220,13 @@ public class StoredSqlOperation extends DBOperation {
             }
             value = context.convert(connection, value, property);
 
-            index = setStatementParameter(context, stmt, index, type, value, dialect);
+            index = setStatementParameter(context, stmt, index, type, value, dialect, binding.isExpandable());
         }
     }
 
-    private <PS> int setStatementParameter(OpContext<?, PS> context, PS preparedStatement, int index, DataType dataType, Object value, Dialect dialect) {
+    private <PS> int setStatementParameter(OpContext<?, PS> context, PS preparedStatement, int index, DataType dataType, Object value, Dialect dialect, boolean isExpandable) {
         if (expandableQuery) {
-            List<Object> values = expandValue(value, dataType);
+            List<Object> values = isExpandable ? expandValue(value, dataType) : Collections.singletonList(value);
             if (values != null && values.isEmpty()) {
                 value = null;
                 values = null;

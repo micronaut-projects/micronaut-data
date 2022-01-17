@@ -32,6 +32,7 @@ import io.micronaut.data.model.runtime.QueryParameterBinding;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -140,7 +141,7 @@ public final class PreparedQueryDBOperation extends StoredSqlOperation {
             }
 
             DataType dataType = queryParameterBinding.getDataType();
-            List<Object> values = expandValue(value, dataType);
+            List<Object> values = queryParameterBinding.isExpandable() ? expandValue(value, dataType) : Collections.singletonList(value);
             if (values != null && values.isEmpty()) {
                 // Empty collections / array should always set at least one value
                 value = null;

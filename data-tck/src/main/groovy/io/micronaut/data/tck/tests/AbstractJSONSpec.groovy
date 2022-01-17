@@ -86,20 +86,23 @@ abstract class AbstractJSONSpec extends Specification {
             Sale sale = new Sale()
             sale.setName("test 1")
             sale.data = [foo:'bar']
+            sale.dataList = ['abc1', 'abc2']
             saleRepository.save(sale)
             sale = saleRepository.findById(sale.id).orElse(null)
 
         then:
             sale.name == 'test 1'
             sale.data == [foo:'bar']
+            sale.dataList == ['abc1', 'abc2']
 
         when:
-            saleRepository.updateData(sale.id,[foo:'changed'] )
+            saleRepository.updateData(sale.id, [foo:'changed'], ['changed1', 'changed2', 'changed3'])
             sale = saleRepository.findById(sale.id).orElse(null)
 
         then:
             sale.name == 'test 1'
             sale.data == [foo:'changed']
+            sale.dataList == ['changed1', 'changed2', 'changed3']
 
         cleanup:
             cleanup()
