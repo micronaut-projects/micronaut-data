@@ -112,6 +112,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -1347,12 +1348,18 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
 
         @Override
         protected void setParameters(OpContext<Connection, Statement> context, Connection connection, Statement stmt, DBOperation dbOperation) {
+            AtomicBoolean isFirst = new AtomicBoolean(true);
             entities = entities.map(d -> {
                 if (d.vetoed) {
                     return d;
                 }
+                if (isFirst.get()) {
+                    isFirst.set(false);
+                } else {
+                    // https://github.com/r2dbc/r2dbc-spi/issues/259
+                    stmt.add();
+                }
                 dbOperation.setParameters(context, connection, stmt, persistentEntity, d.entity, d.previousValues);
-                stmt.add();
                 return d;
             });
         }
