@@ -38,6 +38,10 @@ dependencies {
 
 test {
     systemProperty "oracle.jdbc.timezoneAsRegion", "false"
+    // Disable MySql hanging tests on GraalVM
+    if (System.getProperty("java.vendor").toLowerCase().contains("graal")) {
+        exclude "**/jdbc/mysql/**"
+    }
 }
 
 micronautBuild {
