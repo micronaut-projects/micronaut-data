@@ -15,6 +15,7 @@
  */
 package io.micronaut.transaction.support;
 
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.order.OrderUtil;
 import io.micronaut.transaction.TransactionDefinition;
@@ -495,6 +496,72 @@ public abstract class TransactionSynchronizationManager {
         CURRENT_TRANSACTION_READ_ONLY.remove();
         CURRENT_TRANSACTION_ISOLATION_LEVEL.remove();
         ACTUAL_TRANSACTION_ACTIVE.remove();
+    }
+
+    /**
+     * Copy existing state.
+     *
+     * @return The state
+     * @since 3.3
+     */
+    @Internal
+    public static State copyState() {
+        return new CopyState(RESOURCES.get(),
+                SYNCHRONIZATIONS.get(),
+                CURRENT_TRANSACTION_NAME.get(),
+                CURRENT_TRANSACTION_READ_ONLY.get(),
+                CURRENT_TRANSACTION_ISOLATION_LEVEL.get(),
+                ACTUAL_TRANSACTION_ACTIVE.get());
+    }
+
+    /**
+     * Restore the state.
+     * @param state The state
+     * @since 3.3
+     */
+    @Internal
+    public static void restoreState(State state) {
+        if (state instanceof CopyState) {
+            CopyState copyState = (CopyState) state;
+            RESOURCES.set(copyState.resources == null ? null : new HashMap<>(copyState.resources));
+            SYNCHRONIZATIONS.set(copyState.synchronizations == null ? null : new LinkedHashSet<>(copyState.synchronizations));
+            CURRENT_TRANSACTION_NAME.set(copyState.currentTransactionName);
+            CURRENT_TRANSACTION_READ_ONLY.set(copyState.currentTransactionReadOnlyStatus);
+            CURRENT_TRANSACTION_ISOLATION_LEVEL.set(copyState.currentTransactionIsolationLevel);
+            ACTUAL_TRANSACTION_ACTIVE.set(copyState.actualTransactionActive);
+        } else {
+            throw new IllegalStateException("Unknown state: " + state);
+        }
+    }
+
+    /**
+     * The synchronization state.
+     */
+    @Internal
+    public interface State {
+    }
+
+    private static final class CopyState implements State {
+        private final Map<Object, Object> resources;
+        private final Set<TransactionSynchronization> synchronizations;
+        private final String currentTransactionName;
+        private final Boolean currentTransactionReadOnlyStatus;
+        private final TransactionDefinition.Isolation currentTransactionIsolationLevel;
+        private final Boolean actualTransactionActive;
+
+        private CopyState(Map<Object, Object> resources,
+                          Set<TransactionSynchronization> synchronizations,
+                          String currentTransactionName,
+                          Boolean currentTransactionReadOnlyStatus,
+                          TransactionDefinition.Isolation currentTransactionIsolationLevel,
+                          Boolean actualTransactionActive) {
+            this.resources = resources == null ? null : new HashMap<>(resources);
+            this.synchronizations = synchronizations == null ? null : new LinkedHashSet<>(synchronizations);
+            this.currentTransactionName = currentTransactionName;
+            this.currentTransactionReadOnlyStatus = currentTransactionReadOnlyStatus;
+            this.currentTransactionIsolationLevel = currentTransactionIsolationLevel;
+            this.actualTransactionActive = actualTransactionActive;
+        }
     }
 
 }

@@ -19,6 +19,7 @@ import io.micronaut.aop.InterceptPhase;
 import io.micronaut.aop.InterceptedMethod;
 import io.micronaut.aop.MethodInterceptor;
 import io.micronaut.aop.MethodInvocationContext;
+import io.micronaut.aop.kotlin.KotlinInterceptedMethod;
 import io.micronaut.context.BeanLocator;
 import io.micronaut.context.exceptions.ConfigurationException;
 import io.micronaut.core.annotation.AnnotationValue;
@@ -35,6 +36,7 @@ import io.micronaut.transaction.exceptions.NoTransactionException;
 import io.micronaut.transaction.exceptions.TransactionSystemException;
 import io.micronaut.transaction.reactive.ReactiveTransactionOperations;
 import io.micronaut.transaction.reactive.ReactiveTransactionStatus;
+import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
@@ -42,6 +44,8 @@ import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -74,6 +78,7 @@ public class TransactionalInterceptor implements MethodInterceptor<Object, Objec
 
     @NonNull
     private final BeanLocator beanLocator;
+    private final CoroutineTxHelper coroutineTxHelper;
 
     /**
      * Default constructor.
@@ -81,7 +86,19 @@ public class TransactionalInterceptor implements MethodInterceptor<Object, Objec
      * @param beanLocator The bean locator.
      */
     public TransactionalInterceptor(@NonNull BeanLocator beanLocator) {
+        this(beanLocator, null);
+    }
+
+    /**
+     * Default constructor.
+     *
+     * @param beanLocator       The bean locator.
+     * @param coroutineTxHelper The coroutine helper
+     */
+    @Inject
+    public TransactionalInterceptor(@NonNull BeanLocator beanLocator, @Nullable CoroutineTxHelper coroutineTxHelper) {
         this.beanLocator = beanLocator;
+        this.coroutineTxHelper = coroutineTxHelper;
     }
 
     @Override
@@ -92,6 +109,7 @@ public class TransactionalInterceptor implements MethodInterceptor<Object, Objec
     @Override
     public Object intercept(MethodInvocationContext<Object, Object> context) {
         InterceptedMethod interceptedMethod = InterceptedMethod.of(context);
+        boolean isKotlinSuspended = interceptedMethod instanceof KotlinInterceptedMethod;
         try {
             boolean isReactive = interceptedMethod.resultType() == InterceptedMethod.ResultType.PUBLISHER;
             boolean isAsync = interceptedMethod.resultType() == InterceptedMethod.ResultType.COMPLETION_STAGE;
@@ -100,9 +118,10 @@ public class TransactionalInterceptor implements MethodInterceptor<Object, Objec
                     .computeIfAbsent(context.getExecutableMethod(), executableMethod -> {
                         final String qualifier = executableMethod.stringValue(TransactionalAdvice.class).orElse(null);
 
-                        if (isReactive || isAsync) {
-                            ReactiveTransactionOperations<?> reactiveTransactionOperations
-                                    = beanLocator.findBean(ReactiveTransactionOperations.class, qualifier != null ? Qualifiers.byName(qualifier) : null).orElse(null);
+                        ReactiveTransactionOperations<?> reactiveTransactionOperations
+                                = beanLocator.findBean(ReactiveTransactionOperations.class, qualifier != null ? Qualifiers.byName(qualifier) : null).orElse(null);
+
+                        if ((isReactive || isAsync) && !(isKotlinSuspended && reactiveTransactionOperations == null)) {
                             if (isReactive && reactiveTransactionOperations == null) {
                                 throw new ConfigurationException("No reactive transaction management has been configured. Ensure you have correctly configured a reactive capable transaction manager");
                             } else {
@@ -133,7 +152,37 @@ public class TransactionalInterceptor implements MethodInterceptor<Object, Objec
                     if (transactionInvocation.reactiveTransactionOperations != null) {
                         return interceptedMethod.handleResult(interceptedMethod.interceptResult());
                     } else {
-                        throw new ConfigurationException("Async return type doesn't support transactional execution.");
+                        if (isKotlinSuspended) {
+                            final SynchronousTransactionManager<?> transactionManager = transactionInvocation.transactionManager;
+                            final TransactionInfo transactionInfo = createTransactionIfNecessary(
+                                    transactionManager,
+                                    definition,
+                                    context.getExecutableMethod()
+                            );
+                            KotlinInterceptedMethod kotlinInterceptedMethod = (KotlinInterceptedMethod) interceptedMethod;
+                            if (coroutineTxHelper != null) {
+                                coroutineTxHelper.setupCoroutineContext(kotlinInterceptedMethod);
+                            }
+                            CompletionStage<?> result = interceptedMethod.interceptResultAsCompletionStage();
+                            CompletableFuture newResult = new CompletableFuture();
+                            result.whenComplete((o, throwable) -> {
+                                if (throwable == null) {
+                                    commitTransactionAfterReturning(transactionInfo);
+                                    newResult.complete(o);
+                                } else {
+                                    try {
+                                        completeTransactionAfterThrowing(transactionInfo, throwable);
+                                    } catch (Exception e) {
+                                        // Ignore rethrow
+                                    }
+                                    newResult.completeExceptionally(throwable);
+                                }
+                                cleanupTransactionInfo(transactionInfo);
+                            });
+                            return interceptedMethod.handleResult(newResult);
+                        } else {
+                            throw new ConfigurationException("Async return type doesn't support transactional execution.");
+                        }
                     }
                 case SYNCHRONOUS:
                     final SynchronousTransactionManager<?> transactionManager = transactionInvocation.transactionManager;
@@ -171,11 +220,11 @@ public class TransactionalInterceptor implements MethodInterceptor<Object, Objec
      * Return the transaction status of the current method invocation.
      * Mainly intended for code that wants to set the current transaction
      * rollback-only but not throw an application exception.
-     * @throws NoTransactionException if the transaction info cannot be found,
-     * because the method was invoked outside an AOP invocation context
      *
-     * @return The current status
      * @param <T> The connection type
+     * @return The current status
+     * @throws NoTransactionException if the transaction info cannot be found,
+     *                                because the method was invoked outside an AOP invocation context
      */
     public static <T> TransactionStatus<T> currentTransactionStatus() throws NoTransactionException {
         TransactionInfo info = currentTransactionInfo();
@@ -190,10 +239,11 @@ public class TransactionalInterceptor implements MethodInterceptor<Object, Objec
      * Create a transaction if necessary based on the given TransactionAttribute.
      * <p>Allows callers to perform custom TransactionAttribute lookups through
      * the TransactionAttributeSource.
-     * @param tm The transaction manager
-     * @param txAttr the TransactionAttribute (may be {@code null})
+     *
+     * @param tm               The transaction manager
+     * @param txAttr           the TransactionAttribute (may be {@code null})
      * @param executableMethod the method that is being executed
-     * (used for monitoring and logging purposes)
+     *                         (used for monitoring and logging purposes)
      * @return a TransactionInfo object, whether or not a transaction was created.
      * The {@code hasTransaction()} method on TransactionInfo can be used to
      * tell if there was a transaction created.
@@ -211,11 +261,12 @@ public class TransactionalInterceptor implements MethodInterceptor<Object, Objec
 
     /**
      * Prepare a TransactionInfo for the given attribute and status object.
-     * @param tm The transaction manager
-     * @param txAttr the TransactionAttribute (may be {@code null})
+     *
+     * @param tm               The transaction manager
+     * @param txAttr           the TransactionAttribute (may be {@code null})
      * @param executableMethod the fully qualified method name
-     * (used for monitoring and logging purposes)
-     * @param status the TransactionStatus for the current transaction
+     *                         (used for monitoring and logging purposes)
+     * @param status           the TransactionStatus for the current transaction
      * @return the prepared TransactionInfo object
      */
     protected TransactionInfo prepareTransactionInfo(@NonNull SynchronousTransactionManager tm,
@@ -241,6 +292,7 @@ public class TransactionalInterceptor implements MethodInterceptor<Object, Objec
     /**
      * Execute after successful completion of call, but not after an exception was handled.
      * Do nothing if we didn't create a transaction.
+     *
      * @param txInfo information about the current transaction
      */
     protected void commitTransactionAfterReturning(@NonNull TransactionInfo txInfo) {
@@ -253,8 +305,9 @@ public class TransactionalInterceptor implements MethodInterceptor<Object, Objec
     /**
      * Handle a throwable, completing the transaction.
      * We may commit or roll back, depending on the configuration.
+     *
      * @param txInfo information about the current transaction
-     * @param ex throwable encountered
+     * @param ex     throwable encountered
      */
     protected void completeTransactionAfterThrowing(@NonNull TransactionInfo txInfo, Throwable ex) {
         if (LOG.isTraceEnabled()) {
@@ -291,6 +344,7 @@ public class TransactionalInterceptor implements MethodInterceptor<Object, Objec
     /**
      * Reset the TransactionInfo ThreadLocal.
      * <p>Call this in all cases: exception or normal return!
+     *
      * @param txInfo information about the current transaction (may be {@code null})
      */
     protected void cleanupTransactionInfo(@Nullable TransactionInfo txInfo) {
@@ -331,8 +385,10 @@ public class TransactionalInterceptor implements MethodInterceptor<Object, Objec
      * @param <C> connection type
      */
     private static final class TransactionInvocation<C> {
-        final @Nullable SynchronousTransactionManager<C> transactionManager;
-        final @Nullable ReactiveTransactionOperations<C> reactiveTransactionOperations;
+        final @Nullable
+        SynchronousTransactionManager<C> transactionManager;
+        final @Nullable
+        ReactiveTransactionOperations<C> reactiveTransactionOperations;
         final TransactionAttribute definition;
 
         TransactionInvocation(
@@ -365,13 +421,14 @@ public class TransactionalInterceptor implements MethodInterceptor<Object, Objec
 
         /**
          * Constructs a new transaction info.
-         * @param transactionManager The transaction manager
+         *
+         * @param transactionManager   The transaction manager
          * @param transactionAttribute The transaction attribute
-         * @param executableMethod The joint point identification
+         * @param executableMethod     The joint point identification
          */
         protected TransactionInfo(@NonNull SynchronousTransactionManager<T> transactionManager,
-                               @NonNull TransactionAttribute transactionAttribute,
-                               @NonNull ExecutableMethod<Object, Object> executableMethod) {
+                                  @NonNull TransactionAttribute transactionAttribute,
+                                  @NonNull ExecutableMethod<Object, Object> executableMethod) {
 
             this.transactionManager = transactionManager;
             this.transactionAttribute = transactionAttribute;
@@ -397,6 +454,7 @@ public class TransactionalInterceptor implements MethodInterceptor<Object, Objec
 
         /**
          * Create a new status.
+         *
          * @param status The status.
          */
         public void newTransactionStatus(@NonNull TransactionStatus<T> status) {
