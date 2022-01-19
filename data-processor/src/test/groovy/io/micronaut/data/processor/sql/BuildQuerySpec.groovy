@@ -303,4 +303,28 @@ interface UserRoleRepository extends GenericRepository<UserRole, UserRoleId> {
             getDataTypes(method) == [DataType.LONG]
     }
 
+    void "test multiple join query by identity"() {
+        given:
+            def repository = buildRepository('test.CitiesRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.tck.entities.City;
+import java.util.UUID;
+
+@JdbcRepository(dialect= Dialect.MYSQL)
+@io.micronaut.context.annotation.Executable
+interface CitiesRepository extends CrudRepository<City, Long> {
+
+    @Join("countryRegion")
+    @Join("countryRegion.country")
+    int countDistinctByCountryRegionCountryUuid(UUID id);
+}
+""")
+        def query = getQuery(repository.getRequiredMethod("countDistinctByCountryRegionCountryUuid", UUID))
+
+        expect:
+        query == 'SELECT COUNT(*) FROM `T_CITY` city_ INNER JOIN `CountryRegion` city_country_region_ ON city_.`country_region_id`=city_country_region_.`id` INNER JOIN `country` city_country_region_country_ ON city_country_region_.`countryId`=city_country_region_country_.`uuid` WHERE (city_country_region_country_.`uuid` = ?)'
+
+    }
+
 }
