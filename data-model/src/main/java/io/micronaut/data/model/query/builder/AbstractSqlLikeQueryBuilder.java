@@ -1153,6 +1153,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             }
             PersistentProperty property = propertyPath.getProperty();
             if (joinAssociation != null) {
+                // We don't need to join to access the id of the relation
                 if (property != joinAssociation.getAssociatedEntity().getIdentity()) {
                     String joinStringPath = joinPathJoiner.toString();
                     if (!queryState.isJoined(joinStringPath)) {
@@ -1161,13 +1162,14 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                     if (lastJoinAlias == null) {
                         lastJoinAlias = joinInPath(queryState, joinPathJoiner.toString());
                     }
+                }
+                if (lastJoinAlias != null) {
                     // 'joinPath.prop' should be represented as a path of 'prop' with a join alias
                     return new QueryPropertyPath(
                             new PersistentPropertyPath(Collections.emptyList(), property, property.getName()),
                             lastJoinAlias
                     );
                 }
-                // We don't need to join to access the id of the relation
             }
         } else if (TypeRole.ID.equals(name) && entity.getIdentity() != null) {
             // special case handling for ID
