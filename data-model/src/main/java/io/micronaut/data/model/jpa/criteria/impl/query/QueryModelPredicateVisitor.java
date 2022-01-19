@@ -40,9 +40,7 @@ import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.ParameterExpression;
 
 import java.util.Collection;
-import java.util.Deque;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.StringJoiner;
 import java.util.stream.Collectors;
@@ -57,7 +55,6 @@ import java.util.stream.Collectors;
 public final class QueryModelPredicateVisitor implements PredicateVisitor {
 
     private final QueryModel queryModel;
-    private final Deque<State> stack = new LinkedList<>();
     private State state = new State();
 
     public QueryModelPredicateVisitor(QueryModel queryModel) {
@@ -85,18 +82,19 @@ public final class QueryModelPredicateVisitor implements PredicateVisitor {
             visit(conjunction.getPredicates().iterator().next());
             return;
         }
-        if (stack.isEmpty()) {
+        if (state.junction == null || state.junction instanceof QueryModel.Conjunction) {
             for (IExpression<Boolean> expression : conjunction.getPredicates()) {
                 visit(expression);
             }
         } else {
-            pushState();
-            state.junction = new QueryModel.Conjunction();
+            QueryModel.Conjunction junction = new QueryModel.Conjunction();
+            State prevState = pushState();
+            this.state.junction = junction;
             for (IExpression<Boolean> expression : conjunction.getPredicates()) {
                 visit(expression);
             }
-            queryModel.add(state.junction);
-            popState();
+            restoreState(prevState);
+            add(junction);
         }
     }
 
@@ -109,21 +107,22 @@ public final class QueryModelPredicateVisitor implements PredicateVisitor {
             visit(disjunction.getPredicates().iterator().next());
             return;
         }
-        pushState();
-        state.junction = new QueryModel.Disjunction();
+        QueryModel.Disjunction junction = new QueryModel.Disjunction();
+        State prevState = pushState();
+        state.junction = junction;
         for (IExpression<Boolean> expression : disjunction.getPredicates()) {
             visit(expression);
         }
-        queryModel.add(state.junction);
-        popState();
+        restoreState(prevState);
+        add(junction);
     }
 
     @Override
     public void visit(NegatedPredicate negate) {
-        pushState();
-        state.negated = true;
+        State prevState = pushState();
+        this.state.negated = true;
         visit(negate.getNegated());
-        popState();
+        restoreState(prevState);
     }
 
     @Override
@@ -333,17 +332,19 @@ public final class QueryModelPredicateVisitor implements PredicateVisitor {
         }
     }
 
-    private void pushState() {
-        State state = this.state;
-        stack.push(state);
+    private State pushState() {
+        State prevState = this.state;
         State newState = new State();
-        newState.junction = state.junction;
-        newState.negated = state.negated;
+        newState.junction = prevState.junction;
+        newState.negated = prevState.negated;
         this.state = newState;
+        return prevState;
     }
 
-    private void popState() {
-        this.state = stack.pop();
+    private State restoreState(State state) {
+        State oldState = this.state;
+        this.state = state;
+        return oldState;
     }
 
     private static final class State {
