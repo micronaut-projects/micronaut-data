@@ -70,6 +70,12 @@ abstract class AbstractCriteriaSpec extends Specification {
                         query.where(root.get("enabled"))
                         query.orderBy(cb.desc(root.get("amount")), cb.asc(root.get("budget")))
                         null
+                    } as Specification,
+                    { root, query, cb ->
+                        def pred1 = cb.or(root.get("enabled"), root.get("enabled2"))
+                        def pred2 = cb.or(pred1, cb.equal(root.get("amount"), 100))
+                        def andPred = cb.and(cb.equal(root.get("budget"), 200), pred2)
+                        andPred
                     } as Specification
             ]
             expectedWhereQuery << [
@@ -77,6 +83,7 @@ abstract class AbstractCriteriaSpec extends Specification {
                     '((test_."amount" >= ? AND test_."amount" <= ?))',
                     '(test_."enabled" = TRUE )',
                     '(test_."enabled" = TRUE ) ORDER BY test_."amount" DESC,test_."budget" ASC',
+                    '(test_."budget" = 200 AND ((test_."enabled" = TRUE  OR test_."enabled2" = TRUE ) OR test_."amount" = 100))'
             ]
     }
 

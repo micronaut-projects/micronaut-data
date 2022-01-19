@@ -1776,6 +1776,12 @@ abstract class AbstractRepositorySpec extends Specification {
             personRepository.findAll(where(nameEquals("Jeff")).or(nameEquals("James")), Sort.of(Sort.Order.desc("name")))[1].name == "James"
             personRepository.findAll(where(nameEquals("Jeff")).or(nameEquals("James")), Sort.of(Sort.Order.asc("name")))[1].name == "Jeff"
         when:
+            def pred1 = nameEquals("Jeff").or(nameEquals("Denis"))
+            def pred2 = pred1.or(nameEquals("Abc"))
+            def andPred = nameEquals("Jeff").and(pred2)
+        then:
+            personRepository.findAll(andPred).size() == 1
+        when:
             def unpaged = personRepository.findAll(nameEquals("Jeff").or(nameEquals("James")), Pageable.UNPAGED)
         then:
             unpaged.content.size() == 2
