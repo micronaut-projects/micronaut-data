@@ -94,7 +94,7 @@ final class DataDecoderContext implements Deserializer.DecoderContext {
             OneRelationDeserializer oneRelationDeserializer = new OneRelationDeserializer() {
 
                 @Override
-                public Deserializer<Object> createSpecific(Argument<? super Object> type, DecoderContext decoderContext) throws SerdeException {
+                public Deserializer<Object> createSpecific(DecoderContext decoderContext, Argument<? super Object> type) throws SerdeException {
                     Deserializer<?> relationDeser = findDeserializer(type);
                     return new Deserializer<Object>() {
                         @Override
@@ -123,7 +123,7 @@ final class DataDecoderContext implements Deserializer.DecoderContext {
             IdDeserializer idDeserializer = new IdDeserializer() {
 
                 @Override
-                public Deserializer<Object> createSpecific(Argument<? super Object> type, DecoderContext decoderContext) throws SerdeException {
+                public Deserializer<Object> createSpecific(DecoderContext decoderContext, Argument<? super Object> type) throws SerdeException {
                     if (type.getType().isAssignableFrom(String.class) && type.isAnnotationPresent(GeneratedValue.class)) {
                         Deserializer<? extends ObjectId> deserializer = findDeserializer(OBJECT_ID);
                         return (decoder, decoderContext2, objectIdType) -> {
@@ -145,7 +145,7 @@ final class DataDecoderContext implements Deserializer.DecoderContext {
             CustomConverterDeserializer customConverterDeserializer = new CustomConverterDeserializer() {
 
                 @Override
-                public Deserializer<Object> createSpecific(Argument<? super Object> type, DecoderContext decoderContext) throws SerdeException {
+                public Deserializer<Object> createSpecific(DecoderContext decoderContext, Argument<? super Object> type) throws SerdeException {
                     Class<?> converterClass = type.getAnnotationMetadata().classValue(MappedProperty.class, "converter").get();
                     Class<Object> converterPersistedType = type.getAnnotationMetadata().classValue(MappedProperty.class, "converterPersistedType").get();
                     Argument<Object> convertedType = Argument.of(converterPersistedType);

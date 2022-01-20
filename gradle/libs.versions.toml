@@ -1,6 +1,6 @@
 [versions]
 mongodb = "4.1.1"
-micronaut-serde = "1.0.0-M3"
+micronaut-serde = "1.0.0-M5"
 
 [libraries]
 mongodb-driver-sync = { module = "org.mongodb:mongodb-driver-sync", version.ref = "mongodb" }

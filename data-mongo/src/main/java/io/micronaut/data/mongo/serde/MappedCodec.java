@@ -85,7 +85,7 @@ class MappedCodec<T> implements Codec<T> {
     @Override
     public void encode(BsonWriter writer, T value, EncoderContext encoderContext) {
         try {
-            serializer.serialize(new BsonWriterEncoder(writer), dataSerdeRegistry.newEncoderContext(type, argument, persistentEntity, codecRegistry), value, argument);
+            serializer.serialize(new BsonWriterEncoder(writer), dataSerdeRegistry.newEncoderContext(type, argument, persistentEntity, codecRegistry), argument, value);
         } catch (IOException e) {
             throw new DataAccessException("Cannot serialize: " + value, e);
         }

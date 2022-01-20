@@ -130,24 +130,24 @@ final class DataSerdeRegistry implements SerdeRegistry {
             OneRelationSerializer oneRelationSerializer = new OneRelationSerializer() {
 
                 @Override
-                public Serializer<Object> createSpecific(Argument<?> type, EncoderContext encoderContext) throws SerdeException {
+                public Serializer<Object> createSpecific(EncoderContext encoderContext, Argument<?> type) throws SerdeException {
                     RuntimePersistentEntity entity = runtimeEntityRegistry.getEntity(type.getType());
                     if (entity.getIdentity() == null) {
                         throw new SerdeException("Cannot find ID of entity type: " + type);
                     }
                     BeanProperty property = entity.getIdentity().getProperty();
                     Argument<?> idType = entity.getIdentity().getArgument();
-                    Serializer<Object> idSerializer = encoderContext.findCustomSerializer(IdSerializer.class).createSpecific(idType, encoderContext);
+                    Serializer<Object> idSerializer = encoderContext.findCustomSerializer(IdSerializer.class).createSpecific(encoderContext, idType);
                     return new Serializer<Object>() {
                         @Override
-                        public void serialize(Encoder encoder, EncoderContext context, Object value, Argument<?> type) throws IOException {
+                        public void serialize(Encoder encoder, EncoderContext context, Argument<?> type, Object value) throws IOException {
                             Object id = property.get(value);
                             if (id == null) {
                                 encoder.encodeNull();
                             } else {
                                 Encoder en = encoder.encodeObject(type);
                                 en.encodeKey(MongoUtils.ID);
-                                idSerializer.serialize(en, context, id, idType);
+                                idSerializer.serialize(en, context, idType, id);
                                 en.finishStructure();
                             }
                         }
@@ -155,7 +155,7 @@ final class DataSerdeRegistry implements SerdeRegistry {
                 }
 
                 @Override
-                public void serialize(Encoder encoder, EncoderContext context, Object value, Argument<? extends Object> type) throws IOException {
+                public void serialize(Encoder encoder, EncoderContext context, Argument<? extends Object> type, Object value) throws IOException {
                     throw new IllegalStateException("Create specific call is required!");
                 }
 
@@ -166,7 +166,7 @@ final class DataSerdeRegistry implements SerdeRegistry {
             ManyRelationSerializer manyRelationSerializer = new ManyRelationSerializer() {
 
                 @Override
-                public void serialize(Encoder encoder, EncoderContext context, Object value, Argument<?> type) throws IOException {
+                public void serialize(Encoder encoder, EncoderContext context, Argument<?> type, Object value) throws IOException {
                     encoder.encodeNull();
                 }
             };

@@ -100,21 +100,21 @@ final class DataEncoderContext implements Serializer.EncoderContext {
             IdSerializer idSerializer = new IdSerializer() {
 
                 @Override
-                public Serializer<Object> createSpecific(Argument<?> type, EncoderContext encoderContext) throws SerdeException {
+                public Serializer<Object> createSpecific(EncoderContext encoderContext, Argument<?> type) throws SerdeException {
                     boolean isGeneratedObjectIdAsString = type.isAssignableFrom(String.class)
                             && type.isAnnotationPresent(GeneratedValue.class);
                     if (isGeneratedObjectIdAsString) {
                         Serializer<? super ObjectId> objectIdSerializer = findSerializer(OBJECT_ID);
-                        return (encoder, encoderContext2, value, stringType) -> {
+                        return (encoder, encoderContext2, stringType, value) -> {
                             String stringId = (String) value;
-                            objectIdSerializer.serialize(encoder, encoderContext2, new ObjectId(stringId), OBJECT_ID);
+                            objectIdSerializer.serialize(encoder, encoderContext2, OBJECT_ID, new ObjectId(stringId));
                         };
                     }
                     return (Serializer<Object>) findSerializer(type);
                 }
 
                 @Override
-                public void serialize(Encoder encoder, EncoderContext context, Object value, Argument<?> type) {
+                public void serialize(Encoder encoder, EncoderContext context, Argument<?> type, Object value) {
                     throw new IllegalStateException("Create specific call is required!");
                 }
             };
@@ -123,7 +123,7 @@ final class DataEncoderContext implements Serializer.EncoderContext {
         if (serializerClass == CustomConverterSerializer.class) {
             CustomConverterSerializer customConverterSerializer = new CustomConverterSerializer() {
                 @Override
-                public Serializer<Object> createSpecific(Argument<?> type, EncoderContext encoderContext) throws SerdeException {
+                public Serializer<Object> createSpecific(EncoderContext encoderContext, Argument<?> type) throws SerdeException {
                     Class<?> converterClass = type.getAnnotationMetadata().classValue(MappedProperty.class, "converter").get();
                     Class<Object> converterPersistedType = type.getAnnotationMetadata().classValue(MappedProperty.class, "converterPersistedType").get();
                     Argument<Object> convertedType = Argument.of(converterPersistedType);
@@ -132,7 +132,7 @@ final class DataEncoderContext implements Serializer.EncoderContext {
                     return new Serializer<Object>() {
 
                         @Override
-                        public void serialize(Encoder encoder, EncoderContext context, Object value, Argument<?> type) throws IOException {
+                        public void serialize(Encoder encoder, EncoderContext context, Argument<?> type, Object value) throws IOException {
                             if (value == null) {
                                 encoder.encodeNull();
                                 return;
@@ -142,14 +142,14 @@ final class DataEncoderContext implements Serializer.EncoderContext {
                                 encoder.encodeNull();
                                 return;
                             }
-                            serializer.serialize(encoder, context, converted, convertedType);
+                            serializer.serialize(encoder, context, convertedType, converted);
                         }
 
                     };
                 }
 
                 @Override
-                public void serialize(Encoder encoder, EncoderContext context, Object value, Argument<?> type) {
+                public void serialize(Encoder encoder, EncoderContext context, Argument<?> type, Object value) {
                     throw new IllegalStateException("Create specific call is required!");
                 }
             };
