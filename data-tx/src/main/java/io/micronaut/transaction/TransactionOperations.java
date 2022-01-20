@@ -38,6 +38,14 @@ public interface TransactionOperations<T> {
     T getConnection();
 
     /**
+     * Check if the connection exists.
+     *
+     * @return True if transaction exists
+     * @since 3.3
+     */
+    boolean hasConnection();
+
+    /**
      * Execute a read-only transaction within the context of the function.
      *
      * @param definition The transaction definition

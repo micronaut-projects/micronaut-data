@@ -27,9 +27,11 @@ import io.micronaut.transaction.TransactionOperations;
 import io.micronaut.transaction.TransactionStatus;
 import io.micronaut.transaction.exceptions.NoTransactionException;
 import io.micronaut.transaction.exceptions.TransactionException;
+import org.springframework.jdbc.datasource.ConnectionHolder;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.jdbc.datasource.DataSourceUtils;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import javax.sql.DataSource;
@@ -139,6 +141,12 @@ public class SpringJdbcTransactionOperations implements TransactionOperations<Co
         } catch (SQLException e) {
             throw new DataAccessException("Error retrieving JDBC connection: " + e.getMessage(), e);
         }
+    }
+
+    @Override
+    public boolean hasConnection() {
+        ConnectionHolder conHolder = (ConnectionHolder) TransactionSynchronizationManager.getResource(dataSource);
+        return conHolder != null && conHolder.getConnectionHandle() != null;
     }
 
     /**

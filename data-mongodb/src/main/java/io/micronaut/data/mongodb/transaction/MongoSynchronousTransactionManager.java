@@ -84,6 +84,11 @@ public final class MongoSynchronousTransactionManager extends AbstractSynchronou
     }
 
     @Override
+    public boolean hasConnection() {
+        return findClientSession() != null;
+    }
+
+    @Override
     protected ClientSession getConnection(Object transaction) {
         return ((MongoTransaction) transaction).getClientSession();
     }

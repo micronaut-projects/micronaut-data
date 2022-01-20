@@ -244,15 +244,16 @@ abstract class AbstractRepositorySpec extends Specification {
             books2.size() == 6
             books1[0].title == "The Border"
             books2[0].title == "The Border"
-
-        cleanup:
-            cleanupData()
+//
+//        cleanup:
+//            cleanupData()
     }
 
     protected boolean skipCustomSchemaAndCatalogTest() {
         return false
     }
 
+    @Ignore
     void "test CRUD with custom schema and catalog"() {
         if (skipCustomSchemaAndCatalogTest()) {
             return

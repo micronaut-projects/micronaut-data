@@ -69,9 +69,9 @@ import io.micronaut.data.runtime.mapper.sql.SqlResultEntityTypeMapper;
 import io.micronaut.data.runtime.mapper.sql.SqlTypeMapper;
 import io.micronaut.data.runtime.operations.ExecutorAsyncOperations;
 import io.micronaut.data.runtime.operations.ExecutorReactiveOperations;
+import io.micronaut.data.runtime.operations.internal.AbstractSqlRepositoryOperations;
 import io.micronaut.data.runtime.operations.internal.AbstractSyncEntitiesOperations;
 import io.micronaut.data.runtime.operations.internal.AbstractSyncEntityOperations;
-import io.micronaut.data.runtime.operations.internal.AbstractSqlRepositoryOperations;
 import io.micronaut.data.runtime.operations.internal.DBOperation;
 import io.micronaut.data.runtime.operations.internal.OpContext;
 import io.micronaut.data.runtime.operations.internal.OperationContext;
@@ -81,6 +81,8 @@ import io.micronaut.data.runtime.operations.internal.SyncCascadeOperations;
 import io.micronaut.data.runtime.support.AbstractConversionContext;
 import io.micronaut.http.codec.MediaTypeCodec;
 import io.micronaut.transaction.TransactionOperations;
+import io.micronaut.transaction.jdbc.DataSourceUtils;
+import io.micronaut.transaction.jdbc.DelegatingDataSource;
 import jakarta.inject.Named;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -107,6 +109,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -130,9 +133,11 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     private static final Logger LOG = LoggerFactory.getLogger(DefaultJdbcRepositoryOperations.class);
     private final TransactionOperations<Connection> transactionOperations;
     private final DataSource dataSource;
+    private final DataSource unwrapedDataSource;
     private ExecutorAsyncOperations asyncOperations;
     private ExecutorService executorService;
     private final SyncCascadeOperations<JdbcOperationContext> cascadeOperations;
+    private final JdbcConfiguration jdbcConfiguration;
 
     /**
      * Default constructor.
@@ -147,6 +152,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
      * @param entityRegistry             The entity registry
      * @param conversionService          The conversion service
      * @param attributeConverterRegistry The attribute converter registry
+     * @param jdbcConfiguration          The jdbcConfiguration
      */
     @Internal
     protected DefaultJdbcRepositoryOperations(@Parameter String dataSourceName,
@@ -158,7 +164,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                                               @NonNull DateTimeProvider dateTimeProvider,
                                               RuntimeEntityRegistry entityRegistry,
                                               DataConversionService<?> conversionService,
-                                              AttributeConverterRegistry attributeConverterRegistry) {
+                                              AttributeConverterRegistry attributeConverterRegistry,
+                                              JdbcConfiguration jdbcConfiguration) {
         super(
                 dataSourceName,
                 new ColumnNameResultSetReader(conversionService),
@@ -172,9 +179,11 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         ArgumentUtils.requireNonNull("dataSource", dataSource);
         ArgumentUtils.requireNonNull("transactionOperations", transactionOperations);
         this.dataSource = dataSource;
+        this.unwrapedDataSource = DelegatingDataSource.unwrapDataSource(dataSource);
         this.transactionOperations = transactionOperations;
         this.executorService = executorService;
         this.cascadeOperations = new SyncCascadeOperations<>(conversionService, this);
+        this.jdbcConfiguration = jdbcConfiguration;
     }
 
     @NonNull
@@ -285,8 +294,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     @Nullable
     @Override
     public <T, R> R findOne(@NonNull PreparedQuery<T, R> preparedQuery) {
-        return transactionOperations.executeRead(status -> {
-            Connection connection = status.getConnection();
+        return executeRead(connection -> {
             RuntimePersistentEntity<T> persistentEntity = getEntity(preparedQuery.getRootEntity());
             try (PreparedStatement ps = prepareStatement(connection, connection::prepareStatement, preparedQuery, false, true)) {
                 try (ResultSet rs = ps.executeQuery()) {
@@ -350,9 +358,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
 
     @Override
     public <T> boolean exists(@NonNull PreparedQuery<T, Boolean> preparedQuery) {
-        return transactionOperations.executeRead(status -> {
+        return executeRead(connection -> {
             try {
-                Connection connection = status.getConnection();
                 try (PreparedStatement ps = prepareStatement(connection, connection::prepareStatement, preparedQuery, false, true)) {
                     try (ResultSet rs = ps.executeQuery()) {
                         return rs.next();
@@ -367,7 +374,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     @NonNull
     @Override
     public <T, R> Stream<R> findStream(@NonNull PreparedQuery<T, R> preparedQuery) {
-        return findStream(preparedQuery, transactionOperations.getConnection());
+        return findStream(preparedQuery, getConnection());
     }
 
     private <T, R> Stream<R> findStream(@NonNull PreparedQuery<T, R> preparedQuery, Connection connection) {
@@ -513,18 +520,18 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     @NonNull
     @Override
     public <T, R> Iterable<R> findAll(@NonNull PreparedQuery<T, R> preparedQuery) {
-        return transactionOperations.executeRead(status -> {
-            Connection connection = status.getConnection();
-            return findStream(preparedQuery, connection).collect(Collectors.toList());
+        return executeRead(connection -> {
+            try (Stream<R> stream = findStream(preparedQuery, connection)) {
+                return stream.collect(Collectors.toList());
+            }
         });
     }
 
     @NonNull
     @Override
     public Optional<Number> executeUpdate(@NonNull PreparedQuery<?, Number> preparedQuery) {
-        return transactionOperations.executeWrite(status -> {
+        return executeWrite(connection -> {
             try {
-                Connection connection = status.getConnection();
                 try (PreparedStatement ps = prepareStatement(connection, connection::prepareStatement, preparedQuery, true, false)) {
                     int result = ps.executeUpdate();
                     if (QUERY_LOG.isTraceEnabled()) {
@@ -547,9 +554,9 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
 
     @Override
     public <T> Optional<Number> deleteAll(@NonNull DeleteBatchOperation<T> operation) {
-        return Optional.ofNullable(transactionOperations.executeWrite(status -> {
+        return Optional.ofNullable(executeWrite(connection -> {
             SqlQueryBuilder queryBuilder = queryBuilders.getOrDefault(operation.getRepositoryType(), DEFAULT_SQL_BUILDER);
-            JdbcOperationContext ctx = new JdbcOperationContext(operation.getAnnotationMetadata(), operation.getRepositoryType(), queryBuilder.dialect(), status.getConnection());
+            JdbcOperationContext ctx = new JdbcOperationContext(operation.getAnnotationMetadata(), operation.getRepositoryType(), queryBuilder.dialect(), connection);
             Dialect dialect = queryBuilder.dialect();
             RuntimePersistentEntity<T> persistentEntity = getEntity(operation.getRootEntity());
             if (isSupportsBatchDelete(persistentEntity, dialect)) {
@@ -573,8 +580,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     @Override
     public <T> int delete(@NonNull DeleteOperation<T> operation) {
         SqlQueryBuilder queryBuilder = queryBuilders.getOrDefault(operation.getRepositoryType(), DEFAULT_SQL_BUILDER);
-        return transactionOperations.executeWrite(status -> {
-            JdbcOperationContext ctx = new JdbcOperationContext(operation.getAnnotationMetadata(), operation.getRepositoryType(), queryBuilder.dialect(), status.getConnection());
+        return executeWrite(connection -> {
+            JdbcOperationContext ctx = new JdbcOperationContext(operation.getAnnotationMetadata(), operation.getRepositoryType(), queryBuilder.dialect(), connection);
             DBOperation dbOperation = new StoredQuerySqlOperation(queryBuilder, operation.getStoredQuery());
             JdbcEntityOperations<T> op = new JdbcEntityOperations<>(ctx, getEntity(operation.getRootEntity()), operation.getEntity(), dbOperation);
             op.delete();
@@ -589,8 +596,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         final Class<?> repositoryType = operation.getRepositoryType();
         SqlQueryBuilder queryBuilder = queryBuilders.getOrDefault(repositoryType, DEFAULT_SQL_BUILDER);
         DBOperation dbOperation = new StoredQuerySqlOperation(queryBuilder, operation.getStoredQuery());
-        return transactionOperations.executeWrite(status -> {
-            JdbcOperationContext ctx = new JdbcOperationContext(annotationMetadata, repositoryType, queryBuilder.dialect(), status.getConnection());
+        return executeWrite(connection -> {
+            JdbcOperationContext ctx = new JdbcOperationContext(annotationMetadata, repositoryType, queryBuilder.dialect(), connection);
             JdbcEntityOperations<T> op = new JdbcEntityOperations<>(ctx, getEntity(operation.getRootEntity()), operation.getEntity(), dbOperation);
             op.update();
             return op.getEntity();
@@ -600,13 +607,13 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     @NonNull
     @Override
     public <T> Iterable<T> updateAll(@NonNull UpdateBatchOperation<T> operation) {
-        return transactionOperations.executeWrite(status -> {
+        return executeWrite(connection -> {
             final AnnotationMetadata annotationMetadata = operation.getAnnotationMetadata();
             final Class<?> repositoryType = operation.getRepositoryType();
             SqlQueryBuilder queryBuilder = queryBuilders.getOrDefault(repositoryType, DEFAULT_SQL_BUILDER);
             final RuntimePersistentEntity<T> persistentEntity = getEntity(operation.getRootEntity());
             DBOperation dbOperation = new StoredQuerySqlOperation(queryBuilder, operation.getStoredQuery());
-            JdbcOperationContext ctx = new JdbcOperationContext(annotationMetadata, repositoryType, queryBuilder.dialect(), status.getConnection());
+            JdbcOperationContext ctx = new JdbcOperationContext(annotationMetadata, repositoryType, queryBuilder.dialect(), connection);
             if (!isSupportsBatchUpdate(persistentEntity, queryBuilder.dialect())) {
                 return operation.split()
                         .stream()
@@ -629,8 +636,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         final AnnotationMetadata annotationMetadata = operation.getAnnotationMetadata();
         final Class<?> repositoryType = operation.getRepositoryType();
         SqlQueryBuilder queryBuilder = queryBuilders.getOrDefault(repositoryType, DEFAULT_SQL_BUILDER);
-        return transactionOperations.executeWrite((status) -> {
-            JdbcOperationContext ctx = new JdbcOperationContext(annotationMetadata, repositoryType, queryBuilder.dialect(), status.getConnection());
+        return executeWrite(connection -> {
+            JdbcOperationContext ctx = new JdbcOperationContext(annotationMetadata, repositoryType, queryBuilder.dialect(), connection);
             JdbcEntityOperations<T> op = new JdbcEntityOperations<>(ctx, new StoredQuerySqlOperation(queryBuilder, operation.getStoredQuery()), getEntity(operation.getRootEntity()), operation.getEntity(), true);
             op.persist();
             return op;
@@ -667,13 +674,13 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
 
     @NonNull
     public <T> Iterable<T> persistAll(@NonNull InsertBatchOperation<T> operation) {
-        return transactionOperations.executeWrite(status -> {
+        return executeWrite(connection -> {
             final AnnotationMetadata annotationMetadata = operation.getAnnotationMetadata();
             final Class<?> repositoryType = operation.getRepositoryType();
             SqlQueryBuilder sqlQueryBuilder = queryBuilders.getOrDefault(repositoryType, DEFAULT_SQL_BUILDER);
             DBOperation dbOperation = new StoredQuerySqlOperation(sqlQueryBuilder, operation.getStoredQuery());
             final RuntimePersistentEntity<T> persistentEntity = getEntity(operation.getRootEntity());
-            JdbcOperationContext ctx = new JdbcOperationContext(annotationMetadata, repositoryType, sqlQueryBuilder.dialect(), status.getConnection());
+            JdbcOperationContext ctx = new JdbcOperationContext(annotationMetadata, repositoryType, sqlQueryBuilder.dialect(), connection);
             if (!isSupportsBatchInsert(persistentEntity, sqlQueryBuilder.dialect())) {
                 return operation.split().stream()
                         .map(persistOp -> {
@@ -689,6 +696,34 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             }
 
         });
+    }
+
+    private <I> I executeRead(Function<Connection, I> fn) {
+        if (jdbcConfiguration.isTransactionPerOperation()) {
+            return transactionOperations.executeRead(status -> fn.apply(status.getConnection()));
+        }
+        if (!jdbcConfiguration.isAllowConnectionPerOperation() || transactionOperations.hasConnection()) {
+            return fn.apply(transactionOperations.getConnection());
+        }
+        try (Connection connection = unwrapedDataSource.getConnection()) {
+            return fn.apply(connection);
+        } catch (SQLException e) {
+            throw new DataAccessException("Cannot get connection: " + e.getMessage(), e);
+        }
+    }
+
+    private <I> I executeWrite(Function<Connection, I> fn) {
+        if (jdbcConfiguration.isTransactionPerOperation()) {
+            return transactionOperations.executeWrite(status -> fn.apply(status.getConnection()));
+        }
+        if (!jdbcConfiguration.isAllowConnectionPerOperation() || transactionOperations.hasConnection()) {
+            return fn.apply(transactionOperations.getConnection());
+        }
+        try (Connection connection = unwrapedDataSource.getConnection()) {
+            return fn.apply(connection);
+        } catch (SQLException e) {
+            throw new DataAccessException("Cannot get connection: " + e.getMessage(), e);
+        }
     }
 
     @Override
@@ -708,14 +743,17 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     @NonNull
     @Override
     public Connection getConnection() {
-        return transactionOperations.getConnection();
+        if (jdbcConfiguration.isTransactionPerOperation() || !jdbcConfiguration.isAllowConnectionPerOperation() || transactionOperations.hasConnection()) {
+            return transactionOperations.getConnection();
+        }
+        return DataSourceUtils.getConnection(dataSource, true);
     }
 
     @NonNull
     @Override
     public <R> R execute(@NonNull ConnectionCallback<R> callback) {
         try {
-            return callback.call(transactionOperations.getConnection());
+            return callback.call(getConnection());
         } catch (SQLException e) {
             throw new DataAccessException("Error executing SQL Callback: " + e.getMessage(), e);
         }
@@ -731,7 +769,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         }
         try {
             R result = null;
-            PreparedStatement ps = transactionOperations.getConnection().prepareStatement(sql);
+            PreparedStatement ps = getConnection().prepareStatement(sql);
             try {
                 result = callback.call(ps);
                 return result;

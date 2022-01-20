@@ -105,6 +105,12 @@ public class SpringHibernateTransactionOperations implements TransactionOperatio
     }
 
     @Override
+    public boolean hasConnection() {
+        final SessionImplementor session = (SessionImplementor) sessionFactory.getCurrentSession();
+        return session.isConnected();
+    }
+
+    @Override
     public <R> R execute(@NonNull TransactionDefinition definition, @NonNull TransactionCallback<Connection, R> callback) {
         ArgumentUtils.requireNonNull("callback", callback);
         ArgumentUtils.requireNonNull("definition", definition);
