@@ -28,6 +28,7 @@ import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.data.exceptions.DataAccessException;
+import io.micronaut.data.jdbc.config.DataJdbcConfiguration;
 import io.micronaut.data.jdbc.convert.JdbcConversionContext;
 import io.micronaut.data.jdbc.mapper.ColumnIndexResultSetReader;
 import io.micronaut.data.jdbc.mapper.ColumnNameResultSetReader;
@@ -137,12 +138,13 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     private ExecutorAsyncOperations asyncOperations;
     private ExecutorService executorService;
     private final SyncCascadeOperations<JdbcOperationContext> cascadeOperations;
-    private final JdbcConfiguration jdbcConfiguration;
+    private final DataJdbcConfiguration jdbcConfiguration;
 
     /**
      * Default constructor.
      *
      * @param dataSourceName             The data source name
+     * @param jdbcConfiguration          The jdbcConfiguration
      * @param dataSource                 The datasource
      * @param transactionOperations      The JDBC operations for the data source
      * @param executorService            The executor service
@@ -152,10 +154,10 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
      * @param entityRegistry             The entity registry
      * @param conversionService          The conversion service
      * @param attributeConverterRegistry The attribute converter registry
-     * @param jdbcConfiguration          The jdbcConfiguration
      */
     @Internal
     protected DefaultJdbcRepositoryOperations(@Parameter String dataSourceName,
+                                              @Parameter DataJdbcConfiguration jdbcConfiguration,
                                               DataSource dataSource,
                                               @Parameter TransactionOperations<Connection> transactionOperations,
                                               @Named("io") @Nullable ExecutorService executorService,
@@ -164,8 +166,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                                               @NonNull DateTimeProvider dateTimeProvider,
                                               RuntimeEntityRegistry entityRegistry,
                                               DataConversionService<?> conversionService,
-                                              AttributeConverterRegistry attributeConverterRegistry,
-                                              JdbcConfiguration jdbcConfiguration) {
+                                              AttributeConverterRegistry attributeConverterRegistry) {
         super(
                 dataSourceName,
                 new ColumnNameResultSetReader(conversionService),
