@@ -17,8 +17,6 @@ dependencies {
     implementation libs.mongodb.driver.reactivestreams
     implementation mn.micronaut.mongo
     implementation mn.micronaut.mongo.sync
-    implementation "io.micronaut:micronaut-management"
-
     compileOnly "io.micronaut.reactor:micronaut-reactor"
 
     testAnnotationProcessor projects.dataDocumentProcessor
