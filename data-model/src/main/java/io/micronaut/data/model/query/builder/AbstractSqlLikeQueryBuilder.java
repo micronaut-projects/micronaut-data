@@ -1160,8 +1160,8 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             }
             PersistentProperty property = propertyPath.getProperty();
             if (joinAssociation != null) {
-                // We don't need to join to access the id of the relation
-                if (property != joinAssociation.getAssociatedEntity().getIdentity()) {
+                // We don't need to join to access the id of the relation if it is not a foreign key association
+                if (property != joinAssociation.getAssociatedEntity().getIdentity() || joinAssociation.isForeignKey()) {
                     String joinStringPath = joinPathJoiner.toString();
                     if (!queryState.isJoined(joinStringPath)) {
                         throw new IllegalArgumentException("Property is not joined at path: " + joinStringPath);
