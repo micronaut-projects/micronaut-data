@@ -73,9 +73,15 @@ import static java.util.Collections.singletonMap;
  * @author Denis Stepanov
  * @since 3.3
  */
+@Internal
 public final class MongoQueryBuilder implements QueryBuilder {
 
-    protected final Map<Class, CriterionHandler> queryHandlers = new HashMap<>(30);
+    /**
+     * An object with this property is replaced with an actual query parameter at the runtime.
+     */
+    public static final String QUERY_PARAMETER_PLACEHOLDER = "$mn_qp";
+
+    private final Map<Class, CriterionHandler> queryHandlers = new HashMap<>(30);
 
     {
         addCriterionHandler(QueryModel.Negation.class, (ctx, obj, negation) -> {
@@ -217,7 +223,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
                     (BindingParameter) value,
                     newBindingContext(inPropertyPath, outPropertyPath)
             );
-            return singletonMap("$qpidx", index);
+            return singletonMap(QUERY_PARAMETER_PLACEHOLDER, index);
         } else {
             return asLiteral(value);
         }
@@ -789,7 +795,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
                         (BindingParameter) e.getValue(),
                         newBindingContext(propertyPath)
                 );
-                sets.put(e.getKey(), singletonMap("$qpidx", index));
+                sets.put(e.getKey(), singletonMap(QUERY_PARAMETER_PLACEHOLDER, index));
             } else {
                 sets.put(e.getKey(), e.getValue());
             }
@@ -934,7 +940,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
 
     private boolean shouldEscapeKey(String s) {
         for (char c : s.toCharArray()) {
-            if (!Character.isAlphabetic(c) && !Character.isDigit(c) && c != '$') {
+            if (!Character.isAlphabetic(c) && !Character.isDigit(c) && c != '$' && c != '_') {
                 return true;
             }
         }

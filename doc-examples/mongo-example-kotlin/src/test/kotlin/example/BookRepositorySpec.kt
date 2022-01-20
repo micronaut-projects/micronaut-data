@@ -36,7 +36,7 @@ class BookRepositorySpec : AbstractMongoSpec() {
 
 
         assertEquals( // <4>
-                "{title:{\$eq:{\$qpidx:0}}}",
+                "{title:{\$eq:{\$mn_qp:0}}}",
                 query
         )
 

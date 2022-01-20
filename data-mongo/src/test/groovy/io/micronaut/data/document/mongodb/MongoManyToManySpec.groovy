@@ -101,7 +101,7 @@ class MongoManyToManySpec extends Specification implements MongoTestPropertyProv
             queryModel.join("courses", Join.Type.FETCH, null)
             def q = encoder.buildQuery(queryModel.idEq(new QueryParameter("id")))
         then:
-            q.query == '''[{$lookup:{from:'student_course',localField:'_id',foreignField:'m2m_student',pipeline:[{$lookup:{from:'m2m_course',localField:'m2m_course',foreignField:'_id',as:'m2m_course'}},{$unwind:{path:'$m2m_course',preserveNullAndEmptyArrays:true}},{$replaceRoot:{newRoot:'$m2m_course'}}],as:'courses'}},{$match:{'_id':{$eq:{$qpidx:0}}}}]'''
+            q.query == '''[{$lookup:{from:'student_course',localField:'_id',foreignField:'m2m_student',pipeline:[{$lookup:{from:'m2m_course',localField:'m2m_course',foreignField:'_id',as:'m2m_course'}},{$unwind:{path:'$m2m_course',preserveNullAndEmptyArrays:true}},{$replaceRoot:{newRoot:'$m2m_course'}}],as:'courses'}},{$match:{_id:{$eq:{$mn_qp:0}}}}]'''
     }
 
     void "test build Student select with ratings"() {
@@ -111,7 +111,7 @@ class MongoManyToManySpec extends Specification implements MongoTestPropertyProv
             queryModel.join("ratings", Join.Type.FETCH, null)
             def q = encoder.buildQuery(queryModel.idEq(new QueryParameter("id")))
         then:
-            q.query == '''[{$lookup:{from:'m2m_course_rating',localField:'_id',foreignField:'student._id',as:'ratings'}},{$match:{'_id':{$eq:{$qpidx:0}}}}]'''
+            q.query == '''[{$lookup:{from:'m2m_course_rating',localField:'_id',foreignField:'student._id',as:'ratings'}},{$match:{_id:{$eq:{$mn_qp:0}}}}]'''
     }
 
     @Shared

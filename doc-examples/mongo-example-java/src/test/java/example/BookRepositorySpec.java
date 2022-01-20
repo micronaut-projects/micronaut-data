@@ -39,7 +39,7 @@ class BookRepositorySpec extends AbstractMongoSpec {
 								.orElse(null);
 
 		assertEquals( // <4>
-				"{title:{$eq:{$qpidx:0}}}", query);
+				"{title:{$eq:{$mn_qp:0}}}", query);
 
 	}
 	// end::metadata[]

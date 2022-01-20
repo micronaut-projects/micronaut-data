@@ -117,7 +117,7 @@ class MongoCriteriaSpec extends Specification {
                     } as Specification
             ]
             expectedWhereQuery << [
-                    '''{'_id.code':{$eq:{$qpidx:0}},'_id.code_id':{$eq:{$qpidx:1}},'_id.county._id.id':{$eq:{$qpidx:2}},'_id.county._id.state_id._id':{$eq:{$qpidx:3}}}''',
+                    '''{'_id.code':{$eq:{$mn_qp:0}},'_id.code_id':{$eq:{$mn_qp:1}},'_id.county._id.id':{$eq:{$mn_qp:2}},'_id.county._id.state_id._id':{$eq:{$mn_qp:3}}}''',
             ]
     }
 
@@ -167,7 +167,7 @@ class MongoCriteriaSpec extends Specification {
             ]
             expectedWhereQuery << [
                     '{$and:[{enabled:{$gte:true}},{enabled:{$lte:false}}]}',
-                    '{$and:[{amount:{$gte:{$qpidx:0}}},{amount:{$lte:{$qpidx:1}}}]}',
+                    '{$and:[{amount:{$gte:{$mn_qp:0}}},{amount:{$lte:{$mn_qp:1}}}]}',
                     '{enabled:{$eq:true}}',
                     '[{$match:{enabled:{$eq:true}}},{$sort:{amount:-1,budget:1}}]',
                     '{enabled:{$eq:true}}',
@@ -234,10 +234,10 @@ class MongoCriteriaSpec extends Specification {
 
         where:
             property | projection | expectedWhereQuery
-            "age"    | "max"      | '''[{$group:{age:{$max:'$age'},'_id':null}}]'''
-            "age"    | "min"      | '''[{$group:{age:{$min:'$age'},'_id':null}}]'''
-            "age"    | "avg"      | '''[{$group:{age:{$avg:'$age'},'_id':null}}]'''
-            "age"    | "sum"      | '''[{$group:{age:{$sum:'$age'},'_id':null}}]'''
+            "age"    | "max"      | '''[{$group:{age:{$max:'$age'},_id:null}}]'''
+            "age"    | "min"      | '''[{$group:{age:{$min:'$age'},_id:null}}]'''
+            "age"    | "avg"      | '''[{$group:{age:{$avg:'$age'},_id:null}}]'''
+            "age"    | "sum"      | '''[{$group:{age:{$sum:'$age'},_id:null}}]'''
     }
 
     void "test count"() {
@@ -313,8 +313,8 @@ class MongoCriteriaSpec extends Specification {
             ]
             expectedUpdateQuery << [
                     '''{$set:{name:'ABC',amount:123}}''',
-                    '''{$set:{name:{$qpidx:0},amount:{$qpidx:1}}}''',
-                    '''{$set:{name:'test',amount:{$qpidx:0}}}''',
+                    '''{$set:{name:{$mn_qp:0},amount:{$mn_qp:1}}}''',
+                    '''{$set:{name:'test',amount:{$mn_qp:0}}}''',
             ]
     }
 
