@@ -9,7 +9,7 @@ import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.Relation
 import io.micronaut.data.model.Page
 import io.micronaut.data.model.Pageable
-import io.micronaut.data.mongo.annotation.MongoRepository
+import io.micronaut.data.mongodb.annotation.MongoRepository
 import io.micronaut.data.repository.CrudRepository
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject

@@ -14,7 +14,7 @@ import io.micronaut.data.model.query.QueryModel
 import io.micronaut.data.model.query.QueryParameter
 import io.micronaut.data.model.query.builder.QueryBuilder
 import io.micronaut.data.model.runtime.RuntimePersistentEntity
-import io.micronaut.data.mongo.annotation.MongoRepository
+import io.micronaut.data.mongodb.annotation.MongoRepository
 import io.micronaut.data.repository.CrudRepository
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject

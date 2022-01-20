@@ -10,8 +10,8 @@ import io.micronaut.data.document.mongodb.repositories.MongoPersonRepository
 import io.micronaut.data.document.tck.entities.Person
 import io.micronaut.data.model.runtime.InsertOperation
 import io.micronaut.data.model.runtime.StoredQuery
-import io.micronaut.data.mongo.annotation.MongoRepository
-import io.micronaut.data.mongo.operations.MongoRepositoryOperations
+import io.micronaut.data.mongodb.annotation.MongoRepository
+import io.micronaut.data.mongodb.operations.MongoRepositoryOperations
 import io.micronaut.data.repository.CrudRepository
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import io.micronaut.test.support.TestPropertyProvider

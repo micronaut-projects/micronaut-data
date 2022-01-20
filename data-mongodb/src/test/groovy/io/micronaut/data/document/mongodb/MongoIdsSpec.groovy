@@ -25,7 +25,7 @@ import io.micronaut.data.annotation.Id
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.model.runtime.InsertOperation
 import io.micronaut.data.model.runtime.StoredQuery
-import io.micronaut.data.mongo.operations.DefaultMongoRepositoryOperations
+import io.micronaut.data.mongodb.operations.DefaultMongoRepositoryOperations
 import io.micronaut.serde.annotation.Serdeable
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject

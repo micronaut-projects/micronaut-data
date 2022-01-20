@@ -25,7 +25,7 @@ import io.micronaut.data.annotation.Relation
 import io.micronaut.data.document.tck.entities.Shipment
 import io.micronaut.data.document.tck.entities.ShipmentId
 import io.micronaut.data.document.tck.repositories.ShipmentRepository
-import io.micronaut.data.mongo.annotation.MongoRepository
+import io.micronaut.data.mongodb.annotation.MongoRepository
 import io.micronaut.data.repository.CrudRepository
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
