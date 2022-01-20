@@ -29,7 +29,7 @@ dependencies {
     implementation 'io.micronaut.reactor:micronaut-reactor'
 
     implementation "io.micronaut:micronaut-http-client"
-    implementation projects.dataMongo
+    implementation projects.dataMongodb
     implementation libs.mongodb.driver.sync
 
     compileOnly "javax.persistence:javax.persistence-api:$javaxPersistenceVersion"

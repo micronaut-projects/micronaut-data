@@ -5,7 +5,7 @@ import io.micronaut.data.annotation.Id
 import io.micronaut.data.annotation.Join
 import io.micronaut.data.annotation.Version
 import io.micronaut.data.annotation.repeatable.JoinSpecifications
-import io.micronaut.data.mongo.annotation.MongoRepository
+import io.micronaut.data.mongodb.annotation.MongoRepository
 import io.micronaut.data.repository.CrudRepository
 import org.bson.types.ObjectId
 import java.util.*
