@@ -175,4 +175,12 @@ public interface PersistentEntityCriteriaBuilder extends CriteriaBuilder {
      * @return a new predicate
      */
     Predicate endingWithStringIgnoreCase(Expression<String> x, Expression<String> y);
+
+    /**
+     * Create a predicate for testing whether the expression satisfies the given pattern.
+     * @param x  string expression
+     * @param pattern  string expression
+     * @return like predicate
+     */
+    Predicate regex(Expression<String> x, Expression<String> pattern);
 }

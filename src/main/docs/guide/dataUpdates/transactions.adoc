@@ -1,6 +1,6 @@
 Micronaut Data will automatically manage transactions for you. You can simply declare a method as transactional with the `javax.transaction.Transactional` annotation.
 
-TIP: If you prefer Spring-managed transactions you can add the `micronaut-data-spring` dependency and Spring-managed transactions will be used instead. See the section on <<spring, Spring Support>> for more information.
+TIP: If you prefer Spring-managed transactions for Hibernate or JDBC you can add the `micronaut-data-spring` dependency and Spring-managed transactions will be used instead. See the section on <<spring, Spring Support>> for more information.
 
 Micronaut Data maps the declared transaction annotation to the correct underlying semantics and compilation time.
 

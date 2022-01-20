@@ -1,0 +1,11 @@
+plugins {
+	id "io.micronaut.build.internal.data-module"
+}
+
+dependencies {
+	api projects.dataProcessor
+	api libs.micronaut.serde.processor
+	api libs.micronaut.serde.api
+	api projects.dataDocumentModel
+	compileOnly mn.micronaut.inject.java
+}

@@ -1,0 +1,15 @@
+The default naming strategy when converting camel case class and property names to collection and attribute names is to use underscore separated lower case. In other words `FooBar` becomes `foo_bar`.
+
+If this is not satisfactory then you can customize this by setting the `namingStrategy` member of the ann:data.annotation.MappedEntity[] annotation on the entity:
+
+.Micronaut Data Naming Strategy
+[source,java]
+----
+include::data-tck/src/main/java/io/micronaut/data/tck/entities/CountryRegion.java[tags="namingStrategy"]
+    ...
+}
+----
+
+Few important things to note. Since Micronaut Data pre-computes the collection and attribute name mappings at compilation time the specified api:data.model.naming.NamingStrategy[] implementation must be on the annotation processor classpath (`annotationProcessor` scope for Java or `kapt` for Kotlin).
+
+In addition, if you don't want to repeat the above annotation definition on every entity it is handy to define a meta-annotation where the above annotation definition is applied to another annotation that you add to your class.

@@ -1,6 +1,7 @@
 plugins {
     id "groovy"
     id "io.micronaut.application"
+    id "io.micronaut.build.internal.data-example"
 }
 
 repositories {

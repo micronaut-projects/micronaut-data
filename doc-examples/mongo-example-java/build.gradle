@@ -1,0 +1,43 @@
+plugins {
+    id "java"
+    id "io.micronaut.application"
+    id "io.micronaut.build.internal.data-example"
+}
+
+repositories {
+    mavenCentral()
+}
+
+application {
+    mainClass = "example.Application"
+}
+
+micronaut {
+    version micronautVersion
+    runtime "netty"
+    testRuntime "junit5"
+}
+
+dependencies {
+    annotationProcessor projects.dataDocumentProcessor
+
+    implementation 'io.micronaut.rxjava2:micronaut-rxjava2'
+    implementation 'io.micronaut.reactor:micronaut-reactor'
+
+    implementation "io.micronaut:micronaut-http-client"
+    implementation projects.dataMongo
+    implementation libs.mongodb.driver.sync
+
+    compileOnly "javax.persistence:javax.persistence-api:$javaxPersistenceVersion"
+    implementation "jakarta.persistence:jakarta.persistence-api:$jakartaPersistenceVersion"
+    implementation 'jakarta.transaction:jakarta.transaction-api:1.3.3'
+
+    runtimeOnly "ch.qos.logback:logback-classic"
+
+    testImplementation "org.testcontainers:mongodb"
+}
+
+project.afterEvaluate {
+    nativeImage.enabled = false
+    testNativeImage.enabled = false
+}

@@ -47,7 +47,7 @@ public class DefaultSaveOneAsyncInterceptor<T> extends AbstractAsyncInterceptor<
     @Override
     public CompletionStage<Object> intercept(RepositoryMethodKey methodKey, MethodInvocationContext<T, CompletionStage<Object>> context) {
         Class<?> rootEntity = getRequiredRootEntity(context);
-        Map<String, Object> parameterValueMap = context.getParameterValueMap();
+        Map<String, Object> parameterValueMap = getParameterValueMap(context);
         Executor executor = asyncDatastoreOperations.getExecutor();
         return CompletableFuture.supplyAsync(() -> {
             Object o = instantiateEntity(rootEntity, parameterValueMap);

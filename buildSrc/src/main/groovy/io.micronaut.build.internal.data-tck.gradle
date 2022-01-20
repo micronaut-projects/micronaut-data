@@ -1,0 +1,8 @@
+plugins {
+    id "groovy"
+    id "io.micronaut.build.internal.data-base"
+}
+
+ext {
+    skipDocumentation = true
+}

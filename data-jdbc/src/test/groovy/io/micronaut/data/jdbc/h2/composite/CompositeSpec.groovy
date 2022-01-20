@@ -154,20 +154,20 @@ class CompositeSpec extends Specification implements H2TestPropertyProvider {
 
         then:
             citizen.id
-            verifyAll(citizen.settlements[0]) {
-                settlement.id
-                settlement.id.code == "20010"
-                settlement.id.codeId == 9
-                settlement.id.county.countyName == "Czech Republic"
-                settlement.id.county.id
-                settlement.id.county.id.id == 44
-                settlement.id.county.id.state.id == 12
-                settlement.zone.id == 1
-                settlement.zone.name == "Danger"
-                settlement.settlementType.id == 1
-                settlement.settlementType.name == "Some"
-                settlement.description == "New settlement MODIFIED"
-                settlement.enabled
+            verifyAll(citizen.settlements[0]) {it ->
+                it.id
+                it.id.code == "20010"
+                it.id.codeId == 9
+                it.id.county.countyName == "Czech Republic"
+                it.id.county.id
+                it.id.county.id.id == 44
+                it.id.county.id.state.id == 12
+                it.zone.id == 1
+                it.zone.name == "Danger"
+                it.settlementType.id == 1
+                it.settlementType.name == "Some"
+                it.description == "New settlement MODIFIED"
+                it.enabled
             }
 
         when:

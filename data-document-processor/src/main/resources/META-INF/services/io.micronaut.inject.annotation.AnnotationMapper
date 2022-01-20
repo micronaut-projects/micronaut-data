@@ -1,0 +1,4 @@
+io.micronaut.data.document.processor.mapper.MappedEntityMapper
+io.micronaut.data.document.processor.mapper.MappedIdMapper
+io.micronaut.data.document.processor.mapper.MappedPropertyMapper
+io.micronaut.data.document.processor.mapper.MappedRelationMapper

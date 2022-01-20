@@ -36,6 +36,7 @@ import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.Embedded;
+import io.micronaut.data.model.PersistentAssociationPath;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.naming.NamingStrategy;
 import io.micronaut.data.model.query.JoinPath;
@@ -366,12 +367,12 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
         }
         if (instance != null && (ctx.association == null || ctx.jp != null)) {
             if (parent != null && ctx.association != null && ctx.association.isBidirectional()) {
-                RuntimeAssociation inverseAssociation = (RuntimeAssociation) ctx.association.getInverseSide().get();
-                if (inverseAssociation.getKind().isSingleEnded()) {
-                    BeanProperty inverseProperty = inverseAssociation.getProperty();
-                    Object inverseInstance = inverseProperty.get(instance);
+                PersistentAssociationPath inverse = ctx.association.getInversePathSide().get();
+                Association association = inverse.getAssociation();
+                if (association.getKind().isSingleEnded()) {
+                    Object inverseInstance = inverse.getPropertyValue(instance);
                     if (inverseInstance != parent) {
-                        instance = setProperty(inverseProperty, instance, parent);
+                        instance = inverse.setPropertyValue(instance, parent);
                     }
                 }
             }

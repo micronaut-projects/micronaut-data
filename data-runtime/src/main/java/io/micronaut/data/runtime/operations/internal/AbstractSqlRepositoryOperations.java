@@ -26,6 +26,8 @@ import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.DataType;
+import io.micronaut.data.model.Embedded;
+import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.query.QueryModel;
 import io.micronaut.data.model.query.QueryParameter;
@@ -34,6 +36,7 @@ import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
 import io.micronaut.data.model.runtime.PreparedQuery;
+import io.micronaut.data.model.runtime.QueryParameterBinding;
 import io.micronaut.data.model.runtime.RuntimeAssociation;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
@@ -50,6 +53,7 @@ import io.micronaut.inject.qualifiers.Qualifiers;
 import org.slf4j.Logger;
 
 import java.nio.charset.StandardCharsets;
+import java.util.AbstractMap;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -57,6 +61,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Abstract SQL repository implementation not specifically bound to JDBC.
@@ -69,10 +74,9 @@ import java.util.stream.Collectors;
  * @author Denis Stepanov
  * @since 1.0.0
  */
-@SuppressWarnings("FileLength")
 @Internal
 public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends Exception>
-        extends AbstractRepositoryOperations<Cnt, PS, Exc>
+        extends AbstractRepositoryOperations<Cnt, PS>
         implements ApplicationContextProvider, OpContext<Cnt, PS> {
     protected static final Logger QUERY_LOG = DataSettings.QUERY_LOG;
     protected static final SqlQueryBuilder DEFAULT_SQL_BUILDER = new SqlQueryBuilder();
@@ -312,6 +316,115 @@ public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends E
     }
 
     /**
+     * Resolve SQL insert association operation.
+     *
+     * @param repositoryType   The repository type
+     * @param dialect          The dialect
+     * @param association      The association
+     * @param persistentEntity The persistent entity
+     * @param entity           The entity
+     * @param <T>              The entity type
+     * @return The operation
+     */
+    protected <T> DBOperation resolveSqlInsertAssociation(Class<?> repositoryType, Dialect dialect, RuntimeAssociation<T> association, RuntimePersistentEntity<T> persistentEntity, T entity) {
+        String sqlInsert = resolveAssociationInsert(repositoryType, persistentEntity, association);
+        return new DBOperation(sqlInsert, dialect) {
+
+            @Override
+            public <T, Cnt, PS> void setParameters(OpContext<Cnt, PS> context, Cnt connection, PS ps, RuntimePersistentEntity<T> pe, T e, Map<QueryParameterBinding, Object> previousValues) {
+                int i = 0;
+                for (Map.Entry<PersistentProperty, Object> property : idPropertiesWithValues(persistentEntity.getIdentity(), entity).collect(Collectors.toList())) {
+                    Object value = context.convert(connection, property.getValue(), (RuntimePersistentProperty<?>) property.getKey());
+                    context.setStatementParameter(
+                            ps,
+                            shiftIndex(i++),
+                            property.getKey().getDataType(),
+                            value,
+                            dialect);
+                }
+                for (Map.Entry<PersistentProperty, Object> property : idPropertiesWithValues(pe.getIdentity(), e).collect(Collectors.toList())) {
+                    Object value = context.convert(connection, property.getValue(), (RuntimePersistentProperty<?>) property.getKey());
+                    context.setStatementParameter(
+                            ps,
+                            shiftIndex(i++),
+                            property.getKey().getDataType(),
+                            value,
+                            dialect);
+                }
+            }
+        };
+    }
+
+    private Stream<Map.Entry<PersistentProperty, Object>> idPropertiesWithValues(PersistentProperty property, Object value) {
+        Object propertyValue = ((RuntimePersistentProperty) property).getProperty().get(value);
+        if (property instanceof Embedded) {
+            Embedded embedded = (Embedded) property;
+            PersistentEntity embeddedEntity = embedded.getAssociatedEntity();
+            return embeddedEntity.getPersistentProperties()
+                    .stream()
+                    .flatMap(prop -> idPropertiesWithValues(prop, propertyValue));
+        } else if (property instanceof Association) {
+            Association association = (Association) property;
+            if (association.isForeignKey()) {
+                return Stream.empty();
+            }
+            PersistentEntity associatedEntity = association.getAssociatedEntity();
+            PersistentProperty identity = associatedEntity.getIdentity();
+            if (identity == null) {
+                throw new IllegalStateException("Identity cannot be missing for: " + associatedEntity);
+            }
+            return idPropertiesWithValues(identity, propertyValue);
+        }
+        return Stream.of(new AbstractMap.SimpleEntry<>(property, propertyValue));
+    }
+
+    /**
+     * Does supports batch for update queries.
+     *
+     * @param persistentEntity The persistent entity
+     * @param dialect          The dialect
+     * @return true if supported
+     */
+    protected boolean isSupportsBatchInsert(PersistentEntity persistentEntity, Dialect dialect) {
+        switch (dialect) {
+            case SQL_SERVER:
+                return false;
+            case MYSQL:
+            case ORACLE:
+                if (persistentEntity.getIdentity() != null) {
+                    // Oracle and MySql doesn't support a batch with returning generated ID: "DML Returning cannot be batched"
+                    return !persistentEntity.getIdentity().isGenerated();
+                }
+                return false;
+            default:
+                return true;
+        }
+    }
+
+    /**
+     * Does supports batch for update queries.
+     *
+     * @param persistentEntity The persistent entity
+     * @param dialect          The dialect
+     * @return true if supported
+     */
+    protected boolean isSupportsBatchUpdate(PersistentEntity persistentEntity, Dialect dialect) {
+        return true;
+    }
+
+    /**
+     * Does supports batch for delete queries.
+     *
+     * @param persistentEntity The persistent entity
+     * @param dialect          The dialect
+     * @return true if supported
+     */
+    protected boolean isSupportsBatchDelete(PersistentEntity persistentEntity, Dialect dialect) {
+        return true;
+    }
+
+
+    /**
      * Used to cache queries for entities.
      */
     private class QueryKey {
@@ -340,6 +453,17 @@ public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends E
         public int hashCode() {
             return Objects.hash(repositoryType, entityType);
         }
+    }
+
+
+    /**
+     * Functional interface used to supply a statement.
+     *
+     * @param <PS> The prepared statement type
+     */
+    @FunctionalInterface
+    protected interface StatementSupplier<PS> {
+        PS create(String ps) throws Exception;
     }
 
 }

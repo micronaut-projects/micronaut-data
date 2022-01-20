@@ -1,0 +1,41 @@
+plugins {
+    id "io.micronaut.build.internal.data-module"
+}
+
+dependencies {
+    annotationProcessor projects.dataDocumentProcessor
+    annotationProcessor mn.micronaut.inject.java
+    annotationProcessor mn.micronaut.graal
+    annotationProcessor "io.micronaut.docs:micronaut-docs-asciidoc-config-props:$micronautDocsVersion"
+
+    api projects.dataRuntime
+    api projects.dataDocumentModel
+    api libs.micronaut.serde.bson
+    api libs.micronaut.serde.support
+
+    implementation libs.mongodb.driver.sync
+    implementation libs.mongodb.driver.reactivestreams
+    implementation mn.micronaut.mongo
+    implementation mn.micronaut.mongo.sync
+    implementation "io.micronaut:micronaut-management"
+
+    compileOnly "io.micronaut.reactor:micronaut-reactor"
+
+    testAnnotationProcessor projects.dataDocumentProcessor
+    testAnnotationProcessor mn.micronaut.inject.java
+
+    testImplementation projects.dataDocumentProcessor
+    testImplementation projects.dataDocumentTck
+    testCompileOnly mn.micronaut.inject.groovy
+
+    testImplementation 'io.micronaut.rxjava2:micronaut-rxjava2'
+    testImplementation "io.micronaut.reactor:micronaut-reactor"
+
+    testImplementation "jakarta.persistence:jakarta.persistence-api:$jakartaPersistenceVersion"
+    testImplementation "io.micronaut:micronaut-validation"
+    testImplementation "org.testcontainers:spock"
+    testImplementation "org.testcontainers:mongodb"
+
+    testAnnotationProcessor "jakarta.persistence:jakarta.persistence-api:$jakartaPersistenceVersion"
+    testImplementation "jakarta.persistence:jakarta.persistence-api:$jakartaPersistenceVersion"
+}

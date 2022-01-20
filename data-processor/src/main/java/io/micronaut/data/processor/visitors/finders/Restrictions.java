@@ -102,29 +102,6 @@ public final class Restrictions {
         }
     }
 
-//    /**
-//     * Id restriction.
-//     */
-//    public static class PropertyId<T> implements Restriction<T> {
-//
-//        @Override
-//        public String getName() {
-//            return "Id";
-//        }
-//
-//        @Override
-//        public int getRequiredParameters() {
-//            return 1;
-//        }
-//
-//        @Override
-//        public Predicate find(PersistentEntityRoot<?> entityRoot,
-//                              PersistentEntityCriteriaBuilder cb,
-//                              ParameterExpression<T>[] parameters) {
-//            return cb.equal(entityRoot.id(), parameters[0]);
-//        }
-//    }
-
     /**
      * Greater than expression.
      *
@@ -230,6 +207,21 @@ public final class Restrictions {
         @Override
         public String getName() {
             return "Like";
+        }
+    }
+
+    /**
+     * Regex criterion.
+     */
+    public static class PropertyRegex extends SinglePropertyExpressionRestriction<String> {
+
+        public PropertyRegex() {
+            super(PersistentEntityCriteriaBuilder::regex);
+        }
+
+        @Override
+        public String getName() {
+            return "Regex";
         }
     }
 

@@ -5,6 +5,7 @@ plugins {
     id "org.jetbrains.kotlin.plugin.allopen"
     id "org.jetbrains.kotlin.plugin.jpa"
     id "io.micronaut.application"
+    id "io.micronaut.build.internal.data-example"
 }
 
 repositories {

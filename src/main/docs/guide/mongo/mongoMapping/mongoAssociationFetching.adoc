@@ -1,0 +1,13 @@
+Micronaut Data is a simple data mapper, hence it will not fetch any associations for you using techniques like lazy loading of entity proxies for single-ended associations.
+
+You must instead specify ahead of time what data you want to fetch. You cannot map an association as being eager or lazy. The reason for this design choice is simple, even in the JPA world accessing lazy associations or lazy initialization collections is considered bad practice due to the N+1 query issue and the recommendation is always to write an optimized join query.
+
+Micronaut Data MongoDB takes this a step further by simply not supporting those features considered bad practice anyway. However, it does impact how you may model an association. For example, if you define an association in a constructor argument such as the following entity:
+
+snippet::example.Product[project-base="doc-examples/mongo-example", source="main"]
+
+Then attempt to read the `Product` entity back without specifying a join an exception will occur since the `manufacturer` association is not `Nullable`.
+
+There are few ways around this, one way is to declare at the repository level to always fetch `manufacturer`, another is declare the `@Nullable` annotation on the `manufacturer` argument to allow it to be declared `null` (or in Kotlin add `?` to the end of the constructor argument name). Which approach you choose is dependent on the design of the application.
+
+The following section provides more coverage on handling joins.

@@ -1,0 +1,26 @@
+As seen in the <<mongoQuickStart, Quick Start>> MongoDB repositories in Micronaut Data are defined as interfaces that are annotated with the ann:data.mongo.annotation.MongoRepository[].
+
+In multiple datasource scenario, the ann:data.annotation.Repository[] annotation can be used to specify the datasource configuration to use. By default, Micronaut Data will look for the default datasource.
+
+For example: 
+[source,java]
+----
+@Repository(value = "inventoryServer") // <1>
+@MongoRepository // <2>
+public interface PhoneRepository extends CrudRepository<Phone, Integer> {
+    Optional<Phone> findByAssetId(@NotNull Integer assetId);
+}
+----
+<1> @Repository annotation, pointing to MongoDB server configuration 'inventoryServer'
+<2> @MongoRepository marking the interface to access MongoDB
+
+
+The entity to treat as the root entity for the purposes of querying is established either from the method signature or from the generic type parameter specified to the api:data.repository.GenericRepository[] interface.
+
+If no root entity can be established then a compilation error will occur.
+
+The same interfaces supported by the JPA implementation are supported by MongoDB.
+
+Note that in addition to interfaces you can also define repositories as abstract classes:
+
+snippet::example.AbstractBookRepository[project-base="doc-examples/mongo-example", source="main"]

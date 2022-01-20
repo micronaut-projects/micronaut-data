@@ -1,3 +1,7 @@
+plugins {
+    id "io.micronaut.build.internal.data-module"
+}
+
 dependencies {
     annotationProcessor "io.micronaut:micronaut-inject-java"
     implementation "io.micronaut:micronaut-inject"
@@ -22,11 +26,4 @@ dependencies {
     testRuntimeOnly "com.h2database:h2"
     testRuntimeOnly "io.micronaut.sql:micronaut-jdbc-tomcat"
 
-}
-tasks.withType(GroovyCompile) {
-    groovyOptions.forkOptions.jvmArgs.add('-Dgroovy.parameters=true')
-}
-tasks.withType(JavaCompile){
-    options.encoding = "UTF-8"
-    options.compilerArgs.add('-parameters')
 }

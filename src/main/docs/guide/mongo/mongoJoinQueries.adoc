@@ -1,0 +1,41 @@
+As discussed in the previous section, Micronaut Data MongoDB doesn't support associations in the traditional ORM sense. There is no lazy loading or support for proxies.
+
+Consider a `Product` entity from the previous section that has an association to a `Manufacturer` entity:
+
+snippet::example.Manufacturer[project-base="doc-examples/mongo-example", source="main"]
+
+Say you query for `Product` instances, what happens is that by default Micronaut Data MongoDB will only query for and fetch the simple properties. In the case of single ended associations like the above Micronaut Data will only retrieve the ID and assign it if is possible (In the case of entities that require constructor arguments this is not even possible).
+
+If you need to fetch the association too then you can use the ann:data.annotation.Join[] annotation on your repository interface to specify that the aggregation should be executed to with a lookup of the associated `Manufacturer`.
+
+snippet::example.ProductRepository[project-base="doc-examples/mongo-example", source="main",tags="join"]
+<1> List query should include joined relation `manufacturer` from a different collection
+
+Micronaut Data MongoDB will generate the following aggregation JSON query at the compile-time and only bind the required parameters and the runtime:
+
+[source,json]
+----
+[
+   {
+      "$lookup":{
+         "from":"cart_item",
+         "localField":"_id",
+         "foreignField":"cart._id",
+         "as":"items"
+      }
+   },
+   {
+      "$match":{
+         "_id":{
+            "$eq":{
+               "$oid":"61d69d67e8cb2c06b66d2e67"
+            }
+         }
+      }
+   }
+]
+----
+
+Note that the ann:data.annotation.Join[] annotation is repeatable and hence can be specified multiple time for different associations.
+
+NOTE: Micronaut Data MongoDB doesn't support different join types or a custom alias defined in ann:data.annotation.Join[].

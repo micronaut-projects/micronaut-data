@@ -16,7 +16,9 @@
 package io.micronaut.data.runtime.intercept.criteria;
 
 import io.micronaut.aop.MethodInvocationContext;
+import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Nullable;
+import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.reflect.ClassUtils;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.annotation.RepositoryConfiguration;
@@ -28,6 +30,7 @@ import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaDelete;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQuery;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaUpdate;
 import io.micronaut.data.model.jpa.criteria.impl.QueryResultPersistentEntityCriteriaQuery;
+import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.runtime.PreparedQuery;
@@ -63,7 +66,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQueryInterceptor<T, R> {
 
-    private final Map<RepositoryMethodKey, SqlQueryBuilder> sqlQueryBuilderForRepositories = new ConcurrentHashMap<>();
+    private final Map<RepositoryMethodKey, QueryBuilder> sqlQueryBuilderForRepositories = new ConcurrentHashMap<>();
     private final RuntimeCriteriaBuilder criteriaBuilder;
 
     /**
@@ -90,7 +93,17 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
             }
         }
 
-        SqlQueryBuilder sqlQueryBuilder = sqlQueryBuilderForRepositories.computeIfAbsent(methodKey, repositoryMethodKey -> new SqlQueryBuilder(context.getAnnotationMetadata()));
+        QueryBuilder sqlQueryBuilder = sqlQueryBuilderForRepositories.computeIfAbsent(methodKey, repositoryMethodKey -> {
+                    Class<QueryBuilder> builder = context.getAnnotationMetadata().classValue(RepositoryConfiguration.class, "queryBuilder")
+                            .orElseThrow(() -> new IllegalStateException("Cannot determine QueryBuilder"));
+                    BeanIntrospection<QueryBuilder> introspection = BeanIntrospection.getIntrospection(builder);
+                    if (introspection.getConstructorArguments().length == 1
+                            && introspection.getConstructorArguments()[0].getType() == AnnotationMetadata.class) {
+                        return introspection.instantiate(context.getAnnotationMetadata());
+                    }
+                    return introspection.instantiate();
+                }
+        );
 
         QueryResult queryResult;
 
@@ -148,6 +161,7 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
         }
 
         String query = queryResult.getQuery();
+        String update = queryResult.getUpdate();
         List<io.micronaut.data.model.query.builder.QueryParameterBinding> parameterBindings = queryResult.getParameterBindings();
 
         List<QueryParameterBinding> queryParameters = new ArrayList<>(parameterBindings.size());
@@ -165,14 +179,15 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
         } else if (type == Type.FIND_ALL) {
             storedQuery = createFindAllStoredQuery(context, rootEntity, query, queryParts, queryParameters, !pageable.isUnpaged());
         } else {
-            storedQuery = createFindOneStoredQuery(context, rootEntity, query, queryParts, queryParameters);
+            storedQuery = createFindOneStoredQuery(context, rootEntity, query, update, queryParts, queryParameters);
         }
-        return new DefaultPreparedQuery<E, QR>(context, storedQuery, query, pageable, false);
+        return preparedQueryResolver.resolveQuery(context, storedQuery, pageable);
     }
 
     private <E, QR> StoredQuery<E, QR> createFindOneStoredQuery(MethodInvocationContext<T, R> context,
                                                                 Class<Object> rootEntity,
                                                                 String query,
+                                                                String update,
                                                                 String[] queryParts,
                                                                 List<QueryParameterBinding> queryParameters) {
         return new StoredQuery<E, QR>() {
@@ -189,6 +204,11 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
             @Override
             public String getQuery() {
                 return query;
+            }
+
+            @Override
+            public String getUpdate() {
+                return update;
             }
 
             @Override

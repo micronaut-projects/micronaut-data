@@ -34,6 +34,10 @@ class H2EmbeddedCascadeSpec extends Specification implements H2TestPropertyProvi
     @Inject
     TemplateRepository templateRepository = applicationContext.getBean(TemplateRepository)
 
+    @Shared
+    @Inject
+    TagRepository tagRepository = applicationContext.getBean(TagRepository)
+
     void "test embedded cascade"() {
         when:
             Template template = new Template()
@@ -62,6 +66,10 @@ interface TemplateRepository extends CrudRepository<Template, Long> {
     @Join("tags")
     @Override
     Optional<Template> findById(Long aLong);
+}
+
+@JdbcRepository(dialect = Dialect.H2)
+interface TagRepository extends CrudRepository<Tag, TagPK> {
 }
 
 @MappedEntity

@@ -61,7 +61,7 @@ trait DatabaseTestPropertyProvider implements TestPropertyProvider {
             case "sqlserver":
                 return new MSSQLServerContainer<>()
             case "oracle":
-                return new OracleContainer(DockerImageName.parse("gvenzl/oracle-xe:18"))
+                return new OracleContainer(DockerImageName.parse("gvenzl/oracle-xe:18.4.0"))
                         .withEnv("ORACLE_PASSWORD", "password")
                         .withPassword("password")
             case "mariadb":

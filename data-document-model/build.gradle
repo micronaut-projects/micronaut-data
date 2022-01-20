@@ -1,0 +1,39 @@
+plugins {
+    id "io.micronaut.build.internal.data-module"
+    id "org.jetbrains.kotlin.jvm"
+}
+
+dependencies {
+    annotationProcessor "io.micronaut:micronaut-inject-java:$micronautVersion"
+    annotationProcessor "io.micronaut:micronaut-graal:$micronautVersion"
+    api "io.micronaut:micronaut-inject:$micronautVersion"
+    api "io.micronaut:micronaut-validation:$micronautVersion"
+    api "io.micronaut:micronaut-aop:$micronautVersion"
+    api projects.dataModel
+
+    compileOnly "jakarta.persistence:jakarta.persistence-api:$jakartaPersistenceVersion"
+    compileOnly "io.reactivex.rxjava2:rxjava:$rxJava2Version"
+    implementation "io.projectreactor:reactor-core"
+    testImplementation "io.micronaut:micronaut-inject-java-test:$micronautVersion"
+    compileOnly "com.fasterxml.jackson.core:jackson-annotations"
+    compileOnly "com.fasterxml.jackson.core:jackson-databind"
+    testImplementation "com.fasterxml.jackson.core:jackson-databind"
+
+    compileOnly "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlinVersion"
+    compileOnly "org.jetbrains.kotlinx:kotlinx-coroutines-core"
+    compileOnly "jakarta.persistence:jakarta.persistence-api:$jakartaPersistenceVersion"
+
+    compileOnly libs.micronaut.serde.api
+}
+
+compileKotlin {
+    kotlinOptions {
+        jvmTarget = '1.8'
+    }
+}
+
+compileTestKotlin {
+    kotlinOptions {
+        jvmTarget = '1.8'
+    }
+}

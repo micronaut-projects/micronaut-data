@@ -139,6 +139,11 @@ public class AsyncFromReactiveAsyncRepositoryOperation implements AsyncRepositor
         return toCompletionStage(reactiveOperations.executeUpdate(preparedQuery));
     }
 
+    @Override
+    public CompletionStage<Number> executeDelete(PreparedQuery<?, Number> preparedQuery) {
+        return toCompletionStage(reactiveOperations.executeDelete(preparedQuery));
+    }
+
     @NonNull
     @Override
     public <T> CompletionStage<Number> deleteAll(@NonNull DeleteBatchOperation<T> operation) {

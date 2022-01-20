@@ -185,6 +185,8 @@ public final class QueryModelPredicateVisitor implements PredicateVisitor {
                 return Restrictions.rlike(leftProperty, rightProperty);
             case LIKE:
                 return Restrictions.like(leftProperty, rightProperty);
+            case REGEX:
+                return Restrictions.regex(leftProperty, rightProperty);
             case EQUALS_IGNORE_CASE:
                 return Restrictions.eq(leftProperty, rightProperty).ignoreCase(true);
             case NOT_EQUALS_IGNORE_CASE:

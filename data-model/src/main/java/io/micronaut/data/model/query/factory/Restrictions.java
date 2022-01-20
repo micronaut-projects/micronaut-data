@@ -105,6 +105,16 @@ public class Restrictions {
     }
 
     /**
+     * Restricts the property match the given regex expressions.
+     * @param property The property name
+     * @param expression The expression
+     * @return An instance of Query.Like
+     */
+    public static QueryModel.Regex regex(String property, Object expression) {
+        return new QueryModel.Regex(property, expression);
+    }
+
+    /**
      * Restricts the property match to strings starting with the given value.
      *
      * @param property The property name

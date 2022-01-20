@@ -7,6 +7,9 @@ plugins {
 version "0.1"
 group "example"
 
+repositories {
+    mavenCentral()
+}
 
 configurations {
     // for dependencies that are needed for development only

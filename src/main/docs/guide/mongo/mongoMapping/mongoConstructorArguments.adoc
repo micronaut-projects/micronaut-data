@@ -1,0 +1,7 @@
+Micronaut Data MongoDB also allows the definition of immutable objects using constructor arguments instead of getters/setters. If you define multiple constructors then the one used to create the object from the database should be annotated with `io.micronaut.core.annotation.Creator`.
+
+For example:
+
+snippet::example.Manufacturer[project-base="doc-examples/mongo-example", source="main"]
+
+As you can see from the example above, the `ID` of the object should however include a setter since this has to be assigned from the database generated value.

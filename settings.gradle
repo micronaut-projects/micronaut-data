@@ -2,6 +2,7 @@ pluginManagement {
     plugins {
         id 'io.micronaut.application' version getProperty("micronautGradlePluginVersion")
         id 'io.micronaut.library' version getProperty("micronautGradlePluginVersion")
+        id 'io.micronaut.build.shared.settings' version getProperty("micronautSharedSettingVersion")
         id "org.jetbrains.kotlin.jvm" version getProperty("kotlinVersion")
         id "org.jetbrains.kotlin.kapt" version getProperty("kotlinVersion")
         id "org.jetbrains.kotlin.plugin.allopen" version getProperty("kotlinVersion")
@@ -14,7 +15,21 @@ pluginManagement {
 }
 
 plugins {
-    id 'io.micronaut.build.shared.settings' version '4.1.4'
+    id 'io.micronaut.build.shared.settings'
+}
+
+enableFeaturePreview("VERSION_CATALOGS")
+enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
+
+dependencyResolutionManagement {
+    repositories {
+        mavenCentral()
+    }
+    versionCatalogs {
+        "mn" {
+            from("io.micronaut:micronaut-bom:${providers.gradleProperty("micronautVersion").get()}")
+        }
+    }
 }
 
 rootProject.name = 'data'
@@ -22,17 +37,21 @@ rootProject.name = 'data'
 include 'data-bom'
 include 'data-model'
 include 'data-processor'
+include 'data-document-processor'
 include 'data-runtime'
 include 'data-tx'
+include 'data-document-model'
 
 // Test Compatibility Kit
 include 'data-tck'
+include 'data-document-tck'
 
 // implementations
 include 'data-hibernate-jpa'
 include 'data-tx-hibernate'
 include 'data-jdbc'
 include 'data-r2dbc'
+include 'data-mongo'
 
 // Spring compatibility
 include 'data-spring'
@@ -49,6 +68,9 @@ include 'doc-examples:jdbc-example-kotlin'
 include 'doc-examples:r2dbc-example-java'
 include 'doc-examples:r2dbc-example-groovy'
 include 'doc-examples:r2dbc-example-kotlin'
+include 'doc-examples:mongo-example-java'
+include 'doc-examples:mongo-example-groovy'
+include 'doc-examples:mongo-example-kotlin'
 if (JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_15)) {
     include 'doc-examples:jdbc-example-records-java'
 }

@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.processor.visitors.finders;
 
+import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.reflect.ClassUtils;
 import io.micronaut.core.util.ArrayUtils;
@@ -85,11 +86,11 @@ public class SaveOneMethodMatcher extends AbstractPrefixPatternMethodMatcher {
                     Map<String, ParameterElement> constructorArgs = new HashMap<>(10);
                     if (ArrayUtils.isNotEmpty(parameterElements)) {
                         for (ParameterElement parameterElement : parameterElements) {
-                            constructorArgs.put(parameterElement.getName(), parameterElement);
+                            constructorArgs.put(getParameterValue(parameterElement), parameterElement);
                         }
                     }
                     for (ParameterElement parameter : parameters) {
-                        String name = parameter.getName();
+                        String name = getParameterValue(parameter);
                         ClassElement type = parameter.getGenericType();
 
                         SourcePersistentProperty prop = rootEntity.getPropertyByName(name);
@@ -122,7 +123,7 @@ public class SaveOneMethodMatcher extends AbstractPrefixPatternMethodMatcher {
                         Set<String> names = values.stream().filter(pe -> {
                             SourcePersistentProperty prop = rootEntity.getPropertyByName(pe.getName());
                             return prop != null && prop.isRequired() && !prop.getType().isPrimitive();
-                        }).map(ParameterElement::getName).collect(Collectors.toSet());
+                        }).map(p -> getParameterValue(p)).collect(Collectors.toSet());
                         if (CollectionUtils.isNotEmpty(names)) {
                             throw new MatchFailedException("Save method missing required constructor arguments: " + names);
                         }
@@ -152,6 +153,10 @@ public class SaveOneMethodMatcher extends AbstractPrefixPatternMethodMatcher {
             };
         }
         return null;
+    }
+
+    private String getParameterValue(ParameterElement p) {
+        return p.stringValue(Parameter.class).orElseGet(p::getName);
     }
 
     /**
