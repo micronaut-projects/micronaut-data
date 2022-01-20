@@ -59,9 +59,11 @@
                                 
                                 <div class="toc-item" style="margin-left:0"><a href="#sql"><strong>8</strong><span>Micronaut Data with SQL</span></a></div>
                                 
-                                <div class="toc-item" style="margin-left:0"><a href="#graal"><strong>9</strong><span>Going Native with GraalVM</span></a></div>
+                                <div class="toc-item" style="margin-left:0"><a href="#mongo"><strong>9</strong><span>Micronaut Data MongoDB</span></a></div>
                                 
-                                <div class="toc-item" style="margin-left:0"><a href="#spring"><strong>10</strong><span>Spring Data Support</span></a></div>
+                                <div class="toc-item" style="margin-left:0"><a href="#graal"><strong>10</strong><span>Going Native with GraalVM</span></a></div>
+                                
+                                <div class="toc-item" style="margin-left:0"><a href="#spring"><strong>11</strong><span>Spring Data Support</span></a></div>
                                 
                             </div>
                         </div>
@@ -222,9 +224,47 @@
         
         <div class="toc-item" style="margin-left:30px" id="toc-item-r2entityEvents"><a href="#r2entityEvents"><strong>8.1.10.3</strong><span>Reactive Entity Events</span></a></div>
         
-        <div class="toc-item" style="margin-left:0px" id="toc-item-graal"><a href="#graal"><strong>9</strong><span>Going Native with GraalVM</span></a></div>
+        <div class="toc-item" style="margin-left:0px" id="toc-item-mongo"><a href="#mongo"><strong>9</strong><span>Micronaut Data MongoDB</span></a></div>
         
-        <div class="toc-item" style="margin-left:0px" id="toc-item-spring"><a href="#spring"><strong>10</strong><span>Spring Data Support</span></a></div>
+        <div class="toc-item" style="margin-left:10px" id="toc-item-mongoQuickStart"><a href="#mongoQuickStart"><strong>9.1</strong><span>Quick Start</span></a></div>
+        
+        <div class="toc-item" style="margin-left:10px" id="toc-item-mongoRepositories"><a href="#mongoRepositories"><strong>9.2</strong><span>Repositories</span></a></div>
+        
+        <div class="toc-item" style="margin-left:10px" id="toc-item-mongoMapping"><a href="#mongoMapping"><strong>9.3</strong><span>Mapping Entities</span></a></div>
+        
+        <div class="toc-item" style="margin-left:20px" id="toc-item-mongoAnnotations"><a href="#mongoAnnotations"><strong>9.3.1</strong><span>Mapping Annotations</span></a></div>
+        
+        <div class="toc-item" style="margin-left:20px" id="toc-item-mongoIdGenerator"><a href="#mongoIdGenerator"><strong>9.3.2</strong><span>ID Generation</span></a></div>
+        
+        <div class="toc-item" style="margin-left:20px" id="toc-item-mongoCompositeId"><a href="#mongoCompositeId"><strong>9.3.3</strong><span>Composite Primary Keys</span></a></div>
+        
+        <div class="toc-item" style="margin-left:20px" id="toc-item-mongoConstructorArguments"><a href="#mongoConstructorArguments"><strong>9.3.4</strong><span>Constructor Arguments</span></a></div>
+        
+        <div class="toc-item" style="margin-left:20px" id="toc-item-mongoNaming"><a href="#mongoNaming"><strong>9.3.5</strong><span>Naming Strategies</span></a></div>
+        
+        <div class="toc-item" style="margin-left:20px" id="toc-item-mongoAssociationMapping"><a href="#mongoAssociationMapping"><strong>9.3.6</strong><span>Association Mapping</span></a></div>
+        
+        <div class="toc-item" style="margin-left:20px" id="toc-item-mongoAssociationFetching"><a href="#mongoAssociationFetching"><strong>9.3.7</strong><span>Association Fetching</span></a></div>
+        
+        <div class="toc-item" style="margin-left:10px" id="toc-item-mongoJoinQueries"><a href="#mongoJoinQueries"><strong>9.4</strong><span>Join Queries</span></a></div>
+        
+        <div class="toc-item" style="margin-left:10px" id="toc-item-mongoAttributeConverter"><a href="#mongoAttributeConverter"><strong>9.5</strong><span>Using Attribute Converter</span></a></div>
+        
+        <div class="toc-item" style="margin-left:10px" id="toc-item-mongoCriteriaSpecifications"><a href="#mongoCriteriaSpecifications"><strong>9.6</strong><span>Respositories with Criteria API</span></a></div>
+        
+        <div class="toc-item" style="margin-left:20px" id="toc-item-mongoCriteriaExecuteQuery"><a href="#mongoCriteriaExecuteQuery"><strong>9.6.1</strong><span>Querying</span></a></div>
+        
+        <div class="toc-item" style="margin-left:20px" id="toc-item-mongoCriteriaExecuteUpdate"><a href="#mongoCriteriaExecuteUpdate"><strong>9.6.2</strong><span>Updating</span></a></div>
+        
+        <div class="toc-item" style="margin-left:20px" id="toc-item-mongoCriteriaExecuteDelete"><a href="#mongoCriteriaExecuteDelete"><strong>9.6.3</strong><span>Deleting</span></a></div>
+        
+        <div class="toc-item" style="margin-left:20px" id="toc-item-mongoOtherRepositoryVariations"><a href="#mongoOtherRepositoryVariations"><strong>9.6.4</strong><span>Other repository variations</span></a></div>
+        
+        <div class="toc-item" style="margin-left:10px" id="toc-item-mongoOptimisticLocking"><a href="#mongoOptimisticLocking"><strong>9.7</strong><span>Optimistic locking</span></a></div>
+        
+        <div class="toc-item" style="margin-left:0px" id="toc-item-graal"><a href="#graal"><strong>10</strong><span>Going Native with GraalVM</span></a></div>
+        
+        <div class="toc-item" style="margin-left:0px" id="toc-item-spring"><a href="#spring"><strong>11</strong><span>Spring Data Support</span></a></div>
         
         </div>
     </div>
@@ -234,7 +274,7 @@
         <h1>Micronaut Data</h1>
         <p></p>
         <p>Data Repository Support for Micronaut</p>
-        <p><strong>Version:</strong> <select style='max-width: 200px' onChange='window.document.location.href=this.options[this.selectedIndex].value;'><option selected='selected' value='https://micronaut-projects.github.io/micronaut-data/snapshot/guide/index.html'>SNAPSHOT</option><option value='https://micronaut-projects.github.io/micronaut-data/3.2.2/guide/index.html'>3.2.2</option><option value='https://micronaut-projects.github.io/micronaut-data/3.2.1/guide/index.html'>3.2.1</option><option value='https://micronaut-projects.github.io/micronaut-data/3.2.0/guide/index.html'>3.2.0</option><option value='https://micronaut-projects.github.io/micronaut-data/3.1.2/guide/index.html'>3.1.2</option><option value='https://micronaut-projects.github.io/micronaut-data/3.1.1/guide/index.html'>3.1.1</option><option value='https://micronaut-projects.github.io/micronaut-data/3.1.0/guide/index.html'>3.1.0</option><option value='https://micronaut-projects.github.io/micronaut-data/3.0.1/guide/index.html'>3.0.1</option><option value='https://micronaut-projects.github.io/micronaut-data/3.0.0/guide/index.html'>3.0.0</option><option value='https://micronaut-projects.github.io/micronaut-data/3.0.0-RC1/guide/index.html'>3.0.0-RC1</option><option value='https://micronaut-projects.github.io/micronaut-data/2.5.0/guide/index.html'>2.5.0</option><option value='https://micronaut-projects.github.io/micronaut-data/2.4.7/guide/index.html'>2.4.7</option><option value='https://micronaut-projects.github.io/micronaut-data/2.4.6/guide/index.html'>2.4.6</option><option value='https://micronaut-projects.github.io/micronaut-data/2.4.5/guide/index.html'>2.4.5</option><option value='https://micronaut-projects.github.io/micronaut-data/2.4.4/guide/index.html'>2.4.4</option><option value='https://micronaut-projects.github.io/micronaut-data/2.4.3/guide/index.html'>2.4.3</option><option value='https://micronaut-projects.github.io/micronaut-data/2.4.2/guide/index.html'>2.4.2</option><option value='https://micronaut-projects.github.io/micronaut-data/2.4.1/guide/index.html'>2.4.1</option><option value='https://micronaut-projects.github.io/micronaut-data/2.4.0/guide/index.html'>2.4.0</option><option value='https://micronaut-projects.github.io/micronaut-data/2.3.1/guide/index.html'>2.3.1</option><option value='https://micronaut-projects.github.io/micronaut-data/2.3.0/guide/index.html'>2.3.0</option><option value='https://micronaut-projects.github.io/micronaut-data/2.2.4/guide/index.html'>2.2.4</option><option value='https://micronaut-projects.github.io/micronaut-data/2.2.3/guide/index.html'>2.2.3</option><option value='https://micronaut-projects.github.io/micronaut-data/2.2.2/guide/index.html'>2.2.2</option><option value='https://micronaut-projects.github.io/micronaut-data/2.2.1/guide/index.html'>2.2.1</option><option value='https://micronaut-projects.github.io/micronaut-data/2.2.0/guide/index.html'>2.2.0</option><option value='https://micronaut-projects.github.io/micronaut-data/2.1.1/guide/index.html'>2.1.1</option><option value='https://micronaut-projects.github.io/micronaut-data/2.1.0/guide/index.html'>2.1.0</option><option value='https://micronaut-projects.github.io/micronaut-data/2.0.1/guide/index.html'>2.0.1</option><option value='https://micronaut-projects.github.io/micronaut-data/2.0.0/guide/index.html'>2.0.0</option><option value='https://micronaut-projects.github.io/micronaut-data/1.1.3/guide/index.html'>1.1.3</option></select></p>
+        <p><strong>Version:</strong> <select style='max-width: 200px' onChange='window.document.location.href=this.options[this.selectedIndex].value;'><option selected='selected' value='https://micronaut-projects.github.io/micronaut-data/snapshot/guide/index.html'>SNAPSHOT</option><option value='https://micronaut-projects.github.io/micronaut-data/3.2.2/guide/index.html'>3.2.2</option><option value='https://micronaut-projects.github.io/micronaut-data/3.2.1/guide/index.html'>3.2.1</option><option value='https://micronaut-projects.github.io/micronaut-data/3.2.0/guide/index.html'>3.2.0</option><option value='https://micronaut-projects.github.io/micronaut-data/3.1.2/guide/index.html'>3.1.2</option><option value='https://micronaut-projects.github.io/micronaut-data/3.1.1/guide/index.html'>3.1.1</option><option value='https://micronaut-projects.github.io/micronaut-data/3.1.0/guide/index.html'>3.1.0</option><option value='https://micronaut-projects.github.io/micronaut-data/3.0.1/guide/index.html'>3.0.1</option><option value='https://micronaut-projects.github.io/micronaut-data/3.0.0/guide/index.html'>3.0.0</option><option value='https://micronaut-projects.github.io/micronaut-data/3.0.0-RC1/guide/index.html'>3.0.0-RC1</option><option value='https://micronaut-projects.github.io/micronaut-data/2.5.0/guide/index.html'>2.5.0</option><option value='https://micronaut-projects.github.io/micronaut-data/2.4.7/guide/index.html'>2.4.7</option><option value='https://micronaut-projects.github.io/micronaut-data/2.4.6/guide/index.html'>2.4.6</option><option value='https://micronaut-projects.github.io/micronaut-data/2.4.5/guide/index.html'>2.4.5</option><option value='https://micronaut-projects.github.io/micronaut-data/2.4.4/guide/index.html'>2.4.4</option><option value='https://micronaut-projects.github.io/micronaut-data/2.4.3/guide/index.html'>2.4.3</option><option value='https://micronaut-projects.github.io/micronaut-data/2.4.2/guide/index.html'>2.4.2</option><option value='https://micronaut-projects.github.io/micronaut-data/2.4.1/guide/index.html'>2.4.1</option><option value='https://micronaut-projects.github.io/micronaut-data/2.4.0/guide/index.html'>2.4.0</option><option value='https://micronaut-projects.github.io/micronaut-data/2.3.1/guide/index.html'>2.3.1</option><option value='https://micronaut-projects.github.io/micronaut-data/2.3.0/guide/index.html'>2.3.0</option><option value='https://micronaut-projects.github.io/micronaut-data/2.2.4/guide/index.html'>2.2.4</option><option value='https://micronaut-projects.github.io/micronaut-data/2.2.3/guide/index.html'>2.2.3</option><option value='https://micronaut-projects.github.io/micronaut-data/2.2.2/guide/index.html'>2.2.2</option><option value='https://micronaut-projects.github.io/micronaut-data/2.2.1/guide/index.html'>2.2.1</option><option value='https://micronaut-projects.github.io/micronaut-data/2.2.0/guide/index.html'>2.2.0</option><option value='https://micronaut-projects.github.io/micronaut-data/2.1.1/guide/index.html'>2.1.1</option><option value='https://micronaut-projects.github.io/micronaut-data/2.1.0/guide/index.html'>2.1.0</option><option value='https://micronaut-projects.github.io/micronaut-data/2.0.1/guide/index.html'>2.0.1</option><option value='https://micronaut-projects.github.io/micronaut-data/2.0.0/guide/index.html'>2.0.0</option><option value='https://micronaut-projects.github.io/micronaut-data/1.1.3/guide/index.html'>1.1.3</option></select> </p>
     </div>
     
 <h1 id="introduction"><a class="anchor" href="#introduction"></a>1 Introduction</h1>
@@ -277,7 +317,10 @@
 <p>JPA (Hibernate)</p>
 </li>
 <li>
-<p>SQL (JDBC, R2DBC)</p>
+<p><a href="#sql">SQL (JDBC, R2DBC)</a></p>
+</li>
+<li>
+<p><a href="#mongo">MongoDB</a></p>
 </li>
 </ul>
 </div>
@@ -446,6 +489,16 @@ fun testAnnotationMetadata() {
 </div>
 
 
+<div class="sect2">
+<h3 id="_micronaut_data_3_3">Micronaut Data 3.3</h3>
+<div class="ulist">
+<ul>
+<li>
+<p>Support for MongoDB repositories</p>
+</li>
+</ul>
+</div>
+</div>
 <div class="sect2">
 <h3 id="_micronaut_data_3_2">Micronaut Data 3.2</h3>
 <div class="ulist">
@@ -3751,7 +3804,7 @@ class BookListeners {
 <i class="fa icon-tip" title="Tip"></i>
 </td>
 <td class="content">
-If you prefer Spring-managed transactions you can add the <code>micronaut-data-spring</code> dependency and Spring-managed transactions will be used instead. See the section on <a href="#spring">Spring Support</a> for more information.
+If you prefer Spring-managed transactions for Hibernate or JDBC you can add the <code>micronaut-data-spring</code> dependency and Spring-managed transactions will be used instead. See the section on <a href="#spring">Spring Support</a> for more information.
 </td>
 </tr>
 </table>
@@ -5783,7 +5836,7 @@ interface PersonRepository : CrudRepository&lt;Person, Long&gt;, JpaSpecificatio
 <p>Micronaut Criteria API currently implements only a subset of the API. Most of it is internally used to create queries with predicates and projections.</p>
 </div>
 <div class="paragraph">
-<p>Currently no supported JPA Criteria API features:</p>
+<p>Currently, not supported JPA Criteria API features:</p>
 </div>
 <div class="ulist">
 <ul>
@@ -5791,7 +5844,7 @@ interface PersonRepository : CrudRepository&lt;Person, Long&gt;, JpaSpecificatio
 <p>Joins with custom <code>ON</code> expressions and typed join methods like <code>joinSet</code> etc</p>
 </li>
 <li>
-<p>Subqueries</p>
+<p>Sub-queries</p>
 </li>
 <li>
 <p>Collection operations: <code>isMember</code> etc</p>
@@ -6487,7 +6540,10 @@ public interface DeleteSpecification&lt;T&gt; {
  */
 package io.micronaut.data.tck.entities;
 
-import io.micronaut.data.annotation.*;
+import io.micronaut.data.annotation.AutoPopulated;
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.Relation;
 
 import java.util.Set;
 import java.util.UUID;
@@ -8347,7 +8403,2474 @@ override fun &lt;S : Book&gt; saveAll(entities: Iterable&lt;S&gt;): Flow&lt;S&gt
 <p>Note that persistence events are most commonly used to pre-populate database properties prior to performing an insert (for example encoding a password etc.) these types of operations typically don&#8217;t involve blocking I/O and are safe to perform.</p>
 </div>
 
-<h1 id="graal"><a class="anchor" href="#graal"></a>9 Going Native with GraalVM</h1>
+<h1 id="mongo"><a class="anchor" href="#mongo"></a>9 Micronaut Data MongoDB</h1>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/mongo.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>Micronaut Data MongoDB supports most of the things that are possible to do with JPA and JDBC/R2DBC implementations, including:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="#mongoRepositories">Repositories with compile-time generated filtering, aggregation</a> and <a href="#projections">projection</a> queries</p>
+</li>
+<li>
+<p><a href="#mongoAssociationMapping">Entities relations and cascading</a></p>
+</li>
+<li>
+<p><a href="#transactions">Transactions</a></p>
+</li>
+<li>
+<p><a href="#mongoJoinQueries">Joining relations</a></p>
+</li>
+<li>
+<p><a href="#mongoCriteriaSpecifications">JPA Criteria API</a></p>
+</li>
+<li>
+<p><a href="#mongoAttributeConverter">Attribute converters</a></p>
+</li>
+<li>
+<p><a href="#mongoOptimisticLocking">Optimistic locking</a></p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>In the first version of Micronaut Data MongoDB only synchronous MongoDB driver is supported.</p>
+</div>
+<div class="paragraph">
+<p>The interaction between the object layer and MongoDB&#8217;s driver serialization/deserialization is implemented using <a href="https://micronaut-projects.github.io/micronaut-serialization/1.0.x/guide">Micronaut Serialization</a> and BSON support.</p>
+</div>
+
+<h2 id="mongoQuickStart"><a class="anchor" href="#mongoQuickStart"></a>9.1 Quick Start</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/mongo/mongoQuickStart.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>To get started with Micronaut Data MongoDB add the following dependency to your annotation processor path:</p>
+</div>
+<div class="paragraph">
+<p>        <div class="listingblock multi-language-sample">
+<div class="title"></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">annotationProcessor(<span class="hljs-string">"io.micronaut.data:micronaut-data-document-processor:3.2.3-SNAPSHOT")</span></code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="title"></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="maven">&lt;annotationProcessorPaths&gt;
+    &lt;path&gt;
+        &lt;groupId&gt;io.micronaut.data&lt;/groupId&gt;
+        &lt;artifactId&gt;micronaut-data-document-processor&lt;/artifactId&gt;
+        &lt;version&gt;3.2.3-SNAPSHOT&lt;/version&gt;
+    &lt;/path&gt;
+&lt;/annotationProcessorPaths&gt;</code></pre>
+</div>
+</div>
+</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+For Kotlin the dependency should be in the <code>kapt</code> scope and for Groovy it should be in <code>compileOnly</code> scope.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>You should then configure a compile-scoped dependency on the <code>micronaut-data-mongo</code> module:</p>
+</div>
+<div class="paragraph">
+<p>        <div class="listingblock multi-language-sample">
+<div class="title"></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">implementation(<span class="hljs-string">"io.micronaut.data:micronaut-data-mongo:3.2.3-SNAPSHOT")</span></code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="maven">&lt;dependency&gt;
+    &lt;groupId&gt;io.micronaut.data&lt;/groupId&gt;
+    &lt;artifactId&gt;micronaut-data-mongo&lt;/artifactId&gt;
+    &lt;version&gt;3.2.3-SNAPSHOT&lt;/version&gt;
+&lt;/dependency&gt;</code></pre>
+</div>
+</div>
+</p>
+</div>
+<div class="paragraph">
+<p>And include MongoDB Sync driver:</p>
+</div>
+<div class="paragraph">
+<p>        <div class="listingblock multi-language-sample">
+<div class="title"></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">runtime(<span class="hljs-string">"org.mongodb:mongodb-driver-sync")</span></code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="maven">&lt;dependency&gt;
+    &lt;groupId&gt;org.mongodb&lt;/groupId&gt;
+    &lt;artifactId&gt;mongodb-driver-sync&lt;/artifactId&gt;
+    &lt;scope&gt;runtime&lt;/scope&gt;
+&lt;/dependency&gt;</code></pre>
+</div>
+</div>
+</p>
+</div>
+<div class="paragraph">
+<p>Next up you need to configure at least one data source. The following snippet from <code>application.yml</code> is an example of configuring the default Mongo data source:</p>
+</div>
+<div class="listingblock">
+<div class="title">Example YAML configuration</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">mongodb:
+  uri: mongodb://username:password@localhost:27017/databaseName</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>To retrieve objects from the database you need to define a class annotated with <a href="../api/io/micronaut/data/annotation/MappedEntity.html">@MappedEntity</a>:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">@MappedEntity
+public class Book {
+    @Id
+    @GeneratedValue
+    private ObjectId id;
+    private String title;
+    private int pages;
+
+    public Book(String title, int pages) {
+        this.title = title;
+        this.pages = pages;
+    }
+    // ...
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">@MappedEntity
+class Book {
+    @Id
+    @GeneratedValue
+    private ObjectId id
+    private String title
+    private int pages
+
+    Book(String title, int pages) {
+        this.title = title
+        this.pages = pages
+    }
+    //...
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">@MappedEntity
+data class Book(@field:Id
+                @GeneratedValue
+                var id: ObjectId,
+                var title: String,
+                var pages: Int = 0)</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Followed by an interface that extends from <a href="../api/io/micronaut/data/repository/CrudRepository.html">CrudRepository</a></p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">package example;
+
+import io.micronaut.context.annotation.Executable;
+import io.micronaut.data.annotation.*;
+import io.micronaut.data.mongo.annotation.MongoRepository;
+import io.micronaut.data.model.*;
+import io.micronaut.data.repository.CrudRepository;
+import org.bson.types.ObjectId;
+
+import java.util.List;
+
+
+@MongoRepository <b class="conum">(1)</b>
+interface BookRepository extends CrudRepository&lt;Book, ObjectId&gt; { <b class="conum">(2)</b>
+    @Executable
+    Book find(String title);
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">package example
+
+import io.micronaut.data.annotation.Id
+import io.micronaut.data.model.Page
+import io.micronaut.data.model.Pageable
+import io.micronaut.data.model.Slice
+import io.micronaut.data.mongo.annotation.MongoRepository
+import io.micronaut.data.repository.CrudRepository
+import org.bson.types.ObjectId
+
+@MongoRepository <b class="conum">(1)</b>
+interface BookRepository extends CrudRepository&lt;Book, ObjectId&gt; { <b class="conum">(2)</b>
+    Book find(String title);
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">package example
+
+import io.micronaut.context.annotation.Executable
+import io.micronaut.data.annotation.*
+import io.micronaut.data.mongo.annotation.MongoRepository
+import io.micronaut.data.model.*
+import io.micronaut.data.repository.CrudRepository
+import org.bson.types.ObjectId
+
+@MongoRepository <b class="conum">(1)</b>
+interface BookRepository : CrudRepository&lt;Book, ObjectId&gt; { <b class="conum">(2)</b>
+    @Executable
+    fun find(title: String): Book
+}</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>The interface is annotated with <a href="../api/io/micronaut/data/mongo/annotation/MongoRepository.html">@MongoRepository</a></td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>The <code>CrudRepository</code> interface take 2 generic arguments, the entity type (in this case <code>Book</code>) and the ID type (in this case <code>ObjectId</code>)</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>You can now perform CRUD (Create, Read, Update, Delete) operations on the entity. The implementation of <code>example.BookRepository</code> is created at compilation time. To obtain a reference to it simply inject the bean:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">@Inject BookRepository bookRepository;</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">@Inject @Shared BookRepository bookRepository</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">@Inject
+lateinit var bookRepository: BookRepository</code></pre>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_saving_an_instance_create">Saving an Instance (Create)</h3>
+<div class="paragraph">
+<p>To save an instance use the <code>save</code> method of the <code>CrudRepository</code> interface:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">Book book = new Book("The Stand", 1000);
+bookRepository.save(book);</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">Book book = new Book("The Stand", 1000)
+bookRepository.save(book)</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">var book = Book(ObjectId(),"The Stand", 1000)
+bookRepository.save(book)</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_retrieving_an_instance_read">Retrieving an Instance (Read)</h3>
+<div class="paragraph">
+<p>To read a book back use <code>findById</code>:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">book = bookRepository.findById(id).orElse(null);</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">book = bookRepository.findById(id).orElse(null)</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">book = bookRepository.findById(id).orElse(null)</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_updating_an_instance_update">Updating an Instance (Update)</h3>
+<div class="paragraph">
+<p>With Micronaut Data MongoDB, you must manually implement an <code>update</code> method since the MongoDB implementation doesn&#8217;t include any dirty checking or persistence session notion. So you have to define explicit update methods for updates in your repository. For example:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">void update(@Id ObjectId id, int pages);
+
+void update(@Id ObjectId id, String title);</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">void update(@Id ObjectId id, int pages);
+
+void update(@Id ObjectId id, String title);</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">fun update(@Id id: ObjectId, pages: Int)
+
+fun update(@Id id: ObjectId, title: String)</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Which can then be called like so:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">bookRepository.update(book.getId(), "Changed");</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">bookRepository.update(book.getId(), "Changed")</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">bookRepository.update(book.id, "Changed")</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_deleting_an_instance_delete">Deleting an Instance (Delete)</h3>
+<div class="paragraph">
+<p>To delete an instance use <code>deleteById</code>:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">bookRepository.deleteById(id);</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">bookRepository.deleteById(id)</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">bookRepository.deleteById(id)</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Congratulations you have implemented your first Micronaut Data MongoDB repository! Read on to find out more.</p>
+</div>
+</div>
+
+<h2 id="mongoRepositories"><a class="anchor" href="#mongoRepositories"></a>9.2 Repositories</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/mongo/mongoRepositories.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>As seen in the <a href="#mongoQuickStart">Quick Start</a> MongoDB repositories in Micronaut Data are defined as interfaces that are annotated with the <a href="../api/io/micronaut/data/mongo/annotation/MongoRepository.html">@MongoRepository</a>.</p>
+</div>
+<div class="paragraph">
+<p>In multiple datasource scenario, the <a href="../api/io/micronaut/data/annotation/Repository.html">@Repository</a> annotation can be used to specify the datasource configuration to use. By default, Micronaut Data will look for the default datasource.</p>
+</div>
+<div class="paragraph">
+<p>For example:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@Repository(value = "inventoryServer") <i class="conum" data-value="1"></i><b>(1)</b>
+@MongoRepository <i class="conum" data-value="2"></i><b>(2)</b>
+public interface PhoneRepository extends CrudRepository&lt;Phone, Integer&gt; {
+    Optional&lt;Phone&gt; findByAssetId(@NotNull Integer assetId);
+}</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>@Repository annotation, pointing to MongoDB server configuration 'inventoryServer'</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>@MongoRepository marking the interface to access MongoDB</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>The entity to treat as the root entity for the purposes of querying is established either from the method signature or from the generic type parameter specified to the <a href="../api/io/micronaut/data/repository/GenericRepository.html">GenericRepository</a> interface.</p>
+</div>
+<div class="paragraph">
+<p>If no root entity can be established then a compilation error will occur.</p>
+</div>
+<div class="paragraph">
+<p>The same interfaces supported by the JPA implementation are supported by MongoDB.</p>
+</div>
+<div class="paragraph">
+<p>Note that in addition to interfaces you can also define repositories as abstract classes:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">package example;
+
+import io.micronaut.data.annotation.Repository;
+import io.micronaut.data.repository.CrudRepository;
+import org.bson.types.ObjectId;
+
+import java.util.List;
+
+@Repository
+public abstract class AbstractBookRepository implements CrudRepository&lt;Book, ObjectId&gt; {
+
+    public abstract List&lt;Book&gt; findByTitle(String title);
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">package example
+
+import io.micronaut.data.mongo.annotation.MongoRepository
+import io.micronaut.data.repository.CrudRepository
+import org.bson.types.ObjectId
+
+@MongoRepository
+abstract class AbstractBookRepository implements CrudRepository&lt;Book, ObjectId&gt; {
+
+    abstract List&lt;Book&gt; findByTitle(String title);
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">package example
+
+import io.micronaut.data.mongo.annotation.MongoRepository
+import io.micronaut.data.repository.CrudRepository
+import org.bson.types.ObjectId
+
+@MongoRepository
+abstract class AbstractBookRepository : CrudRepository&lt;Book, ObjectId&gt; {
+
+    abstract fun findByTitle(title: String): List&lt;Book&gt;
+}</code></pre>
+</div>
+</div>
+
+<h2 id="mongoMapping"><a class="anchor" href="#mongoMapping"></a>9.3 Mapping Entities</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/mongo/mongoMapping.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>As mentioned in the <a href="#mongoQuickStart">Quick Start</a> section, if you need to customize how entities map to the collection and attribute names of the collection you need use Micronaut Data&#8217;s own annotations in the <code>io.micronaut.data.annotation</code> package.</p>
+</div>
+<div class="paragraph">
+<p>An important aspect of Micronaut Data MongoDB is that the entity classes must be compiled with Micronaut Data. This is because Micronaut Data pre-computes the persistence model (the relationships between entities, the class/property name to collection/attribute name mappings) at compilation time, which is one of the reasons Micronaut Data MongoDB can startup so fast.</p>
+</div>
+<div class="paragraph">
+<p>An example of mapping with Micronaut Data annotations can be seen below:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">@MappedEntity <b class="conum">(1)</b>
+public class Country {
+
+    @Id
+    private ObjectId id; <b class="conum">(2)</b>
+
+    @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = "country")
+    private Set&lt;CountryRegion&gt; regions; <b class="conum">(3)</b>
+
+    private String name; <b class="conum">(4)</b>
+
+    // ...
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">@MappedEntity <b class="conum">(1)</b>
+class Country {
+
+    @Id
+    private ObjectId id <b class="conum">(2)</b>
+
+    @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = "country")
+    private Set&lt;CountryRegion&gt; regions <b class="conum">(3)</b>
+
+    private String name <b class="conum">(4)</b>
+
+    // ...
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">@MappedEntity <b class="conum">(1)</b>
+data class Country(
+        @field:Id
+        val id: ObjectId, <b class="conum">(2)</b>
+        @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = "country")
+        val regions: Set&lt;CountryRegion&gt;, <b class="conum">(3)</b>
+        val name: String <b class="conum">(4)</b>
+        )</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>The class is marked as a mapped entity that should be persisted in the <code>country</code> collection</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>The id is defined as MongoDB&#8217;s <code>ObjectId</code></td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td>The <code>regions</code> are stored in a separate collection represented by <code>CountryRegion</code></td>
+</tr>
+<tr>
+<td><i class="conum" data-value="4"></i><b>4</b></td>
+<td>The <code>name</code> field that should be persisted in a collection</td>
+</tr>
+</table>
+</div>
+
+<h2 id="mongoAnnotations"><a class="anchor" href="#mongoAnnotations"></a>9.3.1 Mapping Annotations</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/mongo/mongoMapping/mongoAnnotations.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>The following table summarizes the different annotations and what they enable. If you are familiar with and prefer the JPA annotations then feel free to skip to the next section:</p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<caption class="title">Table 1. Micronaut Data Annotations</caption>
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Annotation</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/annotation/AutoPopulated.html">@AutoPopulated</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Meta annotation for a value that should be auto-populated by Micronaut Data (such as time stamps and UUIDs)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/annotation/DateCreated.html">@DateCreated</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Allows assigning a data created value (such as a <code>java.time.Instant</code>) prior to an insert</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/annotation/DateUpdated.html">@DateUpdated</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Allows assigning a last updated value (such as a <code>java.time.Instant</code>) prior to an insert</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/annotation/Embeddable.html">@Embeddable</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Specifies that the bean is embeddable</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/annotation/EmbeddedId.html">@EmbeddedId</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Specifies an embedded ID of an entity</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/annotation/GeneratedValue.html">@GeneratedValue</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Specifies that the property value is generated by the database and not included in inserts</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/annotation/JoinTable.html">@JoinTable</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Specifies a join collection association</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/annotation/JoinColumn.html">@JoinColumn</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Specifies a join attribute mapping</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/annotation/Id.html">@Id</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Specifies the ID of an entity</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/annotation/MappedEntity.html">@MappedEntity</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Specifies the entity is mapped to the collection. If your collection name differs from the entity name, pass the name as the <code>value</code>. For example: <code>@MappedEntity( value = "my_collection" )</code>.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/annotation/MappedProperty.html">@MappedProperty</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Used to customize the attribute name</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/annotation/Relation.html">@Relation</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Used to specify a relationship (one-to-one, one-to-many, etc.)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/annotation/Transient.html">@Transient</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Used to specify a property is transient</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/annotation/Version.html">@Version</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Specifies the version field of an entity, enables optimistic locking</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>Again Micronaut Data MongoDB is not an ORM, but instead a simple data mapper so many of the concepts in JPA simply don&#8217;t apply, however for users familiar with these annotations it is handy being able to use them.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+Micronaut Data Mongo doesn&#8217;t support JPA annotations
+</td>
+</tr>
+</table>
+</div>
+
+<h2 id="mongoIdGenerator"><a class="anchor" href="#mongoIdGenerator"></a>9.3.2 ID Generation</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/mongo/mongoMapping/mongoIdGenerator.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>The default ID generation for MongoDB is using <code>ObjectId</code> as an ID, there are only two supported types: the default <code>ObjectId</code> and a simple Java String which will have the hex value of the <code>ObjectId</code>.</p>
+</div>
+<div class="paragraph">
+<p>You can remove the <code>@GeneratedValue</code> annotation and in this case the expectation is that you will assign an ID before calling <code>save()</code>.</p>
+</div>
+<div class="paragraph">
+<p>Automatically assigned UUIDs are also supported by adding a property annotated with <code>@Id</code> and <code>@AutoPopulated</code>.</p>
+</div>
+
+<h2 id="mongoCompositeId"><a class="anchor" href="#mongoCompositeId"></a>9.3.3 Composite Primary Keys</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/mongo/mongoMapping/mongoCompositeId.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>Composite primary keys can be defined using <a href="../api/io/micronaut/data/annotation/EmbeddedId.html">@EmbeddedId</a> annotation. A composite ID requires an additional class to represent the key. The class should define fields that correspond to the collection&#8217;s attribute making up the composite key. For example:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">package example;
+
+import io.micronaut.data.annotation.Embeddable;
+
+import java.util.Objects;
+
+@Embeddable
+public class ProjectId {
+    private final int departmentId;
+    private final int projectId;
+
+    public ProjectId(int departmentId, int projectId) {
+        this.departmentId = departmentId;
+        this.projectId = projectId;
+    }
+
+    public int getDepartmentId() {
+        return departmentId;
+    }
+
+    public int getProjectId() {
+        return projectId;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        ProjectId projectId1 = (ProjectId) o;
+        return departmentId == projectId1.departmentId &amp;&amp;
+                projectId == projectId1.projectId;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(departmentId, projectId);
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">package example
+
+import groovy.transform.EqualsAndHashCode
+import io.micronaut.data.annotation.Embeddable
+
+@EqualsAndHashCode
+@Embeddable
+class ProjectId {
+    final int departmentId
+    final int projectId
+
+    ProjectId(int departmentId, int projectId) {
+        this.departmentId = departmentId
+        this.projectId = projectId
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">package example
+
+import io.micronaut.data.annotation.Embeddable
+
+@Embeddable
+data class ProjectId(val departmentId: Int, val projectId: Int)</code></pre>
+</div>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+It is recommended that the ID class be immutable and implement <code>equals</code>/<code>hashCode</code>.
+TIP: When using Java, be sure to define getters for the fields making up your composite key.
+</td>
+</tr>
+</table>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">package example;
+
+import io.micronaut.data.annotation.EmbeddedId;
+import io.micronaut.data.annotation.MappedEntity;
+
+@MappedEntity
+public class Project {
+    @EmbeddedId
+    private ProjectId projectId;
+    private String name;
+
+    public Project(ProjectId projectId, String name) {
+        this.projectId = projectId;
+        this.name = name;
+    }
+
+    public ProjectId getProjectId() {
+        return projectId;
+    }
+
+    public String getName() {
+        return name;
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">package example
+
+import io.micronaut.data.annotation.EmbeddedId
+import io.micronaut.data.annotation.MappedEntity
+
+@MappedEntity
+class Project {
+    @EmbeddedId
+    private ProjectId projectId
+    private String name
+
+    Project(ProjectId projectId, String name) {
+        this.projectId = projectId
+        this.name = name
+    }
+
+    ProjectId getProjectId() {
+        return projectId
+    }
+
+    String getName() {
+        return name
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">package example
+
+import io.micronaut.data.annotation.EmbeddedId
+import io.micronaut.data.annotation.MappedEntity
+
+@MappedEntity
+class Project(@EmbeddedId val projectId: ProjectId, val name: String)</code></pre>
+</div>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+To alter the collection&#8217;s attribute mappings for the ID, you may use the <a href="../api/io/micronaut/data/annotation/MappedProperty.html">@MappedProperty</a> annotation on the fields within the <code>ProjectId</code> class
+</td>
+</tr>
+</table>
+</div>
+
+<h2 id="mongoConstructorArguments"><a class="anchor" href="#mongoConstructorArguments"></a>9.3.4 Constructor Arguments</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/mongo/mongoMapping/mongoConstructorArguments.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>Micronaut Data MongoDB also allows the definition of immutable objects using constructor arguments instead of getters/setters. If you define multiple constructors then the one used to create the object from the database should be annotated with <code>io.micronaut.core.annotation.Creator</code>.</p>
+</div>
+<div class="paragraph">
+<p>For example:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">package example;
+
+import io.micronaut.core.annotation.Creator;
+import io.micronaut.data.annotation.GeneratedValue;
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.MappedEntity;
+import org.bson.types.ObjectId;
+
+@MappedEntity
+public class Manufacturer {
+    @Id
+    @GeneratedValue
+    private ObjectId id;
+    private String name;
+
+    @Creator
+    public Manufacturer(String name) {
+        this.name = name;
+    }
+
+    public ObjectId getId() {
+        return id;
+    }
+
+    public void setId(ObjectId id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">package example
+
+import io.micronaut.core.annotation.Creator
+import io.micronaut.data.annotation.GeneratedValue
+import io.micronaut.data.annotation.Id
+import io.micronaut.data.annotation.MappedEntity
+
+@MappedEntity
+class Manufacturer {
+    @Id
+    @GeneratedValue
+    Long id
+    final String name
+
+    @Creator
+    Manufacturer(String name) {
+        this.name = name
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">package example
+
+import io.micronaut.data.annotation.GeneratedValue
+import io.micronaut.data.annotation.Id
+import io.micronaut.data.annotation.MappedEntity
+import org.bson.types.ObjectId
+
+@MappedEntity
+data class Manufacturer(
+        @field:Id
+        @GeneratedValue
+        var id: ObjectId?,
+        val name: String
+)</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>As you can see from the example above, the <code>ID</code> of the object should however include a setter since this has to be assigned from the database generated value.</p>
+</div>
+
+<h2 id="mongoNaming"><a class="anchor" href="#mongoNaming"></a>9.3.5 Naming Strategies</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/mongo/mongoMapping/mongoNaming.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>The default naming strategy when converting camel case class and property names to collection and attribute names is to use underscore separated lower case. In other words <code>FooBar</code> becomes <code>foo_bar</code>.</p>
+</div>
+<div class="paragraph">
+<p>If this is not satisfactory then you can customize this by setting the <code>namingStrategy</code> member of the <a href="../api/io/micronaut/data/annotation/MappedEntity.html">@MappedEntity</a> annotation on the entity:</p>
+</div>
+<div class="listingblock">
+<div class="title">Micronaut Data Naming Strategy</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@MappedEntity(namingStrategy = NamingStrategies.Raw.class)
+public class CountryRegion {
+    ...
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Few important things to note. Since Micronaut Data pre-computes the collection and attribute name mappings at compilation time the specified <a href="../api/io/micronaut/data/model/naming/NamingStrategy.html">NamingStrategy</a> implementation must be on the annotation processor classpath (<code>annotationProcessor</code> scope for Java or <code>kapt</code> for Kotlin).</p>
+</div>
+<div class="paragraph">
+<p>In addition, if you don&#8217;t want to repeat the above annotation definition on every entity it is handy to define a meta-annotation where the above annotation definition is applied to another annotation that you add to your class.</p>
+</div>
+
+<h2 id="mongoAssociationMapping"><a class="anchor" href="#mongoAssociationMapping"></a>9.3.6 Association Mapping</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/mongo/mongoMapping/mongoAssociationMapping.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>To specify a relation between two entities you need to use <a href="../api/io/micronaut/data/annotation/Relation.html">@Relation</a> annotation. The relation kind is specified using enum <a href="../api/io/micronaut/data/annotation/Relation.Kind.html">@Kind</a> <code>value</code> attribute which is similar to JPA relations annotation names (<code>@OneToMany</code>, <code>@OneToOne</code> etc.)</p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<caption class="title">Table 1. Micronaut Data supported relations:</caption>
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Kind</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Kind.ONE_TO_MANY</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">One to many association</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Kind.ONE_TO_ONE</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">One to one association</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Kind.MANY_TO_MANY</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Many to many association</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Kind.MANY_TO_ONE</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Many to one association</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Kind.EMBEDDED</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Embedded association</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>Use 'mappedBy' to specify inverse property that this relation is mapped by.</p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<caption class="title">Table 2. Micronaut Data supported association cascade types:</caption>
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Type</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Cascade.PERSIST</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Associated entity or entities are going to be persisted when owning entity is saved</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Cascade.UPDATE</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Associated entity or entities are going to be updated when owning entity is updated</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Cascade.NONE</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(Default) No operation is cascaded</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Cascade.ALL</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">All (<code>Cascade.PERSIST</code> and <code>Cascade.UPDATE</code>) operations are cascaded</p></td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="mongoAssociationFetching"><a class="anchor" href="#mongoAssociationFetching"></a>9.3.7 Association Fetching</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/mongo/mongoMapping/mongoAssociationFetching.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>Micronaut Data is a simple data mapper, hence it will not fetch any associations for you using techniques like lazy loading of entity proxies for single-ended associations.</p>
+</div>
+<div class="paragraph">
+<p>You must instead specify ahead of time what data you want to fetch. You cannot map an association as being eager or lazy. The reason for this design choice is simple, even in the JPA world accessing lazy associations or lazy initialization collections is considered bad practice due to the N+1 query issue and the recommendation is always to write an optimized join query.</p>
+</div>
+<div class="paragraph">
+<p>Micronaut Data MongoDB takes this a step further by simply not supporting those features considered bad practice anyway. However, it does impact how you may model an association. For example, if you define an association in a constructor argument such as the following entity:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">package example;
+
+import io.micronaut.core.annotation.Nullable;
+import io.micronaut.data.annotation.GeneratedValue;
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.Relation;
+import org.bson.types.ObjectId;
+
+@MappedEntity
+public class Product {
+
+    @Id
+    @GeneratedValue
+    private ObjectId id;
+    private String name;
+    @Nullable
+    @Relation(Relation.Kind.MANY_TO_ONE)
+    private Manufacturer manufacturer;
+
+    public Product(String name, @Nullable Manufacturer manufacturer) {
+        this.name = name;
+        this.manufacturer = manufacturer;
+    }
+
+    public ObjectId getId() {
+        return id;
+    }
+
+    public void setId(ObjectId id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public Manufacturer getManufacturer() {
+        return manufacturer;
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">package example
+
+import io.micronaut.core.annotation.Nullable
+import io.micronaut.data.annotation.GeneratedValue
+import io.micronaut.data.annotation.Id
+import io.micronaut.data.annotation.MappedEntity
+import io.micronaut.data.annotation.Relation
+import org.bson.types.ObjectId
+
+@MappedEntity
+class Product {
+    @Id
+    @GeneratedValue
+    ObjectId id
+    private String name
+    @Nullable
+    @Relation(Relation.Kind.MANY_TO_ONE)
+    private Manufacturer manufacturer
+
+    Product(String name, Manufacturer manufacturer) {
+        this.name = name
+        this.manufacturer = manufacturer
+    }
+
+    String getName() {
+        return name
+    }
+
+    Manufacturer getManufacturer() {
+        return manufacturer
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">package example
+
+import io.micronaut.data.annotation.GeneratedValue
+import io.micronaut.data.annotation.Id
+import io.micronaut.data.annotation.MappedEntity
+import io.micronaut.data.annotation.Relation
+import org.bson.types.ObjectId
+
+@MappedEntity
+data class Product(@field:Id @GeneratedValue
+                   var id: ObjectId?,
+                   var name: String,
+                   @Relation(Relation.Kind.MANY_TO_ONE)
+                   var manufacturer: Manufacturer?)</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Then attempt to read the <code>Product</code> entity back without specifying a join an exception will occur since the <code>manufacturer</code> association is not <code>Nullable</code>.</p>
+</div>
+<div class="paragraph">
+<p>There are few ways around this, one way is to declare at the repository level to always fetch <code>manufacturer</code>, another is declare the <code>@Nullable</code> annotation on the <code>manufacturer</code> argument to allow it to be declared <code>null</code> (or in Kotlin add <code>?</code> to the end of the constructor argument name). Which approach you choose is dependent on the design of the application.</p>
+</div>
+<div class="paragraph">
+<p>The following section provides more coverage on handling joins.</p>
+</div>
+
+<h2 id="mongoJoinQueries"><a class="anchor" href="#mongoJoinQueries"></a>9.4 Join Queries</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/mongo/mongoJoinQueries.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>As discussed in the previous section, Micronaut Data MongoDB doesn&#8217;t support associations in the traditional ORM sense. There is no lazy loading or support for proxies.</p>
+</div>
+<div class="paragraph">
+<p>Consider a <code>Product</code> entity from the previous section that has an association to a <code>Manufacturer</code> entity:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">package example;
+
+import io.micronaut.core.annotation.Creator;
+import io.micronaut.data.annotation.GeneratedValue;
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.MappedEntity;
+import org.bson.types.ObjectId;
+
+@MappedEntity
+public class Manufacturer {
+    @Id
+    @GeneratedValue
+    private ObjectId id;
+    private String name;
+
+    @Creator
+    public Manufacturer(String name) {
+        this.name = name;
+    }
+
+    public ObjectId getId() {
+        return id;
+    }
+
+    public void setId(ObjectId id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">package example
+
+import io.micronaut.core.annotation.Creator
+import io.micronaut.data.annotation.GeneratedValue
+import io.micronaut.data.annotation.Id
+import io.micronaut.data.annotation.MappedEntity
+
+@MappedEntity
+class Manufacturer {
+    @Id
+    @GeneratedValue
+    Long id
+    final String name
+
+    @Creator
+    Manufacturer(String name) {
+        this.name = name
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">package example
+
+import io.micronaut.data.annotation.GeneratedValue
+import io.micronaut.data.annotation.Id
+import io.micronaut.data.annotation.MappedEntity
+import org.bson.types.ObjectId
+
+@MappedEntity
+data class Manufacturer(
+        @field:Id
+        @GeneratedValue
+        var id: ObjectId?,
+        val name: String
+)</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Say you query for <code>Product</code> instances, what happens is that by default Micronaut Data MongoDB will only query for and fetch the simple properties. In the case of single ended associations like the above Micronaut Data will only retrieve the ID and assign it if is possible (In the case of entities that require constructor arguments this is not even possible).</p>
+</div>
+<div class="paragraph">
+<p>If you need to fetch the association too then you can use the <a href="../api/io/micronaut/data/annotation/Join.html">@Join</a> annotation on your repository interface to specify that the aggregation should be executed to with a lookup of the associated <code>Manufacturer</code>.</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">@MongoRepository
+public interface ProductRepository extends CrudRepository&lt;Product, ObjectId&gt; {
+    @Join("manufacturer") <b class="conum">(1)</b>
+    List&lt;Product&gt; list();
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">@MongoRepository
+public interface ProductRepository extends CrudRepository&lt;Product, ObjectId&gt; {
+    @Join("manufacturer") <b class="conum">(1)</b>
+    List&lt;Product&gt; list();
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">@MongoRepository
+interface ProductRepository : CrudRepository&lt;Product, ObjectId&gt; {
+    @Join("manufacturer") <b class="conum">(1)</b>
+    fun list(): List&lt;Product&gt;
+}</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>List query should include joined relation <code>manufacturer</code> from a different collection</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Micronaut Data MongoDB will generate the following aggregation JSON query at the compile-time and only bind the required parameters and the runtime:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-json hljs" data-lang="json">[
+   {
+      "$lookup":{
+         "from":"cart_item",
+         "localField":"_id",
+         "foreignField":"cart._id",
+         "as":"items"
+      }
+   },
+   {
+      "$match":{
+         "_id":{
+            "$eq":{
+               "$oid":"61d69d67e8cb2c06b66d2e67"
+            }
+         }
+      }
+   }
+]</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Note that the <a href="../api/io/micronaut/data/annotation/Join.html">@Join</a> annotation is repeatable and hence can be specified multiple time for different associations.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+Micronaut Data MongoDB doesn&#8217;t support different join types or a custom alias defined in <a href="../api/io/micronaut/data/annotation/Join.html">@Join</a>.
+</td>
+</tr>
+</table>
+</div>
+
+<h2 id="mongoAttributeConverter"><a class="anchor" href="#mongoAttributeConverter"></a>9.5 Using Attribute Converter</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/mongo/mongoAttributeConverter.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>There are cases where you would like to represent the attribute differently in the database than in the entity.</p>
+</div>
+<div class="paragraph">
+<p>Consider the following example entity:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">package example;
+
+import io.micronaut.data.annotation.GeneratedValue;
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.MappedProperty;
+import io.micronaut.data.annotation.Relation;
+import org.bson.types.ObjectId;
+
+@MappedEntity
+public class Sale {
+
+    @Relation(Relation.Kind.MANY_TO_ONE)
+    private final Product product;
+    @MappedProperty(converter = QuantityAttributeConverter.class)
+    private final Quantity quantity;
+
+    @Id
+    @GeneratedValue
+    private ObjectId id;
+
+    public Sale(Product product, Quantity quantity) {
+        this.product = product;
+        this.quantity = quantity;
+    }
+
+    public Product getProduct() {
+        return product;
+    }
+
+    public Quantity getQuantity() {
+        return quantity;
+    }
+
+    public ObjectId getId() {
+        return id;
+    }
+
+    public void setId(ObjectId id) {
+        this.id = id;
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">package example
+
+import io.micronaut.data.annotation.GeneratedValue
+import io.micronaut.data.annotation.Id
+import io.micronaut.data.annotation.MappedEntity
+import io.micronaut.data.annotation.Relation
+import org.bson.types.ObjectId
+
+@MappedEntity
+class Sale {
+    @Id
+    @GeneratedValue
+    ObjectId id
+    @Relation(Relation.Kind.MANY_TO_ONE)
+    final Product product
+    final Quantity quantity
+
+    Sale(Product product, Quantity quantity) {
+        this.product = product
+        this.quantity = quantity
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">package example
+
+import io.micronaut.data.annotation.*
+import org.bson.types.ObjectId
+
+@MappedEntity
+data class Sale(
+    @field:Id
+    @GeneratedValue
+    var id: ObjectId?,
+    @Relation(Relation.Kind.MANY_TO_ONE)
+    val product: Product,
+    @MappedProperty(converter = QuantityAttributeConverter::class)
+    val quantity: Quantity
+)</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The <code>Sale</code> class has a reference to a type <code>Quantity</code>. The <code>Quantity</code> type is defined as:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">package example;
+
+public class Quantity {
+
+    private final int amount;
+
+    private Quantity(int amount) {
+        this.amount = amount;
+    }
+
+    public int getAmount() {
+        return amount;
+    }
+
+    public static Quantity valueOf(int amount) {
+        return new Quantity(amount);
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">package example
+
+import groovy.transform.Immutable
+
+@Immutable
+class Quantity {
+    int amount
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">package example
+
+data class Quantity(val amount: Int)</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>As you can see <code>@MappedProperty(converter = QuantityAttributeConverter.class)</code> is used to define the <code>Quantity</code> converter.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+Micronaut Data MongoDB doesn&#8217;t support defining the converter using <code>@TypeDef</code>.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>The last step is to add custom attribute conversion so that Micronaut Data knows how to read and write the type from an <code>Integer</code>:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">package example;
+
+import io.micronaut.core.convert.ConversionContext;
+import io.micronaut.data.model.runtime.convert.AttributeConverter;
+import jakarta.inject.Singleton;
+
+@Singleton <b class="conum">(1)</b>
+public class QuantityAttributeConverter implements AttributeConverter&lt;Quantity, Integer&gt; {
+
+    @Override <b class="conum">(2)</b>
+    public Integer convertToPersistedValue(Quantity quantity, ConversionContext context) {
+        return quantity == null ? null : quantity.getAmount();
+    }
+
+    @Override <b class="conum">(3)</b>
+    public Quantity convertToEntityValue(Integer value, ConversionContext context) {
+        return value == null ? null : Quantity.valueOf(value);
+    }
+
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">package example
+
+import groovy.transform.CompileStatic
+import io.micronaut.core.convert.ConversionContext
+import io.micronaut.data.model.runtime.convert.AttributeConverter
+import jakarta.inject.Singleton
+
+@Singleton <b class="conum">(1)</b>
+@CompileStatic
+class QuantityAttributeConverter implements AttributeConverter&lt;Quantity, Integer&gt; {
+
+    @Override <b class="conum">(2)</b>
+    Integer convertToPersistedValue(Quantity quantity, ConversionContext context) {
+        return quantity == null ? null : quantity.getAmount()
+    }
+
+    @Override <b class="conum">(3)</b>
+    Quantity convertToEntityValue(Integer value, ConversionContext context) {
+        return value == null ? null : new Quantity(value)
+    }
+
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">package example
+
+import io.micronaut.core.convert.ConversionContext
+import io.micronaut.data.model.runtime.convert.AttributeConverter
+import jakarta.inject.Singleton
+
+@Singleton <b class="conum">(1)</b>
+class QuantityAttributeConverter : AttributeConverter&lt;Quantity?, Int?&gt; {
+
+    <b class="conum">(2)</b>
+    override fun convertToPersistedValue(quantity: Quantity?, context: ConversionContext): Int? {
+        return quantity?.amount
+    }
+
+    <b class="conum">(3)</b>
+    override fun convertToEntityValue(value: Int?, context: ConversionContext): Quantity? {
+        return if (value == null) null else Quantity(value)
+    }
+
+}</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>The attribute converter implements <a href="../api/io/micronaut/data/model/runtime/convert/AttributeConverter.html">@AttributeConverter</a> and must be a bean</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>A converter from <code>Quantity</code> to <code>Integer</code></td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td>A converter from <code>Integer</code> to <code>Quantity</code></td>
+</tr>
+</table>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+It&#8217;s possible to define the converter result type using <a href="../api/io/micronaut/data/annotation/MappedProperty.html">@MappedProperty</a>: <code>@MappedProperty(converterPersistedType = Integer.class)</code>, in this case the data type will be detected automatically.
+</td>
+</tr>
+</table>
+</div>
+
+<h2 id="mongoCriteriaSpecifications"><a class="anchor" href="#mongoCriteriaSpecifications"></a>9.6 Respositories with Criteria API</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/mongo/mongoCriteriaSpecifications.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>In some cases, you need to build a query programmatically and at the runtime; for that, Micronaut Data implements a subset of Jakarta Persistence Criteria API 3.0, which can be used for Micronaut Data MongoDB features.</p>
+</div>
+<div class="paragraph">
+<p>To implement queries that cannot be defined at the compile-time Micronaut Data introduces <a href="../api/io/micronaut/data/repository/JpaSpecificationExecutor.html">JpaSpecificationExecutor</a> repository interface that can be used to extend your repository interface:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">@MongoRepository
+public interface PersonRepository extends CrudRepository&lt;Person, ObjectId&gt;, JpaSpecificationExecutor&lt;Person&gt; {
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">@MongoRepository
+interface PersonRepository extends CrudRepository&lt;Person, ObjectId&gt;, JpaSpecificationExecutor&lt;Person&gt; {
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">@MongoRepository
+interface PersonRepository : CrudRepository&lt;Person, ObjectId&gt;, JpaSpecificationExecutor&lt;Person&gt; {
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Each method expects a "specification" which is a functional interface with a set of Criteria API objects intended to build a query programmatically.</p>
+</div>
+<div class="paragraph">
+<p>Micronaut Criteria API currently implements only a subset of the API. Most of it is internally used to create queries with predicates and projections.</p>
+</div>
+<div class="paragraph">
+<p>Currently, not supported JPA Criteria API features:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Joins with custom <code>ON</code> expressions and typed join methods like <code>joinSet</code> etc</p>
+</li>
+<li>
+<p>Sub-queries</p>
+</li>
+<li>
+<p>Collection operations: <code>isMember</code> etc</p>
+</li>
+<li>
+<p>Custom or tuple result type</p>
+</li>
+<li>
+<p>Transformation expressions like concat, substring etc.</p>
+</li>
+<li>
+<p>Cases and functions</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>More information about Jakarta Persistence Criteria API 3.0 you can find at the <a href="https://jakarta.ee/specifications/persistence/3.0/jakarta-persistence-spec-3.0.html#a6925">official API specification</a></p>
+</div>
+
+<h2 id="mongoCriteriaExecuteQuery"><a class="anchor" href="#mongoCriteriaExecuteQuery"></a>9.6.1 Querying</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/mongo/mongoCriteriaSpecifications/mongoCriteriaExecuteQuery.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>To find an entity or multiple entities you can use one of the following methods from <a href="../api/io/micronaut/data/repository/JpaSpecificationExecutor.html">JpaSpecificationExecutor</a> interface:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">Optional&lt;Person&gt; findOne(PredicateSpecification&lt;Person&gt; spec);
+
+Optional&lt;Person&gt; findOne(QuerySpecification&lt;Person&gt; spec);
+
+List&lt;Person&gt; findAll(PredicateSpecification&lt;Person&gt; spec);
+
+List&lt;Person&gt; findAll(QuerySpecification&lt;Person&gt; spec);
+
+List&lt;Person&gt; findAll(PredicateSpecification&lt;Person&gt; spec, Sort sort);
+
+List&lt;Person&gt; findAll(QuerySpecification&lt;Person&gt; spec, Sort sort);
+
+Page&lt;Person&gt; findAll(PredicateSpecification&lt;Person&gt; spec, Pageable pageable);
+
+Page&lt;Person&gt; findAll(QuerySpecification&lt;Person&gt; spec, Pageable pageable);</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">Optional&lt;Person&gt; findOne(PredicateSpecification&lt;Person&gt; spec)
+
+Optional&lt;Person&gt; findOne(QuerySpecification&lt;Person&gt; spec)
+
+List&lt;Person&gt; findAll(PredicateSpecification&lt;Person&gt; spec)
+
+List&lt;Person&gt; findAll(QuerySpecification&lt;Person&gt; spec)
+
+List&lt;Person&gt; findAll(PredicateSpecification&lt;Person&gt; spec, Sort sort)
+
+List&lt;Person&gt; findAll(QuerySpecification&lt;Person&gt; spec, Sort sort)
+
+Page&lt;Person&gt; findAll(PredicateSpecification&lt;Person&gt; spec, Pageable pageable)
+
+Page&lt;Person&gt; findAll(QuerySpecification&lt;Person&gt; spec, Pageable pageable)</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">fun findOne(spec: PredicateSpecification&lt;Person&gt;?): Optional&lt;Person&gt;
+
+fun findOne(spec: QuerySpecification&lt;Person&gt;?): Optional&lt;Person&gt;
+
+fun findAll(spec: PredicateSpecification&lt;Person&gt;?): List&lt;Person&gt;
+
+fun findAll(spec: QuerySpecification&lt;Person&gt;?): List&lt;Person&gt;
+
+fun findAll(spec: PredicateSpecification&lt;Person&gt;?, sort: Sort): List&lt;Person&gt;
+
+fun findAll(spec: QuerySpecification&lt;Person&gt;?, sort: Sort): List&lt;Person&gt;
+
+fun findAll(spec: PredicateSpecification&lt;Person&gt;?, pageable: Pageable): Page&lt;Person&gt;
+
+fun findAll(spec: QuerySpecification&lt;Person&gt;?, pageable: Pageable): Page&lt;Person&gt;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>As you can see, there are two variations of <code>findOne</code>/<code>findAll</code> methods.</p>
+</div>
+<div class="paragraph">
+<p>First method is expecting <a href="../api/io/micronaut/data/repository/criteria/PredicateSpecification.html">PredicateSpecification</a> which is a simple specification interface that can be implemented to return a predicate:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">import static jakarta.persistence.criteria.*;
+
+public interface PredicateSpecification&lt;T&gt; {
+
+    <i class="conum" data-value="1"></i><b>(1)</b>
+    @Nullable
+    Predicate toPredicate(@NonNull Root&lt;T&gt; root, <i class="conum" data-value="2"></i><b>(2)</b>
+                          @NonNull CriteriaBuilder criteriaBuilder <i class="conum" data-value="3"></i><b>(3)</b>
+    );
+
+}</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>The specification is producing a query limiting predicate</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>The entity root</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td>The criteria builder</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>This interface can also be used for update and delete methods, and it provides <code>or</code> and <code>and</code> methods for combining multiple predicates.</p>
+</div>
+<div class="paragraph">
+<p>The second interface is intended only for query criteria because it includes <code>jakarta.persistence.criteria.CriteriaQuery</code> as a parameter.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">import static jakarta.persistence.criteria.*;
+
+public interface QuerySpecification&lt;T&gt; {
+
+    <i class="conum" data-value="1"></i><b>(1)</b>
+    @Nullable
+    Predicate toPredicate(@NonNull Root&lt;T&gt; root, <i class="conum" data-value="2"></i><b>(2)</b>
+                          @NonNull CriteriaQuery&lt;?&gt; query, <i class="conum" data-value="3"></i><b>(3)</b>
+                          @NonNull CriteriaBuilder criteriaBuilder <i class="conum" data-value="4"></i><b>(4)</b>
+    );
+
+}</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>The specification is producing a query limiting predicate</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>The entity root</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td>The criteria query instance</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="4"></i><b>4</b></td>
+<td>The criteria builder</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>For implementing counting queries following methods can be used:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">long count(PredicateSpecification&lt;Person&gt; spec);
+
+long count(QuerySpecification&lt;Person&gt; spec);</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">long count(PredicateSpecification&lt;Person&gt; spec)
+
+long count(QuerySpecification&lt;Person&gt; spec)</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">fun count(spec: PredicateSpecification&lt;Person&gt;?): Long
+
+fun count(spec: QuerySpecification&lt;Person&gt;?): Long</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>You can define criteria specification methods that will help you to create a query:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">class Specifications {
+
+    static PredicateSpecification&lt;Person&gt; nameEquals(String name) {
+        return (root, criteriaBuilder) -&gt; criteriaBuilder.equal(root.get("name"), name);
+    }
+
+    static PredicateSpecification&lt;Person&gt; ageIsLessThan(int age) {
+        return (root, criteriaBuilder) -&gt; criteriaBuilder.lessThan(root.get("age"), age);
+    }
+
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">class Specifications {
+
+    static PredicateSpecification&lt;Person&gt; nameEquals(String name) {
+        return (root, criteriaBuilder) -&gt; criteriaBuilder.equal(root.get("name"), name)
+    }
+
+    static PredicateSpecification&lt;Person&gt; ageIsLessThan(int age) {
+        return (root, criteriaBuilder) -&gt; criteriaBuilder.lessThan(root.get("age"), age)
+    }
+
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">object Specifications {
+
+    fun nameEquals(name: String?) = PredicateSpecification&lt;Person&gt; { root, criteriaBuilder -&gt;
+        criteriaBuilder.equal(root.get&lt;Any&gt;("name"), name)
+    }
+
+    fun ageIsLessThan(age: Int) = PredicateSpecification&lt;Person&gt; { root, criteriaBuilder -&gt;
+        criteriaBuilder.lessThan(root.get("age"), age)
+    }
+
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Then you can combine them for <code>find</code> or <code>count</code> queries:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">Person denis = personRepository.findOne(nameEquals("Denis")).orElse(null);
+
+long countAgeLess30 = personRepository.count(ageIsLessThan(30));
+
+long countAgeLess20 = personRepository.count(ageIsLessThan(20));
+
+long countAgeLess30NotDenis = personRepository.count(ageIsLessThan(30).and(not(nameEquals("Denis"))));
+
+List&lt;Person&gt; people = personRepository.findAll(where(nameEquals("Denis").or(nameEquals("Josh"))));</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">Person denis = personRepository.findOne(nameEquals("Denis")).orElse(null)
+
+long countAgeLess30 = personRepository.count(ageIsLessThan(30))
+
+long countAgeLess20 = personRepository.count(ageIsLessThan(20))
+
+long countAgeLess30NotDenis = personRepository.count(ageIsLessThan(30) &amp; not(nameEquals("Denis")))
+
+List&lt;Person&gt; people = personRepository.findAll(where(nameEquals("Denis") | nameEquals("Josh")))</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">val denis: Person? = personRepository.findOne(nameEquals("Denis")).orElse(null)
+
+val countAgeLess30: Long = personRepository.count(ageIsLessThan(30))
+
+val countAgeLess20: Long = personRepository.count(ageIsLessThan(20))
+
+val countAgeLess30NotDenis: Long = personRepository.count(ageIsLessThan(30).and(not(nameEquals("Denis"))))
+
+val people = personRepository.findAll(PredicateSpecification.where(nameEquals("Denis").or(nameEquals("Josh"))))</code></pre>
+</div>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+The examples use compile-known values, and in this case, it would be better to create custom repository methods which would come with compile-time generates queries and eliminate runtime overhead.
+It&#8217;s recommended to use criteria only for dynamic queries where the query structure is not known at the build-time.
+</td>
+</tr>
+</table>
+</div>
+
+<h2 id="mongoCriteriaExecuteUpdate"><a class="anchor" href="#mongoCriteriaExecuteUpdate"></a>9.6.2 Updating</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/mongo/mongoCriteriaSpecifications/mongoCriteriaExecuteUpdate.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>To implement the update you can use following method from <a href="../api/io/micronaut/data/repository/JpaSpecificationExecutor.html">JpaSpecificationExecutor</a> interface:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">long updateAll(UpdateSpecification&lt;Person&gt; spec);</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">long updateAll(UpdateSpecification&lt;Person&gt; spec)</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">fun updateAll(spec: UpdateSpecification&lt;Person&gt;?): Long</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This method is expecting <a href="../api/io/micronaut/data/repository/criteria/UpdateSpecification.html">UpdateSpecification</a> which is a variation of specification interface that includes access to <code>jakarta.persistence.criteria.CriteriaUpdate</code>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">import static jakarta.persistence.criteria.*;
+
+public interface UpdateSpecification&lt;T&gt; {
+
+    <i class="conum" data-value="1"></i><b>(1)</b>
+    @Nullable
+    Predicate toPredicate(@NonNull Root&lt;T&gt; root, <i class="conum" data-value="2"></i><b>(2)</b>
+                          @NonNull CriteriaUpdate&lt;?&gt; query, <i class="conum" data-value="3"></i><b>(3)</b>
+                          @NonNull CriteriaBuilder criteriaBuilder <i class="conum" data-value="4"></i><b>(4)</b>
+    );
+
+}</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>The specification is producing a query limiting predicate</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>The entity root</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td>The criteria update instance</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="4"></i><b>4</b></td>
+<td>The criteria builder</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Updating specific properties can be done using <code>jakarta.persistence.criteria.CriteriaUpdate</code> interface:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">query.set(root.get("name"), newName);</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">query.set(root.get("name"), newName)</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">query.set(root.get("name"), newName)</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>You can define criteria specification methods including update specification that will help you to create an update query:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">class Specifications {
+
+    static PredicateSpecification&lt;Person&gt; nameEquals(String name) {
+        return (root, criteriaBuilder) -&gt; criteriaBuilder.equal(root.get("name"), name);
+    }
+
+    static PredicateSpecification&lt;Person&gt; ageIsLessThan(int age) {
+        return (root, criteriaBuilder) -&gt; criteriaBuilder.lessThan(root.get("age"), age);
+    }
+
+    static UpdateSpecification&lt;Person&gt; setNewName(String newName) {
+        return (root, query, criteriaBuilder) -&gt; {
+            query.set(root.get("name"), newName);
+            return null;
+        };
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">class Specifications {
+
+    static PredicateSpecification&lt;Person&gt; nameEquals(String name) {
+        return (root, criteriaBuilder) -&gt; criteriaBuilder.equal(root.get("name"), name)
+    }
+
+    static PredicateSpecification&lt;Person&gt; ageIsLessThan(int age) {
+        return (root, criteriaBuilder) -&gt; criteriaBuilder.lessThan(root.get("age"), age)
+    }
+
+    static UpdateSpecification&lt;Person&gt; setNewName(String newName) {
+        return (root, query, criteriaBuilder) -&gt; {
+            query.set(root.get("name"), newName)
+            null
+        }
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">object Specifications {
+
+    fun nameEquals(name: String?) = PredicateSpecification&lt;Person&gt; { root, criteriaBuilder -&gt;
+        criteriaBuilder.equal(root.get&lt;Any&gt;("name"), name)
+    }
+
+    fun ageIsLessThan(age: Int) = PredicateSpecification&lt;Person&gt; { root, criteriaBuilder -&gt;
+        criteriaBuilder.lessThan(root.get("age"), age)
+    }
+
+    fun setNewName(newName: String) = UpdateSpecification&lt;Person&gt; { root, query, criteriaBuilder -&gt;
+        query.set(root.get("name"), newName)
+        null
+    }
+
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Then you can use the update specification combined with predicate specifications:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">long recordsUpdated = personRepository.updateAll(setNewName("Steven").where(nameEquals("Denis")));</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">long recordsUpdated = personRepository.updateAll(setNewName("Steven").where(nameEquals("Denis")))</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">val recordsUpdated = personRepository.updateAll(setNewName("Steven").where(nameEquals("Denis")))</code></pre>
+</div>
+</div>
+
+<h2 id="mongoCriteriaExecuteDelete"><a class="anchor" href="#mongoCriteriaExecuteDelete"></a>9.6.3 Deleting</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/mongo/mongoCriteriaSpecifications/mongoCriteriaExecuteDelete.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>To delete an entity or multiple entities you can use one of the following methods from <a href="../api/io/micronaut/data/repository/JpaSpecificationExecutor.html">JpaSpecificationExecutor</a> interface:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">long deleteAll(PredicateSpecification&lt;Person&gt; spec);
+
+long deleteAll(DeleteSpecification&lt;Person&gt; spec);</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">long deleteAll(PredicateSpecification&lt;Person&gt; spec)
+
+long deleteAll(DeleteSpecification&lt;Person&gt; spec)</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">fun deleteAll(spec: PredicateSpecification&lt;Person&gt;?): Long
+
+fun deleteAll(spec: DeleteSpecification&lt;Person&gt;?): Long</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>As it is for querying, <code>deleteAll</code> methods also come in two variations.</p>
+</div>
+<div class="paragraph">
+<p>First method is expecting <a href="../api/io/micronaut/data/repository/criteria/PredicateSpecification.html">PredicateSpecification</a> which is a the same interface described in <a href="#criteriaExecuteQuery">Querying</a> section</p>
+</div>
+<div class="paragraph">
+<p>The second method comes with <a href="../api/io/micronaut/data/repository/DeleteSpecification.html">DeleteSpecification</a> and is intended only for delete criteria because it includes access to <code>jakarta.persistence.criteria.CriteriaDelete</code>.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">import static jakarta.persistence.criteria.*;
+
+public interface DeleteSpecification&lt;T&gt; {
+
+    <i class="conum" data-value="1"></i><b>(1)</b>
+    @Nullable
+    Predicate toPredicate(@NonNull Root&lt;T&gt; root, <i class="conum" data-value="2"></i><b>(2)</b>
+                          @NonNull CriteriaDelete&lt;?&gt; query, <i class="conum" data-value="3"></i><b>(3)</b>
+                          @NonNull CriteriaBuilder criteriaBuilder <i class="conum" data-value="4"></i><b>(4)</b>
+    );
+
+}</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>The specification is producing a query limiting predicate</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>The entity root</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td>The criteria delete instance</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="4"></i><b>4</b></td>
+<td>The criteria builder</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>For deleting you can reuse the same predicates as for querying and updating:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">class Specifications {
+
+    static PredicateSpecification&lt;Person&gt; nameEquals(String name) {
+        return (root, criteriaBuilder) -&gt; criteriaBuilder.equal(root.get("name"), name);
+    }
+
+    static PredicateSpecification&lt;Person&gt; ageIsLessThan(int age) {
+        return (root, criteriaBuilder) -&gt; criteriaBuilder.lessThan(root.get("age"), age);
+    }
+
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">class Specifications {
+
+    static PredicateSpecification&lt;Person&gt; nameEquals(String name) {
+        return (root, criteriaBuilder) -&gt; criteriaBuilder.equal(root.get("name"), name)
+    }
+
+    static PredicateSpecification&lt;Person&gt; ageIsLessThan(int age) {
+        return (root, criteriaBuilder) -&gt; criteriaBuilder.lessThan(root.get("age"), age)
+    }
+
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">object Specifications {
+
+    fun nameEquals(name: String?) = PredicateSpecification&lt;Person&gt; { root, criteriaBuilder -&gt;
+        criteriaBuilder.equal(root.get&lt;Any&gt;("name"), name)
+    }
+
+    fun ageIsLessThan(age: Int) = PredicateSpecification&lt;Person&gt; { root, criteriaBuilder -&gt;
+        criteriaBuilder.lessThan(root.get("age"), age)
+    }
+
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Simply pass the predicate specification to the <code>deleteAll</code> method:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">long recordsDeleted = personRepository.deleteAll(where(nameEquals("Denis")));</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">long recordsDeleted = personRepository.deleteAll(where(nameEquals("Denis")))</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">val recordsDeleted = personRepository.deleteAll(PredicateSpecification.where(nameEquals("Denis")))</code></pre>
+</div>
+</div>
+
+<h2 id="mongoOtherRepositoryVariations"><a class="anchor" href="#mongoOtherRepositoryVariations"></a>9.6.4 Other repository variations</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/mongo/mongoCriteriaSpecifications/mongoOtherRepositoryVariations.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>Micronaut Data includes different variations of specification executor interface intended to be used with async or reactive repositories.</p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<caption class="title">Table 1. Builtin Variations of <code>JpaSpecificationExecutor</code> repository interface</caption>
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Interface</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/repository/JpaSpecificationExecutor.html">JpaSpecificationExecutor</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The default interface for querying, deleting and updating data</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/repository/async/AsyncJpaSpecificationExecutor.html">AsyncJpaSpecificationExecutor</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The async version of the specifications repository</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/repository/reactive/ReactiveStreamsJpaSpecificationExecutor.html">ReactiveStreamsJpaSpecificationExecutor</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The reactive streams - <code>Publisher&lt;&gt;</code> version of the specifications repository</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/repository/reactive/ReactorJpaSpecificationExecutor.html">ReactorJpaSpecificationExecutor</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The Reactor version of the specifications repository</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/repository/kotlin/CoroutineJpaSpecificationExecutor.html">CoroutineJpaSpecificationExecutor</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The Kotlin version of the interface that is using coroutines</p></td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="mongoOptimisticLocking"><a class="anchor" href="#mongoOptimisticLocking"></a>9.7 Optimistic locking</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/mongo/mongoOptimisticLocking.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>Optimistic locking is a strategy where you note the actual record state&#8217;s version and modify the record only when the version is the same.</p>
+</div>
+<div class="paragraph">
+<p>To enable optimistic locking for your entity add <a href="../api/io/micronaut/data/annotation/Version.html">@Version</a> annotated field with one of the types:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>java.lang.Integer</code></p>
+</li>
+<li>
+<p><code>java.lang.Long</code></p>
+</li>
+<li>
+<p><code>java.lang.Short</code></p>
+</li>
+<li>
+<p>Date-time type extending <code>java.time.Temporal</code></p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>The field is going to be incremented (for number types) or replaced (for date types) on an update operation.</p>
+</div>
+<div class="paragraph">
+<p>Micronaut Data will generate update/delete filter queries with a version match and if the update/delete doesn&#8217;t produce any result <a href="../api/io/micronaut/data/exceptions/OptimisticLockException.html">OptimisticLockException</a> will be thrown.</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">@MappedEntity
+public class Student {
+
+    @Id
+    @GeneratedValue
+    private ObjectId id;
+    @Version
+    private Long version;</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">@MappedEntity
+class Student {
+
+    @Id
+    @GeneratedValue
+    ObjectId id
+    @Version
+    Long version</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin"></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>It&#8217;s possible to use <a href="../api/io/micronaut/data/annotation/Version.html">@Version</a> in a partial update or a delete method, in this case the version needs to match the version of the stored record.</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">@MongoRepository
+public interface StudentRepository extends CrudRepository&lt;Student, ObjectId&gt; {
+
+    void update(@Id ObjectId id, @Version Long version, String name);
+
+    void delete(@Id ObjectId id, @Version Long version);
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">@MongoRepository
+interface StudentRepository extends CrudRepository&lt;Student, ObjectId&gt; {
+
+    void update(@Id ObjectId id, @Version Long version, String name)
+
+    void delete(@Id ObjectId id, @Version Long version)
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">@MongoRepository
+interface StudentRepository : CrudRepository&lt;Student, ObjectId&gt; {
+
+    fun update(@Id id: ObjectId, @Version version: Long, name: String)
+
+    fun delete(@Id id: ObjectId, @Version version: Long)
+
+}</code></pre>
+</div>
+</div>
+
+<h1 id="graal"><a class="anchor" href="#graal"></a>10 Going Native with GraalVM</h1>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/graal.adoc"'>
@@ -8385,7 +10908,7 @@ override fun &lt;S : Book&gt; saveAll(entities: Iterable&lt;S&gt;): Flow&lt;S&gt
 <p>Micronaut Data will automatically detect the driver and configure the driver correctly for each database as appropriate.</p>
 </div>
 
-<h1 id="spring"><a class="anchor" href="#spring"></a>10 Spring Data Support</h1>
+<h1 id="spring"><a class="anchor" href="#spring"></a>11 Spring Data Support</h1>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/spring.adoc"'>
