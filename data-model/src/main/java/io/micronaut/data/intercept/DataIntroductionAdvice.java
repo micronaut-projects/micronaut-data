@@ -166,7 +166,8 @@ public final class DataIntroductionAdvice implements MethodInterceptor<Object, O
         } catch (NoSuchBeanException e) {
             throw new ConfigurationException("No backing RepositoryOperations configured for repository. Check your configuration and try again", e);
         }
-        BeanIntrospection<Object> introspection = BeanIntrospector.SHARED.findIntrospections(ref -> interceptorType.isAssignableFrom(ref.getBeanType())).stream().findFirst().orElseThrow(() ->
+        BeanIntrospection<Object> introspection = BeanIntrospector.SHARED.findIntrospections(ref ->
+                ref.isPresent() && interceptorType.isAssignableFrom(ref.getBeanType())).stream().findFirst().orElseThrow(() ->
                 new DataAccessException("No Data interceptor found for type: " + interceptorType)
         );
         if (introspection.getConstructorArguments().length == 0) {
