@@ -51,7 +51,7 @@ include 'data-hibernate-jpa'
 include 'data-tx-hibernate'
 include 'data-jdbc'
 include 'data-r2dbc'
-include 'data-mongo'
+include 'data-mongodb'
 
 // Spring compatibility
 include 'data-spring'

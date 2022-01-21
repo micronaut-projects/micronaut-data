@@ -1,4 +1,4 @@
-As seen in the <<mongoQuickStart, Quick Start>> MongoDB repositories in Micronaut Data are defined as interfaces that are annotated with the ann:data.mongo.annotation.MongoRepository[].
+As seen in the <<mongoQuickStart, Quick Start>> MongoDB repositories in Micronaut Data are defined as interfaces that are annotated with the ann:data.mongodb.annotation.MongoRepository[].
 
 In multiple datasource scenario, the ann:data.annotation.Repository[] annotation can be used to specify the datasource configuration to use. By default, Micronaut Data will look for the default datasource.
 

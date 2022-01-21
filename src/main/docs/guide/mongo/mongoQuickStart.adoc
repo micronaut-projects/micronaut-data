@@ -4,9 +4,9 @@ dependency:io.micronaut.data:micronaut-data-document-processor[scope="annotation
 
 NOTE: For Kotlin the dependency should be in the `kapt` scope and for Groovy it should be in `compileOnly` scope.
 
-You should then configure a compile-scoped dependency on the `micronaut-data-mongo` module:
+You should then configure a compile-scoped dependency on the `micronaut-data-mongodb` module:
 
-dependency:io.micronaut.data:micronaut-data-mongo[version="{version}"]
+dependency:io.micronaut.data:micronaut-data-mongodb[version="{version}"]
 
 And include MongoDB Sync driver:
 
@@ -28,7 +28,7 @@ Followed by an interface that extends from api:data.repository.CrudRepository[]
 
 snippet::example.BookRepository[project-base="doc-examples/mongo-example", source="main", tags="repository"]
 
-<1> The interface is annotated with ann:data.mongo.annotation.MongoRepository[]
+<1> The interface is annotated with ann:data.annotation.MongoRepository[]
 <2> The `CrudRepository` interface take 2 generic arguments, the entity type (in this case `Book`) and the ID type (in this case `ObjectId`)
 
 You can now perform CRUD (Create, Read, Update, Delete) operations on the entity. The implementation of `example.BookRepository` is created at compilation time. To obtain a reference to it simply inject the bean:

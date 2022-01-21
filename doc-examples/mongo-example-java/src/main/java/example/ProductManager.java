@@ -3,7 +3,7 @@ package example;
 
 import com.mongodb.client.ClientSession;
 import com.mongodb.client.model.Filters;
-import io.micronaut.data.mongo.database.MongoDatabaseFactory;
+import io.micronaut.data.mongodb.database.MongoDatabaseFactory;
 import io.micronaut.transaction.SynchronousTransactionManager;
 import jakarta.inject.Singleton;
 
