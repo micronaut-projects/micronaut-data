@@ -201,7 +201,8 @@ implements <a href="../../../../../io/micronaut/data/jdbc/operations/JdbcReposit
 </tr>
 <tr class="altColor">
 <td class="colFirst"><code>protected </code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/operations/DefaultJdbcRepositoryOperations.html#DefaultJdbcRepositoryOperations-java.lang.String-javax.sql.DataSource-io.micronaut.transaction.TransactionOperations-java.util.concurrent.ExecutorService-io.micronaut.context.BeanContext-java.util.List-io.micronaut.data.runtime.date.DateTimeProvider-io.micronaut.data.model.runtime.RuntimeEntityRegistry-io.micronaut.data.runtime.convert.DataConversionService-io.micronaut.data.model.runtime.AttributeConverterRegistry-">DefaultJdbcRepositoryOperations</a></span>(java.lang.String&nbsp;dataSourceName,
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/operations/DefaultJdbcRepositoryOperations.html#DefaultJdbcRepositoryOperations-java.lang.String-io.micronaut.data.jdbc.config.DataJdbcConfiguration-javax.sql.DataSource-io.micronaut.transaction.TransactionOperations-java.util.concurrent.ExecutorService-io.micronaut.context.BeanContext-java.util.List-io.micronaut.data.runtime.date.DateTimeProvider-io.micronaut.data.model.runtime.RuntimeEntityRegistry-io.micronaut.data.runtime.convert.DataConversionService-io.micronaut.data.model.runtime.AttributeConverterRegistry-">DefaultJdbcRepositoryOperations</a></span>(java.lang.String&nbsp;dataSourceName,
+                               <a href="../../../../../io/micronaut/data/jdbc/config/DataJdbcConfiguration.html" title="class in io.micronaut.data.jdbc.config">DataJdbcConfiguration</a>&nbsp;jdbcConfiguration,
                                javax.sql.DataSource&nbsp;dataSource,
                                <a href="../../../../../io/micronaut/transaction/TransactionOperations.html" title="interface in io.micronaut.transaction">TransactionOperations</a>&lt;java.sql.Connection&gt;&nbsp;transactionOperations,
                                java.util.concurrent.ExecutorService&nbsp;executorService,
@@ -531,7 +532,7 @@ implements <a href="../../../../../io/micronaut/data/jdbc/operations/JdbcReposit
 <!--   -->
 </a>
 <h3>Constructor Detail</h3>
-<a name="DefaultJdbcRepositoryOperations-java.lang.String-javax.sql.DataSource-io.micronaut.transaction.TransactionOperations-java.util.concurrent.ExecutorService-io.micronaut.context.BeanContext-java.util.List-io.micronaut.data.runtime.date.DateTimeProvider-io.micronaut.data.model.runtime.RuntimeEntityRegistry-io.micronaut.data.runtime.convert.DataConversionService-io.micronaut.data.model.runtime.AttributeConverterRegistry-">
+<a name="DefaultJdbcRepositoryOperations-java.lang.String-io.micronaut.data.jdbc.config.DataJdbcConfiguration-javax.sql.DataSource-io.micronaut.transaction.TransactionOperations-java.util.concurrent.ExecutorService-io.micronaut.context.BeanContext-java.util.List-io.micronaut.data.runtime.date.DateTimeProvider-io.micronaut.data.model.runtime.RuntimeEntityRegistry-io.micronaut.data.runtime.convert.DataConversionService-io.micronaut.data.model.runtime.AttributeConverterRegistry-">
 <!--   -->
 </a>
 <ul class="blockListLast">
@@ -540,6 +541,8 @@ implements <a href="../../../../../io/micronaut/data/jdbc/operations/JdbcReposit
 <pre>@Internal
 protected&nbsp;DefaultJdbcRepositoryOperations(@Parameter
                                                     java.lang.String&nbsp;dataSourceName,
+                                                    @Parameter
+                                                    <a href="../../../../../io/micronaut/data/jdbc/config/DataJdbcConfiguration.html" title="class in io.micronaut.data.jdbc.config">DataJdbcConfiguration</a>&nbsp;jdbcConfiguration,
                                                     javax.sql.DataSource&nbsp;dataSource,
                                                     @Parameter
                                                     <a href="../../../../../io/micronaut/transaction/TransactionOperations.html" title="interface in io.micronaut.transaction">TransactionOperations</a>&lt;java.sql.Connection&gt;&nbsp;transactionOperations,
@@ -556,6 +559,7 @@ protected&nbsp;DefaultJdbcRepositoryOperations(@Parameter
 <dl>
 <dt><span class="paramLabel">Parameters:</span></dt>
 <dd><code>dataSourceName</code> - The data source name</dd>
+<dd><code>jdbcConfiguration</code> - The jdbcConfiguration</dd>
 <dd><code>dataSource</code> - The datasource</dd>
 <dd><code>transactionOperations</code> - The JDBC operations for the data source</dd>
 <dd><code>executorService</code> - The executor service</dd>

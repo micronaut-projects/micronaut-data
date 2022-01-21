@@ -17,7 +17,7 @@
     catch(err) {
     }
 //-->
-var methods = {"i0":10,"i1":10,"i2":10,"i3":10,"i4":10,"i5":10,"i6":10,"i7":10,"i8":10,"i9":10,"i10":10,"i11":10,"i12":10};
+var methods = {"i0":10,"i1":10,"i2":10,"i3":10,"i4":10,"i5":10,"i6":10,"i7":10,"i8":10,"i9":10,"i10":10,"i11":10,"i12":10,"i13":10};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],8:["t4","Concrete Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -272,6 +272,12 @@ extends <a href="../../../../../io/micronaut/transaction/support/AbstractSynchro
 </td>
 </tr>
 <tr id="i12" class="altColor">
+<td class="colFirst"><code>boolean</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/mongodb/transaction/MongoSynchronousTransactionManager.html#hasConnection--">hasConnection</a></span>()</code>
+<div class="block">Check if the connection exists.</div>
+</td>
+</tr>
+<tr id="i13" class="rowColor">
 <td class="colFirst"><code>protected boolean</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/mongodb/transaction/MongoSynchronousTransactionManager.html#isExistingTransaction-java.lang.Object-">isExistingTransaction</a></span>(java.lang.Object&nbsp;transaction)</code>
 <div class="block">Check if the given transaction object indicates an existing transaction
@@ -366,6 +372,21 @@ public&nbsp;com.mongodb.client.ClientSession&nbsp;findClientSession()</pre>
 <dl>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>The connection</dd>
+</dl>
+</li>
+</ul>
+<a name="hasConnection--">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>hasConnection</h4>
+<pre>public&nbsp;boolean&nbsp;hasConnection()</pre>
+<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../../io/micronaut/transaction/TransactionOperations.html#hasConnection--">TransactionOperations</a></code></span></div>
+<div class="block">Check if the connection exists.</div>
+<dl>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>True if transaction exists</dd>
 </dl>
 </li>
 </ul>

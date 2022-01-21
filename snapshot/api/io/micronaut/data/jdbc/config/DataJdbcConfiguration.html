@@ -17,7 +17,7 @@
     catch(err) {
     }
 //-->
-var methods = {"i0":10,"i1":10,"i2":10,"i3":10,"i4":10,"i5":10,"i6":10,"i7":10,"i8":10};
+var methods = {"i0":10,"i1":10,"i2":10,"i3":10,"i4":10,"i5":10,"i6":10,"i7":10,"i8":10,"i9":10,"i10":10,"i11":10,"i12":10};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],8:["t4","Concrete Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -199,29 +199,45 @@ implements io.micronaut.core.naming.Named</pre>
 </tr>
 <tr id="i4" class="altColor">
 <td class="colFirst"><code>boolean</code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/config/DataJdbcConfiguration.html#isBatchGenerate--">isBatchGenerate</a></span>()</code>&nbsp;</td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/config/DataJdbcConfiguration.html#isAllowConnectionPerOperation--">isAllowConnectionPerOperation</a></span>()</code>&nbsp;</td>
 </tr>
 <tr id="i5" class="rowColor">
+<td class="colFirst"><code>boolean</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/config/DataJdbcConfiguration.html#isBatchGenerate--">isBatchGenerate</a></span>()</code>&nbsp;</td>
+</tr>
+<tr id="i6" class="altColor">
+<td class="colFirst"><code>boolean</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/config/DataJdbcConfiguration.html#isTransactionPerOperation--">isTransactionPerOperation</a></span>()</code>&nbsp;</td>
+</tr>
+<tr id="i7" class="rowColor">
+<td class="colFirst"><code>void</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/config/DataJdbcConfiguration.html#setAllowConnectionPerOperation-boolean-">setAllowConnectionPerOperation</a></span>(boolean&nbsp;allowConnectionPerOperation)</code>&nbsp;</td>
+</tr>
+<tr id="i8" class="altColor">
 <td class="colFirst"><code>void</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/config/DataJdbcConfiguration.html#setBatchGenerate-boolean-">setBatchGenerate</a></span>(boolean&nbsp;batchGenerate)</code>&nbsp;</td>
 </tr>
-<tr id="i6" class="altColor">
+<tr id="i9" class="rowColor">
 <td class="colFirst"><code>void</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/config/DataJdbcConfiguration.html#setDialect-io.micronaut.data.model.query.builder.sql.Dialect-">setDialect</a></span>(<a href="../../../../../io/micronaut/data/model/query/builder/sql/Dialect.html" title="enum in io.micronaut.data.model.query.builder.sql">Dialect</a>&nbsp;dialect)</code>
 <div class="block">Sets the dialect.</div>
 </td>
 </tr>
-<tr id="i7" class="rowColor">
+<tr id="i10" class="altColor">
 <td class="colFirst"><code>void</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/config/DataJdbcConfiguration.html#setPackages-java.util.List-">setPackages</a></span>(java.util.List&lt;java.lang.String&gt;&nbsp;packages)</code>
 <div class="block">Sets the packages to include use for the purposes of schema generation.</div>
 </td>
 </tr>
-<tr id="i8" class="altColor">
+<tr id="i11" class="rowColor">
 <td class="colFirst"><code>void</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/config/DataJdbcConfiguration.html#setSchemaGenerate-io.micronaut.data.runtime.config.SchemaGenerate-">setSchemaGenerate</a></span>(<a href="../../../../../io/micronaut/data/runtime/config/SchemaGenerate.html" title="enum in io.micronaut.data.runtime.config">SchemaGenerate</a>&nbsp;schemaGenerate)</code>
 <div class="block">Sets the schema generation strategy.</div>
 </td>
+</tr>
+<tr id="i12" class="altColor">
+<td class="colFirst"><code>void</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/config/DataJdbcConfiguration.html#setTransactionPerOperation-boolean-">setTransactionPerOperation</a></span>(boolean&nbsp;transactionPerOperation)</code>&nbsp;</td>
 </tr>
 </table>
 <ul class="blockList">
@@ -400,7 +416,7 @@ implements io.micronaut.core.naming.Named</pre>
 <a name="getName--">
 <!--   -->
 </a>
-<ul class="blockListLast">
+<ul class="blockList">
 <li class="blockList">
 <h4>getName</h4>
 <pre>@NonNull
@@ -408,6 +424,58 @@ public&nbsp;java.lang.String&nbsp;getName()</pre>
 <dl>
 <dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
 <dd><code>getName</code>&nbsp;in interface&nbsp;<code>io.micronaut.core.naming.Named</code></dd>
+</dl>
+</li>
+</ul>
+<a name="isTransactionPerOperation--">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>isTransactionPerOperation</h4>
+<pre>public&nbsp;boolean&nbsp;isTransactionPerOperation()</pre>
+<dl>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>true if property is set</dd>
+</dl>
+</li>
+</ul>
+<a name="setTransactionPerOperation-boolean-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>setTransactionPerOperation</h4>
+<pre>public&nbsp;void&nbsp;setTransactionPerOperation(boolean&nbsp;transactionPerOperation)</pre>
+<dl>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>transactionPerOperation</code> - The property</dd>
+</dl>
+</li>
+</ul>
+<a name="isAllowConnectionPerOperation--">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>isAllowConnectionPerOperation</h4>
+<pre>public&nbsp;boolean&nbsp;isAllowConnectionPerOperation()</pre>
+<dl>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>true if property is set</dd>
+</dl>
+</li>
+</ul>
+<a name="setAllowConnectionPerOperation-boolean-">
+<!--   -->
+</a>
+<ul class="blockListLast">
+<li class="blockList">
+<h4>setAllowConnectionPerOperation</h4>
+<pre>public&nbsp;void&nbsp;setAllowConnectionPerOperation(boolean&nbsp;allowConnectionPerOperation)</pre>
+<dl>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>allowConnectionPerOperation</code> - The property</dd>
 </dl>
 </li>
 </ul>

@@ -17,7 +17,7 @@
     catch(err) {
     }
 //-->
-var methods = {"i0":10,"i1":10,"i2":10,"i3":10,"i4":10,"i5":10,"i6":10,"i7":10,"i8":10,"i9":10,"i10":10,"i11":10,"i12":10,"i13":10,"i14":10,"i15":10,"i16":10,"i17":10,"i18":10,"i19":10,"i20":10};
+var methods = {"i0":10,"i1":10,"i2":10,"i3":10,"i4":10,"i5":10,"i6":10,"i7":10,"i8":10,"i9":10,"i10":10,"i11":10,"i12":10,"i13":10,"i14":10,"i15":10,"i16":10,"i17":10,"i18":10,"i19":10,"i20":10,"i21":10};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],8:["t4","Concrete Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -306,34 +306,40 @@ implements <a href="../../../../io/micronaut/transaction/support/ResourceTransac
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/transaction/hibernate5/HibernateTransactionManager.html#getSessionFactory--">getSessionFactory</a></span>()</code>&nbsp;</td>
 </tr>
 <tr id="i15" class="rowColor">
+<td class="colFirst"><code>boolean</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/transaction/hibernate5/HibernateTransactionManager.html#hasConnection--">hasConnection</a></span>()</code>
+<div class="block">Check if the connection exists.</div>
+</td>
+</tr>
+<tr id="i16" class="altColor">
 <td class="colFirst"><code>protected boolean</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/transaction/hibernate5/HibernateTransactionManager.html#isExistingTransaction-java.lang.Object-">isExistingTransaction</a></span>(java.lang.Object&nbsp;transaction)</code>
 <div class="block">Check if the given transaction object indicates an existing transaction
  (that is, a transaction which has already started).</div>
 </td>
 </tr>
-<tr id="i16" class="altColor">
+<tr id="i17" class="rowColor">
 <td class="colFirst"><code>protected boolean</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/transaction/hibernate5/HibernateTransactionManager.html#isPhysicallyConnected-org.hibernate.Session-">isPhysicallyConnected</a></span>(org.hibernate.Session&nbsp;session)</code>
 <div class="block">Determine whether the given Session is (still) physically connected
  to the database, that is, holds an active JDBC Connection internally.</div>
 </td>
 </tr>
-<tr id="i17" class="rowColor">
+<tr id="i18" class="altColor">
 <td class="colFirst"><code>protected boolean</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/transaction/hibernate5/HibernateTransactionManager.html#isSameConnectionForEntireSession-org.hibernate.Session-">isSameConnectionForEntireSession</a></span>(org.hibernate.Session&nbsp;session)</code>
 <div class="block">Return whether the given Hibernate Session will always hold the same
  JDBC Connection.</div>
 </td>
 </tr>
-<tr id="i18" class="altColor">
+<tr id="i19" class="rowColor">
 <td class="colFirst"><code>void</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/transaction/hibernate5/HibernateTransactionManager.html#setAllowResultAccessAfterCompletion-boolean-">setAllowResultAccessAfterCompletion</a></span>(boolean&nbsp;allowResultAccessAfterCompletion)</code>
 <div class="block">Set whether to allow result access after completion, typically via Hibernate's
  ScrollableResults mechanism.</div>
 </td>
 </tr>
-<tr id="i19" class="rowColor">
+<tr id="i20" class="altColor">
 <td class="colFirst"><code>void</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/transaction/hibernate5/HibernateTransactionManager.html#setHibernateManagedSession-boolean-">setHibernateManagedSession</a></span>(boolean&nbsp;hibernateManagedSession)</code>
 <div class="block">Set whether to operate on a Hibernate-managed Session, that is, whether to obtain the Session through
@@ -343,7 +349,7 @@ implements <a href="../../../../io/micronaut/transaction/support/ResourceTransac
  check preceding it).</div>
 </td>
 </tr>
-<tr id="i20" class="altColor">
+<tr id="i21" class="rowColor">
 <td class="colFirst"><code>void</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/transaction/hibernate5/HibernateTransactionManager.html#setPrepareConnection-boolean-">setPrepareConnection</a></span>(boolean&nbsp;prepareConnection)</code>
 <div class="block">Set whether to prepare the underlying JDBC Connection of a transactional
@@ -882,7 +888,7 @@ public&nbsp;org.hibernate.Interceptor&nbsp;getEntityInterceptor()</pre>
 <a name="getConnection--">
 <!--   -->
 </a>
-<ul class="blockListLast">
+<ul class="blockList">
 <li class="blockList">
 <h4>getConnection</h4>
 <pre>@NonNull
@@ -894,6 +900,23 @@ public&nbsp;java.sql.Connection&nbsp;getConnection()</pre>
 <dd><code><a href="../../../../io/micronaut/transaction/TransactionOperations.html#getConnection--">getConnection</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../io/micronaut/transaction/TransactionOperations.html" title="interface in io.micronaut.transaction">TransactionOperations</a>&lt;java.sql.Connection&gt;</code></dd>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>The connection</dd>
+</dl>
+</li>
+</ul>
+<a name="hasConnection--">
+<!--   -->
+</a>
+<ul class="blockListLast">
+<li class="blockList">
+<h4>hasConnection</h4>
+<pre>public&nbsp;boolean&nbsp;hasConnection()</pre>
+<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../io/micronaut/transaction/TransactionOperations.html#hasConnection--">TransactionOperations</a></code></span></div>
+<div class="block">Check if the connection exists.</div>
+<dl>
+<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
+<dd><code><a href="../../../../io/micronaut/transaction/TransactionOperations.html#hasConnection--">hasConnection</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../io/micronaut/transaction/TransactionOperations.html" title="interface in io.micronaut.transaction">TransactionOperations</a>&lt;java.sql.Connection&gt;</code></dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>True if transaction exists</dd>
 </dl>
 </li>
 </ul>
