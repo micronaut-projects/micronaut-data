@@ -1,6 +1,6 @@
 plugins {
-    id "org.jetbrains.kotlin.jvm"
     id "io.micronaut.build.internal.data-module"
+    id "io.micronaut.build.internal.data-kotlin"
 }
 
 dependencies {
@@ -18,21 +18,7 @@ dependencies {
     compileOnly mn.rxjava2
     compileOnly mn.jackson.annotations
     compileOnly mn.jackson.databind
-    compileOnly libs.kotlin.stdlib
-    compileOnly libs.kotlin.coroutines
 
     testImplementation mn.micronaut.inject.java.test
     testImplementation mn.micronaut.jackson.databind
-}
-
-tasks.named("compileKotlin") {
-    kotlinOptions {
-        jvmTarget = '1.8'
-    }
-}
-
-tasks.named("compileTestKotlin") {
-    kotlinOptions {
-        jvmTarget = '1.8'
-    }
 }

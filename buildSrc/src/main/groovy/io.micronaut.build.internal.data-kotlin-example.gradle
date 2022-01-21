@@ -1,0 +1,24 @@
+plugins {
+    id "org.jetbrains.kotlin.jvm"
+    id "org.jetbrains.kotlin.kapt"
+    id "org.jetbrains.kotlin.plugin.allopen"
+    id "org.jetbrains.kotlin.plugin.jpa"
+    id "io.micronaut.build.internal.data-example"
+    id "io.micronaut.build.internal.data-kotlin"
+}
+
+allOpen {
+    annotation("io.micronaut.aop.Around")
+}
+
+compileKotlin {
+    kotlinOptions {
+        freeCompilerArgs = ["-Xjvm-default=all"]
+    }
+}
+
+compileTestKotlin {
+    kotlinOptions {
+        freeCompilerArgs = ["-Xjvm-default=all"]
+    }
+}

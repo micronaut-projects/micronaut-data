@@ -1,6 +1,5 @@
 plugins {
     id "io.micronaut.build.internal.data-module"
-    id "org.jetbrains.kotlin.jvm"
 }
 
 dependencies {

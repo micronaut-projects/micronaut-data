@@ -1,11 +1,8 @@
 plugins {
     id "java"
-    id "org.jetbrains.kotlin.jvm"
-    id "org.jetbrains.kotlin.kapt"
-    id "org.jetbrains.kotlin.plugin.allopen"
-    id "org.jetbrains.kotlin.plugin.jpa"
     id "io.micronaut.application"
     id "io.micronaut.build.internal.data-example"
+    id "io.micronaut.build.internal.data-kotlin-example"
 }
 
 repositories {
@@ -39,22 +36,6 @@ dependencies {
 
     runtimeOnly "ch.qos.logback:logback-classic"
     runtimeOnly "com.h2database:h2"
-}
-
-allOpen {
-    annotation("io.micronaut.aop.Around")
-}
-
-compileKotlin {
-    kotlinOptions {
-        jvmTarget = '1.8'
-    }
-}
-
-compileTestKotlin {
-    kotlinOptions {
-        jvmTarget = '1.8'
-    }
 }
 
 project.afterEvaluate {
