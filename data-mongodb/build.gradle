@@ -6,7 +6,7 @@ dependencies {
     annotationProcessor projects.dataDocumentProcessor
     annotationProcessor mn.micronaut.inject.java
     annotationProcessor mn.micronaut.graal
-    annotationProcessor "io.micronaut.docs:micronaut-docs-asciidoc-config-props:$micronautDocsVersion"
+    annotationProcessor libs.micronaut.docs
 
     api projects.dataRuntime
     api projects.dataDocumentModel
@@ -17,23 +17,22 @@ dependencies {
     implementation libs.mongodb.driver.reactivestreams
     implementation mn.micronaut.mongo
     implementation mn.micronaut.mongo.sync
-    compileOnly "io.micronaut.reactor:micronaut-reactor"
+
+    compileOnly mn.micronaut.reactor
 
     testAnnotationProcessor projects.dataDocumentProcessor
     testAnnotationProcessor mn.micronaut.inject.java
+    testAnnotationProcessor libs.jakarta.persistence.api
 
     testImplementation projects.dataDocumentProcessor
     testImplementation projects.dataDocumentTck
+    testImplementation libs.jakarta.persistence.api
+    testImplementation mn.micronaut.rxjava2
+    testImplementation mn.micronaut.reactor
+    testImplementation libs.jakarta.persistence.api
+    testImplementation mn.micronaut.validation
+    testImplementation libs.testcontainers.spock
+    testImplementation libs.testcontainers.mongodb
+
     testCompileOnly mn.micronaut.inject.groovy
-
-    testImplementation 'io.micronaut.rxjava2:micronaut-rxjava2'
-    testImplementation "io.micronaut.reactor:micronaut-reactor"
-
-    testImplementation "jakarta.persistence:jakarta.persistence-api:$jakartaPersistenceVersion"
-    testImplementation "io.micronaut:micronaut-validation"
-    testImplementation "org.testcontainers:spock"
-    testImplementation "org.testcontainers:mongodb"
-
-    testAnnotationProcessor "jakarta.persistence:jakarta.persistence-api:$jakartaPersistenceVersion"
-    testImplementation "jakarta.persistence:jakarta.persistence-api:$jakartaPersistenceVersion"
 }

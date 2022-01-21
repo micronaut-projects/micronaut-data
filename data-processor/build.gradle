@@ -3,20 +3,21 @@ plugins {
 }
 
 dependencies {
-	api project(":data-model")
-	api "jakarta.persistence:jakarta.persistence-api:$jakartaPersistenceVersion"
+	api projects.dataModel
+	api libs.jakarta.persistence.api
 
-	compileOnly "io.micronaut:micronaut-inject:$micronautVersion"
-	testAnnotationProcessor "io.micronaut:micronaut-inject-java"
-	testImplementation "io.projectreactor:reactor-core:3.4.0"
-	testImplementation "io.micronaut:micronaut-inject-groovy"
-	testImplementation "io.micronaut:micronaut-inject-java-test"
-	testImplementation "javax.persistence:javax.persistence-api:$javaxPersistenceVersion"
-	testImplementation "jakarta.persistence:jakarta.persistence-api:$jakartaPersistenceVersion"
-	testImplementation "jakarta.transaction:jakarta.transaction-api:$jakartaTxVersion"
+	compileOnly mn.micronaut.inject
+
+	testAnnotationProcessor mn.micronaut.inject.java
+
+	testImplementation mn.micronaut.reactor
+	testImplementation mn.micronaut.inject.groovy
+	testImplementation mn.micronaut.inject.java.test
+	testImplementation libs.javax.persistence.api
+	testImplementation libs.jakarta.transaction.api
 	if (!JavaVersion.current().isJava9Compatible()) {
 		testImplementation files(org.gradle.internal.jvm.Jvm.current().toolsJar)
 	}
-	testImplementation "org.springframework.data:spring-data-jpa:$springDataVersion"
-	testImplementation project(":data-tck")
+	testImplementation libs.spring.data.jpa
+	testImplementation projects.dataTck
 }

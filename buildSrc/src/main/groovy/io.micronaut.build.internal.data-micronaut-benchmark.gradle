@@ -1,0 +1,12 @@
+plugins {
+    id "io.micronaut.application"
+    id "io.micronaut.build.internal.data-benchmark"
+}
+
+dependencies {
+    annotationProcessor project(":data-processor")
+    runtimeOnly "ch.qos.logback:logback-classic"
+
+    jmh libs.jmh.core
+    jmh libs.jmh.annprocess
+}

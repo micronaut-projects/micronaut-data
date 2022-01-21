@@ -1,12 +1,139 @@
 [versions]
-mongodb = "4.1.1"
 micronaut-serde = "1.0.0-M5"
+micronaut-sql = "4.0.0-RC4"
+micronaut-docs = "2.0.0.RC1"
+micronaut-gradle-plugin = "2.0.3"
+micronaut-gradle-build-settings-plugin = "5.1.1"
+
+groovy = "3.0.8"
+
+javax-persistence = "2.2"
+jakarta-persistence = "3.0.0"
+jakarta-javax-persistence = "2.2.3"
+jakarta-transaction = "1.3.3"
+
+hibernate = "5.4.31.Final"
+
+spring-data = "2.4.0"
+spring = "5.3.0"
+
+mongodb = "4.1.1"
+oracle-driver = "21.1.0.0"
+mariadb-driver = "2.7.0"
+mysql-driver = "8.0.22"
+postgres-driver = "42.2.18"
+mssql-driver = "8.4.1.jre8"
+
+oracle-r2dbc-driver = "0.4.0"
+mysql-r2dbc-driver = "0.8.2.RELEASE"
+r2dbc = "Arabba-SR12"
+
+cglib = "3.3.0"
+objenesis = "3.2"
+
+jmh-core = "1.30"
+jmh-annprocess = "1.25.2"
+
+kotlin-gradle-plugin = "1.6.10"
+jmh-gradle-plugin = "0.6.6"
+spring-boot-gradle-plugin = "2.6.3"
+spring-dependency-management-gradle-plugin = "1.0.11.RELEASE"
 
 [libraries]
-mongodb-driver-sync = { module = "org.mongodb:mongodb-driver-sync", version.ref = "mongodb" }
-mongodb-driver-reactivestreams = { module = "org.mongodb:mongodb-driver-reactivestreams", version.ref = "mongodb" }
+
+groovy-sql = { module = "org.codehaus.groovy:groovy-sql" }
+groovy-dateutil = { module = "org.codehaus.groovy:groovy-dateutil", version.ref = "groovy" }
+
+cglib = { module = "cglib:cglib-nodep", version.ref = "cglib" }
+objenesis = { module = "org.objenesis:objenesis", version.ref = "objenesis" }
+
+micronaut-docs = { module = "io.micronaut.docs:micronaut-docs-asciidoc-config-props", version.ref = "micronaut-docs" }
+
+jackson-databind = { module = "com.fasterxml.jackson.core:jackson-databind" }
+jackson-annotations = { module = "com.fasterxml.jackson.core:jackson-annotations" }
+
+kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib-jdk8" }
+kotlin-coroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core" }
+
+jakarta-transaction-api = { module = "jakarta.transaction:jakarta.transaction-api", version.ref = "jakarta-transaction" }
+javax-persistence-api = { module = "javax.persistence:javax.persistence-api", version.ref = "javax-persistence" }
+jakarta-persistence-api = { module = "jakarta.persistence:jakarta.persistence-api", version.ref = "jakarta-persistence" }
+jakarta-persistence-api2 = { module = "jakarta.persistence:jakarta.persistence-api", version.ref = "jakarta-javax-persistence" }
+
+jmh-core = { module = "org.openjdk.jmh:jmh-core", version.ref = "jmh-core" }
+jmh-annprocess = { module = "org.openjdk.jmh:jmh-generator-annprocess", version.ref = "jmh-annprocess" }
+
+# JPA
+
+micronaut-sql-hibernate-jpa = { module = "io.micronaut.sql:micronaut-hibernate-jpa", version.ref = "micronaut-sql" }
+micronaut-sql-hibernate-jpa-spring = { module = "io.micronaut.sql:micronaut-hibernate-jpa-spring", version.ref = "micronaut-sql" }
+
+hibernate-core = { module = "org.hibernate:hibernate-core", version.ref = "hibernate" }
+hibernate-jpamodelgen = { module = "org.hibernate:hibernate-jpamodelgen", version.ref = "hibernate" }
+
+spring-data-jpa = { module = "org.springframework.data:spring-data-jpa", version.ref = "spring-data" }
+spring-data-commons = { module = "org.springframework.data:spring-data-commons", version.ref = "spring-data" }
+spring-jdbc = { module = "org.springframework:spring-jdbc", version.ref = "spring" }
+spring-orm = { module = "org.springframework:spring-orm", version.ref = "spring" }
+
+# JDBC
+
+micronaut-sql-jdbc-tomcat = { module = "io.micronaut.sql:micronaut-jdbc-tomcat", version.ref = "micronaut-sql" }
+micronaut-sql-jdbc = { module = "io.micronaut.sql:micronaut-jdbc", version.ref = "micronaut-sql" }
+
+h2 = { module = "com.h2database:h2" }
+
+drivers-jdbc-oracle = { module = "com.oracle.database.jdbc:ojdbc8", version.ref = "oracle-driver" }
+drivers-jdbc-mariadb = { module = "org.mariadb.jdbc:mariadb-java-client", version.ref = "mariadb-driver" }
+drivers-jdbc-mysql = { module = "mysql:mysql-connector-java", version.ref = "mysql-driver" }
+drivers-jdbc-postgresql = { module = "org.postgresql:postgresql", version.ref = "postgres-driver" }
+drivers-jdbc-mssql = { module = "com.microsoft.sqlserver:mssql-jdbc", version.ref = "mssql-driver" }
+
+# R2DBC
+
+r2dbc-bom = { module = "io.r2dbc:r2dbc-bom", version.ref = "r2dbc" }
+r2dbc-spi = { module = "io.r2dbc:r2dbc-spi" }
+r2dbc-pool = { module = "io.r2dbc:r2dbc-pool" }
+r2dbc-h2 = { module = "io.r2dbc:r2dbc-h2" }
+
+micronaut-r2dbc = { module = "io.micronaut.r2dbc:micronaut-r2dbc-core" }
+
+drivers-r2dbc-oracle = { module = "com.oracle.database.r2dbc:oracle-r2dbc", version.ref = "oracle-r2dbc-driver" }
+drivers-r2dbc-mariadb = { module = "org.mariadb:r2dbc-mariadb" }
+drivers-r2dbc-mysql = { module = "dev.miku:r2dbc-mysql", version.ref = "mysql-r2dbc-driver" }
+drivers-r2dbc-mssql = { module = "io.r2dbc:r2dbc-mssql" }
+drivers-r2dbc-postgresql = { module = "io.r2dbc:r2dbc-postgresql" }
+
+# TESTCONTAINERS
+
+testcontainers-spock = { module = "org.testcontainers:spock" }
+testcontainers-postgresql = { module = "org.testcontainers:postgresql" }
+testcontainers-mysql = { module = "org.testcontainers:mysql" }
+testcontainers-mariadb = { module = "org.testcontainers:mariadb" }
+testcontainers-mssqlserver = { module = "org.testcontainers:mssqlserver" }
+testcontainers-oracle = { module = "org.testcontainers:oracle-xe" }
+testcontainers-r2dbc = { module = "org.testcontainers:r2dbc" }
+testcontainers-mongodb = { module = "org.testcontainers:mongodb" }
+
+# SERDE
 
 micronaut-serde-processor = { module = "io.micronaut.serde:micronaut-serde-processor", version.ref = "micronaut-serde" }
 micronaut-serde-bson = { module = "io.micronaut.serde:micronaut-serde-bson", version.ref = "micronaut-serde" }
 micronaut-serde-api = { module = "io.micronaut.serde:micronaut-serde-api", version.ref = "micronaut-serde" }
 micronaut-serde-support = { module = "io.micronaut.serde:micronaut-serde-support", version.ref = "micronaut-serde" }
+
+# MONGO
+
+mongodb-driver-sync = { module = "org.mongodb:mongodb-driver-sync", version.ref = "mongodb" }
+mongodb-driver-reactivestreams = { module = "org.mongodb:mongodb-driver-reactivestreams", version.ref = "mongodb" }
+
+#PLUGINS
+
+gradle-micronaut = { module = "io.micronaut.gradle:micronaut-gradle-plugin", version.ref = "micronaut-gradle-plugin" }
+#gradle-micronaut-settings = { module = "io.micronaut.build.shared.settings:io.micronaut.build.shared.settings.gradle.plugin", version.ref = "micronaut-gradle-build-settings-plugin" }
+gradle-kotlin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin-gradle-plugin" }
+gradle-kotlin-allopen = { module = "org.jetbrains.kotlin:kotlin-allopen", version.ref = "kotlin-gradle-plugin" }
+gradle-kotlin-noarg = { module = "org.jetbrains.kotlin:kotlin-noarg", version.ref = "kotlin-gradle-plugin" }
+gradle-jmh = { module = "me.champeau.jmh:jmh-gradle-plugin", version.ref = "jmh-gradle-plugin" }
+gradle-spring-boot = { module = "org.springframework.boot:spring-boot-gradle-plugin", version.ref = "spring-boot-gradle-plugin" }
+gradle-spring-dependencies = { module = "io.spring.gradle:dependency-management-plugin", version.ref = "spring-dependency-management-gradle-plugin" }

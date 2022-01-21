@@ -3,19 +3,21 @@ plugins {
 }
 
 dependencies {
-    annotationProcessor "io.micronaut:micronaut-inject-java"
-    annotationProcessor "io.micronaut:micronaut-graal"
-    api project(":data-runtime")
-    api project(":data-model")
-    api 'jakarta.persistence:jakarta.persistence-api:2.2.3'
-    api "org.hibernate:hibernate-core", {
+    annotationProcessor mn.micronaut.inject.java
+    annotationProcessor mn.micronaut.graal
+
+    api projects.dataRuntime
+    api projects.dataModel
+    api libs.jakarta.persistence.api2
+    api (libs.hibernate.core) {
         exclude group: "javax.persistence", module:"javax.persistence-api"
         exclude group: 'org.jboss.spec.javax.transaction', module: 'jboss-transaction-api_1.2_spec'
         exclude group: 'org.javassist', module: 'javassist'
         exclude group: 'org.jboss:jandex', module: 'jar'
     }
-    api project(":data-tx-hibernate")
-    implementation "io.micronaut.sql:micronaut-hibernate-jpa", {
+    api projects.dataTxHibernate
+
+    implementation (libs.micronaut.sql.hibernate.jpa) {
         exclude group:'org.jboss.spec.javax.transaction', module:'jboss-transaction-api_1.2_spec'
         exclude group:'org.jboss:jandex', module:'jar'
         exclude group:'io.micronaut', module:'micronaut-spring'
@@ -28,22 +30,18 @@ dependencies {
         exclude group:'io.micronaut.configuration', module:'micronaut-hibernate-jpa-spring'
         exclude group: 'io.micronaut.data'
     }
-    testImplementation 'io.micronaut.rxjava2:micronaut-rxjava2'
-    testImplementation 'io.micronaut.reactor:micronaut-reactor'
-    testImplementation project(":data-tck")
 
-    testAnnotationProcessor "io.micronaut:micronaut-inject-java"
-    testAnnotationProcessor project(":data-processor")
-    testImplementation "io.micronaut:micronaut-inject-groovy"
-    testImplementation project(":data-processor")
-    testRuntimeOnly "com.h2database:h2"
-    testRuntimeOnly "io.micronaut.sql:micronaut-jdbc-tomcat"
-    testImplementation("org.codehaus.groovy:groovy-sql")
+    testAnnotationProcessor mn.micronaut.inject.java
+    testAnnotationProcessor projects.dataProcessor
 
-    testImplementation "org.testcontainers:postgresql"
-    testRuntimeOnly "org.postgresql:postgresql"
-//    compileTestGroovy.groovyOptions.forkOptions.jvmArgs = ['-Xdebug', '-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5005']
+    testImplementation mn.micronaut.inject.groovy
+    testImplementation projects.dataProcessor
+    testImplementation mn.micronaut.rxjava2
+    testImplementation mn.micronaut.reactor
+    testImplementation projects.dataTck
+    testImplementation libs.groovy.sql
+    testImplementation libs.testcontainers.postgresql
 
-//    compileTestJava.options.fork = true
-//compileTestJava.options.forkOptions.jvmArgs = ['-Xdebug', '-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5005']
+    testRuntimeOnly libs.h2
+    testRuntimeOnly libs.micronaut.sql.jdbc.tomcat
 }

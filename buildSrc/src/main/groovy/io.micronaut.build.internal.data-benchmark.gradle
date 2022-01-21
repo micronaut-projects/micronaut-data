@@ -1,0 +1,31 @@
+plugins {
+    id "java"
+    id "application"
+    id "me.champeau.jmh"
+}
+
+version "0.1"
+group "example"
+sourceCompatibility = '1.8'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    jmh libs.jmh.core
+    jmh libs.jmh.annprocess
+}
+
+test {
+    useJUnitPlatform()
+}
+
+mainClassName = "example.Application"
+
+run.jvmArgs('-noverify', '-XX:TieredStopAtLevel=1', '-Dcom.sun.management.jmxremote')
+
+jmh {
+    duplicateClassesStrategy = DuplicatesStrategy.EXCLUDE
+}
+

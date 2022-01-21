@@ -3,27 +3,28 @@ plugins {
 }
 
 dependencies {
-    annotationProcessor "io.micronaut:micronaut-inject-java"
-    implementation "io.micronaut:micronaut-inject"
-    implementation "io.micronaut:micronaut-aop"
-    compileOnly "io.micronaut.spring:micronaut-spring"
-    api 'jakarta.transaction:jakarta.transaction-api:1.3.3'
+    annotationProcessor mn.micronaut.inject.java
 
-    // optional dependencies
-    compileOnly "io.micronaut.sql:micronaut-jdbc"
-    compileOnly "org.springframework:spring-jdbc:$springVersion"
-    compileOnly "io.micronaut.test:micronaut-test-core"
-    compileOnly "io.micronaut:micronaut-core-reactive"
+    api libs.jakarta.transaction.api
 
-    testAnnotationProcessor "io.micronaut:micronaut-inject-java"
-    testAnnotationProcessor project(":data-processor")
-    testImplementation project(":data-processor")
-    compileOnly "com.fasterxml.jackson.core:jackson-annotations:2.11.3"
-    testImplementation "io.micronaut:micronaut-inject-java-test"
-    testImplementation "com.fasterxml.jackson.core:jackson-databind"
+    implementation mn.micronaut.inject.java
+    implementation mn.micronaut.aop
 
-    testImplementation "io.micronaut.sql:micronaut-jdbc"
-    testRuntimeOnly "com.h2database:h2"
-    testRuntimeOnly "io.micronaut.sql:micronaut-jdbc-tomcat"
+    compileOnly mn.micronaut.spring
+    compileOnly libs.micronaut.sql.jdbc
+    compileOnly libs.spring.jdbc
+    compileOnly mn.micronaut.test.core
+    compileOnly mn.micronaut.core.reactive
+    compileOnly mn.jackson.annotations
 
+    testAnnotationProcessor mn.micronaut.inject.java
+    testAnnotationProcessor projects.dataProcessor
+
+    testImplementation projects.dataProcessor
+    testImplementation mn.micronaut.inject.java.test
+    testImplementation mn.jackson.databind
+    testImplementation libs.micronaut.sql.jdbc
+
+    testRuntimeOnly libs.h2
+    testRuntimeOnly libs.micronaut.sql.jdbc.tomcat
 }

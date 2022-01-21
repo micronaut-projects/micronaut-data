@@ -1,0 +1,9 @@
+plugins {
+    id "io.micronaut.build.internal.data-benchmark"
+    id "org.springframework.boot"
+    id "io.spring.dependency-management"
+}
+
+springBoot {
+    mainClassName = 'example.Application'
+}

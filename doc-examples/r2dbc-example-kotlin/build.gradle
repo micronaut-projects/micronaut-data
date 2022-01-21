@@ -30,7 +30,7 @@ dependencies {
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-reactive"
 
-    runtimeOnly "dev.miku:r2dbc-mysql:$r2dbcMysqlVersion"
+    runtimeOnly libs.drivers.r2dbc.mysql
     runtimeOnly "mysql:mysql-connector-java"
 
     testImplementation "io.micronaut:micronaut-http-client"

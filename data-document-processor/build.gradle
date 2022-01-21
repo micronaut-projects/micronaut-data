@@ -7,5 +7,6 @@ dependencies {
 	api libs.micronaut.serde.processor
 	api libs.micronaut.serde.api
 	api projects.dataDocumentModel
+
 	compileOnly mn.micronaut.inject.java
 }
