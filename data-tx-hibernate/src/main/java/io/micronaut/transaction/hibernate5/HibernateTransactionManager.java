@@ -582,6 +582,11 @@ public class HibernateTransactionManager extends AbstractSynchronousTransactionM
         return ((SessionImplementor) currentSession).connection();
     }
 
+    @Override
+    public boolean hasConnection() {
+        final Session currentSession = sessionFactory.getCurrentSession();
+        return ((SessionImplementor) currentSession).isConnected();
+    }
 
     /**
      * Hibernate transaction object, representing a SessionHolder.

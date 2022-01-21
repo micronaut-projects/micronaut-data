@@ -161,6 +161,13 @@ public class DataSourceTransactionManager extends AbstractSynchronousTransaction
     }
 
     @Override
+    public boolean hasConnection() {
+        ConnectionHolder conHolder =
+                (ConnectionHolder) TransactionSynchronizationManager.getResource(dataSource);
+        return conHolder != null && conHolder.hasConnection();
+    }
+
+    @Override
     protected Object doGetTransaction() {
         ConnectionHolder conHolder =
                 (ConnectionHolder) TransactionSynchronizationManager.getResource(dataSource);
@@ -341,7 +348,6 @@ public class DataSourceTransactionManager extends AbstractSynchronousTransaction
     public Connection getConnection() {
         return DataSourceUtils.getConnection(dataSource, false);
     }
-
 
     /**
      * DataSource transaction object, representing a ConnectionHolder.

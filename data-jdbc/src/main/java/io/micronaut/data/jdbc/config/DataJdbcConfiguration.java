@@ -45,6 +45,18 @@ public class DataJdbcConfiguration implements Named {
     private final String name;
 
     /**
+     * If true, {@link io.micronaut.transaction.TransactionOperations} will be used for the operation.
+     *
+     * This should be false by default in v4 as it adds additional overhead.
+     */
+    private boolean transactionPerOperation = true;
+
+    /**
+     * If true, {@link javax.sql.DataSource#getConnection()} will be used in try-resource block for the operation.
+     */
+    private boolean allowConnectionPerOperation;
+
+    /**
      * The configuration.
      * @param name The configuration name
      */
@@ -120,5 +132,33 @@ public class DataJdbcConfiguration implements Named {
     @Override
     public String getName() {
         return name;
+    }
+
+    /**
+     * @return true if property is set
+     */
+    public boolean isTransactionPerOperation() {
+        return transactionPerOperation;
+    }
+
+    /**
+     * @param transactionPerOperation The property
+     */
+    public void setTransactionPerOperation(boolean transactionPerOperation) {
+        this.transactionPerOperation = transactionPerOperation;
+    }
+
+    /**
+     * @return true if property is set
+     */
+    public boolean isAllowConnectionPerOperation() {
+        return allowConnectionPerOperation;
+    }
+
+    /**
+     * @param allowConnectionPerOperation The property
+     */
+    public void setAllowConnectionPerOperation(boolean allowConnectionPerOperation) {
+        this.allowConnectionPerOperation = allowConnectionPerOperation;
     }
 }
