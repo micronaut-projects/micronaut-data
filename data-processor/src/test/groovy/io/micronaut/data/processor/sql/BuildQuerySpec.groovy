@@ -327,4 +327,26 @@ interface CitiesRepository extends CrudRepository<City, Long> {
 
     }
 
+    void "test join by foreign key and selecting by joined entity identity"() {
+        given:
+        def repository = buildRepository('test.FacesRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.tck.entities.Face;
+import java.util.UUID;
+
+@JdbcRepository(dialect= Dialect.MYSQL)
+@io.micronaut.context.annotation.Executable
+interface FacesRepository extends CrudRepository<Face, Long> {
+
+    @Join("nose")
+    int countDistinctByNoseId(Long id);
+}
+""")
+        def query = getQuery(repository.getRequiredMethod("countDistinctByNoseId", Long))
+
+        expect:
+        query == 'SELECT COUNT(*) FROM `face` face_ INNER JOIN `nose` face_nose_ ON face_.`id`=face_nose_.`face_id` WHERE (face_nose_.`id` = ?)'
+
+    }
 }
