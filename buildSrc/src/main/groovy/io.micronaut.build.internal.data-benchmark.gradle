@@ -17,15 +17,18 @@ dependencies {
     jmh libs.jmh.annprocess
 }
 
-test {
+tasks.named("test") {
     useJUnitPlatform()
 }
 
-mainClassName = "example.Application"
+application {
+    mainClass = "example.Application"
+}
 
-run.jvmArgs('-noverify', '-XX:TieredStopAtLevel=1', '-Dcom.sun.management.jmxremote')
+tasks.named("run") {
+    jvmArgs('-noverify', '-XX:TieredStopAtLevel=1', '-Dcom.sun.management.jmxremote')
+}
 
 jmh {
     duplicateClassesStrategy = DuplicatesStrategy.EXCLUDE
 }
-

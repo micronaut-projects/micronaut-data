@@ -68,7 +68,7 @@ dependencies {
     testCompileOnly projects.dataProcessor
 }
 
-test {
+tasks.named("test") {
     systemProperty "oracle.jdbc.timezoneAsRegion", "false"
     systemProperty "java.net.preferIPv4Stack", "true"
     systemProperty "java.util.concurrent.ForkJoinPool.common.parallelism", "2"

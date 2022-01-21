@@ -29,7 +29,7 @@ configurations {
     }
 }
 
-tasks.withType(JavaCompile) {
+tasks.withType(JavaCompile).configureEach {
     options.encoding = "UTF-8"
     options.compilerArgs.addAll([
             '-parameters',
@@ -41,7 +41,7 @@ tasks.withType(JavaCompile) {
     ])
 }
 
-tasks.withType(Test) {
+tasks.withType(Test).configureEach {
     jvmArgs '-Xmx2048m'
     systemProperty "micronaut.cloud.platform", "OTHER"
     if (JavaVersion.current() == JavaVersion.VERSION_15) {

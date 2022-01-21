@@ -25,13 +25,13 @@ dependencies {
     testImplementation mn.micronaut.jackson.databind
 }
 
-compileKotlin {
+tasks.named("compileKotlin") {
     kotlinOptions {
         jvmTarget = '1.8'
     }
 }
 
-compileTestKotlin {
+tasks.named("compileTestKotlin") {
     kotlinOptions {
         jvmTarget = '1.8'
     }
