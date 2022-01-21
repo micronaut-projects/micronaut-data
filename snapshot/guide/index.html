@@ -8493,20 +8493,20 @@ For Kotlin the dependency should be in the <code>kapt</code> scope and for Groov
 </table>
 </div>
 <div class="paragraph">
-<p>You should then configure a compile-scoped dependency on the <code>micronaut-data-mongo</code> module:</p>
+<p>You should then configure a compile-scoped dependency on the <code>micronaut-data-mongodb</code> module:</p>
 </div>
 <div class="paragraph">
 <p>        <div class="listingblock multi-language-sample">
 <div class="title"></div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">implementation(<span class="hljs-string">"io.micronaut.data:micronaut-data-mongo:3.2.3-SNAPSHOT")</span></code></pre>
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">implementation(<span class="hljs-string">"io.micronaut.data:micronaut-data-mongodb:3.2.3-SNAPSHOT")</span></code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="maven">&lt;dependency&gt;
     &lt;groupId&gt;io.micronaut.data&lt;/groupId&gt;
-    &lt;artifactId&gt;micronaut-data-mongo&lt;/artifactId&gt;
+    &lt;artifactId&gt;micronaut-data-mongodb&lt;/artifactId&gt;
     &lt;version&gt;3.2.3-SNAPSHOT&lt;/version&gt;
 &lt;/dependency&gt;</code></pre>
 </div>
@@ -8602,7 +8602,7 @@ data class Book(@field:Id
 
 import io.micronaut.context.annotation.Executable;
 import io.micronaut.data.annotation.*;
-import io.micronaut.data.mongo.annotation.MongoRepository;
+import io.micronaut.data.mongodb.annotation.MongoRepository;
 import io.micronaut.data.model.*;
 import io.micronaut.data.repository.CrudRepository;
 import org.bson.types.ObjectId;
@@ -8625,7 +8625,7 @@ import io.micronaut.data.annotation.Id
 import io.micronaut.data.model.Page
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Slice
-import io.micronaut.data.mongo.annotation.MongoRepository
+import io.micronaut.data.mongodb.annotation.MongoRepository
 import io.micronaut.data.repository.CrudRepository
 import org.bson.types.ObjectId
 
@@ -8641,7 +8641,7 @@ interface BookRepository extends CrudRepository&lt;Book, ObjectId&gt; { <b class
 
 import io.micronaut.context.annotation.Executable
 import io.micronaut.data.annotation.*
-import io.micronaut.data.mongo.annotation.MongoRepository
+import io.micronaut.data.mongodb.annotation.MongoRepository
 import io.micronaut.data.model.*
 import io.micronaut.data.repository.CrudRepository
 import org.bson.types.ObjectId
@@ -8657,7 +8657,7 @@ interface BookRepository : CrudRepository&lt;Book, ObjectId&gt; { <b class="conu
 <table>
 <tr>
 <td><i class="conum" data-value="1"></i><b>1</b></td>
-<td>The interface is annotated with <a href="../api/io/micronaut/data/mongo/annotation/MongoRepository.html">@MongoRepository</a></td>
+<td>The interface is annotated with <a href="../api/io/micronaut/data/annotation/MongoRepository.html">@MongoRepository</a></td>
 </tr>
 <tr>
 <td><i class="conum" data-value="2"></i><b>2</b></td>
@@ -8809,7 +8809,7 @@ fun update(@Id id: ObjectId, title: String)</code></pre>
 
 
 <div class="paragraph">
-<p>As seen in the <a href="#mongoQuickStart">Quick Start</a> MongoDB repositories in Micronaut Data are defined as interfaces that are annotated with the <a href="../api/io/micronaut/data/mongo/annotation/MongoRepository.html">@MongoRepository</a>.</p>
+<p>As seen in the <a href="#mongoQuickStart">Quick Start</a> MongoDB repositories in Micronaut Data are defined as interfaces that are annotated with the <a href="../api/io/micronaut/data/mongodb/annotation/MongoRepository.html">@MongoRepository</a>.</p>
 </div>
 <div class="paragraph">
 <p>In multiple datasource scenario, the <a href="../api/io/micronaut/data/annotation/Repository.html">@Repository</a> annotation can be used to specify the datasource configuration to use. By default, Micronaut Data will look for the default datasource.</p>
@@ -8871,7 +8871,7 @@ public abstract class AbstractBookRepository implements CrudRepository&lt;Book, 
 <div class="content">
 <pre class="highlight"><code class="language-groovy" data-lang="groovy">package example
 
-import io.micronaut.data.mongo.annotation.MongoRepository
+import io.micronaut.data.mongodb.annotation.MongoRepository
 import io.micronaut.data.repository.CrudRepository
 import org.bson.types.ObjectId
 
@@ -8886,7 +8886,7 @@ abstract class AbstractBookRepository implements CrudRepository&lt;Book, ObjectI
 <div class="content">
 <pre class="highlight"><code class="language-kotlin" data-lang="kotlin">package example
 
-import io.micronaut.data.mongo.annotation.MongoRepository
+import io.micronaut.data.mongodb.annotation.MongoRepository
 import io.micronaut.data.repository.CrudRepository
 import org.bson.types.ObjectId
 

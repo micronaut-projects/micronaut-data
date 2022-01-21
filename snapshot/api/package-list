@@ -41,11 +41,11 @@ io.micronaut.data.model.query.builder.sql
 io.micronaut.data.model.query.factory
 io.micronaut.data.model.runtime
 io.micronaut.data.model.runtime.convert
-io.micronaut.data.mongo.annotation
-io.micronaut.data.mongo.database
-io.micronaut.data.mongo.init
-io.micronaut.data.mongo.operations
-io.micronaut.data.mongo.transaction
+io.micronaut.data.mongodb.annotation
+io.micronaut.data.mongodb.database
+io.micronaut.data.mongodb.init
+io.micronaut.data.mongodb.operations
+io.micronaut.data.mongodb.transaction
 io.micronaut.data.operations
 io.micronaut.data.operations.async
 io.micronaut.data.operations.reactive
