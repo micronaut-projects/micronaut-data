@@ -40,8 +40,3 @@ dependencies {
 
     testImplementation "org.testcontainers:mongodb"
 }
-
-project.afterEvaluate {
-    nativeImage.enabled = false
-    testNativeImage.enabled = false
-}

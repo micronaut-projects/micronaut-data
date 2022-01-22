@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package benchmarks;
+package benchmark;
 
 import example.Book;
 import example.BookRepository;
@@ -34,7 +34,7 @@ public class SimpleQuery {
 
     @Setup
     public void prepare() {
-        this.applicationContext = ApplicationContext.builder().start();
+        this.applicationContext = ApplicationContext.run();
         this.bookRepository = applicationContext.getBean(BookRepository.class);
         this.bookRepository.saveAll(Arrays.asList(
                 new Book("The Stand", 1000),

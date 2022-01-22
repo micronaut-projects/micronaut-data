@@ -39,8 +39,3 @@ dependencies {
     testImplementation 'io.r2dbc:r2dbc-h2'
     testRuntimeOnly "com.h2database:h2"
 }
-
-project.afterEvaluate {
-    nativeImage.enabled = false
-    testNativeImage.enabled = false
-}

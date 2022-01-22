@@ -5,7 +5,6 @@ plugins {
 
 dependencies {
     annotationProcessor project(":data-processor")
-    annotationProcessor "io.micronaut:micronaut-inject-java"
     implementation project(":data-jdbc")
     implementation libs.javax.persistence.api
     implementation "io.micronaut.sql:micronaut-jdbc-hikari"

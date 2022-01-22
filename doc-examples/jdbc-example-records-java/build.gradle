@@ -31,11 +31,6 @@ dependencies {
     runtimeOnly "com.h2database:h2"
 }
 
-project.afterEvaluate {
-    nativeImage.enabled = false
-    testNativeImage.enabled = false
-}
-
 tasks.withType(JavaCompile){
     if (JavaVersion.current() == JavaVersion.VERSION_15) {
         targetCompatibility("15")

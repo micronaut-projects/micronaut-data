@@ -4,3 +4,8 @@ tasks.named("test") {
         !disabled
     }
 }
+
+project.afterEvaluate {
+    nativeImage.enabled = false
+    testNativeImage.enabled = false
+}

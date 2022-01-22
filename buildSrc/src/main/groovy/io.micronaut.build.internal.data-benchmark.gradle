@@ -1,6 +1,7 @@
 plugins {
     id "java"
     id "application"
+    id "com.github.johnrengelman.shadow"
     id "me.champeau.jmh"
 }
 
@@ -34,4 +35,8 @@ tasks.named("run") {
 
 jmh {
     duplicateClassesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
+jmhJar {
+    mergeServiceFiles()
 }

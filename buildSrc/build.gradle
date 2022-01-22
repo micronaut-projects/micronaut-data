@@ -16,4 +16,5 @@ dependencies {
     implementation libs.gradle.jmh
     implementation libs.gradle.spring.boot
     implementation libs.gradle.spring.dependencies
+    implementation libs.gradle.shadow
 }
