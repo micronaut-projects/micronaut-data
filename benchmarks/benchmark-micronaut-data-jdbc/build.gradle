@@ -1,8 +1,11 @@
 plugins {
+    id "io.micronaut.application"
     id "io.micronaut.build.internal.data-micronaut-benchmark"
 }
 
 dependencies {
+    annotationProcessor project(":data-processor")
+    annotationProcessor "io.micronaut:micronaut-inject-java"
     implementation project(":data-jdbc")
     implementation libs.javax.persistence.api
     implementation "io.micronaut.sql:micronaut-jdbc-hikari"

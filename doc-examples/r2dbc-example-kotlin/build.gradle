@@ -1,7 +1,8 @@
 plugins {
-    id "java"
+    id "org.jetbrains.kotlin.jvm"
+    id "org.jetbrains.kotlin.kapt"
+    id "org.jetbrains.kotlin.plugin.allopen"
     id "io.micronaut.application"
-    id "io.micronaut.build.internal.data-example"
     id "io.micronaut.build.internal.data-kotlin-example"
 }
 
