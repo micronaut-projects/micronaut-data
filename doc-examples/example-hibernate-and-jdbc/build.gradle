@@ -25,11 +25,6 @@ dependencies {
     implementation project(":data-jdbc")
 
     implementation "io.micronaut.sql:micronaut-jdbc-tomcat"
-    runtimeOnly "ch.qos.logback:logback-classic:1.2.6"
+    runtimeOnly "ch.qos.logback:logback-classic"
     runtimeOnly "com.h2database:h2"
-}
-
-project.afterEvaluate {
-    nativeImage.enabled = false
-    testNativeImage.enabled = false
 }

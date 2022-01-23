@@ -1,0 +1,20 @@
+plugins {
+    id "org.jetbrains.kotlin.jvm"
+}
+
+dependencies {
+    compileOnly libs.kotlin.stdlib
+    compileOnly libs.kotlin.coroutines
+}
+
+tasks.named("compileKotlin") {
+    kotlinOptions {
+        jvmTarget = '1.8'
+    }
+}
+
+tasks.named("compileTestKotlin") {
+    kotlinOptions {
+        jvmTarget = '1.8'
+    }
+}

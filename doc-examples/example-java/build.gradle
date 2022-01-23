@@ -21,18 +21,13 @@ micronaut {
 dependencies {
     annotationProcessor project(":data-processor")
     annotationProcessor "io.micronaut:micronaut-validation"
-    annotationProcessor "org.hibernate:hibernate-jpamodelgen:$hibernateVersion"
+    annotationProcessor libs.hibernate.jpamodelgen
     implementation "io.micronaut:micronaut-http-client"
     implementation 'io.micronaut.rxjava2:micronaut-rxjava2'
     implementation project(":data-hibernate-jpa")
     implementation project(":data-jdbc")
 
     implementation "io.micronaut.sql:micronaut-jdbc-tomcat"
-    runtimeOnly "ch.qos.logback:logback-classic:1.2.6"
+    runtimeOnly "ch.qos.logback:logback-classic"
     runtimeOnly "com.h2database:h2"
-}
-
-project.afterEvaluate {
-    nativeImage.enabled = false
-    testNativeImage.enabled = false
 }

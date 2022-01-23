@@ -3,44 +3,51 @@ plugins {
 }
 
 dependencies {
-    annotationProcessor "io.micronaut:micronaut-inject-java"
-    annotationProcessor "io.micronaut:micronaut-graal"
-    annotationProcessor "io.micronaut.docs:micronaut-docs-asciidoc-config-props:$micronautDocsVersion"
-    api project(":data-runtime")
-    compileOnly 'io.micronaut.rxjava2:micronaut-rxjava2'
-    implementation "io.micronaut:micronaut-http"
-    implementation "io.micronaut.sql:micronaut-jdbc"
-    compileOnly project(":data-hibernate-jpa")
-    compileOnly "com.oracle.database.jdbc:ojdbc8:$oracleDriverVersion"
+    annotationProcessor mn.micronaut.inject.java
+    annotationProcessor mn.micronaut.graal
+    annotationProcessor libs.micronaut.docs
 
-    testImplementation project(":data-tck")
-    testAnnotationProcessor "io.micronaut:micronaut-inject-java"
-    testAnnotationProcessor project(":data-processor")
-    testCompileOnly "io.micronaut:micronaut-inject-groovy"
-    testImplementation project(":data-processor")
-    testImplementation 'io.micronaut.rxjava2:micronaut-rxjava2'
-    testImplementation "io.micronaut.reactor:micronaut-reactor"
-    testImplementation "com.fasterxml.jackson.core:jackson-databind"
-	testImplementation "javax.persistence:javax.persistence-api:$javaxPersistenceVersion"
-    testImplementation "jakarta.persistence:jakarta.persistence-api:$jakartaPersistenceVersion"
-    testImplementation "org.codehaus.groovy:groovy-sql:$groovyVersion"
-    testImplementation "io.micronaut:micronaut-validation"
-    testImplementation "org.testcontainers:spock"
-    testImplementation "org.testcontainers:mysql"
-    testImplementation "org.testcontainers:mariadb"
-    testImplementation "org.testcontainers:postgresql"
-    testImplementation "org.testcontainers:mssqlserver"
-    testImplementation "org.testcontainers:oracle-xe"
-    testRuntimeOnly "com.h2database:h2:1.4.200"
-    testRuntimeOnly "io.micronaut.sql:micronaut-jdbc-tomcat"
-    testRuntimeOnly "org.mariadb.jdbc:mariadb-java-client:$mariadbDriverVersion"
-    testRuntimeOnly "com.oracle.database.jdbc:ojdbc8:$oracleDriverVersion"
-    testRuntimeOnly "mysql:mysql-connector-java:$mysqlDriverVersion"
-    testRuntimeOnly "org.postgresql:postgresql:$postgresDriverVersion"
-    testRuntimeOnly "com.microsoft.sqlserver:mssql-jdbc:$mssqlDriverVersion"
+    api projects.dataRuntime
+
+    implementation mn.micronaut.http
+    implementation mn.micronaut.sql.jdbc
+
+    compileOnly mn.micronaut.rxjava2
+    compileOnly projects.dataHibernateJpa
+    compileOnly libs.drivers.jdbc.oracle
+
+    testAnnotationProcessor mn.micronaut.inject.java
+    testAnnotationProcessor projects.dataProcessor
+
+    testImplementation projects.dataTck
+    testImplementation projects.dataProcessor
+    testImplementation mn.micronaut.rxjava2
+    testImplementation mn.micronaut.reactor
+    testImplementation libs.jackson.databind
+    testImplementation libs.javax.persistence.api
+    testImplementation libs.jakarta.persistence.api
+    testImplementation libs.groovy.sql
+    testImplementation mn.micronaut.validation
+
+    testImplementation libs.testcontainers.spock
+    testImplementation libs.testcontainers.mysql
+    testImplementation libs.testcontainers.mariadb
+    testImplementation libs.testcontainers.postgresql
+    testImplementation libs.testcontainers.mssqlserver
+    testImplementation libs.testcontainers.oracle
+
+    testCompileOnly mn.micronaut.inject.groovy
+
+    testRuntimeOnly libs.micronaut.sql.jdbc.tomcat
+    testRuntimeOnly libs.h2
+    testRuntimeOnly libs.drivers.jdbc.mariadb
+    testRuntimeOnly libs.drivers.jdbc.oracle
+    testRuntimeOnly libs.drivers.jdbc.mysql
+    testRuntimeOnly libs.drivers.jdbc.postgresql
+    testRuntimeOnly libs.drivers.jdbc.mssql
 }
 
-test {
+tasks.named("test") {
     systemProperty "oracle.jdbc.timezoneAsRegion", "false"
     // Disable MySql hanging tests on GraalVM
     if (System.getProperty("java.vendor").toLowerCase().contains("graal")) {
@@ -59,6 +66,3 @@ micronautBuild {
         }
     }
 }
-
-//compileTestJava.options.fork = true
-//compileTestJava.options.forkOptions.jvmArgs = ['-Xdebug', '-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5005']

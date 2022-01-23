@@ -1,10 +1,9 @@
 plugins {
-    id "java"
     id "org.jetbrains.kotlin.jvm"
     id "org.jetbrains.kotlin.kapt"
     id "org.jetbrains.kotlin.plugin.allopen"
     id "io.micronaut.application"
-    id "io.micronaut.build.internal.data-example"
+    id "io.micronaut.build.internal.data-kotlin-example"
 }
 
 repositories {
@@ -30,7 +29,7 @@ dependencies {
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-reactive"
 
-    runtimeOnly "dev.miku:r2dbc-mysql:$r2dbcMysqlVersion"
+    runtimeOnly libs.drivers.r2dbc.mysql
     runtimeOnly "mysql:mysql-connector-java"
 
     testImplementation "io.micronaut:micronaut-http-client"
@@ -39,25 +38,4 @@ dependencies {
     // h2
     testImplementation 'io.r2dbc:r2dbc-h2'
     testRuntimeOnly "com.h2database:h2"
-}
-
-allOpen {
-    annotation("io.micronaut.aop.Around")
-}
-
-compileKotlin {
-    kotlinOptions {
-        jvmTarget = '1.8'
-    }
-}
-
-compileTestKotlin {
-    kotlinOptions {
-        jvmTarget = '1.8'
-    }
-}
-
-project.afterEvaluate {
-    nativeImage.enabled = false
-    testNativeImage.enabled = false
 }

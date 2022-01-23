@@ -3,76 +3,72 @@ plugins {
 }
 
 dependencies {
-    annotationProcessor "io.micronaut:micronaut-inject-java"
-    annotationProcessor "io.micronaut:micronaut-graal"
-    annotationProcessor "io.micronaut.docs:micronaut-docs-asciidoc-config-props:$micronautDocsVersion"
-    implementation "io.micronaut.reactor:micronaut-reactor"
-    implementation "io.projectreactor.netty:reactor-netty"
+    annotationProcessor mn.micronaut.inject.java
+    annotationProcessor mn.micronaut.graal
+    annotationProcessor libs.micronaut.docs
 
-    implementation platform("io.r2dbc:r2dbc-bom:$r2dbcVersion")
-    testImplementation platform("io.r2dbc:r2dbc-bom:$r2dbcVersion")
+    implementation platform(libs.r2dbc.bom)
+    testImplementation platform(libs.r2dbc.bom)
 
-    api "io.projectreactor:reactor-core"
-    api project(":data-model")
-    api project(":data-runtime")
-    implementation "io.micronaut:micronaut-http"
-    api "io.micronaut.r2dbc:micronaut-r2dbc-core:$micronautR2dbcVersion"
-    api "io.r2dbc:r2dbc-spi"
+    api mn.micronaut.reactor
+    api projects.dataModel
+    api projects.dataRuntime
+    api libs.micronaut.r2dbc
+    api libs.r2dbc.spi
 
-    testImplementation project(":data-tck")
-    testImplementation "io.micronaut.test:micronaut-test-spock"
-    testImplementation "io.r2dbc:r2dbc-pool"
-    testImplementation 'io.micronaut.rxjava2:micronaut-rxjava2'
+    implementation mn.micronaut.http
+    implementation mn.micronaut.reactor
+//    implementation "io.projectreactor.netty:reactor-netty"
 
-    testAnnotationProcessor "io.micronaut:micronaut-inject-java"
-    testAnnotationProcessor project(":data-processor")
-    testCompileOnly "io.micronaut:micronaut-inject-groovy"
-    testCompileOnly project(":data-processor")
-    testImplementation "com.fasterxml.jackson.core:jackson-databind"
-    testImplementation "javax.persistence:javax.persistence-api:$javaxPersistenceVersion"
-    testImplementation "jakarta.persistence:jakarta.persistence-api:$jakartaPersistenceVersion"
-    testImplementation "org.codehaus.groovy:groovy-sql:$groovyVersion"
-    testImplementation "io.micronaut:micronaut-validation"
-    testImplementation "org.testcontainers:r2dbc"
+    testImplementation projects.dataTck
+    testImplementation mn.micronaut.test.spock
+    testImplementation libs.r2dbc.pool
+    testImplementation mn.micronaut.rxjava2
+
+    testAnnotationProcessor mn.micronaut.inject.java
+    testAnnotationProcessor projects.dataProcessor
+
+    testImplementation mn.jackson.databind
+    testImplementation libs.javax.persistence.api
+    testImplementation libs.jakarta.persistence.api
+    testImplementation libs.groovy.sql
+    testImplementation mn.micronaut.validation
+    testImplementation libs.testcontainers.r2dbc
 
     if (JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_11)) {
-        // oracle
-        def oracleVersion = project.ext.r2dbcOracleVersion
-        if (oracleVersion) {
-            testImplementation "com.oracle.database.r2dbc:oracle-r2dbc:$oracleVersion"
-        } else {
-            testImplementation "com.oracle.database.r2dbc:oracle-r2dbc"
-        }
+        testImplementation libs.drivers.r2dbc.oracle
     }
-    testImplementation "org.testcontainers:oracle-xe"
+    testImplementation libs.testcontainers.oracle
 
     // mariadb
-    testImplementation 'org.mariadb:r2dbc-mariadb'
-    testImplementation "org.testcontainers:mariadb"
-    testImplementation 'org.mariadb.jdbc:mariadb-java-client'
+    testImplementation libs.testcontainers.mariadb
+    testImplementation libs.drivers.r2dbc.mariadb
+    testImplementation libs.drivers.jdbc.mariadb
 
     // mysql
-    testImplementation "org.testcontainers:mysql"
-    testImplementation 'mysql:mysql-connector-java'
-    testImplementation 'dev.miku:r2dbc-mysql:0.8.2.RELEASE'
+    testImplementation libs.testcontainers.mysql
+    testImplementation libs.drivers.r2dbc.mysql
+    testImplementation libs.drivers.jdbc.mysql
 
     // h2
-    testImplementation 'io.r2dbc:r2dbc-h2'
-    testRuntimeOnly "com.h2database:h2"
+    testImplementation libs.r2dbc.h2
+    testRuntimeOnly libs.h2
 
     // sqlserver
-    testImplementation "org.testcontainers:mssqlserver"
-    testImplementation 'com.microsoft.sqlserver:mssql-jdbc'
-    testImplementation 'io.r2dbc:r2dbc-mssql'
+    testImplementation libs.testcontainers.mssqlserver
+    testImplementation libs.drivers.r2dbc.mssql
+    testImplementation libs.drivers.jdbc.mssql
 
     // postgres
-//    testImplementation 'org.postgresql:r2dbc-postgresql'
-    testImplementation 'io.r2dbc:r2dbc-postgresql'
-    testImplementation "org.testcontainers:postgresql"
-    testImplementation 'org.postgresql:postgresql'
+    testImplementation libs.testcontainers.postgresql
+    testImplementation libs.drivers.r2dbc.postgresql
+    testImplementation libs.drivers.jdbc.postgresql
+
+    testCompileOnly mn.micronaut.inject.groovy
+    testCompileOnly projects.dataProcessor
 }
 
-test {
+tasks.named("test") {
     systemProperty "oracle.jdbc.timezoneAsRegion", "false"
     systemProperty "java.net.preferIPv4Stack", "true"
     systemProperty "java.util.concurrent.ForkJoinPool.common.parallelism", "2"

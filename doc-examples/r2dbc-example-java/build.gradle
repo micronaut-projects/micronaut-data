@@ -21,18 +21,9 @@ dependencies {
     implementation("io.micronaut.flyway:micronaut-flyway")
     implementation("io.micronaut.sql:micronaut-jdbc-hikari")
 
-    runtimeOnly "dev.miku:r2dbc-mysql:$r2dbcMysqlVersion"
+    runtimeOnly libs.drivers.r2dbc.mysql
     implementation "mysql:mysql-connector-java"
 
     testImplementation "io.micronaut:micronaut-http-client"
     testImplementation "org.testcontainers:mysql"
-}
-
-nativeImage {
-    args('-H:+AddAllCharsets')
-}
-
-project.afterEvaluate {
-    nativeImage.enabled = false
-    testNativeImage.enabled = false
 }

@@ -1,0 +1,42 @@
+plugins {
+    id "java"
+    id "application"
+    id "com.github.johnrengelman.shadow"
+    id "me.champeau.jmh"
+}
+
+version "0.1"
+group "example"
+sourceCompatibility = '1.8'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testImplementation "org.junit.jupiter:junit-jupiter-api"
+    testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine"
+
+    jmh libs.jmh.core
+    jmh libs.jmh.annprocess
+}
+
+tasks.named("test") {
+    useJUnitPlatform()
+}
+
+application {
+    mainClass = "example.Application"
+}
+
+tasks.named("run") {
+    jvmArgs('-noverify', '-XX:TieredStopAtLevel=1', '-Dcom.sun.management.jmxremote')
+}
+
+jmh {
+    duplicateClassesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
+jmhJar {
+    mergeServiceFiles()
+}

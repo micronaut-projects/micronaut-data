@@ -1,10 +1,10 @@
 plugins {
-    id "java"
     id "org.jetbrains.kotlin.jvm"
     id "org.jetbrains.kotlin.kapt"
     id "org.jetbrains.kotlin.plugin.allopen"
     id "org.jetbrains.kotlin.plugin.jpa"
     id "io.micronaut.application"
+    id "io.micronaut.build.internal.data-kotlin-example"
 }
 
 repositories {
@@ -30,27 +30,4 @@ dependencies {
     kapt project(":data-processor")
     runtimeOnly "ch.qos.logback:logback-classic"
     runtimeOnly "com.h2database:h2"
-}
-
-allOpen {
-    annotation("io.micronaut.aop.Around")
-}
-
-compileKotlin {
-    kotlinOptions {
-        jvmTarget = '1.8'
-        freeCompilerArgs = ["-Xjvm-default=all"]
-    }
-}
-
-compileTestKotlin {
-    kotlinOptions {
-        jvmTarget = '1.8'
-        freeCompilerArgs = ["-Xjvm-default=all"]
-    }
-}
-
-project.afterEvaluate {
-    nativeImage.enabled = false
-    testNativeImage.enabled = false
 }

@@ -1,0 +1,22 @@
+plugins {
+    id "java"
+    id "io.micronaut.application"
+    id "io.micronaut.build.internal.data-benchmark"
+}
+
+dependencies {
+    annotationProcessor project(":data-processor")
+    annotationProcessor "io.micronaut:micronaut-inject-java"
+    runtimeOnly "ch.qos.logback:logback-classic"
+
+    testAnnotationProcessor "io.micronaut:micronaut-inject-java"
+    testImplementation "io.micronaut.test:micronaut-test-junit5"
+
+    jmh libs.jmh.core
+    jmh libs.jmh.annprocess
+}
+
+project.afterEvaluate {
+    nativeImage.enabled = false
+    testNativeImage.enabled = false
+}

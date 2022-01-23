@@ -3,20 +3,24 @@ plugins {
 }
 
 dependencies {
-	annotationProcessor "io.micronaut:micronaut-inject-java"
-	annotationProcessor "io.micronaut.docs:micronaut-docs-asciidoc-config-props:$micronautDocsVersion"
-	api project(":data-model")
-	implementation "io.projectreactor:reactor-core"
-	implementation 'io.micronaut.reactor:micronaut-reactor'
-	compileOnly 'io.micronaut:micronaut-http'
-	compileOnly "javax.persistence:javax.persistence-api:$javaxPersistenceVersion"
-	compileOnly "jakarta.persistence:jakarta.persistence-api:$jakartaPersistenceVersion"
-	testImplementation "jakarta.persistence:jakarta.persistence-api:$jakartaPersistenceVersion"
-	testImplementation "javax.persistence:javax.persistence-api:$javaxPersistenceVersion"
-	testImplementation project(":data-processor")
-	testImplementation "io.micronaut:micronaut-inject-groovy"
-	testAnnotationProcessor "io.micronaut:micronaut-inject-java"
-	testAnnotationProcessor project(":data-processor")
-	testImplementation 'io.micronaut:micronaut-http'
-	testImplementation project(":data-tck")
+	annotationProcessor mn.micronaut.inject.java
+	annotationProcessor libs.micronaut.docs
+
+	api projects.dataModel
+
+	implementation mn.reactor
+
+	compileOnly mn.micronaut.http
+	compileOnly libs.jakarta.persistence.api
+	compileOnly libs.javax.persistence.api
+
+	testAnnotationProcessor mn.micronaut.inject.java
+	testAnnotationProcessor projects.dataProcessor
+
+	testImplementation libs.jakarta.persistence.api
+	testImplementation libs.javax.persistence.api
+	testImplementation projects.dataProcessor
+	testImplementation mn.micronaut.inject.groovy
+	testImplementation mn.micronaut.http
+	testImplementation projects.dataTck
 }

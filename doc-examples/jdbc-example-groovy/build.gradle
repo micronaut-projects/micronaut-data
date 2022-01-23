@@ -26,14 +26,9 @@ dependencies {
     implementation "io.micronaut:micronaut-http-client"
     implementation "io.micronaut:micronaut-validation"
     implementation "io.micronaut.sql:micronaut-jdbc-tomcat"
-    implementation "javax.persistence:javax.persistence-api:$javaxPersistenceVersion"
-    implementation "jakarta.persistence:jakarta.persistence-api:$jakartaPersistenceVersion"
-    implementation 'jakarta.transaction:jakarta.transaction-api:1.3.3'
+    implementation libs.javax.persistence.api
+    implementation libs.jakarta.persistence.api
+    implementation libs.jakarta.transaction.api
     runtimeOnly "ch.qos.logback:logback-classic"
     runtimeOnly "com.h2database:h2"
-}
-
-project.afterEvaluate {
-    nativeImage.enabled = false
-    testNativeImage.enabled = false
 }

@@ -3,24 +3,27 @@ plugins {
 }
 
 dependencies {
-    annotationProcessor "io.micronaut:micronaut-inject-java"
-    annotationProcessor "io.micronaut.docs:micronaut-docs-asciidoc-config-props:$micronautDocsVersion"
-    implementation project(":data-spring")
-    api project(":data-hibernate-jpa")
-    api "org.springframework.data:spring-data-jpa:$springDataVersion"
-    api "io.micronaut.sql:micronaut-hibernate-jpa", {
+    annotationProcessor mn.micronaut.inject.java
+    annotationProcessor libs.micronaut.docs
+
+    api projects.dataHibernateJpa
+    api libs.spring.data.jpa
+    api (libs.micronaut.sql.hibernate.jpa) {
         exclude group: 'io.micronaut.data'
     }
 
-    testAnnotationProcessor "io.micronaut:micronaut-inject-java"
-    testAnnotationProcessor project(":data-processor")
-    testImplementation "io.micronaut:micronaut-inject-groovy"
-    testImplementation project(":data-processor")
-    testImplementation project(":data-hibernate-jpa")
-    testImplementation project(":data-tck")
-    testRuntimeOnly "com.h2database:h2:1.4.200"
-    testRuntimeOnly "io.micronaut.sql:micronaut-hibernate-jpa-spring", {
+    implementation projects.dataSpring
+
+    testAnnotationProcessor mn.micronaut.inject.java
+    testAnnotationProcessor projects.dataProcessor
+
+    testImplementation mn.micronaut.inject.groovy
+    testImplementation projects.dataProcessor
+    testImplementation projects.dataHibernateJpa
+    testImplementation projects.dataTck
+    testRuntimeOnly libs.h2
+    testRuntimeOnly (libs.micronaut.sql.hibernate.jpa.spring) {
         exclude group: 'io.micronaut.data'
     }
-    testRuntimeOnly "io.micronaut.sql:micronaut-jdbc-tomcat"
+    testRuntimeOnly libs.micronaut.sql.jdbc.tomcat
 }
