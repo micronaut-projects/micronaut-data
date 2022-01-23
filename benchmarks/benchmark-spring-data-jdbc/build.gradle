@@ -8,6 +8,6 @@ dependencies {
 		exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
 		exclude group: 'junit', module: 'junit'
 	}
-	runtimeOnly "com.zaxxer:HikariCP:3.4.5"
+	runtimeOnly "com.zaxxer:HikariCP:5.0.1"
 	runtimeOnly "com.h2database:h2"
 }
