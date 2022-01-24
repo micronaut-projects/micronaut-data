@@ -187,6 +187,12 @@ implements io.micronaut.aop.MethodInterceptor&lt;java.lang.Object,java.lang.Obje
 <div class="block">Default constructor.</div>
 </td>
 </tr>
+<tr class="rowColor">
+<td class="colOne"><code><span class="memberNameLink"><a href="../../../../io/micronaut/transaction/interceptor/TransactionalInterceptor.html#TransactionalInterceptor-io.micronaut.context.BeanLocator-io.micronaut.transaction.interceptor.CoroutineTxHelper-">TransactionalInterceptor</a></span>(io.micronaut.context.BeanLocator&nbsp;beanLocator,
+                        io.micronaut.transaction.interceptor.CoroutineTxHelper&nbsp;coroutineTxHelper)</code>
+<div class="block">Default constructor.</div>
+</td>
+</tr>
 </table>
 </li>
 </ul>
@@ -288,7 +294,7 @@ implements io.micronaut.aop.MethodInterceptor&lt;java.lang.Object,java.lang.Obje
 <a name="TransactionalInterceptor-io.micronaut.context.BeanLocator-">
 <!--   -->
 </a>
-<ul class="blockListLast">
+<ul class="blockList">
 <li class="blockList">
 <h4>TransactionalInterceptor</h4>
 <pre>public&nbsp;TransactionalInterceptor(@NonNull
@@ -297,6 +303,25 @@ implements io.micronaut.aop.MethodInterceptor&lt;java.lang.Object,java.lang.Obje
 <dl>
 <dt><span class="paramLabel">Parameters:</span></dt>
 <dd><code>beanLocator</code> - The bean locator.</dd>
+</dl>
+</li>
+</ul>
+<a name="TransactionalInterceptor-io.micronaut.context.BeanLocator-io.micronaut.transaction.interceptor.CoroutineTxHelper-">
+<!--   -->
+</a>
+<ul class="blockListLast">
+<li class="blockList">
+<h4>TransactionalInterceptor</h4>
+<pre>@Inject
+public&nbsp;TransactionalInterceptor(@NonNull
+                                        io.micronaut.context.BeanLocator&nbsp;beanLocator,
+                                        @Nullable
+                                        io.micronaut.transaction.interceptor.CoroutineTxHelper&nbsp;coroutineTxHelper)</pre>
+<div class="block">Default constructor.</div>
+<dl>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>beanLocator</code> - The bean locator.</dd>
+<dd><code>coroutineTxHelper</code> - The coroutine helper</dd>
 </dl>
 </li>
 </ul>
@@ -352,7 +377,7 @@ implements io.micronaut.aop.MethodInterceptor&lt;java.lang.Object,java.lang.Obje
 <dd>The current status</dd>
 <dt><span class="throwsLabel">Throws:</span></dt>
 <dd><code><a href="../../../../io/micronaut/transaction/exceptions/NoTransactionException.html" title="class in io.micronaut.transaction.exceptions">NoTransactionException</a></code> - if the transaction info cannot be found,
- because the method was invoked outside an AOP invocation context</dd>
+                                because the method was invoked outside an AOP invocation context</dd>
 </dl>
 </li>
 </ul>
@@ -375,7 +400,7 @@ implements io.micronaut.aop.MethodInterceptor&lt;java.lang.Object,java.lang.Obje
 <dd><code>tm</code> - The transaction manager</dd>
 <dd><code>txAttr</code> - the TransactionAttribute (may be <code>null</code>)</dd>
 <dd><code>executableMethod</code> - the method that is being executed
- (used for monitoring and logging purposes)</dd>
+                         (used for monitoring and logging purposes)</dd>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>a TransactionInfo object, whether or not a transaction was created.
  The <code>hasTransaction()</code> method on TransactionInfo can be used to
@@ -402,7 +427,7 @@ implements io.micronaut.aop.MethodInterceptor&lt;java.lang.Object,java.lang.Obje
 <dd><code>tm</code> - The transaction manager</dd>
 <dd><code>txAttr</code> - the TransactionAttribute (may be <code>null</code>)</dd>
 <dd><code>executableMethod</code> - the fully qualified method name
- (used for monitoring and logging purposes)</dd>
+                         (used for monitoring and logging purposes)</dd>
 <dd><code>status</code> - the TransactionStatus for the current transaction</dd>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>the prepared TransactionInfo object</dd>
