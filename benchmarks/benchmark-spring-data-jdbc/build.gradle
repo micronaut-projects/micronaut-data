@@ -4,10 +4,4 @@ plugins {
 
 dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-data-jdbc'
-	testImplementation('org.springframework.boot:spring-boot-starter-test') {
-		exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
-		exclude group: 'junit', module: 'junit'
-	}
-	runtimeOnly "com.zaxxer:HikariCP:3.4.5"
-	runtimeOnly "com.h2database:h2"
 }

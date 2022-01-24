@@ -7,6 +7,4 @@ dependencies {
     annotationProcessor project(":data-processor")
     implementation project(":data-jdbc")
     implementation libs.javax.persistence.api
-    implementation "io.micronaut.sql:micronaut-jdbc-hikari"
-    runtimeOnly "com.h2database:h2"
 }
