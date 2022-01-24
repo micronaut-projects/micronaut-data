@@ -1,6 +1,6 @@
 plugins {
+    id "io.micronaut.build.internal.data-kotlin"
     id "io.micronaut.build.internal.data-module"
-    id "io.micronaut.build.internal.data-kotlin-module"
 }
 
 dependencies {
