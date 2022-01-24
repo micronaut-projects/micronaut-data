@@ -1,8 +1,8 @@
 [versions]
 micronaut-serde = "1.0.0-M5"
-micronaut-sql = "4.0.0-RC4"
+micronaut-sql = "4.1.1"
 micronaut-docs = "2.0.0.RC1"
-micronaut-gradle-plugin = "2.0.3"
+micronaut-gradle-plugin = "3.2.0"
 micronaut-gradle-build-settings-plugin = "5.1.1"
 
 groovy = "3.0.8"
@@ -130,7 +130,6 @@ mongodb-driver-reactivestreams = { module = "org.mongodb:mongodb-driver-reactive
 #PLUGINS
 
 gradle-micronaut = { module = "io.micronaut.gradle:micronaut-gradle-plugin", version.ref = "micronaut-gradle-plugin" }
-#gradle-micronaut-settings = { module = "io.micronaut.build.shared.settings:io.micronaut.build.shared.settings.gradle.plugin", version.ref = "micronaut-gradle-build-settings-plugin" }
 gradle-kotlin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin-gradle-plugin" }
 gradle-kotlin-allopen = { module = "org.jetbrains.kotlin:kotlin-allopen", version.ref = "kotlin-gradle-plugin" }
 gradle-kotlin-noarg = { module = "org.jetbrains.kotlin:kotlin-noarg", version.ref = "kotlin-gradle-plugin" }

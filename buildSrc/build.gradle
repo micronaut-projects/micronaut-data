@@ -9,7 +9,6 @@ repositories {
 
 dependencies {
     implementation libs.gradle.micronaut
-//    implementation libs.gradle.micronaut.settings
     implementation libs.gradle.kotlin
     implementation libs.gradle.kotlin.allopen
     implementation libs.gradle.kotlin.noarg
