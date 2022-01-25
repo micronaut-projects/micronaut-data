@@ -55,7 +55,7 @@ trait DatabaseTestPropertyProvider implements TestPropertyProvider {
     JdbcDatabaseContainer getDatabaseContainer(String driverName) {
         switch (driverName) {
             case "postgresql":
-                return new PostgreSQLContainer<>("postgres:10.17")
+                return new PostgreSQLContainer<>("postgres:10")
             case "h2":
                 return null
             case "sqlserver":

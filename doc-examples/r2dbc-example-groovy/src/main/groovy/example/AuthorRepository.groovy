@@ -9,7 +9,7 @@ import reactor.core.publisher.Mono
 
 import javax.validation.constraints.NotNull
 
-@R2dbcRepository(dialect = Dialect.MYSQL) // <1>
+@R2dbcRepository(dialect = Dialect.POSTGRES) // <1>
 interface AuthorRepository extends ReactiveStreamsCrudRepository<Author, Long> {
     @NonNull
     @Override

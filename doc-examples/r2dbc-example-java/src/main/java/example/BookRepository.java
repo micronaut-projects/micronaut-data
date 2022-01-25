@@ -13,7 +13,7 @@ import javax.transaction.Transactional;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
-@R2dbcRepository(dialect = Dialect.MYSQL) // <1>
+@R2dbcRepository(dialect = Dialect.POSTGRES) // <1>
 public interface BookRepository extends ReactiveStreamsCrudRepository<Book, Long> {
     @NonNull
     @Override

@@ -6,18 +6,17 @@ import io.micronaut.http.annotation.Get
 import io.micronaut.http.client.annotation.Client
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import io.micronaut.test.support.TestPropertyProvider
-import org.testcontainers.containers.MySQLContainer
+import jakarta.inject.Inject
+import org.testcontainers.containers.PostgreSQLContainer
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import spock.lang.Shared
 import spock.lang.Specification
 
-import jakarta.inject.Inject
-
 @MicronautTest
 class BookControllerTest extends Specification implements TestPropertyProvider {
 
-    static MySQLContainer<?> container
+    static container
 
     @Inject BookClient bookClient
 
@@ -66,7 +65,7 @@ class BookControllerTest extends Specification implements TestPropertyProvider {
 
     @Override
     Map<String, String> getProperties() {
-        container = new MySQLContainer<>("mysql:8.0.17")
+        container = new PostgreSQLContainer<>("postgres:10")
         container.start()
         return CollectionUtils.mapOf(
                 "datasources.default.url", container.getJdbcUrl(),
@@ -75,7 +74,7 @@ class BookControllerTest extends Specification implements TestPropertyProvider {
                 "datasources.default.database", container.getDatabaseName(),
                 "r2dbc.datasources.default.host", container.getHost(),
                 "r2dbc.datasources.default.port", container.getFirstMappedPort(),
-                "r2dbc.datasources.default.driver", "mysql",
+                "r2dbc.datasources.default.driver", "postgres",
                 "r2dbc.datasources.default.username", container.getUsername(),
                 "r2dbc.datasources.default.password", container.getPassword(),
                 "r2dbc.datasources.default.database", container.getDatabaseName()

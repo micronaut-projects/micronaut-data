@@ -12,8 +12,8 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-import org.testcontainers.containers.MySQLContainer;
-import org.testcontainers.utility.DockerImageName;
+import org.testcontainers.containers.JdbcDatabaseContainer;
+import org.testcontainers.containers.PostgreSQLContainer;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -25,7 +25,7 @@ import java.util.Map;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class BookControllerTest implements TestPropertyProvider {
 
-    static MySQLContainer<?> container;
+    static JdbcDatabaseContainer<?> container;
 
     @Inject
     BookClient bookClient;
@@ -94,7 +94,7 @@ public class BookControllerTest implements TestPropertyProvider {
 
     @Override
     public Map<String, String> getProperties() {
-        container = new MySQLContainer<>(DockerImageName.parse("mysql/mysql-server:8.0").asCompatibleSubstituteFor("mysql"));
+        container = new PostgreSQLContainer<>("postgres:10");
         container.start();
         return CollectionUtils.mapOf(
                 "datasources.default.url", container.getJdbcUrl(),
@@ -104,7 +104,7 @@ public class BookControllerTest implements TestPropertyProvider {
                 "datasources.default.driverClassName", container.getDriverClassName(),
                 "r2dbc.datasources.default.host", container.getHost(),
                 "r2dbc.datasources.default.port", container.getFirstMappedPort(),
-                "r2dbc.datasources.default.driver", "mysql",
+                "r2dbc.datasources.default.driver", "postgres",
                 "r2dbc.datasources.default.username", container.getUsername(),
                 "r2dbc.datasources.default.password", container.getPassword(),
                 "r2dbc.datasources.default.database", container.getDatabaseName()
