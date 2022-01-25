@@ -7,3 +7,12 @@ plugins {
 springBoot {
     mainClassName = 'example.Application'
 }
+
+dependencies {
+    testImplementation('org.springframework.boot:spring-boot-starter-test') {
+        exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
+        exclude group: 'junit', module: 'junit'
+    }
+    runtimeOnly "com.zaxxer:HikariCP"
+    runtimeOnly "com.h2database:h2"
+}
