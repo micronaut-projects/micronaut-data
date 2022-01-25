@@ -1,11 +1,13 @@
 === Micronaut Data 3.3
-- Support for MongoDB repositories
+- Support for <<mongo, MongoDB repositories>>
+- R2DBC upgraded to Arabba-SR12 and OracleDB R2DBC 0.4.0
+- Propagating JDBC transaction context in Kotlin's coroutines
 
 === Micronaut Data 3.2
 - Repositories with JPA Criteria API specification for Micronaut JDBC/R2DBC
 
 === Micronaut Data 3.1
-- Kotlin's coroutines support. New repository interface `CoroutineCrudRepository`.
+- Kotlin's coroutines support. New repository interface `CoroutineCrudRepository`
 - Support for <<dbcAttributeConverter, `AttributeConverter`>>
 - R2DBC upgraded to `Arabba-SR11`
 - JPA Criteria specifications
