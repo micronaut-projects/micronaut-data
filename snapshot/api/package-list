@@ -56,7 +56,6 @@ io.micronaut.data.processor.mappers.jpa.jx
 io.micronaut.data.processor.mappers.jpa.jx.event
 io.micronaut.data.processor.mappers.jta
 io.micronaut.data.processor.mappers.spring
-io.micronaut.data.processor.mappers.support
 io.micronaut.data.processor.model
 io.micronaut.data.processor.model.criteria
 io.micronaut.data.processor.model.criteria.impl

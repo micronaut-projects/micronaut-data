@@ -4987,8 +4987,8 @@ To create configurations for other drivers you can select the appropriate featur
 <div class="listingblock">
 <div class="title">Example <code>V1__create-schema.sql</code></div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-sql hljs" data-lang="sql">CREATE TABLE book(id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY, title VARCHAR(255), pages INT, author_id BIGINT NOT NULL);
-CREATE TABLE author(id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255));</code></pre>
+<pre class="highlightjs highlight"><code class="language-sql hljs" data-lang="sql">CREATE TABLE book(id SERIAL NOT NULL PRIMARY KEY, title VARCHAR(255), pages INT, author_id BIGINT NOT NULL);
+CREATE TABLE author(id SERIAL NOT NULL PRIMARY KEY, name VARCHAR(255));</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -5123,7 +5123,7 @@ import reactor.core.publisher.Mono;
 
 import javax.validation.constraints.NotNull;
 
-@R2dbcRepository(dialect = Dialect.MYSQL) <b class="conum">(1)</b>
+@R2dbcRepository(dialect = Dialect.POSTGRES) <b class="conum">(1)</b>
 public interface AuthorRepository extends ReactiveStreamsCrudRepository&lt;Author, Long&gt; {
     @NonNull
     @Override
@@ -5148,7 +5148,7 @@ import reactor.core.publisher.Mono
 
 import javax.validation.constraints.NotNull
 
-@R2dbcRepository(dialect = Dialect.MYSQL) <b class="conum">(1)</b>
+@R2dbcRepository(dialect = Dialect.POSTGRES) <b class="conum">(1)</b>
 interface AuthorRepository extends ReactiveStreamsCrudRepository&lt;Author, Long&gt; {
     @NonNull
     @Override
@@ -5171,7 +5171,7 @@ import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import javax.validation.constraints.NotNull
 
-@R2dbcRepository(dialect = Dialect.MYSQL) <b class="conum">(1)</b>
+@R2dbcRepository(dialect = Dialect.POSTGRES) <b class="conum">(1)</b>
 interface AuthorRepository : ReactiveStreamsCrudRepository&lt;Author, Long&gt; {
     override fun findById(id: @NotNull Long): Mono&lt;Author&gt; <b class="conum">(2)</b>
     override fun findAll(): Flux&lt;Author&gt;
