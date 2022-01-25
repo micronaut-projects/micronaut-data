@@ -17,6 +17,6 @@ dependencies {
 }
 
 project.afterEvaluate {
-    nativeImage.enabled = false
+    nativeCompile.enabled = false
     testNativeImage.enabled = false
 }
