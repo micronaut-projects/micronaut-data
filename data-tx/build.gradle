@@ -8,7 +8,7 @@ dependencies {
 
     api libs.jakarta.transaction.api
 
-    implementation mn.micronaut.inject.java
+    implementation mn.micronaut.inject
     implementation mn.micronaut.aop
 
     compileOnly mn.micronaut.spring
