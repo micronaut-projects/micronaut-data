@@ -23,6 +23,7 @@ import io.micronaut.data.model.query.QueryParameter
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
 import io.micronaut.data.processor.visitors.AbstractDataSpec
 import io.micronaut.data.tck.jdbc.entities.Project
+import io.micronaut.data.tck.jdbc.entities.Transform
 import spock.lang.Requires
 
 class ColumnTransformerSpec extends AbstractDataSpec {
@@ -77,7 +78,6 @@ class Project {
 
         expect:
         sql == 'UPDATE "project" SET "name"=UPPER(?)'
-
     }
 
     void "test build query with column reader"() {
@@ -89,7 +89,6 @@ class Project {
         expect:
         sql == 'SELECT project_."project_id_department_id",project_."project_id_project_id",LOWER(project_.name) AS name,project_.name AS db_name,UPPER(project_.org) AS org FROM "project" project_'
     }
-
     void "test build query with column reader in where"() {
         given:
         def entity = PersistentEntity.of(Project)
@@ -113,5 +112,47 @@ class Project {
 
         expect:
         sql == 'UPDATE "project" SET "name"=UPPER(?),"org"=? WHERE (LOWER(name) = ? AND UPPER(org) = ?)'
+    }
+
+
+    void "test build insert with column writer2"() {
+        given:
+            def entity = PersistentEntity.of(Transform)
+            SqlQueryBuilder builder = new SqlQueryBuilder()
+            def sql = builder.buildInsert(AnnotationMetadata.EMPTY_METADATA, entity).query
+
+        expect:
+            sql == 'INSERT INTO "transform" ("xyz","project_id_department_id","project_id_project_id") VALUES (LOWER(xyz@abc),?,?)'
+
+    }
+
+    void "test build update with column writer2"() {
+        given:
+            def entity = PersistentEntity.of(Transform)
+            SqlQueryBuilder builder = new SqlQueryBuilder()
+            def sql = builder.buildUpdate(QueryModel.from(entity), Collections.singletonList("xyz")).query
+
+        expect:
+            sql == 'UPDATE "transform" SET "xyz"=LOWER(xyz@abc)'
+    }
+
+    void "test build query with column reader2"() {
+        given:
+            def entity = PersistentEntity.of(Transform)
+            SqlQueryBuilder builder = new SqlQueryBuilder()
+            def sql = builder.buildQuery(QueryModel.from(entity)).query
+
+        expect:
+            sql == 'SELECT transform_."project_id_department_id",transform_."project_id_project_id",UPPER(xyz@abc) AS xyz FROM "transform" transform_'
+    }
+
+    void "test build query with column reader in where2"() {
+        given:
+            def entity = PersistentEntity.of(Transform)
+            SqlQueryBuilder builder = new SqlQueryBuilder()
+            def sql = builder.buildQuery(QueryModel.from(entity).eq("xyz", new QueryParameter("xyz"))).query
+
+        expect:
+            sql == 'SELECT transform_."project_id_department_id",transform_."project_id_project_id",UPPER(xyz@abc) AS xyz FROM "transform" transform_ WHERE (UPPER(xyz@abc) = ?)'
     }
 }
