@@ -21,21 +21,25 @@ internal class PersonSuspendRepositorySpec {
 
     @BeforeEach
     fun beforeEach() {
-        personRepository.saveAll(listOf(
-                Person(
-                        "Denis",
-                        13
-                ),
-                Person(
-                        "Josh",
-                        22
-                )
-        ))
+        runBlocking {
+            personRepository.saveAll(listOf(
+                    Person(
+                            "Denis",
+                            13
+                    ),
+                    Person(
+                            "Josh",
+                            22
+                    )
+            )).toList()
+        }
     }
 
     @AfterEach
     fun afterEach() {
-        personRepository.deleteAll()
+        runBlocking {
+            personRepository.deleteAll()
+        }
     }
 
     @Test
@@ -52,6 +56,17 @@ internal class PersonSuspendRepositorySpec {
         Assertions.assertEquals(1, countAgeLess20)
         Assertions.assertEquals(1, countAgeLess30NotDenis)
         Assertions.assertEquals(2, people.size)
+    }
+
+    @Test
+    fun testFindMissing() = runBlocking {
+        val missing1: Person? = personRepository.findOne(nameEquals("xyz"))
+        val missing2: Person? = personRepository.findById(1234)
+        val missing3: Person = personRepository.queryById(1234)
+        Assertions.assertNull(missing1)
+        Assertions.assertNull(missing2)
+        // TODO: this should throw an exception because the type is not Kotlin nullable but context returns nullable
+        Assertions.assertNull(missing3)
     }
 
     @Test
