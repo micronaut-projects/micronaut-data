@@ -27,6 +27,10 @@ class MongoManyToOneSpec extends Specification implements MongoTestPropertyProvi
     @Inject
     RefARepository refARepository = applicationContext.getBean(RefARepository)
 
+    def cleanup() {
+        refARepository.deleteAll()
+    }
+
     void 'test many-to-one hierarchy'() {
         given:
             RefA refA = new RefA(refB: new RefB(refC: new RefC(name: "TestXyz")))

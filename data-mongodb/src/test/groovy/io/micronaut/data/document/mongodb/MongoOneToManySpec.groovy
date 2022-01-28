@@ -24,6 +24,10 @@ class MongoOneToManySpec extends Specification implements MongoTestPropertyProvi
     @Inject
     ParentRepository parentRepository = applicationContext.getBean(ParentRepository)
 
+    def cleanup() {
+        parentRepository.deleteAll()
+    }
+
     void 'test one-to-many hierarchy'() {
         given:
             def children = []

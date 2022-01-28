@@ -8,6 +8,7 @@ import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Slice;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
@@ -46,6 +47,11 @@ class BookRepositorySpec {
 
     }
     // end::metadata[]
+
+    @AfterEach
+    public void cleanup() {
+        bookRepository.deleteAll();
+    }
 
     @Test
     void testCrud() {

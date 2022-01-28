@@ -8,6 +8,7 @@ import io.micronaut.data.model.Slice;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import org.bson.types.ObjectId;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
@@ -43,6 +44,11 @@ class BookRepositorySpec extends AbstractMongoSpec {
 
 	}
 	// end::metadata[]
+
+	@AfterEach
+	public void cleanup() {
+		bookRepository.deleteAll();
+	}
 
 	@Test
 	void testCrud() {

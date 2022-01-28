@@ -18,6 +18,12 @@ tasks.named("test") {
         def disabled = project.path.contains("groovy") && JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_16)
         !disabled
     }
+
+    def testExamples = project.rootProject.tasks.findByName("testExamples")
+    if (!testExamples) {
+        testExamples = project.rootProject.tasks.create("testExamples")
+    }
+    testExamples.dependsOn(it)
 }
 
 project.afterEvaluate {

@@ -30,6 +30,10 @@ class MongoEmbeddedSpec extends Specification implements MongoTestPropertyProvid
     @Shared
     MongoRestaurantRepository restaurantRepository
 
+    def cleanup() {
+        restaurantRepository.deleteAll()
+    }
+
     void "test save and retreive entity with embedded"() {
         when:"An entity is saved"
         restaurantRepository.save(new Restaurant("Fred's Cafe", new Address("High St.", "7896")))

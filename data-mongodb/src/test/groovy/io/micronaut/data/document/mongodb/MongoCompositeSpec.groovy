@@ -55,6 +55,14 @@ class MongoCompositeSpec extends Specification implements MongoTestPropertyProvi
     @Inject
     CitizenRepository citizenRepository = applicationContext.getBean(MongoCitizenRepository)
 
+    def cleanup() {
+        citizenRepository.deleteAll()
+        countryRepository.deleteAll()
+        zoneRepository.deleteAll()
+        settlementTypeRepository.deleteAll()
+        settlementRepository.deleteAll()
+    }
+
     void 'test composite relations'() {
         given:
             Settlement settlement = new Settlement()

@@ -15,13 +15,17 @@ import spock.lang.Shared
 import spock.lang.Specification
 
 @MicronautTest
-class MultiOneToManyJoinSpec extends Specification implements MongoTestPropertyProvider {
+class MongoMultiOneToManySpec extends Specification implements MongoTestPropertyProvider {
     @AutoCleanup
     @Shared
     ApplicationContext applicationContext = ApplicationContext.run(getProperties())
 
     @Shared
     @Inject CategoryRepository categoryRepository = applicationContext.getBean(CategoryRepository)
+
+    def cleanup() {
+        categoryRepository.deleteAll()
+    }
 
     void 'test handle null values in joins'() {
         expect:"no results are returned"

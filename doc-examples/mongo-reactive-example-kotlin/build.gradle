@@ -1,0 +1,40 @@
+plugins {
+    id "org.jetbrains.kotlin.jvm"
+    id "org.jetbrains.kotlin.kapt"
+    id "org.jetbrains.kotlin.plugin.allopen"
+    id "io.micronaut.application"
+    id "io.micronaut.build.internal.data-kotlin-example"
+}
+
+repositories {
+    mavenCentral()
+}
+
+application {
+    mainClass = "example.ApplicationKt"
+}
+
+micronaut {
+    version project.ext.micronautVersion
+    runtime "netty"
+    testRuntime "junit5"
+}
+
+dependencies {
+    kapt projects.dataDocumentProcessor
+
+    implementation 'io.micronaut.reactor:micronaut-reactor'
+    implementation "io.micronaut:micronaut-http-client"
+    implementation projects.dataMongodb
+    implementation libs.mongodb.driver.reactive
+
+    compileOnly libs.javax.persistence.api
+    implementation libs.jakarta.persistence.api
+    implementation libs.jakarta.transaction.api
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-reactive"
+
+    runtimeOnly "ch.qos.logback:logback-classic"
+
+    testImplementation "org.testcontainers:mongodb"
+}

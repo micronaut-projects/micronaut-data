@@ -18,7 +18,7 @@ package io.micronaut.data.mongodb.operations;
 import io.micronaut.data.operations.reactive.ReactiveRepositoryOperations;
 
 /**
- * Mongo DB reactive repository operations.
+ * MongoDB reactive repository operations.
  *
  * @author Denis Stepanov
  * @since 3.3.0

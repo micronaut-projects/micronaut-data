@@ -17,106 +17,67 @@ package io.micronaut.data.mongodb.init;
 
 import com.mongodb.client.MongoDatabase;
 import io.micronaut.configuration.mongo.core.AbstractMongoConfiguration;
-import io.micronaut.configuration.mongo.core.DefaultMongoConfiguration;
-import io.micronaut.configuration.mongo.core.NamedMongoConfiguration;
 import io.micronaut.context.BeanLocator;
-import io.micronaut.context.Qualifier;
 import io.micronaut.context.annotation.Context;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.beans.BeanIntrospection;
-import io.micronaut.core.beans.BeanIntrospector;
 import io.micronaut.core.util.StringUtils;
-import io.micronaut.data.annotation.MappedEntity;
-import io.micronaut.data.annotation.Relation;
-import io.micronaut.data.mongodb.database.MongoDatabaseFactory;
-import io.micronaut.data.model.Association;
 import io.micronaut.data.model.PersistentEntity;
-import io.micronaut.data.model.PersistentProperty;
-import io.micronaut.data.model.naming.NamingStrategy;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
-import io.micronaut.inject.qualifiers.Qualifiers;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import io.micronaut.data.mongodb.conf.MongoDataConfiguration;
+import io.micronaut.data.mongodb.conf.RequiresSyncMongo;
+import io.micronaut.data.mongodb.database.MongoDatabaseFactory;
 
 import javax.annotation.PostConstruct;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
-import java.util.function.Function;
 
 /**
- * Mongo collections creator.
+ * MongoDB's collections creator.
  *
  * @author Denis Stepanov
  * @since 3.3
  */
 @Context
 @Internal
-@Requires(property = "micronaut.data.mongo.create-collections", value = StringUtils.TRUE)
-public final class MongoCollectionsCreator {
-    private static final Logger LOG = LoggerFactory.getLogger(MongoCollectionsCreator.class);
+@RequiresSyncMongo
+@Requires(property = MongoDataConfiguration.CREATE_COLLECTIONS_PROPERTY, value = StringUtils.TRUE)
+public final class MongoCollectionsCreator extends AbstractMongoCollectionsCreator<MongoDatabase> {
 
     @PostConstruct
     void initialize(BeanLocator beanLocator,
                     RuntimeEntityRegistry runtimeEntityRegistry,
                     List<AbstractMongoConfiguration> mongoConfigurations) {
 
-        for (AbstractMongoConfiguration mongoConfiguration : mongoConfigurations) {
-            // TODO: different initializer per conf
-            Collection<BeanIntrospection<Object>> introspections = BeanIntrospector.SHARED.findIntrospections(MappedEntity.class);
-            PersistentEntity[] entities = introspections.stream()
-                    // filter out inner / internal / abstract(MappedSuperClass) classes
-                    .filter(i -> !i.getBeanType().getName().contains("$"))
-                    .filter(i -> !java.lang.reflect.Modifier.isAbstract(i.getBeanType().getModifiers()))
-                    .map(e -> runtimeEntityRegistry.getEntity(e.getBeanType())).toArray(PersistentEntity[]::new);
-
-            MongoDatabaseFactory mongoDatabaseFactory;
-            if (mongoConfiguration instanceof DefaultMongoConfiguration) {
-                mongoDatabaseFactory = beanLocator.getBean(MongoDatabaseFactory.class);
-            } else if (mongoConfiguration instanceof NamedMongoConfiguration) {
-                Qualifier qualifier = Qualifiers.byName(((NamedMongoConfiguration) mongoConfiguration).getServerName());
-                mongoDatabaseFactory = beanLocator.getBean(MongoDatabaseFactory.class, qualifier);
-            } else {
-                throw new IllegalStateException("Cannot get Mongo client for unrecognized configuration: " + mongoConfiguration);
-            }
-
+        super.initialize(runtimeEntityRegistry, mongoConfigurations, mongoConfiguration -> {
+            MongoDatabaseFactory mongoDatabaseFactory = getMongoFactory(MongoDatabaseFactory.class, beanLocator, mongoConfiguration);
             Map<String, Set<String>> databaseCollections = new HashMap<>();
-            for (PersistentEntity entity : entities) {
-                MongoDatabase database = mongoDatabaseFactory.getDatabase(entity);
-                Set<String> collections = databaseCollections.computeIfAbsent(database.getName(), s -> database.listCollectionNames().into(new HashSet<>()));
-                String persistedName = entity.getPersistedName();
-                if (collections.add(persistedName)) {
-                    if (LOG.isInfoEnabled()) {
-                        LOG.info("Creating collection: {} in database: {}", persistedName, database.getName());
-                    }
-                    database.createCollection(persistedName);
-                }
-                for (PersistentProperty persistentProperty : entity.getPersistentProperties()) {
-                    if (persistentProperty instanceof Association) {
-                        Association association = (Association) persistentProperty;
-                        Optional<Association> inverseSide = association.getInverseSide().map(Function.identity());
-                        if (association.getKind() == Relation.Kind.MANY_TO_MANY || association.isForeignKey() && !inverseSide.isPresent()) {
-                            Association owningAssociation = inverseSide.orElse(association);
-                            NamingStrategy namingStrategy = association.getOwner().getNamingStrategy();
-                            String joinCollectionName = namingStrategy.mappedName(owningAssociation);
-                            if (collections.add(joinCollectionName)) {
-                                if (LOG.isInfoEnabled()) {
-                                    LOG.info("Creating collection: {} in database: {}", persistedName, database.getName());
-                                }
-                                database.createCollection(joinCollectionName);
-                            }
-                        }
-                    }
+            return new DatabaseOperations<MongoDatabase>() {
+
+                @Override
+                public String getDatabaseName(MongoDatabase database) {
+                    return database.getName();
                 }
 
-            }
-        }
+                @Override
+                public MongoDatabase find(PersistentEntity persistentEntity) {
+                    return mongoDatabaseFactory.getDatabase(persistentEntity);
+                }
 
+                @Override
+                public Set<String> listCollectionNames(MongoDatabase database) {
+                    return databaseCollections.computeIfAbsent(database.getName(), s -> database.listCollectionNames().into(new HashSet<>()));
+                }
+
+                @Override
+                public void createCollection(MongoDatabase database, String collection) {
+                    database.createCollection(collection);
+                }
+            };
+        });
     }
 
 }

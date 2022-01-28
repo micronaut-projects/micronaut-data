@@ -12,18 +12,25 @@ dependencies {
     api projects.dataDocumentModel
     api libs.micronaut.serde.bson
     api libs.micronaut.serde.support
+    api (mn.micronaut.mongo) { // reactive
+        exclude group: "org.mongodb"
+        exclude group: "io.micronaut"
+    }
+    api (mn.micronaut.mongo.sync) {
+        exclude group: "org.mongodb"
+        exclude group: "io.micronaut"
+    }
 
-    implementation libs.mongodb.driver.sync
-    implementation libs.mongodb.driver.reactivestreams
-    implementation mn.micronaut.mongo
-    implementation mn.micronaut.mongo.sync
-
+    compileOnly libs.mongodb.driver.sync
+    compileOnly libs.mongodb.driver.reactive
     compileOnly mn.micronaut.reactor
 
     testAnnotationProcessor projects.dataDocumentProcessor
     testAnnotationProcessor mn.micronaut.inject.java
     testAnnotationProcessor libs.jakarta.persistence.api
 
+    testImplementation libs.mongodb.driver.sync
+    testImplementation libs.mongodb.driver.reactive
     testImplementation projects.dataDocumentProcessor
     testImplementation projects.dataDocumentTck
     testImplementation libs.jakarta.persistence.api

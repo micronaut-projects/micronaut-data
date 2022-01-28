@@ -251,7 +251,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         return new R2dbcConversionContextImpl(connection);
     }
 
-    private Mono<Integer> sum(Stream<Mono<Integer>> stream) {
+    private Mono<Long> sum(Stream<Mono<Long>> stream) {
         return stream.reduce((m1, m2) -> m1.zipWith(m2).map(t -> t.getT1() + t.getT2())).orElse(Mono.empty());
     }
 
@@ -1097,13 +1097,13 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                             });
                         });
             } else {
-                Mono<Tuple2<List<Data>, Integer>> entitiesWithRowsUpdated = entities.collectList()
+                Mono<Tuple2<List<Data>, Long>> entitiesWithRowsUpdated = entities.collectList()
                         .flatMap(e -> {
                             List<Data> notVetoedEntities = e.stream().filter(this::notVetoed).collect(Collectors.toList());
                             if (notVetoedEntities.isEmpty()) {
-                                return Mono.just(Tuples.of(e, 0));
+                                return Mono.just(Tuples.of(e, 0L));
                             }
-                            return Flux.from(statement.execute()).flatMap(result -> Flux.from(result.getRowsUpdated())).reduce(0, Integer::sum)
+                            return Flux.from(statement.execute()).flatMap(result -> Flux.from(result.getRowsUpdated())).map(Long::valueOf).reduce(0L, Long::sum)
                                     .map(rowsUpdated -> {
                                         if (dbOperation.isOptimisticLock()) {
                                             checkOptimisticLocking(notVetoedEntities.size(), rowsUpdated);

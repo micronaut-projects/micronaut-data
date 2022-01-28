@@ -41,6 +41,13 @@ class MongoManyToManySpec extends Specification implements MongoTestPropertyProv
     @Inject
     CourseRatingCompositeKeyRepository courseRatingCompositeKeyRepository = applicationContext.getBean(CourseRatingCompositeKeyRepository)
 
+    def cleanup() {
+        studentRepository.deleteAll()
+        courseRepository.deleteAll()
+        courseRatingRepository.deleteAll()
+        courseRatingCompositeKeyRepository.deleteAll()
+    }
+
     void 'test many-to-many hierarchy'() {
         given:
             Student student = new Student(name: "Denis", courses: [new Course(name: "Math"), new Course(name: "Physics")])

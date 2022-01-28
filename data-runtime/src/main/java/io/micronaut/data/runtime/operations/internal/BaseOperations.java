@@ -62,7 +62,7 @@ abstract class BaseOperations<T, Exc extends Exception> {
      * @param expected The expected value
      * @param received THe received value
      */
-    protected void checkOptimisticLocking(int expected, int received) {
+    protected void checkOptimisticLocking(long expected, long received) {
         if (received != expected) {
             throw new OptimisticLockException("Execute update returned unexpected row count. Expected: " + expected + " got: " + received);
         }
