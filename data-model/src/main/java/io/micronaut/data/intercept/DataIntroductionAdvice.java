@@ -32,6 +32,7 @@ import io.micronaut.core.util.KotlinUtils;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.annotation.RepositoryConfiguration;
 import io.micronaut.data.exceptions.DataAccessException;
+import io.micronaut.data.exceptions.EmptyResultException;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.operations.PrimaryRepositoryOperations;
 import io.micronaut.data.operations.RepositoryOperations;
@@ -126,9 +127,13 @@ public final class DataIntroductionAdvice implements MethodInterceptor<Object, O
                                 if (throwable instanceof CompletionException) {
                                     throwable = throwable.getCause();
                                 }
-                                CompletableFuture<?> completableFuture = new CompletableFuture<>();
-                                completableFuture.completeExceptionally(throwable);
-                                interceptedMethod.handleResult(completableFuture);
+                                if (throwable instanceof EmptyResultException && context.isSuspend() && context.isNullable()) {
+                                    interceptedMethod.handleResult(CompletableFuture.completedFuture(null));
+                                } else {
+                                    CompletableFuture<?> completableFuture = new CompletableFuture<>();
+                                    completableFuture.completeExceptionally(throwable);
+                                    interceptedMethod.handleResult(completableFuture);
+                                }
                             }
                         });
                         return KotlinUtils.COROUTINE_SUSPENDED;
