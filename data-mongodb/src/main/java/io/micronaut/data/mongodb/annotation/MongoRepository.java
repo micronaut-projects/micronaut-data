@@ -43,4 +43,10 @@ import java.lang.annotation.Target;
 @Documented
 @Repository
 public @interface MongoRepository {
+
+    /**
+     * @return The database name.
+     */
+    String databaseName() default "";
+
 }
