@@ -16,6 +16,7 @@
 package io.micronaut.data.mongodb.operations;
 
 import com.mongodb.client.model.Sorts;
+import io.micronaut.context.BeanContext;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.beans.BeanIntrospection;
@@ -25,6 +26,7 @@ import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
+import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.document.model.query.builder.MongoQueryBuilder;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.Pageable;
@@ -38,11 +40,15 @@ import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.model.runtime.convert.AttributeConverter;
+import io.micronaut.data.mongodb.annotation.MongoRepository;
+import io.micronaut.data.repository.GenericRepository;
 import io.micronaut.data.runtime.config.DataSettings;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.date.DateTimeProvider;
 import io.micronaut.data.runtime.operations.internal.AbstractRepositoryOperations;
 import io.micronaut.http.codec.MediaTypeCodec;
+import io.micronaut.inject.BeanDefinition;
+import io.micronaut.inject.qualifiers.Qualifiers;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
@@ -56,7 +62,9 @@ import org.slf4j.Logger;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -66,22 +74,40 @@ abstract class AbstractMongoRepositoryOperations<Cnt, PS> extends AbstractReposi
 
     protected static final Logger QUERY_LOG = DataSettings.QUERY_LOG;
     protected static final BsonDocument EMPTY = new BsonDocument();
+    protected final Map<Class, String> repoDatabaseConfig;
 
     /**
      * Default constructor.
      *
+     * @param server                     The server
+     * @param beanContext                The bean context
      * @param codecs                     The media type codecs
      * @param dateTimeProvider           The date time provider
      * @param runtimeEntityRegistry      The entity registry
      * @param conversionService          The conversion service
      * @param attributeConverterRegistry The attribute converter registry
      */
-    protected AbstractMongoRepositoryOperations(List<MediaTypeCodec> codecs,
+    protected AbstractMongoRepositoryOperations(String server,
+                                                BeanContext beanContext,
+                                                List<MediaTypeCodec> codecs,
                                                 DateTimeProvider<Object> dateTimeProvider,
                                                 RuntimeEntityRegistry runtimeEntityRegistry,
                                                 DataConversionService<?> conversionService,
                                                 AttributeConverterRegistry attributeConverterRegistry) {
         super(codecs, dateTimeProvider, runtimeEntityRegistry, conversionService, attributeConverterRegistry);
+        Collection<BeanDefinition<GenericRepository>> beanDefinitions = beanContext
+                .getBeanDefinitions(GenericRepository.class, Qualifiers.byStereotype(MongoRepository.class));
+        HashMap<Class, String> repoDatabaseConfig = new HashMap<>();
+        for (BeanDefinition<GenericRepository> beanDefinition : beanDefinitions) {
+            String targetSrv = beanDefinition.stringValue(Repository.class).orElse(null);
+            if (targetSrv == null || targetSrv.isEmpty() || targetSrv.equalsIgnoreCase(server)) {
+                String database = beanDefinition.stringValue(MongoRepository.class, "databaseName").orElse(null);
+                if (StringUtils.isNotEmpty(database)) {
+                    repoDatabaseConfig.put(beanDefinition.getBeanType(), database);
+                }
+            }
+        }
+        this.repoDatabaseConfig = Collections.unmodifiableMap(repoDatabaseConfig);
     }
 
     protected FetchOptions getFetchOptions(CodecRegistry codecRegistry, PreparedQuery<?, ?> preparedQuery, RuntimePersistentEntity<?> persistentEntity) {

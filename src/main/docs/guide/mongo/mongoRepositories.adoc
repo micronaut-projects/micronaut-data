@@ -24,3 +24,5 @@ The same interfaces supported by the JPA implementation are supported by MongoDB
 Note that in addition to interfaces you can also define repositories as abstract classes:
 
 snippet::example.AbstractBookRepository[project-base="doc-examples/mongo-example", source="main"]
+
+NOTE: You can specify MongoDB's database name using the repository annotation: `@MongoRepository(databaseName = "mydb")` or in the connection url: `mongodb://username:password@localhost:27017/mydb`

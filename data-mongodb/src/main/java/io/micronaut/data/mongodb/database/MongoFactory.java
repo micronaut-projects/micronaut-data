@@ -23,7 +23,6 @@ import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.context.annotation.Primary;
-import io.micronaut.context.exceptions.ConfigurationException;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.util.StringUtils;
 import jakarta.inject.Singleton;
@@ -41,8 +40,8 @@ final class MongoFactory {
         return mongoConfiguration.getConnectionString()
                 .map(ConnectionString::getDatabase)
                 .filter(StringUtils::isNotEmpty)
-                .map(databaseName -> new SimpleMongoDatabaseFactory(mongoClient, databaseName))
-                .orElseThrow(() -> new ConfigurationException("Please specify the default Mongo database in the url string"));
+                .<MongoDatabaseFactory>map(databaseName -> new SimpleMongoDatabaseFactory(mongoClient, databaseName))
+                .orElseGet(UnknownMongoDatabaseFactory::new);
     }
 
     @EachBean(NamedMongoConfiguration.class)
@@ -51,8 +50,8 @@ final class MongoFactory {
         return mongoConfiguration.getConnectionString()
                 .map(ConnectionString::getDatabase)
                 .filter(StringUtils::isNotEmpty)
-                .map(databaseName -> new SimpleMongoDatabaseFactory(mongoClient, databaseName))
-                .orElseThrow(() -> new ConfigurationException("Please specify the default Mongo database in the url string"));
+                .<MongoDatabaseFactory>map(databaseName -> new SimpleMongoDatabaseFactory(mongoClient, databaseName))
+                .orElseGet(UnknownMongoDatabaseFactory::new);
     }
 
 }
