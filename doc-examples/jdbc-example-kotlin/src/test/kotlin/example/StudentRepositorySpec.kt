@@ -19,7 +19,7 @@ class StudentRepositorySpec(private val studentRepository: StudentRepository,
         assertEquals(0, student.version)
         assertNotNull(student.courses[0].id)
         assertNotNull(student.courses[1].id)
-        studentRepository.update(student);
+        studentRepository.update(student)
         student = studentRepository.findById(student.id).get()
         assertNotNull(student.id)
         assertEquals(1, student.version)

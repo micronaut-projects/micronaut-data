@@ -28,6 +28,9 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.util.StringUtils;
 import jakarta.inject.Singleton;
 
+/**
+ * MongoDB sync beans factory.
+ */
 @Internal
 @Factory
 final class MongoFactory {

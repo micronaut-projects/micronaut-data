@@ -42,6 +42,11 @@ class MongoEmbeddedIdSpec extends Specification implements MongoTestPropertyProv
     @Inject
     ItemGroupRepository groupRepository
 
+    def cleanup() {
+        repository.deleteAll()
+        groupRepository.deleteAll()
+    }
+
     void "test empty one-to-many via embedded-id"() {
         when:
         ItemGroup itemGroup = new ItemGroup(1L)

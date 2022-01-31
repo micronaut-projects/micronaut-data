@@ -65,6 +65,9 @@ final class DataCodecRegistry implements CodecRegistry {
         if (codec != null) {
             return codec;
         }
+        if (clazz.isEnum()) {
+            return null;
+        }
         if (BeanIntrospector.SHARED.findIntrospection(clazz).isPresent()) {
             RuntimePersistentEntity<T> entity = runtimeEntityRegistry.getEntity(clazz);
             if (entity.isAnnotationPresent(MappedEntity.class)) {

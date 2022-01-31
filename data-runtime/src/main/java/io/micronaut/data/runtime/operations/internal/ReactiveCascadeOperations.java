@@ -29,6 +29,7 @@ import reactor.core.publisher.Mono;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 /**
@@ -88,122 +89,142 @@ public final class ReactiveCascadeOperations<Ctx extends OperationContext> exten
                 if (ctx.persisted.contains(child)) {
                     continue;
                 }
+
+                monoEntity = monoEntity.flatMap(e -> {
+
                 RuntimePersistentProperty<Object> identity = childPersistentEntity.getIdentity();
                 boolean hasId = identity.getProperty().get(child) != null;
+                Mono<T> thisEntity;
                 Mono<Object> childMono;
                 if ((!hasId || identity instanceof Association) && (cascadeType == Relation.Cascade.PERSIST)) {
                     if (LOG.isDebugEnabled()) {
-                        LOG.debug("Cascading PERSIST for '{}' association: '{}'", persistentEntity.getName(), cascadeOp.ctx.associations);
+                        LOG.debug("Cascading one PERSIST for '{}' association: '{}'", persistentEntity.getName(), cascadeOp.ctx.associations);
                     }
-                    Mono<Object> persisted = helper.persistOne(ctx, child, childPersistentEntity);
-                    monoEntity = monoEntity.flatMap(e -> persisted.map(persistedEntity -> afterCascadedOne(e, cascadeOp.ctx.associations, child, persistedEntity)));
+                    Mono<Object> persisted = helper.persistOne(ctx, child, childPersistentEntity).cache();
+                    thisEntity = persisted.map(persistedEntity -> afterCascadedOne(e, cascadeOp.ctx.associations, child, persistedEntity));
                     childMono = persisted;
                 } else if (hasId && (cascadeType == Relation.Cascade.UPDATE)) {
                     if (LOG.isDebugEnabled()) {
-                        LOG.debug("Cascading MERGE for '{}' ({}) association: '{}'", persistentEntity.getName(),
+                        LOG.debug("Cascading one UPDATE for '{}' ({}) association: '{}'", persistentEntity.getName(),
                                 persistentEntity.getIdentity().getProperty().get(entity), cascadeOp.ctx.associations);
                     }
-                    Mono<Object> updated = helper.updateOne(ctx, child, childPersistentEntity);
-                    monoEntity = monoEntity.flatMap(e -> updated.map(updatedEntity -> afterCascadedOne(e, cascadeOp.ctx.associations, child, updatedEntity)));
+                    Mono<Object> updated = helper.updateOne(ctx, child, childPersistentEntity).cache();
+                    thisEntity = updated.map(updatedEntity -> afterCascadedOne(e, cascadeOp.ctx.associations, child, updatedEntity));
                     childMono = updated;
                 } else {
                     childMono = Mono.just(child);
+                    thisEntity = Mono.just(e);
                 }
 
                 if (!hasId
                         && (cascadeType == Relation.Cascade.PERSIST || cascadeType == Relation.Cascade.UPDATE)
                         && SqlQueryBuilder.isForeignKeyWithJoinTable(association)) {
-                    monoEntity = monoEntity.flatMap(e -> childMono.flatMap(c -> {
+                    return childMono.flatMap(c -> {
                         if (ctx.persisted.contains(c)) {
                             return Mono.just(e);
                         }
                         ctx.persisted.add(c);
-                        Mono<Void> op = helper.persistManyAssociation(ctx, association, e, (RuntimePersistentEntity<Object>) persistentEntity, c, childPersistentEntity);
-                        return op.thenReturn(e);
-                    }));
+                        return thisEntity.flatMap(e2 -> {
+                            Mono<Void> op = helper.persistManyAssociation(ctx, association, e2, (RuntimePersistentEntity<Object>) persistentEntity, c, childPersistentEntity);
+                            return op.thenReturn(e2);
+                        });
+                    });
                 } else {
-                    monoEntity = monoEntity.flatMap(e -> childMono.map(c -> {
+                    return childMono.flatMap(c -> {
                         ctx.persisted.add(c);
-                        return e;
-                    }));
+                        return thisEntity;
+                    });
                 }
+                });
+
             } else if (cascadeOp instanceof CascadeManyOp) {
                 CascadeManyOp cascadeManyOp = (CascadeManyOp) cascadeOp;
                 RuntimePersistentEntity<Object> childPersistentEntity = cascadeManyOp.childPersistentEntity;
 
-                Mono<List<Object>> children;
                 if (cascadeType == Relation.Cascade.UPDATE) {
-                    if (LOG.isDebugEnabled()) {
-                        LOG.debug("Cascading UPDATE for '{}' association: '{}'", persistentEntity.getName(), cascadeOp.ctx.associations);
+                    monoEntity = updateChildren(ctx, monoEntity, cascadeOp, cascadeManyOp, childPersistentEntity, e -> {
+                        if (LOG.isDebugEnabled()) {
+                            LOG.debug("Cascading many UPDATE for '{}' association: '{}'", persistentEntity.getName(), cascadeOp.ctx.associations);
+                        }
+                        Flux<Object> childrenFlux = Flux.empty();
+                        for (Object child : cascadeManyOp.children) {
+                            if (ctx.persisted.contains(child)) {
+                                continue;
+                            }
+                            Mono<Object> modifiedEntity;
+                            if (childPersistentEntity.getIdentity().getProperty().get(child) == null) {
+                                modifiedEntity = helper.persistOne(ctx, child, childPersistentEntity);
+                            } else {
+                                modifiedEntity = helper.updateOne(ctx, child, childPersistentEntity);
+                            }
+                            childrenFlux = childrenFlux.concatWith(modifiedEntity);
+                        }
+                        return childrenFlux.collectList();
+                    });
+                } else if (cascadeType == Relation.Cascade.PERSIST) {
+                    if (helper.isSupportsBatchInsert(ctx, persistentEntity)) {
+                        monoEntity = updateChildren(ctx, monoEntity, cascadeOp, cascadeManyOp, childPersistentEntity, e -> {
+                            if (LOG.isDebugEnabled()) {
+                                LOG.debug("Cascading many PERSIST for '{}' association: '{}'", persistentEntity.getName(), cascadeOp.ctx.associations);
+                            }
+                            RuntimePersistentProperty<Object> identity = childPersistentEntity.getIdentity();
+                            Predicate<Object> veto = val -> ctx.persisted.contains(val) || identity.getProperty().get(val) != null && !(identity instanceof Association);
+                            Flux<Object> inserted = helper.persistBatch(ctx, cascadeManyOp.children, childPersistentEntity, veto);
+                            return inserted.collectList();
+                        });
+                    } else {
+                        monoEntity = updateChildren(ctx, monoEntity, cascadeOp, cascadeManyOp, childPersistentEntity, e -> {
+                            if (LOG.isDebugEnabled()) {
+                                LOG.debug("Cascading many PERSIST for '{}' association: '{}'", persistentEntity.getName(), cascadeOp.ctx.associations);
+                            }
+
+                            Flux<Object> childrenFlux = Flux.empty();
+                            for (Object child : cascadeManyOp.children) {
+                                if (ctx.persisted.contains(child) || childPersistentEntity.getIdentity().getProperty().get(child) != null) {
+                                    childrenFlux = childrenFlux.concatWith(Mono.just(child));
+                                    continue;
+                                }
+                                Mono<Object> persisted = helper.persistOne(ctx, child, childPersistentEntity);
+                                childrenFlux = childrenFlux.concatWith(persisted);
+                            }
+                            return childrenFlux.collectList();
+                        });
                     }
-                    Flux<Object> childrenFlux = Flux.empty();
-                    for (Object child : cascadeManyOp.children) {
+                }
+            }
+        }
+        return monoEntity;
+    }
+
+    private <T> Mono<T> updateChildren(Ctx ctx,
+                                       Mono<T> monoEntity,
+                                       CascadeOp cascadeOp,
+                                       CascadeManyOp cascadeManyOp,
+                                       RuntimePersistentEntity<Object> childPersistentEntity,
+                                       Function<T, Mono<List<Object>>> fn) {
+        monoEntity = monoEntity.flatMap(e -> fn.apply(e).flatMap(newChildren -> {
+            T entityAfterCascade = afterCascadedMany(e, cascadeOp.ctx.associations, cascadeManyOp.children, newChildren);
+            RuntimeAssociation<Object> association = (RuntimeAssociation) cascadeOp.ctx.getAssociation();
+            if (SqlQueryBuilder.isForeignKeyWithJoinTable(association)) {
+                if (helper.isSupportsBatchInsert(ctx, cascadeOp.ctx.parentPersistentEntity)) {
+                    Predicate<Object> veto = ctx.persisted::contains;
+                    Mono<Void> op = helper.persistManyAssociationBatch(ctx, association, cascadeOp.ctx.parent, cascadeOp.ctx.parentPersistentEntity, newChildren, childPersistentEntity, veto);
+                    return op.thenReturn(entityAfterCascade);
+                } else {
+                    Mono<T> res = Mono.just(entityAfterCascade);
+                    for (Object child : newChildren) {
                         if (ctx.persisted.contains(child)) {
                             continue;
                         }
-                        Mono<Object> modifiedEntity;
-                        if (childPersistentEntity.getIdentity().getProperty().get(child) == null) {
-                            modifiedEntity = helper.persistOne(ctx, child, childPersistentEntity);
-                        } else {
-                            modifiedEntity = helper.updateOne(ctx, child, childPersistentEntity);
-                        }
-                        childrenFlux = childrenFlux.concatWith(modifiedEntity);
+                        Mono<Void> op = helper.persistManyAssociation(ctx, association, cascadeOp.ctx.parent, cascadeOp.ctx.parentPersistentEntity, child, childPersistentEntity);
+                        res = res.flatMap(op::thenReturn);
                     }
-                    children = childrenFlux.collectList();
-                } else if (cascadeType == Relation.Cascade.PERSIST) {
-                    if (helper.isSupportsBatchInsert(ctx, persistentEntity)) {
-                        if (LOG.isDebugEnabled()) {
-                            LOG.debug("Cascading PERSIST for '{}' association: '{}'", persistentEntity.getName(), cascadeOp.ctx.associations);
-                        }
-                        RuntimePersistentProperty<Object> identity = childPersistentEntity.getIdentity();
-                        Predicate<Object> veto = val -> ctx.persisted.contains(val) || identity.getProperty().get(val) != null && !(identity instanceof Association);
-                        Flux<Object> inserted = helper.persistBatch(ctx, cascadeManyOp.children, childPersistentEntity, veto);
-                        children = inserted.collectList();
-                    } else {
-                        if (LOG.isDebugEnabled()) {
-                            LOG.debug("Cascading PERSIST for '{}' association: '{}'", persistentEntity.getName(), cascadeOp.ctx.associations);
-                        }
-
-                        Flux<Object> childrenFlux = Flux.empty();
-                        for (Object child : cascadeManyOp.children) {
-                            if (ctx.persisted.contains(child) || childPersistentEntity.getIdentity().getProperty().get(child) != null) {
-                                childrenFlux = childrenFlux.concatWith(Mono.just(child));
-                                continue;
-                            }
-                            Mono<Object> persisted = helper.persistOne(ctx, child, childPersistentEntity);
-                            childrenFlux = childrenFlux.concatWith(persisted);
-                        }
-                        children = childrenFlux.collectList();
-                    }
-                } else {
-                    continue;
+                    return res;
                 }
-                monoEntity = monoEntity.flatMap(e -> children.flatMap(newChildren -> {
-                    T entityAfterCascade = afterCascadedMany(e, cascadeOp.ctx.associations, cascadeManyOp.children, newChildren);
-                    RuntimeAssociation<Object> association = (RuntimeAssociation) cascadeOp.ctx.getAssociation();
-                    if (SqlQueryBuilder.isForeignKeyWithJoinTable(association)) {
-                        if (helper.isSupportsBatchInsert(ctx, cascadeOp.ctx.parentPersistentEntity)) {
-                            Predicate<Object> veto = ctx.persisted::contains;
-                            Mono<Void> op = helper.persistManyAssociationBatch(ctx, association, cascadeOp.ctx.parent, cascadeOp.ctx.parentPersistentEntity, newChildren, childPersistentEntity, veto);
-                            return op.thenReturn(entityAfterCascade);
-                        } else {
-                            Mono<T> res = Mono.just(entityAfterCascade);
-                            for (Object child : newChildren) {
-                                if (ctx.persisted.contains(child)) {
-                                    continue;
-                                }
-                                Mono<Void> op = helper.persistManyAssociation(ctx, association, cascadeOp.ctx.parent, cascadeOp.ctx.parentPersistentEntity, child, childPersistentEntity);
-                                res = res.flatMap(op::thenReturn);
-                            }
-                            return res;
-                        }
-                    }
-                    ctx.persisted.addAll(newChildren);
-                    return Mono.just(entityAfterCascade);
-                }));
-
             }
-        }
+            ctx.persisted.addAll(newChildren);
+            return Mono.just(entityAfterCascade);
+        }));
         return monoEntity;
     }
 

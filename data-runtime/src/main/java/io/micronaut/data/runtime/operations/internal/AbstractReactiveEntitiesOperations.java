@@ -49,7 +49,7 @@ public abstract class AbstractReactiveEntitiesOperations<Ctx extends OperationCo
     protected final boolean insert;
     protected final boolean hasGeneratedId;
     protected Flux<Data> entities;
-    protected Mono<Integer> rowsUpdated;
+    protected Mono<Long> rowsUpdated;
 
     /**
      * Default constructor.
@@ -96,7 +96,7 @@ public abstract class AbstractReactiveEntitiesOperations<Ctx extends OperationCo
     }
 
     private void doCascade(boolean isPost, Relation.Cascade cascadeType) {
-        this.entities = entities.flatMap(d -> {
+        this.entities = entities.concatMap(d -> {
             if (d.vetoed) {
                 return Mono.just(d);
             }
@@ -164,7 +164,7 @@ public abstract class AbstractReactiveEntitiesOperations<Ctx extends OperationCo
     /**
      * @return Rows updated.
      */
-    public Mono<Integer> getRowsUpdated() {
+    public Mono<Long> getRowsUpdated() {
         // We need to trigger entities to execute post actions when getting just rows
         return rowsUpdated.flatMap(rows -> entities.then(Mono.just(rows)));
     }
@@ -175,6 +175,7 @@ public abstract class AbstractReactiveEntitiesOperations<Ctx extends OperationCo
     @SuppressWarnings("VisibilityModifier")
     protected final class Data {
         public T entity;
+        public Object filter;
         public Map<QueryParameterBinding, Object> previousValues;
         public boolean vetoed = false;
     }

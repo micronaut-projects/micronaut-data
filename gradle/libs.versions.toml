@@ -125,7 +125,7 @@ micronaut-serde-support = { module = "io.micronaut.serde:micronaut-serde-support
 # MONGO
 
 mongodb-driver-sync = { module = "org.mongodb:mongodb-driver-sync", version.ref = "mongodb" }
-mongodb-driver-reactivestreams = { module = "org.mongodb:mongodb-driver-reactivestreams", version.ref = "mongodb" }
+mongodb-driver-reactive = { module = "org.mongodb:mongodb-driver-reactivestreams", version.ref = "mongodb" }
 
 #PLUGINS
 

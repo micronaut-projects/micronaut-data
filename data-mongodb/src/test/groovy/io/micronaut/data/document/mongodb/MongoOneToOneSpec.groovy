@@ -17,7 +17,7 @@ import spock.lang.Shared
 import spock.lang.Specification
 
 @MicronautTest
-class MultiOneToOneJoinSpec extends Specification implements MongoTestPropertyProvider {
+class MongoOneToOneSpec extends Specification implements MongoTestPropertyProvider {
     @AutoCleanup
     @Shared
     ApplicationContext applicationContext = ApplicationContext.run(getProperties())
@@ -25,6 +25,10 @@ class MultiOneToOneJoinSpec extends Specification implements MongoTestPropertyPr
     @Shared
     @Inject
     CRefARepository refARepository = applicationContext.getBean(CRefARepository)
+
+    def cleanup() {
+        refARepository.deleteAll()
+    }
 
     void 'test one-to-one hierarchy'() {
         given:

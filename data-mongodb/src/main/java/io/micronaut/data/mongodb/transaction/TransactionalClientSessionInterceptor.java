@@ -19,6 +19,7 @@ import com.mongodb.client.ClientSession;
 import io.micronaut.aop.MethodInterceptor;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.context.annotation.Prototype;
+import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.inject.ExecutableMethod;
 import io.micronaut.transaction.exceptions.NoTransactionException;
@@ -29,6 +30,7 @@ import io.micronaut.transaction.exceptions.NoTransactionException;
  * @author Denis Stepanov
  * @since 3.3
  */
+@Requires(classes = ClientSession.class, beans = MongoSynchronousTransactionManager.class)
 @Prototype
 public final class TransactionalClientSessionInterceptor implements MethodInterceptor<ClientSession, Object> {
 

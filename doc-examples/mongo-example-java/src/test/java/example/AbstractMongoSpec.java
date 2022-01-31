@@ -2,7 +2,6 @@ package example;
 
 import io.micronaut.test.support.TestPropertyProvider;
 import org.bson.UuidRepresentation;
-import org.junit.After;
 import org.junit.Rule;
 import org.testcontainers.containers.MongoDBContainer;
 import org.testcontainers.utility.DockerImageName;
@@ -14,11 +13,6 @@ public abstract class AbstractMongoSpec implements TestPropertyProvider {
 
     @Rule
     MongoDBContainer mongoDBContainer = new MongoDBContainer(DockerImageName.parse("mongo").withTag("5"));
-
-    @After
-    protected void after() {
-        mongoDBContainer.stop();
-    }
 
     @Override
     public Map<String, String> getProperties() {

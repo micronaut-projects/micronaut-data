@@ -65,6 +65,7 @@ include 'doc-examples:r2dbc-example-kotlin'
 include 'doc-examples:mongo-example-java'
 include 'doc-examples:mongo-example-groovy'
 include 'doc-examples:mongo-example-kotlin'
+include 'doc-examples:mongo-reactive-example-kotlin'
 if (JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_15)) {
     include 'doc-examples:jdbc-example-records-java'
 }

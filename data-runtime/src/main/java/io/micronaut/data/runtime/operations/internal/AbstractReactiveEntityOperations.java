@@ -150,8 +150,8 @@ public abstract class AbstractReactiveEntityOperations<Ctx extends OperationCont
     /**
      * @return The rows updated
      */
-    public Mono<Integer> getRowsUpdated() {
-        return data.filter(this::notVetoed).map(d -> d.rowsUpdated).switchIfEmpty(Mono.just(0));
+    public Mono<Long> getRowsUpdated() {
+        return data.filter(this::notVetoed).map(d -> d.rowsUpdated).switchIfEmpty(Mono.just(0L));
     }
 
     /**
@@ -160,8 +160,9 @@ public abstract class AbstractReactiveEntityOperations<Ctx extends OperationCont
     @SuppressWarnings("VisibilityModifier")
     protected final class Data {
         public T entity;
+        public Object filter;
         public Map<QueryParameterBinding, Object> previousValues;
-        public int rowsUpdated;
+        public long rowsUpdated;
         public boolean vetoed = false;
     }
 }

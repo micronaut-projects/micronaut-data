@@ -21,6 +21,7 @@ import com.mongodb.client.MongoClient;
 import io.micronaut.context.annotation.EachBean;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Nullable;
+import io.micronaut.data.mongodb.conf.RequiresSyncMongo;
 import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.exceptions.CannotCreateTransactionException;
 import io.micronaut.transaction.exceptions.NoTransactionException;
@@ -39,6 +40,7 @@ import java.util.concurrent.TimeUnit;
  * @author Denis Stepanov
  * @since 3.3
  */
+@RequiresSyncMongo
 @EachBean(MongoClient.class)
 @Internal
 public final class MongoSynchronousTransactionManager extends AbstractSynchronousTransactionManager<ClientSession> {
