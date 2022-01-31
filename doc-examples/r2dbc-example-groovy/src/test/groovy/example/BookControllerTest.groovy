@@ -26,7 +26,7 @@ class BookControllerTest extends Specification implements TestPropertyProvider {
 
     def setupSpec() {
         // tag::programmatic-tx[]
-        Mono.from(operations.withTransaction(status ->
+        Mono.fromDirect(operations.withTransaction(status ->
                 Flux.from(authorRepository.save(new Author("Stephen King")))
                         .flatMap((author -> bookRepository.saveAll([
                                 new Book("The Stand", 1000, author),

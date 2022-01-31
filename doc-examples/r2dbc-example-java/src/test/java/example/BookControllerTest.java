@@ -42,7 +42,7 @@ public class BookControllerTest implements TestPropertyProvider {
     @BeforeAll
     static void setupData(R2dbcOperations operations, AuthorRepository authorRepository, BookRepository bookRepository) {
         // tag::programmatic-tx[]
-        Mono.from(operations.withTransaction(status ->
+        Mono.fromDirect(operations.withTransaction(status ->
             Flux.from(authorRepository.save(new Author("Stephen King")))
                     .flatMap((author -> bookRepository.saveAll(Arrays.asList(
                             new Book("The Stand", 1000, author),
