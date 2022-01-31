@@ -27,7 +27,7 @@ jobs:
          sudo rm -rf "/usr/local/share/boost"
          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
          sudo apt-get clean
-         df -h    
+         df -h
       - uses: actions/checkout@v2
       - uses: actions/cache@v2.1.7
         with:
@@ -38,7 +38,7 @@ jobs:
       - name: Setup GraalVM CE
         uses: graalvm/setup-graalvm@v1
         with:
-          version: '21.3.0'
+          version: '22.0.0.2'
           java-version: ${{ matrix.java }}
           components: 'native-image'
       - name: Build with Gradle
