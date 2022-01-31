@@ -211,7 +211,7 @@ public class DefaultReactiveMongoRepositoryOperations extends AbstractMongoRepos
 
     @Override
     public <T> Mono<T> findOptional(Class<T> type, Serializable id) {
-        throw new UnsupportedOperationException("The findOptional method by ID is not supported. Execute the SQL query directly");
+        return findOne(type, id);
     }
 
     @Override

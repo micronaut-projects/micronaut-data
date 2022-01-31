@@ -17,6 +17,7 @@ package io.micronaut.data.mongodb.database;
 
 import com.mongodb.reactivestreams.client.MongoDatabase;
 import io.micronaut.core.annotation.Experimental;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.model.PersistentEntity;
 
 /**
@@ -34,7 +35,8 @@ public interface ReactiveMongoDatabaseFactory {
      * @param persistentEntity The persistent entity
      * @return The Mongo database
      */
-    MongoDatabase getDatabase(PersistentEntity persistentEntity);
+    @NonNull
+    MongoDatabase getDatabase(@NonNull PersistentEntity persistentEntity);
 
     /**
      * The Mongo database factory.
@@ -42,6 +44,7 @@ public interface ReactiveMongoDatabaseFactory {
      * @param entityClass The entity class
      * @return The Mongo database
      */
-    MongoDatabase getDatabase(Class<?> entityClass);
+    @NonNull
+    MongoDatabase getDatabase(@NonNull Class<?> entityClass);
 
 }
