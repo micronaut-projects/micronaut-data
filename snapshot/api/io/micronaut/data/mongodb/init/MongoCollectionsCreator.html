@@ -41,8 +41,8 @@
 </div>
 <div class="subNav">
 <ul class="navList">
-<li>Prev&nbsp;Class</li>
-<li>Next&nbsp;Class</li>
+<li><a href="../../../../../io/micronaut/data/mongodb/init/AbstractMongoCollectionsCreator.html" title="class in io.micronaut.data.mongodb.init"><span class="typeNameLink">Prev&nbsp;Class</span></a></li>
+<li><a href="../../../../../io/micronaut/data/mongodb/init/MongoReactiveCollectionsCreator.html" title="class in io.micronaut.data.mongodb.init"><span class="typeNameLink">Next&nbsp;Class</span></a></li>
 </ul>
 <ul class="navList">
 <li><a href="../../../../../index.html?io/micronaut/data/mongodb/init/MongoCollectionsCreator.html" target="_top">Frames</a></li>
@@ -69,7 +69,7 @@
 <li>Nested&nbsp;|&nbsp;</li>
 <li>Field&nbsp;|&nbsp;</li>
 <li><a href="#constructor.summary">Constr</a>&nbsp;|&nbsp;</li>
-<li><a href="#methods.inherited.from.class.java.lang.Object">Method</a></li>
+<li><a href="#methods.inherited.from.class.io.micronaut.data.mongodb.init.AbstractMongoCollectionsCreator">Method</a></li>
 </ul>
 <ul class="subNavList">
 <li>Detail:&nbsp;</li>
@@ -92,7 +92,12 @@
 <li>java.lang.Object</li>
 <li>
 <ul class="inheritance">
+<li><a href="../../../../../io/micronaut/data/mongodb/init/AbstractMongoCollectionsCreator.html" title="class in io.micronaut.data.mongodb.init">io.micronaut.data.mongodb.init.AbstractMongoCollectionsCreator</a>&lt;com.mongodb.client.MongoDatabase&gt;</li>
+<li>
+<ul class="inheritance">
 <li>io.micronaut.data.mongodb.init.MongoCollectionsCreator</li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -103,11 +108,12 @@
 <br>
 <pre>@Context
  @Internal
- @Requires(property="micronaut.data.mongo.create-collections",
+ <a href="../../../../../io/micronaut/data/mongodb/conf/RequiresSyncMongo.html" title="annotation in io.micronaut.data.mongodb.conf">@RequiresSyncMongo</a>
+ @Requires(property="micronaut.data.mongodb.create-collections",
           value="true")
 public final class <span class="typeNameLabel">MongoCollectionsCreator</span>
-extends java.lang.Object</pre>
-<div class="block">Mongo collections creator.</div>
+extends <a href="../../../../../io/micronaut/data/mongodb/init/AbstractMongoCollectionsCreator.html" title="class in io.micronaut.data.mongodb.init">AbstractMongoCollectionsCreator</a>&lt;com.mongodb.client.MongoDatabase&gt;</pre>
+<div class="block">MongoDB's collections creator.</div>
 <dl>
 <dt><span class="simpleTagLabel">Since:</span></dt>
 <dd>3.3</dd>
@@ -143,6 +149,13 @@ extends java.lang.Object</pre>
 <!--   -->
 </a>
 <h3>Method Summary</h3>
+<ul class="blockList">
+<li class="blockList"><a name="methods.inherited.from.class.io.micronaut.data.mongodb.init.AbstractMongoCollectionsCreator">
+<!--   -->
+</a>
+<h3>Methods inherited from class&nbsp;io.micronaut.data.mongodb.init.<a href="../../../../../io/micronaut/data/mongodb/init/AbstractMongoCollectionsCreator.html" title="class in io.micronaut.data.mongodb.init">AbstractMongoCollectionsCreator</a></h3>
+<code><a href="../../../../../io/micronaut/data/mongodb/init/AbstractMongoCollectionsCreator.html#getMongoFactory-java.lang.Class-io.micronaut.context.BeanLocator-io.micronaut.configuration.mongo.core.AbstractMongoConfiguration-">getMongoFactory</a>, <a href="../../../../../io/micronaut/data/mongodb/init/AbstractMongoCollectionsCreator.html#initialize-io.micronaut.data.model.runtime.RuntimeEntityRegistry-java.util.List-io.micronaut.data.mongodb.init.AbstractMongoCollectionsCreator.DatabaseOperationsProvider-">initialize</a></code></li>
+</ul>
 <ul class="blockList">
 <li class="blockList"><a name="methods.inherited.from.class.java.lang.Object">
 <!--   -->
@@ -200,8 +213,8 @@ extends java.lang.Object</pre>
 </div>
 <div class="subNav">
 <ul class="navList">
-<li>Prev&nbsp;Class</li>
-<li>Next&nbsp;Class</li>
+<li><a href="../../../../../io/micronaut/data/mongodb/init/AbstractMongoCollectionsCreator.html" title="class in io.micronaut.data.mongodb.init"><span class="typeNameLink">Prev&nbsp;Class</span></a></li>
+<li><a href="../../../../../io/micronaut/data/mongodb/init/MongoReactiveCollectionsCreator.html" title="class in io.micronaut.data.mongodb.init"><span class="typeNameLink">Next&nbsp;Class</span></a></li>
 </ul>
 <ul class="navList">
 <li><a href="../../../../../index.html?io/micronaut/data/mongodb/init/MongoCollectionsCreator.html" target="_top">Frames</a></li>
@@ -228,7 +241,7 @@ extends java.lang.Object</pre>
 <li>Nested&nbsp;|&nbsp;</li>
 <li>Field&nbsp;|&nbsp;</li>
 <li><a href="#constructor.summary">Constr</a>&nbsp;|&nbsp;</li>
-<li><a href="#methods.inherited.from.class.java.lang.Object">Method</a></li>
+<li><a href="#methods.inherited.from.class.io.micronaut.data.mongodb.init.AbstractMongoCollectionsCreator">Method</a></li>
 </ul>
 <ul class="subNavList">
 <li>Detail:&nbsp;</li>

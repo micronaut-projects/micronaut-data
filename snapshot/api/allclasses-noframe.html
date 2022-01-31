@@ -16,6 +16,7 @@
 <li><a href="io/micronaut/data/runtime/support/AbstractConversionContext.html" title="class in io.micronaut.data.runtime.support">AbstractConversionContext</a></li>
 <li><a href="io/micronaut/data/model/jpa/criteria/impl/AbstractCriteriaBuilder.html" title="class in io.micronaut.data.model.jpa.criteria.impl">AbstractCriteriaBuilder</a></li>
 <li><a href="io/micronaut/data/processor/visitors/finders/AbstractCriteriaMethodMatch.html" title="class in io.micronaut.data.processor.visitors.finders">AbstractCriteriaMethodMatch</a></li>
+<li><a href="io/micronaut/data/mongodb/init/AbstractMongoCollectionsCreator.html" title="class in io.micronaut.data.mongodb.init">AbstractMongoCollectionsCreator</a></li>
 <li><a href="io/micronaut/data/model/jpa/criteria/impl/selection/AbstractNumericalPersistentPropertyExpression.html" title="class in io.micronaut.data.model.jpa.criteria.impl.selection">AbstractNumericalPersistentPropertyExpression</a></li>
 <li><a href="io/micronaut/data/processor/visitors/finders/AbstractPatternMethodMatcher.html" title="class in io.micronaut.data.processor.visitors.finders">AbstractPatternMethodMatcher</a></li>
 <li><a href="io/micronaut/data/model/AbstractPersistentEntity.html" title="class in io.micronaut.data.model">AbstractPersistentEntity</a></li>
@@ -170,6 +171,8 @@
 <li><a href="io/micronaut/data/runtime/query/internal/DefaultPreparedQuery.html" title="class in io.micronaut.data.runtime.query.internal">DefaultPreparedQuery</a></li>
 <li><a href="io/micronaut/data/runtime/query/DefaultPreparedQueryResolver.html" title="class in io.micronaut.data.runtime.query">DefaultPreparedQueryResolver</a></li>
 <li><a href="io/micronaut/data/model/query/DefaultQuery.html" title="class in io.micronaut.data.model.query">DefaultQuery</a></li>
+<li><a href="io/micronaut/data/mongodb/operations/DefaultReactiveMongoRepositoryOperations.html" title="class in io.micronaut.data.mongodb.operations">DefaultReactiveMongoRepositoryOperations</a></li>
+<li><a href="io/micronaut/data/mongodb/operations/DefaultReactiveMongoRepositoryOperations.MongoOperationContext.html" title="class in io.micronaut.data.mongodb.operations">DefaultReactiveMongoRepositoryOperations.MongoOperationContext</a></li>
 <li><a href="io/micronaut/data/runtime/intercept/async/DefaultSaveAllAsyncInterceptor.html" title="class in io.micronaut.data.runtime.intercept.async">DefaultSaveAllAsyncInterceptor</a></li>
 <li><a href="io/micronaut/data/runtime/intercept/DefaultSaveAllInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultSaveAllInterceptor</a></li>
 <li><a href="io/micronaut/data/runtime/intercept/reactive/DefaultSaveAllReactiveInterceptor.html" title="class in io.micronaut.data.runtime.intercept.reactive">DefaultSaveAllReactiveInterceptor</a></li>
@@ -369,8 +372,14 @@
 <li><a href="io/micronaut/transaction/hibernate5/MicronautSessionContext.html" title="class in io.micronaut.transaction.hibernate5">MicronautSessionContext</a></li>
 <li><a href="io/micronaut/data/mongodb/init/MongoCollectionsCreator.html" title="class in io.micronaut.data.mongodb.init">MongoCollectionsCreator</a></li>
 <li><a href="io/micronaut/data/mongodb/database/MongoDatabaseFactory.html" title="interface in io.micronaut.data.mongodb.database"><span class="interfaceName">MongoDatabaseFactory</span></a></li>
+<li><a href="io/micronaut/data/mongodb/conf/MongoDataConfiguration.html" title="class in io.micronaut.data.mongodb.conf">MongoDataConfiguration</a></li>
+<li><a href="io/micronaut/data/mongodb/conf/MongoDataConfiguration.DriverType.html" title="enum in io.micronaut.data.mongodb.conf">MongoDataConfiguration.DriverType</a></li>
+<li><a href="io/micronaut/data/mongodb/conf/MongoDataConfiguration.NotReactiveDriverSelectedCondition.html" title="class in io.micronaut.data.mongodb.conf">MongoDataConfiguration.NotReactiveDriverSelectedCondition</a></li>
+<li><a href="io/micronaut/data/mongodb/conf/MongoDataConfiguration.NotSyncDriverSelectedCondition.html" title="class in io.micronaut.data.mongodb.conf">MongoDataConfiguration.NotSyncDriverSelectedCondition</a></li>
 <li><a href="io/micronaut/data/document/model/query/builder/MongoQueryBuilder.html" title="class in io.micronaut.data.document.model.query.builder">MongoQueryBuilder</a></li>
+<li><a href="io/micronaut/data/mongodb/init/MongoReactiveCollectionsCreator.html" title="class in io.micronaut.data.mongodb.init">MongoReactiveCollectionsCreator</a></li>
 <li><a href="io/micronaut/data/mongodb/operations/MongoReactiveRepositoryOperations.html" title="interface in io.micronaut.data.mongodb.operations"><span class="interfaceName">MongoReactiveRepositoryOperations</span></a></li>
+<li><a href="io/micronaut/data/mongodb/operations/MongoReactorRepositoryOperations.html" title="interface in io.micronaut.data.mongodb.operations"><span class="interfaceName">MongoReactorRepositoryOperations</span></a></li>
 <li><a href="io/micronaut/data/mongodb/annotation/MongoRepository.html" title="annotation in io.micronaut.data.mongodb.annotation">MongoRepository</a></li>
 <li><a href="io/micronaut/data/mongodb/operations/MongoRepositoryOperations.html" title="interface in io.micronaut.data.mongodb.operations"><span class="interfaceName">MongoRepositoryOperations</span></a></li>
 <li><a href="io/micronaut/data/mongodb/transaction/MongoSynchronousTransactionManager.html" title="class in io.micronaut.data.mongodb.transaction">MongoSynchronousTransactionManager</a></li>
@@ -573,6 +582,7 @@
 <li><a href="io/micronaut/data/runtime/operations/internal/ReactiveCascadeOperations.ReactiveCascadeOperationsHelper.html" title="interface in io.micronaut.data.runtime.operations.internal"><span class="interfaceName">ReactiveCascadeOperations.ReactiveCascadeOperationsHelper</span></a></li>
 <li><a href="io/micronaut/data/runtime/operations/internal/ReactiveEntitiesOperations.html" title="class in io.micronaut.data.runtime.operations.internal">ReactiveEntitiesOperations</a></li>
 <li><a href="io/micronaut/data/runtime/operations/internal/ReactiveEntityOperations.html" title="class in io.micronaut.data.runtime.operations.internal">ReactiveEntityOperations</a></li>
+<li><a href="io/micronaut/data/mongodb/database/ReactiveMongoDatabaseFactory.html" title="interface in io.micronaut.data.mongodb.database"><span class="interfaceName">ReactiveMongoDatabaseFactory</span></a></li>
 <li><a href="io/micronaut/data/operations/reactive/ReactiveRepositoryOperations.html" title="interface in io.micronaut.data.operations.reactive"><span class="interfaceName">ReactiveRepositoryOperations</span></a></li>
 <li><a href="io/micronaut/data/repository/reactive/ReactiveStreamsCrudRepository.html" title="interface in io.micronaut.data.repository.reactive"><span class="interfaceName">ReactiveStreamsCrudRepository</span></a></li>
 <li><a href="io/micronaut/data/repository/jpa/reactive/ReactiveStreamsJpaSpecificationExecutor.html" title="interface in io.micronaut.data.repository.jpa.reactive"><span class="interfaceName">ReactiveStreamsJpaSpecificationExecutor</span></a></li>
@@ -595,6 +605,8 @@
 <li><a href="io/micronaut/data/intercept/RepositoryMethodKey.html" title="class in io.micronaut.data.intercept">RepositoryMethodKey</a></li>
 <li><a href="io/micronaut/data/operations/RepositoryOperations.html" title="interface in io.micronaut.data.operations"><span class="interfaceName">RepositoryOperations</span></a></li>
 <li><a href="io/micronaut/data/processor/visitors/RepositoryTypeElementVisitor.html" title="class in io.micronaut.data.processor.visitors">RepositoryTypeElementVisitor</a></li>
+<li><a href="io/micronaut/data/mongodb/conf/RequiresReactiveMongo.html" title="annotation in io.micronaut.data.mongodb.conf">RequiresReactiveMongo</a></li>
+<li><a href="io/micronaut/data/mongodb/conf/RequiresSyncMongo.html" title="annotation in io.micronaut.data.mongodb.conf">RequiresSyncMongo</a></li>
 <li><a href="io/micronaut/transaction/support/ResourceHolder.html" title="interface in io.micronaut.transaction.support"><span class="interfaceName">ResourceHolder</span></a></li>
 <li><a href="io/micronaut/transaction/support/ResourceHolderSupport.html" title="class in io.micronaut.transaction.support">ResourceHolderSupport</a></li>
 <li><a href="io/micronaut/transaction/support/ResourceTransactionManager.html" title="interface in io.micronaut.transaction.support"><span class="interfaceName">ResourceTransactionManager</span></a></li>
@@ -668,6 +680,7 @@
 <li><a href="io/micronaut/transaction/hibernate5/SessionSynchronization.html" title="class in io.micronaut.transaction.hibernate5">SessionSynchronization</a></li>
 <li><a href="io/micronaut/transaction/jdbc/SimpleConnectionHandle.html" title="class in io.micronaut.transaction.jdbc">SimpleConnectionHandle</a></li>
 <li><a href="io/micronaut/data/mongodb/database/SimpleMongoDatabaseFactory.html" title="class in io.micronaut.data.mongodb.database">SimpleMongoDatabaseFactory</a></li>
+<li><a href="io/micronaut/data/mongodb/database/SimpleReactiveMongoDatabaseFactory.html" title="class in io.micronaut.data.mongodb.database">SimpleReactiveMongoDatabaseFactory</a></li>
 <li><a href="io/micronaut/data/model/Slice.html" title="interface in io.micronaut.data.model"><span class="interfaceName">Slice</span></a></li>
 <li><a href="io/micronaut/transaction/support/SmartTransactionObject.html" title="interface in io.micronaut.transaction.support"><span class="interfaceName">SmartTransactionObject</span></a></li>
 <li><a href="io/micronaut/data/model/Sort.html" title="interface in io.micronaut.data.model"><span class="interfaceName">Sort</span></a></li>

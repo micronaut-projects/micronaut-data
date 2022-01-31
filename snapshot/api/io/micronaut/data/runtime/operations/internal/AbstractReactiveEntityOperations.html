@@ -260,8 +260,8 @@ extends <a href="../../../../../../io/micronaut/data/runtime/operations/internal
 </tr>
 <tr id="i2" class="altColor">
 <td class="colFirst"><code>protected void</code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractReactiveEntityOperations.html#checkOptimisticLocking-int-int-">checkOptimisticLocking</a></span>(int&nbsp;expected,
-                      int&nbsp;received)</code>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractReactiveEntityOperations.html#checkOptimisticLocking-long-long-">checkOptimisticLocking</a></span>(long&nbsp;expected,
+                      long&nbsp;received)</code>
 <div class="block">Compare the expected modifications and the received rows count.</div>
 </td>
 </tr>
@@ -293,7 +293,7 @@ extends <a href="../../../../../../io/micronaut/data/runtime/operations/internal
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractReactiveEntityOperations.html#getEntity--">getEntity</a></span>()</code>&nbsp;</td>
 </tr>
 <tr id="i8" class="altColor">
-<td class="colFirst"><code>reactor.core.publisher.Mono&lt;java.lang.Integer&gt;</code></td>
+<td class="colFirst"><code>reactor.core.publisher.Mono&lt;java.lang.Long&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractReactiveEntityOperations.html#getRowsUpdated--">getRowsUpdated</a></span>()</code>&nbsp;</td>
 </tr>
 <tr id="i9" class="rowColor">
@@ -601,21 +601,21 @@ extends <a href="../../../../../../io/micronaut/data/runtime/operations/internal
 <ul class="blockList">
 <li class="blockList">
 <h4>getRowsUpdated</h4>
-<pre>public&nbsp;reactor.core.publisher.Mono&lt;java.lang.Integer&gt;&nbsp;getRowsUpdated()</pre>
+<pre>public&nbsp;reactor.core.publisher.Mono&lt;java.lang.Long&gt;&nbsp;getRowsUpdated()</pre>
 <dl>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>The rows updated</dd>
 </dl>
 </li>
 </ul>
-<a name="checkOptimisticLocking-int-int-">
+<a name="checkOptimisticLocking-long-long-">
 <!--   -->
 </a>
 <ul class="blockList">
 <li class="blockList">
 <h4>checkOptimisticLocking</h4>
-<pre>protected&nbsp;void&nbsp;checkOptimisticLocking(int&nbsp;expected,
-                                      int&nbsp;received)</pre>
+<pre>protected&nbsp;void&nbsp;checkOptimisticLocking(long&nbsp;expected,
+                                      long&nbsp;received)</pre>
 <div class="block">Compare the expected modifications and the received rows count. If not equals throw <a href="../../../../../../io/micronaut/data/exceptions/OptimisticLockException.html" title="class in io.micronaut.data.exceptions"><code>OptimisticLockException</code></a>.</div>
 <dl>
 <dt><span class="paramLabel">Parameters:</span></dt>

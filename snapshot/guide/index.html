@@ -8247,7 +8247,7 @@ open class AuthorService(
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlight"><code class="language-java" data-lang="java">Mono.from(operations.withTransaction(status -&gt;
+<pre class="highlight"><code class="language-java" data-lang="java">Mono.fromDirect(operations.withTransaction(status -&gt;
     Flux.from(authorRepository.save(new Author("Stephen King")))
             .flatMap((author -&gt; bookRepository.saveAll(Arrays.asList(
                     new Book("The Stand", 1000, author),
@@ -8262,7 +8262,7 @@ open class AuthorService(
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlight"><code class="language-groovy" data-lang="groovy">Mono.from(operations.withTransaction(status -&gt;
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">Mono.fromDirect(operations.withTransaction(status -&gt;
         Flux.from(authorRepository.save(new Author("Stephen King")))
                 .flatMap((author -&gt; bookRepository.saveAll([
                         new Book("The Stand", 1000, author),
@@ -8277,7 +8277,7 @@ open class AuthorService(
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">Mono.from(operations.withTransaction {
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">Mono.fromDirect(operations.withTransaction {
     Flux.from(authorRepository.save(Author("Stephen King")))
             .flatMap { author: Author -&gt;
                 bookRepository.saveAll(listOf(
@@ -8452,9 +8452,6 @@ override fun &lt;S : Book&gt; saveAll(entities: Iterable&lt;S&gt;): Flow&lt;S&gt
 </ul>
 </div>
 <div class="paragraph">
-<p>In the first version of Micronaut Data MongoDB only synchronous MongoDB driver is supported.</p>
-</div>
-<div class="paragraph">
 <p>The interaction between the object layer and MongoDB&#8217;s driver serialization/deserialization is implemented using <a href="https://micronaut-projects.github.io/micronaut-serialization/1.0.x/guide">Micronaut Serialization</a> and BSON support.</p>
 </div>
 
@@ -8546,7 +8543,40 @@ For Kotlin the dependency should be in the <code>kapt</code> scope and for Groov
 </p>
 </div>
 <div class="paragraph">
-<p>Next up you need to configure at least one data source. The following snippet from <code>application.yml</code> is an example of configuring the default Mongo data source:</p>
+<p>Or reactive MongoDB driver:</p>
+</div>
+<div class="paragraph">
+<p>        <div class="listingblock multi-language-sample">
+<div class="title"></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">runtime(<span class="hljs-string">"org.mongodb:mongodb-driver-reactivestreams")</span></code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="maven">&lt;dependency&gt;
+    &lt;groupId&gt;org.mongodb&lt;/groupId&gt;
+    &lt;artifactId&gt;mongodb-driver-reactivestreams&lt;/artifactId&gt;
+    &lt;scope&gt;runtime&lt;/scope&gt;
+&lt;/dependency&gt;</code></pre>
+</div>
+</div>
+.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+It&#8217;s not possible to use both drivers at the same time. If you have both drivers on the classpath you can use property <code>micronaut.data.mongodb.driver-type</code> and value: <code>sync</code> or <code>reactive</code> to select proper driver.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Next up you need to configure at least one data source. The following snippet from <code>application.yml</code> is an example of configuring the default MongoDB data source:</p>
 </div>
 <div class="listingblock">
 <div class="title">Example YAML configuration</div>
@@ -8807,6 +8837,18 @@ fun update(@Id id: ObjectId, title: String)</code></pre>
 </div>
 <div class="paragraph">
 <p>Congratulations you have implemented your first Micronaut Data MongoDB repository! Read on to find out more.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+Micronaut Data MongoDB supports creating collections by setting property <code>micronaut.data.mongodb.create-collections</code> to <code>true</code>. MongoDB will create them automatically except for a few cases like transactional context, where collection needs to be already present.
+</td>
+</tr>
+</table>
 </div>
 </div>
 
@@ -9085,7 +9127,7 @@ data class Country(
 <i class="fa icon-note" title="Note"></i>
 </td>
 <td class="content">
-Micronaut Data Mongo doesn&#8217;t support JPA annotations
+Micronaut Data MongoDB doesn&#8217;t support JPA annotations
 </td>
 </tr>
 </table>

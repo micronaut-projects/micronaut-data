@@ -209,8 +209,8 @@ extends <a href="../../../../../../io/micronaut/data/runtime/operations/internal
 </tr>
 <tr id="i2" class="altColor">
 <td class="colFirst"><code>protected void</code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/operations/internal/SyncEntityOperations.html#checkOptimisticLocking-int-int-">checkOptimisticLocking</a></span>(int&nbsp;expected,
-                      int&nbsp;received)</code>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/operations/internal/SyncEntityOperations.html#checkOptimisticLocking-long-long-">checkOptimisticLocking</a></span>(long&nbsp;expected,
+                      long&nbsp;received)</code>
 <div class="block">Compare the expected modifications and the received rows count.</div>
 </td>
 </tr>
@@ -400,14 +400,14 @@ extends <a href="../../../../../../io/micronaut/data/runtime/operations/internal
 <pre>public abstract&nbsp;<a href="../../../../../../io/micronaut/data/runtime/operations/internal/SyncEntityOperations.html" title="type parameter in SyncEntityOperations">T</a>&nbsp;getEntity()</pre>
 </li>
 </ul>
-<a name="checkOptimisticLocking-int-int-">
+<a name="checkOptimisticLocking-long-long-">
 <!--   -->
 </a>
 <ul class="blockList">
 <li class="blockList">
 <h4>checkOptimisticLocking</h4>
-<pre>protected&nbsp;void&nbsp;checkOptimisticLocking(int&nbsp;expected,
-                                      int&nbsp;received)</pre>
+<pre>protected&nbsp;void&nbsp;checkOptimisticLocking(long&nbsp;expected,
+                                      long&nbsp;received)</pre>
 <div class="block">Compare the expected modifications and the received rows count. If not equals throw <a href="../../../../../../io/micronaut/data/exceptions/OptimisticLockException.html" title="class in io.micronaut.data.exceptions"><code>OptimisticLockException</code></a>.</div>
 <dl>
 <dt><span class="paramLabel">Parameters:</span></dt>

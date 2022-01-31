@@ -17,7 +17,7 @@
     catch(err) {
     }
 //-->
-var methods = {"i0":10,"i1":10,"i2":10,"i3":10,"i4":10,"i5":10,"i6":10,"i7":10,"i8":10,"i9":10,"i10":10,"i11":10,"i12":10,"i13":10,"i14":10,"i15":10,"i16":10,"i17":10,"i18":10,"i19":10,"i20":10,"i21":10,"i22":10,"i23":10,"i24":10,"i25":10};
+var methods = {"i0":10,"i1":10,"i2":10,"i3":10,"i4":10,"i5":10,"i6":10,"i7":10,"i8":10,"i9":10,"i10":10,"i11":10,"i12":10,"i13":10,"i14":10,"i15":10,"i16":10,"i17":10,"i18":10,"i19":10,"i20":10,"i21":10,"i22":10,"i23":10,"i24":10,"i25":10,"i26":10,"i27":10,"i28":10,"i29":10,"i30":10,"i31":10,"i32":10};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],8:["t4","Concrete Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -73,13 +73,13 @@ var activeTableTab = "activeTableTab";
 <ul class="subNavList">
 <li>Summary:&nbsp;</li>
 <li><a href="#nested.class.summary">Nested</a>&nbsp;|&nbsp;</li>
-<li><a href="#fields.inherited.from.class.io.micronaut.data.runtime.operations.internal.AbstractRepositoryOperations">Field</a>&nbsp;|&nbsp;</li>
+<li><a href="#field.summary">Field</a>&nbsp;|&nbsp;</li>
 <li><a href="#constructor.summary">Constr</a>&nbsp;|&nbsp;</li>
 <li><a href="#method.summary">Method</a></li>
 </ul>
 <ul class="subNavList">
 <li>Detail:&nbsp;</li>
-<li>Field&nbsp;|&nbsp;</li>
+<li><a href="#field.detail">Field</a>&nbsp;|&nbsp;</li>
 <li><a href="#constructor.detail">Constr</a>&nbsp;|&nbsp;</li>
 <li><a href="#method.detail">Method</a></li>
 </ul>
@@ -98,7 +98,7 @@ var activeTableTab = "activeTableTab";
 <li>java.lang.Object</li>
 <li>
 <ul class="inheritance">
-<li><a href="../../../../../io/micronaut/data/runtime/operations/internal/AbstractRepositoryOperations.html" title="class in io.micronaut.data.runtime.operations.internal">io.micronaut.data.runtime.operations.internal.AbstractRepositoryOperations</a>&lt;com.mongodb.client.ClientSession,java.lang.Object&gt;</li>
+<li><a href="../../../../../io/micronaut/data/runtime/operations/internal/AbstractRepositoryOperations.html" title="class in io.micronaut.data.runtime.operations.internal">io.micronaut.data.runtime.operations.internal.AbstractRepositoryOperations</a>&lt;Cnt,PS&gt;</li>
 <li>
 <ul class="inheritance">
 <li>io.micronaut.data.mongodb.operations.DefaultMongoRepositoryOperations</li>
@@ -116,10 +116,11 @@ var activeTableTab = "activeTableTab";
 </dl>
 <hr>
 <br>
-<pre>@EachBean(value=com.mongodb.client.MongoClient.class)
+<pre><a href="../../../../../io/micronaut/data/mongodb/conf/RequiresSyncMongo.html" title="annotation in io.micronaut.data.mongodb.conf">@RequiresSyncMongo</a>
+ @EachBean(value=com.mongodb.client.MongoClient.class)
  @Internal
 public final class <span class="typeNameLabel">DefaultMongoRepositoryOperations</span>
-extends <a href="../../../../../io/micronaut/data/runtime/operations/internal/AbstractRepositoryOperations.html" title="class in io.micronaut.data.runtime.operations.internal">AbstractRepositoryOperations</a>&lt;com.mongodb.client.ClientSession,java.lang.Object&gt;
+extends <a href="../../../../../io/micronaut/data/runtime/operations/internal/AbstractRepositoryOperations.html" title="class in io.micronaut.data.runtime.operations.internal">AbstractRepositoryOperations</a>&lt;Cnt,PS&gt;
 implements <a href="../../../../../io/micronaut/data/mongodb/operations/MongoRepositoryOperations.html" title="interface in io.micronaut.data.mongodb.operations">MongoRepositoryOperations</a>, <a href="../../../../../io/micronaut/data/operations/async/AsyncCapableRepository.html" title="interface in io.micronaut.data.operations.async">AsyncCapableRepository</a>, <a href="../../../../../io/micronaut/data/operations/reactive/ReactiveCapableRepository.html" title="interface in io.micronaut.data.operations.reactive">ReactiveCapableRepository</a>, <a href="../../../../../io/micronaut/data/runtime/operations/internal/SyncCascadeOperations.SyncCascadeOperationsHelper.html" title="interface in io.micronaut.data.runtime.operations.internal">SyncCascadeOperations.SyncCascadeOperationsHelper</a>&lt;<a href="../../../../../io/micronaut/data/mongodb/operations/DefaultMongoRepositoryOperations.MongoOperationContext.html" title="class in io.micronaut.data.mongodb.operations">DefaultMongoRepositoryOperations.MongoOperationContext</a>&gt;</pre>
 <div class="block">Default Mongo repository operations.</div>
 <dl>
@@ -148,6 +149,14 @@ implements <a href="../../../../../io/micronaut/data/mongodb/operations/MongoRep
 </tr>
 <tr class="altColor">
 <td class="colFirst"><code>protected static class&nbsp;</code></td>
+<td class="colLast"><code><span class="memberNameLink">io.micronaut.data.mongodb.operations.AbstractMongoRepositoryOperations.FetchOptions</span></code>&nbsp;</td>
+</tr>
+<tr class="rowColor">
+<td class="colFirst"><code>protected static class&nbsp;</code></td>
+<td class="colLast"><code><span class="memberNameLink">io.micronaut.data.mongodb.operations.AbstractMongoRepositoryOperations.UpdateOptions</span></code>&nbsp;</td>
+</tr>
+<tr class="altColor">
+<td class="colFirst"><code>protected static class&nbsp;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/mongodb/operations/DefaultMongoRepositoryOperations.MongoOperationContext.html" title="class in io.micronaut.data.mongodb.operations">DefaultMongoRepositoryOperations.MongoOperationContext</a></span></code>&nbsp;</td>
 </tr>
 </table>
@@ -159,6 +168,21 @@ implements <a href="../../../../../io/micronaut/data/mongodb/operations/MongoRep
 <!--   -->
 </a>
 <h3>Field Summary</h3>
+<table class="memberSummary" border="0" cellpadding="3" cellspacing="0" summary="Field Summary table, listing fields, and an explanation">
+<caption><span>Fields</span><span class="tabEnd">&nbsp;</span></caption>
+<tr>
+<th class="colFirst" scope="col">Modifier and Type</th>
+<th class="colLast" scope="col">Field and Description</th>
+</tr>
+<tr class="altColor">
+<td class="colFirst"><code>protected static org.bson.BsonDocument</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/mongodb/operations/DefaultMongoRepositoryOperations.html#EMPTY">EMPTY</a></span></code>&nbsp;</td>
+</tr>
+<tr class="rowColor">
+<td class="colFirst"><code>protected static org.slf4j.Logger</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/mongodb/operations/DefaultMongoRepositoryOperations.html#QUERY_LOG">QUERY_LOG</a></span></code>&nbsp;</td>
+</tr>
+</table>
 <ul class="blockList">
 <li class="blockList"><a name="fields.inherited.from.class.io.micronaut.data.runtime.operations.internal.AbstractRepositoryOperations">
 <!--   -->
@@ -210,109 +234,151 @@ implements <a href="../../../../../io/micronaut/data/mongodb/operations/MongoRep
 <th class="colLast" scope="col">Method and Description</th>
 </tr>
 <tr id="i0" class="altColor">
+<td class="colFirst"><code>protected int</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/mongodb/operations/DefaultMongoRepositoryOperations.html#applyPageable-io.micronaut.data.model.Pageable-java.util.List-">applyPageable</a></span>(<a href="../../../../../io/micronaut/data/model/Pageable.html" title="interface in io.micronaut.data.model">Pageable</a>&nbsp;pageable,
+             java.util.List&lt;org.bson.BsonDocument&gt;&nbsp;pipeline)</code>&nbsp;</td>
+</tr>
+<tr id="i1" class="rowColor">
+<td class="colFirst"><code>protected org.bson.BsonDocument</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/mongodb/operations/DefaultMongoRepositoryOperations.html#association-org.bson.codecs.configuration.CodecRegistry-java.lang.Object-io.micronaut.data.model.runtime.RuntimePersistentEntity-java.lang.Object-io.micronaut.data.model.runtime.RuntimePersistentEntity-">association</a></span>(org.bson.codecs.configuration.CodecRegistry&nbsp;codecRegistry,
+           java.lang.Object&nbsp;value,
+           <a href="../../../../../io/micronaut/data/model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;java.lang.Object&gt;&nbsp;persistentEntity,
+           java.lang.Object&nbsp;child,
+           <a href="../../../../../io/micronaut/data/model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;java.lang.Object&gt;&nbsp;childPersistentEntity)</code>&nbsp;</td>
+</tr>
+<tr id="i2" class="altColor">
 <td class="colFirst"><code><a href="../../../../../io/micronaut/data/runtime/operations/ExecutorAsyncOperations.html" title="class in io.micronaut.data.runtime.operations">ExecutorAsyncOperations</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/mongodb/operations/DefaultMongoRepositoryOperations.html#async--">async</a></span>()</code>&nbsp;</td>
 </tr>
-<tr id="i1" class="rowColor">
+<tr id="i3" class="rowColor">
+<td class="colFirst"><code>protected &lt;R&gt;&nbsp;R</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/mongodb/operations/DefaultMongoRepositoryOperations.html#convertResult-org.bson.codecs.configuration.CodecRegistry-java.lang.Class-org.bson.BsonDocument-boolean-">convertResult</a></span>(org.bson.codecs.configuration.CodecRegistry&nbsp;codecRegistry,
+             java.lang.Class&lt;R&gt;&nbsp;resultType,
+             org.bson.BsonDocument&nbsp;result,
+             boolean&nbsp;isDtoProjection)</code>&nbsp;</td>
+</tr>
+<tr id="i4" class="altColor">
 <td class="colFirst"><code>&lt;T&gt;&nbsp;long</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/mongodb/operations/DefaultMongoRepositoryOperations.html#count-io.micronaut.data.model.runtime.PagedQuery-">count</a></span>(<a href="../../../../../io/micronaut/data/model/runtime/PagedQuery.html" title="interface in io.micronaut.data.model.runtime">PagedQuery</a>&lt;T&gt;&nbsp;pagedQuery)</code>
 <div class="block">Counts all results for the given query.</div>
 </td>
 </tr>
-<tr id="i2" class="altColor">
+<tr id="i5" class="rowColor">
 <td class="colFirst"><code>protected io.micronaut.core.convert.ConversionContext</code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/mongodb/operations/DefaultMongoRepositoryOperations.html#createTypeConversionContext-com.mongodb.client.ClientSession-io.micronaut.data.model.runtime.RuntimePersistentProperty-io.micronaut.core.type.Argument-">createTypeConversionContext</a></span>(com.mongodb.client.ClientSession&nbsp;connection,
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/mongodb/operations/DefaultMongoRepositoryOperations.html#createTypeConversionContext-Cnt-io.micronaut.data.model.runtime.RuntimePersistentProperty-io.micronaut.core.type.Argument-">createTypeConversionContext</a></span>(Cnt&nbsp;connection,
                            <a href="../../../../../io/micronaut/data/model/runtime/RuntimePersistentProperty.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentProperty</a>&lt;?&gt;&nbsp;property,
                            io.micronaut.core.type.Argument&lt;?&gt;&nbsp;argument)</code>
 <div class="block">Creates implementation specific conversion context.</div>
 </td>
 </tr>
-<tr id="i3" class="rowColor">
+<tr id="i6" class="altColor">
 <td class="colFirst"><code>&lt;T&gt;&nbsp;int</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/mongodb/operations/DefaultMongoRepositoryOperations.html#delete-io.micronaut.data.model.runtime.DeleteOperation-">delete</a></span>(<a href="../../../../../io/micronaut/data/model/runtime/DeleteOperation.html" title="interface in io.micronaut.data.model.runtime">DeleteOperation</a>&lt;T&gt;&nbsp;operation)</code>
 <div class="block">Deletes the entity.</div>
 </td>
 </tr>
-<tr id="i4" class="altColor">
+<tr id="i7" class="rowColor">
 <td class="colFirst"><code>&lt;T&gt;&nbsp;java.util.Optional&lt;java.lang.Number&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/mongodb/operations/DefaultMongoRepositoryOperations.html#deleteAll-io.micronaut.data.model.runtime.DeleteBatchOperation-">deleteAll</a></span>(<a href="../../../../../io/micronaut/data/model/runtime/DeleteBatchOperation.html" title="interface in io.micronaut.data.model.runtime">DeleteBatchOperation</a>&lt;T&gt;&nbsp;operation)</code>
 <div class="block">Deletes all the entities of the given type.</div>
 </td>
 </tr>
-<tr id="i5" class="rowColor">
+<tr id="i8" class="altColor">
 <td class="colFirst"><code>java.util.Optional&lt;java.lang.Number&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/mongodb/operations/DefaultMongoRepositoryOperations.html#executeDelete-io.micronaut.data.model.runtime.PreparedQuery-">executeDelete</a></span>(<a href="../../../../../io/micronaut/data/model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;?,java.lang.Number&gt;&nbsp;preparedQuery)</code>
 <div class="block">Executes a delete for the given query and parameter values.</div>
 </td>
 </tr>
-<tr id="i6" class="altColor">
+<tr id="i9" class="rowColor">
 <td class="colFirst"><code>java.util.Optional&lt;java.lang.Number&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/mongodb/operations/DefaultMongoRepositoryOperations.html#executeUpdate-io.micronaut.data.model.runtime.PreparedQuery-">executeUpdate</a></span>(<a href="../../../../../io/micronaut/data/model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;?,java.lang.Number&gt;&nbsp;preparedQuery)</code>
 <div class="block">Executes an update for the given query and parameter values.</div>
 </td>
 </tr>
-<tr id="i7" class="rowColor">
+<tr id="i10" class="altColor">
 <td class="colFirst"><code>&lt;T&gt;&nbsp;boolean</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/mongodb/operations/DefaultMongoRepositoryOperations.html#exists-io.micronaut.data.model.runtime.PreparedQuery-">exists</a></span>(<a href="../../../../../io/micronaut/data/model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;T,java.lang.Boolean&gt;&nbsp;preparedQuery)</code>
 <div class="block">Execute a query that checks for existence.</div>
 </td>
 </tr>
-<tr id="i8" class="altColor">
+<tr id="i11" class="rowColor">
 <td class="colFirst"><code>&lt;T&gt;&nbsp;java.lang.Iterable&lt;T&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/mongodb/operations/DefaultMongoRepositoryOperations.html#findAll-io.micronaut.data.model.runtime.PagedQuery-">findAll</a></span>(<a href="../../../../../io/micronaut/data/model/runtime/PagedQuery.html" title="interface in io.micronaut.data.model.runtime">PagedQuery</a>&lt;T&gt;&nbsp;query)</code>
 <div class="block">Finds all results for the given query.</div>
 </td>
 </tr>
-<tr id="i9" class="rowColor">
+<tr id="i12" class="altColor">
 <td class="colFirst"><code>&lt;T,R&gt;&nbsp;java.lang.Iterable&lt;R&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/mongodb/operations/DefaultMongoRepositoryOperations.html#findAll-io.micronaut.data.model.runtime.PreparedQuery-">findAll</a></span>(<a href="../../../../../io/micronaut/data/model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;T,R&gt;&nbsp;preparedQuery)</code>
 <div class="block">Finds all results for the given query.</div>
 </td>
 </tr>
-<tr id="i10" class="altColor">
+<tr id="i13" class="rowColor">
 <td class="colFirst"><code>&lt;T&gt;&nbsp;T</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/mongodb/operations/DefaultMongoRepositoryOperations.html#findOne-java.lang.Class-java.io.Serializable-">findOne</a></span>(java.lang.Class&lt;T&gt;&nbsp;type,
        java.io.Serializable&nbsp;id)</code>
 <div class="block">Find one by ID.</div>
 </td>
 </tr>
-<tr id="i11" class="rowColor">
+<tr id="i14" class="altColor">
 <td class="colFirst"><code>&lt;T,R&gt;&nbsp;R</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/mongodb/operations/DefaultMongoRepositoryOperations.html#findOne-io.micronaut.data.model.runtime.PreparedQuery-">findOne</a></span>(<a href="../../../../../io/micronaut/data/model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;T,R&gt;&nbsp;preparedQuery)</code>
 <div class="block">Find one by Query.</div>
 </td>
 </tr>
-<tr id="i12" class="altColor">
+<tr id="i15" class="rowColor">
 <td class="colFirst"><code>&lt;R&gt;&nbsp;<a href="../../../../../io/micronaut/data/model/Page.html" title="interface in io.micronaut.data.model">Page</a>&lt;R&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/mongodb/operations/DefaultMongoRepositoryOperations.html#findPage-io.micronaut.data.model.runtime.PagedQuery-">findPage</a></span>(<a href="../../../../../io/micronaut/data/model/runtime/PagedQuery.html" title="interface in io.micronaut.data.model.runtime">PagedQuery</a>&lt;R&gt;&nbsp;query)</code>
 <div class="block">Find a page for the given entity and pageable.</div>
 </td>
 </tr>
-<tr id="i13" class="rowColor">
+<tr id="i16" class="altColor">
 <td class="colFirst"><code>&lt;T&gt;&nbsp;java.util.stream.Stream&lt;T&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/mongodb/operations/DefaultMongoRepositoryOperations.html#findStream-io.micronaut.data.model.runtime.PagedQuery-">findStream</a></span>(<a href="../../../../../io/micronaut/data/model/runtime/PagedQuery.html" title="interface in io.micronaut.data.model.runtime">PagedQuery</a>&lt;T&gt;&nbsp;query)</code>
 <div class="block">Finds a stream for the given arguments.</div>
 </td>
 </tr>
-<tr id="i14" class="altColor">
+<tr id="i17" class="rowColor">
 <td class="colFirst"><code>&lt;T,R&gt;&nbsp;java.util.stream.Stream&lt;R&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/mongodb/operations/DefaultMongoRepositoryOperations.html#findStream-io.micronaut.data.model.runtime.PreparedQuery-">findStream</a></span>(<a href="../../../../../io/micronaut/data/model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;T,R&gt;&nbsp;preparedQuery)</code>
 <div class="block">Finds all results for the given query.</div>
 </td>
 </tr>
-<tr id="i15" class="rowColor">
+<tr id="i18" class="altColor">
+<td class="colFirst"><code>protected io.micronaut.data.mongodb.operations.AbstractMongoRepositoryOperations.FetchOptions</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/mongodb/operations/DefaultMongoRepositoryOperations.html#getFetchOptions-org.bson.codecs.configuration.CodecRegistry-io.micronaut.data.model.runtime.PreparedQuery-io.micronaut.data.model.runtime.RuntimePersistentEntity-">getFetchOptions</a></span>(org.bson.codecs.configuration.CodecRegistry&nbsp;codecRegistry,
+               <a href="../../../../../io/micronaut/data/model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;?,?&gt;&nbsp;preparedQuery,
+               <a href="../../../../../io/micronaut/data/model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;?&gt;&nbsp;persistentEntity)</code>&nbsp;</td>
+</tr>
+<tr id="i19" class="rowColor">
+<td class="colFirst"><code>protected &lt;T&gt;&nbsp;org.bson.conversions.Bson</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/mongodb/operations/DefaultMongoRepositoryOperations.html#getFilter-org.bson.codecs.configuration.CodecRegistry-io.micronaut.data.model.runtime.PreparedQuery-io.micronaut.data.model.runtime.RuntimePersistentEntity-">getFilter</a></span>(org.bson.codecs.configuration.CodecRegistry&nbsp;codecRegistry,
+         <a href="../../../../../io/micronaut/data/model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;?,?&gt;&nbsp;preparedQuery,
+         <a href="../../../../../io/micronaut/data/model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;T&gt;&nbsp;persistentEntity)</code>&nbsp;</td>
+</tr>
+<tr id="i20" class="altColor">
+<td class="colFirst"><code>protected io.micronaut.data.mongodb.operations.AbstractMongoRepositoryOperations.UpdateOptions</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/mongodb/operations/DefaultMongoRepositoryOperations.html#getUpdateOptions-org.bson.codecs.configuration.CodecRegistry-io.micronaut.data.model.runtime.PreparedQuery-io.micronaut.data.model.runtime.RuntimePersistentEntity-">getUpdateOptions</a></span>(org.bson.codecs.configuration.CodecRegistry&nbsp;codecRegistry,
+                <a href="../../../../../io/micronaut/data/model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;?,?&gt;&nbsp;preparedQuery,
+                <a href="../../../../../io/micronaut/data/model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;?&gt;&nbsp;persistentEntity)</code>&nbsp;</td>
+</tr>
+<tr id="i21" class="rowColor">
+<td class="colFirst"><code>protected &lt;T,R&gt;&nbsp;boolean</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/mongodb/operations/DefaultMongoRepositoryOperations.html#isCountQuery-io.micronaut.data.model.runtime.PreparedQuery-">isCountQuery</a></span>(<a href="../../../../../io/micronaut/data/model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;T,R&gt;&nbsp;preparedQuery)</code>&nbsp;</td>
+</tr>
+<tr id="i22" class="altColor">
 <td class="colFirst"><code>&lt;T&gt;&nbsp;T</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/mongodb/operations/DefaultMongoRepositoryOperations.html#persist-io.micronaut.data.model.runtime.InsertOperation-">persist</a></span>(<a href="../../../../../io/micronaut/data/model/runtime/InsertOperation.html" title="interface in io.micronaut.data.model.runtime">InsertOperation</a>&lt;T&gt;&nbsp;operation)</code>
 <div class="block">Persist the operation returning a possibly new entity.</div>
 </td>
 </tr>
-<tr id="i16" class="altColor">
+<tr id="i23" class="rowColor">
 <td class="colFirst"><code>&lt;T&gt;&nbsp;java.lang.Iterable&lt;T&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/mongodb/operations/DefaultMongoRepositoryOperations.html#persistAll-io.micronaut.data.model.runtime.InsertBatchOperation-">persistAll</a></span>(<a href="../../../../../io/micronaut/data/model/runtime/InsertBatchOperation.html" title="interface in io.micronaut.data.model.runtime">InsertBatchOperation</a>&lt;T&gt;&nbsp;operation)</code>
 <div class="block">Persist all the given entities.</div>
 </td>
 </tr>
-<tr id="i17" class="rowColor">
+<tr id="i24" class="altColor">
 <td class="colFirst"><code>&lt;T&gt;&nbsp;java.util.List&lt;T&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/mongodb/operations/DefaultMongoRepositoryOperations.html#persistBatch-io.micronaut.data.mongodb.operations.DefaultMongoRepositoryOperations.MongoOperationContext-java.lang.Iterable-io.micronaut.data.model.runtime.RuntimePersistentEntity-java.util.function.Predicate-">persistBatch</a></span>(<a href="../../../../../io/micronaut/data/mongodb/operations/DefaultMongoRepositoryOperations.MongoOperationContext.html" title="class in io.micronaut.data.mongodb.operations">DefaultMongoRepositoryOperations.MongoOperationContext</a>&nbsp;ctx,
             java.lang.Iterable&lt;T&gt;&nbsp;values,
@@ -321,7 +387,7 @@ implements <a href="../../../../../io/micronaut/data/mongodb/operations/MongoRep
 <div class="block">Persist multiple entities in batch during cascade.</div>
 </td>
 </tr>
-<tr id="i18" class="altColor">
+<tr id="i25" class="rowColor">
 <td class="colFirst"><code>void</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/mongodb/operations/DefaultMongoRepositoryOperations.html#persistManyAssociation-io.micronaut.data.mongodb.operations.DefaultMongoRepositoryOperations.MongoOperationContext-io.micronaut.data.model.runtime.RuntimeAssociation-java.lang.Object-io.micronaut.data.model.runtime.RuntimePersistentEntity-java.lang.Object-io.micronaut.data.model.runtime.RuntimePersistentEntity-">persistManyAssociation</a></span>(<a href="../../../../../io/micronaut/data/mongodb/operations/DefaultMongoRepositoryOperations.MongoOperationContext.html" title="class in io.micronaut.data.mongodb.operations">DefaultMongoRepositoryOperations.MongoOperationContext</a>&nbsp;ctx,
                       <a href="../../../../../io/micronaut/data/model/runtime/RuntimeAssociation.html" title="class in io.micronaut.data.model.runtime">RuntimeAssociation</a>&nbsp;runtimeAssociation,
@@ -332,7 +398,7 @@ implements <a href="../../../../../io/micronaut/data/mongodb/operations/MongoRep
 <div class="block">Persist JOIN table relationship.</div>
 </td>
 </tr>
-<tr id="i19" class="rowColor">
+<tr id="i26" class="altColor">
 <td class="colFirst"><code>void</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/mongodb/operations/DefaultMongoRepositoryOperations.html#persistManyAssociationBatch-io.micronaut.data.mongodb.operations.DefaultMongoRepositoryOperations.MongoOperationContext-io.micronaut.data.model.runtime.RuntimeAssociation-java.lang.Object-io.micronaut.data.model.runtime.RuntimePersistentEntity-java.lang.Iterable-io.micronaut.data.model.runtime.RuntimePersistentEntity-">persistManyAssociationBatch</a></span>(<a href="../../../../../io/micronaut/data/mongodb/operations/DefaultMongoRepositoryOperations.MongoOperationContext.html" title="class in io.micronaut.data.mongodb.operations">DefaultMongoRepositoryOperations.MongoOperationContext</a>&nbsp;ctx,
                            <a href="../../../../../io/micronaut/data/model/runtime/RuntimeAssociation.html" title="class in io.micronaut.data.model.runtime">RuntimeAssociation</a>&nbsp;runtimeAssociation,
@@ -343,7 +409,7 @@ implements <a href="../../../../../io/micronaut/data/mongodb/operations/MongoRep
 <div class="block">Persist JOIN table relationships in batch.</div>
 </td>
 </tr>
-<tr id="i20" class="altColor">
+<tr id="i27" class="rowColor">
 <td class="colFirst"><code>&lt;T&gt;&nbsp;T</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/mongodb/operations/DefaultMongoRepositoryOperations.html#persistOne-io.micronaut.data.mongodb.operations.DefaultMongoRepositoryOperations.MongoOperationContext-T-io.micronaut.data.model.runtime.RuntimePersistentEntity-">persistOne</a></span>(<a href="../../../../../io/micronaut/data/mongodb/operations/DefaultMongoRepositoryOperations.MongoOperationContext.html" title="class in io.micronaut.data.mongodb.operations">DefaultMongoRepositoryOperations.MongoOperationContext</a>&nbsp;ctx,
           T&nbsp;value,
@@ -351,11 +417,11 @@ implements <a href="../../../../../io/micronaut/data/mongodb/operations/MongoRep
 <div class="block">Persist one entity during cascade.</div>
 </td>
 </tr>
-<tr id="i21" class="rowColor">
+<tr id="i28" class="altColor">
 <td class="colFirst"><code><a href="../../../../../io/micronaut/data/operations/reactive/ReactiveRepositoryOperations.html" title="interface in io.micronaut.data.operations.reactive">ReactiveRepositoryOperations</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/mongodb/operations/DefaultMongoRepositoryOperations.html#reactive--">reactive</a></span>()</code>&nbsp;</td>
 </tr>
-<tr id="i22" class="altColor">
+<tr id="i29" class="rowColor">
 <td class="colFirst"><code>void</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/mongodb/operations/DefaultMongoRepositoryOperations.html#setStatementParameter-java.lang.Object-int-io.micronaut.data.model.DataType-java.lang.Object-io.micronaut.data.model.query.builder.sql.Dialect-">setStatementParameter</a></span>(java.lang.Object&nbsp;preparedStatement,
                      int&nbsp;index,
@@ -365,19 +431,19 @@ implements <a href="../../../../../io/micronaut/data/mongodb/operations/MongoRep
 <div class="block">Set the parameter value on the given statement.</div>
 </td>
 </tr>
-<tr id="i23" class="rowColor">
+<tr id="i30" class="altColor">
 <td class="colFirst"><code>&lt;T&gt;&nbsp;T</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/mongodb/operations/DefaultMongoRepositoryOperations.html#update-io.micronaut.data.model.runtime.UpdateOperation-">update</a></span>(<a href="../../../../../io/micronaut/data/model/runtime/UpdateOperation.html" title="interface in io.micronaut.data.model.runtime">UpdateOperation</a>&lt;T&gt;&nbsp;operation)</code>
 <div class="block">Updates the entity for the given operation.</div>
 </td>
 </tr>
-<tr id="i24" class="altColor">
+<tr id="i31" class="rowColor">
 <td class="colFirst"><code>&lt;T&gt;&nbsp;java.lang.Iterable&lt;T&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/mongodb/operations/DefaultMongoRepositoryOperations.html#updateAll-io.micronaut.data.model.runtime.UpdateBatchOperation-">updateAll</a></span>(<a href="../../../../../io/micronaut/data/model/runtime/UpdateBatchOperation.html" title="interface in io.micronaut.data.model.runtime">UpdateBatchOperation</a>&lt;T&gt;&nbsp;operation)</code>
 <div class="block">Updates the entities for the given operation.</div>
 </td>
 </tr>
-<tr id="i25" class="rowColor">
+<tr id="i32" class="altColor">
 <td class="colFirst"><code>&lt;T&gt;&nbsp;T</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/mongodb/operations/DefaultMongoRepositoryOperations.html#updateOne-io.micronaut.data.mongodb.operations.DefaultMongoRepositoryOperations.MongoOperationContext-T-io.micronaut.data.model.runtime.RuntimePersistentEntity-">updateOne</a></span>(<a href="../../../../../io/micronaut/data/mongodb/operations/DefaultMongoRepositoryOperations.MongoOperationContext.html" title="class in io.micronaut.data.mongodb.operations">DefaultMongoRepositoryOperations.MongoOperationContext</a>&nbsp;ctx,
          T&nbsp;value,
@@ -429,6 +495,32 @@ implements <a href="../../../../../io/micronaut/data/mongodb/operations/MongoRep
 <div class="details">
 <ul class="blockList">
 <li class="blockList">
+<!-- ============ FIELD DETAIL =========== -->
+<ul class="blockList">
+<li class="blockList"><a name="field.detail">
+<!--   -->
+</a>
+<h3>Field Detail</h3>
+<a name="QUERY_LOG">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>QUERY_LOG</h4>
+<pre>protected static final&nbsp;org.slf4j.Logger QUERY_LOG</pre>
+</li>
+</ul>
+<a name="EMPTY">
+<!--   -->
+</a>
+<ul class="blockListLast">
+<li class="blockList">
+<h4>EMPTY</h4>
+<pre>protected static final&nbsp;org.bson.BsonDocument EMPTY</pre>
+</li>
+</ul>
+</li>
+</ul>
 <!-- ========= CONSTRUCTOR DETAIL ======== -->
 <ul class="blockList">
 <li class="blockList"><a name="constructor.detail">
@@ -835,29 +927,6 @@ implements <a href="../../../../../io/micronaut/data/mongodb/operations/MongoRep
 </dl>
 </li>
 </ul>
-<a name="createTypeConversionContext-com.mongodb.client.ClientSession-io.micronaut.data.model.runtime.RuntimePersistentProperty-io.micronaut.core.type.Argument-">
-<!--   -->
-</a>
-<ul class="blockList">
-<li class="blockList">
-<h4>createTypeConversionContext</h4>
-<pre>protected&nbsp;io.micronaut.core.convert.ConversionContext&nbsp;createTypeConversionContext(com.mongodb.client.ClientSession&nbsp;connection,
-                                                                                  <a href="../../../../../io/micronaut/data/model/runtime/RuntimePersistentProperty.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentProperty</a>&lt;?&gt;&nbsp;property,
-                                                                                  io.micronaut.core.type.Argument&lt;?&gt;&nbsp;argument)</pre>
-<div class="block"><span class="descfrmTypeLabel">Description copied from class:&nbsp;<code><a href="../../../../../io/micronaut/data/runtime/operations/internal/AbstractRepositoryOperations.html#createTypeConversionContext-Cnt-io.micronaut.data.model.runtime.RuntimePersistentProperty-io.micronaut.core.type.Argument-">AbstractRepositoryOperations</a></code></span></div>
-<div class="block">Creates implementation specific conversion context.</div>
-<dl>
-<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
-<dd><code><a href="../../../../../io/micronaut/data/runtime/operations/internal/AbstractRepositoryOperations.html#createTypeConversionContext-Cnt-io.micronaut.data.model.runtime.RuntimePersistentProperty-io.micronaut.core.type.Argument-">createTypeConversionContext</a></code>&nbsp;in class&nbsp;<code><a href="../../../../../io/micronaut/data/runtime/operations/internal/AbstractRepositoryOperations.html" title="class in io.micronaut.data.runtime.operations.internal">AbstractRepositoryOperations</a>&lt;com.mongodb.client.ClientSession,java.lang.Object&gt;</code></dd>
-<dt><span class="paramLabel">Parameters:</span></dt>
-<dd><code>connection</code> - The connection</dd>
-<dd><code>property</code> - The property</dd>
-<dd><code>argument</code> - The argument</dd>
-<dt><span class="returnLabel">Returns:</span></dt>
-<dd>new <code>ConversionContext</code></dd>
-</dl>
-</li>
-</ul>
 <a name="setStatementParameter-java.lang.Object-int-io.micronaut.data.model.DataType-java.lang.Object-io.micronaut.data.model.query.builder.sql.Dialect-">
 <!--   -->
 </a>
@@ -1037,7 +1106,7 @@ public&nbsp;<a href="../../../../../io/micronaut/data/runtime/operations/Executo
 <a name="reactive--">
 <!--   -->
 </a>
-<ul class="blockListLast">
+<ul class="blockList">
 <li class="blockList">
 <h4>reactive</h4>
 <pre>@NonNull
@@ -1047,6 +1116,108 @@ public&nbsp;<a href="../../../../../io/micronaut/data/operations/reactive/Reacti
 <dd><code><a href="../../../../../io/micronaut/data/operations/reactive/ReactiveCapableRepository.html#reactive--">reactive</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../io/micronaut/data/operations/reactive/ReactiveCapableRepository.html" title="interface in io.micronaut.data.operations.reactive">ReactiveCapableRepository</a></code></dd>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>The reactive operations instance.</dd>
+</dl>
+</li>
+</ul>
+<a name="getFetchOptions-org.bson.codecs.configuration.CodecRegistry-io.micronaut.data.model.runtime.PreparedQuery-io.micronaut.data.model.runtime.RuntimePersistentEntity-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>getFetchOptions</h4>
+<pre>protected&nbsp;io.micronaut.data.mongodb.operations.AbstractMongoRepositoryOperations.FetchOptions&nbsp;getFetchOptions(org.bson.codecs.configuration.CodecRegistry&nbsp;codecRegistry,
+                                                                                                              <a href="../../../../../io/micronaut/data/model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;?,?&gt;&nbsp;preparedQuery,
+                                                                                                              <a href="../../../../../io/micronaut/data/model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;?&gt;&nbsp;persistentEntity)</pre>
+</li>
+</ul>
+<a name="getUpdateOptions-org.bson.codecs.configuration.CodecRegistry-io.micronaut.data.model.runtime.PreparedQuery-io.micronaut.data.model.runtime.RuntimePersistentEntity-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>getUpdateOptions</h4>
+<pre>protected&nbsp;io.micronaut.data.mongodb.operations.AbstractMongoRepositoryOperations.UpdateOptions&nbsp;getUpdateOptions(org.bson.codecs.configuration.CodecRegistry&nbsp;codecRegistry,
+                                                                                                                <a href="../../../../../io/micronaut/data/model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;?,?&gt;&nbsp;preparedQuery,
+                                                                                                                <a href="../../../../../io/micronaut/data/model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;?&gt;&nbsp;persistentEntity)</pre>
+</li>
+</ul>
+<a name="convertResult-org.bson.codecs.configuration.CodecRegistry-java.lang.Class-org.bson.BsonDocument-boolean-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>convertResult</h4>
+<pre>protected&nbsp;&lt;R&gt;&nbsp;R&nbsp;convertResult(org.bson.codecs.configuration.CodecRegistry&nbsp;codecRegistry,
+                              java.lang.Class&lt;R&gt;&nbsp;resultType,
+                              org.bson.BsonDocument&nbsp;result,
+                              boolean&nbsp;isDtoProjection)</pre>
+</li>
+</ul>
+<a name="applyPageable-io.micronaut.data.model.Pageable-java.util.List-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>applyPageable</h4>
+<pre>protected&nbsp;int&nbsp;applyPageable(<a href="../../../../../io/micronaut/data/model/Pageable.html" title="interface in io.micronaut.data.model">Pageable</a>&nbsp;pageable,
+                            java.util.List&lt;org.bson.BsonDocument&gt;&nbsp;pipeline)</pre>
+</li>
+</ul>
+<a name="isCountQuery-io.micronaut.data.model.runtime.PreparedQuery-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>isCountQuery</h4>
+<pre>protected&nbsp;&lt;T,R&gt;&nbsp;boolean&nbsp;isCountQuery(<a href="../../../../../io/micronaut/data/model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;T,R&gt;&nbsp;preparedQuery)</pre>
+</li>
+</ul>
+<a name="getFilter-org.bson.codecs.configuration.CodecRegistry-io.micronaut.data.model.runtime.PreparedQuery-io.micronaut.data.model.runtime.RuntimePersistentEntity-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>getFilter</h4>
+<pre>protected&nbsp;&lt;T&gt;&nbsp;org.bson.conversions.Bson&nbsp;getFilter(org.bson.codecs.configuration.CodecRegistry&nbsp;codecRegistry,
+                                                  <a href="../../../../../io/micronaut/data/model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;?,?&gt;&nbsp;preparedQuery,
+                                                  <a href="../../../../../io/micronaut/data/model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;T&gt;&nbsp;persistentEntity)</pre>
+</li>
+</ul>
+<a name="association-org.bson.codecs.configuration.CodecRegistry-java.lang.Object-io.micronaut.data.model.runtime.RuntimePersistentEntity-java.lang.Object-io.micronaut.data.model.runtime.RuntimePersistentEntity-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>association</h4>
+<pre>protected&nbsp;org.bson.BsonDocument&nbsp;association(org.bson.codecs.configuration.CodecRegistry&nbsp;codecRegistry,
+                                            java.lang.Object&nbsp;value,
+                                            <a href="../../../../../io/micronaut/data/model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;java.lang.Object&gt;&nbsp;persistentEntity,
+                                            java.lang.Object&nbsp;child,
+                                            <a href="../../../../../io/micronaut/data/model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;java.lang.Object&gt;&nbsp;childPersistentEntity)</pre>
+</li>
+</ul>
+<a name="createTypeConversionContext-java.lang.Object-io.micronaut.data.model.runtime.RuntimePersistentProperty-io.micronaut.core.type.Argument-">
+<!--   -->
+</a><a name="createTypeConversionContext-Cnt-io.micronaut.data.model.runtime.RuntimePersistentProperty-io.micronaut.core.type.Argument-">
+<!--   -->
+</a>
+<ul class="blockListLast">
+<li class="blockList">
+<h4>createTypeConversionContext</h4>
+<pre>protected&nbsp;io.micronaut.core.convert.ConversionContext&nbsp;createTypeConversionContext(Cnt&nbsp;connection,
+                                                                                  <a href="../../../../../io/micronaut/data/model/runtime/RuntimePersistentProperty.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentProperty</a>&lt;?&gt;&nbsp;property,
+                                                                                  io.micronaut.core.type.Argument&lt;?&gt;&nbsp;argument)</pre>
+<div class="block"><span class="descfrmTypeLabel">Description copied from class:&nbsp;<code><a href="../../../../../io/micronaut/data/runtime/operations/internal/AbstractRepositoryOperations.html#createTypeConversionContext-Cnt-io.micronaut.data.model.runtime.RuntimePersistentProperty-io.micronaut.core.type.Argument-">AbstractRepositoryOperations</a></code></span></div>
+<div class="block">Creates implementation specific conversion context.</div>
+<dl>
+<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
+<dd><code><a href="../../../../../io/micronaut/data/runtime/operations/internal/AbstractRepositoryOperations.html#createTypeConversionContext-Cnt-io.micronaut.data.model.runtime.RuntimePersistentProperty-io.micronaut.core.type.Argument-">createTypeConversionContext</a></code>&nbsp;in class&nbsp;<code><a href="../../../../../io/micronaut/data/runtime/operations/internal/AbstractRepositoryOperations.html" title="class in io.micronaut.data.runtime.operations.internal">AbstractRepositoryOperations</a>&lt;Cnt,PS&gt;</code></dd>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>connection</code> - The connection</dd>
+<dd><code>property</code> - The property</dd>
+<dd><code>argument</code> - The argument</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>new <code>ConversionContext</code></dd>
 </dl>
 </li>
 </ul>
@@ -1103,13 +1274,13 @@ public&nbsp;<a href="../../../../../io/micronaut/data/operations/reactive/Reacti
 <ul class="subNavList">
 <li>Summary:&nbsp;</li>
 <li><a href="#nested.class.summary">Nested</a>&nbsp;|&nbsp;</li>
-<li><a href="#fields.inherited.from.class.io.micronaut.data.runtime.operations.internal.AbstractRepositoryOperations">Field</a>&nbsp;|&nbsp;</li>
+<li><a href="#field.summary">Field</a>&nbsp;|&nbsp;</li>
 <li><a href="#constructor.summary">Constr</a>&nbsp;|&nbsp;</li>
 <li><a href="#method.summary">Method</a></li>
 </ul>
 <ul class="subNavList">
 <li>Detail:&nbsp;</li>
-<li>Field&nbsp;|&nbsp;</li>
+<li><a href="#field.detail">Field</a>&nbsp;|&nbsp;</li>
 <li><a href="#constructor.detail">Constr</a>&nbsp;|&nbsp;</li>
 <li><a href="#method.detail">Method</a></li>
 </ul>

@@ -42,6 +42,7 @@ io.micronaut.data.model.query.factory
 io.micronaut.data.model.runtime
 io.micronaut.data.model.runtime.convert
 io.micronaut.data.mongodb.annotation
+io.micronaut.data.mongodb.conf
 io.micronaut.data.mongodb.database
 io.micronaut.data.mongodb.init
 io.micronaut.data.mongodb.operations

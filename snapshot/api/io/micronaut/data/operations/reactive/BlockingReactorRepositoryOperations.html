@@ -17,7 +17,7 @@
     catch(err) {
     }
 //-->
-var methods = {"i0":18,"i1":18,"i2":18,"i3":18,"i4":18,"i5":18,"i6":18,"i7":18,"i8":18,"i9":18,"i10":18,"i11":18,"i12":18,"i13":18,"i14":18,"i15":18};
+var methods = {"i0":18,"i1":18,"i2":18,"i3":18,"i4":18,"i5":18,"i6":18,"i7":18,"i8":18,"i9":18,"i10":18,"i11":18,"i12":18,"i13":18,"i14":18,"i15":18,"i16":18};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],16:["t5","Default Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -154,78 +154,84 @@ extends <a href="../../../../../io/micronaut/data/operations/RepositoryOperation
 </tr>
 <tr id="i3" class="rowColor">
 <td class="colFirst"><code>default java.util.Optional&lt;java.lang.Number&gt;</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/operations/reactive/BlockingReactorRepositoryOperations.html#executeDelete-io.micronaut.data.model.runtime.PreparedQuery-">executeDelete</a></span>(<a href="../../../../../io/micronaut/data/model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;?,java.lang.Number&gt;&nbsp;preparedQuery)</code>
+<div class="block">Executes a delete for the given query and parameter values.</div>
+</td>
+</tr>
+<tr id="i4" class="altColor">
+<td class="colFirst"><code>default java.util.Optional&lt;java.lang.Number&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/operations/reactive/BlockingReactorRepositoryOperations.html#executeUpdate-io.micronaut.data.model.runtime.PreparedQuery-">executeUpdate</a></span>(<a href="../../../../../io/micronaut/data/model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;?,java.lang.Number&gt;&nbsp;preparedQuery)</code>
 <div class="block">Executes an update for the given query and parameter values.</div>
 </td>
 </tr>
-<tr id="i4" class="altColor">
+<tr id="i5" class="rowColor">
 <td class="colFirst"><code>default &lt;T&gt;&nbsp;boolean</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/operations/reactive/BlockingReactorRepositoryOperations.html#exists-io.micronaut.data.model.runtime.PreparedQuery-">exists</a></span>(<a href="../../../../../io/micronaut/data/model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;T,java.lang.Boolean&gt;&nbsp;preparedQuery)</code>
 <div class="block">Execute a query that checks for existence.</div>
 </td>
 </tr>
-<tr id="i5" class="rowColor">
+<tr id="i6" class="altColor">
 <td class="colFirst"><code>default &lt;T&gt;&nbsp;java.lang.Iterable&lt;T&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/operations/reactive/BlockingReactorRepositoryOperations.html#findAll-io.micronaut.data.model.runtime.PagedQuery-">findAll</a></span>(<a href="../../../../../io/micronaut/data/model/runtime/PagedQuery.html" title="interface in io.micronaut.data.model.runtime">PagedQuery</a>&lt;T&gt;&nbsp;query)</code>
 <div class="block">Finds all results for the given query.</div>
 </td>
 </tr>
-<tr id="i6" class="altColor">
+<tr id="i7" class="rowColor">
 <td class="colFirst"><code>default &lt;T,R&gt;&nbsp;java.lang.Iterable&lt;R&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/operations/reactive/BlockingReactorRepositoryOperations.html#findAll-io.micronaut.data.model.runtime.PreparedQuery-">findAll</a></span>(<a href="../../../../../io/micronaut/data/model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;T,R&gt;&nbsp;preparedQuery)</code>
 <div class="block">Finds all results for the given query.</div>
 </td>
 </tr>
-<tr id="i7" class="rowColor">
+<tr id="i8" class="altColor">
 <td class="colFirst"><code>default &lt;T&gt;&nbsp;T</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/operations/reactive/BlockingReactorRepositoryOperations.html#findOne-java.lang.Class-java.io.Serializable-">findOne</a></span>(java.lang.Class&lt;T&gt;&nbsp;type,
        java.io.Serializable&nbsp;id)</code>
 <div class="block">Find one by ID.</div>
 </td>
 </tr>
-<tr id="i8" class="altColor">
+<tr id="i9" class="rowColor">
 <td class="colFirst"><code>default &lt;T,R&gt;&nbsp;R</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/operations/reactive/BlockingReactorRepositoryOperations.html#findOne-io.micronaut.data.model.runtime.PreparedQuery-">findOne</a></span>(<a href="../../../../../io/micronaut/data/model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;T,R&gt;&nbsp;preparedQuery)</code>
 <div class="block">Find one by Query.</div>
 </td>
 </tr>
-<tr id="i9" class="rowColor">
+<tr id="i10" class="altColor">
 <td class="colFirst"><code>default &lt;R&gt;&nbsp;<a href="../../../../../io/micronaut/data/model/Page.html" title="interface in io.micronaut.data.model">Page</a>&lt;R&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/operations/reactive/BlockingReactorRepositoryOperations.html#findPage-io.micronaut.data.model.runtime.PagedQuery-">findPage</a></span>(<a href="../../../../../io/micronaut/data/model/runtime/PagedQuery.html" title="interface in io.micronaut.data.model.runtime">PagedQuery</a>&lt;R&gt;&nbsp;query)</code>
 <div class="block">Find a page for the given entity and pageable.</div>
 </td>
 </tr>
-<tr id="i10" class="altColor">
+<tr id="i11" class="rowColor">
 <td class="colFirst"><code>default &lt;T&gt;&nbsp;java.util.stream.Stream&lt;T&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/operations/reactive/BlockingReactorRepositoryOperations.html#findStream-io.micronaut.data.model.runtime.PagedQuery-">findStream</a></span>(<a href="../../../../../io/micronaut/data/model/runtime/PagedQuery.html" title="interface in io.micronaut.data.model.runtime">PagedQuery</a>&lt;T&gt;&nbsp;query)</code>
 <div class="block">Finds a stream for the given arguments.</div>
 </td>
 </tr>
-<tr id="i11" class="rowColor">
+<tr id="i12" class="altColor">
 <td class="colFirst"><code>default &lt;T,R&gt;&nbsp;java.util.stream.Stream&lt;R&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/operations/reactive/BlockingReactorRepositoryOperations.html#findStream-io.micronaut.data.model.runtime.PreparedQuery-">findStream</a></span>(<a href="../../../../../io/micronaut/data/model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;T,R&gt;&nbsp;preparedQuery)</code>
 <div class="block">Finds all results for the given query.</div>
 </td>
 </tr>
-<tr id="i12" class="altColor">
+<tr id="i13" class="rowColor">
 <td class="colFirst"><code>default &lt;T&gt;&nbsp;T</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/operations/reactive/BlockingReactorRepositoryOperations.html#persist-io.micronaut.data.model.runtime.InsertOperation-">persist</a></span>(<a href="../../../../../io/micronaut/data/model/runtime/InsertOperation.html" title="interface in io.micronaut.data.model.runtime">InsertOperation</a>&lt;T&gt;&nbsp;operation)</code>
 <div class="block">Persist the operation returning a possibly new entity.</div>
 </td>
 </tr>
-<tr id="i13" class="rowColor">
+<tr id="i14" class="altColor">
 <td class="colFirst"><code>default &lt;T&gt;&nbsp;java.lang.Iterable&lt;T&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/operations/reactive/BlockingReactorRepositoryOperations.html#persistAll-io.micronaut.data.model.runtime.InsertBatchOperation-">persistAll</a></span>(<a href="../../../../../io/micronaut/data/model/runtime/InsertBatchOperation.html" title="interface in io.micronaut.data.model.runtime">InsertBatchOperation</a>&lt;T&gt;&nbsp;operation)</code>
 <div class="block">Persist all the given entities.</div>
 </td>
 </tr>
-<tr id="i14" class="altColor">
+<tr id="i15" class="rowColor">
 <td class="colFirst"><code>default &lt;T&gt;&nbsp;T</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/operations/reactive/BlockingReactorRepositoryOperations.html#update-io.micronaut.data.model.runtime.UpdateOperation-">update</a></span>(<a href="../../../../../io/micronaut/data/model/runtime/UpdateOperation.html" title="interface in io.micronaut.data.model.runtime">UpdateOperation</a>&lt;T&gt;&nbsp;operation)</code>
 <div class="block">Updates the entity for the given operation.</div>
 </td>
 </tr>
-<tr id="i15" class="rowColor">
+<tr id="i16" class="altColor">
 <td class="colFirst"><code>default &lt;T&gt;&nbsp;java.lang.Iterable&lt;T&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/operations/reactive/BlockingReactorRepositoryOperations.html#updateAll-io.micronaut.data.model.runtime.UpdateBatchOperation-">updateAll</a></span>(<a href="../../../../../io/micronaut/data/model/runtime/UpdateBatchOperation.html" title="interface in io.micronaut.data.model.runtime">UpdateBatchOperation</a>&lt;T&gt;&nbsp;operation)</code>
 <div class="block">Updates the entities for the given operation.</div>
@@ -244,7 +250,7 @@ extends <a href="../../../../../io/micronaut/data/operations/RepositoryOperation
 <!--   -->
 </a>
 <h3>Methods inherited from interface&nbsp;io.micronaut.data.operations.<a href="../../../../../io/micronaut/data/operations/RepositoryOperations.html" title="interface in io.micronaut.data.operations">RepositoryOperations</a></h3>
-<code><a href="../../../../../io/micronaut/data/operations/RepositoryOperations.html#executeDelete-io.micronaut.data.model.runtime.PreparedQuery-">executeDelete</a>, <a href="../../../../../io/micronaut/data/operations/RepositoryOperations.html#getConversionService--">getConversionService</a>, <a href="../../../../../io/micronaut/data/operations/RepositoryOperations.html#getEntity-java.lang.Class-">getEntity</a>, <a href="../../../../../io/micronaut/data/operations/RepositoryOperations.html#getQueryHints-io.micronaut.data.model.runtime.StoredQuery-">getQueryHints</a></code></li>
+<code><a href="../../../../../io/micronaut/data/operations/RepositoryOperations.html#getConversionService--">getConversionService</a>, <a href="../../../../../io/micronaut/data/operations/RepositoryOperations.html#getEntity-java.lang.Class-">getEntity</a>, <a href="../../../../../io/micronaut/data/operations/RepositoryOperations.html#getQueryHints-io.micronaut.data.model.runtime.StoredQuery-">getQueryHints</a></code></li>
 </ul>
 <ul class="blockList">
 <li class="blockList"><a name="methods.inherited.from.class.io.micronaut.context.ApplicationContextProvider">
@@ -470,6 +476,27 @@ default&nbsp;java.util.Optional&lt;java.lang.Number&gt;&nbsp;executeUpdate(@NonN
 <dl>
 <dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
 <dd><code><a href="../../../../../io/micronaut/data/operations/RepositoryOperations.html#executeUpdate-io.micronaut.data.model.runtime.PreparedQuery-">executeUpdate</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../io/micronaut/data/operations/RepositoryOperations.html" title="interface in io.micronaut.data.operations">RepositoryOperations</a></code></dd>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>preparedQuery</code> - The prepared query</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>An optional number with the count of the number of records updated</dd>
+</dl>
+</li>
+</ul>
+<a name="executeDelete-io.micronaut.data.model.runtime.PreparedQuery-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>executeDelete</h4>
+<pre>default&nbsp;java.util.Optional&lt;java.lang.Number&gt;&nbsp;executeDelete(@NonNull
+                                                           <a href="../../../../../io/micronaut/data/model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;?,java.lang.Number&gt;&nbsp;preparedQuery)</pre>
+<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../../io/micronaut/data/operations/RepositoryOperations.html#executeDelete-io.micronaut.data.model.runtime.PreparedQuery-">RepositoryOperations</a></code></span></div>
+<div class="block">Executes a delete for the given query and parameter values. If it is possible to
+ return the number of objects deleted, then do so.</div>
+<dl>
+<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
+<dd><code><a href="../../../../../io/micronaut/data/operations/RepositoryOperations.html#executeDelete-io.micronaut.data.model.runtime.PreparedQuery-">executeDelete</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../io/micronaut/data/operations/RepositoryOperations.html" title="interface in io.micronaut.data.operations">RepositoryOperations</a></code></dd>
 <dt><span class="paramLabel">Parameters:</span></dt>
 <dd><code>preparedQuery</code> - The prepared query</dd>
 <dt><span class="returnLabel">Returns:</span></dt>
