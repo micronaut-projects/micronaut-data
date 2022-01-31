@@ -8950,6 +8950,18 @@ abstract class AbstractBookRepository : CrudRepository&lt;Book, ObjectId&gt; {
 }</code></pre>
 </div>
 </div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+You can specify MongoDB&#8217;s database name using the repository annotation: <code>@MongoRepository(databaseName = "mydb")</code> or in the connection url: <code>mongodb://username:password@localhost:27017/mydb</code>
+</td>
+</tr>
+</table>
+</div>
 
 <h2 id="mongoMapping"><a class="anchor" href="#mongoMapping"></a>9.3 Mapping Entities</h2>
 

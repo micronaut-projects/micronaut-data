@@ -74,13 +74,13 @@ var activeTableTab = "activeTableTab";
 <li>Summary:&nbsp;</li>
 <li><a href="#nested.class.summary">Nested</a>&nbsp;|&nbsp;</li>
 <li><a href="#field.summary">Field</a>&nbsp;|&nbsp;</li>
-<li><a href="#constructor.summary">Constr</a>&nbsp;|&nbsp;</li>
+<li>Constr&nbsp;|&nbsp;</li>
 <li><a href="#method.summary">Method</a></li>
 </ul>
 <ul class="subNavList">
 <li>Detail:&nbsp;</li>
 <li><a href="#field.detail">Field</a>&nbsp;|&nbsp;</li>
-<li><a href="#constructor.detail">Constr</a>&nbsp;|&nbsp;</li>
+<li>Constr&nbsp;|&nbsp;</li>
 <li><a href="#method.detail">Method</a></li>
 </ul>
 </div>
@@ -182,6 +182,10 @@ implements <a href="../../../../../io/micronaut/data/mongodb/operations/MongoRep
 <td class="colFirst"><code>protected static org.slf4j.Logger</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/mongodb/operations/DefaultMongoRepositoryOperations.html#QUERY_LOG">QUERY_LOG</a></span></code>&nbsp;</td>
 </tr>
+<tr class="altColor">
+<td class="colFirst"><code>protected java.util.Map&lt;java.lang.Class,java.lang.String&gt;</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/mongodb/operations/DefaultMongoRepositoryOperations.html#repoDatabaseConfig">repoDatabaseConfig</a></span></code>&nbsp;</td>
+</tr>
 </table>
 <ul class="blockList">
 <li class="blockList"><a name="fields.inherited.from.class.io.micronaut.data.runtime.operations.internal.AbstractRepositoryOperations">
@@ -190,35 +194,6 @@ implements <a href="../../../../../io/micronaut/data/mongodb/operations/MongoRep
 <h3>Fields inherited from class&nbsp;io.micronaut.data.runtime.operations.internal.<a href="../../../../../io/micronaut/data/runtime/operations/internal/AbstractRepositoryOperations.html" title="class in io.micronaut.data.runtime.operations.internal">AbstractRepositoryOperations</a></h3>
 <code><a href="../../../../../io/micronaut/data/runtime/operations/internal/AbstractRepositoryOperations.html#attributeConverterRegistry">attributeConverterRegistry</a>, <a href="../../../../../io/micronaut/data/runtime/operations/internal/AbstractRepositoryOperations.html#conversionService">conversionService</a>, <a href="../../../../../io/micronaut/data/runtime/operations/internal/AbstractRepositoryOperations.html#dateTimeProvider">dateTimeProvider</a>, <a href="../../../../../io/micronaut/data/runtime/operations/internal/AbstractRepositoryOperations.html#entityEventRegistry">entityEventRegistry</a>, <a href="../../../../../io/micronaut/data/runtime/operations/internal/AbstractRepositoryOperations.html#jsonCodec">jsonCodec</a>, <a href="../../../../../io/micronaut/data/runtime/operations/internal/AbstractRepositoryOperations.html#runtimeEntityRegistry">runtimeEntityRegistry</a></code></li>
 </ul>
-</li>
-</ul>
-<!-- ======== CONSTRUCTOR SUMMARY ======== -->
-<ul class="blockList">
-<li class="blockList"><a name="constructor.summary">
-<!--   -->
-</a>
-<h3>Constructor Summary</h3>
-<table class="memberSummary" border="0" cellpadding="3" cellspacing="0" summary="Constructor Summary table, listing constructors, and an explanation">
-<caption><span>Constructors</span><span class="tabEnd">&nbsp;</span></caption>
-<tr>
-<th class="colFirst" scope="col">Modifier</th>
-<th class="colLast" scope="col">Constructor and Description</th>
-</tr>
-<tr class="altColor">
-<td class="colFirst"><code>protected </code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/mongodb/operations/DefaultMongoRepositoryOperations.html#DefaultMongoRepositoryOperations-java.lang.String-io.micronaut.context.BeanContext-java.util.List-io.micronaut.data.runtime.date.DateTimeProvider-io.micronaut.data.model.runtime.RuntimeEntityRegistry-io.micronaut.data.runtime.convert.DataConversionService-io.micronaut.data.model.runtime.AttributeConverterRegistry-com.mongodb.client.MongoClient-java.util.concurrent.ExecutorService-">DefaultMongoRepositoryOperations</a></span>(java.lang.String&nbsp;serverName,
-                                io.micronaut.context.BeanContext&nbsp;beanContext,
-                                java.util.List&lt;io.micronaut.http.codec.MediaTypeCodec&gt;&nbsp;codecs,
-                                <a href="../../../../../io/micronaut/data/runtime/date/DateTimeProvider.html" title="interface in io.micronaut.data.runtime.date">DateTimeProvider</a>&lt;java.lang.Object&gt;&nbsp;dateTimeProvider,
-                                <a href="../../../../../io/micronaut/data/model/runtime/RuntimeEntityRegistry.html" title="interface in io.micronaut.data.model.runtime">RuntimeEntityRegistry</a>&nbsp;runtimeEntityRegistry,
-                                <a href="../../../../../io/micronaut/data/runtime/convert/DataConversionService.html" title="interface in io.micronaut.data.runtime.convert">DataConversionService</a>&lt;?&gt;&nbsp;conversionService,
-                                <a href="../../../../../io/micronaut/data/model/runtime/AttributeConverterRegistry.html" title="interface in io.micronaut.data.model.runtime">AttributeConverterRegistry</a>&nbsp;attributeConverterRegistry,
-                                com.mongodb.client.MongoClient&nbsp;mongoClient,
-                                java.util.concurrent.ExecutorService&nbsp;executorService)</code>
-<div class="block">Default constructor.</div>
-</td>
-</tr>
-</table>
 </li>
 </ul>
 <!-- ========== METHOD SUMMARY =========== -->
@@ -513,50 +488,19 @@ implements <a href="../../../../../io/micronaut/data/mongodb/operations/MongoRep
 <a name="EMPTY">
 <!--   -->
 </a>
-<ul class="blockListLast">
+<ul class="blockList">
 <li class="blockList">
 <h4>EMPTY</h4>
 <pre>protected static final&nbsp;org.bson.BsonDocument EMPTY</pre>
 </li>
 </ul>
-</li>
-</ul>
-<!-- ========= CONSTRUCTOR DETAIL ======== -->
-<ul class="blockList">
-<li class="blockList"><a name="constructor.detail">
-<!--   -->
-</a>
-<h3>Constructor Detail</h3>
-<a name="DefaultMongoRepositoryOperations-java.lang.String-io.micronaut.context.BeanContext-java.util.List-io.micronaut.data.runtime.date.DateTimeProvider-io.micronaut.data.model.runtime.RuntimeEntityRegistry-io.micronaut.data.runtime.convert.DataConversionService-io.micronaut.data.model.runtime.AttributeConverterRegistry-com.mongodb.client.MongoClient-java.util.concurrent.ExecutorService-">
+<a name="repoDatabaseConfig">
 <!--   -->
 </a>
 <ul class="blockListLast">
 <li class="blockList">
-<h4>DefaultMongoRepositoryOperations</h4>
-<pre>protected&nbsp;DefaultMongoRepositoryOperations(@Parameter
-                                           java.lang.String&nbsp;serverName,
-                                           io.micronaut.context.BeanContext&nbsp;beanContext,
-                                           java.util.List&lt;io.micronaut.http.codec.MediaTypeCodec&gt;&nbsp;codecs,
-                                           <a href="../../../../../io/micronaut/data/runtime/date/DateTimeProvider.html" title="interface in io.micronaut.data.runtime.date">DateTimeProvider</a>&lt;java.lang.Object&gt;&nbsp;dateTimeProvider,
-                                           <a href="../../../../../io/micronaut/data/model/runtime/RuntimeEntityRegistry.html" title="interface in io.micronaut.data.model.runtime">RuntimeEntityRegistry</a>&nbsp;runtimeEntityRegistry,
-                                           <a href="../../../../../io/micronaut/data/runtime/convert/DataConversionService.html" title="interface in io.micronaut.data.runtime.convert">DataConversionService</a>&lt;?&gt;&nbsp;conversionService,
-                                           <a href="../../../../../io/micronaut/data/model/runtime/AttributeConverterRegistry.html" title="interface in io.micronaut.data.model.runtime">AttributeConverterRegistry</a>&nbsp;attributeConverterRegistry,
-                                           com.mongodb.client.MongoClient&nbsp;mongoClient,
-                                           @Named(value="io") @Nullable
-                                           java.util.concurrent.ExecutorService&nbsp;executorService)</pre>
-<div class="block">Default constructor.</div>
-<dl>
-<dt><span class="paramLabel">Parameters:</span></dt>
-<dd><code>serverName</code> - The server name</dd>
-<dd><code>beanContext</code> - The bean context</dd>
-<dd><code>codecs</code> - The media type codecs</dd>
-<dd><code>dateTimeProvider</code> - The date time provider</dd>
-<dd><code>runtimeEntityRegistry</code> - The entity registry</dd>
-<dd><code>conversionService</code> - The conversion service</dd>
-<dd><code>attributeConverterRegistry</code> - The attribute converter registry</dd>
-<dd><code>mongoClient</code> - The Mongo client</dd>
-<dd><code>executorService</code> - The executor service</dd>
-</dl>
+<h4>repoDatabaseConfig</h4>
+<pre>protected final&nbsp;java.util.Map&lt;java.lang.Class,java.lang.String&gt; repoDatabaseConfig</pre>
 </li>
 </ul>
 </li>
@@ -1275,13 +1219,13 @@ public&nbsp;<a href="../../../../../io/micronaut/data/operations/reactive/Reacti
 <li>Summary:&nbsp;</li>
 <li><a href="#nested.class.summary">Nested</a>&nbsp;|&nbsp;</li>
 <li><a href="#field.summary">Field</a>&nbsp;|&nbsp;</li>
-<li><a href="#constructor.summary">Constr</a>&nbsp;|&nbsp;</li>
+<li>Constr&nbsp;|&nbsp;</li>
 <li><a href="#method.summary">Method</a></li>
 </ul>
 <ul class="subNavList">
 <li>Detail:&nbsp;</li>
 <li><a href="#field.detail">Field</a>&nbsp;|&nbsp;</li>
-<li><a href="#constructor.detail">Constr</a>&nbsp;|&nbsp;</li>
+<li>Constr&nbsp;|&nbsp;</li>
 <li><a href="#method.detail">Method</a></li>
 </ul>
 </div>

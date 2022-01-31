@@ -1870,6 +1870,8 @@
 <dd>
 <div class="block">Default constructor.</div>
 </dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/mongodb/conf/MongoDataConfiguration.html#DATABASE_CONFIGURATION_ERROR_MESSAGE">DATABASE_CONFIGURATION_ERROR_MESSAGE</a></span> - Static variable in class io.micronaut.data.mongodb.conf.<a href="io/micronaut/data/mongodb/conf/MongoDataConfiguration.html" title="class in io.micronaut.data.mongodb.conf">MongoDataConfiguration</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/config/DataConfiguration.html" title="class in io.micronaut.data.runtime.config"><span class="typeNameLink">DataConfiguration</span></a> - Class in <a href="io/micronaut/data/runtime/config/package-summary.html">io.micronaut.data.runtime.config</a></dt>
 <dd>
 <div class="block">General data configuration.</div>
@@ -2258,10 +2260,6 @@
 <dd>
 <div class="block">Default Mongo repository operations.</div>
 </dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/mongodb/operations/DefaultMongoRepositoryOperations.html#DefaultMongoRepositoryOperations-java.lang.String-io.micronaut.context.BeanContext-java.util.List-io.micronaut.data.runtime.date.DateTimeProvider-io.micronaut.data.model.runtime.RuntimeEntityRegistry-io.micronaut.data.runtime.convert.DataConversionService-io.micronaut.data.model.runtime.AttributeConverterRegistry-com.mongodb.client.MongoClient-java.util.concurrent.ExecutorService-">DefaultMongoRepositoryOperations(String, BeanContext, List&lt;MediaTypeCodec&gt;, DateTimeProvider&lt;Object&gt;, RuntimeEntityRegistry, DataConversionService&lt;?&gt;, AttributeConverterRegistry, MongoClient, ExecutorService)</a></span> - Constructor for class io.micronaut.data.mongodb.operations.<a href="io/micronaut/data/mongodb/operations/DefaultMongoRepositoryOperations.html" title="class in io.micronaut.data.mongodb.operations">DefaultMongoRepositoryOperations</a></dt>
-<dd>
-<div class="block">Default constructor.</div>
-</dd>
 <dt><a href="io/micronaut/data/mongodb/operations/DefaultMongoRepositoryOperations.MongoOperationContext.html" title="class in io.micronaut.data.mongodb.operations"><span class="typeNameLink">DefaultMongoRepositoryOperations.MongoOperationContext</span></a> - Class in <a href="io/micronaut/data/mongodb/operations/package-summary.html">io.micronaut.data.mongodb.operations</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/query/internal/DefaultPagedQuery.html" title="class in io.micronaut.data.runtime.query.internal"><span class="typeNameLink">DefaultPagedQuery</span></a>&lt;<a href="io/micronaut/data/runtime/query/internal/DefaultPagedQuery.html" title="type parameter in DefaultPagedQuery">E</a>&gt; - Class in <a href="io/micronaut/data/runtime/query/internal/package-summary.html">io.micronaut.data.runtime.query.internal</a></dt>
@@ -2309,10 +2307,6 @@
 <dt><a href="io/micronaut/data/mongodb/operations/DefaultReactiveMongoRepositoryOperations.html" title="class in io.micronaut.data.mongodb.operations"><span class="typeNameLink">DefaultReactiveMongoRepositoryOperations</span></a> - Class in <a href="io/micronaut/data/mongodb/operations/package-summary.html">io.micronaut.data.mongodb.operations</a></dt>
 <dd>
 <div class="block">The reactive MongoDB repository operations implementation.</div>
-</dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/mongodb/operations/DefaultReactiveMongoRepositoryOperations.html#DefaultReactiveMongoRepositoryOperations-java.lang.String-io.micronaut.context.BeanContext-java.util.List-io.micronaut.data.runtime.date.DateTimeProvider-io.micronaut.data.model.runtime.RuntimeEntityRegistry-io.micronaut.data.runtime.convert.DataConversionService-io.micronaut.data.model.runtime.AttributeConverterRegistry-com.mongodb.reactivestreams.client.MongoClient-">DefaultReactiveMongoRepositoryOperations(String, BeanContext, List&lt;MediaTypeCodec&gt;, DateTimeProvider&lt;Object&gt;, RuntimeEntityRegistry, DataConversionService&lt;?&gt;, AttributeConverterRegistry, MongoClient)</a></span> - Constructor for class io.micronaut.data.mongodb.operations.<a href="io/micronaut/data/mongodb/operations/DefaultReactiveMongoRepositoryOperations.html" title="class in io.micronaut.data.mongodb.operations">DefaultReactiveMongoRepositoryOperations</a></dt>
-<dd>
-<div class="block">Default constructor.</div>
 </dd>
 <dt><a href="io/micronaut/data/mongodb/operations/DefaultReactiveMongoRepositoryOperations.MongoOperationContext.html" title="class in io.micronaut.data.mongodb.operations"><span class="typeNameLink">DefaultReactiveMongoRepositoryOperations.MongoOperationContext</span></a> - Class in <a href="io/micronaut/data/mongodb/operations/package-summary.html">io.micronaut.data.mongodb.operations</a></dt>
 <dd>&nbsp;</dd>
@@ -4840,6 +4834,14 @@
 <dt><span class="memberNameLink"><a href="io/micronaut/data/mongodb/database/SimpleReactiveMongoDatabaseFactory.html#getDatabase-io.micronaut.data.model.PersistentEntity-">getDatabase(PersistentEntity)</a></span> - Method in class io.micronaut.data.mongodb.database.<a href="io/micronaut/data/mongodb/database/SimpleReactiveMongoDatabaseFactory.html" title="class in io.micronaut.data.mongodb.database">SimpleReactiveMongoDatabaseFactory</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/mongodb/database/SimpleReactiveMongoDatabaseFactory.html#getDatabase-java.lang.Class-">getDatabase(Class&lt;?&gt;)</a></span> - Method in class io.micronaut.data.mongodb.database.<a href="io/micronaut/data/mongodb/database/SimpleReactiveMongoDatabaseFactory.html" title="class in io.micronaut.data.mongodb.database">SimpleReactiveMongoDatabaseFactory</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/mongodb/database/UnknownMongoDatabaseFactory.html#getDatabase-io.micronaut.data.model.PersistentEntity-">getDatabase(PersistentEntity)</a></span> - Method in class io.micronaut.data.mongodb.database.<a href="io/micronaut/data/mongodb/database/UnknownMongoDatabaseFactory.html" title="class in io.micronaut.data.mongodb.database">UnknownMongoDatabaseFactory</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/mongodb/database/UnknownMongoDatabaseFactory.html#getDatabase-java.lang.Class-">getDatabase(Class&lt;?&gt;)</a></span> - Method in class io.micronaut.data.mongodb.database.<a href="io/micronaut/data/mongodb/database/UnknownMongoDatabaseFactory.html" title="class in io.micronaut.data.mongodb.database">UnknownMongoDatabaseFactory</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/mongodb/database/UnknownReactiveMongoDatabaseFactory.html#getDatabase-io.micronaut.data.model.PersistentEntity-">getDatabase(PersistentEntity)</a></span> - Method in class io.micronaut.data.mongodb.database.<a href="io/micronaut/data/mongodb/database/UnknownReactiveMongoDatabaseFactory.html" title="class in io.micronaut.data.mongodb.database">UnknownReactiveMongoDatabaseFactory</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/mongodb/database/UnknownReactiveMongoDatabaseFactory.html#getDatabase-java.lang.Class-">getDatabase(Class&lt;?&gt;)</a></span> - Method in class io.micronaut.data.mongodb.database.<a href="io/micronaut/data/mongodb/database/UnknownReactiveMongoDatabaseFactory.html" title="class in io.micronaut.data.mongodb.database">UnknownReactiveMongoDatabaseFactory</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/jdbc/operations/DefaultJdbcRepositoryOperations.html#getDataSource--">getDataSource()</a></span> - Method in class io.micronaut.data.jdbc.operations.<a href="io/micronaut/data/jdbc/operations/DefaultJdbcRepositoryOperations.html" title="class in io.micronaut.data.jdbc.operations">DefaultJdbcRepositoryOperations</a></dt>
 <dd>&nbsp;</dd>
@@ -14266,6 +14268,18 @@
 <dd>
 <div class="block">Constructor for UnexpectedRollbackException.</div>
 </dd>
+<dt><a href="io/micronaut/data/mongodb/database/UnknownMongoDatabaseFactory.html" title="class in io.micronaut.data.mongodb.database"><span class="typeNameLink">UnknownMongoDatabaseFactory</span></a> - Class in <a href="io/micronaut/data/mongodb/database/package-summary.html">io.micronaut.data.mongodb.database</a></dt>
+<dd>
+<div class="block">The simple Mongo database factory that throws an error because default database name is not specified.</div>
+</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/mongodb/database/UnknownMongoDatabaseFactory.html#UnknownMongoDatabaseFactory--">UnknownMongoDatabaseFactory()</a></span> - Constructor for class io.micronaut.data.mongodb.database.<a href="io/micronaut/data/mongodb/database/UnknownMongoDatabaseFactory.html" title="class in io.micronaut.data.mongodb.database">UnknownMongoDatabaseFactory</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/mongodb/database/UnknownReactiveMongoDatabaseFactory.html" title="class in io.micronaut.data.mongodb.database"><span class="typeNameLink">UnknownReactiveMongoDatabaseFactory</span></a> - Class in <a href="io/micronaut/data/mongodb/database/package-summary.html">io.micronaut.data.mongodb.database</a></dt>
+<dd>
+<div class="block">The simple Mongo reactive database factory that throws an error because default database name is not specified.</div>
+</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/mongodb/database/UnknownReactiveMongoDatabaseFactory.html#UnknownReactiveMongoDatabaseFactory--">UnknownReactiveMongoDatabaseFactory()</a></span> - Constructor for class io.micronaut.data.mongodb.database.<a href="io/micronaut/data/mongodb/database/UnknownReactiveMongoDatabaseFactory.html" title="class in io.micronaut.data.mongodb.database">UnknownReactiveMongoDatabaseFactory</a></dt>
+<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/Pageable.html#UNPAGED">UNPAGED</a></span> - Static variable in interface io.micronaut.data.model.<a href="io/micronaut/data/model/Pageable.html" title="interface in io.micronaut.data.model">Pageable</a></dt>
 <dd>
 <div class="block">Constant for no pagination.</div>
