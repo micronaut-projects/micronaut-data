@@ -1,0 +1,11 @@
+plugins {
+    id "io.micronaut.application"
+    id "io.micronaut.build.internal.data-micronaut-benchmark"
+}
+
+dependencies {
+    annotationProcessor projects.dataDocumentProcessor
+    implementation projects.dataMongodb
+    implementation libs.mongodb.driver.sync
+    testImplementation libs.testcontainers.mongodb
+}

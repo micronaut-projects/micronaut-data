@@ -1,0 +1,11 @@
+plugins {
+	id "io.micronaut.build.internal.data-spring-benchmark"
+}
+
+dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
+	implementation libs.mongodb.driver.core
+	implementation libs.mongodb.driver.sync
+	testImplementation platform(libs.testcontainers.bom)
+	testImplementation libs.testcontainers.mongodb
+}
