@@ -21,11 +21,17 @@ import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.PersistentEntity;
-import io.micronaut.data.model.runtime.*;
+import io.micronaut.data.model.runtime.DeleteBatchOperation;
+import io.micronaut.data.model.runtime.DeleteOperation;
+import io.micronaut.data.model.runtime.InsertBatchOperation;
+import io.micronaut.data.model.runtime.InsertOperation;
+import io.micronaut.data.model.runtime.PagedQuery;
+import io.micronaut.data.model.runtime.PreparedQuery;
+import io.micronaut.data.model.runtime.RuntimePersistentEntity;
+import io.micronaut.data.model.runtime.UpdateBatchOperation;
+import io.micronaut.data.model.runtime.UpdateOperation;
 
 import java.io.Serializable;
-import java.util.Collections;
-import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -36,7 +42,7 @@ import java.util.stream.Stream;
  * @author graemerocher
  * @since 1.0
  */
-public interface RepositoryOperations extends ApplicationContextProvider {
+public interface RepositoryOperations extends HintsCapableRepository, ApplicationContextProvider {
 
     /**
      * Retrieves the entity for the given type.
@@ -211,15 +217,6 @@ public interface RepositoryOperations extends ApplicationContextProvider {
      * @return The number of entities deleted
      */
     <T> Optional<Number> deleteAll(@NonNull DeleteBatchOperation<T> operation);
-
-    /**
-     * Obtain any custom query hints for this method and repository implementation.
-     * @param storedQuery The stored query
-     * @return THe query hints
-     */
-    default @NonNull Map<String, Object> getQueryHints(@NonNull StoredQuery<?, ?> storedQuery) {
-        return Collections.emptyMap();
-    }
 
     /**
      * Get conversion service.

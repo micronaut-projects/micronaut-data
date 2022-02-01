@@ -24,6 +24,7 @@ import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.beans.BeanWrapper;
 import io.micronaut.core.beans.exceptions.IntrospectionException;
+import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.naming.NameUtils;
 import io.micronaut.core.reflect.ClassUtils;
 import io.micronaut.core.reflect.ReflectionUtils;
@@ -102,19 +103,19 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
     protected AbstractQueryInterceptor(@NonNull RepositoryOperations operations) {
         ArgumentUtils.requireNonNull("operations", operations);
         this.operations = operations;
-        this.storedQueryResolver = new DefaultStoredQueryResolver() {
+        this.storedQueryResolver = operations instanceof StoredQueryResolver ? (StoredQueryResolver) operations : new DefaultStoredQueryResolver() {
             @Override
-            protected RepositoryOperations getOperations() {
+            protected RepositoryOperations getHintsCapableRepository() {
                 return operations;
             }
         };
-        this.preparedQueryResolver = new DefaultPreparedQueryResolver() {
+        this.preparedQueryResolver = operations instanceof PreparedQueryResolver ? (PreparedQueryResolver) operations : new DefaultPreparedQueryResolver() {
             @Override
-            protected RepositoryOperations getOperations() {
-                return operations;
+            protected ConversionService getConversionService() {
+                return operations.getConversionService();
             }
         };
-        this.pagedQueryResolver = new DefaultPagedQueryResolver();
+        this.pagedQueryResolver = operations instanceof PagedQueryResolver ? (PagedQueryResolver) operations : new DefaultPagedQueryResolver();
     }
 
     /**

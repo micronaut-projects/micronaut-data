@@ -16,12 +16,20 @@
 package io.micronaut.data.runtime.query;
 
 import io.micronaut.aop.MethodInvocationContext;
+import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.type.Argument;
 import io.micronaut.data.annotation.Query;
+import io.micronaut.data.annotation.RepositoryConfiguration;
 import io.micronaut.data.intercept.annotation.DataMethod;
+import io.micronaut.data.model.DataType;
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
+import io.micronaut.data.model.runtime.QueryParameterBinding;
 import io.micronaut.data.model.runtime.StoredQuery;
-import io.micronaut.data.operations.RepositoryOperations;
+import io.micronaut.data.operations.HintsCapableRepository;
 import io.micronaut.data.runtime.query.internal.DefaultStoredQuery;
+
+import java.util.List;
 
 /**
  * Default stored query resolver.
@@ -48,7 +56,7 @@ public abstract class DefaultStoredQueryResolver implements StoredQueryResolver 
                 entityClass,
                 query,
                 false,
-                getOperations()
+                getHintsCapableRepository()
         );
     }
 
@@ -63,10 +71,168 @@ public abstract class DefaultStoredQueryResolver implements StoredQueryResolver 
                 entityClass,
                 query,
                 true,
-                getOperations()
+                getHintsCapableRepository()
         );
     }
 
-    protected abstract RepositoryOperations getOperations();
+
+    @Override
+    public <E, QR> StoredQuery<E, QR> createStoredQuery(String name,
+                                                        AnnotationMetadata annotationMetadata,
+                                                        Class<Object> rootEntity,
+                                                        String query,
+                                                        String update,
+                                                        String[] queryParts,
+                                                        List<QueryParameterBinding> queryParameters,
+                                                        boolean pageable,
+                                                        boolean isSingleResult) {
+        return new StoredQuery<E, QR>() {
+            @Override
+            public Class<E> getRootEntity() {
+                return (Class<E>) rootEntity;
+            }
+
+            @Override
+            public boolean hasPageable() {
+                return pageable;
+            }
+
+            @Override
+            public String getQuery() {
+                return query;
+            }
+
+            @Override
+            public String[] getExpandableQueryParts() {
+                return queryParts;
+            }
+
+            @Override
+            public List<QueryParameterBinding> getQueryBindings() {
+                return queryParameters;
+            }
+
+            @Override
+            public Class<QR> getResultType() {
+                return (Class<QR>) rootEntity;
+            }
+
+            @Override
+            public Argument<QR> getResultArgument() {
+                return Argument.of(getResultType());
+            }
+
+            @Override
+            public DataType getResultDataType() {
+                return DataType.ENTITY;
+            }
+
+            @Override
+            public boolean useNumericPlaceholders() {
+                return annotationMetadata.classValue(RepositoryConfiguration.class, "queryBuilder")
+                        .map(c -> c == SqlQueryBuilder.class).orElse(false);
+            }
+
+            @Override
+            public boolean isCount() {
+                return false;
+            }
+
+            @Override
+            public boolean isSingleResult() {
+                return isSingleResult;
+            }
+
+            @Override
+            public boolean hasResultConsumer() {
+                return false;
+            }
+
+            @Override
+            public String getName() {
+                return name;
+            }
+        };
+    }
+
+    @Override
+    public StoredQuery<Object, Long> createCountStoredQuery(String name,
+                                                            AnnotationMetadata annotationMetadata,
+                                                            Class<Object> rootEntity,
+                                                            String query,
+                                                            String[] queryParts,
+                                                            List<QueryParameterBinding> queryParameters) {
+        return new StoredQuery<Object, Long>() {
+
+            @Override
+            public Class<Object> getRootEntity() {
+                return rootEntity;
+            }
+
+            @Override
+            public boolean hasPageable() {
+                return false;
+            }
+
+            @Override
+            public String getQuery() {
+                return query;
+            }
+
+            @Override
+            public String[] getExpandableQueryParts() {
+                return queryParts;
+            }
+
+            @Override
+            public List<QueryParameterBinding> getQueryBindings() {
+                return queryParameters;
+            }
+
+            @Override
+            public Class<Long> getResultType() {
+                return Long.class;
+            }
+
+            @Override
+            public Argument<Long> getResultArgument() {
+                return Argument.LONG;
+            }
+
+            @Override
+            public DataType getResultDataType() {
+                return DataType.LONG;
+            }
+
+            @Override
+            public boolean useNumericPlaceholders() {
+                return annotationMetadata
+                        .classValue(RepositoryConfiguration.class, "queryBuilder")
+                        .map(c -> c == SqlQueryBuilder.class).orElse(false);
+            }
+
+            @Override
+            public boolean isCount() {
+                return true;
+            }
+
+            @Override
+            public boolean isSingleResult() {
+                return true;
+            }
+
+            @Override
+            public boolean hasResultConsumer() {
+                return false;
+            }
+
+            @Override
+            public String getName() {
+                return name;
+            }
+        };
+    }
+
+    protected abstract HintsCapableRepository getHintsCapableRepository();
 
 }

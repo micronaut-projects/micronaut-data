@@ -90,6 +90,13 @@ public abstract class AbstractRepositoryOperations<Cnt, PS> implements Applicati
         this.attributeConverterRegistry = attributeConverterRegistry;
     }
 
+    /**
+     * @return the conversion service
+     */
+    public DataConversionService<?> getConversionService() {
+        return conversionService;
+    }
+
     @Override
     public ApplicationContext getApplicationContext() {
         return runtimeEntityRegistry.getApplicationContext();
