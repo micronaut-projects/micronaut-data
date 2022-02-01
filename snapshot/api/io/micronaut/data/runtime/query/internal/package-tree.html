@@ -82,11 +82,40 @@
 <li type="circle">io.micronaut.data.runtime.query.internal.<a href="../../../../../../io/micronaut/data/runtime/query/internal/DefaultPagedQuery.html" title="class in io.micronaut.data.runtime.query.internal"><span class="typeNameLink">DefaultPagedQuery</span></a>&lt;E&gt; (implements io.micronaut.data.model.runtime.<a href="../../../../../../io/micronaut/data/model/runtime/PagedQuery.html" title="interface in io.micronaut.data.model.runtime">PagedQuery</a>&lt;E&gt;)</li>
 <li type="circle">io.micronaut.data.model.runtime.<a href="../../../../../../io/micronaut/data/model/runtime/DefaultStoredDataOperation.html" title="class in io.micronaut.data.model.runtime"><span class="typeNameLink">DefaultStoredDataOperation</span></a>&lt;R&gt; (implements io.micronaut.data.model.runtime.<a href="../../../../../../io/micronaut/data/model/runtime/StoredDataOperation.html" title="interface in io.micronaut.data.model.runtime">StoredDataOperation</a>&lt;R&gt;)
 <ul>
-<li type="circle">io.micronaut.data.runtime.query.internal.<a href="../../../../../../io/micronaut/data/runtime/query/internal/DefaultPreparedQuery.html" title="class in io.micronaut.data.runtime.query.internal"><span class="typeNameLink">DefaultPreparedQuery</span></a>&lt;E,RT&gt; (implements io.micronaut.data.model.runtime.<a href="../../../../../../io/micronaut/data/model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;E,R&gt;)</li>
+<li type="circle">io.micronaut.data.runtime.query.internal.<a href="../../../../../../io/micronaut/data/runtime/query/internal/DefaultPreparedQuery.html" title="class in io.micronaut.data.runtime.query.internal"><span class="typeNameLink">DefaultPreparedQuery</span></a>&lt;E,RT&gt; (implements io.micronaut.data.runtime.query.internal.<a href="../../../../../../io/micronaut/data/runtime/query/internal/DelegateStoredQuery.html" title="interface in io.micronaut.data.runtime.query.internal">DelegateStoredQuery</a>&lt;E,R&gt;, io.micronaut.data.model.runtime.<a href="../../../../../../io/micronaut/data/model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;E,R&gt;)</li>
 <li type="circle">io.micronaut.data.runtime.query.internal.<a href="../../../../../../io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html" title="class in io.micronaut.data.runtime.query.internal"><span class="typeNameLink">DefaultStoredQuery</span></a>&lt;E,RT&gt; (implements io.micronaut.data.model.runtime.<a href="../../../../../../io/micronaut/data/model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;E,R&gt;)</li>
 </ul>
 </li>
 <li type="circle">io.micronaut.data.runtime.query.internal.<a href="../../../../../../io/micronaut/data/runtime/query/internal/StoredQueryParameter.html" title="class in io.micronaut.data.runtime.query.internal"><span class="typeNameLink">StoredQueryParameter</span></a> (implements io.micronaut.data.model.runtime.<a href="../../../../../../io/micronaut/data/model/runtime/QueryParameterBinding.html" title="interface in io.micronaut.data.model.runtime">QueryParameterBinding</a>)</li>
+</ul>
+</li>
+</ul>
+<h2 title="Interface Hierarchy">Interface Hierarchy</h2>
+<ul>
+<li type="circle">io.micronaut.core.annotation.AnnotationSource
+<ul>
+<li type="circle">io.micronaut.core.annotation.AnnotationMetadataProvider
+<ul>
+<li type="circle">io.micronaut.data.model.runtime.<a href="../../../../../../io/micronaut/data/model/runtime/StoredDataOperation.html" title="interface in io.micronaut.data.model.runtime"><span class="typeNameLink">StoredDataOperation</span></a>&lt;R&gt;
+<ul>
+<li type="circle">io.micronaut.data.model.runtime.<a href="../../../../../../io/micronaut/data/model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime"><span class="typeNameLink">StoredQuery</span></a>&lt;E,R&gt; (also extends io.micronaut.core.naming.Named)
+<ul>
+<li type="circle">io.micronaut.data.runtime.query.internal.<a href="../../../../../../io/micronaut/data/runtime/query/internal/DelegateStoredQuery.html" title="interface in io.micronaut.data.runtime.query.internal"><span class="typeNameLink">DelegateStoredQuery</span></a>&lt;E,R&gt;</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li type="circle">io.micronaut.core.naming.Named
+<ul>
+<li type="circle">io.micronaut.data.model.runtime.<a href="../../../../../../io/micronaut/data/model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime"><span class="typeNameLink">StoredQuery</span></a>&lt;E,R&gt; (also extends io.micronaut.data.model.runtime.<a href="../../../../../../io/micronaut/data/model/runtime/StoredDataOperation.html" title="interface in io.micronaut.data.model.runtime">StoredDataOperation</a>&lt;R&gt;)
+<ul>
+<li type="circle">io.micronaut.data.runtime.query.internal.<a href="../../../../../../io/micronaut/data/runtime/query/internal/DelegateStoredQuery.html" title="interface in io.micronaut.data.runtime.query.internal"><span class="typeNameLink">DelegateStoredQuery</span></a>&lt;E,R&gt;</li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>

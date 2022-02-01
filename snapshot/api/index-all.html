@@ -1687,6 +1687,12 @@
 <dd>
 <div class="block">Create a savepoint and hold it for the transaction.</div>
 </dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/query/DefaultStoredQueryResolver.html#createCountStoredQuery-java.lang.String-io.micronaut.core.annotation.AnnotationMetadata-java.lang.Class-java.lang.String-java.lang.String:A-java.util.List-">createCountStoredQuery(String, AnnotationMetadata, Class&lt;Object&gt;, String, String[], List&lt;QueryParameterBinding&gt;)</a></span> - Method in class io.micronaut.data.runtime.query.<a href="io/micronaut/data/runtime/query/DefaultStoredQueryResolver.html" title="class in io.micronaut.data.runtime.query">DefaultStoredQueryResolver</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/query/StoredQueryResolver.html#createCountStoredQuery-java.lang.String-io.micronaut.core.annotation.AnnotationMetadata-java.lang.Class-java.lang.String-java.lang.String:A-java.util.List-">createCountStoredQuery(String, AnnotationMetadata, Class&lt;Object&gt;, String, String[], List&lt;QueryParameterBinding&gt;)</a></span> - Method in interface io.micronaut.data.runtime.query.<a href="io/micronaut/data/runtime/query/StoredQueryResolver.html" title="interface in io.micronaut.data.runtime.query">StoredQueryResolver</a></dt>
+<dd>
+<div class="block">Create count stored query from provided values.</div>
+</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/PersistentEntityCriteriaBuilder.html#createCriteriaDelete-java.lang.Class-">createCriteriaDelete(Class&lt;T&gt;)</a></span> - Method in interface io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityCriteriaBuilder.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaBuilder</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/processor/model/criteria/impl/MethodMatchSourcePersistentEntityCriteriaBuilderImpl.html#createCriteriaDelete-java.lang.Class-">createCriteriaDelete(Class&lt;T&gt;)</a></span> - Method in class io.micronaut.data.processor.model.criteria.impl.<a href="io/micronaut/data/processor/model/criteria/impl/MethodMatchSourcePersistentEntityCriteriaBuilderImpl.html" title="class in io.micronaut.data.processor.model.criteria.impl">MethodMatchSourcePersistentEntityCriteriaBuilderImpl</a></dt>
@@ -1758,6 +1764,12 @@
 <dt><span class="memberNameLink"><a href="io/micronaut/data/r2dbc/config/R2dbcSchemaGenerator.html#createSchema-io.micronaut.context.BeanLocator-">createSchema(BeanLocator)</a></span> - Method in class io.micronaut.data.r2dbc.config.<a href="io/micronaut/data/r2dbc/config/R2dbcSchemaGenerator.html" title="class in io.micronaut.data.r2dbc.config">R2dbcSchemaGenerator</a></dt>
 <dd>
 <div class="block">Creates the schema.</div>
+</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/query/DefaultStoredQueryResolver.html#createStoredQuery-java.lang.String-io.micronaut.core.annotation.AnnotationMetadata-java.lang.Class-java.lang.String-java.lang.String-java.lang.String:A-java.util.List-boolean-boolean-">createStoredQuery(String, AnnotationMetadata, Class&lt;Object&gt;, String, String, String[], List&lt;QueryParameterBinding&gt;, boolean, boolean)</a></span> - Method in class io.micronaut.data.runtime.query.<a href="io/micronaut/data/runtime/query/DefaultStoredQueryResolver.html" title="class in io.micronaut.data.runtime.query">DefaultStoredQueryResolver</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/query/StoredQueryResolver.html#createStoredQuery-java.lang.String-io.micronaut.core.annotation.AnnotationMetadata-java.lang.Class-java.lang.String-java.lang.String-java.lang.String:A-java.util.List-boolean-boolean-">createStoredQuery(String, AnnotationMetadata, Class&lt;Object&gt;, String, String, String[], List&lt;QueryParameterBinding&gt;, boolean, boolean)</a></span> - Method in interface io.micronaut.data.runtime.query.<a href="io/micronaut/data/runtime/query/StoredQueryResolver.html" title="interface in io.micronaut.data.runtime.query">StoredQueryResolver</a></dt>
+<dd>
+<div class="block">Create stored query from provided values.</div>
 </dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/transaction/interceptor/TransactionalInterceptor.html#createTransactionIfNecessary-io.micronaut.transaction.SynchronousTransactionManager-io.micronaut.transaction.interceptor.TransactionAttribute-io.micronaut.inject.ExecutableMethod-">createTransactionIfNecessary(SynchronousTransactionManager&lt;?&gt;, TransactionAttribute, ExecutableMethod&lt;Object, Object&gt;)</a></span> - Method in class io.micronaut.transaction.interceptor.<a href="io/micronaut/transaction/interceptor/TransactionalInterceptor.html" title="class in io.micronaut.transaction.interceptor">TransactionalInterceptor</a></dt>
 <dd>
@@ -2392,7 +2404,7 @@
 <dd>
 <div class="block">Represents a prepared query.</div>
 </dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html#DefaultStoredQuery-io.micronaut.inject.ExecutableMethod-java.lang.Class-java.lang.Class-java.lang.String-boolean-io.micronaut.data.operations.RepositoryOperations-">DefaultStoredQuery(ExecutableMethod&lt;?, ?&gt;, Class&lt;RT&gt;, Class&lt;E&gt;, String, boolean, RepositoryOperations)</a></span> - Constructor for class io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html" title="class in io.micronaut.data.runtime.query.internal">DefaultStoredQuery</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html#DefaultStoredQuery-io.micronaut.inject.ExecutableMethod-java.lang.Class-java.lang.Class-java.lang.String-boolean-io.micronaut.data.operations.HintsCapableRepository-">DefaultStoredQuery(ExecutableMethod&lt;?, ?&gt;, Class&lt;RT&gt;, Class&lt;E&gt;, String, boolean, HintsCapableRepository)</a></span> - Constructor for class io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html" title="class in io.micronaut.data.runtime.query.internal">DefaultStoredQuery</a></dt>
 <dd>
 <div class="block">The default constructor.</div>
 </dd>
@@ -2511,6 +2523,10 @@
 <dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/intercept/reactive/DefaultUpdateReactiveInterceptor.html#DefaultUpdateReactiveInterceptor-io.micronaut.data.operations.RepositoryOperations-">DefaultUpdateReactiveInterceptor(RepositoryOperations)</a></span> - Constructor for class io.micronaut.data.runtime.intercept.reactive.<a href="io/micronaut/data/runtime/intercept/reactive/DefaultUpdateReactiveInterceptor.html" title="class in io.micronaut.data.runtime.intercept.reactive">DefaultUpdateReactiveInterceptor</a></dt>
 <dd>
 <div class="block">Default constructor.</div>
+</dd>
+<dt><a href="io/micronaut/data/runtime/query/internal/DelegateStoredQuery.html" title="interface in io.micronaut.data.runtime.query.internal"><span class="typeNameLink">DelegateStoredQuery</span></a>&lt;<a href="io/micronaut/data/runtime/query/internal/DelegateStoredQuery.html" title="type parameter in DelegateStoredQuery">E</a>,<a href="io/micronaut/data/runtime/query/internal/DelegateStoredQuery.html" title="type parameter in DelegateStoredQuery">R</a>&gt; - Interface in <a href="io/micronaut/data/runtime/query/internal/package-summary.html">io.micronaut.data.runtime.query.internal</a></dt>
+<dd>
+<div class="block">Delegate implementation of <a href="io/micronaut/data/model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime"><code>StoredQuery</code></a>.</div>
 </dd>
 <dt><a href="io/micronaut/transaction/jdbc/DelegatingDataSource.html" title="class in io.micronaut.transaction.jdbc"><span class="typeNameLink">DelegatingDataSource</span></a> - Class in <a href="io/micronaut/transaction/jdbc/package-summary.html">io.micronaut.transaction.jdbc</a></dt>
 <dd>
@@ -4529,6 +4545,8 @@
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/query/internal/DefaultPagedQuery.html#getAnnotationMetadata--">getAnnotationMetadata()</a></span> - Method in class io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/DefaultPagedQuery.html" title="class in io.micronaut.data.runtime.query.internal">DefaultPagedQuery</a></dt>
 <dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/query/internal/DelegateStoredQuery.html#getAnnotationMetadata--">getAnnotationMetadata()</a></span> - Method in interface io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/DelegateStoredQuery.html" title="interface in io.micronaut.data.runtime.query.internal">DelegateStoredQuery</a></dt>
+<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/support/AbstractConversionContext.html#getAnnotationMetadata--">getAnnotationMetadata()</a></span> - Method in class io.micronaut.data.runtime.support.<a href="io/micronaut/data/runtime/support/AbstractConversionContext.html" title="class in io.micronaut.data.runtime.support">AbstractConversionContext</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/processor/visitors/AnnotationMetadataHierarchy.html#getAnnotationNames--">getAnnotationNames()</a></span> - Method in class io.micronaut.data.processor.visitors.<a href="io/micronaut/data/processor/visitors/AnnotationMetadataHierarchy.html" title="class in io.micronaut.data.processor.visitors">AnnotationMetadataHierarchy</a></dt>
@@ -4562,9 +4580,9 @@
 <dd>
 <div class="block">The argument types to the method that invokes the query.</div>
 </dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/query/internal/DefaultPreparedQuery.html#getArgumentTypes--">getArgumentTypes()</a></span> - Method in class io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/DefaultPreparedQuery.html" title="class in io.micronaut.data.runtime.query.internal">DefaultPreparedQuery</a></dt>
-<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html#getArgumentTypes--">getArgumentTypes()</a></span> - Method in class io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html" title="class in io.micronaut.data.runtime.query.internal">DefaultStoredQuery</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/query/internal/DelegateStoredQuery.html#getArgumentTypes--">getArgumentTypes()</a></span> - Method in interface io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/DelegateStoredQuery.html" title="interface in io.micronaut.data.runtime.query.internal">DelegateStoredQuery</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/Association.html#getAssociatedEntity--">getAssociatedEntity()</a></span> - Method in interface io.micronaut.data.model.<a href="io/micronaut/data/model/Association.html" title="interface in io.micronaut.data.model">Association</a></dt>
 <dd>
@@ -4772,6 +4790,10 @@
 <dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.html#getConversionService--">getConversionService()</a></span> - Method in class io.micronaut.data.runtime.mapper.sql.<a href="io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.html" title="class in io.micronaut.data.runtime.mapper.sql">SqlResultEntityTypeMapper</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/mapper/TypeMapper.html#getConversionService--">getConversionService()</a></span> - Method in interface io.micronaut.data.runtime.mapper.<a href="io/micronaut/data/runtime/mapper/TypeMapper.html" title="interface in io.micronaut.data.runtime.mapper">TypeMapper</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/operations/internal/AbstractRepositoryOperations.html#getConversionService--">getConversionService()</a></span> - Method in class io.micronaut.data.runtime.operations.internal.<a href="io/micronaut/data/runtime/operations/internal/AbstractRepositoryOperations.html" title="class in io.micronaut.data.runtime.operations.internal">AbstractRepositoryOperations</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/query/DefaultPreparedQueryResolver.html#getConversionService--">getConversionService()</a></span> - Method in class io.micronaut.data.runtime.query.<a href="io/micronaut/data/runtime/query/DefaultPreparedQueryResolver.html" title="class in io.micronaut.data.runtime.query">DefaultPreparedQueryResolver</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/PersistentProperty.html#getConverter--">getConverter()</a></span> - Method in interface io.micronaut.data.model.<a href="io/micronaut/data/model/PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a></dt>
 <dd>&nbsp;</dd>
@@ -5000,9 +5022,9 @@
 <dd>
 <div class="block">The type of the ID member of the entity.</div>
 </dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/query/internal/DefaultPreparedQuery.html#getEntityIdentifierType--">getEntityIdentifierType()</a></span> - Method in class io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/DefaultPreparedQuery.html" title="class in io.micronaut.data.runtime.query.internal">DefaultPreparedQuery</a></dt>
-<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html#getEntityIdentifierType--">getEntityIdentifierType()</a></span> - Method in class io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html" title="class in io.micronaut.data.runtime.query.internal">DefaultStoredQuery</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/query/internal/DelegateStoredQuery.html#getEntityIdentifierType--">getEntityIdentifierType()</a></span> - Method in interface io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/DelegateStoredQuery.html" title="interface in io.micronaut.data.runtime.query.internal">DelegateStoredQuery</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/transaction/hibernate5/HibernateTransactionManager.html#getEntityInterceptor--">getEntityInterceptor()</a></span> - Method in class io.micronaut.transaction.hibernate5.<a href="io/micronaut/transaction/hibernate5/HibernateTransactionManager.html" title="class in io.micronaut.transaction.hibernate5">HibernateTransactionManager</a></dt>
 <dd>&nbsp;</dd>
@@ -5034,9 +5056,9 @@
 <dd>
 <div class="block">The query to execute.</div>
 </dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/query/internal/DefaultPreparedQuery.html#getExpandableQueryParts--">getExpandableQueryParts()</a></span> - Method in class io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/DefaultPreparedQuery.html" title="class in io.micronaut.data.runtime.query.internal">DefaultPreparedQuery</a></dt>
-<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html#getExpandableQueryParts--">getExpandableQueryParts()</a></span> - Method in class io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html" title="class in io.micronaut.data.runtime.query.internal">DefaultStoredQuery</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/query/internal/DelegateStoredQuery.html#getExpandableQueryParts--">getExpandableQueryParts()</a></span> - Method in interface io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/DelegateStoredQuery.html" title="interface in io.micronaut.data.runtime.query.internal">DelegateStoredQuery</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/impl/PersistentPropertyOrder.html#getExpression--">getExpression()</a></span> - Method in class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/PersistentPropertyOrder.html" title="class in io.micronaut.data.model.jpa.criteria.impl">PersistentPropertyOrder</a></dt>
 <dd>&nbsp;</dd>
@@ -5051,6 +5073,8 @@
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/impl/selection/AggregateExpression.html#getExpressionType--">getExpressionType()</a></span> - Method in class io.micronaut.data.model.jpa.criteria.impl.selection.<a href="io/micronaut/data/model/jpa/criteria/impl/selection/AggregateExpression.html" title="class in io.micronaut.data.model.jpa.criteria.impl.selection">AggregateExpression</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentEntityJoinSupport.html#getFetches--">getFetches()</a></span> - Method in class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentEntityJoinSupport.html" title="class in io.micronaut.data.model.jpa.criteria.impl">AbstractPersistentEntityJoinSupport</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/mongodb/operations/MongoStoredQuery.html#getFilter--">getFilter()</a></span> - Method in interface io.micronaut.data.mongodb.operations.<a href="io/micronaut/data/mongodb/operations/MongoStoredQuery.html" title="interface in io.micronaut.data.mongodb.operations">MongoStoredQuery</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.QueryState.html#getFinalQuery--">getFinalQuery()</a></span> - Method in class io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.QueryState.html" title="class in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder.QueryState</a></dt>
 <dd>&nbsp;</dd>
@@ -5067,6 +5091,8 @@
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentEntityCriteriaQuery.html#getGroupList--">getGroupList()</a></span> - Method in class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentEntityCriteriaQuery.html" title="class in io.micronaut.data.model.jpa.criteria.impl">AbstractPersistentEntityCriteriaQuery</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentEntityCriteriaQuery.html#getGroupRestriction--">getGroupRestriction()</a></span> - Method in class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentEntityCriteriaQuery.html" title="class in io.micronaut.data.model.jpa.criteria.impl">AbstractPersistentEntityCriteriaQuery</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/query/DefaultStoredQueryResolver.html#getHintsCapableRepository--">getHintsCapableRepository()</a></span> - Method in class io.micronaut.data.runtime.query.<a href="io/micronaut/data/runtime/query/DefaultStoredQueryResolver.html" title="class in io.micronaut.data.runtime.query">DefaultStoredQueryResolver</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/PersistentEntity.html#getIdentity--">getIdentity()</a></span> - Method in interface io.micronaut.data.model.<a href="io/micronaut/data/model/PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a></dt>
 <dd>
@@ -5102,25 +5128,19 @@
 <dd>
 <div class="block"><span class="deprecatedLabel">Deprecated.</span></div>
 </dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/query/internal/DefaultPreparedQuery.html#getIndexedParameterAutoPopulatedPreviousPropertyIndexes--">getIndexedParameterAutoPopulatedPreviousPropertyIndexes()</a></span> - Method in class io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/DefaultPreparedQuery.html" title="class in io.micronaut.data.runtime.query.internal">DefaultPreparedQuery</a></dt>
-<dd>&nbsp;</dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html#getIndexedParameterAutoPopulatedPreviousPropertyIndexes--">getIndexedParameterAutoPopulatedPreviousPropertyIndexes()</a></span> - Method in class io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html" title="class in io.micronaut.data.runtime.query.internal">DefaultStoredQuery</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/query/internal/DelegateStoredQuery.html#getIndexedParameterAutoPopulatedPreviousPropertyIndexes--">getIndexedParameterAutoPopulatedPreviousPropertyIndexes()</a></span> - Method in interface io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/DelegateStoredQuery.html" title="interface in io.micronaut.data.runtime.query.internal">DelegateStoredQuery</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/runtime/StoredQuery.html#getIndexedParameterAutoPopulatedPreviousPropertyPaths--">getIndexedParameterAutoPopulatedPreviousPropertyPaths()</a></span> - Method in interface io.micronaut.data.model.runtime.<a href="io/micronaut/data/model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a></dt>
 <dd>
 <div class="block"><span class="deprecatedLabel">Deprecated.</span></div>
 </dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/query/internal/DefaultPreparedQuery.html#getIndexedParameterAutoPopulatedPreviousPropertyPaths--">getIndexedParameterAutoPopulatedPreviousPropertyPaths()</a></span> - Method in class io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/DefaultPreparedQuery.html" title="class in io.micronaut.data.runtime.query.internal">DefaultPreparedQuery</a></dt>
-<dd>&nbsp;</dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html#getIndexedParameterAutoPopulatedPreviousPropertyPaths--">getIndexedParameterAutoPopulatedPreviousPropertyPaths()</a></span> - Method in class io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html" title="class in io.micronaut.data.runtime.query.internal">DefaultStoredQuery</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/query/internal/DelegateStoredQuery.html#getIndexedParameterAutoPopulatedPreviousPropertyPaths--">getIndexedParameterAutoPopulatedPreviousPropertyPaths()</a></span> - Method in interface io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/DelegateStoredQuery.html" title="interface in io.micronaut.data.runtime.query.internal">DelegateStoredQuery</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/runtime/StoredQuery.html#getIndexedParameterAutoPopulatedPropertyPaths--">getIndexedParameterAutoPopulatedPropertyPaths()</a></span> - Method in interface io.micronaut.data.model.runtime.<a href="io/micronaut/data/model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a></dt>
 <dd>
 <div class="block"><span class="deprecatedLabel">Deprecated.</span></div>
 </dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/query/internal/DefaultPreparedQuery.html#getIndexedParameterAutoPopulatedPropertyPaths--">getIndexedParameterAutoPopulatedPropertyPaths()</a></span> - Method in class io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/DefaultPreparedQuery.html" title="class in io.micronaut.data.runtime.query.internal">DefaultPreparedQuery</a></dt>
-<dd>&nbsp;</dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html#getIndexedParameterAutoPopulatedPropertyPaths--">getIndexedParameterAutoPopulatedPropertyPaths()</a></span> - Method in class io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html" title="class in io.micronaut.data.runtime.query.internal">DefaultStoredQuery</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/query/internal/DelegateStoredQuery.html#getIndexedParameterAutoPopulatedPropertyPaths--">getIndexedParameterAutoPopulatedPropertyPaths()</a></span> - Method in interface io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/DelegateStoredQuery.html" title="interface in io.micronaut.data.runtime.query.internal">DelegateStoredQuery</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/runtime/StoredQuery.html#getIndexedParameterBinding--">getIndexedParameterBinding()</a></span> - Method in interface io.micronaut.data.model.runtime.<a href="io/micronaut/data/model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a></dt>
 <dd>
@@ -5132,8 +5152,6 @@
 <dd>
 <div class="block"><span class="deprecatedLabel">Deprecated.</span></div>
 </dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html#getIndexedParameterPaths--">getIndexedParameterPaths()</a></span> - Method in class io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html" title="class in io.micronaut.data.runtime.query.internal">DefaultStoredQuery</a></dt>
-<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/runtime/StoredQuery.html#getIndexedParameterTypes--">getIndexedParameterTypes()</a></span> - Method in interface io.micronaut.data.model.runtime.<a href="io/micronaut/data/model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a></dt>
 <dd>
 <div class="block"><span class="deprecatedLabel">Deprecated.</span></div>
@@ -5216,9 +5234,9 @@
 </dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/runtime/StoredQuery.html#getJoinFetchPaths--">getJoinFetchPaths()</a></span> - Method in interface io.micronaut.data.model.runtime.<a href="io/micronaut/data/model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a></dt>
 <dd>&nbsp;</dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/query/internal/DefaultPreparedQuery.html#getJoinFetchPaths--">getJoinFetchPaths()</a></span> - Method in class io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/DefaultPreparedQuery.html" title="class in io.micronaut.data.runtime.query.internal">DefaultPreparedQuery</a></dt>
-<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html#getJoinFetchPaths--">getJoinFetchPaths()</a></span> - Method in class io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html" title="class in io.micronaut.data.runtime.query.internal">DefaultStoredQuery</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/query/internal/DelegateStoredQuery.html#getJoinFetchPaths--">getJoinFetchPaths()</a></span> - Method in interface io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/DelegateStoredQuery.html" title="interface in io.micronaut.data.runtime.query.internal">DelegateStoredQuery</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/DefaultQuery.html#getJoinPath-java.lang.String-">getJoinPath(String)</a></span> - Method in class io.micronaut.data.model.query.<a href="io/micronaut/data/model/query/DefaultQuery.html" title="class in io.micronaut.data.model.query">DefaultQuery</a></dt>
 <dd>
@@ -5530,9 +5548,9 @@
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/query/internal/DefaultPagedQuery.html#getName--">getName()</a></span> - Method in class io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/DefaultPagedQuery.html" title="class in io.micronaut.data.runtime.query.internal">DefaultPagedQuery</a></dt>
 <dd>&nbsp;</dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/query/internal/DefaultPreparedQuery.html#getName--">getName()</a></span> - Method in class io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/DefaultPreparedQuery.html" title="class in io.micronaut.data.runtime.query.internal">DefaultPreparedQuery</a></dt>
-<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html#getName--">getName()</a></span> - Method in class io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html" title="class in io.micronaut.data.runtime.query.internal">DefaultStoredQuery</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/query/internal/DelegateStoredQuery.html#getName--">getName()</a></span> - Method in interface io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/DelegateStoredQuery.html" title="interface in io.micronaut.data.runtime.query.internal">DelegateStoredQuery</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/query/internal/StoredQueryParameter.html#getName--">getName()</a></span> - Method in class io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/StoredQueryParameter.html" title="class in io.micronaut.data.runtime.query.internal">StoredQueryParameter</a></dt>
 <dd>&nbsp;</dd>
@@ -5593,10 +5611,6 @@
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/impl/predicate/PersistentPropertyBinaryPredicate.html#getOp--">getOp()</a></span> - Method in class io.micronaut.data.model.jpa.criteria.impl.predicate.<a href="io/micronaut/data/model/jpa/criteria/impl/predicate/PersistentPropertyBinaryPredicate.html" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate">PersistentPropertyBinaryPredicate</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/impl/predicate/PersistentPropertyUnaryPredicate.html#getOp--">getOp()</a></span> - Method in class io.micronaut.data.model.jpa.criteria.impl.predicate.<a href="io/micronaut/data/model/jpa/criteria/impl/predicate/PersistentPropertyUnaryPredicate.html" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate">PersistentPropertyUnaryPredicate</a></dt>
-<dd>&nbsp;</dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/query/DefaultPreparedQueryResolver.html#getOperations--">getOperations()</a></span> - Method in class io.micronaut.data.runtime.query.<a href="io/micronaut/data/runtime/query/DefaultPreparedQueryResolver.html" title="class in io.micronaut.data.runtime.query">DefaultPreparedQueryResolver</a></dt>
-<dd>&nbsp;</dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/query/DefaultStoredQueryResolver.html#getOperations--">getOperations()</a></span> - Method in class io.micronaut.data.runtime.query.<a href="io/micronaut/data/runtime/query/DefaultStoredQueryResolver.html" title="class in io.micronaut.data.runtime.query">DefaultStoredQueryResolver</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/processor/visitors/finders/AbstractCriteriaMethodMatch.html#getOperationType--">getOperationType()</a></span> - Method in class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/AbstractCriteriaMethodMatch.html" title="class in io.micronaut.data.processor.visitors.finders">AbstractCriteriaMethodMatch</a></dt>
 <dd>&nbsp;</dd>
@@ -5695,10 +5709,6 @@
 <dd>
 <div class="block"><span class="deprecatedLabel">Deprecated.</span></div>
 </dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/query/internal/DefaultPreparedQuery.html#getParameterBinding--">getParameterBinding()</a></span> - Method in class io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/DefaultPreparedQuery.html" title="class in io.micronaut.data.runtime.query.internal">DefaultPreparedQuery</a></dt>
-<dd>&nbsp;</dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html#getParameterBinding--">getParameterBinding()</a></span> - Method in class io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html" title="class in io.micronaut.data.runtime.query.internal">DefaultStoredQuery</a></dt>
-<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/builder/QueryParameterBinding.html#getParameterBindingPath--">getParameterBindingPath()</a></span> - Method in interface io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/QueryParameterBinding.html" title="interface in io.micronaut.data.model.query.builder">QueryParameterBinding</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/runtime/QueryParameterBinding.html#getParameterBindingPath--">getParameterBindingPath()</a></span> - Method in interface io.micronaut.data.model.runtime.<a href="io/micronaut/data/model/runtime/QueryParameterBinding.html" title="interface in io.micronaut.data.model.runtime">QueryParameterBinding</a></dt>
@@ -5737,8 +5747,6 @@
 <dd>
 <div class="block"><span class="deprecatedLabel">Deprecated.</span></div>
 </dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html#getParameterNames--">getParameterNames()</a></span> - Method in class io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html" title="class in io.micronaut.data.runtime.query.internal">DefaultStoredQuery</a></dt>
-<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/processor/visitors/finders/MethodMatchInfo.html#getParameterRoles--">getParameterRoles()</a></span> - Method in class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/MethodMatchInfo.html" title="class in io.micronaut.data.processor.visitors.finders">MethodMatchInfo</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentEntityCriteriaQuery.html#getParameters--">getParameters()</a></span> - Method in class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentEntityCriteriaQuery.html" title="class in io.micronaut.data.model.jpa.criteria.impl">AbstractPersistentEntityCriteriaQuery</a></dt>
@@ -5852,6 +5860,8 @@
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/runtime/RuntimePersistentEntity.html#getPersistentPropertyNames--">getPersistentPropertyNames()</a></span> - Method in class io.micronaut.data.model.runtime.<a href="io/micronaut/data/model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/processor/model/SourcePersistentEntity.html#getPersistentPropertyNames--">getPersistentPropertyNames()</a></span> - Method in class io.micronaut.data.processor.model.<a href="io/micronaut/data/processor/model/SourcePersistentEntity.html" title="class in io.micronaut.data.processor.model">SourcePersistentEntity</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/mongodb/operations/MongoStoredQuery.html#getPipeline--">getPipeline()</a></span> - Method in interface io.micronaut.data.mongodb.operations.<a href="io/micronaut/data/mongodb/operations/MongoStoredQuery.html" title="interface in io.micronaut.data.mongodb.operations">MongoStoredQuery</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/impl/ParameterExpressionImpl.html#getPosition--">getPosition()</a></span> - Method in class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/ParameterExpressionImpl.html" title="class in io.micronaut.data.model.jpa.criteria.impl">ParameterExpressionImpl</a></dt>
 <dd>&nbsp;</dd>
@@ -5976,13 +5986,15 @@
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html#getQuery--">getQuery()</a></span> - Method in class io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html" title="class in io.micronaut.data.runtime.query.internal">DefaultStoredQuery</a></dt>
 <dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/query/internal/DelegateStoredQuery.html#getQuery--">getQuery()</a></span> - Method in interface io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/DelegateStoredQuery.html" title="interface in io.micronaut.data.runtime.query.internal">DelegateStoredQuery</a></dt>
+<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/runtime/StoredQuery.html#getQueryBindings--">getQueryBindings()</a></span> - Method in interface io.micronaut.data.model.runtime.<a href="io/micronaut/data/model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a></dt>
 <dd>
 <div class="block">The list of query bindings.</div>
 </dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/query/internal/DefaultPreparedQuery.html#getQueryBindings--">getQueryBindings()</a></span> - Method in class io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/DefaultPreparedQuery.html" title="class in io.micronaut.data.runtime.query.internal">DefaultPreparedQuery</a></dt>
-<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html#getQueryBindings--">getQueryBindings()</a></span> - Method in class io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html" title="class in io.micronaut.data.runtime.query.internal">DefaultStoredQuery</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/query/internal/DelegateStoredQuery.html#getQueryBindings--">getQueryBindings()</a></span> - Method in interface io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/DelegateStoredQuery.html" title="interface in io.micronaut.data.runtime.query.internal">DelegateStoredQuery</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/processor/visitors/MatchContext.html#getQueryBuilder--">getQueryBuilder()</a></span> - Method in class io.micronaut.data.processor.visitors.<a href="io/micronaut/data/processor/visitors/MatchContext.html" title="class in io.micronaut.data.processor.visitors">MatchContext</a></dt>
 <dd>&nbsp;</dd>
@@ -6000,13 +6012,15 @@
 <dd>
 <div class="block">The parameter binding.</div>
 </dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/operations/RepositoryOperations.html#getQueryHints-io.micronaut.data.model.runtime.StoredQuery-">getQueryHints(StoredQuery&lt;?, ?&gt;)</a></span> - Method in interface io.micronaut.data.operations.<a href="io/micronaut/data/operations/RepositoryOperations.html" title="interface in io.micronaut.data.operations">RepositoryOperations</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/operations/HintsCapableRepository.html#getQueryHints-io.micronaut.data.model.runtime.StoredQuery-">getQueryHints(StoredQuery&lt;?, ?&gt;)</a></span> - Method in interface io.micronaut.data.operations.<a href="io/micronaut/data/operations/HintsCapableRepository.html" title="interface in io.micronaut.data.operations">HintsCapableRepository</a></dt>
 <dd>
 <div class="block">Obtain any custom query hints for this method and repository implementation.</div>
 </dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/query/internal/DefaultPreparedQuery.html#getQueryHints--">getQueryHints()</a></span> - Method in class io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/DefaultPreparedQuery.html" title="class in io.micronaut.data.runtime.query.internal">DefaultPreparedQuery</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html#getQueryHints--">getQueryHints()</a></span> - Method in class io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html" title="class in io.micronaut.data.runtime.query.internal">DefaultStoredQuery</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/query/internal/DelegateStoredQuery.html#getQueryHints--">getQueryHints()</a></span> - Method in interface io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/DelegateStoredQuery.html" title="interface in io.micronaut.data.runtime.query.internal">DelegateStoredQuery</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentEntityCriteriaDelete.html#getQueryModel--">getQueryModel()</a></span> - Method in class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentEntityCriteriaDelete.html" title="class in io.micronaut.data.model.jpa.criteria.impl">AbstractPersistentEntityCriteriaDelete</a></dt>
 <dd>&nbsp;</dd>
@@ -6125,11 +6139,13 @@
 <dd>
 <div class="block">The query result type.</div>
 </dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/query/internal/DelegateStoredQuery.html#getResultArgument--">getResultArgument()</a></span> - Method in interface io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/DelegateStoredQuery.html" title="interface in io.micronaut.data.runtime.query.internal">DelegateStoredQuery</a></dt>
+<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/runtime/StoredQuery.html#getResultDataType--">getResultDataType()</a></span> - Method in interface io.micronaut.data.model.runtime.<a href="io/micronaut/data/model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a></dt>
 <dd>&nbsp;</dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/query/internal/DefaultPreparedQuery.html#getResultDataType--">getResultDataType()</a></span> - Method in class io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/DefaultPreparedQuery.html" title="class in io.micronaut.data.runtime.query.internal">DefaultPreparedQuery</a></dt>
-<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html#getResultDataType--">getResultDataType()</a></span> - Method in class io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html" title="class in io.micronaut.data.runtime.query.internal">DefaultStoredQuery</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/query/internal/DelegateStoredQuery.html#getResultDataType--">getResultDataType()</a></span> - Method in interface io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/DelegateStoredQuery.html" title="interface in io.micronaut.data.runtime.query.internal">DelegateStoredQuery</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/mapper/DTOMapper.html#getResultReader--">getResultReader()</a></span> - Method in class io.micronaut.data.runtime.mapper.<a href="io/micronaut/data/runtime/mapper/DTOMapper.html" title="class in io.micronaut.data.runtime.mapper">DTOMapper</a></dt>
 <dd>&nbsp;</dd>
@@ -6149,9 +6165,9 @@
 <dd>
 <div class="block">The computed result type.</div>
 </dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/query/internal/DefaultPreparedQuery.html#getResultType--">getResultType()</a></span> - Method in class io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/DefaultPreparedQuery.html" title="class in io.micronaut.data.runtime.query.internal">DefaultPreparedQuery</a></dt>
-<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html#getResultType--">getResultType()</a></span> - Method in class io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html" title="class in io.micronaut.data.runtime.query.internal">DefaultStoredQuery</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/query/internal/DelegateStoredQuery.html#getResultType--">getResultType()</a></span> - Method in interface io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/DelegateStoredQuery.html" title="interface in io.micronaut.data.runtime.query.internal">DelegateStoredQuery</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/processor/visitors/MatchContext.html#getReturnType--">getReturnType()</a></span> - Method in class io.micronaut.data.processor.visitors.<a href="io/micronaut/data/processor/visitors/MatchContext.html" title="class in io.micronaut.data.processor.visitors">MatchContext</a></dt>
 <dd>&nbsp;</dd>
@@ -6200,6 +6216,8 @@
 <dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/query/internal/DefaultPreparedQuery.html#getRootEntity--">getRootEntity()</a></span> - Method in class io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/DefaultPreparedQuery.html" title="class in io.micronaut.data.runtime.query.internal">DefaultPreparedQuery</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html#getRootEntity--">getRootEntity()</a></span> - Method in class io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html" title="class in io.micronaut.data.runtime.query.internal">DefaultStoredQuery</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/query/internal/DelegateStoredQuery.html#getRootEntity--">getRootEntity()</a></span> - Method in interface io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/DelegateStoredQuery.html" title="interface in io.micronaut.data.runtime.query.internal">DelegateStoredQuery</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentEntityCriteriaQuery.html#getRoots--">getRoots()</a></span> - Method in class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentEntityCriteriaQuery.html" title="class in io.micronaut.data.model.jpa.criteria.impl">AbstractPersistentEntityCriteriaQuery</a></dt>
 <dd>&nbsp;</dd>
@@ -6286,6 +6304,10 @@
 <dd>
 <div class="block">Possible stored query if exists.</div>
 </dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/query/internal/DefaultPreparedQuery.html#getStoredQueryDelegate--">getStoredQueryDelegate()</a></span> - Method in class io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/DefaultPreparedQuery.html" title="class in io.micronaut.data.runtime.query.internal">DefaultPreparedQuery</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/query/internal/DelegateStoredQuery.html#getStoredQueryDelegate--">getStoredQueryDelegate()</a></span> - Method in interface io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/DelegateStoredQuery.html" title="interface in io.micronaut.data.runtime.query.internal">DelegateStoredQuery</a></dt>
+<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/QueryModel.Exists.html#getSubquery--">getSubquery()</a></span> - Method in class io.micronaut.data.model.query.<a href="io/micronaut/data/model/query/QueryModel.Exists.html" title="class in io.micronaut.data.model.query">QueryModel.Exists</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/QueryModel.In.html#getSubquery--">getSubquery()</a></span> - Method in class io.micronaut.data.model.query.<a href="io/micronaut/data/model/query/QueryModel.In.html" title="class in io.micronaut.data.model.query">QueryModel.In</a></dt>
@@ -6373,6 +6395,8 @@
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/runtime/StoredDataOperation.html#getTransactionDefinition--">getTransactionDefinition()</a></span> - Method in interface io.micronaut.data.model.runtime.<a href="io/micronaut/data/model/runtime/StoredDataOperation.html" title="interface in io.micronaut.data.model.runtime">StoredDataOperation</a></dt>
 <dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/query/internal/DelegateStoredQuery.html#getTransactionDefinition--">getTransactionDefinition()</a></span> - Method in interface io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/DelegateStoredQuery.html" title="interface in io.micronaut.data.runtime.query.internal">DelegateStoredQuery</a></dt>
+<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/transaction/interceptor/TransactionalInterceptor.TransactionInfo.html#getTransactionManager--">getTransactionManager()</a></span> - Method in class io.micronaut.transaction.interceptor.<a href="io/micronaut/transaction/interceptor/TransactionalInterceptor.TransactionInfo.html" title="class in io.micronaut.transaction.interceptor">TransactionalInterceptor.TransactionInfo</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/transaction/interceptor/TransactionalInterceptor.TransactionInfo.html#getTransactionStatus--">getTransactionStatus()</a></span> - Method in class io.micronaut.transaction.interceptor.<a href="io/micronaut/transaction/interceptor/TransactionalInterceptor.TransactionInfo.html" title="class in io.micronaut.transaction.interceptor">TransactionalInterceptor.TransactionInfo</a></dt>
@@ -6418,13 +6442,7 @@
 </dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/builder/QueryResult.html#getUpdate--">getUpdate()</a></span> - Method in interface io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/QueryResult.html" title="interface in io.micronaut.data.model.query.builder">QueryResult</a></dt>
 <dd>&nbsp;</dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/model/runtime/StoredQuery.html#getUpdate--">getUpdate()</a></span> - Method in interface io.micronaut.data.model.runtime.<a href="io/micronaut/data/model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a></dt>
-<dd>
-<div class="block">The query to execute.</div>
-</dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/query/internal/DefaultPreparedQuery.html#getUpdate--">getUpdate()</a></span> - Method in class io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/DefaultPreparedQuery.html" title="class in io.micronaut.data.runtime.query.internal">DefaultPreparedQuery</a></dt>
-<dd>&nbsp;</dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html#getUpdate--">getUpdate()</a></span> - Method in class io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html" title="class in io.micronaut.data.runtime.query.internal">DefaultStoredQuery</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/mongodb/operations/MongoStoredQuery.html#getUpdate--">getUpdate()</a></span> - Method in interface io.micronaut.data.mongodb.operations.<a href="io/micronaut/data/mongodb/operations/MongoStoredQuery.html" title="interface in io.micronaut.data.mongodb.operations">MongoStoredQuery</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html#getUpdateAllBatchOperation-io.micronaut.aop.MethodInvocationContext-java.lang.Class-java.lang.Iterable-">getUpdateAllBatchOperation(MethodInvocationContext&lt;T, ?&gt;, Class&lt;E&gt;, Iterable&lt;E&gt;)</a></span> - Method in class io.micronaut.data.runtime.intercept.<a href="io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html" title="class in io.micronaut.data.runtime.intercept">AbstractQueryInterceptor</a></dt>
 <dd>
@@ -6692,11 +6710,7 @@
 <dd>
 <div class="block"><span class="deprecatedLabel">Deprecated.</span></div>
 </dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/query/internal/DefaultPreparedQuery.html#hasInExpression--">hasInExpression()</a></span> - Method in class io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/DefaultPreparedQuery.html" title="class in io.micronaut.data.runtime.query.internal">DefaultPreparedQuery</a></dt>
-<dd>
-<div class="block"><span class="deprecatedLabel">Deprecated.</span></div>
-</dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html#hasInExpression--">hasInExpression()</a></span> - Method in class io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html" title="class in io.micronaut.data.runtime.query.internal">DefaultStoredQuery</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/query/internal/DelegateStoredQuery.html#hasInExpression--">hasInExpression()</a></span> - Method in interface io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/DelegateStoredQuery.html" title="interface in io.micronaut.data.runtime.query.internal">DelegateStoredQuery</a></dt>
 <dd>
 <div class="block"><span class="deprecatedLabel">Deprecated.</span></div>
 </dd>
@@ -6716,9 +6730,9 @@
 <dd>
 <div class="block">Does the query have a pageable.</div>
 </dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/query/internal/DefaultPreparedQuery.html#hasPageable--">hasPageable()</a></span> - Method in class io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/DefaultPreparedQuery.html" title="class in io.micronaut.data.runtime.query.internal">DefaultPreparedQuery</a></dt>
-<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html#hasPageable--">hasPageable()</a></span> - Method in class io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html" title="class in io.micronaut.data.runtime.query.internal">DefaultStoredQuery</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/query/internal/DelegateStoredQuery.html#hasPageable--">hasPageable()</a></span> - Method in interface io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/DelegateStoredQuery.html" title="interface in io.micronaut.data.runtime.query.internal">DelegateStoredQuery</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/processor/visitors/MethodMatchContext.html#hasParameterInRole-java.lang.String-">hasParameterInRole(String)</a></span> - Method in class io.micronaut.data.processor.visitors.<a href="io/micronaut/data/processor/visitors/MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a></dt>
 <dd>
@@ -6762,9 +6776,9 @@
 </dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/runtime/StoredQuery.html#hasResultConsumer--">hasResultConsumer()</a></span> - Method in interface io.micronaut.data.model.runtime.<a href="io/micronaut/data/model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a></dt>
 <dd>&nbsp;</dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/query/internal/DefaultPreparedQuery.html#hasResultConsumer--">hasResultConsumer()</a></span> - Method in class io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/DefaultPreparedQuery.html" title="class in io.micronaut.data.runtime.query.internal">DefaultPreparedQuery</a></dt>
-<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html#hasResultConsumer--">hasResultConsumer()</a></span> - Method in class io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html" title="class in io.micronaut.data.runtime.query.internal">DefaultStoredQuery</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/query/internal/DelegateStoredQuery.html#hasResultConsumer--">hasResultConsumer()</a></span> - Method in interface io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/DelegateStoredQuery.html" title="interface in io.micronaut.data.runtime.query.internal">DelegateStoredQuery</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/transaction/support/AbstractTransactionStatus.html#hasSavepoint--">hasSavepoint()</a></span> - Method in class io.micronaut.transaction.support.<a href="io/micronaut/transaction/support/AbstractTransactionStatus.html" title="class in io.micronaut.transaction.support">AbstractTransactionStatus</a></dt>
 <dd>&nbsp;</dd>
@@ -6832,6 +6846,10 @@
 <dt><span class="memberNameLink"><a href="io/micronaut/transaction/hibernate5/HibernateTransactionManager.html#HibernateTransactionManager-org.hibernate.SessionFactory-javax.sql.DataSource-org.hibernate.Interceptor-">HibernateTransactionManager(SessionFactory, DataSource, Interceptor)</a></span> - Constructor for class io.micronaut.transaction.hibernate5.<a href="io/micronaut/transaction/hibernate5/HibernateTransactionManager.html" title="class in io.micronaut.transaction.hibernate5">HibernateTransactionManager</a></dt>
 <dd>
 <div class="block">Create a new HibernateTransactionManager instance.</div>
+</dd>
+<dt><a href="io/micronaut/data/operations/HintsCapableRepository.html" title="interface in io.micronaut.data.operations"><span class="typeNameLink">HintsCapableRepository</span></a> - Interface in <a href="io/micronaut/data/operations/package-summary.html">io.micronaut.data.operations</a></dt>
+<dd>
+<div class="block">Hints capable repository interface.</div>
 </dd>
 </dl>
 <a name="I:I">
@@ -7722,9 +7740,9 @@
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/runtime/StoredQuery.html#isCount--">isCount()</a></span> - Method in interface io.micronaut.data.model.runtime.<a href="io/micronaut/data/model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a></dt>
 <dd>&nbsp;</dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/query/internal/DefaultPreparedQuery.html#isCount--">isCount()</a></span> - Method in class io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/DefaultPreparedQuery.html" title="class in io.micronaut.data.runtime.query.internal">DefaultPreparedQuery</a></dt>
-<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html#isCount--">isCount()</a></span> - Method in class io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html" title="class in io.micronaut.data.runtime.query.internal">DefaultStoredQuery</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/query/internal/DelegateStoredQuery.html#isCount--">isCount()</a></span> - Method in interface io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/DelegateStoredQuery.html" title="interface in io.micronaut.data.runtime.query.internal">DelegateStoredQuery</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/mongodb/conf/MongoDataConfiguration.html#isCreateCollections--">isCreateCollections()</a></span> - Method in class io.micronaut.data.mongodb.conf.<a href="io/micronaut/data/mongodb/conf/MongoDataConfiguration.html" title="class in io.micronaut.data.mongodb.conf">MongoDataConfiguration</a></dt>
 <dd>&nbsp;</dd>
@@ -7749,6 +7767,8 @@
 <dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/query/internal/DefaultPreparedQuery.html#isDtoProjection--">isDtoProjection()</a></span> - Method in class io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/DefaultPreparedQuery.html" title="class in io.micronaut.data.runtime.query.internal">DefaultPreparedQuery</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html#isDtoProjection--">isDtoProjection()</a></span> - Method in class io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html" title="class in io.micronaut.data.runtime.query.internal">DefaultStoredQuery</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/query/internal/DelegateStoredQuery.html#isDtoProjection--">isDtoProjection()</a></span> - Method in interface io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/DelegateStoredQuery.html" title="interface in io.micronaut.data.runtime.query.internal">DelegateStoredQuery</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/jpa/criteria/ISelection.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">ISelection</span></a>&lt;<a href="io/micronaut/data/model/jpa/criteria/ISelection.html" title="type parameter in ISelection">T</a>&gt; - Interface in <a href="io/micronaut/data/model/jpa/criteria/package-summary.html">io.micronaut.data.model.jpa.criteria</a></dt>
 <dd>
@@ -7953,9 +7973,9 @@
 <dd>
 <div class="block">In cases where one needs to differentiate between at higher level query format (like JPA-QL) and a lower level format (like SQL).</div>
 </dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/query/internal/DefaultPreparedQuery.html#isNative--">isNative()</a></span> - Method in class io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/DefaultPreparedQuery.html" title="class in io.micronaut.data.runtime.query.internal">DefaultPreparedQuery</a></dt>
-<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html#isNative--">isNative()</a></span> - Method in class io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html" title="class in io.micronaut.data.runtime.query.internal">DefaultStoredQuery</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/query/internal/DelegateStoredQuery.html#isNative--">isNative()</a></span> - Method in interface io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/DelegateStoredQuery.html" title="interface in io.micronaut.data.runtime.query.internal">DelegateStoredQuery</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/impl/predicate/AbstractPredicate.html#isNegated--">isNegated()</a></span> - Method in class io.micronaut.data.model.jpa.criteria.impl.predicate.<a href="io/micronaut/data/model/jpa/criteria/impl/predicate/AbstractPredicate.html" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate">AbstractPredicate</a></dt>
 <dd>&nbsp;</dd>
@@ -8120,9 +8140,9 @@
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/operations/internal/StoredSqlOperation.html#isOptimisticLock--">isOptimisticLock()</a></span> - Method in class io.micronaut.data.runtime.operations.internal.<a href="io/micronaut/data/runtime/operations/internal/StoredSqlOperation.html" title="class in io.micronaut.data.runtime.operations.internal">StoredSqlOperation</a></dt>
 <dd>&nbsp;</dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/query/internal/DefaultPreparedQuery.html#isOptimisticLock--">isOptimisticLock()</a></span> - Method in class io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/DefaultPreparedQuery.html" title="class in io.micronaut.data.runtime.query.internal">DefaultPreparedQuery</a></dt>
-<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html#isOptimisticLock--">isOptimisticLock()</a></span> - Method in class io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html" title="class in io.micronaut.data.runtime.query.internal">DefaultStoredQuery</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/query/internal/DelegateStoredQuery.html#isOptimisticLock--">isOptimisticLock()</a></span> - Method in interface io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/DelegateStoredQuery.html" title="interface in io.micronaut.data.runtime.query.internal">DelegateStoredQuery</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/PersistentProperty.html#isOptional--">isOptional()</a></span> - Method in interface io.micronaut.data.model.<a href="io/micronaut/data/model/PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a></dt>
 <dd>
@@ -8246,9 +8266,9 @@
 <dd>
 <div class="block">Whether the query can be treated as a single result.</div>
 </dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/query/internal/DefaultPreparedQuery.html#isSingleResult--">isSingleResult()</a></span> - Method in class io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/DefaultPreparedQuery.html" title="class in io.micronaut.data.runtime.query.internal">DefaultPreparedQuery</a></dt>
-<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html#isSingleResult--">isSingleResult()</a></span> - Method in class io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html" title="class in io.micronaut.data.runtime.query.internal">DefaultStoredQuery</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/query/internal/DelegateStoredQuery.html#isSingleResult--">isSingleResult()</a></span> - Method in interface io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/DelegateStoredQuery.html" title="interface in io.micronaut.data.runtime.query.internal">DelegateStoredQuery</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/processor/visitors/finders/FindersUtils.html#isSlice-io.micronaut.data.processor.visitors.MethodMatchContext-io.micronaut.inject.ast.ClassElement-">isSlice(MethodMatchContext, ClassElement)</a></span> - Static method in interface io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/FindersUtils.html" title="interface in io.micronaut.data.processor.visitors.finders">FindersUtils</a></dt>
 <dd>&nbsp;</dd>
@@ -9484,6 +9504,10 @@
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/mongodb/operations/DefaultReactiveMongoRepositoryOperations.MongoOperationContext.html#MongoOperationContext-com.mongodb.reactivestreams.client.ClientSession-java.lang.Class-io.micronaut.core.annotation.AnnotationMetadata-">MongoOperationContext(ClientSession, Class&lt;?&gt;, AnnotationMetadata)</a></span> - Constructor for class io.micronaut.data.mongodb.operations.<a href="io/micronaut/data/mongodb/operations/DefaultReactiveMongoRepositoryOperations.MongoOperationContext.html" title="class in io.micronaut.data.mongodb.operations">DefaultReactiveMongoRepositoryOperations.MongoOperationContext</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/mongodb/operations/MongoPreparedQuery.html" title="interface in io.micronaut.data.mongodb.operations"><span class="typeNameLink">MongoPreparedQuery</span></a>&lt;<a href="io/micronaut/data/mongodb/operations/MongoPreparedQuery.html" title="type parameter in MongoPreparedQuery">E</a>,<a href="io/micronaut/data/mongodb/operations/MongoPreparedQuery.html" title="type parameter in MongoPreparedQuery">R</a>&gt; - Interface in <a href="io/micronaut/data/mongodb/operations/package-summary.html">io.micronaut.data.mongodb.operations</a></dt>
+<dd>
+<div class="block">MongoDB's <a href="io/micronaut/data/model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime"><code>PreparedQuery</code></a>.</div>
+</dd>
 <dt><a href="io/micronaut/data/document/model/query/builder/MongoQueryBuilder.html" title="class in io.micronaut.data.document.model.query.builder"><span class="typeNameLink">MongoQueryBuilder</span></a> - Class in <a href="io/micronaut/data/document/model/query/builder/package-summary.html">io.micronaut.data.document.model.query.builder</a></dt>
 <dd>
 <div class="block">The Mongo query builder.</div>
@@ -9515,6 +9539,10 @@
 <dt><a href="io/micronaut/data/mongodb/operations/MongoRepositoryOperations.html" title="interface in io.micronaut.data.mongodb.operations"><span class="typeNameLink">MongoRepositoryOperations</span></a> - Interface in <a href="io/micronaut/data/mongodb/operations/package-summary.html">io.micronaut.data.mongodb.operations</a></dt>
 <dd>
 <div class="block">Mongo DB repository operations.</div>
+</dd>
+<dt><a href="io/micronaut/data/mongodb/operations/MongoStoredQuery.html" title="interface in io.micronaut.data.mongodb.operations"><span class="typeNameLink">MongoStoredQuery</span></a>&lt;<a href="io/micronaut/data/mongodb/operations/MongoStoredQuery.html" title="type parameter in MongoStoredQuery">E</a>,<a href="io/micronaut/data/mongodb/operations/MongoStoredQuery.html" title="type parameter in MongoStoredQuery">R</a>&gt; - Interface in <a href="io/micronaut/data/mongodb/operations/package-summary.html">io.micronaut.data.mongodb.operations</a></dt>
+<dd>
+<div class="block">MongoDB's <a href="io/micronaut/data/model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime"><code>StoredQuery</code></a>.</div>
 </dd>
 <dt><a href="io/micronaut/data/mongodb/transaction/MongoSynchronousTransactionManager.html" title="class in io.micronaut.data.mongodb.transaction"><span class="typeNameLink">MongoSynchronousTransactionManager</span></a> - Class in <a href="io/micronaut/data/mongodb/transaction/package-summary.html">io.micronaut.data.mongodb.transaction</a></dt>
 <dd>
@@ -14532,12 +14560,12 @@
 <dd>
 <div class="block">Are the placeholders for query set using numeric indices starting from 1.</div>
 </dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/query/internal/DefaultPreparedQuery.html#useNumericPlaceholders--">useNumericPlaceholders()</a></span> - Method in class io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/DefaultPreparedQuery.html" title="class in io.micronaut.data.runtime.query.internal">DefaultPreparedQuery</a></dt>
-<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html#useNumericPlaceholders--">useNumericPlaceholders()</a></span> - Method in class io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html" title="class in io.micronaut.data.runtime.query.internal">DefaultStoredQuery</a></dt>
 <dd>
 <div class="block">Is this a raw SQL query.</div>
 </dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/query/internal/DelegateStoredQuery.html#useNumericPlaceholders--">useNumericPlaceholders()</a></span> - Method in interface io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/DelegateStoredQuery.html" title="interface in io.micronaut.data.runtime.query.internal">DelegateStoredQuery</a></dt>
+<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html#useSavepointForNestedTransaction--">useSavepointForNestedTransaction()</a></span> - Method in class io.micronaut.transaction.support.<a href="io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html" title="class in io.micronaut.transaction.support">AbstractSynchronousTransactionManager</a></dt>
 <dd>
 <div class="block">Return whether to use a savepoint for a nested transaction.</div>

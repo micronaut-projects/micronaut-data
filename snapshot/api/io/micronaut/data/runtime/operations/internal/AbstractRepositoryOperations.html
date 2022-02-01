@@ -17,7 +17,7 @@
     catch(err) {
     }
 //-->
-var methods = {"i0":10,"i1":10,"i2":10,"i3":6,"i4":10,"i5":10,"i6":10,"i7":10,"i8":10,"i9":10,"i10":10};
+var methods = {"i0":10,"i1":10,"i2":10,"i3":6,"i4":10,"i5":10,"i6":10,"i7":10,"i8":10,"i9":10,"i10":10,"i11":10};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],4:["t3","Abstract Methods"],8:["t4","Concrete Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -250,37 +250,41 @@ implements io.micronaut.context.ApplicationContextProvider, <a href="../../../..
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractRepositoryOperations.html#getApplicationContext--">getApplicationContext</a></span>()</code>&nbsp;</td>
 </tr>
 <tr id="i5" class="rowColor">
+<td class="colFirst"><code><a href="../../../../../../io/micronaut/data/runtime/convert/DataConversionService.html" title="interface in io.micronaut.data.runtime.convert">DataConversionService</a>&lt;?&gt;</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractRepositoryOperations.html#getConversionService--">getConversionService</a></span>()</code>&nbsp;</td>
+</tr>
+<tr id="i6" class="altColor">
 <td class="colFirst"><code>&lt;T&gt;&nbsp;<a href="../../../../../../io/micronaut/data/model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;T&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractRepositoryOperations.html#getEntity-java.lang.Class-">getEntity</a></span>(java.lang.Class&lt;T&gt;&nbsp;type)</code>
 <div class="block">Get persistent entity by type.</div>
 </td>
 </tr>
-<tr id="i6" class="altColor">
+<tr id="i7" class="rowColor">
 <td class="colFirst"><code>protected <a href="../../../../../../io/micronaut/data/model/runtime/RuntimePersistentProperty.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentProperty</a>&lt;java.lang.Object&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractRepositoryOperations.html#getIdReader-java.lang.Object-">getIdReader</a></span>(java.lang.Object&nbsp;o)</code>
 <div class="block">Obtain an ID reader for the given object.</div>
 </td>
 </tr>
-<tr id="i7" class="rowColor">
+<tr id="i8" class="altColor">
 <td class="colFirst"><code><a href="../../../../../../io/micronaut/data/model/runtime/RuntimeEntityRegistry.html" title="interface in io.micronaut.data.model.runtime">RuntimeEntityRegistry</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractRepositoryOperations.html#getRuntimeEntityRegistry--">getRuntimeEntityRegistry</a></span>()</code>
 <div class="block">Get runtime entity registry.</div>
 </td>
 </tr>
-<tr id="i8" class="altColor">
+<tr id="i9" class="rowColor">
 <td class="colFirst"><code>protected boolean</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractRepositoryOperations.html#isOnlySingleEndedJoins-io.micronaut.data.model.runtime.RuntimePersistentEntity-java.util.Set-">isOnlySingleEndedJoins</a></span>(<a href="../../../../../../io/micronaut/data/model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;?&gt;&nbsp;rootPersistentEntity,
                       java.util.Set&lt;<a href="../../../../../../io/micronaut/data/model/query/JoinPath.html" title="class in io.micronaut.data.model.query">JoinPath</a>&gt;&nbsp;joinFetchPaths)</code>
 <div class="block">Check if joined associated are all single ended (Can produce only one result).</div>
 </td>
 </tr>
-<tr id="i9" class="rowColor">
+<tr id="i10" class="altColor">
 <td class="colFirst"><code>int</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractRepositoryOperations.html#shiftIndex-int-">shiftIndex</a></span>(int&nbsp;i)</code>
 <div class="block">Used to define the index whether it is 1 based (JDBC) or 0 based (R2DBC).</div>
 </td>
 </tr>
-<tr id="i10" class="altColor">
+<tr id="i11" class="rowColor">
 <td class="colFirst"><code>protected &lt;T&gt;&nbsp;T</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractRepositoryOperations.html#triggerPostLoad-T-io.micronaut.data.model.runtime.RuntimePersistentEntity-io.micronaut.core.annotation.AnnotationMetadata-">triggerPostLoad</a></span>(T&nbsp;entity,
                <a href="../../../../../../io/micronaut/data/model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;T&gt;&nbsp;pe,
@@ -409,6 +413,19 @@ implements io.micronaut.context.ApplicationContextProvider, <a href="../../../..
 <!--   -->
 </a>
 <h3>Method Detail</h3>
+<a name="getConversionService--">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>getConversionService</h4>
+<pre>public&nbsp;<a href="../../../../../../io/micronaut/data/runtime/convert/DataConversionService.html" title="interface in io.micronaut.data.runtime.convert">DataConversionService</a>&lt;?&gt;&nbsp;getConversionService()</pre>
+<dl>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>the conversion service</dd>
+</dl>
+</li>
+</ul>
 <a name="getApplicationContext--">
 <!--   -->
 </a>

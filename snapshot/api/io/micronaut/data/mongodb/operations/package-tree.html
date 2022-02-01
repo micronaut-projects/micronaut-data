@@ -97,11 +97,104 @@
 </ul>
 <h2 title="Interface Hierarchy">Interface Hierarchy</h2>
 <ul>
+<li type="circle">io.micronaut.core.annotation.AnnotationSource
+<ul>
+<li type="circle">io.micronaut.core.annotation.AnnotationMetadataProvider
+<ul>
+<li type="circle">io.micronaut.data.model.runtime.<a href="../../../../../io/micronaut/data/model/runtime/PagedQuery.html" title="interface in io.micronaut.data.model.runtime"><span class="typeNameLink">PagedQuery</span></a>&lt;E&gt; (also extends io.micronaut.core.naming.Named)
+<ul>
+<li type="circle">io.micronaut.data.model.runtime.<a href="../../../../../io/micronaut/data/model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime"><span class="typeNameLink">PreparedQuery</span></a>&lt;E,R&gt; (also extends io.micronaut.data.model.runtime.<a href="../../../../../io/micronaut/data/model/runtime/PreparedDataOperation.html" title="interface in io.micronaut.data.model.runtime">PreparedDataOperation</a>&lt;R&gt;, io.micronaut.data.model.runtime.<a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;E,R&gt;)
+<ul>
+<li type="circle">io.micronaut.data.mongodb.operations.<a href="../../../../../io/micronaut/data/mongodb/operations/MongoPreparedQuery.html" title="interface in io.micronaut.data.mongodb.operations"><span class="typeNameLink">MongoPreparedQuery</span></a>&lt;E,R&gt; (also extends io.micronaut.data.mongodb.operations.<a href="../../../../../io/micronaut/data/mongodb/operations/MongoStoredQuery.html" title="interface in io.micronaut.data.mongodb.operations">MongoStoredQuery</a>&lt;E,R&gt;)</li>
+</ul>
+</li>
+</ul>
+</li>
+<li type="circle">io.micronaut.data.model.runtime.<a href="../../../../../io/micronaut/data/model/runtime/StoredDataOperation.html" title="interface in io.micronaut.data.model.runtime"><span class="typeNameLink">StoredDataOperation</span></a>&lt;R&gt;
+<ul>
+<li type="circle">io.micronaut.data.model.runtime.<a href="../../../../../io/micronaut/data/model/runtime/PreparedDataOperation.html" title="interface in io.micronaut.data.model.runtime"><span class="typeNameLink">PreparedDataOperation</span></a>&lt;R&gt; (also extends io.micronaut.core.attr.AttributeHolder)
+<ul>
+<li type="circle">io.micronaut.data.model.runtime.<a href="../../../../../io/micronaut/data/model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime"><span class="typeNameLink">PreparedQuery</span></a>&lt;E,R&gt; (also extends io.micronaut.data.model.runtime.<a href="../../../../../io/micronaut/data/model/runtime/PagedQuery.html" title="interface in io.micronaut.data.model.runtime">PagedQuery</a>&lt;E&gt;, io.micronaut.data.model.runtime.<a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;E,R&gt;)
+<ul>
+<li type="circle">io.micronaut.data.mongodb.operations.<a href="../../../../../io/micronaut/data/mongodb/operations/MongoPreparedQuery.html" title="interface in io.micronaut.data.mongodb.operations"><span class="typeNameLink">MongoPreparedQuery</span></a>&lt;E,R&gt; (also extends io.micronaut.data.mongodb.operations.<a href="../../../../../io/micronaut/data/mongodb/operations/MongoStoredQuery.html" title="interface in io.micronaut.data.mongodb.operations">MongoStoredQuery</a>&lt;E,R&gt;)</li>
+</ul>
+</li>
+</ul>
+</li>
+<li type="circle">io.micronaut.data.model.runtime.<a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime"><span class="typeNameLink">StoredQuery</span></a>&lt;E,R&gt; (also extends io.micronaut.core.naming.Named)
+<ul>
+<li type="circle">io.micronaut.data.mongodb.operations.<a href="../../../../../io/micronaut/data/mongodb/operations/MongoStoredQuery.html" title="interface in io.micronaut.data.mongodb.operations"><span class="typeNameLink">MongoStoredQuery</span></a>&lt;E,R&gt;
+<ul>
+<li type="circle">io.micronaut.data.mongodb.operations.<a href="../../../../../io/micronaut/data/mongodb/operations/MongoPreparedQuery.html" title="interface in io.micronaut.data.mongodb.operations"><span class="typeNameLink">MongoPreparedQuery</span></a>&lt;E,R&gt; (also extends io.micronaut.data.model.runtime.<a href="../../../../../io/micronaut/data/model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;E,R&gt;)</li>
+</ul>
+</li>
+<li type="circle">io.micronaut.data.model.runtime.<a href="../../../../../io/micronaut/data/model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime"><span class="typeNameLink">PreparedQuery</span></a>&lt;E,R&gt; (also extends io.micronaut.data.model.runtime.<a href="../../../../../io/micronaut/data/model/runtime/PagedQuery.html" title="interface in io.micronaut.data.model.runtime">PagedQuery</a>&lt;E&gt;, io.micronaut.data.model.runtime.<a href="../../../../../io/micronaut/data/model/runtime/PreparedDataOperation.html" title="interface in io.micronaut.data.model.runtime">PreparedDataOperation</a>&lt;R&gt;)
+<ul>
+<li type="circle">io.micronaut.data.mongodb.operations.<a href="../../../../../io/micronaut/data/mongodb/operations/MongoPreparedQuery.html" title="interface in io.micronaut.data.mongodb.operations"><span class="typeNameLink">MongoPreparedQuery</span></a>&lt;E,R&gt; (also extends io.micronaut.data.mongodb.operations.<a href="../../../../../io/micronaut/data/mongodb/operations/MongoStoredQuery.html" title="interface in io.micronaut.data.mongodb.operations">MongoStoredQuery</a>&lt;E,R&gt;)</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
 <li type="circle">io.micronaut.context.ApplicationContextProvider
 <ul>
-<li type="circle">io.micronaut.data.operations.<a href="../../../../../io/micronaut/data/operations/RepositoryOperations.html" title="interface in io.micronaut.data.operations"><span class="typeNameLink">RepositoryOperations</span></a>
+<li type="circle">io.micronaut.data.operations.<a href="../../../../../io/micronaut/data/operations/RepositoryOperations.html" title="interface in io.micronaut.data.operations"><span class="typeNameLink">RepositoryOperations</span></a> (also extends io.micronaut.data.operations.<a href="../../../../../io/micronaut/data/operations/HintsCapableRepository.html" title="interface in io.micronaut.data.operations">HintsCapableRepository</a>)
 <ul>
 <li type="circle">io.micronaut.data.mongodb.operations.<a href="../../../../../io/micronaut/data/mongodb/operations/MongoRepositoryOperations.html" title="interface in io.micronaut.data.mongodb.operations"><span class="typeNameLink">MongoRepositoryOperations</span></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li type="circle">io.micronaut.core.attr.AttributeHolder
+<ul>
+<li type="circle">io.micronaut.data.model.runtime.<a href="../../../../../io/micronaut/data/model/runtime/PreparedDataOperation.html" title="interface in io.micronaut.data.model.runtime"><span class="typeNameLink">PreparedDataOperation</span></a>&lt;R&gt; (also extends io.micronaut.data.model.runtime.<a href="../../../../../io/micronaut/data/model/runtime/StoredDataOperation.html" title="interface in io.micronaut.data.model.runtime">StoredDataOperation</a>&lt;R&gt;)
+<ul>
+<li type="circle">io.micronaut.data.model.runtime.<a href="../../../../../io/micronaut/data/model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime"><span class="typeNameLink">PreparedQuery</span></a>&lt;E,R&gt; (also extends io.micronaut.data.model.runtime.<a href="../../../../../io/micronaut/data/model/runtime/PagedQuery.html" title="interface in io.micronaut.data.model.runtime">PagedQuery</a>&lt;E&gt;, io.micronaut.data.model.runtime.<a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;E,R&gt;)
+<ul>
+<li type="circle">io.micronaut.data.mongodb.operations.<a href="../../../../../io/micronaut/data/mongodb/operations/MongoPreparedQuery.html" title="interface in io.micronaut.data.mongodb.operations"><span class="typeNameLink">MongoPreparedQuery</span></a>&lt;E,R&gt; (also extends io.micronaut.data.mongodb.operations.<a href="../../../../../io/micronaut/data/mongodb/operations/MongoStoredQuery.html" title="interface in io.micronaut.data.mongodb.operations">MongoStoredQuery</a>&lt;E,R&gt;)</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li type="circle">io.micronaut.data.operations.<a href="../../../../../io/micronaut/data/operations/HintsCapableRepository.html" title="interface in io.micronaut.data.operations"><span class="typeNameLink">HintsCapableRepository</span></a>
+<ul>
+<li type="circle">io.micronaut.data.operations.<a href="../../../../../io/micronaut/data/operations/RepositoryOperations.html" title="interface in io.micronaut.data.operations"><span class="typeNameLink">RepositoryOperations</span></a> (also extends io.micronaut.context.ApplicationContextProvider)
+<ul>
+<li type="circle">io.micronaut.data.mongodb.operations.<a href="../../../../../io/micronaut/data/mongodb/operations/MongoRepositoryOperations.html" title="interface in io.micronaut.data.mongodb.operations"><span class="typeNameLink">MongoRepositoryOperations</span></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li type="circle">io.micronaut.core.naming.Named
+<ul>
+<li type="circle">io.micronaut.data.model.runtime.<a href="../../../../../io/micronaut/data/model/runtime/PagedQuery.html" title="interface in io.micronaut.data.model.runtime"><span class="typeNameLink">PagedQuery</span></a>&lt;E&gt; (also extends io.micronaut.core.annotation.AnnotationMetadataProvider)
+<ul>
+<li type="circle">io.micronaut.data.model.runtime.<a href="../../../../../io/micronaut/data/model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime"><span class="typeNameLink">PreparedQuery</span></a>&lt;E,R&gt; (also extends io.micronaut.data.model.runtime.<a href="../../../../../io/micronaut/data/model/runtime/PreparedDataOperation.html" title="interface in io.micronaut.data.model.runtime">PreparedDataOperation</a>&lt;R&gt;, io.micronaut.data.model.runtime.<a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;E,R&gt;)
+<ul>
+<li type="circle">io.micronaut.data.mongodb.operations.<a href="../../../../../io/micronaut/data/mongodb/operations/MongoPreparedQuery.html" title="interface in io.micronaut.data.mongodb.operations"><span class="typeNameLink">MongoPreparedQuery</span></a>&lt;E,R&gt; (also extends io.micronaut.data.mongodb.operations.<a href="../../../../../io/micronaut/data/mongodb/operations/MongoStoredQuery.html" title="interface in io.micronaut.data.mongodb.operations">MongoStoredQuery</a>&lt;E,R&gt;)</li>
+</ul>
+</li>
+</ul>
+</li>
+<li type="circle">io.micronaut.data.model.runtime.<a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime"><span class="typeNameLink">StoredQuery</span></a>&lt;E,R&gt; (also extends io.micronaut.data.model.runtime.<a href="../../../../../io/micronaut/data/model/runtime/StoredDataOperation.html" title="interface in io.micronaut.data.model.runtime">StoredDataOperation</a>&lt;R&gt;)
+<ul>
+<li type="circle">io.micronaut.data.mongodb.operations.<a href="../../../../../io/micronaut/data/mongodb/operations/MongoStoredQuery.html" title="interface in io.micronaut.data.mongodb.operations"><span class="typeNameLink">MongoStoredQuery</span></a>&lt;E,R&gt;
+<ul>
+<li type="circle">io.micronaut.data.mongodb.operations.<a href="../../../../../io/micronaut/data/mongodb/operations/MongoPreparedQuery.html" title="interface in io.micronaut.data.mongodb.operations"><span class="typeNameLink">MongoPreparedQuery</span></a>&lt;E,R&gt; (also extends io.micronaut.data.model.runtime.<a href="../../../../../io/micronaut/data/model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;E,R&gt;)</li>
+</ul>
+</li>
+<li type="circle">io.micronaut.data.model.runtime.<a href="../../../../../io/micronaut/data/model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime"><span class="typeNameLink">PreparedQuery</span></a>&lt;E,R&gt; (also extends io.micronaut.data.model.runtime.<a href="../../../../../io/micronaut/data/model/runtime/PagedQuery.html" title="interface in io.micronaut.data.model.runtime">PagedQuery</a>&lt;E&gt;, io.micronaut.data.model.runtime.<a href="../../../../../io/micronaut/data/model/runtime/PreparedDataOperation.html" title="interface in io.micronaut.data.model.runtime">PreparedDataOperation</a>&lt;R&gt;)
+<ul>
+<li type="circle">io.micronaut.data.mongodb.operations.<a href="../../../../../io/micronaut/data/mongodb/operations/MongoPreparedQuery.html" title="interface in io.micronaut.data.mongodb.operations"><span class="typeNameLink">MongoPreparedQuery</span></a>&lt;E,R&gt; (also extends io.micronaut.data.mongodb.operations.<a href="../../../../../io/micronaut/data/mongodb/operations/MongoStoredQuery.html" title="interface in io.micronaut.data.mongodb.operations">MongoStoredQuery</a>&lt;E,R&gt;)</li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>

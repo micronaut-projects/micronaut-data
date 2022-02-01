@@ -17,8 +17,8 @@
     catch(err) {
     }
 //-->
-var methods = {"i0":10,"i1":10,"i2":10,"i3":10,"i4":10,"i5":10,"i6":10,"i7":10,"i8":10,"i9":10,"i10":10,"i11":10,"i12":10,"i13":10,"i14":10,"i15":10,"i16":10,"i17":10,"i18":10,"i19":10,"i20":10,"i21":10,"i22":42,"i23":10,"i24":10,"i25":10,"i26":10,"i27":10,"i28":10,"i29":10,"i30":10};
-var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],8:["t4","Concrete Methods"],32:["t6","Deprecated Methods"]};
+var methods = {"i0":10,"i1":10,"i2":10,"i3":10,"i4":10,"i5":10,"i6":10,"i7":10,"i8":10,"i9":10,"i10":10,"i11":10,"i12":10,"i13":10,"i14":10,"i15":10,"i16":10,"i17":10,"i18":10,"i19":10,"i20":10,"i21":10,"i22":10};
+var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],8:["t4","Concrete Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
 var tableTab = "tableTab";
@@ -48,7 +48,7 @@ var activeTableTab = "activeTableTab";
 <div class="subNav">
 <ul class="navList">
 <li><a href="../../../../../../io/micronaut/data/runtime/query/internal/DefaultPreparedQuery.html" title="class in io.micronaut.data.runtime.query.internal"><span class="typeNameLink">Prev&nbsp;Class</span></a></li>
-<li><a href="../../../../../../io/micronaut/data/runtime/query/internal/StoredQueryParameter.html" title="class in io.micronaut.data.runtime.query.internal"><span class="typeNameLink">Next&nbsp;Class</span></a></li>
+<li><a href="../../../../../../io/micronaut/data/runtime/query/internal/DelegateStoredQuery.html" title="interface in io.micronaut.data.runtime.query.internal"><span class="typeNameLink">Next&nbsp;Class</span></a></li>
 </ul>
 <ul class="navList">
 <li><a href="../../../../../../index.html?io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html" target="_top">Frames</a></li>
@@ -166,12 +166,12 @@ implements <a href="../../../../../../io/micronaut/data/model/runtime/StoredQuer
 <th class="colOne" scope="col">Constructor and Description</th>
 </tr>
 <tr class="altColor">
-<td class="colOne"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html#DefaultStoredQuery-io.micronaut.inject.ExecutableMethod-java.lang.Class-java.lang.Class-java.lang.String-boolean-io.micronaut.data.operations.RepositoryOperations-">DefaultStoredQuery</a></span>(io.micronaut.inject.ExecutableMethod&lt;?,?&gt;&nbsp;method,
+<td class="colOne"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html#DefaultStoredQuery-io.micronaut.inject.ExecutableMethod-java.lang.Class-java.lang.Class-java.lang.String-boolean-io.micronaut.data.operations.HintsCapableRepository-">DefaultStoredQuery</a></span>(io.micronaut.inject.ExecutableMethod&lt;?,?&gt;&nbsp;method,
                   java.lang.Class&lt;<a href="../../../../../../io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html" title="type parameter in DefaultStoredQuery">RT</a>&gt;&nbsp;resultType,
                   java.lang.Class&lt;<a href="../../../../../../io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html" title="type parameter in DefaultStoredQuery">E</a>&gt;&nbsp;rootEntity,
                   java.lang.String&nbsp;query,
                   boolean&nbsp;isCount,
-                  <a href="../../../../../../io/micronaut/data/operations/RepositoryOperations.html" title="interface in io.micronaut.data.operations">RepositoryOperations</a>&nbsp;repositoryOperations)</code>
+                  <a href="../../../../../../io/micronaut/data/operations/HintsCapableRepository.html" title="interface in io.micronaut.data.operations">HintsCapableRepository</a>&nbsp;repositoryOperations)</code>
 <div class="block">The default constructor.</div>
 </td>
 </tr>
@@ -185,7 +185,7 @@ implements <a href="../../../../../../io/micronaut/data/model/runtime/StoredQuer
 </a>
 <h3>Method Summary</h3>
 <table class="memberSummary" border="0" cellpadding="3" cellspacing="0" summary="Method Summary table, listing methods, and an explanation">
-<caption><span id="t0" class="activeTableTab"><span>All Methods</span><span class="tabEnd">&nbsp;</span></span><span id="t2" class="tableTab"><span><a href="javascript:show(2);">Instance Methods</a></span><span class="tabEnd">&nbsp;</span></span><span id="t4" class="tableTab"><span><a href="javascript:show(8);">Concrete Methods</a></span><span class="tabEnd">&nbsp;</span></span><span id="t6" class="tableTab"><span><a href="javascript:show(32);">Deprecated Methods</a></span><span class="tabEnd">&nbsp;</span></span></caption>
+<caption><span id="t0" class="activeTableTab"><span>All Methods</span><span class="tabEnd">&nbsp;</span></span><span id="t2" class="tableTab"><span><a href="javascript:show(2);">Instance Methods</a></span><span class="tabEnd">&nbsp;</span></span><span id="t4" class="tableTab"><span><a href="javascript:show(8);">Concrete Methods</a></span><span class="tabEnd">&nbsp;</span></span></caption>
 <tr>
 <th class="colFirst" scope="col">Modifier and Type</th>
 <th class="colLast" scope="col">Method and Description</th>
@@ -214,145 +214,101 @@ implements <a href="../../../../../../io/micronaut/data/model/runtime/StoredQuer
 </tr>
 <tr id="i4" class="altColor">
 <td class="colFirst"><code>int[]</code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html#getIndexedParameterAutoPopulatedPreviousPropertyIndexes--">getIndexedParameterAutoPopulatedPreviousPropertyIndexes</a></span>()</code>
-<div class="block">The mapping between query parameters and auto populated previous properties that the parameter represents.</div>
-</td>
-</tr>
-<tr id="i5" class="rowColor">
-<td class="colFirst"><code>java.lang.String[]</code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html#getIndexedParameterAutoPopulatedPreviousPropertyPaths--">getIndexedParameterAutoPopulatedPreviousPropertyPaths</a></span>()</code>
-<div class="block">The mapping between query parameters and auto populated previous properties that the parameter represents.</div>
-</td>
-</tr>
-<tr id="i6" class="altColor">
-<td class="colFirst"><code>java.lang.String[]</code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html#getIndexedParameterAutoPopulatedPropertyPaths--">getIndexedParameterAutoPopulatedPropertyPaths</a></span>()</code>
-<div class="block">The mapping between query parameters and auto populated properties that the parameter represents.</div>
-</td>
-</tr>
-<tr id="i7" class="rowColor">
-<td class="colFirst"><code>int[]</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html#getIndexedParameterBinding--">getIndexedParameterBinding</a></span>()</code>
 <div class="block">The parameter binding.</div>
 </td>
 </tr>
-<tr id="i8" class="altColor">
-<td class="colFirst"><code>java.lang.String[]</code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html#getIndexedParameterPaths--">getIndexedParameterPaths</a></span>()</code>&nbsp;</td>
-</tr>
-<tr id="i9" class="rowColor">
+<tr id="i5" class="rowColor">
 <td class="colFirst"><code><a href="../../../../../../io/micronaut/data/model/DataType.html" title="enum in io.micronaut.data.model">DataType</a>[]</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html#getIndexedParameterTypes--">getIndexedParameterTypes</a></span>()</code>
 <div class="block">The compute time computed parameter data types for the query indices.</div>
 </td>
 </tr>
-<tr id="i10" class="altColor">
+<tr id="i6" class="altColor">
 <td class="colFirst"><code>java.util.Set&lt;<a href="../../../../../../io/micronaut/data/model/query/JoinPath.html" title="class in io.micronaut.data.model.query">JoinPath</a>&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html#getJoinFetchPaths--">getJoinFetchPaths</a></span>()</code>&nbsp;</td>
 </tr>
-<tr id="i11" class="rowColor">
+<tr id="i7" class="rowColor">
 <td class="colFirst"><code>java.lang.String</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html#getName--">getName</a></span>()</code>&nbsp;</td>
 </tr>
-<tr id="i12" class="altColor">
-<td class="colFirst"><code>java.util.Map&lt;java.lang.String,java.lang.String&gt;</code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html#getParameterBinding--">getParameterBinding</a></span>()</code>
-<div class="block">The parameter binding.</div>
-</td>
-</tr>
-<tr id="i13" class="rowColor">
-<td class="colFirst"><code>java.lang.String[]</code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html#getParameterNames--">getParameterNames</a></span>()</code>&nbsp;</td>
-</tr>
-<tr id="i14" class="altColor">
+<tr id="i8" class="altColor">
 <td class="colFirst"><code>java.lang.String</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html#getQuery--">getQuery</a></span>()</code>
 <div class="block">The query to execute.</div>
 </td>
 </tr>
-<tr id="i15" class="rowColor">
+<tr id="i9" class="rowColor">
 <td class="colFirst"><code>java.util.List&lt;<a href="../../../../../../io/micronaut/data/model/runtime/QueryParameterBinding.html" title="interface in io.micronaut.data.model.runtime">QueryParameterBinding</a>&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html#getQueryBindings--">getQueryBindings</a></span>()</code>
 <div class="block">The list of query bindings.</div>
 </td>
 </tr>
-<tr id="i16" class="altColor">
+<tr id="i10" class="altColor">
 <td class="colFirst"><code>java.util.Map&lt;java.lang.String,java.lang.Object&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html#getQueryHints--">getQueryHints</a></span>()</code>
 <div class="block">The parameter binding.</div>
 </td>
 </tr>
-<tr id="i17" class="rowColor">
+<tr id="i11" class="rowColor">
 <td class="colFirst"><code><a href="../../../../../../io/micronaut/data/model/DataType.html" title="enum in io.micronaut.data.model">DataType</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html#getResultDataType--">getResultDataType</a></span>()</code>&nbsp;</td>
 </tr>
-<tr id="i18" class="altColor">
+<tr id="i12" class="altColor">
 <td class="colFirst"><code>java.lang.Class&lt;<a href="../../../../../../io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html" title="type parameter in DefaultStoredQuery">RT</a>&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html#getResultType--">getResultType</a></span>()</code>
 <div class="block">The query result type.</div>
 </td>
 </tr>
-<tr id="i19" class="rowColor">
+<tr id="i13" class="rowColor">
 <td class="colFirst"><code>java.lang.Class&lt;<a href="../../../../../../io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html" title="type parameter in DefaultStoredQuery">E</a>&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html#getRootEntity--">getRootEntity</a></span>()</code>
 <div class="block">The root entity type.</div>
 </td>
 </tr>
-<tr id="i20" class="altColor">
-<td class="colFirst"><code>java.lang.String</code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html#getUpdate--">getUpdate</a></span>()</code>
-<div class="block">The query to execute.</div>
-</td>
-</tr>
-<tr id="i21" class="rowColor">
+<tr id="i14" class="altColor">
 <td class="colFirst"><code>int</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html#hashCode--">hashCode</a></span>()</code>&nbsp;</td>
 </tr>
-<tr id="i22" class="altColor">
-<td class="colFirst"><code>boolean</code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html#hasInExpression--">hasInExpression</a></span>()</code>
-<div class="block"><span class="deprecatedLabel">Deprecated.</span>&nbsp;</div>
-</td>
-</tr>
-<tr id="i23" class="rowColor">
+<tr id="i15" class="rowColor">
 <td class="colFirst"><code>boolean</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html#hasPageable--">hasPageable</a></span>()</code>
 <div class="block">Does the query have a pageable.</div>
 </td>
 </tr>
-<tr id="i24" class="altColor">
+<tr id="i16" class="altColor">
 <td class="colFirst"><code>boolean</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html#hasResultConsumer--">hasResultConsumer</a></span>()</code>&nbsp;</td>
 </tr>
-<tr id="i25" class="rowColor">
+<tr id="i17" class="rowColor">
 <td class="colFirst"><code>boolean</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html#isCount--">isCount</a></span>()</code>&nbsp;</td>
 </tr>
-<tr id="i26" class="altColor">
+<tr id="i18" class="altColor">
 <td class="colFirst"><code>boolean</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html#isDtoProjection--">isDtoProjection</a></span>()</code>
 <div class="block">Returns whether the query returns the actual entity or a Data Transfer Object (DTO) project.</div>
 </td>
 </tr>
-<tr id="i27" class="rowColor">
+<tr id="i19" class="rowColor">
 <td class="colFirst"><code>boolean</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html#isNative--">isNative</a></span>()</code>
 <div class="block">In cases where one needs to differentiate between at higher level query format (like JPA-QL) and a lower level format (like SQL).</div>
 </td>
 </tr>
-<tr id="i28" class="altColor">
+<tr id="i20" class="altColor">
 <td class="colFirst"><code>boolean</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html#isOptimisticLock--">isOptimisticLock</a></span>()</code>
 <div class="block">Is with an optimistic lock.</div>
 </td>
 </tr>
-<tr id="i29" class="rowColor">
+<tr id="i21" class="rowColor">
 <td class="colFirst"><code>boolean</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html#isSingleResult--">isSingleResult</a></span>()</code>
 <div class="block">Whether the query can be treated as a single result.</div>
 </td>
 </tr>
-<tr id="i30" class="altColor">
+<tr id="i22" class="altColor">
 <td class="colFirst"><code>boolean</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html#useNumericPlaceholders--">useNumericPlaceholders</a></span>()</code>
 <div class="block">Is this a raw SQL query.</div>
@@ -378,7 +334,7 @@ implements <a href="../../../../../../io/micronaut/data/model/runtime/StoredQuer
 <!--   -->
 </a>
 <h3>Methods inherited from interface&nbsp;io.micronaut.data.model.runtime.<a href="../../../../../../io/micronaut/data/model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a></h3>
-<code><a href="../../../../../../io/micronaut/data/model/runtime/StoredQuery.html#getLastUpdatedProperty--">getLastUpdatedProperty</a>, <a href="../../../../../../io/micronaut/data/model/runtime/StoredQuery.html#getResultArgument--">getResultArgument</a></code></li>
+<code><a href="../../../../../../io/micronaut/data/model/runtime/StoredQuery.html#getIndexedParameterAutoPopulatedPreviousPropertyIndexes--">getIndexedParameterAutoPopulatedPreviousPropertyIndexes</a>, <a href="../../../../../../io/micronaut/data/model/runtime/StoredQuery.html#getIndexedParameterAutoPopulatedPreviousPropertyPaths--">getIndexedParameterAutoPopulatedPreviousPropertyPaths</a>, <a href="../../../../../../io/micronaut/data/model/runtime/StoredQuery.html#getIndexedParameterAutoPopulatedPropertyPaths--">getIndexedParameterAutoPopulatedPropertyPaths</a>, <a href="../../../../../../io/micronaut/data/model/runtime/StoredQuery.html#getIndexedParameterPaths--">getIndexedParameterPaths</a>, <a href="../../../../../../io/micronaut/data/model/runtime/StoredQuery.html#getLastUpdatedProperty--">getLastUpdatedProperty</a>, <a href="../../../../../../io/micronaut/data/model/runtime/StoredQuery.html#getParameterBinding--">getParameterBinding</a>, <a href="../../../../../../io/micronaut/data/model/runtime/StoredQuery.html#getParameterNames--">getParameterNames</a>, <a href="../../../../../../io/micronaut/data/model/runtime/StoredQuery.html#getResultArgument--">getResultArgument</a>, <a href="../../../../../../io/micronaut/data/model/runtime/StoredQuery.html#hasInExpression--">hasInExpression</a></code></li>
 </ul>
 <ul class="blockList">
 <li class="blockList"><a name="methods.inherited.from.class.io.micronaut.data.model.runtime.StoredDataOperation">
@@ -415,7 +371,7 @@ implements <a href="../../../../../../io/micronaut/data/model/runtime/StoredQuer
 <!--   -->
 </a>
 <h3>Constructor Detail</h3>
-<a name="DefaultStoredQuery-io.micronaut.inject.ExecutableMethod-java.lang.Class-java.lang.Class-java.lang.String-boolean-io.micronaut.data.operations.RepositoryOperations-">
+<a name="DefaultStoredQuery-io.micronaut.inject.ExecutableMethod-java.lang.Class-java.lang.Class-java.lang.String-boolean-io.micronaut.data.operations.HintsCapableRepository-">
 <!--   -->
 </a>
 <ul class="blockListLast">
@@ -430,7 +386,7 @@ implements <a href="../../../../../../io/micronaut/data/model/runtime/StoredQuer
                           @NonNull
                           java.lang.String&nbsp;query,
                           boolean&nbsp;isCount,
-                          <a href="../../../../../../io/micronaut/data/operations/RepositoryOperations.html" title="interface in io.micronaut.data.operations">RepositoryOperations</a>&nbsp;repositoryOperations)</pre>
+                          <a href="../../../../../../io/micronaut/data/operations/HintsCapableRepository.html" title="interface in io.micronaut.data.operations">HintsCapableRepository</a>&nbsp;repositoryOperations)</pre>
 <div class="block">The default constructor.</div>
 <dl>
 <dt><span class="paramLabel">Parameters:</span></dt>
@@ -465,36 +421,6 @@ implements <a href="../../../../../../io/micronaut/data/model/runtime/StoredQuer
 <dd><code><a href="../../../../../../io/micronaut/data/model/runtime/StoredQuery.html#getQueryBindings--">getQueryBindings</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../../io/micronaut/data/model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;<a href="../../../../../../io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html" title="type parameter in DefaultStoredQuery">E</a>,<a href="../../../../../../io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html" title="type parameter in DefaultStoredQuery">RT</a>&gt;</code></dd>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>the query bindings</dd>
-</dl>
-</li>
-</ul>
-<a name="getParameterNames--">
-<!--   -->
-</a>
-<ul class="blockList">
-<li class="blockList">
-<h4>getParameterNames</h4>
-<pre>public&nbsp;java.lang.String[]&nbsp;getParameterNames()</pre>
-<dl>
-<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
-<dd><code><a href="../../../../../../io/micronaut/data/model/runtime/StoredQuery.html#getParameterNames--">getParameterNames</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../../io/micronaut/data/model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;<a href="../../../../../../io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html" title="type parameter in DefaultStoredQuery">E</a>,<a href="../../../../../../io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html" title="type parameter in DefaultStoredQuery">RT</a>&gt;</code></dd>
-<dt><span class="returnLabel">Returns:</span></dt>
-<dd>The parameter names the case where named parameters are supported</dd>
-</dl>
-</li>
-</ul>
-<a name="getIndexedParameterPaths--">
-<!--   -->
-</a>
-<ul class="blockList">
-<li class="blockList">
-<h4>getIndexedParameterPaths</h4>
-<pre>public&nbsp;java.lang.String[]&nbsp;getIndexedParameterPaths()</pre>
-<dl>
-<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
-<dd><code><a href="../../../../../../io/micronaut/data/model/runtime/StoredQuery.html#getIndexedParameterPaths--">getIndexedParameterPaths</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../../io/micronaut/data/model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;<a href="../../../../../../io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html" title="type parameter in DefaultStoredQuery">E</a>,<a href="../../../../../../io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html" title="type parameter in DefaultStoredQuery">RT</a>&gt;</code></dd>
-<dt><span class="returnLabel">Returns:</span></dt>
-<dd>The indexed parameter paths.</dd>
 </dl>
 </li>
 </ul>
@@ -738,24 +664,6 @@ public&nbsp;java.lang.Class&lt;<a href="../../../../../../io/micronaut/data/runt
 </dl>
 </li>
 </ul>
-<a name="hasInExpression--">
-<!--   -->
-</a>
-<ul class="blockList">
-<li class="blockList">
-<h4>hasInExpression</h4>
-<pre>@Deprecated
-public&nbsp;boolean&nbsp;hasInExpression()</pre>
-<div class="block"><span class="deprecatedLabel">Deprecated.</span>&nbsp;</div>
-<div class="block">Does the query contain an in expression.</div>
-<dl>
-<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
-<dd><code><a href="../../../../../../io/micronaut/data/model/runtime/StoredQuery.html#hasInExpression--">hasInExpression</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../../io/micronaut/data/model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;<a href="../../../../../../io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html" title="type parameter in DefaultStoredQuery">E</a>,<a href="../../../../../../io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html" title="type parameter in DefaultStoredQuery">RT</a>&gt;</code></dd>
-<dt><span class="returnLabel">Returns:</span></dt>
-<dd>True if it does</dd>
-</dl>
-</li>
-</ul>
 <a name="hasPageable--">
 <!--   -->
 </a>
@@ -786,23 +694,6 @@ public&nbsp;java.lang.String&nbsp;getQuery()</pre>
 <dl>
 <dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
 <dd><code><a href="../../../../../../io/micronaut/data/model/runtime/StoredQuery.html#getQuery--">getQuery</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../../io/micronaut/data/model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;<a href="../../../../../../io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html" title="type parameter in DefaultStoredQuery">E</a>,<a href="../../../../../../io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html" title="type parameter in DefaultStoredQuery">RT</a>&gt;</code></dd>
-<dt><span class="returnLabel">Returns:</span></dt>
-<dd>The query to execute</dd>
-</dl>
-</li>
-</ul>
-<a name="getUpdate--">
-<!--   -->
-</a>
-<ul class="blockList">
-<li class="blockList">
-<h4>getUpdate</h4>
-<pre>public&nbsp;java.lang.String&nbsp;getUpdate()</pre>
-<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../../../io/micronaut/data/model/runtime/StoredQuery.html#getUpdate--">StoredQuery</a></code></span></div>
-<div class="block">The query to execute.</div>
-<dl>
-<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
-<dd><code><a href="../../../../../../io/micronaut/data/model/runtime/StoredQuery.html#getUpdate--">getUpdate</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../../io/micronaut/data/model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;<a href="../../../../../../io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html" title="type parameter in DefaultStoredQuery">E</a>,<a href="../../../../../../io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html" title="type parameter in DefaultStoredQuery">RT</a>&gt;</code></dd>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>The query to execute</dd>
 </dl>
@@ -854,75 +745,6 @@ public&nbsp;java.lang.Class&lt;?&gt;[]&nbsp;getArgumentTypes()</pre>
 <dd><code><a href="../../../../../../io/micronaut/data/model/runtime/StoredQuery.html#getArgumentTypes--">getArgumentTypes</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../../io/micronaut/data/model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;<a href="../../../../../../io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html" title="type parameter in DefaultStoredQuery">E</a>,<a href="../../../../../../io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html" title="type parameter in DefaultStoredQuery">RT</a>&gt;</code></dd>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>The argument types</dd>
-</dl>
-</li>
-</ul>
-<a name="getParameterBinding--">
-<!--   -->
-</a>
-<ul class="blockList">
-<li class="blockList">
-<h4>getParameterBinding</h4>
-<pre>@NonNull
-public&nbsp;java.util.Map&lt;java.lang.String,java.lang.String&gt;&nbsp;getParameterBinding()</pre>
-<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../../../io/micronaut/data/model/runtime/StoredQuery.html#getParameterBinding--">StoredQuery</a></code></span></div>
-<div class="block">The parameter binding. That is the mapping between named query parameters and parameters of the method.</div>
-<dl>
-<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
-<dd><code><a href="../../../../../../io/micronaut/data/model/runtime/StoredQuery.html#getParameterBinding--">getParameterBinding</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../../io/micronaut/data/model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;<a href="../../../../../../io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html" title="type parameter in DefaultStoredQuery">E</a>,<a href="../../../../../../io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html" title="type parameter in DefaultStoredQuery">RT</a>&gt;</code></dd>
-<dt><span class="returnLabel">Returns:</span></dt>
-<dd>The parameter binding.</dd>
-</dl>
-</li>
-</ul>
-<a name="getIndexedParameterAutoPopulatedPropertyPaths--">
-<!--   -->
-</a>
-<ul class="blockList">
-<li class="blockList">
-<h4>getIndexedParameterAutoPopulatedPropertyPaths</h4>
-<pre>public&nbsp;java.lang.String[]&nbsp;getIndexedParameterAutoPopulatedPropertyPaths()</pre>
-<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../../../io/micronaut/data/model/runtime/StoredQuery.html#getIndexedParameterAutoPopulatedPropertyPaths--">StoredQuery</a></code></span></div>
-<div class="block">The mapping between query parameters and auto populated properties that the parameter represents.</div>
-<dl>
-<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
-<dd><code><a href="../../../../../../io/micronaut/data/model/runtime/StoredQuery.html#getIndexedParameterAutoPopulatedPropertyPaths--">getIndexedParameterAutoPopulatedPropertyPaths</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../../io/micronaut/data/model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;<a href="../../../../../../io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html" title="type parameter in DefaultStoredQuery">E</a>,<a href="../../../../../../io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html" title="type parameter in DefaultStoredQuery">RT</a>&gt;</code></dd>
-<dt><span class="returnLabel">Returns:</span></dt>
-<dd>The auto populated properties.</dd>
-</dl>
-</li>
-</ul>
-<a name="getIndexedParameterAutoPopulatedPreviousPropertyIndexes--">
-<!--   -->
-</a>
-<ul class="blockList">
-<li class="blockList">
-<h4>getIndexedParameterAutoPopulatedPreviousPropertyIndexes</h4>
-<pre>public&nbsp;int[]&nbsp;getIndexedParameterAutoPopulatedPreviousPropertyIndexes()</pre>
-<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../../../io/micronaut/data/model/runtime/StoredQuery.html#getIndexedParameterAutoPopulatedPreviousPropertyIndexes--">StoredQuery</a></code></span></div>
-<div class="block">The mapping between query parameters and auto populated previous properties that the parameter represents.</div>
-<dl>
-<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
-<dd><code><a href="../../../../../../io/micronaut/data/model/runtime/StoredQuery.html#getIndexedParameterAutoPopulatedPreviousPropertyIndexes--">getIndexedParameterAutoPopulatedPreviousPropertyIndexes</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../../io/micronaut/data/model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;<a href="../../../../../../io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html" title="type parameter in DefaultStoredQuery">E</a>,<a href="../../../../../../io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html" title="type parameter in DefaultStoredQuery">RT</a>&gt;</code></dd>
-<dt><span class="returnLabel">Returns:</span></dt>
-<dd>The auto populated properties.</dd>
-</dl>
-</li>
-</ul>
-<a name="getIndexedParameterAutoPopulatedPreviousPropertyPaths--">
-<!--   -->
-</a>
-<ul class="blockList">
-<li class="blockList">
-<h4>getIndexedParameterAutoPopulatedPreviousPropertyPaths</h4>
-<pre>public&nbsp;java.lang.String[]&nbsp;getIndexedParameterAutoPopulatedPreviousPropertyPaths()</pre>
-<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../../../io/micronaut/data/model/runtime/StoredQuery.html#getIndexedParameterAutoPopulatedPreviousPropertyPaths--">StoredQuery</a></code></span></div>
-<div class="block">The mapping between query parameters and auto populated previous properties that the parameter represents.</div>
-<dl>
-<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
-<dd><code><a href="../../../../../../io/micronaut/data/model/runtime/StoredQuery.html#getIndexedParameterAutoPopulatedPreviousPropertyPaths--">getIndexedParameterAutoPopulatedPreviousPropertyPaths</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../../io/micronaut/data/model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;<a href="../../../../../../io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html" title="type parameter in DefaultStoredQuery">E</a>,<a href="../../../../../../io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html" title="type parameter in DefaultStoredQuery">RT</a>&gt;</code></dd>
-<dt><span class="returnLabel">Returns:</span></dt>
-<dd>The auto populated properties.</dd>
 </dl>
 </li>
 </ul>
@@ -997,7 +819,7 @@ public&nbsp;java.util.Map&lt;java.lang.String,java.lang.String&gt;&nbsp;getParam
 <div class="subNav">
 <ul class="navList">
 <li><a href="../../../../../../io/micronaut/data/runtime/query/internal/DefaultPreparedQuery.html" title="class in io.micronaut.data.runtime.query.internal"><span class="typeNameLink">Prev&nbsp;Class</span></a></li>
-<li><a href="../../../../../../io/micronaut/data/runtime/query/internal/StoredQueryParameter.html" title="class in io.micronaut.data.runtime.query.internal"><span class="typeNameLink">Next&nbsp;Class</span></a></li>
+<li><a href="../../../../../../io/micronaut/data/runtime/query/internal/DelegateStoredQuery.html" title="interface in io.micronaut.data.runtime.query.internal"><span class="typeNameLink">Next&nbsp;Class</span></a></li>
 </ul>
 <ul class="navList">
 <li><a href="../../../../../../index.html?io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html" target="_top">Frames</a></li>

@@ -17,7 +17,7 @@
     catch(err) {
     }
 //-->
-var methods = {"i0":6,"i1":6,"i2":6,"i3":18,"i4":6,"i5":6,"i6":6,"i7":6,"i8":6,"i9":6,"i10":6,"i11":6,"i12":6,"i13":18,"i14":18,"i15":18,"i16":6,"i17":18,"i18":6,"i19":18};
+var methods = {"i0":6,"i1":6,"i2":6,"i3":18,"i4":6,"i5":6,"i6":6,"i7":6,"i8":6,"i9":6,"i10":6,"i11":6,"i12":6,"i13":18,"i14":18,"i15":6,"i16":18,"i17":6,"i18":18};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],4:["t3","Abstract Methods"],16:["t5","Default Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -99,7 +99,7 @@ var activeTableTab = "activeTableTab";
 <li class="blockList">
 <dl>
 <dt>All Superinterfaces:</dt>
-<dd>io.micronaut.context.ApplicationContextProvider</dd>
+<dd>io.micronaut.context.ApplicationContextProvider, <a href="../../../../io/micronaut/data/operations/HintsCapableRepository.html" title="interface in io.micronaut.data.operations">HintsCapableRepository</a></dd>
 </dl>
 <dl>
 <dt>All Known Subinterfaces:</dt>
@@ -112,7 +112,7 @@ var activeTableTab = "activeTableTab";
 <hr>
 <br>
 <pre>public interface <span class="typeNameLabel">RepositoryOperations</span>
-extends io.micronaut.context.ApplicationContextProvider</pre>
+extends <a href="../../../../io/micronaut/data/operations/HintsCapableRepository.html" title="interface in io.micronaut.data.operations">HintsCapableRepository</a>, io.micronaut.context.ApplicationContextProvider</pre>
 <div class="block">Common interface for repository implementations to implement.</div>
 <dl>
 <dt><span class="simpleTagLabel">Since:</span></dt>
@@ -230,36 +230,37 @@ extends io.micronaut.context.ApplicationContextProvider</pre>
 </td>
 </tr>
 <tr id="i15" class="rowColor">
-<td class="colFirst"><code>default java.util.Map&lt;java.lang.String,java.lang.Object&gt;</code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/operations/RepositoryOperations.html#getQueryHints-io.micronaut.data.model.runtime.StoredQuery-">getQueryHints</a></span>(<a href="../../../../io/micronaut/data/model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;?,?&gt;&nbsp;storedQuery)</code>
-<div class="block">Obtain any custom query hints for this method and repository implementation.</div>
-</td>
-</tr>
-<tr id="i16" class="altColor">
 <td class="colFirst"><code>&lt;T&gt;&nbsp;T</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/operations/RepositoryOperations.html#persist-io.micronaut.data.model.runtime.InsertOperation-">persist</a></span>(<a href="../../../../io/micronaut/data/model/runtime/InsertOperation.html" title="interface in io.micronaut.data.model.runtime">InsertOperation</a>&lt;T&gt;&nbsp;operation)</code>
 <div class="block">Persist the operation returning a possibly new entity.</div>
 </td>
 </tr>
-<tr id="i17" class="rowColor">
+<tr id="i16" class="altColor">
 <td class="colFirst"><code>default &lt;T&gt;&nbsp;java.lang.Iterable&lt;T&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/operations/RepositoryOperations.html#persistAll-io.micronaut.data.model.runtime.InsertBatchOperation-">persistAll</a></span>(<a href="../../../../io/micronaut/data/model/runtime/InsertBatchOperation.html" title="interface in io.micronaut.data.model.runtime">InsertBatchOperation</a>&lt;T&gt;&nbsp;operation)</code>
 <div class="block">Persist all the given entities.</div>
 </td>
 </tr>
-<tr id="i18" class="altColor">
+<tr id="i17" class="rowColor">
 <td class="colFirst"><code>&lt;T&gt;&nbsp;T</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/operations/RepositoryOperations.html#update-io.micronaut.data.model.runtime.UpdateOperation-">update</a></span>(<a href="../../../../io/micronaut/data/model/runtime/UpdateOperation.html" title="interface in io.micronaut.data.model.runtime">UpdateOperation</a>&lt;T&gt;&nbsp;operation)</code>
 <div class="block">Updates the entity for the given operation.</div>
 </td>
 </tr>
-<tr id="i19" class="rowColor">
+<tr id="i18" class="altColor">
 <td class="colFirst"><code>default &lt;T&gt;&nbsp;java.lang.Iterable&lt;T&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/operations/RepositoryOperations.html#updateAll-io.micronaut.data.model.runtime.UpdateBatchOperation-">updateAll</a></span>(<a href="../../../../io/micronaut/data/model/runtime/UpdateBatchOperation.html" title="interface in io.micronaut.data.model.runtime">UpdateBatchOperation</a>&lt;T&gt;&nbsp;operation)</code>
 <div class="block">Updates the entities for the given operation.</div>
 </td>
 </tr>
 </table>
+<ul class="blockList">
+<li class="blockList"><a name="methods.inherited.from.class.io.micronaut.data.operations.HintsCapableRepository">
+<!--   -->
+</a>
+<h3>Methods inherited from interface&nbsp;io.micronaut.data.operations.<a href="../../../../io/micronaut/data/operations/HintsCapableRepository.html" title="interface in io.micronaut.data.operations">HintsCapableRepository</a></h3>
+<code><a href="../../../../io/micronaut/data/operations/HintsCapableRepository.html#getQueryHints-io.micronaut.data.model.runtime.StoredQuery-">getQueryHints</a></code></li>
+</ul>
 <ul class="blockList">
 <li class="blockList"><a name="methods.inherited.from.class.io.micronaut.context.ApplicationContextProvider">
 <!--   -->
@@ -638,24 +639,6 @@ default&nbsp;java.util.Optional&lt;java.lang.Number&gt;&nbsp;executeDelete(@NonN
 <dd><code>operation</code> - The operation</dd>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>The number of entities deleted</dd>
-</dl>
-</li>
-</ul>
-<a name="getQueryHints-io.micronaut.data.model.runtime.StoredQuery-">
-<!--   -->
-</a>
-<ul class="blockList">
-<li class="blockList">
-<h4>getQueryHints</h4>
-<pre>@NonNull
-default&nbsp;java.util.Map&lt;java.lang.String,java.lang.Object&gt;&nbsp;getQueryHints(@NonNull
-                                                                                <a href="../../../../io/micronaut/data/model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;?,?&gt;&nbsp;storedQuery)</pre>
-<div class="block">Obtain any custom query hints for this method and repository implementation.</div>
-<dl>
-<dt><span class="paramLabel">Parameters:</span></dt>
-<dd><code>storedQuery</code> - The stored query</dd>
-<dt><span class="returnLabel">Returns:</span></dt>
-<dd>THe query hints</dd>
 </dl>
 </li>
 </ul>

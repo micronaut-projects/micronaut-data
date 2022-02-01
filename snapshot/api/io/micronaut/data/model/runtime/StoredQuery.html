@@ -17,7 +17,7 @@
     catch(err) {
     }
 //-->
-var methods = {"i0":18,"i1":18,"i2":6,"i3":50,"i4":50,"i5":50,"i6":50,"i7":50,"i8":50,"i9":18,"i10":50,"i11":50,"i12":50,"i13":6,"i14":6,"i15":18,"i16":6,"i17":6,"i18":6,"i19":6,"i20":18,"i21":50,"i22":6,"i23":6,"i24":6,"i25":18,"i26":18,"i27":18,"i28":6,"i29":6};
+var methods = {"i0":18,"i1":18,"i2":6,"i3":50,"i4":50,"i5":50,"i6":50,"i7":50,"i8":50,"i9":18,"i10":50,"i11":50,"i12":50,"i13":6,"i14":6,"i15":18,"i16":6,"i17":6,"i18":6,"i19":6,"i20":50,"i21":6,"i22":6,"i23":6,"i24":18,"i25":18,"i26":18,"i27":6,"i28":6};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],4:["t3","Abstract Methods"],16:["t5","Default Methods"],32:["t6","Deprecated Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -108,7 +108,7 @@ var activeTableTab = "activeTableTab";
 </dl>
 <dl>
 <dt>All Known Subinterfaces:</dt>
-<dd><a href="../../../../../io/micronaut/data/model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;E,R&gt;</dd>
+<dd><a href="../../../../../io/micronaut/data/runtime/query/internal/DelegateStoredQuery.html" title="interface in io.micronaut.data.runtime.query.internal">DelegateStoredQuery</a>&lt;E,R&gt;, <a href="../../../../../io/micronaut/data/mongodb/operations/MongoPreparedQuery.html" title="interface in io.micronaut.data.mongodb.operations">MongoPreparedQuery</a>&lt;E,R&gt;, <a href="../../../../../io/micronaut/data/mongodb/operations/MongoStoredQuery.html" title="interface in io.micronaut.data.mongodb.operations">MongoStoredQuery</a>&lt;E,R&gt;, <a href="../../../../../io/micronaut/data/model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;E,R&gt;</dd>
 </dl>
 <dl>
 <dt>All Known Implementing Classes:</dt>
@@ -275,56 +275,50 @@ extends io.micronaut.core.naming.Named, <a href="../../../../../io/micronaut/dat
 </td>
 </tr>
 <tr id="i20" class="altColor">
-<td class="colFirst"><code>default java.lang.String</code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#getUpdate--">getUpdate</a></span>()</code>
-<div class="block">The query to execute.</div>
-</td>
-</tr>
-<tr id="i21" class="rowColor">
 <td class="colFirst"><code>default boolean</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#hasInExpression--">hasInExpression</a></span>()</code>
 <div class="block"><span class="deprecatedLabel">Deprecated.</span>&nbsp;</div>
 </td>
 </tr>
-<tr id="i22" class="altColor">
+<tr id="i21" class="rowColor">
 <td class="colFirst"><code>boolean</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#hasPageable--">hasPageable</a></span>()</code>
 <div class="block">Does the query have a pageable.</div>
 </td>
 </tr>
-<tr id="i23" class="rowColor">
+<tr id="i22" class="altColor">
 <td class="colFirst"><code>boolean</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#hasResultConsumer--">hasResultConsumer</a></span>()</code>&nbsp;</td>
 </tr>
-<tr id="i24" class="altColor">
+<tr id="i23" class="rowColor">
 <td class="colFirst"><code>boolean</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#isCount--">isCount</a></span>()</code>&nbsp;</td>
 </tr>
-<tr id="i25" class="rowColor">
+<tr id="i24" class="altColor">
 <td class="colFirst"><code>default boolean</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#isDtoProjection--">isDtoProjection</a></span>()</code>
 <div class="block">Returns whether the query returns the actual entity or a Data Transfer Object (DTO) project.</div>
 </td>
 </tr>
-<tr id="i26" class="altColor">
+<tr id="i25" class="rowColor">
 <td class="colFirst"><code>default boolean</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#isNative--">isNative</a></span>()</code>
 <div class="block">In cases where one needs to differentiate between at higher level query format (like JPA-QL) and a lower level format (like SQL).</div>
 </td>
 </tr>
-<tr id="i27" class="rowColor">
+<tr id="i26" class="altColor">
 <td class="colFirst"><code>default boolean</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#isOptimisticLock--">isOptimisticLock</a></span>()</code>
 <div class="block">Is with an optimistic lock.</div>
 </td>
 </tr>
-<tr id="i28" class="altColor">
+<tr id="i27" class="rowColor">
 <td class="colFirst"><code>boolean</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#isSingleResult--">isSingleResult</a></span>()</code>
 <div class="block">Whether the query can be treated as a single result.</div>
 </td>
 </tr>
-<tr id="i29" class="rowColor">
+<tr id="i28" class="altColor">
 <td class="colFirst"><code>boolean</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#useNumericPlaceholders--">useNumericPlaceholders</a></span>()</code>
 <div class="block">Are the placeholders for query set using numeric indices starting from 1.</div>
@@ -426,21 +420,6 @@ default&nbsp;boolean&nbsp;hasInExpression()</pre>
 <h4>getQuery</h4>
 <pre>@NonNull
 java.lang.String&nbsp;getQuery()</pre>
-<div class="block">The query to execute.</div>
-<dl>
-<dt><span class="returnLabel">Returns:</span></dt>
-<dd>The query to execute</dd>
-</dl>
-</li>
-</ul>
-<a name="getUpdate--">
-<!--   -->
-</a>
-<ul class="blockList">
-<li class="blockList">
-<h4>getUpdate</h4>
-<pre>@Nullable
-default&nbsp;java.lang.String&nbsp;getUpdate()</pre>
 <div class="block">The query to execute.</div>
 <dl>
 <dt><span class="returnLabel">Returns:</span></dt>
