@@ -32,11 +32,11 @@ import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaUpdate;
 import io.micronaut.data.model.jpa.criteria.impl.QueryResultPersistentEntityCriteriaQuery;
 import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.QueryResult;
-import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.model.runtime.QueryParameterBinding;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.model.runtime.StoredQuery;
+import io.micronaut.data.operations.HintsCapableRepository;
 import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.repository.jpa.criteria.DeleteSpecification;
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification;
@@ -44,6 +44,8 @@ import io.micronaut.data.repository.jpa.criteria.QuerySpecification;
 import io.micronaut.data.repository.jpa.criteria.UpdateSpecification;
 import io.micronaut.data.runtime.criteria.RuntimeCriteriaBuilder;
 import io.micronaut.data.runtime.intercept.AbstractQueryInterceptor;
+import io.micronaut.data.runtime.query.DefaultStoredQueryResolver;
+import io.micronaut.data.runtime.query.StoredQueryResolver;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Order;
 import jakarta.persistence.criteria.Path;
@@ -68,6 +70,7 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
 
     private final Map<RepositoryMethodKey, QueryBuilder> sqlQueryBuilderForRepositories = new ConcurrentHashMap<>();
     private final RuntimeCriteriaBuilder criteriaBuilder;
+    private final StoredQueryResolver storedQueryResolver;
 
     /**
      * Default constructor.
@@ -78,6 +81,12 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
         super(operations);
         RuntimeEntityRegistry runtimeEntityRegistry = operations.getApplicationContext().getBean(RuntimeEntityRegistry.class);
         this.criteriaBuilder = new RuntimeCriteriaBuilder(runtimeEntityRegistry);
+        storedQueryResolver = operations instanceof StoredQueryResolver ? (StoredQueryResolver) operations : new DefaultStoredQueryResolver() {
+            @Override
+            protected HintsCapableRepository getHintsCapableRepository() {
+                return operations;
+            }
+        };
     }
 
     protected final <E, QR> PreparedQuery<E, QR> preparedQueryForCriteria(RepositoryMethodKey methodKey,
@@ -175,246 +184,16 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
 
         StoredQuery<E, QR> storedQuery;
         if (type == Type.COUNT) {
-            storedQuery = (StoredQuery<E, QR>) createCountStoredQuery(context, rootEntity, query, queryParts, queryParameters);
+            storedQuery = (StoredQuery<E, QR>) storedQueryResolver.createCountStoredQuery(context.getName(), context.getAnnotationMetadata(),
+                    rootEntity, query, queryParts, queryParameters);
         } else if (type == Type.FIND_ALL) {
-            storedQuery = createFindAllStoredQuery(context, rootEntity, query, queryParts, queryParameters, !pageable.isUnpaged());
+            storedQuery = storedQueryResolver.createStoredQuery(context.getName(), context.getAnnotationMetadata(), rootEntity,
+                    query, null, queryParts, queryParameters, !pageable.isUnpaged(), false);
         } else {
-            storedQuery = createFindOneStoredQuery(context, rootEntity, query, update, queryParts, queryParameters);
+            storedQuery = storedQueryResolver.createStoredQuery(context.getName(), context.getAnnotationMetadata(), rootEntity,
+                    query, update, queryParts, queryParameters, false, true);
         }
         return preparedQueryResolver.resolveQuery(context, storedQuery, pageable);
-    }
-
-    private <E, QR> StoredQuery<E, QR> createFindOneStoredQuery(MethodInvocationContext<T, R> context,
-                                                                Class<Object> rootEntity,
-                                                                String query,
-                                                                String update,
-                                                                String[] queryParts,
-                                                                List<QueryParameterBinding> queryParameters) {
-        return new StoredQuery<E, QR>() {
-            @Override
-            public Class<E> getRootEntity() {
-                return (Class<E>) rootEntity;
-            }
-
-            @Override
-            public boolean hasPageable() {
-                return false;
-            }
-
-            @Override
-            public String getQuery() {
-                return query;
-            }
-
-            @Override
-            public String getUpdate() {
-                return update;
-            }
-
-            @Override
-            public String[] getExpandableQueryParts() {
-                return queryParts;
-            }
-
-            @Override
-            public List<QueryParameterBinding> getQueryBindings() {
-                return queryParameters;
-            }
-
-            @Override
-            public Class<QR> getResultType() {
-                return (Class<QR>) rootEntity;
-            }
-
-            @Override
-            public Argument<QR> getResultArgument() {
-                return Argument.of(getResultType());
-            }
-
-            @Override
-            public DataType getResultDataType() {
-                return DataType.ENTITY;
-            }
-
-            @Override
-            public boolean useNumericPlaceholders() {
-                return context.getExecutableMethod()
-                        .classValue(RepositoryConfiguration.class, "queryBuilder")
-                        .map(c -> c == SqlQueryBuilder.class).orElse(false);
-            }
-
-            @Override
-            public boolean isCount() {
-                return false;
-            }
-
-            @Override
-            public boolean isSingleResult() {
-                return true;
-            }
-
-            @Override
-            public boolean hasResultConsumer() {
-                return false;
-            }
-
-            @Override
-            public String getName() {
-                return context.getMethodName();
-            }
-        };
-    }
-
-    private <E, QR> StoredQuery<E, QR> createFindAllStoredQuery(MethodInvocationContext<T, R> context,
-                                                                Class<Object> rootEntity,
-                                                                String query,
-                                                                String[] queryParts,
-                                                                List<QueryParameterBinding> queryParameters,
-                                                                boolean hasPageable) {
-        return new StoredQuery<E, QR>() {
-            @Override
-            public Class<E> getRootEntity() {
-                return (Class<E>) rootEntity;
-            }
-
-            @Override
-            public boolean hasPageable() {
-                return hasPageable;
-            }
-
-            @Override
-            public String getQuery() {
-                return query;
-            }
-
-            @Override
-            public String[] getExpandableQueryParts() {
-                return queryParts;
-            }
-
-            @Override
-            public List<QueryParameterBinding> getQueryBindings() {
-                return queryParameters;
-            }
-
-            @Override
-            public Class<QR> getResultType() {
-                return (Class<QR>) rootEntity;
-            }
-
-            @Override
-            public Argument<QR> getResultArgument() {
-                return Argument.of(getResultType());
-            }
-
-            @Override
-            public DataType getResultDataType() {
-                return DataType.ENTITY;
-            }
-
-            @Override
-            public boolean useNumericPlaceholders() {
-                return context.getExecutableMethod()
-                        .classValue(RepositoryConfiguration.class, "queryBuilder")
-                        .map(c -> c == SqlQueryBuilder.class).orElse(false);
-            }
-
-            @Override
-            public boolean isCount() {
-                return false;
-            }
-
-            @Override
-            public boolean isSingleResult() {
-                return false;
-            }
-
-            @Override
-            public boolean hasResultConsumer() {
-                return false;
-            }
-
-            @Override
-            public String getName() {
-                return context.getMethodName();
-            }
-        };
-    }
-
-    private StoredQuery<Object, Long> createCountStoredQuery(MethodInvocationContext<T, R> context,
-                                                             Class<Object> rootEntity,
-                                                             String query,
-                                                             String[] queryParts,
-                                                             List<QueryParameterBinding> queryParameters) {
-        return new StoredQuery<Object, Long>() {
-
-            @Override
-            public Class<Object> getRootEntity() {
-                return rootEntity;
-            }
-
-            @Override
-            public boolean hasPageable() {
-                return false;
-            }
-
-            @Override
-            public String getQuery() {
-                return query;
-            }
-
-            @Override
-            public String[] getExpandableQueryParts() {
-                return queryParts;
-            }
-
-            @Override
-            public List<QueryParameterBinding> getQueryBindings() {
-                return queryParameters;
-            }
-
-            @Override
-            public Class<Long> getResultType() {
-                return Long.class;
-            }
-
-            @Override
-            public Argument<Long> getResultArgument() {
-                return Argument.LONG;
-            }
-
-            @Override
-            public DataType getResultDataType() {
-                return DataType.LONG;
-            }
-
-            @Override
-            public boolean useNumericPlaceholders() {
-                return context.getExecutableMethod()
-                        .classValue(RepositoryConfiguration.class, "queryBuilder")
-                        .map(c -> c == SqlQueryBuilder.class).orElse(false);
-            }
-
-            @Override
-            public boolean isCount() {
-                return true;
-            }
-
-            @Override
-            public boolean isSingleResult() {
-                return true;
-            }
-
-            @Override
-            public boolean hasResultConsumer() {
-                return false;
-            }
-
-            @Override
-            public String getName() {
-                return context.getMethodName();
-            }
-        };
     }
 
     /**

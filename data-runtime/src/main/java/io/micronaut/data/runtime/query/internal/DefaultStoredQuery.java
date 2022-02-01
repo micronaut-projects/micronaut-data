@@ -35,7 +35,7 @@ import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.runtime.DefaultStoredDataOperation;
 import io.micronaut.data.model.runtime.QueryParameterBinding;
 import io.micronaut.data.model.runtime.StoredQuery;
-import io.micronaut.data.operations.RepositoryOperations;
+import io.micronaut.data.operations.HintsCapableRepository;
 import io.micronaut.inject.ExecutableMethod;
 
 import java.util.ArrayList;
@@ -66,7 +66,6 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
     private final Class<E> rootEntity;
     @NonNull
     private final String query;
-    private final String update;
     private final String[] queryParts;
     private final ExecutableMethod<?, ?> method;
     private final boolean isDto;
@@ -98,9 +97,8 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
             @NonNull Class<E> rootEntity,
             @NonNull String query,
             boolean isCount,
-            RepositoryOperations repositoryOperations) {
+            HintsCapableRepository repositoryOperations) {
         super(method);
-        this.update = method.stringValue(Query.class, "update").orElse(null);
         this.resultType = ReflectionUtils.getWrapperType(resultType);
         this.rootEntity = rootEntity;
         this.annotationMetadata = method.getAnnotationMetadata();
@@ -191,16 +189,6 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
     @Override
     public List<QueryParameterBinding> getQueryBindings() {
         return (List) queryParameters;
-    }
-
-    @Override
-    public String[] getParameterNames() {
-        return StringUtils.EMPTY_STRING_ARRAY;
-    }
-
-    @Override
-    public String[] getIndexedParameterPaths() {
-        return StringUtils.EMPTY_STRING_ARRAY;
     }
 
     @NonNull
@@ -328,17 +316,6 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
         return rootEntity;
     }
 
-    /**
-     * Does the query contain an in expression.
-     *
-     * @return True if it does
-     */
-    @Override
-    @Deprecated
-    public boolean hasInExpression() {
-        return false;
-    }
-
     @Override
     public boolean hasPageable() {
         return hasPageable;
@@ -348,11 +325,6 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
     @NonNull
     public String getQuery() {
         return query;
-    }
-
-    @Override
-    public String getUpdate() {
-        return update;
     }
 
     @Override
@@ -370,27 +342,6 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
     @NonNull
     public Class<?>[] getArgumentTypes() {
         return method.getArgumentTypes();
-    }
-
-    @NonNull
-    @Override
-    public Map<String, String> getParameterBinding() {
-        return Collections.emptyMap();
-    }
-
-    @Override
-    public String[] getIndexedParameterAutoPopulatedPropertyPaths() {
-        return StringUtils.EMPTY_STRING_ARRAY;
-    }
-
-    @Override
-    public int[] getIndexedParameterAutoPopulatedPreviousPropertyIndexes() {
-        return new int[0];
-    }
-
-    @Override
-    public String[] getIndexedParameterAutoPopulatedPreviousPropertyPaths() {
-        return StringUtils.EMPTY_STRING_ARRAY;
     }
 
     @Override

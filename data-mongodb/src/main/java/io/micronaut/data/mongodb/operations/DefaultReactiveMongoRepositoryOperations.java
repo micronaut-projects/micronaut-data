@@ -52,6 +52,7 @@ import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.model.runtime.UpdateBatchOperation;
 import io.micronaut.data.model.runtime.UpdateOperation;
+import io.micronaut.data.mongodb.conf.RequiresReactiveMongo;
 import io.micronaut.data.mongodb.database.ReactiveMongoDatabaseFactory;
 import io.micronaut.data.operations.reactive.ReactorReactiveRepositoryOperations;
 import io.micronaut.data.runtime.config.DataSettings;
@@ -96,7 +97,7 @@ import java.util.stream.Collectors;
  * @author Denis Stepanov
  * @since 3.3
  */
-//@RequiresSyncMongo
+@RequiresReactiveMongo
 @EachBean(MongoClient.class)
 @Internal
 public class DefaultReactiveMongoRepositoryOperations extends AbstractMongoRepositoryOperations<ClientSession, Object>
@@ -291,7 +292,8 @@ public class DefaultReactiveMongoRepositoryOperations extends AbstractMongoRepos
             if (QUERY_LOG.isDebugEnabled()) {
                 QUERY_LOG.debug("Executing Mongo 'updateMany' with filter: {} and update: {}", updateOptions.filter.toBsonDocument().toJson(), updateOptions.update.toBsonDocument().toJson());
             }
-            return Mono.from(getCollection(database, persistentEntity, persistentEntity.getIntrospection().getBeanType()).updateMany(clientSession, updateOptions.filter, updateOptions.update)).map(updateResult -> {
+            return Mono.from(getCollection(database, persistentEntity, persistentEntity.getIntrospection().getBeanType())
+                    .updateMany(clientSession, updateOptions.filter, updateOptions.update)).map(updateResult -> {
                 if (preparedQuery.isOptimisticLock()) {
                     checkOptimisticLocking(1, (int) updateResult.getModifiedCount());
                 }
@@ -305,11 +307,12 @@ public class DefaultReactiveMongoRepositoryOperations extends AbstractMongoRepos
         return withClientSession(clientSession -> {
             RuntimePersistentEntity<?> persistentEntity = runtimeEntityRegistry.getEntity(preparedQuery.getRootEntity());
             MongoDatabase mongoDatabase = getDatabase(persistentEntity, preparedQuery.getRepositoryType());
-            Bson filter = getFilter(mongoDatabase.getCodecRegistry(), preparedQuery, persistentEntity);
+            DeleteOptions deleteOptions = getDeleteOptions(mongoDatabase.getCodecRegistry(), preparedQuery, persistentEntity);
             if (QUERY_LOG.isDebugEnabled()) {
-                QUERY_LOG.debug("Executing Mongo 'deleteMany' with filter: {}", filter.toBsonDocument().toJson());
+                QUERY_LOG.debug("Executing Mongo 'deleteMany' with filter: {}", deleteOptions.filter.toBsonDocument().toJson());
             }
-            return Mono.from(getCollection(mongoDatabase, persistentEntity, persistentEntity.getIntrospection().getBeanType()).deleteMany(clientSession, filter)).map(deleteResult -> {
+            return Mono.from(getCollection(mongoDatabase, persistentEntity, persistentEntity.getIntrospection().getBeanType())
+                    .deleteMany(clientSession, deleteOptions.filter)).map(deleteResult -> {
                 if (preparedQuery.isOptimisticLock()) {
                     checkOptimisticLocking(1, (int) deleteResult.getDeletedCount());
                 }

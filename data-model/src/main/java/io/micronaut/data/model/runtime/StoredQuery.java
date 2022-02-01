@@ -76,16 +76,6 @@ public interface StoredQuery<E, R> extends Named, StoredDataOperation<R> {
      *
      * @return The query to execute
      */
-    @Nullable
-    default String getUpdate() {
-        return null;
-    }
-
-    /**
-     * The query to execute.
-     *
-     * @return The query to execute
-     */
     @NonNull
     String[] getExpandableQueryParts();
 

@@ -16,6 +16,8 @@
 package io.micronaut.data.mongodb.operations;
 
 import com.mongodb.client.model.Sorts;
+import io.micronaut.aop.MethodInvocationContext;
+import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.context.BeanContext;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Nullable;
@@ -23,6 +25,7 @@ import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.beans.exceptions.IntrospectionException;
 import io.micronaut.core.convert.ConversionContext;
+import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
@@ -39,13 +42,19 @@ import io.micronaut.data.model.runtime.RuntimeAssociation;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
+import io.micronaut.data.model.runtime.StoredQuery;
 import io.micronaut.data.model.runtime.convert.AttributeConverter;
 import io.micronaut.data.mongodb.annotation.MongoRepository;
 import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.operations.HintsCapableRepository;
 import io.micronaut.data.runtime.config.DataSettings;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.date.DateTimeProvider;
 import io.micronaut.data.runtime.operations.internal.AbstractRepositoryOperations;
+import io.micronaut.data.runtime.query.DefaultPreparedQueryResolver;
+import io.micronaut.data.runtime.query.DefaultStoredQueryResolver;
+import io.micronaut.data.runtime.query.PreparedQueryResolver;
+import io.micronaut.data.runtime.query.StoredQueryResolver;
 import io.micronaut.http.codec.MediaTypeCodec;
 import io.micronaut.inject.BeanDefinition;
 import io.micronaut.inject.qualifiers.Qualifiers;
@@ -69,12 +78,34 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+/**
+ * Shared implementation of Mongo sync and reactive repositories.
+ *
+ * @param <Cnt> The connection
+ * @param <PS>  The prepared statement
+ * @author Denis Stepanov
+ * @since 3.3
+ */
 @Internal
-abstract class AbstractMongoRepositoryOperations<Cnt, PS> extends AbstractRepositoryOperations<Cnt, PS> {
+abstract class AbstractMongoRepositoryOperations<Cnt, PS> extends AbstractRepositoryOperations<Cnt, PS> implements HintsCapableRepository, PreparedQueryResolver, StoredQueryResolver {
 
     protected static final Logger QUERY_LOG = DataSettings.QUERY_LOG;
     protected static final BsonDocument EMPTY = new BsonDocument();
     protected final Map<Class, String> repoDatabaseConfig;
+
+    private final DefaultStoredQueryResolver defaultStoredQueryResolver = new DefaultStoredQueryResolver() {
+        @Override
+        protected HintsCapableRepository getHintsCapableRepository() {
+            return AbstractMongoRepositoryOperations.this;
+        }
+    };
+
+    private final DefaultPreparedQueryResolver defaultPreparedQueryResolver = new DefaultPreparedQueryResolver() {
+        @Override
+        protected ConversionService getConversionService() {
+            return conversionService;
+        }
+    };
 
     /**
      * Default constructor.
@@ -110,23 +141,99 @@ abstract class AbstractMongoRepositoryOperations<Cnt, PS> extends AbstractReposi
         this.repoDatabaseConfig = Collections.unmodifiableMap(repoDatabaseConfig);
     }
 
+    @Override
+    public <E, R> PreparedQuery<E, R> resolveQuery(MethodInvocationContext<?, ?> context,
+                                                   StoredQuery<E, R> storedQuery,
+                                                   Pageable pageable) {
+        return new DefaultMongoPreparedQuery<>(defaultPreparedQueryResolver.resolveQuery(context, storedQuery, pageable));
+    }
+
+    @Override
+    public <E, R> PreparedQuery<E, R> resolveCountQuery(MethodInvocationContext<?, ?> context,
+                                                        StoredQuery<E, R> storedQuery,
+                                                        Pageable pageable) {
+        return new DefaultMongoPreparedQuery<>(defaultPreparedQueryResolver.resolveCountQuery(context, storedQuery, pageable));
+    }
+
+    @Override
+    public <E, R> StoredQuery<E, R> resolveQuery(MethodInvocationContext<?, ?> context, Class<E> entityClass, Class<R> resultType) {
+        return new DefaultMongoStoredQuery<>(defaultStoredQueryResolver.resolveQuery(context, entityClass, resultType));
+    }
+
+    @Override
+    public <E, R> StoredQuery<E, R> resolveCountQuery(MethodInvocationContext<?, ?> context, Class<E> entityClass, Class<R> resultType) {
+        return new DefaultMongoStoredQuery<>(defaultStoredQueryResolver.resolveCountQuery(context, entityClass, resultType));
+    }
+
+    @Override
+    public <E, QR> StoredQuery<E, QR> createStoredQuery(String name, AnnotationMetadata annotationMetadata,
+                                                        Class<Object> rootEntity,
+                                                        String query,
+                                                        String update,
+                                                        String[] queryParts,
+                                                        List<QueryParameterBinding> queryParameters,
+                                                        boolean hasPageable,
+                                                        boolean isSingleResult) {
+        StoredQuery<E, QR> storedQuery = defaultStoredQueryResolver.createStoredQuery(name, annotationMetadata,
+                rootEntity, query, update, queryParts, queryParameters, hasPageable, isSingleResult);
+        return new DefaultMongoStoredQuery<>(storedQuery, update);
+    }
+
+    @Override
+    public StoredQuery<Object, Long> createCountStoredQuery(String name,
+                                                            AnnotationMetadata annotationMetadata,
+                                                            Class<Object> rootEntity,
+                                                            String query,
+                                                            String[] queryParts,
+                                                            List<QueryParameterBinding> queryParameters) {
+        StoredQuery<Object, Long> storedQuery = defaultStoredQueryResolver.createCountStoredQuery(name, annotationMetadata,
+                rootEntity, query, queryParts, queryParameters);
+        return new DefaultMongoStoredQuery<>(storedQuery);
+    }
+
     protected FetchOptions getFetchOptions(CodecRegistry codecRegistry, PreparedQuery<?, ?> preparedQuery, RuntimePersistentEntity<?> persistentEntity) {
-        Bson filter;
-        List<BsonDocument> pipeline;
-        if (preparedQuery.getQuery().startsWith("[")) {
-            pipeline = getPipeline(codecRegistry, preparedQuery, persistentEntity);
-            filter = null;
-        } else {
-            pipeline = null;
-            filter = getFilter(codecRegistry, preparedQuery, persistentEntity);
+        MongoPreparedQuery<?, ?> mongoPreparedQuery = (MongoPreparedQuery<?, ?>) preparedQuery;
+        BsonArray pipeline = mongoPreparedQuery.getPipeline();
+        if (pipeline != null) {
+            pipeline = (BsonArray) replaceQueryParameters(codecRegistry, preparedQuery, persistentEntity, pipeline);
+            List<BsonDocument> preparedPipeline = pipeline.stream().map(BsonValue::asDocument).collect(Collectors.toList());
+            return new FetchOptions(preparedPipeline, null);
         }
-        return new FetchOptions(pipeline, filter);
+        BsonDocument filter = mongoPreparedQuery.getFilter();
+        if (filter != null) {
+            BsonDocument preparedFilter = getQuery(codecRegistry, preparedQuery, persistentEntity, filter);
+            return new FetchOptions(null, preparedFilter);
+        }
+        return new FetchOptions(null, EMPTY);
     }
 
     protected UpdateOptions getUpdateOptions(CodecRegistry codecRegistry, PreparedQuery<?, ?> preparedQuery, RuntimePersistentEntity<?> persistentEntity) {
-        Bson update = getUpdate(codecRegistry, preparedQuery, persistentEntity);
-        Bson filter = getFilter(codecRegistry, preparedQuery, persistentEntity);
-        return new UpdateOptions(update, filter);
+        MongoPreparedQuery<?, ?> mongoPreparedQuery = (MongoPreparedQuery<?, ?>) preparedQuery;
+        BsonDocument update = mongoPreparedQuery.getUpdate();
+        if (update == null) {
+            throw new IllegalArgumentException("Update query is not provided!");
+        }
+        BsonDocument preparedUpdate = getQuery(codecRegistry, preparedQuery, persistentEntity, update);
+        BsonDocument preparedFilter;
+        BsonDocument filter = mongoPreparedQuery.getFilter();
+        if (filter != null) {
+            preparedFilter = getQuery(codecRegistry, preparedQuery, persistentEntity, filter);
+        } else {
+            preparedFilter = null;
+        }
+        return new UpdateOptions(preparedUpdate, preparedFilter);
+    }
+
+    protected DeleteOptions getDeleteOptions(CodecRegistry codecRegistry, PreparedQuery<?, ?> preparedQuery, RuntimePersistentEntity<?> persistentEntity) {
+        MongoPreparedQuery<?, ?> mongoPreparedQuery = (MongoPreparedQuery<?, ?>) preparedQuery;
+        BsonDocument preparedFilter;
+        BsonDocument filter = mongoPreparedQuery.getFilter();
+        if (filter != null) {
+            preparedFilter = getQuery(codecRegistry, preparedQuery, persistentEntity, filter);
+        } else {
+            preparedFilter = null;
+        }
+        return new DeleteOptions(preparedFilter);
     }
 
     protected <R> R convertResult(CodecRegistry codecRegistry,
@@ -196,33 +303,11 @@ abstract class AbstractMongoRepositoryOperations<Cnt, PS> extends AbstractReposi
         }
     }
 
-    private <T> Bson getUpdate(CodecRegistry codecRegistry, PreparedQuery<?, ?> preparedQuery, RuntimePersistentEntity<T> persistentEntity) {
-        String query = preparedQuery.getUpdate();
-        if (query == null) {
-            throw new IllegalArgumentException("Update query is not provided!");
-        }
-        return getQuery(codecRegistry, preparedQuery, persistentEntity, query);
-    }
-
-    protected <T> Bson getFilter(CodecRegistry codecRegistry, PreparedQuery<?, ?> preparedQuery, RuntimePersistentEntity<T> persistentEntity) {
-        String query = preparedQuery.getQuery();
-        return getQuery(codecRegistry, preparedQuery, persistentEntity, query);
-    }
-
-    private <T> List<BsonDocument> getPipeline(CodecRegistry codecRegistry, PreparedQuery<?, ?> preparedQuery, RuntimePersistentEntity<T> persistentEntity) {
-        String query = preparedQuery.getQuery();
-        BsonArray bsonArray = BsonArray.parse(query);
-        bsonArray = (BsonArray) replaceQueryParameters(codecRegistry, preparedQuery, persistentEntity, bsonArray);
-        return bsonArray.stream().map(BsonValue::asDocument).collect(Collectors.toList());
-    }
-
-    private <T> BsonDocument getQuery(CodecRegistry codecRegistry, PreparedQuery<?, ?> preparedQuery, RuntimePersistentEntity<T> persistentEntity, String query) {
-        if (StringUtils.isEmpty(query)) {
+    private <T> BsonDocument getQuery(CodecRegistry codecRegistry, PreparedQuery<?, ?> preparedQuery, RuntimePersistentEntity<T> persistentEntity, BsonDocument bsonDocument) {
+        if (bsonDocument == null) {
             return EMPTY;
         }
-        BsonDocument bsonDocument = BsonDocument.parse(query);
-        bsonDocument = (BsonDocument) replaceQueryParameters(codecRegistry, preparedQuery, persistentEntity, bsonDocument);
-        return bsonDocument;
+        return (BsonDocument) replaceQueryParameters(codecRegistry, preparedQuery, persistentEntity, bsonDocument);
     }
 
     private <T> BsonValue replaceQueryParameters(CodecRegistry codecRegistry, PreparedQuery<?, ?> preparedQuery, RuntimePersistentEntity<T> persistentEntity, BsonValue value) {
@@ -421,10 +506,10 @@ abstract class AbstractMongoRepositoryOperations<Cnt, PS> extends AbstractReposi
 
     protected static final class FetchOptions {
 
-        protected final List<BsonDocument> pipeline;
-        protected final Bson filter;
+        final List<BsonDocument> pipeline;
+        final BsonDocument filter;
 
-        public FetchOptions(@Nullable List<BsonDocument> pipeline, @Nullable Bson filter) {
+        public FetchOptions(@Nullable List<BsonDocument> pipeline, @Nullable BsonDocument filter) {
             this.pipeline = pipeline;
             this.filter = filter;
         }
@@ -432,12 +517,21 @@ abstract class AbstractMongoRepositoryOperations<Cnt, PS> extends AbstractReposi
 
     protected static final class UpdateOptions {
 
-        protected final Bson update;
-        protected final Bson filter;
+        final BsonDocument update;
+        final BsonDocument filter;
 
-        public UpdateOptions(@Nullable Bson update, @Nullable Bson filter) {
+        public UpdateOptions(@Nullable BsonDocument update, @Nullable BsonDocument filter) {
             this.update = update;
             this.filter = filter;
+        }
+    }
+
+    protected static final class DeleteOptions {
+
+        final BsonDocument filter;
+
+        public DeleteOptions(@Nullable BsonDocument filter) {
+            this.filter = filter == null ? EMPTY : filter;
         }
     }
 

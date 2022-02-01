@@ -17,10 +17,10 @@ package io.micronaut.data.runtime.query;
 
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.convert.ConversionService;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.model.runtime.StoredQuery;
-import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.runtime.query.internal.DefaultPreparedQuery;
 
 /**
@@ -42,7 +42,7 @@ public abstract class DefaultPreparedQueryResolver implements PreparedQueryResol
                 storedQuery.getQuery(),
                 pageable,
                 storedQuery.isDtoProjection(),
-                getOperations().getConversionService()
+                getConversionService()
         );
     }
 
@@ -56,10 +56,10 @@ public abstract class DefaultPreparedQueryResolver implements PreparedQueryResol
                 storedQuery.getQuery(),
                 pageable,
                 false,
-                getOperations().getConversionService()
+                getConversionService()
         );
     }
 
-    protected abstract RepositoryOperations getOperations();
+    protected abstract ConversionService getConversionService();
 
 }

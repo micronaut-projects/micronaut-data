@@ -16,7 +16,11 @@
 package io.micronaut.data.runtime.query;
 
 import io.micronaut.aop.MethodInvocationContext;
+import io.micronaut.core.annotation.AnnotationMetadata;
+import io.micronaut.data.model.runtime.QueryParameterBinding;
 import io.micronaut.data.model.runtime.StoredQuery;
+
+import java.util.List;
 
 /**
  * Stored query resolver.
@@ -50,4 +54,50 @@ public interface StoredQueryResolver {
      */
     <E, R> StoredQuery<E, R> resolveCountQuery(MethodInvocationContext<?, ?> context, Class<E> entityClass, Class<R> resultType);
 
+    /**
+     * Create stored query from provided values.
+     * Used for criteria stored query creation.
+     *
+     * @param name               The name
+     * @param annotationMetadata The annotation metadata
+     * @param rootEntity         The root entity
+     * @param query              The query
+     * @param update             The update query
+     * @param queryParts         The query parts
+     * @param queryParameters    The query parameters
+     * @param hasPageable        Has pageable
+     * @param isSingleResult     Is single result
+     * @param <E>                The entity type
+     * @param <QR>               The result type
+     * @return new instance of stored query
+     */
+    <E, QR> StoredQuery<E, QR> createStoredQuery(String name,
+                                                 AnnotationMetadata annotationMetadata,
+                                                 Class<Object> rootEntity,
+                                                 String query,
+                                                 String update,
+                                                 String[] queryParts,
+                                                 List<QueryParameterBinding> queryParameters,
+                                                 boolean hasPageable,
+                                                 boolean isSingleResult);
+
+    /**
+     * Create count stored query from provided values.
+     * Used for criteria stored query creation.
+     *
+     * @param name               The name
+     * @param annotationMetadata The annotation metadata
+     * @param rootEntity         The root entity
+     * @param query              The query
+     * @param queryParts         The query parts
+     * @param queryParameters    The query parameters
+     * @return new instance of stored query
+     * @return
+     */
+    StoredQuery<Object, Long> createCountStoredQuery(String name,
+                                                     AnnotationMetadata annotationMetadata,
+                                                     Class<Object> rootEntity,
+                                                     String query,
+                                                     String[] queryParts,
+                                                     List<QueryParameterBinding> queryParameters);
 }

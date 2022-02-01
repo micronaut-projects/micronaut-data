@@ -455,11 +455,11 @@ public final class DefaultMongoRepositoryOperations extends AbstractMongoReposit
         return withClientSession(clientSession -> {
             RuntimePersistentEntity<?> persistentEntity = runtimeEntityRegistry.getEntity(preparedQuery.getRootEntity());
             MongoDatabase mongoDatabase = getDatabase(persistentEntity, preparedQuery.getRepositoryType());
-            Bson filter = getFilter(mongoDatabase.getCodecRegistry(), preparedQuery, persistentEntity);
+            DeleteOptions deleteOptions = getDeleteOptions(mongoDatabase.getCodecRegistry(), preparedQuery, persistentEntity);
             if (QUERY_LOG.isDebugEnabled()) {
-                QUERY_LOG.debug("Executing Mongo 'deleteMany' with filter: {}", filter.toBsonDocument().toJson());
+                QUERY_LOG.debug("Executing Mongo 'deleteMany' with filter: {}", deleteOptions.filter.toBsonDocument().toJson());
             }
-            DeleteResult deleteResult = getCollection(mongoDatabase, persistentEntity, persistentEntity.getIntrospection().getBeanType()).deleteMany(clientSession, filter);
+            DeleteResult deleteResult = getCollection(mongoDatabase, persistentEntity, persistentEntity.getIntrospection().getBeanType()).deleteMany(clientSession, deleteOptions.filter);
             if (preparedQuery.isOptimisticLock()) {
                 checkOptimisticLocking(1, (int) deleteResult.getDeletedCount());
             }

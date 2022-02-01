@@ -18,25 +18,19 @@ package io.micronaut.data.runtime.query.internal;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.convert.value.ConvertibleValues;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.type.MutableArgumentValue;
 import io.micronaut.data.intercept.annotation.DataMethod;
-import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.Pageable;
-import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.runtime.DefaultStoredDataOperation;
 import io.micronaut.data.model.runtime.PreparedQuery;
-import io.micronaut.data.model.runtime.QueryParameterBinding;
 import io.micronaut.data.model.runtime.StoredQuery;
 
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 
 /**
  * Represents a prepared query.
@@ -45,7 +39,7 @@ import java.util.Set;
  * @param <RT> The result type
  */
 @Internal
-public final class DefaultPreparedQuery<E, RT> extends DefaultStoredDataOperation<RT> implements PreparedQuery<E, RT> {
+public final class DefaultPreparedQuery<E, RT> extends DefaultStoredDataOperation<RT> implements DelegateStoredQuery<E, RT>, PreparedQuery<E, RT> {
     private static final String DATA_METHOD_ANN_NAME = DataMethod.class.getName();
     private final Pageable pageable;
     private final StoredQuery<E, RT> storedQuery;
@@ -81,13 +75,18 @@ public final class DefaultPreparedQuery<E, RT> extends DefaultStoredDataOperatio
     }
 
     @Override
-    public String[] getExpandableQueryParts() {
-        return storedQuery.getExpandableQueryParts();
+    public Class<E> getRootEntity() {
+        return storedQuery.getRootEntity();
     }
 
     @Override
-    public List<QueryParameterBinding> getQueryBindings() {
-        return storedQuery.getQueryBindings();
+    public Map<String, Object> getQueryHints() {
+        return storedQuery.getQueryHints();
+    }
+
+    @Override
+    public StoredQuery<E, RT> getStoredQueryDelegate() {
+        return storedQuery;
     }
 
     @Override
@@ -110,28 +109,6 @@ public final class DefaultPreparedQuery<E, RT> extends DefaultStoredDataOperatio
             }
             return Optional.ofNullable(parameterValue);
         });
-    }
-
-    @Override
-    public boolean hasResultConsumer() {
-        return storedQuery.hasResultConsumer();
-    }
-
-    @NonNull
-    @Override
-    public Set<JoinPath> getJoinFetchPaths() {
-        return storedQuery.getJoinFetchPaths();
-    }
-
-    @Override
-    public boolean isSingleResult() {
-        return storedQuery.isSingleResult();
-    }
-
-    @NonNull
-    @Override
-    public Map<String, Object> getQueryHints() {
-        return storedQuery.getQueryHints();
     }
 
     @Override
@@ -166,87 +143,14 @@ public final class DefaultPreparedQuery<E, RT> extends DefaultStoredDataOperatio
     }
 
     @Override
-    public boolean isNative() {
-        return storedQuery.isNative();
-    }
-
-    @Override
-    public boolean useNumericPlaceholders() {
-        return storedQuery.useNumericPlaceholders();
-    }
-
-    @Override
     public boolean isDtoProjection() {
         return dto;
     }
 
     @NonNull
     @Override
-    public Class<RT> getResultType() {
-        return storedQuery.getResultType();
-    }
-
-    @NonNull
-    @Override
-    public DataType getResultDataType() {
-        return storedQuery.getResultDataType();
-    }
-
-    @Nullable
-    @Override
-    public Optional<Class<?>> getEntityIdentifierType() {
-        return storedQuery.getEntityIdentifierType();
-    }
-
-    @NonNull
-    @Override
-    public Class<E> getRootEntity() {
-        return storedQuery.getRootEntity();
-    }
-
-    @Override
-    @Deprecated
-    public boolean hasInExpression() {
-        return storedQuery.hasInExpression();
-    }
-
-    @Override
-    public boolean hasPageable() {
-        return storedQuery.hasPageable();
-    }
-
-    @NonNull
-    @Override
     public String getQuery() {
         return query;
-    }
-
-    @Override
-    public String getUpdate() {
-        return storedQuery.getUpdate();
-    }
-
-    @NonNull
-    @Override
-    public Class<?>[] getArgumentTypes() {
-        return storedQuery.getArgumentTypes();
-    }
-
-    @NonNull
-    @Override
-    public Map<String, String> getParameterBinding() {
-        return storedQuery.getParameterBinding();
-    }
-
-    @Override
-    public boolean isCount() {
-        return storedQuery.isCount();
-    }
-
-    @NonNull
-    @Override
-    public String getName() {
-        return storedQuery.getName();
     }
 
     @NonNull
@@ -267,24 +171,4 @@ public final class DefaultPreparedQuery<E, RT> extends DefaultStoredDataOperatio
         return context.getAttribute(name, type);
     }
 
-    @Nullable
-    @Override
-    public String[] getIndexedParameterAutoPopulatedPropertyPaths() {
-        return storedQuery.getIndexedParameterAutoPopulatedPropertyPaths();
-    }
-
-    @Override
-    public String[] getIndexedParameterAutoPopulatedPreviousPropertyPaths() {
-        return storedQuery.getIndexedParameterAutoPopulatedPreviousPropertyPaths();
-    }
-
-    @Override
-    public int[] getIndexedParameterAutoPopulatedPreviousPropertyIndexes() {
-        return storedQuery.getIndexedParameterAutoPopulatedPreviousPropertyIndexes();
-    }
-
-    @Override
-    public boolean isOptimisticLock() {
-        return storedQuery.isOptimisticLock();
-    }
 }

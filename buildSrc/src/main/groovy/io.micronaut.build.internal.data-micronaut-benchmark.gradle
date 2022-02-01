@@ -5,13 +5,11 @@ plugins {
 }
 
 dependencies {
-    annotationProcessor project(":data-processor")
+    annotationProcessor projects.dataProcessor
     annotationProcessor "io.micronaut:micronaut-inject-java"
     runtimeOnly "ch.qos.logback:logback-classic"
 
     implementation "io.micronaut:micronaut-runtime"
-    implementation "io.micronaut.sql:micronaut-jdbc-hikari"
-    runtimeOnly "com.h2database:h2"
 
     testAnnotationProcessor "io.micronaut:micronaut-inject-java"
     testImplementation "io.micronaut.test:micronaut-test-junit5"
