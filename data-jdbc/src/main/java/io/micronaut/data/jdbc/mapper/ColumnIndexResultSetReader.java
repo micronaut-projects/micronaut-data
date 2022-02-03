@@ -96,7 +96,7 @@ public final class ColumnIndexResultSetReader implements ResultReader<ResultSet,
     @Override
     public char readChar(ResultSet resultSet, Integer index) {
         try {
-            return (char) resultSet.getInt(index);
+            return resultSet.getString(index).charAt(0);
         } catch (SQLException e) {
             throw exceptionForColumn(index, e);
         }

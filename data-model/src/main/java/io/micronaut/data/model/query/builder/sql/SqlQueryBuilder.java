@@ -1737,13 +1737,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                 }
                 break;
             case CHARACTER:
-                if (dialect == Dialect.ORACLE) {
-                    column += " NUMBER(10)";
-                } else if (dialect == Dialect.POSTGRES) {
-                    column += " INTEGER";
-                } else {
-                    column += " INT";
-                }
+                column += " CHAR(1)";
                 if (required) {
                     column += " NOT NULL";
                 }

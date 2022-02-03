@@ -121,7 +121,7 @@ public final class ColumnNameResultSetReader implements ResultReader<ResultSet, 
     @Override
     public char readChar(ResultSet resultSet, String name) {
         try {
-            return (char) resultSet.getInt(name);
+            return resultSet.getString(name).charAt(0);
         } catch (SQLException e) {
             throw exceptionForColumn(name, e);
         }

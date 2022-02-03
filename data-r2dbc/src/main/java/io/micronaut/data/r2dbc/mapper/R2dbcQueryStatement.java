@@ -165,7 +165,7 @@ public class R2dbcQueryStatement implements QueryStatement<Statement, Integer> {
     @NonNull
     @Override
     public QueryStatement<Statement, Integer> setChar(Statement statement, Integer name, char value) {
-        setInt(statement, name, value);
+        setValue(statement, name, String.valueOf(value));
         return this;
     }
 
