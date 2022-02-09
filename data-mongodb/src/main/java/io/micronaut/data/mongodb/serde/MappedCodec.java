@@ -47,6 +47,9 @@ class MappedCodec<T> implements Codec<T> {
     protected final Serializer<? super T> serializer;
     protected final Deserializer<? extends T> deserializer;
     protected final CodecRegistry codecRegistry;
+    private final Deserializer.DecoderContext decoderContext;
+    private final Serializer.EncoderContext encoderContext;
+
 
     /**
      * Default constructor.
@@ -65,9 +68,11 @@ class MappedCodec<T> implements Codec<T> {
         this.type = type;
         this.argument = Argument.of(type);
         this.codecRegistry = codecRegistry;
+        this.decoderContext = dataSerdeRegistry.newDecoderContext(type, argument, persistentEntity, codecRegistry);
+        this.encoderContext = dataSerdeRegistry.newEncoderContext(type, argument, persistentEntity, codecRegistry);
         try {
-            this.serializer = dataSerdeRegistry.findSerializer(argument);
-            this.deserializer = dataSerdeRegistry.findDeserializer(argument);
+            this.serializer = dataSerdeRegistry.findSerializer(argument).createSpecific(encoderContext, argument);
+            this.deserializer = dataSerdeRegistry.findDeserializer(argument).createSpecific(decoderContext, argument);
         } catch (IOException e) {
             throw new DataAccessException("Cannot find serialize/deserializer for type: " + type + ". " + e.getMessage(), e);
         }
@@ -76,7 +81,7 @@ class MappedCodec<T> implements Codec<T> {
     @Override
     public T decode(BsonReader reader, DecoderContext decoderContext) {
         try {
-            return deserializer.deserialize(new BsonReaderDecoder(reader), dataSerdeRegistry.newDecoderContext(type, argument, persistentEntity, codecRegistry), argument);
+            return deserializer.deserialize(new BsonReaderDecoder(reader), this.decoderContext, argument);
         } catch (IOException e) {
             throw new DataAccessException("Cannot deserialize: " + type, e);
         }
@@ -85,7 +90,7 @@ class MappedCodec<T> implements Codec<T> {
     @Override
     public void encode(BsonWriter writer, T value, EncoderContext encoderContext) {
         try {
-            serializer.serialize(new BsonWriterEncoder(writer), dataSerdeRegistry.newEncoderContext(type, argument, persistentEntity, codecRegistry), argument, value);
+            serializer.serialize(new BsonWriterEncoder(writer), this.encoderContext, argument, value);
         } catch (IOException e) {
             throw new DataAccessException("Cannot serialize: " + value, e);
         }
