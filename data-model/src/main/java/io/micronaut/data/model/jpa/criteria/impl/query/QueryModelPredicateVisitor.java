@@ -270,7 +270,12 @@ public final class QueryModelPredicateVisitor implements PredicateVisitor {
                 value = asValue(first);
             }
         }
-        add(Restrictions.in(getPropertyPath(propertyIn), value));
+        if (state.negated) {
+            state.negated = false;
+            add(Restrictions.notIn(getPropertyPath(propertyIn), value));
+        } else {
+            add(Restrictions.in(getPropertyPath(propertyIn), value));
+        }
     }
 
     @Override
@@ -283,14 +288,27 @@ public final class QueryModelPredicateVisitor implements PredicateVisitor {
                 if (iterator.hasNext()) {
                     throw new IllegalStateException("Only one parameter is supported for IN expression!");
                 }
-                add(Restrictions.in(getPropertyPath(inValues), asValue(first)));
+                if (state.negated) {
+                    state.negated = false;
+                    add(Restrictions.notIn(getPropertyPath(inValues), asValue(first)));
+                } else {
+                    add(Restrictions.in(getPropertyPath(inValues), asValue(first)));
+                }
                 return;
             }
         }
-        add(Restrictions.in(
-                getPropertyPath(inValues),
-                values.stream().map(this::asValue).collect(Collectors.toList())
-        ));
+        if (state.negated) {
+            state.negated = false;
+            add(Restrictions.notIn(
+                    getPropertyPath(inValues),
+                    values.stream().map(this::asValue).collect(Collectors.toList())
+            ));
+        } else {
+            add(Restrictions.in(
+                    getPropertyPath(inValues),
+                    values.stream().map(this::asValue).collect(Collectors.toList())
+            ));
+        }
     }
 
     private Object asValue(Object value) {

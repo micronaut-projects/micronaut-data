@@ -118,7 +118,7 @@ public final class CriteriaUtils {
         throw new IllegalStateException("Expression is expected to be a parameter! Got: " + exp);
     }
 
-    public static <T> PersistentPropertyPath<T> requireProperty(Expression<T> exp) {
+    public static <T> PersistentPropertyPath<T> requireProperty(Expression<? extends T> exp) {
         if (exp instanceof PersistentPropertyPath) {
             return (PersistentPropertyPath<T>) exp;
         }

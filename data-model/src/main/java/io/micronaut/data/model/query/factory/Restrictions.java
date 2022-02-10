@@ -75,6 +75,16 @@ public class Restrictions {
     }
 
     /**
+     * Restricts the property to not be in the list of given values.
+     * @param property The property
+     * @param parameter The parameter that provides the value
+     * @return An instance of Query.In
+     */
+    public static QueryModel.NotIn notIn(String property, Object parameter) {
+        return new QueryModel.NotIn(property, parameter);
+    }
+
+    /**
      * Restricts the property to be in the list of given values.
      * @param property The property
      * @param subquery The subquery
