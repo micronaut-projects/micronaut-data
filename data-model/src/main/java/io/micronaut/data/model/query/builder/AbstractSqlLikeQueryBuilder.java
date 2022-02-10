@@ -34,6 +34,7 @@ import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.Sort;
+import io.micronaut.data.model.jpa.criteria.impl.LiteralExpression;
 import io.micronaut.data.model.naming.NamingStrategy;
 import io.micronaut.data.model.query.AssociationQuery;
 import io.micronaut.data.model.query.BindingParameter;
@@ -223,7 +224,12 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             StringBuilder whereClause = ctx.query();
             appendPropertyRef(whereClause, propertyPath);
             whereClause.append(" IN (");
-            ctx.pushParameter((BindingParameter) inQuery.getValue(), newBindingContext(propertyPath.propertyPath).expandable());
+            Object value = inQuery.getValue();
+            if (value instanceof BindingParameter) {
+                ctx.pushParameter((BindingParameter) value, newBindingContext(propertyPath.propertyPath).expandable());
+            } else {
+                asLiterals(ctx.query(), value);
+            }
             whereClause.append(CLOSE_BRACKET);
         });
 
@@ -232,9 +238,37 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             StringBuilder whereClause = ctx.query();
             appendPropertyRef(whereClause, propertyPath);
             whereClause.append(" NOT IN (");
-            ctx.pushParameter((BindingParameter) inQuery.getValue(), newBindingContext(propertyPath.propertyPath).expandable());
+            Object value = inQuery.getValue();
+            if (value instanceof BindingParameter) {
+                ctx.pushParameter((BindingParameter) value, newBindingContext(propertyPath.propertyPath).expandable());
+            } else {
+                asLiterals(ctx.query(), value);
+            }
             whereClause.append(CLOSE_BRACKET);
         });
+    }
+
+    private void asLiterals(StringBuilder sb, @Nullable Object value) {
+        if (value instanceof Iterable) {
+            for (Iterator iterator = ((Iterable) value).iterator(); iterator.hasNext(); ) {
+                Object o = iterator.next();
+                sb.append(asLiteral(o));
+                if (iterator.hasNext()) {
+                    sb.append(",");
+                }
+            }
+        } else if (value instanceof Object[]) {
+            Object[] objects = (Object[]) value;
+            for (int i = 0; i < objects.length; i++) {
+                Object o = objects[i];
+                sb.append(asLiteral(o));
+                if (i + 1 != objects.length) {
+                    sb.append(",");
+                }
+            }
+        } else {
+            sb.append(asLiteral(value));
+        }
     }
 
     /**
@@ -245,6 +279,9 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
      */
     @NonNull
     protected String asLiteral(@Nullable Object value) {
+        if (value instanceof LiteralExpression) {
+            value = ((LiteralExpression<?>) value).getValue();
+        }
         if (value == null) {
             return "NULL";
         }

@@ -56,6 +56,26 @@ abstract class AbstractCriteriaSpec extends Specification {
         where:
             specification << [
                     { root, query, cb ->
+                        root.get("amount").in(100, 200)
+                    } as Specification,
+                    { root, query, cb ->
+                        root.get("amount").in(100, 200).not()
+                    } as Specification,
+                    { root, query, cb ->
+                        cb.in(root.get("amount")).value(100).value(200)
+                    } as Specification,
+                    { root, query, cb ->
+                        cb.in(root.get("amount")).value(100).value(200).not()
+                    } as Specification,
+                    { root, query, cb ->
+                        def parameter = cb.parameter(Integer)
+                        root.get("amount").in([parameter] as Expression<?>[])
+                    } as Specification,
+                    { root, query, cb ->
+                        def parameter = cb.parameter(Integer)
+                        root.get("amount").in([parameter] as Expression<?>[]).not()
+                    } as Specification,
+                    { root, query, cb ->
                         cb.between(root.get("enabled"), true, false)
                     } as Specification,
                     { root, query, cb ->
@@ -79,6 +99,12 @@ abstract class AbstractCriteriaSpec extends Specification {
                     } as Specification
             ]
             expectedWhereQuery << [
+                    '(test_."amount" IN (100,200))',
+                    '(test_."amount" NOT IN (100,200))',
+                    '(test_."amount" IN (100,200))',
+                    '(test_."amount" NOT IN (100,200))',
+                    '(test_."amount" IN (?))',
+                    '(test_."amount" NOT IN (?))',
                     '((test_."enabled" >= TRUE AND test_."enabled" <= FALSE))',
                     '((test_."amount" >= ? AND test_."amount" <= ?))',
                     '(test_."enabled" = TRUE )',
