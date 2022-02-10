@@ -66,7 +66,7 @@ interface MyInterface {
         alias() |"name"    | "Like"              | ["name": String] | "(${alias}.$property like :p1)"
         alias() |"name"    | "Ilike"             | ["name": String] | "(lower(${alias}.$property) like lower(:p1))"
         alias() |"name"    | "In"                | ["name": String] | "(${alias}.$property IN (:p1))"
-        alias() |"name"    | "NotIn"             | ["name": String] | "( NOT(${alias}.$property IN (:p1)))"
+        alias() |"name"    | "NotIn"             | ["name": String] | "(${alias}.$property NOT IN (:p1))"
         alias() |"name"    | "InList"            | ["name": String] | "(${alias}.$property IN (:p1))"
         alias() |"name"    | "StartsWith"        | ["name": String] | "(${alias}.$property LIKE CONCAT(:p1,'%'))"
         alias() |"name"    | "EndsWith"          | ["name": String] | "(${alias}.$property LIKE CONCAT('%',:p1))"
