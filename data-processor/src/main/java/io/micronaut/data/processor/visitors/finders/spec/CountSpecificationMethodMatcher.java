@@ -16,6 +16,7 @@
 package io.micronaut.data.processor.visitors.finders.spec;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.data.processor.visitors.finders.AbstractSpecificationMethodMatcher;
 import io.micronaut.data.processor.visitors.finders.FindersUtils;
@@ -47,15 +48,17 @@ public class CountSpecificationMethodMatcher extends AbstractSpecificationMethod
             return mc -> {
                 if (isFirstParameterMicronautDataQuerySpecification(matchContext.getMethodElement())) {
                     Map.Entry<ClassElement, ClassElement> e = FindersUtils.pickCountSpecInterceptor(matchContext, matchContext.getReturnType());
-                    return new MethodMatchInfo(e.getKey(), e.getValue());
+                    return new MethodMatchInfo(DataMethod.OperationType.COUNT, e.getKey(), e.getValue());
                 }
                 if (isFirstParameterSpringJpaSpecification(mc.getMethodElement())) {
                     return new MethodMatchInfo(
+                            DataMethod.OperationType.COUNT,
                             mc.getReturnType(),
                             getInterceptorElement(mc, "io.micronaut.data.spring.jpa.intercept.CountSpecificationInterceptor")
                     );
                 }
                 return new MethodMatchInfo(
+                        DataMethod.OperationType.COUNT,
                         mc.getReturnType(),
                         getInterceptorElement(mc, "io.micronaut.data.jpa.repository.intercept.CountSpecificationInterceptor")
                 );

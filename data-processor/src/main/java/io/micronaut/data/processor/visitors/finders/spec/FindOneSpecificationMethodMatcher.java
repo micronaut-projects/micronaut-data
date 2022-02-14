@@ -16,6 +16,7 @@
 package io.micronaut.data.processor.visitors.finders.spec;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.data.processor.visitors.finders.AbstractSpecificationMethodMatcher;
 import io.micronaut.data.processor.visitors.finders.FindersUtils;
@@ -44,15 +45,17 @@ public class FindOneSpecificationMethodMatcher extends AbstractSpecificationMeth
     protected MethodMatch match(MethodMatchContext matchContext, java.util.regex.Matcher matcher) {
         if (isFirstParameterMicronautDataQuerySpecification(matchContext.getMethodElement())) {
             Map.Entry<ClassElement, ClassElement> e = FindersUtils.pickFindOneSpecInterceptor(matchContext, matchContext.getMethodElement().getGenericReturnType());
-            return mc -> new MethodMatchInfo(e.getKey(), e.getValue());
+            return mc -> new MethodMatchInfo(DataMethod.OperationType.QUERY, e.getKey(), e.getValue());
         }
         if (isFirstParameterSpringJpaSpecification(matchContext.getMethodElement())) {
             return mc -> new MethodMatchInfo(
+                    DataMethod.OperationType.QUERY,
                     mc.getReturnType(),
                     getInterceptorElement(mc, "io.micronaut.data.spring.jpa.intercept.FindOneSpecificationInterceptor")
             );
         }
         return mc -> new MethodMatchInfo(
+                DataMethod.OperationType.QUERY,
                 mc.getReturnType(),
                 getInterceptorElement(mc, "io.micronaut.data.jpa.repository.intercept.FindOneSpecificationInterceptor")
         );

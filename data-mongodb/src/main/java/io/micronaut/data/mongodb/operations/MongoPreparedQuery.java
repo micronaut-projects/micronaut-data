@@ -17,15 +17,53 @@ package io.micronaut.data.mongodb.operations;
 
 import io.micronaut.core.annotation.Experimental;
 import io.micronaut.data.model.runtime.PreparedQuery;
+import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 
 /**
  * MongoDB's {@link PreparedQuery}.
  *
- * @param <E> The entity type
- * @param <R> The result type
+ * @param <E>   The entity type
+ * @param <R>   The result type
+ * @param <Dtb> The database type
  * @author Denis Stepanov
- * @since 3.3.
+ * @since 3.3.0
  */
 @Experimental
-public interface MongoPreparedQuery<E, R> extends PreparedQuery<E, R>, MongoStoredQuery<E, R> {
+public interface MongoPreparedQuery<E, R, Dtb> extends PreparedQuery<E, R> {
+
+    /**
+     * @return The persistent entity
+     */
+    RuntimePersistentEntity<E> getRuntimePersistentEntity();
+
+    /**
+     * @return The associated databae
+     */
+    Dtb getDatabase();
+
+    /**
+     * @return Is aggregation query?
+     */
+    boolean isAggregate();
+
+    /**
+     * @return The data to execute the aggregation
+     */
+    MongoAggregation getAggregation();
+
+    /**
+     * @return The data to execute the find
+     */
+    MongoFind getFind();
+
+    /**
+     * @return The data to execute the update many
+     */
+    MongoUpdate getUpdateMany();
+
+    /**
+     * @return The data to execute the delete many
+     */
+    MongoDelete getDeleteMany();
+
 }

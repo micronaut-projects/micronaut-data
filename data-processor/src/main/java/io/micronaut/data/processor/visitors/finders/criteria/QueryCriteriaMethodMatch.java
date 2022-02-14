@@ -23,6 +23,7 @@ import io.micronaut.data.annotation.Join;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.intercept.DataInterceptor;
+import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityCriteriaQuery;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQuery;
@@ -67,7 +68,9 @@ import java.util.stream.Collectors;
  */
 @Experimental
 public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
-    private static final Pattern ORDER_BY_PATTERN = Pattern.compile("(.*)OrderBy([\\w\\d]+)");
+    private static final String[] ORDER_VARIATIONS = {"Order", "Sort"};
+    private static final String BY = "By";
+    private static final Pattern ORDER_BY_PATTERN = Pattern.compile("(.*)(" + Arrays.stream(ORDER_VARIATIONS).map(o -> o + BY).collect(Collectors.joining("|")) + ")([\\w\\d]+)");
 
     /**
      * Default constructor.
@@ -94,12 +97,14 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
         if (matcher.groupCount() == 4) {
             String projectionSequence = matcher.group(3);
             String querySequence = matcher.group(4);
-            if (projectionSequence.endsWith("Order") && matchContext.getMethodElement().getName().contains("OrderBy" + querySequence)) {
-                apply(matchContext, root, query, cb, projectionSequence + "By" + querySequence);
-                return;
+            for (String orderVariation : ORDER_VARIATIONS) {
+                if (projectionSequence.endsWith(orderVariation) && matchContext.getMethodElement().getName().contains(orderVariation + BY + querySequence)) {
+                    apply(matchContext, root, query, cb, projectionSequence + BY + querySequence);
+                    return;
+                }
             }
             apply(matchContext, root, query, cb, projectionSequence, querySequence);
-        } else if (matcher.group(2).endsWith("By")) {
+        } else if (matcher.group(2).endsWith(BY)) {
             apply(matchContext, root, query, cb, "", matcher.group(3));
         } else {
             String querySequence = matcher.group(3);
@@ -168,24 +173,25 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
 
         boolean isDto = resultType != null
                 && !TypeUtils.areTypesCompatible(resultType, queryResultType)
-                && resultType.hasStereotype(Introspected.class)
-                && queryResultType.hasStereotype(MappedEntity.class);
+                && (isDtoType(resultType) || resultType.hasStereotype(Introspected.class) && queryResultType.hasStereotype(MappedEntity.class));
 
         if (isDto) {
-            List<SourcePersistentProperty> dtoProjectionProperties = getDtoProjectionProperties(matchContext.getRootEntity(), resultType);
-            if (!dtoProjectionProperties.isEmpty()) {
-                Root<?> root = query.getRoots().iterator().next();
-                query.multiselect(
-                        dtoProjectionProperties.stream()
-                                .map(p -> {
-                                    if (matchContext.getQueryBuilder().shouldAliasProjections()) {
-                                        return root.get(p.getName()).alias(p.getName());
-                                    } else {
-                                        return root.get(p.getName());
-                                    }
-                                })
-                                .collect(Collectors.toList())
-                );
+            if (!isDtoType(resultType)) {
+                List<SourcePersistentProperty> dtoProjectionProperties = getDtoProjectionProperties(matchContext.getRootEntity(), resultType);
+                if (!dtoProjectionProperties.isEmpty()) {
+                    Root<?> root = query.getRoots().iterator().next();
+                    query.multiselect(
+                            dtoProjectionProperties.stream()
+                                    .map(p -> {
+                                        if (matchContext.getQueryBuilder().shouldAliasProjections()) {
+                                            return root.get(p.getName()).alias(p.getName());
+                                        } else {
+                                            return root.get(p.getName());
+                                        }
+                                    })
+                                    .collect(Collectors.toList())
+                    );
+                }
             }
         } else {
             if (resultType == null || (!resultType.isAssignable(void.class) && !resultType.isAssignable(Void.class))) {
@@ -245,6 +251,7 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
         }
 
         return new MethodMatchInfo(
+                DataMethod.OperationType.QUERY,
                 resultType,
                 getInterceptorElement(matchContext, interceptorType)
         )
@@ -252,6 +259,13 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
                 .optimisticLock(optimisticLock)
                 .queryResult(queryResult)
                 .countQueryResult(countQueryResult);
+    }
+
+    private boolean isDtoType(ClassElement classElement) {
+        if (classElement.getName().equals("org.bson.BsonDocument")) {
+            return true;
+        }
+        return false;
     }
 
     private List<SourcePersistentProperty> getDtoProjectionProperties(SourcePersistentEntity entity,
@@ -322,7 +336,7 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
             StringBuffer buffer = new StringBuffer();
             if (matcher.find()) {
                 matcher.appendReplacement(buffer, "$1");
-                String orderDefGroup = matcher.group(2);
+                String orderDefGroup = matcher.group(3);
                 if (StringUtils.isNotEmpty(orderDefGroup)) {
                     String[] orderDefItems = orderDefGroup.split("And");
                     for (String orderDef : orderDefItems) {
@@ -390,7 +404,7 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
     }
 
     @Override
-    protected MethodMatchInfo.OperationType getOperationType() {
-        return MethodMatchInfo.OperationType.QUERY;
+    protected DataMethod.OperationType getOperationType() {
+        return DataMethod.OperationType.QUERY;
     }
 }

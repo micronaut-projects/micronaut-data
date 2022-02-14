@@ -15,67 +15,714 @@
  */
 package io.micronaut.data.mongodb.operations;
 
+import com.mongodb.CursorType;
+import com.mongodb.client.model.Collation;
+import com.mongodb.client.model.DeleteOptions;
+import com.mongodb.client.model.UpdateOptions;
+import io.micronaut.aop.InvocationContext;
+import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.annotation.Nullable;
+import io.micronaut.core.beans.BeanIntrospection;
+import io.micronaut.core.beans.BeanProperty;
+import io.micronaut.core.beans.exceptions.IntrospectionException;
+import io.micronaut.core.convert.ConversionContext;
+import io.micronaut.core.convert.ConversionService;
+import io.micronaut.core.type.Argument;
+import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.Query;
+import io.micronaut.data.document.model.query.builder.MongoQueryBuilder;
+import io.micronaut.data.intercept.annotation.DataMethod;
+import io.micronaut.data.model.DataType;
+import io.micronaut.data.model.PersistentPropertyPath;
+import io.micronaut.data.model.runtime.AttributeConverterRegistry;
+import io.micronaut.data.model.runtime.QueryParameterBinding;
+import io.micronaut.data.model.runtime.RuntimeAssociation;
+import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
+import io.micronaut.data.model.runtime.RuntimePersistentEntity;
+import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.model.runtime.StoredQuery;
+import io.micronaut.data.model.runtime.convert.AttributeConverter;
+import io.micronaut.data.mongodb.annotation.MongoCollation;
+import io.micronaut.data.mongodb.annotation.MongoProjection;
+import io.micronaut.data.mongodb.annotation.MongoSort;
+import io.micronaut.data.mongodb.operations.options.MongoAggregationOptions;
+import io.micronaut.data.mongodb.operations.options.MongoFindOptions;
 import io.micronaut.data.runtime.query.internal.DelegateStoredQuery;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
+import org.bson.BsonInt32;
+import org.bson.BsonObjectId;
+import org.bson.BsonValue;
+import org.bson.codecs.configuration.CodecRegistry;
+import org.bson.conversions.Bson;
+import org.bson.types.ObjectId;
+
+import java.lang.reflect.Array;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Default implementation of {@link MongoStoredQuery}.
  *
- * @param <E> The entity type
- * @param <R> The result type
+ * @param <E>   The entity type
+ * @param <R>   The result type
+ * @param <Dtb> The database type
  * @author Denis Stepanov
  * @since 3.3.
  */
 @Internal
-final class DefaultMongoStoredQuery<E, R> implements DelegateStoredQuery<E, R>, MongoStoredQuery<E, R> {
+final class DefaultMongoStoredQuery<E, R, Dtb> implements DelegateStoredQuery<E, R>, MongoStoredQuery<E, R, Dtb> {
+
+    private static final BsonDocument EMPTY = new BsonDocument();
 
     private final StoredQuery<E, R> storedQuery;
-    private final BsonDocument update;
-    private final BsonArray pipeline;
-    private final BsonDocument filter;
+    private final CodecRegistry codecRegistry;
+    private final AttributeConverterRegistry attributeConverterRegistry;
+    private final RuntimeEntityRegistry runtimeEntityRegistry;
+    private final ConversionService<?> conversionService;
+    private final Dtb database;
+    private final RuntimePersistentEntity<E> persistentEntity;
+    private final UpdateData updateData;
+    private final FindData findData;
+    private final AggregateData aggregateData;
+    private final DeleteData deleteData;
 
-    DefaultMongoStoredQuery(StoredQuery<E, R> storedQuery) {
-        this(storedQuery, storedQuery.getAnnotationMetadata().stringValue(Query.class, "update").orElse(null));
+    DefaultMongoStoredQuery(StoredQuery<E, R> storedQuery,
+                            CodecRegistry codecRegistry,
+                            AttributeConverterRegistry attributeConverterRegistry,
+                            RuntimeEntityRegistry runtimeEntityRegistry,
+                            ConversionService<?> conversionService,
+                            RuntimePersistentEntity<E> persistentEntity,
+                            Dtb database) {
+        this(storedQuery,
+                codecRegistry,
+                attributeConverterRegistry,
+                runtimeEntityRegistry,
+                conversionService,
+                persistentEntity,
+                database,
+                storedQuery.getAnnotationMetadata().enumValue(DataMethod.NAME, DataMethod.META_MEMBER_OPERATION_TYPE, DataMethod.OperationType.class).get(),
+                storedQuery.getAnnotationMetadata().stringValue(Query.class, "update").orElse(null));
     }
 
-    DefaultMongoStoredQuery(StoredQuery<E, R> storedQuery, String update) {
+    DefaultMongoStoredQuery(StoredQuery<E, R> storedQuery,
+                            CodecRegistry codecRegistry,
+                            AttributeConverterRegistry attributeConverterRegistry,
+                            RuntimeEntityRegistry runtimeEntityRegistry,
+                            ConversionService<?> conversionService,
+                            RuntimePersistentEntity<E> persistentEntity,
+                            Dtb database,
+                            DataMethod.OperationType operationType,
+                            String updateJson) {
         this.storedQuery = storedQuery;
-        this.update = update == null ? null : BsonDocument.parse(update);
-        String query = storedQuery.getQuery();
-        if (StringUtils.isEmpty(query)) {
-            pipeline = null;
-            filter = null;
-        } else if (query.startsWith("[")) {
-            pipeline = BsonArray.parse(query);
-            filter = null;
+        this.codecRegistry = codecRegistry;
+        this.attributeConverterRegistry = attributeConverterRegistry;
+        this.runtimeEntityRegistry = runtimeEntityRegistry;
+        this.conversionService = conversionService;
+        this.database = database;
+        this.persistentEntity = persistentEntity;
+        if (operationType == DataMethod.OperationType.QUERY || operationType == DataMethod.OperationType.EXISTS || operationType == DataMethod.OperationType.COUNT) {
+            String query = storedQuery.getQuery();
+            if (StringUtils.isEmpty(query)) {
+                aggregateData = null;
+                findData = new FindData(null);
+            } else if (query.startsWith("[")) {
+                aggregateData = new AggregateData(BsonArray.parse(query).stream().map(BsonValue::asDocument).collect(Collectors.toList()));
+                findData = null;
+            } else {
+                aggregateData = null;
+                findData = new FindData(BsonDocument.parse(query));
+            }
         } else {
-            pipeline = null;
-            filter = BsonDocument.parse(query);
+            aggregateData = null;
+            findData = null;
+        }
+
+        if (operationType == DataMethod.OperationType.DELETE) {
+            String query = storedQuery.getQuery();
+            deleteData = new DeleteData(StringUtils.isEmpty(query) ? EMPTY : BsonDocument.parse(query));
+        } else {
+            deleteData = null;
+        }
+
+        if (operationType == DataMethod.OperationType.UPDATE) {
+            if (StringUtils.isEmpty(updateJson)) {
+                throw new IllegalStateException("Update query is expected!");
+            }
+            String query = storedQuery.getQuery();
+            updateData = new UpdateData(BsonDocument.parse(updateJson), StringUtils.isEmpty(query) ? EMPTY : BsonDocument.parse(query));
+        } else {
+            updateData = null;
         }
     }
 
     @Override
-    public BsonDocument getUpdate() {
-        return update;
+    public RuntimePersistentEntity<E> getRuntimePersistentEntity() {
+        return persistentEntity;
     }
 
     @Override
-    public BsonDocument getFilter() {
-        return filter;
+    public Dtb getDatabase() {
+        return database;
     }
 
     @Override
-    public BsonArray getPipeline() {
-        return pipeline;
+    public boolean isAggregate() {
+        return aggregateData != null;
+    }
+
+    @Override
+    public MongoAggregation getAggregation(InvocationContext<?, ?> invocationContext) {
+        if (aggregateData == null) {
+            throw new IllegalStateException("Expected aggregation query!");
+        }
+        return aggregateData.getAggregation(invocationContext);
+    }
+
+    @Override
+    public MongoFind getFind(InvocationContext<?, ?> invocationContext) {
+        if (findData == null) {
+            throw new IllegalStateException("Expected find query!");
+        }
+        return findData.getFind(invocationContext);
+    }
+
+    @Override
+    public MongoUpdate getUpdateMany(InvocationContext<?, ?> invocationContext) {
+        if (updateData == null) {
+            throw new IllegalStateException("Expected update query!");
+        }
+        return updateData.getUpdateMany(invocationContext);
+
+    }
+
+    @Override
+    public MongoUpdate getUpdateOne(E entity) {
+        if (updateData == null) {
+            throw new IllegalStateException("Expected update query!");
+        }
+        return updateData.getUpdateOne(entity);
+    }
+
+    @Override
+    public MongoDelete getDeleteMany(InvocationContext<?, ?> invocationContext) {
+        if (deleteData == null) {
+            throw new IllegalStateException("Expected delete query!");
+        }
+        return deleteData.getDeleteMany(invocationContext);
+    }
+
+    @Override
+    public MongoDelete getDeleteOne(E entity) {
+        if (deleteData == null) {
+            throw new IllegalStateException("Expected delete query!");
+        }
+        return deleteData.getDeleteOne(entity);
+    }
+
+    private boolean needsProcessing(Bson value) {
+        if (value == null) {
+            return false;
+        }
+        if (value instanceof BsonDocument) {
+            return needsProcessingValue(value.toBsonDocument());
+        }
+        throw new IllegalStateException("Unrecognized value: " + value);
+    }
+
+    private boolean needsProcessing(List<Bson> values) {
+        if (values == null) {
+            return false;
+        }
+        for (Bson value : values) {
+            if (needsProcessing(value)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean needsProcessingValue(BsonValue value) {
+        if (value instanceof BsonDocument) {
+            BsonDocument bsonDocument = (BsonDocument) value;
+            BsonInt32 queryParameterIndex = bsonDocument.getInt32(MongoQueryBuilder.QUERY_PARAMETER_PLACEHOLDER, null);
+            if (queryParameterIndex != null) {
+                return true;
+            }
+            for (Map.Entry<String, BsonValue> entry : bsonDocument.entrySet()) {
+                BsonValue bsonValue = entry.getValue();
+                if (needsProcessingValue(bsonValue)) {
+                    return true;
+                }
+            }
+            return false;
+        } else if (value instanceof BsonArray) {
+            BsonArray bsonArray = (BsonArray) value;
+            for (BsonValue bsonValue : bsonArray) {
+                if (needsProcessingValue(bsonValue)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private Bson getUpdate(@Nullable InvocationContext<?, ?> invocationContext, @Nullable E entity) {
+        if (updateData == null) {
+            throw new IllegalStateException("Update query is not provided!");
+        }
+        return updateData.updateNeedsProcessing ? replaceQueryParameters(updateData.update, invocationContext, entity) : updateData.update;
+    }
+
+    private Bson replaceQueryParameters(Bson value, @Nullable InvocationContext<?, ?> invocationContext, @Nullable E entity) {
+        if (value instanceof BsonDocument) {
+            return (BsonDocument) replaceQueryParametersInBsonValue(((BsonDocument) value).clone(), invocationContext, entity);
+        }
+        throw new IllegalStateException("Unrecognized value: " + value);
+    }
+
+    private <T> List<Bson> replaceQueryParametersInList(List<Bson> values, @Nullable InvocationContext<?, ?> invocationContext, @Nullable E entity) {
+        values = new ArrayList<>(values);
+        for (int i = 0; i < values.size(); i++) {
+            Bson value = values.get(i);
+            Bson newValue = replaceQueryParameters(value, invocationContext, entity);
+            if (value != newValue) {
+                values.set(i, newValue);
+            }
+        }
+        return values;
+    }
+
+    private BsonValue replaceQueryParametersInBsonValue(BsonValue value, @Nullable InvocationContext<?, ?> invocationContext, @Nullable E entity) {
+        if (value instanceof BsonDocument) {
+            BsonDocument bsonDocument = (BsonDocument) value;
+            BsonInt32 queryParameterIndex = bsonDocument.getInt32(MongoQueryBuilder.QUERY_PARAMETER_PLACEHOLDER, null);
+            if (queryParameterIndex != null) {
+                int index = queryParameterIndex.getValue();
+                return getValue(index, getQueryBindings().get(index), invocationContext, persistentEntity, codecRegistry, entity);
+            }
+            for (Map.Entry<String, BsonValue> entry : bsonDocument.entrySet()) {
+                BsonValue bsonValue = entry.getValue();
+                BsonValue newValue = replaceQueryParametersInBsonValue(bsonValue, invocationContext, entity);
+                if (bsonValue != newValue) {
+                    entry.setValue(newValue);
+                }
+            }
+            return bsonDocument;
+        } else if (value instanceof BsonArray) {
+            BsonArray bsonArray = (BsonArray) value;
+            for (int i = 0; i < bsonArray.size(); i++) {
+                BsonValue bsonValue = bsonArray.get(i);
+                BsonValue newValue = replaceQueryParametersInBsonValue(bsonValue, invocationContext, entity);
+                if (bsonValue != newValue) {
+                    if (newValue.isNull()) {
+                        bsonArray.remove(i);
+                        i -= 1;
+                    } else if (newValue.isArray()) {
+                        bsonArray.remove(i);
+                        List<BsonValue> values = newValue.asArray().getValues();
+                        bsonArray.addAll(i, values);
+                        i += values.size() - 1;
+                    } else {
+                        bsonArray.set(i, newValue);
+                    }
+                }
+            }
+        }
+        return value;
+    }
+
+    private <QE, QR, T> BsonValue getValue(int index,
+                                           QueryParameterBinding queryParameterBinding,
+                                           InvocationContext<?, ?> invocationContext,
+                                           RuntimePersistentEntity<T> persistentEntity,
+                                           CodecRegistry codecRegistry, E entity) {
+        Class<?> parameterConverter = queryParameterBinding.getParameterConverterClass();
+        Object value;
+        if (queryParameterBinding.getParameterIndex() != -1) {
+            requireInvocationContext(invocationContext);
+            value = resolveParameterValue(queryParameterBinding, invocationContext.getParameterValues());
+        } else if (queryParameterBinding.isAutoPopulated()) {
+            PersistentPropertyPath pp = getRequiredPropertyPath(queryParameterBinding, persistentEntity);
+            RuntimePersistentProperty<?> persistentProperty = (RuntimePersistentProperty) pp.getProperty();
+            Object previousValue = null;
+            QueryParameterBinding previousPopulatedValueParameter = queryParameterBinding.getPreviousPopulatedValueParameter();
+            if (previousPopulatedValueParameter != null) {
+                if (previousPopulatedValueParameter.getParameterIndex() == -1) {
+                    throw new IllegalStateException("Previous value parameter cannot be bind!");
+                }
+                previousValue = resolveParameterValue(previousPopulatedValueParameter, invocationContext.getParameterValues());
+            }
+            value = runtimeEntityRegistry.autoPopulateRuntimeProperty(persistentProperty, previousValue);
+            value = convert(value, persistentProperty);
+            parameterConverter = null;
+        } else if (entity != null) {
+            PersistentPropertyPath pp = getRequiredPropertyPath(queryParameterBinding, persistentEntity);
+            value = pp.getPropertyValue(entity);
+        } else {
+            throw new IllegalStateException("Invalid query [" + "]. Unable to establish parameter value for parameter at position: " + (index + 1));
+        }
+
+        DataType dataType = queryParameterBinding.getDataType();
+        List<Object> values = expandValue(value, dataType);
+        if (values != null && values.isEmpty()) {
+            // Empty collections / array should always set at least one value
+            value = null;
+            values = null;
+        }
+        if (values == null) {
+            if (parameterConverter != null) {
+                int parameterIndex = queryParameterBinding.getParameterIndex();
+                Argument<?> argument;
+                if (parameterIndex > -1) {
+                    requireInvocationContext(invocationContext);
+                    argument = invocationContext.getArguments()[parameterIndex];
+                } else {
+                    argument = null;
+                }
+                value = convert(parameterConverter, value, argument);
+            }
+            // Check if the parameter is not an id which might be represented as String but needs to mapped as ObjectId
+            if (value instanceof String && queryParameterBinding.getPropertyPath() != null) {
+                // TODO: improve id recognition
+                PersistentPropertyPath pp = getRequiredPropertyPath(queryParameterBinding, persistentEntity);
+                RuntimePersistentProperty<?> persistentProperty = (RuntimePersistentProperty) pp.getProperty();
+                if (persistentProperty instanceof RuntimeAssociation) {
+                    RuntimeAssociation runtimeAssociation = (RuntimeAssociation) persistentProperty;
+                    RuntimePersistentProperty identity = runtimeAssociation.getAssociatedEntity().getIdentity();
+                    if (identity != null && identity.getType() == String.class && identity.isGenerated()) {
+                        return new BsonObjectId(new ObjectId((String) value));
+                    }
+                }
+                if (persistentProperty.getOwner().getIdentity() == persistentProperty && persistentProperty.getType() == String.class && persistentProperty.isGenerated()) {
+                    return new BsonObjectId(new ObjectId((String) value));
+                }
+            }
+            return MongoUtils.toBsonValue(conversionService, value, codecRegistry);
+        } else {
+            Class<?> finalParameterConverter = parameterConverter;
+            return new BsonArray(values.stream().map(val -> {
+                if (finalParameterConverter != null) {
+                    int parameterIndex = queryParameterBinding.getParameterIndex();
+                    Argument<?> argument;
+                    if (parameterIndex > -1) {
+                        requireInvocationContext(invocationContext);
+                        argument = invocationContext.getArguments()[parameterIndex];
+                    } else {
+                        argument = null;
+                    }
+                    val = convert(finalParameterConverter, val, argument);
+                }
+                return MongoUtils.toBsonValue(conversionService, val, codecRegistry);
+            }).collect(Collectors.toList()));
+        }
+    }
+
+    private void requireInvocationContext(InvocationContext<?, ?> invocationContext) {
+        if (invocationContext == null) {
+            throw new IllegalStateException("Invocation context is required!");
+        }
+    }
+
+    private Object convert(Class<?> converterClass, Object value, @Nullable Argument<?> argument) {
+        if (converterClass == null) {
+            return value;
+        }
+        AttributeConverter<Object, Object> converter = attributeConverterRegistry.getConverter(converterClass);
+        ConversionContext conversionContext = createTypeConversionContext(null, argument);
+        return converter.convertToPersistedValue(value, conversionContext);
+    }
+
+    private Object convert(Object value, RuntimePersistentProperty<?> property) {
+        AttributeConverter<Object, Object> converter = property.getConverter();
+        if (converter != null) {
+            return converter.convertToPersistedValue(value, createTypeConversionContext(property, property.getArgument()));
+        }
+        return value;
+    }
+
+    private <T> PersistentPropertyPath getRequiredPropertyPath(QueryParameterBinding queryParameterBinding, RuntimePersistentEntity<T> persistentEntity) {
+        String[] propertyPath = queryParameterBinding.getRequiredPropertyPath();
+        PersistentPropertyPath pp = persistentEntity.getPropertyPath(propertyPath);
+        if (pp == null) {
+            throw new IllegalStateException("Cannot find auto populated property: " + String.join(".", propertyPath));
+        }
+        return pp;
+    }
+
+    private List<Object> expandValue(Object value, DataType dataType) {
+        // Special case for byte array, we want to support a list of byte[] convertible values
+        if (value == null || dataType != null && dataType.isArray() && dataType != DataType.BYTE_ARRAY || value instanceof byte[]) {
+            // not expanded
+            return null;
+        } else if (value instanceof Iterable) {
+            return (List<Object>) CollectionUtils.iterableToList((Iterable<?>) value);
+        } else if (value.getClass().isArray()) {
+            int len = Array.getLength(value);
+            if (len == 0) {
+                return Collections.emptyList();
+            } else {
+                List<Object> list = new ArrayList<>(len);
+                for (int j = 0; j < len; j++) {
+                    Object o = Array.get(value, j);
+                    list.add(o);
+                }
+                return list;
+            }
+        } else {
+            // not expanded
+            return null;
+        }
+    }
+
+    private Object resolveParameterValue(QueryParameterBinding queryParameterBinding, Object[] parameterArray) {
+        Object value;
+        value = parameterArray[queryParameterBinding.getParameterIndex()];
+        String[] parameterBindingPath = queryParameterBinding.getParameterBindingPath();
+        if (parameterBindingPath != null) {
+            for (String prop : parameterBindingPath) {
+                if (value == null) {
+                    return null;
+                }
+                Object finalValue = value;
+                BeanProperty beanProperty = BeanIntrospection.getIntrospection(value.getClass())
+                        .getProperty(prop).orElseThrow(() -> new IntrospectionException("Cannot find a property: '" + prop + "' on bean: " + finalValue));
+                value = beanProperty.get(value);
+            }
+        }
+        return value;
+    }
+
+    private ConversionContext createTypeConversionContext(RuntimePersistentProperty<?> property, Argument<?> argument) {
+        if (argument != null) {
+            return ConversionContext.of(argument);
+        }
+        return ConversionContext.DEFAULT;
     }
 
     @Override
     public StoredQuery<E, R> getStoredQueryDelegate() {
         return storedQuery;
+    }
+
+    private final class AggregateData extends CollationSupported {
+        private final List<Bson> pipeline;
+        private final boolean pipelineNeedsProcessing;
+        private final MongoAggregationOptions options;
+
+        private AggregateData(List<Bson> pipeline) {
+            this.pipeline = pipeline;
+            this.pipelineNeedsProcessing = needsProcessing(pipeline);
+            options = new MongoAggregationOptions();
+            AnnotationValue<io.micronaut.data.mongodb.annotation.MongoAggregateOptions> optionsAnn = storedQuery.getAnnotationMetadata().getAnnotation(io.micronaut.data.mongodb.annotation.MongoAggregateOptions.class);
+            if (optionsAnn != null) {
+                optionsAnn.booleanValue("bypassDocumentValidation").ifPresent(options::bypassDocumentValidation);
+                optionsAnn.longValue("maxTimeMS").ifPresent(options::maxTimeMS);
+                optionsAnn.longValue("maxAwaitTimeMS").ifPresent(options::maxAwaitTimeMS);
+                optionsAnn.stringValue("comment").ifPresent(options::comment);
+                optionsAnn.stringValue("hint").map(BsonDocument::parse).ifPresent(options::hint);
+                optionsAnn.booleanValue("allowDiskUse").ifPresent(options::allowDiskUse);
+            }
+        }
+
+        public MongoAggregation getAggregation(InvocationContext<?, ?> invocationContext) {
+            List<Bson> pipeline = pipelineNeedsProcessing ? replaceQueryParametersInList(this.pipeline, invocationContext, null) : this.pipeline;
+            MongoAggregationOptions options = new MongoAggregationOptions(this.options).collation(getCollation(invocationContext, null));
+            return new MongoAggregation(pipeline, options);
+        }
+
+    }
+
+    private final class UpdateData extends CollationSupported {
+        private final Bson update;
+        private final boolean updateNeedsProcessing;
+        private final Bson filter;
+        private final boolean filterNeedsProcessing;
+        private final UpdateOptions options;
+
+        private UpdateData(Bson update, Bson filter) {
+            this.update = update;
+            this.updateNeedsProcessing = needsProcessing(update);
+            this.filter = filter;
+            this.filterNeedsProcessing = needsProcessing(filter);
+            options = new UpdateOptions();
+            AnnotationValue<io.micronaut.data.mongodb.annotation.MongoUpdateOptions> optionsAnn = storedQuery.getAnnotationMetadata().getAnnotation(io.micronaut.data.mongodb.annotation.MongoUpdateOptions.class);
+            if (optionsAnn != null) {
+                optionsAnn.booleanValue("upsert").ifPresent(options::upsert);
+                optionsAnn.booleanValue("bypassDocumentValidation").ifPresent(options::bypassDocumentValidation);
+                optionsAnn.stringValue("hint").map(BsonDocument::parse).ifPresent(options::hint);
+            }
+        }
+
+        private UpdateOptions copy(UpdateOptions options) {
+            UpdateOptions newOptions = new UpdateOptions();
+            newOptions.collation(options.getCollation());
+            newOptions.upsert(options.isUpsert());
+            newOptions.bypassDocumentValidation(options.getBypassDocumentValidation());
+            newOptions.hint(options.getHint());
+            newOptions.hintString(options.getHintString());
+            return newOptions;
+        }
+
+        public MongoUpdate getUpdateMany(InvocationContext<?, ?> invocationContext) {
+            Bson update = getUpdate(invocationContext, null);
+            if (update == null) {
+                throw new IllegalStateException("Update query is not provided!");
+            }
+            UpdateOptions options = copy(this.options).collation(getCollation(invocationContext, null));
+            return new MongoUpdate(update, getFilter(invocationContext, null), options);
+        }
+
+        public MongoUpdate getUpdateOne(E entity) {
+            if (updateData == null) {
+                throw new IllegalStateException("Expected update query!");
+            }
+            Bson update = getUpdate(null, entity);
+            if (update == null) {
+                throw new IllegalStateException("Update query is not provided!");
+            }
+            UpdateOptions options = copy(this.options).collation(getCollation(null, null));
+            return new MongoUpdate(update, getFilter(null, entity), options);
+        }
+
+        private Bson getFilter(@Nullable InvocationContext<?, ?> invocationContext, E entity) {
+            return filterNeedsProcessing ? replaceQueryParameters(filter, invocationContext, entity) : filter;
+        }
+    }
+
+    private final class FindData extends CollationSupported {
+        private final Bson filter;
+        private final boolean filterNeedsProcessing;
+        private final Bson sort;
+        private final boolean sortNeedsProcessing;
+        private final Bson projection;
+        private final boolean projectionNeedsProcessing;
+        private final MongoFindOptions options;
+
+        private FindData(Bson filter) {
+            sort = storedQuery.getAnnotationMetadata().stringValue(MongoSort.class).map(BsonDocument::parse).orElse(null);
+            sortNeedsProcessing = needsProcessing(sort);
+            projection = storedQuery.getAnnotationMetadata().stringValue(MongoProjection.class).map(BsonDocument::parse).orElse(null);
+            projectionNeedsProcessing = needsProcessing(projection);
+            this.filter = filter;
+            this.filterNeedsProcessing = needsProcessing(filter);
+
+            options = new MongoFindOptions();
+            AnnotationValue<io.micronaut.data.mongodb.annotation.MongoFindOptions> optionsAnn = storedQuery.getAnnotationMetadata().getAnnotation(io.micronaut.data.mongodb.annotation.MongoFindOptions.class);
+            if (optionsAnn != null) {
+                optionsAnn.intValue("batchSize").ifPresent(options::batchSize);
+                optionsAnn.intValue("skip").ifPresent(options::skip);
+                optionsAnn.intValue("limit").ifPresent(options::limit);
+                optionsAnn.longValue("maxTimeMS").ifPresent(options::maxTimeMS);
+                optionsAnn.longValue("maxAwaitTimeMS").ifPresent(options::maxAwaitTimeMS);
+                optionsAnn.enumValue("cursorType", CursorType.class).ifPresent(options::cursorType);
+                optionsAnn.booleanValue("noCursorTimeout").ifPresent(options::noCursorTimeout);
+                optionsAnn.booleanValue("partial").ifPresent(options::partial);
+                optionsAnn.stringValue("comment").ifPresent(options::comment);
+                optionsAnn.stringValue("hint").map(BsonDocument::parse).ifPresent(options::hint);
+                optionsAnn.stringValue("max").map(BsonDocument::parse).ifPresent(options::max);
+                optionsAnn.stringValue("min").map(BsonDocument::parse).ifPresent(options::min);
+                optionsAnn.booleanValue("returnKey").ifPresent(options::returnKey);
+                optionsAnn.booleanValue("showRecordId").ifPresent(options::showRecordId);
+                optionsAnn.booleanValue("allowDiskUse").ifPresent(options::allowDiskUse);
+            }
+        }
+
+        public MongoFind getFind(InvocationContext<?, ?> invocationContext) {
+            MongoFindOptions options = new MongoFindOptions(this.options)
+                    .filter(getFilter(invocationContext, null))
+                    .collation(getCollation(invocationContext, null))
+                    .sort(getSort(invocationContext, null))
+                    .projection(getProjection(invocationContext, null));
+            return new MongoFind(options);
+        }
+
+        private Bson getFilter(@Nullable InvocationContext<?, ?> invocationContext, E entity) {
+            if (filter == null) {
+                return null;
+            }
+            return filterNeedsProcessing ? replaceQueryParameters(filter, invocationContext, entity) : filter;
+        }
+
+        private Bson getSort(@Nullable InvocationContext<?, ?> invocationContext, @Nullable E entity) {
+            if (sort == null) {
+                return null;
+            }
+            return sortNeedsProcessing ? replaceQueryParameters(sort, invocationContext, entity) : sort;
+        }
+
+        private Bson getProjection(@Nullable InvocationContext<?, ?> invocationContext, @Nullable E entity) {
+            if (projection == null) {
+                return null;
+            }
+            return projectionNeedsProcessing ? replaceQueryParameters(projection, invocationContext, entity) : projection;
+        }
+
+    }
+
+    private final class DeleteData extends CollationSupported {
+        private final Bson filter;
+        private final boolean filterNeedsProcessing;
+        private final DeleteOptions options;
+
+        private DeleteData(Bson filter) {
+            this.filter = filter;
+            this.filterNeedsProcessing = needsProcessing(filter);
+            options = new DeleteOptions();
+            AnnotationValue<io.micronaut.data.mongodb.annotation.MongoDeleteOptions> optionsAnn = storedQuery.getAnnotationMetadata().getAnnotation(io.micronaut.data.mongodb.annotation.MongoDeleteOptions.class);
+            if (optionsAnn != null) {
+                optionsAnn.stringValue("hint").map(BsonDocument::parse).ifPresent(options::hint);
+            }
+        }
+
+        public MongoDelete getDeleteMany(InvocationContext<?, ?> invocationContext) {
+            DeleteOptions options = copy(this.options).collation(getCollation(invocationContext, null));
+            return new MongoDelete(getFilter(invocationContext, null), options);
+        }
+
+        public MongoDelete getDeleteOne(E entity) {
+            DeleteOptions options = copy(this.options).collation(getCollation(null, null));
+            return new MongoDelete(getFilter(null, entity), options);
+        }
+
+        private DeleteOptions copy(DeleteOptions options) {
+            DeleteOptions newOptions = new DeleteOptions();
+            newOptions.collation(options.getCollation());
+            newOptions.hint(options.getHint());
+            newOptions.hintString(options.getHintString());
+            return newOptions;
+        }
+
+        private Bson getFilter(@Nullable InvocationContext<?, ?> invocationContext, E entity) {
+            return filterNeedsProcessing ? replaceQueryParameters(filter, invocationContext, entity) : filter;
+        }
+    }
+
+    private abstract class CollationSupported {
+        private final Bson collationAsBson;
+        private final boolean collationNeedsProcessing;
+        private final Collation collation;
+
+        protected CollationSupported() {
+            collationAsBson = storedQuery.getAnnotationMetadata().stringValue(MongoCollation.class).map(BsonDocument::parse).orElse(null);
+            collationNeedsProcessing = needsProcessing(collationAsBson);
+            collation = collationAsBson == null || collationNeedsProcessing ? null : MongoUtils.bsonDocumentAsCollation(collationAsBson.toBsonDocument());
+        }
+
+        protected Collation getCollation(@Nullable InvocationContext<?, ?> invocationContext, @Nullable E entity) {
+            if (collation != null) {
+                return collation;
+            }
+            if (collationAsBson == null) {
+                return null;
+            }
+            Bson collationAsBson = collationNeedsProcessing ? replaceQueryParameters(this.collationAsBson, invocationContext, entity) : this.collationAsBson;
+            return MongoUtils.bsonDocumentAsCollation(collationAsBson.toBsonDocument());
+        }
     }
 }

@@ -22,6 +22,7 @@ import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.intercept.DataInterceptor;
+import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.SourcePersistentProperty;
@@ -136,6 +137,7 @@ public class SaveOneMethodMatcher extends AbstractPrefixPatternMethodMatcher {
 
                     Map.Entry<ClassElement, Class<? extends DataInterceptor>> e = FindersUtils.pickSaveOneInterceptor(matchContext, matchContext.getReturnType());
                     return new MethodMatchInfo(
+                            DataMethod.OperationType.INSERT,
                             e.getKey(),
                             getInterceptorElement(matchContext, e.getValue())
                     )

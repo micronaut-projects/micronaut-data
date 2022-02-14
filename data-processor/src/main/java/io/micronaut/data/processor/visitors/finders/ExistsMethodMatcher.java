@@ -17,6 +17,7 @@ package io.micronaut.data.processor.visitors.finders;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.intercept.DataInterceptor;
+import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQuery;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
@@ -54,6 +55,11 @@ public final class ExistsMethodMatcher extends AbstractPatternMethodMatcher {
                 @Override
                 protected Map.Entry<ClassElement, Class<? extends DataInterceptor>> resolveReturnTypeAndInterceptor(MethodMatchContext matchContext) {
                     return FindersUtils.pickExistsInterceptor(matchContext, matchContext.getReturnType());
+                }
+
+                @Override
+                protected DataMethod.OperationType getOperationType() {
+                    return DataMethod.OperationType.EXISTS;
                 }
 
             };

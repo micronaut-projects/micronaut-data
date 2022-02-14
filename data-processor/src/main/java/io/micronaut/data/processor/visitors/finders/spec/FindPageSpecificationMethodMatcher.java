@@ -17,6 +17,7 @@ package io.micronaut.data.processor.visitors.finders.spec;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
+import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.data.processor.visitors.finders.AbstractSpecificationMethodMatcher;
 import io.micronaut.data.processor.visitors.finders.FindersUtils;
@@ -56,17 +57,20 @@ public class FindPageSpecificationMethodMatcher extends AbstractSpecificationMet
             if (isFirstParameterMicronautDataQuerySpecification(matchContext.getMethodElement())) {
                 Map.Entry<ClassElement, ClassElement> e = FindersUtils.pickFindPageSpecInterceptor(matchContext, matchContext.getReturnType());
                 return mc -> new MethodMatchInfo(
+                        DataMethod.OperationType.QUERY,
                         mc.getReturnType(),
                         getInterceptorElement(mc, "io.micronaut.data.runtime.intercept.criteria.FindPageSpecificationInterceptor")
                 );
             }
             if (isFirstParameterSpringJpaSpecification(matchContext.getMethodElement())) {
                 return mc -> new MethodMatchInfo(
+                        DataMethod.OperationType.QUERY,
                         mc.getReturnType(),
                         getInterceptorElement(mc, "io.micronaut.data.spring.jpa.intercept.FindPageSpecificationInterceptor")
                 );
             }
             return mc -> new MethodMatchInfo(
+                    DataMethod.OperationType.QUERY,
                     mc.getReturnType(),
                     getInterceptorElement(mc, "io.micronaut.data.jpa.repository.intercept.FindPageSpecificationInterceptor")
             );

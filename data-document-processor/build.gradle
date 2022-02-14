@@ -9,4 +9,15 @@ dependencies {
 	api projects.dataDocumentModel
 
 	compileOnly mn.micronaut.inject.java
+
+	testAnnotationProcessor mn.micronaut.inject.java
+
+	testImplementation mn.micronaut.inject.groovy
+	testImplementation mn.micronaut.inject.java.test
+	testImplementation projects.dataDocumentTck
+	testImplementation projects.dataMongodb
+
+	if (!JavaVersion.current().isJava9Compatible()) {
+		testImplementation files(org.gradle.internal.jvm.Jvm.current().toolsJar)
+	}
 }

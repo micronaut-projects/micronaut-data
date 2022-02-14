@@ -15,29 +15,96 @@
  */
 package io.micronaut.data.mongodb.operations;
 
+import com.mongodb.client.model.Sorts;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.runtime.PreparedQuery;
+import io.micronaut.data.model.runtime.RuntimePersistentEntity;
+import io.micronaut.data.mongodb.operations.options.MongoFindOptions;
+import io.micronaut.data.runtime.query.internal.DefaultPreparedQuery;
 import io.micronaut.data.runtime.query.internal.DelegateStoredQuery;
-import org.bson.BsonArray;
 import org.bson.BsonDocument;
+import org.bson.BsonInt32;
+import org.bson.conversions.Bson;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Default implementation of {@link MongoPreparedQuery}.
  *
- * @param <E> The entity type
- * @param <R> The result type
+ * @param <E>   The entity type
+ * @param <R>   The result type
+ * @param <Dtb> The database type
  * @author Denis Stepanov
  * @since 3.3.
  */
 @Internal
-final class DefaultMongoPreparedQuery<E, R> implements DelegatePreparedQuery<E, R>, MongoPreparedQuery<E, R> {
+final class DefaultMongoPreparedQuery<E, R, Dtb> implements DelegatePreparedQuery<E, R>, MongoPreparedQuery<E, R, Dtb> {
 
-    private final PreparedQuery<E, R> preparedQuery;
-    private final MongoStoredQuery<E, R> mongoStoredQuery;
+    private final DefaultPreparedQuery<E, R> preparedQuery;
+    private final MongoStoredQuery<E, R, Dtb> mongoStoredQuery;
 
     public DefaultMongoPreparedQuery(PreparedQuery<E, R> preparedQuery) {
-        this.preparedQuery = preparedQuery;
-        this.mongoStoredQuery = (MongoStoredQuery<E, R>) ((DelegateStoredQuery<Object, Object>) preparedQuery).getStoredQueryDelegate();
+        this.preparedQuery = (DefaultPreparedQuery<E, R>) preparedQuery;
+        this.mongoStoredQuery = (MongoStoredQuery<E, R, Dtb>) ((DelegateStoredQuery<Object, Object>) preparedQuery).getStoredQueryDelegate();
+    }
+
+    @Override
+    public RuntimePersistentEntity<E> getRuntimePersistentEntity() {
+        return mongoStoredQuery.getRuntimePersistentEntity();
+    }
+
+    @Override
+    public Dtb getDatabase() {
+        return mongoStoredQuery.getDatabase();
+    }
+
+    @Override
+    public boolean isAggregate() {
+        return mongoStoredQuery.isAggregate();
+    }
+
+    @Override
+    public MongoAggregation getAggregation() {
+        MongoAggregation aggregation = mongoStoredQuery.getAggregation(preparedQuery.getContext());
+        Pageable pageable = getPageable();
+        if (pageable != Pageable.UNPAGED) {
+            List<Bson> pipeline = new ArrayList<>(aggregation.getPipeline());
+            applyPageable(pageable, pipeline);
+            return new MongoAggregation(pipeline, aggregation.getOptions());
+        }
+        return aggregation;
+    }
+
+    @Override
+    public MongoFind getFind() {
+        MongoFind find = mongoStoredQuery.getFind(preparedQuery.getContext());
+        Pageable pageable = preparedQuery.getPageable();
+        if (pageable != Pageable.UNPAGED) {
+            MongoFindOptions options = new MongoFindOptions(find.getOptions());
+            options.limit(pageable.getSize()).skip((int) pageable.getOffset());
+            Sort pageableSort = pageable.getSort();
+            if (pageableSort.isSorted()) {
+                Bson sort = pageableSort.getOrderBy().stream().map(order -> order.isAscending() ? Sorts.ascending(order.getProperty()) : Sorts.descending(order.getProperty()))
+                        .collect(Collectors.collectingAndThen(Collectors.toList(), Sorts::orderBy));
+                options.sort(sort);
+            }
+            return new MongoFind(options);
+        }
+        return find;
+    }
+
+    @Override
+    public MongoUpdate getUpdateMany() {
+        return mongoStoredQuery.getUpdateMany(preparedQuery.getContext());
+    }
+
+    @Override
+    public MongoDelete getDeleteMany() {
+        return mongoStoredQuery.getDeleteMany(preparedQuery.getContext());
     }
 
     @Override
@@ -45,21 +112,43 @@ final class DefaultMongoPreparedQuery<E, R> implements DelegatePreparedQuery<E, 
         return preparedQuery;
     }
 
-    @Override
-    public BsonDocument getFilter() {
-        BsonDocument filter = mongoStoredQuery.getFilter();
-        return filter == null ? null : filter.clone();
+    private int applyPageable(Pageable pageable, List<Bson> pipeline) {
+        int limit = 0;
+        if (pageable != Pageable.UNPAGED) {
+            int skip = (int) pageable.getOffset();
+            limit = pageable.getSize();
+            Sort pageableSort = pageable.getSort();
+            if (pageableSort.isSorted()) {
+                Bson sort = pageableSort.getOrderBy().stream().map(order -> order.isAscending() ? Sorts.ascending(order.getProperty()) : Sorts.descending(order.getProperty())).collect(Collectors.collectingAndThen(Collectors.toList(), Sorts::orderBy));
+                BsonDocument sortStage = new BsonDocument().append("$sort", sort.toBsonDocument());
+                addStageToPipelineBefore(pipeline, sortStage, "$limit", "$skip");
+            }
+            if (skip > 0) {
+                pipeline.add(new BsonDocument().append("$skip", new BsonInt32(skip)));
+            }
+            if (limit > 0) {
+                pipeline.add(new BsonDocument().append("$limit", new BsonInt32(limit)));
+            }
+        }
+        return limit;
     }
 
-    @Override
-    public BsonArray getPipeline() {
-        BsonArray pipeline = mongoStoredQuery.getPipeline();
-        return pipeline == null ? null : pipeline.clone();
-    }
-
-    @Override
-    public BsonDocument getUpdate() {
-        BsonDocument update = mongoStoredQuery.getUpdate();
-        return update == null ? null : update.clone();
+    private void addStageToPipelineBefore(List<Bson> pipeline, BsonDocument stageToAdd, String... beforeStages) {
+        int lastFoundIndex = -1;
+        int index = 0;
+        for (Bson stage : pipeline) {
+            for (String beforeStageName : beforeStages) {
+                if (stage.toBsonDocument().containsKey(beforeStageName)) {
+                    lastFoundIndex = index;
+                    break;
+                }
+            }
+            index++;
+        }
+        if (lastFoundIndex > -1) {
+            pipeline.add(lastFoundIndex, stageToAdd);
+        } else {
+            pipeline.add(stageToAdd);
+        }
     }
 }

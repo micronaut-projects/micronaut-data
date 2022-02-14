@@ -17,6 +17,7 @@ package io.micronaut.data.processor.visitors.finders.criteria;
 
 import io.micronaut.core.annotation.Experimental;
 import io.micronaut.data.intercept.DataInterceptor;
+import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityCriteriaDelete;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaDelete;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
@@ -102,6 +103,7 @@ public class DeleteCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
         QueryResult queryResult = queryBuilder.buildDelete(annotationMetadataHierarchy, queryModel);
 
         return new MethodMatchInfo(
+                DataMethod.OperationType.DELETE,
                 resultType,
                 getInterceptorElement(matchContext, interceptorType)
         )
@@ -110,7 +112,7 @@ public class DeleteCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
     }
 
     @Override
-    protected MethodMatchInfo.OperationType getOperationType() {
-        return MethodMatchInfo.OperationType.DELETE;
+    protected DataMethod.OperationType getOperationType() {
+        return DataMethod.OperationType.DELETE;
     }
 }
