@@ -28,7 +28,7 @@ NOTE: The `schema-generate` setting is only useful for demos and testing trivial
 
 To retrieve objects from the database you need to define a class annotated with ann:data.annotation.MappedEntity[]. Note that this is a meta annotation and in fact if you prefer you can use JPA annotations (only a subset are supported, more on that later). If you wish to use JPA annotations include the following `compileOnly` scoped dependency:
 
-dependency:jakarta.persistence:jakarta.persistence-api[version="2.2.2", scope="compileOnly"]
+dependency:jakarta.persistence:jakarta.persistence-api[version="3.0.0", scope="compileOnly"]
 
 As above since only the annotations are used the dependency can be included only for compilation and not at runtime so you don't drag along the rest of the API, reducing your JAR file size.
 
