@@ -3,7 +3,7 @@ package example
 
 import io.micronaut.core.annotation.Creator
 
-import javax.persistence.*
+import jakarta.persistence.*
 
 @Entity
 class Manufacturer {

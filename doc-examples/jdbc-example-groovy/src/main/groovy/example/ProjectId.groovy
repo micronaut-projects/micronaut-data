@@ -2,7 +2,7 @@
 package example
 
 import groovy.transform.EqualsAndHashCode
-import javax.persistence.Embeddable
+import jakarta.persistence.Embeddable
 
 @EqualsAndHashCode
 @Embeddable

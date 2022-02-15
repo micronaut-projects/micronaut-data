@@ -1,7 +1,7 @@
 
 package example
 
-import javax.persistence.Embeddable
+import jakarta.persistence.Embeddable
 
 @Embeddable
 data class ProjectId(val departmentId: Int, val projectId: Int)

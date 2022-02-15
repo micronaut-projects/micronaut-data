@@ -29,7 +29,6 @@ dependencies {
     implementation "io.micronaut:micronaut-http-client"
     implementation project(":data-jdbc")
     implementation "io.micronaut.sql:micronaut-jdbc-tomcat"
-    compileOnly libs.javax.persistence.api
     implementation libs.jakarta.persistence.api
     implementation libs.jakarta.transaction.api
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core"
