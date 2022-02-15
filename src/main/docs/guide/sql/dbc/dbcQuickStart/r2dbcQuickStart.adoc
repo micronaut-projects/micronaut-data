@@ -55,7 +55,7 @@ snippet::example.AuthorRepository[project-base="doc-examples/r2dbc-example", sou
 
 You can now inject this interface into controllers and use it to perform R2DBC queries:
 
-snippet::example.AuthorController[project-base="doc-examples/example", source="main", indent="0"]
+snippet::example.AuthorController[project-base="doc-examples/r2dbc-example", source="main", indent="0"]
 
 <1> By returning a reactive type that emits many items you can stream data (either rx:Flowable[] or `Flux`)
 <1> By returning a reactive type that emits a single item you return the entire response (either rx:Single[] or `Mono`)
