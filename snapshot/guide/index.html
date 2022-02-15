@@ -2451,9 +2451,9 @@ class User {
 <pre class="highlight"><code class="language-kotlin" data-lang="kotlin">package example
 
 import io.micronaut.data.annotation.Where
-import javax.persistence.Entity
-import javax.persistence.GeneratedValue
-import javax.persistence.Id
+import jakarta.persistence.Entity
+import jakarta.persistence.GeneratedValue
+import jakarta.persistence.Id
 
 
 @Entity
@@ -4601,7 +4601,7 @@ The <code>schema-generate</code> setting is only useful for demos and testing tr
 <p>        <div class="listingblock multi-language-sample">
 <div class="title"></div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">compileOnly(<span class="hljs-string">"jakarta.persistence:jakarta.persistence-api:2.2.2")</span></code></pre>
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">compileOnly(<span class="hljs-string">"jakarta.persistence:jakarta.persistence-api:3.0.0")</span></code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -4609,7 +4609,7 @@ The <code>schema-generate</code> setting is only useful for demos and testing tr
 <pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="maven">&lt;dependency&gt;
     &lt;groupId&gt;jakarta.persistence&lt;/groupId&gt;
     &lt;artifactId&gt;jakarta.persistence-api&lt;/artifactId&gt;
-    &lt;version&gt;2.2.2&lt;/version&gt;
+    &lt;version&gt;3.0.0&lt;/version&gt;
     &lt;scope&gt;provided&lt;/scope&gt;
 &lt;/dependency&gt;</code></pre>
 </div>
@@ -4626,7 +4626,7 @@ The <code>schema-generate</code> setting is only useful for demos and testing tr
 <div class="content">
 <pre class="highlight"><code class="language-java" data-lang="java">package example;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 @Entity
 public class Book {
@@ -4663,7 +4663,7 @@ public class Book {
 <div class="content">
 <pre class="highlight"><code class="language-groovy" data-lang="groovy">package example
 
-import javax.persistence.*
+import jakarta.persistence.*
 
 @Entity
 class Book {
@@ -4692,9 +4692,9 @@ class Book {
 <div class="content">
 <pre class="highlight"><code class="language-kotlin" data-lang="kotlin">package example
 
-import javax.persistence.Entity
-import javax.persistence.GeneratedValue
-import javax.persistence.Id
+import jakarta.persistence.Entity
+import jakarta.persistence.GeneratedValue
+import jakarta.persistence.Id
 
 @Entity
 data class Book(@Id
@@ -5198,6 +5198,87 @@ interface AuthorRepository : ReactiveStreamsCrudRepository&lt;Author, Long&gt; {
 </div>
 <div class="paragraph">
 <p>You can now inject this interface into controllers and use it to perform R2DBC queries:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">package example;
+
+import io.micronaut.http.annotation.Controller;
+import io.micronaut.http.annotation.Get;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+
+@Controller("/authors")
+public class AuthorController {
+    private final AuthorRepository repository;
+
+    public AuthorController(AuthorRepository repository) {
+        this.repository = repository;
+    }
+
+    @Get
+    Flux&lt;Author&gt; all() { <b class="conum">(1)</b>
+        return repository.findAll();
+    }
+
+    @Get("/id")
+    Mono&lt;Author&gt; get(Long id) { <b class="conum">(2)</b>
+        return repository.findById(id);
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">package example
+
+import io.micronaut.http.annotation.Controller
+import io.micronaut.http.annotation.Get
+import reactor.core.publisher.Flux
+import reactor.core.publisher.Mono
+
+@Controller("/authors")
+class AuthorController {
+    private final AuthorRepository repository
+
+    AuthorController(AuthorRepository repository) {
+        this.repository = repository
+    }
+
+    @Get
+    Flux&lt;Author&gt; all() { <b class="conum">(1)</b>
+        return repository.findAll()
+    }
+
+    @Get("/id")
+    Mono&lt;Author&gt; get(Long id) { <b class="conum">(2)</b>
+        return repository.findById(id)
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">package example
+
+import io.micronaut.http.annotation.Controller
+import io.micronaut.http.annotation.Get
+import reactor.core.publisher.Flux
+import reactor.core.publisher.Mono
+
+@Controller("/authors")
+class AuthorController(private val repository: AuthorRepository) {
+    @Get
+    fun all(): Flux&lt;Author&gt; { <b class="conum">(1)</b>
+        return repository.findAll()
+    }
+
+    @Get("/id")
+    fun get(id: Long): Mono&lt;Author&gt; { <b class="conum">(2)</b>
+        return repository.findById(id)
+    }
+}</code></pre>
+</div>
 </div>
 <div class="colist arabic">
 <table>
@@ -6789,7 +6870,7 @@ It&#8217;s better to use the array type if your targeted database supports it. F
 <div class="content">
 <pre class="highlight"><code class="language-java" data-lang="java">package example;
 
-import javax.persistence.Embeddable;
+import jakarta.persistence.Embeddable;
 import java.util.Objects;
 
 @Embeddable
@@ -6835,7 +6916,7 @@ public class ProjectId {
 <pre class="highlight"><code class="language-groovy" data-lang="groovy">package example
 
 import groovy.transform.EqualsAndHashCode
-import javax.persistence.Embeddable
+import jakarta.persistence.Embeddable
 
 @EqualsAndHashCode
 @Embeddable
@@ -6854,7 +6935,7 @@ class ProjectId {
 <div class="content">
 <pre class="highlight"><code class="language-kotlin" data-lang="kotlin">package example
 
-import javax.persistence.Embeddable
+import jakarta.persistence.Embeddable
 
 @Embeddable
 data class ProjectId(val departmentId: Int, val projectId: Int)</code></pre>
@@ -6880,8 +6961,8 @@ TIP: When using Java, be sure to define getters for the fields making up your co
 <div class="content">
 <pre class="highlight"><code class="language-java" data-lang="java">package example;
 
-import javax.persistence.EmbeddedId;
-import javax.persistence.Entity;
+import jakarta.persistence.EmbeddedId;
+import jakarta.persistence.Entity;
 
 @Entity
 public class Project {
@@ -6908,8 +6989,8 @@ public class Project {
 <div class="content">
 <pre class="highlight"><code class="language-groovy" data-lang="groovy">package example
 
-import javax.persistence.EmbeddedId
-import javax.persistence.Entity
+import jakarta.persistence.EmbeddedId
+import jakarta.persistence.Entity
 
 @Entity
 class Project {
@@ -6936,8 +7017,8 @@ class Project {
 <div class="content">
 <pre class="highlight"><code class="language-kotlin" data-lang="kotlin">package example
 
-import javax.persistence.EmbeddedId
-import javax.persistence.Entity
+import jakarta.persistence.EmbeddedId
+import jakarta.persistence.Entity
 
 @Entity
 class Project(
@@ -6980,7 +7061,7 @@ To alter the column mappings for the ID, you may use the <code>@Column</code> an
 
 import io.micronaut.core.annotation.Creator;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 @Entity
 public class Manufacturer {
@@ -7015,7 +7096,7 @@ public class Manufacturer {
 
 import io.micronaut.core.annotation.Creator
 
-import javax.persistence.*
+import jakarta.persistence.*
 
 @Entity
 class Manufacturer {
@@ -7035,7 +7116,7 @@ class Manufacturer {
 <div class="content">
 <pre class="highlight"><code class="language-kotlin" data-lang="kotlin">package example
 
-import javax.persistence.*
+import jakarta.persistence.*
 
 @Entity
 data class Manufacturer(
@@ -7221,7 +7302,7 @@ You can use JPA&#8217;s equivalent annotations <a href="../api/io/micronaut/data
 <div class="content">
 <pre class="highlight"><code class="language-java" data-lang="java">package example;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 @Entity
 public class Product {
@@ -7260,7 +7341,7 @@ public class Product {
 <div class="content">
 <pre class="highlight"><code class="language-groovy" data-lang="groovy">package example
 
-import javax.persistence.*
+import jakarta.persistence.*
 
 @Entity
 class Product {
@@ -7291,7 +7372,7 @@ class Product {
 <div class="content">
 <pre class="highlight"><code class="language-kotlin" data-lang="kotlin">package example
 
-import javax.persistence.*
+import jakarta.persistence.*
 
 @Entity
 data class Product(
@@ -7560,7 +7641,7 @@ Generated values and relations that cannot be created during the entity initiali
 <div class="content">
 <pre class="highlight"><code class="language-java" data-lang="java">package example;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 @Entity
 public class Sale {
@@ -7600,10 +7681,10 @@ public class Sale {
 <div class="content">
 <pre class="highlight"><code class="language-groovy" data-lang="groovy">package example
 
-import javax.persistence.Id
-import javax.persistence.Entity
-import javax.persistence.ManyToOne
-import javax.persistence.GeneratedValue
+import jakarta.persistence.Id
+import jakarta.persistence.Entity
+import jakarta.persistence.ManyToOne
+import jakarta.persistence.GeneratedValue
 
 @Entity
 class Sale {
@@ -7628,7 +7709,7 @@ class Sale {
 <div class="content">
 <pre class="highlight"><code class="language-kotlin" data-lang="kotlin">package example
 
-import javax.persistence.*
+import jakarta.persistence.*
 
 @Entity
 data class Sale(
@@ -7838,7 +7919,7 @@ It&#8217;s possible to define the converter using <a href="../api/io/micronaut/d
 
 import io.micronaut.core.annotation.Creator;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 @Entity
 public class Manufacturer {
@@ -7873,7 +7954,7 @@ public class Manufacturer {
 
 import io.micronaut.core.annotation.Creator
 
-import javax.persistence.*
+import jakarta.persistence.*
 
 @Entity
 class Manufacturer {
@@ -7893,7 +7974,7 @@ class Manufacturer {
 <div class="content">
 <pre class="highlight"><code class="language-kotlin" data-lang="kotlin">package example
 
-import javax.persistence.*
+import jakarta.persistence.*
 
 @Entity
 data class Manufacturer(
@@ -10894,7 +10975,12 @@ class Student {
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlight"><code class="language-kotlin" data-lang="kotlin"></code></pre>
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">@MappedEntity
+data class Student(
+        @field:Id @GeneratedValue
+        val id: ObjectId?,
+        @field:Version
+        val version: Long?,</code></pre>
 </div>
 </div>
 <div class="paragraph">
