@@ -1083,7 +1083,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                 if (d.vetoed) {
                     continue;
                 }
-                sqlOperation.collectAutoPopulatedPreviousValues(persistentEntity, d.entity);
+                d.previousValues = sqlOperation.collectAutoPopulatedPreviousValues(persistentEntity, d.entity);
             }
         }
 

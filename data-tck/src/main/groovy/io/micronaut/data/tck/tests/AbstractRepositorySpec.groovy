@@ -1630,6 +1630,38 @@ abstract class AbstractRepositorySpec extends Specification {
             studentRepository.deleteAll()
     }
 
+    void "test optimistic locking with batched operations"() {
+        if (skipOptimisticLockingTest()) {
+            return
+        }
+        given:
+            def students = [new Student("Denis"), new Student("Stephen")]
+        when:
+            studentRepository.saveAll(students)
+        then:
+            students[0].version == 0
+            students[1].version == 0
+        when:
+            students[0] = studentRepository.findById(students[0].getId()).get()
+            students[1] = studentRepository.findById(students[1].getId()).get()
+        then:
+            students[0].version == 0
+            students[1].version == 0
+        when:
+            students[0].setName("Abc")
+            students[1].setName("Xyz")
+            studentRepository.updateAll(students)
+        then:
+            students[0].version == 1
+            students[1].version == 1
+        when:
+            students[1].setName("Cba")
+            studentRepository.updateAll(students)
+        then:
+            students[0].version == 2
+            students[1].version == 2
+    }
+
     void "test update relation custom query"() {
         given:
             setupBooks()
