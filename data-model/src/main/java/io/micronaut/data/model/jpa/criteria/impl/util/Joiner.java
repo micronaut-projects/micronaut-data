@@ -24,6 +24,7 @@ import io.micronaut.data.model.jpa.criteria.IExpression;
 import io.micronaut.data.model.jpa.criteria.PersistentAssociationPath;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.model.jpa.criteria.PersistentPropertyPath;
+import io.micronaut.data.model.jpa.criteria.impl.IdExpression;
 import io.micronaut.data.model.jpa.criteria.impl.LiteralExpression;
 import io.micronaut.data.model.jpa.criteria.impl.PredicateVisitable;
 import io.micronaut.data.model.jpa.criteria.impl.PredicateVisitor;
@@ -31,6 +32,7 @@ import io.micronaut.data.model.jpa.criteria.impl.SelectionVisitable;
 import io.micronaut.data.model.jpa.criteria.impl.SelectionVisitor;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.ConjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.DisjunctionPredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.ExpressionBinaryPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.NegatedPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyBetweenPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyBinaryPredicate;
@@ -197,6 +199,10 @@ public class Joiner implements SelectionVisitor, PredicateVisitor {
     }
 
     @Override
+    public void visit(IdExpression<?, ?> idExpression) {
+    }
+
+    @Override
     public void visit(AggregateExpression<?, ?> aggregateExpression) {
         visitSelectionExpression(aggregateExpression.getExpression());
     }
@@ -245,6 +251,12 @@ public class Joiner implements SelectionVisitor, PredicateVisitor {
     public void visit(PersistentPropertyInValuesPredicate<?> inValues) {
         joinIfNeeded(inValues.getPropertyPath(), true);
         inValues.getValues().forEach(this::visitPredicateExpression);
+    }
+
+    @Override
+    public void visit(ExpressionBinaryPredicate expressionBinaryPredicate) {
+        visitPredicateExpression(expressionBinaryPredicate.getLeft());
+        visitPredicateExpression(expressionBinaryPredicate.getRight());
     }
 
     /**

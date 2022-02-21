@@ -26,6 +26,7 @@ import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQuery;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.ConjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.DisjunctionPredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.ExpressionBinaryPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.NegatedPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyBetweenPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyBinaryPredicate;
@@ -51,6 +52,7 @@ import jakarta.persistence.criteria.Root;
 import jakarta.persistence.criteria.Selection;
 import jakarta.persistence.criteria.SetJoin;
 import jakarta.persistence.criteria.Subquery;
+import org.jetbrains.annotations.NotNull;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -84,6 +86,22 @@ import static io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils.requirePro
  */
 @Internal
 public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteriaBuilder {
+
+    @NotNull
+    private Predicate predicate(Expression<?> x, Expression<?> y, PredicateBinaryOp op) {
+        if (x instanceof IdExpression) {
+            return new ExpressionBinaryPredicate(x, y, op);
+        }
+        return new PersistentPropertyBinaryPredicate<>(requireProperty(x), requirePropertyParameterOrLiteral(y), op);
+    }
+
+    @NotNull
+    private Predicate predicate(Expression<?> x, Object y, PredicateBinaryOp op) {
+        if (x instanceof IdExpression) {
+            return new ExpressionBinaryPredicate(x, Objects.requireNonNull(literal(y)), op);
+        }
+        return new PersistentPropertyBinaryPredicate<>(requireProperty(x), Objects.requireNonNull(literal(y)), op);
+    }
 
     /**
      * Not supported yet.
@@ -403,73 +421,73 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
     @Override
     @NonNull
     public Predicate equal(@NonNull Expression<?> x, @NonNull Expression<?> y) {
-        return new PersistentPropertyBinaryPredicate<>(requireProperty(x), requirePropertyParameterOrLiteral(y), PredicateBinaryOp.EQUALS);
+        return predicate(x, y, PredicateBinaryOp.EQUALS);
     }
 
     @Override
     @NonNull
     public Predicate equal(@NonNull Expression<?> x, @Nullable Object y) {
-        return new PersistentPropertyBinaryPredicate<>(requireProperty(x), Objects.requireNonNull(literal(y)), PredicateBinaryOp.EQUALS);
+        return predicate(x, y, PredicateBinaryOp.EQUALS);
     }
 
     @Override
     @NonNull
     public Predicate notEqual(@NonNull Expression<?> x, @NonNull Expression<?> y) {
-        return new PersistentPropertyBinaryPredicate<>(requireProperty(x), requirePropertyParameterOrLiteral(y), PredicateBinaryOp.NOT_EQUALS);
+        return predicate(x, y, PredicateBinaryOp.NOT_EQUALS);
     }
 
     @Override
     @NonNull
     public Predicate notEqual(@NonNull Expression<?> x, @Nullable Object y) {
-        return new PersistentPropertyBinaryPredicate<>(requireProperty(x), Objects.requireNonNull(literal(y)), PredicateBinaryOp.NOT_EQUALS);
+        return predicate(x, y, PredicateBinaryOp.NOT_EQUALS);
     }
 
     @Override
     @NonNull
     public <Y extends Comparable<? super Y>> Predicate greaterThan(@NonNull Expression<? extends Y> x, @NonNull Expression<? extends Y> y) {
-        return new PersistentPropertyBinaryPredicate<>(requireProperty(x), requirePropertyParameterOrLiteral(y), PredicateBinaryOp.GREATER_THAN);
+        return predicate(x, y, PredicateBinaryOp.GREATER_THAN);
     }
 
     @Override
     @NonNull
     public <Y extends Comparable<? super Y>> Predicate greaterThan(@NonNull Expression<? extends Y> x, Y y) {
-        return new PersistentPropertyBinaryPredicate<>(requireProperty(x), Objects.requireNonNull(literal(y)), PredicateBinaryOp.GREATER_THAN);
+        return predicate(x, y, PredicateBinaryOp.GREATER_THAN);
     }
 
     @Override
     @NonNull
     public <Y extends Comparable<? super Y>> Predicate greaterThanOrEqualTo(@NonNull Expression<? extends Y> x, @NonNull Expression<? extends Y> y) {
-        return new PersistentPropertyBinaryPredicate<>(requireProperty(x), requirePropertyParameterOrLiteral(y), PredicateBinaryOp.GREATER_THAN_OR_EQUALS);
+        return predicate(x, y, PredicateBinaryOp.GREATER_THAN_OR_EQUALS);
     }
 
     @Override
     @NonNull
     public <Y extends Comparable<? super Y>> Predicate greaterThanOrEqualTo(@NonNull Expression<? extends Y> x, Y y) {
-        return new PersistentPropertyBinaryPredicate<>(requireProperty(x), Objects.requireNonNull(literal(y)), PredicateBinaryOp.GREATER_THAN_OR_EQUALS);
+        return predicate(x, y, PredicateBinaryOp.GREATER_THAN_OR_EQUALS);
     }
 
     @Override
     @NonNull
     public <Y extends Comparable<? super Y>> Predicate lessThan(@NonNull Expression<? extends Y> x, @NonNull Expression<? extends Y> y) {
-        return new PersistentPropertyBinaryPredicate<>(requireProperty(x), requirePropertyParameterOrLiteral(y), PredicateBinaryOp.LESS_THAN);
+        return predicate(x, y, PredicateBinaryOp.LESS_THAN);
     }
 
     @Override
     @NonNull
     public <Y extends Comparable<? super Y>> Predicate lessThan(@NonNull Expression<? extends Y> x, @NonNull Y y) {
-        return new PersistentPropertyBinaryPredicate<>(requireProperty(x), Objects.requireNonNull(literal(y)), PredicateBinaryOp.LESS_THAN);
+        return predicate(x, y, PredicateBinaryOp.LESS_THAN);
     }
 
     @Override
     @NonNull
     public <Y extends Comparable<? super Y>> Predicate lessThanOrEqualTo(@NonNull Expression<? extends Y> x, @NonNull Expression<? extends Y> y) {
-        return new PersistentPropertyBinaryPredicate<>(requireProperty(x), requirePropertyParameterOrLiteral(y), PredicateBinaryOp.LESS_THAN_OR_EQUALS);
+        return predicate(x, y, PredicateBinaryOp.LESS_THAN_OR_EQUALS);
     }
 
     @Override
     @NonNull
     public <Y extends Comparable<? super Y>> Predicate lessThanOrEqualTo(@NonNull Expression<? extends Y> x, Y y) {
-        return new PersistentPropertyBinaryPredicate<>(requireProperty(x), Objects.requireNonNull(literal(y)), PredicateBinaryOp.LESS_THAN_OR_EQUALS);
+        return predicate(x, y, PredicateBinaryOp.LESS_THAN_OR_EQUALS);
     }
 
     @Override

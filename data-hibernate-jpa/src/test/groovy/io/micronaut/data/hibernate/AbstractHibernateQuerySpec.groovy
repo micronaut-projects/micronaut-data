@@ -272,13 +272,20 @@ abstract class AbstractHibernateQuerySpec extends AbstractQuerySpec {
         author.authorName
     }
 
-
     void "entity with id class"() {
         given:
         EntityWithIdClass e = new EntityWithIdClass()
         e.id1 = 11
         e.id2 = 22
         e.name = "Xyz"
+        EntityWithIdClass f = new EntityWithIdClass()
+        f.id1 = 33
+        f.id2 = e.id2
+        f.name = "Xyz"
+        EntityWithIdClass g = new EntityWithIdClass()
+        g.id1 = e.id1
+        g.id2 = 44
+        g.name = "Xyz"
         EntityIdClass k = new EntityIdClass()
         k.id1 = 11
         k.id2 = 22
@@ -291,6 +298,20 @@ abstract class AbstractHibernateQuerySpec extends AbstractQuerySpec {
         e.id1 == 11
         e.id2 == 22
         e.name == "Xyz"
+
+        when:
+        entityWithIdClassRepository.save(f)
+        List<EntityWithIdClass> ef = entityWithIdClassRepository.findById2(e.id2)
+
+        then:
+        ef.size() == 2
+
+        when:
+        entityWithIdClassRepository.save(g)
+        List<EntityWithIdClass> eg = entityWithIdClassRepository.findById1(e.id1)
+
+        then:
+        eg.size() == 2
 
         when:
         e.name = "abc"
