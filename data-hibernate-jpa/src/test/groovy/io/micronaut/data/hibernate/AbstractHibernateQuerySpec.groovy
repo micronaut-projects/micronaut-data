@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.hibernate
 
-
+import io.micronaut.data.exceptions.EmptyResultException
 import io.micronaut.data.hibernate.entities.Rating
 import io.micronaut.data.hibernate.entities.UserWithWhere
 import io.micronaut.data.jpa.repository.criteria.Specification
@@ -171,6 +171,20 @@ abstract class AbstractHibernateQuerySpec extends AbstractQuerySpec {
         author.books.size() == 2
         author.books[0].pages.size() == 0
         author.books[1].pages.size() == 0
+    }
+
+    void "author find empty"() {
+        when:
+        def author = authorRepository.retrieveByName("XYZ")
+
+        then:
+        author == null
+
+        when:
+        authorRepository.searchByName("XYZ")
+
+        then:
+        thrown(EmptyResultException)
     }
 
     void "author find by id with EntityGraph"() {

@@ -59,6 +59,10 @@ public interface AuthorRepository extends CrudRepository<Author, Long> {
     @Join("books")
     Author searchByName(String name);
 
+    @Nullable
+    @Join("books")
+    Author retrieveByName(String name);
+
     // Various list all authors with different join types:
 
     @Join("books")
