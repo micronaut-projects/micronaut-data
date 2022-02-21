@@ -17,7 +17,7 @@
     catch(err) {
     }
 //-->
-var methods = {"i0":6,"i1":6,"i2":6,"i3":6,"i4":6,"i5":6,"i6":6};
+var methods = {"i0":6,"i1":6,"i2":6,"i3":6,"i4":6,"i5":6,"i6":6,"i7":6};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],4:["t3","Abstract Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -150,23 +150,29 @@ public interface <span class="typeNameLabel">SelectionVisitor</span></pre>
 </tr>
 <tr id="i3" class="rowColor">
 <td class="colFirst"><code>void</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../../io/micronaut/data/model/jpa/criteria/impl/SelectionVisitor.html#visit-io.micronaut.data.model.jpa.criteria.impl.IdExpression-">visit</a></span>(<a href="../../../../../../../io/micronaut/data/model/jpa/criteria/impl/IdExpression.html" title="class in io.micronaut.data.model.jpa.criteria.impl">IdExpression</a>&lt;?,?&gt;&nbsp;idExpression)</code>
+<div class="block">Visit <a href="../../../../../../../io/micronaut/data/model/jpa/criteria/impl/IdExpression.html" title="class in io.micronaut.data.model.jpa.criteria.impl"><code>IdExpression</code></a>.</div>
+</td>
+</tr>
+<tr id="i4" class="altColor">
+<td class="colFirst"><code>void</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../../io/micronaut/data/model/jpa/criteria/impl/SelectionVisitor.html#visit-io.micronaut.data.model.jpa.criteria.impl.LiteralExpression-">visit</a></span>(<a href="../../../../../../../io/micronaut/data/model/jpa/criteria/impl/LiteralExpression.html" title="class in io.micronaut.data.model.jpa.criteria.impl">LiteralExpression</a>&lt;?&gt;&nbsp;literalExpression)</code>
 <div class="block">Visit <a href="../../../../../../../io/micronaut/data/model/jpa/criteria/impl/LiteralExpression.html" title="class in io.micronaut.data.model.jpa.criteria.impl"><code>LiteralExpression</code></a>.</div>
 </td>
 </tr>
-<tr id="i4" class="altColor">
+<tr id="i5" class="rowColor">
 <td class="colFirst"><code>void</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../../io/micronaut/data/model/jpa/criteria/impl/SelectionVisitor.html#visit-io.micronaut.data.model.jpa.criteria.PersistentEntityRoot-">visit</a></span>(<a href="../../../../../../../io/micronaut/data/model/jpa/criteria/PersistentEntityRoot.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityRoot</a>&lt;?&gt;&nbsp;entityRoot)</code>
 <div class="block">Visit <a href="../../../../../../../io/micronaut/data/model/jpa/criteria/PersistentEntityRoot.html" title="interface in io.micronaut.data.model.jpa.criteria"><code>PersistentEntityRoot</code></a>.</div>
 </td>
 </tr>
-<tr id="i5" class="rowColor">
+<tr id="i6" class="altColor">
 <td class="colFirst"><code>void</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../../io/micronaut/data/model/jpa/criteria/impl/SelectionVisitor.html#visit-io.micronaut.data.model.jpa.criteria.PersistentPropertyPath-">visit</a></span>(<a href="../../../../../../../io/micronaut/data/model/jpa/criteria/PersistentPropertyPath.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentPropertyPath</a>&lt;?&gt;&nbsp;persistentPropertyPath)</code>
 <div class="block">Visit <a href="../../../../../../../io/micronaut/data/model/jpa/criteria/PersistentPropertyPath.html" title="interface in io.micronaut.data.model.jpa.criteria"><code>PersistentPropertyPath</code></a>.</div>
 </td>
 </tr>
-<tr id="i6" class="altColor">
+<tr id="i7" class="rowColor">
 <td class="colFirst"><code>void</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../../io/micronaut/data/model/jpa/criteria/impl/SelectionVisitor.html#visit-jakarta.persistence.criteria.Predicate-">visit</a></span>(jakarta.persistence.criteria.Predicate&nbsp;predicate)</code>
 <div class="block">Visit <code>Predicate</code>.</div>
@@ -274,7 +280,7 @@ public interface <span class="typeNameLabel">SelectionVisitor</span></pre>
 <a name="visit-io.micronaut.data.model.jpa.criteria.impl.selection.AggregateExpression-">
 <!--   -->
 </a>
-<ul class="blockListLast">
+<ul class="blockList">
 <li class="blockList">
 <h4>visit</h4>
 <pre>void&nbsp;visit(<a href="../../../../../../../io/micronaut/data/model/jpa/criteria/impl/selection/AggregateExpression.html" title="class in io.micronaut.data.model.jpa.criteria.impl.selection">AggregateExpression</a>&lt;?,?&gt;&nbsp;aggregateExpression)</pre>
@@ -282,6 +288,20 @@ public interface <span class="typeNameLabel">SelectionVisitor</span></pre>
 <dl>
 <dt><span class="paramLabel">Parameters:</span></dt>
 <dd><code>aggregateExpression</code> - The aggregateExpression</dd>
+</dl>
+</li>
+</ul>
+<a name="visit-io.micronaut.data.model.jpa.criteria.impl.IdExpression-">
+<!--   -->
+</a>
+<ul class="blockListLast">
+<li class="blockList">
+<h4>visit</h4>
+<pre>void&nbsp;visit(<a href="../../../../../../../io/micronaut/data/model/jpa/criteria/impl/IdExpression.html" title="class in io.micronaut.data.model.jpa.criteria.impl">IdExpression</a>&lt;?,?&gt;&nbsp;idExpression)</pre>
+<div class="block">Visit <a href="../../../../../../../io/micronaut/data/model/jpa/criteria/impl/IdExpression.html" title="class in io.micronaut.data.model.jpa.criteria.impl"><code>IdExpression</code></a>.</div>
+<dl>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>idExpression</code> - The idExpression</dd>
 </dl>
 </li>
 </ul>

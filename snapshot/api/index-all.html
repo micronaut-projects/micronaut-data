@@ -358,6 +358,8 @@
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentPropertyPath.html#accept-io.micronaut.data.model.jpa.criteria.impl.SelectionVisitor-">accept(SelectionVisitor)</a></span> - Method in class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentPropertyPath.html" title="class in io.micronaut.data.model.jpa.criteria.impl">AbstractPersistentPropertyPath</a></dt>
 <dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/impl/IdExpression.html#accept-io.micronaut.data.model.jpa.criteria.impl.SelectionVisitor-">accept(SelectionVisitor)</a></span> - Method in class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/IdExpression.html" title="class in io.micronaut.data.model.jpa.criteria.impl">IdExpression</a></dt>
+<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/impl/LiteralExpression.html#accept-io.micronaut.data.model.jpa.criteria.impl.SelectionVisitor-">accept(SelectionVisitor)</a></span> - Method in class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/LiteralExpression.html" title="class in io.micronaut.data.model.jpa.criteria.impl">LiteralExpression</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/impl/predicate/AbstractPredicate.html#accept-io.micronaut.data.model.jpa.criteria.impl.SelectionVisitor-">accept(SelectionVisitor)</a></span> - Method in class io.micronaut.data.model.jpa.criteria.impl.predicate.<a href="io/micronaut/data/model/jpa/criteria/impl/predicate/AbstractPredicate.html" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate">AbstractPredicate</a></dt>
@@ -365,6 +367,8 @@
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/impl/predicate/ConjunctionPredicate.html#accept-io.micronaut.data.model.jpa.criteria.impl.PredicateVisitor-">accept(PredicateVisitor)</a></span> - Method in class io.micronaut.data.model.jpa.criteria.impl.predicate.<a href="io/micronaut/data/model/jpa/criteria/impl/predicate/ConjunctionPredicate.html" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate">ConjunctionPredicate</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/impl/predicate/DisjunctionPredicate.html#accept-io.micronaut.data.model.jpa.criteria.impl.PredicateVisitor-">accept(PredicateVisitor)</a></span> - Method in class io.micronaut.data.model.jpa.criteria.impl.predicate.<a href="io/micronaut/data/model/jpa/criteria/impl/predicate/DisjunctionPredicate.html" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate">DisjunctionPredicate</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/impl/predicate/ExpressionBinaryPredicate.html#accept-io.micronaut.data.model.jpa.criteria.impl.PredicateVisitor-">accept(PredicateVisitor)</a></span> - Method in class io.micronaut.data.model.jpa.criteria.impl.predicate.<a href="io/micronaut/data/model/jpa/criteria/impl/predicate/ExpressionBinaryPredicate.html" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate">ExpressionBinaryPredicate</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/impl/predicate/NegatedPredicate.html#accept-io.micronaut.data.model.jpa.criteria.impl.PredicateVisitor-">accept(PredicateVisitor)</a></span> - Method in class io.micronaut.data.model.jpa.criteria.impl.predicate.<a href="io/micronaut/data/model/jpa/criteria/impl/predicate/NegatedPredicate.html" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate">NegatedPredicate</a></dt>
 <dd>&nbsp;</dd>
@@ -723,8 +727,6 @@
 <div class="block">Convert the literal value to it's SQL representation.</div>
 </dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html#asLiteral-java.lang.Object-">asLiteral(Object)</a></span> - Method in class io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html" title="class in io.micronaut.data.model.query.builder.sql">SqlQueryBuilder</a></dt>
-<dd>&nbsp;</dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/impl/query/QueryModelPredicateVisitor.html#asPath-java.util.List-io.micronaut.data.model.PersistentProperty-">asPath(List&lt;Association&gt;, PersistentProperty)</a></span> - Method in class io.micronaut.data.model.jpa.criteria.impl.query.<a href="io/micronaut/data/model/jpa/criteria/impl/query/QueryModelPredicateVisitor.html" title="class in io.micronaut.data.model.jpa.criteria.impl.query">QueryModelPredicateVisitor</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/PersistentAssociationPath.html#asPath--">asPath()</a></span> - Method in interface io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentAssociationPath</a></dt>
 <dd>&nbsp;</dd>
@@ -3562,6 +3564,12 @@
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/operations/internal/StoredSqlOperation.html#expandableQueryParts">expandableQueryParts</a></span> - Variable in class io.micronaut.data.runtime.operations.internal.<a href="io/micronaut/data/runtime/operations/internal/StoredSqlOperation.html" title="class in io.micronaut.data.runtime.operations.internal">StoredSqlOperation</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/model/jpa/criteria/impl/predicate/ExpressionBinaryPredicate.html" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate"><span class="typeNameLink">ExpressionBinaryPredicate</span></a> - Class in <a href="io/micronaut/data/model/jpa/criteria/impl/predicate/package-summary.html">io.micronaut.data.model.jpa.criteria.impl.predicate</a></dt>
+<dd>
+<div class="block">The expression binary operation predicate implementation.</div>
+</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/impl/predicate/ExpressionBinaryPredicate.html#ExpressionBinaryPredicate-jakarta.persistence.criteria.Expression-jakarta.persistence.criteria.Expression-io.micronaut.data.model.jpa.criteria.impl.predicate.PredicateBinaryOp-">ExpressionBinaryPredicate(Expression&lt;?&gt;, Expression&lt;?&gt;, PredicateBinaryOp)</a></span> - Constructor for class io.micronaut.data.model.jpa.criteria.impl.predicate.<a href="io/micronaut/data/model/jpa/criteria/impl/predicate/ExpressionBinaryPredicate.html" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate">ExpressionBinaryPredicate</a></dt>
+<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/impl/CriteriaUtils.html#extractPredicateParameters-jakarta.persistence.criteria.Expression-">extractPredicateParameters(Expression&lt;?&gt;)</a></span> - Static method in class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/CriteriaUtils.html" title="class in io.micronaut.data.model.jpa.criteria.impl">CriteriaUtils</a></dt>
 <dd>&nbsp;</dd>
 </dl>
@@ -5210,6 +5218,8 @@
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentPropertyPath.html#getJavaType--">getJavaType()</a></span> - Method in class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentPropertyPath.html" title="class in io.micronaut.data.model.jpa.criteria.impl">AbstractPersistentPropertyPath</a></dt>
 <dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/impl/IdExpression.html#getJavaType--">getJavaType()</a></span> - Method in class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/IdExpression.html" title="class in io.micronaut.data.model.jpa.criteria.impl">IdExpression</a></dt>
+<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/impl/LiteralExpression.html#getJavaType--">getJavaType()</a></span> - Method in class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/LiteralExpression.html" title="class in io.micronaut.data.model.jpa.criteria.impl">LiteralExpression</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/impl/ParameterExpressionImpl.html#getJavaType--">getJavaType()</a></span> - Method in class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/ParameterExpressionImpl.html" title="class in io.micronaut.data.model.jpa.criteria.impl">ParameterExpressionImpl</a></dt>
@@ -5284,6 +5294,8 @@
 <dd>
 <div class="block"><span class="deprecatedLabel">Deprecated.</span></div>
 </dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/impl/predicate/ExpressionBinaryPredicate.html#getLeft--">getLeft()</a></span> - Method in class io.micronaut.data.model.jpa.criteria.impl.predicate.<a href="io/micronaut/data/model/jpa/criteria/impl/predicate/ExpressionBinaryPredicate.html" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate">ExpressionBinaryPredicate</a></dt>
+<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/transaction/jdbc/DelegatingDataSource.html#getLoginTimeout--">getLoginTimeout()</a></span> - Method in class io.micronaut.transaction.jdbc.<a href="io/micronaut/transaction/jdbc/DelegatingDataSource.html" title="class in io.micronaut.transaction.jdbc">DelegatingDataSource</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/transaction/jdbc/DelegatingDataSource.html#getLogWriter--">getLogWriter()</a></span> - Method in class io.micronaut.transaction.jdbc.<a href="io/micronaut/transaction/jdbc/DelegatingDataSource.html" title="class in io.micronaut.transaction.jdbc">DelegatingDataSource</a></dt>
@@ -5607,6 +5619,8 @@
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/Slice.html#getOffset--">getOffset()</a></span> - Method in interface io.micronaut.data.model.<a href="io/micronaut/data/model/Slice.html" title="interface in io.micronaut.data.model">Slice</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/PersistentAssociationPath.html#getOn--">getOn()</a></span> - Method in interface io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentAssociationPath</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/impl/predicate/ExpressionBinaryPredicate.html#getOp--">getOp()</a></span> - Method in class io.micronaut.data.model.jpa.criteria.impl.predicate.<a href="io/micronaut/data/model/jpa/criteria/impl/predicate/ExpressionBinaryPredicate.html" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate">ExpressionBinaryPredicate</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/impl/predicate/PersistentPropertyBinaryPredicate.html#getOp--">getOp()</a></span> - Method in class io.micronaut.data.model.jpa.criteria.impl.predicate.<a href="io/micronaut/data/model/jpa/criteria/impl/predicate/PersistentPropertyBinaryPredicate.html" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate">PersistentPropertyBinaryPredicate</a></dt>
 <dd>&nbsp;</dd>
@@ -6179,9 +6193,13 @@
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/intercept/criteria/async/AbstractAsyncSpecificationInterceptor.html#getReturnType-io.micronaut.aop.MethodInvocationContext-">getReturnType(MethodInvocationContext&lt;?, ?&gt;)</a></span> - Method in class io.micronaut.data.runtime.intercept.criteria.async.<a href="io/micronaut/data/runtime/intercept/criteria/async/AbstractAsyncSpecificationInterceptor.html" title="class in io.micronaut.data.runtime.intercept.criteria.async">AbstractAsyncSpecificationInterceptor</a></dt>
 <dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/impl/predicate/ExpressionBinaryPredicate.html#getRight--">getRight()</a></span> - Method in class io.micronaut.data.model.jpa.criteria.impl.predicate.<a href="io/micronaut/data/model/jpa/criteria/impl/predicate/ExpressionBinaryPredicate.html" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate">ExpressionBinaryPredicate</a></dt>
+<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentEntityCriteriaDelete.html#getRoot--">getRoot()</a></span> - Method in class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentEntityCriteriaDelete.html" title="class in io.micronaut.data.model.jpa.criteria.impl">AbstractPersistentEntityCriteriaDelete</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentEntityCriteriaUpdate.html#getRoot--">getRoot()</a></span> - Method in class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentEntityCriteriaUpdate.html" title="class in io.micronaut.data.model.jpa.criteria.impl">AbstractPersistentEntityCriteriaUpdate</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/impl/IdExpression.html#getRoot--">getRoot()</a></span> - Method in class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/IdExpression.html" title="class in io.micronaut.data.model.jpa.criteria.impl">IdExpression</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/PersistentEntityCriteriaDelete.html#getRoot--">getRoot()</a></span> - Method in interface io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityCriteriaDelete.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaDelete</a></dt>
 <dd>&nbsp;</dd>
@@ -6915,6 +6933,12 @@
 <dd>
 <div class="block">Default constructor.</div>
 </dd>
+<dt><a href="io/micronaut/data/model/jpa/criteria/impl/IdExpression.html" title="class in io.micronaut.data.model.jpa.criteria.impl"><span class="typeNameLink">IdExpression</span></a>&lt;<a href="io/micronaut/data/model/jpa/criteria/impl/IdExpression.html" title="type parameter in IdExpression">E</a>,<a href="io/micronaut/data/model/jpa/criteria/impl/IdExpression.html" title="type parameter in IdExpression">T</a>&gt; - Class in <a href="io/micronaut/data/model/jpa/criteria/impl/package-summary.html">io.micronaut.data.model.jpa.criteria.impl</a></dt>
+<dd>
+<div class="block">The ID expression implementation.</div>
+</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/impl/IdExpression.html#IdExpression-io.micronaut.data.model.jpa.criteria.PersistentEntityRoot-">IdExpression(PersistentEntityRoot&lt;E&gt;)</a></span> - Constructor for class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/IdExpression.html" title="class in io.micronaut.data.model.jpa.criteria.impl">IdExpression</a></dt>
+<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/QueryModel.IdProjection.html#IdProjection--">IdProjection()</a></span> - Constructor for class io.micronaut.data.model.query.<a href="io/micronaut/data/model/query/QueryModel.IdProjection.html" title="class in io.micronaut.data.model.query">QueryModel.IdProjection</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/document/serde/IdPropertyNamingStrategy.html" title="interface in io.micronaut.data.document.serde"><span class="typeNameLink">IdPropertyNamingStrategy</span></a> - Interface in <a href="io/micronaut/data/document/serde/package-summary.html">io.micronaut.data.document.serde</a></dt>
@@ -7690,6 +7714,8 @@
 </dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/IExpression.html#isBoolean--">isBoolean()</a></span> - Method in interface io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/IExpression.html" title="interface in io.micronaut.data.model.jpa.criteria">IExpression</a></dt>
 <dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/impl/IdExpression.html#isBoolean--">isBoolean()</a></span> - Method in class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/IdExpression.html" title="class in io.micronaut.data.model.jpa.criteria.impl">IdExpression</a></dt>
+<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/impl/LiteralExpression.html#isBoolean--">isBoolean()</a></span> - Method in class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/LiteralExpression.html" title="class in io.micronaut.data.model.jpa.criteria.impl">LiteralExpression</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/impl/selection/AggregateExpression.html#isBoolean--">isBoolean()</a></span> - Method in class io.micronaut.data.model.jpa.criteria.impl.selection.<a href="io/micronaut/data/model/jpa/criteria/impl/selection/AggregateExpression.html" title="class in io.micronaut.data.model.jpa.criteria.impl.selection">AggregateExpression</a></dt>
@@ -8101,6 +8127,8 @@
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/IExpression.html#isNumeric--">isNumeric()</a></span> - Method in interface io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/IExpression.html" title="interface in io.micronaut.data.model.jpa.criteria">IExpression</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/impl/CriteriaUtils.html#isNumeric-java.lang.Class-">isNumeric(Class&lt;?&gt;)</a></span> - Static method in class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/CriteriaUtils.html" title="class in io.micronaut.data.model.jpa.criteria.impl">CriteriaUtils</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/impl/IdExpression.html#isNumeric--">isNumeric()</a></span> - Method in class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/IdExpression.html" title="class in io.micronaut.data.model.jpa.criteria.impl">IdExpression</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/impl/LiteralExpression.html#isNumeric--">isNumeric()</a></span> - Method in class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/LiteralExpression.html" title="class in io.micronaut.data.model.jpa.criteria.impl">LiteralExpression</a></dt>
 <dd>&nbsp;</dd>
@@ -13847,6 +13875,8 @@
 </dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentPropertyPath.html#toString--">toString()</a></span> - Method in class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentPropertyPath.html" title="class in io.micronaut.data.model.jpa.criteria.impl">AbstractPersistentPropertyPath</a></dt>
 <dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/impl/IdExpression.html#toString--">toString()</a></span> - Method in class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/IdExpression.html" title="class in io.micronaut.data.model.jpa.criteria.impl">IdExpression</a></dt>
+<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/impl/LiteralExpression.html#toString--">toString()</a></span> - Method in class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/LiteralExpression.html" title="class in io.micronaut.data.model.jpa.criteria.impl">LiteralExpression</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/impl/ParameterExpressionImpl.html#toString--">toString()</a></span> - Method in class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/ParameterExpressionImpl.html" title="class in io.micronaut.data.model.jpa.criteria.impl">ParameterExpressionImpl</a></dt>
@@ -13854,6 +13884,8 @@
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/impl/predicate/ConjunctionPredicate.html#toString--">toString()</a></span> - Method in class io.micronaut.data.model.jpa.criteria.impl.predicate.<a href="io/micronaut/data/model/jpa/criteria/impl/predicate/ConjunctionPredicate.html" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate">ConjunctionPredicate</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/impl/predicate/DisjunctionPredicate.html#toString--">toString()</a></span> - Method in class io.micronaut.data.model.jpa.criteria.impl.predicate.<a href="io/micronaut/data/model/jpa/criteria/impl/predicate/DisjunctionPredicate.html" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate">DisjunctionPredicate</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/impl/predicate/ExpressionBinaryPredicate.html#toString--">toString()</a></span> - Method in class io.micronaut.data.model.jpa.criteria.impl.predicate.<a href="io/micronaut/data/model/jpa/criteria/impl/predicate/ExpressionBinaryPredicate.html" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate">ExpressionBinaryPredicate</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/impl/predicate/NegatedPredicate.html#toString--">toString()</a></span> - Method in class io.micronaut.data.model.jpa.criteria.impl.predicate.<a href="io/micronaut/data/model/jpa/criteria/impl/predicate/NegatedPredicate.html" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate">NegatedPredicate</a></dt>
 <dd>&nbsp;</dd>
@@ -14880,6 +14912,10 @@ the order they are declared.</div>
 <dd>
 <div class="block">Visit <a href="io/micronaut/data/model/jpa/criteria/impl/predicate/PersistentPropertyInValuesPredicate.html" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate"><code>PersistentPropertyInValuesPredicate</code></a>.</div>
 </dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/impl/PredicateVisitor.html#visit-io.micronaut.data.model.jpa.criteria.impl.predicate.ExpressionBinaryPredicate-">visit(ExpressionBinaryPredicate)</a></span> - Method in interface io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/PredicateVisitor.html" title="interface in io.micronaut.data.model.jpa.criteria.impl">PredicateVisitor</a></dt>
+<dd>
+<div class="block">Visit <a href="io/micronaut/data/model/jpa/criteria/impl/predicate/ExpressionBinaryPredicate.html" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate"><code>ExpressionBinaryPredicate</code></a>.</div>
+</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/impl/query/QueryModelPredicateVisitor.html#visit-io.micronaut.data.model.jpa.criteria.IExpression-">visit(IExpression&lt;Boolean&gt;)</a></span> - Method in class io.micronaut.data.model.jpa.criteria.impl.query.<a href="io/micronaut/data/model/jpa/criteria/impl/query/QueryModelPredicateVisitor.html" title="class in io.micronaut.data.model.jpa.criteria.impl.query">QueryModelPredicateVisitor</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/impl/query/QueryModelPredicateVisitor.html#visit-io.micronaut.data.model.jpa.criteria.impl.predicate.ConjunctionPredicate-">visit(ConjunctionPredicate)</a></span> - Method in class io.micronaut.data.model.jpa.criteria.impl.query.<a href="io/micronaut/data/model/jpa/criteria/impl/query/QueryModelPredicateVisitor.html" title="class in io.micronaut.data.model.jpa.criteria.impl.query">QueryModelPredicateVisitor</a></dt>
@@ -14889,6 +14925,8 @@ the order they are declared.</div>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/impl/query/QueryModelPredicateVisitor.html#visit-io.micronaut.data.model.jpa.criteria.impl.predicate.NegatedPredicate-">visit(NegatedPredicate)</a></span> - Method in class io.micronaut.data.model.jpa.criteria.impl.query.<a href="io/micronaut/data/model/jpa/criteria/impl/query/QueryModelPredicateVisitor.html" title="class in io.micronaut.data.model.jpa.criteria.impl.query">QueryModelPredicateVisitor</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/impl/query/QueryModelPredicateVisitor.html#visit-io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyBinaryPredicate-">visit(PersistentPropertyBinaryPredicate&lt;?&gt;)</a></span> - Method in class io.micronaut.data.model.jpa.criteria.impl.query.<a href="io/micronaut/data/model/jpa/criteria/impl/query/QueryModelPredicateVisitor.html" title="class in io.micronaut.data.model.jpa.criteria.impl.query">QueryModelPredicateVisitor</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/impl/query/QueryModelPredicateVisitor.html#visit-io.micronaut.data.model.jpa.criteria.impl.predicate.ExpressionBinaryPredicate-">visit(ExpressionBinaryPredicate)</a></span> - Method in class io.micronaut.data.model.jpa.criteria.impl.query.<a href="io/micronaut/data/model/jpa/criteria/impl/query/QueryModelPredicateVisitor.html" title="class in io.micronaut.data.model.jpa.criteria.impl.query">QueryModelPredicateVisitor</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/impl/query/QueryModelPredicateVisitor.html#visit-io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyUnaryPredicate-">visit(PersistentPropertyUnaryPredicate&lt;?&gt;)</a></span> - Method in class io.micronaut.data.model.jpa.criteria.impl.query.<a href="io/micronaut/data/model/jpa/criteria/impl/query/QueryModelPredicateVisitor.html" title="class in io.micronaut.data.model.jpa.criteria.impl.query">QueryModelPredicateVisitor</a></dt>
 <dd>&nbsp;</dd>
@@ -14909,6 +14947,8 @@ the order they are declared.</div>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/impl/query/QueryModelSelectionVisitor.html#visit-io.micronaut.data.model.jpa.criteria.PersistentEntityRoot-">visit(PersistentEntityRoot&lt;?&gt;)</a></span> - Method in class io.micronaut.data.model.jpa.criteria.impl.query.<a href="io/micronaut/data/model/jpa/criteria/impl/query/QueryModelSelectionVisitor.html" title="class in io.micronaut.data.model.jpa.criteria.impl.query">QueryModelSelectionVisitor</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/impl/query/QueryModelSelectionVisitor.html#visit-io.micronaut.data.model.jpa.criteria.impl.LiteralExpression-">visit(LiteralExpression&lt;?&gt;)</a></span> - Method in class io.micronaut.data.model.jpa.criteria.impl.query.<a href="io/micronaut/data/model/jpa/criteria/impl/query/QueryModelSelectionVisitor.html" title="class in io.micronaut.data.model.jpa.criteria.impl.query">QueryModelSelectionVisitor</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/impl/query/QueryModelSelectionVisitor.html#visit-io.micronaut.data.model.jpa.criteria.impl.IdExpression-">visit(IdExpression&lt;?, ?&gt;)</a></span> - Method in class io.micronaut.data.model.jpa.criteria.impl.query.<a href="io/micronaut/data/model/jpa/criteria/impl/query/QueryModelSelectionVisitor.html" title="class in io.micronaut.data.model.jpa.criteria.impl.query">QueryModelSelectionVisitor</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/impl/query/QueryModelSelectionVisitor.html#visit-io.micronaut.data.model.jpa.criteria.impl.selection.AliasedSelection-">visit(AliasedSelection&lt;?&gt;)</a></span> - Method in class io.micronaut.data.model.jpa.criteria.impl.query.<a href="io/micronaut/data/model/jpa/criteria/impl/query/QueryModelSelectionVisitor.html" title="class in io.micronaut.data.model.jpa.criteria.impl.query">QueryModelSelectionVisitor</a></dt>
 <dd>&nbsp;</dd>
@@ -14940,6 +14980,10 @@ the order they are declared.</div>
 <dd>
 <div class="block">Visit <a href="io/micronaut/data/model/jpa/criteria/impl/selection/AggregateExpression.html" title="class in io.micronaut.data.model.jpa.criteria.impl.selection"><code>AggregateExpression</code></a>.</div>
 </dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/impl/SelectionVisitor.html#visit-io.micronaut.data.model.jpa.criteria.impl.IdExpression-">visit(IdExpression&lt;?, ?&gt;)</a></span> - Method in interface io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/SelectionVisitor.html" title="interface in io.micronaut.data.model.jpa.criteria.impl">SelectionVisitor</a></dt>
+<dd>
+<div class="block">Visit <a href="io/micronaut/data/model/jpa/criteria/impl/IdExpression.html" title="class in io.micronaut.data.model.jpa.criteria.impl"><code>IdExpression</code></a>.</div>
+</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/impl/util/Joiner.html#visit-io.micronaut.data.model.jpa.criteria.PersistentEntityRoot-">visit(PersistentEntityRoot&lt;?&gt;)</a></span> - Method in class io.micronaut.data.model.jpa.criteria.impl.util.<a href="io/micronaut/data/model/jpa/criteria/impl/util/Joiner.html" title="class in io.micronaut.data.model.jpa.criteria.impl.util">Joiner</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/impl/util/Joiner.html#visit-io.micronaut.data.model.jpa.criteria.PersistentPropertyPath-">visit(PersistentPropertyPath&lt;?&gt;)</a></span> - Method in class io.micronaut.data.model.jpa.criteria.impl.util.<a href="io/micronaut/data/model/jpa/criteria/impl/util/Joiner.html" title="class in io.micronaut.data.model.jpa.criteria.impl.util">Joiner</a></dt>
@@ -14951,6 +14995,8 @@ the order they are declared.</div>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/impl/util/Joiner.html#visit-io.micronaut.data.model.jpa.criteria.impl.selection.CompoundSelection-">visit(CompoundSelection&lt;?&gt;)</a></span> - Method in class io.micronaut.data.model.jpa.criteria.impl.util.<a href="io/micronaut/data/model/jpa/criteria/impl/util/Joiner.html" title="class in io.micronaut.data.model.jpa.criteria.impl.util">Joiner</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/impl/util/Joiner.html#visit-io.micronaut.data.model.jpa.criteria.impl.LiteralExpression-">visit(LiteralExpression&lt;?&gt;)</a></span> - Method in class io.micronaut.data.model.jpa.criteria.impl.util.<a href="io/micronaut/data/model/jpa/criteria/impl/util/Joiner.html" title="class in io.micronaut.data.model.jpa.criteria.impl.util">Joiner</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/impl/util/Joiner.html#visit-io.micronaut.data.model.jpa.criteria.impl.IdExpression-">visit(IdExpression&lt;?, ?&gt;)</a></span> - Method in class io.micronaut.data.model.jpa.criteria.impl.util.<a href="io/micronaut/data/model/jpa/criteria/impl/util/Joiner.html" title="class in io.micronaut.data.model.jpa.criteria.impl.util">Joiner</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/impl/util/Joiner.html#visit-io.micronaut.data.model.jpa.criteria.impl.selection.AggregateExpression-">visit(AggregateExpression&lt;?, ?&gt;)</a></span> - Method in class io.micronaut.data.model.jpa.criteria.impl.util.<a href="io/micronaut/data/model/jpa/criteria/impl/util/Joiner.html" title="class in io.micronaut.data.model.jpa.criteria.impl.util">Joiner</a></dt>
 <dd>&nbsp;</dd>
@@ -14969,6 +15015,8 @@ the order they are declared.</div>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/impl/util/Joiner.html#visit-io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyBinaryPredicate-">visit(PersistentPropertyBinaryPredicate&lt;?&gt;)</a></span> - Method in class io.micronaut.data.model.jpa.criteria.impl.util.<a href="io/micronaut/data/model/jpa/criteria/impl/util/Joiner.html" title="class in io.micronaut.data.model.jpa.criteria.impl.util">Joiner</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/impl/util/Joiner.html#visit-io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyInValuesPredicate-">visit(PersistentPropertyInValuesPredicate&lt;?&gt;)</a></span> - Method in class io.micronaut.data.model.jpa.criteria.impl.util.<a href="io/micronaut/data/model/jpa/criteria/impl/util/Joiner.html" title="class in io.micronaut.data.model.jpa.criteria.impl.util">Joiner</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/impl/util/Joiner.html#visit-io.micronaut.data.model.jpa.criteria.impl.predicate.ExpressionBinaryPredicate-">visit(ExpressionBinaryPredicate)</a></span> - Method in class io.micronaut.data.model.jpa.criteria.impl.util.<a href="io/micronaut/data/model/jpa/criteria/impl/util/Joiner.html" title="class in io.micronaut.data.model.jpa.criteria.impl.util">Joiner</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/processor/visitors/EmbeddableVisitor.html#visitClass-io.micronaut.inject.ast.ClassElement-io.micronaut.inject.visitor.VisitorContext-">visitClass(ClassElement, VisitorContext)</a></span> - Method in class io.micronaut.data.processor.visitors.<a href="io/micronaut/data/processor/visitors/EmbeddableVisitor.html" title="class in io.micronaut.data.processor.visitors">EmbeddableVisitor</a></dt>
 <dd>&nbsp;</dd>
