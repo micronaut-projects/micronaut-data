@@ -15,7 +15,14 @@
  */
 package io.micronaut.data.jdbc.postgres
 
-
+import io.micronaut.data.annotation.GeneratedValue
+import io.micronaut.data.annotation.Id
+import io.micronaut.data.annotation.MappedEntity
+import io.micronaut.data.annotation.MappedProperty
+import io.micronaut.data.jdbc.annotation.JdbcRepository
+import io.micronaut.data.model.DataType
+import io.micronaut.data.model.query.builder.sql.Dialect
+import io.micronaut.data.repository.PageableRepository
 import io.micronaut.data.tck.entities.MultiArrayEntity
 import io.micronaut.data.tck.repositories.ArraysEntityRepository
 import io.micronaut.data.tck.repositories.MultiArrayEntityRepository
@@ -56,4 +63,30 @@ class PostgresArraysSpec extends AbstractArraysSpec implements PostgresTestPrope
 //            entityStored.stringMultiArray == [["OOO", "ZZZ"], ["CCC", "DDD"], ["123", "456"]] as String[][]
     }
 
+    def "empty array"() {
+        given:
+            def repo = context.getBean(Repo)
+        when:
+            def e = repo.save(new Ent(strings: new String[0]))
+        then:
+            e.strings.length == 0
+        when:
+            e = repo.findById(1L).get()
+        then:
+            e.strings.length == 0
+    }
+
+}
+
+@MappedEntity("pg_arrayz")
+class Ent {
+    @Id
+    @GeneratedValue
+    Long id
+    @MappedProperty(definition = "VARCHAR(255) []", type = DataType.STRING_ARRAY)
+    String[] strings
+}
+
+@JdbcRepository(dialect = Dialect.POSTGRES)
+interface Repo extends PageableRepository<Ent, Long> {
 }
