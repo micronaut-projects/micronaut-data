@@ -16,9 +16,12 @@
 package io.micronaut.data.model.jpa.criteria.impl.query;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.data.model.PersistentEntity;
+import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.model.jpa.criteria.PersistentPropertyPath;
 import io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils;
+import io.micronaut.data.model.jpa.criteria.impl.IdExpression;
 import io.micronaut.data.model.jpa.criteria.impl.LiteralExpression;
 import io.micronaut.data.model.jpa.criteria.impl.SelectionVisitable;
 import io.micronaut.data.model.jpa.criteria.impl.SelectionVisitor;
@@ -130,6 +133,28 @@ public final class QueryModelSelectionVisitor implements SelectionVisitor {
     @Override
     public void visit(LiteralExpression<?> literalExpression) {
         addProjection(Projections.literal(literalExpression.getValue()));
+    }
+
+    @Override
+    public void visit(IdExpression<?, ?> idExpression) {
+        PersistentEntityRoot<?> root = idExpression.getRoot();
+        PersistentEntity persistentEntity = root.getPersistentEntity();
+        if (persistentEntity.hasCompositeIdentity()) {
+            for (PersistentProperty persistentProperty : persistentEntity.getCompositeIdentity()) {
+                if (distinct) {
+                    addProjection(Projections.distinct(persistentProperty.getName()));
+                } else {
+                    addProjection(Projections.property(persistentProperty.getName()));
+                }
+            }
+        } else {
+            PersistentProperty identity = persistentEntity.getIdentity();
+            if (distinct) {
+                addProjection(Projections.distinct(identity.getName()));
+            } else {
+                addProjection(Projections.property(identity.getName()));
+            }
+        }
     }
 
     @Override

@@ -21,6 +21,7 @@ import io.micronaut.data.model.jpa.criteria.ISelection;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.model.jpa.criteria.PersistentPropertyPath;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityCriteriaQuery;
+import io.micronaut.data.model.jpa.criteria.impl.IdExpression;
 import io.micronaut.data.model.jpa.criteria.impl.LiteralExpression;
 import io.micronaut.data.model.jpa.criteria.impl.SelectionVisitable;
 import io.micronaut.data.model.jpa.criteria.impl.SelectionVisitor;
@@ -135,6 +136,15 @@ final class SourcePersistentEntityCriteriaQueryImpl<T> extends AbstractPersisten
                 @Override
                 public void visit(LiteralExpression<?> literalExpression) {
                     result[0] = literalExpression.getValue().getClass().getName();
+                }
+
+                @Override
+                public void visit(IdExpression<?, ?> idExpression) {
+                    SourcePersistentEntity persistentEntity = (SourcePersistentEntity) idExpression.getRoot().getPersistentEntity();
+                    if (persistentEntity.hasCompositeIdentity()) {
+                        throw new IllegalStateException("IdClass is unknown!");
+                    }
+                    result[0] = persistentEntity.getIdentity().getType().getName();
                 }
             });
             return result[0];

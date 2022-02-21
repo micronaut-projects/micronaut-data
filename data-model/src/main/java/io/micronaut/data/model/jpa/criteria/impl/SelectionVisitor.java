@@ -81,4 +81,11 @@ public interface SelectionVisitor {
      */
     void visit(AggregateExpression<?, ?> aggregateExpression);
 
+    /**
+     * Visit {@link IdExpression}.
+     *
+     * @param idExpression The idExpression
+     */
+    void visit(IdExpression<?, ?> idExpression);
+
 }

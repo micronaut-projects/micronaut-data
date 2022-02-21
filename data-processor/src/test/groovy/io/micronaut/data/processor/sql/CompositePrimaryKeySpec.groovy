@@ -68,10 +68,14 @@ ${TestEntities.compositePrimaryKeyEntities()}
 @io.micronaut.context.annotation.Executable
 interface ProjectRepository extends CrudRepository<Project, ProjectId>{
     void update(@Id ProjectId id, @Parameter("name") String name);
+    List<Project> findByDepartmentId(Long departmentId);
+//    List<Project> findByProjectId(Long projectId);
 }
 """)
         def findByIdMethod = repository.findPossibleMethods("findById").findFirst().get()
         def updateMethod = repository.findPossibleMethods("update").findFirst().get()
+        def findByDepartmentIdMethod = repository.findPossibleMethods("findByDepartmentId").findFirst().get()
+//        def findByProjectIdMethod = repository.findPossibleMethods("findByProjectId").findFirst().get()
 
         expect:"The repository compiles"
         repository != null
@@ -84,6 +88,11 @@ interface ProjectRepository extends CrudRepository<Project, ProjectId>{
         getParameterBindingIndexes(updateMethod) == ["1", "0", "0"]
         getParameterPropertyPaths(updateMethod) == ["name", "projectId.departmentId", "projectId.projectId"] as String[]
         getParameterBindingPaths(updateMethod) == ["", "departmentId", "projectId"] as String[]
+
+        and:
+        getParameterBindingIndexes(findByDepartmentIdMethod) == ["0"]
+        getParameterPropertyPaths(findByDepartmentIdMethod) == ["projectId.departmentId"] as String[]
+        getParameterBindingPaths(findByDepartmentIdMethod) == [""] as String[]
     }
 
     void "test compile repo with composite key relations"() {
@@ -152,18 +161,30 @@ import io.micronaut.data.repository.CrudRepository;
 @RepositoryConfiguration(queryBuilder=JpaQueryBuilder.class, implicitQueries = true, namedParameters = true)
 @io.micronaut.context.annotation.Executable
 interface EntityWithIdClassRepository extends CrudRepository<EntityWithIdClass, EntityIdClass> {
-        
+    List<EntityWithIdClass> findById1(Long id1);
+    List<EntityWithIdClass> findById2(Long id2);
 }
 """)
 
         when:
         def findByIdMethod = repository.findPossibleMethods("findById").findFirst().get()
+        def findById1Method = repository.findPossibleMethods("findById1").findFirst().get()
+        def findById2Method = repository.findPossibleMethods("findById2").findFirst().get()
 
         then:
         getQuery(findByIdMethod) == 'SELECT entityWithIdClass_ FROM io.micronaut.data.tck.entities.EntityWithIdClass AS entityWithIdClass_ WHERE (entityWithIdClass_.id1 = :p1 AND entityWithIdClass_.id2 = :p2)'
         getParameterBindingIndexes(findByIdMethod) == ["0", "0"]
         getParameterPropertyPaths(findByIdMethod) == ["id1", "id2"] as String[]
         getParameterBindingPaths(findByIdMethod) == ["id1", "id2"] as String[]
+
+        and:
+        getParameterBindingIndexes(findById1Method) == ["0"]
+        getParameterPropertyPaths(findById1Method) == ["id1"] as String[]
+        getParameterBindingPaths(findById1Method) == [""] as String[]
+
+        getParameterBindingIndexes(findById2Method) == ["0"]
+        getParameterPropertyPaths(findById2Method) == ["id2"] as String[]
+        getParameterBindingPaths(findById2Method) == [""] as String[]
     }
 
     void "test create table"() {

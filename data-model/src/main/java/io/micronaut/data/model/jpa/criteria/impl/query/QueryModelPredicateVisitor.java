@@ -21,12 +21,14 @@ import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.jpa.criteria.IExpression;
 import io.micronaut.data.model.jpa.criteria.PersistentPropertyPath;
+import io.micronaut.data.model.jpa.criteria.impl.IdExpression;
 import io.micronaut.data.model.jpa.criteria.impl.LiteralExpression;
 import io.micronaut.data.model.jpa.criteria.impl.PredicateVisitable;
 import io.micronaut.data.model.jpa.criteria.impl.PredicateVisitor;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.AbstractPersistentPropertyPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.ConjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.DisjunctionPredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.ExpressionBinaryPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.NegatedPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyBetweenPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyBinaryPredicate;
@@ -127,21 +129,46 @@ public final class QueryModelPredicateVisitor implements PredicateVisitor {
 
     @Override
     public void visit(PersistentPropertyBinaryPredicate<?> propertyToExpressionOp) {
+        PersistentPropertyPath<?> propertyPath = propertyToExpressionOp.getPropertyPath();
+        PredicateBinaryOp op = propertyToExpressionOp.getOp();
         Expression<?> expression = propertyToExpressionOp.getExpression();
+        visitPropertyPathPredicate(propertyPath, expression, op);
+    }
+
+    private void visitPropertyPathPredicate(PersistentPropertyPath<?> propertyPath, Expression<?> expression, PredicateBinaryOp op) {
         if (expression instanceof PersistentPropertyPath) {
-            add(getPropertyToPropertyRestriction(propertyToExpressionOp.getOp(),
-                    propertyToExpressionOp.getPropertyPath(),
+            add(getPropertyToPropertyRestriction(op,
+                    propertyPath,
                     (PersistentPropertyPath<?>) expression));
         } else if (expression instanceof ParameterExpression) {
-            add(getPropertyToValueRestriction(propertyToExpressionOp.getOp(),
-                    propertyToExpressionOp.getPropertyPath(),
+            add(getPropertyToValueRestriction(op,
+                    propertyPath,
                     expression));
         } else if (expression instanceof LiteralExpression) {
-            add(getPropertyToValueRestriction(propertyToExpressionOp.getOp(),
-                    propertyToExpressionOp.getPropertyPath(),
+            add(getPropertyToValueRestriction(op,
+                    propertyPath,
                     ((LiteralExpression<?>) expression).getValue()));
         } else {
             throw new IllegalStateException("Unsupported expression: " + expression);
+        }
+    }
+
+    @Override
+    public void visit(ExpressionBinaryPredicate expressionBinaryPredicate) {
+        Expression<?> left = expressionBinaryPredicate.getLeft();
+        PredicateBinaryOp op = expressionBinaryPredicate.getOp();
+        if (left instanceof PersistentPropertyPath) {
+            visitPropertyPathPredicate((PersistentPropertyPath<?>) left,
+                    expressionBinaryPredicate.getRight(),
+                    op);
+        } else if (left instanceof IdExpression) {
+            if (op == PredicateBinaryOp.EQUALS) {
+                add(Restrictions.idEq(asValue(expressionBinaryPredicate.getRight())));
+            } else {
+                throw new IllegalStateException("Unsupported ID expression OP: " + op);
+            }
+        } else {
+            throw new IllegalStateException("Unsupported expression: " + left);
         }
     }
 
@@ -155,8 +182,7 @@ public final class QueryModelPredicateVisitor implements PredicateVisitor {
             case EQUALS:
                 PersistentProperty property = left.getProperty();
                 PersistentEntity owner = property.getOwner();
-                if (left.getAssociations().isEmpty() &&
-                        (owner.hasIdentity() && owner.getIdentity() == property || owner.hasCompositeIdentity() && owner.getCompositeIdentity()[0] == property)) {
+                if (left.getAssociations().isEmpty() && (owner.hasIdentity() && owner.getIdentity() == property)) {
                     return Restrictions.idEq(rightProperty);
                 } else if (left.getAssociations().isEmpty() && owner.getVersion() == property) {
                     return Restrictions.versionEq(rightProperty);
@@ -327,7 +353,7 @@ public final class QueryModelPredicateVisitor implements PredicateVisitor {
         return asPath(propertyPath.getAssociations(), propertyPath.getProperty());
     }
 
-    protected String asPath(List<Association> associations, PersistentProperty property) {
+    private String asPath(List<Association> associations, PersistentProperty property) {
         if (associations.isEmpty()) {
             return property.getName();
         }

@@ -18,6 +18,7 @@ package io.micronaut.data.model.jpa.criteria;
 import io.micronaut.core.annotation.Experimental;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.model.PersistentEntity;
+import io.micronaut.data.model.jpa.criteria.impl.IdExpression;
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Root;
 
@@ -43,7 +44,7 @@ public interface PersistentEntityRoot<T> extends Root<T>, PersistentEntityFrom<T
         if (persistentEntity.hasIdentity()) {
             return get(persistentEntity.getIdentity().getName());
         } else if (persistentEntity.hasCompositeIdentity()) {
-            return get(persistentEntity.getCompositeIdentity()[0].getName());
+            return new IdExpression<>(this);
         }
         throw new IllegalStateException("No identity is present");
     }
