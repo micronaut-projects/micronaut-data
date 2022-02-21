@@ -1,0 +1,55 @@
+Micronaut Data MongoDB introduces a few annotations that can be used to define custom queries and modify default options:
+
+.Micronaut Data MongoDB annotations
+[cols=2*]
+|===
+|*Annotation*
+|*Description*
+
+|ann:data.mongodb.annotation.MongoFindQuery[]
+|Allows defining a custom find method execution with values for filtering, sorting, projection and collation.
+
+|ann:data.mongodb.annotation.MongoAggregateQuery[]
+|Allows defining a custom aggregate method execution with a value for the pipeline.
+
+|ann:data.mongodb.annotation.MongoUpdateQuery[]
+|Allows defining a custom update method execution with values for filter, update and collation.
+
+|ann:data.mongodb.annotation.MongoDeleteQuery[]
+|Allows defining a custom update method execution with values for filter and collation.
+
+|ann:data.mongodb.annotation.MongoFilter[]
+|Allows defining a custom filter value for operations that support it. Can be used on annotation to create a predefined filter annotation.
+
+|ann:data.mongodb.annotation.MongoSort[]
+|Allows defining a custom sort value for operations that support it. Can be used on repository class to define a default sort or to create a predefined sort annotation.
+
+|ann:data.mongodb.annotation.MongoProjection[]
+|Allows defining a custom projection value for operations that support it. Can be used on repository class to define a default projection or to create a predefined projection annotation.
+
+|ann:data.mongodb.annotation.MongoCollation[]
+|Allows defining a custom collation value for operations that support it. Can be used on repository class to define a default collation or to create a predefined collation annotation.
+
+|ann:data.mongodb.annotation.MongoAggregateOptions[]
+|The aggregation operation options.
+
+|ann:data.mongodb.annotation.MongoFindOptions[]
+|The find operation options.
+
+|ann:data.mongodb.annotation.MongoUpdateOptions[]
+|The update operation options.
+
+|ann:data.mongodb.annotation.MongoDeleteOptions[]
+|The delete operation options.
+
+|===
+
+Custom queries for MongoDB are defined in JSON and method parameters can be references as a variable prefixed with `:`.
+
+snippet::example.BookRepository[project-base="doc-examples/mongo-example", source="main" tags="custom", indent="0"]
+
+NOTE: Only queries for the filter, pipeline and the update can reference method parameters.
+
+Some annotations support to be defined on the repository, that can be used to provide the defaults for all operations that support it:
+
+snippet::example.SaleRepository[project-base="doc-examples/mongo-example", source="main" tags="options", indent="0"]

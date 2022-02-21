@@ -29,6 +29,7 @@ import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.annotation.Where;
 import io.micronaut.data.intercept.DataInterceptor;
+import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
@@ -124,7 +125,7 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
      * @return The operation type
      */
     @NonNull
-    protected abstract MethodMatchInfo.OperationType getOperationType();
+    protected abstract DataMethod.OperationType getOperationType();
 
     /**
      * @return true of the operation is supported by implicit queries
@@ -139,6 +140,7 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
         if (supportedByImplicitQueries() && matchContext.supportsImplicitQueries() && hasNoWhereAndJoinDeclaration(matchContext)) {
             Map.Entry<ClassElement, Class<? extends DataInterceptor>> entry = resolveReturnTypeAndInterceptor(matchContext);
             methodMatchInfo = new MethodMatchInfo(
+                    getOperationType(),
                     entry.getKey(),
                     getInterceptorElement(matchContext, entry.getValue())
             );

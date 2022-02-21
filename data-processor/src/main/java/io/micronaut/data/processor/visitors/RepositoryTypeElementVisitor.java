@@ -352,6 +352,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
         List<QueryParameterBinding> finalParameterBinding = parameterBinding;
         element.annotate(DataMethod.class, annotationBuilder -> {
 
+            annotationBuilder.member(DataMethod.META_MEMBER_OPERATION_TYPE, methodInfo.getOperationType());
             annotationBuilder.member(DataMethod.META_MEMBER_ROOT_ENTITY, new AnnotationClassValue<>(entity.getName()));
 
             // include the roles

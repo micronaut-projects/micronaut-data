@@ -208,6 +208,13 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
         return joinFetchPaths;
     }
 
+    /**
+     * @return The method
+     */
+    public ExecutableMethod<?, ?> getMethod() {
+        return method;
+    }
+
     @Override
     public boolean isSingleResult() {
         return !isCount() && getJoinFetchPaths().isEmpty();

@@ -5,7 +5,6 @@ import io.micronaut.context.ApplicationContext
 import io.micronaut.data.annotation.GeneratedValue
 import io.micronaut.data.annotation.Id
 import io.micronaut.data.annotation.MappedEntity
-import io.micronaut.data.document.mongodb.MongoTestPropertyProvider
 import io.micronaut.data.mongodb.annotation.MongoRepository
 import io.micronaut.data.repository.CrudRepository
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
@@ -15,7 +14,7 @@ import spock.lang.Shared
 import spock.lang.Specification
 
 @MicronautTest
-class MongoRectiveCustomDatabaseSpec extends Specification implements MongoTestPropertyProvider {
+class MongoRectiveCustomDatabaseSpec extends Specification implements MongoSelectReactiveDriver {
     @AutoCleanup
     @Shared
     ApplicationContext applicationContext = ApplicationContext.run(getProperties())

@@ -58,11 +58,6 @@ interface BookRepository : CrudRepository<Book, ObjectId> { // <2>
     fun listOrderByTitleDesc(): List<Book>
     // end::ordering[]
 
-    // tag::explicit[]
-    @Query("SELECT * FROM book as b WHERE b.title = :t ORDER BY b.title")
-    fun listBooks(t: String): List<Book>
-    // end::explicit[]
-
     // tag::save[]
     fun persist(entity: Book): Book
     // end::save[]
@@ -96,11 +91,6 @@ interface BookRepository : CrudRepository<Book, ObjectId> { // <2>
     // tag::dto[]
     fun findOne(title: String): BookDTO
     // end::dto[]
-
-    // tag::native[]
-    @Query("select * from book b where b.title like :title limit 5")
-    fun findBooks(title: String): List<Book>
-    // end::native[]
 
 // tag::repository[]
 }

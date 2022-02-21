@@ -24,6 +24,7 @@ import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.annotation.TypeRole;
+import io.micronaut.data.document.mongo.MongoAnnotations;
 import io.micronaut.data.exceptions.MappingException;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.Embedded;
@@ -264,7 +265,6 @@ public final class MongoQueryBuilder implements QueryBuilder {
         Map<String, Object> group = new LinkedHashMap<>();
         Map<String, Object> projectionObj = new LinkedHashMap<>();
         Map<String, Object> countObj = new LinkedHashMap<>();
-        Map<String, Object> sortObj = new LinkedHashMap<>();
 
         addLookups(query.getJoinPaths(), queryState);
         List<Map<String, Object>> pipeline = queryState.rootLookups.pipeline;
@@ -274,10 +274,6 @@ public final class MongoQueryBuilder implements QueryBuilder {
             predicateObj = buildWhereClause(annotationMetadata, criteria, queryState);
         }
 
-        Sort sort = query.getSort();
-        if (sort.isSorted()) {
-            sort.getOrderBy().forEach(order -> sortObj.put(order.getProperty(), order.isAscending() ? 1 : -1));
-        }
         if (!predicateObj.isEmpty()) {
             pipeline.add(singletonMap("$match", predicateObj));
         }
@@ -290,9 +286,22 @@ public final class MongoQueryBuilder implements QueryBuilder {
         }
         if (!projectionObj.isEmpty()) {
             pipeline.add(singletonMap("$project", projectionObj));
+        } else {
+            String customProjection = annotationMetadata.stringValue(MongoAnnotations.PROJECTION).orElse(null);
+            if (customProjection != null) {
+                pipeline.add(singletonMap("$project", new RawJsonValue(customProjection)));
+            }
         }
-        if (!sortObj.isEmpty()) {
+        Sort sort = query.getSort();
+        if (sort.isSorted() && !sort.getOrderBy().isEmpty()) {
+            Map<String, Object> sortObj = new LinkedHashMap<>();
+            sort.getOrderBy().forEach(order -> sortObj.put(order.getProperty(), order.isAscending() ? 1 : -1));
             pipeline.add(singletonMap("$sort", sortObj));
+        } else {
+            String customSort = annotationMetadata.stringValue(MongoAnnotations.SORT).orElse(null);
+            if (customSort != null) {
+                pipeline.add(singletonMap("$sort", new RawJsonValue(customSort)));
+            }
         }
         if (query.getOffset() > 0) {
             pipeline.add(singletonMap("$skip", query.getOffset()));
@@ -925,6 +934,8 @@ public final class MongoQueryBuilder implements QueryBuilder {
             appendMap(sb, (Map) obj);
         } else if (obj instanceof Collection) {
             appendArray(sb, (Collection<Object>) obj);
+        } else if (obj instanceof RawJsonValue) {
+            sb.append(((RawJsonValue) obj).value);
         } else if (obj == null) {
             sb.append("null");
         } else if (obj instanceof Boolean) {
@@ -1009,6 +1020,15 @@ public final class MongoQueryBuilder implements QueryBuilder {
             }
         } else {
             consumerProperty.accept(associations, property);
+        }
+    }
+
+    private static final class RawJsonValue {
+
+        private final String value;
+
+        private RawJsonValue(String value) {
+            this.value = value;
         }
     }
 

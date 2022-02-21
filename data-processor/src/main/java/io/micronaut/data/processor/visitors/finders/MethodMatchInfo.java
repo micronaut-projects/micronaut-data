@@ -16,6 +16,7 @@
 package io.micronaut.data.processor.visitors.finders;
 
 import io.micronaut.core.annotation.Nullable;
+import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.TypedElement;
@@ -35,6 +36,7 @@ import java.util.Map;
  */
 public final class MethodMatchInfo {
 
+    private final DataMethod.OperationType operationType;
     private final TypedElement resultType;
     private final ClassElement interceptor;
 
@@ -52,9 +54,17 @@ public final class MethodMatchInfo {
      * @param resultType The result type, can be null for void etc.
      * @param interceptor The interceptor type to execute at runtime
      */
-    public MethodMatchInfo(@Nullable TypedElement resultType, @Nullable ClassElement interceptor) {
+    public MethodMatchInfo(DataMethod.OperationType operationType, @Nullable TypedElement resultType, @Nullable ClassElement interceptor) {
+        this.operationType = operationType;
         this.interceptor = interceptor;
         this.resultType = resultType;
+    }
+
+    /**
+     * @return The operation type
+     */
+    public DataMethod.OperationType getOperationType() {
+        return operationType;
     }
 
     /**
@@ -165,28 +175,6 @@ public final class MethodMatchInfo {
 
     public boolean isEncodeEntityParameters() {
         return encodeEntityParameters;
-    }
-
-    /**
-     * Describes the operation type.
-     */
-    public enum OperationType {
-        /**
-         * A query operation.
-         */
-        QUERY,
-        /**
-         * An update operation.
-         */
-        UPDATE,
-        /**
-         * A delete operation.
-         */
-        DELETE,
-        /**
-         * An insert operation.
-         */
-        INSERT
     }
 
 }

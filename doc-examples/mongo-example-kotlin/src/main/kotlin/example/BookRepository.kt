@@ -3,9 +3,11 @@
 package example
 
 import io.micronaut.context.annotation.Executable
-import io.micronaut.data.annotation.*
-import io.micronaut.data.mongodb.annotation.MongoRepository
-import io.micronaut.data.model.*
+import io.micronaut.data.annotation.Id
+import io.micronaut.data.model.Page
+import io.micronaut.data.model.Pageable
+import io.micronaut.data.model.Slice
+import io.micronaut.data.mongodb.annotation.*
 import io.micronaut.data.repository.CrudRepository
 import org.bson.types.ObjectId
 
@@ -58,11 +60,6 @@ interface BookRepository : CrudRepository<Book, ObjectId> { // <2>
     fun listOrderByTitleDesc(): List<Book>
     // end::ordering[]
 
-    // tag::explicit[]
-    @Query("SELECT * FROM book as b WHERE b.title = :t ORDER BY b.title")
-    fun listBooks(t: String): List<Book>
-    // end::explicit[]
-
     // tag::save[]
     fun persist(entity: Book): Book
     // end::save[]
@@ -97,10 +94,19 @@ interface BookRepository : CrudRepository<Book, ObjectId> { // <2>
     fun findOne(title: String): BookDTO
     // end::dto[]
 
-    // tag::native[]
-    @Query("select * from book b where b.title like :title limit 5")
-    fun findBooks(title: String): List<Book>
-    // end::native[]
+    // tag::custom[]
+    @MongoFindQuery(filter = "{title:{\$regex: :t}}", sort = "{title: 1}")
+    fun customFind(t: String): List<Book>
+
+    @MongoAggregateQuery("[{\$match: {name:{\$regex: :t}}}, {\$sort: {name: 1}}, {\$project: {name: 1}}]")
+    fun customAggregate(t: String): List<Person>
+
+    @MongoUpdateQuery(filter = "{title:{\$regex: :t}}", update = "{\$set:{name: 'tom'}}")
+    fun customUpdate(t: String): List<Book>
+
+    @MongoDeleteQuery(filter = "{title:{\$regex: :t}}", collation = "{locale:'en_US', numericOrdering:true}")
+    fun customDelete(t: String)
+    // end::custom[]
 
 // tag::repository[]
 }

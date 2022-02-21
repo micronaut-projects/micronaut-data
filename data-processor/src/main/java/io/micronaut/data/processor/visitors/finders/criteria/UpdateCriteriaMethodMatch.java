@@ -18,6 +18,7 @@ package io.micronaut.data.processor.visitors.finders.criteria;
 import io.micronaut.core.annotation.Experimental;
 import io.micronaut.data.annotation.AutoPopulated;
 import io.micronaut.data.intercept.DataInterceptor;
+import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityCriteriaUpdate;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaUpdate;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
@@ -132,6 +133,7 @@ public class UpdateCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
         QueryResult queryResult = queryBuilder.buildUpdate(annotationMetadataHierarchy, queryModel, propertiesToUpdate);
 
         return new MethodMatchInfo(
+                DataMethod.OperationType.UPDATE,
                 resultType,
                 getInterceptorElement(matchContext, interceptorType)
         )
@@ -140,7 +142,7 @@ public class UpdateCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
     }
 
     @Override
-    protected MethodMatchInfo.OperationType getOperationType() {
-        return MethodMatchInfo.OperationType.UPDATE;
+    protected DataMethod.OperationType getOperationType() {
+        return DataMethod.OperationType.UPDATE;
     }
 }

@@ -28,6 +28,7 @@ import io.micronaut.data.model.runtime.QueryParameterBinding;
 import io.micronaut.data.model.runtime.StoredQuery;
 import io.micronaut.data.operations.HintsCapableRepository;
 import io.micronaut.data.runtime.query.internal.DefaultStoredQuery;
+import io.micronaut.inject.ExecutableMethod;
 
 import java.util.List;
 
@@ -75,9 +76,10 @@ public abstract class DefaultStoredQueryResolver implements StoredQueryResolver 
         );
     }
 
-
     @Override
-    public <E, QR> StoredQuery<E, QR> createStoredQuery(String name,
+    public <E, QR> StoredQuery<E, QR> createStoredQuery(ExecutableMethod<?, ?> executableMethod,
+                                                        DataMethod.OperationType operationType,
+                                                        String name,
                                                         AnnotationMetadata annotationMetadata,
                                                         Class<Object> rootEntity,
                                                         String query,
@@ -156,7 +158,9 @@ public abstract class DefaultStoredQueryResolver implements StoredQueryResolver 
     }
 
     @Override
-    public StoredQuery<Object, Long> createCountStoredQuery(String name,
+    public StoredQuery<Object, Long> createCountStoredQuery(ExecutableMethod<?, ?> executableMethod,
+                                                            DataMethod.OperationType operationType,
+                                                            String name,
                                                             AnnotationMetadata annotationMetadata,
                                                             Class<Object> rootEntity,
                                                             String query,

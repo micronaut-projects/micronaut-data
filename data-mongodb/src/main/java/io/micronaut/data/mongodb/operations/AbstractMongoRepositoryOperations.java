@@ -15,38 +15,30 @@
  */
 package io.micronaut.data.mongodb.operations;
 
-import com.mongodb.client.model.Sorts;
+import com.mongodb.client.model.Collation;
 import io.micronaut.aop.MethodInvocationContext;
-import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.context.BeanContext;
+import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.Nullable;
-import io.micronaut.core.beans.BeanIntrospection;
-import io.micronaut.core.beans.BeanProperty;
-import io.micronaut.core.beans.exceptions.IntrospectionException;
 import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.type.Argument;
-import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.Repository;
-import io.micronaut.data.document.model.query.builder.MongoQueryBuilder;
-import io.micronaut.data.model.DataType;
+import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.Pageable;
-import io.micronaut.data.model.PersistentPropertyPath;
-import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
 import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.model.runtime.QueryParameterBinding;
-import io.micronaut.data.model.runtime.RuntimeAssociation;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.model.runtime.StoredQuery;
-import io.micronaut.data.model.runtime.convert.AttributeConverter;
 import io.micronaut.data.mongodb.annotation.MongoRepository;
-import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.mongodb.operations.options.MongoAggregationOptions;
+import io.micronaut.data.mongodb.operations.options.MongoFindOptions;
 import io.micronaut.data.operations.HintsCapableRepository;
+import io.micronaut.data.repository.GenericRepository;
 import io.micronaut.data.runtime.config.DataSettings;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.date.DateTimeProvider;
@@ -55,22 +47,18 @@ import io.micronaut.data.runtime.query.DefaultPreparedQueryResolver;
 import io.micronaut.data.runtime.query.DefaultStoredQueryResolver;
 import io.micronaut.data.runtime.query.PreparedQueryResolver;
 import io.micronaut.data.runtime.query.StoredQueryResolver;
+import io.micronaut.data.runtime.query.internal.DefaultStoredQuery;
 import io.micronaut.http.codec.MediaTypeCodec;
 import io.micronaut.inject.BeanDefinition;
+import io.micronaut.inject.ExecutableMethod;
 import io.micronaut.inject.qualifiers.Qualifiers;
-import org.bson.BsonArray;
 import org.bson.BsonDocument;
-import org.bson.BsonInt32;
 import org.bson.BsonNull;
-import org.bson.BsonObjectId;
 import org.bson.BsonValue;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
-import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 
-import java.lang.reflect.Array;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -81,13 +69,14 @@ import java.util.stream.Collectors;
 /**
  * Shared implementation of Mongo sync and reactive repositories.
  *
+ * @param <Dtb> The database type
  * @param <Cnt> The connection
  * @param <PS>  The prepared statement
  * @author Denis Stepanov
  * @since 3.3
  */
 @Internal
-abstract class AbstractMongoRepositoryOperations<Cnt, PS> extends AbstractRepositoryOperations<Cnt, PS> implements HintsCapableRepository, PreparedQueryResolver, StoredQueryResolver {
+abstract class AbstractMongoRepositoryOperations<Dtb, Cnt, PS> extends AbstractRepositoryOperations<Cnt, PS> implements HintsCapableRepository, PreparedQueryResolver, StoredQueryResolver {
 
     protected static final Logger QUERY_LOG = DataSettings.QUERY_LOG;
     protected static final BsonDocument EMPTY = new BsonDocument();
@@ -141,32 +130,68 @@ abstract class AbstractMongoRepositoryOperations<Cnt, PS> extends AbstractReposi
         this.repoDatabaseConfig = Collections.unmodifiableMap(repoDatabaseConfig);
     }
 
+    protected abstract Dtb getDatabase(RuntimePersistentEntity<?> persistentEntity, Class<?> repository);
+
+    protected abstract CodecRegistry getCodecRegistry(Dtb database);
+
+    protected <E, R> MongoStoredQuery<E, R, Dtb> getMongoStoredQuery(StoredQuery<E, R> storedQuery) {
+        if (storedQuery instanceof MongoStoredQuery) {
+            return (MongoStoredQuery<E, R, Dtb>) storedQuery;
+        }
+        throw new IllegalStateException("Expected for stored query to be of type: MongoStoredQuery");
+    }
+
+    protected <E, R> MongoPreparedQuery<E, R, Dtb> getMongoPreparedQuery(PreparedQuery<E, R> preparedQuery) {
+        if (preparedQuery instanceof MongoPreparedQuery) {
+            return (MongoPreparedQuery<E, R, Dtb>) preparedQuery;
+        }
+        throw new IllegalStateException("Expected for prepared query to be of type: MongoPreparedQuery");
+    }
+
     @Override
     public <E, R> PreparedQuery<E, R> resolveQuery(MethodInvocationContext<?, ?> context,
                                                    StoredQuery<E, R> storedQuery,
                                                    Pageable pageable) {
-        return new DefaultMongoPreparedQuery<>(defaultPreparedQueryResolver.resolveQuery(context, storedQuery, pageable));
+        PreparedQuery<E, R> preparedQuery = defaultPreparedQueryResolver.resolveQuery(context, storedQuery, pageable);
+        return new DefaultMongoPreparedQuery<>(preparedQuery);
     }
 
     @Override
     public <E, R> PreparedQuery<E, R> resolveCountQuery(MethodInvocationContext<?, ?> context,
                                                         StoredQuery<E, R> storedQuery,
                                                         Pageable pageable) {
-        return new DefaultMongoPreparedQuery<>(defaultPreparedQueryResolver.resolveCountQuery(context, storedQuery, pageable));
+
+        PreparedQuery<E, R> preparedQuery = defaultPreparedQueryResolver.resolveCountQuery(context, storedQuery, pageable);
+        return new DefaultMongoPreparedQuery<>(preparedQuery);
     }
 
     @Override
     public <E, R> StoredQuery<E, R> resolveQuery(MethodInvocationContext<?, ?> context, Class<E> entityClass, Class<R> resultType) {
-        return new DefaultMongoStoredQuery<>(defaultStoredQueryResolver.resolveQuery(context, entityClass, resultType));
+        StoredQuery<E, R> storedQuery = defaultStoredQueryResolver.resolveQuery(context, entityClass, resultType);
+        RuntimePersistentEntity<E> persistentEntity = runtimeEntityRegistry.getEntity(storedQuery.getRootEntity());
+        Class<?> repositoryType = ((DefaultStoredQuery) storedQuery).getMethod().getDeclaringType();
+        Dtb database = getDatabase(persistentEntity, repositoryType);
+        CodecRegistry codecRegistry = getCodecRegistry(database);
+        return new DefaultMongoStoredQuery<>(storedQuery, codecRegistry, attributeConverterRegistry,
+                runtimeEntityRegistry, conversionService, persistentEntity, database);
     }
 
     @Override
     public <E, R> StoredQuery<E, R> resolveCountQuery(MethodInvocationContext<?, ?> context, Class<E> entityClass, Class<R> resultType) {
-        return new DefaultMongoStoredQuery<>(defaultStoredQueryResolver.resolveCountQuery(context, entityClass, resultType));
+        StoredQuery<E, R> storedQuery = defaultStoredQueryResolver.resolveCountQuery(context, entityClass, resultType);
+        Class<?> repositoryType = ((DefaultStoredQuery) storedQuery).getMethod().getDeclaringType();
+        RuntimePersistentEntity<E> persistentEntity = runtimeEntityRegistry.getEntity(storedQuery.getRootEntity());
+        Dtb database = getDatabase(persistentEntity, repositoryType);
+        CodecRegistry codecRegistry = getCodecRegistry(database);
+        return new DefaultMongoStoredQuery<>(storedQuery, codecRegistry, attributeConverterRegistry,
+                runtimeEntityRegistry, conversionService, persistentEntity, database);
     }
 
     @Override
-    public <E, QR> StoredQuery<E, QR> createStoredQuery(String name, AnnotationMetadata annotationMetadata,
+    public <E, QR> StoredQuery<E, QR> createStoredQuery(ExecutableMethod<?, ?> executableMethod,
+                                                        DataMethod.OperationType operationType,
+                                                        String name,
+                                                        AnnotationMetadata annotationMetadata,
                                                         Class<Object> rootEntity,
                                                         String query,
                                                         String update,
@@ -174,72 +199,40 @@ abstract class AbstractMongoRepositoryOperations<Cnt, PS> extends AbstractReposi
                                                         List<QueryParameterBinding> queryParameters,
                                                         boolean hasPageable,
                                                         boolean isSingleResult) {
-        StoredQuery<E, QR> storedQuery = defaultStoredQueryResolver.createStoredQuery(name, annotationMetadata,
+        StoredQuery<E, QR> storedQuery = defaultStoredQueryResolver.createStoredQuery(executableMethod, operationType, name, annotationMetadata,
                 rootEntity, query, update, queryParts, queryParameters, hasPageable, isSingleResult);
-        return new DefaultMongoStoredQuery<>(storedQuery, update);
+        Class<?> repositoryType = executableMethod.getDeclaringType();
+        RuntimePersistentEntity<E> persistentEntity = runtimeEntityRegistry.getEntity(storedQuery.getRootEntity());
+        Dtb database = getDatabase(persistentEntity, repositoryType);
+        CodecRegistry codecRegistry = getCodecRegistry(database);
+        return new DefaultMongoStoredQuery<>(storedQuery, codecRegistry, attributeConverterRegistry, runtimeEntityRegistry, conversionService, persistentEntity, database, operationType, update);
     }
 
     @Override
-    public StoredQuery<Object, Long> createCountStoredQuery(String name,
+    public StoredQuery<Object, Long> createCountStoredQuery(ExecutableMethod<?, ?> executableMethod,
+                                                            DataMethod.OperationType operationType,
+                                                            String name,
                                                             AnnotationMetadata annotationMetadata,
                                                             Class<Object> rootEntity,
                                                             String query,
                                                             String[] queryParts,
                                                             List<QueryParameterBinding> queryParameters) {
-        StoredQuery<Object, Long> storedQuery = defaultStoredQueryResolver.createCountStoredQuery(name, annotationMetadata,
+        StoredQuery<Object, Long> storedQuery = defaultStoredQueryResolver.createCountStoredQuery(executableMethod, operationType, name, annotationMetadata,
                 rootEntity, query, queryParts, queryParameters);
-        return new DefaultMongoStoredQuery<>(storedQuery);
-    }
-
-    protected FetchOptions getFetchOptions(CodecRegistry codecRegistry, PreparedQuery<?, ?> preparedQuery, RuntimePersistentEntity<?> persistentEntity) {
-        MongoPreparedQuery<?, ?> mongoPreparedQuery = (MongoPreparedQuery<?, ?>) preparedQuery;
-        BsonArray pipeline = mongoPreparedQuery.getPipeline();
-        if (pipeline != null) {
-            pipeline = (BsonArray) replaceQueryParameters(codecRegistry, preparedQuery, persistentEntity, pipeline);
-            List<BsonDocument> preparedPipeline = pipeline.stream().map(BsonValue::asDocument).collect(Collectors.toList());
-            return new FetchOptions(preparedPipeline, null);
-        }
-        BsonDocument filter = mongoPreparedQuery.getFilter();
-        if (filter != null) {
-            BsonDocument preparedFilter = getQuery(codecRegistry, preparedQuery, persistentEntity, filter);
-            return new FetchOptions(null, preparedFilter);
-        }
-        return new FetchOptions(null, EMPTY);
-    }
-
-    protected UpdateOptions getUpdateOptions(CodecRegistry codecRegistry, PreparedQuery<?, ?> preparedQuery, RuntimePersistentEntity<?> persistentEntity) {
-        MongoPreparedQuery<?, ?> mongoPreparedQuery = (MongoPreparedQuery<?, ?>) preparedQuery;
-        BsonDocument update = mongoPreparedQuery.getUpdate();
-        if (update == null) {
-            throw new IllegalArgumentException("Update query is not provided!");
-        }
-        BsonDocument preparedUpdate = getQuery(codecRegistry, preparedQuery, persistentEntity, update);
-        BsonDocument preparedFilter;
-        BsonDocument filter = mongoPreparedQuery.getFilter();
-        if (filter != null) {
-            preparedFilter = getQuery(codecRegistry, preparedQuery, persistentEntity, filter);
-        } else {
-            preparedFilter = null;
-        }
-        return new UpdateOptions(preparedUpdate, preparedFilter);
-    }
-
-    protected DeleteOptions getDeleteOptions(CodecRegistry codecRegistry, PreparedQuery<?, ?> preparedQuery, RuntimePersistentEntity<?> persistentEntity) {
-        MongoPreparedQuery<?, ?> mongoPreparedQuery = (MongoPreparedQuery<?, ?>) preparedQuery;
-        BsonDocument preparedFilter;
-        BsonDocument filter = mongoPreparedQuery.getFilter();
-        if (filter != null) {
-            preparedFilter = getQuery(codecRegistry, preparedQuery, persistentEntity, filter);
-        } else {
-            preparedFilter = null;
-        }
-        return new DeleteOptions(preparedFilter);
+        Class<?> repositoryType = executableMethod.getDeclaringType();
+        RuntimePersistentEntity<Object> persistentEntity = runtimeEntityRegistry.getEntity(storedQuery.getRootEntity());
+        Dtb database = getDatabase(persistentEntity, repositoryType);
+        CodecRegistry codecRegistry = getCodecRegistry(database);
+        return new DefaultMongoStoredQuery<>(storedQuery, codecRegistry, attributeConverterRegistry, runtimeEntityRegistry, conversionService, persistentEntity, database, operationType, null);
     }
 
     protected <R> R convertResult(CodecRegistry codecRegistry,
                                   Class<R> resultType,
                                   BsonDocument result,
                                   boolean isDtoProjection) {
+        if (resultType == BsonDocument.class) {
+            return (R) result;
+        }
         BsonValue value;
         if (result == null) {
             value = BsonNull.VALUE;
@@ -259,232 +252,8 @@ abstract class AbstractMongoRepositoryOperations<Cnt, PS> extends AbstractReposi
         return conversionService.convertRequired(MongoUtils.toValue(value), resultType);
     }
 
-    protected int applyPageable(Pageable pageable, List<BsonDocument> pipeline) {
-        int limit = 0;
-        if (pageable != Pageable.UNPAGED) {
-            int skip = (int) pageable.getOffset();
-            limit = pageable.getSize();
-            Sort pageableSort = pageable.getSort();
-            if (pageableSort.isSorted()) {
-                Bson sort = pageableSort.getOrderBy().stream().map(order -> order.isAscending() ? Sorts.ascending(order.getProperty()) : Sorts.descending(order.getProperty())).collect(Collectors.collectingAndThen(Collectors.toList(), Sorts::orderBy));
-                BsonDocument sortStage = new BsonDocument().append("$sort", sort.toBsonDocument());
-                addStageToPipelineBefore(pipeline, sortStage, "$limit", "$skip");
-            }
-            if (skip > 0) {
-                pipeline.add(new BsonDocument().append("$skip", new BsonInt32(skip)));
-            }
-            if (limit > 0) {
-                pipeline.add(new BsonDocument().append("$limit", new BsonInt32(limit)));
-            }
-        }
-        return limit;
-    }
-
     protected <T, R> boolean isCountQuery(PreparedQuery<T, R> preparedQuery) {
         return preparedQuery.isCount() || preparedQuery.getQuery().contains("$count");
-    }
-
-    private void addStageToPipelineBefore(List<BsonDocument> pipeline, BsonDocument stageToAdd, String... beforeStages) {
-        int lastFoundIndex = -1;
-        int index = 0;
-        for (BsonDocument stage : pipeline) {
-            for (String beforeStageName : beforeStages) {
-                if (stage.containsKey(beforeStageName)) {
-                    lastFoundIndex = index;
-                    break;
-                }
-            }
-            index++;
-        }
-        if (lastFoundIndex > -1) {
-            pipeline.add(lastFoundIndex, stageToAdd);
-        } else {
-            pipeline.add(stageToAdd);
-        }
-    }
-
-    private <T> BsonDocument getQuery(CodecRegistry codecRegistry, PreparedQuery<?, ?> preparedQuery, RuntimePersistentEntity<T> persistentEntity, BsonDocument bsonDocument) {
-        if (bsonDocument == null) {
-            return EMPTY;
-        }
-        return (BsonDocument) replaceQueryParameters(codecRegistry, preparedQuery, persistentEntity, bsonDocument);
-    }
-
-    private <T> BsonValue replaceQueryParameters(CodecRegistry codecRegistry, PreparedQuery<?, ?> preparedQuery, RuntimePersistentEntity<T> persistentEntity, BsonValue value) {
-        if (value instanceof BsonDocument) {
-            BsonDocument bsonDocument = (BsonDocument) value;
-            BsonInt32 queryParameterIndex = bsonDocument.getInt32(MongoQueryBuilder.QUERY_PARAMETER_PLACEHOLDER, null);
-            if (queryParameterIndex != null) {
-                int index = queryParameterIndex.getValue();
-                return getValue(index, preparedQuery.getQueryBindings().get(index), preparedQuery, persistentEntity, codecRegistry);
-            }
-
-            for (Map.Entry<String, BsonValue> entry : bsonDocument.entrySet()) {
-                BsonValue bsonValue = entry.getValue();
-                BsonValue newValue = replaceQueryParameters(codecRegistry, preparedQuery, persistentEntity, bsonValue);
-                if (bsonValue != newValue) {
-                    entry.setValue(newValue);
-                }
-            }
-            return bsonDocument;
-        } else if (value instanceof BsonArray) {
-            BsonArray bsonArray = (BsonArray) value;
-            for (int i = 0; i < bsonArray.size(); i++) {
-                BsonValue bsonValue = bsonArray.get(i);
-                BsonValue newValue = replaceQueryParameters(codecRegistry, preparedQuery, persistentEntity, bsonValue);
-                if (bsonValue != newValue) {
-                    if (newValue.isNull()) {
-                        bsonArray.remove(i);
-                        i -= 1;
-                    } else if (newValue.isArray()) {
-                        bsonArray.remove(i);
-                        List<BsonValue> values = newValue.asArray().getValues();
-                        bsonArray.addAll(i, values);
-                        i += values.size() - 1;
-                    } else {
-                        bsonArray.set(i, newValue);
-                    }
-                }
-            }
-        }
-        return value;
-    }
-
-    private <T> BsonValue getValue(int index,
-                                   QueryParameterBinding queryParameterBinding,
-                                   PreparedQuery<?, ?> preparedQuery,
-                                   RuntimePersistentEntity<T> persistentEntity,
-                                   CodecRegistry codecRegistry) {
-        Class<?> parameterConverter = queryParameterBinding.getParameterConverterClass();
-        Object value;
-        if (queryParameterBinding.getParameterIndex() != -1) {
-            value = resolveParameterValue(queryParameterBinding, preparedQuery.getParameterArray());
-        } else if (queryParameterBinding.isAutoPopulated()) {
-            PersistentPropertyPath pp = getRequiredPropertyPath(queryParameterBinding, persistentEntity);
-            RuntimePersistentProperty<?> persistentProperty = (RuntimePersistentProperty) pp.getProperty();
-            Object previousValue = null;
-            QueryParameterBinding previousPopulatedValueParameter = queryParameterBinding.getPreviousPopulatedValueParameter();
-            if (previousPopulatedValueParameter != null) {
-                if (previousPopulatedValueParameter.getParameterIndex() == -1) {
-                    throw new IllegalStateException("Previous value parameter cannot be bind!");
-                }
-                previousValue = resolveParameterValue(previousPopulatedValueParameter, preparedQuery.getParameterArray());
-            }
-            value = runtimeEntityRegistry.autoPopulateRuntimeProperty(persistentProperty, previousValue);
-            value = convert(value, persistentProperty);
-            parameterConverter = null;
-        } else {
-            throw new IllegalStateException("Invalid query [" + "]. Unable to establish parameter value for parameter at position: " + (index + 1));
-        }
-
-        DataType dataType = queryParameterBinding.getDataType();
-        List<Object> values = expandValue(value, dataType);
-        if (values != null && values.isEmpty()) {
-            // Empty collections / array should always set at least one value
-            value = null;
-            values = null;
-        }
-        if (values == null) {
-            if (parameterConverter != null) {
-                int parameterIndex = queryParameterBinding.getParameterIndex();
-                Argument<?> argument = parameterIndex > -1 ? preparedQuery.getArguments()[parameterIndex] : null;
-                value = convert(parameterConverter, value, argument);
-            }
-            if (value instanceof String) {
-                PersistentPropertyPath pp = getRequiredPropertyPath(queryParameterBinding, persistentEntity);
-                RuntimePersistentProperty<?> persistentProperty = (RuntimePersistentProperty) pp.getProperty();
-                if (persistentProperty instanceof RuntimeAssociation) {
-                    RuntimeAssociation runtimeAssociation = (RuntimeAssociation) persistentProperty;
-                    RuntimePersistentProperty identity = runtimeAssociation.getAssociatedEntity().getIdentity();
-                    if (identity != null && identity.getType() == String.class && identity.isGenerated()) {
-                        return new BsonObjectId(new ObjectId((String) value));
-                    }
-                }
-                if (persistentProperty.getOwner().getIdentity() == persistentProperty && persistentProperty.getType() == String.class && persistentProperty.isGenerated()) {
-                    return new BsonObjectId(new ObjectId((String) value));
-                }
-            }
-            return MongoUtils.toBsonValue(conversionService, value, codecRegistry);
-        } else {
-            Class<?> finalParameterConverter = parameterConverter;
-            return new BsonArray(values.stream().map(val -> {
-                if (finalParameterConverter != null) {
-                    int parameterIndex = queryParameterBinding.getParameterIndex();
-                    Argument<?> argument = parameterIndex > -1 ? preparedQuery.getArguments()[parameterIndex] : null;
-                    val = convert(finalParameterConverter, val, argument);
-                }
-                return MongoUtils.toBsonValue(conversionService, val, codecRegistry);
-            }).collect(Collectors.toList()));
-        }
-    }
-
-    private Object convert(Class<?> converterClass, Object value, @Nullable Argument<?> argument) {
-        if (converterClass == null) {
-            return value;
-        }
-        AttributeConverter<Object, Object> converter = attributeConverterRegistry.getConverter(converterClass);
-        ConversionContext conversionContext = createTypeConversionContext(null, null, argument);
-        return converter.convertToPersistedValue(value, conversionContext);
-    }
-
-    private Object convert(Object value, RuntimePersistentProperty<?> property) {
-        AttributeConverter<Object, Object> converter = property.getConverter();
-        if (converter != null) {
-            return converter.convertToPersistedValue(value, createTypeConversionContext(null, property, property.getArgument()));
-        }
-        return value;
-    }
-
-    private <T> PersistentPropertyPath getRequiredPropertyPath(QueryParameterBinding queryParameterBinding, RuntimePersistentEntity<T> persistentEntity) {
-        String[] propertyPath = queryParameterBinding.getRequiredPropertyPath();
-        PersistentPropertyPath pp = persistentEntity.getPropertyPath(propertyPath);
-        if (pp == null) {
-            throw new IllegalStateException("Cannot find auto populated property: " + String.join(".", propertyPath));
-        }
-        return pp;
-    }
-
-    private List<Object> expandValue(Object value, DataType dataType) {
-        // Special case for byte array, we want to support a list of byte[] convertible values
-        if (value == null || dataType != null && dataType.isArray() && dataType != DataType.BYTE_ARRAY || value instanceof byte[]) {
-            // not expanded
-            return null;
-        } else if (value instanceof Iterable) {
-            return (List<Object>) CollectionUtils.iterableToList((Iterable<?>) value);
-        } else if (value.getClass().isArray()) {
-            int len = Array.getLength(value);
-            if (len == 0) {
-                return Collections.emptyList();
-            } else {
-                List<Object> list = new ArrayList<>(len);
-                for (int j = 0; j < len; j++) {
-                    Object o = Array.get(value, j);
-                    list.add(o);
-                }
-                return list;
-            }
-        } else {
-            // not expanded
-            return null;
-        }
-    }
-
-    private Object resolveParameterValue(QueryParameterBinding queryParameterBinding, Object[] parameterArray) {
-        Object value;
-        value = parameterArray[queryParameterBinding.getParameterIndex()];
-        String[] parameterBindingPath = queryParameterBinding.getParameterBindingPath();
-        if (parameterBindingPath != null) {
-            for (String prop : parameterBindingPath) {
-                if (value == null) {
-                    return null;
-                }
-                Object finalValue = value;
-                BeanProperty beanProperty = BeanIntrospection.getIntrospection(value.getClass())
-                        .getProperty(prop).orElseThrow(() -> new IntrospectionException("Cannot find a property: '" + prop + "' on bean: " + finalValue));
-                value = beanProperty.get(value);
-            }
-        }
-        return value;
     }
 
     protected BsonDocument association(CodecRegistry codecRegistry,
@@ -504,35 +273,41 @@ abstract class AbstractMongoRepositoryOperations<Cnt, PS> extends AbstractReposi
         return ConversionContext.DEFAULT;
     }
 
-    protected static final class FetchOptions {
-
-        final List<BsonDocument> pipeline;
-        final BsonDocument filter;
-
-        public FetchOptions(@Nullable List<BsonDocument> pipeline, @Nullable BsonDocument filter) {
-            this.pipeline = pipeline;
-            this.filter = filter;
+    protected void logFind(MongoFind find) {
+        MongoFindOptions options = find.getOptions();
+        StringBuilder sb = new StringBuilder();
+        Bson filter = options.getFilter();
+        if (filter != null) {
+            sb.append(" filter: ").append(filter.toBsonDocument().toJson());
+        }
+        Bson sort = options.getSort();
+        if (sort != null) {
+            sb.append(" sort: ").append(sort.toBsonDocument().toJson());
+        }
+        Bson projection = options.getProjection();
+        if (projection != null) {
+            sb.append(" projection: ").append(projection.toBsonDocument().toJson());
+        }
+        Collation collation = options.getCollation();
+        if (collation != null) {
+            sb.append(" collation: ").append(collation);
+        }
+        if (sb.length() == 0) {
+            QUERY_LOG.debug("Executing exists Mongo 'find'");
+        } else {
+            QUERY_LOG.debug("Executing exists Mongo 'find' with" + sb);
         }
     }
 
-    protected static final class UpdateOptions {
-
-        final BsonDocument update;
-        final BsonDocument filter;
-
-        public UpdateOptions(@Nullable BsonDocument update, @Nullable BsonDocument filter) {
-            this.update = update;
-            this.filter = filter;
+    protected void logAggregate(MongoAggregation aggregation) {
+        MongoAggregationOptions options = aggregation.getOptions();
+        StringBuilder sb = new StringBuilder();
+        sb.append(" pipeline: ").append(aggregation.getPipeline().stream().map(e -> e.toBsonDocument().toJson()).collect(Collectors.toList()));
+        Collation collation = options.getCollation();
+        if (collation != null) {
+            sb.append(" collation: ").append(collation);
         }
-    }
-
-    protected static final class DeleteOptions {
-
-        final BsonDocument filter;
-
-        public DeleteOptions(@Nullable BsonDocument filter) {
-            this.filter = filter == null ? EMPTY : filter;
-        }
+        QUERY_LOG.debug("Executing exists Mongo 'aggregate' with" + sb);
     }
 
 }

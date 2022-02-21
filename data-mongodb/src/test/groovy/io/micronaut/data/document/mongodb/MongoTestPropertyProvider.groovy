@@ -19,6 +19,7 @@ trait MongoTestPropertyProvider implements TestPropertyProvider {
         def mongo = TestContainerHolder.getContainerOrCreate()
         mongo.start()
         return [
+                "micronaut.data.mongodb.driver-type": "sync",
                 'micronaut.data.mongodb.create-collections': 'true',
                 'mongodb.uri': mongo.replicaSetUrl,
                 'mongodb.uuid-representation': UuidRepresentation.STANDARD.name()

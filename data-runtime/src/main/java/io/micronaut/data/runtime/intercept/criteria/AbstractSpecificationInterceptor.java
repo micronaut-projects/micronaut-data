@@ -23,6 +23,7 @@ import io.micronaut.core.reflect.ClassUtils;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.annotation.RepositoryConfiguration;
 import io.micronaut.data.intercept.RepositoryMethodKey;
+import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
@@ -184,13 +185,32 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
 
         StoredQuery<E, QR> storedQuery;
         if (type == Type.COUNT) {
-            storedQuery = (StoredQuery<E, QR>) storedQueryResolver.createCountStoredQuery(context.getName(), context.getAnnotationMetadata(),
+            storedQuery = (StoredQuery<E, QR>) storedQueryResolver.createCountStoredQuery(context.getExecutableMethod(), DataMethod.OperationType.COUNT, context.getName(), context.getAnnotationMetadata(),
                     rootEntity, query, queryParts, queryParameters);
         } else if (type == Type.FIND_ALL) {
-            storedQuery = storedQueryResolver.createStoredQuery(context.getName(), context.getAnnotationMetadata(), rootEntity,
+            storedQuery = storedQueryResolver.createStoredQuery(context.getExecutableMethod(), DataMethod.OperationType.QUERY, context.getName(), context.getAnnotationMetadata(), rootEntity,
                     query, null, queryParts, queryParameters, !pageable.isUnpaged(), false);
         } else {
-            storedQuery = storedQueryResolver.createStoredQuery(context.getName(), context.getAnnotationMetadata(), rootEntity,
+            DataMethod.OperationType operationType;
+            switch (type) {
+                case COUNT:
+                    operationType = DataMethod.OperationType.COUNT;
+                    break;
+                case DELETE_ALL:
+                    operationType = DataMethod.OperationType.DELETE;
+                    break;
+                case UPDATE_ALL:
+                    operationType = DataMethod.OperationType.UPDATE;
+                    break;
+                case FIND_ALL:
+                case FIND_ONE:
+                case FIND_PAGE:
+                    operationType = DataMethod.OperationType.QUERY;
+                    break;
+                default:
+                    throw new IllegalStateException("Unknown value: " + type);
+            }
+            storedQuery = storedQueryResolver.createStoredQuery(context.getExecutableMethod(), operationType, context.getName(), context.getAnnotationMetadata(), rootEntity,
                     query, update, queryParts, queryParameters, false, true);
         }
         return preparedQueryResolver.resolveQuery(context, storedQuery, pageable);

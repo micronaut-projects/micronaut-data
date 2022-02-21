@@ -33,14 +33,6 @@ interface ProductRepository : CrudRepository<Product, ObjectId> {
     fun countDistinctByManufacturerName(name: String?): Mono<Long>
     // end::reactive[]
 
-    // tag::native[]
-    @Query("""SELECT *, m_.name as m_name, m_.id as m_id 
-                    FROM product p 
-                    INNER JOIN manufacturer m_ ON p.manufacturer_id = m_.id 
-                    WHERE p.name like :name limit 5""")
-    @Join(value = "manufacturer", alias = "m_")
-    fun searchProducts(name: String): List<Product>
-    // end::native[]
 // tag::join[]
 // tag::async[]
 }

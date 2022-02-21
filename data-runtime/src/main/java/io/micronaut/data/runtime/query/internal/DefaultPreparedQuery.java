@@ -74,6 +74,13 @@ public final class DefaultPreparedQuery<E, RT> extends DefaultStoredDataOperatio
         this.conversionService = conversionService;
     }
 
+    /**
+     * @return The context
+     */
+    public MethodInvocationContext<?, ?> getContext() {
+        return context;
+    }
+
     @Override
     public Class<E> getRootEntity() {
         return storedQuery.getRootEntity();

@@ -50,7 +50,6 @@ class MappedCodec<T> implements Codec<T> {
     private final Deserializer.DecoderContext decoderContext;
     private final Serializer.EncoderContext encoderContext;
 
-
     /**
      * Default constructor.
      *

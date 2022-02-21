@@ -40,6 +40,7 @@ import io.micronaut.data.intercept.SaveOneInterceptor;
 import io.micronaut.data.intercept.UpdateAllEntitiesInterceptor;
 import io.micronaut.data.intercept.UpdateEntityInterceptor;
 import io.micronaut.data.intercept.UpdateInterceptor;
+import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.intercept.async.CountAsyncInterceptor;
 import io.micronaut.data.intercept.async.DeleteAllAsyncInterceptor;
 import io.micronaut.data.intercept.async.DeleteOneAsyncInterceptor;
@@ -94,7 +95,7 @@ public interface FindersUtils {
 
     static Map.Entry<ClassElement, Class<? extends DataInterceptor>> resolveInterceptorTypeByOperationType(boolean hasEntityParameter,
                                                                                                            boolean hasMultipleEntityParameter,
-                                                                                                           MethodMatchInfo.OperationType operationType,
+                                                                                                           DataMethod.OperationType operationType,
                                                                                                            MethodMatchContext matchContext) {
         ClassElement returnType = matchContext.getReturnType();
         switch (operationType) {
@@ -130,6 +131,8 @@ public interface FindersUtils {
                 }
                 return saveEntry;
             case QUERY:
+            case COUNT:
+            case EXISTS:
                 return resolveFindInterceptor(matchContext, returnType);
             default:
                 throw new IllegalStateException("Cannot pick interceptor for an operation type: " + operationType + " and a return type: " + returnType);

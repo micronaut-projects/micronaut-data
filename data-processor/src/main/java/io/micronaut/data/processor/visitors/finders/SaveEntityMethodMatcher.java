@@ -18,6 +18,7 @@ package io.micronaut.data.processor.visitors.finders;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.intercept.DataInterceptor;
+import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.processor.visitors.AnnotationMetadataHierarchy;
 import io.micronaut.data.processor.visitors.MatchContext;
 import io.micronaut.data.processor.visitors.MatchFailedException;
@@ -63,9 +64,11 @@ public class SaveEntityMethodMatcher extends AbstractPrefixPatternMethodMatcher 
                 Map.Entry<ClassElement, Class<? extends DataInterceptor>> entry = FindersUtils.resolveInterceptorTypeByOperationType(
                         entityParameter != null,
                         entitiesParameter != null,
-                        MethodMatchInfo.OperationType.INSERT, mc
+                        DataMethod.OperationType.INSERT, mc
                 );
-                MethodMatchInfo methodMatchInfo = new MethodMatchInfo(entry.getKey(),
+                MethodMatchInfo methodMatchInfo = new MethodMatchInfo(
+                        DataMethod.OperationType.INSERT,
+                        entry.getKey(),
                         getInterceptorElement(mc, entry.getValue())
                 );
                 if (!mc.supportsImplicitQueries()) {

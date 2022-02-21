@@ -23,6 +23,7 @@ import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.RepositoryConfiguration;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.intercept.DataInterceptor;
+import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.query.BindingParameter.BindingContext;
 import io.micronaut.data.model.query.builder.QueryParameterBinding;
@@ -94,7 +95,7 @@ public class RawQueryMethodMatcher implements MethodMatcher {
 
                     boolean readOnly = matchContext.getAnnotationMetadata().booleanValue(Query.class, "readOnly").orElse(true);
                     String query = matchContext.getAnnotationMetadata().stringValue(Query.class).get();
-                    MethodMatchInfo.OperationType operationType = findOperationType(methodElement.getName(), query, readOnly);
+                    DataMethod.OperationType operationType = findOperationType(methodElement.getName(), query, readOnly);
 
                     Map.Entry<ClassElement, Class<? extends DataInterceptor>> entry = FindersUtils.resolveInterceptorTypeByOperationType(
                             entityParameter != null,
@@ -108,13 +109,13 @@ public class RawQueryMethodMatcher implements MethodMatcher {
                         // Use `executeUpdate` operation for "insert(String a, String b)" style queries
                         // - custom query doesn't need to use root entity
                         // - we would like to know how many rows were updated
-                        operationType = MethodMatchInfo.OperationType.UPDATE;
+                        operationType = DataMethod.OperationType.UPDATE;
                         Map.Entry<ClassElement, Class<? extends DataInterceptor>> e = FindersUtils.pickUpdateInterceptor(matchContext, matchContext.getReturnType());
                         resultType = e.getKey();
                         interceptorType = e.getValue();
                     }
 
-                    if (operationType == MethodMatchInfo.OperationType.QUERY) {
+                    if (operationType == DataMethod.OperationType.QUERY) {
                         // Entity parameter/parameters only make sense if the operation is based on entity
                         entityParameter = null;
                         entitiesParameter = null;
@@ -124,7 +125,7 @@ public class RawQueryMethodMatcher implements MethodMatcher {
                     if (resultType == null) {
                         resultType = matchContext.getRootEntity().getType();
                     } else {
-                        if (operationType == MethodMatchInfo.OperationType.QUERY) {
+                        if (operationType == DataMethod.OperationType.QUERY) {
                             if (resultType.hasAnnotation(Introspected.class)) {
                                 if (!resultType.hasAnnotation(MappedEntity.class)) {
                                     isDto = true;
@@ -136,7 +137,8 @@ public class RawQueryMethodMatcher implements MethodMatcher {
                     }
 
                     MethodMatchInfo methodMatchInfo = new MethodMatchInfo(
-                                resultType,
+                            operationType,
+                            resultType,
                             FindersUtils.getInterceptorElement(matchContext, interceptorType)
                     );
 
@@ -156,31 +158,31 @@ public class RawQueryMethodMatcher implements MethodMatcher {
         return null;
     }
 
-    private boolean isValidReturnType(ClassElement returnType, MethodMatchInfo.OperationType operationType) {
-        if (operationType == MethodMatchInfo.OperationType.INSERT) {
+    private boolean isValidReturnType(ClassElement returnType, DataMethod.OperationType operationType) {
+        if (operationType == DataMethod.OperationType.INSERT) {
             return TypeUtils.isVoid(returnType) || TypeUtils.isNumber(returnType);
         }
         return true;
     }
 
-    private MethodMatchInfo.OperationType findOperationType(String methodName, String query, boolean readOnly) {
+    private DataMethod.OperationType findOperationType(String methodName, String query, boolean readOnly) {
         query = query.trim().toLowerCase(Locale.ENGLISH);
         if (query.startsWith(SELECT)) {
-            return MethodMatchInfo.OperationType.QUERY;
+            return DataMethod.OperationType.QUERY;
         } else if (query.startsWith(DELETE)) {
-            return MethodMatchInfo.OperationType.DELETE;
+            return DataMethod.OperationType.DELETE;
         } else if (query.startsWith(UPDATE)) {
             if (DeleteMethodMatcher.METHOD_PATTERN.matcher(methodName.toLowerCase(Locale.ENGLISH)).matches()) {
-                return MethodMatchInfo.OperationType.DELETE;
+                return DataMethod.OperationType.DELETE;
             }
-            return MethodMatchInfo.OperationType.UPDATE;
+            return DataMethod.OperationType.UPDATE;
         } else if (query.startsWith(INSERT)) {
-            return MethodMatchInfo.OperationType.INSERT;
+            return DataMethod.OperationType.INSERT;
         }
         if (readOnly) {
-            return MethodMatchInfo.OperationType.QUERY;
+            return DataMethod.OperationType.QUERY;
         }
-        return MethodMatchInfo.OperationType.UPDATE;
+        return DataMethod.OperationType.UPDATE;
     }
 
     /**
@@ -190,7 +192,7 @@ public class RawQueryMethodMatcher implements MethodMatcher {
                                MethodMatchInfo methodMatchInfo,
                                ParameterElement entityParameter,
                                ParameterElement entitiesParameter,
-                               MethodMatchInfo.OperationType operationType) {
+                               DataMethod.OperationType operationType) {
         MethodElement methodElement = matchContext.getMethodElement();
         String queryString = methodElement.stringValue(Query.class).orElseThrow(() ->
                 new IllegalStateException("Should only be called if Query has value!")
@@ -213,7 +215,7 @@ public class RawQueryMethodMatcher implements MethodMatcher {
         String cq = matchContext.getAnnotationMetadata().stringValue(Query.class, "countQuery")
                 .orElse(null);
         QueryResult countQueryResult = cq == null ? null : getQueryResult(matchContext, cq, parameters, namedParameters, entityParam, persistentEntity);
-        boolean encodeEntityParameters = persistentEntity != null || operationType == MethodMatchInfo.OperationType.INSERT;
+        boolean encodeEntityParameters = persistentEntity != null || operationType == DataMethod.OperationType.INSERT;
         methodMatchInfo
                 .isRawQuery(true)
                 .encodeEntityParameters(encodeEntityParameters)

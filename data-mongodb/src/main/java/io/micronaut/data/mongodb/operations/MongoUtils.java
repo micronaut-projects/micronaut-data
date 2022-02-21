@@ -15,9 +15,15 @@
  */
 package io.micronaut.data.mongodb.operations;
 
+import com.mongodb.client.model.Collation;
+import com.mongodb.client.model.CollationAlternate;
+import com.mongodb.client.model.CollationCaseFirst;
+import com.mongodb.client.model.CollationMaxVariable;
+import com.mongodb.client.model.CollationStrength;
 import com.mongodb.client.model.Filters;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.data.model.Association;
@@ -49,6 +55,50 @@ import java.util.Date;
 public final class MongoUtils {
 
     public static final String ID = "_id";
+
+    public static Collation bsonDocumentAsCollation(@Nullable BsonDocument collationDocument) {
+        if (collationDocument == null) {
+            return null;
+        }
+        Collation.Builder builder = Collation.builder();
+        BsonValue locale = collationDocument.get("locale");
+        if (locale != null) {
+            builder.locale(locale.asString().getValue());
+        }
+        BsonValue caseLevel = collationDocument.get("caseLevel");
+        if (caseLevel != null) {
+            builder.caseLevel(caseLevel.asBoolean().getValue());
+        }
+        BsonValue caseFirst = collationDocument.get("caseFirst");
+        if (caseFirst != null) {
+            builder.collationCaseFirst(CollationCaseFirst.valueOf(caseFirst.asString().getValue()));
+        }
+        BsonValue strength = collationDocument.get("strength");
+        if (strength != null) {
+            builder.collationStrength(CollationStrength.valueOf(strength.asString().getValue()));
+        }
+        BsonValue numericOrdering = collationDocument.get("numericOrdering");
+        if (numericOrdering != null) {
+            builder.numericOrdering(numericOrdering.asBoolean().getValue());
+        }
+        BsonValue alternate = collationDocument.get("alternate");
+        if (alternate != null) {
+            builder.collationAlternate(CollationAlternate.valueOf(alternate.asString().getValue()));
+        }
+        BsonValue maxVariable = collationDocument.get("maxVariable");
+        if (maxVariable != null) {
+            builder.collationMaxVariable(CollationMaxVariable.valueOf(maxVariable.asString().getValue()));
+        }
+        BsonValue normalization = collationDocument.get("normalization");
+        if (normalization != null) {
+            builder.normalization(normalization.asBoolean().getValue());
+        }
+        BsonValue backwards = collationDocument.get("backwards");
+        if (backwards != null) {
+            builder.backwards(backwards.asBoolean().getValue());
+        }
+        return builder.build();
+    }
 
     public static BsonValue entityIdValue(ConversionService<?> conversionService,
                                           RuntimePersistentEntity<?> persistentEntity,

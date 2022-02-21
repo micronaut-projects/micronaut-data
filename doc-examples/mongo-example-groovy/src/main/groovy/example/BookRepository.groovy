@@ -6,7 +6,11 @@ import io.micronaut.data.annotation.Id
 import io.micronaut.data.model.Page
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Slice
+import io.micronaut.data.mongodb.annotation.MongoAggregateQuery
+import io.micronaut.data.mongodb.annotation.MongoDeleteQuery
+import io.micronaut.data.mongodb.annotation.MongoFindQuery
 import io.micronaut.data.mongodb.annotation.MongoRepository
+import io.micronaut.data.mongodb.annotation.MongoUpdateQuery
 import io.micronaut.data.repository.CrudRepository
 import org.bson.types.ObjectId
 
@@ -91,6 +95,20 @@ interface BookRepository extends CrudRepository<Book, ObjectId> { // <2>
     // tag::dto[]
     BookDTO findOne(String title);
     // end::dto[]
+
+    // tag::custom[]
+    @MongoFindQuery(filter = '{title:{$regex: :t}}', sort = '{title: 1}')
+    List<Book> customFind(String t);
+
+    @MongoAggregateQuery('[{$match: {name:{$regex: :t}}}, {$sort: {name: 1}}, {$project: {name: 1}}]')
+    List<Person> customAggregate(String t)
+
+    @MongoUpdateQuery(filter = '{title:{$regex: :t}}', update = '{$set:{name: "tom"}}')
+    List<Book> customUpdate(String t);
+
+    @MongoDeleteQuery(filter = '{title:{$regex: :t}}', collation = "{locale:'en_US', numericOrdering:true}")
+    void customDelete(String t);
+    // end::custom[]
 
 // tag::repository[]
 }

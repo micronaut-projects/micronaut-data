@@ -170,6 +170,11 @@ public @interface DataMethod {
     String META_MEMBER_PARAMETERS = "parameters";
 
     /**
+     * The member name that holds the root entity type.
+     */
+    String META_MEMBER_OPERATION_TYPE = "opType";
+
+    /**
      * @return The child interceptor to use for the method execution.
      */
     Class<? extends DataInterceptor> interceptor();
@@ -246,4 +251,34 @@ public @interface DataMethod {
      * @return The query parameters
      */
     DataMethodQueryParameter[] parameters() default {};
+
+    /**
+     * Describes the operation type.
+     */
+    enum OperationType {
+        /**
+         * A query operation.
+         */
+        QUERY,
+        /**
+         * A count operation.
+         */
+        COUNT,
+        /**
+         * A exists operation.
+         */
+        EXISTS,
+        /**
+         * An update operation.
+         */
+        UPDATE,
+        /**
+         * A delete operation.
+         */
+        DELETE,
+        /**
+         * An insert operation.
+         */
+        INSERT
+    }
 }

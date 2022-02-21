@@ -81,7 +81,10 @@ sql:
 mongo:
   title: Micronaut Data MongoDB
   mongoQuickStart: Quick Start
-  mongoRepositories: Repositories
+  mongoRepositories:
+    title: Repositories
+    mongoInsertsAndUpdates: Inserts and Updates
+    mongoCustomQueries: Custom Queries and Options
   mongoMapping:
     title: Mapping Entities
     mongoAnnotations: Mapping Annotations

@@ -13,7 +13,7 @@ import spock.lang.AutoCleanup
 import spock.lang.Shared
 import spock.lang.Specification
 
-@MicronautTest
+@MicronautTest(transactional = false)
 class MongoCustomDatabaseSpec extends Specification implements MongoTestPropertyProvider {
     @AutoCleanup
     @Shared

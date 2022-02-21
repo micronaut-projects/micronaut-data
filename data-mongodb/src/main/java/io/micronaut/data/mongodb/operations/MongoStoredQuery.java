@@ -15,39 +15,72 @@
  */
 package io.micronaut.data.mongodb.operations;
 
+import io.micronaut.aop.InvocationContext;
 import io.micronaut.core.annotation.Experimental;
-import io.micronaut.core.annotation.Nullable;
+import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.StoredQuery;
-import org.bson.BsonArray;
-import org.bson.BsonDocument;
 
 /**
  * MongoDB's {@link StoredQuery}.
  *
- * @param <E> The entity type
- * @param <R> The result type
+ * @param <E>   The entity type
+ * @param <R>   The result type
+ * @param <Dtb> The database type
  * @author Denis Stepanov
  * @since 3.3.
  */
 @Experimental
-public interface MongoStoredQuery<E, R> extends StoredQuery<E, R> {
+public interface MongoStoredQuery<E, R, Dtb> extends StoredQuery<E, R> {
 
     /**
-     * @return The filter
+     * @return The persistent entity
      */
-    @Nullable
-    BsonDocument getFilter();
+    RuntimePersistentEntity<E> getRuntimePersistentEntity();
 
     /**
-     * @return The aggregation pipeline
+     * @return The associated databae
      */
-    @Nullable
-    BsonArray getPipeline();
+    Dtb getDatabase();
 
     /**
-     * @return The update
+     * @return Is aggregation query?
      */
-    @Nullable
-    BsonDocument getUpdate();
+    boolean isAggregate();
+
+    /**
+     * @param invocationContext The invocation context to have query parameters extracted from
+     * @return The data to execute the aggregation
+     */
+    MongoAggregation getAggregation(InvocationContext<?, ?> invocationContext);
+
+    /**
+     * @param invocationContext The invocation context to have query parameters extracted from
+     * @return The data to execute the find
+     */
+    MongoFind getFind(InvocationContext<?, ?> invocationContext);
+
+    /**
+     * @param invocationContext The invocation context to have query parameters extracted from
+     * @return The data to execute the update
+     */
+    MongoUpdate getUpdateMany(InvocationContext<?, ?> invocationContext);
+
+    /**
+     * @param entity The entity to have query parameters extracted from
+     * @return The data to execute the update
+     */
+    MongoUpdate getUpdateOne(E entity);
+
+    /**
+     * @param invocationContext The invocation context to have query parameters extracted from
+     * @return The data to execute the delete
+     */
+    MongoDelete getDeleteMany(InvocationContext<?, ?> invocationContext);
+
+    /**
+     * @param entity The entity to have query parameters extracted from
+     * @return The data to execute the delete
+     */
+    MongoDelete getDeleteOne(E entity);
 
 }
