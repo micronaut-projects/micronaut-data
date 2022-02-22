@@ -17,7 +17,7 @@
     catch(err) {
     }
 //-->
-var methods = {"i0":9,"i1":9,"i2":9};
+var methods = {"i0":9,"i1":9,"i2":9,"i3":9};
 var tabs = {65535:["t0","All Methods"],1:["t1","Static Methods"],8:["t4","Concrete Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -47,7 +47,7 @@ var activeTableTab = "activeTableTab";
 </div>
 <div class="subNav">
 <ul class="navList">
-<li><a href="../../../../../io/micronaut/data/mongodb/operations/MongoStoredQuery.html" title="interface in io.micronaut.data.mongodb.operations"><span class="typeNameLink">Prev&nbsp;Class</span></a></li>
+<li><a href="../../../../../io/micronaut/data/mongodb/operations/MongoUpdate.html" title="class in io.micronaut.data.mongodb.operations"><span class="typeNameLink">Prev&nbsp;Class</span></a></li>
 <li>Next&nbsp;Class</li>
 </ul>
 <ul class="navList">
@@ -166,20 +166,24 @@ extends java.lang.Object</pre>
 <th class="colLast" scope="col">Method and Description</th>
 </tr>
 <tr id="i0" class="altColor">
+<td class="colFirst"><code>static com.mongodb.client.model.Collation</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/mongodb/operations/MongoUtils.html#bsonDocumentAsCollation-org.bson.BsonDocument-">bsonDocumentAsCollation</a></span>(org.bson.BsonDocument&nbsp;collationDocument)</code>&nbsp;</td>
+</tr>
+<tr id="i1" class="rowColor">
 <td class="colFirst"><code>static org.bson.BsonValue</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/mongodb/operations/MongoUtils.html#entityIdValue-io.micronaut.core.convert.ConversionService-io.micronaut.data.model.runtime.RuntimePersistentEntity-java.lang.Object-org.bson.codecs.configuration.CodecRegistry-">entityIdValue</a></span>(io.micronaut.core.convert.ConversionService&lt;?&gt;&nbsp;conversionService,
              <a href="../../../../../io/micronaut/data/model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;?&gt;&nbsp;persistentEntity,
              java.lang.Object&nbsp;entity,
              org.bson.codecs.configuration.CodecRegistry&nbsp;codecRegistry)</code>&nbsp;</td>
 </tr>
-<tr id="i1" class="rowColor">
+<tr id="i2" class="altColor">
 <td class="colFirst"><code>static org.bson.BsonValue</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/mongodb/operations/MongoUtils.html#idValue-io.micronaut.core.convert.ConversionService-io.micronaut.data.model.runtime.RuntimePersistentEntity-java.lang.Object-org.bson.codecs.configuration.CodecRegistry-">idValue</a></span>(io.micronaut.core.convert.ConversionService&lt;?&gt;&nbsp;conversionService,
        <a href="../../../../../io/micronaut/data/model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;?&gt;&nbsp;persistentEntity,
        java.lang.Object&nbsp;idValue,
        org.bson.codecs.configuration.CodecRegistry&nbsp;codecRegistry)</code>&nbsp;</td>
 </tr>
-<tr id="i2" class="altColor">
+<tr id="i3" class="rowColor">
 <td class="colFirst"><code>static org.bson.BsonValue</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/mongodb/operations/MongoUtils.html#toBsonValue-io.micronaut.core.convert.ConversionService-java.lang.Object-org.bson.codecs.configuration.CodecRegistry-">toBsonValue</a></span>(io.micronaut.core.convert.ConversionService&lt;?&gt;&nbsp;conversionService,
            java.lang.Object&nbsp;value,
@@ -245,6 +249,16 @@ extends java.lang.Object</pre>
 <!--   -->
 </a>
 <h3>Method Detail</h3>
+<a name="bsonDocumentAsCollation-org.bson.BsonDocument-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>bsonDocumentAsCollation</h4>
+<pre>public static&nbsp;com.mongodb.client.model.Collation&nbsp;bsonDocumentAsCollation(@Nullable
+                                                                         org.bson.BsonDocument&nbsp;collationDocument)</pre>
+</li>
+</ul>
 <a name="entityIdValue-io.micronaut.core.convert.ConversionService-io.micronaut.data.model.runtime.RuntimePersistentEntity-java.lang.Object-org.bson.codecs.configuration.CodecRegistry-">
 <!--   -->
 </a>
@@ -307,7 +321,7 @@ extends java.lang.Object</pre>
 </div>
 <div class="subNav">
 <ul class="navList">
-<li><a href="../../../../../io/micronaut/data/mongodb/operations/MongoStoredQuery.html" title="interface in io.micronaut.data.mongodb.operations"><span class="typeNameLink">Prev&nbsp;Class</span></a></li>
+<li><a href="../../../../../io/micronaut/data/mongodb/operations/MongoUpdate.html" title="class in io.micronaut.data.mongodb.operations"><span class="typeNameLink">Prev&nbsp;Class</span></a></li>
 <li>Next&nbsp;Class</li>
 </ul>
 <ul class="navList">

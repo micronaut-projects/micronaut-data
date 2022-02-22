@@ -17,6 +17,12 @@
     catch(err) {
     }
 //-->
+var methods = {"i0":6,"i1":6,"i2":6,"i3":6,"i4":6,"i5":6,"i6":6};
+var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],4:["t3","Abstract Methods"]};
+var altColor = "altColor";
+var rowColor = "rowColor";
+var tableTab = "tableTab";
+var activeTableTab = "activeTableTab";
 </script>
 <noscript>
 <div>JavaScript is disabled on your browser.</div>
@@ -41,7 +47,7 @@
 </div>
 <div class="subNav">
 <ul class="navList">
-<li><a href="../../../../../io/micronaut/data/mongodb/operations/DefaultReactiveMongoRepositoryOperations.MongoOperationContext.html" title="class in io.micronaut.data.mongodb.operations"><span class="typeNameLink">Prev&nbsp;Class</span></a></li>
+<li><a href="../../../../../io/micronaut/data/mongodb/operations/MongoFind.html" title="class in io.micronaut.data.mongodb.operations"><span class="typeNameLink">Prev&nbsp;Class</span></a></li>
 <li><a href="../../../../../io/micronaut/data/mongodb/operations/MongoReactiveRepositoryOperations.html" title="interface in io.micronaut.data.mongodb.operations"><span class="typeNameLink">Next&nbsp;Class</span></a></li>
 </ul>
 <ul class="navList">
@@ -69,13 +75,13 @@
 <li>Nested&nbsp;|&nbsp;</li>
 <li>Field&nbsp;|&nbsp;</li>
 <li>Constr&nbsp;|&nbsp;</li>
-<li>Method</li>
+<li><a href="#method.summary">Method</a></li>
 </ul>
 <ul class="subNavList">
 <li>Detail:&nbsp;</li>
 <li>Field&nbsp;|&nbsp;</li>
 <li>Constr&nbsp;|&nbsp;</li>
-<li>Method</li>
+<li><a href="#method.detail">Method</a></li>
 </ul>
 </div>
 <a name="skip.navbar.top">
@@ -85,7 +91,7 @@
 <!-- ======== START OF CLASS DATA ======== -->
 <div class="header">
 <div class="subTitle">io.micronaut.data.mongodb.operations</div>
-<h2 title="Interface MongoPreparedQuery" class="title">Interface MongoPreparedQuery&lt;E,R&gt;</h2>
+<h2 title="Interface MongoPreparedQuery" class="title">Interface MongoPreparedQuery&lt;E,R,Dtb&gt;</h2>
 </div>
 <div class="contentContainer">
 <div class="description">
@@ -95,19 +101,20 @@
 <dt><span class="paramLabel">Type Parameters:</span></dt>
 <dd><code>E</code> - The entity type</dd>
 <dd><code>R</code> - The result type</dd>
+<dd><code>Dtb</code> - The database type</dd>
 </dl>
 <dl>
 <dt>All Superinterfaces:</dt>
-<dd>io.micronaut.core.annotation.AnnotationMetadataProvider, io.micronaut.core.annotation.AnnotationSource, io.micronaut.core.attr.AttributeHolder, <a href="../../../../../io/micronaut/data/mongodb/operations/MongoStoredQuery.html" title="interface in io.micronaut.data.mongodb.operations">MongoStoredQuery</a>&lt;E,R&gt;, io.micronaut.core.naming.Named, <a href="../../../../../io/micronaut/data/model/runtime/PagedQuery.html" title="interface in io.micronaut.data.model.runtime">PagedQuery</a>&lt;E&gt;, <a href="../../../../../io/micronaut/data/model/runtime/PreparedDataOperation.html" title="interface in io.micronaut.data.model.runtime">PreparedDataOperation</a>&lt;R&gt;, <a href="../../../../../io/micronaut/data/model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;E,R&gt;, <a href="../../../../../io/micronaut/data/model/runtime/StoredDataOperation.html" title="interface in io.micronaut.data.model.runtime">StoredDataOperation</a>&lt;R&gt;, <a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;E,R&gt;</dd>
+<dd>io.micronaut.core.annotation.AnnotationMetadataProvider, io.micronaut.core.annotation.AnnotationSource, io.micronaut.core.attr.AttributeHolder, io.micronaut.core.naming.Named, <a href="../../../../../io/micronaut/data/model/runtime/PagedQuery.html" title="interface in io.micronaut.data.model.runtime">PagedQuery</a>&lt;E&gt;, <a href="../../../../../io/micronaut/data/model/runtime/PreparedDataOperation.html" title="interface in io.micronaut.data.model.runtime">PreparedDataOperation</a>&lt;R&gt;, <a href="../../../../../io/micronaut/data/model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;E,R&gt;, <a href="../../../../../io/micronaut/data/model/runtime/StoredDataOperation.html" title="interface in io.micronaut.data.model.runtime">StoredDataOperation</a>&lt;R&gt;, <a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;E,R&gt;</dd>
 </dl>
 <hr>
 <br>
-<pre>public interface <span class="typeNameLabel">MongoPreparedQuery&lt;E,R&gt;</span>
-extends <a href="../../../../../io/micronaut/data/model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;E,R&gt;, <a href="../../../../../io/micronaut/data/mongodb/operations/MongoStoredQuery.html" title="interface in io.micronaut.data.mongodb.operations">MongoStoredQuery</a>&lt;E,R&gt;</pre>
+<pre>public interface <span class="typeNameLabel">MongoPreparedQuery&lt;E,R,Dtb&gt;</span>
+extends <a href="../../../../../io/micronaut/data/model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;E,R&gt;</pre>
 <div class="block">MongoDB's <a href="../../../../../io/micronaut/data/model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime"><code>PreparedQuery</code></a>.</div>
 <dl>
 <dt><span class="simpleTagLabel">Since:</span></dt>
-<dd>3.3.</dd>
+<dd>3.3.0</dd>
 <dt><span class="simpleTagLabel">Author:</span></dt>
 <dd>Denis Stepanov</dd>
 </dl>
@@ -138,6 +145,41 @@ extends <a href="../../../../../io/micronaut/data/model/runtime/PreparedQuery.ht
 <!--   -->
 </a>
 <h3>Method Summary</h3>
+<table class="memberSummary" border="0" cellpadding="3" cellspacing="0" summary="Method Summary table, listing methods, and an explanation">
+<caption><span id="t0" class="activeTableTab"><span>All Methods</span><span class="tabEnd">&nbsp;</span></span><span id="t2" class="tableTab"><span><a href="javascript:show(2);">Instance Methods</a></span><span class="tabEnd">&nbsp;</span></span><span id="t3" class="tableTab"><span><a href="javascript:show(4);">Abstract Methods</a></span><span class="tabEnd">&nbsp;</span></span></caption>
+<tr>
+<th class="colFirst" scope="col">Modifier and Type</th>
+<th class="colLast" scope="col">Method and Description</th>
+</tr>
+<tr id="i0" class="altColor">
+<td class="colFirst"><code><a href="../../../../../io/micronaut/data/mongodb/operations/MongoAggregation.html" title="class in io.micronaut.data.mongodb.operations">MongoAggregation</a></code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/mongodb/operations/MongoPreparedQuery.html#getAggregation--">getAggregation</a></span>()</code>&nbsp;</td>
+</tr>
+<tr id="i1" class="rowColor">
+<td class="colFirst"><code><a href="../../../../../io/micronaut/data/mongodb/operations/MongoPreparedQuery.html" title="type parameter in MongoPreparedQuery">Dtb</a></code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/mongodb/operations/MongoPreparedQuery.html#getDatabase--">getDatabase</a></span>()</code>&nbsp;</td>
+</tr>
+<tr id="i2" class="altColor">
+<td class="colFirst"><code><a href="../../../../../io/micronaut/data/mongodb/operations/MongoDelete.html" title="class in io.micronaut.data.mongodb.operations">MongoDelete</a></code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/mongodb/operations/MongoPreparedQuery.html#getDeleteMany--">getDeleteMany</a></span>()</code>&nbsp;</td>
+</tr>
+<tr id="i3" class="rowColor">
+<td class="colFirst"><code><a href="../../../../../io/micronaut/data/mongodb/operations/MongoFind.html" title="class in io.micronaut.data.mongodb.operations">MongoFind</a></code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/mongodb/operations/MongoPreparedQuery.html#getFind--">getFind</a></span>()</code>&nbsp;</td>
+</tr>
+<tr id="i4" class="altColor">
+<td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;<a href="../../../../../io/micronaut/data/mongodb/operations/MongoPreparedQuery.html" title="type parameter in MongoPreparedQuery">E</a>&gt;</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/mongodb/operations/MongoPreparedQuery.html#getRuntimePersistentEntity--">getRuntimePersistentEntity</a></span>()</code>&nbsp;</td>
+</tr>
+<tr id="i5" class="rowColor">
+<td class="colFirst"><code><a href="../../../../../io/micronaut/data/mongodb/operations/MongoUpdate.html" title="class in io.micronaut.data.mongodb.operations">MongoUpdate</a></code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/mongodb/operations/MongoPreparedQuery.html#getUpdateMany--">getUpdateMany</a></span>()</code>&nbsp;</td>
+</tr>
+<tr id="i6" class="altColor">
+<td class="colFirst"><code>boolean</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/mongodb/operations/MongoPreparedQuery.html#isAggregate--">isAggregate</a></span>()</code>&nbsp;</td>
+</tr>
+</table>
 <ul class="blockList">
 <li class="blockList"><a name="methods.inherited.from.class.io.micronaut.data.model.runtime.PreparedQuery">
 <!--   -->
@@ -153,27 +195,6 @@ extends <a href="../../../../../io/micronaut/data/model/runtime/PreparedQuery.ht
 <code><a href="../../../../../io/micronaut/data/model/runtime/PagedQuery.html#getPageable--">getPageable</a>, <a href="../../../../../io/micronaut/data/model/runtime/PagedQuery.html#getRootEntity--">getRootEntity</a></code></li>
 </ul>
 <ul class="blockList">
-<li class="blockList"><a name="methods.inherited.from.class.io.micronaut.data.model.runtime.PreparedDataOperation">
-<!--   -->
-</a>
-<h3>Methods inherited from interface&nbsp;io.micronaut.data.model.runtime.<a href="../../../../../io/micronaut/data/model/runtime/PreparedDataOperation.html" title="interface in io.micronaut.data.model.runtime">PreparedDataOperation</a></h3>
-<code><a href="../../../../../io/micronaut/data/model/runtime/PreparedDataOperation.html#getParameterInRole-java.lang.String-java.lang.Class-">getParameterInRole</a></code></li>
-</ul>
-<ul class="blockList">
-<li class="blockList"><a name="methods.inherited.from.class.io.micronaut.core.attr.AttributeHolder">
-<!--   -->
-</a>
-<h3>Methods inherited from interface&nbsp;io.micronaut.core.attr.AttributeHolder</h3>
-<code>getAttribute, getAttribute, getAttributes</code></li>
-</ul>
-<ul class="blockList">
-<li class="blockList"><a name="methods.inherited.from.class.io.micronaut.data.mongodb.operations.MongoStoredQuery">
-<!--   -->
-</a>
-<h3>Methods inherited from interface&nbsp;io.micronaut.data.mongodb.operations.<a href="../../../../../io/micronaut/data/mongodb/operations/MongoStoredQuery.html" title="interface in io.micronaut.data.mongodb.operations">MongoStoredQuery</a></h3>
-<code><a href="../../../../../io/micronaut/data/mongodb/operations/MongoStoredQuery.html#getFilter--">getFilter</a>, <a href="../../../../../io/micronaut/data/mongodb/operations/MongoStoredQuery.html#getPipeline--">getPipeline</a>, <a href="../../../../../io/micronaut/data/mongodb/operations/MongoStoredQuery.html#getUpdate--">getUpdate</a></code></li>
-</ul>
-<ul class="blockList">
 <li class="blockList"><a name="methods.inherited.from.class.io.micronaut.data.model.runtime.StoredQuery">
 <!--   -->
 </a>
@@ -186,6 +207,13 @@ extends <a href="../../../../../io/micronaut/data/model/runtime/PreparedQuery.ht
 </a>
 <h3>Methods inherited from interface&nbsp;io.micronaut.core.naming.Named</h3>
 <code>getName</code></li>
+</ul>
+<ul class="blockList">
+<li class="blockList"><a name="methods.inherited.from.class.io.micronaut.data.model.runtime.PreparedDataOperation">
+<!--   -->
+</a>
+<h3>Methods inherited from interface&nbsp;io.micronaut.data.model.runtime.<a href="../../../../../io/micronaut/data/model/runtime/PreparedDataOperation.html" title="interface in io.micronaut.data.model.runtime">PreparedDataOperation</a></h3>
+<code><a href="../../../../../io/micronaut/data/model/runtime/PreparedDataOperation.html#getParameterInRole-java.lang.String-java.lang.Class-">getParameterInRole</a></code></li>
 </ul>
 <ul class="blockList">
 <li class="blockList"><a name="methods.inherited.from.class.io.micronaut.data.model.runtime.StoredDataOperation">
@@ -207,6 +235,118 @@ extends <a href="../../../../../io/micronaut/data/model/runtime/PreparedQuery.ht
 </a>
 <h3>Methods inherited from interface&nbsp;io.micronaut.core.annotation.AnnotationSource</h3>
 <code>getAnnotation, getAnnotation, getDeclaredAnnotation, getDeclaredAnnotation, isAnnotationPresent, isDeclaredAnnotationPresent, synthesize, synthesizeDeclared</code></li>
+</ul>
+<ul class="blockList">
+<li class="blockList"><a name="methods.inherited.from.class.io.micronaut.core.attr.AttributeHolder">
+<!--   -->
+</a>
+<h3>Methods inherited from interface&nbsp;io.micronaut.core.attr.AttributeHolder</h3>
+<code>getAttribute, getAttribute, getAttributes</code></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="details">
+<ul class="blockList">
+<li class="blockList">
+<!-- ============ METHOD DETAIL ========== -->
+<ul class="blockList">
+<li class="blockList"><a name="method.detail">
+<!--   -->
+</a>
+<h3>Method Detail</h3>
+<a name="getRuntimePersistentEntity--">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>getRuntimePersistentEntity</h4>
+<pre><a href="../../../../../io/micronaut/data/model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;<a href="../../../../../io/micronaut/data/mongodb/operations/MongoPreparedQuery.html" title="type parameter in MongoPreparedQuery">E</a>&gt;&nbsp;getRuntimePersistentEntity()</pre>
+<dl>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>The persistent entity</dd>
+</dl>
+</li>
+</ul>
+<a name="getDatabase--">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>getDatabase</h4>
+<pre><a href="../../../../../io/micronaut/data/mongodb/operations/MongoPreparedQuery.html" title="type parameter in MongoPreparedQuery">Dtb</a>&nbsp;getDatabase()</pre>
+<dl>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>The associated databae</dd>
+</dl>
+</li>
+</ul>
+<a name="isAggregate--">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>isAggregate</h4>
+<pre>boolean&nbsp;isAggregate()</pre>
+<dl>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>Is aggregation query?</dd>
+</dl>
+</li>
+</ul>
+<a name="getAggregation--">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>getAggregation</h4>
+<pre><a href="../../../../../io/micronaut/data/mongodb/operations/MongoAggregation.html" title="class in io.micronaut.data.mongodb.operations">MongoAggregation</a>&nbsp;getAggregation()</pre>
+<dl>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>The data to execute the aggregation</dd>
+</dl>
+</li>
+</ul>
+<a name="getFind--">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>getFind</h4>
+<pre><a href="../../../../../io/micronaut/data/mongodb/operations/MongoFind.html" title="class in io.micronaut.data.mongodb.operations">MongoFind</a>&nbsp;getFind()</pre>
+<dl>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>The data to execute the find</dd>
+</dl>
+</li>
+</ul>
+<a name="getUpdateMany--">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>getUpdateMany</h4>
+<pre><a href="../../../../../io/micronaut/data/mongodb/operations/MongoUpdate.html" title="class in io.micronaut.data.mongodb.operations">MongoUpdate</a>&nbsp;getUpdateMany()</pre>
+<dl>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>The data to execute the update many</dd>
+</dl>
+</li>
+</ul>
+<a name="getDeleteMany--">
+<!--   -->
+</a>
+<ul class="blockListLast">
+<li class="blockList">
+<h4>getDeleteMany</h4>
+<pre><a href="../../../../../io/micronaut/data/mongodb/operations/MongoDelete.html" title="class in io.micronaut.data.mongodb.operations">MongoDelete</a>&nbsp;getDeleteMany()</pre>
+<dl>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>The data to execute the delete many</dd>
+</dl>
+</li>
 </ul>
 </li>
 </ul>
@@ -235,7 +375,7 @@ extends <a href="../../../../../io/micronaut/data/model/runtime/PreparedQuery.ht
 </div>
 <div class="subNav">
 <ul class="navList">
-<li><a href="../../../../../io/micronaut/data/mongodb/operations/DefaultReactiveMongoRepositoryOperations.MongoOperationContext.html" title="class in io.micronaut.data.mongodb.operations"><span class="typeNameLink">Prev&nbsp;Class</span></a></li>
+<li><a href="../../../../../io/micronaut/data/mongodb/operations/MongoFind.html" title="class in io.micronaut.data.mongodb.operations"><span class="typeNameLink">Prev&nbsp;Class</span></a></li>
 <li><a href="../../../../../io/micronaut/data/mongodb/operations/MongoReactiveRepositoryOperations.html" title="interface in io.micronaut.data.mongodb.operations"><span class="typeNameLink">Next&nbsp;Class</span></a></li>
 </ul>
 <ul class="navList">
@@ -263,13 +403,13 @@ extends <a href="../../../../../io/micronaut/data/model/runtime/PreparedQuery.ht
 <li>Nested&nbsp;|&nbsp;</li>
 <li>Field&nbsp;|&nbsp;</li>
 <li>Constr&nbsp;|&nbsp;</li>
-<li>Method</li>
+<li><a href="#method.summary">Method</a></li>
 </ul>
 <ul class="subNavList">
 <li>Detail:&nbsp;</li>
 <li>Field&nbsp;|&nbsp;</li>
 <li>Constr&nbsp;|&nbsp;</li>
-<li>Method</li>
+<li><a href="#method.detail">Method</a></li>
 </ul>
 </div>
 <a name="skip.navbar.bottom">

@@ -159,7 +159,9 @@ implements <a href="../../../../../io/micronaut/data/runtime/query/StoredQueryRe
 </tr>
 <tr id="i0" class="altColor">
 <td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;java.lang.Object,java.lang.Long&gt;</code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/runtime/query/DefaultStoredQueryResolver.html#createCountStoredQuery-java.lang.String-io.micronaut.core.annotation.AnnotationMetadata-java.lang.Class-java.lang.String-java.lang.String:A-java.util.List-">createCountStoredQuery</a></span>(java.lang.String&nbsp;name,
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/runtime/query/DefaultStoredQueryResolver.html#createCountStoredQuery-io.micronaut.inject.ExecutableMethod-io.micronaut.data.intercept.annotation.DataMethod.OperationType-java.lang.String-io.micronaut.core.annotation.AnnotationMetadata-java.lang.Class-java.lang.String-java.lang.String:A-java.util.List-">createCountStoredQuery</a></span>(io.micronaut.inject.ExecutableMethod&lt;?,?&gt;&nbsp;executableMethod,
+                      <a href="../../../../../io/micronaut/data/intercept/annotation/DataMethod.OperationType.html" title="enum in io.micronaut.data.intercept.annotation">DataMethod.OperationType</a>&nbsp;operationType,
+                      java.lang.String&nbsp;name,
                       io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
                       java.lang.Class&lt;java.lang.Object&gt;&nbsp;rootEntity,
                       java.lang.String&nbsp;query,
@@ -170,7 +172,9 @@ implements <a href="../../../../../io/micronaut/data/runtime/query/StoredQueryRe
 </tr>
 <tr id="i1" class="rowColor">
 <td class="colFirst"><code>&lt;E,QR&gt;&nbsp;<a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;E,QR&gt;</code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/runtime/query/DefaultStoredQueryResolver.html#createStoredQuery-java.lang.String-io.micronaut.core.annotation.AnnotationMetadata-java.lang.Class-java.lang.String-java.lang.String-java.lang.String:A-java.util.List-boolean-boolean-">createStoredQuery</a></span>(java.lang.String&nbsp;name,
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/runtime/query/DefaultStoredQueryResolver.html#createStoredQuery-io.micronaut.inject.ExecutableMethod-io.micronaut.data.intercept.annotation.DataMethod.OperationType-java.lang.String-io.micronaut.core.annotation.AnnotationMetadata-java.lang.Class-java.lang.String-java.lang.String-java.lang.String:A-java.util.List-boolean-boolean-">createStoredQuery</a></span>(io.micronaut.inject.ExecutableMethod&lt;?,?&gt;&nbsp;executableMethod,
+                 <a href="../../../../../io/micronaut/data/intercept/annotation/DataMethod.OperationType.html" title="enum in io.micronaut.data.intercept.annotation">DataMethod.OperationType</a>&nbsp;operationType,
+                 java.lang.String&nbsp;name,
                  io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
                  java.lang.Class&lt;java.lang.Object&gt;&nbsp;rootEntity,
                  java.lang.String&nbsp;query,
@@ -293,13 +297,15 @@ implements <a href="../../../../../io/micronaut/data/runtime/query/StoredQueryRe
 </dl>
 </li>
 </ul>
-<a name="createStoredQuery-java.lang.String-io.micronaut.core.annotation.AnnotationMetadata-java.lang.Class-java.lang.String-java.lang.String-java.lang.String:A-java.util.List-boolean-boolean-">
+<a name="createStoredQuery-io.micronaut.inject.ExecutableMethod-io.micronaut.data.intercept.annotation.DataMethod.OperationType-java.lang.String-io.micronaut.core.annotation.AnnotationMetadata-java.lang.Class-java.lang.String-java.lang.String-java.lang.String:A-java.util.List-boolean-boolean-">
 <!--   -->
 </a>
 <ul class="blockList">
 <li class="blockList">
 <h4>createStoredQuery</h4>
-<pre>public&nbsp;&lt;E,QR&gt;&nbsp;<a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;E,QR&gt;&nbsp;createStoredQuery(java.lang.String&nbsp;name,
+<pre>public&nbsp;&lt;E,QR&gt;&nbsp;<a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;E,QR&gt;&nbsp;createStoredQuery(io.micronaut.inject.ExecutableMethod&lt;?,?&gt;&nbsp;executableMethod,
+                                                  <a href="../../../../../io/micronaut/data/intercept/annotation/DataMethod.OperationType.html" title="enum in io.micronaut.data.intercept.annotation">DataMethod.OperationType</a>&nbsp;operationType,
+                                                  java.lang.String&nbsp;name,
                                                   io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
                                                   java.lang.Class&lt;java.lang.Object&gt;&nbsp;rootEntity,
                                                   java.lang.String&nbsp;query,
@@ -308,16 +314,18 @@ implements <a href="../../../../../io/micronaut/data/runtime/query/StoredQueryRe
                                                   java.util.List&lt;<a href="../../../../../io/micronaut/data/model/runtime/QueryParameterBinding.html" title="interface in io.micronaut.data.model.runtime">QueryParameterBinding</a>&gt;&nbsp;queryParameters,
                                                   boolean&nbsp;pageable,
                                                   boolean&nbsp;isSingleResult)</pre>
-<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../../io/micronaut/data/runtime/query/StoredQueryResolver.html#createStoredQuery-java.lang.String-io.micronaut.core.annotation.AnnotationMetadata-java.lang.Class-java.lang.String-java.lang.String-java.lang.String:A-java.util.List-boolean-boolean-">StoredQueryResolver</a></code></span></div>
+<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../../io/micronaut/data/runtime/query/StoredQueryResolver.html#createStoredQuery-io.micronaut.inject.ExecutableMethod-io.micronaut.data.intercept.annotation.DataMethod.OperationType-java.lang.String-io.micronaut.core.annotation.AnnotationMetadata-java.lang.Class-java.lang.String-java.lang.String-java.lang.String:A-java.util.List-boolean-boolean-">StoredQueryResolver</a></code></span></div>
 <div class="block">Create stored query from provided values.
  Used for criteria stored query creation.</div>
 <dl>
 <dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
-<dd><code><a href="../../../../../io/micronaut/data/runtime/query/StoredQueryResolver.html#createStoredQuery-java.lang.String-io.micronaut.core.annotation.AnnotationMetadata-java.lang.Class-java.lang.String-java.lang.String-java.lang.String:A-java.util.List-boolean-boolean-">createStoredQuery</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../io/micronaut/data/runtime/query/StoredQueryResolver.html" title="interface in io.micronaut.data.runtime.query">StoredQueryResolver</a></code></dd>
+<dd><code><a href="../../../../../io/micronaut/data/runtime/query/StoredQueryResolver.html#createStoredQuery-io.micronaut.inject.ExecutableMethod-io.micronaut.data.intercept.annotation.DataMethod.OperationType-java.lang.String-io.micronaut.core.annotation.AnnotationMetadata-java.lang.Class-java.lang.String-java.lang.String-java.lang.String:A-java.util.List-boolean-boolean-">createStoredQuery</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../io/micronaut/data/runtime/query/StoredQueryResolver.html" title="interface in io.micronaut.data.runtime.query">StoredQueryResolver</a></code></dd>
 <dt><span class="paramLabel">Type Parameters:</span></dt>
 <dd><code>E</code> - The entity type</dd>
 <dd><code>QR</code> - The result type</dd>
 <dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>executableMethod</code> - The executableMethod</dd>
+<dd><code>operationType</code> - The operationType</dd>
 <dd><code>name</code> - The name</dd>
 <dd><code>annotationMetadata</code> - The annotation metadata</dd>
 <dd><code>rootEntity</code> - The root entity</dd>
@@ -332,25 +340,29 @@ implements <a href="../../../../../io/micronaut/data/runtime/query/StoredQueryRe
 </dl>
 </li>
 </ul>
-<a name="createCountStoredQuery-java.lang.String-io.micronaut.core.annotation.AnnotationMetadata-java.lang.Class-java.lang.String-java.lang.String:A-java.util.List-">
+<a name="createCountStoredQuery-io.micronaut.inject.ExecutableMethod-io.micronaut.data.intercept.annotation.DataMethod.OperationType-java.lang.String-io.micronaut.core.annotation.AnnotationMetadata-java.lang.Class-java.lang.String-java.lang.String:A-java.util.List-">
 <!--   -->
 </a>
 <ul class="blockList">
 <li class="blockList">
 <h4>createCountStoredQuery</h4>
-<pre>public&nbsp;<a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;java.lang.Object,java.lang.Long&gt;&nbsp;createCountStoredQuery(java.lang.String&nbsp;name,
+<pre>public&nbsp;<a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;java.lang.Object,java.lang.Long&gt;&nbsp;createCountStoredQuery(io.micronaut.inject.ExecutableMethod&lt;?,?&gt;&nbsp;executableMethod,
+                                                                           <a href="../../../../../io/micronaut/data/intercept/annotation/DataMethod.OperationType.html" title="enum in io.micronaut.data.intercept.annotation">DataMethod.OperationType</a>&nbsp;operationType,
+                                                                           java.lang.String&nbsp;name,
                                                                            io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
                                                                            java.lang.Class&lt;java.lang.Object&gt;&nbsp;rootEntity,
                                                                            java.lang.String&nbsp;query,
                                                                            java.lang.String[]&nbsp;queryParts,
                                                                            java.util.List&lt;<a href="../../../../../io/micronaut/data/model/runtime/QueryParameterBinding.html" title="interface in io.micronaut.data.model.runtime">QueryParameterBinding</a>&gt;&nbsp;queryParameters)</pre>
-<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../../io/micronaut/data/runtime/query/StoredQueryResolver.html#createCountStoredQuery-java.lang.String-io.micronaut.core.annotation.AnnotationMetadata-java.lang.Class-java.lang.String-java.lang.String:A-java.util.List-">StoredQueryResolver</a></code></span></div>
+<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../../io/micronaut/data/runtime/query/StoredQueryResolver.html#createCountStoredQuery-io.micronaut.inject.ExecutableMethod-io.micronaut.data.intercept.annotation.DataMethod.OperationType-java.lang.String-io.micronaut.core.annotation.AnnotationMetadata-java.lang.Class-java.lang.String-java.lang.String:A-java.util.List-">StoredQueryResolver</a></code></span></div>
 <div class="block">Create count stored query from provided values.
  Used for criteria stored query creation.</div>
 <dl>
 <dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
-<dd><code><a href="../../../../../io/micronaut/data/runtime/query/StoredQueryResolver.html#createCountStoredQuery-java.lang.String-io.micronaut.core.annotation.AnnotationMetadata-java.lang.Class-java.lang.String-java.lang.String:A-java.util.List-">createCountStoredQuery</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../io/micronaut/data/runtime/query/StoredQueryResolver.html" title="interface in io.micronaut.data.runtime.query">StoredQueryResolver</a></code></dd>
+<dd><code><a href="../../../../../io/micronaut/data/runtime/query/StoredQueryResolver.html#createCountStoredQuery-io.micronaut.inject.ExecutableMethod-io.micronaut.data.intercept.annotation.DataMethod.OperationType-java.lang.String-io.micronaut.core.annotation.AnnotationMetadata-java.lang.Class-java.lang.String-java.lang.String:A-java.util.List-">createCountStoredQuery</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../io/micronaut/data/runtime/query/StoredQueryResolver.html" title="interface in io.micronaut.data.runtime.query">StoredQueryResolver</a></code></dd>
 <dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>executableMethod</code> - The executableMethod</dd>
+<dd><code>operationType</code> - The operationType</dd>
 <dd><code>name</code> - The name</dd>
 <dd><code>annotationMetadata</code> - The annotation metadata</dd>
 <dd><code>rootEntity</code> - The root entity</dd>

@@ -230,6 +230,10 @@
         
         <div class="toc-item" style="margin-left:10px" id="toc-item-mongoRepositories"><a href="#mongoRepositories"><strong>9.2</strong><span>Repositories</span></a></div>
         
+        <div class="toc-item" style="margin-left:20px" id="toc-item-mongoInsertsAndUpdates"><a href="#mongoInsertsAndUpdates"><strong>9.2.1</strong><span>Inserts and Updates</span></a></div>
+        
+        <div class="toc-item" style="margin-left:20px" id="toc-item-mongoCustomQueries"><a href="#mongoCustomQueries"><strong>9.2.2</strong><span>Custom Queries and Options</span></a></div>
+        
         <div class="toc-item" style="margin-left:10px" id="toc-item-mongoMapping"><a href="#mongoMapping"><strong>9.3</strong><span>Mapping Entities</span></a></div>
         
         <div class="toc-item" style="margin-left:20px" id="toc-item-mongoAnnotations"><a href="#mongoAnnotations"><strong>9.3.1</strong><span>Mapping Annotations</span></a></div>
@@ -8723,9 +8727,15 @@ data class Book(@field:Id
 <pre class="highlight"><code class="language-java" data-lang="java">package example;
 
 import io.micronaut.context.annotation.Executable;
-import io.micronaut.data.annotation.*;
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.model.Page;
+import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.Slice;
+import io.micronaut.data.mongodb.annotation.MongoAggregateQuery;
+import io.micronaut.data.mongodb.annotation.MongoDeleteQuery;
+import io.micronaut.data.mongodb.annotation.MongoFindQuery;
 import io.micronaut.data.mongodb.annotation.MongoRepository;
-import io.micronaut.data.model.*;
+import io.micronaut.data.mongodb.annotation.MongoUpdateQuery;
 import io.micronaut.data.repository.CrudRepository;
 import org.bson.types.ObjectId;
 
@@ -8747,7 +8757,11 @@ import io.micronaut.data.annotation.Id
 import io.micronaut.data.model.Page
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Slice
+import io.micronaut.data.mongodb.annotation.MongoAggregateQuery
+import io.micronaut.data.mongodb.annotation.MongoDeleteQuery
+import io.micronaut.data.mongodb.annotation.MongoFindQuery
 import io.micronaut.data.mongodb.annotation.MongoRepository
+import io.micronaut.data.mongodb.annotation.MongoUpdateQuery
 import io.micronaut.data.repository.CrudRepository
 import org.bson.types.ObjectId
 
@@ -8762,9 +8776,11 @@ interface BookRepository extends CrudRepository&lt;Book, ObjectId&gt; { <b class
 <pre class="highlight"><code class="language-kotlin" data-lang="kotlin">package example
 
 import io.micronaut.context.annotation.Executable
-import io.micronaut.data.annotation.*
-import io.micronaut.data.mongodb.annotation.MongoRepository
-import io.micronaut.data.model.*
+import io.micronaut.data.annotation.Id
+import io.micronaut.data.model.Page
+import io.micronaut.data.model.Pageable
+import io.micronaut.data.model.Slice
+import io.micronaut.data.mongodb.annotation.*
 import io.micronaut.data.repository.CrudRepository
 import org.bson.types.ObjectId
 
@@ -9042,6 +9058,213 @@ You can specify MongoDB&#8217;s database name using the repository annotation: <
 </td>
 </tr>
 </table>
+</div>
+
+<h2 id="mongoInsertsAndUpdates"><a class="anchor" href="#mongoInsertsAndUpdates"></a>9.2.1 Inserts and Updates</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/mongo/mongoRepositories/mongoInsertsAndUpdates.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>Unlike JPA/Hibernate, Micronaut Data MongoDB is stateless and has no notion of a persistence session that requires state management.</p>
+</div>
+<div class="paragraph">
+<p>Since there is no session, features like dirty checking are not supported. This has implications when defining repository methods for inserts and updates.</p>
+</div>
+<div class="paragraph">
+<p>By default, when saving an entity with a method like <code>save(MyEntity)</code> an insert is always performed since Micronaut Data has no way to know whether the entity is associated to a particular session.</p>
+</div>
+<div class="paragraph">
+<p>If you wish to update an entity you should instead either use <code>update(MyEntity)</code> or even better define an appropriate <code>update</code> method to update only the data you want to update, for example:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">void update(@Id ObjectId id, int pages);
+
+void update(@Id ObjectId id, String title);</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">void update(@Id ObjectId id, int pages);
+
+void update(@Id ObjectId id, String title);</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">fun update(@Id id: ObjectId, pages: Int)
+
+fun update(@Id id: ObjectId, title: String)</code></pre>
+</div>
+</div>
+
+<h2 id="mongoCustomQueries"><a class="anchor" href="#mongoCustomQueries"></a>9.2.2 Custom Queries and Options</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/mongo/mongoRepositories/mongoCustomQueries.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>Micronaut Data MongoDB introduces a few annotations that can be used to define custom queries and modify default options:</p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<caption class="title">Table 1. Micronaut Data MongoDB annotations</caption>
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Annotation</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/mongodb/annotation/MongoFindQuery.html">@MongoFindQuery</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Allows defining a custom find method execution with values for filtering, sorting, projection and collation.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/mongodb/annotation/MongoAggregateQuery.html">@MongoAggregateQuery</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Allows defining a custom aggregate method execution with a value for the pipeline.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/mongodb/annotation/MongoUpdateQuery.html">@MongoUpdateQuery</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Allows defining a custom update method execution with values for filter, update and collation.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/mongodb/annotation/MongoDeleteQuery.html">@MongoDeleteQuery</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Allows defining a custom update method execution with values for filter and collation.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/mongodb/annotation/MongoFilter.html">@MongoFilter</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Allows defining a custom filter value for operations that support it. Can be used on annotation to create a predefined filter annotation.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/mongodb/annotation/MongoSort.html">@MongoSort</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Allows defining a custom sort value for operations that support it. Can be used on repository class to define a default sort or to create a predefined sort annotation.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/mongodb/annotation/MongoProjection.html">@MongoProjection</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Allows defining a custom projection value for operations that support it. Can be used on repository class to define a default projection or to create a predefined projection annotation.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/mongodb/annotation/MongoCollation.html">@MongoCollation</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Allows defining a custom collation value for operations that support it. Can be used on repository class to define a default collation or to create a predefined collation annotation.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/mongodb/annotation/MongoAggregateOptions.html">@MongoAggregateOptions</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The aggregation operation options.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/mongodb/annotation/MongoFindOptions.html">@MongoFindOptions</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The find operation options.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/mongodb/annotation/MongoUpdateOptions.html">@MongoUpdateOptions</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The update operation options.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/mongodb/annotation/MongoDeleteOptions.html">@MongoDeleteOptions</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The delete operation options.</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>Custom queries for MongoDB are defined in JSON and method parameters can be references as a variable prefixed with <code>:</code>.</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">@MongoFindQuery(filter = "{title:{$regex: :t}}", sort = "{title: 1}")
+List&lt;Book&gt; customFind(String t);
+
+@MongoAggregateQuery("[{$match: {name:{$regex: :t}}}, {$sort: {name: 1}}, {$project: {name: 1}}]")
+List&lt;Person&gt; customAggregate(String t);
+
+@MongoUpdateQuery(filter = "{title:{$regex: :t}}", update = "{$set:{name: 'tom'}}")
+List&lt;Book&gt; customUpdate(String t);
+
+@MongoDeleteQuery(filter = "{title:{$regex: :t}}", collation = "{locale:'en_US', numericOrdering:true}")
+void customDelete(String t);</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">@MongoFindQuery(filter = '{title:{$regex: :t}}', sort = '{title: 1}')
+List&lt;Book&gt; customFind(String t);
+
+@MongoAggregateQuery('[{$match: {name:{$regex: :t}}}, {$sort: {name: 1}}, {$project: {name: 1}}]')
+List&lt;Person&gt; customAggregate(String t)
+
+@MongoUpdateQuery(filter = '{title:{$regex: :t}}', update = '{$set:{name: "tom"}}')
+List&lt;Book&gt; customUpdate(String t);
+
+@MongoDeleteQuery(filter = '{title:{$regex: :t}}', collation = "{locale:'en_US', numericOrdering:true}")
+void customDelete(String t);</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">@MongoFindQuery(filter = "{title:{\$regex: :t}}", sort = "{title: 1}")
+fun customFind(t: String): List&lt;Book&gt;
+
+@MongoAggregateQuery("[{\$match: {name:{\$regex: :t}}}, {\$sort: {name: 1}}, {\$project: {name: 1}}]")
+fun customAggregate(t: String): List&lt;Person&gt;
+
+@MongoUpdateQuery(filter = "{title:{\$regex: :t}}", update = "{\$set:{name: 'tom'}}")
+fun customUpdate(t: String): List&lt;Book&gt;
+
+@MongoDeleteQuery(filter = "{title:{\$regex: :t}}", collation = "{locale:'en_US', numericOrdering:true}")
+fun customDelete(t: String)</code></pre>
+</div>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+Only queries for the filter, pipeline and the update can reference method parameters.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Some annotations support to be defined on the repository, that can be used to provide the defaults for all operations that support it:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">@MongoFindOptions(allowDiskUse = true, maxTimeMS = 1000)
+@MongoAggregateOptions(allowDiskUse = true, maxTimeMS = 100)
+@MongoCollation("{ locale: 'en_US', numericOrdering: true}")
+@MongoRepository
+public interface SaleRepository extends CrudRepository&lt;Sale, ObjectId&gt; {</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">@MongoFindOptions(allowDiskUse = true, maxTimeMS = 1000L)
+@MongoAggregateOptions(allowDiskUse = true, maxTimeMS = 100L)
+@MongoCollation("{ locale: 'en_US', numericOrdering: true}")
+@MongoRepository
+interface SaleRepository extends CrudRepository&lt;Sale, ObjectId&gt; {</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">@MongoFindOptions(allowDiskUse = true, maxTimeMS = 1000)
+@MongoAggregateOptions(allowDiskUse = true, maxTimeMS = 100)
+@MongoCollation("{ locale: 'en_US', numericOrdering: true}")
+@MongoRepository
+interface SaleRepository : CrudRepository&lt;Sale, ObjectId&gt; {</code></pre>
+</div>
 </div>
 
 <h2 id="mongoMapping"><a class="anchor" href="#mongoMapping"></a>9.3 Mapping Entities</h2>

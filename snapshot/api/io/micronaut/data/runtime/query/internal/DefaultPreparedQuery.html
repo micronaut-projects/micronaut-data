@@ -17,7 +17,7 @@
     catch(err) {
     }
 //-->
-var methods = {"i0":10,"i1":10,"i2":10,"i3":10,"i4":10,"i5":10,"i6":10,"i7":10,"i8":10,"i9":10,"i10":10,"i11":10,"i12":10,"i13":10};
+var methods = {"i0":10,"i1":10,"i2":10,"i3":10,"i4":10,"i5":10,"i6":10,"i7":10,"i8":10,"i9":10,"i10":10,"i11":10,"i12":10,"i13":10,"i14":10};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],8:["t4","Concrete Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -208,51 +208,55 @@ implements <a href="../../../../../../io/micronaut/data/runtime/query/internal/D
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/query/internal/DefaultPreparedQuery.html#getAttributes--">getAttributes</a></span>()</code>&nbsp;</td>
 </tr>
 <tr id="i4" class="altColor">
+<td class="colFirst"><code>io.micronaut.aop.MethodInvocationContext&lt;?,?&gt;</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/query/internal/DefaultPreparedQuery.html#getContext--">getContext</a></span>()</code>&nbsp;</td>
+</tr>
+<tr id="i5" class="rowColor">
 <td class="colFirst"><code><a href="../../../../../../io/micronaut/data/model/Pageable.html" title="interface in io.micronaut.data.model">Pageable</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/query/internal/DefaultPreparedQuery.html#getPageable--">getPageable</a></span>()</code>&nbsp;</td>
 </tr>
-<tr id="i5" class="rowColor">
+<tr id="i6" class="altColor">
 <td class="colFirst"><code>java.lang.Object[]</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/query/internal/DefaultPreparedQuery.html#getParameterArray--">getParameterArray</a></span>()</code>&nbsp;</td>
 </tr>
-<tr id="i6" class="altColor">
+<tr id="i7" class="rowColor">
 <td class="colFirst"><code>&lt;RT1&gt;&nbsp;java.util.Optional&lt;RT1&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/query/internal/DefaultPreparedQuery.html#getParameterInRole-java.lang.String-java.lang.Class-">getParameterInRole</a></span>(java.lang.String&nbsp;role,
                   java.lang.Class&lt;RT1&gt;&nbsp;type)</code>
 <div class="block">Return the value of the given parameter if the given role.</div>
 </td>
 </tr>
-<tr id="i7" class="rowColor">
+<tr id="i8" class="altColor">
 <td class="colFirst"><code>java.util.Map&lt;java.lang.String,java.lang.Object&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/query/internal/DefaultPreparedQuery.html#getParameterValues--">getParameterValues</a></span>()</code>&nbsp;</td>
 </tr>
-<tr id="i8" class="altColor">
+<tr id="i9" class="rowColor">
 <td class="colFirst"><code>java.lang.String</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/query/internal/DefaultPreparedQuery.html#getQuery--">getQuery</a></span>()</code>
 <div class="block">The query to execute.</div>
 </td>
 </tr>
-<tr id="i9" class="rowColor">
+<tr id="i10" class="altColor">
 <td class="colFirst"><code>java.util.Map&lt;java.lang.String,java.lang.Object&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/query/internal/DefaultPreparedQuery.html#getQueryHints--">getQueryHints</a></span>()</code>
 <div class="block">The parameter binding.</div>
 </td>
 </tr>
-<tr id="i10" class="altColor">
+<tr id="i11" class="rowColor">
 <td class="colFirst"><code>java.lang.Class&lt;?&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/query/internal/DefaultPreparedQuery.html#getRepositoryType--">getRepositoryType</a></span>()</code>&nbsp;</td>
 </tr>
-<tr id="i11" class="rowColor">
+<tr id="i12" class="altColor">
 <td class="colFirst"><code>java.lang.Class&lt;<a href="../../../../../../io/micronaut/data/runtime/query/internal/DefaultPreparedQuery.html" title="type parameter in DefaultPreparedQuery">E</a>&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/query/internal/DefaultPreparedQuery.html#getRootEntity--">getRootEntity</a></span>()</code>
 <div class="block">The root entity type.</div>
 </td>
 </tr>
-<tr id="i12" class="altColor">
+<tr id="i13" class="rowColor">
 <td class="colFirst"><code><a href="../../../../../../io/micronaut/data/model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;<a href="../../../../../../io/micronaut/data/runtime/query/internal/DefaultPreparedQuery.html" title="type parameter in DefaultPreparedQuery">E</a>,<a href="../../../../../../io/micronaut/data/runtime/query/internal/DefaultPreparedQuery.html" title="type parameter in DefaultPreparedQuery">RT</a>&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/query/internal/DefaultPreparedQuery.html#getStoredQueryDelegate--">getStoredQueryDelegate</a></span>()</code>&nbsp;</td>
 </tr>
-<tr id="i13" class="rowColor">
+<tr id="i14" class="altColor">
 <td class="colFirst"><code>boolean</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/query/internal/DefaultPreparedQuery.html#isDtoProjection--">isDtoProjection</a></span>()</code>
 <div class="block">Returns whether the query returns the actual entity or a Data Transfer Object (DTO) project.</div>
@@ -355,6 +359,19 @@ implements <a href="../../../../../../io/micronaut/data/runtime/query/internal/D
 <!--   -->
 </a>
 <h3>Method Detail</h3>
+<a name="getContext--">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>getContext</h4>
+<pre>public&nbsp;io.micronaut.aop.MethodInvocationContext&lt;?,?&gt;&nbsp;getContext()</pre>
+<dl>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>The context</dd>
+</dl>
+</li>
+</ul>
 <a name="getRootEntity--">
 <!--   -->
 </a>

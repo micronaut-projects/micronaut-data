@@ -131,7 +131,9 @@ var activeTableTab = "activeTableTab";
 </tr>
 <tr id="i0" class="altColor">
 <td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;java.lang.Object,java.lang.Long&gt;</code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/runtime/query/StoredQueryResolver.html#createCountStoredQuery-java.lang.String-io.micronaut.core.annotation.AnnotationMetadata-java.lang.Class-java.lang.String-java.lang.String:A-java.util.List-">createCountStoredQuery</a></span>(java.lang.String&nbsp;name,
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/runtime/query/StoredQueryResolver.html#createCountStoredQuery-io.micronaut.inject.ExecutableMethod-io.micronaut.data.intercept.annotation.DataMethod.OperationType-java.lang.String-io.micronaut.core.annotation.AnnotationMetadata-java.lang.Class-java.lang.String-java.lang.String:A-java.util.List-">createCountStoredQuery</a></span>(io.micronaut.inject.ExecutableMethod&lt;?,?&gt;&nbsp;executableMethod,
+                      <a href="../../../../../io/micronaut/data/intercept/annotation/DataMethod.OperationType.html" title="enum in io.micronaut.data.intercept.annotation">DataMethod.OperationType</a>&nbsp;operationType,
+                      java.lang.String&nbsp;name,
                       io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
                       java.lang.Class&lt;java.lang.Object&gt;&nbsp;rootEntity,
                       java.lang.String&nbsp;query,
@@ -142,7 +144,9 @@ var activeTableTab = "activeTableTab";
 </tr>
 <tr id="i1" class="rowColor">
 <td class="colFirst"><code>&lt;E,QR&gt;&nbsp;<a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;E,QR&gt;</code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/runtime/query/StoredQueryResolver.html#createStoredQuery-java.lang.String-io.micronaut.core.annotation.AnnotationMetadata-java.lang.Class-java.lang.String-java.lang.String-java.lang.String:A-java.util.List-boolean-boolean-">createStoredQuery</a></span>(java.lang.String&nbsp;name,
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/runtime/query/StoredQueryResolver.html#createStoredQuery-io.micronaut.inject.ExecutableMethod-io.micronaut.data.intercept.annotation.DataMethod.OperationType-java.lang.String-io.micronaut.core.annotation.AnnotationMetadata-java.lang.Class-java.lang.String-java.lang.String-java.lang.String:A-java.util.List-boolean-boolean-">createStoredQuery</a></span>(io.micronaut.inject.ExecutableMethod&lt;?,?&gt;&nbsp;executableMethod,
+                 <a href="../../../../../io/micronaut/data/intercept/annotation/DataMethod.OperationType.html" title="enum in io.micronaut.data.intercept.annotation">DataMethod.OperationType</a>&nbsp;operationType,
+                 java.lang.String&nbsp;name,
                  io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
                  java.lang.Class&lt;java.lang.Object&gt;&nbsp;rootEntity,
                  java.lang.String&nbsp;query,
@@ -231,13 +235,15 @@ var activeTableTab = "activeTableTab";
 </dl>
 </li>
 </ul>
-<a name="createStoredQuery-java.lang.String-io.micronaut.core.annotation.AnnotationMetadata-java.lang.Class-java.lang.String-java.lang.String-java.lang.String:A-java.util.List-boolean-boolean-">
+<a name="createStoredQuery-io.micronaut.inject.ExecutableMethod-io.micronaut.data.intercept.annotation.DataMethod.OperationType-java.lang.String-io.micronaut.core.annotation.AnnotationMetadata-java.lang.Class-java.lang.String-java.lang.String-java.lang.String:A-java.util.List-boolean-boolean-">
 <!--   -->
 </a>
 <ul class="blockList">
 <li class="blockList">
 <h4>createStoredQuery</h4>
-<pre>&lt;E,QR&gt;&nbsp;<a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;E,QR&gt;&nbsp;createStoredQuery(java.lang.String&nbsp;name,
+<pre>&lt;E,QR&gt;&nbsp;<a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;E,QR&gt;&nbsp;createStoredQuery(io.micronaut.inject.ExecutableMethod&lt;?,?&gt;&nbsp;executableMethod,
+                                           <a href="../../../../../io/micronaut/data/intercept/annotation/DataMethod.OperationType.html" title="enum in io.micronaut.data.intercept.annotation">DataMethod.OperationType</a>&nbsp;operationType,
+                                           java.lang.String&nbsp;name,
                                            io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
                                            java.lang.Class&lt;java.lang.Object&gt;&nbsp;rootEntity,
                                            java.lang.String&nbsp;query,
@@ -253,6 +259,8 @@ var activeTableTab = "activeTableTab";
 <dd><code>E</code> - The entity type</dd>
 <dd><code>QR</code> - The result type</dd>
 <dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>executableMethod</code> - The executableMethod</dd>
+<dd><code>operationType</code> - The operationType</dd>
 <dd><code>name</code> - The name</dd>
 <dd><code>annotationMetadata</code> - The annotation metadata</dd>
 <dd><code>rootEntity</code> - The root entity</dd>
@@ -267,13 +275,15 @@ var activeTableTab = "activeTableTab";
 </dl>
 </li>
 </ul>
-<a name="createCountStoredQuery-java.lang.String-io.micronaut.core.annotation.AnnotationMetadata-java.lang.Class-java.lang.String-java.lang.String:A-java.util.List-">
+<a name="createCountStoredQuery-io.micronaut.inject.ExecutableMethod-io.micronaut.data.intercept.annotation.DataMethod.OperationType-java.lang.String-io.micronaut.core.annotation.AnnotationMetadata-java.lang.Class-java.lang.String-java.lang.String:A-java.util.List-">
 <!--   -->
 </a>
 <ul class="blockListLast">
 <li class="blockList">
 <h4>createCountStoredQuery</h4>
-<pre><a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;java.lang.Object,java.lang.Long&gt;&nbsp;createCountStoredQuery(java.lang.String&nbsp;name,
+<pre><a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;java.lang.Object,java.lang.Long&gt;&nbsp;createCountStoredQuery(io.micronaut.inject.ExecutableMethod&lt;?,?&gt;&nbsp;executableMethod,
+                                                                    <a href="../../../../../io/micronaut/data/intercept/annotation/DataMethod.OperationType.html" title="enum in io.micronaut.data.intercept.annotation">DataMethod.OperationType</a>&nbsp;operationType,
+                                                                    java.lang.String&nbsp;name,
                                                                     io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
                                                                     java.lang.Class&lt;java.lang.Object&gt;&nbsp;rootEntity,
                                                                     java.lang.String&nbsp;query,
@@ -283,6 +293,8 @@ var activeTableTab = "activeTableTab";
  Used for criteria stored query creation.</div>
 <dl>
 <dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>executableMethod</code> - The executableMethod</dd>
+<dd><code>operationType</code> - The operationType</dd>
 <dd><code>name</code> - The name</dd>
 <dd><code>annotationMetadata</code> - The annotation metadata</dd>
 <dd><code>rootEntity</code> - The root entity</dd>
