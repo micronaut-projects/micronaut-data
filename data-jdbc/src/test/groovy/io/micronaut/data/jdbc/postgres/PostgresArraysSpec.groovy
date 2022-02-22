@@ -67,7 +67,7 @@ class PostgresArraysSpec extends AbstractArraysSpec implements PostgresTestPrope
         given:
             def repo = context.getBean(Repo)
         when:
-            def e = repo.save(new Ent(strings: new String[0]))
+            def e = repo.save(new Ent(null, new String[0]))
         then:
             e.strings.length == 0
         when:
@@ -85,6 +85,11 @@ class Ent {
     Long id
     @MappedProperty(definition = "VARCHAR(255) []", type = DataType.STRING_ARRAY)
     String[] strings
+
+    Ent(Long id, String[] strings) {
+        this.id = id
+        this.strings = strings
+    }
 }
 
 @JdbcRepository(dialect = Dialect.POSTGRES)

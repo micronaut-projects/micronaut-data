@@ -473,19 +473,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                                     }
                                 }
                             }
-
-                            if (prop.getType().isInstance(v)) {
-                                args[i] = v;
-                            } else if (prop.getDataType() == DataType.JSON && jsonCodec != null) {
-                                try {
-                                    args[i] = jsonCodec.decode(prop.getArgument(), v.toString());
-                                } catch (Exception e) {
-                                    // Fallback to reading and converting if decoding failed.
-                                    args[i] = resultReader.convertRequired(v, prop.getArgument());
-                                }
-                            } else {
-                                args[i] = resultReader.convertRequired(v, prop.getArgument());
-                            }
+                            args[i] = convert(prop, v);
                         }
                     } else {
                         throw new DataAccessException("Constructor argument [" + constructorArguments[i].getName() + "] must have an associated getter.");
@@ -501,13 +489,13 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
             if (id != null && identity != null) {
                 @SuppressWarnings("unchecked")
                 BeanProperty<K, Object> idProperty = (BeanProperty<K, Object>) identity.getProperty();
-                entity = (K) convertAndSetWithValue(entity, identity, idProperty, id, identity.getDataType());
+                entity = (K) convertAndSetWithValue(entity, identity, idProperty, id);
             }
             RuntimePersistentProperty<K> version = persistentEntity.getVersion();
             if (version != null) {
                 Object v = readProperty(rs, ctx, version);
                 if (v != null) {
-                    entity = (K) convertAndSetWithValue(entity, version, version.getProperty(), v, version.getDataType());
+                    entity = (K) convertAndSetWithValue(entity, version, version.getProperty(), v);
                 }
             }
             for (RuntimePersistentProperty<K> rpp : persistentEntity.getPersistentProperties()) {
@@ -567,7 +555,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                 } else {
                     Object v = readProperty(rs, ctx, rpp);
                     if (v != null) {
-                        entity = (K) convertAndSetWithValue(entity, rpp, property, v, rpp.getDataType());
+                        entity = (K) convertAndSetWithValue(entity, rpp, property, v);
                     }
                 }
             }
@@ -612,9 +600,12 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
         return readProperty(rs, ctx, identity);
     }
 
-    private Object convertAndSetWithValue(Object entity, RuntimePersistentProperty rpp, BeanProperty property, Object v, DataType dataType) {
+    private Object convertAndSetWithValue(Object entity, RuntimePersistentProperty<?> rpp, BeanProperty property, Object v) {
+        return setProperty(property, entity, convert(rpp, v));
+    }
+
+    private Object convert(RuntimePersistentProperty<?> rpp, Object v) {
         Class<?> propertyType = rpp.getType();
-        final Object r;
         if (v instanceof Array) {
             try {
                 v = ((Array) v).getArray();
@@ -623,15 +614,16 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
             }
         }
         if (propertyType.isInstance(v)) {
-            r = v;
-        } else {
-            if (dataType == DataType.JSON && jsonCodec != null) {
-                r = jsonCodec.decode(rpp.getArgument(), v.toString());
-            } else {
-                r = resultReader.convertRequired(v, rpp.getArgument());
+            return v;
+        }
+        if (jsonCodec != null && rpp.getDataType() == DataType.JSON) {
+            try {
+                return jsonCodec.decode(rpp.getArgument(), v.toString());
+            } catch (Exception e) {
+                // Ignore and try basic convert
             }
         }
-        return setProperty(property, entity, r);
+        return resultReader.convertRequired(v, rpp.getArgument());
     }
 
     private <K> K buildIdOnlyEntity(RS rs, MappingContext<K> ctx, Object resolvedId) {

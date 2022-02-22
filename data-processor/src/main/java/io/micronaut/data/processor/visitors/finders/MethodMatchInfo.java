@@ -51,8 +51,10 @@ public final class MethodMatchInfo {
 
     /**
      * Creates a method info.
-     * @param resultType The result type, can be null for void etc.
-     * @param interceptor The interceptor type to execute at runtime
+     *
+     * @param operationType The operation type
+     * @param resultType    The result type, can be null for void etc.
+     * @param interceptor   The interceptor type to execute at runtime
      */
     public MethodMatchInfo(DataMethod.OperationType operationType, @Nullable TypedElement resultType, @Nullable ClassElement interceptor) {
         this.operationType = operationType;

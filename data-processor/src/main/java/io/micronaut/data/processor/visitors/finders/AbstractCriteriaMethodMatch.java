@@ -462,10 +462,6 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
             throw new MatchFailedException("No property name specified in clause: " + restriction.getName());
         }
 
-        if ("Id".equals(propertyName) && root.getPersistentEntity().hasCompositeIdentity()) {
-
-        }
-
         Expression prop = getProperty(root, propertyName);
 
         Predicate predicate = restriction.find(root,
