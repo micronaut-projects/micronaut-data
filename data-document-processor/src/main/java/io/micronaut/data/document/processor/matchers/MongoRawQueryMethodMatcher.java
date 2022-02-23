@@ -197,7 +197,6 @@ public class MongoRawQueryMethodMatcher implements MethodMatcher {
         });
 
         methodMatchInfo
-                .isRawQuery(true)
                 .encodeEntityParameters(encodeEntityParameters)
                 .queryResult(queryResult)
                 .countQueryResult(null);

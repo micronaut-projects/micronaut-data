@@ -34,6 +34,7 @@ import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.core.type.Argument;
@@ -160,7 +161,7 @@ public class DefaultReactiveMongoRepositoryOperations extends AbstractMongoRepos
     public <T, R> Mono<R> findOne(PreparedQuery<T, R> preparedQuery) {
         return withClientSession(clientSession -> {
             MongoPreparedQuery<T, R, MongoDatabase> mongoPreparedQuery = getMongoPreparedQuery(preparedQuery);
-            if (isCountQuery(preparedQuery)) {
+            if (mongoPreparedQuery.isCount()) {
                 return getCount(clientSession, mongoPreparedQuery);
             }
             if (mongoPreparedQuery.isAggregate()) {
@@ -346,7 +347,7 @@ public class DefaultReactiveMongoRepositoryOperations extends AbstractMongoRepos
     }
 
     private <T, R> Flux<R> findAll(ClientSession clientSession, MongoPreparedQuery<T, R, MongoDatabase> preparedQuery) {
-        if (isCountQuery(preparedQuery)) {
+        if (preparedQuery.isCount()) {
             return getCount(clientSession, preparedQuery).flux();
         }
         if (preparedQuery.isAggregate()) {
@@ -369,7 +370,8 @@ public class DefaultReactiveMongoRepositoryOperations extends AbstractMongoRepos
                     .switchIfEmpty(Mono.defer(() -> Mono.just(conversionService.convertRequired(0, resultType))));
         } else {
             MongoFind find = preparedQuery.getFind();
-            Bson filter = find.getOptions().getFilter();
+            MongoFindOptions options = find.getOptions();
+            Bson filter = options == null ? null : options.getFilter();
             filter = filter == null ? new BsonDocument() : filter;
             if (QUERY_LOG.isDebugEnabled()) {
                 QUERY_LOG.debug("Executing Mongo 'countDocuments' with filter: {}", filter.toBsonDocument().toJson());
@@ -438,7 +440,10 @@ public class DefaultReactiveMongoRepositoryOperations extends AbstractMongoRepos
         return applyFindOptions(find.getOptions(), findIterable);
     }
 
-    private <T, R, MR> FindPublisher<MR> applyFindOptions(MongoFindOptions findOptions, FindPublisher<MR> findIterable) {
+    private <MR> FindPublisher<MR> applyFindOptions(@Nullable MongoFindOptions findOptions, FindPublisher<MR> findIterable) {
+        if (findOptions == null) {
+            return findIterable;
+        }
         Bson filter = findOptions.getFilter();
         if (filter != null) {
             findIterable = findIterable.filter(filter);
@@ -535,7 +540,10 @@ public class DefaultReactiveMongoRepositoryOperations extends AbstractMongoRepos
         return aggregate(clientSession, preparedQuery, preparedQuery.getResultType());
     }
 
-    private <MR> AggregatePublisher<MR> applyAggregateOptions(MongoAggregationOptions aggregateOptions, AggregatePublisher<MR> aggregateIterable) {
+    private <MR> AggregatePublisher<MR> applyAggregateOptions(@Nullable MongoAggregationOptions aggregateOptions, AggregatePublisher<MR> aggregateIterable) {
+        if (aggregateOptions == null) {
+            return aggregateIterable;
+        }
         if (aggregateOptions.getCollation() != null) {
             aggregateIterable = aggregateIterable.collation(aggregateOptions.getCollation());
         }

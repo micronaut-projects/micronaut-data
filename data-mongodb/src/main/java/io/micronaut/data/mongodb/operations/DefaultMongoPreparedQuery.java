@@ -84,7 +84,8 @@ final class DefaultMongoPreparedQuery<E, R, Dtb> implements DelegatePreparedQuer
         MongoFind find = mongoStoredQuery.getFind(preparedQuery.getContext());
         Pageable pageable = preparedQuery.getPageable();
         if (pageable != Pageable.UNPAGED) {
-            MongoFindOptions options = new MongoFindOptions(find.getOptions());
+            MongoFindOptions findOptions = find.getOptions();
+            MongoFindOptions options = findOptions == null ? new MongoFindOptions() : new MongoFindOptions(findOptions);
             options.limit(pageable.getSize()).skip((int) pageable.getOffset());
             Sort pageableSort = pageable.getSort();
             if (pageableSort.isSorted()) {

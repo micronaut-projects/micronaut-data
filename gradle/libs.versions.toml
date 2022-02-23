@@ -42,6 +42,12 @@ shadow-gradle-plugin = "7.1.2"
 
 [libraries]
 
+reactor = { module = 'io.projectreactor:reactor-core' }
+rxjava2 = { module = 'io.reactivex.rxjava2:rxjava' }
+
+micronaut-reactor = { module = 'io.micronaut.reactor:micronaut-reactor' }
+micronaut-rxjava2 = { module = 'io.micronaut.rxjava2:micronaut-rxjava2' }
+
 groovy-sql = { module = "org.codehaus.groovy:groovy-sql" }
 groovy-dateutil = { module = "org.codehaus.groovy:groovy-dateutil", version.ref = "groovy" }
 

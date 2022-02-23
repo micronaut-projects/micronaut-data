@@ -23,7 +23,7 @@ dependencies {
 
     compileOnly libs.mongodb.driver.sync
     compileOnly libs.mongodb.driver.reactive
-    compileOnly mn.micronaut.reactor
+    compileOnly libs.micronaut.reactor
 
     testAnnotationProcessor projects.dataDocumentProcessor
     testAnnotationProcessor mn.micronaut.inject.java
@@ -34,8 +34,8 @@ dependencies {
     testImplementation projects.dataDocumentProcessor
     testImplementation projects.dataDocumentTck
     testImplementation libs.jakarta.persistence.api
-    testImplementation mn.micronaut.rxjava2
-    testImplementation mn.micronaut.reactor
+    testImplementation libs.micronaut.rxjava2
+    testImplementation libs.micronaut.reactor
     testImplementation libs.jakarta.persistence.api
     testImplementation mn.micronaut.validation
     testImplementation libs.testcontainers.spock

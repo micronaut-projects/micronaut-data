@@ -26,3 +26,9 @@ Note that in addition to interfaces you can also define repositories as abstract
 snippet::example.AbstractBookRepository[project-base="doc-examples/mongo-example", source="main"]
 
 NOTE: You can specify MongoDB's database name using the repository annotation: `@MongoRepository(databaseName = "mydb")` or in the connection url: `mongodb://username:password@localhost:27017/mydb`
+
+Micronaut Data MongoDB introduces one special repository interface api:data.mongodb.repository.MongoQueryExecutor[] which accepts `Bson`/`List<Bson>` filter/pipeline/update parameters intended to be used in combination with MongoDB DSL API:
+
+ - `com.mongodb.client.model.Filters`
+ - `com.mongodb.client.model.Aggregates`
+ - `com.mongodb.client.model.Updates`

@@ -36,4 +36,20 @@ public interface MongoAnnotations {
     String PROJECTION = "io.micronaut.data.mongodb.annotation.MongoProjection";
     String COLLATION = "io.micronaut.data.mongodb.annotation.MongoCollation";
 
+    String FILTER_ROLE = "filter";
+    String PIPELINE_ROLE = "pipeline";
+    String UPDATE_ROLE = "update";
+    String FIND_OPTIONS_ROLE = "findOptions";
+    String AGGREGATE_OPTIONS_ROLE = "aggregateOptions";
+    String UPDATE_OPTIONS_ROLE = "updateOptions";
+    String DELETE_OPTIONS_ROLE = "deleteOptions";
+
+    String EXECUTOR_REPOSITORY = "io.micronaut.data.mongodb.repository.MongoQueryExecutor";
+
+    String BSON = "org.bson.conversions.Bson";
+    String FIND_OPTIONS_BEAN = "io.micronaut.data.mongodb.operations.options.MongoFindOptions";
+    String AGGREGATION_OPTIONS_BEAN = "io.micronaut.data.mongodb.operations.options.MongoAggregationOptions";
+    String UPDATE_OPTIONS_BEAN = "com.mongodb.client.model.UpdateOptions";
+    String DELETE_OPTIONS_BEAN = "com.mongodb.client.model.DeleteOptions";
+
 }

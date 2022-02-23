@@ -1,8 +1,14 @@
 package io.micronaut.data.document.mongodb
 
 import com.mongodb.client.MongoClient
+import com.mongodb.client.model.Aggregates
+import com.mongodb.client.model.DeleteOptions
+import com.mongodb.client.model.Filters
+import com.mongodb.client.model.UpdateOptions
+import com.mongodb.client.model.Updates
 import groovy.transform.Memoized
 import io.micronaut.data.document.mongodb.repositories.MongoAuthorRepository
+import io.micronaut.data.document.mongodb.repositories.MongoExecutorPersonRepository
 import io.micronaut.data.document.mongodb.repositories.MongoBasicTypesRepository
 import io.micronaut.data.document.mongodb.repositories.MongoBookRepository
 import io.micronaut.data.document.mongodb.repositories.MongoDomainEventsRepository
@@ -18,6 +24,8 @@ import io.micronaut.data.document.tck.repositories.BookRepository
 import io.micronaut.data.document.tck.repositories.DomainEventsRepository
 import io.micronaut.data.document.tck.repositories.SaleRepository
 import io.micronaut.data.document.tck.repositories.StudentRepository
+import io.micronaut.data.mongodb.operations.options.MongoAggregationOptions
+import io.micronaut.data.mongodb.operations.options.MongoFindOptions
 import org.bson.BsonDocument
 
 class MongoDocumentRepositorySpec extends AbstractDocumentRepositorySpec implements MongoTestPropertyProvider {
@@ -223,6 +231,132 @@ class MongoDocumentRepositorySpec extends AbstractDocumentRepositorySpec impleme
         then:
             deleted == 1
             people.size() == 3
+    }
+
+    void "query executor counts"() {
+        given:
+            savePersons(["Dennis", "Jeff", "James", "Dennis"])
+        when:
+            def count = mongoExecutorPersonRepository.count(Filters.eq("name", "Jeff"))
+        then:
+            count == 1
+        when:
+            count = mongoExecutorPersonRepository.count(Filters.regex("name", /J.*/))
+        then:
+            count == 2
+    }
+
+    void "query executor finds"() {
+        given:
+            savePersons(["Dennis", "Jeff", "James", "Dennis"])
+        when:
+            def people = mongoExecutorPersonRepository.findAll(Filters.eq("name", "Jeff"))
+        then:
+            people.size() == 1
+        when:
+            people = mongoExecutorPersonRepository.findAll(new MongoFindOptions().filter(Filters.eq("name", "Jeff")))
+        then:
+            people.size() == 1
+        when:
+            people = mongoExecutorPersonRepository.findAll([Aggregates.match(Filters.eq("name", "Jeff"))])
+        then:
+            people.size() == 1
+        when:
+            people = mongoExecutorPersonRepository.findAll([Aggregates.match(Filters.eq("name", "Jeff"))], new MongoAggregationOptions())
+        then:
+            people.size() == 1
+        when:
+            def person = mongoExecutorPersonRepository.findOne(Filters.eq("name", "Jeff"))
+        then:
+            person.get().name == "Jeff"
+        when:
+            person = mongoExecutorPersonRepository.findOne(new MongoFindOptions().filter(Filters.eq("name", "Jeff")))
+        then:
+            person.get().name == "Jeff"
+        when:
+            person = mongoExecutorPersonRepository.findOne([Aggregates.match(Filters.eq("name", "Jeff"))])
+        then:
+            person.get().name == "Jeff"
+        when:
+            person = mongoExecutorPersonRepository.findOne([Aggregates.match(Filters.eq("name", "Jeff"))], new MongoAggregationOptions())
+        then:
+            person.get().name == "Jeff"
+    }
+
+    void "query executor deletes"() {
+        given:
+            savePersons(["Dennis", "Jeff", "James", "Dennis"])
+        when:
+            def people = mongoExecutorPersonRepository.findAll()
+        then:
+            people.size() == 4
+        when:
+            long deleted = mongoExecutorPersonRepository.deleteAll(Filters.regex("name", /J.*/))
+        then:
+            deleted == 2
+        when:
+            people = mongoExecutorPersonRepository.findAll()
+        then:
+            people.size() == 2
+    }
+
+    void "query executor deletes2"() {
+        given:
+            savePersons(["Dennis", "Jeff", "James", "Dennis"])
+        when:
+            def people = mongoExecutorPersonRepository.findAll()
+        then:
+            people.size() == 4
+        when:
+            long deleted = mongoExecutorPersonRepository.deleteAll(Filters.regex("name", /J.*/), new DeleteOptions())
+        then:
+            deleted == 2
+        when:
+            people = mongoExecutorPersonRepository.findAll()
+        then:
+            people.size() == 2
+    }
+
+    void "query executor updates"() {
+        given:
+            savePersons(["Dennis", "Jeff", "James", "Dennis"])
+        when:
+            def people = mongoExecutorPersonRepository.findAll()
+        then:
+            people.size() == 4
+        when:
+            long updated = mongoExecutorPersonRepository.updateAll(Filters.regex("name", /J.*/), Updates.set("name", "UPDATED"))
+        then:
+            updated == 2
+        when:
+            people = mongoExecutorPersonRepository.findAll()
+        then:
+            people.count{ it.name == "UPDATED" } == 2
+    }
+
+    void "query executor updates2"() {
+        given:
+            savePersons(["Dennis", "Jeff", "James", "Dennis"])
+        when:
+            def people = mongoExecutorPersonRepository.findAll()
+        then:
+            people.size() == 4
+        when:
+            long updated = mongoExecutorPersonRepository.updateAll(
+                    Filters.regex("name", /J.*/),
+                    Updates.set("name", "UPDATED"), new UpdateOptions()
+            )
+        then:
+            updated == 2
+        when:
+            people = mongoExecutorPersonRepository.findAll()
+        then:
+            people.count{ it.name == "UPDATED" } == 2
+    }
+
+    @Memoized
+    MongoExecutorPersonRepository getMongoExecutorPersonRepository() {
+        return context.getBean(MongoExecutorPersonRepository)
     }
 
     @Memoized

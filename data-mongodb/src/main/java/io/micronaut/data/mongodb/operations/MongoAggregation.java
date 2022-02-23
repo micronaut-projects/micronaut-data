@@ -17,6 +17,7 @@ package io.micronaut.data.mongodb.operations;
 
 import io.micronaut.core.annotation.Experimental;
 import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.mongodb.operations.options.MongoAggregationOptions;
 import org.bson.conversions.Bson;
 
@@ -40,7 +41,7 @@ public final class MongoAggregation {
      * @param pipeline The pipeline
      * @param options  The options
      */
-    public MongoAggregation(@NonNull List<Bson> pipeline, @NonNull MongoAggregationOptions options) {
+    public MongoAggregation(@NonNull List<Bson> pipeline, @Nullable MongoAggregationOptions options) {
         this.pipeline = pipeline;
         this.options = options;
     }
@@ -50,7 +51,7 @@ public final class MongoAggregation {
         return pipeline;
     }
 
-    @NonNull
+    @Nullable
     public MongoAggregationOptions getOptions() {
         return options;
     }

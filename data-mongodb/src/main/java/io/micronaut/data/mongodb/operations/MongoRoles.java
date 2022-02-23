@@ -15,32 +15,23 @@
  */
 package io.micronaut.data.mongodb.operations;
 
-import io.micronaut.core.annotation.Experimental;
-import io.micronaut.core.annotation.Nullable;
-import io.micronaut.data.mongodb.operations.options.MongoFindOptions;
+import io.micronaut.core.annotation.Internal;
 
 /**
- * The MongoDB's find command.
+ * Mongo parameter roles contansts.
  *
  * @author Denis Stepanov
  * @since 3.3.0
  */
-@Experimental
-public final class MongoFind {
+@Internal
+public interface MongoRoles {
 
-    private final MongoFindOptions options;
+    String FILTER_ROLE = "filter";
+    String PIPELINE_ROLE = "pipeline";
+    String UPDATE_ROLE = "update";
+    String FIND_OPTIONS_ROLE = "findOptions";
+    String AGGREGATE_OPTIONS_ROLE = "aggregateOptions";
+    String UPDATE_OPTIONS_ROLE = "updateOptions";
+    String DELETE_OPTIONS_ROLE = "deleteOptions";
 
-    /**
-     * The default constructor.
-     *
-     * @param options The options
-     */
-    public MongoFind(@Nullable MongoFindOptions options) {
-        this.options = options;
-    }
-
-    @Nullable
-    public MongoFindOptions getOptions() {
-        return options;
-    }
 }

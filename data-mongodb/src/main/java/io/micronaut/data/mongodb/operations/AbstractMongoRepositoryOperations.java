@@ -252,10 +252,6 @@ abstract class AbstractMongoRepositoryOperations<Dtb, Cnt, PS> extends AbstractR
         return conversionService.convertRequired(MongoUtils.toValue(value), resultType);
     }
 
-    protected <T, R> boolean isCountQuery(PreparedQuery<T, R> preparedQuery) {
-        return preparedQuery.isCount() || preparedQuery.getQuery().contains("$count");
-    }
-
     protected BsonDocument association(CodecRegistry codecRegistry,
                                        Object value, RuntimePersistentEntity<Object> persistentEntity,
                                        Object child, RuntimePersistentEntity<Object> childPersistentEntity) {
@@ -274,23 +270,25 @@ abstract class AbstractMongoRepositoryOperations<Dtb, Cnt, PS> extends AbstractR
     }
 
     protected void logFind(MongoFind find) {
-        MongoFindOptions options = find.getOptions();
         StringBuilder sb = new StringBuilder();
-        Bson filter = options.getFilter();
-        if (filter != null) {
-            sb.append(" filter: ").append(filter.toBsonDocument().toJson());
-        }
-        Bson sort = options.getSort();
-        if (sort != null) {
-            sb.append(" sort: ").append(sort.toBsonDocument().toJson());
-        }
-        Bson projection = options.getProjection();
-        if (projection != null) {
-            sb.append(" projection: ").append(projection.toBsonDocument().toJson());
-        }
-        Collation collation = options.getCollation();
-        if (collation != null) {
-            sb.append(" collation: ").append(collation);
+        MongoFindOptions options = find.getOptions();
+        if (options != null) {
+            Bson filter = options.getFilter();
+            if (filter != null) {
+                sb.append(" filter: ").append(filter.toBsonDocument().toJson());
+            }
+            Bson sort = options.getSort();
+            if (sort != null) {
+                sb.append(" sort: ").append(sort.toBsonDocument().toJson());
+            }
+            Bson projection = options.getProjection();
+            if (projection != null) {
+                sb.append(" projection: ").append(projection.toBsonDocument().toJson());
+            }
+            Collation collation = options.getCollation();
+            if (collation != null) {
+                sb.append(" collation: ").append(collation);
+            }
         }
         if (sb.length() == 0) {
             QUERY_LOG.debug("Executing exists Mongo 'find'");
@@ -302,10 +300,12 @@ abstract class AbstractMongoRepositoryOperations<Dtb, Cnt, PS> extends AbstractR
     protected void logAggregate(MongoAggregation aggregation) {
         MongoAggregationOptions options = aggregation.getOptions();
         StringBuilder sb = new StringBuilder();
-        sb.append(" pipeline: ").append(aggregation.getPipeline().stream().map(e -> e.toBsonDocument().toJson()).collect(Collectors.toList()));
-        Collation collation = options.getCollation();
-        if (collation != null) {
-            sb.append(" collation: ").append(collation);
+        if (options != null) {
+            sb.append(" pipeline: ").append(aggregation.getPipeline().stream().map(e -> e.toBsonDocument().toJson()).collect(Collectors.toList()));
+            Collation collation = options.getCollation();
+            if (collation != null) {
+                sb.append(" collation: ").append(collation);
+            }
         }
         QUERY_LOG.debug("Executing exists Mongo 'aggregate' with" + sb);
     }
