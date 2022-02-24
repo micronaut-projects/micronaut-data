@@ -19,6 +19,8 @@ import com.mongodb.client.model.DeleteOptions;
 import com.mongodb.client.model.UpdateOptions;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
+import io.micronaut.data.model.Page;
+import io.micronaut.data.model.Pageable;
 import io.micronaut.data.mongodb.operations.options.MongoAggregationOptions;
 import io.micronaut.data.mongodb.operations.options.MongoFindOptions;
 import org.bson.conversions.Bson;
@@ -57,7 +59,8 @@ public interface MongoQueryExecutor<E> {
      * @param filter The filter to be applied
      * @return The records
      */
-    @NonNull List<E> findAll(@Nullable Bson filter);
+    @NonNull
+    List<E> findAll(@Nullable Bson filter);
 
     /**
      * Finds all results.
@@ -65,10 +68,31 @@ public interface MongoQueryExecutor<E> {
      * @param options The options
      * @return The records
      */
-    @NonNull List<E> findAll(@NonNull MongoFindOptions options);
+    @NonNull
+    List<E> findAll(@NonNull MongoFindOptions options);
 
     /**
-     * Finds one result.
+     * Finds a page of records.
+     *
+     * @param filter   The filter
+     * @param pageable The pageable
+     * @return The page
+     */
+    @NonNull
+    Page<E> findAll(@Nullable Bson filter, @NonNull Pageable pageable);
+
+    /**
+     * Finds a page of records.
+     *
+     * @param options  The options
+     * @param pageable The pageable
+     * @return The page
+     */
+    @NonNull
+    Page<E> findAll(@NonNull MongoFindOptions options, @NonNull Pageable pageable);
+
+    /**
+     * Finds a page of records.
      *
      * @param pipeline The pipeline to be applied
      * @return The optional result
@@ -90,7 +114,8 @@ public interface MongoQueryExecutor<E> {
      * @param pipeline The pipeline to be applied
      * @return The results
      */
-    @NonNull List<E> findAll(@NonNull Iterable<Bson> pipeline);
+    @NonNull
+    List<E> findAll(@NonNull Iterable<Bson> pipeline);
 
     /**
      * Finds all results.
@@ -99,7 +124,8 @@ public interface MongoQueryExecutor<E> {
      * @param options  The options
      * @return The results
      */
-    @NonNull List<E> findAll(@NonNull Iterable<Bson> pipeline, @NonNull MongoAggregationOptions options);
+    @NonNull
+    List<E> findAll(@NonNull Iterable<Bson> pipeline, @NonNull MongoAggregationOptions options);
 
     /**
      * Count the records.

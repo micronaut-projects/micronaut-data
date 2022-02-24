@@ -16,6 +16,7 @@
 package io.micronaut.data.document.processor.matchers;
 
 import io.micronaut.data.annotation.Query;
+import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.document.mongo.MongoAnnotations;
 import io.micronaut.data.intercept.DataInterceptor;
 import io.micronaut.data.intercept.annotation.DataMethod;
@@ -110,6 +111,42 @@ public class MongoExecutorQueryMethodMatcher implements MethodMatcher {
                             protected void apply(MethodMatchInfo matchInfo) {
                                 matchInfo.addParameterRole(MongoAnnotations.PIPELINE_ROLE, parameter1.getName());
                                 matchInfo.addParameterRole(MongoAnnotations.AGGREGATE_OPTIONS_ROLE, parameter2.getName());
+                            }
+
+                        };
+                    }
+                    if ("findOne".equals(methodName)) {
+                        break;
+                    }
+                    ParameterElement p1 = parameters[0];
+                    ParameterElement p2 = parameters[1];
+                    if (isBson(p1)
+                            && p2.getType().isAssignable(MongoAnnotations.PAGEABLE_BEAN)) {
+                        return new MongoQueryExecutorMatch(DataMethod.OperationType.QUERY) {
+
+                            @Override
+                            protected void apply(MethodMatchInfo matchInfo) {
+                                matchInfo.addParameterRole(MongoAnnotations.FILTER_ROLE, p1.getName());
+                                matchInfo.addParameterRole(TypeRole.PAGEABLE, p2.getName());
+                                // Fake query to have stored query
+                                matchContext.getMethodElement().annotate(Query.class, builder -> {
+                                    builder.member(DataMethod.META_MEMBER_COUNT_QUERY, "{}");
+                                });
+                            }
+
+                        };
+                    } else if (p1.getType().isAssignable(MongoAnnotations.FIND_OPTIONS_BEAN)
+                            && p2.getType().isAssignable(MongoAnnotations.PAGEABLE_BEAN)) {
+                        return new MongoQueryExecutorMatch(DataMethod.OperationType.QUERY) {
+
+                            @Override
+                            protected void apply(MethodMatchInfo matchInfo) {
+                                matchInfo.addParameterRole(MongoAnnotations.FIND_OPTIONS_ROLE, p1.getName());
+                                matchInfo.addParameterRole(TypeRole.PAGEABLE, p2.getName());
+                                // Fake query to have stored query
+                                matchContext.getMethodElement().annotate(Query  .class, builder -> {
+                                    builder.member(DataMethod.META_MEMBER_COUNT_QUERY, "{}");
+                                });
                             }
 
                         };
@@ -220,8 +257,8 @@ public class MongoExecutorQueryMethodMatcher implements MethodMatcher {
         if (!parameter.getType().isAssignable(Iterable.class)) {
             return false;
         }
-        return parameter.getType().getFirstTypeArgument().isPresent() &&
-                parameter.getType().getFirstTypeArgument().get().isAssignable(MongoAnnotations.BSON);
+        Optional<ClassElement> firstTypeArgument = parameter.getType().getFirstTypeArgument();
+        return firstTypeArgument.isPresent() && firstTypeArgument.get().isAssignable(MongoAnnotations.BSON);
     }
 
     private boolean isBson(ParameterElement parameter) {

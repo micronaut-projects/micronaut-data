@@ -4,6 +4,7 @@ import com.mongodb.client.MongoClient
 import com.mongodb.client.model.Aggregates
 import com.mongodb.client.model.DeleteOptions
 import com.mongodb.client.model.Filters
+import com.mongodb.client.model.Sorts
 import com.mongodb.client.model.UpdateOptions
 import com.mongodb.client.model.Updates
 import groovy.transform.Memoized
@@ -24,6 +25,7 @@ import io.micronaut.data.document.tck.repositories.BookRepository
 import io.micronaut.data.document.tck.repositories.DomainEventsRepository
 import io.micronaut.data.document.tck.repositories.SaleRepository
 import io.micronaut.data.document.tck.repositories.StudentRepository
+import io.micronaut.data.model.Pageable
 import io.micronaut.data.mongodb.operations.options.MongoAggregationOptions
 import io.micronaut.data.mongodb.operations.options.MongoFindOptions
 import org.bson.BsonDocument
@@ -281,6 +283,50 @@ class MongoDocumentRepositorySpec extends AbstractDocumentRepositorySpec impleme
             person = mongoExecutorPersonRepository.findOne([Aggregates.match(Filters.eq("name", "Jeff"))], new MongoAggregationOptions())
         then:
             person.get().name == "Jeff"
+    }
+
+    void "query executor finds page"() {
+        given:
+            savePersons(["Dennis", "Jeff", "James", "Dennis"])
+        when:
+            def people = mongoExecutorPersonRepository.findAll(Filters.regex("name", /J.*/), Pageable.from(0, 1))
+        then:
+            people.size() == 1
+            people.getTotalPages() == 2
+            people[0].name == "Jeff"
+        when:
+            people = mongoExecutorPersonRepository.findAll(Filters.regex("name", /J.*/), Pageable.from(1, 1))
+        then:
+            people.size() == 1
+            people.getTotalPages() == 2
+            people[0].name == "James"
+        when:
+            people = mongoExecutorPersonRepository.findAll(Filters.regex("name", /J.*/), Pageable.from(0, 1).order("name"))
+        then:
+            people.size() == 1
+            people.getTotalPages() == 2
+            people[0].name == "James"
+        when:
+            people = mongoExecutorPersonRepository.findAll(Filters.regex("name", /J.*/), Pageable.from(0, 2).order("name"))
+        then:
+            people.size() == 2
+            people.getTotalPages() == 1
+            people[0].name == "James"
+            people[1].name == "Jeff"
+        when:
+            people = mongoExecutorPersonRepository.findAll(null, Pageable.from(0, 2).order("name"))
+        then:
+            people.size() == 2
+            people.getTotalPages() == 2
+        when:
+            people = mongoExecutorPersonRepository.findAll(new MongoFindOptions()
+                    .filter(Filters.regex("name", /J.*/))
+                    .sort(Sorts.ascending("name")), Pageable.from(0, 2))
+        then:
+            people.size() == 2
+            people.getTotalPages() == 1
+            people[0].name == "James"
+            people[1].name == "Jeff"
     }
 
     void "query executor deletes"() {

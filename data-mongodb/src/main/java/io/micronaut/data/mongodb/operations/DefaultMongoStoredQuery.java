@@ -734,22 +734,20 @@ final class DefaultMongoStoredQuery<E, R, Dtb> implements DelegateStoredQuery<E,
                     if (options == null) {
                         options = paramOptions;
                     } else {
-                        options = copy(options);
+                        options = copy(this.options);
                         copyNonNullFrom(options, paramOptions);
                     }
                 }
             }
+            if (options == null) {
+                options = new UpdateOptions();
+            }
             Collation collation = getCollation(invocationContext, null);
             if (collation != null) {
-                if (options == null) {
-                    options = new UpdateOptions();
-                } else if (this.options == options) {
+                if (options == this.options) {
                     options = copy(options);
                 }
                 options.collation(collation);
-            }
-            if (options == null) {
-                options = new UpdateOptions();
             }
             return options;
         }
@@ -839,21 +837,21 @@ final class DefaultMongoStoredQuery<E, R, Dtb> implements DelegateStoredQuery<E,
 
         @NonNull
         private MongoFindOptions getFilterOptions(@Nullable InvocationContext<?, ?> invocationContext) {
-            MongoFindOptions options = this.options;
             if (optionsParameterIndex != -1) {
                 MongoFindOptions paramOptions = getParameterAtIndex(invocationContext, optionsParameterIndex);
-                if (options == null) {
-                    options = paramOptions;
-                } else if (paramOptions != null) {
-                    options = new MongoFindOptions(options);
+                if (paramOptions != null) {
+                    if (options == null) {
+                        return paramOptions;
+                    }
+                    MongoFindOptions options = new MongoFindOptions(this.options);
                     options.copyNotNullFrom(paramOptions);
                     return options;
                 }
             }
-            if (options == null) {
-                options = new MongoFindOptions();
+            if (options != null) {
+                return new MongoFindOptions(options);
             }
-            return options;
+            return new MongoFindOptions();
         }
 
         private Bson getFilter(@Nullable InvocationContext<?, ?> invocationContext, E entity) {
@@ -928,17 +926,15 @@ final class DefaultMongoStoredQuery<E, R, Dtb> implements DelegateStoredQuery<E,
                     }
                 }
             }
+            if (options == null) {
+                options = new DeleteOptions();
+            }
             Collation collation = getCollation(invocationContext, null);
             if (collation != null) {
-                if (options == null) {
-                    options = new DeleteOptions();
-                } else if (options == this.options) {
+                if (this.options == options) {
                     options = copy(options);
                 }
                 options.collation(collation);
-            }
-            if (options == null) {
-                options = new DeleteOptions();
             }
             return options;
         }
