@@ -17,6 +17,7 @@ package io.micronaut.data.mongodb.repository;
 
 import com.mongodb.client.model.DeleteOptions;
 import com.mongodb.client.model.UpdateOptions;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.mongodb.operations.options.MongoAggregationOptions;
 import io.micronaut.data.mongodb.operations.options.MongoFindOptions;
@@ -48,7 +49,7 @@ public interface MongoQueryExecutor<E> {
      * @param options The options
      * @return The optional result
      */
-    Optional<E> findOne(MongoFindOptions options);
+    Optional<E> findOne(@NonNull MongoFindOptions options);
 
     /**
      * Finds all results.
@@ -56,7 +57,7 @@ public interface MongoQueryExecutor<E> {
      * @param filter The filter to be applied
      * @return The records
      */
-    List<E> findAll(@Nullable Bson filter);
+    @NonNull List<E> findAll(@Nullable Bson filter);
 
     /**
      * Finds all results.
@@ -64,7 +65,7 @@ public interface MongoQueryExecutor<E> {
      * @param options The options
      * @return The records
      */
-    List<E> findAll(MongoFindOptions options);
+    @NonNull List<E> findAll(@NonNull MongoFindOptions options);
 
     /**
      * Finds one result.
@@ -72,7 +73,7 @@ public interface MongoQueryExecutor<E> {
      * @param pipeline The pipeline to be applied
      * @return The optional result
      */
-    Optional<E> findOne(Iterable<Bson> pipeline);
+    Optional<E> findOne(@NonNull Iterable<Bson> pipeline);
 
     /**
      * Finds one result.
@@ -81,7 +82,7 @@ public interface MongoQueryExecutor<E> {
      * @param options  The aggregation options
      * @return The optional result
      */
-    Optional<E> findOne(Iterable<Bson> pipeline, MongoAggregationOptions options);
+    Optional<E> findOne(@NonNull Iterable<Bson> pipeline, @NonNull MongoAggregationOptions options);
 
     /**
      * Finds all results.
@@ -89,7 +90,7 @@ public interface MongoQueryExecutor<E> {
      * @param pipeline The pipeline to be applied
      * @return The results
      */
-    List<E> findAll(Iterable<Bson> pipeline);
+    @NonNull List<E> findAll(@NonNull Iterable<Bson> pipeline);
 
     /**
      * Finds all results.
@@ -98,7 +99,7 @@ public interface MongoQueryExecutor<E> {
      * @param options  The options
      * @return The results
      */
-    List<E> findAll(Iterable<Bson> pipeline, MongoAggregationOptions options);
+    @NonNull List<E> findAll(@NonNull Iterable<Bson> pipeline, @NonNull MongoAggregationOptions options);
 
     /**
      * Count the records.
@@ -114,7 +115,7 @@ public interface MongoQueryExecutor<E> {
      * @param filter The filter to be applied
      * @return The deleted count
      */
-    long deleteAll(Bson filter);
+    long deleteAll(@NonNull Bson filter);
 
     /**
      * Delete the records matching the filter.
@@ -123,7 +124,7 @@ public interface MongoQueryExecutor<E> {
      * @param options The delete options
      * @return The deleted count
      */
-    long deleteAll(Bson filter, DeleteOptions options);
+    long deleteAll(@NonNull Bson filter, @NonNull DeleteOptions options);
 
     /**
      * Update the records matching the filter.
@@ -132,7 +133,7 @@ public interface MongoQueryExecutor<E> {
      * @param update The update modification
      * @return The updated count
      */
-    long updateAll(Bson filter, Bson update);
+    long updateAll(@NonNull Bson filter, @NonNull Bson update);
 
     /**
      * Update the records matching the filter.
@@ -142,5 +143,5 @@ public interface MongoQueryExecutor<E> {
      * @param options The update options
      * @return The updated count
      */
-    long updateAll(Bson filter, Bson update, UpdateOptions options);
+    long updateAll(@NonNull Bson filter, @NonNull Bson update, @NonNull UpdateOptions options);
 }
