@@ -214,8 +214,7 @@ public class MongoExecutorQueryMethodMatcher implements MethodMatcher {
                 case 2:
                     ParameterElement parameter1 = parameters[0];
                     ParameterElement parameter2 = parameters[1];
-                    if (isBson(parameter1) && parameter1.getName().equals("filter")
-                            && isBson(parameter2) && parameter2.getName().equals("update")) {
+                    if (isBson(parameter1) && isBson(parameter2)) {
                         return new MongoQueryExecutorMatch(DataMethod.OperationType.UPDATE) {
 
                             @Override
@@ -231,9 +230,7 @@ public class MongoExecutorQueryMethodMatcher implements MethodMatcher {
                     ParameterElement filter = parameters[0];
                     ParameterElement update = parameters[1];
                     ParameterElement options = parameters[2];
-                    if (isBson(filter) && filter.getName().equals("filter")
-                            && isBson(update) && update.getName().equals("update")
-                            && options.getType().isAssignable(MongoAnnotations.UPDATE_OPTIONS_BEAN)) {
+                    if (isBson(filter) && isBson(update) && options.getType().isAssignable(MongoAnnotations.UPDATE_OPTIONS_BEAN)) {
                         return new MongoQueryExecutorMatch(DataMethod.OperationType.UPDATE) {
 
                             @Override
