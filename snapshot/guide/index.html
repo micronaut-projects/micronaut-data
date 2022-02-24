@@ -9041,6 +9041,22 @@ You can specify MongoDB&#8217;s database name using the repository annotation: <
 </tr>
 </table>
 </div>
+<div class="paragraph">
+<p>Micronaut Data MongoDB introduces one special repository interface <a href="../api/io/micronaut/data/mongodb/repository/MongoQueryExecutor.html">MongoQueryExecutor</a> which accepts <code>Bson</code>/<code>List&lt;Bson&gt;</code> filter/pipeline/update parameters intended to be used in combination with MongoDB DSL API:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>com.mongodb.client.model.Filters</code></p>
+</li>
+<li>
+<p><code>com.mongodb.client.model.Aggregates</code></p>
+</li>
+<li>
+<p><code>com.mongodb.client.model.Updates</code></p>
+</li>
+</ul>
+</div>
 
 <h2 id="mongoInsertsAndUpdates"><a class="anchor" href="#mongoInsertsAndUpdates"></a>9.2.1 Inserts and Updates</h2>
 
