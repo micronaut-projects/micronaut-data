@@ -74,6 +74,127 @@ public final class MongoFindOptions {
         allowDiskUse = options.allowDiskUse;
     }
 
+    public void copyNotNullFrom(MongoFindOptions options) {
+        if (options.filter != null) {
+            filter = options.filter;
+        }
+        if (options.batchSize != null) {
+            batchSize = options.batchSize;
+        }
+        if (options.limit != null) {
+            limit = options.limit;
+        }
+        if (options.projection != null) {
+            projection = options.projection;
+        }
+        if (options.maxTimeMS != null) {
+            maxTimeMS = options.maxTimeMS;
+        }
+        if (options.maxAwaitTimeMS != null) {
+            maxAwaitTimeMS = options.maxAwaitTimeMS;
+        }
+        if (options.skip != null) {
+            skip = options.skip;
+        }
+        if (options.sort != null) {
+            sort = options.sort;
+        }
+        if (options.cursorType != null) {
+            cursorType = options.cursorType;
+        }
+        if (options.noCursorTimeout != null) {
+            noCursorTimeout = options.noCursorTimeout;
+        }
+        if (options.partial != null) {
+            partial = options.partial;
+        }
+        if (options.collation != null) {
+            collation = options.collation;
+        }
+        if (options.comment != null) {
+            comment = options.comment;
+        }
+        if (options.hint != null) {
+            hint = options.hint;
+        }
+        if (options.max != null) {
+            max = options.max;
+        }
+        if (options.min != null) {
+            min = options.min;
+        }
+        if (options.returnKey != null) {
+            returnKey = options.returnKey;
+        }
+        if (options.showRecordId != null) {
+            showRecordId = options.showRecordId;
+        }
+        if (options.allowDiskUse != null) {
+            allowDiskUse = options.allowDiskUse;
+        }
+    }
+
+    public boolean isEmpty() {
+        if (filter != null) {
+            return false;
+        }
+        if (batchSize != null) {
+            return false;
+        }
+        if (limit != null) {
+            return false;
+        }
+        if (projection != null) {
+            return false;
+        }
+        if (maxTimeMS != null) {
+            return false;
+        }
+        if (maxAwaitTimeMS != null) {
+            return false;
+        }
+        if (skip != null) {
+            return false;
+        }
+        if (sort != null) {
+            return false;
+        }
+        if (cursorType != null) {
+            return false;
+        }
+        if (noCursorTimeout != null) {
+            return false;
+        }
+        if (partial != null) {
+            return false;
+        }
+        if (collation != null) {
+            return false;
+        }
+        if (comment != null) {
+            return false;
+        }
+        if (hint != null) {
+            return false;
+        }
+        if (max != null) {
+            return false;
+        }
+        if (min != null) {
+            return false;
+        }
+        if (returnKey != null) {
+            return false;
+        }
+        if (showRecordId != null) {
+            return false;
+        }
+        if (allowDiskUse != null) {
+            return false;
+        }
+        return true;
+    }
+
     @Nullable
     public Bson getFilter() {
         return filter;

@@ -175,7 +175,7 @@ public final class DefaultMongoRepositoryOperations extends AbstractMongoReposit
     public <T, R> R findOne(PreparedQuery<T, R> preparedQuery) {
         return withClientSession(clientSession -> {
             MongoPreparedQuery<T, R, MongoDatabase> mongoPreparedQuery = getMongoPreparedQuery(preparedQuery);
-            if (isCountQuery(preparedQuery)) {
+            if (mongoPreparedQuery.isCount()) {
                 return getCount(clientSession, mongoPreparedQuery);
             }
             if (mongoPreparedQuery.isAggregate()) {
@@ -204,7 +204,8 @@ public final class DefaultMongoRepositoryOperations extends AbstractMongoReposit
             return result;
         } else {
             MongoFind find = preparedQuery.getFind();
-            Bson filter = find.getOptions().getFilter();
+            MongoFindOptions options = find.getOptions();
+            Bson filter = options == null ? null : options.getFilter();
             filter = filter == null ? new BsonDocument() : filter;
             if (QUERY_LOG.isDebugEnabled()) {
                 QUERY_LOG.debug("Executing Mongo 'countDocuments' with filter: {}", filter.toBsonDocument().toJson());
@@ -276,7 +277,7 @@ public final class DefaultMongoRepositoryOperations extends AbstractMongoReposit
     }
 
     private <T, R> Iterable<R> findAll(ClientSession clientSession, MongoPreparedQuery<T, R, MongoDatabase> preparedQuery, boolean stream) {
-        if (isCountQuery(preparedQuery)) {
+        if (preparedQuery.isCount()) {
             return Collections.singletonList(getCount(clientSession, preparedQuery));
         }
         if (preparedQuery.isAggregate()) {
@@ -367,7 +368,10 @@ public final class DefaultMongoRepositoryOperations extends AbstractMongoReposit
         return applyFindOptions(find.getOptions(), findIterable);
     }
 
-    private <T, R, MR> FindIterable<MR> applyFindOptions(MongoFindOptions findOptions, FindIterable<MR> findIterable) {
+    private <MR> FindIterable<MR> applyFindOptions(@Nullable MongoFindOptions findOptions, FindIterable<MR> findIterable) {
+        if (findOptions == null) {
+            return findIterable;
+        }
         Bson filter = findOptions.getFilter();
         if (filter != null) {
             findIterable = findIterable.filter(filter);
@@ -464,7 +468,10 @@ public final class DefaultMongoRepositoryOperations extends AbstractMongoReposit
         return aggregate(clientSession, preparedQuery, preparedQuery.getResultType());
     }
 
-    private <MR> AggregateIterable<MR> applyAggregateOptions(MongoAggregationOptions aggregateOptions, AggregateIterable<MR> aggregateIterable) {
+    private <MR> AggregateIterable<MR> applyAggregateOptions(@Nullable MongoAggregationOptions aggregateOptions, AggregateIterable<MR> aggregateIterable) {
+        if (aggregateOptions == null) {
+            return aggregateIterable;
+        }
         if (aggregateOptions.getCollation() != null) {
             aggregateIterable = aggregateIterable.collation(aggregateOptions.getCollation());
         }

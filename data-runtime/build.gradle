@@ -8,7 +8,7 @@ dependencies {
 
 	api projects.dataModel
 
-	implementation mn.reactor
+	implementation libs.reactor
 
 	compileOnly mn.micronaut.http
 	compileOnly libs.jakarta.persistence.api

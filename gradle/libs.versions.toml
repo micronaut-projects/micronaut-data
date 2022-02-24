@@ -1,5 +1,5 @@
 [versions]
-micronaut-serde = "1.0.0-M5"
+micronaut-serde = "1.0.0-M7"
 micronaut-sql = "4.1.1"
 micronaut-docs = "2.0.0.RC1"
 micronaut-gradle-plugin = "3.2.0"
@@ -41,6 +41,12 @@ spring-dependency-management-gradle-plugin = "1.0.11.RELEASE"
 shadow-gradle-plugin = "7.1.2"
 
 [libraries]
+
+reactor = { module = 'io.projectreactor:reactor-core' }
+rxjava2 = { module = 'io.reactivex.rxjava2:rxjava' }
+
+micronaut-reactor = { module = 'io.micronaut.reactor:micronaut-reactor' }
+micronaut-rxjava2 = { module = 'io.micronaut.rxjava2:micronaut-rxjava2' }
 
 groovy-sql = { module = "org.codehaus.groovy:groovy-sql" }
 groovy-dateutil = { module = "org.codehaus.groovy:groovy-dateutil", version.ref = "groovy" }

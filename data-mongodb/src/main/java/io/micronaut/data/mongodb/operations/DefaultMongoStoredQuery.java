@@ -22,6 +22,7 @@ import com.mongodb.client.model.UpdateOptions;
 import io.micronaut.aop.InvocationContext;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.beans.BeanProperty;
@@ -49,6 +50,7 @@ import io.micronaut.data.mongodb.annotation.MongoProjection;
 import io.micronaut.data.mongodb.annotation.MongoSort;
 import io.micronaut.data.mongodb.operations.options.MongoAggregationOptions;
 import io.micronaut.data.mongodb.operations.options.MongoFindOptions;
+import io.micronaut.data.runtime.query.internal.DefaultStoredQuery;
 import io.micronaut.data.runtime.query.internal.DelegateStoredQuery;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
@@ -91,6 +93,7 @@ final class DefaultMongoStoredQuery<E, R, Dtb> implements DelegateStoredQuery<E,
     private final FindData findData;
     private final AggregateData aggregateData;
     private final DeleteData deleteData;
+    private final boolean isCount;
 
     DefaultMongoStoredQuery(StoredQuery<E, R> storedQuery,
                             CodecRegistry codecRegistry,
@@ -128,9 +131,18 @@ final class DefaultMongoStoredQuery<E, R, Dtb> implements DelegateStoredQuery<E,
         this.persistentEntity = persistentEntity;
         if (operationType == DataMethod.OperationType.QUERY || operationType == DataMethod.OperationType.EXISTS || operationType == DataMethod.OperationType.COUNT) {
             String query = storedQuery.getQuery();
-            if (StringUtils.isEmpty(query)) {
+            String filterParameter = getParameterInRole(MongoRoles.FILTER_ROLE);
+            String filterOptionsParameter = getParameterInRole(MongoRoles.FIND_OPTIONS_ROLE);
+            String pipelineParameter = getParameterInRole(MongoRoles.PIPELINE_ROLE);
+            if (filterParameter != null || filterOptionsParameter != null) {
                 aggregateData = null;
-                findData = new FindData(null);
+                findData = new FindData(filterParameter, filterOptionsParameter);
+            } else if (pipelineParameter != null) {
+                aggregateData = new AggregateData(pipelineParameter, getParameterInRole(MongoRoles.AGGREGATE_OPTIONS_ROLE));
+                findData = null;
+            } else if (StringUtils.isEmpty(query)) {
+                aggregateData = null;
+                findData = new FindData(BsonDocument.parse(query));
             } else if (query.startsWith("[")) {
                 aggregateData = new AggregateData(BsonArray.parse(query).stream().map(BsonValue::asDocument).collect(Collectors.toList()));
                 findData = null;
@@ -138,14 +150,20 @@ final class DefaultMongoStoredQuery<E, R, Dtb> implements DelegateStoredQuery<E,
                 aggregateData = null;
                 findData = new FindData(BsonDocument.parse(query));
             }
+            isCount = operationType == DataMethod.OperationType.COUNT || storedQuery.isCount() || query.contains("$count");
         } else {
             aggregateData = null;
             findData = null;
+            isCount = false;
         }
 
         if (operationType == DataMethod.OperationType.DELETE) {
             String query = storedQuery.getQuery();
-            deleteData = new DeleteData(StringUtils.isEmpty(query) ? EMPTY : BsonDocument.parse(query));
+            deleteData = new DeleteData(
+                    StringUtils.isEmpty(query) ? EMPTY : BsonDocument.parse(query),
+                    getParameterInRole(MongoRoles.FILTER_ROLE),
+                    getParameterInRole(MongoRoles.DELETE_OPTIONS_ROLE)
+            );
         } else {
             deleteData = null;
         }
@@ -155,10 +173,52 @@ final class DefaultMongoStoredQuery<E, R, Dtb> implements DelegateStoredQuery<E,
                 throw new IllegalStateException("Update query is expected!");
             }
             String query = storedQuery.getQuery();
-            updateData = new UpdateData(BsonDocument.parse(updateJson), StringUtils.isEmpty(query) ? EMPTY : BsonDocument.parse(query));
+            updateData = new UpdateData(
+                    BsonDocument.parse(updateJson), StringUtils.isEmpty(query) ? EMPTY : BsonDocument.parse(query),
+                    getParameterInRole(MongoRoles.FILTER_ROLE),
+                    getParameterInRole(MongoRoles.UPDATE_ROLE),
+                    getParameterInRole(MongoRoles.UPDATE_OPTIONS_ROLE)
+            );
         } else {
             updateData = null;
         }
+    }
+
+    @Override
+    public boolean isCount() {
+        return isCount;
+    }
+
+    @Nullable
+    private String getParameterInRole(String role) {
+        if (storedQuery instanceof DefaultStoredQuery) {
+            return storedQuery.getAnnotationMetadata().getAnnotation(DataMethod.class).stringValue(role).orElse(null);
+        }
+        return null;
+    }
+
+    @Nullable
+    private int getParameterIndexByName(@Nullable String name) {
+        if (name == null) {
+            return -1;
+        }
+        if (storedQuery instanceof DefaultStoredQuery) {
+            String[] argumentNames = ((DefaultStoredQuery<E, R>) storedQuery).getMethod().getArgumentNames();
+            for (int i = 0; i < argumentNames.length; i++) {
+                String argumentName = argumentNames[i];
+                if (argumentName.equals(name)) {
+                    return i;
+                }
+            }
+            throw new IllegalStateException("Unknown parameter with name: " + name);
+        }
+        throw new IllegalStateException("Expected DefaultStoredQuery");
+    }
+
+    @Nullable
+    private <X> X getParameterAtIndex(InvocationContext<?, ?> invocationContext, int index) {
+        requireInvocationContext(invocationContext);
+        return (X) invocationContext.getParameterValues()[index];
     }
 
     @Override
@@ -270,13 +330,6 @@ final class DefaultMongoStoredQuery<E, R, Dtb> implements DelegateStoredQuery<E,
             }
         }
         return false;
-    }
-
-    private Bson getUpdate(@Nullable InvocationContext<?, ?> invocationContext, @Nullable E entity) {
-        if (updateData == null) {
-            throw new IllegalStateException("Update query is not provided!");
-        }
-        return updateData.updateNeedsProcessing ? replaceQueryParameters(updateData.update, invocationContext, entity) : updateData.update;
     }
 
     private Bson replaceQueryParameters(Bson value, @Nullable InvocationContext<?, ?> invocationContext, @Nullable E entity) {
@@ -513,27 +566,72 @@ final class DefaultMongoStoredQuery<E, R, Dtb> implements DelegateStoredQuery<E,
     private final class AggregateData extends CollationSupported {
         private final List<Bson> pipeline;
         private final boolean pipelineNeedsProcessing;
+        @Nullable
         private final MongoAggregationOptions options;
+        private final int pipelineParameterIndex;
+        private final int optionsParameterIndex;
 
         private AggregateData(List<Bson> pipeline) {
+            this(pipeline, null, null);
+        }
+
+        private AggregateData(String pipelineParameter, String optionsParameter) {
+            this(null, pipelineParameter, optionsParameter);
+        }
+
+        private AggregateData(List<Bson> pipeline, String pipelineParameter, String optionsParameter) {
             this.pipeline = pipeline;
+            this.pipelineParameterIndex = getParameterIndexByName(pipelineParameter);
+            this.optionsParameterIndex = getParameterIndexByName(optionsParameter);
             this.pipelineNeedsProcessing = needsProcessing(pipeline);
-            options = new MongoAggregationOptions();
             AnnotationValue<io.micronaut.data.mongodb.annotation.MongoAggregateOptions> optionsAnn = storedQuery.getAnnotationMetadata().getAnnotation(io.micronaut.data.mongodb.annotation.MongoAggregateOptions.class);
             if (optionsAnn != null) {
+                MongoAggregationOptions options = new MongoAggregationOptions();
                 optionsAnn.booleanValue("bypassDocumentValidation").ifPresent(options::bypassDocumentValidation);
                 optionsAnn.longValue("maxTimeMS").ifPresent(options::maxTimeMS);
                 optionsAnn.longValue("maxAwaitTimeMS").ifPresent(options::maxAwaitTimeMS);
                 optionsAnn.stringValue("comment").ifPresent(options::comment);
                 optionsAnn.stringValue("hint").map(BsonDocument::parse).ifPresent(options::hint);
                 optionsAnn.booleanValue("allowDiskUse").ifPresent(options::allowDiskUse);
+                this.options = options.isEmpty() ? null : options;
+            } else {
+                options = null;
             }
         }
 
         public MongoAggregation getAggregation(InvocationContext<?, ?> invocationContext) {
-            List<Bson> pipeline = pipelineNeedsProcessing ? replaceQueryParametersInList(this.pipeline, invocationContext, null) : this.pipeline;
-            MongoAggregationOptions options = new MongoAggregationOptions(this.options).collation(getCollation(invocationContext, null));
+            List<Bson> pipeline = getPipeline(invocationContext);
+            MongoAggregationOptions options = getOptions(invocationContext);
+            Collation collation = getCollation(invocationContext, null);
+            if (collation != null) {
+                if (options == null) {
+                    options = new MongoAggregationOptions();
+                }
+                options.collation(collation);
+            }
             return new MongoAggregation(pipeline, options);
+        }
+
+        private List<Bson> getPipeline(InvocationContext<?, ?> invocationContext) {
+            if (pipelineParameterIndex != -1) {
+                return getParameterAtIndex(invocationContext, pipelineParameterIndex);
+            }
+            return pipelineNeedsProcessing ? replaceQueryParametersInList(this.pipeline, invocationContext, null) : this.pipeline;
+        }
+
+        @Nullable
+        private MongoAggregationOptions getOptions(InvocationContext<?, ?> invocationContext) {
+            if (optionsParameterIndex != -1) {
+                MongoAggregationOptions paramOptions = getParameterAtIndex(invocationContext, optionsParameterIndex);
+                if (this.options == null) {
+                    return paramOptions;
+                } else if (paramOptions != null) {
+                    MongoAggregationOptions options = new MongoAggregationOptions(this.options);
+                    options.copyNotNullFrom(paramOptions);
+                    return options;
+                }
+            }
+            return this.options;
         }
 
     }
@@ -543,19 +641,28 @@ final class DefaultMongoStoredQuery<E, R, Dtb> implements DelegateStoredQuery<E,
         private final boolean updateNeedsProcessing;
         private final Bson filter;
         private final boolean filterNeedsProcessing;
+        @Nullable
         private final UpdateOptions options;
+        private final int filterParameterIndex;
+        private final int updateParameterIndex;
+        private final int optionsParameterIndex;
 
-        private UpdateData(Bson update, Bson filter) {
+        private UpdateData(Bson update, Bson filter, String filterParameter, String updateParameter, String optionsParameter) {
             this.update = update;
             this.updateNeedsProcessing = needsProcessing(update);
             this.filter = filter;
             this.filterNeedsProcessing = needsProcessing(filter);
-            options = new UpdateOptions();
+            this.filterParameterIndex = getParameterIndexByName(filterParameter);
+            this.updateParameterIndex = getParameterIndexByName(updateParameter);
+            this.optionsParameterIndex = getParameterIndexByName(optionsParameter);
             AnnotationValue<io.micronaut.data.mongodb.annotation.MongoUpdateOptions> optionsAnn = storedQuery.getAnnotationMetadata().getAnnotation(io.micronaut.data.mongodb.annotation.MongoUpdateOptions.class);
             if (optionsAnn != null) {
+                options = new UpdateOptions();
                 optionsAnn.booleanValue("upsert").ifPresent(options::upsert);
                 optionsAnn.booleanValue("bypassDocumentValidation").ifPresent(options::bypassDocumentValidation);
                 optionsAnn.stringValue("hint").map(BsonDocument::parse).ifPresent(options::hint);
+            } else {
+                options = null;
             }
         }
 
@@ -569,13 +676,29 @@ final class DefaultMongoStoredQuery<E, R, Dtb> implements DelegateStoredQuery<E,
             return newOptions;
         }
 
-        public MongoUpdate getUpdateMany(InvocationContext<?, ?> invocationContext) {
-            Bson update = getUpdate(invocationContext, null);
-            if (update == null) {
-                throw new IllegalStateException("Update query is not provided!");
+        private void copyNonNullFrom(UpdateOptions to, UpdateOptions from) {
+            if (from.getCollation() != null) {
+                to.collation(from.getCollation());
             }
-            UpdateOptions options = copy(this.options).collation(getCollation(invocationContext, null));
-            return new MongoUpdate(update, getFilter(invocationContext, null), options);
+            if (from.isUpsert()) {
+                to.upsert(from.isUpsert());
+            }
+            if (from.getBypassDocumentValidation() != null) {
+                to.bypassDocumentValidation(from.getBypassDocumentValidation());
+            }
+            if (from.getHint() != null) {
+                to.hint(from.getHint());
+            }
+            if (from.getHintString() != null) {
+                to.hintString(from.getHintString());
+            }
+        }
+
+        public MongoUpdate getUpdateMany(InvocationContext<?, ?> invocationContext) {
+            return new MongoUpdate(
+                    getUpdate(invocationContext, null),
+                    getFilter(invocationContext, null),
+                    getOptions(invocationContext));
         }
 
         public MongoUpdate getUpdateOne(E entity) {
@@ -583,14 +706,56 @@ final class DefaultMongoStoredQuery<E, R, Dtb> implements DelegateStoredQuery<E,
                 throw new IllegalStateException("Expected update query!");
             }
             Bson update = getUpdate(null, entity);
-            if (update == null) {
-                throw new IllegalStateException("Update query is not provided!");
-            }
-            UpdateOptions options = copy(this.options).collation(getCollation(null, null));
+            UpdateOptions options = getOptions(null);
             return new MongoUpdate(update, getFilter(null, entity), options);
         }
 
+        private Bson getUpdate(InvocationContext<?, ?> invocationContext, E entity) {
+            Bson update = this.update;
+            if (updateParameterIndex != -1) {
+                update = getParameterAtIndex(invocationContext, updateParameterIndex);
+            }
+            if (update == null) {
+                throw new IllegalStateException("Update query is not provided!");
+            }
+            update = updateNeedsProcessing ? replaceQueryParameters(update, invocationContext, entity) : update;
+            if (update == null) {
+                throw new IllegalStateException("Update query is not provided!");
+            }
+            return update;
+        }
+
+        @NonNull
+        private UpdateOptions getOptions(InvocationContext<?, ?> invocationContext) {
+            UpdateOptions options = this.options;
+            if (optionsParameterIndex != -1) {
+                UpdateOptions paramOptions = getParameterAtIndex(invocationContext, optionsParameterIndex);
+                if (paramOptions != null) {
+                    if (options == null) {
+                        options = paramOptions;
+                    } else {
+                        options = copy(this.options);
+                        copyNonNullFrom(options, paramOptions);
+                    }
+                }
+            }
+            if (options == null) {
+                options = new UpdateOptions();
+            }
+            Collation collation = getCollation(invocationContext, null);
+            if (collation != null) {
+                if (options == this.options) {
+                    options = copy(options);
+                }
+                options.collation(collation);
+            }
+            return options;
+        }
+
         private Bson getFilter(@Nullable InvocationContext<?, ?> invocationContext, E entity) {
+            if (filterParameterIndex != -1) {
+                return getParameterAtIndex(invocationContext, filterParameterIndex);
+            }
             return filterNeedsProcessing ? replaceQueryParameters(filter, invocationContext, entity) : filter;
         }
     }
@@ -602,9 +767,22 @@ final class DefaultMongoStoredQuery<E, R, Dtb> implements DelegateStoredQuery<E,
         private final boolean sortNeedsProcessing;
         private final Bson projection;
         private final boolean projectionNeedsProcessing;
+        @Nullable
         private final MongoFindOptions options;
+        private final int filterParameterIndex;
+        private final int optionsParameterIndex;
 
         private FindData(Bson filter) {
+            this(filter, null, null);
+        }
+
+        private FindData(String filterParameter, String optionsParameter) {
+            this(null, filterParameter, optionsParameter);
+        }
+
+        private FindData(Bson filter, String filterParameter, String optionsParameter) {
+            this.filterParameterIndex = getParameterIndexByName(filterParameter);
+            this.optionsParameterIndex = getParameterIndexByName(optionsParameter);
             sort = storedQuery.getAnnotationMetadata().stringValue(MongoSort.class).map(BsonDocument::parse).orElse(null);
             sortNeedsProcessing = needsProcessing(sort);
             projection = storedQuery.getAnnotationMetadata().stringValue(MongoProjection.class).map(BsonDocument::parse).orElse(null);
@@ -612,9 +790,9 @@ final class DefaultMongoStoredQuery<E, R, Dtb> implements DelegateStoredQuery<E,
             this.filter = filter;
             this.filterNeedsProcessing = needsProcessing(filter);
 
-            options = new MongoFindOptions();
             AnnotationValue<io.micronaut.data.mongodb.annotation.MongoFindOptions> optionsAnn = storedQuery.getAnnotationMetadata().getAnnotation(io.micronaut.data.mongodb.annotation.MongoFindOptions.class);
             if (optionsAnn != null) {
+                MongoFindOptions options = new MongoFindOptions();
                 optionsAnn.intValue("batchSize").ifPresent(options::batchSize);
                 optionsAnn.intValue("skip").ifPresent(options::skip);
                 optionsAnn.intValue("limit").ifPresent(options::limit);
@@ -630,19 +808,56 @@ final class DefaultMongoStoredQuery<E, R, Dtb> implements DelegateStoredQuery<E,
                 optionsAnn.booleanValue("returnKey").ifPresent(options::returnKey);
                 optionsAnn.booleanValue("showRecordId").ifPresent(options::showRecordId);
                 optionsAnn.booleanValue("allowDiskUse").ifPresent(options::allowDiskUse);
+                this.options = options.isEmpty() ? null : options;
+            } else {
+                options = null;
             }
         }
 
         public MongoFind getFind(InvocationContext<?, ?> invocationContext) {
-            MongoFindOptions options = new MongoFindOptions(this.options)
-                    .filter(getFilter(invocationContext, null))
-                    .collation(getCollation(invocationContext, null))
-                    .sort(getSort(invocationContext, null))
-                    .projection(getProjection(invocationContext, null));
-            return new MongoFind(options);
+            MongoFindOptions options = getFilterOptions(invocationContext);
+            Bson filter = getFilter(invocationContext, null);
+            if (filter != null) {
+                options.filter(filter);
+            }
+            Collation collation = getCollation(invocationContext, null);
+            if (collation != null) {
+                options.collation(collation);
+            }
+            Bson sort = getSort(invocationContext, null);
+            if (sort != null) {
+                options.sort(sort);
+            }
+            Bson projection = getProjection(invocationContext, null);
+            if (projection != null) {
+                options.projection(projection);
+            }
+            return new MongoFind(options.isEmpty() ? null : options);
+        }
+
+        @NonNull
+        private MongoFindOptions getFilterOptions(@Nullable InvocationContext<?, ?> invocationContext) {
+            if (optionsParameterIndex != -1) {
+                MongoFindOptions paramOptions = getParameterAtIndex(invocationContext, optionsParameterIndex);
+                if (paramOptions != null) {
+                    if (options == null) {
+                        return paramOptions;
+                    }
+                    MongoFindOptions options = new MongoFindOptions(this.options);
+                    options.copyNotNullFrom(paramOptions);
+                    return options;
+                }
+            }
+            if (options != null) {
+                return new MongoFindOptions(options);
+            }
+            return new MongoFindOptions();
         }
 
         private Bson getFilter(@Nullable InvocationContext<?, ?> invocationContext, E entity) {
+            if (filterParameterIndex != -1) {
+                return getParameterAtIndex(invocationContext, filterParameterIndex);
+            }
             if (filter == null) {
                 return null;
             }
@@ -668,26 +883,60 @@ final class DefaultMongoStoredQuery<E, R, Dtb> implements DelegateStoredQuery<E,
     private final class DeleteData extends CollationSupported {
         private final Bson filter;
         private final boolean filterNeedsProcessing;
+        @Nullable
         private final DeleteOptions options;
+        private final int filterParameterIndex;
+        private final int optionsParameterIndex;
 
-        private DeleteData(Bson filter) {
+        private DeleteData(Bson filter, String filterParameter, String optionsParameter) {
             this.filter = filter;
             this.filterNeedsProcessing = needsProcessing(filter);
-            options = new DeleteOptions();
+            this.filterParameterIndex = getParameterIndexByName(filterParameter);
+            this.optionsParameterIndex = getParameterIndexByName(optionsParameter);
             AnnotationValue<io.micronaut.data.mongodb.annotation.MongoDeleteOptions> optionsAnn = storedQuery.getAnnotationMetadata().getAnnotation(io.micronaut.data.mongodb.annotation.MongoDeleteOptions.class);
             if (optionsAnn != null) {
+                options = new DeleteOptions();
                 optionsAnn.stringValue("hint").map(BsonDocument::parse).ifPresent(options::hint);
+            } else {
+                options = null;
             }
         }
 
         public MongoDelete getDeleteMany(InvocationContext<?, ?> invocationContext) {
-            DeleteOptions options = copy(this.options).collation(getCollation(invocationContext, null));
+            DeleteOptions options = getOptions(invocationContext);
             return new MongoDelete(getFilter(invocationContext, null), options);
         }
 
         public MongoDelete getDeleteOne(E entity) {
-            DeleteOptions options = copy(this.options).collation(getCollation(null, null));
+            DeleteOptions options = getOptions(null);
             return new MongoDelete(getFilter(null, entity), options);
+        }
+
+        @NonNull
+        private DeleteOptions getOptions(InvocationContext<?, ?> invocationContext) {
+            DeleteOptions options = this.options;
+            if (optionsParameterIndex != -1) {
+                DeleteOptions paramOptions = getParameterAtIndex(invocationContext, optionsParameterIndex);
+                if (paramOptions != null) {
+                    if (options == null) {
+                        options = paramOptions;
+                    } else {
+                        options = copy(options);
+                        copyNonNullFrom(options, paramOptions);
+                    }
+                }
+            }
+            if (options == null) {
+                options = new DeleteOptions();
+            }
+            Collation collation = getCollation(invocationContext, null);
+            if (collation != null) {
+                if (this.options == options) {
+                    options = copy(options);
+                }
+                options.collation(collation);
+            }
+            return options;
         }
 
         private DeleteOptions copy(DeleteOptions options) {
@@ -698,7 +947,22 @@ final class DefaultMongoStoredQuery<E, R, Dtb> implements DelegateStoredQuery<E,
             return newOptions;
         }
 
+        private void copyNonNullFrom(DeleteOptions to, DeleteOptions from) {
+            if (from.getCollation() != null) {
+                to.collation(from.getCollation());
+            }
+            if (from.getHint() != null) {
+                to.hint(from.getHint());
+            }
+            if (from.getHintString() != null) {
+                to.hintString(from.getHintString());
+            }
+        }
+
         private Bson getFilter(@Nullable InvocationContext<?, ?> invocationContext, E entity) {
+            if (filterParameterIndex != -1) {
+                return getParameterAtIndex(invocationContext, filterParameterIndex);
+            }
             return filterNeedsProcessing ? replaceQueryParameters(filter, invocationContext, entity) : filter;
         }
     }

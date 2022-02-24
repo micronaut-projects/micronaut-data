@@ -15,7 +15,7 @@ import io.micronaut.data.mongodb.annotation.MongoFindQuery;
 import io.micronaut.data.document.tck.entities.Book;
 
 @MongoRepository
-interface MyInterface2 extends CrudRepository<Book, String> {
+interface MyInterface2 extends GenericRepository<Book, String> {
 
     @MongoFindQuery(\"$customQuery\")
     Book queryById(String id);

@@ -50,6 +50,55 @@ public final class MongoAggregationOptions {
         hint = options.hint;
     }
 
+    public void copyNotNullFrom(MongoAggregationOptions options) {
+        if (options.allowDiskUse != null) {
+            allowDiskUse = options.allowDiskUse;
+        }
+        if (options.maxTimeMS != null) {
+            maxTimeMS = options.maxTimeMS;
+        }
+        if (options.maxAwaitTimeMS != null) {
+            maxAwaitTimeMS = options.maxAwaitTimeMS;
+        }
+        if (options.bypassDocumentValidation != null) {
+            bypassDocumentValidation = options.bypassDocumentValidation;
+        }
+        if (options.collation != null) {
+            collation = options.collation;
+        }
+        if (options.comment != null) {
+            comment = options.comment;
+        }
+        if (options.hint != null) {
+            hint = options.hint;
+        }
+    }
+
+    public boolean isEmpty() {
+        if (allowDiskUse != null) {
+            return false;
+        }
+        if (maxTimeMS != null) {
+            return false;
+        }
+        if (maxAwaitTimeMS != null) {
+            return false;
+        }
+        if (bypassDocumentValidation != null) {
+            return false;
+        }
+        if (collation != null) {
+            return false;
+        }
+        if (comment != null) {
+            return false;
+        }
+        if (hint != null) {
+            return false;
+        }
+        return true;
+    }
+
     @Nullable
     public Boolean getAllowDiskUse() {
         return allowDiskUse;

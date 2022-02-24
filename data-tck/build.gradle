@@ -3,13 +3,15 @@ plugins {
 }
 
 dependencies {
+    implementation platform("io.micronaut:micronaut-bom:$micronautVersion")
+
     annotationProcessor mn.micronaut.inject.java
     annotationProcessor projects.dataProcessor
 
     implementation projects.dataModel
     implementation projects.dataJdbc
-    implementation mn.rxjava2
-    implementation mn.reactor
+    implementation libs.rxjava2
+    implementation libs.reactor
     implementation mn.micronaut.test.spock
     implementation mn.micronaut.test.core
     implementation mn.jackson.databind

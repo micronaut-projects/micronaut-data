@@ -12,7 +12,7 @@ dependencies {
     implementation mn.micronaut.http
     implementation mn.micronaut.sql.jdbc
 
-    compileOnly mn.micronaut.rxjava2
+    compileOnly libs.micronaut.rxjava2
     compileOnly projects.dataHibernateJpa
     compileOnly libs.drivers.jdbc.oracle
 
@@ -21,8 +21,8 @@ dependencies {
 
     testImplementation projects.dataTck
     testImplementation projects.dataProcessor
-    testImplementation mn.micronaut.rxjava2
-    testImplementation mn.micronaut.reactor
+    testImplementation libs.micronaut.rxjava2
+    testImplementation libs.micronaut.reactor
     testImplementation libs.jackson.databind
     testImplementation libs.javax.persistence.api
     testImplementation libs.jakarta.persistence.api

@@ -10,20 +10,20 @@ dependencies {
     implementation platform(libs.r2dbc.bom)
     testImplementation platform(libs.r2dbc.bom)
 
-    api mn.micronaut.reactor
+    api libs.micronaut.reactor
     api projects.dataModel
     api projects.dataRuntime
     api libs.micronaut.r2dbc
     api libs.r2dbc.spi
 
     implementation mn.micronaut.http
-    implementation mn.micronaut.reactor
+    implementation libs.micronaut.reactor
 //    implementation "io.projectreactor.netty:reactor-netty"
 
     testImplementation projects.dataTck
     testImplementation mn.micronaut.test.spock
     testImplementation libs.r2dbc.pool
-    testImplementation mn.micronaut.rxjava2
+    testImplementation libs.micronaut.rxjava2
 
     testAnnotationProcessor mn.micronaut.inject.java
     testAnnotationProcessor projects.dataProcessor

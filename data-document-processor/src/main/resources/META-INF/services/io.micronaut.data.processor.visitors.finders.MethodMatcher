@@ -1,1 +1,2 @@
 io.micronaut.data.document.processor.matchers.MongoRawQueryMethodMatcher
+io.micronaut.data.document.processor.matchers.MongoExecutorQueryMethodMatcher

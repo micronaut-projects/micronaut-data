@@ -36,8 +36,8 @@ dependencies {
 
     testImplementation mn.micronaut.inject.groovy
     testImplementation projects.dataProcessor
-    testImplementation mn.micronaut.rxjava2
-    testImplementation mn.micronaut.reactor
+    testImplementation libs.micronaut.rxjava2
+    testImplementation libs.micronaut.reactor
     testImplementation projects.dataTck
     testImplementation libs.groovy.sql
     testImplementation libs.testcontainers.postgresql

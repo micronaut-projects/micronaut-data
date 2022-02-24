@@ -43,10 +43,12 @@ public final class MongoDelete {
         this.options = options;
     }
 
+    @NonNull
     public Bson getFilter() {
         return filter;
     }
 
+    @NonNull
     public DeleteOptions getOptions() {
         return options;
     }
