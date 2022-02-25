@@ -146,8 +146,10 @@ final class DataDecoderContext implements Deserializer.DecoderContext {
 
                 @Override
                 public Deserializer<Object> createSpecific(DecoderContext decoderContext, Argument<? super Object> type) throws SerdeException {
-                    Class<?> converterClass = type.getAnnotationMetadata().classValue(MappedProperty.class, "converter").get();
-                    Class<Object> converterPersistedType = type.getAnnotationMetadata().classValue(MappedProperty.class, "converterPersistedType").get();
+                    Class<?> converterClass = type.getAnnotationMetadata().classValue(MappedProperty.class, "converter")
+                            .orElseThrow(IllegalStateException::new);
+                    Class<Object> converterPersistedType = type.getAnnotationMetadata().classValue(MappedProperty.class, "converterPersistedType")
+                            .orElseThrow(IllegalStateException::new);
                     Argument<Object> convertedType = Argument.of(converterPersistedType);
                     AttributeConverter<Object, Object> converter = attributeConverterRegistry.getConverter(converterClass);
                     Deserializer<?> deserializer = findDeserializer(convertedType);

@@ -134,7 +134,7 @@ public interface QueryStatement<PS, IDX> {
                 if (value instanceof BigDecimal) {
                     return setBigDecimal(statement, index, (BigDecimal) value);
                 } else if (value instanceof Number) {
-                    return setBigDecimal(statement, index, new BigDecimal(((Number) value).doubleValue()));
+                    return setBigDecimal(statement, index, BigDecimal.valueOf(((Number) value).doubleValue()));
                 } else {
                     return setBigDecimal(statement, index, convertRequired(value, BigDecimal.class));
                 }

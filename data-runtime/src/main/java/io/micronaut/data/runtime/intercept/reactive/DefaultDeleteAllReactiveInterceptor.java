@@ -52,6 +52,8 @@ public class DefaultDeleteAllReactiveInterceptor extends AbstractReactiveInterce
         if (!deleteEntity.isPresent() && !deleteEntities.isPresent()) {
             PreparedQuery<?, Number> preparedQuery = (PreparedQuery<?, Number>) prepareQuery(methodKey, context);
             publisher = reactiveOperations.executeDelete(preparedQuery);
+        } else if (deleteEntity.isPresent()) {
+            publisher = reactiveOperations.delete(getDeleteOperation(context, deleteEntity.get()));
         } else {
             publisher = reactiveOperations.deleteAll(getDeleteBatchOperation(context, deleteEntities.get()));
         }

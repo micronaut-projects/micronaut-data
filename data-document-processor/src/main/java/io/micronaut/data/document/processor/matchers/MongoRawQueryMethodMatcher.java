@@ -178,7 +178,8 @@ public class MongoRawQueryMethodMatcher implements MethodMatcher {
             persistentEntity = matchContext.getEntity(entityParameter.getGenericType());
         } else if (entitiesParameter != null) {
             entityParam = entitiesParameter;
-            persistentEntity = matchContext.getEntity(entitiesParameter.getGenericType().getFirstTypeArgument().get());
+            persistentEntity = matchContext.getEntity(entitiesParameter.getGenericType().getFirstTypeArgument()
+                    .orElseThrow(IllegalStateException::new));
         }
 
         QueryResult queryResult;

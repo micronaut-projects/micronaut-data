@@ -114,7 +114,7 @@ public interface FindersUtils {
                     updateEntry = pickUpdateInterceptor(matchContext, returnType);
                 }
                 if (isContainer(updateEntry.getKey(), Iterable.class)) {
-                    return typeAndInterceptorEntry(updateEntry.getKey().getFirstTypeArgument().get(), updateEntry.getValue());
+                    return typeAndInterceptorEntry(updateEntry.getKey().getFirstTypeArgument().orElseThrow(IllegalStateException::new), updateEntry.getValue());
                 }
                 return updateEntry;
             case INSERT:
@@ -127,7 +127,7 @@ public interface FindersUtils {
                     saveEntry = pickSaveOneInterceptor(matchContext, returnType);
                 }
                 if (isContainer(saveEntry.getKey(), Iterable.class)) {
-                    return typeAndInterceptorEntry(saveEntry.getKey().getFirstTypeArgument().get(), saveEntry.getValue());
+                    return typeAndInterceptorEntry(saveEntry.getKey().getFirstTypeArgument().orElseThrow(IllegalStateException::new), saveEntry.getValue());
                 }
                 return saveEntry;
             case QUERY:
@@ -216,7 +216,7 @@ public interface FindersUtils {
         if (isFutureType(matchContext, returnType)) {
             entry = resolveAsyncFindInterceptor(matchContext, returnType, getAsyncType(matchContext, returnType));
         } else if (isReactiveType(returnType)) {
-            entry = resolveReactiveFindInterceptor(matchContext, returnType, returnType.getFirstTypeArgument().orElse(null));
+            entry = resolveReactiveFindInterceptor(matchContext, returnType, returnType.getFirstTypeArgument().orElseThrow(IllegalStateException::new));
         } else {
             entry = resolveSyncFindInterceptor(matchContext, returnType);
         }
@@ -401,7 +401,7 @@ public interface FindersUtils {
 
     static ClassElement getAsyncType(@NonNull MethodMatchContext matchContext,
                                      @NonNull ClassElement returnType) {
-        return matchContext.getMethodElement().isSuspend() ? returnType : returnType.getFirstTypeArgument().orElse(null);
+        return matchContext.getMethodElement().isSuspend() ? returnType : returnType.getFirstTypeArgument().orElseThrow(IllegalStateException::new);
     }
 
     static Map.Entry<ClassElement, Class<? extends DataInterceptor>> typeAndInterceptorEntry(ClassElement type, Class<? extends DataInterceptor> interceptor) {

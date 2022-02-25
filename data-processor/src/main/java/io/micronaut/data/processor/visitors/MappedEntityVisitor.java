@@ -277,7 +277,7 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
     }
 
     private DataType getDataTypeFromConverter(ClassElement type, String converter, Map<String, DataType> dataTypes, VisitorContext context) {
-        ClassElement classElement = context.getClassElement(converter).get();
+        ClassElement classElement = context.getClassElement(converter).orElseThrow(IllegalStateException::new);
         ClassElement genericType = classElement.getGenericType();
 
         Map<String, ClassElement> typeArguments = genericType.getTypeArguments(AttributeConverter.class.getName());
@@ -310,7 +310,7 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
     }
 
     private ClassElement getPersistedClassFromConverter(String converter, VisitorContext context) {
-        ClassElement classElement = context.getClassElement(converter).get();
+        ClassElement classElement = context.getClassElement(converter).orElseThrow(IllegalStateException::new);
         ClassElement genericType = classElement.getGenericType();
 
         Map<String, ClassElement> typeArguments = genericType.getTypeArguments(AttributeConverter.class.getName());

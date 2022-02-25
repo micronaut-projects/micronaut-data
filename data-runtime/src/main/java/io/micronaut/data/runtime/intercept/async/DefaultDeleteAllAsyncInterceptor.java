@@ -51,6 +51,8 @@ public class DefaultDeleteAllAsyncInterceptor<T> extends AbstractAsyncIntercepto
         if (!deleteEntity.isPresent() && !deleteEntities.isPresent()) {
             PreparedQuery<?, Number> preparedQuery = (PreparedQuery<?, Number>) prepareQuery(methodKey, context);
             cs = asyncDatastoreOperations.executeDelete(preparedQuery);
+        } else if (deleteEntity.isPresent()) {
+            cs = asyncDatastoreOperations.delete(getDeleteOperation(context, deleteEntity.get()));
         } else {
             cs = asyncDatastoreOperations.deleteAll(getDeleteBatchOperation(context, deleteEntities.get()));
         }

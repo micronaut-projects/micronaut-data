@@ -1402,18 +1402,6 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                       List<Association> rightPropertyAssociations,
                       PersistentProperty rightProperty) {
 
-        if (!computePropertyPaths()) {
-            join(sb,
-                    queryState.getQueryModel(),
-                    joinType,
-                    getTableName(associatedEntity),
-                    leftTableAlias,
-                    rightTableAlias,
-                    asPath(leftPropertyAssociations, leftProperty),
-                    asPath(rightPropertyAssociations, rightProperty)
-            );
-            return;
-        }
         final boolean escape = shouldEscape(associationOwner);
         List<String> onLeftColumns = new ArrayList<>();
         List<String> onRightColumns = new ArrayList<>();

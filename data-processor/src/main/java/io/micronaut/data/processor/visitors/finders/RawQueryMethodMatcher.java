@@ -94,7 +94,7 @@ public class RawQueryMethodMatcher implements MethodMatcher {
                     }
 
                     boolean readOnly = matchContext.getAnnotationMetadata().booleanValue(Query.class, "readOnly").orElse(true);
-                    String query = matchContext.getAnnotationMetadata().stringValue(Query.class).get();
+                    String query = matchContext.getAnnotationMetadata().stringValue(Query.class).orElseThrow(IllegalStateException::new);
                     DataMethod.OperationType operationType = findOperationType(methodElement.getName(), query, readOnly);
 
                     Map.Entry<ClassElement, Class<? extends DataInterceptor>> entry = FindersUtils.resolveInterceptorTypeByOperationType(
@@ -208,7 +208,7 @@ public class RawQueryMethodMatcher implements MethodMatcher {
             persistentEntity = matchContext.getEntity(entityParameter.getGenericType());
         } else if (entitiesParameter != null) {
             entityParam = entitiesParameter;
-            persistentEntity = matchContext.getEntity(entitiesParameter.getGenericType().getFirstTypeArgument().get());
+            persistentEntity = matchContext.getEntity(entitiesParameter.getGenericType().getFirstTypeArgument().orElseThrow(IllegalStateException::new));
         }
 
         QueryResult queryResult = getQueryResult(matchContext, queryString, parameters, namedParameters, entityParam, persistentEntity);
