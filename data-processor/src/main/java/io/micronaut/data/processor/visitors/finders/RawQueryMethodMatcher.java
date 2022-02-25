@@ -59,7 +59,7 @@ public class RawQueryMethodMatcher implements MethodMatcher {
     private static final String UPDATE = "update";
     private static final String INSERT = "insert";
 
-    private static final Pattern VARIABLE_PATTERN = Pattern.compile("([^:]*)((?<![:]):([a-zA-Z0-9]+))([^:]*)");
+    private static final Pattern VARIABLE_PATTERN = Pattern.compile("([^:\\\\]*)((?<![:]):([a-zA-Z0-9]+))([^:]*)");
 
     /**
      * Default constructor.
@@ -229,7 +229,8 @@ public class RawQueryMethodMatcher implements MethodMatcher {
                                        boolean namedParameters,
                                        ParameterElement entityParam,
                                        SourcePersistentEntity persistentEntity) {
-        java.util.regex.Matcher matcher = VARIABLE_PATTERN.matcher(queryString);
+        java.util.regex.Matcher matcher = VARIABLE_PATTERN.matcher(queryString.replace("\\:", ""));
+
         List<QueryParameterBinding> parameterBindings = new ArrayList<>(parameters.size());
         List<String> queryParts = new ArrayList<>();
         boolean requiresEnd = true;
@@ -298,15 +299,17 @@ public class RawQueryMethodMatcher implements MethodMatcher {
                 }
             }
         }
+        queryString = queryString.replace("\\:", ":");
         if (queryParts.isEmpty()) {
             queryParts.add(queryString);
         } else if (requiresEnd) {
             queryParts.add("");
         }
+        String finalQueryString = queryString;
         return new QueryResult() {
             @Override
             public String getQuery() {
-                return queryString;
+                return finalQueryString;
             }
 
             @Override
