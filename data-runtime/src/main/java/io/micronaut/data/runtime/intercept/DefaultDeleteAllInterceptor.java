@@ -56,6 +56,9 @@ public class DefaultDeleteAllInterceptor<T> extends AbstractQueryInterceptor<T, 
                 Number result = operations.deleteAll(getDeleteAllBatchOperation(context)).orElse(0);
                 return convertIfNecessary(resultType, result);
             }
+        } else if (deleteEntity.isPresent()) {
+            Number result = operations.delete(getDeleteOperation(context, deleteEntity.get()));
+            return convertIfNecessary(resultType, result);
         } else {
             Number result = operations.deleteAll(getDeleteBatchOperation(context, deleteEntities.get())).orElse(0);
             return convertIfNecessary(resultType, result);

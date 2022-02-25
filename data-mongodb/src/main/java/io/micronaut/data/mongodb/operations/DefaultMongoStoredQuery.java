@@ -109,7 +109,8 @@ final class DefaultMongoStoredQuery<E, R, Dtb> implements DelegateStoredQuery<E,
                 conversionService,
                 persistentEntity,
                 database,
-                storedQuery.getAnnotationMetadata().enumValue(DataMethod.NAME, DataMethod.META_MEMBER_OPERATION_TYPE, DataMethod.OperationType.class).get(),
+                storedQuery.getAnnotationMetadata().enumValue(DataMethod.NAME, DataMethod.META_MEMBER_OPERATION_TYPE, DataMethod.OperationType.class)
+                        .orElseThrow(IllegalStateException::new),
                 storedQuery.getAnnotationMetadata().stringValue(Query.class, "update").orElse(null));
     }
 

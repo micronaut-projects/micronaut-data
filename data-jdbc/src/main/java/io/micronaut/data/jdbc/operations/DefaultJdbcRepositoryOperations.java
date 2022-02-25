@@ -101,6 +101,7 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -818,25 +819,35 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         ArgumentUtils.requireNonNull("rootEntity", rootEntity);
         TypeMapper<ResultSet, T> mapper = new SqlResultEntityTypeMapper<>(prefix, getEntity(rootEntity), columnNameResultSetReader, jsonCodec, conversionService);
         Iterable<T> iterable = () -> new Iterator<T>() {
-            boolean nextCalled = false;
+            boolean fetched = false;
+            boolean end = false;
 
             @Override
             public boolean hasNext() {
+                if (fetched) {
+                    return true;
+                }
+                if (end) {
+                    return false;
+                }
                 try {
-                    if (!nextCalled) {
-                        nextCalled = true;
-                        return resultSet.next();
+                    if (resultSet.next()) {
+                        fetched = true;
                     } else {
-                        return nextCalled;
+                        end = true;
                     }
                 } catch (SQLException e) {
                     throw new DataAccessException("Error retrieving next JDBC result: " + e.getMessage(), e);
                 }
+                return !end;
             }
 
             @Override
             public T next() {
-                nextCalled = false;
+                if (!hasNext()) {
+                    throw new NoSuchElementException();
+                }
+                fetched = false;
                 return mapper.map(resultSet, rootEntity);
             }
         };
@@ -844,7 +855,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     }
 
     @NonNull
-    protected ResultConsumer.Context<ResultSet> newMappingContext(ResultSet rs) {
+    private ResultConsumer.Context<ResultSet> newMappingContext(ResultSet rs) {
         return new ResultConsumer.Context<ResultSet>() {
             @Override
             public ResultSet getResultSet() {

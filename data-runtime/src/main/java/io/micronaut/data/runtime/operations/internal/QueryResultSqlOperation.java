@@ -59,7 +59,7 @@ public class QueryResultSqlOperation extends StoredSqlOperation {
 
             @Override
             public Class<?> getParameterConverterClass() {
-                return ClassUtils.forName(binding.getConverterClassName(), null).get();
+                return ClassUtils.forName(binding.getConverterClassName(), null).orElseThrow(IllegalStateException::new);
             }
 
             @Override

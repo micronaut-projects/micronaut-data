@@ -259,7 +259,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
         ArgumentUtils.requireNonNull("annotationMetadata", annotationMetadata);
         ArgumentUtils.requireNonNull("query", query);
 
-        QueryState queryState = new QueryState(query, true, false);
+        QueryState queryState = new QueryState(query, true);
 
         Map<String, Object> predicateObj = new LinkedHashMap<>();
         Map<String, Object> group = new LinkedHashMap<>();
@@ -436,7 +436,8 @@ public final class MongoQueryBuilder implements QueryBuilder {
                 } else {
                     String currentPath = asPath(propertyPath.getAssociations(), propertyPath.getProperty());
                     if (association.isForeignKey()) {
-                        String mappedBy = association.getAnnotationMetadata().stringValue(Relation.class, "mappedBy").get();
+                        String mappedBy = association.getAnnotationMetadata().stringValue(Relation.class, "mappedBy")
+                                .orElseThrow(IllegalStateException::new);
                         PersistentPropertyPath mappedByPath = association.getAssociatedEntity().getPropertyPath(mappedBy);
                         if (mappedByPath == null) {
                             throw new IllegalStateException("Cannot find mapped path: " + mappedBy);
@@ -693,10 +694,10 @@ public final class MongoQueryBuilder implements QueryBuilder {
 
     @NonNull
     private PersistentPropertyPath findProperty(QueryState queryState, String name, Class criterionType) {
-        return findPropertyInternal(queryState, queryState.getEntity(), queryState.getRootAlias(), name, criterionType);
+        return findPropertyInternal(queryState, queryState.getEntity(), name, criterionType);
     }
 
-    private PersistentPropertyPath findPropertyInternal(QueryState queryState, PersistentEntity entity, String tableAlias, String name, Class criterionType) {
+    private PersistentPropertyPath findPropertyInternal(QueryState queryState, PersistentEntity entity, String name, Class criterionType) {
         PersistentPropertyPath propertyPath = entity.getPropertyPath(name);
         if (propertyPath != null) {
             if (propertyPath.getAssociations().isEmpty()) {
@@ -786,7 +787,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
         ArgumentUtils.requireNonNull("query", query);
         ArgumentUtils.requireNonNull("propertiesToUpdate", propertiesToUpdate);
 
-        QueryState queryState = new QueryState(query, true, false);
+        QueryState queryState = new QueryState(query, true);
 
         QueryModel.Junction criteria = query.getCriteria();
 
@@ -849,7 +850,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
         ArgumentUtils.requireNonNull("annotationMetadata", annotationMetadata);
         ArgumentUtils.requireNonNull("query", query);
 
-        QueryState queryState = new QueryState(query, true, false);
+        QueryState queryState = new QueryState(query, true);
 
         QueryModel.Junction criteria = query.getCriteria();
 
@@ -1089,7 +1090,6 @@ public final class MongoQueryBuilder implements QueryBuilder {
      */
     @Internal
     protected final class QueryState implements PropertyParameterCreator {
-        private final String rootAlias;
         private final Set<String> joinPaths = new TreeSet<>();
         private final AtomicInteger position = new AtomicInteger(0);
         private final Map<String, String> additionalRequiredParameters = new LinkedHashMap<>();
@@ -1099,20 +1099,11 @@ public final class MongoQueryBuilder implements QueryBuilder {
 
         private final LookupsStage rootLookups;
 
-        private QueryState(QueryModel query, boolean allowJoins, boolean useAlias) {
+        private QueryState(QueryModel query, boolean allowJoins) {
             this.allowJoins = allowJoins;
             this.entity = query.getPersistentEntity();
-            this.rootAlias = useAlias ? null : null;
             this.parameterBindings = new ArrayList<>(entity.getPersistentPropertyNames().size());
             this.rootLookups = new LookupsStage(entity);
-        }
-
-        /**
-         * @return The root alias
-         */
-        public @Nullable
-        String getRootAlias() {
-            return rootAlias;
         }
 
         /**

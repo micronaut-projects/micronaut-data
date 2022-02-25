@@ -102,8 +102,9 @@ public class SchemaGenerator {
                                             if (DataSettings.QUERY_LOG.isDebugEnabled()) {
                                                 DataSettings.QUERY_LOG.debug("Dropping Tables: \n{}", sql);
                                             }
-                                            PreparedStatement ps = connection.prepareStatement(sql);
-                                            ps.executeUpdate();
+                                            try (PreparedStatement ps = connection.prepareStatement(sql)) {
+                                                ps.executeUpdate();
+                                            }
                                         } catch (SQLException e) {
                                             if (DataSettings.QUERY_LOG.isTraceEnabled()) {
                                                 DataSettings.QUERY_LOG.trace("Drop Unsuccessful: " + e.getMessage());
@@ -114,8 +115,9 @@ public class SchemaGenerator {
                                         if (DataSettings.QUERY_LOG.isDebugEnabled()) {
                                             DataSettings.QUERY_LOG.debug("Creating Tables: \n{}", sql);
                                         }
-                                        PreparedStatement ps = connection.prepareStatement(sql);
-                                        ps.executeUpdate();
+                                        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+                                            ps.executeUpdate();
+                                        }
                                         break;
                                     default:
                                         // do nothing
@@ -130,8 +132,9 @@ public class SchemaGenerator {
                                                     if (DataSettings.QUERY_LOG.isDebugEnabled()) {
                                                         DataSettings.QUERY_LOG.debug("Dropping Table: \n{}", sql);
                                                     }
-                                                    PreparedStatement ps = connection.prepareStatement(sql);
-                                                    ps.executeUpdate();
+                                                    try (PreparedStatement ps = connection.prepareStatement(sql)) {
+                                                        ps.executeUpdate();
+                                                    }
                                                 }
                                             } catch (SQLException e) {
                                                 if (DataSettings.QUERY_LOG.isTraceEnabled()) {
@@ -148,8 +151,9 @@ public class SchemaGenerator {
                                                     DataSettings.QUERY_LOG.debug("Executing CREATE statement: \n{}", stmt);
                                                 }
                                                 try {
-                                                    PreparedStatement ps = connection.prepareStatement(stmt);
-                                                    ps.executeUpdate();
+                                                    try (PreparedStatement ps = connection.prepareStatement(stmt)) {
+                                                        ps.executeUpdate();
+                                                    }
                                                 } catch (SQLException e) {
                                                     if (DataSettings.QUERY_LOG.isWarnEnabled()) {
                                                         DataSettings.QUERY_LOG.warn("CREATE Statement Unsuccessful: " + e.getMessage());

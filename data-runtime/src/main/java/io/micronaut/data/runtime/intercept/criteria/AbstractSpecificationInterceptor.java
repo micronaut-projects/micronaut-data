@@ -316,7 +316,7 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
 
         @Override
         public Class<?> getParameterConverterClass() {
-            return ClassUtils.forName(p.getConverterClassName(), null).get();
+            return ClassUtils.forName(p.getConverterClassName(), null).orElseThrow(IllegalStateException::new);
         }
 
         @Override

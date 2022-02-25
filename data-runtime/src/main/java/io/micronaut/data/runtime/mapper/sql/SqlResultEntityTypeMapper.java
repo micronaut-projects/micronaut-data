@@ -324,6 +324,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
             if (associatedCtx == null) {
                 associatedCtx = ctx.copy();
                 R entity = (R) readEntity(rs, associatedCtx, parent, id);
+                Objects.requireNonNull(id);
                 ctx.associate(associatedCtx, id, entity);
             } else {
                 readChildren(rs, instance, parent, associatedCtx);
@@ -367,7 +368,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
         }
         if (instance != null && (ctx.association == null || ctx.jp != null)) {
             if (parent != null && ctx.association != null && ctx.association.isBidirectional()) {
-                PersistentAssociationPath inverse = ctx.association.getInversePathSide().get();
+                PersistentAssociationPath inverse = ctx.association.getInversePathSide().orElseThrow(IllegalStateException::new);
                 Association association = inverse.getAssociation();
                 if (association.getKind().isSingleEnded()) {
                     Object inverseInstance = inverse.getPropertyValue(instance);
@@ -543,6 +544,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                                     }
                                     Object associatedEntity = readEntity(rs, associatedCtx, entity, associatedId);
                                     if (associatedEntity != null) {
+                                        Objects.requireNonNull(associatedId);
                                         joinCtx.associate(associatedCtx, associatedId, associatedEntity);
                                     }
                                 }

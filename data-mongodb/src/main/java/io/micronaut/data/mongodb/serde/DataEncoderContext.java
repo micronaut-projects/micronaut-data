@@ -124,8 +124,10 @@ final class DataEncoderContext implements Serializer.EncoderContext {
             CustomConverterSerializer customConverterSerializer = new CustomConverterSerializer() {
                 @Override
                 public Serializer<Object> createSpecific(EncoderContext encoderContext, Argument<?> type) throws SerdeException {
-                    Class<?> converterClass = type.getAnnotationMetadata().classValue(MappedProperty.class, "converter").get();
-                    Class<Object> converterPersistedType = type.getAnnotationMetadata().classValue(MappedProperty.class, "converterPersistedType").get();
+                    Class<?> converterClass = type.getAnnotationMetadata().classValue(MappedProperty.class, "converter")
+                            .orElseThrow(IllegalStateException::new);
+                    Class<Object> converterPersistedType = type.getAnnotationMetadata().classValue(MappedProperty.class, "converterPersistedType")
+                            .orElseThrow(IllegalStateException::new);
                     Argument<Object> convertedType = Argument.of(converterPersistedType);
                     Serializer<? super Object> serializer = findSerializer(convertedType);
                     AttributeConverter<Object, Object> converter = attributeConverterRegistry.getConverter(converterClass);

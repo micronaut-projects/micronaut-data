@@ -112,6 +112,9 @@ public final class SourceParameterExpressionImpl extends ParameterExpressionImpl
                 }
             };
         }
+        if (outgoingQueryParameterProperty == null) {
+            throw new IllegalStateException("Outgoing query parameter property is required!");
+        }
         boolean autopopulated = propertyPath.getProperty()
                         .findAnnotation(AutoPopulated.class)
                         .map(ap -> ap.getRequiredValue(AutoPopulated.UPDATEABLE, Boolean.class))

@@ -44,6 +44,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.TimeZone;
 import java.util.UUID;
@@ -165,8 +166,8 @@ public class TypeUtils {
      */
     public static boolean isReactiveType(@Nullable ClassElement type) {
         return type != null && (type.isAssignable(Publisher.class)
-                || type.getPackageName().equals("io.reactivex"))
-                || type.getPackageName().startsWith("kotlinx.coroutines.flow");
+                || type.getPackageName().equals("io.reactivex")
+                || type.getPackageName().startsWith("kotlinx.coroutines.flow"));
     }
 
     /**
@@ -310,6 +311,7 @@ public class TypeUtils {
      */
     public static Optional<DataType> resolveDataType(@NonNull ParameterElement parameter) {
         ClassElement genericType = parameter.getGenericType();
+        Objects.requireNonNull(genericType);
         if (TypeUtils.isEntityContainerType(genericType) || genericType.hasStereotype(MappedEntity.class)) {
             return Optional.of(DataType.ENTITY);
         }

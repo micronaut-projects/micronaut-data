@@ -64,6 +64,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -237,9 +238,14 @@ abstract class AbstractMongoRepositoryOperations<Dtb, Cnt, PS> extends AbstractR
         if (result == null) {
             value = BsonNull.VALUE;
         } else if (result.size() == 1) {
-            value = result.values().iterator().next().asNumber();
+            value = result.values().iterator().next();
         } else if (result.size() == 2) {
-            value = result.entrySet().stream().filter(f -> !f.getKey().equals("_id")).findFirst().get().getValue();
+            Optional<Map.Entry<String, BsonValue>> id = result.entrySet().stream().filter(f -> !f.getKey().equals("_id")).findFirst();
+            if (id.isPresent()) {
+                value = id.get().getValue();
+            } else {
+                value = result.values().iterator().next();
+            }
         } else if (isDtoProjection) {
             Object dtoResult = MongoUtils.toValue(result.asDocument(), resultType, codecRegistry);
             if (resultType.isInstance(dtoResult)) {

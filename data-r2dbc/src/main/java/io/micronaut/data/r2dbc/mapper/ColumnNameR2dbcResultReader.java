@@ -140,7 +140,11 @@ public class ColumnNameR2dbcResultReader implements ResultReader<Row, String> {
             return ((ByteBuffer) o).array();
         }
         if (o instanceof Blob) {
-            return Mono.from(((Blob) o).stream()).block().array();
+            ByteBuffer byteBuffer = Mono.from(((Blob) o).stream()).block();
+            if (byteBuffer == null) {
+                return new byte[0];
+            }
+            return byteBuffer.array();
         }
         return convertRequired(o, byte[].class);
     }
