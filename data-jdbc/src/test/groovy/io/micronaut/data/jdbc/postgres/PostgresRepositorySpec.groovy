@@ -141,6 +141,13 @@ class PostgresRepositorySpec extends AbstractRepositorySpec implements PostgresT
         return true
     }
 
+    void "test escaped"() {
+        when:
+            def escaped = bookRepository.reproduceColonErrorEscaped()
+        then:
+            escaped == 'one:two:three'
+    }
+
     void "test native query with nullable property"() {
         given:
             setupBooks()

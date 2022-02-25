@@ -25,6 +25,7 @@ import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 
 import io.micronaut.core.annotation.Nullable;
+
 import java.util.List;
 
 @JdbcRepository(dialect = Dialect.POSTGRES)
@@ -41,4 +42,7 @@ public abstract class PostgresBookRepository extends BookRepository {
 
     @Query(value = "select * from book where (CASE WHEN exists ( select (:arg0) ) THEN title IN (:arg0) ELSE true END)", nativeQuery = true)
     public abstract List<Book> listNativeBooksNullableArraySearch(@Expandable @TypeDef(type = DataType.STRING) @Nullable String[] arg0);
+
+    @Query("SELECT 'one\\:two\\:three'")
+    public abstract String reproduceColonErrorEscaped();
 }
