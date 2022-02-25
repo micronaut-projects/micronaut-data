@@ -17,7 +17,7 @@
     catch(err) {
     }
 //-->
-var methods = {"i0":10,"i1":10,"i2":10,"i3":10,"i4":10,"i5":10,"i6":10,"i7":10,"i8":10,"i9":10,"i10":10,"i11":10,"i12":10,"i13":10,"i14":10,"i15":10,"i16":10,"i17":10,"i18":10,"i19":10,"i20":10,"i21":10,"i22":10,"i23":10,"i24":10,"i25":10,"i26":10,"i27":10,"i28":10,"i29":10,"i30":10,"i31":10,"i32":10,"i33":10,"i34":10};
+var methods = {"i0":10,"i1":10,"i2":10,"i3":10,"i4":10,"i5":10,"i6":10,"i7":10,"i8":10,"i9":10,"i10":10,"i11":10,"i12":10,"i13":10,"i14":10,"i15":10,"i16":10,"i17":10,"i18":10,"i19":10,"i20":10,"i21":10,"i22":10,"i23":10,"i24":10,"i25":10,"i26":10,"i27":10,"i28":10,"i29":10,"i30":10,"i31":10,"i32":10,"i33":10};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],8:["t4","Concrete Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -359,22 +359,18 @@ implements <a href="../../../../../io/micronaut/data/jdbc/operations/JdbcReposit
 </td>
 </tr>
 <tr id="i21" class="rowColor">
-<td class="colFirst"><code>protected <a href="../../../../../io/micronaut/data/runtime/mapper/ResultConsumer.Context.html" title="interface in io.micronaut.data.runtime.mapper">ResultConsumer.Context</a>&lt;java.sql.ResultSet&gt;</code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/operations/DefaultJdbcRepositoryOperations.html#newMappingContext-java.sql.ResultSet-">newMappingContext</a></span>(java.sql.ResultSet&nbsp;rs)</code>&nbsp;</td>
-</tr>
-<tr id="i22" class="altColor">
 <td class="colFirst"><code>&lt;T&gt;&nbsp;T</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/operations/DefaultJdbcRepositoryOperations.html#persist-io.micronaut.data.model.runtime.InsertOperation-">persist</a></span>(<a href="../../../../../io/micronaut/data/model/runtime/InsertOperation.html" title="interface in io.micronaut.data.model.runtime">InsertOperation</a>&lt;T&gt;&nbsp;operation)</code>
 <div class="block">Persist the operation returning a possibly new entity.</div>
 </td>
 </tr>
-<tr id="i23" class="rowColor">
+<tr id="i22" class="altColor">
 <td class="colFirst"><code>&lt;T&gt;&nbsp;java.lang.Iterable&lt;T&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/operations/DefaultJdbcRepositoryOperations.html#persistAll-io.micronaut.data.model.runtime.InsertBatchOperation-">persistAll</a></span>(<a href="../../../../../io/micronaut/data/model/runtime/InsertBatchOperation.html" title="interface in io.micronaut.data.model.runtime">InsertBatchOperation</a>&lt;T&gt;&nbsp;operation)</code>
 <div class="block">Persist all the given entities.</div>
 </td>
 </tr>
-<tr id="i24" class="altColor">
+<tr id="i23" class="rowColor">
 <td class="colFirst"><code>&lt;T&gt;&nbsp;java.util.List&lt;T&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/operations/DefaultJdbcRepositoryOperations.html#persistBatch-io.micronaut.data.jdbc.operations.DefaultJdbcRepositoryOperations.JdbcOperationContext-java.lang.Iterable-io.micronaut.data.model.runtime.RuntimePersistentEntity-java.util.function.Predicate-">persistBatch</a></span>(<a href="../../../../../io/micronaut/data/jdbc/operations/DefaultJdbcRepositoryOperations.JdbcOperationContext.html" title="class in io.micronaut.data.jdbc.operations">DefaultJdbcRepositoryOperations.JdbcOperationContext</a>&nbsp;ctx,
             java.lang.Iterable&lt;T&gt;&nbsp;values,
@@ -383,7 +379,7 @@ implements <a href="../../../../../io/micronaut/data/jdbc/operations/JdbcReposit
 <div class="block">Persist multiple entities in batch during cascade.</div>
 </td>
 </tr>
-<tr id="i25" class="rowColor">
+<tr id="i24" class="altColor">
 <td class="colFirst"><code>void</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/operations/DefaultJdbcRepositoryOperations.html#persistManyAssociation-io.micronaut.data.jdbc.operations.DefaultJdbcRepositoryOperations.JdbcOperationContext-io.micronaut.data.model.runtime.RuntimeAssociation-java.lang.Object-io.micronaut.data.model.runtime.RuntimePersistentEntity-java.lang.Object-io.micronaut.data.model.runtime.RuntimePersistentEntity-">persistManyAssociation</a></span>(<a href="../../../../../io/micronaut/data/jdbc/operations/DefaultJdbcRepositoryOperations.JdbcOperationContext.html" title="class in io.micronaut.data.jdbc.operations">DefaultJdbcRepositoryOperations.JdbcOperationContext</a>&nbsp;ctx,
                       <a href="../../../../../io/micronaut/data/model/runtime/RuntimeAssociation.html" title="class in io.micronaut.data.model.runtime">RuntimeAssociation</a>&nbsp;runtimeAssociation,
@@ -394,7 +390,7 @@ implements <a href="../../../../../io/micronaut/data/jdbc/operations/JdbcReposit
 <div class="block">Persist JOIN table relationship.</div>
 </td>
 </tr>
-<tr id="i26" class="altColor">
+<tr id="i25" class="rowColor">
 <td class="colFirst"><code>void</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/operations/DefaultJdbcRepositoryOperations.html#persistManyAssociationBatch-io.micronaut.data.jdbc.operations.DefaultJdbcRepositoryOperations.JdbcOperationContext-io.micronaut.data.model.runtime.RuntimeAssociation-java.lang.Object-io.micronaut.data.model.runtime.RuntimePersistentEntity-java.lang.Iterable-io.micronaut.data.model.runtime.RuntimePersistentEntity-">persistManyAssociationBatch</a></span>(<a href="../../../../../io/micronaut/data/jdbc/operations/DefaultJdbcRepositoryOperations.JdbcOperationContext.html" title="class in io.micronaut.data.jdbc.operations">DefaultJdbcRepositoryOperations.JdbcOperationContext</a>&nbsp;ctx,
                            <a href="../../../../../io/micronaut/data/model/runtime/RuntimeAssociation.html" title="class in io.micronaut.data.model.runtime">RuntimeAssociation</a>&nbsp;runtimeAssociation,
@@ -405,7 +401,7 @@ implements <a href="../../../../../io/micronaut/data/jdbc/operations/JdbcReposit
 <div class="block">Persist JOIN table relationships in batch.</div>
 </td>
 </tr>
-<tr id="i27" class="rowColor">
+<tr id="i26" class="altColor">
 <td class="colFirst"><code>&lt;T&gt;&nbsp;T</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/operations/DefaultJdbcRepositoryOperations.html#persistOne-io.micronaut.data.jdbc.operations.DefaultJdbcRepositoryOperations.JdbcOperationContext-T-io.micronaut.data.model.runtime.RuntimePersistentEntity-">persistOne</a></span>(<a href="../../../../../io/micronaut/data/jdbc/operations/DefaultJdbcRepositoryOperations.JdbcOperationContext.html" title="class in io.micronaut.data.jdbc.operations">DefaultJdbcRepositoryOperations.JdbcOperationContext</a>&nbsp;ctx,
           T&nbsp;value,
@@ -413,18 +409,18 @@ implements <a href="../../../../../io/micronaut/data/jdbc/operations/JdbcReposit
 <div class="block">Persist one entity during cascade.</div>
 </td>
 </tr>
-<tr id="i28" class="altColor">
+<tr id="i27" class="rowColor">
 <td class="colFirst"><code>&lt;R&gt;&nbsp;R</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/operations/DefaultJdbcRepositoryOperations.html#prepareStatement-java.lang.String-io.micronaut.data.jdbc.runtime.PreparedStatementCallback-">prepareStatement</a></span>(java.lang.String&nbsp;sql,
                 <a href="../../../../../io/micronaut/data/jdbc/runtime/PreparedStatementCallback.html" title="interface in io.micronaut.data.jdbc.runtime">PreparedStatementCallback</a>&lt;R&gt;&nbsp;callback)</code>
 <div class="block">Execute the given operation with the given callback.</div>
 </td>
 </tr>
-<tr id="i29" class="rowColor">
+<tr id="i28" class="altColor">
 <td class="colFirst"><code><a href="../../../../../io/micronaut/data/operations/reactive/ReactiveRepositoryOperations.html" title="interface in io.micronaut.data.operations.reactive">ReactiveRepositoryOperations</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/operations/DefaultJdbcRepositoryOperations.html#reactive--">reactive</a></span>()</code>&nbsp;</td>
 </tr>
-<tr id="i30" class="altColor">
+<tr id="i29" class="rowColor">
 <td class="colFirst"><code>&lt;E,D&gt;&nbsp;D</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/operations/DefaultJdbcRepositoryOperations.html#readDTO-java.lang.String-java.sql.ResultSet-java.lang.Class-java.lang.Class-">readDTO</a></span>(java.lang.String&nbsp;prefix,
        java.sql.ResultSet&nbsp;resultSet,
@@ -433,7 +429,7 @@ implements <a href="../../../../../io/micronaut/data/jdbc/operations/JdbcReposit
 <div class="block">Read an entity using the given prefix to be passes to result set lookups.</div>
 </td>
 </tr>
-<tr id="i31" class="rowColor">
+<tr id="i30" class="altColor">
 <td class="colFirst"><code>&lt;E&gt;&nbsp;E</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/operations/DefaultJdbcRepositoryOperations.html#readEntity-java.lang.String-java.sql.ResultSet-java.lang.Class-">readEntity</a></span>(java.lang.String&nbsp;prefix,
           java.sql.ResultSet&nbsp;resultSet,
@@ -441,19 +437,19 @@ implements <a href="../../../../../io/micronaut/data/jdbc/operations/JdbcReposit
 <div class="block">Read an entity using the given prefix to be passes to result set lookups.</div>
 </td>
 </tr>
-<tr id="i32" class="altColor">
+<tr id="i31" class="rowColor">
 <td class="colFirst"><code>&lt;T&gt;&nbsp;T</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/operations/DefaultJdbcRepositoryOperations.html#update-io.micronaut.data.model.runtime.UpdateOperation-">update</a></span>(<a href="../../../../../io/micronaut/data/model/runtime/UpdateOperation.html" title="interface in io.micronaut.data.model.runtime">UpdateOperation</a>&lt;T&gt;&nbsp;operation)</code>
 <div class="block">Updates the entity for the given operation.</div>
 </td>
 </tr>
-<tr id="i33" class="rowColor">
+<tr id="i32" class="altColor">
 <td class="colFirst"><code>&lt;T&gt;&nbsp;java.lang.Iterable&lt;T&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/operations/DefaultJdbcRepositoryOperations.html#updateAll-io.micronaut.data.model.runtime.UpdateBatchOperation-">updateAll</a></span>(<a href="../../../../../io/micronaut/data/model/runtime/UpdateBatchOperation.html" title="interface in io.micronaut.data.model.runtime">UpdateBatchOperation</a>&lt;T&gt;&nbsp;operation)</code>
 <div class="block">Updates the entities for the given operation.</div>
 </td>
 </tr>
-<tr id="i34" class="altColor">
+<tr id="i33" class="rowColor">
 <td class="colFirst"><code>&lt;T&gt;&nbsp;T</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/operations/DefaultJdbcRepositoryOperations.html#updateOne-io.micronaut.data.jdbc.operations.DefaultJdbcRepositoryOperations.JdbcOperationContext-T-io.micronaut.data.model.runtime.RuntimePersistentEntity-">updateOne</a></span>(<a href="../../../../../io/micronaut/data/jdbc/operations/DefaultJdbcRepositoryOperations.JdbcOperationContext.html" title="class in io.micronaut.data.jdbc.operations">DefaultJdbcRepositoryOperations.JdbcOperationContext</a>&nbsp;ctx,
          T&nbsp;value,
@@ -1363,16 +1359,6 @@ public&nbsp;&lt;T&gt;&nbsp;java.util.stream.Stream&lt;T&gt;&nbsp;entityStream(@N
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>The stream</dd>
 </dl>
-</li>
-</ul>
-<a name="newMappingContext-java.sql.ResultSet-">
-<!--   -->
-</a>
-<ul class="blockList">
-<li class="blockList">
-<h4>newMappingContext</h4>
-<pre>@NonNull
-protected&nbsp;<a href="../../../../../io/micronaut/data/runtime/mapper/ResultConsumer.Context.html" title="interface in io.micronaut.data.runtime.mapper">ResultConsumer.Context</a>&lt;java.sql.ResultSet&gt;&nbsp;newMappingContext(java.sql.ResultSet&nbsp;rs)</pre>
 </li>
 </ul>
 <a name="isSupportsBatchInsert-io.micronaut.data.jdbc.operations.DefaultJdbcRepositoryOperations.JdbcOperationContext-io.micronaut.data.model.runtime.RuntimePersistentEntity-">
