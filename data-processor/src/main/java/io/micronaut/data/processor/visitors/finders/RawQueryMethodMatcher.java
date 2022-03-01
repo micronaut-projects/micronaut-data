@@ -237,11 +237,11 @@ public class RawQueryMethodMatcher implements MethodMatcher {
         int index = 1;
         while (matcher.find()) {
             requiresEnd = true;
-            String start = matcher.group(1);
+            String start = queryString.substring(0, matcher.start(3) - 1);
             if (!start.isEmpty()) {
                 queryParts.add(start);
             }
-            String end = matcher.group(4);
+            String end = queryString.substring(matcher.end(3));
             if (!end.isEmpty()) {
                 requiresEnd = false;
                 queryParts.add(end);
