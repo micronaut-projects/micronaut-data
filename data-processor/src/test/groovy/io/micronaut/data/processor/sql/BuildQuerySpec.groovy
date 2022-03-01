@@ -15,7 +15,6 @@
  */
 package io.micronaut.data.processor.sql
 
-
 import io.micronaut.data.intercept.annotation.DataMethod
 import io.micronaut.data.model.DataType
 import io.micronaut.data.model.Pageable
@@ -23,7 +22,12 @@ import io.micronaut.data.processor.visitors.AbstractDataSpec
 import spock.lang.Issue
 import spock.lang.Unroll
 
-import static io.micronaut.data.processor.visitors.TestUtils.*
+import static io.micronaut.data.processor.visitors.TestUtils.getDataTypes
+import static io.micronaut.data.processor.visitors.TestUtils.getParameterBindingIndexes
+import static io.micronaut.data.processor.visitors.TestUtils.getParameterBindingPaths
+import static io.micronaut.data.processor.visitors.TestUtils.getParameterPropertyPaths
+import static io.micronaut.data.processor.visitors.TestUtils.getQuery
+import static io.micronaut.data.processor.visitors.TestUtils.getRawQuery
 
 class BuildQuerySpec extends AbstractDataSpec {
 
@@ -64,6 +68,35 @@ interface MyInterface2 extends CrudRepository<CustomBook, Long> {
 
         then:
             query == 'SELECT custom_book_."id",custom_book_."title" FROM "CustomBooK" custom_book_ WHERE (custom_book_."id" = ?)'
+    }
+
+
+    void "test POSTGRES custom query"() {
+        given:
+            def repository = buildRepository('test.MyInterface2', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.tck.entities.CustomBook;
+
+@JdbcRepository(dialect= Dialect.POSTGRES)
+@io.micronaut.context.annotation.Executable
+interface MyInterface2 extends CrudRepository<CustomBook, Long> {
+
+    @Query("SELECT * FROM arrays_entity WHERE stringArray::varchar[] && ARRAY[:nickNames]")
+    Optional<CustomBook> somethingWithCast(String[] nickNames);
+
+}
+"""
+            )
+
+            def method = repository.getRequiredMethod("somethingWithCast", String[])
+        when:
+            String query = getQuery(method)
+            String rawQuery = getRawQuery(method)
+
+        then:
+            query == 'SELECT * FROM arrays_entity WHERE stringArray::varchar[] && ARRAY[:nickNames]'
+            rawQuery == 'SELECT * FROM arrays_entity WHERE stringArray::varchar[] && ARRAY[?]'
     }
 
     void "test to-one join on repository type that inherits from CrudRepository"() {
