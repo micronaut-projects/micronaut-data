@@ -233,19 +233,14 @@ public class RawQueryMethodMatcher implements MethodMatcher {
 
         List<QueryParameterBinding> parameterBindings = new ArrayList<>(parameters.size());
         List<String> queryParts = new ArrayList<>();
-        boolean requiresEnd = true;
         int index = 1;
+        int lastOffset = 0;
         while (matcher.find()) {
-            requiresEnd = true;
-            String start = queryString.substring(0, matcher.start(3) - 1);
-            if (!start.isEmpty()) {
-                queryParts.add(start);
+            String prefix = queryString.substring(lastOffset, matcher.start(3) - 1);
+            if (!prefix.isEmpty()) {
+                queryParts.add(prefix);
             }
-            String end = queryString.substring(matcher.end(3));
-            if (!end.isEmpty()) {
-                requiresEnd = false;
-                queryParts.add(end);
-            }
+            lastOffset = matcher.end(3);
             String name = matcher.group(3);
             if (namedParameters) {
                 Optional<ParameterElement> element = parameters.stream()
@@ -302,8 +297,8 @@ public class RawQueryMethodMatcher implements MethodMatcher {
         queryString = queryString.replace("\\:", ":");
         if (queryParts.isEmpty()) {
             queryParts.add(queryString);
-        } else if (requiresEnd) {
-            queryParts.add("");
+        } else if (lastOffset > 0) {
+            queryParts.add(queryString.substring(lastOffset));
         }
         String finalQueryString = queryString;
         return new QueryResult() {
