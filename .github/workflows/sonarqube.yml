@@ -25,7 +25,9 @@ jobs:
          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
          sudo apt-get clean
          df -h
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
       - uses: actions/cache@v2.1.7
         with:
           path: ~/.gradle/caches
