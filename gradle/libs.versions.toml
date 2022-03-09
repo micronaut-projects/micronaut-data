@@ -3,7 +3,7 @@ micronaut-serde = "1.0.0-RC1"
 micronaut-sql = "4.1.1"
 micronaut-docs = "2.0.0.RC1"
 micronaut-gradle-plugin = "3.2.0"
-micronaut-gradle-build-settings-plugin = "5.2.1"
+micronaut-gradle-build-settings-plugin = "5.2.3"
 
 groovy = "3.0.8"
 
