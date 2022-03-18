@@ -262,6 +262,11 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         });
     }
 
+    /**
+     * Get dialect.
+     *
+     * @return dialect
+     */
     protected Dialect getDialect() {
         return Dialect.ANSI;
     }
