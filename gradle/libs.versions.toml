@@ -24,9 +24,8 @@ mysql-driver = "8.0.22"
 postgres-driver = "42.2.18"
 mssql-driver = "8.4.1.jre8"
 
-oracle-r2dbc-driver = "0.4.0"
 mysql-r2dbc-driver = "0.8.2.RELEASE"
-r2dbc = "Arabba-SR12"
+r2dbc-bom = "Borca-SR1"
 
 cglib = "3.3.0"
 objenesis = "3.2"
@@ -98,18 +97,18 @@ drivers-jdbc-mssql = { module = "com.microsoft.sqlserver:mssql-jdbc", version.re
 
 # R2DBC
 
-r2dbc-bom = { module = "io.r2dbc:r2dbc-bom", version.ref = "r2dbc" }
+r2dbc-bom = { module = "io.r2dbc:r2dbc-bom", version.ref = "r2dbc-bom" }
 r2dbc-spi = { module = "io.r2dbc:r2dbc-spi" }
 r2dbc-pool = { module = "io.r2dbc:r2dbc-pool" }
-r2dbc-h2 = { module = "io.r2dbc:r2dbc-h2" }
 
 micronaut-r2dbc = { module = "io.micronaut.r2dbc:micronaut-r2dbc-core" }
 
-drivers-r2dbc-oracle = { module = "com.oracle.database.r2dbc:oracle-r2dbc", version.ref = "oracle-r2dbc-driver" }
+drivers-r2dbc-h2 = { module = "io.r2dbc:r2dbc-h2" }
+drivers-r2dbc-oracle = { module = "com.oracle.database.r2dbc:oracle-r2dbc" }
 drivers-r2dbc-mariadb = { module = "org.mariadb:r2dbc-mariadb" }
 drivers-r2dbc-mysql = { module = "dev.miku:r2dbc-mysql", version.ref = "mysql-r2dbc-driver" }
 drivers-r2dbc-mssql = { module = "io.r2dbc:r2dbc-mssql" }
-drivers-r2dbc-postgresql = { module = "io.r2dbc:r2dbc-postgresql" }
+drivers-r2dbc-postgresql = { module = "org.postgresql:r2dbc-postgresql" }
 
 # TESTCONTAINERS
 
