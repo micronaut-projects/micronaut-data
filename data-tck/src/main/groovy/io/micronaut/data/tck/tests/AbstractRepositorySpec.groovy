@@ -92,8 +92,9 @@ abstract class AbstractRepositorySpec extends Specification {
         // book without an author
         bookRepository.save(new Book(title: "Anonymous", totalPages: 400))
 
-        // blank title
+        // Oracle interprets blank string as null and fail on non-null condition
         if (!isOracle()) {
+            // blank title
             bookRepository.save(new Book(title: "", totalPages: 0))
         }
 
@@ -378,9 +379,8 @@ abstract class AbstractRepositorySpec extends Specification {
         personRepository.count() == 4
         personRepository.count("Jeff") == 1
 
-        // Oracle 11g doesn't support pagination
-        isOracle() || personRepository.list(Pageable.from(1)).isEmpty()
-        isOracle() || personRepository.list(Pageable.from(0, 1)).size() == 1
+        personRepository.list(Pageable.from(1)).isEmpty()
+        personRepository.list(Pageable.from(0, 1)).size() == 1
     }
 
     void "test save many custom"() {
@@ -398,9 +398,8 @@ abstract class AbstractRepositorySpec extends Specification {
         personRepository.count() == 4
         personRepository.count("Jeff") == 1
 
-        // Oracle 11g doesn't support pagination
-        isOracle() || personRepository.list(Pageable.from(1)).isEmpty()
-        isOracle() || personRepository.list(Pageable.from(0, 1)).size() == 1
+        personRepository.list(Pageable.from(1)).isEmpty()
+        personRepository.list(Pageable.from(0, 1)).size() == 1
     }
 
     void "test update many"() {
@@ -727,12 +726,12 @@ abstract class AbstractRepositorySpec extends Specification {
         setupBooks()
 
         expect:
-        // NOTE: Oracle treats blank and null the same
-        isOracle() || bookRepository.count() == 8
-        isOracle() || bookRepository.findByAuthorIsNull().size() == 2
-        isOracle() || bookRepository.findByAuthorIsNotNull().size() == 6
-        isOracle() || bookRepository.countByTitleIsEmpty() == 1
-        isOracle() || bookRepository.countByTitleIsNotEmpty() == 7
+        // NOTE: The empty title is skipped for Oracle because it treats blank and null the same, failing the not-null condition
+        bookRepository.count() == (isOracle() ? 7 : 8)
+        bookRepository.findByAuthorIsNull().size() == (isOracle() ? 1 : 2)
+        bookRepository.findByAuthorIsNotNull().size() == 6
+        bookRepository.countByTitleIsEmpty() == (isOracle() ? 0 : 1)
+        bookRepository.countByTitleIsNotEmpty() == 7
     }
 
     void "test order by association"() {
@@ -805,9 +804,8 @@ abstract class AbstractRepositorySpec extends Specification {
         ])
 
         expect:
-        // Oracle 11g doesn't do pagination
-        isOracle() || bookRepository.findTop3OrderByTitle().size() == 3
-        isOracle() || bookRepository.findTop3OrderByTitle()[0].title == 'Along Came a Spider'
+        bookRepository.findTop3OrderByTitle().size() == 3
+        bookRepository.findTop3OrderByTitle()[0].title == 'Along Came a Spider'
         personRepository.countByAgeGreaterThan(33) == 2
         personRepository.countByAgeLessThan(33) == 1
         personRepository.findAgeByName("Jeff") == 40
@@ -833,11 +831,6 @@ abstract class AbstractRepositorySpec extends Specification {
         results.every { it instanceof BookDto }
         results.every { it.title.startsWith("The")}
         bookDtoRepository.findOneByTitle("The Stand").title == "The Stand"
-
-        if (isOracle()) {
-            // Oracle 11g doesn't support pagination
-            return
-        }
 
         when:"paged result check"
         def result = bookDtoRepository.searchByTitleLike("The%", Pageable.from(0))
@@ -897,25 +890,20 @@ abstract class AbstractRepositorySpec extends Specification {
         setupBooks()
 
         expect:
-        if (isOracle()) {
-            assert bookRepository.count() == 7
-        } else {
-            assert bookRepository.count() == 8
-        }
-        if (!isOracle()) {
-            bookRepository.queryTop3ByAuthorNameOrderByTitle("Stephen King")
-                    .stream().findFirst().get().title == "Pet Cemetery"
-            bookRepository.queryTop3ByAuthorNameOrderByTitle("Stephen King")
-                    .size() == 2
-            if (transactionManager.isPresent()) {
-                transactionManager.get().executeRead {
-                    assert bookRepository.findTop3ByAuthorNameOrderByTitle("Stephen King")
-                            .findFirst().get().title == "Pet Cemetery"
-                    assert bookRepository.findTop3ByAuthorNameOrderByTitle("Stephen King")
-                            .count() == 2
-                }
+        bookRepository.count() == (isOracle() ? 7 : 8)
+        bookRepository.queryTop3ByAuthorNameOrderByTitle("Stephen King")
+                .stream().findFirst().get().title == "Pet Cemetery"
+        bookRepository.queryTop3ByAuthorNameOrderByTitle("Stephen King")
+                .size() == 2
+        if (transactionManager.isPresent()) {
+            transactionManager.get().executeRead {
+                assert bookRepository.findTop3ByAuthorNameOrderByTitle("Stephen King")
+                        .findFirst().get().title == "Pet Cemetery"
+                assert bookRepository.findTop3ByAuthorNameOrderByTitle("Stephen King")
+                        .count() == 2
             }
         }
+
         authorRepository.findByBooksTitle("The Stand").name == "Stephen King"
         authorRepository.findByBooksTitle("The Border").name == "Don Winslow"
         bookRepository.findByAuthorName("Stephen King").size() == 2
@@ -1111,11 +1099,6 @@ abstract class AbstractRepositorySpec extends Specification {
         then:
         results.size() == 1
         results[0].name == 'Bob'
-
-        if (isOracle()) {
-            // Oracle 11g doesn't support pagination
-            return
-        }
 
         when:
         results = personRepository.findAllByNameLike("Fred%", Pageable.from(0, 10))

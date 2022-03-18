@@ -22,11 +22,6 @@ import io.micronaut.data.tck.entities.MultiArrayEntity;
 
 public interface MultiArrayEntityRepository extends CrudRepository<MultiArrayEntity, Long> {
 
-//    void update(@Id Long id, @Parameter("stringMultiArray") String[][] stringMultiArray);
-//    This triggers:
-//    Caused by: java.lang.UnsupportedOperationException
-//    at io.micronaut.asm.Type.getOpcode(Type.java:802)
-//    at io.micronaut.asm.commons.GeneratorAdapter.loadInsn(GeneratorAdapter.java:481)
-//    at io.micronaut.asm.commons.GeneratorAdapter.loadArg(GeneratorAdapter.java:508)
+    void update(@Id Long id, @Parameter("stringMultiArray") String[][] stringMultiArray);
 
 }

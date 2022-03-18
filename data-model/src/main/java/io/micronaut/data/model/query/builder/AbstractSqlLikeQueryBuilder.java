@@ -41,6 +41,7 @@ import io.micronaut.data.model.query.BindingParameter;
 import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.query.QueryModel;
 import io.micronaut.data.model.query.QueryParameter;
+import io.micronaut.data.model.query.builder.sql.Dialect;
 
 import javax.validation.constraints.NotNull;
 import java.util.AbstractMap;
@@ -149,7 +150,20 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         });
 
         addCriterionHandler(QueryModel.IsNotEmpty.class, (ctx, isNotEmpty) -> {
-            appendEmptyExpression(ctx, IS_NOT_NULL + AND + StringUtils.SPACE, " <> '' ", IS_NOT_EMPTY, isNotEmpty.getProperty());
+            if (getDialect() == Dialect.ORACLE) {
+                // Oracle treats blank and null the same
+                QueryPropertyPath propertyPath = ctx.getRequiredProperty(isNotEmpty.getProperty(), QueryModel.IsEmpty.class);
+                StringBuilder whereClause = ctx.query();
+                if (propertyPath.getProperty().isAssignable(CharSequence.class)) {
+                    appendPropertyRef(whereClause, propertyPath);
+                    whereClause.append(IS_NOT_NULL);
+                } else {
+                    appendPropertyRef(whereClause, propertyPath);
+                    whereClause.append(IS_NOT_EMPTY);
+                }
+            } else {
+                appendEmptyExpression(ctx, IS_NOT_NULL + AND + StringUtils.SPACE, " <> '' ", IS_NOT_EMPTY, isNotEmpty.getProperty());
+            }
         });
 
         addCriterionHandler(QueryModel.IdEquals.class, (ctx, idEquals) -> {
@@ -246,6 +260,10 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             }
             whereClause.append(CLOSE_BRACKET);
         });
+    }
+
+    protected Dialect getDialect() {
+        return Dialect.ANSI;
     }
 
     private void asLiterals(StringBuilder sb, @Nullable Object value) {
