@@ -63,18 +63,28 @@ public final class PreparedQueryDBOperation extends StoredSqlOperation {
                                    RuntimePersistentEntity<K> persistentEntity,
                                    SqlQueryBuilder queryBuilder) {
         if (pageable != Pageable.UNPAGED) {
+            StringBuilder added = new StringBuilder();
             Sort sort = pageable.getSort();
             if (sort.isSorted()) {
-                query += queryBuilder.buildOrderBy(persistentEntity, sort).getQuery();
+                added.append(queryBuilder.buildOrderBy(persistentEntity, sort).getQuery());
             } else if (isSqlServerWithoutOrderBy(query, dialect)) {
                 // SQL server requires order by
                 sort = sortById(persistentEntity);
-                query += queryBuilder.buildOrderBy(persistentEntity, sort).getQuery();
+                added.append(queryBuilder.buildOrderBy(persistentEntity, sort).getQuery());
             }
             if (isSingleResult && pageable.getOffset() > 0) {
                 pageable = Pageable.from(pageable.getNumber(), 1);
             }
-            query += queryBuilder.buildPagination(pageable).getQuery();
+            added.append(queryBuilder.buildPagination(pageable).getQuery());
+            int forUpdateIndex = query.lastIndexOf(SqlQueryBuilder.STANDARD_FOR_UPDATE_CLAUSE);
+            if (forUpdateIndex == -1) {
+                forUpdateIndex = query.lastIndexOf(SqlQueryBuilder.SQL_SERVER_FOR_UPDATE_CLAUSE);
+            }
+            if (forUpdateIndex > -1) {
+                query = query.substring(0, forUpdateIndex) + added + query.substring(forUpdateIndex);
+            } else {
+                query += added;
+            }
         }
     }
 
