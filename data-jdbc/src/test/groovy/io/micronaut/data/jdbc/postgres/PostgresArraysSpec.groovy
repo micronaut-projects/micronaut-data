@@ -54,13 +54,13 @@ class PostgresArraysSpec extends AbstractArraysSpec implements PostgresTestPrope
             entityStored = multiArrayEntityRepository.findById(entity.id).get()
         then:
             entityStored == entity
-//        when:
-//            multiArrayEntityRepository.update(entityStored.id,
-//                    [["OOO", "ZZZ"], ["CCC", "DDD"], ["123", "456"]] as String[][]
-//            )
-//            entityStored = multiArrayEntityRepository.findById(entity.id).get()
-//        then:
-//            entityStored.stringMultiArray == [["OOO", "ZZZ"], ["CCC", "DDD"], ["123", "456"]] as String[][]
+        when:
+            multiArrayEntityRepository.update(entityStored.id,
+                    [["OOO", "ZZZ"], ["CCC", "DDD"], ["123", "456"]] as String[][]
+            )
+            entityStored = multiArrayEntityRepository.findById(entity.id).get()
+        then:
+            entityStored.stringMultiArray == [["OOO", "ZZZ"], ["CCC", "DDD"], ["123", "456"]] as String[][]
     }
 
     def "empty array"() {
