@@ -19,6 +19,8 @@ import groovy.transform.Memoized
 import io.micronaut.data.tck.repositories.*
 import io.micronaut.data.tck.tests.AbstractRepositorySpec
 
+import java.time.LocalDate
+
 class MySqlRepositorySpec extends AbstractRepositorySpec implements MySQLTestPropertyProvider {
 
     @Memoized
@@ -29,7 +31,7 @@ class MySqlRepositorySpec extends AbstractRepositorySpec implements MySQLTestPro
 
     @Memoized
     @Override
-    BookRepository getBookRepository() {
+    MySqlBookRepository getBookRepository() {
         return context.getBean(MySqlBookRepository)
     }
 
@@ -133,6 +135,15 @@ class MySqlRepositorySpec extends AbstractRepositorySpec implements MySQLTestPro
     @Override
     BasicTypesRepository getBasicTypeRepository() {
         return context.getBean(MySqlBasicTypesRepository)
+    }
+
+    def "for update is in the correct location"() {
+        given:
+            setupBooks()
+        when:
+            def books = bookRepository.findFirst500ByLastUpdatedBeforeForUpdate(LocalDate.of(2050, 05, 05).atStartOfDay())
+        then:
+            books.size() == 8
     }
 
     @Override
