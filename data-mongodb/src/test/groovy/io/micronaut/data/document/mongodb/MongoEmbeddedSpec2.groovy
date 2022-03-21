@@ -13,23 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package example // Keep example package for testing non micronaut package
+package example  // Keep example package for testing non micronaut package
 
+import io.micronaut.core.annotation.Nullable
+import io.micronaut.data.annotation.Embeddable
+import io.micronaut.data.annotation.GeneratedValue
+import io.micronaut.data.annotation.Id
+import io.micronaut.data.annotation.MappedEntity
+import io.micronaut.data.annotation.Relation
 import io.micronaut.data.document.mongodb.MongoTestPropertyProvider
-import io.micronaut.data.document.mongodb.repositories.MongoRestaurantRepository
-import io.micronaut.data.document.tck.entities.Address
-import io.micronaut.data.document.tck.entities.Restaurant
+import io.micronaut.data.mongodb.annotation.MongoRepository
+import io.micronaut.data.repository.CrudRepository
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
 import spock.lang.Shared
 import spock.lang.Specification
 
 @MicronautTest
-class MongoEmbeddedSpec extends Specification implements MongoTestPropertyProvider {
+class MongoEmbeddedSpec2 extends Specification implements MongoTestPropertyProvider {
 
     @Inject
     @Shared
-    MongoRestaurantRepository restaurantRepository
+    RestaurantRepository2 restaurantRepository
 
     def cleanup() {
         restaurantRepository.deleteAll()
@@ -37,8 +42,8 @@ class MongoEmbeddedSpec extends Specification implements MongoTestPropertyProvid
 
     void "test save and retreive entity with embedded"() {
         when:"An entity is saved"
-        restaurantRepository.save(new Restaurant("Fred's Cafe", new Address("High St.", "7896")))
-        def restaurant = restaurantRepository.save(new Restaurant("Joe's Cafe", new Address("Smith St.", "1234")))
+        restaurantRepository.saveAll([new Restaurant2("Fred's Cafe", new Address2("High St.", "7896"))])
+        def restaurant = restaurantRepository.save(new Restaurant2("Joe's Cafe", new Address2("Smith St.", "1234")))
 
         then:"The entity was saved"
         restaurant
@@ -56,7 +61,7 @@ class MongoEmbeddedSpec extends Specification implements MongoTestPropertyProvid
         restaurant.hqAddress == null
 
         when:"The object is updated with non-null value"
-        restaurant.hqAddress = new Address("John St.", "4567")
+        restaurant.hqAddress = new Address2("John St.", "4567")
         restaurantRepository.update(restaurant)
         restaurant = restaurantRepository.findById(restaurant.id).orElse(null)
 
@@ -72,5 +77,45 @@ class MongoEmbeddedSpec extends Specification implements MongoTestPropertyProvid
         then:"The correct query is executed"
         restaurant.address.street == 'Smith St.'
 
+    }
+
+}
+
+@MongoRepository
+interface RestaurantRepository2 extends CrudRepository<Restaurant2, String> {
+
+    Restaurant2 findByAddress(Address2 address);
+}
+
+@MappedEntity
+class Restaurant2 {
+
+    @GeneratedValue
+    @Id
+    String id
+    final String name
+
+    @Relation(Relation.Kind.EMBEDDED)
+    final Address2 address
+
+    @Relation(Relation.Kind.EMBEDDED)
+    @Nullable
+    Address2 hqAddress
+
+    Restaurant2(String name, Address2 address) {
+        this.name = name
+        this.address = address
+    }
+
+}
+
+@Embeddable
+class Address2 {
+    final String street
+    final String zipCode
+
+    Address2(String street, String zipCode) {
+        this.street = street
+        this.zipCode = zipCode
     }
 }
