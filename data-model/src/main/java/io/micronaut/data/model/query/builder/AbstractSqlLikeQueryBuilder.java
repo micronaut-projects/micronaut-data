@@ -1358,6 +1358,19 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
     @NonNull
     @Override
     public QueryResult buildOrderBy(@NonNull PersistentEntity entity, @NonNull Sort sort) {
+        return buildOrderBy("", entity, sort);
+    }
+
+    /**
+     * Encode the given query into the encoded query instance.
+     *
+     * @param query The query
+     * @param entity The root entity
+     * @param sort The sort
+     * @return The encoded query
+     */
+    @NonNull
+    public QueryResult buildOrderBy(String query, @NonNull PersistentEntity entity, @NonNull Sort sort) {
         ArgumentUtils.requireNonNull("entity", entity);
         ArgumentUtils.requireNonNull("sort", sort);
         List<Sort.Order> orders = sort.getOrderBy();
@@ -1378,24 +1391,36 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             if (ignoreCase) {
                 buff.append("LOWER(");
             }
-            if (!computePropertyPaths()) {
+            if (path.getAssociations().isEmpty()) {
                 buff.append(getAliasName(entity));
-                for (Association association : path.getAssociations()) {
-                    buff.append(DOT).append(association.getName());
-                }
-                buff.append(DOT).append(path.getProperty().getName());
             } else {
-                if (!path.getAssociations().isEmpty()) {
-                    StringJoiner joiner = new StringJoiner(".");
-                    for (Association association : path.getAssociations()) {
-                        joiner.add(association.getName());
-                    }
-                    buff.append(getAliasName(new JoinPath(joiner.toString(), path.getAssociations().toArray(new Association[0]), Join.Type.DEFAULT, null)))
-                            .append(DOT)
-                            .append(getColumnName(path.getProperty()));
-                } else {
-                    buff.append(getAliasName(entity)).append(DOT).append(getColumnName(path.getProperty()));
+                StringJoiner joiner = new StringJoiner(".");
+                for (Association association : path.getAssociations()) {
+                    joiner.add(association.getName());
                 }
+                String joinAlias = getAliasName(new JoinPath(joiner.toString(), path.getAssociations().toArray(new Association[0]), Join.Type.DEFAULT, null));
+                if (!computePropertyPaths()) {
+                    if (!query.contains(" " + joinAlias + " ") && !query.endsWith(" " + joinAlias)) {
+                        // Special hack case for JPA, Hibernate can join the relation with cross join automatically when referenced by the property path
+                        // This probably should be removed in the future major version
+                        buff.append(getAliasName(entity)).append(DOT);
+                        StringJoiner pathJoiner = new StringJoiner(".");
+                        for (Association association : path.getAssociations()) {
+                            pathJoiner.add(association.getName());
+                        }
+                        buff.append(pathJoiner);
+                    } else {
+                        buff.append(joinAlias);
+                    }
+                } else {
+                    buff.append(joinAlias);
+                }
+            }
+            buff.append(DOT);
+            if (!computePropertyPaths()) {
+                buff.append(path.getProperty().getName());
+            } else {
+                buff.append(getColumnName(path.getProperty()));
             }
             if (ignoreCase) {
                 buff.append(")");
