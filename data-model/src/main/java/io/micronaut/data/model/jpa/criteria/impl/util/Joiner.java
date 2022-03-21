@@ -90,18 +90,18 @@ public class Joiner implements SelectionVisitor, PredicateVisitor {
             return;
         }
 
-        joinAssociation(persistentPropertyPath.getPathAsString(), persistentPropertyPath);
+        joinAssociation(persistentPropertyPath);
     }
 
-    private void joinAssociation(String fullpath, Path<?> path) {
+    private void joinAssociation(Path<?> path) {
         if (path instanceof PersistentAssociationPath) {
             PersistentAssociationPath<?, ?> associationPath = (PersistentAssociationPath) path;
             if (associationPath.getAssociation().getKind() == Relation.Kind.EMBEDDED) {
                 // Cannot join embedded
 
-                joinAssociation(fullpath, path.getParentPath());
+                joinAssociation(path.getParentPath());
             } else {
-                join(fullpath, associationPath);
+                join(associationPath);
             }
         } else if (path instanceof PersistentPropertyPath) {
             PersistentPropertyPath persistentPropertyPath = (PersistentPropertyPath) path;
@@ -113,12 +113,12 @@ public class Joiner implements SelectionVisitor, PredicateVisitor {
                     return;
                 }
             }
-            joinAssociation(fullpath, parentPath);
+            joinAssociation(parentPath);
         }
     }
 
-    private void join(String fullpath, PersistentAssociationPath<?, ?> associationPath) {
-        Joined joined = joins.computeIfAbsent(fullpath,
+    private void join(PersistentAssociationPath<?, ?> associationPath) {
+        Joined joined = joins.computeIfAbsent(associationPath.getPathAsString(),
                 s -> new Joined(associationPath, associationPath.getAssociationJoinType(), associationPath.getAlias()));
 
         if (joined.association == associationPath) {
