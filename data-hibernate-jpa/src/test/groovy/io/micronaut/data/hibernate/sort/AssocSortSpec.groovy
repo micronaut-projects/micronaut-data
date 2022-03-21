@@ -84,7 +84,7 @@ class AssocSortSpec extends Specification {
             items.get(1).getName1() == "item_1"
 
         when:
-            // sort the list on a third or more level property -> doesn't works
+            // sort the list on a third or more level property
             items = repository.findAll(Sort.of(Sort.Order.asc("level2.level3.name3")))
         then:
             items.get(0).getName1() == "item_1"

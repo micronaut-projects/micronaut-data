@@ -40,9 +40,20 @@ public abstract class BookRepository extends io.micronaut.data.tck.repositories.
         super(authorRepository);
     }
 
+    /**
+     * @deprecated Order by 'author.name' case without a join. Hibernate will do the cross join if the association property is accessed by the property path without join.
+     */
     @Query(value = "SELECT book_ FROM Book book_", countQuery = "SELECT count(book_) FROM Book book_ ")
     @Join(value = "author", type = Join.Type.FETCH)
+    @Deprecated
     public abstract Page<Book> listPageableCustomQuery(Pageable pageable);
+
+    /**
+     * @deprecated Order by 'author.name' case without a join. Hibernate will do the cross join if the association property is accessed by the property path without join.
+     */
+    @Query(value = "SELECT book_ FROM Book book_", countQuery = "SELECT count(book_) FROM Book book_ ")
+    @Deprecated
+    public abstract Page<Book> listPageableCustomQuery2(Pageable pageable);
 
     @EntityGraph(
             attributePaths = {
