@@ -15,7 +15,5 @@
  */
 package io.micronaut.data.document.mongodb.reactive
 
-import io.micronaut.data.document.mongodb.MongoEmbeddedSpec
-
-class MongoReactiveEmbeddedSpec extends MongoEmbeddedSpec implements MongoSelectReactiveDriver {
+class MongoReactiveEmbeddedSpec extends example.MongoEmbeddedSpec implements MongoSelectReactiveDriver {
 }
