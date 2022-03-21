@@ -1378,24 +1378,20 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             if (ignoreCase) {
                 buff.append("LOWER(");
             }
-            if (!computePropertyPaths()) {
+            if (path.getAssociations().isEmpty()) {
                 buff.append(getAliasName(entity));
-                for (Association association : path.getAssociations()) {
-                    buff.append(DOT).append(association.getName());
-                }
-                buff.append(DOT).append(path.getProperty().getName());
             } else {
-                if (!path.getAssociations().isEmpty()) {
-                    StringJoiner joiner = new StringJoiner(".");
-                    for (Association association : path.getAssociations()) {
-                        joiner.add(association.getName());
-                    }
-                    buff.append(getAliasName(new JoinPath(joiner.toString(), path.getAssociations().toArray(new Association[0]), Join.Type.DEFAULT, null)))
-                            .append(DOT)
-                            .append(getColumnName(path.getProperty()));
-                } else {
-                    buff.append(getAliasName(entity)).append(DOT).append(getColumnName(path.getProperty()));
+                StringJoiner joiner = new StringJoiner(".");
+                for (Association association : path.getAssociations()) {
+                    joiner.add(association.getName());
                 }
+                buff.append(getAliasName(new JoinPath(joiner.toString(), path.getAssociations().toArray(new Association[0]), Join.Type.DEFAULT, null)));
+            }
+            buff.append(DOT);
+            if (!computePropertyPaths()) {
+                buff.append(path.getProperty().getName());
+            } else {
+                buff.append(getColumnName(path.getProperty()));
             }
             if (ignoreCase) {
                 buff.append(")");
