@@ -7,6 +7,6 @@ version projectVersion
 
 micronautBom {
     excludeProject.set({ p ->
-        p.name.contains('benchmark') || p.name.contains('example')
+        p.name.contains('benchmark') || p.name.contains('example') || p.name == 'data-tck'
     } as Spec<String>)
 }
