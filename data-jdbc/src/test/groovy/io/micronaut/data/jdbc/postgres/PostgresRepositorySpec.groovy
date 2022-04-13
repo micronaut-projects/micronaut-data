@@ -148,6 +148,19 @@ class PostgresRepositorySpec extends AbstractRepositorySpec implements PostgresT
             escaped == 'one:two:three'
     }
 
+    void "test delete by mapped entity"() {
+        given:
+            saveSampleBooks()
+        when:
+            def book = bookRepository.findAll().first()
+        then:
+            book.author != null
+        when:
+            bookRepository.deleteByAuthor(book.author)
+        then:
+            noExceptionThrown()
+    }
+
     void "test native query with nullable property"() {
         given:
             setupBooks()
