@@ -137,4 +137,6 @@ public abstract class BookRepository implements PageableRepository<Book, Long> {
     }
 
     public abstract int deleteByIdAndAuthorId(Long id, Long authorId);
+
+    public abstract Book save(String title, int totalPages, Author author);
 }

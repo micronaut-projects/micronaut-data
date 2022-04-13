@@ -16,6 +16,8 @@
 package io.micronaut.data.jdbc.postgres
 
 import groovy.transform.Memoized
+import io.micronaut.data.tck.entities.Author
+import io.micronaut.data.tck.entities.Book
 import io.micronaut.data.tck.repositories.*
 import io.micronaut.data.tck.tests.AbstractRepositorySpec
 
@@ -146,6 +148,15 @@ class PostgresRepositorySpec extends AbstractRepositorySpec implements PostgresT
             def escaped = bookRepository.reproduceColonErrorEscaped()
         then:
             escaped == 'one:two:three'
+    }
+
+    void "save entity using repository method with different mapped entity argument"() {
+        given:
+            Author author = authorRepository.save(new Author().with(true, {it.name = "Kartarka Jolanda"}))
+        when:
+            Book book = bookRepository.save("Hodne Budes Nekde", 42, author)
+        then:
+            book.author.id == author.id
     }
 
     void "test native query with nullable property"() {
