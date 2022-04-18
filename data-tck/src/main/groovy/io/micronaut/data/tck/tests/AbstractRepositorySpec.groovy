@@ -1748,6 +1748,8 @@ abstract class AbstractRepositorySpec extends Specification {
             personRepository.findAll(nameEquals("Denis")).size() == 0
             personRepository.findAll(null as QuerySpecification).size() == 2
             personRepository.findAll(null as PredicateSpecification).size() == 2
+            personRepository.findAll(null as QuerySpecification, Pageable.from(Sort.of(Sort.Order.desc("name")))).size() == 2
+            personRepository.findAll(null as PredicateSpecification, Pageable.from(Sort.of(Sort.Order.desc("name")))).size() == 2
             personRepository.findAll(nameEquals("Jeff").or(nameEquals("Denis"))).size() == 1
             personRepository.findAll(nameEquals("Jeff").and(nameEquals("Denis"))).size() == 0
             personRepository.findAll(nameEquals("Jeff").and(nameEquals("Jeff"))).size() == 1
