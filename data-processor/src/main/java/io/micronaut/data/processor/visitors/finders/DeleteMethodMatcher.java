@@ -15,13 +15,12 @@
  */
 package io.micronaut.data.processor.visitors.finders;
 
+import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.model.Embedded;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaDelete;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
-import io.micronaut.data.processor.model.SourcePersistentProperty;
 import io.micronaut.data.processor.model.criteria.SourcePersistentEntityCriteriaBuilder;
 import io.micronaut.data.processor.visitors.MatchFailedException;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
@@ -54,8 +53,26 @@ public final class DeleteMethodMatcher extends AbstractPatternMethodMatcher {
     @Override
     public MethodMatch match(MethodMatchContext matchContext, java.util.regex.Matcher matcher) {
         ParameterElement[] parameters = matchContext.getParameters();
-        final ParameterElement entityParameter = Arrays.stream(parameters).filter(p -> TypeUtils.isEntity(p.getGenericType())).findFirst().orElse(null);
-        final ParameterElement entitiesParameter = Arrays.stream(parameters).filter(p -> TypeUtils.isIterableOfEntity(p.getGenericType())).findFirst().orElse(null);
+        boolean isSpecificDelete = matcher.group(2).endsWith("By");
+        ParameterElement entityParameter = null;
+        ParameterElement entitiesParameter = null;
+        if (matchContext.getParametersNotInRole().size() == 1) {
+            entityParameter = Arrays.stream(parameters).filter(p -> TypeUtils.isEntity(p.getGenericType())).findFirst().orElse(null);
+            entitiesParameter = Arrays.stream(parameters).filter(p -> TypeUtils.isIterableOfEntity(p.getGenericType())).findFirst().orElse(null);
+        }
+        if (isSpecificDelete) {
+            // Un-mark the entity parameter if there is a property named the same and 'By' syntax is used
+            if (entityParameter != null) {
+                if (matchContext.getRootEntity().getPropertyByName(getName(entityParameter)) != null) {
+                    entityParameter = null;
+                }
+            }
+            if (entitiesParameter != null) {
+                if (matchContext.getRootEntity().getPropertyByName(getName(entitiesParameter)) != null) {
+                    entitiesParameter = null;
+                }
+            }
+        }
         if (entityParameter == null && entitiesParameter == null) {
             if (!TypeUtils.isValidBatchUpdateReturnType(matchContext.getMethodElement())) {
                 return null;
@@ -70,17 +87,11 @@ public final class DeleteMethodMatcher extends AbstractPatternMethodMatcher {
 
         boolean supportedByImplicitQueries = !matcher.group(2).endsWith("By");
 
-        final String idName;
-        final SourcePersistentProperty identity = rootEntity.getIdentity();
-        if (identity != null) {
-            idName = identity.getName();
-        } else {
-            idName = TypeRole.ID;
-        }
-
         boolean generateInIdList = entitiesParameter != null
                 && !rootEntity.hasCompositeIdentity()
                 && !(rootEntity.getIdentity() instanceof Embedded) && rootEntity.getVersion() == null;
+        ParameterElement finalEntityParameter = entityParameter;
+        ParameterElement finalEntitiesParameter = entitiesParameter;
         if (generateInIdList) {
             return new DeleteCriteriaMethodMatch(matcher) {
 
@@ -95,7 +106,7 @@ public final class DeleteMethodMatcher extends AbstractPatternMethodMatcher {
                                                    PersistentEntityCriteriaDelete<T> query,
                                                    SourcePersistentEntityCriteriaBuilder cb) {
                     Predicate restriction = query.getRestriction();
-                    Predicate predicate = root.id().in(cb.entityPropertyParameter(entitiesParameter));
+                    Predicate predicate = root.id().in(cb.entityPropertyParameter(finalEntitiesParameter));
                     if (restriction == null) {
                         query.where(predicate);
                     } else {
@@ -105,12 +116,12 @@ public final class DeleteMethodMatcher extends AbstractPatternMethodMatcher {
 
                 @Override
                 protected ParameterElement getEntityParameter() {
-                    return entityParameter;
+                    return finalEntityParameter;
                 }
 
                 @Override
                 protected ParameterElement getEntitiesParameter() {
-                    return entitiesParameter;
+                    return finalEntitiesParameter;
                 }
 
             };
@@ -149,14 +160,18 @@ public final class DeleteMethodMatcher extends AbstractPatternMethodMatcher {
 
             @Override
             protected ParameterElement getEntityParameter() {
-                return entityParameter;
+                return finalEntityParameter;
             }
 
             @Override
             protected ParameterElement getEntitiesParameter() {
-                return entitiesParameter;
+                return finalEntitiesParameter;
             }
 
         };
+    }
+
+    private String getName(ParameterElement entityParameter) {
+        return entityParameter.stringValue(Parameter.class).orElseGet(entityParameter::getName);
     }
 }

@@ -402,6 +402,25 @@ abstract class AbstractRepositorySpec extends Specification {
         personRepository.list(Pageable.from(0, 1)).size() == 1
     }
 
+    void "save entity using repository method with different mapped entity argument"() {
+        given:
+            Author author = authorRepository.save(new Author().with(true, {it.name = "Kartarka Jolanda"}))
+        when:
+            Book book = bookRepository.save("Hodne Budes Nekde", 42, author)
+        then:
+            book.author.id == author.id
+    }
+
+    void "test delete by mapped entity"() {
+        given:
+            saveSampleBooks()
+        when:
+            def author = authorRepository.findByName("Stephen King")
+            int deleted = bookRepository.deleteByAuthor(author)
+        then:
+            deleted == 2
+    }
+
     void "test update many"() {
         given:
         savePersons(["Jeff", "James"])

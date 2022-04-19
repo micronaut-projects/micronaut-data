@@ -52,6 +52,10 @@ class TestUtils {
         return metadata.getAnnotation(Query).stringValue( "rawQuery").get()
     }
 
+    static String getDataInterceptor(AnnotationMetadataProvider metadata) {
+        return metadata.getAnnotation(DataMethod).stringValue( DataMethod.META_MEMBER_INTERCEPTOR).get()
+    }
+
     static String[] getParameterPropertyPaths(AnnotationMetadataProvider metadata) {
         return getParameterPropertyPaths(metadata.getAnnotation(DataMethod))
     }
