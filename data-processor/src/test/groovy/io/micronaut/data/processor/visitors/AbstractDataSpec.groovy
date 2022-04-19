@@ -25,6 +25,7 @@ import io.micronaut.inject.ast.ClassElement
 import io.micronaut.inject.beans.visitor.IntrospectedTypeElementVisitor
 import io.micronaut.inject.visitor.TypeElementVisitor
 import io.micronaut.inject.writer.BeanDefinitionVisitor
+import org.intellij.lang.annotations.Language
 import spock.lang.Requires
 
 import javax.annotation.processing.SupportedAnnotationTypes
@@ -32,7 +33,7 @@ import javax.annotation.processing.SupportedAnnotationTypes
 @Requires({ javaVersion <= 1.8 })
 class AbstractDataSpec extends AbstractTypeElementSpec {
 
-    SourcePersistentEntity buildJpaEntity(String name, String source) {
+    SourcePersistentEntity buildJpaEntity(String name, @Language("JAVA") String source) {
         def pkg = NameUtils.getPackageName(name)
         ClassElement classElement = buildClassElement("""
 package $pkg;
@@ -48,7 +49,7 @@ $source
         return TestUtils.sourcePersistentEntity(classElement)
     }
 
-    SourcePersistentEntity buildEntity(String name, String source) {
+    SourcePersistentEntity buildEntity(String name, @Language("JAVA") String source) {
         def pkg = NameUtils.getPackageName(name)
         ClassElement classElement = buildClassElement("""
 package $pkg;
@@ -61,7 +62,7 @@ $source
         return TestUtils.sourcePersistentEntity(classElement)
     }
 
-    BeanDefinition<?> buildRepository(String name, String source) {
+    BeanDefinition<?> buildRepository(String name, @Language("JAVA") String source) {
         def pkg = NameUtils.getPackageName(name)
         return buildBeanDefinition(name + BeanDefinitionVisitor.PROXY_SUFFIX, """
 package $pkg;
@@ -76,7 +77,7 @@ $source
 
     }
 
-    BeanDefinition<?> buildJpaRepository(String name, String source) {
+    BeanDefinition<?> buildJpaRepository(String name, @Language("JAVA") String source) {
         def pkg = NameUtils.getPackageName(name)
         return buildBeanDefinition(name + BeanDefinitionVisitor.PROXY_SUFFIX, """
 package $pkg;
