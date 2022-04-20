@@ -23,9 +23,7 @@ import io.micronaut.data.intercept.async.SaveOneAsyncInterceptor;
 import io.micronaut.data.operations.RepositoryOperations;
 
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
-import java.util.concurrent.Executor;
 
 /**
  * Default implementation of {@link SaveOneAsyncInterceptor}.
@@ -48,18 +46,12 @@ public class DefaultSaveOneAsyncInterceptor<T> extends AbstractAsyncInterceptor<
     public CompletionStage<Object> intercept(RepositoryMethodKey methodKey, MethodInvocationContext<T, CompletionStage<Object>> context) {
         Class<?> rootEntity = getRequiredRootEntity(context);
         Map<String, Object> parameterValueMap = getParameterValueMap(context);
-        Executor executor = asyncDatastoreOperations.getExecutor();
-        return CompletableFuture.supplyAsync(() -> {
-            Object o = instantiateEntity(rootEntity, parameterValueMap);
-            return getInsertOperation(context, o);
-        }, executor)
-                .thenCompose(operation -> {
-                    CompletionStage<Object> cs = asyncDatastoreOperations.persist(operation);
-                    Argument<?> csValueArgument = getReturnType(context);
-                    if (isNumber(csValueArgument.getType())) {
-                        return cs.thenApply(it -> operations.getConversionService().convertRequired(it == null ? 0 : 1, csValueArgument));
-                    }
-                    return cs;
-                });
+        Object o = instantiateEntity(rootEntity, parameterValueMap);
+        CompletionStage<Object> cs = asyncDatastoreOperations.persist(getInsertOperation(context, o));
+        Argument<?> csValueArgument = getReturnType(context);
+        if (isNumber(csValueArgument.getType())) {
+            return cs.thenApply(it -> operations.getConversionService().convertRequired(it == null ? 0 : 1, csValueArgument));
+        }
+        return cs;
     }
 }

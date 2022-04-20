@@ -36,6 +36,7 @@ import io.micronaut.transaction.exceptions.NoTransactionException;
 import io.micronaut.transaction.exceptions.TransactionSystemException;
 import io.micronaut.transaction.reactive.ReactiveTransactionOperations;
 import io.micronaut.transaction.reactive.ReactiveTransactionStatus;
+import io.micronaut.transaction.support.TransactionSynchronizationManager;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import org.reactivestreams.Publisher;
@@ -44,6 +45,7 @@ import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
@@ -153,33 +155,7 @@ public class TransactionalInterceptor implements MethodInterceptor<Object, Objec
                         return interceptedMethod.handleResult(interceptedMethod.interceptResult());
                     } else {
                         if (isKotlinSuspended) {
-                            final SynchronousTransactionManager<?> transactionManager = transactionInvocation.transactionManager;
-                            final TransactionInfo transactionInfo = createTransactionIfNecessary(
-                                    transactionManager,
-                                    definition,
-                                    context.getExecutableMethod()
-                            );
-                            KotlinInterceptedMethod kotlinInterceptedMethod = (KotlinInterceptedMethod) interceptedMethod;
-                            if (coroutineTxHelper != null) {
-                                coroutineTxHelper.setupCoroutineContext(kotlinInterceptedMethod);
-                            }
-                            CompletionStage<?> result = interceptedMethod.interceptResultAsCompletionStage();
-                            CompletableFuture newResult = new CompletableFuture();
-                            result.whenComplete((o, throwable) -> {
-                                if (throwable == null) {
-                                    commitTransactionAfterReturning(transactionInfo);
-                                    newResult.complete(o);
-                                } else {
-                                    try {
-                                        completeTransactionAfterThrowing(transactionInfo, throwable);
-                                    } catch (Exception e) {
-                                        // Ignore rethrow
-                                    }
-                                    newResult.completeExceptionally(throwable);
-                                }
-                                cleanupTransactionInfo(transactionInfo);
-                            });
-                            return interceptedMethod.handleResult(newResult);
+                            return interceptKotlinSuspended(context, interceptedMethod, transactionInvocation, definition);
                         } else {
                             throw new ConfigurationException("Async return type doesn't support transactional execution.");
                         }
@@ -209,6 +185,53 @@ public class TransactionalInterceptor implements MethodInterceptor<Object, Objec
         } catch (Exception e) {
             return interceptedMethod.handleException(e);
         }
+    }
+
+    private Object interceptKotlinSuspended(MethodInvocationContext<Object, Object> context,
+                                            InterceptedMethod interceptedMethod,
+                                            TransactionInvocation<?> transactionInvocation,
+                                            TransactionAttribute definition) {
+        KotlinInterceptedMethod kotlinInterceptedMethod = (KotlinInterceptedMethod) interceptedMethod;
+        TransactionSynchronizationManager.State state = Objects.requireNonNull(coroutineTxHelper).setupTxState(kotlinInterceptedMethod);
+
+         return TransactionSynchronizationManager.withState(state, () -> {
+            final SynchronousTransactionManager<?> transactionManager = transactionInvocation.transactionManager;
+            TransactionInfo<Object> transactionInfo = (TransactionInfo<Object>) createTransactionIfNecessary(
+                    transactionManager,
+                    definition,
+                    context.getExecutableMethod()
+            );
+
+            CompletionStage<?> result;
+            try {
+                result = interceptedMethod.interceptResultAsCompletionStage();
+            } catch (Exception e) {
+                CompletableFuture<?> r = new CompletableFuture<>();
+                r.completeExceptionally(e);
+                result = r;
+            }
+
+             CompletableFuture<Object> newResult = new CompletableFuture<>();
+             // Last step to complete the TX, we need to use `withState` to properly setup thread-locals for the TX manager
+             result.whenComplete((o, throwable) -> TransactionSynchronizationManager.withState(state, () -> {
+                 if (throwable == null) {
+                     commitTransactionAfterReturning(transactionInfo);
+                     newResult.complete(o);
+                 } else {
+                     try {
+                         completeTransactionAfterThrowing(transactionInfo, throwable);
+                     } catch (Exception e) {
+                         // Ignore rethrow
+                     }
+                     newResult.completeExceptionally(throwable);
+                 }
+                 cleanupTransactionInfo(transactionInfo);
+                 return null;
+             }));
+
+             return interceptedMethod.handleResult(newResult);
+        });
+
     }
 
     @Nullable
@@ -247,7 +270,9 @@ public class TransactionalInterceptor implements MethodInterceptor<Object, Objec
      * @return a TransactionInfo object, whether or not a transaction was created.
      * The {@code hasTransaction()} method on TransactionInfo can be used to
      * tell if there was a transaction created.
+     * @deprecated The class will be final with private methods in the next major version
      */
+    @Deprecated
     @SuppressWarnings("serial")
     protected TransactionInfo createTransactionIfNecessary(@NonNull SynchronousTransactionManager<?> tm,
                                                            @NonNull TransactionAttribute txAttr,
@@ -268,7 +293,9 @@ public class TransactionalInterceptor implements MethodInterceptor<Object, Objec
      *                         (used for monitoring and logging purposes)
      * @param status           the TransactionStatus for the current transaction
      * @return the prepared TransactionInfo object
+     * @deprecated The class will be final with private methods in the next major version
      */
+    @Deprecated
     protected TransactionInfo prepareTransactionInfo(@NonNull SynchronousTransactionManager tm,
                                                      @NonNull TransactionAttribute txAttr,
                                                      ExecutableMethod<Object, Object> executableMethod,
@@ -294,7 +321,9 @@ public class TransactionalInterceptor implements MethodInterceptor<Object, Objec
      * Do nothing if we didn't create a transaction.
      *
      * @param txInfo information about the current transaction
+     * @deprecated The class will be final with private methods in the next major version
      */
+    @Deprecated
     protected void commitTransactionAfterReturning(@NonNull TransactionInfo txInfo) {
         if (LOG.isTraceEnabled()) {
             LOG.trace("Completing transaction for [" + txInfo.getJoinpointIdentification() + "]");
@@ -308,7 +337,9 @@ public class TransactionalInterceptor implements MethodInterceptor<Object, Objec
      *
      * @param txInfo information about the current transaction
      * @param ex     throwable encountered
+     * @deprecated The class will be final with private methods in the next major version
      */
+    @Deprecated
     protected void completeTransactionAfterThrowing(@NonNull TransactionInfo txInfo, Throwable ex) {
         if (LOG.isTraceEnabled()) {
             LOG.trace("Completing transaction for [" + txInfo.getJoinpointIdentification() +
@@ -323,6 +354,7 @@ public class TransactionalInterceptor implements MethodInterceptor<Object, Objec
                 throw ex2;
             } catch (RuntimeException | Error ex2) {
                 LOG.error("Application exception overridden by rollback exception", ex);
+                ex2.printStackTrace();
                 throw ex2;
             }
         } else {
@@ -346,7 +378,9 @@ public class TransactionalInterceptor implements MethodInterceptor<Object, Objec
      * <p>Call this in all cases: exception or normal return!
      *
      * @param txInfo information about the current transaction (may be {@code null})
+     * @deprecated The class will be final with private methods in the next major version
      */
+    @Deprecated
     protected void cleanupTransactionInfo(@Nullable TransactionInfo txInfo) {
         if (txInfo != null) {
             txInfo.restoreThreadLocalStatus();
@@ -356,7 +390,9 @@ public class TransactionalInterceptor implements MethodInterceptor<Object, Objec
     /**
      * @param executableMethod The method
      * @return The {@link TransactionAttribute}
+     * @deprecated The class will be final with private methods in the next major version
      */
+    @Deprecated
     protected TransactionAttribute resolveTransactionDefinition(
             ExecutableMethod<Object, Object> executableMethod) {
         AnnotationValue<TransactionalAdvice> annotation = executableMethod.getAnnotation(TransactionalAdvice.class);
@@ -410,7 +446,9 @@ public class TransactionalInterceptor implements MethodInterceptor<Object, Objec
      * must pass it back to methods on this class, but not see its internals.
      *
      * @param <T> connection type
+     * @deprecated The class will be final with private methods in the next major version
      */
+    @Deprecated
     protected static final class TransactionInfo<T> {
 
         private final SynchronousTransactionManager<T> transactionManager;

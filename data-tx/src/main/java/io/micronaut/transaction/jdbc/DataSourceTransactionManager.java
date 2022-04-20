@@ -26,8 +26,10 @@ import io.micronaut.transaction.jdbc.exceptions.CannotGetJdbcConnectionException
 import io.micronaut.transaction.support.AbstractSynchronousTransactionManager;
 import io.micronaut.transaction.support.DefaultTransactionStatus;
 import io.micronaut.transaction.support.ResourceTransactionManager;
+import io.micronaut.transaction.support.SynchronousTransactionState;
 import io.micronaut.transaction.support.TransactionSynchronizationManager;
 import io.micronaut.transaction.support.TransactionSynchronizationUtils;
+import org.jetbrains.annotations.NotNull;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
@@ -108,6 +110,12 @@ public class DataSourceTransactionManager extends AbstractSynchronousTransaction
         this.dataSource = dataSource;
     }
 
+    @NotNull
+    @Override
+    protected Object getStateKey() {
+        return getDataSource();
+    }
+
     /**
      * @return Return the JDBC DataSource that this instance manages transactions for.
      */
@@ -162,15 +170,13 @@ public class DataSourceTransactionManager extends AbstractSynchronousTransaction
 
     @Override
     public boolean hasConnection() {
-        ConnectionHolder conHolder =
-                (ConnectionHolder) TransactionSynchronizationManager.getResource(dataSource);
+        ConnectionHolder conHolder = (ConnectionHolder) TransactionSynchronizationManager.getResource(dataSource);
         return conHolder != null && conHolder.hasConnection();
     }
 
     @Override
     protected Object doGetTransaction() {
-        ConnectionHolder conHolder =
-                (ConnectionHolder) TransactionSynchronizationManager.getResource(dataSource);
+        ConnectionHolder conHolder = (ConnectionHolder) TransactionSynchronizationManager.getResource(dataSource);
         DataSourceTransactionObject txObject = new DataSourceTransactionObject(conHolder, false);
         txObject.setSavepointAllowed(isNestedTransactionAllowed());
         return txObject;
@@ -191,8 +197,7 @@ public class DataSourceTransactionManager extends AbstractSynchronousTransaction
         Connection con = null;
 
         try {
-            if (!txObject.hasConnectionHolder() ||
-                    txObject.getConnectionHolder().isSynchronizedWithTransaction()) {
+            if (!txObject.hasConnectionHolder() || txObject.getConnectionHolder().isSynchronizedWithTransaction()) {
                 Connection newCon = dataSource.getConnection();
                 if (logger.isDebugEnabled()) {
                     logger.debug("Acquired Connection [" + newCon + "] for JDBC transaction");
@@ -353,7 +358,7 @@ public class DataSourceTransactionManager extends AbstractSynchronousTransaction
      * DataSource transaction object, representing a ConnectionHolder.
      * Used as transaction object by DataSourceTransactionManager.
      */
-    private static class DataSourceTransactionObject extends JdbcTransactionObjectSupport implements ConnectionHandle {
+    private class DataSourceTransactionObject extends JdbcTransactionObjectSupport implements ConnectionHandle {
 
         private boolean newConnectionHolder;
 
@@ -392,8 +397,9 @@ public class DataSourceTransactionManager extends AbstractSynchronousTransaction
 
         @Override
         public void flush() {
-            if (TransactionSynchronizationManager.isSynchronizationActive()) {
-                TransactionSynchronizationUtils.triggerFlush();
+            SynchronousTransactionState state = TransactionSynchronizationManager.getRequiredSynchronousTransactionState(dataSource);
+            if (state.isSynchronizationActive()) {
+                TransactionSynchronizationUtils.triggerFlush(state);
             }
         }
 

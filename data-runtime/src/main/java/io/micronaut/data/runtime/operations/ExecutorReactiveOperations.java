@@ -17,7 +17,6 @@ package io.micronaut.data.runtime.operations;
 
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
-import io.micronaut.core.async.publisher.Publishers;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArgumentUtils;
@@ -33,11 +32,15 @@ import io.micronaut.data.model.runtime.UpdateOperation;
 import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.operations.reactive.ReactiveRepositoryOperations;
 import io.micronaut.data.runtime.convert.DataConversionService;
+import io.micronaut.transaction.support.TransactionSynchronizationManager;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.io.Serializable;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
+import java.util.function.Supplier;
 
 /**
  * An implementation of {@link ReactiveRepositoryOperations} that delegates to a blocking operations and specified {@link Executor}.
@@ -45,8 +48,8 @@ import java.util.concurrent.Executor;
  *
  * <p>If a backing implementation provides a reactive API then the backing implementation should not use this class and instead directly implement the {@link ReactiveRepositoryOperations} interface.</p>
  *
- * @see ReactiveRepositoryOperations
  * @author graemerocher
+ * @see ReactiveRepositoryOperations
  * @since 1.0.0
  */
 public class ExecutorReactiveOperations implements ReactiveRepositoryOperations {
@@ -89,7 +92,7 @@ public class ExecutorReactiveOperations implements ReactiveRepositoryOperations 
     /**
      * Default constructor.
      *
-     * @param asyncOperations The instance operations instance
+     * @param asyncOperations       The instance operations instance
      * @param dataConversionService The data conversion service
      */
     public ExecutorReactiveOperations(@NonNull ExecutorAsyncOperations asyncOperations, DataConversionService dataConversionService) {
@@ -102,40 +105,30 @@ public class ExecutorReactiveOperations implements ReactiveRepositoryOperations 
     @NonNull
     @Override
     public <T> Publisher<T> findOne(@NonNull Class<T> type, @NonNull Serializable id) {
-        return Publishers.fromCompletableFuture(() ->
-                asyncOperations.findOne(type, id)
-        );
+        return fromCompletableFuture(() -> asyncOperations.findOne(type, id));
     }
 
     @Override
     public <T> Publisher<Boolean> exists(@NonNull PreparedQuery<T, Boolean> preparedQuery) {
-        return Publishers.fromCompletableFuture(() ->
-                asyncOperations.exists(preparedQuery)
-        );
+        return fromCompletableFuture(() -> asyncOperations.exists(preparedQuery));
     }
 
     @NonNull
     @Override
     public <T, R> Publisher<R> findOne(@NonNull PreparedQuery<T, R> preparedQuery) {
-        return Publishers.fromCompletableFuture(() ->
-                asyncOperations.findOne(preparedQuery)
-        );
+        return fromCompletableFuture(() -> asyncOperations.findOne(preparedQuery));
     }
 
     @NonNull
     @Override
     public <T> Publisher<T> findOptional(@NonNull Class<T> type, @NonNull Serializable id) {
-        return Publishers.fromCompletableFuture(() ->
-                asyncOperations.findOptional(type, id)
-        );
+        return fromCompletableFuture(() -> asyncOperations.findOptional(type, id));
     }
 
     @NonNull
     @Override
     public <T, R> Publisher<R> findOptional(@NonNull PreparedQuery<T, R> preparedQuery) {
-        return Publishers.map(Publishers.fromCompletableFuture(() ->
-                asyncOperations.findOptional(preparedQuery)
-        ), r -> {
+        return fromCompletableFuture(() -> asyncOperations.findOptional(preparedQuery)).map(r -> {
             Argument<R> returnType = preparedQuery.getResultArgument();
             Argument<?> type = returnType.getFirstTypeVariable().orElse(Argument.OBJECT_ARGUMENT);
             if (!type.getType().isInstance(r)) {
@@ -150,92 +143,84 @@ public class ExecutorReactiveOperations implements ReactiveRepositoryOperations 
     @NonNull
     @Override
     public <T> Publisher<T> findAll(PagedQuery<T> pagedQuery) {
-        return Flux.from(Publishers.fromCompletableFuture(() ->
-                asyncOperations.findAll(pagedQuery)
-        )).flatMap(Flux::fromIterable);
+        return fromCompletableFuture(() -> asyncOperations.findAll(pagedQuery))
+                .flatMapMany(Flux::fromIterable);
     }
 
     @NonNull
     @Override
     public <T> Publisher<Long> count(PagedQuery<T> pagedQuery) {
-        return Publishers.fromCompletableFuture(() ->
-                asyncOperations.count(pagedQuery)
-        );
+        return fromCompletableFuture(() -> asyncOperations.count(pagedQuery));
     }
 
     @NonNull
     @Override
     public <R> Publisher<Page<R>> findPage(@NonNull PagedQuery<R> pagedQuery) {
-        return Publishers.fromCompletableFuture(() ->
-                asyncOperations.findPage(pagedQuery)
-        );
+        return fromCompletableFuture(() -> asyncOperations.findPage(pagedQuery));
     }
 
     @NonNull
     @Override
     public <T, R> Publisher<R> findAll(@NonNull PreparedQuery<T, R> preparedQuery) {
-        return Flux.from(Publishers.fromCompletableFuture(() ->
-                asyncOperations.findAll(preparedQuery)
-        )).flatMap(Flux::fromIterable);
+        return fromCompletableFuture(() -> asyncOperations.findAll(preparedQuery))
+                .flatMapMany(Flux::fromIterable);
     }
 
     @NonNull
     @Override
     public <T> Publisher<T> persist(@NonNull InsertOperation<T> entity) {
-        return Publishers.fromCompletableFuture(() ->
-                asyncOperations.persist(entity)
-        );
+        return fromCompletableFuture(() -> asyncOperations.persist(entity));
     }
 
     @NonNull
     @Override
     public <T> Publisher<T> update(@NonNull UpdateOperation<T> operation) {
-        return Publishers.fromCompletableFuture(() ->
-                asyncOperations.update(operation)
-        );
+        return fromCompletableFuture(() -> asyncOperations.update(operation));
     }
 
     @NonNull
     @Override
     public <T> Publisher<T> updateAll(@NonNull UpdateBatchOperation<T> operation) {
-        return Flux.from(Publishers.fromCompletableFuture(() ->
-                asyncOperations.updateAll(operation)
-        )).flatMap(Flux::fromIterable);
+        return fromCompletableFuture(() -> asyncOperations.updateAll(operation))
+                .flatMapMany(Flux::fromIterable);
     }
 
     @NonNull
     @Override
     public <T> Publisher<T> persistAll(@NonNull InsertBatchOperation<T> operation) {
-        return Flux.from(Publishers.fromCompletableFuture(() ->
-                asyncOperations.persistAll(operation)
-        )).flatMap(Flux::fromIterable);
+        return fromCompletableFuture(() -> asyncOperations.persistAll(operation))
+                .flatMapMany(Flux::fromIterable);
     }
 
     @NonNull
     @Override
     public Publisher<Number> executeUpdate(@NonNull PreparedQuery<?, Number> preparedQuery) {
-        return Publishers.map(Publishers.fromCompletableFuture(() ->
-                asyncOperations.executeUpdate(preparedQuery)
-        ), number -> convertNumberArgumentIfNecessary(number, preparedQuery.getResultArgument()));
+        return fromCompletableFuture(() -> asyncOperations.executeUpdate(preparedQuery))
+                .map(number -> convertNumberArgumentIfNecessary(number, preparedQuery.getResultArgument()));
     }
 
     @NonNull
     @Override
     public <T> Publisher<Number> delete(@NonNull DeleteOperation<T> operation) {
-        return Publishers.fromCompletableFuture(() -> asyncOperations.delete(operation));
+        return fromCompletableFuture(() -> asyncOperations.delete(operation));
     }
 
     @NonNull
     @Override
     public <T> Publisher<Number> deleteAll(@NonNull DeleteBatchOperation<T> operation) {
-        return Publishers.map(Publishers.fromCompletableFuture(() ->
-                asyncOperations.deleteAll(operation)
-        ), number -> convertNumberArgumentIfNecessary(number, operation.getResultArgument()));
+        return fromCompletableFuture(() -> asyncOperations.deleteAll(operation))
+                .map(number -> convertNumberArgumentIfNecessary(number, operation.getResultArgument()));
+    }
+
+    private <R> Mono<R> fromCompletableFuture(Supplier<CompletableFuture<R>> futureSupplier) {
+        Supplier<CompletableFuture<R>> decorated = TransactionSynchronizationManager.decorateToPropagateState(futureSupplier);
+        return Mono.fromCompletionStage(decorated);
     }
 
     /**
      * Convert a number argument if necessary.
-     * @param number The number
+     *
+     * @param number   The number
      * @param argument The argument
      * @return The result
      */

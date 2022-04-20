@@ -19,6 +19,7 @@ import io.micronaut.context.annotation.Property
 import io.micronaut.data.tck.entities.Person
 import io.micronaut.data.model.Pageable
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
+import org.hibernate.SessionFactory
 import spock.lang.Specification
 
 import jakarta.inject.Inject
@@ -30,6 +31,8 @@ class RxJava2Spec extends Specification{
 
     @Inject
     RxJavaPersonRepo reactiveRepo
+    @Inject
+    SessionFactory sessionFactory
 
     void "test reactive RxJava CRUD"() {
         when:"An entity is saved"
@@ -72,6 +75,7 @@ class RxJava2Spec extends Specification{
 
         when:"an entity is updated"
         def updated = reactiveRepo.updateByName("Bob", 50).blockingGet()
+        sessionFactory.getCurrentSession().clear()
 
         then:"The update is executed correctly"
         updated == 1

@@ -17,6 +17,7 @@ package io.micronaut.transaction.hibernate5;
 
 import io.micronaut.core.annotation.TypeHint;
 import io.micronaut.transaction.jpa.EntityManagerHolder;
+import io.micronaut.transaction.support.SynchronousTransactionState;
 import io.micronaut.transaction.support.TransactionSynchronizationManager;
 import org.hibernate.FlushMode;
 import org.hibernate.HibernateException;
@@ -65,18 +66,18 @@ public final class MicronautSessionContext implements CurrentSessionContext {
             // HibernateTransactionManager
             SessionHolder sessionHolder = (SessionHolder) value;
             Session session = sessionHolder.getSession();
-            if (!sessionHolder.isSynchronizedWithTransaction() &&
-                    TransactionSynchronizationManager.isSynchronizationActive()) {
-                TransactionSynchronizationManager.registerSynchronization(
-                        new SessionSynchronization(sessionHolder, this.sessionFactory, false));
-                sessionHolder.setSynchronizedWithTransaction(true);
-                // Switch to FlushMode.AUTO, as we have to assume a thread-bound Session
-                // with FlushMode.MANUAL, which needs to allow flushing within the transaction.
-                FlushMode flushMode = session.getHibernateFlushMode();
-                if (flushMode.equals(FlushMode.MANUAL) &&
-                        !TransactionSynchronizationManager.isCurrentTransactionReadOnly()) {
-                    session.setFlushMode(FlushMode.AUTO);
-                    sessionHolder.setPreviousFlushMode(flushMode);
+            if (!sessionHolder.isSynchronizedWithTransaction()) {
+                SynchronousTransactionState state = TransactionSynchronizationManager.getSynchronousTransactionState(this.sessionFactory);
+                if (state != null && state.isSynchronizationActive()) {
+                    state.registerSynchronization(new SessionSynchronization(sessionHolder, this.sessionFactory, false));
+                    sessionHolder.setSynchronizedWithTransaction(true);
+                    // Switch to FlushMode.AUTO, as we have to assume a thread-bound Session
+                    // with FlushMode.MANUAL, which needs to allow flushing within the transaction.
+                    FlushMode flushMode = session.getHibernateFlushMode();
+                    if (flushMode.equals(FlushMode.MANUAL) && !state.isTransactionReadOnly()) {
+                        session.setFlushMode(FlushMode.AUTO);
+                        sessionHolder.setPreviousFlushMode(flushMode);
+                    }
                 }
             }
             return session;
@@ -85,20 +86,19 @@ public final class MicronautSessionContext implements CurrentSessionContext {
             return ((EntityManagerHolder) value).getEntityManager().unwrap(Session.class);
         }
 
-        if (TransactionSynchronizationManager.isSynchronizationActive()) {
-            Session session = this.sessionFactory.openSession();
-            if (TransactionSynchronizationManager.isCurrentTransactionReadOnly()) {
-                session.setFlushMode(FlushMode.MANUAL);
-            }
-            SessionHolder sessionHolder = new SessionHolder(session);
-            TransactionSynchronizationManager.registerSynchronization(
-                    new SessionSynchronization(sessionHolder, this.sessionFactory, true));
-            TransactionSynchronizationManager.bindResource(this.sessionFactory, sessionHolder);
-            sessionHolder.setSynchronizedWithTransaction(true);
-            return session;
-        } else {
+        SynchronousTransactionState state = TransactionSynchronizationManager.getSynchronousTransactionState(this.sessionFactory);
+        if (state == null || !state.isSynchronizationActive()) {
             throw new HibernateException("Could not obtain transaction-synchronized Session for current thread");
         }
+        Session session = this.sessionFactory.openSession();
+        if (state.isTransactionReadOnly()) {
+            session.setFlushMode(FlushMode.MANUAL);
+        }
+        SessionHolder sessionHolder = new SessionHolder(session);
+        state.registerSynchronization(new SessionSynchronization(sessionHolder, this.sessionFactory, true));
+        TransactionSynchronizationManager.bindResource(this.sessionFactory, sessionHolder);
+        sessionHolder.setSynchronizedWithTransaction(true);
+        return session;
     }
 
 }

@@ -56,6 +56,11 @@ public final class MongoSynchronousTransactionManager extends AbstractSynchronou
         this.mongoClient = mongoClient;
     }
 
+    @Override
+    protected Object getStateKey() {
+        return mongoClient;
+    }
+
     /**
      * Find existing connection.
      *
@@ -141,7 +146,7 @@ public final class MongoSynchronousTransactionManager extends AbstractSynchronou
     }
 
     @Override
-    protected void doCommit(DefaultTransactionStatus status) throws TransactionException {
+    protected void doCommit(DefaultTransactionStatus<ClientSession> status) throws TransactionException {
         MongoTransaction transaction = (MongoTransaction) status.getTransaction();
         if (transaction.isRollbackOnly()) {
             throw new TransactionException("Transaction marked as rollback only!");
@@ -157,7 +162,7 @@ public final class MongoSynchronousTransactionManager extends AbstractSynchronou
     }
 
     @Override
-    protected void doRollback(DefaultTransactionStatus status) throws TransactionException {
+    protected void doRollback(DefaultTransactionStatus<ClientSession> status) throws TransactionException {
         MongoTransaction transaction = (MongoTransaction) status.getTransaction();
         if (status.isDebug()) {
             logger.debug("Rolling back Mongo transaction [{}]", transaction);

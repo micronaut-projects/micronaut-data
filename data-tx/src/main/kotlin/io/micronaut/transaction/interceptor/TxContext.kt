@@ -23,18 +23,18 @@ import kotlin.coroutines.CoroutineContext
 
 @Internal
 class TxSynchronousContext(
-        private val state: TransactionSynchronizationManager.State
-) : ThreadContextElement<TransactionSynchronizationManager.State>, AbstractCoroutineContextElement(Key) {
+        val state: TransactionSynchronizationManager.State?
+) : ThreadContextElement<TransactionSynchronizationManager.State?>, AbstractCoroutineContextElement(Key) {
 
     companion object Key : CoroutineContext.Key<TxSynchronousContext>
 
-    override fun restoreThreadContext(context: CoroutineContext, oldState: TransactionSynchronizationManager.State) {
-        TransactionSynchronizationManager.restoreState(oldState)
+    override fun restoreThreadContext(context: CoroutineContext, oldState: TransactionSynchronizationManager.State?) {
+        TransactionSynchronizationManager.setState(oldState)
     }
 
-    override fun updateThreadContext(context: CoroutineContext): TransactionSynchronizationManager.State {
-        val copyState = TransactionSynchronizationManager.copyState()
-        TransactionSynchronizationManager.restoreState(state)
+    override fun updateThreadContext(context: CoroutineContext): TransactionSynchronizationManager.State? {
+        val copyState = TransactionSynchronizationManager.getState()
+        TransactionSynchronizationManager.setState(state)
         return copyState
     }
 

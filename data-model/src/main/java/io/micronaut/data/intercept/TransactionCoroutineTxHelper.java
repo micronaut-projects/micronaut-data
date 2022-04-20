@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.transaction.interceptor;
+package io.micronaut.data.intercept;
 
 import io.micronaut.aop.kotlin.KotlinInterceptedMethod;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.transaction.interceptor.TxSynchronousContext;
 import io.micronaut.transaction.support.TransactionSynchronizationManager;
 import jakarta.inject.Singleton;
 import kotlin.coroutines.CoroutineContext;
@@ -26,22 +27,20 @@ import kotlin.coroutines.CoroutineContext;
  * Helper to setup Kotlin coroutine context.
  *
  * @author Denis Stepanov
- * @since 3.3
+ * @since 3.4.0
  */
 @Internal
 @Singleton
-@Requires(classes = kotlin.coroutines.CoroutineContext.class)
-final class CoroutineTxHelper {
+@Requires(classes = CoroutineContext.class)
+final class TransactionCoroutineTxHelper {
 
-    public TransactionSynchronizationManager.State setupTxState(KotlinInterceptedMethod kotlinInterceptedMethod) {
+    public TransactionSynchronizationManager.State findTxManagerState(KotlinInterceptedMethod kotlinInterceptedMethod) {
         CoroutineContext existingContext = kotlinInterceptedMethod.getCoroutineContext();
         TxSynchronousContext txSynchronousContext = existingContext.get(TxSynchronousContext.Key);
         if (txSynchronousContext != null) {
             return txSynchronousContext.getState();
         }
-        TransactionSynchronizationManager.State txState = TransactionSynchronizationManager.getOrCreateState();
-        kotlinInterceptedMethod.updateCoroutineContext(existingContext.plus(new TxSynchronousContext(txState)));
-        return txState;
+        return null;
     }
 
 }

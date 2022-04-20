@@ -618,7 +618,8 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
             String query = preparedQuery.getQuery();
             Query<?> q = getCurrentSession().createQuery(query);
             bindParameters(q, preparedQuery, query);
-            return Optional.of(q.executeUpdate());
+            Optional<Number> number = Optional.of(q.executeUpdate());
+            return number;
         });
     }
 
