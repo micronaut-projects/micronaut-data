@@ -131,7 +131,7 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
 
             if (type == Type.FIND_ALL) {
                 for (Object param : context.getParameterValues()) {
-                    if (param instanceof Sort) {
+                    if (param instanceof Sort && param != pageable) {
                         Sort sort = (Sort) param;
                         if (sort.isSorted()) {
                             criteriaQuery.orderBy(getOrders(sort, root, criteriaBuilder));
