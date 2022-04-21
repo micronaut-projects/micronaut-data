@@ -15,12 +15,18 @@
  */
 package io.micronaut.data.processor.sql
 
-
 import io.micronaut.data.model.DataType
 import io.micronaut.data.processor.visitors.AbstractDataSpec
 import spock.lang.Unroll
 
-import static io.micronaut.data.processor.visitors.TestUtils.*
+import static io.micronaut.data.processor.visitors.TestUtils.getDataInterceptor
+import static io.micronaut.data.processor.visitors.TestUtils.getDataTypes
+import static io.micronaut.data.processor.visitors.TestUtils.getParameterBindingIndexes
+import static io.micronaut.data.processor.visitors.TestUtils.getParameterBindingPaths
+import static io.micronaut.data.processor.visitors.TestUtils.getParameterPropertyPaths
+import static io.micronaut.data.processor.visitors.TestUtils.getQuery
+import static io.micronaut.data.processor.visitors.TestUtils.getQueryParts
+import static io.micronaut.data.processor.visitors.TestUtils.getRawQuery
 
 class BuildDeleteSpec extends AbstractDataSpec {
 
@@ -96,6 +102,8 @@ interface BookRepository extends CrudRepository<Book, Long> {
     
     @Query("DELETE  FROM `book`  WHERE (`id` = :id AND `author_id` = :authorId)")
     int deleteAllByIdAndAuthorId(Long id, Long authorId);
+    
+    int deleteAllByAuthor(Author author);
 
 }
 """)
@@ -107,7 +115,7 @@ interface BookRepository extends CrudRepository<Book, Long> {
             getParameterBindingPaths(deleteByIdAndAuthorIdMethod) == ["", ""] as String[]
             getParameterPropertyPaths(deleteByIdAndAuthorIdMethod) == ["id", "author.id"] as String[]
             getDataTypes(deleteByIdAndAuthorIdMethod) == [DataType.LONG, DataType.LONG]
-
+            getDataInterceptor(deleteByIdAndAuthorIdMethod) == "io.micronaut.data.intercept.DeleteAllInterceptor"
         when:
             def deleteAllByIdAndAuthorIdMethod = repository.findPossibleMethods("deleteAllByIdAndAuthorId").findFirst().get()
         then:
@@ -117,6 +125,15 @@ interface BookRepository extends CrudRepository<Book, Long> {
             getParameterBindingPaths(deleteAllByIdAndAuthorIdMethod) == ["", ""] as String[]
             getParameterPropertyPaths(deleteAllByIdAndAuthorIdMethod) == ["id", ""] as String[]
             getDataTypes(deleteAllByIdAndAuthorIdMethod) == [DataType.LONG, DataType.LONG]
+            getDataInterceptor(deleteAllByIdAndAuthorIdMethod) == "io.micronaut.data.intercept.DeleteAllInterceptor"
+        when:
+            def deleteAllByAuthor = repository.findPossibleMethods("deleteAllByAuthor").findFirst().get()
+        then:
+            getQuery(deleteAllByAuthor) == 'DELETE  FROM `book`  WHERE (`author_id` = ?)'
+            getParameterBindingIndexes(deleteAllByAuthor) == ["0"] as String[]
+            getParameterBindingPaths(deleteAllByAuthor) == ["id"] as String[]
+            getParameterPropertyPaths(deleteAllByAuthor) == ["author.id"] as String[]
+            getDataInterceptor(deleteAllByAuthor) == "io.micronaut.data.intercept.DeleteAllInterceptor"
     }
 
 }

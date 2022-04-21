@@ -59,102 +59,109 @@ public class SaveOneMethodMatcher extends AbstractPrefixPatternMethodMatcher {
     }
 
     @Override
+    public final int getOrder() {
+        // should run before SaveEntityMethodMatcher
+        return DEFAULT_POSITION - 100;
+    }
+
+    @Override
     protected MethodMatch match(MethodMatchContext matchContext, java.util.regex.Matcher matcher) {
-        ParameterElement[] parameters = matchContext.getParameters();
-        if (isValidSaveReturnType(matchContext, true) &&
-                parameters.length > 0 &&
-                !TypeUtils.isIterableOfEntity(parameters[0].getGenericType())) {
-            return new MethodMatch() {
-
-                @Override
-                public MethodMatchInfo buildMatchInfo(MethodMatchContext matchContext) {
-                    List<ParameterElement> parameters = matchContext.getParametersNotInRole();
-                    SourcePersistentEntity rootEntity = matchContext.getRootEntity();
-                    ClassElement returnType = matchContext.getReturnType();
-                    if (TypeUtils.isReactiveOrFuture(returnType)) {
-                        returnType = returnType.getFirstTypeArgument().orElse(null);
-                    }
-                    if (returnType == null || !TypeUtils.isNumber(returnType) && !rootEntity.getName().equals(returnType.getName())) {
-                        throw new MatchFailedException("The return type of the save method must be the same as the root entity type: " + rootEntity.getName());
-                    }
-
-                    Set<String> requiredProps = rootEntity.getPersistentProperties()
-                            .stream()
-                            .filter(this::isRequiredProperty)
-                            .map(PersistentProperty::getName)
-                            .collect(Collectors.toSet());
-                    ParameterElement[] parameterElements = rootEntity.getClassElement().getPrimaryConstructor().map(MethodElement::getParameters).orElse(null);
-                    Map<String, ParameterElement> constructorArgs = new HashMap<>(10);
-                    if (ArrayUtils.isNotEmpty(parameterElements)) {
-                        for (ParameterElement parameterElement : parameterElements) {
-                            constructorArgs.put(getParameterValue(parameterElement), parameterElement);
-                        }
-                    }
-                    for (ParameterElement parameter : parameters) {
-                        String name = getParameterValue(parameter);
-                        ClassElement type = parameter.getGenericType();
-
-                        SourcePersistentProperty prop = rootEntity.getPropertyByName(name);
-                        ParameterElement constructorArg = constructorArgs.get(name);
-                        if (prop == null && constructorArg == null) {
-                            throw new MatchFailedException("Cannot save with non-existent property or constructor argument: " + name);
-                        }
-
-                        if (prop != null) {
-                            String typeName = prop.getTypeName();
-                            if (!type.isAssignable(typeName) && !typeName.equals(type.getName())) {
-                                throw new MatchFailedException("Type mismatch. Found parameter of type [" + type.getName() + "]. Required property of type: " + typeName);
-                            }
-                            requiredProps.remove(name);
-                        } else {
-                            ClassElement argType = constructorArg.getGenericType();
-                            String typeName = argType.getName();
-                            if (!type.isAssignable(typeName) && !typeName.equals(type.getName())) {
-                                throw new MatchFailedException("Type mismatch. Found parameter of type [" + type.getName() + "]. Required constructor argument of: " + typeName);
-                            }
-                        }
-                        constructorArgs.remove(name);
-                    }
-
-                    if (!requiredProps.isEmpty()) {
-                        throw new MatchFailedException("Save method missing required properties: " + requiredProps);
-                    }
-                    if (!constructorArgs.isEmpty()) {
-                        Collection<ParameterElement> values = constructorArgs.values();
-                        Set<String> names = values.stream().filter(pe -> {
-                            SourcePersistentProperty prop = rootEntity.getPropertyByName(pe.getName());
-                            return prop != null && prop.isRequired() && !prop.getType().isPrimitive();
-                        }).map(p -> getParameterValue(p)).collect(Collectors.toSet());
-                        if (CollectionUtils.isNotEmpty(names)) {
-                            throw new MatchFailedException("Save method missing required constructor arguments: " + names);
-                        }
-                    }
-
-                    final AnnotationMetadataHierarchy annotationMetadataHierarchy = new AnnotationMetadataHierarchy(
-                            matchContext.getRepositoryClass().getAnnotationMetadata(),
-                            matchContext.getAnnotationMetadata()
-                    );
-
-                    Map.Entry<ClassElement, Class<? extends DataInterceptor>> e = FindersUtils.pickSaveOneInterceptor(matchContext, matchContext.getReturnType());
-                    return new MethodMatchInfo(
-                            DataMethod.OperationType.INSERT,
-                            e.getKey(),
-                            getInterceptorElement(matchContext, e.getValue())
-                    )
-                            .encodeEntityParameters(true)
-                            .queryResult(
-                                    matchContext.getQueryBuilder().buildInsert(annotationMetadataHierarchy, matchContext.getRootEntity())
-                            );
-                }
-
-                private boolean isRequiredProperty(SourcePersistentProperty pp) {
-                    return pp.isRequired() &&
-                            !ClassUtils.getPrimitiveType(pp.getTypeName()).isPresent();
-                }
-
-            };
+        List<ParameterElement> parameters = matchContext.getParametersNotInRole();
+        if (parameters.size() == 0
+                || TypeUtils.isEntity(parameters.get(0).getGenericType())
+                || TypeUtils.isIterableOfEntity(parameters.get(0).getGenericType())
+                || !isValidSaveReturnType(matchContext, true)) {
+            return null;
         }
-        return null;
+        return new MethodMatch() {
+
+            @Override
+            public MethodMatchInfo buildMatchInfo(MethodMatchContext matchContext) {
+                List<ParameterElement> parameters = matchContext.getParametersNotInRole();
+                SourcePersistentEntity rootEntity = matchContext.getRootEntity();
+                ClassElement returnType = matchContext.getReturnType();
+                if (TypeUtils.isReactiveOrFuture(returnType)) {
+                    returnType = returnType.getFirstTypeArgument().orElse(null);
+                }
+                if (returnType == null || !TypeUtils.isNumber(returnType) && !rootEntity.getName().equals(returnType.getName())) {
+                    throw new MatchFailedException("The return type of the save method must be the same as the root entity type: " + rootEntity.getName());
+                }
+
+                Set<String> requiredProps = rootEntity.getPersistentProperties()
+                        .stream()
+                        .filter(this::isRequiredProperty)
+                        .map(PersistentProperty::getName)
+                        .collect(Collectors.toSet());
+                ParameterElement[] parameterElements = rootEntity.getClassElement().getPrimaryConstructor().map(MethodElement::getParameters).orElse(null);
+                Map<String, ParameterElement> constructorArgs = new HashMap<>(10);
+                if (ArrayUtils.isNotEmpty(parameterElements)) {
+                    for (ParameterElement parameterElement : parameterElements) {
+                        constructorArgs.put(getParameterValue(parameterElement), parameterElement);
+                    }
+                }
+                for (ParameterElement parameter : parameters) {
+                    String name = getParameterValue(parameter);
+                    ClassElement type = parameter.getGenericType();
+
+                    SourcePersistentProperty prop = rootEntity.getPropertyByName(name);
+                    ParameterElement constructorArg = constructorArgs.get(name);
+                    if (prop == null && constructorArg == null) {
+                        throw new MatchFailedException("Cannot save with non-existent property or constructor argument: " + name);
+                    }
+
+                    if (prop != null) {
+                        String typeName = prop.getTypeName();
+                        if (!type.isAssignable(typeName) && !typeName.equals(type.getName())) {
+                            throw new MatchFailedException("Type mismatch. Found parameter of type [" + type.getName() + "]. Required property of type: " + typeName);
+                        }
+                        requiredProps.remove(name);
+                    } else {
+                        ClassElement argType = constructorArg.getGenericType();
+                        String typeName = argType.getName();
+                        if (!type.isAssignable(typeName) && !typeName.equals(type.getName())) {
+                            throw new MatchFailedException("Type mismatch. Found parameter of type [" + type.getName() + "]. Required constructor argument of: " + typeName);
+                        }
+                    }
+                    constructorArgs.remove(name);
+                }
+
+                if (!requiredProps.isEmpty()) {
+                    throw new MatchFailedException("Save method missing required properties: " + requiredProps);
+                }
+                if (!constructorArgs.isEmpty()) {
+                    Collection<ParameterElement> values = constructorArgs.values();
+                    Set<String> names = values.stream().filter(pe -> {
+                        SourcePersistentProperty prop = rootEntity.getPropertyByName(pe.getName());
+                        return prop != null && prop.isRequired() && !prop.getType().isPrimitive();
+                    }).map(p -> getParameterValue(p)).collect(Collectors.toSet());
+                    if (CollectionUtils.isNotEmpty(names)) {
+                        throw new MatchFailedException("Save method missing required constructor arguments: " + names);
+                    }
+                }
+
+                final AnnotationMetadataHierarchy annotationMetadataHierarchy = new AnnotationMetadataHierarchy(
+                        matchContext.getRepositoryClass().getAnnotationMetadata(),
+                        matchContext.getAnnotationMetadata()
+                );
+
+                Map.Entry<ClassElement, Class<? extends DataInterceptor>> e = FindersUtils.pickSaveOneInterceptor(matchContext, matchContext.getReturnType());
+                return new MethodMatchInfo(
+                        DataMethod.OperationType.INSERT,
+                        e.getKey(),
+                        getInterceptorElement(matchContext, e.getValue())
+                )
+                        .encodeEntityParameters(true)
+                        .queryResult(
+                                matchContext.getQueryBuilder().buildInsert(annotationMetadataHierarchy, matchContext.getRootEntity())
+                        );
+            }
+
+            private boolean isRequiredProperty(SourcePersistentProperty pp) {
+                return pp.isRequired() &&
+                        !ClassUtils.getPrimitiveType(pp.getTypeName()).isPresent();
+            }
+
+        };
     }
 
     private String getParameterValue(ParameterElement p) {

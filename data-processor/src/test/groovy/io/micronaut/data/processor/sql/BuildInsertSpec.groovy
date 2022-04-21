@@ -15,7 +15,6 @@
  */
 package io.micronaut.data.processor.sql
 
-
 import io.micronaut.data.model.DataType
 import io.micronaut.data.model.entities.Person
 import io.micronaut.data.model.query.builder.sql.Dialect
@@ -28,7 +27,11 @@ import io.micronaut.inject.writer.BeanDefinitionVisitor
 import spock.lang.PendingFeature
 import spock.lang.Unroll
 
-import static io.micronaut.data.processor.visitors.TestUtils.*
+import static io.micronaut.data.processor.visitors.TestUtils.getDataInterceptor
+import static io.micronaut.data.processor.visitors.TestUtils.getDataTypes
+import static io.micronaut.data.processor.visitors.TestUtils.getParameterPropertyPaths
+import static io.micronaut.data.processor.visitors.TestUtils.getQuery
+import static io.micronaut.data.processor.visitors.TestUtils.getRawQuery
 
 class BuildInsertSpec extends AbstractDataSpec {
 
@@ -366,6 +369,7 @@ interface MyInterface extends CrudRepository<Food, UUID> {
 package test;
 
 import io.micronaut.data.tck.entities.Food;
+import io.micronaut.data.tck.entities.Meal;
 import io.micronaut.data.annotation.*;
 import io.micronaut.data.repository.*;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
@@ -382,6 +386,8 @@ interface MyInterface extends CrudRepository<Food, UUID> {
     @Query("INSERT INTO food(key, carbohydrates) VALUES (:key, :carbohydrates)")
     void saveCustomSingle(Food food);
 
+    Food saveCustom2(UUID fid, String key, int carbohydrates, Meal meal);
+    
 }
 """)
         when:
@@ -394,5 +400,10 @@ interface MyInterface extends CrudRepository<Food, UUID> {
         then:
         getRawQuery(saveCustomSingle) == 'INSERT INTO food(key, carbohydrates) VALUES (?, ?)'
         getParameterPropertyPaths(saveCustomSingle) == ["key", "carbohydrates"] as String[]
+        when:
+        def save = beanDefinition.findPossibleMethods("saveCustom2").findFirst().get()
+        then:
+        getQuery(save) == 'INSERT INTO "food" ("key","carbohydrates","portion_grams","created_on","updated_on","fk_meal_id","fk_alt_meal","fid") VALUES (?,?,?,?,?,?,?,?)'
+        getDataInterceptor(save) == "io.micronaut.data.intercept.SaveOneInterceptor"
     }
 }
