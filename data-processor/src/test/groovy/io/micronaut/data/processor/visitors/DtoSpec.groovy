@@ -308,4 +308,99 @@ class AuthorDto {
         findAllMethod.isTrue(DataMethod, DataMethod.META_MEMBER_DTO)
     }
 
+    void "test build repository with DTO projection 2"() {
+        when:
+            def repository = buildJpaRepository('test.MyInterface', """
+
+import io.micronaut.core.annotation.Introspected;
+import javax.persistence.*;
+import io.micronaut.data.repository.*;
+import io.micronaut.data.annotation.Repository;
+import io.micronaut.data.annotation.Join;
+
+@Repository
+@io.micronaut.context.annotation.Executable
+interface MyInterface extends GenericRepository<Author, Long> {
+
+    AuthorDto findFirstNameAndLastNameByIdAndEmailIn(Long id, Collection<String> email);
+    
+}
+
+@Entity
+class Author {
+
+    @Id
+    @GeneratedValue
+    private Long id;
+    private String firstName;
+    private String lastName;
+    private String email;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+    
+    public String getFirstName() {
+        return firstName;
+    }
+
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
+    }
+    
+    public String getLastName() {
+        return lastName;
+    }
+    
+      public void setLastName(String lastName) {
+        this.lastName = lastName;
+    }
+    
+    public String getEmail() {
+        return email;
+    }
+    
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+}
+
+
+@Introspected
+class AuthorDto {
+    private String firstName;
+    private String lastName;
+    
+    public String getFirstName() {
+        return firstName;
+    }
+
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
+    }
+    
+    public String getLastName() {
+        return lastName;
+    }
+    
+    public void setLastName(String lastName) {
+        this.lastName = lastName;
+    }
+    
+}
+""")
+        then:
+            repository != null
+
+            def listAllMethod = repository.getRequiredMethod("findFirstNameAndLastNameByIdAndEmailIn", Long.class, Collection.class)
+            listAllMethod.synthesize(DataMethod).resultType().name.contains("AuthorDto")
+            listAllMethod.synthesize(Query).value() == "SELECT author_.firstName AS firstName,author_.lastName AS lastName FROM test.Author AS author_ WHERE (author_.id = :p1 AND author_.email IN (:p2))"
+            listAllMethod.isTrue(DataMethod, DataMethod.META_MEMBER_DTO)
+    }
+
 }

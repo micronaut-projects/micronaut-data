@@ -24,10 +24,10 @@ import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.intercept.DataInterceptor;
 import io.micronaut.data.intercept.annotation.DataMethod;
-import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityCriteriaQuery;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQuery;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
+import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityCriteriaQuery;
 import io.micronaut.data.model.jpa.criteria.impl.QueryModelPersistentEntityCriteriaQuery;
 import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.query.QueryModel;
@@ -36,8 +36,8 @@ import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.SourcePersistentProperty;
 import io.micronaut.data.processor.model.criteria.SourcePersistentEntityCriteriaBuilder;
-import io.micronaut.data.processor.model.criteria.impl.MethodMatchSourcePersistentEntityCriteriaBuilderImpl;
 import io.micronaut.data.processor.model.criteria.SourcePersistentEntityCriteriaQuery;
+import io.micronaut.data.processor.model.criteria.impl.MethodMatchSourcePersistentEntityCriteriaBuilderImpl;
 import io.micronaut.data.processor.visitors.AnnotationMetadataHierarchy;
 import io.micronaut.data.processor.visitors.MatchContext;
 import io.micronaut.data.processor.visitors.MatchFailedException;
@@ -388,17 +388,23 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
             querySequence = querySequence.substring("Distinct".length());
         }
         if (StringUtils.isNotEmpty(querySequence)) {
-            io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> propertyPath = findProperty(root, querySequence);
-            if (propertyPath != null) {
-                query.multiselect(propertyPath);
-                return "";
+            List<Selection<?>> selectionList = new ArrayList<>();
+            for (String projection : querySequence.split("And")) {
+                io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> propertyPath = findProperty(root, projection);
+                if (propertyPath != null) {
+                    selectionList.add(propertyPath);
+                } else {
+                    Selection<?> selection = Projections.find(root, cb, projection);
+                    if (selection != null) {
+                        selectionList.add(selection);
+                    }
+                }
             }
-            Selection<?> selection = Projections.find(root, cb, querySequence);
-            if (selection != null) {
-                query.multiselect(selection);
-                return "";
+            if (selectionList.isEmpty()) {
+                return querySequence;
             }
-            // queryResultType
+            query.multiselect(selectionList);
+            return "";
         }
         return querySequence;
     }

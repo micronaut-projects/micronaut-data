@@ -130,7 +130,10 @@ final class SourcePersistentEntityCriteriaQueryImpl<T> extends AbstractPersisten
 
                 @Override
                 public void visit(CompoundSelection<?> compoundSelection) {
-                    compoundSelection.getCompoundSelectionItems().forEach(s -> ((SelectionVisitable) s).accept(this));
+                    if (compoundSelection.getCompoundSelectionItems().size() == 1) {
+                        // Multiple selection shouldn't result in one type
+                        compoundSelection.getCompoundSelectionItems().forEach(s -> ((SelectionVisitable) s).accept(this));
+                    }
                 }
 
                 @Override
