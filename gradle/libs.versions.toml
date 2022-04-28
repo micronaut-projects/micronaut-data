@@ -2,7 +2,7 @@
 micronaut-serde = "1.0.0"
 micronaut-sql = "4.1.1"
 micronaut-docs = "2.0.0"
-micronaut-gradle-plugin = "3.2.0"
+micronaut-gradle-plugin = "3.3.2"
 
 groovy = "3.0.8"
 
