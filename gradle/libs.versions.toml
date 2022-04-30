@@ -4,7 +4,7 @@ micronaut-sql = "4.1.1"
 micronaut-docs = "2.0.0"
 micronaut-gradle-plugin = "3.3.2"
 
-groovy = "3.0.8"
+groovy = "3.0.10"
 
 javax-persistence = "2.2"
 jakarta-persistence = "3.0.0"
