@@ -16,7 +16,7 @@ hibernate = "5.6.8.Final"
 spring-data = "2.4.14"
 spring = "5.3.19"
 
-mongodb = "4.1.1"
+mongodb = "4.6.0"
 oracle-driver = "21.5.0.0"
 mariadb-driver = "2.7.5"
 mysql-driver = "8.0.29"
