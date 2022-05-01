@@ -18,7 +18,7 @@ spring = "5.3.19"
 
 mongodb = "4.1.1"
 oracle-driver = "21.5.0.0"
-mariadb-driver = "2.7.0"
+mariadb-driver = "2.7.5"
 mysql-driver = "8.0.22"
 postgres-driver = "42.2.18"
 mssql-driver = "8.4.1.jre8"
