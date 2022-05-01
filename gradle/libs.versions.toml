@@ -21,7 +21,7 @@ oracle-driver = "21.5.0.0"
 mariadb-driver = "2.7.5"
 mysql-driver = "8.0.29"
 postgres-driver = "42.3.4"
-mssql-driver = "8.4.1.jre8"
+mssql-driver = "8.4.1.jre14"
 
 oracle-r2dbc-driver = "0.4.0"
 mysql-r2dbc-driver = "0.8.2.RELEASE"
