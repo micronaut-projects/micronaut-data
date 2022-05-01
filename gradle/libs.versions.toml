@@ -1,6 +1,6 @@
 [versions]
 micronaut-serde = "1.0.1"
-micronaut-sql = "4.1.1"
+micronaut-sql = "4.3.0"
 micronaut-docs = "2.0.0"
 micronaut-gradle-plugin = "3.4.0"
 
