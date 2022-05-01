@@ -7,7 +7,7 @@ micronaut-gradle-plugin = "3.4.0"
 groovy = "3.0.10"
 
 javax-persistence = "2.2"
-jakarta-persistence = "3.0.0"
+jakarta-persistence = "3.1.0"
 jakarta-javax-persistence = "2.2.3"
 jakarta-transaction = "1.3.3"
 
