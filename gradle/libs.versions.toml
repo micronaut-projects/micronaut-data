@@ -29,7 +29,7 @@ r2dbc = "Arabba-SR12"
 
 cglib = "3.3.0"
 objenesis = "3.2"
-testcontainers = "1.16.3"
+testcontainers = "1.17.1"
 
 jmh = "1.34"
 
