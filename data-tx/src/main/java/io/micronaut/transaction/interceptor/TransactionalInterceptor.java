@@ -354,7 +354,6 @@ public class TransactionalInterceptor implements MethodInterceptor<Object, Objec
                 throw ex2;
             } catch (RuntimeException | Error ex2) {
                 LOG.error("Application exception overridden by rollback exception", ex);
-                ex2.printStackTrace();
                 throw ex2;
             }
         } else {
