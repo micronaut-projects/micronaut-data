@@ -1,0 +1,6 @@
+[
+  {
+    "name":"org.hibernate.cfg.beanvalidation.TypeSafeActivator",
+    "methods":[{"name":"activate","parameterTypes":["org.hibernate.cfg.beanvalidation.ActivationContext"] }]
+  }
+]
