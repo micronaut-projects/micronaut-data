@@ -38,6 +38,7 @@ import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.operations.PrimaryRepositoryOperations;
 import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.inject.qualifiers.Qualifiers;
+import io.micronaut.transaction.interceptor.CoroutineTxHelper;
 import io.micronaut.transaction.support.TransactionSynchronizationManager;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -62,18 +63,18 @@ public final class DataIntroductionAdvice implements MethodInterceptor<Object, O
 
     private final BeanLocator beanLocator;
     private final Map<RepositoryMethodKey, DataInterceptor> interceptorMap = new ConcurrentHashMap<>(20);
-    private final TransactionCoroutineTxHelper transactionCoroutineTxHelper;
+    private final CoroutineTxHelper coroutineTxHelper;
 
     /**
      * Default constructor.
      *
-     * @param beanLocator                  The bean locator.
-     * @param transactionCoroutineTxHelper The coroutine helper
+     * @param beanLocator       The bean locator.
+     * @param coroutineTxHelper The coroutine helper
      */
     @Inject
-    public DataIntroductionAdvice(@NonNull BeanLocator beanLocator, @Nullable TransactionCoroutineTxHelper transactionCoroutineTxHelper) {
+    public DataIntroductionAdvice(@NonNull BeanLocator beanLocator, @Nullable CoroutineTxHelper coroutineTxHelper) {
         this.beanLocator = beanLocator;
-        this.transactionCoroutineTxHelper = transactionCoroutineTxHelper;
+        this.coroutineTxHelper = coroutineTxHelper;
     }
 
     @Override
@@ -126,31 +127,7 @@ public final class DataIntroductionAdvice implements MethodInterceptor<Object, O
                 case COMPLETION_STAGE:
                     boolean isKotlinSuspended = interceptedMethod instanceof KotlinInterceptedMethod;
                     if (isKotlinSuspended) {
-                        CompletionStage<Object> completionStage;
-                        TransactionSynchronizationManager.State state = Objects.requireNonNull(transactionCoroutineTxHelper).findTxManagerState((KotlinInterceptedMethod) interceptedMethod);
-                        if (state == null) {
-                            completionStage = (CompletionStage<Object>) dataInterceptor.intercept(key, context);
-                        } else {
-                            completionStage = TransactionSynchronizationManager.withState(state,
-                                    () -> (CompletionStage<Object>) dataInterceptor.intercept(key, context));
-                        }
-                        CompletableFuture<Object> completableFuture = new CompletableFuture<>();
-                        interceptedMethod.handleResult(completableFuture);
-                        completionStage.whenComplete((value, throwable) -> {
-                            if (throwable == null) {
-                                completableFuture.complete(value);
-                            } else {
-                                if (throwable instanceof CompletionException) {
-                                    throwable = throwable.getCause();
-                                }
-                                if (throwable instanceof EmptyResultException && context.isSuspend() && context.isNullable()) {
-                                    completableFuture.complete(null);
-                                } else {
-                                    completableFuture.completeExceptionally(throwable);
-                                }
-                            }
-                        });
-                        return KotlinUtils.COROUTINE_SUSPENDED;
+                        return interceptKotlinSuspend(context, dataInterceptor, key, interceptedMethod);
                     } else {
                         return interceptedMethod.handleResult(dataInterceptor.intercept(key, context));
                     }
@@ -162,6 +139,40 @@ public final class DataIntroductionAdvice implements MethodInterceptor<Object, O
         } catch (Exception e) {
             return interceptedMethod.handleException(e);
         }
+    }
+
+    private Object interceptKotlinSuspend(MethodInvocationContext<Object, Object> context,
+                                          DataInterceptor<Object, Object> dataInterceptor,
+                                          RepositoryMethodKey key,
+                                          InterceptedMethod interceptedMethod) {
+        CompletionStage<Object> completionStage;
+        TransactionSynchronizationManager.State state = Objects.requireNonNull(coroutineTxHelper)
+                .setupTxState((KotlinInterceptedMethod) interceptedMethod);
+        if (state == null) {
+            completionStage = (CompletionStage<Object>) dataInterceptor.intercept(key, context);
+        } else {
+            completionStage = TransactionSynchronizationManager.withState(state,
+                    () -> (CompletionStage<Object>) dataInterceptor.intercept(key, context));
+        }
+        CompletableFuture<Object> completableFuture = new CompletableFuture<>();
+        interceptedMethod.handleResult(completableFuture);
+        completionStage.whenComplete((value, throwable) -> TransactionSynchronizationManager.withState(state, () -> {
+            if (throwable == null) {
+                completableFuture.complete(value);
+            } else {
+                Throwable finalThrowable = throwable;
+                if (finalThrowable instanceof CompletionException) {
+                    finalThrowable = finalThrowable.getCause();
+                }
+                if (finalThrowable instanceof EmptyResultException && context.isSuspend() && context.isNullable()) {
+                    completableFuture.complete(null);
+                } else {
+                    completableFuture.completeExceptionally(finalThrowable);
+                }
+            }
+            return null;
+        }));
+        return KotlinUtils.COROUTINE_SUSPENDED;
     }
 
     @NonNull
