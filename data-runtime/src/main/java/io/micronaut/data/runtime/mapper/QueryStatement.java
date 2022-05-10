@@ -64,11 +64,15 @@ public interface QueryStatement<PS, IDX> {
         switch (dataType) {
             case STRING:
             case JSON:
+                String str;
                 if (value instanceof CharSequence) {
-                    return setString(statement, index, value.toString());
+                    str = value.toString();
+                } else if (value instanceof Enum) {
+                    str = ((Enum<?>) value).name();
                 } else {
-                    return setString(statement, index, convertRequired(value, String.class));
+                    str = convertRequired(value, String.class);
                 }
+                return setString(statement, index, str);
             case INTEGER:
                 if (value instanceof Number) {
                     return setInt(statement, index, ((Number) value).intValue());

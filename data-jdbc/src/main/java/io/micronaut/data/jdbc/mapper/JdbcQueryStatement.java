@@ -151,7 +151,7 @@ public class JdbcQueryStatement implements QueryStatement<PreparedStatement, Int
                 statement.setArray(index, (Array) value);
             } else if (value != null) {
                 if (value.getClass().isEnum()) {
-                    statement.setString(index, ((Enum) value).name());
+                    statement.setObject(index, value, java.sql.Types.OTHER);
                 } else {
                     statement.setObject(index, value);
                 }
