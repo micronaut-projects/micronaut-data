@@ -18,6 +18,7 @@ package io.micronaut.data.intercept;
 import io.micronaut.aop.InterceptedMethod;
 import io.micronaut.aop.MethodInterceptor;
 import io.micronaut.aop.MethodInvocationContext;
+import io.micronaut.aop.kotlin.KotlinInterceptedMethod;
 import io.micronaut.context.BeanLocator;
 import io.micronaut.context.Qualifier;
 import io.micronaut.context.exceptions.ConfigurationException;
@@ -37,9 +38,13 @@ import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.operations.PrimaryRepositoryOperations;
 import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.inject.qualifiers.Qualifiers;
+import io.micronaut.transaction.interceptor.CoroutineTxHelper;
+import io.micronaut.transaction.support.TransactionSynchronizationManager;
+import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
@@ -58,14 +63,18 @@ public final class DataIntroductionAdvice implements MethodInterceptor<Object, O
 
     private final BeanLocator beanLocator;
     private final Map<RepositoryMethodKey, DataInterceptor> interceptorMap = new ConcurrentHashMap<>(20);
+    private final CoroutineTxHelper coroutineTxHelper;
 
     /**
      * Default constructor.
      *
-     * @param beanLocator The bean locator
+     * @param beanLocator       The bean locator.
+     * @param coroutineTxHelper The coroutine helper
      */
-    DataIntroductionAdvice(BeanLocator beanLocator) {
+    @Inject
+    public DataIntroductionAdvice(@NonNull BeanLocator beanLocator, @Nullable CoroutineTxHelper coroutineTxHelper) {
         this.beanLocator = beanLocator;
+        this.coroutineTxHelper = coroutineTxHelper;
     }
 
     @Override
@@ -112,36 +121,18 @@ public final class DataIntroductionAdvice implements MethodInterceptor<Object, O
                              RepositoryMethodKey key) {
         InterceptedMethod interceptedMethod = InterceptedMethod.of(context);
         try {
-            Object result = dataInterceptor.intercept(key, context);
             switch (interceptedMethod.resultType()) {
                 case PUBLISHER:
-                    return interceptedMethod.handleResult(result);
+                    return interceptedMethod.handleResult(dataInterceptor.intercept(key, context));
                 case COMPLETION_STAGE:
-                    if (context.isSuspend()) {
-                        // Unwrap CompletionException
-                        CompletionStage<Object> completionStage = (CompletionStage) result;
-                        completionStage.whenComplete((value, throwable) -> {
-                            if (throwable == null) {
-                                interceptedMethod.handleResult(CompletableFuture.completedFuture(value));
-                            } else {
-                                if (throwable instanceof CompletionException) {
-                                    throwable = throwable.getCause();
-                                }
-                                if (throwable instanceof EmptyResultException && context.isSuspend() && context.isNullable()) {
-                                    interceptedMethod.handleResult(CompletableFuture.completedFuture(null));
-                                } else {
-                                    CompletableFuture<?> completableFuture = new CompletableFuture<>();
-                                    completableFuture.completeExceptionally(throwable);
-                                    interceptedMethod.handleResult(completableFuture);
-                                }
-                            }
-                        });
-                        return KotlinUtils.COROUTINE_SUSPENDED;
+                    boolean isKotlinSuspended = interceptedMethod instanceof KotlinInterceptedMethod;
+                    if (isKotlinSuspended) {
+                        return interceptKotlinSuspend(context, dataInterceptor, key, interceptedMethod);
                     } else {
-                        return interceptedMethod.handleResult(result);
+                        return interceptedMethod.handleResult(dataInterceptor.intercept(key, context));
                     }
                 case SYNCHRONOUS:
-                    return result;
+                    return dataInterceptor.intercept(key, context);
                 default:
                     return interceptedMethod.unsupported();
             }
@@ -150,11 +141,44 @@ public final class DataIntroductionAdvice implements MethodInterceptor<Object, O
         }
     }
 
-    private @NonNull
-    DataInterceptor<Object, Object> findInterceptor(
-            @Nullable String dataSourceName,
-            @NonNull Class<?> operationsType,
-            @NonNull Class<?> interceptorType) {
+    private Object interceptKotlinSuspend(MethodInvocationContext<Object, Object> context,
+                                          DataInterceptor<Object, Object> dataInterceptor,
+                                          RepositoryMethodKey key,
+                                          InterceptedMethod interceptedMethod) {
+        CompletionStage<Object> completionStage;
+        TransactionSynchronizationManager.TransactionSynchronizationState state = Objects.requireNonNull(coroutineTxHelper)
+                .setupTxState((KotlinInterceptedMethod) interceptedMethod);
+        if (state == null) {
+            completionStage = (CompletionStage<Object>) dataInterceptor.intercept(key, context);
+        } else {
+            completionStage = TransactionSynchronizationManager.withState(state,
+                    () -> (CompletionStage<Object>) dataInterceptor.intercept(key, context));
+        }
+        CompletableFuture<Object> completableFuture = new CompletableFuture<>();
+        interceptedMethod.handleResult(completableFuture);
+        completionStage.whenComplete((value, throwable) -> TransactionSynchronizationManager.withState(state, () -> {
+            if (throwable == null) {
+                completableFuture.complete(value);
+            } else {
+                Throwable finalThrowable = throwable;
+                if (finalThrowable instanceof CompletionException) {
+                    finalThrowable = finalThrowable.getCause();
+                }
+                if (finalThrowable instanceof EmptyResultException && context.isSuspend() && context.isNullable()) {
+                    completableFuture.complete(null);
+                } else {
+                    completableFuture.completeExceptionally(finalThrowable);
+                }
+            }
+            return null;
+        }));
+        return KotlinUtils.COROUTINE_SUSPENDED;
+    }
+
+    @NonNull
+    private DataInterceptor<Object, Object> findInterceptor(@Nullable String dataSourceName,
+                                                            @NonNull Class<?> operationsType,
+                                                            @NonNull Class<?> interceptorType) {
         DataInterceptor interceptor;
         if (!RepositoryOperations.class.isAssignableFrom(operationsType)) {
             throw new IllegalArgumentException("Repository type must be an instance of RepositoryOperations!");

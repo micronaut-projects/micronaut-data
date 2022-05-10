@@ -31,11 +31,22 @@ import kotlin.coroutines.CoroutineContext;
 @Internal
 @Singleton
 @Requires(classes = kotlin.coroutines.CoroutineContext.class)
-final class CoroutineTxHelper {
+public final class CoroutineTxHelper {
 
-    public void setupCoroutineContext(KotlinInterceptedMethod kotlinInterceptedMethod) {
+    /**
+     * Extract the TX state from the Kotlin's context or takes the thread-local context.
+     * @param kotlinInterceptedMethod The intercepted method
+     * @return The tx state
+     */
+    public TransactionSynchronizationManager.TransactionSynchronizationState setupTxState(KotlinInterceptedMethod kotlinInterceptedMethod) {
         CoroutineContext existingContext = kotlinInterceptedMethod.getCoroutineContext();
-        kotlinInterceptedMethod.updateCoroutineContext(existingContext.plus(new TxSynchronousContext(TransactionSynchronizationManager.copyState())));
+        TxSynchronousContext txSynchronousContext = existingContext.get(TxSynchronousContext.Key);
+        if (txSynchronousContext != null) {
+            return txSynchronousContext.getState();
+        }
+        TransactionSynchronizationManager.TransactionSynchronizationState txState = TransactionSynchronizationManager.getOrCreateState();
+        kotlinInterceptedMethod.updateCoroutineContext(existingContext.plus(new TxSynchronousContext(txState)));
+        return txState;
     }
 
 }

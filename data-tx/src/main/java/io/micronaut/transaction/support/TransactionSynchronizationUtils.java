@@ -71,33 +71,36 @@ public abstract class TransactionSynchronizationUtils {
 
     /**
      * Trigger {@code flush} callbacks on all currently registered synchronizations.
+     * @param state The transaction state
      * @throws RuntimeException if thrown by a {@code flush} callback
      * @see TransactionSynchronization#flush()
      */
-    public static void triggerFlush() {
-        for (TransactionSynchronization synchronization : TransactionSynchronizationManager.getSynchronizations()) {
+    public static void triggerFlush(SynchronousTransactionState state) {
+        for (TransactionSynchronization synchronization : state.getSynchronizations()) {
             synchronization.flush();
         }
     }
 
     /**
      * Trigger {@code beforeCommit} callbacks on all currently registered synchronizations.
+     * @param state The transaction state
      * @param readOnly whether the transaction is defined as read-only transaction
      * @throws RuntimeException if thrown by a {@code beforeCommit} callback
      * @see TransactionSynchronization#beforeCommit(boolean)
      */
-    public static void triggerBeforeCommit(boolean readOnly) {
-        for (TransactionSynchronization synchronization : TransactionSynchronizationManager.getSynchronizations()) {
+    public static void triggerBeforeCommit(SynchronousTransactionState state, boolean readOnly) {
+        for (TransactionSynchronization synchronization : state.getSynchronizations()) {
             synchronization.beforeCommit(readOnly);
         }
     }
 
     /**
      * Trigger {@code beforeCompletion} callbacks on all currently registered synchronizations.
+     * @param state The transaction state
      * @see TransactionSynchronization#beforeCompletion()
      */
-    public static void triggerBeforeCompletion() {
-        for (TransactionSynchronization synchronization : TransactionSynchronizationManager.getSynchronizations()) {
+    public static void triggerBeforeCompletion(SynchronousTransactionState state) {
+        for (TransactionSynchronization synchronization : state.getSynchronizations()) {
             try {
                 synchronization.beforeCompletion();
             } catch (Throwable tsex) {
@@ -108,12 +111,13 @@ public abstract class TransactionSynchronizationUtils {
 
     /**
      * Trigger {@code afterCommit} callbacks on all currently registered synchronizations.
+     * @param state The transaction state
      * @throws RuntimeException if thrown by a {@code afterCommit} callback
-     * @see TransactionSynchronizationManager#getSynchronizations()
+     * @see SynchronousTransactionState#getSynchronizations()
      * @see TransactionSynchronization#afterCommit()
      */
-    public static void triggerAfterCommit() {
-        invokeAfterCommit(TransactionSynchronizationManager.getSynchronizations());
+    public static void triggerAfterCommit(SynchronousTransactionState state) {
+        invokeAfterCommit(state.getSynchronizations());
     }
 
     /**
@@ -132,16 +136,17 @@ public abstract class TransactionSynchronizationUtils {
 
     /**
      * Trigger {@code afterCompletion} callbacks on all currently registered synchronizations.
+     * @param state The transaction state
      * @param completionStatus the completion status according to the
      * constants in the TransactionSynchronization interface
-     * @see TransactionSynchronizationManager#getSynchronizations()
+     * @see SynchronousTransactionState#getSynchronizations()
      * @see TransactionSynchronization#afterCompletion(TransactionSynchronization.Status)
      * @see TransactionSynchronization.Status#COMMITTED
      * @see TransactionSynchronization.Status#ROLLED_BACK
      * @see TransactionSynchronization.Status#UNKNOWN
      */
-    public static void triggerAfterCompletion(@NonNull TransactionSynchronization.Status completionStatus) {
-        List<TransactionSynchronization> synchronizations = TransactionSynchronizationManager.getSynchronizations();
+    public static void triggerAfterCompletion(SynchronousTransactionState state, @NonNull TransactionSynchronization.Status completionStatus) {
+        List<TransactionSynchronization> synchronizations = state.getSynchronizations();
         invokeAfterCompletion(synchronizations, completionStatus);
     }
 

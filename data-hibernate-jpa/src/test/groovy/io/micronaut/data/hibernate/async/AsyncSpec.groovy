@@ -22,11 +22,12 @@ import io.micronaut.data.model.Pageable
 import io.micronaut.data.tck.entities.Person
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
+import org.hibernate.SessionFactory
 import spock.lang.Specification
 
 import java.util.concurrent.ExecutionException
 
-@MicronautTest(rollback = false,packages = "io.micronaut.data.tck.entities")
+@MicronautTest(rollback = false, packages = "io.micronaut.data.tck.entities")
 @Property(name = "datasources.default.name", value = "mydb")
 @Property(name = 'jpa.default.properties.hibernate.hbm2ddl.auto', value = 'create-drop')
 class AsyncSpec extends Specification {
@@ -36,6 +37,9 @@ class AsyncSpec extends Specification {
 
     @Inject
     AsyncUserWithWhereRepository userWithWhereRepository
+
+    @Inject
+    SessionFactory sessionFactory
 
     void "test @where with nullable property values"() {
         when:
@@ -114,6 +118,7 @@ class AsyncSpec extends Specification {
 
         when:"an entity is updated"
         def updated = asyncCrudRepository.updateByName("Bob", 50).get()
+        sessionFactory.getCurrentSession().clear()
 
         then:"The update is executed correctly"
         updated == 1

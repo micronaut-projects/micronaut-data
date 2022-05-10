@@ -24,6 +24,7 @@ import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.intercept.async.FindPageAsyncInterceptor;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.runtime.PreparedQuery;
+import io.micronaut.transaction.support.TransactionSynchronizationManager;
 
 import java.util.List;
 import java.util.concurrent.CompletionStage;
@@ -51,13 +52,13 @@ public class DefaultFindPageAsyncInterceptor<T> extends AbstractAsyncInterceptor
         if (context.hasAnnotation(Query.class)) {
             PreparedQuery<?, ?> preparedQuery = prepareQuery(methodKey, context);
             PreparedQuery<?, Number> countQuery = prepareCountQuery(methodKey, context);
-
+            TransactionSynchronizationManager.TransactionSynchronizationState state = TransactionSynchronizationManager.getState();
             return asyncDatastoreOperations.findOne(countQuery)
-                    .thenCompose(total -> asyncDatastoreOperations.findAll(preparedQuery)
+                    .thenCompose(total -> TransactionSynchronizationManager.withState(state, () -> asyncDatastoreOperations.findAll(preparedQuery)
                             .thenApply(objects -> {
                                 List<Object> resultList = CollectionUtils.iterableToList((Iterable<Object>) objects);
                                 return Page.of(resultList, getPageable(context), total.longValue());
-                            }));
+                            })));
 
         } else {
             return asyncDatastoreOperations.findPage(getPagedQuery(context));

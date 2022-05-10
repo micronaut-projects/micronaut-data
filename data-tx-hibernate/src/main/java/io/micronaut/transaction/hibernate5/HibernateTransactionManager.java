@@ -123,6 +123,11 @@ public class HibernateTransactionManager extends AbstractSynchronousTransactionM
         this.entityInterceptor = entityInterceptor;
     }
 
+    @Override
+    protected Object getTransactionStateKey() {
+        return getSessionFactory();
+    }
+
     /**
      * @return Return the SessionFactory that this instance should manage transactions for.
      */

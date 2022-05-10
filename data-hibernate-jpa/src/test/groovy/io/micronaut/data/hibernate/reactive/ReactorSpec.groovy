@@ -21,6 +21,7 @@ import io.micronaut.data.model.Pageable
 import io.micronaut.data.tck.entities.Person
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
+import org.hibernate.SessionFactory
 import spock.lang.Specification
 
 @MicronautTest(rollback = false, packages = "io.micronaut.data.tck.entities")
@@ -33,6 +34,9 @@ class ReactorSpec extends Specification{
 
     @Inject
     ReactorUserWithWhereRepository userWithWhereRepository
+
+    @Inject
+    SessionFactory sessionFactory
 
     void "test @where with nullable property values"() {
         when:
@@ -98,6 +102,7 @@ class ReactorSpec extends Specification{
 
         when:"an entity is updated"
         def updated = reactiveRepo.updateByName("Bob", 50).block()
+        sessionFactory.getCurrentSession().clear()
 
         then:"The update is executed correctly"
         updated == 1

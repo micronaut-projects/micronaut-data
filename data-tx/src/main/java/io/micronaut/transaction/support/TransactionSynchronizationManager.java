@@ -16,13 +16,18 @@
 package io.micronaut.transaction.support;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
-import io.micronaut.core.order.OrderUtil;
 import io.micronaut.transaction.TransactionDefinition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.function.Supplier;
 
 /**
  * Central delegate that manages resources and transaction synchronizations per thread.
@@ -55,69 +60,51 @@ import java.util.*;
  * any given DataSource or SessionFactory, respectively.
  *
  * @author Juergen Hoeller
- * @since 02.06.2003
  * @see #isSynchronizationActive
  * @see #registerSynchronization
  * @see TransactionSynchronization
  * @see AbstractSynchronousTransactionManager#setTransactionSynchronization
+ * @since 02.06.2003
  */
 public abstract class TransactionSynchronizationManager {
 
+    public static final Object DEFAULT_STATE_KEY = new Object();
+
     private static final Logger LOG = LoggerFactory.getLogger(TransactionSynchronizationManager.class);
 
-    @SuppressWarnings("unchecked")
-    private static final ThreadLocal<Map<Object, Object>> RESOURCES =
-            new ThreadLocal() {
-                @Override
-                public String toString() {
-                    return "Transactional resources";
-                }
-            };
+    private static final ThreadLocal<MutableTransactionSynchronizationState> STATE = new ThreadLocal<MutableTransactionSynchronizationState>() {
+        @Override
+        public String toString() {
+            return "The state";
+        }
+    };
 
-    @SuppressWarnings("unchecked")
-    private static final ThreadLocal<Set<TransactionSynchronization>> SYNCHRONIZATIONS =
-            new ThreadLocal() {
-                @Override
-                public String toString() {
-                    return "Transaction synchronizations";
-                }
-            };
+    @NonNull
+    private static MutableTransactionSynchronizationState getOrCreateInternalState() {
+        MutableTransactionSynchronizationState mutableState = STATE.get();
+        if (mutableState == null) {
+            mutableState = new MutableTransactionSynchronizationState();
+            STATE.set(mutableState);
+        }
+        return mutableState;
+    }
 
-    @SuppressWarnings("unchecked")
-    private static final ThreadLocal<String> CURRENT_TRANSACTION_NAME =
-            new ThreadLocal() {
-                @Override
-                public String toString() {
-                    return "Current transaction name";
-                }
-            };
+    @NonNull
+    private static MutableTransactionSynchronizationState getInternalState() {
+        MutableTransactionSynchronizationState mutableState = STATE.get();
+        if (mutableState == null) {
+            mutableState = new MutableTransactionSynchronizationState();
+        }
+        return mutableState;
+    }
 
-    @SuppressWarnings("unchecked")
-    private static final ThreadLocal<Boolean> CURRENT_TRANSACTION_READ_ONLY =
-            new ThreadLocal() {
-                @Override
-                public String toString() {
-                    return "Current transaction read-only status";
-                }
-            };
-
-    @SuppressWarnings("unchecked")
-    private static final ThreadLocal<TransactionDefinition.Isolation> CURRENT_TRANSACTION_ISOLATION_LEVEL =
-            new ThreadLocal() {
-                @Override
-                public String toString() {
-                    return "Current transaction isolation level";
-                }
-            };
-
-    @SuppressWarnings("unchecked")
-    private static final ThreadLocal<Boolean> ACTUAL_TRANSACTION_ACTIVE =
-            new ThreadLocal() {
-                @Override
-                public String toString() {
-                    return "Actual transaction active";
-                }
-            };
+    private static void removeStateIfEmpty() {
+        // Remove entire ThreadLocal if empty...
+        MutableTransactionSynchronizationState mutableState = STATE.get();
+        if (mutableState != null && mutableState.states.isEmpty() && mutableState.resources.isEmpty()) {
+            STATE.remove();
+        }
+    }
 
     //-------------------------------------------------------------------------
     // Management of transaction-associated resource handles
@@ -127,30 +114,32 @@ public abstract class TransactionSynchronizationManager {
      * Return all resources that are bound to the current thread.
      * <p>Mainly for debugging purposes. Resource managers should always invoke
      * {@code hasResource} for a specific resource key that they are interested in.
+     *
      * @return a Map with resource keys (usually the resource factory) and resource
      * values (usually the active resource object), or an empty Map if there are
      * currently no resources bound
      * @see #hasResource
      */
     public static Map<Object, Object> getResourceMap() {
-        Map<Object, Object> map = RESOURCES.get();
-        return (map != null ? Collections.unmodifiableMap(map) : Collections.emptyMap());
+        return Collections.unmodifiableMap(getInternalState().getResources());
     }
 
     /**
      * Check if there is a resource for the given key bound to the current thread.
+     *
      * @param key the key to check (usually the resource factory)
      * @return if there is a value bound to the current thread
      * @see ResourceTransactionManager#getResourceFactory()
      */
     public static boolean hasResource(Object key) {
         Object actualKey = TransactionSynchronizationUtils.unwrapResourceIfNecessary(key);
-        Object value = doGetResource(actualKey);
+        Object value = doGetResource(getInternalState().getResources(), actualKey);
         return (value != null);
     }
 
     /**
      * Retrieve a resource for the given key that is bound to the current thread.
+     *
      * @param key the key to check (usually the resource factory)
      * @return a value bound to the current thread (usually the active
      * resource object), or {@code null} if none
@@ -159,7 +148,7 @@ public abstract class TransactionSynchronizationManager {
     @Nullable
     public static Object getResource(Object key) {
         Object actualKey = TransactionSynchronizationUtils.unwrapResourceIfNecessary(key);
-        Object value = doGetResource(actualKey);
+        Object value = doGetResource(getInternalState().getResources(), actualKey);
         if (value != null && LOG.isTraceEnabled()) {
             LOG.trace("Retrieved value [" + value + "] for key [" + actualKey + "] bound to thread [" +
                     Thread.currentThread().getName() + "]");
@@ -171,19 +160,15 @@ public abstract class TransactionSynchronizationManager {
      * Actually check the value of the resource that is bound for the given key.
      */
     @Nullable
-    private static Object doGetResource(Object actualKey) {
-        Map<Object, Object> map = RESOURCES.get();
+    private static <T> T doGetResource(@Nullable Map<Object, T> map, @NonNull Object actualKey) {
         if (map == null) {
             return null;
         }
-        Object value = map.get(actualKey);
+        T value = map.get(actualKey);
         // Transparently remove ResourceHolder that was marked as void...
         if (value instanceof ResourceHolder && ((ResourceHolder) value).isVoid()) {
             map.remove(actualKey);
-            // Remove entire ThreadLocal if empty...
-            if (map.isEmpty()) {
-                RESOURCES.remove();
-            }
+            removeStateIfEmpty();
             value = null;
         }
         return value;
@@ -191,20 +176,19 @@ public abstract class TransactionSynchronizationManager {
 
     /**
      * Bind the given resource for the given key to the current thread.
-     * @param key the key to bind the value to (usually the resource factory)
+     *
+     * @param key   the key to bind the value to (usually the resource factory)
      * @param value the value to bind (usually the active resource object)
      * @throws IllegalStateException if there is already a value bound to the thread
      * @see ResourceTransactionManager#getResourceFactory()
      */
     public static void bindResource(Object key, Object value) throws IllegalStateException {
+        bindResource(getOrCreateInternalState().getResources(), key, value);
+    }
+
+    private static <T> void bindResource(Map<Object, T> map, Object key, T value) {
         Object actualKey = TransactionSynchronizationUtils.unwrapResourceIfNecessary(key);
         Objects.requireNonNull(value, "Value must not be null");
-        Map<Object, Object> map = RESOURCES.get();
-        // set ThreadLocal Map if none found
-        if (map == null) {
-            map = new HashMap<>();
-            RESOURCES.set(map);
-        }
         Object oldValue = map.put(actualKey, value);
         // Transparently suppress a ResourceHolder that was marked as void...
         if (oldValue instanceof ResourceHolder && ((ResourceHolder) oldValue).isVoid()) {
@@ -222,6 +206,7 @@ public abstract class TransactionSynchronizationManager {
 
     /**
      * Unbind a resource for the given key from the current thread.
+     *
      * @param key the key to unbind (usually the resource factory)
      * @return the previously bound value (usually the active resource object)
      * @throws IllegalStateException if there is no value bound to the thread
@@ -229,7 +214,7 @@ public abstract class TransactionSynchronizationManager {
      */
     public static Object unbindResource(Object key) throws IllegalStateException {
         Object actualKey = TransactionSynchronizationUtils.unwrapResourceIfNecessary(key);
-        Object value = doUnbindResource(actualKey);
+        Object value = doUnbindResource(getInternalState().getResources(), actualKey);
         if (value == null) {
             throw new IllegalStateException(
                     "No value for key [" + actualKey + "] bound to thread [" + Thread.currentThread().getName() + "]");
@@ -239,29 +224,23 @@ public abstract class TransactionSynchronizationManager {
 
     /**
      * Unbind a resource for the given key from the current thread.
+     *
      * @param key the key to unbind (usually the resource factory)
      * @return the previously bound value, or {@code null} if none bound
      */
     @Nullable
     public static Object unbindResourceIfPossible(Object key) {
         Object actualKey = TransactionSynchronizationUtils.unwrapResourceIfNecessary(key);
-        return doUnbindResource(actualKey);
+        return doUnbindResource(getInternalState().getResources(), actualKey);
     }
 
     /**
      * Actually remove the value of the resource that is bound for the given key.
      */
     @Nullable
-    private static Object doUnbindResource(Object actualKey) {
-        Map<Object, Object> map = RESOURCES.get();
-        if (map == null) {
-            return null;
-        }
-        Object value = map.remove(actualKey);
-        // Remove entire ThreadLocal if empty...
-        if (map.isEmpty()) {
-            RESOURCES.remove();
-        }
+    private static <T> T doUnbindResource(@Nullable Map<Object, T> map, @NonNull Object actualKey) {
+        T value = map == null ? null : map.remove(actualKey);
+        removeStateIfEmpty();
         // Transparently suppress a ResourceHolder that was marked as void...
         if (value instanceof ResourceHolder && ((ResourceHolder) value).isVoid()) {
             value = null;
@@ -277,27 +256,111 @@ public abstract class TransactionSynchronizationManager {
     // Management of transaction synchronizations
     //-------------------------------------------------------------------------
 
+    public static void bindSynchronousTransactionState(@NonNull Object key, @NonNull SynchronousTransactionState state) {
+        bindResource(getOrCreateInternalState().getStates(), key, state);
+    }
+
+    public static SynchronousTransactionState unbindSynchronousTransactionState(Object key) throws IllegalStateException {
+        Object actualKey = TransactionSynchronizationUtils.unwrapResourceIfNecessary(key);
+        SynchronousTransactionState value = doUnbindResource(getInternalState().getStates(), actualKey);
+        if (value == null) {
+            throw new IllegalStateException(
+                    "No value for key [" + actualKey + "] bound to thread [" + Thread.currentThread().getName() + "]");
+        }
+        return value;
+    }
+
+    @Nullable
+    public static SynchronousTransactionState getSynchronousTransactionState(@NonNull Object key) {
+        Object actualKey = TransactionSynchronizationUtils.unwrapResourceIfNecessary(key);
+        SynchronousTransactionState value = doGetResource(getInternalState().getStates(), actualKey);
+        if (value != null && LOG.isTraceEnabled()) {
+            LOG.trace("Retrieved value [" + value + "] for key [" + actualKey + "] bound to thread [" + Thread.currentThread().getName() + "]");
+        }
+        return value;
+    }
+
+    @NonNull
+    public static SynchronousTransactionState getRequiredSynchronousTransactionState(@NonNull Object key) {
+        Object actualKey = TransactionSynchronizationUtils.unwrapResourceIfNecessary(key);
+        SynchronousTransactionState value = doGetResource(getInternalState().getStates(), actualKey);
+        if (value == null) {
+            throw new IllegalStateException("No value for key [" + actualKey + "] bound to thread [" + Thread.currentThread().getName() + "]");
+        }
+        if (LOG.isTraceEnabled()) {
+            LOG.trace("Retrieved value [" + value + "] for key [" + actualKey + "] bound to thread [" + Thread.currentThread().getName() + "]");
+        }
+        return value;
+    }
+
+    @NonNull
+    public static SynchronousTransactionState getSynchronousTransactionStateOrCreate(@NonNull Object key, Supplier<SynchronousTransactionState> creator) {
+        Object actualKey = TransactionSynchronizationUtils.unwrapResourceIfNecessary(key);
+        SynchronousTransactionState value = doGetResource(getOrCreateInternalState().getStates(), actualKey);
+        if (value != null && LOG.isTraceEnabled()) {
+            LOG.trace("Retrieved value [" + value + "] for key [" + actualKey + "] bound to thread [" + Thread.currentThread().getName() + "]");
+        }
+        if (value == null) {
+            value = creator.get();
+            bindSynchronousTransactionState(actualKey, value);
+        }
+        return value;
+    }
+
+    @Nullable
+    private static SynchronousTransactionState findDefaultState() {
+        Map<Object, SynchronousTransactionState> states = getInternalState().getStates();
+        if (states.isEmpty()) {
+            return null;
+        }
+        if (states.size() == 1) {
+            return states.values().iterator().next();
+        }
+        SynchronousTransactionState synchronousTransactionState = states.get(DEFAULT_STATE_KEY);
+        if (synchronousTransactionState != null) {
+            return synchronousTransactionState;
+        }
+        throw new IllegalStateException("Multiple synchronous transaction states found!");
+    }
+
+    @NonNull
+    private static SynchronousTransactionState getOrEmptyDefaultState() {
+        SynchronousTransactionState synchronousTransactionState = findDefaultState();
+        return synchronousTransactionState == null ? new DefaultSynchronousTransactionState() : synchronousTransactionState;
+    }
+
+    @NonNull
+    private static SynchronousTransactionState getRequiredDefaultState() {
+        SynchronousTransactionState synchronousTransactionState = findDefaultState();
+        if (synchronousTransactionState == null) {
+            throw new IllegalStateException("Cannot find default synchronous transaction state!");
+        }
+        return synchronousTransactionState;
+    }
+
     /**
      * Return if transaction synchronization is active for the current thread.
      * Can be called before register to avoid unnecessary instance creation.
-     * @see #registerSynchronization
+     *
      * @return True if a synchronization is active
+     * @see #registerSynchronization
+     * @deprecated use {@link #getSynchronousTransactionState(Object)}
      */
+    @Deprecated
     public static boolean isSynchronizationActive() {
-        return (SYNCHRONIZATIONS.get() != null);
+        return getOrEmptyDefaultState().isSynchronizationActive();
     }
 
     /**
      * Activate transaction synchronization for the current thread.
      * Called by a transaction manager on transaction begin.
+     *
      * @throws IllegalStateException if synchronization is already active
+     * @deprecated use {@link #getSynchronousTransactionState(Object)}
      */
+    @Deprecated
     public static void initSynchronization() throws IllegalStateException {
-        if (isSynchronizationActive()) {
-            throw new IllegalStateException("Cannot activate transaction synchronization - already active");
-        }
-        LOG.trace("Initializing transaction synchronization");
-        SYNCHRONIZATIONS.set(new LinkedHashSet<>());
+        getRequiredDefaultState().initSynchronization();
     }
 
     /**
@@ -306,57 +369,42 @@ public abstract class TransactionSynchronizationManager {
      * <p>Note that synchronizations can implement the
      * {@link io.micronaut.core.order.Ordered} interface.
      * They will be executed in an order according to their order value (if any).
+     *
      * @param synchronization the synchronization object to register
      * @throws IllegalStateException if transaction synchronization is not active
      * @see io.micronaut.core.order.Ordered
+     * @deprecated use {@link #getSynchronousTransactionState(Object)}
      */
+    @Deprecated
     public static void registerSynchronization(TransactionSynchronization synchronization)
             throws IllegalStateException {
-
-        Objects.requireNonNull(synchronization, "TransactionSynchronization must not be null");
-        Set<TransactionSynchronization> synchs = SYNCHRONIZATIONS.get();
-        if (synchs == null) {
-            throw new IllegalStateException("Transaction synchronization is not active");
-        }
-        synchs.add(synchronization);
+        getRequiredDefaultState().registerSynchronization(synchronization);
     }
 
     /**
      * Return an unmodifiable snapshot list of all registered synchronizations
      * for the current thread.
+     *
      * @return unmodifiable List of TransactionSynchronization instances
      * @throws IllegalStateException if synchronization is not active
      * @see TransactionSynchronization
+     * @deprecated use {@link #getSynchronousTransactionState(Object)}
      */
+    @Deprecated
     public static List<TransactionSynchronization> getSynchronizations() throws IllegalStateException {
-        Set<TransactionSynchronization> synchs = SYNCHRONIZATIONS.get();
-        if (synchs == null) {
-            throw new IllegalStateException("Transaction synchronization is not active");
-        }
-        // Return unmodifiable snapshot, to avoid ConcurrentModificationExceptions
-        // while iterating and invoking synchronization callbacks that in turn
-        // might register further synchronizations.
-        if (synchs.isEmpty()) {
-            return Collections.emptyList();
-        } else {
-            // Sort lazily here, not in registerSynchronization.
-            List<TransactionSynchronization> sortedSynchs = new ArrayList<>(synchs);
-            OrderUtil.sort(sortedSynchs);
-            return Collections.unmodifiableList(sortedSynchs);
-        }
+        return getOrEmptyDefaultState().getSynchronizations();
     }
 
     /**
      * Deactivate transaction synchronization for the current thread.
      * Called by the transaction manager on transaction cleanup.
+     *
      * @throws IllegalStateException if synchronization is not active
+     * @deprecated use {@link #getSynchronousTransactionState(Object)}
      */
+    @Deprecated
     public static void clearSynchronization() throws IllegalStateException {
-        if (!isSynchronizationActive()) {
-            throw new IllegalStateException("Cannot deactivate transaction synchronization - not active");
-        }
-        LOG.trace("Clearing transaction synchronization");
-        SYNCHRONIZATIONS.remove();
+        getRequiredDefaultState().clearSynchronization();
     }
 
     //-------------------------------------------------------------------------
@@ -366,34 +414,43 @@ public abstract class TransactionSynchronizationManager {
     /**
      * Expose the name of the current transaction, if any.
      * Called by the transaction manager on transaction begin and on cleanup.
+     *
      * @param name the name of the transaction, or {@code null} to reset it
      * @see io.micronaut.transaction.TransactionDefinition#getName()
+     * @deprecated use {@link #getSynchronousTransactionState(Object)}
      */
+    @Deprecated
     public static void setCurrentTransactionName(@Nullable String name) {
-        CURRENT_TRANSACTION_NAME.set(name);
+        getRequiredDefaultState().setTransactionName(name);
     }
 
     /**
      * Return the name of the current transaction, or {@code null} if none set.
      * To be called by resource management code for optimizations per use case,
      * for example to optimize fetch strategies for specific named transactions.
-     * @see io.micronaut.transaction.TransactionDefinition#getName()
+     *
      * @return The current transaction name
+     * @see io.micronaut.transaction.TransactionDefinition#getName()
+     * @deprecated use {@link #getSynchronousTransactionState(Object)}
      */
+    @Deprecated
     @Nullable
     public static String getCurrentTransactionName() {
-        return CURRENT_TRANSACTION_NAME.get();
+        return getOrEmptyDefaultState().getTransactionName();
     }
 
     /**
      * Expose a read-only flag for the current transaction.
      * Called by the transaction manager on transaction begin and on cleanup.
+     *
      * @param readOnly {@code true} to mark the current transaction
-     * as read-only; {@code false} to reset such a read-only marker
+     *                 as read-only; {@code false} to reset such a read-only marker
      * @see io.micronaut.transaction.TransactionDefinition#isReadOnly()
+     * @deprecated use {@link #getSynchronousTransactionState(Object)}
      */
+    @Deprecated
     public static void setCurrentTransactionReadOnly(boolean readOnly) {
-        CURRENT_TRANSACTION_READ_ONLY.set(readOnly ? Boolean.TRUE : null);
+        getRequiredDefaultState().setTransactionReadOnly(readOnly);
     }
 
     /**
@@ -405,19 +462,23 @@ public abstract class TransactionSynchronizationManager {
      * to suppress change detection on commit. The present method is meant
      * to be used for earlier read-only checks, for example to set the
      * flush mode of a Hibernate Session to "FlushMode.NEVER" upfront.
+     *
+     * @return Whether the transaction is read only
      * @see io.micronaut.transaction.TransactionDefinition#isReadOnly()
      * @see TransactionSynchronization#beforeCommit(boolean)
-     * @return Whether the transaction is read only
+     * @deprecated use {@link #getSynchronousTransactionState(Object)}
      */
+    @Deprecated
     public static boolean isCurrentTransactionReadOnly() {
-        return (CURRENT_TRANSACTION_READ_ONLY.get() != null);
+        return getOrEmptyDefaultState().isTransactionReadOnly();
     }
 
     /**
      * Expose an isolation level for the current transaction.
      * Called by the transaction manager on transaction begin and on cleanup.
+     *
      * @param isolationLevel the isolation level to expose, according to the
-     * JDBC Connection constants (equivalent to the corresponding
+     *                       JDBC Connection constants (equivalent to the corresponding
      *                       TransactionDefinition constants), or {@code null} to reset it
      * @see java.sql.Connection#TRANSACTION_READ_UNCOMMITTED
      * @see java.sql.Connection#TRANSACTION_READ_COMMITTED
@@ -428,15 +489,18 @@ public abstract class TransactionSynchronizationManager {
      * @see io.micronaut.transaction.TransactionDefinition.Isolation#REPEATABLE_READ
      * @see io.micronaut.transaction.TransactionDefinition.Isolation#SERIALIZABLE
      * @see io.micronaut.transaction.TransactionDefinition#getIsolationLevel()
+     * @deprecated use {@link #getSynchronousTransactionState(Object)}
      */
+    @Deprecated
     public static void setCurrentTransactionIsolationLevel(@Nullable TransactionDefinition.Isolation isolationLevel) {
-        CURRENT_TRANSACTION_ISOLATION_LEVEL.set(isolationLevel);
+        getRequiredDefaultState().setTransactionIsolationLevel(isolationLevel);
     }
 
     /**
      * Return the isolation level for the current transaction, if any.
      * To be called by resource management code when preparing a newly
      * created resource (for example, a JDBC Connection).
+     *
      * @return the currently exposed isolation level, according to the
      * JDBC Connection constants (equivalent to the corresponding
      * TransactionDefinition constants), or {@code null} if none
@@ -449,20 +513,25 @@ public abstract class TransactionSynchronizationManager {
      * @see io.micronaut.transaction.TransactionDefinition.Isolation#REPEATABLE_READ
      * @see io.micronaut.transaction.TransactionDefinition.Isolation#SERIALIZABLE
      * @see io.micronaut.transaction.TransactionDefinition#getIsolationLevel()
+     * @deprecated use {@link #getSynchronousTransactionState(Object)}
      */
     @Nullable
+    @Deprecated
     public static TransactionDefinition.Isolation getCurrentTransactionIsolationLevel() {
-        return CURRENT_TRANSACTION_ISOLATION_LEVEL.get();
+        return getOrEmptyDefaultState().getTransactionIsolationLevel();
     }
 
     /**
      * Expose whether there currently is an actual transaction active.
      * Called by the transaction manager on transaction begin and on cleanup.
+     *
      * @param active {@code true} to mark the current thread as being associated
-     * with an actual transaction; {@code false} to reset that marker
+     *               with an actual transaction; {@code false} to reset that marker
+     * @deprecated use {@link #getSynchronousTransactionState(Object)}
      */
+    @Deprecated
     public static void setActualTransactionActive(boolean active) {
-        ACTUAL_TRANSACTION_ACTIVE.set(active ? Boolean.TRUE : null);
+        getRequiredDefaultState().setActualTransactionActive(active);
     }
 
     /**
@@ -474,93 +543,145 @@ public abstract class TransactionSynchronizationManager {
      * resource transaction; also on PROPAGATION_SUPPORTS) and an actual
      * transaction being active (with backing resource transaction;
      * on PROPAGATION_REQUIRED, PROPAGATION_REQUIRES_NEW, etc).
-     * @see #isSynchronizationActive()
+     *
      * @return Whether a transaction is active
+     * @see #isSynchronizationActive()
+     * @deprecated use {@link #getSynchronousTransactionState(Object)}
      */
+    @Deprecated
     public static boolean isActualTransactionActive() {
-        return (ACTUAL_TRANSACTION_ACTIVE.get() != null);
+        return getOrEmptyDefaultState().isActualTransactionActive();
     }
 
     /**
      * Clear the entire transaction synchronization state for the current thread:
      * registered synchronizations as well as the various transaction characteristics.
+     *
      * @see #clearSynchronization()
      * @see #setCurrentTransactionName
      * @see #setCurrentTransactionReadOnly
      * @see #setCurrentTransactionIsolationLevel
      * @see #setActualTransactionActive
+     * @deprecated use {@link #getSynchronousTransactionState(Object)}
      */
+    @Deprecated
     public static void clear() {
-        SYNCHRONIZATIONS.remove();
-        CURRENT_TRANSACTION_NAME.remove();
-        CURRENT_TRANSACTION_READ_ONLY.remove();
-        CURRENT_TRANSACTION_ISOLATION_LEVEL.remove();
-        ACTUAL_TRANSACTION_ACTIVE.remove();
+        getRequiredDefaultState().clear();
     }
 
     /**
-     * Copy existing state.
+     * Get the existing state.
      *
      * @return The state
      * @since 3.3
      */
     @Internal
-    public static State copyState() {
-        return new CopyState(RESOURCES.get(),
-                SYNCHRONIZATIONS.get(),
-                CURRENT_TRANSACTION_NAME.get(),
-                CURRENT_TRANSACTION_READ_ONLY.get(),
-                CURRENT_TRANSACTION_ISOLATION_LEVEL.get(),
-                ACTUAL_TRANSACTION_ACTIVE.get());
+    @Nullable
+    public static TransactionSynchronizationState getState() {
+        return STATE.get();
     }
 
     /**
-     * Restore the state.
+     * Get existing or create new associated state.
+     *
+     * @return The state
+     * @since 3.3
+     */
+    @Internal
+    @NonNull
+    public static TransactionSynchronizationState getOrCreateState() {
+        return getOrCreateInternalState();
+    }
+
+    /**
+     * Restore the state from the thread local.
+     *
      * @param state The state
      * @since 3.3
      */
     @Internal
-    public static void restoreState(State state) {
-        if (state instanceof CopyState) {
-            CopyState copyState = (CopyState) state;
-            RESOURCES.set(copyState.resources == null ? null : new HashMap<>(copyState.resources));
-            SYNCHRONIZATIONS.set(copyState.synchronizations == null ? null : new LinkedHashSet<>(copyState.synchronizations));
-            CURRENT_TRANSACTION_NAME.set(copyState.currentTransactionName);
-            CURRENT_TRANSACTION_READ_ONLY.set(copyState.currentTransactionReadOnlyStatus);
-            CURRENT_TRANSACTION_ISOLATION_LEVEL.set(copyState.currentTransactionIsolationLevel);
-            ACTUAL_TRANSACTION_ACTIVE.set(copyState.actualTransactionActive);
+    public static void setState(@Nullable TransactionSynchronizationState state) {
+        if (state == null) {
+            STATE.remove();
+            return;
+        }
+        if (state instanceof MutableTransactionSynchronizationState) {
+            MutableTransactionSynchronizationState mutableState = (MutableTransactionSynchronizationState) state;
+            STATE.set(mutableState);
         } else {
             throw new IllegalStateException("Unknown state: " + state);
         }
     }
 
     /**
+     * Execute provided supplier with setup state in the thread-local. Afterwards update the state with the modifications done to it.
+     *
+     * @param state The state
+     * @param supplier The supplier to be executed
+     * @param <T> The supplied type
+     * @return The suppler return value
+     * @author Denis Stepanov
+     * @since 3.4.0
+     */
+    @Internal
+    public static <T> T withState(@Nullable TransactionSynchronizationState state, Supplier<T> supplier) {
+        if (state == null) {
+            return supplier.get();
+        }
+        TransactionSynchronizationState previousState = getState();
+        try {
+            setState(state);
+            return supplier.get();
+        } finally {
+            setState(previousState);
+        }
+    }
+
+    /**
+     * Decorate the supplier with possible propagated state in thread-local.
+     *
+     * It's used to propagated TX state down to the async functions.
+     *
+     * @param supplier The supplier to be decorated
+     * @param <T> The supplied type
+     * @return The decorated supplier
+     * @author Denis Stepanov
+     * @since 3.4.0
+     */
+    @Internal
+    public static <T> Supplier<T> decorateToPropagateState(Supplier<T> supplier) {
+        TransactionSynchronizationState state = STATE.get();
+        if (state == null) {
+            return supplier;
+        }
+        return () -> withState(state, supplier);
+    }
+
+    /**
      * The synchronization state.
      */
     @Internal
-    public interface State {
+    public interface TransactionSynchronizationState {
     }
 
-    private static final class CopyState implements State {
-        private final Map<Object, Object> resources;
-        private final Set<TransactionSynchronization> synchronizations;
-        private final String currentTransactionName;
-        private final Boolean currentTransactionReadOnlyStatus;
-        private final TransactionDefinition.Isolation currentTransactionIsolationLevel;
-        private final Boolean actualTransactionActive;
+    /**
+     * The copy-state of the thread-local values.
+     *
+     * @author Denis Stepanov
+     * @since 3.4.0
+     */
+    private static final class MutableTransactionSynchronizationState implements TransactionSynchronizationState {
+        private final Map<Object, Object> resources = new HashMap<>(2, 1);
+        private final Map<Object, SynchronousTransactionState> states = new HashMap<>(2, 1);
 
-        private CopyState(Map<Object, Object> resources,
-                          Set<TransactionSynchronization> synchronizations,
-                          String currentTransactionName,
-                          Boolean currentTransactionReadOnlyStatus,
-                          TransactionDefinition.Isolation currentTransactionIsolationLevel,
-                          Boolean actualTransactionActive) {
-            this.resources = resources == null ? null : new HashMap<>(resources);
-            this.synchronizations = synchronizations == null ? null : new LinkedHashSet<>(synchronizations);
-            this.currentTransactionName = currentTransactionName;
-            this.currentTransactionReadOnlyStatus = currentTransactionReadOnlyStatus;
-            this.currentTransactionIsolationLevel = currentTransactionIsolationLevel;
-            this.actualTransactionActive = actualTransactionActive;
+        @NonNull
+        public synchronized Map<Object, Object> getResources() {
+            return resources;
+        }
+
+        @NonNull
+        public synchronized Map<Object, SynchronousTransactionState> getStates() {
+            return states;
         }
     }
 
