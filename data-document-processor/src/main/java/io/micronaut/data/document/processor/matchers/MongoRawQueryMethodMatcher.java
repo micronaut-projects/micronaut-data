@@ -299,10 +299,11 @@ public class MongoRawQueryMethodMatcher implements MethodMatcher {
     private String processCustomQuery(MethodMatchContext matchContext, String queryString, List<ParameterElement> parameters, ParameterElement entityParam, SourcePersistentEntity persistentEntity, List<QueryParameterBinding> parameterBindings) {
         java.util.regex.Matcher matcher = VARIABLE_PATTERN.matcher(queryString);
         List<String> queryParts = new ArrayList<>();
-        boolean requiresEnd = true;
+        int lastOffset = 0;
         while (matcher.find()) {
-            requiresEnd = true;
-            String start = queryString.substring(0, matcher.start(3) - 1);
+            int matcherStart = matcher.start(3);
+            String start = queryString.substring(lastOffset, matcherStart - 1);
+            lastOffset = matcher.end(3);
             if (!start.isEmpty()) {
                 queryParts.add(start);
             }
@@ -336,19 +337,12 @@ public class MongoRawQueryMethodMatcher implements MethodMatcher {
 
             int ind = parameterBindings.size() - 1;
             queryParts.add("{$mn_qp:" + ind + "}");
-            String end = queryString.substring(matcher.end(3));
-            if (!end.isEmpty()) {
-                requiresEnd = false;
-                queryParts.add(end);
-            }
         }
-        if (queryParts.isEmpty()) {
-            queryParts.add(queryString);
-        } else if (requiresEnd) {
-            queryParts.add("");
+        String end = queryString.substring(lastOffset);
+        if (!end.isEmpty()) {
+            queryParts.add(end);
         }
-        String query = String.join("", queryParts);
-        return query;
+        return String.join("", queryParts);
     }
 
     private SourceParameterExpressionImpl bindingParameter(MethodMatchContext matchContext, ParameterElement element) {

@@ -194,6 +194,38 @@ interface MyInterface2 extends GenericRepository<Book, String> {
             collation == '{ locale: \'en_US\', numericOrdering: true}'
     }
 
+    void "test find query method3"() {
+        given:
+            def repository = buildRepository('test.MyInterface2', """
+import io.micronaut.data.mongodb.annotation.*;
+import io.micronaut.data.document.tck.entities.Book;
+
+@MongoRepository
+@MongoSort(\"{ title : 1 }\")
+@MongoProjection(\"{ title: 1, totalPages: 1}\")
+@MongoCollation(\"{ locale: 'en_US', numericOrdering: true}\")
+interface MyInterface2 extends GenericRepository<Book, String> {
+
+    @MongoFindQuery(\"{title:{\$eq: :t}, totalPages: {\$eq: :p}}\")
+    List<Book> listBooks(String t, int p);
+
+}
+"""
+            )
+
+            def method = repository.getRequiredMethod("listBooks", String, int)
+        when:
+            String filter = method.stringValue(Query).get()
+            String sort = method.stringValue(MongoAnnotations.SORT).get()
+            String project = method.stringValue(MongoAnnotations.PROJECTION).get()
+            String collation = method.stringValue(MongoAnnotations.COLLATION).get()
+        then:
+            filter == '{title:{$eq: {$mn_qp:0}}, totalPages: {$eq: {$mn_qp:1}}}'
+            sort == '{ title : 1 }'
+            project == '{ title: 1, totalPages: 1}'
+            collation == '{ locale: \'en_US\', numericOrdering: true}'
+    }
+
     void "test delete query method"() {
         given:
             def repository = buildRepository('test.MyInterface2', """

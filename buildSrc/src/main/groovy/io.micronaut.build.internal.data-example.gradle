@@ -26,6 +26,10 @@ tasks.named("test") {
     testExamples.dependsOn(it)
 }
 
+tasks.withType(JavaCompile).configureEach {
+    options.fork = true
+}
+
 project.afterEvaluate {
     nativeCompile.enabled = false
     testNativeImage.enabled = false
