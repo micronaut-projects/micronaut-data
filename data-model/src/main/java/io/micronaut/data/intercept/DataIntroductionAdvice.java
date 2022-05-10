@@ -146,7 +146,7 @@ public final class DataIntroductionAdvice implements MethodInterceptor<Object, O
                                           RepositoryMethodKey key,
                                           InterceptedMethod interceptedMethod) {
         CompletionStage<Object> completionStage;
-        TransactionSynchronizationManager.State state = Objects.requireNonNull(coroutineTxHelper)
+        TransactionSynchronizationManager.TransactionSynchronizationState state = Objects.requireNonNull(coroutineTxHelper)
                 .setupTxState((KotlinInterceptedMethod) interceptedMethod);
         if (state == null) {
             completionStage = (CompletionStage<Object>) dataInterceptor.intercept(key, context);

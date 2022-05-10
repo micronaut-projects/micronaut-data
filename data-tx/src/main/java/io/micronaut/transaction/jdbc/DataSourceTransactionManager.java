@@ -29,7 +29,6 @@ import io.micronaut.transaction.support.ResourceTransactionManager;
 import io.micronaut.transaction.support.SynchronousTransactionState;
 import io.micronaut.transaction.support.TransactionSynchronizationManager;
 import io.micronaut.transaction.support.TransactionSynchronizationUtils;
-import org.jetbrains.annotations.NotNull;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
@@ -110,9 +109,9 @@ public class DataSourceTransactionManager extends AbstractSynchronousTransaction
         this.dataSource = dataSource;
     }
 
-    @NotNull
+    @NonNull
     @Override
-    protected Object getStateKey() {
+    protected Object getTransactionStateKey() {
         return getDataSource();
     }
 

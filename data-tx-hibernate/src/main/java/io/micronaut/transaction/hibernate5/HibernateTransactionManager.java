@@ -124,7 +124,7 @@ public class HibernateTransactionManager extends AbstractSynchronousTransactionM
     }
 
     @Override
-    protected Object getStateKey() {
+    protected Object getTransactionStateKey() {
         return getSessionFactory();
     }
 

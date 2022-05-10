@@ -57,7 +57,7 @@ public final class MongoSynchronousTransactionManager extends AbstractSynchronou
     }
 
     @Override
-    protected Object getStateKey() {
+    protected Object getTransactionStateKey() {
         return mongoClient;
     }
 

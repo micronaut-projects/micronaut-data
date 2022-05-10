@@ -38,13 +38,13 @@ public final class CoroutineTxHelper {
      * @param kotlinInterceptedMethod The intercepted method
      * @return The tx state
      */
-    public TransactionSynchronizationManager.State setupTxState(KotlinInterceptedMethod kotlinInterceptedMethod) {
+    public TransactionSynchronizationManager.TransactionSynchronizationState setupTxState(KotlinInterceptedMethod kotlinInterceptedMethod) {
         CoroutineContext existingContext = kotlinInterceptedMethod.getCoroutineContext();
         TxSynchronousContext txSynchronousContext = existingContext.get(TxSynchronousContext.Key);
         if (txSynchronousContext != null) {
             return txSynchronousContext.getState();
         }
-        TransactionSynchronizationManager.State txState = TransactionSynchronizationManager.getOrCreateState();
+        TransactionSynchronizationManager.TransactionSynchronizationState txState = TransactionSynchronizationManager.getOrCreateState();
         kotlinInterceptedMethod.updateCoroutineContext(existingContext.plus(new TxSynchronousContext(txState)));
         return txState;
     }

@@ -86,7 +86,7 @@ public abstract class AbstractSynchronousTransactionManager<T> extends AbstractS
      * @return The key
      */
     @NotNull
-    protected Object getStateKey() {
+    protected Object getTransactionStateKey() {
         return TransactionSynchronizationManager.DEFAULT_STATE_KEY;
     }
 
@@ -97,7 +97,7 @@ public abstract class AbstractSynchronousTransactionManager<T> extends AbstractS
      */
     @NonNull
     protected SynchronousTransactionState getState() {
-        SynchronousTransactionState synchronousTransactionState = TransactionSynchronizationManager.getSynchronousTransactionState(getStateKey());
+        SynchronousTransactionState synchronousTransactionState = TransactionSynchronizationManager.getSynchronousTransactionState(getTransactionStateKey());
         if (synchronousTransactionState == null) {
             throw new IllegalStateException("Transaction state is not initialized!");
         }
@@ -111,7 +111,7 @@ public abstract class AbstractSynchronousTransactionManager<T> extends AbstractS
      */
     @NonNull
     protected SynchronousTransactionState findOrCreateState() {
-        return TransactionSynchronizationManager.getSynchronousTransactionStateOrCreate(getStateKey(), DefaultSynchronousTransactionState::new);
+        return TransactionSynchronizationManager.getSynchronousTransactionStateOrCreate(getTransactionStateKey(), DefaultSynchronousTransactionState::new);
     }
 
     /**
@@ -120,7 +120,7 @@ public abstract class AbstractSynchronousTransactionManager<T> extends AbstractS
      */
     @Override
     protected void doDestroyState(SynchronousTransactionState state) {
-        TransactionSynchronizationManager.unbindSynchronousTransactionState(getStateKey());
+        TransactionSynchronizationManager.unbindSynchronousTransactionState(getTransactionStateKey());
     }
 
     @Override

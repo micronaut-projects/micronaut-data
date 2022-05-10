@@ -51,7 +51,7 @@ public class DefaultFindPageReactiveInterceptor extends AbstractReactiveIntercep
             PreparedQuery<?, ?> preparedQuery = prepareQuery(methodKey, context);
             PreparedQuery<?, Number> countQuery = prepareCountQuery(methodKey, context);
 
-            TransactionSynchronizationManager.State state = TransactionSynchronizationManager.getState();
+            TransactionSynchronizationManager.TransactionSynchronizationState state = TransactionSynchronizationManager.getState();
 
             publisher = Flux.from(reactiveOperations.findOne(countQuery))
                     .flatMap(total -> TransactionSynchronizationManager.withState(state, () -> {

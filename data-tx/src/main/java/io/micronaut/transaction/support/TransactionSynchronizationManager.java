@@ -72,7 +72,7 @@ public abstract class TransactionSynchronizationManager {
 
     private static final Logger LOG = LoggerFactory.getLogger(TransactionSynchronizationManager.class);
 
-    private static final ThreadLocal<MutableState> STATE = new ThreadLocal<MutableState>() {
+    private static final ThreadLocal<MutableTransactionSynchronizationState> STATE = new ThreadLocal<MutableTransactionSynchronizationState>() {
         @Override
         public String toString() {
             return "The state";
@@ -80,27 +80,27 @@ public abstract class TransactionSynchronizationManager {
     };
 
     @NonNull
-    private static MutableState getOrCreateInternalState() {
-        MutableState mutableState = STATE.get();
+    private static MutableTransactionSynchronizationState getOrCreateInternalState() {
+        MutableTransactionSynchronizationState mutableState = STATE.get();
         if (mutableState == null) {
-            mutableState = new MutableState();
+            mutableState = new MutableTransactionSynchronizationState();
             STATE.set(mutableState);
         }
         return mutableState;
     }
 
     @NonNull
-    private static MutableState getInternalState() {
-        MutableState mutableState = STATE.get();
+    private static MutableTransactionSynchronizationState getInternalState() {
+        MutableTransactionSynchronizationState mutableState = STATE.get();
         if (mutableState == null) {
-            mutableState = new MutableState();
+            mutableState = new MutableTransactionSynchronizationState();
         }
         return mutableState;
     }
 
     private static void removeStateIfEmpty() {
         // Remove entire ThreadLocal if empty...
-        MutableState mutableState = STATE.get();
+        MutableTransactionSynchronizationState mutableState = STATE.get();
         if (mutableState != null && mutableState.states.isEmpty() && mutableState.resources.isEmpty()) {
             STATE.remove();
         }
@@ -577,7 +577,7 @@ public abstract class TransactionSynchronizationManager {
      */
     @Internal
     @Nullable
-    public static State getState() {
+    public static TransactionSynchronizationState getState() {
         return STATE.get();
     }
 
@@ -589,7 +589,7 @@ public abstract class TransactionSynchronizationManager {
      */
     @Internal
     @NonNull
-    public static State getOrCreateState() {
+    public static TransactionSynchronizationState getOrCreateState() {
         return getOrCreateInternalState();
     }
 
@@ -600,13 +600,13 @@ public abstract class TransactionSynchronizationManager {
      * @since 3.3
      */
     @Internal
-    public static void setState(@Nullable State state) {
+    public static void setState(@Nullable TransactionSynchronizationState state) {
         if (state == null) {
             STATE.remove();
             return;
         }
-        if (state instanceof MutableState) {
-            MutableState mutableState = (MutableState) state;
+        if (state instanceof MutableTransactionSynchronizationState) {
+            MutableTransactionSynchronizationState mutableState = (MutableTransactionSynchronizationState) state;
             STATE.set(mutableState);
         } else {
             throw new IllegalStateException("Unknown state: " + state);
@@ -624,11 +624,11 @@ public abstract class TransactionSynchronizationManager {
      * @since 3.4.0
      */
     @Internal
-    public static <T> T withState(@Nullable State state, Supplier<T> supplier) {
+    public static <T> T withState(@Nullable TransactionSynchronizationState state, Supplier<T> supplier) {
         if (state == null) {
             return supplier.get();
         }
-        State previousState = getState();
+        TransactionSynchronizationState previousState = getState();
         try {
             setState(state);
             return supplier.get();
@@ -650,7 +650,7 @@ public abstract class TransactionSynchronizationManager {
      */
     @Internal
     public static <T> Supplier<T> decorateToPropagateState(Supplier<T> supplier) {
-        State state = STATE.get();
+        TransactionSynchronizationState state = STATE.get();
         if (state == null) {
             return supplier;
         }
@@ -661,7 +661,7 @@ public abstract class TransactionSynchronizationManager {
      * The synchronization state.
      */
     @Internal
-    public interface State {
+    public interface TransactionSynchronizationState {
     }
 
     /**
@@ -670,9 +670,9 @@ public abstract class TransactionSynchronizationManager {
      * @author Denis Stepanov
      * @since 3.4.0
      */
-    private static final class MutableState implements State {
-        private final Map<Object, Object> resources = new HashMap<>();
-        private final Map<Object, SynchronousTransactionState> states = new HashMap<>();
+    private static final class MutableTransactionSynchronizationState implements TransactionSynchronizationState {
+        private final Map<Object, Object> resources = new HashMap<>(2, 1);
+        private final Map<Object, SynchronousTransactionState> states = new HashMap<>(2, 1);
 
         @NonNull
         public synchronized Map<Object, Object> getResources() {

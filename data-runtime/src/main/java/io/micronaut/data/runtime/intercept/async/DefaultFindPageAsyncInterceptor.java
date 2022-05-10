@@ -52,7 +52,7 @@ public class DefaultFindPageAsyncInterceptor<T> extends AbstractAsyncInterceptor
         if (context.hasAnnotation(Query.class)) {
             PreparedQuery<?, ?> preparedQuery = prepareQuery(methodKey, context);
             PreparedQuery<?, Number> countQuery = prepareCountQuery(methodKey, context);
-            TransactionSynchronizationManager.State state = TransactionSynchronizationManager.getState();
+            TransactionSynchronizationManager.TransactionSynchronizationState state = TransactionSynchronizationManager.getState();
             return asyncDatastoreOperations.findOne(countQuery)
                     .thenCompose(total -> TransactionSynchronizationManager.withState(state, () -> asyncDatastoreOperations.findAll(preparedQuery)
                             .thenApply(objects -> {

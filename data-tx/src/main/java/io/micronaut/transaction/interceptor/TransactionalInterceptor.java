@@ -192,7 +192,7 @@ public class TransactionalInterceptor implements MethodInterceptor<Object, Objec
                                             TransactionInvocation<?> transactionInvocation,
                                             TransactionAttribute definition) {
         KotlinInterceptedMethod kotlinInterceptedMethod = (KotlinInterceptedMethod) interceptedMethod;
-        TransactionSynchronizationManager.State state = Objects.requireNonNull(coroutineTxHelper).setupTxState(kotlinInterceptedMethod);
+        TransactionSynchronizationManager.TransactionSynchronizationState state = Objects.requireNonNull(coroutineTxHelper).setupTxState(kotlinInterceptedMethod);
 
          return TransactionSynchronizationManager.withState(state, () -> {
             final SynchronousTransactionManager<?> transactionManager = transactionInvocation.transactionManager;
