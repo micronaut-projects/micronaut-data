@@ -30,6 +30,7 @@ configurations {
 }
 
 tasks.withType(JavaCompile).configureEach {
+    options.fork = true
     options.encoding = "UTF-8"
     options.compilerArgs.addAll([
             '-parameters',
