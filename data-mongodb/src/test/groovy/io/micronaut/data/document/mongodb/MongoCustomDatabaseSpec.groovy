@@ -39,6 +39,9 @@ class MongoCustomDatabaseSpec extends Specification implements MongoTestProperty
         when:
             balloonRepository.save(b)
         then:
+            balloonRepository.findAll().size() == 1
+            balloonRepository.findByName("red").id
+        then:
             mongoClient.getDatabase("party").listCollectionNames().into(new ArrayList<>()) == ["balloons"]
     }
 
@@ -46,6 +49,9 @@ class MongoCustomDatabaseSpec extends Specification implements MongoTestProperty
 
 @MongoRepository(databaseName = "party")
 interface BalloonRepository extends CrudRepository<Balloon, String> {
+
+    Balloon findByName(String name);
+
 }
 
 @MappedEntity("balloons")

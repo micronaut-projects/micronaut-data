@@ -47,7 +47,6 @@ import io.micronaut.data.runtime.query.DefaultPreparedQueryResolver;
 import io.micronaut.data.runtime.query.DefaultStoredQueryResolver;
 import io.micronaut.data.runtime.query.PreparedQueryResolver;
 import io.micronaut.data.runtime.query.StoredQueryResolver;
-import io.micronaut.data.runtime.query.internal.DefaultStoredQuery;
 import io.micronaut.http.codec.MediaTypeCodec;
 import io.micronaut.inject.BeanDefinition;
 import io.micronaut.inject.ExecutableMethod;
@@ -170,7 +169,7 @@ abstract class AbstractMongoRepositoryOperations<Dtb, Cnt, PS> extends AbstractR
     public <E, R> StoredQuery<E, R> resolveQuery(MethodInvocationContext<?, ?> context, Class<E> entityClass, Class<R> resultType) {
         StoredQuery<E, R> storedQuery = defaultStoredQueryResolver.resolveQuery(context, entityClass, resultType);
         RuntimePersistentEntity<E> persistentEntity = runtimeEntityRegistry.getEntity(storedQuery.getRootEntity());
-        Class<?> repositoryType = ((DefaultStoredQuery) storedQuery).getMethod().getDeclaringType();
+        Class<?> repositoryType = context.getTarget().getClass();
         Dtb database = getDatabase(persistentEntity, repositoryType);
         CodecRegistry codecRegistry = getCodecRegistry(database);
         return new DefaultMongoStoredQuery<>(storedQuery, codecRegistry, attributeConverterRegistry,
@@ -180,7 +179,7 @@ abstract class AbstractMongoRepositoryOperations<Dtb, Cnt, PS> extends AbstractR
     @Override
     public <E, R> StoredQuery<E, R> resolveCountQuery(MethodInvocationContext<?, ?> context, Class<E> entityClass, Class<R> resultType) {
         StoredQuery<E, R> storedQuery = defaultStoredQueryResolver.resolveCountQuery(context, entityClass, resultType);
-        Class<?> repositoryType = ((DefaultStoredQuery) storedQuery).getMethod().getDeclaringType();
+        Class<?> repositoryType = context.getTarget().getClass();
         RuntimePersistentEntity<E> persistentEntity = runtimeEntityRegistry.getEntity(storedQuery.getRootEntity());
         Dtb database = getDatabase(persistentEntity, repositoryType);
         CodecRegistry codecRegistry = getCodecRegistry(database);
