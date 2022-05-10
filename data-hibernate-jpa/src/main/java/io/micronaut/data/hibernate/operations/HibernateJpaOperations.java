@@ -234,8 +234,7 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
                 }
                 bindParameters(q, preparedQuery, query);
                 bindQueryHints(q, preparedQuery, currentSession);
-
-                Tuple tuple = first(q.list().iterator());
+                Tuple tuple = first(q);
                 if (tuple != null) {
                     return (new BeanIntrospectionMapper<Tuple, R>() {
                         @Override
@@ -264,13 +263,14 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
                 }
                 bindParameters(q, preparedQuery, query);
                 bindQueryHints(q, preparedQuery, currentSession);
-
-                return first(q.list().iterator());
+                return first(q);
             }
         });
     }
 
-    private <T> T first(Iterator<T> iterator) {
+    private <T> T first(Query<T> q) {
+        q.setMaxResults(1);
+        Iterator<T> iterator = q.list().iterator();
         if (iterator.hasNext()) {
             return iterator.next();
         }
@@ -351,7 +351,6 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
     @NonNull
     @Override
     public <T> Iterable<T> findAll(@NonNull PagedQuery<T> query) {
-        //noinspection ConstantConditions
         return transactionOperations.executeRead(status -> {
             Session session = getCurrentSession();
             CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
@@ -363,7 +362,6 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
 
     @Override
     public <T> long count(PagedQuery<T> pagedQuery) {
-        //noinspection ConstantConditions
         return transactionOperations.executeRead(status -> {
             Session session = getCurrentSession();
             CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
@@ -385,7 +383,6 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
     @NonNull
     @Override
     public <T, R> Iterable<R> findAll(@NonNull PreparedQuery<T, R> preparedQuery) {
-        //noinspection ConstantConditions
         return transactionOperations.executeRead(status -> {
             Session entityManager = sessionFactory.getCurrentSession();
             String queryStr = preparedQuery.getQuery();
