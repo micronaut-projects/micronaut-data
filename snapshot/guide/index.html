@@ -494,6 +494,19 @@ fun testAnnotationMetadata() {
 
 
 <div class="sect2">
+<h3 id="_micronaut_data_3_4">Micronaut Data 3.4</h3>
+<div class="ulist">
+<ul>
+<li>
+<p>Propagating synchronous transaction state in Kotlin&#8217;s coroutines</p>
+</li>
+<li>
+<p>R2DBC upgraded to <code>1.0.0.RELEASE</code></p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect2">
 <h3 id="_micronaut_data_3_3">Micronaut Data 3.3</h3>
 <div class="ulist">
 <ul>
@@ -4526,7 +4539,7 @@ For Kotlin the dependency should be in the <code>kapt</code> scope and for Groov
 <p>        <div class="listingblock multi-language-sample">
 <div class="title"></div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">runtime(<span class="hljs-string">"com.h2database:h2")</span></code></pre>
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">runtimeOnly(<span class="hljs-string">"com.h2database:h2")</span></code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -4546,7 +4559,7 @@ For Kotlin the dependency should be in the <code>kapt</code> scope and for Groov
 <p>        <div class="listingblock multi-language-sample">
 <div class="title"></div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">runtime(<span class="hljs-string">"io.micronaut.sql:micronaut-jdbc-hikari")</span></code></pre>
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">runtimeOnly(<span class="hljs-string">"io.micronaut.sql:micronaut-jdbc-hikari")</span></code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -8597,7 +8610,7 @@ For Kotlin the dependency should be in the <code>kapt</code> scope and for Groov
 <p>        <div class="listingblock multi-language-sample">
 <div class="title"></div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">runtime(<span class="hljs-string">"org.mongodb:mongodb-driver-sync")</span></code></pre>
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">runtimeOnly(<span class="hljs-string">"org.mongodb:mongodb-driver-sync")</span></code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -8617,7 +8630,7 @@ For Kotlin the dependency should be in the <code>kapt</code> scope and for Groov
 <p>        <div class="listingblock multi-language-sample">
 <div class="title"></div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">runtime(<span class="hljs-string">"org.mongodb:mongodb-driver-reactivestreams")</span></code></pre>
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">runtimeOnly(<span class="hljs-string">"org.mongodb:mongodb-driver-reactivestreams")</span></code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
