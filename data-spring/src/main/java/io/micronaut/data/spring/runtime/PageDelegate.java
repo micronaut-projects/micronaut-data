@@ -18,6 +18,7 @@ package io.micronaut.data.spring.runtime;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.util.CollectionUtils;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 
@@ -141,55 +142,12 @@ class PageDelegate<T> implements Page<T> {
     /**
      * A pageable delegate impl.
      */
-    private class PageableDelegate implements Pageable {
-
-        private final io.micronaut.data.model.Pageable pageable;
+    private class PageableDelegate extends PageRequest {
 
         PageableDelegate(io.micronaut.data.model.Pageable pageable) {
-            this.pageable = pageable;
+            super(pageable.getNumber(), pageable.getSize(), new SortDelegate(pageable.getSort()));
         }
 
-        @Override
-        public int getPageNumber() {
-            return pageable.getNumber();
-        }
-
-        @Override
-        public int getPageSize() {
-            return pageable.getSize();
-        }
-
-        @Override
-        public long getOffset() {
-            return pageable.getOffset();
-        }
-
-        @Override
-        public Sort getSort() {
-            return new SortDelegate(this.pageable.getSort());
-        }
-
-        @Override
-        public Pageable next() {
-            return new PageableDelegate(pageable.next());
-        }
-
-        @Override
-        public Pageable previousOrFirst() {
-            return new PageableDelegate(pageable.previous());
-        }
-
-        @Override
-        public Pageable first() {
-            return new PageableDelegate(
-                    io.micronaut.data.model.Pageable.from(0, delegate.getSize(), delegate.getSort())
-            );
-        }
-
-        @Override
-        public boolean hasPrevious() {
-            return this.pageable.getNumber() > 0;
-        }
     }
 
     /**
