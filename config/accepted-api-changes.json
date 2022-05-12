@@ -1,0 +1,62 @@
+[
+    {
+        "type": "io.micronaut.transaction.interceptor.CoroutineTxHelper",
+        "member": "Method io.micronaut.transaction.interceptor.CoroutineTxHelper.setupCoroutineContext(io.micronaut.aop.kotlin.KotlinInterceptedMethod)",
+        "reason": "Internal method"
+    },
+    {
+        "type": "io.micronaut.transaction.interceptor.TxSynchronousContext",
+        "member": "Method io.micronaut.transaction.interceptor.TxSynchronousContext.restoreThreadContext(kotlin.coroutines.CoroutineContext,io.micronaut.transaction.support.TransactionSynchronizationManager$State)",
+        "reason": "Internal method"
+    },
+    {
+        "type": "io.micronaut.transaction.interceptor.TxSynchronousContext",
+        "member": "Method io.micronaut.transaction.interceptor.TxSynchronousContext.updateThreadContext(kotlin.coroutines.CoroutineContext)",
+        "reason": "Internal method"
+    },
+    {
+        "type": "io.micronaut.transaction.interceptor.TxSynchronousContext",
+        "member": "Constructor io.micronaut.transaction.interceptor.TxSynchronousContext(io.micronaut.transaction.support.TransactionSynchronizationManager$State)",
+        "reason": "Internal method"
+    },
+    {
+        "type": "io.micronaut.transaction.support.TransactionSynchronizationManager",
+        "member": "Class io.micronaut.transaction.support.TransactionSynchronizationManager",
+        "reason": "Accepted changes"
+    },
+    {
+        "type": "io.micronaut.transaction.support.TransactionSynchronizationUtils",
+        "member": "Method io.micronaut.transaction.support.TransactionSynchronizationUtils.triggerAfterCommit()",
+        "reason": "Internal method"
+    },
+    {
+        "type": "io.micronaut.transaction.support.TransactionSynchronizationUtils",
+        "member": "Method io.micronaut.transaction.support.TransactionSynchronizationUtils.triggerAfterCompletion(io.micronaut.transaction.support.TransactionSynchronization$Status)",
+        "reason": "Internal method"
+    },
+    {
+        "type": "io.micronaut.transaction.support.TransactionSynchronizationUtils",
+        "member": "Method io.micronaut.transaction.support.TransactionSynchronizationUtils.triggerBeforeCommit(boolean)",
+        "reason": "Internal method"
+    },
+    {
+        "type": "io.micronaut.transaction.support.TransactionSynchronizationUtils",
+        "member": "Method io.micronaut.transaction.support.TransactionSynchronizationUtils.triggerBeforeCompletion()",
+        "reason": "Internal method"
+    },
+    {
+        "type": "io.micronaut.transaction.support.TransactionSynchronizationUtils",
+        "member": "Method io.micronaut.transaction.support.TransactionSynchronizationUtils.triggerFlush()",
+        "reason": "Internal method"
+    },
+    {
+        "type": "io.micronaut.transaction.support.AbstractSynchronousTransactionManager",
+        "member": "Method io.micronaut.transaction.support.AbstractSynchronousTransactionManager.getTransactionSynchronization()",
+        "reason": "Internal method"
+    },
+    {
+        "type": "io.micronaut.transaction.jdbc.DataSourceTransactionManager",
+        "member": "Class io.micronaut.transaction.jdbc.DataSourceTransactionManager",
+        "reason": "Internal method"
+    }
+]

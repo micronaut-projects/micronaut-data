@@ -3,7 +3,7 @@ plugins {
 }
 
 dependencies {
-    implementation platform("io.micronaut:micronaut-bom:$micronautVersion")
+    implementation platform(mn.micronaut.bom)
 
     annotationProcessor mn.micronaut.inject.java
     annotationProcessor projects.dataProcessor

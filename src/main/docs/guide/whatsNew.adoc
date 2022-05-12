@@ -1,3 +1,7 @@
+=== Micronaut Data 3.4
+- Propagating synchronous transaction state in Kotlin's coroutines
+- R2DBC upgraded to `1.0.0.RELEASE`
+
 === Micronaut Data 3.3
 - Support for <<mongo, MongoDB repositories>>
 - R2DBC upgraded to Arabba-SR12 and OracleDB R2DBC 0.4.0
