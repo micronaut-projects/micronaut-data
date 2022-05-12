@@ -1,4 +1,6 @@
 [versions]
+micronaut = "3.4.3"
+micronaut-test = "3.0.5"
 micronaut-serde = "1.0.1"
 micronaut-sql = "4.3.0"
 micronaut-docs = "2.0.0"
@@ -17,21 +19,36 @@ spring-data = "2.4.14"
 spring = "5.3.19"
 
 mongodb = "4.1.1"
-oracle-driver = "21.5.0.0"
-mariadb-driver = "2.7.5"
-mysql-driver = "8.0.29"
-postgres-driver = "42.3.5"
-mssql-driver = "8.4.1.jre8"
+
+# JDBC Drivers
+
+oracle-jdbc-driver = "21.5.0.0"
+mariadb-jdbc-driver = "2.7.5"
+mysql-jdbc-driver = "8.0.29"
+postgres-jdbc-driver = "42.3.5"
+mssql-jdbc-driver = "8.4.1.jre8"
+
+# R2DBC Drivers
+
+r2dbc = "1.0.0.RELEASE"
+r2dbc-pool = "0.9.0.RELEASE"
 
 oracle-r2dbc-driver = "0.4.0"
 mysql-r2dbc-driver = "0.8.2.RELEASE"
-r2dbc = "Arabba-SR12"
+h2-r2dbc-driver = "0.8.5.RELEASE"
+mariadb-r2dbc-driver = "1.1.1-rc"
+postgresql-r2dbc-driver = "0.9.1.RELEASE"
+mssql-r2dbc-driver = "0.9.0.RELEASE"
 
+# Testing and benchmarking
+
+spock = "2.0-groovy-3.0"
 cglib = "3.3.0"
 objenesis = "3.2"
 testcontainers = "1.17.1"
-
 jmh = "1.35"
+
+# Gradle plugins
 
 kotlin-gradle-plugin = "1.6.21"
 jmh-gradle-plugin = "0.6.6"
@@ -89,26 +106,25 @@ micronaut-sql-jdbc = { module = "io.micronaut.sql:micronaut-jdbc", version.ref =
 
 h2 = { module = "com.h2database:h2" }
 
-drivers-jdbc-oracle = { module = "com.oracle.database.jdbc:ojdbc8", version.ref = "oracle-driver" }
-drivers-jdbc-mariadb = { module = "org.mariadb.jdbc:mariadb-java-client", version.ref = "mariadb-driver" }
-drivers-jdbc-mysql = { module = "mysql:mysql-connector-java", version.ref = "mysql-driver" }
-drivers-jdbc-postgresql = { module = "org.postgresql:postgresql", version.ref = "postgres-driver" }
-drivers-jdbc-mssql = { module = "com.microsoft.sqlserver:mssql-jdbc", version.ref = "mssql-driver" }
+drivers-jdbc-oracle = { module = "com.oracle.database.jdbc:ojdbc8", version.ref = "oracle-jdbc-driver" }
+drivers-jdbc-mariadb = { module = "org.mariadb.jdbc:mariadb-java-client", version.ref = "mariadb-jdbc-driver" }
+drivers-jdbc-mysql = { module = "mysql:mysql-connector-java", version.ref = "mysql-jdbc-driver" }
+drivers-jdbc-postgresql = { module = "org.postgresql:postgresql", version.ref = "postgres-jdbc-driver" }
+drivers-jdbc-mssql = { module = "com.microsoft.sqlserver:mssql-jdbc", version.ref = "mssql-jdbc-driver" }
 
 # R2DBC
 
-r2dbc-bom = { module = "io.r2dbc:r2dbc-bom", version.ref = "r2dbc" }
-r2dbc-spi = { module = "io.r2dbc:r2dbc-spi" }
-r2dbc-pool = { module = "io.r2dbc:r2dbc-pool" }
-r2dbc-h2 = { module = "io.r2dbc:r2dbc-h2" }
+r2dbc-spi = { module = "io.r2dbc:r2dbc-spi", version.ref = "r2dbc" }
+r2dbc-pool = { module = "io.r2dbc:r2dbc-pool", version.ref = "r2dbc-pool" }
 
 micronaut-r2dbc = { module = "io.micronaut.r2dbc:micronaut-r2dbc-core" }
 
+drivers-r2dbc-h2 = { module = "io.r2dbc:r2dbc-h2", version.ref = "h2-r2dbc-driver" }
 drivers-r2dbc-oracle = { module = "com.oracle.database.r2dbc:oracle-r2dbc", version.ref = "oracle-r2dbc-driver" }
-drivers-r2dbc-mariadb = { module = "org.mariadb:r2dbc-mariadb" }
+drivers-r2dbc-mariadb = { module = "org.mariadb:r2dbc-mariadb", version.ref = "mariadb-r2dbc-driver" }
 drivers-r2dbc-mysql = { module = "dev.miku:r2dbc-mysql", version.ref = "mysql-r2dbc-driver" }
-drivers-r2dbc-mssql = { module = "io.r2dbc:r2dbc-mssql" }
-drivers-r2dbc-postgresql = { module = "io.r2dbc:r2dbc-postgresql" }
+drivers-r2dbc-mssql = { module = "io.r2dbc:r2dbc-mssql", version.ref = "mssql-r2dbc-driver" }
+drivers-r2dbc-postgresql = { module = "org.postgresql:r2dbc-postgresql", version.ref = "postgresql-r2dbc-driver" }
 
 # TESTCONTAINERS
 

@@ -7,9 +7,6 @@ dependencies {
     annotationProcessor mn.micronaut.graal
     annotationProcessor libs.micronaut.docs
 
-    implementation platform(libs.r2dbc.bom)
-    testImplementation platform(libs.r2dbc.bom)
-
     api libs.micronaut.reactor
     api projects.dataModel
     api projects.dataRuntime
@@ -18,7 +15,6 @@ dependencies {
 
     implementation mn.micronaut.http
     implementation libs.micronaut.reactor
-//    implementation "io.projectreactor.netty:reactor-netty"
 
     testImplementation projects.dataTck
     testImplementation mn.micronaut.test.spock
@@ -51,7 +47,7 @@ dependencies {
     testImplementation libs.drivers.jdbc.mysql
 
     // h2
-    testImplementation libs.r2dbc.h2
+    testImplementation libs.drivers.r2dbc.h2
     testRuntimeOnly libs.h2
 
     // sqlserver

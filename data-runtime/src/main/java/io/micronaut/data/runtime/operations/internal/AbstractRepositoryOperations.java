@@ -170,8 +170,8 @@ public abstract class AbstractRepositoryOperations<Cnt, PS> implements Applicati
      * @param expected The expected value
      * @param received THe received value
      */
-    protected void checkOptimisticLocking(int expected, int received) {
-        if (received != expected) {
+    protected void checkOptimisticLocking(int expected, Number received) {
+        if (received.intValue() != expected) {
             throw new OptimisticLockException("Execute update returned unexpected row count. Expected: " + expected + " got: " + received);
         }
     }

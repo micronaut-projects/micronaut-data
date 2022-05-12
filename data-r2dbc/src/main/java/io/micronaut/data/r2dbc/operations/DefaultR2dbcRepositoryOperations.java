@@ -658,7 +658,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                         true
                 );
                 return Flux.from(statement.execute())
-                        .flatMap((result) -> Flux.from(result.getRowsUpdated()).flatMap(rowsUpdated -> {
+                        .flatMap((result) -> Flux.from(result.getRowsUpdated()).flatMap((Number rowsUpdated) -> {
                             if (QUERY_LOG.isTraceEnabled()) {
                                 QUERY_LOG.trace("Update operation updated {} records", rowsUpdated);
                             }
@@ -668,7 +668,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                             Argument<?> argument = preparedQuery.getResultArgument().getFirstTypeVariable().orElse(null);
                             if (argument != null) {
                                 if (argument.isVoid() || argument.getType() == Void.class) {
-                                    return Mono.<Number>empty();
+                                    return Mono.empty();
                                 } else if (argument.getType().isInstance(rowsUpdated)) {
                                     return Mono.just(rowsUpdated);
                                 } else {
@@ -997,8 +997,8 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                     }
                     return Flux.from(statement.execute()).flatMap(r -> Flux.from(r.getRowsUpdated()))
                             .as(DefaultR2dbcRepositoryOperations::toSingleResult)
-                            .map(rowsUpdated -> {
-                                d.rowsUpdated = rowsUpdated;
+                            .map((Number rowsUpdated) -> {
+                                d.rowsUpdated = rowsUpdated.longValue();
                                 return d;
                             });
                 });
@@ -1103,7 +1103,8 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                             if (notVetoedEntities.isEmpty()) {
                                 return Mono.just(Tuples.of(e, 0L));
                             }
-                            return Flux.from(statement.execute()).flatMap(result -> Flux.from(result.getRowsUpdated())).map(Long::valueOf).reduce(0L, Long::sum)
+                            return Flux.from(statement.execute()).flatMap(result -> Flux.from(result.getRowsUpdated()))
+                                    .map((Number ru) -> ru.longValue()).reduce(0L, Long::sum)
                                     .map(rowsUpdated -> {
                                         if (dbOperation.isOptimisticLock()) {
                                             checkOptimisticLocking(notVetoedEntities.size(), rowsUpdated);
