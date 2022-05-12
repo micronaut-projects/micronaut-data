@@ -19,14 +19,13 @@ dependencyResolutionManagement {
     repositories {
         mavenCentral()
     }
-    versionCatalogs {
-        "mn" {
-            from("io.micronaut:micronaut-bom:${providers.gradleProperty("micronautVersion").get()}")
-        }
-    }
 }
 
 rootProject.name = 'data-parent'
+
+micronautBuild {
+    importMicronautCatalog()
+}
 
 include 'data-bom'
 include 'data-model'
