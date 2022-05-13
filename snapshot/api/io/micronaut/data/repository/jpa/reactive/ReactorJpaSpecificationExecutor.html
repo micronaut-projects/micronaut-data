@@ -17,7 +17,7 @@
     catch(err) {
     }
 //-->
-var methods = {"i0":6,"i1":6,"i2":6,"i3":6,"i4":6,"i5":6,"i6":6,"i7":6,"i8":6,"i9":6,"i10":6};
+var methods = {"i0":6,"i1":6,"i2":6,"i3":6,"i4":6,"i5":6,"i6":6,"i7":6,"i8":6,"i9":6,"i10":6,"i11":6,"i12":6};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],4:["t3","Abstract Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -165,38 +165,52 @@ extends <a href="../../../../../../io/micronaut/data/repository/jpa/reactive/Rea
 </td>
 </tr>
 <tr id="i5" class="rowColor">
+<td class="colFirst"><code>reactor.core.publisher.Mono&lt;<a href="../../../../../../io/micronaut/data/model/Page.html" title="interface in io.micronaut.data.model">Page</a>&lt;<a href="../../../../../../io/micronaut/data/repository/jpa/reactive/ReactorJpaSpecificationExecutor.html" title="type parameter in ReactorJpaSpecificationExecutor">T</a>&gt;&gt;</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/repository/jpa/reactive/ReactorJpaSpecificationExecutor.html#findAll-io.micronaut.data.repository.jpa.criteria.PredicateSpecification-io.micronaut.data.model.Pageable-">findAll</a></span>(<a href="../../../../../../io/micronaut/data/repository/jpa/criteria/PredicateSpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria">PredicateSpecification</a>&lt;<a href="../../../../../../io/micronaut/data/repository/jpa/reactive/ReactorJpaSpecificationExecutor.html" title="type parameter in ReactorJpaSpecificationExecutor">T</a>&gt;&nbsp;spec,
+       <a href="../../../../../../io/micronaut/data/model/Pageable.html" title="interface in io.micronaut.data.model">Pageable</a>&nbsp;pageable)</code>
+<div class="block">Returns a <a href="../../../../../../io/micronaut/data/model/Page.html" title="interface in io.micronaut.data.model"><code>Page</code></a> of entities matching the given <a href="../../../../../../io/micronaut/data/repository/jpa/criteria/QuerySpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria"><code>QuerySpecification</code></a>.</div>
+</td>
+</tr>
+<tr id="i6" class="altColor">
 <td class="colFirst"><code>reactor.core.publisher.Flux&lt;<a href="../../../../../../io/micronaut/data/repository/jpa/reactive/ReactorJpaSpecificationExecutor.html" title="type parameter in ReactorJpaSpecificationExecutor">T</a>&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/repository/jpa/reactive/ReactorJpaSpecificationExecutor.html#findAll-io.micronaut.data.repository.jpa.criteria.PredicateSpecification-io.micronaut.data.model.Sort-">findAll</a></span>(<a href="../../../../../../io/micronaut/data/repository/jpa/criteria/PredicateSpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria">PredicateSpecification</a>&lt;<a href="../../../../../../io/micronaut/data/repository/jpa/reactive/ReactorJpaSpecificationExecutor.html" title="type parameter in ReactorJpaSpecificationExecutor">T</a>&gt;&nbsp;spec,
        <a href="../../../../../../io/micronaut/data/model/Sort.html" title="interface in io.micronaut.data.model">Sort</a>&nbsp;sort)</code>
 <div class="block">Returns all entities matching the given <a href="../../../../../../io/micronaut/data/repository/jpa/criteria/QuerySpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria"><code>QuerySpecification</code></a> and <a href="../../../../../../io/micronaut/data/model/Sort.html" title="interface in io.micronaut.data.model"><code>Sort</code></a>.</div>
 </td>
 </tr>
-<tr id="i6" class="altColor">
+<tr id="i7" class="rowColor">
 <td class="colFirst"><code>reactor.core.publisher.Flux&lt;<a href="../../../../../../io/micronaut/data/repository/jpa/reactive/ReactorJpaSpecificationExecutor.html" title="type parameter in ReactorJpaSpecificationExecutor">T</a>&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/repository/jpa/reactive/ReactorJpaSpecificationExecutor.html#findAll-io.micronaut.data.repository.jpa.criteria.QuerySpecification-">findAll</a></span>(<a href="../../../../../../io/micronaut/data/repository/jpa/criteria/QuerySpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria">QuerySpecification</a>&lt;<a href="../../../../../../io/micronaut/data/repository/jpa/reactive/ReactorJpaSpecificationExecutor.html" title="type parameter in ReactorJpaSpecificationExecutor">T</a>&gt;&nbsp;spec)</code>
 <div class="block">Returns all entities matching the given <a href="../../../../../../io/micronaut/data/repository/jpa/criteria/QuerySpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria"><code>QuerySpecification</code></a>.</div>
 </td>
 </tr>
-<tr id="i7" class="rowColor">
+<tr id="i8" class="altColor">
+<td class="colFirst"><code>reactor.core.publisher.Mono&lt;<a href="../../../../../../io/micronaut/data/model/Page.html" title="interface in io.micronaut.data.model">Page</a>&lt;<a href="../../../../../../io/micronaut/data/repository/jpa/reactive/ReactorJpaSpecificationExecutor.html" title="type parameter in ReactorJpaSpecificationExecutor">T</a>&gt;&gt;</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/repository/jpa/reactive/ReactorJpaSpecificationExecutor.html#findAll-io.micronaut.data.repository.jpa.criteria.QuerySpecification-io.micronaut.data.model.Pageable-">findAll</a></span>(<a href="../../../../../../io/micronaut/data/repository/jpa/criteria/QuerySpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria">QuerySpecification</a>&lt;<a href="../../../../../../io/micronaut/data/repository/jpa/reactive/ReactorJpaSpecificationExecutor.html" title="type parameter in ReactorJpaSpecificationExecutor">T</a>&gt;&nbsp;spec,
+       <a href="../../../../../../io/micronaut/data/model/Pageable.html" title="interface in io.micronaut.data.model">Pageable</a>&nbsp;pageable)</code>
+<div class="block">Returns a <a href="../../../../../../io/micronaut/data/model/Page.html" title="interface in io.micronaut.data.model"><code>Page</code></a> of entities matching the given <a href="../../../../../../io/micronaut/data/repository/jpa/criteria/QuerySpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria"><code>QuerySpecification</code></a>.</div>
+</td>
+</tr>
+<tr id="i9" class="rowColor">
 <td class="colFirst"><code>reactor.core.publisher.Flux&lt;<a href="../../../../../../io/micronaut/data/repository/jpa/reactive/ReactorJpaSpecificationExecutor.html" title="type parameter in ReactorJpaSpecificationExecutor">T</a>&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/repository/jpa/reactive/ReactorJpaSpecificationExecutor.html#findAll-io.micronaut.data.repository.jpa.criteria.QuerySpecification-io.micronaut.data.model.Sort-">findAll</a></span>(<a href="../../../../../../io/micronaut/data/repository/jpa/criteria/QuerySpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria">QuerySpecification</a>&lt;<a href="../../../../../../io/micronaut/data/repository/jpa/reactive/ReactorJpaSpecificationExecutor.html" title="type parameter in ReactorJpaSpecificationExecutor">T</a>&gt;&nbsp;spec,
        <a href="../../../../../../io/micronaut/data/model/Sort.html" title="interface in io.micronaut.data.model">Sort</a>&nbsp;sort)</code>
 <div class="block">Returns all entities matching the given <a href="../../../../../../io/micronaut/data/repository/jpa/criteria/QuerySpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria"><code>QuerySpecification</code></a> and <a href="../../../../../../io/micronaut/data/model/Sort.html" title="interface in io.micronaut.data.model"><code>Sort</code></a>.</div>
 </td>
 </tr>
-<tr id="i8" class="altColor">
+<tr id="i10" class="altColor">
 <td class="colFirst"><code>reactor.core.publisher.Mono&lt;<a href="../../../../../../io/micronaut/data/repository/jpa/reactive/ReactorJpaSpecificationExecutor.html" title="type parameter in ReactorJpaSpecificationExecutor">T</a>&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/repository/jpa/reactive/ReactorJpaSpecificationExecutor.html#findOne-io.micronaut.data.repository.jpa.criteria.PredicateSpecification-">findOne</a></span>(<a href="../../../../../../io/micronaut/data/repository/jpa/criteria/PredicateSpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria">PredicateSpecification</a>&lt;<a href="../../../../../../io/micronaut/data/repository/jpa/reactive/ReactorJpaSpecificationExecutor.html" title="type parameter in ReactorJpaSpecificationExecutor">T</a>&gt;&nbsp;spec)</code>
 <div class="block">Returns a single entity matching the given <a href="../../../../../../io/micronaut/data/repository/jpa/criteria/PredicateSpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria"><code>PredicateSpecification</code></a>.</div>
 </td>
 </tr>
-<tr id="i9" class="rowColor">
+<tr id="i11" class="rowColor">
 <td class="colFirst"><code>reactor.core.publisher.Mono&lt;<a href="../../../../../../io/micronaut/data/repository/jpa/reactive/ReactorJpaSpecificationExecutor.html" title="type parameter in ReactorJpaSpecificationExecutor">T</a>&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/repository/jpa/reactive/ReactorJpaSpecificationExecutor.html#findOne-io.micronaut.data.repository.jpa.criteria.QuerySpecification-">findOne</a></span>(<a href="../../../../../../io/micronaut/data/repository/jpa/criteria/QuerySpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria">QuerySpecification</a>&lt;<a href="../../../../../../io/micronaut/data/repository/jpa/reactive/ReactorJpaSpecificationExecutor.html" title="type parameter in ReactorJpaSpecificationExecutor">T</a>&gt;&nbsp;spec)</code>
 <div class="block">Returns a single entity matching the given <a href="../../../../../../io/micronaut/data/repository/jpa/criteria/QuerySpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria"><code>QuerySpecification</code></a>.</div>
 </td>
 </tr>
-<tr id="i10" class="altColor">
+<tr id="i12" class="altColor">
 <td class="colFirst"><code>reactor.core.publisher.Mono&lt;java.lang.Long&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/repository/jpa/reactive/ReactorJpaSpecificationExecutor.html#updateAll-io.micronaut.data.repository.jpa.criteria.UpdateSpecification-">updateAll</a></span>(<a href="../../../../../../io/micronaut/data/repository/jpa/criteria/UpdateSpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria">UpdateSpecification</a>&lt;<a href="../../../../../../io/micronaut/data/repository/jpa/reactive/ReactorJpaSpecificationExecutor.html" title="type parameter in ReactorJpaSpecificationExecutor">T</a>&gt;&nbsp;spec)</code>
 <div class="block">Updates all entities matching the given <a href="../../../../../../io/micronaut/data/repository/jpa/criteria/UpdateSpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria"><code>UpdateSpecification</code></a>.</div>
@@ -298,6 +312,48 @@ reactor.core.publisher.Flux&lt;<a href="../../../../../../io/micronaut/data/repo
 <dd><code>spec</code> - The query specification</dd>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>found results</dd>
+</dl>
+</li>
+</ul>
+<a name="findAll-io.micronaut.data.repository.jpa.criteria.QuerySpecification-io.micronaut.data.model.Pageable-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>findAll</h4>
+<pre>reactor.core.publisher.Mono&lt;<a href="../../../../../../io/micronaut/data/model/Page.html" title="interface in io.micronaut.data.model">Page</a>&lt;<a href="../../../../../../io/micronaut/data/repository/jpa/reactive/ReactorJpaSpecificationExecutor.html" title="type parameter in ReactorJpaSpecificationExecutor">T</a>&gt;&gt;&nbsp;findAll(<a href="../../../../../../io/micronaut/data/repository/jpa/criteria/QuerySpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria">QuerySpecification</a>&lt;<a href="../../../../../../io/micronaut/data/repository/jpa/reactive/ReactorJpaSpecificationExecutor.html" title="type parameter in ReactorJpaSpecificationExecutor">T</a>&gt;&nbsp;spec,
+                                             <a href="../../../../../../io/micronaut/data/model/Pageable.html" title="interface in io.micronaut.data.model">Pageable</a>&nbsp;pageable)</pre>
+<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../../../io/micronaut/data/repository/jpa/reactive/ReactiveStreamsJpaSpecificationExecutor.html#findAll-io.micronaut.data.repository.jpa.criteria.QuerySpecification-io.micronaut.data.model.Pageable-">ReactiveStreamsJpaSpecificationExecutor</a></code></span></div>
+<div class="block">Returns a <a href="../../../../../../io/micronaut/data/model/Page.html" title="interface in io.micronaut.data.model"><code>Page</code></a> of entities matching the given <a href="../../../../../../io/micronaut/data/repository/jpa/criteria/QuerySpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria"><code>QuerySpecification</code></a>.</div>
+<dl>
+<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
+<dd><code><a href="../../../../../../io/micronaut/data/repository/jpa/reactive/ReactiveStreamsJpaSpecificationExecutor.html#findAll-io.micronaut.data.repository.jpa.criteria.QuerySpecification-io.micronaut.data.model.Pageable-">findAll</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../../io/micronaut/data/repository/jpa/reactive/ReactiveStreamsJpaSpecificationExecutor.html" title="interface in io.micronaut.data.repository.jpa.reactive">ReactiveStreamsJpaSpecificationExecutor</a>&lt;<a href="../../../../../../io/micronaut/data/repository/jpa/reactive/ReactorJpaSpecificationExecutor.html" title="type parameter in ReactorJpaSpecificationExecutor">T</a>&gt;</code></dd>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>spec</code> - The query specification</dd>
+<dd><code>pageable</code> - The pageable object</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>a page</dd>
+</dl>
+</li>
+</ul>
+<a name="findAll-io.micronaut.data.repository.jpa.criteria.PredicateSpecification-io.micronaut.data.model.Pageable-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>findAll</h4>
+<pre>reactor.core.publisher.Mono&lt;<a href="../../../../../../io/micronaut/data/model/Page.html" title="interface in io.micronaut.data.model">Page</a>&lt;<a href="../../../../../../io/micronaut/data/repository/jpa/reactive/ReactorJpaSpecificationExecutor.html" title="type parameter in ReactorJpaSpecificationExecutor">T</a>&gt;&gt;&nbsp;findAll(<a href="../../../../../../io/micronaut/data/repository/jpa/criteria/PredicateSpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria">PredicateSpecification</a>&lt;<a href="../../../../../../io/micronaut/data/repository/jpa/reactive/ReactorJpaSpecificationExecutor.html" title="type parameter in ReactorJpaSpecificationExecutor">T</a>&gt;&nbsp;spec,
+                                             <a href="../../../../../../io/micronaut/data/model/Pageable.html" title="interface in io.micronaut.data.model">Pageable</a>&nbsp;pageable)</pre>
+<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../../../io/micronaut/data/repository/jpa/reactive/ReactiveStreamsJpaSpecificationExecutor.html#findAll-io.micronaut.data.repository.jpa.criteria.PredicateSpecification-io.micronaut.data.model.Pageable-">ReactiveStreamsJpaSpecificationExecutor</a></code></span></div>
+<div class="block">Returns a <a href="../../../../../../io/micronaut/data/model/Page.html" title="interface in io.micronaut.data.model"><code>Page</code></a> of entities matching the given <a href="../../../../../../io/micronaut/data/repository/jpa/criteria/QuerySpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria"><code>QuerySpecification</code></a>.</div>
+<dl>
+<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
+<dd><code><a href="../../../../../../io/micronaut/data/repository/jpa/reactive/ReactiveStreamsJpaSpecificationExecutor.html#findAll-io.micronaut.data.repository.jpa.criteria.PredicateSpecification-io.micronaut.data.model.Pageable-">findAll</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../../io/micronaut/data/repository/jpa/reactive/ReactiveStreamsJpaSpecificationExecutor.html" title="interface in io.micronaut.data.repository.jpa.reactive">ReactiveStreamsJpaSpecificationExecutor</a>&lt;<a href="../../../../../../io/micronaut/data/repository/jpa/reactive/ReactorJpaSpecificationExecutor.html" title="type parameter in ReactorJpaSpecificationExecutor">T</a>&gt;</code></dd>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>spec</code> - The query specification</dd>
+<dd><code>pageable</code> - The pageable object</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>a page</dd>
 </dl>
 </li>
 </ul>
