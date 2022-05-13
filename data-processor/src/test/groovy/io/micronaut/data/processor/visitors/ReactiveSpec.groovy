@@ -21,9 +21,8 @@ import spock.lang.Unroll
 
 class ReactiveSpec extends AbstractDataSpec {
 
-
     @Unroll
-    void "test reactive method with rxjava #method"() {
+    void "test reactive method #method"() {
         given:
         def repository = buildRepository('test.MyInterface', """
 
@@ -33,6 +32,7 @@ import io.micronaut.data.annotation.*;
 import io.micronaut.data.model.*;
 import java.util.*;
 import io.reactivex.*;
+import reactor.core.publisher.*;
 
 @Repository
 @io.micronaut.context.annotation.Executable
@@ -52,6 +52,8 @@ $returnType $method($arguments);
 
         where:
         method         | returnType              | arguments                      | interceptor
+        "list"         | "Flux<Page<Person>>"    | "Pageable pageable"            | FindPageReactiveInterceptor
+        "list"         | "Mono<Page<Person>>"    | "Pageable pageable"            | FindPageReactiveInterceptor
         "list"         | "Single<Page<Person>>"  | "Pageable pageable"            | FindPageReactiveInterceptor
         "list"         | "Single<Slice<Person>>" | "Pageable pageable"            | FindSliceReactiveInterceptor
         "findByName"   | "Single<Person>"        | "String name"                  | FindOneReactiveInterceptor
@@ -80,6 +82,6 @@ $returnType $method($arguments);
         "updateCustom" | "Single<List<Person>>"  | "List<Person> entities"        | UpdateAllEntitiesReactiveInterceptor
         "update"       | "Single<Integer>"       | "List<Person> entities"        | UpdateAllEntitiesReactiveInterceptor
         "update"       | "Single<List<Person>>"  | "List<Person> entities"        | UpdateAllEntitiesReactiveInterceptor
-        "update"       | "Completable"  | "List<Person> entities"        | UpdateAllEntitiesReactiveInterceptor
+        "update"       | "Completable"           | "List<Person> entities"        | UpdateAllEntitiesReactiveInterceptor
     }
 }

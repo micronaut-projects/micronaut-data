@@ -7,7 +7,7 @@ import io.micronaut.data.tck.repositories.StudentReactiveRepository
 import io.micronaut.data.tck.tests.AbstractReactiveRepositorySpec
 import io.micronaut.transaction.reactive.ReactiveTransactionStatus
 import io.r2dbc.spi.Connection
-import io.reactivex.Single
+import reactor.core.publisher.Mono
 
 class H2ReactiveRepositorySpec extends AbstractReactiveRepositorySpec implements H2TestPropertyProvider {
 
@@ -28,12 +28,12 @@ class H2ReactiveRepositorySpec extends AbstractReactiveRepositorySpec implements
         given:
         R2dbcOperations r2dbcOperations = context.getBean(R2dbcOperations)
 
-        personRepository.save(new Person(name: "Tony")).blockingGet()
+        personRepository.save(new Person(name: "Tony")).block()
 
         when:
-        Person person = Single.fromPublisher(r2dbcOperations.withTransaction({ ReactiveTransactionStatus<Connection> status ->
+        Person person = Mono.from(r2dbcOperations.withTransaction({ ReactiveTransactionStatus<Connection> status ->
             personRepository.findByName("Tony", status).toFlowable()
-        })).blockingGet()
+        })).block()
 
         then:
         person != null

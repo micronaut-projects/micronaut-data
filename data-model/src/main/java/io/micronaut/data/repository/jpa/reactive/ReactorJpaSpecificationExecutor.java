@@ -17,6 +17,8 @@ package io.micronaut.data.repository.jpa.reactive;
 
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
+import io.micronaut.data.model.Page;
+import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
 import io.micronaut.data.repository.jpa.criteria.DeleteSpecification;
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification;
@@ -49,6 +51,12 @@ public interface ReactorJpaSpecificationExecutor<T> extends ReactiveStreamsJpaSp
     @Override
     @NonNull
     Flux<T> findAll(@Nullable PredicateSpecification<T> spec);
+
+    @Override
+    Mono<Page<T>> findAll(QuerySpecification<T> spec, Pageable pageable);
+
+    @Override
+    Mono<Page<T>> findAll(PredicateSpecification<T> spec, Pageable pageable);
 
     @Override
     @NonNull
