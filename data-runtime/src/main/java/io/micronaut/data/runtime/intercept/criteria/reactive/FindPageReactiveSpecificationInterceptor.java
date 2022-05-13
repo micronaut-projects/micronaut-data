@@ -31,7 +31,7 @@ import reactor.core.publisher.Mono;
  * Runtime implementation of {@code Publisher<Page> find(Specification, Pageable)}.
  *
  * @author Denis Stepanov
- * @since 3.5.0
+ * @since 3.4.0
  */
 @Internal
 public class FindPageReactiveSpecificationInterceptor extends AbstractReactiveSpecificationInterceptor<Object, Object> {
