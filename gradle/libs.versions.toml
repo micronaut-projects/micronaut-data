@@ -41,6 +41,7 @@ mssql-r2dbc-driver = "0.9.0.RELEASE"
 
 # Testing and benchmarking
 
+benchmark-spring-data-mongodb = "4.1.1"
 benchmark-spring-data = "2021.1.4"
 spock = "2.0-groovy-3.0"
 cglib = "3.3.0"
@@ -87,6 +88,8 @@ jmh-core = { module = "org.openjdk.jmh:jmh-core", version.ref = "jmh" }
 jmh-annprocess = { module = "org.openjdk.jmh:jmh-generator-annprocess", version.ref = "jmh" }
 
 benchmark-spring-data-bom = { module = "org.springframework.data:spring-data-bom", version.ref = "benchmark-spring-data" }
+benchmark-spring-data-mongodb-driver-core = { module = "org.mongodb:mongodb-driver-core", version.ref = "benchmark-spring-data-mongodb" }
+benchmark-spring-data-mongodb-driver-sync = { module = "org.mongodb:mongodb-driver-sync", version.ref = "benchmark-spring-data-mongodb" }
 
 # JPA
 
