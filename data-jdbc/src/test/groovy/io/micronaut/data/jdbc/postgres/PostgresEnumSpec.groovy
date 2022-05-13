@@ -48,7 +48,9 @@ class PostgresEnumsSpec extends Specification implements PostgresTestPropertyPro
     void startContainer(JdbcDatabaseContainer container) {
         PostgresTestPropertyProvider.super.startContainer(container)
         try (Connection connection = container.createConnection("")) {
-            connection.prepareCall("""CREATE TYPE happiness AS ENUM ('happy', 'very_happy', 'ecstatic');""").execute()
+            try (def st = connection.prepareCall("""CREATE TYPE happiness AS ENUM ('happy', 'very_happy', 'ecstatic');""")) {
+                st.execute()
+            }
         }
     }
 
