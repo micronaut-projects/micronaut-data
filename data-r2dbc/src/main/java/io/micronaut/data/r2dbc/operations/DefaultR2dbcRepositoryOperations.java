@@ -589,10 +589,9 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                         .flatMap(r -> {
                             if (isEntity || dtoProjection) {
                                 TypeMapper<Row, R> mapper;
-                                RuntimePersistentEntity<R> persistentEntity = getEntity(resultType);
                                 if (dtoProjection) {
                                     mapper = new SqlDTOMapper<>(
-                                            persistentEntity,
+                                            getEntity(preparedQuery.getRootEntity()),
                                             columnNameResultSetReader,
                                             jsonCodec,
                                             conversionService
@@ -600,7 +599,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                                 } else {
                                     Set<JoinPath> joinFetchPaths = preparedQuery.getJoinFetchPaths();
                                     SqlResultEntityTypeMapper<Row, R> entityTypeMapper = new SqlResultEntityTypeMapper<>(
-                                            persistentEntity,
+                                            getEntity(resultType),
                                             columnNameResultSetReader,
                                             joinFetchPaths,
                                             jsonCodec,
