@@ -17,6 +17,8 @@ package io.micronaut.data.repository.jpa.reactive;
 
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
+import io.micronaut.data.model.Page;
+import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
 import io.micronaut.data.repository.jpa.criteria.DeleteSpecification;
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification;
@@ -68,6 +70,26 @@ public interface ReactiveStreamsJpaSpecificationExecutor<T> {
      */
     @NonNull
     Publisher<T> findAll(@Nullable PredicateSpecification<T> spec);
+
+    /**
+     * Returns a {@link Page} of entities matching the given {@link QuerySpecification}.
+     *
+     * @param spec     The query specification
+     * @param pageable The pageable object
+     * @return a page
+     */
+    @NonNull
+    Publisher<Page<T>> findAll(@Nullable QuerySpecification<T> spec, Pageable pageable);
+
+    /**
+     * Returns a {@link Page} of entities matching the given {@link QuerySpecification}.
+     *
+     * @param spec     The query specification
+     * @param pageable The pageable object
+     * @return a page
+     */
+    @NonNull
+    Publisher<Page<T>> findAll(@Nullable PredicateSpecification<T> spec, Pageable pageable);
 
     /**
      * Returns all entities matching the given {@link QuerySpecification} and {@link Sort}.

@@ -16,6 +16,7 @@
 package io.micronaut.data.tck.tests
 
 import io.micronaut.context.ApplicationContext
+import io.micronaut.data.model.Page
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
 import io.micronaut.data.repository.jpa.criteria.DeleteSpecification
@@ -54,70 +55,70 @@ abstract class AbstractReactiveRepositorySpec extends Specification {
 
     def setup() {
         init()
-        personRepository.deleteAll().blockingGet()
+        personRepository.deleteAll().block()
         studentRepository.deleteAll().blockingGet()
         personRepository.saveAll([
                 new Person(name: "Jeff"),
                 new Person(name: "James")
-        ]).toList().blockingGet()
+        ]).collectList().block()
     }
 
     def createFrankAndBob(){
-        personRepository.save("Frank", 0).blockingGet()
-        personRepository.save("Bob", 0).blockingGet()
+        personRepository.save("Frank", 0).block()
+        personRepository.save("Bob", 0).block()
     }
 
     def cleanup() {
-        personRepository.deleteAll().blockingGet()
+        personRepository.deleteAll().block()
         studentRepository.deleteAll().blockingGet()
     }
 
     void "test no value"() {
         expect:
-        personRepository.getMaxId().isEmpty().blockingGet()
+        !personRepository.getMaxId().blockOptional().isPresent()
     }
 
     void "test save one"() {
         when:"one is saved"
         def person = new Person(name: "Fred", age: 30)
-        personRepository.save(person).blockingGet()
+        personRepository.save(person).block()
 
         then:"the instance is persisted"
         person.id != null
-        def personDto = personRepository.getByName("Fred").blockingGet()
+        def personDto = personRepository.getByName("Fred").block()
         personDto instanceof PersonDto
         personDto.age == 30
-        personRepository.queryByName("Fred").toList().blockingGet().size() == 1
-        personRepository.findById(person.id).blockingGet()
-        personRepository.getById(person.id).blockingGet().name == 'Fred'
-        personRepository.existsById(person.id).blockingGet()
-        personRepository.count().blockingGet() == 3
-        personRepository.count("Fred").blockingGet() == 1
-        personRepository.findAll().toList().blockingGet().size() == 3
+        personRepository.queryByName("Fred").collectList().block().size() == 1
+        personRepository.findById(person.id).block()
+        personRepository.getById(person.id).block().name == 'Fred'
+        personRepository.existsById(person.id).block()
+        personRepository.count().block() == 3
+        personRepository.count("Fred").block() == 1
+        personRepository.findAll().collectList().block().size() == 3
     }
 
     void "test save many"() {
         when:"many are saved"
-        def p1 = personRepository.save("Frank", 0).blockingGet()
-        def p2 = personRepository.save("Bob", 0).blockingGet()
+        def p1 = personRepository.save("Frank", 0).block()
+        def p2 = personRepository.save("Bob", 0).block()
         def people = [p1,p2]
 
         then:"all are saved"
         people.every { it.id != null }
-        people.every { personRepository.findById(it.id).blockingGet() != null }
-        personRepository.findAll().toList().blockingGet().size() == 4
-        personRepository.count().blockingGet() == 4
-        personRepository.count("Jeff").blockingGet() == 1
-        personRepository.list(Pageable.from(1)).toList().blockingGet().isEmpty()
-        personRepository.list(Pageable.from(0, 1)).toList().blockingGet().size() == 1
+        people.every { personRepository.findById(it.id).block() != null }
+        personRepository.findAll().collectList().block().size() == 4
+        personRepository.count().block() == 4
+        personRepository.count("Jeff").block() == 1
+        personRepository.list(Pageable.from(1)).collectList().block().isEmpty()
+        personRepository.list(Pageable.from(0, 1)).collectList().block().size() == 1
     }
 
     void "test update many"() {
         when:
-        def people = personRepository.findAll().blockingIterable().toList()
+        def people = personRepository.findAll().collectList().block()
         people.forEach() { it.name = it.name + " updated" }
-        def recordsUpdated = personRepository.updateAll(people).toList().blockingGet().size()
-        people = personRepository.findAll().blockingIterable().toList()
+        def recordsUpdated = personRepository.updateAll(people).collectList().block().size()
+        people = personRepository.findAll().collectList().block()
 
         then:
         people.size() == 2
@@ -126,10 +127,10 @@ abstract class AbstractReactiveRepositorySpec extends Specification {
         people.get(1).name.endsWith(" updated")
 
         when:
-        people = personRepository.findAll().blockingIterable().toList()
+        people = personRepository.findAll().collectList().block()
         people.forEach() { it.name = it.name + " X" }
-        def peopleUpdated = personRepository.updatePeople(people).blockingIterable().toList()
-        people = personRepository.findAll().blockingIterable().toList()
+        def peopleUpdated = personRepository.updatePeople(people).collectList().block()
+        people = personRepository.findAll().collectList().block()
 
         then:
         peopleUpdated.size() == 2
@@ -141,11 +142,11 @@ abstract class AbstractReactiveRepositorySpec extends Specification {
 
     void "test custom insert"() {
         given:
-        personRepository.deleteAll().blockingGet()
-        def saved = personRepository.saveCustom([new Person(name: "Abc", age: 12), new Person(name: "Xyz", age: 22)]).blockingGet()
+        personRepository.deleteAll().block()
+        def saved = personRepository.saveCustom([new Person(name: "Abc", age: 12), new Person(name: "Xyz", age: 22)]).block()
 
         when:
-        def people = personRepository.findAll().blockingIterable().toList()
+        def people = personRepository.findAll().collectList().block()
 
         then:
         saved == 2
@@ -158,11 +159,11 @@ abstract class AbstractReactiveRepositorySpec extends Specification {
 
     void "test custom single insert"() {
         given:
-        personRepository.deleteAll().blockingGet()
-        def saved = personRepository.saveCustomSingle(new Person(name: "Abc", age: 12)).blockingGet()
+        personRepository.deleteAll().block()
+        def saved = personRepository.saveCustomSingle(new Person(name: "Abc", age: 12)).block()
 
         when:
-        def people = personRepository.findAll().toList().blockingGet()
+        def people = personRepository.findAll().collectList().block()
 
         then:
         saved == 1
@@ -172,17 +173,17 @@ abstract class AbstractReactiveRepositorySpec extends Specification {
 
     void "test custom update"() {
         given:
-        personRepository.deleteAll().blockingGet()
+        personRepository.deleteAll().block()
         def saved = personRepository.saveCustom([
                 new Person(name: "Dennis", age: 12),
                 new Person(name: "Jeff", age: 22),
                 new Person(name: "James", age: 12),
                 new Person(name: "Dennis", age: 22)]
-        ).blockingGet()
+        ).block()
 
         when:
-        def updated = personRepository.updateNamesCustom("Denis", "Dennis").blockingGet()
-        def people = personRepository.findAll().blockingIterable().toList()
+        def updated = personRepository.updateNamesCustom("Denis", "Dennis").block()
+        def people = personRepository.findAll().collectList().block()
 
         then:
         saved == 4
@@ -194,104 +195,104 @@ abstract class AbstractReactiveRepositorySpec extends Specification {
     void "test delete by id"() {
         when:"an entity is retrieved"
         createFrankAndBob()
-        def person = personRepository.findByName("Frank").blockingGet()
+        def person = personRepository.findByName("Frank").block()
 
         then:"the person is not null"
         person != null
         person.name == 'Frank'
-        personRepository.findById(person.id).blockingGet() != null
+        personRepository.findById(person.id).block() != null
 
         when:"the person is deleted"
-        personRepository.deleteById(person.id).blockingGet()
+        personRepository.deleteById(person.id).block()
 
         then:"They are really deleted"
-        !personRepository.findById(person.id).blockingGet()
-        personRepository.count().blockingGet() == 3
+        !personRepository.findById(person.id).block()
+        personRepository.count().block() == 3
     }
 
     void "test delete by multiple ids"() {
         when:"A search for some people"
         createFrankAndBob()
-        def allPeople = personRepository.findAll().toList().blockingGet()
-        def people = personRepository.findByNameLike("J%").toList().blockingGet()
+        def allPeople = personRepository.findAll().collectList().block()
+        def people = personRepository.findByNameLike("J%").collectList().block()
 
         then:
         allPeople.size() == 4
         people.size() == 2
 
         when:"the people are deleted"
-        personRepository.deleteAll(people).blockingGet()
+        personRepository.deleteAll(people).block()
 
         then:"Only the correct people are deleted"
-        people.every { !personRepository.findById(it.id).blockingGet() }
-        personRepository.count().blockingGet() == 2
+        people.every { !personRepository.findById(it.id).block() }
+        personRepository.count().block() == 2
     }
 
     void "test delete one"() {
         when:"A specific person is found and deleted"
         createFrankAndBob()
-        def allPeople = personRepository.findAll().toList().blockingGet()
-        def bob = personRepository.findByName("Bob").blockingGet()
+        def allPeople = personRepository.findAll().collectList().block()
+        def bob = personRepository.findByName("Bob").block()
 
         then:"The person is present"
         bob != null
         allPeople.size() == 4
 
         when:"The person is deleted"
-        personRepository.deleteById(bob.id).blockingGet()
+        personRepository.deleteById(bob.id).block()
 
         then:"They are deleted"
-        !personRepository.findById(bob.id).blockingGet()
-        personRepository.count().blockingGet() == 3
+        !personRepository.findById(bob.id).block()
+        personRepository.count().block() == 3
     }
 
     void "test update one"() {
         when:"A person is retrieved"
         createFrankAndBob()
-        def frank = personRepository.findByName("Frank").blockingGet()
+        def frank = personRepository.findByName("Frank").block()
 
         then:"The person is present"
         frank != null
 
         when:"The person is updated"
-        def updated =personRepository.updatePerson(frank.id, "Jack").blockingGet()
+        def updated =personRepository.updatePerson(frank.id, "Jack").block()
 
         then:"the person is updated"
         updated == 1
-        personRepository.findByName("Frank").blockingGet() == null
-        personRepository.findByName("Jack").blockingGet() != null
+        personRepository.findByName("Frank").block() == null
+        personRepository.findByName("Jack").block() != null
 
         when:
-        def jack = personRepository.findByName("Jack").blockingGet()
+        def jack = personRepository.findByName("Jack").block()
         jack.setName("Joe")
-        jack = personRepository.update(jack).blockingGet()
+        jack = personRepository.update(jack).block()
 
         then:
         jack.name == 'Joe'
-        personRepository.findByName("Jack").blockingGet() == null
-        personRepository.findByName("Joe").blockingGet() != null
+        personRepository.findByName("Jack").block() == null
+        personRepository.findByName("Joe").block() != null
     }
 
     void "test delete all"() {
         when:"A new person is saved"
-        personRepository.save("Greg", 30).blockingGet()
-        personRepository.save("Groot", 300).blockingGet()
+        personRepository.save("Greg", 30).block()
+        personRepository.save("Groot", 300).block()
 
         then:"The count is 4"
-        personRepository.count().blockingGet() == 4
+        personRepository.count().block() == 4
 
         when:"batch delete occurs"
-        def deleted = personRepository.deleteByNameLike("G%").blockingGet()
+        def deleted = personRepository.deleteByNameLike("G%").block()
 
         then:"The count is back to 2 and it entries were deleted"
         deleted == 2
-        personRepository.count().blockingGet() == 2
+        personRepository.count().block() == 2
 
         when:"everything is deleted"
-        personRepository.deleteAll().blockingGet()
+        personRepository.deleteAll().block()
 
         then:"data is gone"
-        personRepository.count().blockingGet() == 0
+        personRepository.count().block() == 0
     }
 
     boolean skipOptimisticLockingTest() {
@@ -413,14 +414,14 @@ abstract class AbstractReactiveRepositorySpec extends Specification {
 
     void "test custom delete"() {
         given:
-        personRepository.deleteAll().blockingGet()
+        personRepository.deleteAll().block()
         savePersons(["Dennis", "Jeff", "James", "Dennis"])
 
         when:
-        def people = personRepository.findAll().toList().blockingGet()
+        def people = personRepository.findAll().collectList().block()
         people.findAll {it.name == "Dennis"}.forEach{ it.name = "DoNotDelete"}
-        def deleted = personRepository.deleteCustom(people).blockingGet()
-        people = personRepository.findAll().toList().blockingGet()
+        def deleted = personRepository.deleteCustom(people).block()
+        people = personRepository.findAll().collectList().block()
 
         then:
         deleted == 2
@@ -430,14 +431,14 @@ abstract class AbstractReactiveRepositorySpec extends Specification {
 
     void "test custom delete single"() {
         given:
-        personRepository.deleteAll().blockingGet()
+        personRepository.deleteAll().block()
         savePersons(["Dennis", "Jeff", "James", "Dennis"])
 
         when:
-        def people = personRepository.findAll().toList().blockingGet()
+        def people = personRepository.findAll().collectList().block()
         def jeff = people.find {it.name == "Jeff"}
-        def deleted = personRepository.deleteCustomSingle(jeff).blockingGet()
-        people = personRepository.findAll().toList().blockingGet()
+        def deleted = personRepository.deleteCustomSingle(jeff).block()
+        people = personRepository.findAll().collectList().block()
 
         then:
         deleted == 1
@@ -446,8 +447,8 @@ abstract class AbstractReactiveRepositorySpec extends Specification {
         when:
         def james = people.find {it.name == "James"}
         james.name = "DoNotDelete"
-        deleted = personRepository.deleteCustomSingle(james).blockingGet()
-        people = personRepository.findAll().toList().blockingGet()
+        deleted = personRepository.deleteCustomSingle(james).block()
+        people = personRepository.findAll().collectList().block()
 
         then:
         deleted == 0
@@ -456,14 +457,14 @@ abstract class AbstractReactiveRepositorySpec extends Specification {
 
     void "test custom delete single no entity"() {
         given:
-        personRepository.deleteAll().blockingGet()
+        personRepository.deleteAll().block()
         savePersons(["Dennis", "Jeff", "James", "Dennis"])
 
         when:
-        def people = personRepository.findAll().toList().blockingGet()
+        def people = personRepository.findAll().collectList().block()
         def jeff = people.find {it.name == "Jeff"}
-        def deleted = personRepository.deleteCustomSingleNoEntity(jeff.getName()).blockingGet()
-        people = personRepository.findAll().toList().blockingGet()
+        def deleted = personRepository.deleteCustomSingleNoEntity(jeff.getName()).block()
+        people = personRepository.findAll().collectList().block()
 
         then:
         deleted == 1
@@ -472,7 +473,7 @@ abstract class AbstractReactiveRepositorySpec extends Specification {
 
     void "test criteria" () {
         when:
-            personRepository.deleteAll().blockingGet()
+            personRepository.deleteAll().block()
             savePersons(["Jeff", "James"])
         then:
             personRepository.findOne(nameEquals("Jeff")).blockOptional().isPresent()
@@ -487,8 +488,8 @@ abstract class AbstractReactiveRepositorySpec extends Specification {
             personRepository.findAll(null as PredicateSpecification).collectList().block().size() == 2
             personRepository.findAll(null as QuerySpecification, Sort.of(Sort.Order.desc("name"))).collectList().block().size() == 2
             personRepository.findAll(null as PredicateSpecification, Sort.of(Sort.Order.desc("name"))).collectList().block().size() == 2
-            personRepository.findAll(null as QuerySpecification, Pageable.from(Sort.of(Sort.Order.desc("name")))).collectList().block().size() == 2
-            personRepository.findAll(null as PredicateSpecification, Pageable.from(Sort.of(Sort.Order.desc("name")))).collectList().block().size() == 2
+            personRepository.findAll(null as QuerySpecification, Pageable.from(Sort.of(Sort.Order.desc("name")))).block().getContent().size() == 2
+            personRepository.findAll(null as PredicateSpecification, Pageable.from(Sort.of(Sort.Order.desc("name")))).block().getContent().size() == 2
             personRepository.findAll(nameEquals("Jeff").or(nameEquals("Denis"))).collectList().block().size() == 1
             personRepository.findAll(nameEquals("Jeff").and(nameEquals("Denis"))).collectList().block().size() == 0
             personRepository.findAll(nameEquals("Jeff").and(nameEquals("Jeff"))).collectList().block().size() == 1
@@ -499,42 +500,42 @@ abstract class AbstractReactiveRepositorySpec extends Specification {
             personRepository.findAll(where(nameEquals("Jeff")).or(nameEquals("James"))).collectList().block().size() == 2
             personRepository.findAll(where(nameEquals("Jeff")).or(nameEquals("James")), Sort.of(Sort.Order.desc("name"))).collectList().block()[1].name == "James"
             personRepository.findAll(where(nameEquals("Jeff")).or(nameEquals("James")), Sort.of(Sort.Order.asc("name"))).collectList().block()[1].name == "Jeff"
-//        when:
-//            def unpaged = personRepository.findAll(nameEquals("Jeff").or(nameEquals("James")), Pageable.UNPAGED)
-//        then:
-//            unpaged.content.size() == 2
-//            unpaged.totalSize == 2
-//        when:
-//            def unpagedSortedDesc = personRepository.findAll(nameEquals("Jeff").or(nameEquals("James")), Pageable.UNPAGED.order(Sort.Order.desc("name")))
-//            def unpagedSortedAsc = personRepository.findAll(nameEquals("Jeff").or(nameEquals("James")), Pageable.UNPAGED.order(Sort.Order.asc("name")))
-//        then:
-//            unpagedSortedDesc.content.size() == 2
-//            unpagedSortedDesc.content[1].name == "James"
-//            unpagedSortedAsc.content.size() == 2
-//            unpagedSortedAsc.content[1].name == "Jeff"
-//        when:
-//            def paged = personRepository.findAll(nameEquals("Jeff").or(nameEquals("James")), Pageable.from(0, 1))
-//        then:
-//            paged.content.size() == 1
-//            paged.pageNumber == 0
-//            paged.totalPages == 2
-//            paged.totalSize == 2
-//        when:
-//            def pagedSortedDesc = personRepository.findAll(nameEquals("Jeff").or(nameEquals("James")), Pageable.from(0, 1).order(Sort.Order.desc("name")))
-//        then:
-//            pagedSortedDesc.content.size() == 1
-//            pagedSortedDesc.content[0].name == "Jeff"
-//            pagedSortedDesc.pageNumber == 0
-//            pagedSortedDesc.totalPages == 2
-//            pagedSortedDesc.totalSize == 2
-//        when:
-//            def pagedSortedAsc = personRepository.findAll(where(nameEquals("Jeff")).or(nameEquals("James")), Pageable.from(0, 1).order(Sort.Order.asc("name")))
-//        then:
-//            pagedSortedAsc.content.size() == 1
-//            pagedSortedAsc.content[0].name == "James"
-//            pagedSortedAsc.pageNumber == 0
-//            pagedSortedAsc.totalPages == 2
-//            pagedSortedAsc.totalSize == 2
+        when:
+            def unpaged = personRepository.findAll(nameEquals("Jeff").or(nameEquals("James")), Pageable.UNPAGED).block()
+        then:
+            unpaged.content.size() == 2
+            unpaged.totalSize == 2
+        when:
+            def unpagedSortedDesc = personRepository.findAll(nameEquals("Jeff").or(nameEquals("James")), Pageable.UNPAGED.order(Sort.Order.desc("name"))).block()
+            def unpagedSortedAsc = personRepository.findAll(nameEquals("Jeff").or(nameEquals("James")), Pageable.UNPAGED.order(Sort.Order.asc("name"))).block()
+        then:
+            unpagedSortedDesc.content.size() == 2
+            unpagedSortedDesc.content[1].name == "James"
+            unpagedSortedAsc.content.size() == 2
+            unpagedSortedAsc.content[1].name == "Jeff"
+        when:
+            def paged = personRepository.findAll(nameEquals("Jeff").or(nameEquals("James")), Pageable.from(0, 1)).block()
+        then:
+            paged.content.size() == 1
+            paged.pageNumber == 0
+            paged.totalPages == 2
+            paged.totalSize == 2
+        when:
+            def pagedSortedDesc = personRepository.findAll(nameEquals("Jeff").or(nameEquals("James")), Pageable.from(0, 1).order(Sort.Order.desc("name"))).block()
+        then:
+            pagedSortedDesc.content.size() == 1
+            pagedSortedDesc.content[0].name == "Jeff"
+            pagedSortedDesc.pageNumber == 0
+            pagedSortedDesc.totalPages == 2
+            pagedSortedDesc.totalSize == 2
+        when:
+            def pagedSortedAsc = personRepository.findAll(where(nameEquals("Jeff")).or(nameEquals("James")), Pageable.from(0, 1).order(Sort.Order.asc("name"))).block()
+        then:
+            pagedSortedAsc.content.size() == 1
+            pagedSortedAsc.content[0].name == "James"
+            pagedSortedAsc.pageNumber == 0
+            pagedSortedAsc.totalPages == 2
+            pagedSortedAsc.totalSize == 2
         when:
             def countAllByPredicateSpec = personRepository.count(nameEquals("Jeff").or(nameEquals("James"))).block()
         then:
@@ -559,14 +560,14 @@ abstract class AbstractReactiveRepositorySpec extends Specification {
             countAppByNullByQuerySpec == 2
         when:
             def deleted = personRepository.deleteAll(nameEquals("Jeff")).block()
-            def all = personRepository.findAll().toList().blockingGet()
+            def all = personRepository.findAll().collectList().block()
         then:
             deleted == 1
             all.size() == 1
             all[0].name == "James"
         when:
             deleted = personRepository.deleteAll(null as DeleteSpecification).block()
-            all = personRepository.findAll().toList().blockingGet()
+            all = personRepository.findAll().collectList().block()
         then:
             deleted == 1
             all.size() == 0
@@ -590,7 +591,122 @@ abstract class AbstractReactiveRepositorySpec extends Specification {
             personRepository.count(nameEquals("Xyz")).block() == 0
     }
 
+    def setupPersonsForPageableTest() {
+        personRepository.deleteAll().block()
+        List<Person> people = []
+        50.times { num ->
+            ('A'..'Z').each {
+                people << new Person(name: it * 5 + num)
+            }
+        }
+        personRepository.saveAll(people).collectList().block()
+    }
+
+    void "test pageable list"() {
+        given:
+            setupPersonsForPageableTest()
+        when: "All the people are count"
+            def count = personRepository.count().block()
+
+        then: "the count is correct"
+            count == 1300
+
+        when: "10 people are paged"
+            def pageable = Pageable.from(0, 10, Sort.of(Sort.Order.asc("id")))
+            Page<Person> page = personRepository.findAll(pageable).block()
+
+        then: "The data is correct"
+            page.content.size() == 10
+            page.content.every() { it instanceof Person }
+            page.content[0].name.startsWith("A")
+            page.content[1].name.startsWith("B")
+            page.totalSize == 1300
+            page.totalPages == 130
+            page.nextPageable().offset == 10
+            page.nextPageable().size == 10
+
+        when: "The next page is selected"
+            pageable = page.nextPageable()
+            page = personRepository.findAll(pageable).block()
+
+        then: "it is correct"
+            page.offset == 10
+            page.pageNumber == 1
+            page.content[0].name.startsWith("K")
+            page.content.size() == 10
+
+        when: "The previous page is selected"
+            pageable = page.previousPageable()
+            page = personRepository.findAll(pageable).block()
+
+        then: "it is correct"
+            page.offset == 0
+            page.pageNumber == 0
+            page.content[0].name.startsWith("A")
+            page.content.size() == 10
+    }
+
+    void "test pageable sort"() {
+        given:
+            setupPersonsForPageableTest()
+        when: "All the people are count"
+            def count = personRepository.count().block()
+
+        then: "the count is correct"
+            count == 1300
+
+        when: "10 people are paged"
+            Page<Person> page = personRepository.findAll(
+                    Pageable.from(0, 10)
+                            .order("name", Sort.Order.Direction.DESC)
+            ).block()
+
+        then: "The data is correct"
+            page.content.size() == 10
+            page.content.every() { it instanceof Person }
+            page.content[0].name.startsWith("Z")
+            page.content[1].name.startsWith("Z")
+            page.totalSize == 1300
+            page.totalPages == 130
+            page.nextPageable().offset == 10
+            page.nextPageable().size == 10
+
+        when: "The next page is selected"
+            page = personRepository.findAll(page.nextPageable()).block()
+
+        then: "it is correct"
+            page.offset == 10
+            page.pageNumber == 1
+            page.content[0].name.startsWith("Z")
+    }
+
+    void "test pageable findBy"() {
+        given:
+            setupPersonsForPageableTest()
+        when: "People are searched for"
+            def pageable = Pageable.from(0, 10)
+            Page<Person> page = personRepository.findByNameLike("A%", pageable).block()
+            Page<Person> page2 = personRepository.findPeople("A%", pageable).block()
+
+        then: "The page is correct"
+            page.offset == 0
+            page.pageNumber == 0
+            page.totalSize == 50
+            page2.totalSize == page.totalSize
+            page.content
+
+        when: "The next page is retrieved"
+            page = personRepository.findByNameLike("A%", page.nextPageable()).block()
+
+        then: "it is correct"
+            page.offset == 10
+            page.pageNumber == 1
+            page.totalSize == 50
+            page.nextPageable().offset == 20
+            page.nextPageable().number == 2
+    }
+
     protected void savePersons(List<String> names) {
-        personRepository.saveAll(names.collect { new Person(name: it) }).toList().blockingGet()
+        personRepository.saveAll(names.collect { new Person(name: it) }).collectList().block()
     }
 }

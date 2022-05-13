@@ -377,7 +377,9 @@ public interface FindersUtils {
         if (isFutureType(matchContext, returnType)) {
             throw new MatchFailedException("Async find page specification method is not supported!");
         } else if (isReactiveType(returnType)) {
-            throw new MatchFailedException("Reactive find page specification method is not supported!");
+            return typeAndInterceptorEntry(returnType.getType(),
+                    getInterceptorElement(matchContext, "io.micronaut.data.runtime.intercept.criteria.reactive.FindPageReactiveSpecificationInterceptor")
+            );
         }
         return typeAndInterceptorEntry(returnType.getType(),
                 getInterceptorElement(matchContext, "io.micronaut.data.runtime.intercept.criteria.FindPageSpecificationInterceptor")

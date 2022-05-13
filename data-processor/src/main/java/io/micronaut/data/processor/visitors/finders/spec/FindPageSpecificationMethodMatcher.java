@@ -22,6 +22,7 @@ import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.data.processor.visitors.finders.AbstractSpecificationMethodMatcher;
 import io.micronaut.data.processor.visitors.finders.FindersUtils;
 import io.micronaut.data.processor.visitors.finders.MethodMatchInfo;
+import io.micronaut.data.processor.visitors.finders.TypeUtils;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.MethodElement;
 import io.micronaut.inject.ast.ParameterElement;
@@ -52,14 +53,17 @@ public class FindPageSpecificationMethodMatcher extends AbstractSpecificationMet
     @Override
     protected MethodMatch match(MethodMatchContext matchContext, java.util.regex.Matcher matcher) {
         ClassElement returnType = matchContext.getReturnType();
+        if (TypeUtils.isReactiveOrFuture(returnType)) {
+            returnType = returnType.getFirstTypeArgument().orElseThrow(IllegalStateException::new);
+        }
         if ((returnType.isAssignable("org.springframework.data.domain.Page") || returnType.isAssignable("io.micronaut.data.model.Page"))
                 && areParametersValid(matchContext.getMethodElement())) {
             if (isFirstParameterMicronautDataQuerySpecification(matchContext.getMethodElement())) {
                 Map.Entry<ClassElement, ClassElement> e = FindersUtils.pickFindPageSpecInterceptor(matchContext, matchContext.getReturnType());
                 return mc -> new MethodMatchInfo(
                         DataMethod.OperationType.QUERY,
-                        mc.getReturnType(),
-                        getInterceptorElement(mc, "io.micronaut.data.runtime.intercept.criteria.FindPageSpecificationInterceptor")
+                        e.getKey(),
+                        e.getValue()
                 );
             }
             if (isFirstParameterSpringJpaSpecification(matchContext.getMethodElement())) {

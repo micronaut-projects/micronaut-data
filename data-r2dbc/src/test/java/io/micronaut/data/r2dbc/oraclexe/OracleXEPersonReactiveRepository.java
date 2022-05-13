@@ -20,8 +20,7 @@ import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.r2dbc.annotation.R2dbcRepository;
 import io.micronaut.data.tck.entities.Person;
 import io.micronaut.data.tck.repositories.PersonReactiveRepository;
-import io.reactivex.Completable;
-import io.reactivex.Single;
+import reactor.core.publisher.Mono;
 
 import java.util.List;
 
@@ -29,9 +28,9 @@ import java.util.List;
 public interface OracleXEPersonReactiveRepository extends PersonReactiveRepository {
 
     @Query("INSERT INTO person(id, name, age, enabled) VALUES (\"PERSON_SEQ\".nextval, :name, :age, 1)")
-    Single<Long> saveCustom(List<Person> people);
+    Mono<Long> saveCustom(List<Person> people);
 
     @Query("INSERT INTO person(id, name, age, enabled) VALUES (\"PERSON_SEQ\".nextval, :name, :age, 1)")
-    Single<Long> saveCustomSingle(Person people);
+    Mono<Long> saveCustomSingle(Person people);
 
 }
