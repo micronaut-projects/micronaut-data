@@ -24,6 +24,8 @@ import io.micronaut.inject.ast.MethodElement;
 import io.micronaut.inject.ast.ParameterElement;
 import io.micronaut.inject.visitor.VisitorContext;
 
+import java.util.Arrays;
+
 /**
  * Abstract superclass for specification methods.
  *
@@ -39,7 +41,7 @@ public abstract class AbstractSpecificationMethodMatcher extends AbstractPrefixP
      * @param prefixes The method prefixes to match
      */
     protected AbstractSpecificationMethodMatcher(String... prefixes) {
-        super(prefixes);
+        super(Arrays.asList(prefixes));
     }
 
     @Override

@@ -17,12 +17,12 @@ package io.micronaut.data.processor.visitors.finders;
 
 import io.micronaut.core.annotation.Experimental;
 import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 
-import java.util.Arrays;
 import java.util.Comparator;
+import java.util.List;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * The matcher based on a simple patter.
@@ -33,13 +33,14 @@ import java.util.regex.Pattern;
 @Experimental
 public abstract class AbstractPrefixPatternMethodMatcher implements MethodMatcher {
 
+    private static final Comparator<String> PREFIX_COMPARATOR = Comparator.comparingInt(String::length).thenComparing(String::compareTo).reversed();
+
     protected final Pattern pattern;
 
-    protected AbstractPrefixPatternMethodMatcher(@NonNull String... prefixes) {
-        if (ArrayUtils.isEmpty(prefixes)) {
+    protected AbstractPrefixPatternMethodMatcher(@NonNull List<String> prefixes) {
+        if (prefixes.isEmpty()) {
             throw new IllegalArgumentException("At least one prefix required");
         }
-        Arrays.sort(prefixes, Comparator.comparingInt(String::length).thenComparing(String::compareTo).reversed());
         this.pattern = computePattern(prefixes);
     }
 
@@ -57,13 +58,15 @@ public abstract class AbstractPrefixPatternMethodMatcher implements MethodMatche
      * Handle the match.
      *
      * @param matchContext The match context
-     * @param matcher      The matcher
+     * @param matcher The matcher
      * @return The method matcher
      */
     protected abstract MethodMatch match(MethodMatchContext matchContext, java.util.regex.Matcher matcher);
 
-    private static Pattern computePattern(String[] prefixes) {
-        String prefixPattern = String.join("|", prefixes);
+    private static Pattern computePattern(List<String> prefixes) {
+        String prefixPattern = prefixes.stream()
+                .sorted(PREFIX_COMPARATOR)
+                .collect(Collectors.joining("|"));
         return Pattern.compile("^((" + prefixPattern + ")(\\S*?))$");
     }
 

@@ -27,6 +27,8 @@ import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.ParameterElement;
 
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 import static io.micronaut.data.processor.visitors.finders.FindersUtils.getInterceptorElement;
@@ -39,7 +41,9 @@ import static io.micronaut.data.processor.visitors.finders.FindersUtils.getInter
  */
 public class SaveEntityMethodMatcher extends AbstractPrefixPatternMethodMatcher {
 
-    public static final String[] PREFIXES = {"save", "persist", "store", "insert"};
+    public static final List<String> PREFIXES = Collections.unmodifiableList(
+            Arrays.asList("save", "persist", "store", "insert")
+    );
 
     /**
      * The default constructor.
