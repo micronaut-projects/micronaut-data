@@ -612,7 +612,7 @@ abstract class AbstractReactiveRepositorySpec extends Specification {
             count == 1300
 
         when: "10 people are paged"
-            def pageable = Pageable.from(0, 10, Sort.of(Sort.Order.desc("name")))
+            def pageable = Pageable.from(0, 10, Sort.of(Sort.Order.asc("id")))
             Page<Person> page = personRepository.findAll(pageable).block()
 
         then: "The data is correct"
