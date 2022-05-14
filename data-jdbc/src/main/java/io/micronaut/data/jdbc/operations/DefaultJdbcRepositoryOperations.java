@@ -403,10 +403,9 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             if (isEntity || dtoProjection) {
                 SqlResultConsumer sqlMappingConsumer = preparedQuery.hasResultConsumer() ? preparedQuery.getParameterInRole(SqlResultConsumer.ROLE, SqlResultConsumer.class).orElse(null) : null;
                 SqlTypeMapper<ResultSet, R> mapper;
-                final RuntimePersistentEntity<R> persistentEntity = getEntity(resultType);
                 if (dtoProjection) {
                     mapper = new SqlDTOMapper<>(
-                            persistentEntity,
+                            getEntity(preparedQuery.getRootEntity()),
                             columnNameResultSetReader,
                             jsonCodec,
                             conversionService
@@ -414,7 +413,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                 } else {
                     Set<JoinPath> joinFetchPaths = preparedQuery.getJoinFetchPaths();
                     SqlResultEntityTypeMapper<ResultSet, R> entityTypeMapper = new SqlResultEntityTypeMapper<>(
-                            persistentEntity,
+                            getEntity(resultType),
                             columnNameResultSetReader,
                             joinFetchPaths,
                             jsonCodec,
