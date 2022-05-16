@@ -281,7 +281,7 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity impleme
     public List<String> getPersistentPropertyNames() {
         if (allPersistentPropertiesNames == null) {
             allPersistentPropertiesNames = Collections.unmodifiableList(
-                    Arrays.stream(persistentProperties)
+                    Arrays.stream(allPersistentProperties)
                             .filter(Objects::nonNull)
                             .map(RuntimePersistentProperty::getName)
                             .collect(Collectors.toList())
