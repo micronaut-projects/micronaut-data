@@ -18,17 +18,19 @@ package io.micronaut.data.tck.repositories;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Query;
+import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
-import io.micronaut.data.repository.async.AsyncCrudRepository;
+import io.micronaut.data.repository.async.AsyncPageableRepository;
 import io.micronaut.data.repository.jpa.async.AsyncJpaSpecificationExecutor;
 import io.micronaut.data.tck.entities.Person;
 import io.micronaut.data.tck.entities.PersonDto;
+import reactor.core.publisher.Mono;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
-public interface PersonAsyncRepository extends AsyncCrudRepository<Person, Long>, AsyncJpaSpecificationExecutor<Person> {
+public interface PersonAsyncRepository extends AsyncPageableRepository<Person, Long>, AsyncJpaSpecificationExecutor<Person> {
 
     CompletionStage<Person> save(String name, int age);
 
@@ -49,6 +51,12 @@ public interface PersonAsyncRepository extends AsyncCrudRepository<Person, Long>
     CompletableFuture<Long> deleteByNameLike(String name);
 
     CompletableFuture<List<Person>> findByNameLike(String name);
+
+    CompletableFuture<Page<Person>> findByNameLike(String name, Pageable pageable);
+
+    @Query(value = "select * from person person_ where person_.name like :n",
+            countQuery = "select count(*) from person person_ where person_.name like :n")
+    CompletableFuture<Page<Person>> findPeople(String n, Pageable pageable);
 
     @Query("SELECT MAX(id) FROM person WHERE id = -1")
     CompletableFuture<Long> getMaxId();

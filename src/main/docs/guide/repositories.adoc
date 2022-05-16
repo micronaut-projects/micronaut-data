@@ -20,14 +20,26 @@ The following table summarizes the repository interfaces that come with Micronau
 |api:data.repository.CrudRepository[]
 |Extends api:data.repository.GenericRepository[] and adds methods to perform CRUD
 
+|api:data.repository.PageableRepository[]
+|Extends api:data.repository.CrudRepository[] and adds methods for pagination
+
 |api:data.repository.async.AsyncCrudRepository[]
 |Extends api:data.repository.GenericRepository[] and adds methods for asynchronous CRUD execution
+
+|api:data.repository.async.AsyncPageableRepository[]
+|Extends api:data.repository.async.AsyncCrudRepository[] and adds methods for pagination
 
 |api:data.repository.reactive.ReactiveStreamsCrudRepository[]
 |Extends api:data.repository.GenericRepository[] and adds CRUD methods that return rs:Publisher[]
 
+|api:data.repository.reactive.ReactiveStreamsPageableRepository[]
+|Extends api:data.repository.reactive.ReactiveStreamsCrudRepository[] and adds methods for pagination
+
 |api:data.repository.reactive.ReactorCrudRepository[]
 |Extends api:data.repository.ReactiveStreamsCrudRepository[] and is using Reactor return types
+
+|api:data.repository.reactive.ReactorPageableRepository[]
+|Extends api:data.repository.reactive.ReactorCrudRepository[] and adds methods for pagination
 
 |api:data.repository.reactive.RxJavaCrudRepository[]
 |Extends api:data.repository.GenericRepository[] and adds CRUD methods that return RxJava 2 types
@@ -35,8 +47,8 @@ The following table summarizes the repository interfaces that come with Micronau
 |api:data.repository.kotlin.CoroutineCrudRepository[]
 |Extends api:data.repository.GenericRepository[] and is using Kotlin coroutines for reactive CRUD operations
 
-|api:data.repository.PageableRepository[]
-|Extends api:data.repository.CrudRepository[] and adds methods for pagination
+|api:data.repository.kotlin.CoroutinePageableCrudRepository[]
+|Extends api:data.repository.kotlin.CoroutineCrudRepository[] and adds methods for pagination
 |===
 
 Note that in addition to interfaces you can also define repositories as abstract classes:

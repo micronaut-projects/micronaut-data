@@ -375,7 +375,9 @@ public interface FindersUtils {
 
     static Map.Entry<ClassElement, ClassElement> pickFindPageSpecInterceptor(MethodMatchContext matchContext, ClassElement returnType) {
         if (isFutureType(matchContext, returnType)) {
-            throw new MatchFailedException("Async find page specification method is not supported!");
+            return typeAndInterceptorEntry(getAsyncType(matchContext, returnType),
+                    getInterceptorElement(matchContext, "io.micronaut.data.runtime.intercept.criteria.async.FindPageAsyncSpecificationInterceptor")
+            );
         } else if (isReactiveType(returnType)) {
             return typeAndInterceptorEntry(returnType.getType(),
                     getInterceptorElement(matchContext, "io.micronaut.data.runtime.intercept.criteria.reactive.FindPageReactiveSpecificationInterceptor")
@@ -403,7 +405,13 @@ public interface FindersUtils {
 
     static ClassElement getAsyncType(@NonNull MethodMatchContext matchContext,
                                      @NonNull ClassElement returnType) {
-        return matchContext.getMethodElement().isSuspend() ? returnType : returnType.getFirstTypeArgument().orElseThrow(IllegalStateException::new);
+        if (matchContext.getMethodElement().isSuspend()) {
+            if (returnType.getName().equals("kotlinx.coroutines.flow.Flow")) {
+                return returnType.getFirstTypeArgument().orElseThrow(IllegalStateException::new);
+            }
+            return returnType;
+        }
+        return returnType.getFirstTypeArgument().orElseThrow(IllegalStateException::new);
     }
 
     static Map.Entry<ClassElement, Class<? extends DataInterceptor>> typeAndInterceptorEntry(ClassElement type, Class<? extends DataInterceptor> interceptor) {

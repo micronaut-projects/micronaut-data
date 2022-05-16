@@ -3,6 +3,8 @@ package example
 import example.PersonRepository.Specifications.ageIsLessThan
 import example.PersonRepository.Specifications.nameEquals
 import example.PersonRepository.Specifications.setNewName
+import io.micronaut.data.model.Pageable
+import io.micronaut.data.model.Sort
 import jakarta.inject.Inject
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification.not
@@ -50,12 +52,15 @@ internal class PersonSuspendRepositorySpec {
         val countAgeLess20: Long = personRepository.count(ageIsLessThan(20))
         val countAgeLess30NotDenis: Long = personRepository.count(ageIsLessThan(30).and(not(nameEquals("Denis"))))
         val people = personRepository.findAll(PredicateSpecification.where(nameEquals("Denis").or(nameEquals("Josh")))).toList()
+        val countAgeLess30Page = personRepository.findAll(ageIsLessThan(30), Pageable.from(0,1, Sort.of(Sort.Order.asc("name"))))
         // end::find[]
         Assertions.assertNotNull(denis)
         Assertions.assertEquals(2, countAgeLess30)
         Assertions.assertEquals(1, countAgeLess20)
         Assertions.assertEquals(1, countAgeLess30NotDenis)
         Assertions.assertEquals(2, people.size)
+        Assertions.assertEquals(2, countAgeLess30Page.totalPages)
+        Assertions.assertEquals(1, countAgeLess30Page.content.size)
     }
 
     @Test
@@ -99,5 +104,17 @@ internal class PersonSuspendRepositorySpec {
         Assertions.assertEquals(2, all.size)
         Assertions.assertTrue(all.stream().anyMatch { p: Person -> p.name == "Steven" })
         Assertions.assertTrue(all.stream().anyMatch { p: Person -> p.name == "Josh" })
+    }
+
+    @Test
+    fun testPagination() = runBlocking {
+        val countAgeLess30Sorted = personRepository.findAll(ageIsLessThan(30), Sort.of(Sort.Order.asc("name"))).toList()
+        val countAgeLess30Page = personRepository.findAll(ageIsLessThan(30), Pageable.from(0,1, Sort.of(Sort.Order.asc("name"))))
+        Assertions.assertEquals(2, countAgeLess30Sorted.size)
+        Assertions.assertEquals("Denis", countAgeLess30Sorted[0].name)
+        Assertions.assertEquals("Josh", countAgeLess30Sorted[1].name)
+        Assertions.assertEquals(2, countAgeLess30Page.totalPages)
+        Assertions.assertEquals(1, countAgeLess30Page.content.size)
+        Assertions.assertEquals("Denis", countAgeLess30Page.content[0].name)
     }
 }
