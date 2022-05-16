@@ -158,6 +158,15 @@ implements <a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlTy
 <div class="block">Default constructor.</div>
 </td>
 </tr>
+<tr class="altColor">
+<td class="colOne"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlDTOMapper.html#SqlDTOMapper-io.micronaut.data.model.runtime.RuntimePersistentEntity-io.micronaut.data.model.runtime.RuntimePersistentEntity-io.micronaut.data.runtime.mapper.ResultReader-io.micronaut.http.codec.MediaTypeCodec-io.micronaut.data.runtime.convert.DataConversionService-">SqlDTOMapper</a></span>(<a href="../../../../../../io/micronaut/data/model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;<a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlDTOMapper.html" title="type parameter in SqlDTOMapper">T</a>&gt;&nbsp;persistentEntity,
+            <a href="../../../../../../io/micronaut/data/model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;?&gt;&nbsp;dtoEntity,
+            <a href="../../../../../../io/micronaut/data/runtime/mapper/ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a>&lt;<a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlDTOMapper.html" title="type parameter in SqlDTOMapper">S</a>,java.lang.String&gt;&nbsp;resultReader,
+            io.micronaut.http.codec.MediaTypeCodec&nbsp;jsonCodec,
+            <a href="../../../../../../io/micronaut/data/runtime/convert/DataConversionService.html" title="interface in io.micronaut.data.runtime.convert">DataConversionService</a>&lt;?&gt;&nbsp;conversionService)</code>
+<div class="block">Default constructor.</div>
+</td>
+</tr>
 </table>
 </li>
 </ul>
@@ -243,7 +252,7 @@ implements <a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlTy
 <a name="SqlDTOMapper-io.micronaut.data.model.runtime.RuntimePersistentEntity-io.micronaut.data.runtime.mapper.ResultReader-io.micronaut.http.codec.MediaTypeCodec-io.micronaut.data.runtime.convert.DataConversionService-">
 <!--   -->
 </a>
-<ul class="blockListLast">
+<ul class="blockList">
 <li class="blockList">
 <h4>SqlDTOMapper</h4>
 <pre>public&nbsp;SqlDTOMapper(<a href="../../../../../../io/micronaut/data/model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;<a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlDTOMapper.html" title="type parameter in SqlDTOMapper">T</a>&gt;&nbsp;persistentEntity,
@@ -254,6 +263,28 @@ implements <a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlTy
 <dl>
 <dt><span class="paramLabel">Parameters:</span></dt>
 <dd><code>persistentEntity</code> - The entity</dd>
+<dd><code>resultReader</code> - The result reader</dd>
+<dd><code>jsonCodec</code> - The json codec</dd>
+<dd><code>conversionService</code> - The conversion service</dd>
+</dl>
+</li>
+</ul>
+<a name="SqlDTOMapper-io.micronaut.data.model.runtime.RuntimePersistentEntity-io.micronaut.data.model.runtime.RuntimePersistentEntity-io.micronaut.data.runtime.mapper.ResultReader-io.micronaut.http.codec.MediaTypeCodec-io.micronaut.data.runtime.convert.DataConversionService-">
+<!--   -->
+</a>
+<ul class="blockListLast">
+<li class="blockList">
+<h4>SqlDTOMapper</h4>
+<pre>public&nbsp;SqlDTOMapper(<a href="../../../../../../io/micronaut/data/model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;<a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlDTOMapper.html" title="type parameter in SqlDTOMapper">T</a>&gt;&nbsp;persistentEntity,
+                    <a href="../../../../../../io/micronaut/data/model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;?&gt;&nbsp;dtoEntity,
+                    <a href="../../../../../../io/micronaut/data/runtime/mapper/ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a>&lt;<a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlDTOMapper.html" title="type parameter in SqlDTOMapper">S</a>,java.lang.String&gt;&nbsp;resultReader,
+                    io.micronaut.http.codec.MediaTypeCodec&nbsp;jsonCodec,
+                    <a href="../../../../../../io/micronaut/data/runtime/convert/DataConversionService.html" title="interface in io.micronaut.data.runtime.convert">DataConversionService</a>&lt;?&gt;&nbsp;conversionService)</pre>
+<div class="block">Default constructor.</div>
+<dl>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>persistentEntity</code> - The entity</dd>
+<dd><code>dtoEntity</code> - The DTO entity</dd>
 <dd><code>resultReader</code> - The result reader</dd>
 <dd><code>jsonCodec</code> - The json codec</dd>
 <dd><code>conversionService</code> - The conversion service</dd>
