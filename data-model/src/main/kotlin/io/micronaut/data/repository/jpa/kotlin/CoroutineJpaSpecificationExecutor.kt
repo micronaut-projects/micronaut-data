@@ -77,7 +77,7 @@ interface CoroutineJpaSpecificationExecutor<T> {
     fun findAll(spec: QuerySpecification<T>?, pageable: Pageable): Page<T>
 
     /**
-     * Returns a [Page] of entities matching the given [QuerySpecification].
+     * Returns a [Page] of entities matching the given [PredicateSpecification].
      *
      * @param spec     The query specification
      * @param pageable The pageable object

@@ -82,7 +82,7 @@ public interface ReactiveStreamsJpaSpecificationExecutor<T> {
     Publisher<Page<T>> findAll(@Nullable QuerySpecification<T> spec, Pageable pageable);
 
     /**
-     * Returns a {@link Page} of entities matching the given {@link QuerySpecification}.
+     * Returns a {@link Page} of entities matching the given {@link PredicateSpecification}.
      *
      * @param spec     The query specification
      * @param pageable The pageable object
