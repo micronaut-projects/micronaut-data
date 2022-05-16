@@ -21,6 +21,7 @@ changelog:
     - title: Dependency updates 🚀
       labels:
         - 'type: dependency-upgrade'
+        - 'dependency-upgrade'
     - title: Other Changes 💡
       labels:
         - "*"
