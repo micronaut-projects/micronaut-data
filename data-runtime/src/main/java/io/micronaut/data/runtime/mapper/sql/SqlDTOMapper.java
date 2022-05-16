@@ -57,6 +57,23 @@ public class SqlDTOMapper<T, S, R> extends DTOMapper<T, S, R> implements SqlType
         super(persistentEntity, resultReader, jsonCodec, conversionService);
     }
 
+    /**
+     * Default constructor.
+     *
+     * @param persistentEntity The entity
+     * @param dtoEntity        The DTO entity
+     * @param resultReader     The result reader
+     * @param jsonCodec        The json codec
+     * @param conversionService The conversion service
+     */
+    public SqlDTOMapper(RuntimePersistentEntity<T> persistentEntity,
+                        RuntimePersistentEntity<?> dtoEntity,
+                        ResultReader<S, String> resultReader,
+                        MediaTypeCodec jsonCodec,
+                        DataConversionService<?> conversionService) {
+        super(persistentEntity, dtoEntity, resultReader, jsonCodec, conversionService);
+    }
+
     @Override
     public boolean hasNext(S resultSet) {
         return getResultReader().next(resultSet);

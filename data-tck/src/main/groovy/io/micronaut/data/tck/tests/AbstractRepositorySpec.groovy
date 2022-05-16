@@ -187,8 +187,74 @@ abstract class AbstractRepositorySpec extends Specification {
         retrievedBook.offsetDateTime == book.offsetDateTime
         retrievedBook.dateCreated == book.dateCreated
         retrievedBook.dateUpdated == book.dateUpdated
+
         // stored as a DATE type without time
-//        retrievedBook.date == book.date
+//        retrievedBookProj.date == book.date
+        when:
+        def retrievedBookProj = basicTypeRepository.queryById(book.myId)
+
+        then:"The book is correct"
+        retrievedBookProj.uuid == book.uuid
+        retrievedBookProj.bigDecimal == book.bigDecimal
+        retrievedBookProj.byteArray == book.byteArray
+        retrievedBookProj.charSequence == book.charSequence
+        retrievedBookProj.charset == book.charset
+        retrievedBookProj.primitiveBoolean == book.primitiveBoolean
+        retrievedBookProj.primitiveByte == book.primitiveByte
+        retrievedBookProj.primitiveChar == book.primitiveChar
+        retrievedBookProj.primitiveDouble == book.primitiveDouble
+        retrievedBookProj.primitiveFloat == book.primitiveFloat
+        retrievedBookProj.primitiveInteger == book.primitiveInteger
+        retrievedBookProj.primitiveLong == book.primitiveLong
+        retrievedBookProj.primitiveShort == book.primitiveShort
+        retrievedBookProj.wrapperBoolean == book.wrapperBoolean
+        retrievedBookProj.wrapperByte == book.wrapperByte
+        retrievedBookProj.wrapperChar == book.wrapperChar
+        retrievedBookProj.wrapperDouble == book.wrapperDouble
+        retrievedBookProj.wrapperFloat == book.wrapperFloat
+        retrievedBookProj.wrapperInteger == book.wrapperInteger
+        retrievedBookProj.wrapperLong == book.wrapperLong
+        retrievedBookProj.uri == book.uri
+        retrievedBookProj.url == book.url
+        retrievedBookProj.instant == book.instant
+        retrievedBookProj.localDateTime == book.localDateTime
+        retrievedBookProj.zonedDateTime == book.zonedDateTime
+        retrievedBookProj.offsetDateTime == book.offsetDateTime
+        retrievedBookProj.dateCreated == book.dateCreated
+        retrievedBookProj.dateUpdated == book.dateUpdated
+
+        when:
+        retrievedBookProj = basicTypeRepository.findAllById(book.myId).iterator().next()
+
+        then:"The book is correct"
+        retrievedBookProj.uuid == book.uuid
+        retrievedBookProj.bigDecimal == book.bigDecimal
+        retrievedBookProj.byteArray == book.byteArray
+        retrievedBookProj.charSequence == book.charSequence
+        retrievedBookProj.charset == book.charset
+        retrievedBookProj.primitiveBoolean == book.primitiveBoolean
+        retrievedBookProj.primitiveByte == book.primitiveByte
+        retrievedBookProj.primitiveChar == book.primitiveChar
+        retrievedBookProj.primitiveDouble == book.primitiveDouble
+        retrievedBookProj.primitiveFloat == book.primitiveFloat
+        retrievedBookProj.primitiveInteger == book.primitiveInteger
+        retrievedBookProj.primitiveLong == book.primitiveLong
+        retrievedBookProj.primitiveShort == book.primitiveShort
+        retrievedBookProj.wrapperBoolean == book.wrapperBoolean
+        retrievedBookProj.wrapperByte == book.wrapperByte
+        retrievedBookProj.wrapperChar == book.wrapperChar
+        retrievedBookProj.wrapperDouble == book.wrapperDouble
+        retrievedBookProj.wrapperFloat == book.wrapperFloat
+        retrievedBookProj.wrapperInteger == book.wrapperInteger
+        retrievedBookProj.wrapperLong == book.wrapperLong
+        retrievedBookProj.uri == book.uri
+        retrievedBookProj.url == book.url
+        retrievedBookProj.instant == book.instant
+        retrievedBookProj.localDateTime == book.localDateTime
+        retrievedBookProj.zonedDateTime == book.zonedDateTime
+        retrievedBookProj.offsetDateTime == book.offsetDateTime
+        retrievedBookProj.dateCreated == book.dateCreated
+        retrievedBookProj.dateUpdated == book.dateUpdated
     }
 
     @IgnoreIf({ !jvm.isJava11Compatible() })

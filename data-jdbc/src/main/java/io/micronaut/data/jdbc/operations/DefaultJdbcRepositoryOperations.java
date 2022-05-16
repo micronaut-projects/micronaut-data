@@ -27,7 +27,9 @@ import io.micronaut.core.convert.ArgumentConversionContext;
 import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArgumentUtils;
+import io.micronaut.data.annotation.Query;
 import io.micronaut.data.exceptions.DataAccessException;
+import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.jdbc.config.DataJdbcConfiguration;
 import io.micronaut.data.jdbc.convert.JdbcConversionContext;
 import io.micronaut.data.jdbc.mapper.ColumnIndexResultSetReader;
@@ -403,10 +405,12 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             if (isEntity || dtoProjection) {
                 SqlResultConsumer sqlMappingConsumer = preparedQuery.hasResultConsumer() ? preparedQuery.getParameterInRole(SqlResultConsumer.ROLE, SqlResultConsumer.class).orElse(null) : null;
                 SqlTypeMapper<ResultSet, R> mapper;
-                final RuntimePersistentEntity<R> persistentEntity = getEntity(resultType);
+                RuntimePersistentEntity<T> persistentEntity = getEntity(preparedQuery.getRootEntity());
                 if (dtoProjection) {
+                    boolean isRawQuery = preparedQuery.getAnnotationMetadata().stringValue(Query.class, DataMethod.META_MEMBER_RAW_QUERY).isPresent();
                     mapper = new SqlDTOMapper<>(
                             persistentEntity,
+                            isRawQuery ? getEntity(preparedQuery.getResultType()) : persistentEntity,
                             columnNameResultSetReader,
                             jsonCodec,
                             conversionService
@@ -414,7 +418,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                 } else {
                     Set<JoinPath> joinFetchPaths = preparedQuery.getJoinFetchPaths();
                     SqlResultEntityTypeMapper<ResultSet, R> entityTypeMapper = new SqlResultEntityTypeMapper<>(
-                            persistentEntity,
+                            getEntity(resultType),
                             columnNameResultSetReader,
                             joinFetchPaths,
                             jsonCodec,
@@ -426,7 +430,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                                 }
                             },
                             conversionService);
-                    boolean onlySingleEndedJoins = isOnlySingleEndedJoins(getEntity(preparedQuery.getRootEntity()), joinFetchPaths);
+                    boolean onlySingleEndedJoins = isOnlySingleEndedJoins(persistentEntity, joinFetchPaths);
                     // Cannot stream ResultSet for "many" joined query
                     if (!onlySingleEndedJoins) {
                         try {
