@@ -1,4 +1,5 @@
 === Micronaut Data 3.4
+- New async, reactive and coroutines repositories to support pagination
 - Propagating synchronous transaction state in Kotlin's coroutines
 - R2DBC upgraded to `1.0.0.RELEASE`
 

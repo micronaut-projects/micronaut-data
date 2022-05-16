@@ -15,6 +15,8 @@
  */
 package io.micronaut.data.repository.jpa.kotlin
 
+import io.micronaut.data.model.Page
+import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
 import io.micronaut.data.repository.jpa.criteria.DeleteSpecification
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
@@ -64,6 +66,24 @@ interface CoroutineJpaSpecificationExecutor<T> {
      * @return found results
      */
     fun findAll(spec: PredicateSpecification<T>?): Flow<T>
+
+    /**
+     * Returns a [Page] of entities matching the given [QuerySpecification].
+     *
+     * @param spec     The query specification
+     * @param pageable The pageable object
+     * @return a page
+     */
+    fun findAll(spec: QuerySpecification<T>?, pageable: Pageable): Page<T>
+
+    /**
+     * Returns a [Page] of entities matching the given [PredicateSpecification].
+     *
+     * @param spec     The query specification
+     * @param pageable The pageable object
+     * @return a page
+     */
+    fun findAll(spec: PredicateSpecification<T>?, pageable: Pageable): Page<T>
 
     /**
      * Returns all entities matching the given [QuerySpecification] and [Sort].

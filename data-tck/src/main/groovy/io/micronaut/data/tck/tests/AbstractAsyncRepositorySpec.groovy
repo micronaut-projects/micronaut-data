@@ -17,6 +17,7 @@ package io.micronaut.data.tck.tests
 
 import io.micronaut.context.ApplicationContext
 import io.micronaut.data.exceptions.EmptyResultException
+import io.micronaut.data.model.Page
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
 import io.micronaut.data.repository.jpa.criteria.DeleteSpecification
@@ -425,42 +426,42 @@ abstract class AbstractAsyncRepositorySpec extends Specification {
             personRepository.findAll(where(nameEquals("Jeff")).or(nameEquals("James"))).get().size() == 2
             personRepository.findAll(where(nameEquals("Jeff")).or(nameEquals("James")), Sort.of(Sort.Order.desc("name"))).get()[1].name == "James"
             personRepository.findAll(where(nameEquals("Jeff")).or(nameEquals("James")), Sort.of(Sort.Order.asc("name"))).get()[1].name == "Jeff"
-//        when:
-//            def unpaged = personRepository.findAll(nameEquals("Jeff").or(nameEquals("James")), Pageable.UNPAGED)
-//        then:
-//            unpaged.content.size() == 2
-//            unpaged.totalSize == 2
-//        when:
-//            def unpagedSortedDesc = personRepository.findAll(nameEquals("Jeff").or(nameEquals("James")), Pageable.UNPAGED.order(Sort.Order.desc("name")))
-//            def unpagedSortedAsc = personRepository.findAll(nameEquals("Jeff").or(nameEquals("James")), Pageable.UNPAGED.order(Sort.Order.asc("name")))
-//        then:
-//            unpagedSortedDesc.content.size() == 2
-//            unpagedSortedDesc.content[1].name == "James"
-//            unpagedSortedAsc.content.size() == 2
-//            unpagedSortedAsc.content[1].name == "Jeff"
-//        when:
-//            def paged = personRepository.findAll(nameEquals("Jeff").or(nameEquals("James")), Pageable.from(0, 1))
-//        then:
-//            paged.content.size() == 1
-//            paged.pageNumber == 0
-//            paged.totalPages == 2
-//            paged.totalSize == 2
-//        when:
-//            def pagedSortedDesc = personRepository.findAll(nameEquals("Jeff").or(nameEquals("James")), Pageable.from(0, 1).order(Sort.Order.desc("name")))
-//        then:
-//            pagedSortedDesc.content.size() == 1
-//            pagedSortedDesc.content[0].name == "Jeff"
-//            pagedSortedDesc.pageNumber == 0
-//            pagedSortedDesc.totalPages == 2
-//            pagedSortedDesc.totalSize == 2
-//        when:
-//            def pagedSortedAsc = personRepository.findAll(where(nameEquals("Jeff")).or(nameEquals("James")), Pageable.from(0, 1).order(Sort.Order.asc("name")))
-//        then:
-//            pagedSortedAsc.content.size() == 1
-//            pagedSortedAsc.content[0].name == "James"
-//            pagedSortedAsc.pageNumber == 0
-//            pagedSortedAsc.totalPages == 2
-//            pagedSortedAsc.totalSize == 2
+        when:
+            def unpaged = personRepository.findAll(nameEquals("Jeff").or(nameEquals("James")), Pageable.UNPAGED).get()
+        then:
+            unpaged.content.size() == 2
+            unpaged.totalSize == 2
+        when:
+            def unpagedSortedDesc = personRepository.findAll(nameEquals("Jeff").or(nameEquals("James")), Pageable.UNPAGED.order(Sort.Order.desc("name"))).get()
+            def unpagedSortedAsc = personRepository.findAll(nameEquals("Jeff").or(nameEquals("James")), Pageable.UNPAGED.order(Sort.Order.asc("name"))).get()
+        then:
+            unpagedSortedDesc.content.size() == 2
+            unpagedSortedDesc.content[1].name == "James"
+            unpagedSortedAsc.content.size() == 2
+            unpagedSortedAsc.content[1].name == "Jeff"
+        when:
+            def paged = personRepository.findAll(nameEquals("Jeff").or(nameEquals("James")), Pageable.from(0, 1)).get()
+        then:
+            paged.content.size() == 1
+            paged.pageNumber == 0
+            paged.totalPages == 2
+            paged.totalSize == 2
+        when:
+            def pagedSortedDesc = personRepository.findAll(nameEquals("Jeff").or(nameEquals("James")), Pageable.from(0, 1).order(Sort.Order.desc("name"))).get()
+        then:
+            pagedSortedDesc.content.size() == 1
+            pagedSortedDesc.content[0].name == "Jeff"
+            pagedSortedDesc.pageNumber == 0
+            pagedSortedDesc.totalPages == 2
+            pagedSortedDesc.totalSize == 2
+        when:
+            def pagedSortedAsc = personRepository.findAll(where(nameEquals("Jeff")).or(nameEquals("James")), Pageable.from(0, 1).order(Sort.Order.asc("name"))).get()
+        then:
+            pagedSortedAsc.content.size() == 1
+            pagedSortedAsc.content[0].name == "James"
+            pagedSortedAsc.pageNumber == 0
+            pagedSortedAsc.totalPages == 2
+            pagedSortedAsc.totalSize == 2
         when:
             def countAllByPredicateSpec = personRepository.count(nameEquals("Jeff").or(nameEquals("James"))).get()
         then:
@@ -514,6 +515,121 @@ abstract class AbstractAsyncRepositorySpec extends Specification {
         then:
             deleted == 1
             personRepository.count(nameEquals("Xyz")).get() == 0
+    }
+
+    def setupPersonsForPageableTest() {
+        personRepository.deleteAll().get()
+        List<Person> people = []
+        50.times { num ->
+            ('A'..'Z').each {
+                people << new Person(name: it * 5 + num)
+            }
+        }
+        personRepository.saveAll(people).get()
+    }
+
+    void "test pageable list"() {
+        given:
+            setupPersonsForPageableTest()
+        when: "All the people are count"
+            def count = personRepository.count().get()
+
+        then: "the count is correct"
+            count == 1300
+
+        when: "10 people are paged"
+            def pageable = Pageable.from(0, 10, Sort.of(Sort.Order.asc("id")))
+            Page<Person> page = personRepository.findAll(pageable).get()
+
+        then: "The data is correct"
+            page.content.size() == 10
+            page.content.every() { it instanceof Person }
+            page.content[0].name.startsWith("A")
+            page.content[1].name.startsWith("B")
+            page.totalSize == 1300
+            page.totalPages == 130
+            page.nextPageable().offset == 10
+            page.nextPageable().size == 10
+
+        when: "The next page is selected"
+            pageable = page.nextPageable()
+            page = personRepository.findAll(pageable).get()
+
+        then: "it is correct"
+            page.offset == 10
+            page.pageNumber == 1
+            page.content[0].name.startsWith("K")
+            page.content.size() == 10
+
+        when: "The previous page is selected"
+            pageable = page.previousPageable()
+            page = personRepository.findAll(pageable).get()
+
+        then: "it is correct"
+            page.offset == 0
+            page.pageNumber == 0
+            page.content[0].name.startsWith("A")
+            page.content.size() == 10
+    }
+
+    void "test pageable sort"() {
+        given:
+            setupPersonsForPageableTest()
+        when: "All the people are count"
+            def count = personRepository.count().get()
+
+        then: "the count is correct"
+            count == 1300
+
+        when: "10 people are paged"
+            Page<Person> page = personRepository.findAll(
+                    Pageable.from(0, 10)
+                            .order("name", Sort.Order.Direction.DESC)
+            ).get()
+
+        then: "The data is correct"
+            page.content.size() == 10
+            page.content.every() { it instanceof Person }
+            page.content[0].name.startsWith("Z")
+            page.content[1].name.startsWith("Z")
+            page.totalSize == 1300
+            page.totalPages == 130
+            page.nextPageable().offset == 10
+            page.nextPageable().size == 10
+
+        when: "The next page is selected"
+            page = personRepository.findAll(page.nextPageable()).get()
+
+        then: "it is correct"
+            page.offset == 10
+            page.pageNumber == 1
+            page.content[0].name.startsWith("Z")
+    }
+
+    void "test pageable findBy"() {
+        given:
+            setupPersonsForPageableTest()
+        when: "People are searched for"
+            def pageable = Pageable.from(0, 10)
+            Page<Person> page = personRepository.findByNameLike("A%", pageable).get()
+            Page<Person> page2 = personRepository.findPeople("A%", pageable).get()
+
+        then: "The page is correct"
+            page.offset == 0
+            page.pageNumber == 0
+            page.totalSize == 50
+            page2.totalSize == page.totalSize
+            page.content
+
+        when: "The next page is retrieved"
+            page = personRepository.findByNameLike("A%", page.nextPageable()).get()
+
+        then: "it is correct"
+            page.offset == 10
+            page.pageNumber == 1
+            page.totalSize == 50
+            page.nextPageable().offset == 20
+            page.nextPageable().number == 2
     }
 
     protected void savePersons(List<String> names) {
