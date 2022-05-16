@@ -40,6 +40,7 @@ import io.micronaut.http.codec.MediaTypeCodec;
 public class DTOMapper<T, S, R> implements BeanIntrospectionMapper<S, R> {
 
     private final RuntimePersistentEntity<T> persistentEntity;
+    private final RuntimePersistentEntity<?> dtoEntity;
     private final ResultReader<S, String> resultReader;
     private final @Nullable MediaTypeCodec jsonCodec;
     private final DataConversionService<?> conversionService;
@@ -67,10 +68,27 @@ public class DTOMapper<T, S, R> implements BeanIntrospectionMapper<S, R> {
                      ResultReader<S, String> resultReader,
                      @Nullable MediaTypeCodec jsonCodec,
                      DataConversionService<?> conversionService) {
+        this(persistentEntity, persistentEntity, resultReader, jsonCodec, conversionService);
+    }
+
+    /**
+     * Default constructor.
+     * @param persistentEntity The entity
+     * @param dtoEntity The dto entity
+     * @param resultReader The result reader
+     * @param jsonCodec The JSON codec
+     * @param conversionService
+     */
+    public DTOMapper(RuntimePersistentEntity<T> persistentEntity,
+                     RuntimePersistentEntity<?> dtoEntity,
+                     ResultReader<S, String> resultReader,
+                     @Nullable MediaTypeCodec jsonCodec,
+                     DataConversionService<?> conversionService) {
         this.conversionService = conversionService;
         ArgumentUtils.requireNonNull("persistentEntity", persistentEntity);
         ArgumentUtils.requireNonNull("resultReader", resultReader);
         this.persistentEntity = persistentEntity;
+        this.dtoEntity = dtoEntity;
         this.resultReader = resultReader;
         this.jsonCodec = jsonCodec;
     }
@@ -83,12 +101,15 @@ public class DTOMapper<T, S, R> implements BeanIntrospectionMapper<S, R> {
     @Nullable
     @Override
     public Object read(@NonNull S object, @NonNull String name) throws ConversionErrorException {
-        RuntimePersistentProperty<T> pp = persistentEntity.getPropertyByName(name);
-        if (pp == null) {
+        RuntimePersistentProperty<?> pp = persistentEntity.getPropertyByName(name);
+        if (pp == null && persistentEntity == dtoEntity) {
             throw new DataAccessException("DTO projection defines a property [" + name + "] that doesn't exist on root entity: " + persistentEntity.getName());
-        } else {
-            return read(object, pp);
         }
+        pp = dtoEntity.getPropertyByName(name);
+        if (pp == null) {
+            throw new DataAccessException("DTO projection doesn't defines a property [" + name + "] on DTO entity: " + dtoEntity.getName());
+        }
+        return read(object, pp);
     }
 
     @Nullable
@@ -111,7 +132,7 @@ public class DTOMapper<T, S, R> implements BeanIntrospectionMapper<S, R> {
      * @param property THe property
      * @return The result
      */
-    public @Nullable Object read(@NonNull S resultSet, @NonNull RuntimePersistentProperty<T> property) {
+    public @Nullable Object read(@NonNull S resultSet, @NonNull RuntimePersistentProperty<?> property) {
         String propertyName = property.getPersistedName();
         DataType dataType = property.getDataType();
         if (dataType == DataType.JSON && jsonCodec != null) {

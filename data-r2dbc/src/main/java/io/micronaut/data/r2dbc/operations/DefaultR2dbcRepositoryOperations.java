@@ -29,8 +29,10 @@ import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.convert.ArgumentConversionContext;
 import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.core.type.Argument;
+import io.micronaut.data.annotation.Query;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.exceptions.NonUniqueResultException;
+import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.query.JoinPath;
@@ -589,9 +591,12 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                         .flatMap(r -> {
                             if (isEntity || dtoProjection) {
                                 TypeMapper<Row, R> mapper;
+                                RuntimePersistentEntity<T> persistentEntity = getEntity(preparedQuery.getRootEntity());
                                 if (dtoProjection) {
+                                    boolean isRawQuery = preparedQuery.getAnnotationMetadata().stringValue(Query.class, DataMethod.META_MEMBER_RAW_QUERY).isPresent();
                                     mapper = new SqlDTOMapper<>(
-                                            getEntity(preparedQuery.getRootEntity()),
+                                            persistentEntity,
+                                            isRawQuery ? getEntity(preparedQuery.getResultType()) : persistentEntity,
                                             columnNameResultSetReader,
                                             jsonCodec,
                                             conversionService
@@ -611,7 +616,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                                                 }
                                             },
                                             conversionService);
-                                    boolean onlySingleEndedJoins = isOnlySingleEndedJoins(getEntity(preparedQuery.getRootEntity()), joinFetchPaths);
+                                    boolean onlySingleEndedJoins = isOnlySingleEndedJoins(persistentEntity, joinFetchPaths);
                                     // Cannot stream ResultSet for "many" joined query
                                     if (!onlySingleEndedJoins) {
                                         SqlResultEntityTypeMapper.PushingMapper<Row, List<R>> manyReader = entityTypeMapper.readAllWithJoins();
