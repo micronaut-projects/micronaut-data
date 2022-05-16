@@ -498,6 +498,9 @@ fun testAnnotationMetadata() {
 <div class="ulist">
 <ul>
 <li>
+<p>New async, reactive and coroutines repositories to support pagination</p>
+</li>
+<li>
 <p>Propagating synchronous transaction state in Kotlin&#8217;s coroutines</p>
 </li>
 <li>
@@ -1181,16 +1184,32 @@ Lombok plugins like the Gradle plugin <code>io.franzbecker.gradle-lombok</code> 
 <td class="tableblock halign-left valign-top"><p class="tableblock">Extends <a href="../api/io/micronaut/data/repository/GenericRepository.html">GenericRepository</a> and adds methods to perform CRUD</p></td>
 </tr>
 <tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/repository/PageableRepository.html">PageableRepository</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Extends <a href="../api/io/micronaut/data/repository/CrudRepository.html">CrudRepository</a> and adds methods for pagination</p></td>
+</tr>
+<tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/repository/async/AsyncCrudRepository.html">AsyncCrudRepository</a></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Extends <a href="../api/io/micronaut/data/repository/GenericRepository.html">GenericRepository</a> and adds methods for asynchronous CRUD execution</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/repository/async/AsyncPageableRepository.html">AsyncPageableRepository</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Extends <a href="../api/io/micronaut/data/repository/async/AsyncCrudRepository.html">AsyncCrudRepository</a> and adds methods for pagination</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/repository/reactive/ReactiveStreamsCrudRepository.html">ReactiveStreamsCrudRepository</a></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Extends <a href="../api/io/micronaut/data/repository/GenericRepository.html">GenericRepository</a> and adds CRUD methods that return <a href="https://www.reactive-streams.org/reactive-streams-1.0.3-javadoc/org/reactivestreams/Publisher.html">Publisher</a></p></td>
 </tr>
 <tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/repository/reactive/ReactiveStreamsPageableRepository.html">ReactiveStreamsPageableRepository</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Extends <a href="../api/io/micronaut/data/repository/reactive/ReactiveStreamsCrudRepository.html">ReactiveStreamsCrudRepository</a> and adds methods for pagination</p></td>
+</tr>
+<tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/repository/reactive/ReactorCrudRepository.html">ReactorCrudRepository</a></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Extends <a href="../api/io/micronaut/data/repository/ReactiveStreamsCrudRepository.html">ReactiveStreamsCrudRepository</a> and is using Reactor return types</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/repository/reactive/ReactorPageableRepository.html">ReactorPageableRepository</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Extends <a href="../api/io/micronaut/data/repository/reactive/ReactorCrudRepository.html">ReactorCrudRepository</a> and adds methods for pagination</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/repository/reactive/RxJavaCrudRepository.html">RxJavaCrudRepository</a></p></td>
@@ -1201,8 +1220,8 @@ Lombok plugins like the Gradle plugin <code>io.franzbecker.gradle-lombok</code> 
 <td class="tableblock halign-left valign-top"><p class="tableblock">Extends <a href="../api/io/micronaut/data/repository/GenericRepository.html">GenericRepository</a> and is using Kotlin coroutines for reactive CRUD operations</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/repository/PageableRepository.html">PageableRepository</a></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Extends <a href="../api/io/micronaut/data/repository/CrudRepository.html">CrudRepository</a> and adds methods for pagination</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/repository/kotlin/CoroutinePageableCrudRepository.html">CoroutinePageableCrudRepository</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Extends <a href="../api/io/micronaut/data/repository/kotlin/CoroutineCrudRepository.html">CoroutineCrudRepository</a> and adds methods for pagination</p></td>
 </tr>
 </tbody>
 </table>

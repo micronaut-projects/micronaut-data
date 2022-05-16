@@ -803,6 +803,10 @@
 </dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/intercept/criteria/async/AbstractAsyncSpecificationInterceptor.html#asyncOperations">asyncOperations</a></span> - Variable in class io.micronaut.data.runtime.intercept.criteria.async.<a href="io/micronaut/data/runtime/intercept/criteria/async/AbstractAsyncSpecificationInterceptor.html" title="class in io.micronaut.data.runtime.intercept.criteria.async">AbstractAsyncSpecificationInterceptor</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/repository/async/AsyncPageableRepository.html" title="interface in io.micronaut.data.repository.async"><span class="typeNameLink">AsyncPageableRepository</span></a>&lt;<a href="io/micronaut/data/repository/async/AsyncPageableRepository.html" title="type parameter in AsyncPageableRepository">E</a>,<a href="io/micronaut/data/repository/async/AsyncPageableRepository.html" title="type parameter in AsyncPageableRepository">ID</a>&gt; - Interface in <a href="io/micronaut/data/repository/async/package-summary.html">io.micronaut.data.repository.async</a></dt>
+<dd>
+<div class="block">A repository that supports pagination.</div>
+</dd>
 <dt><a href="io/micronaut/data/operations/async/AsyncRepositoryOperations.html" title="interface in io.micronaut.data.operations.async"><span class="typeNameLink">AsyncRepositoryOperations</span></a> - Interface in <a href="io/micronaut/data/operations/async/package-summary.html">io.micronaut.data.operations.async</a></dt>
 <dd>
 <div class="block">Asynchronous operations for reading data from a backing implementations.</div>
@@ -3893,6 +3897,14 @@
 <dd>
 <div class="block">Returns all instances of the type.</div>
 </dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/repository/async/AsyncPageableRepository.html#findAll-io.micronaut.data.model.Sort-">findAll(Sort)</a></span> - Method in interface io.micronaut.data.repository.async.<a href="io/micronaut/data/repository/async/AsyncPageableRepository.html" title="interface in io.micronaut.data.repository.async">AsyncPageableRepository</a></dt>
+<dd>
+<div class="block">Find all results for the given sort order.</div>
+</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/repository/async/AsyncPageableRepository.html#findAll-io.micronaut.data.model.Pageable-">findAll(Pageable)</a></span> - Method in interface io.micronaut.data.repository.async.<a href="io/micronaut/data/repository/async/AsyncPageableRepository.html" title="interface in io.micronaut.data.repository.async">AsyncPageableRepository</a></dt>
+<dd>
+<div class="block">Finds all records for the given pageable.</div>
+</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/repository/CrudRepository.html#findAll--">findAll()</a></span> - Method in interface io.micronaut.data.repository.<a href="io/micronaut/data/repository/CrudRepository.html" title="interface in io.micronaut.data.repository">CrudRepository</a></dt>
 <dd>
 <div class="block">Returns all instances of the type.</div>
@@ -3904,6 +3916,14 @@
 <dt><span class="memberNameLink"><a href="io/micronaut/data/repository/jpa/async/AsyncJpaSpecificationExecutor.html#findAll-io.micronaut.data.repository.jpa.criteria.PredicateSpecification-">findAll(PredicateSpecification&lt;T&gt;)</a></span> - Method in interface io.micronaut.data.repository.jpa.async.<a href="io/micronaut/data/repository/jpa/async/AsyncJpaSpecificationExecutor.html" title="interface in io.micronaut.data.repository.jpa.async">AsyncJpaSpecificationExecutor</a></dt>
 <dd>
 <div class="block">Returns all entities matching the given <a href="io/micronaut/data/repository/jpa/criteria/PredicateSpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria"><code>PredicateSpecification</code></a>.</div>
+</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/repository/jpa/async/AsyncJpaSpecificationExecutor.html#findAll-io.micronaut.data.repository.jpa.criteria.QuerySpecification-io.micronaut.data.model.Pageable-">findAll(QuerySpecification&lt;T&gt;, Pageable)</a></span> - Method in interface io.micronaut.data.repository.jpa.async.<a href="io/micronaut/data/repository/jpa/async/AsyncJpaSpecificationExecutor.html" title="interface in io.micronaut.data.repository.jpa.async">AsyncJpaSpecificationExecutor</a></dt>
+<dd>
+<div class="block">Returns a <a href="io/micronaut/data/model/Page.html" title="interface in io.micronaut.data.model"><code>Page</code></a> of entities matching the given <a href="io/micronaut/data/repository/jpa/criteria/QuerySpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria"><code>QuerySpecification</code></a>.</div>
+</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/repository/jpa/async/AsyncJpaSpecificationExecutor.html#findAll-io.micronaut.data.repository.jpa.criteria.PredicateSpecification-io.micronaut.data.model.Pageable-">findAll(PredicateSpecification&lt;T&gt;, Pageable)</a></span> - Method in interface io.micronaut.data.repository.jpa.async.<a href="io/micronaut/data/repository/jpa/async/AsyncJpaSpecificationExecutor.html" title="interface in io.micronaut.data.repository.jpa.async">AsyncJpaSpecificationExecutor</a></dt>
+<dd>
+<div class="block">Returns a <a href="io/micronaut/data/model/Page.html" title="interface in io.micronaut.data.model"><code>Page</code></a> of entities matching the given <a href="io/micronaut/data/repository/jpa/criteria/PredicateSpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria"><code>PredicateSpecification</code></a>.</div>
 </dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/repository/jpa/async/AsyncJpaSpecificationExecutor.html#findAll-io.micronaut.data.repository.jpa.criteria.QuerySpecification-io.micronaut.data.model.Sort-">findAll(QuerySpecification&lt;T&gt;, Sort)</a></span> - Method in interface io.micronaut.data.repository.jpa.async.<a href="io/micronaut/data/repository/jpa/async/AsyncJpaSpecificationExecutor.html" title="interface in io.micronaut.data.repository.jpa.async">AsyncJpaSpecificationExecutor</a></dt>
 <dd>
@@ -3951,7 +3971,7 @@
 </dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/repository/jpa/reactive/ReactiveStreamsJpaSpecificationExecutor.html#findAll-io.micronaut.data.repository.jpa.criteria.PredicateSpecification-io.micronaut.data.model.Pageable-">findAll(PredicateSpecification&lt;T&gt;, Pageable)</a></span> - Method in interface io.micronaut.data.repository.jpa.reactive.<a href="io/micronaut/data/repository/jpa/reactive/ReactiveStreamsJpaSpecificationExecutor.html" title="interface in io.micronaut.data.repository.jpa.reactive">ReactiveStreamsJpaSpecificationExecutor</a></dt>
 <dd>
-<div class="block">Returns a <a href="io/micronaut/data/model/Page.html" title="interface in io.micronaut.data.model"><code>Page</code></a> of entities matching the given <a href="io/micronaut/data/repository/jpa/criteria/QuerySpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria"><code>QuerySpecification</code></a>.</div>
+<div class="block">Returns a <a href="io/micronaut/data/model/Page.html" title="interface in io.micronaut.data.model"><code>Page</code></a> of entities matching the given <a href="io/micronaut/data/repository/jpa/criteria/PredicateSpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria"><code>PredicateSpecification</code></a>.</div>
 </dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/repository/jpa/reactive/ReactiveStreamsJpaSpecificationExecutor.html#findAll-io.micronaut.data.repository.jpa.criteria.QuerySpecification-io.micronaut.data.model.Sort-">findAll(QuerySpecification&lt;T&gt;, Sort)</a></span> - Method in interface io.micronaut.data.repository.jpa.reactive.<a href="io/micronaut/data/repository/jpa/reactive/ReactiveStreamsJpaSpecificationExecutor.html" title="interface in io.micronaut.data.repository.jpa.reactive">ReactiveStreamsJpaSpecificationExecutor</a></dt>
 <dd>
@@ -4384,6 +4404,14 @@
 <dt><a href="io/micronaut/data/intercept/async/FindPageAsyncInterceptor.html" title="interface in io.micronaut.data.intercept.async"><span class="typeNameLink">FindPageAsyncInterceptor</span></a>&lt;<a href="io/micronaut/data/intercept/async/FindPageAsyncInterceptor.html" title="type parameter in FindPageAsyncInterceptor">T</a>&gt; - Interface in <a href="io/micronaut/data/intercept/async/package-summary.html">io.micronaut.data.intercept.async</a></dt>
 <dd>
 <div class="block">An interceptor that executes a query and returns a <a href="io/micronaut/data/model/Page.html" title="interface in io.micronaut.data.model"><code>Page</code></a> asynchronously.</div>
+</dd>
+<dt><a href="io/micronaut/data/runtime/intercept/criteria/async/FindPageAsyncSpecificationInterceptor.html" title="class in io.micronaut.data.runtime.intercept.criteria.async"><span class="typeNameLink">FindPageAsyncSpecificationInterceptor</span></a> - Class in <a href="io/micronaut/data/runtime/intercept/criteria/async/package-summary.html">io.micronaut.data.runtime.intercept.criteria.async</a></dt>
+<dd>
+<div class="block">Runtime implementation of <code>CompletableFuture&lt;Page&gt; find(Specification, Pageable)</code>.</div>
+</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/intercept/criteria/async/FindPageAsyncSpecificationInterceptor.html#FindPageAsyncSpecificationInterceptor-io.micronaut.data.operations.RepositoryOperations-">FindPageAsyncSpecificationInterceptor(RepositoryOperations)</a></span> - Constructor for class io.micronaut.data.runtime.intercept.criteria.async.<a href="io/micronaut/data/runtime/intercept/criteria/async/FindPageAsyncSpecificationInterceptor.html" title="class in io.micronaut.data.runtime.intercept.criteria.async">FindPageAsyncSpecificationInterceptor</a></dt>
+<dd>
+<div class="block">Default constructor.</div>
 </dd>
 <dt><a href="io/micronaut/data/intercept/FindPageInterceptor.html" title="interface in io.micronaut.data.intercept"><span class="typeNameLink">FindPageInterceptor</span></a>&lt;<a href="io/micronaut/data/intercept/FindPageInterceptor.html" title="type parameter in FindPageInterceptor">T</a>,<a href="io/micronaut/data/intercept/FindPageInterceptor.html" title="type parameter in FindPageInterceptor">R</a>&gt; - Interface in <a href="io/micronaut/data/intercept/package-summary.html">io.micronaut.data.intercept</a></dt>
 <dd>
@@ -7634,6 +7662,8 @@
 <dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/intercept/criteria/async/FindAllAsyncSpecificationInterceptor.html#intercept-io.micronaut.data.intercept.RepositoryMethodKey-io.micronaut.aop.MethodInvocationContext-">intercept(RepositoryMethodKey, MethodInvocationContext&lt;Object, Object&gt;)</a></span> - Method in class io.micronaut.data.runtime.intercept.criteria.async.<a href="io/micronaut/data/runtime/intercept/criteria/async/FindAllAsyncSpecificationInterceptor.html" title="class in io.micronaut.data.runtime.intercept.criteria.async">FindAllAsyncSpecificationInterceptor</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/intercept/criteria/async/FindOneAsyncSpecificationInterceptor.html#intercept-io.micronaut.data.intercept.RepositoryMethodKey-io.micronaut.aop.MethodInvocationContext-">intercept(RepositoryMethodKey, MethodInvocationContext&lt;Object, Object&gt;)</a></span> - Method in class io.micronaut.data.runtime.intercept.criteria.async.<a href="io/micronaut/data/runtime/intercept/criteria/async/FindOneAsyncSpecificationInterceptor.html" title="class in io.micronaut.data.runtime.intercept.criteria.async">FindOneAsyncSpecificationInterceptor</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/intercept/criteria/async/FindPageAsyncSpecificationInterceptor.html#intercept-io.micronaut.data.intercept.RepositoryMethodKey-io.micronaut.aop.MethodInvocationContext-">intercept(RepositoryMethodKey, MethodInvocationContext&lt;Object, Object&gt;)</a></span> - Method in class io.micronaut.data.runtime.intercept.criteria.async.<a href="io/micronaut/data/runtime/intercept/criteria/async/FindPageAsyncSpecificationInterceptor.html" title="class in io.micronaut.data.runtime.intercept.criteria.async">FindPageAsyncSpecificationInterceptor</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/intercept/criteria/async/UpdateAllAsyncSpecificationInterceptor.html#intercept-io.micronaut.data.intercept.RepositoryMethodKey-io.micronaut.aop.MethodInvocationContext-">intercept(RepositoryMethodKey, MethodInvocationContext&lt;Object, Object&gt;)</a></span> - Method in class io.micronaut.data.runtime.intercept.criteria.async.<a href="io/micronaut/data/runtime/intercept/criteria/async/UpdateAllAsyncSpecificationInterceptor.html" title="class in io.micronaut.data.runtime.intercept.criteria.async">UpdateAllAsyncSpecificationInterceptor</a></dt>
 <dd>&nbsp;</dd>
