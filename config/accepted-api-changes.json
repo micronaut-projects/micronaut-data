@@ -58,5 +58,25 @@
         "type": "io.micronaut.transaction.jdbc.DataSourceTransactionManager",
         "member": "Class io.micronaut.transaction.jdbc.DataSourceTransactionManager",
         "reason": "Internal method"
+    },
+    {
+    "type": "io.micronaut.data.processor.visitors.finders.AbstractPrefixPatternMethodMatcher",
+    "member": "Class io.micronaut.data.processor.visitors.finders.AbstractPrefixPatternMethodMatcher",
+    "reason": "Class is considered internal API"
+},
+    {
+        "type": "io.micronaut.data.processor.visitors.finders.AbstractPrefixPatternMethodMatcher",
+        "member": "Constructor io.micronaut.data.processor.visitors.finders.AbstractPrefixPatternMethodMatcher(java.lang.String[])",
+        "reason": "Class is considered internal API"
+    },
+    {
+        "type": "io.micronaut.data.processor.visitors.finders.SaveEntityMethodMatcher",
+        "member": "Class io.micronaut.data.processor.visitors.finders.SaveEntityMethodMatcher",
+        "reason": "Class is considered internal API"
+    },
+    {
+        "type": "io.micronaut.data.processor.visitors.finders.SaveEntityMethodMatcher",
+        "member": "Field PREFIXES",
+        "reason": "Class is considered internal API"
     }
 ]
