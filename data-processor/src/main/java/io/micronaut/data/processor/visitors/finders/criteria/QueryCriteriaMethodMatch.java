@@ -271,14 +271,14 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
     private List<SourcePersistentProperty> getDtoProjectionProperties(SourcePersistentEntity entity,
                                                                       ClassElement returnType) {
         return returnType.getBeanProperties().stream()
-                .filter(beanProperty -> {
-                    String propertyName = beanProperty.getName();
+                .filter(dtoProperty -> {
+                    String propertyName = dtoProperty.getName();
                     // ignore Groovy meta class
-                    return !"metaClass".equals(propertyName) || !beanProperty.getType().isAssignable("groovy.lang.MetaClass");
+                    return !"metaClass".equals(propertyName) || !dtoProperty.getType().isAssignable("groovy.lang.MetaClass");
                 })
-                .map(beanProperty -> {
-                    String propertyName = beanProperty.getName();
-                    if ("metaClass".equals(propertyName) && beanProperty.getType().isAssignable("groovy.lang.MetaClass")) {
+                .map(dtoProperty -> {
+                    String propertyName = dtoProperty.getName();
+                    if ("metaClass".equals(propertyName) && dtoProperty.getType().isAssignable("groovy.lang.MetaClass")) {
                         // ignore Groovy meta class
                         return null;
                     }
@@ -292,8 +292,13 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
                         throw new MatchFailedException("Property " + propertyName + " is not present in entity: " + entity.getName());
                     }
 
-                    if (!TypeUtils.areTypesCompatible(beanProperty.getType(), pp.getType())) {
-                        throw new MatchFailedException("Property [" + propertyName + "] of type [" + beanProperty.getType().getName() + "] is not compatible with equivalent property declared in entity: " + entity.getName());
+                    ClassElement dtoPropertyType = dtoProperty.getType();
+                    if (dtoPropertyType.getName().equals("java.lang.Object") || dtoPropertyType.getName().equals("java.lang.String")) {
+                        // Convert anything to a string or an object
+                        return pp;
+                    }
+                    if (!TypeUtils.areTypesCompatible(dtoPropertyType, pp.getType())) {
+                        throw new MatchFailedException("Property [" + propertyName + "] of type [" + dtoPropertyType.getName() + "] is not compatible with equivalent property of type [" + pp.getType().getName() + "] declared in entity: " + entity.getName());
                     }
                     return pp;
                 }).collect(Collectors.toList());

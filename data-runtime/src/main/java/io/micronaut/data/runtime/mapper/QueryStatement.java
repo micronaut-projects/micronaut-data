@@ -68,7 +68,7 @@ public interface QueryStatement<PS, IDX> {
                 if (value instanceof CharSequence) {
                     str = value.toString();
                 } else if (value instanceof Enum) {
-                    str = ((Enum<?>) value).name();
+                    str = value.toString();
                 } else {
                     str = convertRequired(value, String.class);
                 }
