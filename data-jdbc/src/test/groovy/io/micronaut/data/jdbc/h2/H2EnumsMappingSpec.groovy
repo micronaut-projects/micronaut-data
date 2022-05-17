@@ -46,7 +46,7 @@ class H2EnumsMappingSpec extends Specification implements H2TestPropertyProvider
 
     void 'test read lower case enum'() {
         when:
-        enumEntityRepository.insertValueExplicit("b", "B")
+        enumEntityRepository.insertValueExplicit("B", "b")
         def result = enumEntityRepository.findByAsString(MyEnum.B)
 
         then:
