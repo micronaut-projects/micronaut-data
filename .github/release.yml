@@ -22,6 +22,9 @@ changelog:
       labels:
         - 'type: dependency-upgrade'
         - 'dependency-upgrade'
+    - title: Regressions 🧐
+      label:
+        - 'type: regression'
     - title: Other Changes 💡
       labels:
         - "*"
