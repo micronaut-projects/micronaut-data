@@ -1,6 +1,7 @@
 package io.micronaut.data.jdbc.h2
 
 import io.micronaut.context.ApplicationContext
+import io.micronaut.core.annotation.Introspected
 import io.micronaut.data.annotation.GeneratedValue
 import io.micronaut.data.annotation.Id
 import io.micronaut.data.annotation.MappedEntity
@@ -14,12 +15,11 @@ import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
 import io.micronaut.data.repository.CrudRepository
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
+import jakarta.inject.Inject
 import spock.lang.AutoCleanup
-import spock.lang.PendingFeature
 import spock.lang.Shared
 import spock.lang.Specification
 
-import jakarta.inject.Inject
 import javax.persistence.Entity
 import javax.persistence.EnumType
 import javax.persistence.Enumerated
@@ -46,7 +46,7 @@ class H2EnumsMappingSpec extends Specification implements H2TestPropertyProvider
 
     void 'test read lower case enum'() {
         when:
-        enumEntityRepository.insertValueExplicit("b", "B")
+        enumEntityRepository.insertValueExplicit("B", "b")
         def result = enumEntityRepository.findByAsString(MyEnum.B)
 
         then:
@@ -68,6 +68,12 @@ class H2EnumsMappingSpec extends Specification implements H2TestPropertyProvider
             entity.asDefault == MyEnum.A
             entity.asString == MyEnum.B
             entity.asInt == MyEnum.C
+        when:
+            def dto = enumEntityRepository.queryById(entity.id)
+        then:
+            dto.asDefault == "a"
+            dto.asString == "b"
+            dto.asInt == 2
         when:
             int updated = enumEntityRepository.update(entity.id, MyEnum.D, MyEnum.E, MyEnum.F)
             entity = enumEntityRepository.findById(entity.id).get()
@@ -159,6 +165,8 @@ abstract class EnumEntityRepository implements CrudRepository<EnumEntity, Long> 
 
     abstract Optional<EnumEntity> find(MyEnum asDefault, MyEnum asString, MyEnum asInt)
 
+    abstract EnumEntityDto queryById(Long id)
+
 }
 
 @JdbcRepository(dialect = Dialect.H2)
@@ -183,6 +191,14 @@ class EnumEntity {
     MyEnum asInt
 }
 
+@Introspected
+class EnumEntityDto {
+
+    String asDefault
+    String asString
+    Object asInt
+}
+
 @Entity
 class JpaEnumEntity {
     @javax.persistence.Id
@@ -197,4 +213,9 @@ class JpaEnumEntity {
 
 enum MyEnum {
     A, B, C, D, E, F
+
+    @Override
+    String toString() {
+        return name().toLowerCase();
+    }
 }

@@ -119,7 +119,7 @@ class PersonDto {
 """)
         then:
         def e = thrown(RuntimeException)
-        e.message.contains('Property [name] of type [int] is not compatible with equivalent property declared in entity: io.micronaut.data.model.entities.Person')
+        e.message.contains('Property [name] of type [int] is not compatible with equivalent property of type [java.lang.String] declared in entity: io.micronaut.data.model.entities.Person')
     }
 
 
