@@ -25,6 +25,9 @@ changelog:
     - title: Regressions 🧐
       labels:
         - 'type: regression'
+    - title: GraalVM 🏆
+      labels:
+        - 'relates-to: graal'
     - title: Other Changes 💡
       labels:
         - "*"
