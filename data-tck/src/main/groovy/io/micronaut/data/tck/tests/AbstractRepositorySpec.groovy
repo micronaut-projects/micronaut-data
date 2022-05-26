@@ -1468,8 +1468,12 @@ abstract class AbstractRepositorySpec extends Specification {
         cleanupMeals()
     }
 
+    boolean testLockingForUpdate() {
+        return true
+    }
+
     void "test find one for update"() {
-        if (!transactionManager.isPresent()) {
+        if (!transactionManager.isPresent() || !testLockingForUpdate()) {
             return
         }
         given:
@@ -1491,7 +1495,7 @@ abstract class AbstractRepositorySpec extends Specification {
     }
 
     void "test find many for update"() {
-        if (!transactionManager.isPresent()) {
+        if (!transactionManager.isPresent() || !testLockingForUpdate()) {
             return
         }
 
@@ -1521,7 +1525,7 @@ abstract class AbstractRepositorySpec extends Specification {
     }
 
     void "test find for update locking"() {
-        if (!transactionManager.isPresent()) {
+        if (!transactionManager.isPresent() || !testLockingForUpdate()) {
             return
         }
 
@@ -1551,7 +1555,7 @@ abstract class AbstractRepositorySpec extends Specification {
     }
 
     void "test find for update locking with associations"() {
-        if (!transactionManager.isPresent()) {
+        if (!transactionManager.isPresent() || !testLockingForUpdate()) {
             return
         }
         given:

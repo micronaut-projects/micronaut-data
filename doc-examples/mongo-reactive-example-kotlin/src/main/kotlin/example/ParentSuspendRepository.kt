@@ -6,6 +6,7 @@ import io.micronaut.data.mongodb.annotation.MongoRepository
 import io.micronaut.data.repository.GenericRepository
 import org.bson.types.ObjectId
 import java.util.*
+import javax.transaction.Transactional
 
 @MongoRepository
 interface ParentSuspendRepository : GenericRepository<Parent, ObjectId> {
@@ -17,4 +18,6 @@ interface ParentSuspendRepository : GenericRepository<Parent, ObjectId> {
 
     suspend fun update(@NonNull entity: Parent): Parent
 
+    @Transactional(Transactional.TxType.MANDATORY)
+    suspend fun queryById(id: ObjectId): Optional<Parent>
 }

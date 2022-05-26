@@ -23,6 +23,7 @@ import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.data.tck.entities.Sale;
 import io.micronaut.data.tck.entities.SaleDTO;
 
+import javax.validation.constraints.NotNull;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;

@@ -17,8 +17,8 @@ package io.micronaut.transaction;
 
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
+import io.micronaut.transaction.support.ExceptionUtil;
 
-import java.lang.reflect.UndeclaredThrowableException;
 import java.util.function.Function;
 
 /**
@@ -36,7 +36,7 @@ public interface TransactionCallback<T, R> extends Function<TransactionStatus<T>
         try {
             return call(status);
         } catch (Exception e) {
-            throw new UndeclaredThrowableException(e);
+            return ExceptionUtil.sneakyThrow(e);
         }
     }
 

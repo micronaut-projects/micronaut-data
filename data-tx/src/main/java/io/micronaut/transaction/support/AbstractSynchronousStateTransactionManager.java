@@ -35,7 +35,6 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
-import java.lang.reflect.UndeclaredThrowableException;
 import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
@@ -144,14 +143,13 @@ public abstract class AbstractSynchronousStateTransactionManager<T> implements S
         R result;
         try {
             result = callback.call(status);
-        } catch (RuntimeException | Error ex) {
-            // Transactional code threw application exception -> rollback
-            rollbackOnException(state, status, ex);
-            throw ex;
         } catch (Throwable ex) {
-            // Transactional code threw unexpected exception -> rollback
-            rollbackOnException(state, status, ex);
-            throw new UndeclaredThrowableException(ex, "TransactionCallback threw undeclared checked exception");
+            if (definition.rollbackOn(ex)) {
+                rollbackOnException(state, status, ex);
+            } else {
+                commit(state, status);
+            }
+            return ExceptionUtil.sneakyThrow(ex);
         }
         commit(state, status);
         return result;

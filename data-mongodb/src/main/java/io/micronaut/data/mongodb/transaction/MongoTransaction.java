@@ -19,12 +19,10 @@ import com.mongodb.TransactionOptions;
 import com.mongodb.client.ClientSession;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Nullable;
-import org.bson.types.ObjectId;
 
 @Internal
 final class MongoTransaction implements AutoCloseable {
 
-    private final ObjectId id = new ObjectId();
     private String name;
     private ClientSession clientSession;
     private boolean newClientSession;
@@ -90,9 +88,6 @@ final class MongoTransaction implements AutoCloseable {
 
     @Override
     public String toString() {
-        if (name != null) {
-            return name + " " + id.toHexString();
-        }
-        return id.toHexString();
+        return name;
     }
 }

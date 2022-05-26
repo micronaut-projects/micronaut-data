@@ -5,7 +5,6 @@ import io.micronaut.context.annotation.Property
 import io.micronaut.context.annotation.Requires
 import io.micronaut.core.convert.value.ConvertibleValues
 import io.micronaut.core.type.Argument
-import io.micronaut.data.annotation.Repository
 import io.micronaut.data.document.mongodb.repositories.MongoPersonRepository
 import io.micronaut.data.document.tck.entities.Person
 import io.micronaut.data.model.runtime.InsertOperation
@@ -26,7 +25,7 @@ import spock.lang.Specification
 import javax.transaction.Transactional
 
 @Property(name = "spec.name", value = "MongoMultipleDataSourceSpec")
-@MicronautTest
+@MicronautTest(transactional = false)
 class MongoMultipleDataSourceSpec extends Specification implements TestPropertyProvider {
 
     @Inject
@@ -79,14 +78,12 @@ class MongoMultipleDataSourceSpec extends Specification implements TestPropertyP
     }
 
     @Requires(property = "spec.name", value = "MongoMultipleDataSourceSpec")
-    @MongoRepository
-    @Repository('xyz')
+    @MongoRepository('xyz')
     static interface XyzMongoPersonRepository extends MongoPersonRepository {
     }
 
     @Requires(property = "spec.name", value = "MongoMultipleDataSourceSpec")
-    @MongoRepository
-    @Repository('other')
+    @MongoRepository('other')
     static abstract class OtherPersonRepository implements CrudRepository<Person, String> {
 
         private final MongoRepositoryOperations mongoRepositoryOperations;

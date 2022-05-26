@@ -16,20 +16,19 @@
 package io.micronaut.transaction.interceptor;
 
 import io.micronaut.core.annotation.Nullable;
-import io.micronaut.core.util.ArrayUtils;
-import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.transaction.support.DefaultTransactionDefinition;
 
-import java.util.Set;
+import java.util.Arrays;
 
 /**
  * @author graemerocher
  * @since 1.0
+ * @deprecated Class is not needed anymore
  */
+@Deprecated
 public class DefaultTransactionAttribute extends DefaultTransactionDefinition implements TransactionAttribute {
 
     private String qualifier;
-    private Set<Class<? extends Throwable>> noRollbackFor;
 
     /**
      * Sets the qualifier to use for this attribute.
@@ -44,9 +43,7 @@ public class DefaultTransactionAttribute extends DefaultTransactionDefinition im
      * @param noRollbackFor The exceptions
      */
     public void setNoRollbackFor(Class<? extends Throwable>... noRollbackFor) {
-        if (ArrayUtils.isNotEmpty(noRollbackFor)) {
-            this.noRollbackFor = CollectionUtils.setOf(noRollbackFor);
-        }
+        setDontRollbackOn(Arrays.asList(noRollbackFor));
     }
 
     @Nullable
@@ -57,11 +54,7 @@ public class DefaultTransactionAttribute extends DefaultTransactionDefinition im
 
     @Override
     public boolean rollbackOn(Throwable ex) {
-        if (noRollbackFor == null) {
-            // rollback on all exceptions
-            return true;
-        } else {
-            return noRollbackFor.stream().noneMatch(t -> t.isInstance(ex));
-        }
+        return super.rollbackOn(ex);
     }
+
 }

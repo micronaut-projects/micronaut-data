@@ -15,9 +15,9 @@ import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import jakarta.inject.Inject
 
-@MicronautTest
+@MicronautTest(transactional = false)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class BookControllerTest : AbstractTest() {
+class BookControllerTest : AbstractTest(true) {
     @Inject
     lateinit var bookClient: BookClient
 

@@ -8,7 +8,7 @@ import spock.lang.Specification
 
 import jakarta.inject.Inject
 
-@MicronautTest(rollback = false)
+@MicronautTest(transactional = false)
 class H2ImmutableTypeSpec extends Specification implements H2TestPropertyProvider {
 
     @Inject ImmutablePetRepository repository

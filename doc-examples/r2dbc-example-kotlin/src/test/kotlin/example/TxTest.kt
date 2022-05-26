@@ -1,7 +1,5 @@
 package example
 
-import io.micronaut.context.annotation.Property
-import io.micronaut.context.annotation.PropertySource
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest
 import io.micronaut.transaction.exceptions.NoTransactionException
 import jakarta.inject.Inject
@@ -12,15 +10,9 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 
 
-@PropertySource(
-    Property(name = "flyway.datasources.default.enabled", value = "false"),
-    Property(name = "r2dbc.datasources.default.url", value = "r2dbc:h2:mem:///testdb"),
-    Property(name = "r2dbc.datasources.default.schema-generate", value = "CREATE_DROP"),
-    Property(name = "r2dbc.datasources.default.dialect", value = "H2")
-)
 @MicronautTest(transactional = false, rollback = false)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class TxTest {
+class TxTest : AbstractTest(false) {
 
     @Inject
     private lateinit var repository: Parent2Repository

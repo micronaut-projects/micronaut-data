@@ -103,6 +103,12 @@ public @interface TransactionalAdvice {
      * Defines the exceptions that will not result in a rollback.
      * @return The exception types that will not result in a rollback.
      */
+    Class<? extends Throwable>[] rollbackFor() default {};
+
+      /**
+     * Defines the exceptions that will not result in a rollback.
+     * @return The exception types that will not result in a rollback.
+     */
     Class<? extends Throwable>[] noRollbackFor() default {};
 
 }

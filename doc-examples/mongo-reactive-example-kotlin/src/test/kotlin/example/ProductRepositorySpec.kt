@@ -7,7 +7,7 @@ import java.util.concurrent.TimeUnit
 
 import jakarta.inject.Inject
 
-@MicronautTest
+@MicronautTest(transactional = false)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 internal class ProductRepositorySpec : AbstractMongoSpec() {
 

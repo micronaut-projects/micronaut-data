@@ -19,6 +19,7 @@ import com.mongodb.TransactionOptions;
 import com.mongodb.client.ClientSession;
 import com.mongodb.client.MongoClient;
 import io.micronaut.context.annotation.EachBean;
+import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.mongodb.conf.RequiresSyncMongo;
@@ -35,7 +36,7 @@ import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Mongo synchronous transaction manager.
+ * MongoDB synchronous transaction manager.
  *
  * @author Denis Stepanov
  * @since 3.3
@@ -46,14 +47,17 @@ import java.util.concurrent.TimeUnit;
 public final class MongoSynchronousTransactionManager extends AbstractSynchronousTransactionManager<ClientSession> {
 
     private final MongoClient mongoClient;
+    private final String name;
 
     /**
      * Default constructor.
      *
      * @param mongoClient The mongo client
+     * @param name        The datasource name
      */
-    public MongoSynchronousTransactionManager(MongoClient mongoClient) {
+    public MongoSynchronousTransactionManager(MongoClient mongoClient, @Nullable @Parameter String name) {
         this.mongoClient = mongoClient;
+        this.name = name == null ? "default" : name;
     }
 
     @Override
@@ -85,7 +89,7 @@ public final class MongoSynchronousTransactionManager extends AbstractSynchronou
     public ClientSession getConnection() {
         ClientSession clientSession = findClientSession();
         if (clientSession == null) {
-            throw new NoTransactionException("No active Mongo client session!");
+            throw new NoTransactionException("No active MongoDB client session!");
         }
         return clientSession;
     }
@@ -119,7 +123,7 @@ public final class MongoSynchronousTransactionManager extends AbstractSynchronou
             mongoTransaction.setName(definition.getName());
             if (!mongoTransaction.hasClientSession()) {
                 if (logger.isDebugEnabled()) {
-                    logger.debug("Acquired ClientSession for Mongo transaction [{}]", mongoTransaction);
+                    logger.debug("Acquired ClientSession for MongoDB transaction [{}] of datasource: [{}]", mongoTransaction, name);
                 }
                 ClientSession clientSession = mongoClient.startSession();
                 mongoTransaction.setClientSessionHolder(clientSession, true);
@@ -131,7 +135,7 @@ public final class MongoSynchronousTransactionManager extends AbstractSynchronou
                 txOptionsBuilder = txOptionsBuilder.maxCommitTime(timeout.toMillis(), TimeUnit.MILLISECONDS);
             }
             if (logger.isDebugEnabled()) {
-                logger.debug("Starting Mongo transaction [{}]", transaction);
+                logger.debug("Starting MongoDB transaction [{}] of datasource: [{}]", transaction, name);
             }
             mongoTransaction.beginTransaction(txOptionsBuilder.build());
 
@@ -141,7 +145,7 @@ public final class MongoSynchronousTransactionManager extends AbstractSynchronou
             }
         } catch (Throwable ex) {
             mongoTransaction.close();
-            throw new CannotCreateTransactionException("Could not open Mongo client session for transaction", ex);
+            throw new CannotCreateTransactionException("Could not open MongoDB client session for transaction", ex);
         }
     }
 
@@ -152,12 +156,12 @@ public final class MongoSynchronousTransactionManager extends AbstractSynchronou
             throw new TransactionException("Transaction marked as rollback only!");
         }
         if (status.isDebug()) {
-            logger.debug("Committing Mongo transaction [{}]", transaction);
+            logger.debug("Committing MongoDB transaction [{}] of datasource: [{}]", transaction, name);
         }
         try {
             transaction.commitTransaction();
         } catch (Exception ex) {
-            throw new TransactionSystemException("Could not commit Mongo transaction", ex);
+            throw new TransactionSystemException("Could not commit MongoDB transaction", ex);
         }
     }
 
@@ -165,12 +169,12 @@ public final class MongoSynchronousTransactionManager extends AbstractSynchronou
     protected void doRollback(DefaultTransactionStatus<ClientSession> status) throws TransactionException {
         MongoTransaction transaction = (MongoTransaction) status.getTransaction();
         if (status.isDebug()) {
-            logger.debug("Rolling back Mongo transaction [{}]", transaction);
+            logger.debug("Rolling back MongoDB transaction [{}] of datasource: [{}]", transaction, name);
         }
         try {
             transaction.abortTransaction();
         } catch (Exception ex) {
-            throw new TransactionSystemException("Could not roll back Mongo transaction", ex);
+            throw new TransactionSystemException("Could not roll back MongoDB transaction", ex);
         }
     }
 
@@ -188,7 +192,7 @@ public final class MongoSynchronousTransactionManager extends AbstractSynchronou
     protected void doSetRollbackOnly(DefaultTransactionStatus status) {
         MongoTransaction mongoTransaction = (MongoTransaction) status.getTransaction();
         if (status.isDebug()) {
-            logger.debug("Setting Mongo transaction [{}] rollback-only", mongoTransaction);
+            logger.debug("Setting MongoDB transaction [{}] to rollback-only, of datasource: [{}]", mongoTransaction, name);
         }
         mongoTransaction.setRollbackOnly();
     }

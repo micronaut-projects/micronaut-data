@@ -18,6 +18,7 @@ dependencies {
     implementation libs.groovy.dateutil
     implementation libs.javax.persistence.api
     implementation libs.jakarta.persistence.api
+    api libs.jetbrains.annotations
 
     compileOnly mn.micronaut.inject.groovy
 

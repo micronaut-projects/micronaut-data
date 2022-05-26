@@ -6,11 +6,12 @@ plugins {
 dependencies {
     annotationProcessor mn.micronaut.inject.java
 
-    api libs.jakarta.transaction.api
+    api libs.javax.transaction.api
 
     implementation mn.micronaut.inject
     implementation mn.micronaut.aop
 
+    compileOnly libs.reactor
     compileOnly mn.micronaut.spring
     compileOnly libs.micronaut.sql.jdbc
     compileOnly libs.spring.jdbc

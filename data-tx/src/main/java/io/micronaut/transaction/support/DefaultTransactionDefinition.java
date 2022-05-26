@@ -21,6 +21,7 @@ import io.micronaut.transaction.TransactionDefinition;
 
 import java.io.Serializable;
 import java.time.Duration;
+import java.util.Collection;
 import java.util.Objects;
 
 
@@ -32,7 +33,6 @@ import java.util.Objects;
  * @author Juergen Hoeller
  * @since 08.05.2003
  */
-@SuppressWarnings("serial")
 public class DefaultTransactionDefinition implements TransactionDefinition, Serializable {
 
     /** Prefix for the propagation constants defined in TransactionDefinition. */
@@ -57,6 +57,10 @@ public class DefaultTransactionDefinition implements TransactionDefinition, Seri
 
     @Nullable
     private String name;
+
+    private Collection<Class<? extends Throwable>> rollbackOn;
+
+    private Collection<Class<? extends Throwable>> dontRollbackOn;
 
     /**
      * Create a new DefaultTransactionDefinition, with default settings.
@@ -85,6 +89,8 @@ public class DefaultTransactionDefinition implements TransactionDefinition, Seri
         this.timeout = other.getTimeout();
         this.readOnly = other.isReadOnly();
         this.name = other.getName();
+        this.rollbackOn = other.getRollbackOn();
+        this.dontRollbackOn = other.getDontRollbackOn();
     }
 
     /**
@@ -232,6 +238,35 @@ public class DefaultTransactionDefinition implements TransactionDefinition, Seri
         return this.name;
     }
 
+    /**
+     * Set exception classes which should cause the rollback. Empty if all should cause it.
+     *
+     * @param rollbackOn The exception classes
+     * @since 3.5.0
+     */
+    public void setRollbackOn(Collection<Class<? extends Throwable>> rollbackOn) {
+        this.rollbackOn = rollbackOn;
+    }
+
+    /**
+     * Set exception classes which shouldn't cause the rollback.
+     *
+     * @param dontRollbackOn The exception classes
+     * @since 3.5.0
+     */
+    public void setDontRollbackOn(Collection<Class<? extends Throwable>> dontRollbackOn) {
+        this.dontRollbackOn = dontRollbackOn;
+    }
+
+    @Override
+    public Collection<Class<? extends Throwable>> getRollbackOn() {
+        return rollbackOn;
+    }
+
+    @Override
+    public Collection<Class<? extends Throwable>> getDontRollbackOn() {
+        return dontRollbackOn;
+    }
 
     /**
      * This implementation compares the {@code toString()} results.

@@ -24,7 +24,7 @@ import javax.persistence.JoinColumn
 import javax.persistence.ManyToOne
 import javax.persistence.OneToMany
 
-@MicronautTest
+@MicronautTest(transactional = false)
 class H2EmbeddedCascadeSpec extends Specification implements H2TestPropertyProvider {
     @AutoCleanup
     @Shared

@@ -19,9 +19,9 @@ import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertTrue
 
-@MicronautTest
+@MicronautTest(transactional = false)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class BookCoroutinesControllerTest : AbstractTest() {
+class BookCoroutinesControllerTest : AbstractTest(false) {
     @Inject
     lateinit var bookClient: BookClient
 

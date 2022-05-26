@@ -21,6 +21,8 @@ import io.micronaut.core.annotation.Nullable;
 import io.micronaut.transaction.support.DefaultTransactionDefinition;
 
 import java.time.Duration;
+import java.util.Collection;
+import java.util.Collections;
 
 /**
  * NOTICE: This is a fork of Spring's {@code PlatformTransactionManager} modernizing it
@@ -51,14 +53,19 @@ public interface TransactionDefinition {
     /**
      * The default transaction definition.
      */
-    TransactionDefinition DEFAULT = new DefaultTransactionDefinition();
+    TransactionDefinition DEFAULT = new TransactionDefinition() {
+    };
 
     /**
      * A read only definition.
      */
-    TransactionDefinition READ_ONLY = new DefaultTransactionDefinition() {{
-        setReadOnly(true);
-    }};
+    TransactionDefinition READ_ONLY = new TransactionDefinition() {
+
+        @Override
+        public boolean isReadOnly() {
+            return true;
+        }
+    };
 
     /**
      * Possible propagation values.
@@ -330,4 +337,52 @@ public interface TransactionDefinition {
     static @NonNull TransactionDefinition of(@NonNull Propagation propagationBehaviour) {
         return new DefaultTransactionDefinition(propagationBehaviour);
     }
+
+    /**
+     * Collection of exception classes that should cause the rollback. Empty if all exception should cause the rollback.
+     *
+     * @return the exception classes
+     * @since 3.5.0
+     */
+    @NonNull
+    default Collection<Class<? extends Throwable>> getRollbackOn() {
+        return Collections.emptyList();
+    }
+
+    /**
+     * Collection of exception classes that shouldn't cause the rollback.
+     *
+     * @return the exception classes
+     * @since 3.5.0
+     */
+    @NonNull
+    default Collection<Class<? extends Throwable>> getDontRollbackOn() {
+        return Collections.emptyList();
+    }
+
+    /**
+     * Check of the transaction should roll back when exception occurs.
+     *
+     * @param e The exception
+     * @return true if the transaction should roll back
+     * @since 3.5.0
+     */
+    default boolean rollbackOn(Throwable e) {
+        Collection<Class<? extends Throwable>> rollbackOn = getRollbackOn();
+        if (!rollbackOn.isEmpty()) {
+            for (Class<? extends Throwable> rollbackOnExClass : rollbackOn) {
+                if (rollbackOnExClass.isInstance(e)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        for (Class<? extends Throwable> dontRollbackOnExClass : getDontRollbackOn()) {
+            if (dontRollbackOnExClass.isInstance(e)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
 }

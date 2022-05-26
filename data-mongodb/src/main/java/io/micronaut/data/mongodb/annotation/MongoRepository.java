@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.mongodb.annotation;
 
+import io.micronaut.context.annotation.AliasFor;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.annotation.RepositoryConfiguration;
 import io.micronaut.data.document.model.query.builder.MongoQueryBuilder;
@@ -43,6 +44,18 @@ import java.lang.annotation.Target;
 @Documented
 @Repository
 public @interface MongoRepository {
+
+    /**
+     * @return The datasource name.
+     */
+    @AliasFor(annotation = Repository.class, member = "value")
+    String value() default "default";
+
+    /**
+     * @return The server name.
+     */
+    @AliasFor(annotation = Repository.class, member = "value")
+    String serverName() default "default";
 
     /**
      * @return The database name.

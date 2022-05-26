@@ -6,6 +6,7 @@ import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.r2dbc.annotation.R2dbcRepository
 import io.micronaut.data.repository.GenericRepository
 import java.util.*
+import javax.transaction.Transactional
 
 @R2dbcRepository(dialect = Dialect.POSTGRES)
 interface ParentSuspendRepository : GenericRepository<Parent, Int> {
@@ -17,4 +18,6 @@ interface ParentSuspendRepository : GenericRepository<Parent, Int> {
 
     suspend fun update(@NonNull entity: Parent): Parent
 
+    @Transactional(Transactional.TxType.MANDATORY)
+    suspend fun queryById(id: Int): Optional<Parent>
 }

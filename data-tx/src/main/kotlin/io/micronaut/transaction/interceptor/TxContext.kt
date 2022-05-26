@@ -23,7 +23,7 @@ import kotlin.coroutines.CoroutineContext
 
 @Internal
 class TxSynchronousContext(
-        val state: TransactionSynchronizationManager.TransactionSynchronizationState?
+        val state: TransactionSynchronizationManager.TransactionSynchronizationState
 ) : ThreadContextElement<TransactionSynchronizationManager.TransactionSynchronizationState?>, AbstractCoroutineContextElement(Key) {
 
     companion object Key : CoroutineContext.Key<TxSynchronousContext>
@@ -34,7 +34,7 @@ class TxSynchronousContext(
 
     override fun updateThreadContext(context: CoroutineContext): TransactionSynchronizationManager.TransactionSynchronizationState? {
         val copyState = TransactionSynchronizationManager.getState()
-        TransactionSynchronizationManager.setState(state)
+        TransactionSynchronizationManager.setState(state.copy())
         return copyState
     }
 

@@ -15,17 +15,14 @@
  */
 package io.micronaut.data.model.runtime;
 
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.AnnotationMetadata;
-import io.micronaut.core.annotation.AnnotationValue;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.type.Argument;
 import io.micronaut.inject.ExecutableMethod;
 import io.micronaut.transaction.TransactionDefinition;
-import io.micronaut.transaction.annotation.TransactionalAdvice;
-import io.micronaut.transaction.interceptor.DefaultTransactionAttribute;
 import io.micronaut.transaction.support.DefaultTransactionDefinition;
+import io.micronaut.transaction.support.TransactionUtil;
 
-import java.time.Duration;
 import java.util.Optional;
 
 /**
@@ -36,6 +33,10 @@ import java.util.Optional;
  * @author graemerocher
  */
 public class DefaultStoredDataOperation<R> implements StoredDataOperation<R> {
+    /**
+     * @deprecated Not needed anymore
+     */
+    @Deprecated
     public static final DefaultTransactionDefinition NO_TRANSACTION = new DefaultTransactionDefinition();
     private final ExecutableMethod<?, ?> method;
     private TransactionDefinition transactionDefinition;
@@ -48,30 +49,13 @@ public class DefaultStoredDataOperation<R> implements StoredDataOperation<R> {
     @Override
     public final Optional<TransactionDefinition> getTransactionDefinition() {
         if (transactionDefinition == null) {
-            AnnotationValue<TransactionalAdvice> annotation = method.getAnnotation(TransactionalAdvice.class);
-
-            if (annotation != null) {
-
-                DefaultTransactionAttribute attribute = new DefaultTransactionAttribute();
-                attribute.setName(method.getDeclaringType().getSimpleName() + "." + method.getMethodName());
-                attribute.setReadOnly(annotation.isTrue("readOnly"));
-                annotation.intValue("timeout").ifPresent(value -> attribute.setTimeout(Duration.ofSeconds(value)));
-                final Class[] noRollbackFors = annotation.classValues("noRollbackFor");
-                //noinspection unchecked
-                attribute.setNoRollbackFor(noRollbackFors);
-                annotation.enumValue("propagation", TransactionDefinition.Propagation.class)
-                        .ifPresent(attribute::setPropagationBehavior);
-                annotation.enumValue("isolation", TransactionDefinition.Isolation.class)
-                        .ifPresent(attribute::setIsolationLevel);
-                this.transactionDefinition = attribute;
-            } else {
-                transactionDefinition = NO_TRANSACTION;
-            }
+            transactionDefinition = TransactionUtil.getTransactionDefinition(
+                    method.getDeclaringType().getSimpleName() + "." + method.getMethodName(), method);
         }
-        if (transactionDefinition != NO_TRANSACTION) {
-            return Optional.of(transactionDefinition);
+        if (transactionDefinition == TransactionDefinition.DEFAULT) {
+            return Optional.empty();
         }
-        return Optional.empty();
+        return Optional.of(transactionDefinition);
     }
 
     @NonNull

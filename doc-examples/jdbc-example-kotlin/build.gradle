@@ -30,7 +30,7 @@ dependencies {
     implementation project(":data-jdbc")
     implementation "io.micronaut.sql:micronaut-jdbc-tomcat"
     implementation libs.jakarta.persistence.api
-    implementation libs.jakarta.transaction.api
+    implementation libs.javax.transaction.api
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-reactive"
 

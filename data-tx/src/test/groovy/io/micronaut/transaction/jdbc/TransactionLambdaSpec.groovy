@@ -38,7 +38,7 @@ class TransactionLambdaSpec extends Specification {
 
         then:
         def e2 = thrown(Exception)
-        e2.cause.message == 'Bad things happened'
+        e2.message == 'Bad things happened'
         testService.readTransactionally() == 1
     }
 }

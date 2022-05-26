@@ -27,7 +27,9 @@ import io.micronaut.transaction.TransactionDefinition;
  * @author Juergen Hoeller
  * @since 16.03.2003
  * @see DefaultTransactionAttribute
+ * @deprecated Interface is not needed anymore
  */
+@Deprecated
 public interface TransactionAttribute extends TransactionDefinition {
 
     /**

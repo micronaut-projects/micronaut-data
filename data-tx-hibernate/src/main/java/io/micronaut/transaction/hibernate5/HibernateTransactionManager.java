@@ -31,6 +31,7 @@ import io.micronaut.transaction.support.AbstractSynchronousTransactionManager;
 import io.micronaut.transaction.support.DefaultTransactionStatus;
 import io.micronaut.transaction.support.ResourceTransactionManager;
 import io.micronaut.transaction.support.TransactionSynchronizationManager;
+import jakarta.inject.Inject;
 import org.hibernate.*;
 import org.hibernate.engine.spi.SessionImplementor;
 import org.hibernate.resource.jdbc.spi.PhysicalConnectionHandlingMode;
@@ -96,6 +97,8 @@ public class HibernateTransactionManager extends AbstractSynchronousTransactionM
     @NonNull
     private final DataSource dataSource;
 
+    private final String dataSourceName;
+
     private boolean prepareConnection = true;
 
     private boolean allowResultAccessAfterCompletion = false;
@@ -115,12 +118,29 @@ public class HibernateTransactionManager extends AbstractSynchronousTransactionM
             SessionFactory sessionFactory,
             @Parameter DataSource dataSource,
             @Nullable Interceptor entityInterceptor) {
+        this(sessionFactory, dataSource, entityInterceptor, null);
+    }
+
+    /**
+     * Create a new HibernateTransactionManager instance.
+     * @param sessionFactory the SessionFactory to manage transactions for
+     * @param dataSource The data source associated with the session factory
+     * @param entityInterceptor The configured entity interceptor
+     * @param name The data source name
+     */
+    @Inject
+    public HibernateTransactionManager(
+            SessionFactory sessionFactory,
+            @Parameter DataSource dataSource,
+            @Nullable Interceptor entityInterceptor,
+            @Parameter String name) {
         this.sessionFactory = sessionFactory;
         if (dataSource instanceof DelegatingDataSource) {
             dataSource = ((DelegatingDataSource) dataSource).getTargetDataSource();
         }
         this.dataSource = dataSource;
         this.entityInterceptor = entityInterceptor;
+        this.dataSourceName = name;
     }
 
     @Override
@@ -237,13 +257,13 @@ public class HibernateTransactionManager extends AbstractSynchronousTransactionM
                 (SessionHolder) TransactionSynchronizationManager.getResource(sessionFactory);
         if (sessionHolder != null) {
             if (logger.isDebugEnabled()) {
-                logger.debug("Found thread-bound Session [" + sessionHolder.getSession() + "] for Hibernate transaction");
+                logger.debug("Found thread-bound Session [{}] for Hibernate transaction and datasource: [{}]", sessionHolder.getSession(), dataSourceName);
             }
             txObject.setSessionHolder(sessionHolder);
         } else if (this.hibernateManagedSession) {
             Session session = sessionFactory.getCurrentSession();
             if (logger.isDebugEnabled()) {
-                logger.debug("Found Hibernate-managed Session [" + session + "] for Spring-managed transaction");
+                logger.debug("Found Hibernate-managed Session [{}] for Spring-managed transaction and datasource: [{}]", session, dataSourceName);
             }
             txObject.setExistingSession(session);
         }
@@ -284,7 +304,7 @@ public class HibernateTransactionManager extends AbstractSynchronousTransactionM
                         getSessionFactory().withOptions().interceptor(entityInterceptor).openSession() :
                         getSessionFactory().openSession());
                 if (logger.isDebugEnabled()) {
-                    logger.debug("Opened new Session [" + newSession + "] for Hibernate transaction");
+                    logger.debug("Opened new Session [{}] for Hibernate transaction for datasource: [{}]", newSession, dataSourceName);
                 }
                 txObject.setSession(newSession);
             }
@@ -433,8 +453,7 @@ public class HibernateTransactionManager extends AbstractSynchronousTransactionM
         Transaction hibTx = txObject.getSessionHolder().getTransaction();
         Objects.requireNonNull(hibTx, "No Hibernate transaction");
         if (status.isDebug()) {
-            logger.debug("Committing Hibernate transaction on Session [" +
-                    txObject.getSessionHolder().getSession() + "]");
+            logger.debug("Committing Hibernate transaction on Session [{}] for datasource: [{}]", txObject.getSessionHolder().getSession(), dataSourceName);
         }
 
         try {
@@ -451,8 +470,7 @@ public class HibernateTransactionManager extends AbstractSynchronousTransactionM
         Transaction hibTx = txObject.getSessionHolder().getTransaction();
         Objects.requireNonNull(hibTx, "No Hibernate transaction");
         if (status.isDebug()) {
-            logger.debug("Rolling back Hibernate transaction on Session [" +
-                    txObject.getSessionHolder().getSession() + "]");
+            logger.debug("Rolling back Hibernate transaction on Session [{}] for datasource: [{}]", txObject.getSessionHolder().getSession(), dataSourceName);
         }
 
         try {
@@ -472,8 +490,7 @@ public class HibernateTransactionManager extends AbstractSynchronousTransactionM
     protected void doSetRollbackOnly(DefaultTransactionStatus status) {
         HibernateTransactionObject txObject = (HibernateTransactionObject) status.getTransaction();
         if (status.isDebug()) {
-            logger.debug("Setting Hibernate transaction on Session [" +
-                    txObject.getSessionHolder().getSession() + "] rollback-only");
+            logger.debug("Setting Hibernate transaction on Session [{}] rollback-only for datasource: [{}]", txObject.getSessionHolder().getSession(), dataSource);
         }
         txObject.setRollbackOnly();
     }
@@ -514,12 +531,12 @@ public class HibernateTransactionManager extends AbstractSynchronousTransactionM
 
         if (txObject.isNewSession()) {
             if (logger.isDebugEnabled()) {
-                logger.debug("Closing Hibernate Session [" + session + "] after transaction");
+                logger.debug("Closing Hibernate Session [{}] after transaction for datasource: [{}]", session, dataSourceName);
             }
             SessionFactoryUtils.closeSession(session);
         } else {
             if (logger.isDebugEnabled()) {
-                logger.debug("Not closing pre-bound Hibernate Session [" + session + "] after transaction");
+                logger.debug("Not closing pre-bound Hibernate Session [{}] after transaction for datasource: [{}]", session, dataSourceName);
             }
             if (txObject.getSessionHolder().getPreviousFlushMode() != null) {
                 session.setFlushMode(txObject.getSessionHolder().getPreviousFlushMode());

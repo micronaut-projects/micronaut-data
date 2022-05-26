@@ -18,5 +18,5 @@ package io.micronaut.data.document.mongodb.reactive
 
 import io.micronaut.data.document.mongodb.MongoCriteriaSpec
 
-class MongoReactiveCriteriaSpec extends MongoCriteriaSpec implements MongoSelectReactiveDriver {
+class MongoReactiveCriteriaSpec extends MongoCriteriaSpec {
 }

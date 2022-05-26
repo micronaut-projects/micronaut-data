@@ -108,5 +108,125 @@
     "type": "io.micronaut.data.mongodb.serde.$DataCodecRegistry$Definition$Reference",
     "member": "Constructor io.micronaut.data.mongodb.serde.$DataCodecRegistry$Definition$Reference()",
     "reason": "Internal class"
-  }
+  },
+    {
+        "type": "io.micronaut.data.mongodb.operations.DefaultReactiveMongoRepositoryOperations",
+        "member": "Method io.micronaut.data.mongodb.operations.DefaultReactiveMongoRepositoryOperations.withTransaction(io.micronaut.transaction.reactive.ReactiveTransactionStatus,io.micronaut.transaction.reactive.ReactiveTransactionOperations$TransactionalCallback)",
+        "reason": "Experimental method"
+    },
+    {
+        "type": "io.micronaut.data.mongodb.operations.MongoReactorRepositoryOperations",
+        "member": "Class io.micronaut.data.mongodb.operations.MongoReactorRepositoryOperations",
+        "reason": "Experimental method"
+    },
+    {
+        "type": "io.micronaut.data.mongodb.operations.MongoReactorRepositoryOperations",
+        "member": "Field CLIENT_SESSION_CONTEXT_KEY",
+        "reason": "Experimental method"
+    },
+    {
+        "type": "io.micronaut.data.mongodb.operations.MongoReactorRepositoryOperations",
+        "member": "Method io.micronaut.data.mongodb.operations.MongoReactorRepositoryOperations.withTransaction(io.micronaut.transaction.reactive.ReactiveTransactionStatus,io.micronaut.transaction.reactive.ReactiveTransactionOperations$TransactionalCallback)",
+        "reason": "Experimental method"
+    },
+    {
+        "type": "io.micronaut.data.mongodb.operations.MongoReactorRepositoryOperations",
+        "member": "Implemented interface io.micronaut.data.mongodb.operations.MongoReactiveRepositoryOperations",
+        "reason": "Experimental method"
+    },
+    {
+        "type": "io.micronaut.transaction.interceptor.TransactionalInterceptor",
+        "member": "Method io.micronaut.transaction.interceptor.TransactionalInterceptor.cleanupTransactionInfo(io.micronaut.transaction.interceptor.TransactionalInterceptor$TransactionInfo)",
+        "reason": "Removed deprecated method"
+    },
+    {
+        "type": "io.micronaut.transaction.interceptor.TransactionalInterceptor",
+        "member": "Method io.micronaut.transaction.interceptor.TransactionalInterceptor.commitTransactionAfterReturning(io.micronaut.transaction.interceptor.TransactionalInterceptor$TransactionInfo)",
+        "reason": "Removed deprecated method"
+    },
+    {
+        "type": "io.micronaut.transaction.interceptor.TransactionalInterceptor",
+        "member": "Method io.micronaut.transaction.interceptor.TransactionalInterceptor.completeTransactionAfterThrowing(io.micronaut.transaction.interceptor.TransactionalInterceptor$TransactionInfo,java.lang.Throwable)",
+        "reason": "Removed deprecated method"
+    },
+    {
+        "type": "io.micronaut.transaction.interceptor.TransactionalInterceptor",
+        "member": "Method io.micronaut.transaction.interceptor.TransactionalInterceptor.createTransactionIfNecessary(io.micronaut.transaction.SynchronousTransactionManager,io.micronaut.transaction.interceptor.TransactionAttribute,io.micronaut.inject.ExecutableMethod)",
+        "reason": "Removed deprecated method"
+    },
+    {
+        "type": "io.micronaut.transaction.interceptor.TransactionalInterceptor",
+        "member": "Method io.micronaut.transaction.interceptor.TransactionalInterceptor.prepareTransactionInfo(io.micronaut.transaction.SynchronousTransactionManager,io.micronaut.transaction.interceptor.TransactionAttribute,io.micronaut.inject.ExecutableMethod,io.micronaut.transaction.TransactionStatus)",
+        "reason": "Removed deprecated method"
+    },
+    {
+        "type": "io.micronaut.transaction.interceptor.TransactionalInterceptor",
+        "member": "Method io.micronaut.transaction.interceptor.TransactionalInterceptor.resolveTransactionDefinition(io.micronaut.inject.ExecutableMethod)",
+        "reason": "Removed deprecated method"
+    },
+    {
+        "type": "io.micronaut.transaction.interceptor.TransactionalInterceptor",
+        "member": "Constructor io.micronaut.transaction.interceptor.TransactionalInterceptor(io.micronaut.context.BeanLocator,io.micronaut.transaction.interceptor.CoroutineTxHelper)",
+        "reason": "Removed deprecated method"
+    },
+    {
+        "type": "io.micronaut.transaction.interceptor.TransactionalInterceptor$TransactionInfo",
+        "member": "Class io.micronaut.transaction.interceptor.TransactionalInterceptor$TransactionInfo",
+        "reason": "Removed deprecated class"
+    },
+    {
+        "type": "io.micronaut.transaction.interceptor.TransactionalInterceptor$TransactionInfo",
+        "member": "Method io.micronaut.transaction.interceptor.TransactionalInterceptor$TransactionInfo.getJoinpointIdentification()",
+        "reason": "Removed deprecated class"
+    },
+    {
+        "type": "io.micronaut.transaction.interceptor.TransactionalInterceptor$TransactionInfo",
+        "member": "Method io.micronaut.transaction.interceptor.TransactionalInterceptor$TransactionInfo.getTransactionManager()",
+        "reason": "Removed deprecated class"
+    },
+    {
+        "type": "io.micronaut.transaction.interceptor.TransactionalInterceptor$TransactionInfo",
+        "member": "Method io.micronaut.transaction.interceptor.TransactionalInterceptor$TransactionInfo.getTransactionManager()",
+        "reason": "Removed deprecated class"
+    },
+    {
+        "type": "io.micronaut.transaction.interceptor.TransactionalInterceptor$TransactionInfo",
+        "member": "Method io.micronaut.transaction.interceptor.TransactionalInterceptor$TransactionInfo.hasTransaction()",
+        "reason": "Removed deprecated class"
+    },
+    {
+        "type": "io.micronaut.transaction.interceptor.TransactionalInterceptor$TransactionInfo",
+        "member": "Method io.micronaut.transaction.interceptor.TransactionalInterceptor$TransactionInfo.newTransactionStatus(io.micronaut.transaction.TransactionStatus)",
+        "reason": "Removed deprecated class"
+    },
+    {
+        "type": "io.micronaut.transaction.interceptor.TransactionalInterceptor$TransactionInfo",
+        "member": "Constructor io.micronaut.transaction.interceptor.TransactionalInterceptor$TransactionInfo(io.micronaut.transaction.SynchronousTransactionManager,io.micronaut.transaction.interceptor.TransactionAttribute,io.micronaut.inject.ExecutableMethod)",
+        "reason": "Removed deprecated class"
+    },
+    {
+        "type": "io.micronaut.transaction.interceptor.TransactionalInterceptor$TransactionInfo",
+        "member": "Method io.micronaut.transaction.interceptor.TransactionalInterceptor$TransactionInfo.getTransactionStatus()",
+        "reason": "Removed deprecated class"
+    },
+    {
+        "type": "io.micronaut.transaction.TransactionDefinition",
+        "member": "Class io.micronaut.transaction.TransactionDefinition",
+        "reason": "Added default methods"
+    },
+    {
+        "type": "io.micronaut.transaction.TransactionDefinition",
+        "member": "Method io.micronaut.transaction.TransactionDefinition.getDontRollbackOn()",
+        "reason": "Added default method"
+    },
+    {
+        "type": "io.micronaut.transaction.TransactionDefinition",
+        "member": "Method io.micronaut.transaction.TransactionDefinition.getRollbackOn()",
+        "reason": "Added default method"
+    },
+    {
+        "type": "io.micronaut.transaction.TransactionDefinition",
+        "member": "Method io.micronaut.transaction.TransactionDefinition.rollbackOn(java.lang.Throwable)",
+        "reason": "Added default method"
+    }
 ]

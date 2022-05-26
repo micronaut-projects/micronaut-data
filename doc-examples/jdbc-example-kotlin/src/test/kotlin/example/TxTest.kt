@@ -20,8 +20,8 @@ class TxTest {
     @Inject
     private lateinit var service: PersonSuspendRepositoryService
 
-    @AfterEach
-    fun tearDown() {
+    @BeforeEach
+    fun cleanup() {
         repository.deleteAll()
         repositoryForCustomDb.deleteAll()
     }

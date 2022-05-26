@@ -13,7 +13,7 @@ import reactor.core.publisher.Mono
 import spock.lang.Shared
 import spock.lang.Specification
 
-@MicronautTest
+@MicronautTest(transactional = false)
 class BookControllerTest extends Specification implements TestPropertyProvider {
 
     static container

@@ -6,9 +6,9 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import jakarta.inject.Inject
 
-@MicronautTest
+@MicronautTest(transactional = false)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class SomeEntityRepositoryTest() : AbstractTest() {
+class SomeEntityRepositoryTest() : AbstractTest(false) {
     @Inject
     lateinit var repository: SomeEntityRepository
 

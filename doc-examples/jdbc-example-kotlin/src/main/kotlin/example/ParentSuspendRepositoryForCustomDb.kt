@@ -9,8 +9,7 @@ import io.micronaut.data.repository.GenericRepository
 import java.util.*
 import javax.transaction.Transactional
 
-@Repository("custom")
-@JdbcRepository(dialect = Dialect.H2)
+@JdbcRepository(dataSource = "custom", dialect = Dialect.H2)
 interface ParentSuspendRepositoryForCustomDb : GenericRepository<Parent, Int> {
 
     @Join(value = "children", type = Join.Type.FETCH)

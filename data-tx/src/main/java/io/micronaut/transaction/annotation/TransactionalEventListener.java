@@ -19,7 +19,12 @@ import io.micronaut.aop.Adapter;
 import io.micronaut.context.event.ApplicationEventListener;
 import io.micronaut.core.annotation.Indexed;
 import io.micronaut.transaction.interceptor.annotation.TransactionalEventAdvice;
-import java.lang.annotation.*;
+
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
  * Largely based on the similar annotation in Spring. This is an {@link Adapter} that
@@ -44,6 +49,18 @@ public @interface TransactionalEventListener {
      * @return The transaction phase this listener applies to.
      */
     TransactionPhase value() default TransactionPhase.AFTER_COMMIT;
+
+    /**
+     * A <em>qualifier</em> value for the specified transaction.
+     * <p>May be used to determine the target transaction manager,
+     * matching the qualifier value (or the bean name) of a specific
+     * {@link io.micronaut.transaction.SynchronousTransactionManager}
+     * bean definition.
+     *
+     * @return The transaction manager
+     * @since 3.5.0
+     */
+    String transactionManager() default "";
 
     /**
      * The phase at which a transactional event listener applies.

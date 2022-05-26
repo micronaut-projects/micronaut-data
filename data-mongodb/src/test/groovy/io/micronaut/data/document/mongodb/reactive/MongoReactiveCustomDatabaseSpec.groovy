@@ -13,7 +13,7 @@ import spock.lang.AutoCleanup
 import spock.lang.Shared
 import spock.lang.Specification
 
-@MicronautTest
+@MicronautTest(transactional = false)
 class MongoRectiveCustomDatabaseSpec extends Specification implements MongoSelectReactiveDriver {
     @AutoCleanup
     @Shared

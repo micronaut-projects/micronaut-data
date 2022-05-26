@@ -8,9 +8,9 @@ import jakarta.inject.Inject
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.TestInstance
 
-@MicronautTest
+@MicronautTest(transactional = false)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class ParentSuspendRepositoryTest : AbstractTest() {
+class ParentSuspendRepositoryTest : AbstractTest(false) {
 
     @Inject
     private lateinit var repository: ParentSuspendRepository

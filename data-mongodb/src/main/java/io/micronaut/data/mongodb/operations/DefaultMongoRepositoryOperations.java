@@ -139,7 +139,7 @@ public final class DefaultMongoRepositoryOperations extends AbstractMongoReposit
      * @param mongoClient                The Mongo client
      * @param executorService            The executor service
      */
-    DefaultMongoRepositoryOperations(@Parameter String serverName,
+    DefaultMongoRepositoryOperations(@Nullable @Parameter String serverName,
                                      BeanContext beanContext,
                                      List<MediaTypeCodec> codecs,
                                      DateTimeProvider<Object> dateTimeProvider,

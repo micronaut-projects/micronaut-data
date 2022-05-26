@@ -46,13 +46,11 @@ import java.lang.annotation.*;
 @SqlQueryConfiguration({
     @SqlQueryConfiguration.DialectConfiguration(
         dialect = Dialect.POSTGRES,
-        positionalParameterFormat = "$%s",
-        escapeQueries = true
+        positionalParameterFormat = "$%s"
     ),
     @SqlQueryConfiguration.DialectConfiguration(
         dialect = Dialect.SQL_SERVER,
-        positionalParameterFormat = "@p%s",
-        escapeQueries = false
+        positionalParameterFormat = "@p%s"
     )
 })
 @Retention(RetentionPolicy.RUNTIME)
@@ -61,6 +59,10 @@ import java.lang.annotation.*;
 @Repository
 public @interface R2dbcRepository {
 
+    /**
+     * @deprecated Transaction status key needs to be created using the data source name to allow propagating of multiple data source transactions
+     */
+    @Deprecated
     String PARAMETER_TX_STATUS = "tx-status";
 
     /**
@@ -68,6 +70,12 @@ public @interface R2dbcRepository {
      */
     @AliasFor(annotation = Repository.class, member = "value")
     String value() default "default";
+
+    /**
+     * @return The datasource name.
+     */
+    @AliasFor(annotation = Repository.class, member = "value")
+    String dataSource() default "default";
 
     /**
      * @return The dialect to use.

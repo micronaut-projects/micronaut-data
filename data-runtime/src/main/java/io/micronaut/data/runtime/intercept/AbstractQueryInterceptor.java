@@ -883,7 +883,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
         @NonNull
         @Override
         public String getName() {
-            return method.getMethodName();
+            return method.getDeclaringType().getSimpleName() + "." + method.getMethodName();
         }
     }
 
