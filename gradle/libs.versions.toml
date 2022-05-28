@@ -4,6 +4,7 @@ micronaut-serde = "1.1.0"
 micronaut-sql = "4.4.0"
 micronaut-docs = "2.0.0"
 micronaut-gradle-plugin = "3.4.0"
+micronaut-mongo = "4.3.0"
 
 groovy = "3.0.10"
 
@@ -155,6 +156,9 @@ micronaut-serde-support = { module = "io.micronaut.serde:micronaut-serde-support
 mongodb-driver-core = { module = "org.mongodb:mongodb-driver-core", version.ref = "mongodb" }
 mongodb-driver-sync = { module = "org.mongodb:mongodb-driver-sync", version.ref = "mongodb" }
 mongodb-driver-reactive = { module = "org.mongodb:mongodb-driver-reactivestreams", version.ref = "mongodb" }
+
+micronaut-mongo-reactive = { module = "io.micronaut.mongodb:micronaut-mongo-reactive", version.ref = "micronaut-mongo" }
+micronaut-mongo-sync = { module = "io.micronaut.mongodb:micronaut-mongo-sync", version.ref = "micronaut-mongo" }
 
 #PLUGINS
 

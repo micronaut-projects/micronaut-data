@@ -22,10 +22,14 @@ trait MongoTestPropertyProvider implements TestPropertyProvider {
                 "micronaut.data.mongodb.driver-type": "sync",
                 'micronaut.data.mongodb.create-collections': 'true',
                 'mongodb.uri': mongo.replicaSetUrl,
-                'mongodb.uuid-representation': UuidRepresentation.STANDARD.name()
+                'mongodb.uuid-representation': UuidRepresentation.STANDARD.name(),
+                'mongodb.package-names': getPackageNames()
         ]
     }
 
+    List<String> getPackageNames() {
+        ['io.micronaut.data']
+    }
 
 }
 

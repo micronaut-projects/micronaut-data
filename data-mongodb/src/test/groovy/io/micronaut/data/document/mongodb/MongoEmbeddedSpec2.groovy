@@ -36,6 +36,11 @@ class MongoEmbeddedSpec2 extends Specification implements MongoTestPropertyProvi
     @Shared
     RestaurantRepository2 restaurantRepository
 
+    @Override
+    List<String> getPackageNames() {
+        return ['example', 'io.micronaut.data']
+    }
+
     def cleanup() {
         restaurantRepository.deleteAll()
     }

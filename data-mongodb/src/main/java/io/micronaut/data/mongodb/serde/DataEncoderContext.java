@@ -100,7 +100,7 @@ final class DataEncoderContext implements Serializer.EncoderContext {
             IdSerializer idSerializer = new IdSerializer() {
 
                 @Override
-                public Serializer<Object> createSpecific(EncoderContext encoderContext, Argument<?> type) throws SerdeException {
+                public Serializer<Object> createSpecific(EncoderContext encoderContext, Argument<? extends Object> type) throws SerdeException {
                     boolean isGeneratedObjectIdAsString = type.isAssignableFrom(String.class)
                             && type.isAnnotationPresent(GeneratedValue.class);
                     if (isGeneratedObjectIdAsString) {
@@ -110,7 +110,8 @@ final class DataEncoderContext implements Serializer.EncoderContext {
                             objectIdSerializer.serialize(encoder, encoderContext2, OBJECT_ID, new ObjectId(stringId));
                         };
                     }
-                    return (Serializer<Object>) findSerializer(type);
+                    Serializer<? super Object> serializer = findSerializer(type);
+                    return serializer.createSpecific(encoderContext, type);
                 }
 
                 @Override

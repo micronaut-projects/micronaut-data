@@ -12,11 +12,11 @@ dependencies {
     api projects.dataDocumentModel
     api libs.micronaut.serde.bson
     api libs.micronaut.serde.support
-    api (mn.micronaut.mongo.reactive) {
+    api (libs.micronaut.mongo.reactive) {
         exclude group: "org.mongodb"
         exclude group: "io.micronaut"
     }
-    api (mn.micronaut.mongo.sync) {
+    api (libs.micronaut.mongo.sync) {
         exclude group: "org.mongodb"
         exclude group: "io.micronaut"
     }

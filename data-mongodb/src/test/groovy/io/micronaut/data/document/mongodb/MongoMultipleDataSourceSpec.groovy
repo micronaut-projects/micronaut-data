@@ -72,7 +72,9 @@ class MongoMultipleDataSourceSpec extends Specification implements TestPropertyP
         return [
                 'mongodb.servers.xyz.uri': mongoDBContainer1.replicaSetUrl,
                 'mongodb.servers.other.uri': mongoDBContainer2.replicaSetUrl,
-                'mongodb.uuid-representation': UuidRepresentation.STANDARD.name()
+                'mongodb.uuid-representation': UuidRepresentation.STANDARD.name(),
+                'mongodb.servers.xyz.package-names': ['io.micronaut.data'],
+                'mongodb.servers.other.package-names': ['io.micronaut.data']
         ]
     }
 

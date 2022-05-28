@@ -78,5 +78,35 @@
         "type": "io.micronaut.data.processor.visitors.finders.SaveEntityMethodMatcher",
         "member": "Field PREFIXES",
         "reason": "Class is considered internal API"
-    }
+    },
+  {
+    "type": "io.micronaut.data.mongodb.serde.$DataCodecRegistry$Definition$Reference",
+    "member": "Class io.micronaut.data.mongodb.serde.$DataCodecRegistry$Definition$Reference",
+    "reason": "Internal class"
+  },
+  {
+    "type": "io.micronaut.data.mongodb.serde.$DataCodecRegistry$Definition$Reference",
+    "member": "Field $ANNOTATION_METADATA",
+    "reason": "Internal class"
+  },
+  {
+    "type": "io.micronaut.data.mongodb.serde.$DataCodecRegistry$Definition$Reference",
+    "member": "Method io.micronaut.data.mongodb.serde.$DataCodecRegistry$Definition$Reference.getBeanDefinitionType()",
+    "reason": "Internal class"
+  },
+  {
+    "type": "io.micronaut.data.mongodb.serde.$DataCodecRegistry$Definition$Reference",
+    "member": "Method io.micronaut.data.mongodb.serde.$DataCodecRegistry$Definition$Reference.getBeanType()",
+    "reason": "Internal class"
+  },
+  {
+    "type": "io.micronaut.data.mongodb.serde.$DataCodecRegistry$Definition$Reference",
+    "member": "Method io.micronaut.data.mongodb.serde.$DataCodecRegistry$Definition$Reference.load()",
+    "reason": "Internal class"
+  },
+  {
+    "type": "io.micronaut.data.mongodb.serde.$DataCodecRegistry$Definition$Reference",
+    "member": "Constructor io.micronaut.data.mongodb.serde.$DataCodecRegistry$Definition$Reference()",
+    "reason": "Internal class"
+  }
 ]

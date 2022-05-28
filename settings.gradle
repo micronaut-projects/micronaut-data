@@ -67,6 +67,7 @@ include 'doc-examples:mongo-example-kotlin'
 include 'doc-examples:mongo-reactive-example-kotlin'
 if (JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_15)) {
     include 'doc-examples:jdbc-example-records-java'
+    include 'doc-examples:mongo-example-records-java'
 }
 
 // benchmarks

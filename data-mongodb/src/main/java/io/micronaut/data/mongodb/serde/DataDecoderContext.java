@@ -131,7 +131,8 @@ final class DataDecoderContext implements Deserializer.DecoderContext {
                             return objectId == null ? null : objectId.toHexString();
                         };
                     }
-                    return (Deserializer<Object>) findDeserializer(type);
+                    Deserializer<? extends Object> deserializer = findDeserializer(type);
+                    return (Deserializer<Object>) deserializer.createSpecific(decoderContext, type);
                 }
 
                 @Override
