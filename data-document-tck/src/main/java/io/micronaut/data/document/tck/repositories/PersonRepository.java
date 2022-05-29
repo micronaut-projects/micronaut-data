@@ -27,6 +27,7 @@ import io.micronaut.data.repository.PageableRepository;
 import io.micronaut.data.repository.jpa.JpaSpecificationExecutor;
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification;
 
+import java.time.LocalDate;
 import java.util.List;
 
 public interface PersonRepository extends CrudRepository<Person, String>, PageableRepository<Person, String>, JpaSpecificationExecutor<Person> {
@@ -92,6 +93,10 @@ public interface PersonRepository extends CrudRepository<Person, String>, Pageab
 
         public static PredicateSpecification<Person> nameEquals(String name) {
             return (root, criteriaBuilder) -> criteriaBuilder.equal(root.get("name"), name);
+        }
+
+        public static PredicateSpecification<Person> dateOfBirthEquals(LocalDate localDate) {
+            return (root, criteriaBuilder) -> criteriaBuilder.equal(root.get("dateOfBirth"), localDate);
         }
 
         public static PredicateSpecification<Person> nameEqualsCaseInsensitive(String name) {

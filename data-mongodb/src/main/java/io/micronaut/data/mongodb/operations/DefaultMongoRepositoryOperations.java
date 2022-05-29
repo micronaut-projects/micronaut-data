@@ -29,6 +29,7 @@ import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.DeleteOneModel;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.ReplaceOneModel;
+import com.mongodb.client.model.ReplaceOptions;
 import com.mongodb.client.model.UpdateOneModel;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.InsertManyResult;
@@ -801,7 +802,8 @@ public final class DefaultMongoRepositoryOperations extends AbstractMongoReposit
                 }
                 BsonDocument bsonDocument = BsonDocumentWrapper.asBsonDocument(entity, mongoDatabase.getCodecRegistry());
                 bsonDocument.remove("_id");
-                UpdateResult updateResult = collection.replaceOne(ctx.clientSession, filter, bsonDocument);
+                ReplaceOptions replaceOptions = new ReplaceOptions();
+                UpdateResult updateResult = collection.replaceOne(ctx.clientSession, filter, bsonDocument, replaceOptions);
                 modifiedCount = updateResult.getModifiedCount();
                 if (persistentEntity.getVersion() != null) {
                     checkOptimisticLocking(1, (int) modifiedCount);

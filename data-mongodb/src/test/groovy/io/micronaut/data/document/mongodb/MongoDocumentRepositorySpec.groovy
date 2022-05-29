@@ -40,7 +40,7 @@ class MongoDocumentRepositorySpec extends AbstractDocumentRepositorySpec impleme
         when:
             def people = personRepository.queryAll()
         then:
-            people.every {it.size() == 4 && !it.id }
+            people.every {it.size() == 5 && !it.id }
     }
 
     void "test attribute converter"() {
