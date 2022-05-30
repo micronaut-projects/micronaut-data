@@ -50,8 +50,10 @@ import spock.lang.AutoCleanup
 import spock.lang.Shared
 import spock.lang.Specification
 
+import java.time.LocalDate
 import java.util.stream.Collectors
 
+import static io.micronaut.data.document.tck.repositories.PersonRepository.Specifications.dateOfBirthEquals
 import static io.micronaut.data.document.tck.repositories.PersonRepository.Specifications.nameEquals
 import static io.micronaut.data.repository.jpa.criteria.QuerySpecification.where
 
@@ -105,7 +107,8 @@ abstract class AbstractDocumentRepositorySpec extends Specification {
     }
 
     protected void savePersons(List<String> names) {
-        personRepository.saveAll(names.collect { new Person(name: it) })
+        int i = 0
+        personRepository.saveAll(names.collect { new Person(name: it, dateOfBirth: LocalDate.of(1986, 6, 1 + i++)) })
     }
 
     protected void setup() {
@@ -851,6 +854,8 @@ abstract class AbstractDocumentRepositorySpec extends Specification {
         when:
             savePersons(["Jeff", "James"])
         then:
+            personRepository.findOne(dateOfBirthEquals(LocalDate.of(1986, 6, 1))).get().name == "Jeff"
+            personRepository.findOne(dateOfBirthEquals(LocalDate.of(1986, 6, 2))).get().name == "James"
             personRepository.findOne(nameEquals("Jeff")).isPresent()
             !personRepository.findOne(nameEquals("Denis")).isPresent()
             personRepository.findOne(where(nameEquals("Jeff"))).isPresent()

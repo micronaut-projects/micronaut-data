@@ -19,7 +19,6 @@ import io.micronaut.data.annotation.DateUpdated;
 import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
-import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.annotation.Transient;
 import io.micronaut.data.annotation.event.PostLoad;
@@ -53,6 +52,9 @@ public class Book {
 
     @Transient
     public int prePersist, postPersist, preUpdate, postUpdate, preRemove, postRemove, postLoad;
+
+    @DateUpdated
+    private LocalDateTime created;
 
     @DateUpdated
     private LocalDateTime lastUpdated;
@@ -157,5 +159,13 @@ public class Book {
 
     public void setLastUpdated(LocalDateTime lastUpdated) {
         this.lastUpdated = lastUpdated;
+    }
+
+    public LocalDateTime getCreated() {
+        return created;
+    }
+
+    public void setCreated(LocalDateTime created) {
+        this.created = created;
     }
 }

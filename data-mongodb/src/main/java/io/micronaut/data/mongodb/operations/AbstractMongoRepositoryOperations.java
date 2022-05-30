@@ -296,9 +296,9 @@ abstract class AbstractMongoRepositoryOperations<Dtb, Cnt, PS> extends AbstractR
             }
         }
         if (sb.length() == 0) {
-            QUERY_LOG.debug("Executing exists Mongo 'find'");
+            QUERY_LOG.debug("Executing Mongo 'find'");
         } else {
-            QUERY_LOG.debug("Executing exists Mongo 'find' with" + sb);
+            QUERY_LOG.debug("Executing Mongo 'find' with" + sb);
         }
     }
 
@@ -312,7 +312,11 @@ abstract class AbstractMongoRepositoryOperations<Dtb, Cnt, PS> extends AbstractR
                 sb.append(" collation: ").append(collation);
             }
         }
-        QUERY_LOG.debug("Executing exists Mongo 'aggregate' with" + sb);
+        if (sb.length() == 0) {
+            QUERY_LOG.debug("Executing Mongo 'aggregate'");
+        } else {
+            QUERY_LOG.debug("Executing Mongo 'aggregate' with" + sb);
+        }
     }
 
 }
