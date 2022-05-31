@@ -1,5 +1,10 @@
 plugins {
     id "io.micronaut.build.internal.docs"
-    id "io.micronaut.build.internal.dependency-updates"
     id "io.micronaut.build.internal.quality-reporting"
+}
+
+tasks.withType(org.sonarqube.gradle.SonarQubeTask).configureEach {
+    properties {
+        property "sonar.exclusions", "doc-examples/**, data-tck/**, data-document-tck/**"
+    }
 }

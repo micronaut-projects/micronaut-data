@@ -34,10 +34,3 @@ project.afterEvaluate {
     nativeCompile.enabled = false
     testNativeImage.enabled = false
 }
-
-def sonarqubeTask = tasks.findByName("sonarqube")
-if (sonarqubeTask) {
-    sonarqubeTask.configure {
-        skipProject = true
-    }
-}
