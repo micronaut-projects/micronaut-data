@@ -3,6 +3,10 @@ plugins {
     id "io.micronaut.build.internal.quality-reporting"
 }
 
-tasks.withType(org.sonarqube.gradle.SonarQubeTask).configureEach {
-    properties.put "sonar.exclusions", "doc-examples/**, data-tck/**, data-document-tck/**, benchmarks/**"
+if (System.getenv("SONAR_TOKEN") != null) {
+    sonarqube {
+        properties {
+            property "sonar.exclusions", "**/example/**"
+        }
+    }
 }
