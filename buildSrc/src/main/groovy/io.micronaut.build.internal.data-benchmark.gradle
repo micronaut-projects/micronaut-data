@@ -40,3 +40,10 @@ jmh {
 jmhJar {
     mergeServiceFiles()
 }
+
+def sonarqubeTask = tasks.findByName("sonarqube")
+if (sonarqubeTask) {
+    sonarqubeTask.configure {
+        skipProject = true
+    }
+}

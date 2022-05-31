@@ -6,3 +6,10 @@ plugins {
 ext {
     skipDocumentation = true
 }
+
+def sonarqubeTask = tasks.findByName("sonarqube")
+if (sonarqubeTask) {
+    sonarqubeTask.configure {
+        skipProject = true
+    }
+}
