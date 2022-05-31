@@ -35,7 +35,7 @@ public final class KotlinInterceptedMethodAsyncResultSupplier<C, T> implements F
 
     private final KotlinInterceptedMethod kotlinInterceptedMethod;
 
-    public KotlinInterceptedMethodAsyncResultSupplier(KotlinInterceptedMethod kotlinInterceptedMethod) {
+    KotlinInterceptedMethodAsyncResultSupplier(KotlinInterceptedMethod kotlinInterceptedMethod) {
         this.kotlinInterceptedMethod = kotlinInterceptedMethod;
     }
 

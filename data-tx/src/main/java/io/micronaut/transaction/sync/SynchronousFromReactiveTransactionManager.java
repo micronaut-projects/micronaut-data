@@ -124,27 +124,27 @@ public final class SynchronousFromReactiveTransactionManager<T> implements Synch
                 "and only supports 'execute', 'executeRead' and 'executeWrite' methods.");
     }
 
-    private static final class DefaultTransactionStatus<T> implements TransactionStatus<T> {
+    private final class DefaultTransactionStatus<K> implements TransactionStatus<K> {
 
-        private final ReactiveTransactionStatus<T> transactionStatus;
+        private final ReactiveTransactionStatus<K> transactionStatus;
 
-        private DefaultTransactionStatus(ReactiveTransactionStatus<T> transactionStatus) {
+        private DefaultTransactionStatus(ReactiveTransactionStatus<K> transactionStatus) {
             this.transactionStatus = transactionStatus;
         }
 
         @Override
         public Object createSavepoint() throws TransactionException {
-            throw new IllegalStateException("Not supported!");
+            throw noSupported();
         }
 
         @Override
         public void rollbackToSavepoint(Object savepoint) throws TransactionException {
-            throw new IllegalStateException("Not supported!");
+            throw noSupported();
         }
 
         @Override
         public void releaseSavepoint(Object savepoint) throws TransactionException {
-            throw new IllegalStateException("Not supported!");
+            throw noSupported();
         }
 
         @Override
@@ -169,22 +169,22 @@ public final class SynchronousFromReactiveTransactionManager<T> implements Synch
 
         @Override
         public boolean hasSavepoint() {
-            throw new IllegalStateException("Not supported!");
+            throw noSupported();
         }
 
         @Override
         public void flush() {
-            throw new IllegalStateException("Not supported!");
+            throw noSupported();
         }
 
         @Override
         public Object getTransaction() {
-            throw new IllegalStateException("Not supported!");
+            throw noSupported();
         }
 
         @Override
-        public T getConnection() {
-            throw new IllegalStateException("Not supported!");
+        public K getConnection() {
+            throw noSupported();
         }
     }
 }

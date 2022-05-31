@@ -38,7 +38,7 @@ import java.util.concurrent.ExecutorService;
  * @since 3.5.0
  */
 @Factory
-final class TransactionManagersFactory {
+final class R2dbcTransactionManagerFactory {
 
     @EachBean(ConnectionFactory.class)
     <T> SynchronousTransactionManager<T> buildSynchronousTransactionManager(@Parameter ReactorReactiveTransactionOperations<T> reactiveTransactionOperations,

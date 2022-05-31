@@ -53,6 +53,10 @@ public class TransactionalEventInterceptor implements MethodInterceptor<Object, 
     private final BeanLocator beanLocator;
     private final Map<ExecutableMethod, TransactionEventInvocation> transactionInvocationMap = new ConcurrentHashMap<>(10);
 
+    /**
+     * @deprecated Deprecated to be removed
+     */
+    @Deprecated
     public TransactionalEventInterceptor() {
         this(null);
     }

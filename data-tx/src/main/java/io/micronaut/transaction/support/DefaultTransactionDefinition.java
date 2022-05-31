@@ -22,6 +22,7 @@ import io.micronaut.transaction.TransactionDefinition;
 import java.io.Serializable;
 import java.time.Duration;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Objects;
 
 
@@ -244,8 +245,8 @@ public class DefaultTransactionDefinition implements TransactionDefinition, Seri
      * @param rollbackOn The exception classes
      * @since 3.5.0
      */
-    public void setRollbackOn(Collection<Class<? extends Throwable>> rollbackOn) {
-        this.rollbackOn = rollbackOn;
+    public void setRollbackOn(@Nullable Collection<Class<? extends Throwable>> rollbackOn) {
+        this.rollbackOn = rollbackOn == null ? Collections.emptyList() : rollbackOn;
     }
 
     /**
@@ -254,8 +255,8 @@ public class DefaultTransactionDefinition implements TransactionDefinition, Seri
      * @param dontRollbackOn The exception classes
      * @since 3.5.0
      */
-    public void setDontRollbackOn(Collection<Class<? extends Throwable>> dontRollbackOn) {
-        this.dontRollbackOn = dontRollbackOn;
+    public void setDontRollbackOn(@Nullable Collection<Class<? extends Throwable>> dontRollbackOn) {
+        this.dontRollbackOn = dontRollbackOn == null ? Collections.emptyList() : dontRollbackOn;
     }
 
     @Override

@@ -38,7 +38,7 @@ import jakarta.inject.Singleton;
  */
 @RequiresSyncMongo
 @Factory
-final class SyncMongoTransactionManagersFactory {
+final class SynchronousMongoTransactionManagerFactory {
 
     @Requires(missingProperty = MongoSettings.MONGODB_SERVERS)
     @Primary

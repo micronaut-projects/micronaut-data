@@ -46,7 +46,7 @@ import java.util.concurrent.ExecutorService;
 @RequiresReactiveMongo
 @Factory
 @Internal
-final class ReactiveTransactionManagersFactory {
+final class MongoReactiveTransactionManagerFactory {
 
     @Requires(missingProperty = MongoSettings.MONGODB_SERVERS)
     @Primary

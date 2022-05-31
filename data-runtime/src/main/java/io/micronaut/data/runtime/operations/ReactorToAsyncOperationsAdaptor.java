@@ -44,13 +44,13 @@ import java.util.concurrent.Executor;
  * @since 3.5.0
  */
 @Experimental
-public final class AsyncFromReactorReactiveAsyncRepositoryOperation implements AsyncRepositoryOperations {
+public final class ReactorToAsyncOperationsAdaptor implements AsyncRepositoryOperations {
 
     private final ReactorReactiveRepositoryOperations reactiveOperations;
     private final Executor executor;
 
-    public AsyncFromReactorReactiveAsyncRepositoryOperation(ReactorReactiveRepositoryOperations reactiveOperations,
-                                                            Executor executor) {
+    public ReactorToAsyncOperationsAdaptor(ReactorReactiveRepositoryOperations reactiveOperations,
+                                           Executor executor) {
         this.reactiveOperations = reactiveOperations;
         this.executor = executor;
     }

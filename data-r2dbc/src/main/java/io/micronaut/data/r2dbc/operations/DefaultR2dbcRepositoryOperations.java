@@ -65,7 +65,7 @@ import io.micronaut.data.runtime.mapper.DTOMapper;
 import io.micronaut.data.runtime.mapper.TypeMapper;
 import io.micronaut.data.runtime.mapper.sql.SqlDTOMapper;
 import io.micronaut.data.runtime.mapper.sql.SqlResultEntityTypeMapper;
-import io.micronaut.data.runtime.operations.AsyncFromReactorReactiveAsyncRepositoryOperation;
+import io.micronaut.data.runtime.operations.ReactorToAsyncOperationsAdaptor;
 import io.micronaut.data.runtime.operations.internal.AbstractReactiveEntitiesOperations;
 import io.micronaut.data.runtime.operations.internal.AbstractReactiveEntityOperations;
 import io.micronaut.data.runtime.operations.internal.AbstractSqlRepositoryOperations;
@@ -290,7 +290,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             if (executorService == null) {
                 executorService = Executors.newCachedThreadPool();
             }
-            asyncRepositoryOperations = new AsyncFromReactorReactiveAsyncRepositoryOperation(reactiveOperations, executorService);
+            asyncRepositoryOperations = new ReactorToAsyncOperationsAdaptor(reactiveOperations, executorService);
         }
         return asyncRepositoryOperations;
     }
