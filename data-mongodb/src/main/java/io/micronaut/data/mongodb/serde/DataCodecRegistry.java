@@ -16,15 +16,16 @@
 package io.micronaut.data.mongodb.serde;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.beans.BeanIntrospector;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
-import jakarta.inject.Singleton;
 import org.bson.codecs.Codec;
 import org.bson.codecs.configuration.CodecConfigurationException;
 import org.bson.codecs.configuration.CodecRegistry;
 
+import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -35,9 +36,10 @@ import java.util.concurrent.ConcurrentHashMap;
  * @since 3.3
  */
 @Internal
-@Singleton
 final class DataCodecRegistry implements CodecRegistry {
 
+    @Nullable
+    private final Collection<Class<?>> entities;
     private final DataSerdeRegistry dataSerdeRegistry;
     private final RuntimeEntityRegistry runtimeEntityRegistry;
     private final Map<Class, Codec> codecs = new ConcurrentHashMap<>();
@@ -45,11 +47,14 @@ final class DataCodecRegistry implements CodecRegistry {
     /**
      * Default constructor.
      *
+     * @param entities              The entities
      * @param dataSerdeRegistry     The data serde registry
      * @param runtimeEntityRegistry The runtime entity registry
      */
-    DataCodecRegistry(DataSerdeRegistry dataSerdeRegistry,
+    DataCodecRegistry(@Nullable Collection<Class<?>> entities,
+                      DataSerdeRegistry dataSerdeRegistry,
                       RuntimeEntityRegistry runtimeEntityRegistry) {
+        this.entities = entities;
         this.dataSerdeRegistry = dataSerdeRegistry;
         this.runtimeEntityRegistry = runtimeEntityRegistry;
     }
@@ -65,7 +70,7 @@ final class DataCodecRegistry implements CodecRegistry {
         if (codec != null) {
             return codec;
         }
-        if (clazz.isEnum()) {
+        if (clazz.isEnum() || entities != null && !entities.contains(clazz)) {
             return null;
         }
         if (BeanIntrospector.SHARED.findIntrospection(clazz).isPresent()) {
