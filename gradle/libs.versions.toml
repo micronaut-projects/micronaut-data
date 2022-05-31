@@ -25,7 +25,7 @@ mongodb = "4.6.0"
 oracle-jdbc-driver = "21.5.0.0"
 mariadb-jdbc-driver = "2.7.5"
 mysql-jdbc-driver = "8.0.29"
-postgres-jdbc-driver = "42.3.5"
+postgres-jdbc-driver = "42.3.6"
 mssql-jdbc-driver = "8.4.1.jre8"
 
 # R2DBC Drivers
