@@ -5,6 +5,6 @@ plugins {
 
 tasks.withType(org.sonarqube.gradle.SonarQubeTask).configureEach {
     properties {
-        property "sonar.exclusions", "doc-examples/**, data-tck/**, data-document-tck/**"
+        property "sonar.exclusions", "doc-examples/**, data-tck/**, data-document-tck/**, benchmarks/**"
     }
 }
