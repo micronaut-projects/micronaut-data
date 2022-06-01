@@ -29,6 +29,10 @@ dependencies {
     testImplementation libs.jakarta.persistence.api
     testImplementation libs.groovy.sql
     testImplementation mn.micronaut.validation
+
+    implementation mn.micronaut.http.server.netty
+    implementation mn.micronaut.http.client
+
     testImplementation libs.testcontainers.r2dbc
 
     if (JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_11)) {
