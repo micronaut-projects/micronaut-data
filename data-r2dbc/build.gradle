@@ -30,8 +30,8 @@ dependencies {
     testImplementation libs.groovy.sql
     testImplementation mn.micronaut.validation
 
-    implementation mn.micronaut.http.server.netty
-    implementation mn.micronaut.http.client
+    testImplementation mn.micronaut.http.server.netty
+    testImplementation mn.micronaut.http.client
 
     testImplementation libs.testcontainers.r2dbc
 
