@@ -1,6 +1,7 @@
 plugins {
     id "groovy"
     id "io.micronaut.build.internal.data-base"
+    id 'jacoco'
 }
 
 ext {

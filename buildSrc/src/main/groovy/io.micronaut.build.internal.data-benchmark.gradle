@@ -3,6 +3,7 @@ plugins {
     id "application"
     id "com.github.johnrengelman.shadow"
     id "me.champeau.jmh"
+    id 'jacoco'
 }
 
 version "0.1"
