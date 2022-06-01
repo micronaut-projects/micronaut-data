@@ -164,7 +164,7 @@ public abstract class AbstractReactiveEntitiesOperations<Ctx extends OperationCo
     /**
      * @return Rows updated.
      */
-    public Mono<Long> getRowsUpdated() {
+    public Mono<Number> getRowsUpdated() {
         // We need to trigger entities to execute post actions when getting just rows
         return rowsUpdated.flatMap(rows -> entities.then(Mono.just(rows)));
     }
