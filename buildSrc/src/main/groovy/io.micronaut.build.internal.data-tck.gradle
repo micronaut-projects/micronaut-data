@@ -1,16 +1,8 @@
 plugins {
     id "groovy"
     id "io.micronaut.build.internal.data-base"
-    id "io.micronaut.build.internal.quality-checks"
 }
 
 ext {
     skipDocumentation = true
-}
-
-tasks.register("spotlessCheck") {
-    // workaround for bug in build looking for this task
-}
-tasks.withType(Checkstyle).configureEach {
-    enabled = false
 }
