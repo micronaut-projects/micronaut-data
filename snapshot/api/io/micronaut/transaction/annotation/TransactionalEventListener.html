@@ -129,6 +129,12 @@ public @interface <span class="memberNameLabel">TransactionalEventListener</span
 <th class="colLast" scope="col">Optional Element and Description</th>
 </tr>
 <tr class="altColor">
+<td class="colFirst"><code>java.lang.String</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/transaction/annotation/TransactionalEventListener.html#transactionManager--">transactionManager</a></span></code>
+<div class="block">A <em>qualifier</em> value for the specified transaction.</div>
+</td>
+</tr>
+<tr class="rowColor">
 <td class="colFirst"><code><a href="../../../../io/micronaut/transaction/annotation/TransactionalEventListener.TransactionPhase.html" title="enum in io.micronaut.transaction.annotation">TransactionalEventListener.TransactionPhase</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/transaction/annotation/TransactionalEventListener.html#value--">value</a></span></code>&nbsp;</td>
 </tr>
@@ -150,7 +156,7 @@ public @interface <span class="memberNameLabel">TransactionalEventListener</span
 <a name="value--">
 <!--   -->
 </a>
-<ul class="blockListLast">
+<ul class="blockList">
 <li class="blockList">
 <h4>value</h4>
 <pre>public abstract&nbsp;<a href="../../../../io/micronaut/transaction/annotation/TransactionalEventListener.TransactionPhase.html" title="enum in io.micronaut.transaction.annotation">TransactionalEventListener.TransactionPhase</a>&nbsp;value</pre>
@@ -161,6 +167,33 @@ public @interface <span class="memberNameLabel">TransactionalEventListener</span
 <dl>
 <dt>Default:</dt>
 <dd>io.micronaut.transaction.annotation.TransactionalEventListener.TransactionPhase.AFTER_COMMIT</dd>
+</dl>
+</li>
+</ul>
+</li>
+</ul>
+<ul class="blockList">
+<li class="blockList"><a name="transactionManager--">
+<!--   -->
+</a>
+<ul class="blockListLast">
+<li class="blockList">
+<h4>transactionManager</h4>
+<pre>public abstract&nbsp;java.lang.String&nbsp;transactionManager</pre>
+<div class="block">A <em>qualifier</em> value for the specified transaction.
+ <p>May be used to determine the target transaction manager,
+ matching the qualifier value (or the bean name) of a specific
+ <a href="../../../../io/micronaut/transaction/SynchronousTransactionManager.html" title="interface in io.micronaut.transaction"><code>SynchronousTransactionManager</code></a>
+ bean definition.</div>
+<dl>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>The transaction manager</dd>
+<dt><span class="simpleTagLabel">Since:</span></dt>
+<dd>3.5.0</dd>
+</dl>
+<dl>
+<dt>Default:</dt>
+<dd>""</dd>
 </dl>
 </li>
 </ul>

@@ -17,7 +17,7 @@
     catch(err) {
     }
 //-->
-var methods = {"i0":10,"i1":10,"i2":10,"i3":10,"i4":10,"i5":10,"i6":10,"i7":10,"i8":10,"i9":10,"i10":10,"i11":10,"i12":10};
+var methods = {"i0":10,"i1":10,"i2":10,"i3":10,"i4":10,"i5":10,"i6":10,"i7":10,"i8":10,"i9":10,"i10":10,"i11":10,"i12":10,"i13":10,"i14":10,"i15":10,"i16":10};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],8:["t4","Concrete Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -245,72 +245,96 @@ implements <a href="../../../../io/micronaut/transaction/TransactionDefinition.h
 </td>
 </tr>
 <tr id="i1" class="rowColor">
+<td class="colFirst"><code>java.util.Collection&lt;java.lang.Class&lt;? extends java.lang.Throwable&gt;&gt;</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/transaction/support/DefaultTransactionDefinition.html#getDontRollbackOn--">getDontRollbackOn</a></span>()</code>
+<div class="block">Collection of exception classes that shouldn't cause the rollback.</div>
+</td>
+</tr>
+<tr id="i2" class="altColor">
 <td class="colFirst"><code><a href="../../../../io/micronaut/transaction/TransactionDefinition.Isolation.html" title="enum in io.micronaut.transaction">TransactionDefinition.Isolation</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/transaction/support/DefaultTransactionDefinition.html#getIsolationLevel--">getIsolationLevel</a></span>()</code>
 <div class="block">Return the isolation level.</div>
 </td>
 </tr>
-<tr id="i2" class="altColor">
+<tr id="i3" class="rowColor">
 <td class="colFirst"><code>java.lang.String</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/transaction/support/DefaultTransactionDefinition.html#getName--">getName</a></span>()</code>
 <div class="block">Return the name of this transaction.</div>
 </td>
 </tr>
-<tr id="i3" class="rowColor">
+<tr id="i4" class="altColor">
 <td class="colFirst"><code><a href="../../../../io/micronaut/transaction/TransactionDefinition.Propagation.html" title="enum in io.micronaut.transaction">TransactionDefinition.Propagation</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/transaction/support/DefaultTransactionDefinition.html#getPropagationBehavior--">getPropagationBehavior</a></span>()</code>
 <div class="block">Return the propagation behavior.</div>
 </td>
 </tr>
-<tr id="i4" class="altColor">
+<tr id="i5" class="rowColor">
+<td class="colFirst"><code>java.util.Collection&lt;java.lang.Class&lt;? extends java.lang.Throwable&gt;&gt;</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/transaction/support/DefaultTransactionDefinition.html#getRollbackOn--">getRollbackOn</a></span>()</code>
+<div class="block">Collection of exception classes that should cause the rollback.</div>
+</td>
+</tr>
+<tr id="i6" class="altColor">
 <td class="colFirst"><code>java.time.Duration</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/transaction/support/DefaultTransactionDefinition.html#getTimeout--">getTimeout</a></span>()</code>
 <div class="block">Return the transaction timeout.</div>
 </td>
 </tr>
-<tr id="i5" class="rowColor">
+<tr id="i7" class="rowColor">
 <td class="colFirst"><code>int</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/transaction/support/DefaultTransactionDefinition.html#hashCode--">hashCode</a></span>()</code>
 <div class="block">This implementation returns <code>toString()</code>'s hash code.</div>
 </td>
 </tr>
-<tr id="i6" class="altColor">
+<tr id="i8" class="altColor">
 <td class="colFirst"><code>boolean</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/transaction/support/DefaultTransactionDefinition.html#isReadOnly--">isReadOnly</a></span>()</code>
 <div class="block">Return whether to optimize as a read-only transaction.</div>
 </td>
 </tr>
-<tr id="i7" class="rowColor">
+<tr id="i9" class="rowColor">
+<td class="colFirst"><code>void</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/transaction/support/DefaultTransactionDefinition.html#setDontRollbackOn-java.util.Collection-">setDontRollbackOn</a></span>(java.util.Collection&lt;java.lang.Class&lt;? extends java.lang.Throwable&gt;&gt;&nbsp;dontRollbackOn)</code>
+<div class="block">Set exception classes which shouldn't cause the rollback.</div>
+</td>
+</tr>
+<tr id="i10" class="altColor">
 <td class="colFirst"><code>void</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/transaction/support/DefaultTransactionDefinition.html#setIsolationLevel-io.micronaut.transaction.TransactionDefinition.Isolation-">setIsolationLevel</a></span>(<a href="../../../../io/micronaut/transaction/TransactionDefinition.Isolation.html" title="enum in io.micronaut.transaction">TransactionDefinition.Isolation</a>&nbsp;isolationLevel)</code>
 <div class="block">Set the isolation level.</div>
 </td>
 </tr>
-<tr id="i8" class="altColor">
+<tr id="i11" class="rowColor">
 <td class="colFirst"><code>void</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/transaction/support/DefaultTransactionDefinition.html#setName-java.lang.String-">setName</a></span>(java.lang.String&nbsp;name)</code>
 <div class="block">Set the name of this transaction.</div>
 </td>
 </tr>
-<tr id="i9" class="rowColor">
+<tr id="i12" class="altColor">
 <td class="colFirst"><code>void</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/transaction/support/DefaultTransactionDefinition.html#setPropagationBehavior-io.micronaut.transaction.TransactionDefinition.Propagation-">setPropagationBehavior</a></span>(<a href="../../../../io/micronaut/transaction/TransactionDefinition.Propagation.html" title="enum in io.micronaut.transaction">TransactionDefinition.Propagation</a>&nbsp;propagationBehavior)</code>
 <div class="block">Set the propagation behavior.</div>
 </td>
 </tr>
-<tr id="i10" class="altColor">
+<tr id="i13" class="rowColor">
 <td class="colFirst"><code>void</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/transaction/support/DefaultTransactionDefinition.html#setReadOnly-boolean-">setReadOnly</a></span>(boolean&nbsp;readOnly)</code>
 <div class="block">Set whether to optimize as read-only transaction.</div>
 </td>
 </tr>
-<tr id="i11" class="rowColor">
+<tr id="i14" class="altColor">
+<td class="colFirst"><code>void</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/transaction/support/DefaultTransactionDefinition.html#setRollbackOn-java.util.Collection-">setRollbackOn</a></span>(java.util.Collection&lt;java.lang.Class&lt;? extends java.lang.Throwable&gt;&gt;&nbsp;rollbackOn)</code>
+<div class="block">Set exception classes which should cause the rollback.</div>
+</td>
+</tr>
+<tr id="i15" class="rowColor">
 <td class="colFirst"><code>void</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/transaction/support/DefaultTransactionDefinition.html#setTimeout-java.time.Duration-">setTimeout</a></span>(java.time.Duration&nbsp;timeout)</code>
 <div class="block">Set the timeout to apply, as number of seconds.</div>
 </td>
 </tr>
-<tr id="i12" class="altColor">
+<tr id="i16" class="altColor">
 <td class="colFirst"><code>java.lang.String</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/transaction/support/DefaultTransactionDefinition.html#toString--">toString</a></span>()</code>
 <div class="block">Return an identifying description for this transaction definition.</div>
@@ -329,7 +353,7 @@ implements <a href="../../../../io/micronaut/transaction/TransactionDefinition.h
 <!--   -->
 </a>
 <h3>Methods inherited from interface&nbsp;io.micronaut.transaction.<a href="../../../../io/micronaut/transaction/TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a></h3>
-<code><a href="../../../../io/micronaut/transaction/TransactionDefinition.html#of-io.micronaut.transaction.TransactionDefinition.Propagation-">of</a></code></li>
+<code><a href="../../../../io/micronaut/transaction/TransactionDefinition.html#of-io.micronaut.transaction.TransactionDefinition.Propagation-">of</a>, <a href="../../../../io/micronaut/transaction/TransactionDefinition.html#rollbackOn-java.lang.Throwable-">rollbackOn</a></code></li>
 </ul>
 </li>
 </ul>
@@ -731,6 +755,74 @@ public final&nbsp;java.lang.String&nbsp;getName()</pre>
 <dd>the name of this transaction (<code>null</code> by default}</dd>
 <dt><span class="seeLabel">See Also:</span></dt>
 <dd><a href="../../../../io/micronaut/transaction/support/TransactionSynchronizationManager.html#getCurrentTransactionName--"><code>TransactionSynchronizationManager.getCurrentTransactionName()</code></a></dd>
+</dl>
+</li>
+</ul>
+<a name="setRollbackOn-java.util.Collection-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>setRollbackOn</h4>
+<pre>public&nbsp;void&nbsp;setRollbackOn(@Nullable
+                          java.util.Collection&lt;java.lang.Class&lt;? extends java.lang.Throwable&gt;&gt;&nbsp;rollbackOn)</pre>
+<div class="block">Set exception classes which should cause the rollback. Empty if all should cause it.</div>
+<dl>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>rollbackOn</code> - The exception classes</dd>
+<dt><span class="simpleTagLabel">Since:</span></dt>
+<dd>3.5.0</dd>
+</dl>
+</li>
+</ul>
+<a name="setDontRollbackOn-java.util.Collection-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>setDontRollbackOn</h4>
+<pre>public&nbsp;void&nbsp;setDontRollbackOn(@Nullable
+                              java.util.Collection&lt;java.lang.Class&lt;? extends java.lang.Throwable&gt;&gt;&nbsp;dontRollbackOn)</pre>
+<div class="block">Set exception classes which shouldn't cause the rollback.</div>
+<dl>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>dontRollbackOn</code> - The exception classes</dd>
+<dt><span class="simpleTagLabel">Since:</span></dt>
+<dd>3.5.0</dd>
+</dl>
+</li>
+</ul>
+<a name="getRollbackOn--">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>getRollbackOn</h4>
+<pre>public&nbsp;java.util.Collection&lt;java.lang.Class&lt;? extends java.lang.Throwable&gt;&gt;&nbsp;getRollbackOn()</pre>
+<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../io/micronaut/transaction/TransactionDefinition.html#getRollbackOn--">TransactionDefinition</a></code></span></div>
+<div class="block">Collection of exception classes that should cause the rollback. Empty if all exception should cause the rollback.</div>
+<dl>
+<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
+<dd><code><a href="../../../../io/micronaut/transaction/TransactionDefinition.html#getRollbackOn--">getRollbackOn</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../io/micronaut/transaction/TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a></code></dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>the exception classes</dd>
+</dl>
+</li>
+</ul>
+<a name="getDontRollbackOn--">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>getDontRollbackOn</h4>
+<pre>public&nbsp;java.util.Collection&lt;java.lang.Class&lt;? extends java.lang.Throwable&gt;&gt;&nbsp;getDontRollbackOn()</pre>
+<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../io/micronaut/transaction/TransactionDefinition.html#getDontRollbackOn--">TransactionDefinition</a></code></span></div>
+<div class="block">Collection of exception classes that shouldn't cause the rollback.</div>
+<dl>
+<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
+<dd><code><a href="../../../../io/micronaut/transaction/TransactionDefinition.html#getDontRollbackOn--">getDontRollbackOn</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../io/micronaut/transaction/TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a></code></dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>the exception classes</dd>
 </dl>
 </li>
 </ul>

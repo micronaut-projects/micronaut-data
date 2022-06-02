@@ -17,8 +17,8 @@
     catch(err) {
     }
 //-->
-var methods = {"i0":42,"i1":42,"i2":42,"i3":42,"i4":9,"i5":10,"i6":10,"i7":42,"i8":42};
-var tabs = {65535:["t0","All Methods"],1:["t1","Static Methods"],2:["t2","Instance Methods"],8:["t4","Concrete Methods"],32:["t6","Deprecated Methods"]};
+var methods = {"i0":9,"i1":10,"i2":10};
+var tabs = {65535:["t0","All Methods"],1:["t1","Static Methods"],2:["t2","Instance Methods"],8:["t4","Concrete Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
 var tableTab = "tableTab";
@@ -48,7 +48,7 @@ var activeTableTab = "activeTableTab";
 <div class="subNav">
 <ul class="navList">
 <li><a href="../../../../io/micronaut/transaction/interceptor/TransactionalEventInterceptor.html" title="class in io.micronaut.transaction.interceptor"><span class="typeNameLink">Prev&nbsp;Class</span></a></li>
-<li><a href="../../../../io/micronaut/transaction/interceptor/TransactionalInterceptor.TransactionInfo.html" title="class in io.micronaut.transaction.interceptor"><span class="typeNameLink">Next&nbsp;Class</span></a></li>
+<li><a href="../../../../io/micronaut/transaction/interceptor/TransactionAttribute.html" title="interface in io.micronaut.transaction.interceptor"><span class="typeNameLink">Next&nbsp;Class</span></a></li>
 </ul>
 <ul class="navList">
 <li><a href="../../../../index.html?io/micronaut/transaction/interceptor/TransactionalInterceptor.html" target="_top">Frames</a></li>
@@ -72,7 +72,7 @@ var activeTableTab = "activeTableTab";
 <div>
 <ul class="subNavList">
 <li>Summary:&nbsp;</li>
-<li><a href="#nested.class.summary">Nested</a>&nbsp;|&nbsp;</li>
+<li>Nested&nbsp;|&nbsp;</li>
 <li>Field&nbsp;|&nbsp;</li>
 <li><a href="#constructor.summary">Constr</a>&nbsp;|&nbsp;</li>
 <li><a href="#method.summary">Method</a></li>
@@ -112,7 +112,8 @@ var activeTableTab = "activeTableTab";
 <hr>
 <br>
 <pre>@Singleton
-public class <span class="typeNameLabel">TransactionalInterceptor</span>
+ @Internal
+public final class <span class="typeNameLabel">TransactionalInterceptor</span>
 extends java.lang.Object
 implements io.micronaut.aop.MethodInterceptor&lt;java.lang.Object,java.lang.Object&gt;</pre>
 <div class="block">Default implementation of <a href="../../../../io/micronaut/transaction/annotation/TransactionalAdvice.html" title="annotation in io.micronaut.transaction.annotation"><code>TransactionalAdvice</code></a>. Forked from the reflection based code in Spring.</div>
@@ -120,7 +121,7 @@ implements io.micronaut.aop.MethodInterceptor&lt;java.lang.Object,java.lang.Obje
 <dt><span class="simpleTagLabel">Since:</span></dt>
 <dd>1.0</dd>
 <dt><span class="simpleTagLabel">Author:</span></dt>
-<dd>Rod Johnson, Juergen Hoeller, Stéphane Nicoll, Sam Brannen, graemerocher</dd>
+<dd>graemerocher, Denis stepanov</dd>
 </dl>
 </li>
 </ul>
@@ -128,29 +129,6 @@ implements io.micronaut.aop.MethodInterceptor&lt;java.lang.Object,java.lang.Obje
 <div class="summary">
 <ul class="blockList">
 <li class="blockList">
-<!-- ======== NESTED CLASS SUMMARY ======== -->
-<ul class="blockList">
-<li class="blockList"><a name="nested.class.summary">
-<!--   -->
-</a>
-<h3>Nested Class Summary</h3>
-<table class="memberSummary" border="0" cellpadding="3" cellspacing="0" summary="Nested Class Summary table, listing nested classes, and an explanation">
-<caption><span>Nested Classes</span><span class="tabEnd">&nbsp;</span></caption>
-<tr>
-<th class="colFirst" scope="col">Modifier and Type</th>
-<th class="colLast" scope="col">Class and Description</th>
-</tr>
-<tr class="altColor">
-<td class="colFirst"><code>protected static class&nbsp;</code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/transaction/interceptor/TransactionalInterceptor.TransactionInfo.html" title="class in io.micronaut.transaction.interceptor">TransactionalInterceptor.TransactionInfo</a>&lt;<a href="../../../../io/micronaut/transaction/interceptor/TransactionalInterceptor.TransactionInfo.html" title="type parameter in TransactionalInterceptor.TransactionInfo">T</a>&gt;</span></code>
-<div class="block"><span class="deprecatedLabel">Deprecated.</span>&nbsp;
-<div class="block"><span class="deprecationComment">The class will be final with private methods in the next major version</span></div>
-</div>
-</td>
-</tr>
-</table>
-</li>
-</ul>
 <!-- =========== FIELD SUMMARY =========== -->
 <ul class="blockList">
 <li class="blockList"><a name="field.summary">
@@ -189,12 +167,6 @@ implements io.micronaut.aop.MethodInterceptor&lt;java.lang.Object,java.lang.Obje
 <div class="block">Default constructor.</div>
 </td>
 </tr>
-<tr class="rowColor">
-<td class="colOne"><code><span class="memberNameLink"><a href="../../../../io/micronaut/transaction/interceptor/TransactionalInterceptor.html#TransactionalInterceptor-io.micronaut.context.BeanLocator-io.micronaut.transaction.interceptor.CoroutineTxHelper-">TransactionalInterceptor</a></span>(io.micronaut.context.BeanLocator&nbsp;beanLocator,
-                        <a href="../../../../io/micronaut/transaction/interceptor/CoroutineTxHelper.html" title="class in io.micronaut.transaction.interceptor">CoroutineTxHelper</a>&nbsp;coroutineTxHelper)</code>
-<div class="block">Default constructor.</div>
-</td>
-</tr>
 </table>
 </li>
 </ul>
@@ -205,78 +177,24 @@ implements io.micronaut.aop.MethodInterceptor&lt;java.lang.Object,java.lang.Obje
 </a>
 <h3>Method Summary</h3>
 <table class="memberSummary" border="0" cellpadding="3" cellspacing="0" summary="Method Summary table, listing methods, and an explanation">
-<caption><span id="t0" class="activeTableTab"><span>All Methods</span><span class="tabEnd">&nbsp;</span></span><span id="t1" class="tableTab"><span><a href="javascript:show(1);">Static Methods</a></span><span class="tabEnd">&nbsp;</span></span><span id="t2" class="tableTab"><span><a href="javascript:show(2);">Instance Methods</a></span><span class="tabEnd">&nbsp;</span></span><span id="t4" class="tableTab"><span><a href="javascript:show(8);">Concrete Methods</a></span><span class="tabEnd">&nbsp;</span></span><span id="t6" class="tableTab"><span><a href="javascript:show(32);">Deprecated Methods</a></span><span class="tabEnd">&nbsp;</span></span></caption>
+<caption><span id="t0" class="activeTableTab"><span>All Methods</span><span class="tabEnd">&nbsp;</span></span><span id="t1" class="tableTab"><span><a href="javascript:show(1);">Static Methods</a></span><span class="tabEnd">&nbsp;</span></span><span id="t2" class="tableTab"><span><a href="javascript:show(2);">Instance Methods</a></span><span class="tabEnd">&nbsp;</span></span><span id="t4" class="tableTab"><span><a href="javascript:show(8);">Concrete Methods</a></span><span class="tabEnd">&nbsp;</span></span></caption>
 <tr>
 <th class="colFirst" scope="col">Modifier and Type</th>
 <th class="colLast" scope="col">Method and Description</th>
 </tr>
 <tr id="i0" class="altColor">
-<td class="colFirst"><code>protected void</code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/transaction/interceptor/TransactionalInterceptor.html#cleanupTransactionInfo-io.micronaut.transaction.interceptor.TransactionalInterceptor.TransactionInfo-">cleanupTransactionInfo</a></span>(<a href="../../../../io/micronaut/transaction/interceptor/TransactionalInterceptor.TransactionInfo.html" title="class in io.micronaut.transaction.interceptor">TransactionalInterceptor.TransactionInfo</a>&nbsp;txInfo)</code>
-<div class="block"><span class="deprecatedLabel">Deprecated.</span>&nbsp;
-<div class="block"><span class="deprecationComment">The class will be final with private methods in the next major version</span></div>
-</div>
-</td>
-</tr>
-<tr id="i1" class="rowColor">
-<td class="colFirst"><code>protected void</code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/transaction/interceptor/TransactionalInterceptor.html#commitTransactionAfterReturning-io.micronaut.transaction.interceptor.TransactionalInterceptor.TransactionInfo-">commitTransactionAfterReturning</a></span>(<a href="../../../../io/micronaut/transaction/interceptor/TransactionalInterceptor.TransactionInfo.html" title="class in io.micronaut.transaction.interceptor">TransactionalInterceptor.TransactionInfo</a>&nbsp;txInfo)</code>
-<div class="block"><span class="deprecatedLabel">Deprecated.</span>&nbsp;
-<div class="block"><span class="deprecationComment">The class will be final with private methods in the next major version</span></div>
-</div>
-</td>
-</tr>
-<tr id="i2" class="altColor">
-<td class="colFirst"><code>protected void</code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/transaction/interceptor/TransactionalInterceptor.html#completeTransactionAfterThrowing-io.micronaut.transaction.interceptor.TransactionalInterceptor.TransactionInfo-java.lang.Throwable-">completeTransactionAfterThrowing</a></span>(<a href="../../../../io/micronaut/transaction/interceptor/TransactionalInterceptor.TransactionInfo.html" title="class in io.micronaut.transaction.interceptor">TransactionalInterceptor.TransactionInfo</a>&nbsp;txInfo,
-                                java.lang.Throwable&nbsp;ex)</code>
-<div class="block"><span class="deprecatedLabel">Deprecated.</span>&nbsp;
-<div class="block"><span class="deprecationComment">The class will be final with private methods in the next major version</span></div>
-</div>
-</td>
-</tr>
-<tr id="i3" class="rowColor">
-<td class="colFirst"><code>protected <a href="../../../../io/micronaut/transaction/interceptor/TransactionalInterceptor.TransactionInfo.html" title="class in io.micronaut.transaction.interceptor">TransactionalInterceptor.TransactionInfo</a></code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/transaction/interceptor/TransactionalInterceptor.html#createTransactionIfNecessary-io.micronaut.transaction.SynchronousTransactionManager-io.micronaut.transaction.interceptor.TransactionAttribute-io.micronaut.inject.ExecutableMethod-">createTransactionIfNecessary</a></span>(<a href="../../../../io/micronaut/transaction/SynchronousTransactionManager.html" title="interface in io.micronaut.transaction">SynchronousTransactionManager</a>&lt;?&gt;&nbsp;tm,
-                            <a href="../../../../io/micronaut/transaction/interceptor/TransactionAttribute.html" title="interface in io.micronaut.transaction.interceptor">TransactionAttribute</a>&nbsp;txAttr,
-                            io.micronaut.inject.ExecutableMethod&lt;java.lang.Object,java.lang.Object&gt;&nbsp;executableMethod)</code>
-<div class="block"><span class="deprecatedLabel">Deprecated.</span>&nbsp;
-<div class="block"><span class="deprecationComment">The class will be final with private methods in the next major version</span></div>
-</div>
-</td>
-</tr>
-<tr id="i4" class="altColor">
 <td class="colFirst"><code>static &lt;T&gt;&nbsp;<a href="../../../../io/micronaut/transaction/TransactionStatus.html" title="interface in io.micronaut.transaction">TransactionStatus</a>&lt;T&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/transaction/interceptor/TransactionalInterceptor.html#currentTransactionStatus--">currentTransactionStatus</a></span>()</code>
 <div class="block">Return the transaction status of the current method invocation.</div>
 </td>
 </tr>
-<tr id="i5" class="rowColor">
+<tr id="i1" class="rowColor">
 <td class="colFirst"><code>int</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/transaction/interceptor/TransactionalInterceptor.html#getOrder--">getOrder</a></span>()</code>&nbsp;</td>
 </tr>
-<tr id="i6" class="altColor">
+<tr id="i2" class="altColor">
 <td class="colFirst"><code>java.lang.Object</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/transaction/interceptor/TransactionalInterceptor.html#intercept-io.micronaut.aop.MethodInvocationContext-">intercept</a></span>(io.micronaut.aop.MethodInvocationContext&lt;java.lang.Object,java.lang.Object&gt;&nbsp;context)</code>&nbsp;</td>
-</tr>
-<tr id="i7" class="rowColor">
-<td class="colFirst"><code>protected <a href="../../../../io/micronaut/transaction/interceptor/TransactionalInterceptor.TransactionInfo.html" title="class in io.micronaut.transaction.interceptor">TransactionalInterceptor.TransactionInfo</a></code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/transaction/interceptor/TransactionalInterceptor.html#prepareTransactionInfo-io.micronaut.transaction.SynchronousTransactionManager-io.micronaut.transaction.interceptor.TransactionAttribute-io.micronaut.inject.ExecutableMethod-io.micronaut.transaction.TransactionStatus-">prepareTransactionInfo</a></span>(<a href="../../../../io/micronaut/transaction/SynchronousTransactionManager.html" title="interface in io.micronaut.transaction">SynchronousTransactionManager</a>&nbsp;tm,
-                      <a href="../../../../io/micronaut/transaction/interceptor/TransactionAttribute.html" title="interface in io.micronaut.transaction.interceptor">TransactionAttribute</a>&nbsp;txAttr,
-                      io.micronaut.inject.ExecutableMethod&lt;java.lang.Object,java.lang.Object&gt;&nbsp;executableMethod,
-                      <a href="../../../../io/micronaut/transaction/TransactionStatus.html" title="interface in io.micronaut.transaction">TransactionStatus</a>&nbsp;status)</code>
-<div class="block"><span class="deprecatedLabel">Deprecated.</span>&nbsp;
-<div class="block"><span class="deprecationComment">The class will be final with private methods in the next major version</span></div>
-</div>
-</td>
-</tr>
-<tr id="i8" class="altColor">
-<td class="colFirst"><code>protected <a href="../../../../io/micronaut/transaction/interceptor/TransactionAttribute.html" title="interface in io.micronaut.transaction.interceptor">TransactionAttribute</a></code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/transaction/interceptor/TransactionalInterceptor.html#resolveTransactionDefinition-io.micronaut.inject.ExecutableMethod-">resolveTransactionDefinition</a></span>(io.micronaut.inject.ExecutableMethod&lt;java.lang.Object,java.lang.Object&gt;&nbsp;executableMethod)</code>
-<div class="block"><span class="deprecatedLabel">Deprecated.</span>&nbsp;
-<div class="block"><span class="deprecationComment">The class will be final with private methods in the next major version</span></div>
-</div>
-</td>
 </tr>
 </table>
 <ul class="blockList">
@@ -310,7 +228,7 @@ implements io.micronaut.aop.MethodInterceptor&lt;java.lang.Object,java.lang.Obje
 <a name="TransactionalInterceptor-io.micronaut.context.BeanLocator-">
 <!--   -->
 </a>
-<ul class="blockList">
+<ul class="blockListLast">
 <li class="blockList">
 <h4>TransactionalInterceptor</h4>
 <pre>public&nbsp;TransactionalInterceptor(@NonNull
@@ -319,25 +237,6 @@ implements io.micronaut.aop.MethodInterceptor&lt;java.lang.Object,java.lang.Obje
 <dl>
 <dt><span class="paramLabel">Parameters:</span></dt>
 <dd><code>beanLocator</code> - The bean locator.</dd>
-</dl>
-</li>
-</ul>
-<a name="TransactionalInterceptor-io.micronaut.context.BeanLocator-io.micronaut.transaction.interceptor.CoroutineTxHelper-">
-<!--   -->
-</a>
-<ul class="blockListLast">
-<li class="blockList">
-<h4>TransactionalInterceptor</h4>
-<pre>@Inject
-public&nbsp;TransactionalInterceptor(@NonNull
-                                        io.micronaut.context.BeanLocator&nbsp;beanLocator,
-                                        @Nullable
-                                        <a href="../../../../io/micronaut/transaction/interceptor/CoroutineTxHelper.html" title="class in io.micronaut.transaction.interceptor">CoroutineTxHelper</a>&nbsp;coroutineTxHelper)</pre>
-<div class="block">Default constructor.</div>
-<dl>
-<dt><span class="paramLabel">Parameters:</span></dt>
-<dd><code>beanLocator</code> - The bean locator.</dd>
-<dd><code>coroutineTxHelper</code> - The coroutine helper</dd>
 </dl>
 </li>
 </ul>
@@ -378,7 +277,7 @@ public&nbsp;TransactionalInterceptor(@NonNull
 <a name="currentTransactionStatus--">
 <!--   -->
 </a>
-<ul class="blockList">
+<ul class="blockListLast">
 <li class="blockList">
 <h4>currentTransactionStatus</h4>
 <pre>public static&nbsp;&lt;T&gt;&nbsp;<a href="../../../../io/micronaut/transaction/TransactionStatus.html" title="interface in io.micronaut.transaction">TransactionStatus</a>&lt;T&gt;&nbsp;currentTransactionStatus()
@@ -394,136 +293,6 @@ public&nbsp;TransactionalInterceptor(@NonNull
 <dt><span class="throwsLabel">Throws:</span></dt>
 <dd><code><a href="../../../../io/micronaut/transaction/exceptions/NoTransactionException.html" title="class in io.micronaut.transaction.exceptions">NoTransactionException</a></code> - if the transaction info cannot be found,
                                 because the method was invoked outside an AOP invocation context</dd>
-</dl>
-</li>
-</ul>
-<a name="createTransactionIfNecessary-io.micronaut.transaction.SynchronousTransactionManager-io.micronaut.transaction.interceptor.TransactionAttribute-io.micronaut.inject.ExecutableMethod-">
-<!--   -->
-</a>
-<ul class="blockList">
-<li class="blockList">
-<h4>createTransactionIfNecessary</h4>
-<pre>@Deprecated
-protected&nbsp;<a href="../../../../io/micronaut/transaction/interceptor/TransactionalInterceptor.TransactionInfo.html" title="class in io.micronaut.transaction.interceptor">TransactionalInterceptor.TransactionInfo</a>&nbsp;createTransactionIfNecessary(@NonNull
-                                                                                            <a href="../../../../io/micronaut/transaction/SynchronousTransactionManager.html" title="interface in io.micronaut.transaction">SynchronousTransactionManager</a>&lt;?&gt;&nbsp;tm,
-                                                                                            @NonNull
-                                                                                            <a href="../../../../io/micronaut/transaction/interceptor/TransactionAttribute.html" title="interface in io.micronaut.transaction.interceptor">TransactionAttribute</a>&nbsp;txAttr,
-                                                                                            io.micronaut.inject.ExecutableMethod&lt;java.lang.Object,java.lang.Object&gt;&nbsp;executableMethod)</pre>
-<div class="block"><span class="deprecatedLabel">Deprecated.</span>&nbsp;<span class="deprecationComment">The class will be final with private methods in the next major version</span></div>
-<div class="block">Create a transaction if necessary based on the given TransactionAttribute.
- <p>Allows callers to perform custom TransactionAttribute lookups through
- the TransactionAttributeSource.</div>
-<dl>
-<dt><span class="paramLabel">Parameters:</span></dt>
-<dd><code>tm</code> - The transaction manager</dd>
-<dd><code>txAttr</code> - the TransactionAttribute (may be <code>null</code>)</dd>
-<dd><code>executableMethod</code> - the method that is being executed
-                         (used for monitoring and logging purposes)</dd>
-<dt><span class="returnLabel">Returns:</span></dt>
-<dd>a TransactionInfo object, whether or not a transaction was created.
- The <code>hasTransaction()</code> method on TransactionInfo can be used to
- tell if there was a transaction created.</dd>
-</dl>
-</li>
-</ul>
-<a name="prepareTransactionInfo-io.micronaut.transaction.SynchronousTransactionManager-io.micronaut.transaction.interceptor.TransactionAttribute-io.micronaut.inject.ExecutableMethod-io.micronaut.transaction.TransactionStatus-">
-<!--   -->
-</a>
-<ul class="blockList">
-<li class="blockList">
-<h4>prepareTransactionInfo</h4>
-<pre>@Deprecated
-protected&nbsp;<a href="../../../../io/micronaut/transaction/interceptor/TransactionalInterceptor.TransactionInfo.html" title="class in io.micronaut.transaction.interceptor">TransactionalInterceptor.TransactionInfo</a>&nbsp;prepareTransactionInfo(@NonNull
-                                                                                      <a href="../../../../io/micronaut/transaction/SynchronousTransactionManager.html" title="interface in io.micronaut.transaction">SynchronousTransactionManager</a>&nbsp;tm,
-                                                                                      @NonNull
-                                                                                      <a href="../../../../io/micronaut/transaction/interceptor/TransactionAttribute.html" title="interface in io.micronaut.transaction.interceptor">TransactionAttribute</a>&nbsp;txAttr,
-                                                                                      io.micronaut.inject.ExecutableMethod&lt;java.lang.Object,java.lang.Object&gt;&nbsp;executableMethod,
-                                                                                      @NonNull
-                                                                                      <a href="../../../../io/micronaut/transaction/TransactionStatus.html" title="interface in io.micronaut.transaction">TransactionStatus</a>&nbsp;status)</pre>
-<div class="block"><span class="deprecatedLabel">Deprecated.</span>&nbsp;<span class="deprecationComment">The class will be final with private methods in the next major version</span></div>
-<div class="block">Prepare a TransactionInfo for the given attribute and status object.</div>
-<dl>
-<dt><span class="paramLabel">Parameters:</span></dt>
-<dd><code>tm</code> - The transaction manager</dd>
-<dd><code>txAttr</code> - the TransactionAttribute (may be <code>null</code>)</dd>
-<dd><code>executableMethod</code> - the fully qualified method name
-                         (used for monitoring and logging purposes)</dd>
-<dd><code>status</code> - the TransactionStatus for the current transaction</dd>
-<dt><span class="returnLabel">Returns:</span></dt>
-<dd>the prepared TransactionInfo object</dd>
-</dl>
-</li>
-</ul>
-<a name="commitTransactionAfterReturning-io.micronaut.transaction.interceptor.TransactionalInterceptor.TransactionInfo-">
-<!--   -->
-</a>
-<ul class="blockList">
-<li class="blockList">
-<h4>commitTransactionAfterReturning</h4>
-<pre>@Deprecated
-protected&nbsp;void&nbsp;commitTransactionAfterReturning(@NonNull
-                                                           <a href="../../../../io/micronaut/transaction/interceptor/TransactionalInterceptor.TransactionInfo.html" title="class in io.micronaut.transaction.interceptor">TransactionalInterceptor.TransactionInfo</a>&nbsp;txInfo)</pre>
-<div class="block"><span class="deprecatedLabel">Deprecated.</span>&nbsp;<span class="deprecationComment">The class will be final with private methods in the next major version</span></div>
-<div class="block">Execute after successful completion of call, but not after an exception was handled.
- Do nothing if we didn't create a transaction.</div>
-<dl>
-<dt><span class="paramLabel">Parameters:</span></dt>
-<dd><code>txInfo</code> - information about the current transaction</dd>
-</dl>
-</li>
-</ul>
-<a name="completeTransactionAfterThrowing-io.micronaut.transaction.interceptor.TransactionalInterceptor.TransactionInfo-java.lang.Throwable-">
-<!--   -->
-</a>
-<ul class="blockList">
-<li class="blockList">
-<h4>completeTransactionAfterThrowing</h4>
-<pre>@Deprecated
-protected&nbsp;void&nbsp;completeTransactionAfterThrowing(@NonNull
-                                                            <a href="../../../../io/micronaut/transaction/interceptor/TransactionalInterceptor.TransactionInfo.html" title="class in io.micronaut.transaction.interceptor">TransactionalInterceptor.TransactionInfo</a>&nbsp;txInfo,
-                                                            java.lang.Throwable&nbsp;ex)</pre>
-<div class="block"><span class="deprecatedLabel">Deprecated.</span>&nbsp;<span class="deprecationComment">The class will be final with private methods in the next major version</span></div>
-<div class="block">Handle a throwable, completing the transaction.
- We may commit or roll back, depending on the configuration.</div>
-<dl>
-<dt><span class="paramLabel">Parameters:</span></dt>
-<dd><code>txInfo</code> - information about the current transaction</dd>
-<dd><code>ex</code> - throwable encountered</dd>
-</dl>
-</li>
-</ul>
-<a name="cleanupTransactionInfo-io.micronaut.transaction.interceptor.TransactionalInterceptor.TransactionInfo-">
-<!--   -->
-</a>
-<ul class="blockList">
-<li class="blockList">
-<h4>cleanupTransactionInfo</h4>
-<pre>@Deprecated
-protected&nbsp;void&nbsp;cleanupTransactionInfo(@Nullable
-                                                  <a href="../../../../io/micronaut/transaction/interceptor/TransactionalInterceptor.TransactionInfo.html" title="class in io.micronaut.transaction.interceptor">TransactionalInterceptor.TransactionInfo</a>&nbsp;txInfo)</pre>
-<div class="block"><span class="deprecatedLabel">Deprecated.</span>&nbsp;<span class="deprecationComment">The class will be final with private methods in the next major version</span></div>
-<div class="block">Reset the TransactionInfo ThreadLocal.
- <p>Call this in all cases: exception or normal return!</div>
-<dl>
-<dt><span class="paramLabel">Parameters:</span></dt>
-<dd><code>txInfo</code> - information about the current transaction (may be <code>null</code>)</dd>
-</dl>
-</li>
-</ul>
-<a name="resolveTransactionDefinition-io.micronaut.inject.ExecutableMethod-">
-<!--   -->
-</a>
-<ul class="blockListLast">
-<li class="blockList">
-<h4>resolveTransactionDefinition</h4>
-<pre>@Deprecated
-protected&nbsp;<a href="../../../../io/micronaut/transaction/interceptor/TransactionAttribute.html" title="interface in io.micronaut.transaction.interceptor">TransactionAttribute</a>&nbsp;resolveTransactionDefinition(io.micronaut.inject.ExecutableMethod&lt;java.lang.Object,java.lang.Object&gt;&nbsp;executableMethod)</pre>
-<div class="block"><span class="deprecatedLabel">Deprecated.</span>&nbsp;<span class="deprecationComment">The class will be final with private methods in the next major version</span></div>
-<dl>
-<dt><span class="paramLabel">Parameters:</span></dt>
-<dd><code>executableMethod</code> - The method</dd>
-<dt><span class="returnLabel">Returns:</span></dt>
-<dd>The <a href="../../../../io/micronaut/transaction/interceptor/TransactionAttribute.html" title="interface in io.micronaut.transaction.interceptor"><code>TransactionAttribute</code></a></dd>
 </dl>
 </li>
 </ul>
@@ -555,7 +324,7 @@ protected&nbsp;<a href="../../../../io/micronaut/transaction/interceptor/Transac
 <div class="subNav">
 <ul class="navList">
 <li><a href="../../../../io/micronaut/transaction/interceptor/TransactionalEventInterceptor.html" title="class in io.micronaut.transaction.interceptor"><span class="typeNameLink">Prev&nbsp;Class</span></a></li>
-<li><a href="../../../../io/micronaut/transaction/interceptor/TransactionalInterceptor.TransactionInfo.html" title="class in io.micronaut.transaction.interceptor"><span class="typeNameLink">Next&nbsp;Class</span></a></li>
+<li><a href="../../../../io/micronaut/transaction/interceptor/TransactionAttribute.html" title="interface in io.micronaut.transaction.interceptor"><span class="typeNameLink">Next&nbsp;Class</span></a></li>
 </ul>
 <ul class="navList">
 <li><a href="../../../../index.html?io/micronaut/transaction/interceptor/TransactionalInterceptor.html" target="_top">Frames</a></li>
@@ -579,7 +348,7 @@ protected&nbsp;<a href="../../../../io/micronaut/transaction/interceptor/Transac
 <div>
 <ul class="subNavList">
 <li>Summary:&nbsp;</li>
-<li><a href="#nested.class.summary">Nested</a>&nbsp;|&nbsp;</li>
+<li>Nested&nbsp;|&nbsp;</li>
 <li>Field&nbsp;|&nbsp;</li>
 <li><a href="#constructor.summary">Constr</a>&nbsp;|&nbsp;</li>
 <li><a href="#method.summary">Method</a></li>

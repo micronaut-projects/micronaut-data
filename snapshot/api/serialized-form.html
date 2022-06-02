@@ -128,9 +128,13 @@
 <li class="blockList">
 <h3>Serialized Fields</h3>
 <ul class="blockList">
-<li class="blockListLast">
+<li class="blockList">
 <h4>mongoClient</h4>
 <pre>com.mongodb.client.MongoClient mongoClient</pre>
+</li>
+<li class="blockListLast">
+<h4>name</h4>
+<pre>java.lang.String name</pre>
 </li>
 </ul>
 </li>
@@ -283,6 +287,10 @@
 <pre>javax.sql.DataSource dataSource</pre>
 </li>
 <li class="blockList">
+<h4>dataSourceName</h4>
+<pre>java.lang.String dataSourceName</pre>
+</li>
+<li class="blockList">
 <h4>prepareConnection</h4>
 <pre>boolean prepareConnection</pre>
 </li>
@@ -331,13 +339,10 @@
 <li class="blockList">
 <h3>Serialized Fields</h3>
 <ul class="blockList">
-<li class="blockList">
+<li class="blockListLast">
 <h4>qualifier</h4>
 <pre>java.lang.String qualifier</pre>
-</li>
-<li class="blockListLast">
-<h4>noRollbackFor</h4>
-<pre>java.util.Set&lt;E&gt; noRollbackFor</pre>
+<div class="block"><span class="deprecatedLabel">Deprecated.</span>&nbsp;</div>
 </li>
 </ul>
 </li>
@@ -486,9 +491,17 @@
 <h4>readOnly</h4>
 <pre>boolean readOnly</pre>
 </li>
-<li class="blockListLast">
+<li class="blockList">
 <h4>name</h4>
 <pre>java.lang.String name</pre>
+</li>
+<li class="blockList">
+<h4>rollbackOn</h4>
+<pre>java.util.Collection&lt;E&gt; rollbackOn</pre>
+</li>
+<li class="blockListLast">
+<h4>dontRollbackOn</h4>
+<pre>java.util.Collection&lt;E&gt; dontRollbackOn</pre>
 </li>
 </ul>
 </li>

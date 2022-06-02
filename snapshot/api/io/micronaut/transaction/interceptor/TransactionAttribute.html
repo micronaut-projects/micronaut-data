@@ -17,8 +17,8 @@
     catch(err) {
     }
 //-->
-var methods = {"i0":6,"i1":6};
-var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],4:["t3","Abstract Methods"]};
+var methods = {"i0":38,"i1":38};
+var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],4:["t3","Abstract Methods"],32:["t6","Deprecated Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
 var tableTab = "tableTab";
@@ -47,7 +47,7 @@ var activeTableTab = "activeTableTab";
 </div>
 <div class="subNav">
 <ul class="navList">
-<li><a href="../../../../io/micronaut/transaction/interceptor/TransactionalInterceptor.TransactionInfo.html" title="class in io.micronaut.transaction.interceptor"><span class="typeNameLink">Prev&nbsp;Class</span></a></li>
+<li><a href="../../../../io/micronaut/transaction/interceptor/TransactionalInterceptor.html" title="class in io.micronaut.transaction.interceptor"><span class="typeNameLink">Prev&nbsp;Class</span></a></li>
 <li>Next&nbsp;Class</li>
 </ul>
 <ul class="navList">
@@ -106,8 +106,12 @@ var activeTableTab = "activeTableTab";
 <dd><a href="../../../../io/micronaut/transaction/interceptor/DefaultTransactionAttribute.html" title="class in io.micronaut.transaction.interceptor">DefaultTransactionAttribute</a></dd>
 </dl>
 <hr>
+<div class="block"><span class="deprecatedLabel">Deprecated.</span>&nbsp;
+<div class="block"><span class="deprecationComment">Interface is not needed anymore</span></div>
+</div>
 <br>
-<pre>public interface <span class="typeNameLabel">TransactionAttribute</span>
+<pre>@Deprecated
+public interface <span class="typeNameLabel">TransactionAttribute</span>
 extends <a href="../../../../io/micronaut/transaction/TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a></pre>
 <div class="block">This interface adds a <code>rollbackOn</code> specification to <a href="../../../../io/micronaut/transaction/TransactionDefinition.html" title="interface in io.micronaut.transaction"><code>TransactionDefinition</code></a>.
  As custom <code>rollbackOn</code> is only possible with AOP, it resides in the AOP-related
@@ -163,7 +167,7 @@ extends <a href="../../../../io/micronaut/transaction/TransactionDefinition.html
 </a>
 <h3>Method Summary</h3>
 <table class="memberSummary" border="0" cellpadding="3" cellspacing="0" summary="Method Summary table, listing methods, and an explanation">
-<caption><span id="t0" class="activeTableTab"><span>All Methods</span><span class="tabEnd">&nbsp;</span></span><span id="t2" class="tableTab"><span><a href="javascript:show(2);">Instance Methods</a></span><span class="tabEnd">&nbsp;</span></span><span id="t3" class="tableTab"><span><a href="javascript:show(4);">Abstract Methods</a></span><span class="tabEnd">&nbsp;</span></span></caption>
+<caption><span id="t0" class="activeTableTab"><span>All Methods</span><span class="tabEnd">&nbsp;</span></span><span id="t2" class="tableTab"><span><a href="javascript:show(2);">Instance Methods</a></span><span class="tabEnd">&nbsp;</span></span><span id="t3" class="tableTab"><span><a href="javascript:show(4);">Abstract Methods</a></span><span class="tabEnd">&nbsp;</span></span><span id="t6" class="tableTab"><span><a href="javascript:show(32);">Deprecated Methods</a></span><span class="tabEnd">&nbsp;</span></span></caption>
 <tr>
 <th class="colFirst" scope="col">Modifier and Type</th>
 <th class="colLast" scope="col">Method and Description</th>
@@ -171,12 +175,14 @@ extends <a href="../../../../io/micronaut/transaction/TransactionDefinition.html
 <tr id="i0" class="altColor">
 <td class="colFirst"><code>java.lang.String</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/transaction/interceptor/TransactionAttribute.html#getQualifier--">getQualifier</a></span>()</code>
+<div class="block"><span class="deprecatedLabel">Deprecated.</span>&nbsp;</div>
 <div class="block">Return a qualifier value associated with this transaction attribute.</div>
 </td>
 </tr>
 <tr id="i1" class="rowColor">
 <td class="colFirst"><code>boolean</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/transaction/interceptor/TransactionAttribute.html#rollbackOn-java.lang.Throwable-">rollbackOn</a></span>(java.lang.Throwable&nbsp;ex)</code>
+<div class="block"><span class="deprecatedLabel">Deprecated.</span>&nbsp;</div>
 <div class="block">Should we roll back on the given exception?</div>
 </td>
 </tr>
@@ -186,7 +192,7 @@ extends <a href="../../../../io/micronaut/transaction/TransactionDefinition.html
 <!--   -->
 </a>
 <h3>Methods inherited from interface&nbsp;io.micronaut.transaction.<a href="../../../../io/micronaut/transaction/TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a></h3>
-<code><a href="../../../../io/micronaut/transaction/TransactionDefinition.html#getIsolationLevel--">getIsolationLevel</a>, <a href="../../../../io/micronaut/transaction/TransactionDefinition.html#getName--">getName</a>, <a href="../../../../io/micronaut/transaction/TransactionDefinition.html#getPropagationBehavior--">getPropagationBehavior</a>, <a href="../../../../io/micronaut/transaction/TransactionDefinition.html#getTimeout--">getTimeout</a>, <a href="../../../../io/micronaut/transaction/TransactionDefinition.html#isReadOnly--">isReadOnly</a>, <a href="../../../../io/micronaut/transaction/TransactionDefinition.html#of-io.micronaut.transaction.TransactionDefinition.Propagation-">of</a></code></li>
+<code><a href="../../../../io/micronaut/transaction/TransactionDefinition.html#getDontRollbackOn--">getDontRollbackOn</a>, <a href="../../../../io/micronaut/transaction/TransactionDefinition.html#getIsolationLevel--">getIsolationLevel</a>, <a href="../../../../io/micronaut/transaction/TransactionDefinition.html#getName--">getName</a>, <a href="../../../../io/micronaut/transaction/TransactionDefinition.html#getPropagationBehavior--">getPropagationBehavior</a>, <a href="../../../../io/micronaut/transaction/TransactionDefinition.html#getRollbackOn--">getRollbackOn</a>, <a href="../../../../io/micronaut/transaction/TransactionDefinition.html#getTimeout--">getTimeout</a>, <a href="../../../../io/micronaut/transaction/TransactionDefinition.html#isReadOnly--">isReadOnly</a>, <a href="../../../../io/micronaut/transaction/TransactionDefinition.html#of-io.micronaut.transaction.TransactionDefinition.Propagation-">of</a></code></li>
 </ul>
 </li>
 </ul>
@@ -210,6 +216,7 @@ extends <a href="../../../../io/micronaut/transaction/TransactionDefinition.html
 <h4>getQualifier</h4>
 <pre>@Nullable
 java.lang.String&nbsp;getQualifier()</pre>
+<div class="block"><span class="deprecatedLabel">Deprecated.</span>&nbsp;</div>
 <div class="block">Return a qualifier value associated with this transaction attribute.
  <p>This may be used for choosing a corresponding transaction manager
  to process this specific transaction.</div>
@@ -228,8 +235,11 @@ java.lang.String&nbsp;getQualifier()</pre>
 <li class="blockList">
 <h4>rollbackOn</h4>
 <pre>boolean&nbsp;rollbackOn(java.lang.Throwable&nbsp;ex)</pre>
+<div class="block"><span class="deprecatedLabel">Deprecated.</span>&nbsp;</div>
 <div class="block">Should we roll back on the given exception?</div>
 <dl>
+<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
+<dd><code><a href="../../../../io/micronaut/transaction/TransactionDefinition.html#rollbackOn-java.lang.Throwable-">rollbackOn</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../io/micronaut/transaction/TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a></code></dd>
 <dt><span class="paramLabel">Parameters:</span></dt>
 <dd><code>ex</code> - the exception to evaluate</dd>
 <dt><span class="returnLabel">Returns:</span></dt>
@@ -264,7 +274,7 @@ java.lang.String&nbsp;getQualifier()</pre>
 </div>
 <div class="subNav">
 <ul class="navList">
-<li><a href="../../../../io/micronaut/transaction/interceptor/TransactionalInterceptor.TransactionInfo.html" title="class in io.micronaut.transaction.interceptor"><span class="typeNameLink">Prev&nbsp;Class</span></a></li>
+<li><a href="../../../../io/micronaut/transaction/interceptor/TransactionalInterceptor.html" title="class in io.micronaut.transaction.interceptor"><span class="typeNameLink">Prev&nbsp;Class</span></a></li>
 <li>Next&nbsp;Class</li>
 </ul>
 <ul class="navList">
