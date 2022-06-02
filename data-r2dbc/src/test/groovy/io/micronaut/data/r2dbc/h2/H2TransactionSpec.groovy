@@ -8,7 +8,7 @@ import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Stepwise
 
-@MicronautTest(rollback = false, transactional = false)
+@MicronautTest(transactional = false)
 @Stepwise
 class H2TransactionSpec extends Specification implements H2TestPropertyProvider {
 

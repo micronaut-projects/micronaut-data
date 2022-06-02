@@ -16,6 +16,8 @@
 package io.micronaut.data.document.mongodb.reactive
 
 import io.micronaut.data.document.mongodb.MongoEmbeddedIdSpec
+import io.micronaut.test.extensions.spock.annotation.MicronautTest
 
+@MicronautTest(transactional = false)
 class MongoReactiveEmbeddedIdSpec extends MongoEmbeddedIdSpec implements MongoSelectReactiveDriver {
 }

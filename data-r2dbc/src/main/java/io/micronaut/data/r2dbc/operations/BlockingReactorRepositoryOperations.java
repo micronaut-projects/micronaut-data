@@ -20,6 +20,8 @@ package io.micronaut.data.r2dbc.operations;
  *
  * @author Denis Stepanov
  * @since 2.4.0
+ * @deprecated Replaced by {@link io.micronaut.data.operations.reactive.BlockingReactorRepositoryOperations}.
  */
+@Deprecated
 public interface BlockingReactorRepositoryOperations extends io.micronaut.data.operations.reactive.BlockingReactorRepositoryOperations {
 }

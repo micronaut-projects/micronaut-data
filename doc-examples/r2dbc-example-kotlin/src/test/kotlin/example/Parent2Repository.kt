@@ -6,7 +6,7 @@ import io.micronaut.data.repository.kotlin.CoroutineCrudRepository
 import kotlinx.coroutines.flow.Flow
 import javax.transaction.Transactional
 
-@R2dbcRepository(dialect = Dialect.H2)
+@R2dbcRepository(dialect = Dialect.POSTGRES)
 interface Parent2Repository : CoroutineCrudRepository<Parent, Long> {
 
     @Transactional(Transactional.TxType.MANDATORY)

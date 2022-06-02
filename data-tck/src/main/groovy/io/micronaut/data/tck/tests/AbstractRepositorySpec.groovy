@@ -30,6 +30,8 @@ import io.micronaut.data.tck.jdbc.entities.Role
 import io.micronaut.data.tck.jdbc.entities.UserRole
 import io.micronaut.data.tck.repositories.*
 import io.micronaut.transaction.SynchronousTransactionManager
+import io.micronaut.transaction.TransactionCallback
+import io.micronaut.transaction.TransactionStatus
 import jakarta.persistence.criteria.CriteriaBuilder
 import jakarta.persistence.criteria.CriteriaUpdate
 import jakarta.persistence.criteria.Predicate
@@ -858,18 +860,23 @@ abstract class AbstractRepositorySpec extends Specification {
         setupBooks()
 
         when:
-        def authors = transactionManager.get().executeRead {
-            authorRepository.queryByNameContains("e").collect(Collectors.toList())
-        }
+        List<Author> authors = transactionManager.get().executeRead(new TransactionCallback<Connection, List<Author>>() {
+            @Override
+            List<Author> call(TransactionStatus<Connection> status) throws Exception {
+                authorRepository.queryByNameContains("e").collect(Collectors.toList())
+            }
+        })
 
         then:
         authors.size() == 2
 
         when:
-
-        def emptyAuthors = transactionManager.get().executeRead {
-            authorRepository.queryByNameContains("x").collect(Collectors.toList())
-        }
+        List<Author> emptyAuthors = transactionManager.get().executeRead(new TransactionCallback<Connection, List<Author>>() {
+            @Override
+            List<Author> call(TransactionStatus<Connection> status) throws Exception {
+                authorRepository.queryByNameContains("x").collect(Collectors.toList())
+            }
+        })
 
         then:
         emptyAuthors.size() == 0
@@ -933,9 +940,12 @@ abstract class AbstractRepositorySpec extends Specification {
             return
         }
         when:"Stream is used"
-        def dto = transactionManager.get().executeRead {
-            bookDtoRepository.findStream("The Stand").findFirst().get()
-        }
+        def dto = transactionManager.get().executeRead(new TransactionCallback<Connection, BookDto>() {
+            @Override
+            BookDto call(TransactionStatus<Connection> status) throws Exception {
+                bookDtoRepository.findStream("The Stand").findFirst().get()
+            }
+        })
 
         then:"The result is correct"
         dto instanceof BookDto
@@ -981,12 +991,15 @@ abstract class AbstractRepositorySpec extends Specification {
         bookRepository.queryTop3ByAuthorNameOrderByTitle("Stephen King")
                 .size() == 2
         if (transactionManager.isPresent()) {
-            transactionManager.get().executeRead {
-                assert bookRepository.findTop3ByAuthorNameOrderByTitle("Stephen King")
-                        .findFirst().get().title == "Pet Cemetery"
-                assert bookRepository.findTop3ByAuthorNameOrderByTitle("Stephen King")
-                        .count() == 2
-            }
+            transactionManager.get().executeRead(new TransactionCallback<Connection, Object>() {
+                @Override
+                Object call(TransactionStatus<Connection> status) throws Exception {
+                    assert bookRepository.findTop3ByAuthorNameOrderByTitle("Stephen King")
+                            .findFirst().get().title == "Pet Cemetery"
+                    assert bookRepository.findTop3ByAuthorNameOrderByTitle("Stephen King")
+                            .count() == 2
+                }
+            })
         }
 
         authorRepository.findByBooksTitle("The Stand").name == "Stephen King"
@@ -1058,9 +1071,12 @@ abstract class AbstractRepositorySpec extends Specification {
             saveSampleBooks()
 
         when:
-            def authors = transactionManager.get().executeRead {
-                authorRepository.queryByIdIsNotNull().collect(Collectors.toList())
-            }
+            def authors = transactionManager.get().executeRead(new TransactionCallback<Connection, List<Author>>() {
+                @Override
+                List<Author> call(TransactionStatus<Connection> status) throws Exception {
+                    authorRepository.queryByIdIsNotNull().collect(Collectors.toList())
+                }
+            })
 
         then:
             authors.size() == 3
@@ -1468,8 +1484,12 @@ abstract class AbstractRepositorySpec extends Specification {
         cleanupMeals()
     }
 
+    boolean testLockingForUpdate() {
+        return true
+    }
+
     void "test find one for update"() {
-        if (!transactionManager.isPresent()) {
+        if (!transactionManager.isPresent() || !testLockingForUpdate()) {
             return
         }
         given:
@@ -1477,12 +1497,22 @@ abstract class AbstractRepositorySpec extends Specification {
         def food = foodRepository.save(new Food("food", 80, 200, meal))
 
         when:
-        def mealById = transactionManager.get().executeWrite { mealRepository.findByIdForUpdate(meal.mid) }
+        Meal mealById = transactionManager.get().executeWrite(new TransactionCallback<Connection, Meal>() {
+            @Override
+            Meal call(TransactionStatus<Connection> status) throws Exception {
+                return mealRepository.findByIdForUpdate(meal.mid)
+            }
+        })
         then:
         meal.currentBloodGlucose == mealById.currentBloodGlucose
 
         when: "finding with associations"
-        def mealWithFood = transactionManager.get().executeWrite { mealRepository.searchByIdForUpdate(meal.mid) }
+        Meal mealWithFood = transactionManager.get().executeWrite(new TransactionCallback<Connection, Meal>() {
+            @Override
+            Meal call(TransactionStatus<Connection> status) throws Exception {
+                return mealRepository.searchByIdForUpdate(meal.mid)
+            }
+        })
         then: "the association is fetched"
         food.carbohydrates == mealWithFood.foods.first().carbohydrates
 
@@ -1490,8 +1520,8 @@ abstract class AbstractRepositorySpec extends Specification {
         cleanupMeals()
     }
 
-    void "test find many for update"() {
-        if (!transactionManager.isPresent()) {
+    void "test find many for update"(Closure forUpdateMethod, Object[] args) {
+        if (!transactionManager.isPresent() || !testLockingForUpdate()) {
             return
         }
 
@@ -1504,7 +1534,12 @@ abstract class AbstractRepositorySpec extends Specification {
         foodRepository.saveAll(meals.collect { new Food("food", 10, 100, it) })
 
         when:
-        def mealsForUpdate = transactionManager.get().executeWrite { forUpdateMethod.call(*args) }
+        def mealsForUpdate = transactionManager.get().executeWrite(new TransactionCallback<Connection, Object>() {
+            @Override
+            Object call(TransactionStatus<Connection> status) throws Exception {
+                return forUpdateMethod.call(*args)
+            }
+        })
 
         then:
         mealsForUpdate.collect { it.currentBloodGlucose }.sort() ==
@@ -1521,7 +1556,7 @@ abstract class AbstractRepositorySpec extends Specification {
     }
 
     void "test find for update locking"() {
-        if (!transactionManager.isPresent()) {
+        if (!transactionManager.isPresent() || !testLockingForUpdate()) {
             return
         }
 
@@ -1533,13 +1568,16 @@ abstract class AbstractRepositorySpec extends Specification {
         def latch = new CountDownLatch(threadCount)
         (1..threadCount).collect {
             Thread.start {
-                transactionManager.get().executeWrite {
-                    def mealToUpdate = mealRepository.findByIdForUpdate(meal.mid)
-                    latch.countDown()
-                    latch.await(5, TimeUnit.SECONDS)
-                    mealToUpdate.currentBloodGlucose++
-                    mealRepository.update(mealToUpdate)
-                }
+                transactionManager.get().executeWrite(new TransactionCallback<Connection, Object>() {
+                    @Override
+                    Object call(TransactionStatus<Connection> status) throws Exception {
+                        def mealToUpdate = mealRepository.findByIdForUpdate(meal.mid)
+                        latch.countDown()
+                        latch.await(5, TimeUnit.SECONDS)
+                        mealToUpdate.currentBloodGlucose++
+                        mealRepository.update(mealToUpdate)
+                    }
+                })
             }
         }.forEach { it.join() }
 
@@ -1551,7 +1589,7 @@ abstract class AbstractRepositorySpec extends Specification {
     }
 
     void "test find for update locking with associations"() {
-        if (!transactionManager.isPresent()) {
+        if (!transactionManager.isPresent() || !testLockingForUpdate()) {
             return
         }
         given:
@@ -1563,14 +1601,17 @@ abstract class AbstractRepositorySpec extends Specification {
         def latch = new CountDownLatch(threadCount)
         (1..threadCount).collect {
             Thread.start {
-                transactionManager.get().executeWrite {
-                    def food = foodRepository.findByMealMidForUpdate(meal.mid)
-                    def mealToUpdate = food.meal
-                    latch.countDown()
-                    latch.await(5, TimeUnit.SECONDS)
-                    mealToUpdate.currentBloodGlucose++
-                    mealRepository.update(mealToUpdate)
-                }
+                transactionManager.get().executeWrite(new TransactionCallback<Connection, Object>() {
+                    @Override
+                    Object call(TransactionStatus<Connection> status) throws Exception {
+                        def food = foodRepository.findByMealMidForUpdate(meal.mid)
+                        def mealToUpdate = food.meal
+                        latch.countDown()
+                        latch.await(5, TimeUnit.SECONDS)
+                        mealToUpdate.currentBloodGlucose++
+                        mealRepository.update(mealToUpdate)
+                    }
+                })
             }
         }.forEach { it.join() }
 

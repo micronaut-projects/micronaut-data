@@ -27,6 +27,9 @@ import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.model.runtime.UpdateBatchOperation;
 import io.micronaut.data.model.runtime.UpdateOperation;
 import io.micronaut.data.operations.RepositoryOperations;
+import io.micronaut.transaction.support.TransactionSynchronizationManager;
+import reactor.util.context.Context;
+import reactor.util.context.ContextView;
 
 import java.io.Serializable;
 import java.util.Optional;
@@ -42,95 +45,139 @@ public interface BlockingReactorRepositoryOperations extends RepositoryOperation
 
     @Nullable
     default <T> T findOne(@NonNull Class<T> type, @NonNull Serializable id) {
-        return reactive().findOne(type, id).block();
+        return reactive().findOne(type, id)
+                .contextWrite(TransactionSynchronizationManager.getResourceOrDefault(ContextView.class, Context.empty()))
+                .block();
     }
 
     @Nullable
     @Override
     default <T, R> R findOne(@NonNull PreparedQuery<T, R> preparedQuery) {
-        return reactive().findOne(preparedQuery).block();
+        return reactive().findOne(preparedQuery)
+                .contextWrite(TransactionSynchronizationManager.getResourceOrDefault(ContextView.class, Context.empty()))
+                .block();
     }
 
     @NonNull
     @Override
     default <T, R> Iterable<R> findAll(@NonNull PreparedQuery<T, R> preparedQuery) {
-        return reactive().findAll(preparedQuery).toIterable();
+        return reactive().findAll(preparedQuery)
+                .contextWrite(TransactionSynchronizationManager.getResourceOrDefault(ContextView.class, Context.empty()))
+                .collectList()
+                .block();
     }
 
     @NonNull
     @Override
     default <T, R> Stream<R> findStream(@NonNull PreparedQuery<T, R> preparedQuery) {
-        return reactive().findAll(preparedQuery).toStream();
+        return reactive().findAll(preparedQuery)
+                .contextWrite(TransactionSynchronizationManager.getResourceOrDefault(ContextView.class, Context.empty()))
+                .toStream();
     }
 
     @NonNull
     @Override
     default <T> T persist(@NonNull InsertOperation<T> operation) {
-        return reactive().persist(operation).blockOptional().orElse(null);
+        return reactive().persist(operation)
+                .contextWrite(TransactionSynchronizationManager.getResourceOrDefault(ContextView.class, Context.empty()))
+                .blockOptional()
+                .orElseGet(operation::getEntity);
     }
 
     @NonNull
     @Override
     default <T> T update(@NonNull UpdateOperation<T> operation) {
-        return reactive().update(operation).block();
+        return reactive().update(operation)
+                .contextWrite(TransactionSynchronizationManager.getResourceOrDefault(ContextView.class, Context.empty()))
+                .blockOptional()
+                .orElseGet(operation::getEntity);
     }
 
     @Override
     default <T> Iterable<T> updateAll(UpdateBatchOperation<T> operation) {
-        return reactive().updateAll(operation).collectList().block();
+        return reactive().updateAll(operation)
+                .contextWrite(TransactionSynchronizationManager.getResourceOrDefault(ContextView.class, Context.empty()))
+                .collectList()
+                .<Iterable<T>>map(it -> it)
+                .blockOptional()
+                .orElse(operation);
     }
 
     @NonNull
     @Override
     default <T> Iterable<T> persistAll(@NonNull InsertBatchOperation<T> operation) {
-        return reactive().persistAll(operation).collectList().block();
+        return reactive().persistAll(operation)
+                .contextWrite(TransactionSynchronizationManager.getResourceOrDefault(ContextView.class, Context.empty()))
+                .collectList()
+                .<Iterable<T>>map(it -> it)
+                .blockOptional()
+                .orElse(operation);
     }
 
     @NonNull
     @Override
     default Optional<Number> executeUpdate(@NonNull PreparedQuery<?, Number> preparedQuery) {
-        return reactive().executeUpdate(preparedQuery).blockOptional();
+        return reactive().executeUpdate(preparedQuery)
+                .contextWrite(TransactionSynchronizationManager.getResourceOrDefault(ContextView.class, Context.empty()))
+                .blockOptional();
     }
 
     @Override
     default Optional<Number> executeDelete(@NonNull PreparedQuery<?, Number> preparedQuery) {
-        return reactive().executeDelete(preparedQuery).blockOptional();
+        return reactive().executeDelete(preparedQuery)
+                .contextWrite(TransactionSynchronizationManager.getResourceOrDefault(ContextView.class, Context.empty()))
+                .blockOptional();
     }
 
     @Override
     default <T> int delete(@NonNull DeleteOperation<T> operation) {
-        return reactive().delete(operation).blockOptional().orElse(0).intValue();
+        return reactive().delete(operation)
+                .contextWrite(TransactionSynchronizationManager.getResourceOrDefault(ContextView.class, Context.empty()))
+                .blockOptional().orElse(0).intValue();
     }
 
     @Override
     default <T> Optional<Number> deleteAll(@NonNull DeleteBatchOperation<T> operation) {
-        return reactive().deleteAll(operation).blockOptional();
+        return reactive().deleteAll(operation)
+                .contextWrite(TransactionSynchronizationManager.getResourceOrDefault(ContextView.class, Context.empty()))
+                .blockOptional();
     }
 
     @Override
     default <T> boolean exists(@NonNull PreparedQuery<T, Boolean> preparedQuery) {
-        return reactive().exists(preparedQuery).blockOptional().orElse(false);
+        return reactive().exists(preparedQuery)
+                .contextWrite(TransactionSynchronizationManager.getResourceOrDefault(ContextView.class, Context.empty()))
+                .blockOptional().orElse(false);
     }
 
     @Override
     default <R> Page<R> findPage(@NonNull PagedQuery<R> query) {
-        return reactive().findPage(query).block();
+        return reactive().findPage(query)
+                .contextWrite(TransactionSynchronizationManager.getResourceOrDefault(ContextView.class, Context.empty()))
+                .block();
     }
 
     @NonNull
     @Override
     default <T> Iterable<T> findAll(@NonNull PagedQuery<T> query) {
-        return reactive().findAll(query).toIterable();
+        return reactive().findAll(query)
+                .contextWrite(TransactionSynchronizationManager.getResourceOrDefault(ContextView.class, Context.empty()))
+                .collectList()
+                .block();
     }
 
     @Override
     default <T> long count(PagedQuery<T> pagedQuery) {
-        return reactive().count(pagedQuery).blockOptional().orElse(0L);
+        return reactive().count(pagedQuery)
+                .contextWrite(TransactionSynchronizationManager.getResourceOrDefault(ContextView.class, Context.empty()))
+                .blockOptional().orElse(0L);
     }
 
     @NonNull
     @Override
     default <T> Stream<T> findStream(@NonNull PagedQuery<T> query) {
-        return reactive().findAll(query).toStream();
+        return reactive().findAll(query)
+                .contextWrite(TransactionSynchronizationManager.getResourceOrDefault(ContextView.class, Context.empty()))
+                .toStream();
     }
 }

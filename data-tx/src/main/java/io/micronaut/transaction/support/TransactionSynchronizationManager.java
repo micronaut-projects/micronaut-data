@@ -98,14 +98,6 @@ public abstract class TransactionSynchronizationManager {
         return mutableState;
     }
 
-    private static void removeStateIfEmpty() {
-        // Remove entire ThreadLocal if empty...
-        MutableTransactionSynchronizationState mutableState = STATE.get();
-        if (mutableState != null && mutableState.states.isEmpty() && mutableState.resources.isEmpty()) {
-            STATE.remove();
-        }
-    }
-
     //-------------------------------------------------------------------------
     // Management of transaction-associated resource handles
     //-------------------------------------------------------------------------
@@ -156,6 +148,12 @@ public abstract class TransactionSynchronizationManager {
         return value;
     }
 
+    @NonNull
+    public static <T> T getResourceOrDefault(Object key, @NonNull T defaultValue) {
+        T resource = (T) getResource(key);
+        return resource == null ? defaultValue : resource;
+    }
+
     /**
      * Actually check the value of the resource that is bound for the given key.
      */
@@ -168,7 +166,6 @@ public abstract class TransactionSynchronizationManager {
         // Transparently remove ResourceHolder that was marked as void...
         if (value instanceof ResourceHolder && ((ResourceHolder) value).isVoid()) {
             map.remove(actualKey);
-            removeStateIfEmpty();
             value = null;
         }
         return value;
@@ -184,6 +181,16 @@ public abstract class TransactionSynchronizationManager {
      */
     public static void bindResource(Object key, Object value) throws IllegalStateException {
         bindResource(getOrCreateInternalState().getResources(), key, value);
+    }
+
+    public static void rebindResource(Object key, Object value) throws IllegalStateException {
+        Object resource = getResource(key);
+        if (resource == null) {
+            bindResource(key, value);
+        } else if (resource != value) {
+            unbindResource(key);
+            bindResource(key, value);
+        }
     }
 
     private static <T> void bindResource(Map<Object, T> map, Object key, T value) {
@@ -240,7 +247,6 @@ public abstract class TransactionSynchronizationManager {
     @Nullable
     private static <T> T doUnbindResource(@Nullable Map<Object, T> map, @NonNull Object actualKey) {
         T value = map == null ? null : map.remove(actualKey);
-        removeStateIfEmpty();
         // Transparently suppress a ResourceHolder that was marked as void...
         if (value instanceof ResourceHolder && ((ResourceHolder) value).isVoid()) {
             value = null;
@@ -625,9 +631,6 @@ public abstract class TransactionSynchronizationManager {
      */
     @Internal
     public static <T> T withState(@Nullable TransactionSynchronizationState state, Supplier<T> supplier) {
-        if (state == null) {
-            return supplier.get();
-        }
         TransactionSynchronizationState previousState = getState();
         try {
             setState(state);
@@ -635,6 +638,19 @@ public abstract class TransactionSynchronizationManager {
         } finally {
             setState(previousState);
         }
+    }
+
+    /**
+     * Execute provided supplier with setup state in the thread-local. Make sure the thread-local state is cleanup afterwards.
+     *
+     * @param supplier The result supplier
+     * @param <T> The result type
+     * @return 3.5.0
+     */
+    @Internal
+    public static <T> T withGuardedState(Supplier<T> supplier) {
+        TransactionSynchronizationState previousState = getState();
+        return withState(previousState == null ? null : previousState.copy(), supplier);
     }
 
     /**
@@ -662,6 +678,8 @@ public abstract class TransactionSynchronizationManager {
      */
     @Internal
     public interface TransactionSynchronizationState {
+
+        TransactionSynchronizationState copy();
     }
 
     /**
@@ -671,8 +689,17 @@ public abstract class TransactionSynchronizationManager {
      * @since 3.4.0
      */
     private static final class MutableTransactionSynchronizationState implements TransactionSynchronizationState {
-        private final Map<Object, Object> resources = new HashMap<>(2, 1);
-        private final Map<Object, SynchronousTransactionState> states = new HashMap<>(2, 1);
+        private final Map<Object, Object> resources;
+        private final Map<Object, SynchronousTransactionState> states;
+
+        private MutableTransactionSynchronizationState() {
+            this(new HashMap<>(2, 1), new HashMap<>(2, 1));
+        }
+
+        private MutableTransactionSynchronizationState(Map<Object, Object> resources, Map<Object, SynchronousTransactionState> states) {
+            this.resources = resources;
+            this.states = states;
+        }
 
         @NonNull
         public synchronized Map<Object, Object> getResources() {
@@ -682,6 +709,11 @@ public abstract class TransactionSynchronizationManager {
         @NonNull
         public synchronized Map<Object, SynchronousTransactionState> getStates() {
             return states;
+        }
+
+        @Override
+        public MutableTransactionSynchronizationState copy() {
+            return new MutableTransactionSynchronizationState(new HashMap<>(resources), new HashMap<>(states));
         }
     }
 

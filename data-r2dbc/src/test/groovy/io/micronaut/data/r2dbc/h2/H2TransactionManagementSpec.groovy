@@ -9,7 +9,7 @@ import spock.lang.Stepwise
 
 import jakarta.inject.Inject
 
-@MicronautTest(rollback = false)
+@MicronautTest(transactional = false)
 @Stepwise
 class H2TransactionManagementSpec extends Specification implements H2TestPropertyProvider {
 

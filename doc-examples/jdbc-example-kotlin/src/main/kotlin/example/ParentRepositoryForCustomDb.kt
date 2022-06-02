@@ -7,8 +7,7 @@ import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.repository.CrudRepository
 import java.util.Optional
 
-@Repository("custom")
-@JdbcRepository(dialect = Dialect.H2)
+@JdbcRepository(dataSource = "custom", dialect = Dialect.H2)
 abstract class ParentRepositoryForCustomDb : CrudRepository<Parent, Int> {
 
     @Join(value = "children", type = Join.Type.FETCH)

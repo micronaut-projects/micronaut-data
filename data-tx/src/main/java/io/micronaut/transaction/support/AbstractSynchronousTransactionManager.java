@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * NOTICE: This is a fork of Spring's {@code AbstractPlatformTransactionManager} modernizing it
@@ -115,6 +116,20 @@ public abstract class AbstractSynchronousTransactionManager<T> extends AbstractS
     }
 
     /**
+     * Find optional transaction state.
+     *
+     * @return The state
+     */
+    @NonNull
+    public Optional<SynchronousTransactionState> find() {
+        SynchronousTransactionState synchronousTransactionState = TransactionSynchronizationManager.getSynchronousTransactionState(getTransactionStateKey());
+        if (synchronousTransactionState == null) {
+            return Optional.empty();
+        }
+        return Optional.of(synchronousTransactionState);
+    }
+
+    /**
      * Destroy the state.
      * @param state The state
      */
@@ -125,7 +140,7 @@ public abstract class AbstractSynchronousTransactionManager<T> extends AbstractS
 
     @Override
     public <R> R execute(@NonNull TransactionDefinition definition, @NonNull TransactionCallback<T, R> callback) {
-        return execute(findOrCreateState(), definition, callback);
+        return TransactionSynchronizationManager.withGuardedState(() -> execute(findOrCreateState(), definition, callback));
     }
 
     @Override
@@ -198,7 +213,7 @@ public abstract class AbstractSynchronousTransactionManager<T> extends AbstractS
             boolean newSynchronization,
             boolean debug,
             @Nullable Object suspendedResources) {
-        return super.newTransactionStatus(getState(), definition, transaction, newTransaction, newSynchronization, debug, suspendedResources);
+        return super.newTransactionStatus(findOrCreateState(), definition, transaction, newTransaction, newSynchronization, debug, suspendedResources);
     }
 
     @Override

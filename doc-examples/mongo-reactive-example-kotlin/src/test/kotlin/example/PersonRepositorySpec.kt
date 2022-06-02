@@ -9,7 +9,7 @@ import io.micronaut.data.repository.jpa.criteria.PredicateSpecification.not
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest
 import org.junit.jupiter.api.*
 
-@MicronautTest
+@MicronautTest(transactional = false)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class PersonRepositorySpec : AbstractMongoSpec() {
     @Inject

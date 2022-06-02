@@ -21,6 +21,11 @@ import io.micronaut.data.tck.tests.AbstractRepositorySpec
 
 class SqlServerRepositorySpec extends AbstractRepositorySpec implements SqlServerTestPropertyProvider {
 
+    @Override
+    boolean testLockingForUpdate() {
+        return false
+    }
+
     @Memoized
     @Override
     PersonRepository getPersonRepository() {

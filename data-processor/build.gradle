@@ -14,6 +14,7 @@ dependencies {
 	testImplementation mn.micronaut.inject.groovy
 	testImplementation mn.micronaut.inject.java.test
 	testImplementation libs.javax.persistence.api
+	testImplementation libs.javax.transaction.api
 	testImplementation libs.jakarta.transaction.api
 	if (!JavaVersion.current().isJava9Compatible()) {
 		testImplementation files(org.gradle.internal.jvm.Jvm.current().toolsJar)

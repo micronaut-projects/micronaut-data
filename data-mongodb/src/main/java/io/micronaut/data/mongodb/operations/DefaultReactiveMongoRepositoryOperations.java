@@ -77,6 +77,7 @@ import io.micronaut.transaction.exceptions.TransactionSystemException;
 import io.micronaut.transaction.exceptions.TransactionUsageException;
 import io.micronaut.transaction.reactive.ReactiveTransactionOperations;
 import io.micronaut.transaction.reactive.ReactiveTransactionStatus;
+import io.micronaut.transaction.reactive.ReactorReactiveTransactionOperations;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
 import org.bson.BsonValue;
@@ -87,6 +88,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.util.context.ContextView;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
@@ -114,13 +116,17 @@ public class DefaultReactiveMongoRepositoryOperations extends AbstractMongoRepos
         implements MongoReactorRepositoryOperations,
         ReactorReactiveRepositoryOperations,
         ReactiveCascadeOperations.ReactiveCascadeOperationsHelper<DefaultReactiveMongoRepositoryOperations.MongoOperationContext>,
-        ReactiveTransactionOperations<ClientSession> {
+        ReactorReactiveTransactionOperations<ClientSession> {
     private static final Logger LOG = LoggerFactory.getLogger(DefaultReactiveMongoRepositoryOperations.class);
     private static final Logger QUERY_LOG = DataSettings.QUERY_LOG;
+    private static final String NAME = "mongodb.reactive";
     private final String serverName;
     private final MongoClient mongoClient;
     private final ReactiveCascadeOperations<MongoOperationContext> cascadeOperations;
     private final ReactiveMongoDatabaseFactory mongoDatabaseFactory;
+    private final String txStatusKey;
+    private final String txDefinitionKey;
+    private final String currentSessionKey;
 
     /**
      * Default constructor.
@@ -134,13 +140,27 @@ public class DefaultReactiveMongoRepositoryOperations extends AbstractMongoRepos
      * @param attributeConverterRegistry The attribute converter registry
      * @param mongoClient                The reactive mongo client
      */
-    DefaultReactiveMongoRepositoryOperations(@Parameter String serverName, BeanContext beanContext, List<MediaTypeCodec> codecs, DateTimeProvider<Object> dateTimeProvider, RuntimeEntityRegistry runtimeEntityRegistry, DataConversionService<?> conversionService, AttributeConverterRegistry attributeConverterRegistry, MongoClient mongoClient) {
+    DefaultReactiveMongoRepositoryOperations(@Parameter String serverName,
+                                             BeanContext beanContext,
+                                             List<MediaTypeCodec> codecs,
+                                             DateTimeProvider<Object> dateTimeProvider,
+                                             RuntimeEntityRegistry runtimeEntityRegistry,
+                                             DataConversionService<?> conversionService,
+                                             AttributeConverterRegistry attributeConverterRegistry,
+                                             MongoClient mongoClient) {
         super(serverName, beanContext, codecs, dateTimeProvider, runtimeEntityRegistry, conversionService, attributeConverterRegistry);
         this.serverName = serverName;
         this.mongoClient = mongoClient;
         this.cascadeOperations = new ReactiveCascadeOperations<>(conversionService, this);
         boolean isPrimary = "Primary".equals(serverName);
         this.mongoDatabaseFactory = beanContext.getBean(ReactiveMongoDatabaseFactory.class, isPrimary ? null : Qualifiers.byName(serverName));
+        String name = serverName;
+        if (name == null) {
+            name = "default";
+        }
+        this.txStatusKey = ReactorReactiveTransactionOperations.TRANSACTION_STATUS_KEY_PREFIX + "." + NAME + "." + name;
+        this.txDefinitionKey = ReactorReactiveTransactionOperations.TRANSACTION_DEFINITION_KEY_PREFIX + "." + NAME + "." + name;
+        this.currentSessionKey = "io.micronaut." + NAME + ".session." + name;
     }
 
     @Override
@@ -702,17 +722,18 @@ public class DefaultReactiveMongoRepositoryOperations extends AbstractMongoRepos
     public <T> Mono<T> withClientSession(Function<ClientSession, Mono<? extends T>> function) {
         Objects.requireNonNull(function, "Handler cannot be null");
         return Mono.deferContextual(contextView -> {
-            ClientSession clientSession = contextView.getOrDefault(MongoReactorRepositoryOperations.CLIENT_SESSION_CONTEXT_KEY, null);
+            ClientSession clientSession = contextView.getOrDefault(currentSessionKey, null);
             if (clientSession != null) {
-                LOG.debug("Reusing client session for MongoDB configuration: " + serverName);
+                LOG.debug("Reusing client session for MongoDB configuration: {}", serverName);
                 return function.apply(clientSession);
             }
             if (LOG.isDebugEnabled()) {
-                LOG.debug("Creating a new client session for MongoDB configuration: " + serverName);
+                LOG.debug("Creating a new client session for MongoDB configuration: {}", serverName);
             }
-            return Mono.usingWhen(mongoClient.startSession(), cs -> function.apply(cs).contextWrite(ctx -> ctx.put(CLIENT_SESSION_CONTEXT_KEY, cs)), connection -> {
+            return Mono.usingWhen(mongoClient.startSession(), cs -> function.apply(cs)
+                    .contextWrite(ctx -> ctx.put(currentSessionKey, cs)), connection -> {
                 if (LOG.isDebugEnabled()) {
-                    LOG.debug("Closing Connection for MongoDB configuration: " + serverName);
+                    LOG.debug("Closing Connection for MongoDB configuration: {}", serverName);
                 }
                 connection.close();
                 return Mono.empty();
@@ -724,18 +745,18 @@ public class DefaultReactiveMongoRepositoryOperations extends AbstractMongoRepos
     public <T> Flux<T> withClientSessionMany(Function<ClientSession, Flux<? extends T>> function) {
         Objects.requireNonNull(function, "Handler cannot be null");
         return Flux.deferContextual(contextView -> {
-            ClientSession clientSession = contextView.getOrDefault(MongoReactorRepositoryOperations.CLIENT_SESSION_CONTEXT_KEY, null);
+            ClientSession clientSession = contextView.getOrDefault(currentSessionKey, null);
             if (clientSession != null) {
                 return Flux.from(function.apply(clientSession));
             }
             if (LOG.isDebugEnabled()) {
-                LOG.debug("Creating a new client session for MongoDB configuration: " + serverName);
+                LOG.debug("Creating a new client session for MongoDB configuration: {}", serverName);
             }
             return Flux.usingWhen(mongoClient.startSession(),
-                    cs -> function.apply(cs).contextWrite(ctx -> ctx.put(CLIENT_SESSION_CONTEXT_KEY, cs)),
+                    cs -> function.apply(cs).contextWrite(ctx -> ctx.put(currentSessionKey, cs)),
                     connection -> {
                         if (LOG.isDebugEnabled()) {
-                            LOG.debug("Closing Connection for MongoDB configuration: " + serverName);
+                            LOG.debug("Closing Connection for MongoDB configuration: {}", serverName);
                         }
                         connection.close();
                         return Mono.empty();
@@ -1033,27 +1054,24 @@ public class DefaultReactiveMongoRepositoryOperations extends AbstractMongoRepos
     }
 
     @Override
-    @NonNull
-    public <T> Publisher<T> withTransaction(@NonNull ReactiveTransactionStatus<ClientSession> status, @NonNull ReactiveTransactionOperations.TransactionalCallback<ClientSession, T> handler) {
-        Objects.requireNonNull(status, "Transaction status cannot be null");
-        Objects.requireNonNull(handler, "Callback handler cannot be null");
-        return Flux.defer(() -> {
-            try {
-                return handler.doInTransaction(status);
-            } catch (Exception e) {
-                return Flux.error(new TransactionSystemException("Error invoking doInTransaction handler: " + e.getMessage(), e));
-            }
-        }).contextWrite(context -> context.put(ReactiveTransactionStatus.STATUS, status));
+    public ReactiveTransactionStatus<ClientSession> getTransactionStatus(ContextView contextView) {
+        return contextView.getOrDefault(txStatusKey, null);
     }
 
     @Override
-    public @NonNull
-    <T> Flux<T> withTransaction(@NonNull TransactionDefinition definition, @NonNull ReactiveTransactionOperations.TransactionalCallback<ClientSession, T> handler) {
+    public TransactionDefinition getTransactionDefinition(ContextView contextView) {
+        return contextView.getOrDefault(txDefinitionKey, null);
+    }
+
+    @Override
+    @NonNull
+    public <T> Flux<T> withTransaction(@NonNull TransactionDefinition definition,
+                                       @NonNull ReactiveTransactionOperations.TransactionalCallback<ClientSession, T> handler) {
         Objects.requireNonNull(definition, "Transaction definition cannot be null");
         Objects.requireNonNull(handler, "Callback handler cannot be null");
 
         return Flux.deferContextual(contextView -> {
-            Object o = contextView.getOrDefault(ReactiveTransactionStatus.STATUS, null);
+            Object o = getTransactionStatus(contextView);
             TransactionDefinition.Propagation propagationBehavior = definition.getPropagationBehavior();
             if (o instanceof ReactiveTransactionStatus) {
                 // existing transaction, use it
@@ -1083,7 +1101,7 @@ public class DefaultReactiveMongoRepositoryOperations extends AbstractMongoRepos
 
                     return Flux.usingWhen(Mono.just(status), sts -> {
                         try {
-                            return Flux.from(handler.doInTransaction(status)).contextWrite(context -> context.put(ReactiveTransactionStatus.STATUS, status).put(ReactiveTransactionStatus.ATTRIBUTE, definition));
+                            return Flux.from(handler.doInTransaction(status)).contextWrite(context -> context.put(txStatusKey, status).put(txDefinitionKey, definition));
                         } catch (Exception e) {
                             return Flux.error(new TransactionSystemException("Error invoking doInTransaction handler: " + e.getMessage(), e));
                         }
@@ -1091,7 +1109,13 @@ public class DefaultReactiveMongoRepositoryOperations extends AbstractMongoRepos
                         if (LOG.isWarnEnabled()) {
                             LOG.warn("Rolling back transaction on error: " + throwable.getMessage(), throwable);
                         }
-                        return Flux.from(sts.getConnection().abortTransaction()).hasElements().onErrorResume((rollbackError) -> {
+                        Mono<?> mono;
+                        if (definition.rollbackOn(throwable)) {
+                            mono = Flux.from(sts.getConnection().abortTransaction()).hasElements();
+                        } else {
+                            mono = Mono.error(throwable);
+                        }
+                        return mono.onErrorResume((rollbackError) -> {
                             if (rollbackError != throwable && LOG.isWarnEnabled()) {
                                 LOG.warn("Error occurred during transaction rollback: " + rollbackError.getMessage(), rollbackError);
                             }

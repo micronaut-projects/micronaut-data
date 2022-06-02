@@ -27,7 +27,7 @@ dependencies {
     implementation "io.micronaut:micronaut-validation"
     implementation "io.micronaut.sql:micronaut-jdbc-tomcat"
     implementation libs.jakarta.persistence.api
-    implementation libs.jakarta.transaction.api
+    implementation libs.javax.transaction.api
     runtimeOnly "ch.qos.logback:logback-classic"
     runtimeOnly "com.h2database:h2"
 }

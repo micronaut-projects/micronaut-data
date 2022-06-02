@@ -29,6 +29,7 @@ import io.micronaut.test.extensions.AbstractMicronautExtension;
 import io.micronaut.transaction.SynchronousTransactionManager;
 import io.micronaut.transaction.TransactionStatus;
 import io.micronaut.transaction.support.DefaultTransactionDefinition;
+import io.micronaut.transaction.sync.SynchronousFromReactiveTransactionManager;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -60,6 +61,10 @@ public class DefaultTestTransactionExecutionListener implements TestExecutionLis
             SynchronousTransactionManager<Object> transactionManager,
             @Property(name = AbstractMicronautExtension.TEST_ROLLBACK, defaultValue = "true") boolean rollback,
             @Property(name = AbstractMicronautExtension.TEST_TRANSACTION_MODE, defaultValue = "SEPARATE_TRANSACTIONS") TransactionMode transactionMode) {
+
+        if (transactionManager instanceof SynchronousFromReactiveTransactionManager) {
+            throw new IllegalStateException("Transaction mode is not supported when the synchronous transaction manager is created using Reactive transaction manager!");
+        }
 
         this.transactionManager = transactionManager;
         this.rollback = rollback;

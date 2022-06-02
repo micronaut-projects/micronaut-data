@@ -7,7 +7,7 @@ import spock.lang.Specification
 
 import jakarta.inject.Inject
 
-@MicronautTest(rollback = false)
+@MicronautTest(transactional = false)
 class H2JoinOneSpec extends Specification implements H2TestPropertyProvider {
 
     @Shared @Inject H2OwnerRepository ownerRepository

@@ -23,6 +23,7 @@ import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.operations.RepositoryOperations;
+import io.micronaut.transaction.support.TransactionSynchronizationManager;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -62,13 +63,13 @@ public class FindPageReactiveSpecificationInterceptor extends AbstractReactiveSp
             PreparedQuery<?, ?> preparedQuery = preparedQueryForCriteria(methodKey, context, Type.FIND_PAGE);
             PreparedQuery<?, Number> countQuery = preparedQueryForCriteria(methodKey, context, Type.COUNT);
 
-            Flux<?> results = Flux.from(reactiveOperations.findAll(preparedQuery));
+            TransactionSynchronizationManager.TransactionSynchronizationState state = TransactionSynchronizationManager.getState();
 
-            Mono<Number> count = Mono.from(reactiveOperations.findOne(countQuery));
-
-            result = results.collectList()
-                    .zipWith(count)
-                    .map(tuple -> Page.of(tuple.getT1(), getPageable(context), tuple.getT2().longValue()));
+            result = Flux.from(reactiveOperations.findAll(preparedQuery)).collectList().flatMap(list -> {
+                return TransactionSynchronizationManager.withState(state, () -> {
+                    return Mono.from(reactiveOperations.findOne(countQuery)).map(count -> Page.of(list, getPageable(context), count.longValue()));
+                });
+            });
         }
         return Publishers.convertPublisher(result, context.getReturnType().getType());
 

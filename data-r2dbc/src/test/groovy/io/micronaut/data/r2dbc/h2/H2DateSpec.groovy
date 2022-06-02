@@ -7,7 +7,7 @@ import spock.lang.Specification
 
 import jakarta.inject.Inject
 
-@MicronautTest(rollback = false)
+@MicronautTest(transactional = false)
 class H2DateSpec extends Specification implements H2TestPropertyProvider {
     @Inject H2ReactorProductRepository repository
 

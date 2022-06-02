@@ -28,11 +28,16 @@ import io.micronaut.transaction.TransactionExecution;
 public interface ReactiveTransactionStatus<T> extends TransactionExecution {
     /**
      * Attribute that can be used to store this status within context propagation services.
+     * @deprecated The key cannot be constant in multi-tx environments. Replaced with {@link ReactorReactiveTransactionOperations#getTransactionStatus(reactor.util.context.ContextView)}.
      */
+    @Deprecated
     String ATTRIBUTE = "io.micronaut.tx.ATTRIBUTE";
+
     /**
      * Attribute that can be used to store the transaction status.
+     * @deprecated The key cannot be constant in multi-tx environments. Replaced with {@link ReactorReactiveTransactionOperations#getTransactionDefinition(reactor.util.context.ContextView)}.
      */
+    @Deprecated
     String STATUS = "io.micronaut.tx.STATUS";
 
     /**

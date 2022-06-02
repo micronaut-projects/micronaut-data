@@ -48,6 +48,19 @@ import java.lang.annotation.*;
 @Documented
 @Repository
 public @interface JdbcRepository {
+
+    /**
+     * @return The datasource name.
+     */
+    @AliasFor(annotation = Repository.class, member = "value")
+    String value() default "default";
+
+    /**
+     * @return The datasource name.
+     */
+    @AliasFor(annotation = Repository.class, member = "value")
+    String dataSource() default "default";
+
     /**
      * @return The dialect to use.
      */

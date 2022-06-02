@@ -9,7 +9,7 @@ import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Stepwise
 
-@MicronautTest(rollback = false)
+@MicronautTest(transactional = false, rollback = false)
 @Stepwise
 class MongoTransactionManagementSpec extends Specification implements MongoSelectReactiveDriver {
 

@@ -15,5 +15,8 @@
  */
 package io.micronaut.data.document.mongodb.reactive
 
+import io.micronaut.test.extensions.spock.annotation.MicronautTest
+
+@MicronautTest(transactional = false)
 class MongoReactiveEmbeddedSpec extends example.MongoEmbeddedSpec implements MongoSelectReactiveDriver {
 }

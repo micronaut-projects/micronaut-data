@@ -35,18 +35,16 @@ public final class CoroutineTxHelper {
 
     /**
      * Extract the TX state from the Kotlin's context or takes the thread-local context.
+     *
+     * @param state                   The transaction state
      * @param kotlinInterceptedMethod The intercepted method
-     * @return The tx state
      */
-    public TransactionSynchronizationManager.TransactionSynchronizationState setupTxState(KotlinInterceptedMethod kotlinInterceptedMethod) {
-        CoroutineContext existingContext = kotlinInterceptedMethod.getCoroutineContext();
-        TxSynchronousContext txSynchronousContext = existingContext.get(TxSynchronousContext.Key);
-        if (txSynchronousContext != null) {
-            return txSynchronousContext.getState();
-        }
-        TransactionSynchronizationManager.TransactionSynchronizationState txState = TransactionSynchronizationManager.getOrCreateState();
-        kotlinInterceptedMethod.updateCoroutineContext(existingContext.plus(new TxSynchronousContext(txState)));
-        return txState;
+    public void setupTxState(KotlinInterceptedMethod kotlinInterceptedMethod,
+                             TransactionSynchronizationManager.TransactionSynchronizationState state) {
+        CoroutineContext coroutineContext = kotlinInterceptedMethod.getCoroutineContext()
+                .minusKey(TxSynchronousContext.Key)
+                .plus(new TxSynchronousContext(state));
+        kotlinInterceptedMethod.updateCoroutineContext(coroutineContext);
     }
 
 }

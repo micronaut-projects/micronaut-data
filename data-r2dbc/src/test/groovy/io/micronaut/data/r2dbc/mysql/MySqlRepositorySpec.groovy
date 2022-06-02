@@ -21,6 +21,11 @@ import io.micronaut.data.tck.tests.AbstractRepositorySpec
 
 class MySqlRepositorySpec extends AbstractRepositorySpec implements MySqlTestPropertyProvider {
 
+    @Override
+    boolean testLockingForUpdate() {
+        return false
+    }
+
     @Memoized
     @Override
     PersonRepository getPersonRepository() {

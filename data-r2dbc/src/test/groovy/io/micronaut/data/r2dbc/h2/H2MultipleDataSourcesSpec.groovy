@@ -12,7 +12,7 @@ import spock.lang.Specification
 
 import jakarta.inject.Inject
 
-@MicronautTest(rollback = false)
+@MicronautTest(transactional = false)
 @Property(name = "r2dbc.datasources.other.url", value = "r2dbc:h2:mem:///otherdb;DB_CLOSE_DELAY=10")
 @Property(name = "r2dbc.datasources.other.schema-generate", value = "CREATE_DROP")
 @Property(name = "r2dbc.datasources.other.dialect", value = "H2")

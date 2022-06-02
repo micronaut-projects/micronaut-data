@@ -3,5 +3,5 @@ micronaut:
     name: example
 flyway:
   datasources:
-    default:
+    flyway:
       enabled: true

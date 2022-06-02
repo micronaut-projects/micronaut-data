@@ -6,12 +6,22 @@ micronaut:
 ---
 datasources:
   default:
-    url: jdbc:h2:mem:devDb;LOCK_TIMEOUT=10000;DB_CLOSE_ON_EXIT=FALSE
+    url: jdbc:h2:mem:test1;LOCK_TIMEOUT=10000;DB_CLOSE_ON_EXIT=FALSE
     driverClassName: org.h2.Driver
     username: sa
     password: ''    
+  custom:
+    url: jdbc:h2:mem:test2;LOCK_TIMEOUT=10000;DB_CLOSE_ON_EXIT=FALSE
+    driverClassName: org.h2.Driver
+    username: sa
+    password: ''
 jpa:
   default:
+    properties:
+      hibernate:
+        hbm2ddl:
+          auto: update
+  custom:
     properties:
       hibernate:
         hbm2ddl:

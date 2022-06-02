@@ -139,4 +139,9 @@ class H2RepositorySpec extends AbstractRepositorySpec implements H2TestPropertyP
     protected boolean skipQueryByDataArray() {
         return true
     }
+
+    @Override
+    boolean testLockingForUpdate() {
+        return false
+    }
 }

@@ -42,6 +42,8 @@ import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
 import io.micronaut.data.repository.jpa.criteria.QuerySpecification
 import io.micronaut.data.repository.jpa.criteria.UpdateSpecification
 import io.micronaut.transaction.SynchronousTransactionManager
+import io.micronaut.transaction.TransactionCallback
+import io.micronaut.transaction.TransactionStatus
 import jakarta.persistence.criteria.CriteriaBuilder
 import jakarta.persistence.criteria.CriteriaUpdate
 import jakarta.persistence.criteria.Predicate
@@ -51,6 +53,7 @@ import spock.lang.Shared
 import spock.lang.Specification
 
 import java.util.stream.Collectors
+import java.util.stream.Stream
 
 import static io.micronaut.data.document.tck.repositories.PersonRepository.Specifications.nameEquals
 import static io.micronaut.data.repository.jpa.criteria.QuerySpecification.where
@@ -472,8 +475,9 @@ abstract class AbstractDocumentRepositorySpec extends Specification {
 
         expect:
             bookRepository.count() == 8
-            bookRepository.queryTop3ByAuthorNameOrderByTitle("Stephen King")
-                    .stream().findFirst().get().title == "Pet Cemetery"
+            try (def stream = bookRepository.queryTop3ByAuthorNameOrderByTitle("Stephen King").stream()) {
+                assert stream.findFirst().get().title == "Pet Cemetery"
+            }
             bookRepository.queryTop3ByAuthorNameOrderByTitle("Stephen King")
                     .size() == 2
             authorRepository.findByBooksTitle("The Stand").name == "Stephen King"
@@ -1172,18 +1176,27 @@ abstract class AbstractDocumentRepositorySpec extends Specification {
             setupBooks()
 
         when:
-            def authors = transactionManager.get().executeRead {
-                authorRepository.queryByNameRegex(/.*e.*/).collect(Collectors.toList())
-            }
+            List<Author> authors = transactionManager.get().executeRead(new TransactionCallback<Object, List<Author>>() {
+                @Override
+                List<Author> call(TransactionStatus<Object> status) throws Exception {
+                    try (Stream<Author> stream = authorRepository.queryByNameRegex(/.*e.*/)) {
+                        return stream.collect(Collectors.toList())
+                    }
+                }
+            })
 
         then:
             authors.size() == 2
 
         when:
-
-            def emptyAuthors = transactionManager.get().executeRead {
-                authorRepository.queryByNameRegex(/.*x.*/).collect(Collectors.toList())
-            }
+            List<Author> emptyAuthors = transactionManager.get().executeRead(new TransactionCallback<Object, List<Author>>() {
+                @Override
+                List<Author> call(TransactionStatus<Object> status) throws Exception {
+                    try (Stream<Author> stream = authorRepository.queryByNameRegex(/.*x.*/)) {
+                        return stream.collect(Collectors.toList())
+                    }
+                }
+            })
 
         then:
             emptyAuthors.size() == 0
