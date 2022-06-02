@@ -147,6 +147,7 @@ abstract class AbstractRepositorySpec extends Specification {
         return false
     }
 
+    @IgnoreIf({ jvm.isJava15Compatible() })
     void "test save and retrieve basic types"() {
         when: "we save a new book"
         def book = basicTypeRepository.save(new BasicTypes())
