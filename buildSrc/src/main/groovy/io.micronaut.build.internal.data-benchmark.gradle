@@ -3,7 +3,7 @@ plugins {
     id "application"
     id "com.github.johnrengelman.shadow"
     id "me.champeau.jmh"
-    id 'jacoco'
+    id "io.micronaut.build.internal.quality-checks"
 }
 
 version "0.1"
@@ -40,4 +40,11 @@ jmh {
 
 jmhJar {
     mergeServiceFiles()
+}
+
+tasks.register("spotlessCheck") {
+    // workaround for bug in build looking for this task
+}
+tasks.withType(Checkstyle).configureEach {
+    enabled = false
 }

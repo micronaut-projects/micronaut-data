@@ -1,6 +1,6 @@
 plugins {
     id "io.micronaut.application"
-    id 'jacoco'
+    id "io.micronaut.build.internal.quality-checks"
 }
 
 configurations.all {
@@ -34,4 +34,11 @@ tasks.withType(JavaCompile).configureEach {
 project.afterEvaluate {
     nativeCompile.enabled = false
     testNativeImage.enabled = false
+}
+
+tasks.register("spotlessCheck") {
+    // workaround for bug in build looking for this task
+}
+tasks.withType(Checkstyle).configureEach {
+    enabled = false
 }
