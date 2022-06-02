@@ -78,5 +78,15 @@
         "type": "io.micronaut.data.processor.visitors.finders.SaveEntityMethodMatcher",
         "member": "Field PREFIXES",
         "reason": "Class is considered internal API"
+    },
+    {
+        "type": "io.micronaut.data.runtime.mapper.QueryStatement",
+        "member": "Class io.micronaut.data.runtime.mapper.QueryStatement",
+        "reason": "Added a default method"
+    },
+    {
+        "type": "io.micronaut.data.runtime.mapper.QueryStatement",
+        "member": "Method io.micronaut.data.runtime.mapper.QueryStatement.setTimestamp(java.lang.Object,java.lang.Object,java.time.Instant)",
+        "reason": "Added a default method"
     }
 ]
