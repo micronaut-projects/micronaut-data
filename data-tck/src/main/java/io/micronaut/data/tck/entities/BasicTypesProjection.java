@@ -21,6 +21,7 @@ import java.math.BigDecimal;
 import java.net.URI;
 import java.net.URL;
 import java.nio.charset.Charset;
+import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -59,10 +60,15 @@ public class BasicTypesProjection {
 
     private LocalDateTime localDateTime;
     private ZonedDateTime zonedDateTime;
+    private ZonedDateTime zonedDateTimeWithTimezone;
     private OffsetDateTime offsetDateTime;
+    private OffsetDateTime offsetDateTimeWithTimezone;
     private LocalDate localDate;
     private LocalTime localTime;
     private Instant instant;
+    private Instant instantWithTimezone;
+    private Timestamp timestamp;
+    private Timestamp timestampWithTimezone;
     private UUID uuid;
     private BigDecimal bigDecimal;
     private TimeZone timeZone;
@@ -351,5 +357,45 @@ public class BasicTypesProjection {
 
     public void setLocalTime(LocalTime localTime) {
         this.localTime = localTime;
+    }
+
+    public ZonedDateTime getZonedDateTimeWithTimezone() {
+        return zonedDateTimeWithTimezone;
+    }
+
+    public void setZonedDateTimeWithTimezone(ZonedDateTime zonedDateTimeWithTimezone) {
+        this.zonedDateTimeWithTimezone = zonedDateTimeWithTimezone;
+    }
+
+    public OffsetDateTime getOffsetDateTimeWithTimezone() {
+        return offsetDateTimeWithTimezone;
+    }
+
+    public void setOffsetDateTimeWithTimezone(OffsetDateTime offsetDateTimeWithTimezone) {
+        this.offsetDateTimeWithTimezone = offsetDateTimeWithTimezone;
+    }
+
+    public Instant getInstantWithTimezone() {
+        return instantWithTimezone;
+    }
+
+    public void setInstantWithTimezone(Instant instantWithTimezone) {
+        this.instantWithTimezone = instantWithTimezone;
+    }
+
+    public Timestamp getTimestamp() {
+        return timestamp;
+    }
+
+    public void setTimestamp(Timestamp timestamp) {
+        this.timestamp = timestamp;
+    }
+
+    public Timestamp getTimestampWithTimezone() {
+        return timestampWithTimezone;
+    }
+
+    public void setTimestampWithTimezone(Timestamp timestampWithTimezone) {
+        this.timestampWithTimezone = timestampWithTimezone;
     }
 }

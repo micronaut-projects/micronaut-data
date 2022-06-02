@@ -147,7 +147,6 @@ abstract class AbstractRepositorySpec extends Specification {
         return false
     }
 
-    @IgnoreIf({ jvm.isJava15Compatible() })
     void "test save and retrieve basic types"() {
         when: "we save a new book"
         def book = basicTypeRepository.save(new BasicTypes())
@@ -182,14 +181,18 @@ abstract class AbstractRepositorySpec extends Specification {
         retrievedBook.uri == book.uri
         retrievedBook.url == book.url
         retrievedBook.instant == book.instant
+        retrievedBook.instantWithTimezone == book.instantWithTimezone
+        retrievedBook.timestamp == book.timestamp
+        retrievedBook.timestampWithTimezone == book.timestampWithTimezone
         retrievedBook.localDateTime == book.localDateTime
         retrievedBook.zonedDateTime == book.zonedDateTime
+        retrievedBook.zonedDateTimeWithTimezone == book.zonedDateTimeWithTimezone
         retrievedBook.offsetDateTime == book.offsetDateTime
+        retrievedBook.offsetDateTimeWithTimezone == book.offsetDateTimeWithTimezone
         retrievedBook.dateCreated == book.dateCreated
         retrievedBook.dateUpdated == book.dateUpdated
+//        retrievedBook.date == book.date
 
-        // stored as a DATE type without time
-//        retrievedBookProj.date == book.date
         when:
         def retrievedBookProj = basicTypeRepository.queryById(book.myId)
 
@@ -217,11 +220,20 @@ abstract class AbstractRepositorySpec extends Specification {
         retrievedBookProj.uri == book.uri
         retrievedBookProj.url == book.url
         retrievedBookProj.instant == book.instant
+        retrievedBookProj.instantWithTimezone == book.instantWithTimezone
+        retrievedBookProj.timestamp == book.timestamp
+        retrievedBookProj.timestampWithTimezone == book.timestampWithTimezone
+        retrievedBookProj.localDateTime == book.localDateTime
+        retrievedBookProj.zonedDateTime == book.zonedDateTime
+        retrievedBookProj.zonedDateTimeWithTimezone == book.zonedDateTimeWithTimezone
+        retrievedBookProj.offsetDateTime == book.offsetDateTime
+        retrievedBookProj.offsetDateTimeWithTimezone == book.offsetDateTimeWithTimezone
         retrievedBookProj.localDateTime == book.localDateTime
         retrievedBookProj.zonedDateTime == book.zonedDateTime
         retrievedBookProj.offsetDateTime == book.offsetDateTime
         retrievedBookProj.dateCreated == book.dateCreated
         retrievedBookProj.dateUpdated == book.dateUpdated
+//        retrievedBookProj.date == book.date
 
         when:
         retrievedBookProj = basicTypeRepository.findAllById(book.myId).iterator().next()
@@ -250,11 +262,20 @@ abstract class AbstractRepositorySpec extends Specification {
         retrievedBookProj.uri == book.uri
         retrievedBookProj.url == book.url
         retrievedBookProj.instant == book.instant
+        retrievedBookProj.instantWithTimezone == book.instantWithTimezone
+        retrievedBookProj.timestamp == book.timestamp
+        retrievedBookProj.timestampWithTimezone == book.timestampWithTimezone
+        retrievedBookProj.localDateTime == book.localDateTime
+        retrievedBookProj.zonedDateTime == book.zonedDateTime
+        retrievedBookProj.zonedDateTimeWithTimezone == book.zonedDateTimeWithTimezone
+        retrievedBookProj.offsetDateTime == book.offsetDateTime
+        retrievedBookProj.offsetDateTimeWithTimezone == book.offsetDateTimeWithTimezone
         retrievedBookProj.localDateTime == book.localDateTime
         retrievedBookProj.zonedDateTime == book.zonedDateTime
         retrievedBookProj.offsetDateTime == book.offsetDateTime
         retrievedBookProj.dateCreated == book.dateCreated
         retrievedBookProj.dateUpdated == book.dateUpdated
+//        retrievedBookProj.date == book.date
     }
 
     @IgnoreIf({ !jvm.isJava11Compatible() })

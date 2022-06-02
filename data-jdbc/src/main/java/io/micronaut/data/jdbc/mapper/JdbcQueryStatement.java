@@ -24,6 +24,7 @@ import io.micronaut.data.model.DataType;
 
 import java.math.BigDecimal;
 import java.sql.*;
+import java.time.Instant;
 import java.util.Date;
 
 /**
@@ -123,16 +124,13 @@ public class JdbcQueryStatement implements QueryStatement<PreparedStatement, Int
         }
     }
 
-    @NonNull
     @Override
-    public QueryStatement<PreparedStatement, Integer> setTimestamp(PreparedStatement statement, Integer name, Date date) {
+    public QueryStatement<PreparedStatement, Integer> setTimestamp(PreparedStatement statement, Integer name, Instant instant) {
         try {
-            if (date == null) {
+            if (instant == null) {
                 statement.setNull(name, Types.TIMESTAMP);
-            } else if (date instanceof Timestamp) {
-                statement.setTimestamp(name, (Timestamp) date);
             } else {
-                statement.setTimestamp(name, new Timestamp(date.getTime()));
+                statement.setTimestamp(name, Timestamp.from(instant));
             }
         } catch (SQLException e) {
             throw newDataAccessException(e);

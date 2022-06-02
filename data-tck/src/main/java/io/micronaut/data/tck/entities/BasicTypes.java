@@ -28,6 +28,7 @@ import java.net.URI;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -69,10 +70,19 @@ public class BasicTypes {
 
     private LocalDateTime localDateTime = LocalDateTime.now();
     private ZonedDateTime zonedDateTime = ZonedDateTime.now();
+    @MappedProperty(definition = "timestamp with time zone")
+    private ZonedDateTime zonedDateTimeWithTimezone = ZonedDateTime.now();
     private OffsetDateTime offsetDateTime = OffsetDateTime.now();
+    @MappedProperty(definition = "timestamp with time zone")
+    private OffsetDateTime offsetDateTimeWithTimezone = OffsetDateTime.now();
     private LocalDate localDate = LocalDate.now();
     private LocalTime localTime = LocalTime.now();
     private Instant instant = Instant.now();
+    @MappedProperty(definition = "timestamp with time zone")
+    private Instant instantWithTimezone = Instant.now();
+    private Timestamp timestamp = Timestamp.from(Instant.now());
+    @MappedProperty(definition = "timestamp with time zone")
+    private Timestamp timestampWithTimezone = Timestamp.from(Instant.now());
     private UUID uuid = UUID.randomUUID();
     @MappedProperty(definition = "DECIMAL(24) NOT NULL")
     private BigDecimal bigDecimal = new BigDecimal(Long.MAX_VALUE + "000");
@@ -304,6 +314,14 @@ public class BasicTypes {
         this.instant = instant;
     }
 
+    public Instant getInstantWithTimezone() {
+        return instantWithTimezone;
+    }
+
+    public void setInstantWithTimezone(Instant instantWithTimezone) {
+        this.instantWithTimezone = instantWithTimezone;
+    }
+
     public UUID getUuid() {
         return uuid;
     }
@@ -366,5 +384,37 @@ public class BasicTypes {
 
     public void setLocalTime(LocalTime localTime) {
         this.localTime = localTime;
+    }
+
+    public Timestamp getTimestamp() {
+        return timestamp;
+    }
+
+    public void setTimestamp(Timestamp timestamp) {
+        this.timestamp = timestamp;
+    }
+
+    public Timestamp getTimestampWithTimezone() {
+        return timestampWithTimezone;
+    }
+
+    public void setTimestampWithTimezone(Timestamp timestampWithTimezone) {
+        this.timestampWithTimezone = timestampWithTimezone;
+    }
+
+    public ZonedDateTime getZonedDateTimeWithTimezone() {
+        return zonedDateTimeWithTimezone;
+    }
+
+    public void setZonedDateTimeWithTimezone(ZonedDateTime zonedDateTimeWithTimezone) {
+        this.zonedDateTimeWithTimezone = zonedDateTimeWithTimezone;
+    }
+
+    public OffsetDateTime getOffsetDateTimeWithTimezone() {
+        return offsetDateTimeWithTimezone;
+    }
+
+    public void setOffsetDateTimeWithTimezone(OffsetDateTime offsetDateTimeWithTimezone) {
+        this.offsetDateTimeWithTimezone = offsetDateTimeWithTimezone;
     }
 }
