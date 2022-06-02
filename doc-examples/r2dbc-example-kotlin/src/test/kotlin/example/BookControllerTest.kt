@@ -14,6 +14,7 @@ import org.junit.jupiter.api.TestInstance
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import jakarta.inject.Inject
+import kotlinx.coroutines.runBlocking
 
 @MicronautTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -53,8 +54,11 @@ class BookControllerTest : AbstractTest() {
     }
 
     @AfterAll
-    fun cleanupData(bookRepository: BookReactiveRepository) {
-        bookRepository.deleteAll()
+    fun cleanupData(bookRepository: BookRepository, authorRepository: AuthorRepository) {
+        runBlocking {
+            bookRepository.deleteAll()
+            authorRepository.deleteAll()
+        }
     }
 
     @Test
