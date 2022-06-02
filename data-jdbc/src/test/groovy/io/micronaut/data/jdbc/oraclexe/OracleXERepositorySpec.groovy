@@ -140,6 +140,12 @@ class OracleXERepositorySpec extends AbstractRepositorySpec implements OracleTes
         return context.getBean(OracleXEBasicTypesRepository)
     }
 
+    @Memoized
+    @Override
+    TimezoneBasicTypesRepository getTimezoneBasicTypeRepository() {
+        return context.getBean(OracleXETimezoneBasicTypesRepository)
+    }
+
     @Override
     protected boolean skipCustomSchemaAndCatalogTest() {
         // ORA-04043: object "FORD"."CARS" does not exist
