@@ -28,6 +28,7 @@ dependencies {
     implementation "io.micronaut.sql:micronaut-jdbc-hikari"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-reactive"
+    implementation libs.micronaut.serde.support
 
     runtimeOnly libs.drivers.r2dbc.postgresql
     runtimeOnly libs.drivers.jdbc.postgresql
