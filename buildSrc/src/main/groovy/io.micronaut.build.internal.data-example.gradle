@@ -42,3 +42,9 @@ tasks.register("spotlessCheck") {
 tasks.withType(Checkstyle).configureEach {
     enabled = false
 }
+
+test {
+    jacoco {
+        excludes += ['example/**']
+    }
+}
