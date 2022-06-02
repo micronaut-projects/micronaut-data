@@ -45,6 +45,6 @@ tasks.withType(Checkstyle).configureEach {
 
 test {
     jacoco {
-        excludes += ['example/**']
+        excludes += ['**/example/**', '**example**', 'doc-examples/**']
     }
 }
