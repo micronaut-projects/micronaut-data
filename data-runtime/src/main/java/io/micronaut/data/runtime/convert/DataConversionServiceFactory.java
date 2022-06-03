@@ -382,10 +382,10 @@ final class DataConversionServiceFactory {
         conversionService.addConverter(OffsetDateTime.class, Long.class, offsetDateTime -> offsetDateTime.toInstant().toEpochMilli());
 
         // Date
-        addZonedConvertorsConvertors(conversionService, Date.class, date -> instantToZonedDateTime.apply(date.toInstant()));
+        addZonedConvertorsConvertors(conversionService, Date.class, date -> instantToZonedDateTime.apply(Instant.ofEpochMilli(date.getTime())));
 
         // SQL Date
-        conversionService.addConverter(java.sql.Date.class, Instant.class, java.sql.Date::toInstant);
+        addZonedConvertorsConvertors(conversionService, java.sql.Date.class, date -> instantToZonedDateTime.apply(Instant.ofEpochMilli(date.getTime())));
 
         // Timestamp
         addZonedConvertorsConvertors(conversionService, Timestamp.class, timestamp -> instantToZonedDateTime.apply(timestamp.toInstant()));
