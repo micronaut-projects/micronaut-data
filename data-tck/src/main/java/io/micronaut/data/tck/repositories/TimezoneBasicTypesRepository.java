@@ -19,8 +19,12 @@ import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.data.tck.entities.TimezoneBasicTypes;
 import io.micronaut.data.tck.entities.TimezoneBasicTypesProjection;
 
+import java.util.Collection;
+
 public interface TimezoneBasicTypesRepository extends CrudRepository<TimezoneBasicTypes, Long> {
 
     TimezoneBasicTypesProjection queryById(Long id);
+
+    Collection<TimezoneBasicTypesProjection> findAllById(Long id);
 
 }

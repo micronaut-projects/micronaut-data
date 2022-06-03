@@ -148,7 +148,6 @@ abstract class AbstractRepositorySpec extends Specification {
         return false
     }
 
-    @IgnoreIf({ jvm.isJava15Compatible() })
     void "test save and retrieve basic types"() {
         when: "we save a new book"
         def book = basicTypeRepository.save(new BasicTypes())
@@ -258,7 +257,6 @@ abstract class AbstractRepositorySpec extends Specification {
         retrievedBookProj.dateUpdated == book.dateUpdated
     }
 
-    @IgnoreIf({ jvm.isJava15Compatible() })
     void "test save and retrieve timezone basic types"() {
         if (!timezoneBasicTypeRepository) {
             return
@@ -301,7 +299,7 @@ abstract class AbstractRepositorySpec extends Specification {
         retrievedBookProj.offsetDateTime == book.offsetDateTime
 
         when:
-        retrievedBookProj = basicTypeRepository.findAllById(book.myId).iterator().next()
+        retrievedBookProj = timezoneBasicTypeRepository.findAllById(book.myId).iterator().next()
 
         then:"The book is correct"
         retrievedBookProj.instant == book.instant

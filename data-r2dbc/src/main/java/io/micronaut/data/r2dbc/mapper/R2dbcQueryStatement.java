@@ -27,6 +27,8 @@ import io.r2dbc.spi.Statement;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Date;
 import java.util.UUID;
 
@@ -183,9 +185,9 @@ public class R2dbcQueryStatement implements QueryStatement<Statement, Integer> {
     @Override
     public QueryStatement<Statement, Integer> setTimestamp(Statement statement, Integer name, Instant instant) {
         if (instant == null) {
-            statement.bindNull(name, Instant.class);
+            statement.bindNull(name, LocalDateTime.class);
         } else {
-            statement.bind(name, instant);
+            statement.bind(name, instant.atZone(ZoneId.systemDefault()).toLocalDateTime());
         }
         return this;
     }

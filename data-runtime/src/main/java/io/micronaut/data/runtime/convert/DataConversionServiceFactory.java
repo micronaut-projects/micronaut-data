@@ -42,6 +42,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Function;
 
 /**
  * The {@link DataConversionService} factory class.
@@ -352,56 +353,42 @@ final class DataConversionServiceFactory {
         });
 
         // Instant
-        conversionService.addConverter(Instant.class, Date.class, Date::from);
-        conversionService.addConverter(Instant.class, ZonedDateTime.class, instant -> instant.atZone(ZoneId.systemDefault()));
-        conversionService.addConverter(Instant.class, LocalTime.class, instant -> instant.atZone(ZoneId.systemDefault()).toLocalTime());
-        conversionService.addConverter(Instant.class, LocalDate.class, instant -> instant.atZone(ZoneId.systemDefault()).toLocalDate());
-        conversionService.addConverter(Instant.class, LocalDateTime.class, instant -> instant.atZone(ZoneId.systemDefault()).toLocalDateTime());
-        conversionService.addConverter(Instant.class, OffsetDateTime.class, instant -> instant.atZone(ZoneId.systemDefault()).toOffsetDateTime());
-        conversionService.addConverter(Instant.class, Timestamp.class, Timestamp::from);
+        Function<Instant, ZonedDateTime> instantToZonedDateTime = instant -> instant.atZone(ZoneId.systemDefault());
+        addZonedConvertorsConvertors(conversionService, Instant.class, instantToZonedDateTime);
 
         // ZonedDateTime
-        conversionService.addConverter(ZonedDateTime.class, Instant.class, ChronoZonedDateTime::toInstant);
-        conversionService.addConverter(ZonedDateTime.class, Date.class, zonedDateTime -> Date.from(zonedDateTime.toInstant()));
-        conversionService.addConverter(ZonedDateTime.class, Timestamp.class, zonedDateTime -> Timestamp.from(zonedDateTime.toInstant()));
-        conversionService.addConverter(ZonedDateTime.class, LocalTime.class, ZonedDateTime::toLocalTime);
-        conversionService.addConverter(ZonedDateTime.class, LocalDate.class, ZonedDateTime::toLocalDate);
-        conversionService.addConverter(ZonedDateTime.class, LocalDateTime.class, ZonedDateTime::toLocalDateTime);
-        conversionService.addConverter(ZonedDateTime.class, OffsetDateTime.class, ZonedDateTime::toOffsetDateTime);
+        addZonedConvertorsConvertors(conversionService, ZonedDateTime.class, Function.identity());
 
         // LocalTime
         conversionService.addConverter(LocalTime.class, Timestamp.class, localTime -> Timestamp.valueOf(localTime.atDate(LocalDate.now())));
         conversionService.addConverter(LocalTime.class, Instant.class, localTime -> localTime.atDate(LocalDate.now()).atZone(ZoneId.systemDefault()).toInstant());
 
         // LocalDateTime
-        conversionService.addConverter(LocalDateTime.class, Date.class, localDateTime -> new Date(localDateTime.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()));
+        conversionService.addConverter(LocalDateTime.class, Date.class, localDateTime -> Date.from(localDateTime.atZone(ZoneId.systemDefault()).toInstant()));
         conversionService.addConverter(LocalDateTime.class, Instant.class, localDateTime -> localDateTime.atZone(ZoneId.systemDefault()).toInstant());
         conversionService.addConverter(LocalDateTime.class, Timestamp.class, Timestamp::valueOf);
+        conversionService.addConverter(LocalDateTime.class, LocalDate.class, LocalDateTime::toLocalDate);
+        conversionService.addConverter(LocalDateTime.class, LocalTime.class, LocalDateTime::toLocalTime);
+        conversionService.addConverter(LocalDateTime.class, ZonedDateTime.class, localDateTime -> localDateTime.atZone(ZoneId.systemDefault()));
 
         // OffsetDateTime
-        conversionService.addConverter(OffsetDateTime.class, Date.class, offsetDateTime -> new Date(offsetDateTime.toInstant().toEpochMilli()));
+        conversionService.addConverter(OffsetDateTime.class, Date.class, offsetDateTime -> Date.from(offsetDateTime.toInstant()));
         conversionService.addConverter(OffsetDateTime.class, java.sql.Date.class, offsetDateTime -> new java.sql.Date(offsetDateTime.toInstant().toEpochMilli()));
         conversionService.addConverter(OffsetDateTime.class, Timestamp.class, offsetDateTime -> Timestamp.from(offsetDateTime.toInstant()));
         conversionService.addConverter(OffsetDateTime.class, Instant.class, OffsetDateTime::toInstant);
         conversionService.addConverter(OffsetDateTime.class, LocalDate.class, OffsetDateTime::toLocalDate);
         conversionService.addConverter(OffsetDateTime.class, LocalDateTime.class, OffsetDateTime::toLocalDateTime);
+        conversionService.addConverter(OffsetDateTime.class, ZonedDateTime.class, OffsetDateTime::toZonedDateTime);
         conversionService.addConverter(OffsetDateTime.class, Long.class, offsetDateTime -> offsetDateTime.toInstant().toEpochMilli());
 
         // Date
-        conversionService.addConverter(Date.class, OffsetDateTime.class, date -> Instant.ofEpochMilli(date.getTime()).atZone(ZoneId.systemDefault()).toOffsetDateTime());
-        conversionService.addConverter(Date.class, LocalDateTime.class, date -> Instant.ofEpochMilli(date.getTime()).atZone(ZoneId.systemDefault()).toLocalDateTime());
-        conversionService.addConverter(Date.class, LocalDate.class, date -> Instant.ofEpochMilli(date.getTime()).atZone(ZoneId.systemDefault()).toLocalDate());
-        conversionService.addConverter(Date.class, LocalTime.class, date -> Instant.ofEpochMilli(date.getTime()).atZone(ZoneId.systemDefault()).toLocalTime());
-        conversionService.addConverter(Date.class, Instant.class, Date::toInstant);
+        addZonedConvertorsConvertors(conversionService, Date.class, date -> instantToZonedDateTime.apply(date.toInstant()));
 
         // SQL Date
-        conversionService.addConverter(java.sql.Date.class, Instant.class, date -> Instant.ofEpochMilli(date.getTime()));
+        conversionService.addConverter(java.sql.Date.class, Instant.class, java.sql.Date::toInstant);
 
         // Timestamp
-        conversionService.addConverter(Timestamp.class, ZonedDateTime.class, timestamp -> timestamp.toLocalDateTime().atZone(ZoneId.systemDefault()));
-        conversionService.addConverter(Timestamp.class, OffsetDateTime.class, timestamp -> OffsetDateTime.ofInstant(timestamp.toInstant(), ZoneId.systemDefault()));
-        conversionService.addConverter(Timestamp.class, LocalTime.class, timestamp -> timestamp.toLocalDateTime().toLocalTime());
-        conversionService.addConverter(Timestamp.class, LocalDateTime.class, Timestamp::toLocalDateTime);
+        addZonedConvertorsConvertors(conversionService, Timestamp.class, timestamp -> instantToZonedDateTime.apply(timestamp.toInstant()));
 
         if (beanContext != null) {
             Collection<BeanRegistration<DataTypeConverter>> typeConverters = beanContext.getBeanRegistrations(DataTypeConverter.class);
@@ -423,6 +410,17 @@ final class DataConversionServiceFactory {
         }
 
         return conversionService;
+    }
+
+    private <T> void addZonedConvertorsConvertors(DataConversionService<?> conversionService, Class<T> dateType, Function<T, ZonedDateTime> dateToZonedDateTime) {
+        conversionService.addConverter(dateType, ZonedDateTime.class, dateToZonedDateTime);
+        conversionService.addConverter(dateType, OffsetDateTime.class, dateToZonedDateTime.andThen(ZonedDateTime::toOffsetDateTime));
+        conversionService.addConverter(dateType, LocalDateTime.class, dateToZonedDateTime.andThen(ZonedDateTime::toLocalDateTime));
+        conversionService.addConverter(dateType, LocalDate.class, dateToZonedDateTime.andThen(ZonedDateTime::toLocalDate));
+        conversionService.addConverter(dateType, LocalTime.class, dateToZonedDateTime.andThen(ZonedDateTime::toLocalTime));
+        conversionService.addConverter(dateType, Instant.class, dateToZonedDateTime.andThen(ChronoZonedDateTime::toInstant));
+        conversionService.addConverter(dateType, Date.class, dateToZonedDateTime.andThen(zonedDateTime -> Date.from(zonedDateTime.toInstant())));
+        conversionService.addConverter(dateType, Timestamp.class, dateToZonedDateTime.andThen(zonedDateTime -> Timestamp.from(zonedDateTime.toInstant())));
     }
 
     private Integer asInteger(Object value, DataConversionService<?> dataConversionService) {
