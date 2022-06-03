@@ -103,5 +103,20 @@
         "type": "io.micronaut.data.r2dbc.mapper.R2dbcQueryStatement",
         "member": "Method io.micronaut.data.r2dbc.mapper.R2dbcQueryStatement.setTimestamp(java.lang.Object,java.lang.Object,java.util.Date)",
         "reason": "Added a default method"
+    },
+    {
+        "type": "io.micronaut.data.jdbc.mapper.JdbcQueryStatement",
+        "member": "Class io.micronaut.data.jdbc.mapper.JdbcQueryStatement",
+        "reason": "Added a default method"
+    },
+    {
+        "type": "io.micronaut.data.jdbc.mapper.JdbcQueryStatement",
+        "member": "Method io.micronaut.data.jdbc.mapper.JdbcQueryStatement.setTimestamp(java.sql.PreparedStatement,java.lang.Integer,java.util.Date)",
+        "reason": "Added a default method"
+    },
+    {
+        "type": "io.micronaut.data.jdbc.mapper.JdbcQueryStatement",
+        "member": "Method io.micronaut.data.jdbc.mapper.JdbcQueryStatement.setTimestamp(java.lang.Object,java.lang.Object,java.util.Date)",
+        "reason": "Added a default method"
     }
 ]
