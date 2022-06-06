@@ -119,7 +119,15 @@ public class AutoTimestampEntityEventListener extends AutoPopulatedEntityEventLi
 
             final BeanProperty<Object, Object> beanProperty = (BeanProperty<Object, Object>) property.getProperty();
             final Class<?> propertyType = property.getType();
-            ChronoUnit truncateToValue = isUpdate ? truncateToDateUpdated(property.getAnnotationMetadata()) : truncateToDateCreated(property.getAnnotationMetadata());
+            ChronoUnit truncateToValue;
+            if (isUpdate) {
+                truncateToValue = truncateToDateUpdated(property.getAnnotationMetadata());
+            } else {
+                truncateToValue = truncateToDateCreated(property.getAnnotationMetadata());
+                if (truncateToValue == null) {
+                    truncateToValue = truncateToDateUpdated(property.getAnnotationMetadata());
+                }
+            }
             Object propertyNow = truncate(now, truncateToValue);
             if (propertyType.isInstance(propertyNow)) {
                 context.setProperty(beanProperty, propertyNow);
@@ -131,11 +139,11 @@ public class AutoTimestampEntityEventListener extends AutoPopulatedEntityEventLi
 
     @Nullable
     private ChronoUnit truncateToDateCreated(@NonNull AnnotationMetadata annotationMetadata) {
-        return annotationMetadata.enumValue(DateCreated.class, ChronoUnit.class).filter(cu -> cu != ChronoUnit.FOREVER).orElse(null);
+        return annotationMetadata.enumValue(DateCreated.class, "truncatedTo", ChronoUnit.class).filter(cu -> cu != ChronoUnit.FOREVER).orElse(null);
     }
 
     @Nullable
     private ChronoUnit truncateToDateUpdated(@NonNull AnnotationMetadata annotationMetadata) {
-        return annotationMetadata.enumValue(DateUpdated.class, ChronoUnit.class).filter(cu -> cu != ChronoUnit.FOREVER).orElse(null);
+        return annotationMetadata.enumValue(DateUpdated.class, "truncatedTo", ChronoUnit.class).filter(cu -> cu != ChronoUnit.FOREVER).orElse(null);
     }
 }
