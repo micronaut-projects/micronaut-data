@@ -424,8 +424,8 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                                 resourceSupplier = Flux.from(connection.beginTransaction()).hasElements();
                             }
 
-                            Function<Boolean, Publisher<?>> doCommit = ignore -> doCommit(status, cancelCallback);
-                            BiFunction<Boolean, Throwable, Publisher<?>> doRollback = (b, throwable) -> doRollback(status, throwable, cancelCallback);
+                            Function<Boolean, Publisher<?>> onSuccess = ignore -> doCommit(status, cancelCallback);
+                            BiFunction<Boolean, Throwable, Publisher<?>> onException = (b, throwable) -> onException(status, definition, throwable, cancelCallback);
 
                             return Flux.usingWhen(resourceSupplier,
                                     (b) -> {
@@ -438,20 +438,24 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                                             return Mono.error(new TransactionSystemException("Error invoking doInTransaction handler: " + e.getMessage(), e));
                                         }
                                     },
-                                    doCommit,
-                                    doRollback,
-                                    doCommit);
+                                    onSuccess,
+                                    onException,
+                                    onSuccess);
                         }
                 );
             }
         });
     }
 
-    private Flux<Void> doRollback(DefaultReactiveTransactionStatus status,
-                                  Throwable throwable,
-                                  Supplier<Publisher<Void>> cancelConnection) {
+    private Flux<Void> onException(DefaultReactiveTransactionStatus status,
+                                   TransactionDefinition definition,
+                                   Throwable throwable,
+                                   Supplier<Publisher<Void>> cancelConnection) {
         if (LOG.isWarnEnabled()) {
             LOG.warn("Rolling back transaction on error: " + throwable.getMessage(), throwable);
+        }
+        if (!definition.rollbackOn(throwable)) {
+            return doCommit(status, cancelConnection);
         }
         return doRollback(status, cancelConnection)
                 .onErrorResume((rollbackError) -> {
@@ -463,13 +467,8 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
     }
 
     private Flux<Void> doRollback(DefaultReactiveTransactionStatus status, Supplier<Publisher<Void>> cancelConnection) {
-        Mono<?> mono;
-        if (definition.rollbackOn(throwable)) {
-            mono = Flux.from(connection.rollbackTransaction()).hasElements();
-        } else {
-            mono = Mono.error(throwable).hasElements();
-        }
-        return mono
+        return Flux.from(status.getConnection().rollbackTransaction())
+                .hasElements()
                 .flatMapMany(ignore -> cancelConnection.get())
                 .doFinally((sig) -> status.completed = true);
     }
