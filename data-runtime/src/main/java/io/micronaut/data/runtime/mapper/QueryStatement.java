@@ -23,7 +23,7 @@ import io.micronaut.data.model.DataType;
 
 import java.math.BigDecimal;
 import java.sql.Array;
-import java.sql.Timestamp;
+import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.Date;
 import java.util.UUID;
@@ -102,13 +102,17 @@ public interface QueryStatement<PS, IDX> {
                     return setDate(statement, index, convertRequired(value, Date.class));
                 }
             case TIMESTAMP:
-                if (value instanceof ZonedDateTime) {
-                    return setTimestamp(statement, index, convertRequired(value, Timestamp.class));
-                } else if (value instanceof Date) {
-                    return setTimestamp(statement, index, ((Date) value));
+                Instant instant;
+                if (value == null) {
+                    instant = null;
+                } else if (value instanceof ZonedDateTime) {
+                    instant = ((ZonedDateTime) value).toInstant();
+                } else if (value instanceof Instant) {
+                    instant = ((Instant) value);
                 } else {
-                    return setTimestamp(statement, index, convertRequired(value, Timestamp.class));
+                    instant = convertRequired(value, Instant.class);
                 }
+                return setTimestamp(statement, index, instant);
             case UUID:
                 if (value instanceof CharSequence) {
                     return setValue(statement, index, UUID.fromString(value.toString()));
@@ -305,10 +309,26 @@ public interface QueryStatement<PS, IDX> {
      * @param name The name (such as the column name)
      * @param date The date
      * @return This writer
+     * @deprecated Use {@link #setTimestamp(Object, Object, Instant)}.
      */
+    @Deprecated
     default @NonNull
     QueryStatement<PS, IDX> setTimestamp(PS statement, IDX name, Date date) {
-        return setValue(statement, name, date);
+        return setTimestamp(statement, name, date == null ? null : date.toInstant());
+    }
+
+    /**
+     * Write an instant value for the given name.
+     *
+     * @param statement The statement
+     * @param name      The name (such as the column name)
+     * @param instant   The instant
+     * @return This writer
+     * @since 3.4.2
+     */
+    @NonNull
+    default QueryStatement<PS, IDX> setTimestamp(PS statement, IDX name, Instant instant) {
+        return setValue(statement, name, instant);
     }
 
     /**

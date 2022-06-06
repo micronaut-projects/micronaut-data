@@ -15,22 +15,13 @@
  */
 package io.micronaut.data.mongodb.operations;
 
-import com.mongodb.client.model.Collation;
-import com.mongodb.client.model.CollationAlternate;
-import com.mongodb.client.model.CollationCaseFirst;
-import com.mongodb.client.model.CollationMaxVariable;
-import com.mongodb.client.model.CollationStrength;
-import com.mongodb.client.model.Filters;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.data.model.Association;
-import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
-import io.micronaut.serde.config.annotation.SerdeConfig;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
 import org.bson.BsonInt32;
@@ -56,48 +47,7 @@ public final class MongoUtils {
 
     public static final String ID = "_id";
 
-    public static Collation bsonDocumentAsCollation(@Nullable BsonDocument collationDocument) {
-        if (collationDocument == null) {
-            return null;
-        }
-        Collation.Builder builder = Collation.builder();
-        BsonValue locale = collationDocument.get("locale");
-        if (locale != null) {
-            builder.locale(locale.asString().getValue());
-        }
-        BsonValue caseLevel = collationDocument.get("caseLevel");
-        if (caseLevel != null) {
-            builder.caseLevel(caseLevel.asBoolean().getValue());
-        }
-        BsonValue caseFirst = collationDocument.get("caseFirst");
-        if (caseFirst != null) {
-            builder.collationCaseFirst(CollationCaseFirst.valueOf(caseFirst.asString().getValue()));
-        }
-        BsonValue strength = collationDocument.get("strength");
-        if (strength != null) {
-            builder.collationStrength(CollationStrength.valueOf(strength.asString().getValue()));
-        }
-        BsonValue numericOrdering = collationDocument.get("numericOrdering");
-        if (numericOrdering != null) {
-            builder.numericOrdering(numericOrdering.asBoolean().getValue());
-        }
-        BsonValue alternate = collationDocument.get("alternate");
-        if (alternate != null) {
-            builder.collationAlternate(CollationAlternate.valueOf(alternate.asString().getValue()));
-        }
-        BsonValue maxVariable = collationDocument.get("maxVariable");
-        if (maxVariable != null) {
-            builder.collationMaxVariable(CollationMaxVariable.valueOf(maxVariable.asString().getValue()));
-        }
-        BsonValue normalization = collationDocument.get("normalization");
-        if (normalization != null) {
-            builder.normalization(normalization.asBoolean().getValue());
-        }
-        BsonValue backwards = collationDocument.get("backwards");
-        if (backwards != null) {
-            builder.backwards(backwards.asBoolean().getValue());
-        }
-        return builder.build();
+    private MongoUtils() {
     }
 
     public static BsonValue entityIdValue(ConversionService<?> conversionService,
@@ -143,34 +93,6 @@ public final class MongoUtils {
                            CodecRegistry codecRegistry) {
         BsonValue id = idValue(conversionService, persistentEntity, value, codecRegistry);
         return new BsonDocument().append(ID, id);
-    }
-
-    static Bson filterByEntityId(ConversionService<?> conversionService,
-                                 RuntimePersistentEntity<?> persistentEntity,
-                                 Object entity,
-                                 CodecRegistry codecRegistry) {
-        BsonValue id = entityIdValue(conversionService, persistentEntity, entity, codecRegistry);
-        return new BsonDocument().append(ID, id);
-    }
-
-    static Bson filterByIdAndVersion(ConversionService<?> conversionService,
-                                     RuntimePersistentEntity persistentEntity,
-                                     Object entity,
-                                     CodecRegistry codecRegistry) {
-        RuntimePersistentProperty version = persistentEntity.getVersion();
-        if (version != null) {
-            return Filters.and(
-                    filterByEntityId(conversionService, persistentEntity, entity, codecRegistry),
-                    Filters.eq(getPropertyPersistName(version), version.getProperty().get(entity))
-            );
-        }
-        return filterByEntityId(conversionService, persistentEntity, entity, codecRegistry);
-    }
-
-    private static String getPropertyPersistName(PersistentProperty property) {
-        return property.getAnnotationMetadata()
-                .stringValue(SerdeConfig.class, SerdeConfig.PROPERTY)
-                .orElseGet(property::getName);
     }
 
     static <T> T toValue(BsonDocument bsonDocument, Class<T> resultClass, CodecRegistry codecRegistry) {

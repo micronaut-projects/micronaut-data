@@ -43,6 +43,11 @@ import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.serde.config.annotation.SerdeConfig;
 
 import javax.validation.constraints.NotNull;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -64,6 +69,7 @@ import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import static java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static java.util.Collections.singletonMap;
@@ -81,6 +87,8 @@ public final class MongoQueryBuilder implements QueryBuilder {
      * An object with this property is replaced with an actual query parameter at the runtime.
      */
     public static final String QUERY_PARAMETER_PLACEHOLDER = "$mn_qp";
+    public static final String MONGO_DATE_IDENTIFIER = "$date";
+    public static final String MONGO_OBJECT_ID_IDENTIFIER = "$oid";
 
     private final Map<Class, CriterionHandler> queryHandlers = new HashMap<>(30);
 
@@ -219,6 +227,12 @@ public final class MongoQueryBuilder implements QueryBuilder {
                                        PersistentPropertyPath inPropertyPath,
                                        PersistentPropertyPath outPropertyPath,
                                        Object value) {
+        if (value instanceof LocalDate) {
+            return singletonMap(MONGO_DATE_IDENTIFIER, formatDate((LocalDate) value));
+        }
+        if (value instanceof LocalDateTime) {
+            return singletonMap(MONGO_DATE_IDENTIFIER, formatDate((LocalDateTime) value));
+        }
         if (value instanceof BindingParameter) {
             int index = context.pushParameter(
                     (BindingParameter) value,
@@ -228,6 +242,18 @@ public final class MongoQueryBuilder implements QueryBuilder {
         } else {
             return asLiteral(value);
         }
+    }
+
+    private String formatDate(LocalDate localDate) {
+        return formatDate(localDate.atStartOfDay());
+    }
+
+    private String formatDate(LocalDateTime localDateTime) {
+        return formatDate(localDateTime.atZone(ZoneId.of("Z")).toInstant().toEpochMilli());
+    }
+
+    private String formatDate(final long dateTime) {
+        return ZonedDateTime.ofInstant(Instant.ofEpochMilli(dateTime), ZoneId.of("Z")).format(ISO_OFFSET_DATE_TIME);
     }
 
     private <T extends QueryModel.PropertyComparisonCriterion> CriterionHandler<T> comparison(String operator) {

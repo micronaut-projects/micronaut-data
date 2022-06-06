@@ -30,7 +30,7 @@ import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
 import java.nio.ByteBuffer;
-import java.sql.Timestamp;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -93,17 +93,9 @@ public class ColumnNameR2dbcResultReader implements ResultReader<Row, String> {
             case BYTE:
                 return resultSet.get(index, Byte.class);
             case TIMESTAMP:
-                LocalDateTime value = resultSet.get(index, LocalDateTime.class);
-                if (value == null) {
-                    return null;
-                }
-                return convertRequired(value, Timestamp.class);
+                return readDynamic(resultSet, index, Instant.class);
             case DATE:
-                LocalDate dateValue = resultSet.get(index, LocalDate.class);
-                if (dateValue == null) {
-                    return null;
-                }
-                return convertRequired(dateValue, Date.class);
+                return readDynamic(resultSet, index, LocalDate.class);
             case CHARACTER:
                 return readDynamic(resultSet, index, Character.class);
             case FLOAT:

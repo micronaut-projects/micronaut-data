@@ -731,7 +731,7 @@ public final class DefaultMongoRepositoryOperations extends AbstractMongoReposit
         if (QUERY_LOG.isDebugEnabled()) {
             QUERY_LOG.debug("Executing Mongo 'insertOne' for collection: {} with document: {}", collection.getNamespace().getFullName(), association);
         }
-        collection.insertOne(ctx.clientSession, association);
+        collection.insertOne(ctx.clientSession, association, getInsertOneOptions(ctx.annotationMetadata));
     }
 
     @Override
@@ -749,7 +749,7 @@ public final class DefaultMongoRepositoryOperations extends AbstractMongoReposit
         if (QUERY_LOG.isDebugEnabled()) {
             QUERY_LOG.debug("Executing Mongo 'insertMany' for collection: {} with documents: {}", collection.getNamespace().getFullName(), associations);
         }
-        collection.insertMany(ctx.clientSession, associations);
+        collection.insertMany(ctx.clientSession, associations, getInsertManyOptions(ctx.annotationMetadata));
     }
 
     private <T> T withClientSession(Function<ClientSession, T> function) {
@@ -772,7 +772,7 @@ public final class DefaultMongoRepositoryOperations extends AbstractMongoReposit
                 if (QUERY_LOG.isDebugEnabled()) {
                     QUERY_LOG.debug("Executing Mongo 'insertOne' with entity: {}", entity);
                 }
-                InsertOneResult insertOneResult = collection.insertOne(ctx.clientSession, entity);
+                InsertOneResult insertOneResult = collection.insertOne(ctx.clientSession, entity, getInsertOneOptions(ctx.annotationMetadata));
                 BsonValue insertedId = insertOneResult.getInsertedId();
                 BeanProperty<T, Object> property = (BeanProperty<T, Object>) persistentEntity.getIdentity().getProperty();
                 if (property.get(entity) == null) {
@@ -791,7 +791,7 @@ public final class DefaultMongoRepositoryOperations extends AbstractMongoReposit
 
             @Override
             protected void collectAutoPopulatedPreviousValues() {
-                filter = MongoUtils.filterByIdAndVersion(conversionService, persistentEntity, entity, collection.getCodecRegistry());
+                filter = createFilterIdAndVersion(persistentEntity, entity, mongoDatabase.getCodecRegistry());
             }
 
             @Override
@@ -801,12 +801,13 @@ public final class DefaultMongoRepositoryOperations extends AbstractMongoReposit
                 }
                 BsonDocument bsonDocument = BsonDocumentWrapper.asBsonDocument(entity, mongoDatabase.getCodecRegistry());
                 bsonDocument.remove("_id");
-                UpdateResult updateResult = collection.replaceOne(ctx.clientSession, filter, bsonDocument);
+                UpdateResult updateResult = collection.replaceOne(ctx.clientSession, filter, bsonDocument, getReplaceOptions(ctx.annotationMetadata));
                 modifiedCount = updateResult.getModifiedCount();
                 if (persistentEntity.getVersion() != null) {
                     checkOptimisticLocking(1, (int) modifiedCount);
                 }
             }
+
         };
     }
 
@@ -852,7 +853,7 @@ public final class DefaultMongoRepositoryOperations extends AbstractMongoReposit
             @Override
             protected void collectAutoPopulatedPreviousValues() {
                 filters = entities.stream()
-                        .collect(Collectors.toMap(d -> d, d -> MongoUtils.filterByIdAndVersion(conversionService, persistentEntity, d.entity, collection.getCodecRegistry())));
+                        .collect(Collectors.toMap(d -> d, d -> createFilterIdAndVersion(persistentEntity, d.entity, collection.getCodecRegistry())));
             }
 
             @Override
@@ -868,7 +869,7 @@ public final class DefaultMongoRepositoryOperations extends AbstractMongoReposit
                     }
                     BsonDocument bsonDocument = BsonDocumentWrapper.asBsonDocument(d.entity, mongoDatabase.getCodecRegistry());
                     bsonDocument.remove("_id");
-                    replaces.add(new ReplaceOneModel<>(filter, bsonDocument));
+                    replaces.add(new ReplaceOneModel<>(filter, bsonDocument, getReplaceOptions(ctx.annotationMetadata)));
                 }
                 BulkWriteResult bulkWriteResult = collection.bulkWrite(ctx.clientSession, replaces);
                 modifiedCount = bulkWriteResult.getModifiedCount();
@@ -888,7 +889,7 @@ public final class DefaultMongoRepositoryOperations extends AbstractMongoReposit
 
             @Override
             protected void collectAutoPopulatedPreviousValues() {
-                filter = MongoUtils.filterByIdAndVersion(conversionService, persistentEntity, entity, collection.getCodecRegistry());
+                filter = createFilterIdAndVersion(persistentEntity, entity, collection.getCodecRegistry());
             }
 
             @Override
@@ -896,7 +897,7 @@ public final class DefaultMongoRepositoryOperations extends AbstractMongoReposit
                 if (QUERY_LOG.isDebugEnabled()) {
                     QUERY_LOG.debug("Executing Mongo 'deleteOne' with filter: {}", filter.toBsonDocument().toJson());
                 }
-                DeleteResult deleteResult = collection.deleteOne(ctx.clientSession, filter);
+                DeleteResult deleteResult = collection.deleteOne(ctx.clientSession, filter, getDeleteOptions(ctx.annotationMetadata));
                 modifiedCount = deleteResult.getDeletedCount();
                 if (persistentEntity.getVersion() != null) {
                     checkOptimisticLocking(1, (int) modifiedCount);
@@ -914,7 +915,7 @@ public final class DefaultMongoRepositoryOperations extends AbstractMongoReposit
 
             @Override
             protected void collectAutoPopulatedPreviousValues() {
-                filters = entities.stream().collect(Collectors.toMap(d -> d, d -> MongoUtils.filterByIdAndVersion(conversionService, persistentEntity, d.entity, collection.getCodecRegistry())));
+                filters = entities.stream().collect(Collectors.toMap(d -> d, d -> createFilterIdAndVersion(persistentEntity, d.entity, collection.getCodecRegistry())));
             }
 
             @Override
@@ -925,7 +926,7 @@ public final class DefaultMongoRepositoryOperations extends AbstractMongoReposit
                     if (QUERY_LOG.isDebugEnabled()) {
                         QUERY_LOG.debug("Executing Mongo 'deleteMany' with filter: {}", filter.toBsonDocument().toJson());
                     }
-                    DeleteResult deleteResult = collection.deleteMany(ctx.clientSession, filter);
+                    DeleteResult deleteResult = collection.deleteMany(ctx.clientSession, filter, getDeleteOptions(ctx.annotationMetadata));
                     modifiedCount = deleteResult.getDeletedCount();
                 }
                 if (persistentEntity.getVersion() != null) {
@@ -978,7 +979,7 @@ public final class DefaultMongoRepositoryOperations extends AbstractMongoReposit
                 }
                 MongoDatabase mongoDatabase = getDatabase(persistentEntity, ctx.repositoryType);
                 InsertManyResult insertManyResult = getCollection(mongoDatabase, persistentEntity, persistentEntity.getIntrospection().getBeanType())
-                        .insertMany(ctx.clientSession, toInsert);
+                        .insertMany(ctx.clientSession, toInsert, getInsertManyOptions(ctx.annotationMetadata));
                 if (hasGeneratedId) {
                     Map<Integer, BsonValue> insertedIds = insertManyResult.getInsertedIds();
                     RuntimePersistentProperty<T> identity = persistentEntity.getIdentity();

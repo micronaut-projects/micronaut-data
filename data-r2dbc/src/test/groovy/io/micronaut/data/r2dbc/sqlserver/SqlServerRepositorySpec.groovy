@@ -139,4 +139,10 @@ class SqlServerRepositorySpec extends AbstractRepositorySpec implements SqlServe
     BasicTypesRepository getBasicTypeRepository() {
         return context.getBean(MSBasicTypesRepository)
     }
+
+    @Memoized
+    @Override
+    TimezoneBasicTypesRepository getTimezoneBasicTypeRepository() {
+        return null
+    }
 }

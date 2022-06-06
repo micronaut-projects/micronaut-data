@@ -701,7 +701,7 @@ public class DefaultReactiveMongoRepositoryOperations extends AbstractMongoRepos
         if (QUERY_LOG.isDebugEnabled()) {
             QUERY_LOG.debug("Executing Mongo 'insertOne' for collection: {} with document: {}", collection.getNamespace().getFullName(), association);
         }
-        return Mono.from(collection.insertOne(ctx.clientSession, association)).then();
+        return Mono.from(collection.insertOne(ctx.clientSession, association, getInsertOneOptions(ctx.annotationMetadata))).then();
     }
 
     @Override
@@ -715,7 +715,7 @@ public class DefaultReactiveMongoRepositoryOperations extends AbstractMongoRepos
         if (QUERY_LOG.isDebugEnabled()) {
             QUERY_LOG.debug("Executing Mongo 'insertMany' for collection: {} with associations: {}", collection.getNamespace().getFullName(), associations);
         }
-        return Mono.from(collection.insertMany(ctx.clientSession, associations)).then();
+        return Mono.from(collection.insertMany(ctx.clientSession, associations, getInsertManyOptions(ctx.annotationMetadata))).then();
     }
 
     @Override
@@ -776,7 +776,7 @@ public class DefaultReactiveMongoRepositoryOperations extends AbstractMongoRepos
                     if (QUERY_LOG.isDebugEnabled()) {
                         QUERY_LOG.debug("Executing Mongo 'insertOne' with entity: {}", d.entity);
                     }
-                    return Mono.from(collection.insertOne(ctx.clientSession, d.entity)).map(insertOneResult -> {
+                    return Mono.from(collection.insertOne(ctx.clientSession, d.entity, getInsertOneOptions(ctx.annotationMetadata))).map(insertOneResult -> {
                         BsonValue insertedId = insertOneResult.getInsertedId();
                         BeanProperty<T, Object> property = (BeanProperty<T, Object>) persistentEntity.getIdentity().getProperty();
                         if (property.get(d.entity) == null) {
@@ -798,7 +798,7 @@ public class DefaultReactiveMongoRepositoryOperations extends AbstractMongoRepos
             @Override
             protected void collectAutoPopulatedPreviousValues() {
                 data = data.map(d -> {
-                    d.filter = MongoUtils.filterByIdAndVersion(conversionService, persistentEntity, d.entity, collection.getCodecRegistry());
+                    d.filter = createFilterIdAndVersion(persistentEntity, d.entity, collection.getCodecRegistry());
                     return d;
                 });
             }
@@ -812,7 +812,7 @@ public class DefaultReactiveMongoRepositoryOperations extends AbstractMongoRepos
                     }
                     BsonDocument bsonDocument = BsonDocumentWrapper.asBsonDocument(d.entity, mongoDatabase.getCodecRegistry());
                     bsonDocument.remove("_id");
-                    return Mono.from(collection.replaceOne(ctx.clientSession, filter, bsonDocument)).map(updateResult -> {
+                    return Mono.from(collection.replaceOne(ctx.clientSession, filter, bsonDocument, getReplaceOptions(ctx.annotationMetadata))).map(updateResult -> {
                         d.rowsUpdated = updateResult.getModifiedCount();
                         if (persistentEntity.getVersion() != null) {
                             checkOptimisticLocking(1, (int) d.rowsUpdated);
@@ -838,7 +838,7 @@ public class DefaultReactiveMongoRepositoryOperations extends AbstractMongoRepos
                     if (d.vetoed) {
                         return d;
                     }
-                    d.filter = MongoUtils.filterByIdAndVersion(conversionService, persistentEntity, d.entity, collection.getCodecRegistry());
+                    d.filter = createFilterIdAndVersion(persistentEntity, d.entity, collection.getCodecRegistry());
                     return d;
                 });
             }
@@ -857,7 +857,7 @@ public class DefaultReactiveMongoRepositoryOperations extends AbstractMongoRepos
                         }
                         BsonDocument bsonDocument = BsonDocumentWrapper.asBsonDocument(d.entity, mongoDatabase.getCodecRegistry());
                         bsonDocument.remove("_id");
-                        replaces.add(new ReplaceOneModel<>(filter, bsonDocument));
+                        replaces.add(new ReplaceOneModel<>(filter, bsonDocument, getReplaceOptions(ctx.annotationMetadata)));
                     }
                     return Mono.from(collection.bulkWrite(ctx.clientSession, replaces)).map(bulkWriteResult -> {
                         if (persistentEntity.getVersion() != null) {
@@ -915,7 +915,7 @@ public class DefaultReactiveMongoRepositoryOperations extends AbstractMongoRepos
                     if (d.vetoed) {
                         return d;
                     }
-                    d.filter = MongoUtils.filterByIdAndVersion(conversionService, persistentEntity, d.entity, collection.getCodecRegistry());
+                    d.filter = createFilterIdAndVersion(persistentEntity, d.entity, collection.getCodecRegistry());
                     return d;
                 });
             }
@@ -927,7 +927,7 @@ public class DefaultReactiveMongoRepositoryOperations extends AbstractMongoRepos
                     if (QUERY_LOG.isDebugEnabled()) {
                         QUERY_LOG.debug("Executing Mongo 'deleteOne' with filter: {}", filter.toBsonDocument().toJson());
                     }
-                    return Mono.from(getCollection(persistentEntity, ctx.repositoryType).deleteOne(ctx.clientSession, filter)).map(deleteResult -> {
+                    return Mono.from(getCollection(persistentEntity, ctx.repositoryType).deleteOne(ctx.clientSession, filter, getDeleteOptions(ctx.annotationMetadata))).map(deleteResult -> {
                         d.rowsUpdated = (int) deleteResult.getDeletedCount();
                         if (persistentEntity.getVersion() != null) {
                             checkOptimisticLocking(1, d.rowsUpdated);
@@ -953,7 +953,7 @@ public class DefaultReactiveMongoRepositoryOperations extends AbstractMongoRepos
                     if (d.vetoed) {
                         return d;
                     }
-                    d.filter = MongoUtils.filterByIdAndVersion(conversionService, persistentEntity, d.entity, collection.getCodecRegistry());
+                    d.filter = createFilterIdAndVersion(persistentEntity, d.entity, collection.getCodecRegistry());
                     return d;
                 });
             }
@@ -968,7 +968,7 @@ public class DefaultReactiveMongoRepositoryOperations extends AbstractMongoRepos
                         if (QUERY_LOG.isDebugEnabled()) {
                             QUERY_LOG.debug("Executing Mongo 'deleteMany' with filter: {}", filter.toBsonDocument().toJson());
                         }
-                        modifiedCount = Mono.from(collection.deleteMany(ctx.clientSession, filter)).map(DeleteResult::getDeletedCount);
+                        modifiedCount = Mono.from(collection.deleteMany(ctx.clientSession, filter, getDeleteOptions(ctx.annotationMetadata))).map(DeleteResult::getDeletedCount);
                     } else {
                         modifiedCount = Mono.just(0L);
                     }
@@ -1028,7 +1028,7 @@ public class DefaultReactiveMongoRepositoryOperations extends AbstractMongoRepos
                     if (QUERY_LOG.isDebugEnabled()) {
                         QUERY_LOG.debug("Executing Mongo 'insertMany' for collection: {} with documents: {}", collection.getNamespace().getFullName(), toInsert);
                     }
-                    return Mono.from(collection.insertMany(ctx.clientSession, toInsert)).flatMapMany(insertManyResult -> {
+                    return Mono.from(collection.insertMany(ctx.clientSession, toInsert, getInsertManyOptions(ctx.annotationMetadata))).flatMapMany(insertManyResult -> {
                         if (hasGeneratedId) {
                             Map<Integer, BsonValue> insertedIds = insertManyResult.getInsertedIds();
                             RuntimePersistentProperty<T> identity = persistentEntity.getIdentity();

@@ -140,6 +140,12 @@ class MySqlRepositorySpec extends AbstractRepositorySpec implements MySqlTestPro
         return context.getBean(MySqlBasicTypesRepository)
     }
 
+    @Memoized
+    @Override
+    TimezoneBasicTypesRepository getTimezoneBasicTypeRepository() {
+        return null
+    }
+
     @Override
     protected boolean skipCustomSchemaAndCatalogTest() {
         // INSERT command denied to user 'test'@'172.17.0.1' for table 'cars'

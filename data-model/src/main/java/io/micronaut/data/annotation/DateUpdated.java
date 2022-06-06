@@ -16,6 +16,7 @@
 package io.micronaut.data.annotation;
 
 import java.lang.annotation.*;
+import java.time.temporal.ChronoUnit;
 
 /**
  * Can be applied to date type to indicate the property should be populated when it was last updated.
@@ -32,4 +33,12 @@ public @interface DateUpdated {
      * The date created name.
      */
     String NAME = DateUpdated.class.getName();
+
+    /**
+     * Allows to truncate the auto set date value.
+     *
+     * @return the truncated to constant
+     * @since 3.4.2
+     */
+    ChronoUnit truncatedTo() default ChronoUnit.FOREVER;
 }

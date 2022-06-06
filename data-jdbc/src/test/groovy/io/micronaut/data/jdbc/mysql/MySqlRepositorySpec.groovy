@@ -137,6 +137,12 @@ class MySqlRepositorySpec extends AbstractRepositorySpec implements MySQLTestPro
         return context.getBean(MySqlBasicTypesRepository)
     }
 
+    @Memoized
+    @Override
+    TimezoneBasicTypesRepository getTimezoneBasicTypeRepository() {
+        return null
+    }
+
     def "for update is in the correct location"() {
         given:
             setupBooks()
