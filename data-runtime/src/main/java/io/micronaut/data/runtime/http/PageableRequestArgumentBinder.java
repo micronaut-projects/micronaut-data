@@ -96,6 +96,10 @@ public class PageableRequestArgumentBinder implements TypedRequestArgumentBinder
             sort = Sort.of(orders);
         }
 
+        if (configuration.isStartFromPageOne() && page > 0) {
+            page--;
+        }
+
         if (size < 1) {
             if (page == 0 && configuredMaxSize < 1 && sort == null) {
                 pageable = Pageable.UNPAGED;
