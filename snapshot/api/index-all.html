@@ -13877,13 +13877,19 @@
 <dd>
 <div class="block">Set the timeout for this object in milliseconds.</div>
 </dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/jdbc/mapper/JdbcQueryStatement.html#setTimestamp-java.sql.PreparedStatement-java.lang.Integer-java.util.Date-">setTimestamp(PreparedStatement, Integer, Date)</a></span> - Method in class io.micronaut.data.jdbc.mapper.<a href="io/micronaut/data/jdbc/mapper/JdbcQueryStatement.html" title="class in io.micronaut.data.jdbc.mapper">JdbcQueryStatement</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/jdbc/mapper/JdbcQueryStatement.html#setTimestamp-java.sql.PreparedStatement-java.lang.Integer-java.time.Instant-">setTimestamp(PreparedStatement, Integer, Instant)</a></span> - Method in class io.micronaut.data.jdbc.mapper.<a href="io/micronaut/data/jdbc/mapper/JdbcQueryStatement.html" title="class in io.micronaut.data.jdbc.mapper">JdbcQueryStatement</a></dt>
 <dd>&nbsp;</dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/r2dbc/mapper/R2dbcQueryStatement.html#setTimestamp-io.r2dbc.spi.Statement-java.lang.Integer-java.util.Date-">setTimestamp(Statement, Integer, Date)</a></span> - Method in class io.micronaut.data.r2dbc.mapper.<a href="io/micronaut/data/r2dbc/mapper/R2dbcQueryStatement.html" title="class in io.micronaut.data.r2dbc.mapper">R2dbcQueryStatement</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/r2dbc/mapper/R2dbcQueryStatement.html#setTimestamp-io.r2dbc.spi.Statement-java.lang.Integer-java.time.Instant-">setTimestamp(Statement, Integer, Instant)</a></span> - Method in class io.micronaut.data.r2dbc.mapper.<a href="io/micronaut/data/r2dbc/mapper/R2dbcQueryStatement.html" title="class in io.micronaut.data.r2dbc.mapper">R2dbcQueryStatement</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/mapper/QueryStatement.html#setTimestamp-PS-IDX-java.util.Date-">setTimestamp(PS, IDX, Date)</a></span> - Method in interface io.micronaut.data.runtime.mapper.<a href="io/micronaut/data/runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a></dt>
 <dd>
-<div class="block">Write a date value for the given name.</div>
+<div class="block"><span class="deprecatedLabel">Deprecated.</span>
+<div class="block"><span class="deprecationComment">Use <a href="io/micronaut/data/runtime/mapper/QueryStatement.html#setTimestamp-PS-IDX-java.time.Instant-"><code>QueryStatement.setTimestamp(Object, Object, Instant)</code></a>.</span></div>
+</div>
+</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/mapper/QueryStatement.html#setTimestamp-PS-IDX-java.time.Instant-">setTimestamp(PS, IDX, Instant)</a></span> - Method in interface io.micronaut.data.runtime.mapper.<a href="io/micronaut/data/runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a></dt>
+<dd>
+<div class="block">Write an instant value for the given name.</div>
 </dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/transaction/hibernate5/SessionHolder.html#setTransaction-org.hibernate.Transaction-">setTransaction(Transaction)</a></span> - Method in class io.micronaut.transaction.hibernate5.<a href="io/micronaut/transaction/hibernate5/SessionHolder.html" title="class in io.micronaut.transaction.hibernate5">SessionHolder</a></dt>
 <dd>

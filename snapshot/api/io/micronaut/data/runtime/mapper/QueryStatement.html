@@ -17,8 +17,8 @@
     catch(err) {
     }
 //-->
-var methods = {"i0":18,"i1":18,"i2":18,"i3":18,"i4":18,"i5":18,"i6":18,"i7":18,"i8":18,"i9":18,"i10":18,"i11":18,"i12":18,"i13":18,"i14":18,"i15":18,"i16":18,"i17":6};
-var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],4:["t3","Abstract Methods"],16:["t5","Default Methods"]};
+var methods = {"i0":18,"i1":18,"i2":18,"i3":18,"i4":18,"i5":18,"i6":18,"i7":18,"i8":18,"i9":18,"i10":18,"i11":18,"i12":18,"i13":18,"i14":18,"i15":18,"i16":50,"i17":18,"i18":6};
+var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],4:["t3","Abstract Methods"],16:["t5","Default Methods"],32:["t6","Deprecated Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
 var tableTab = "tableTab";
@@ -123,7 +123,7 @@ var activeTableTab = "activeTableTab";
 </a>
 <h3>Method Summary</h3>
 <table class="memberSummary" border="0" cellpadding="3" cellspacing="0" summary="Method Summary table, listing methods, and an explanation">
-<caption><span id="t0" class="activeTableTab"><span>All Methods</span><span class="tabEnd">&nbsp;</span></span><span id="t2" class="tableTab"><span><a href="javascript:show(2);">Instance Methods</a></span><span class="tabEnd">&nbsp;</span></span><span id="t3" class="tableTab"><span><a href="javascript:show(4);">Abstract Methods</a></span><span class="tabEnd">&nbsp;</span></span><span id="t5" class="tableTab"><span><a href="javascript:show(16);">Default Methods</a></span><span class="tabEnd">&nbsp;</span></span></caption>
+<caption><span id="t0" class="activeTableTab"><span>All Methods</span><span class="tabEnd">&nbsp;</span></span><span id="t2" class="tableTab"><span><a href="javascript:show(2);">Instance Methods</a></span><span class="tabEnd">&nbsp;</span></span><span id="t3" class="tableTab"><span><a href="javascript:show(4);">Abstract Methods</a></span><span class="tabEnd">&nbsp;</span></span><span id="t5" class="tableTab"><span><a href="javascript:show(16);">Default Methods</a></span><span class="tabEnd">&nbsp;</span></span><span id="t6" class="tableTab"><span><a href="javascript:show(32);">Deprecated Methods</a></span><span class="tabEnd">&nbsp;</span></span></caption>
 <tr>
 <th class="colFirst" scope="col">Modifier and Type</th>
 <th class="colLast" scope="col">Method and Description</th>
@@ -259,10 +259,20 @@ var activeTableTab = "activeTableTab";
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/runtime/mapper/QueryStatement.html#setTimestamp-PS-IDX-java.util.Date-">setTimestamp</a></span>(<a href="../../../../../io/micronaut/data/runtime/mapper/QueryStatement.html" title="type parameter in QueryStatement">PS</a>&nbsp;statement,
             <a href="../../../../../io/micronaut/data/runtime/mapper/QueryStatement.html" title="type parameter in QueryStatement">IDX</a>&nbsp;name,
             java.util.Date&nbsp;date)</code>
-<div class="block">Write a date value for the given name.</div>
+<div class="block"><span class="deprecatedLabel">Deprecated.</span>&nbsp;
+<div class="block"><span class="deprecationComment">Use <a href="../../../../../io/micronaut/data/runtime/mapper/QueryStatement.html#setTimestamp-PS-IDX-java.time.Instant-"><code>setTimestamp(Object, Object, Instant)</code></a>.</span></div>
+</div>
 </td>
 </tr>
 <tr id="i17" class="rowColor">
+<td class="colFirst"><code>default <a href="../../../../../io/micronaut/data/runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a>&lt;<a href="../../../../../io/micronaut/data/runtime/mapper/QueryStatement.html" title="type parameter in QueryStatement">PS</a>,<a href="../../../../../io/micronaut/data/runtime/mapper/QueryStatement.html" title="type parameter in QueryStatement">IDX</a>&gt;</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/runtime/mapper/QueryStatement.html#setTimestamp-PS-IDX-java.time.Instant-">setTimestamp</a></span>(<a href="../../../../../io/micronaut/data/runtime/mapper/QueryStatement.html" title="type parameter in QueryStatement">PS</a>&nbsp;statement,
+            <a href="../../../../../io/micronaut/data/runtime/mapper/QueryStatement.html" title="type parameter in QueryStatement">IDX</a>&nbsp;name,
+            java.time.Instant&nbsp;instant)</code>
+<div class="block">Write an instant value for the given name.</div>
+</td>
+</tr>
+<tr id="i18" class="altColor">
 <td class="colFirst"><code><a href="../../../../../io/micronaut/data/runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a>&lt;<a href="../../../../../io/micronaut/data/runtime/mapper/QueryStatement.html" title="type parameter in QueryStatement">PS</a>,<a href="../../../../../io/micronaut/data/runtime/mapper/QueryStatement.html" title="type parameter in QueryStatement">IDX</a>&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/runtime/mapper/QueryStatement.html#setValue-PS-IDX-java.lang.Object-">setValue</a></span>(<a href="../../../../../io/micronaut/data/runtime/mapper/QueryStatement.html" title="type parameter in QueryStatement">PS</a>&nbsp;statement,
         <a href="../../../../../io/micronaut/data/runtime/mapper/QueryStatement.html" title="type parameter in QueryStatement">IDX</a>&nbsp;index,
@@ -440,10 +450,12 @@ default&nbsp;<a href="../../../../../io/micronaut/data/runtime/mapper/QueryState
 <ul class="blockList">
 <li class="blockList">
 <h4>setTimestamp</h4>
-<pre>@NonNull
+<pre>@Deprecated
+ @NonNull
 default&nbsp;<a href="../../../../../io/micronaut/data/runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a>&lt;<a href="../../../../../io/micronaut/data/runtime/mapper/QueryStatement.html" title="type parameter in QueryStatement">PS</a>,<a href="../../../../../io/micronaut/data/runtime/mapper/QueryStatement.html" title="type parameter in QueryStatement">IDX</a>&gt;&nbsp;setTimestamp(<a href="../../../../../io/micronaut/data/runtime/mapper/QueryStatement.html" title="type parameter in QueryStatement">PS</a>&nbsp;statement,
-                                                     <a href="../../../../../io/micronaut/data/runtime/mapper/QueryStatement.html" title="type parameter in QueryStatement">IDX</a>&nbsp;name,
-                                                     java.util.Date&nbsp;date)</pre>
+                                                                  <a href="../../../../../io/micronaut/data/runtime/mapper/QueryStatement.html" title="type parameter in QueryStatement">IDX</a>&nbsp;name,
+                                                                  java.util.Date&nbsp;date)</pre>
+<div class="block"><span class="deprecatedLabel">Deprecated.</span>&nbsp;<span class="deprecationComment">Use <a href="../../../../../io/micronaut/data/runtime/mapper/QueryStatement.html#setTimestamp-PS-IDX-java.time.Instant-"><code>setTimestamp(Object, Object, Instant)</code></a>.</span></div>
 <div class="block">Write a date value for the given name.</div>
 <dl>
 <dt><span class="paramLabel">Parameters:</span></dt>
@@ -452,6 +464,31 @@ default&nbsp;<a href="../../../../../io/micronaut/data/runtime/mapper/QueryState
 <dd><code>date</code> - The date</dd>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>This writer</dd>
+</dl>
+</li>
+</ul>
+<a name="setTimestamp-java.lang.Object-java.lang.Object-java.time.Instant-">
+<!--   -->
+</a><a name="setTimestamp-PS-IDX-java.time.Instant-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>setTimestamp</h4>
+<pre>@NonNull
+default&nbsp;<a href="../../../../../io/micronaut/data/runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a>&lt;<a href="../../../../../io/micronaut/data/runtime/mapper/QueryStatement.html" title="type parameter in QueryStatement">PS</a>,<a href="../../../../../io/micronaut/data/runtime/mapper/QueryStatement.html" title="type parameter in QueryStatement">IDX</a>&gt;&nbsp;setTimestamp(<a href="../../../../../io/micronaut/data/runtime/mapper/QueryStatement.html" title="type parameter in QueryStatement">PS</a>&nbsp;statement,
+                                                     <a href="../../../../../io/micronaut/data/runtime/mapper/QueryStatement.html" title="type parameter in QueryStatement">IDX</a>&nbsp;name,
+                                                     java.time.Instant&nbsp;instant)</pre>
+<div class="block">Write an instant value for the given name.</div>
+<dl>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>statement</code> - The statement</dd>
+<dd><code>name</code> - The name (such as the column name)</dd>
+<dd><code>instant</code> - The instant</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>This writer</dd>
+<dt><span class="simpleTagLabel">Since:</span></dt>
+<dd>3.4.2</dd>
 </dl>
 </li>
 </ul>

@@ -282,10 +282,10 @@ implements <a href="../../../../../io/micronaut/data/runtime/mapper/QueryStateme
 </tr>
 <tr id="i15" class="rowColor">
 <td class="colFirst"><code><a href="../../../../../io/micronaut/data/runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a>&lt;java.sql.PreparedStatement,java.lang.Integer&gt;</code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/mapper/JdbcQueryStatement.html#setTimestamp-java.sql.PreparedStatement-java.lang.Integer-java.util.Date-">setTimestamp</a></span>(java.sql.PreparedStatement&nbsp;statement,
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/mapper/JdbcQueryStatement.html#setTimestamp-java.sql.PreparedStatement-java.lang.Integer-java.time.Instant-">setTimestamp</a></span>(java.sql.PreparedStatement&nbsp;statement,
             java.lang.Integer&nbsp;name,
-            java.util.Date&nbsp;date)</code>
-<div class="block">Write a date value for the given name.</div>
+            java.time.Instant&nbsp;instant)</code>
+<div class="block">Write an instant value for the given name.</div>
 </td>
 </tr>
 <tr id="i16" class="altColor">
@@ -309,7 +309,7 @@ implements <a href="../../../../../io/micronaut/data/runtime/mapper/QueryStateme
 <!--   -->
 </a>
 <h3>Methods inherited from interface&nbsp;io.micronaut.data.runtime.mapper.<a href="../../../../../io/micronaut/data/runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a></h3>
-<code><a href="../../../../../io/micronaut/data/runtime/mapper/QueryStatement.html#convertRequired-java.lang.Object-java.lang.Class-">convertRequired</a></code></li>
+<code><a href="../../../../../io/micronaut/data/runtime/mapper/QueryStatement.html#convertRequired-java.lang.Object-java.lang.Class-">convertRequired</a>, <a href="../../../../../io/micronaut/data/runtime/mapper/QueryStatement.html#setTimestamp-PS-IDX-java.util.Date-">setTimestamp</a></code></li>
 </ul>
 </li>
 </ul>
@@ -403,25 +403,24 @@ implements <a href="../../../../../io/micronaut/data/runtime/mapper/QueryStateme
 </dl>
 </li>
 </ul>
-<a name="setTimestamp-java.sql.PreparedStatement-java.lang.Integer-java.util.Date-">
+<a name="setTimestamp-java.sql.PreparedStatement-java.lang.Integer-java.time.Instant-">
 <!--   -->
 </a>
 <ul class="blockList">
 <li class="blockList">
 <h4>setTimestamp</h4>
-<pre>@NonNull
-public&nbsp;<a href="../../../../../io/micronaut/data/runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a>&lt;java.sql.PreparedStatement,java.lang.Integer&gt;&nbsp;setTimestamp(java.sql.PreparedStatement&nbsp;statement,
-                                                                                          java.lang.Integer&nbsp;name,
-                                                                                          java.util.Date&nbsp;date)</pre>
-<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../../io/micronaut/data/runtime/mapper/QueryStatement.html#setTimestamp-PS-IDX-java.util.Date-">QueryStatement</a></code></span></div>
-<div class="block">Write a date value for the given name.</div>
+<pre>public&nbsp;<a href="../../../../../io/micronaut/data/runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a>&lt;java.sql.PreparedStatement,java.lang.Integer&gt;&nbsp;setTimestamp(java.sql.PreparedStatement&nbsp;statement,
+                                                                                 java.lang.Integer&nbsp;name,
+                                                                                 java.time.Instant&nbsp;instant)</pre>
+<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../../io/micronaut/data/runtime/mapper/QueryStatement.html#setTimestamp-PS-IDX-java.time.Instant-">QueryStatement</a></code></span></div>
+<div class="block">Write an instant value for the given name.</div>
 <dl>
 <dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
-<dd><code><a href="../../../../../io/micronaut/data/runtime/mapper/QueryStatement.html#setTimestamp-PS-IDX-java.util.Date-">setTimestamp</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../io/micronaut/data/runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a>&lt;java.sql.PreparedStatement,java.lang.Integer&gt;</code></dd>
+<dd><code><a href="../../../../../io/micronaut/data/runtime/mapper/QueryStatement.html#setTimestamp-PS-IDX-java.time.Instant-">setTimestamp</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../io/micronaut/data/runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a>&lt;java.sql.PreparedStatement,java.lang.Integer&gt;</code></dd>
 <dt><span class="paramLabel">Parameters:</span></dt>
 <dd><code>statement</code> - The statement</dd>
 <dd><code>name</code> - The name (such as the column name)</dd>
-<dd><code>date</code> - The date</dd>
+<dd><code>instant</code> - The instant</dd>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>This writer</dd>
 </dl>
