@@ -27,6 +27,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 
 @MappedEntity("timezone_basic_types")
 public class TimezoneBasicTypes {
@@ -34,21 +35,21 @@ public class TimezoneBasicTypes {
     @GeneratedValue
     private Long myId;
 
-    private LocalDateTime localDateTime = LocalDateTime.now();
-    private ZonedDateTime zonedDateTime = ZonedDateTime.now();
+    private LocalDateTime localDateTime = LocalDateTime.now().truncatedTo(ChronoUnit.MILLIS);
+    private ZonedDateTime zonedDateTime = ZonedDateTime.now().truncatedTo(ChronoUnit.MILLIS);
     @MappedProperty(definition = "timestamp with time zone")
-    private ZonedDateTime zonedDateTimeWithTimezone = ZonedDateTime.now();
-    private OffsetDateTime offsetDateTime = OffsetDateTime.now();
+    private ZonedDateTime zonedDateTimeWithTimezone = ZonedDateTime.now().truncatedTo(ChronoUnit.MILLIS);
+    private OffsetDateTime offsetDateTime = OffsetDateTime.now().truncatedTo(ChronoUnit.MILLIS);
     @MappedProperty(definition = "timestamp with time zone")
-    private OffsetDateTime offsetDateTimeWithTimezone = OffsetDateTime.now();
+    private OffsetDateTime offsetDateTimeWithTimezone = OffsetDateTime.now().truncatedTo(ChronoUnit.MILLIS);
     private LocalDate localDate = LocalDate.now();
-    private LocalTime localTime = LocalTime.now();
-    private Instant instant = Instant.now();
+    private LocalTime localTime = LocalTime.now().truncatedTo(ChronoUnit.MILLIS);
+    private Instant instant = Instant.now().truncatedTo(ChronoUnit.MILLIS);
     @MappedProperty(definition = "timestamp with time zone")
-    private Instant instantWithTimezone = Instant.now();
-    private Timestamp timestamp = Timestamp.from(Instant.now());
+    private Instant instantWithTimezone = Instant.now().truncatedTo(ChronoUnit.MILLIS);
+    private Timestamp timestamp = Timestamp.from(Instant.now().truncatedTo(ChronoUnit.MILLIS));
     @MappedProperty(definition = "timestamp with time zone")
-    private Timestamp timestampWithTimezone = Timestamp.from(Instant.now());
+    private Timestamp timestampWithTimezone = Timestamp.from(Instant.now().truncatedTo(ChronoUnit.MILLIS));
 
     public Long getMyId() {
         return myId;
