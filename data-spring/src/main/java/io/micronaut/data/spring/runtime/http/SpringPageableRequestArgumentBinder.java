@@ -100,6 +100,10 @@ public class SpringPageableRequestArgumentBinder implements TypedRequestArgument
             sort = Sort.unsorted();
         }
 
+        if (configuration.isStartFromPageOne() && page > 0) {
+            page--;
+        }
+
         if (size < 1) {
             if (page == 0 && configuredMaxSize < 1 && sort.isUnsorted()) {
                 pageable = Pageable.unpaged();
