@@ -32,6 +32,7 @@ import io.micronaut.data.tck.repositories.NoseRepository
 import io.micronaut.data.tck.repositories.RegionRepository
 import io.micronaut.data.tck.repositories.RoleRepository
 import io.micronaut.data.tck.repositories.StudentRepository
+import io.micronaut.data.tck.repositories.TimezoneBasicTypesRepository
 import io.micronaut.data.tck.repositories.UserRepository
 import io.micronaut.data.tck.repositories.UserRoleRepository
 import io.micronaut.data.tck.tests.AbstractRepositorySpec
@@ -187,6 +188,12 @@ class H2RepositorySpec extends AbstractRepositorySpec implements H2TestPropertyP
     @Override
     BasicTypesRepository getBasicTypeRepository() {
         return context.getBean(H2BasicTypesRepository)
+    }
+
+    @Memoized
+    @Override
+    TimezoneBasicTypesRepository getTimezoneBasicTypeRepository() {
+        return context.getBean(H2TimezoneBasicTypesRepository)
     }
 
     @Override

@@ -137,6 +137,12 @@ class PostgresRepositorySpec extends AbstractRepositorySpec implements PostgresT
 
     @Memoized
     @Override
+    TimezoneBasicTypesRepository getTimezoneBasicTypeRepository() {
+        return context.getBean(PostgresTimezoneBasicTypesRepository)
+    }
+
+    @Memoized
+    @Override
     boolean isSupportsArrays() {
         return true
     }

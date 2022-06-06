@@ -34,6 +34,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.TimeZone;
 import java.util.UUID;
@@ -67,22 +68,22 @@ public class BasicTypes {
     private byte[] byteArray = new byte[]{1, 2, 3};
     private Date date = new Date();
 
-    private LocalDateTime localDateTime = LocalDateTime.now();
-    private ZonedDateTime zonedDateTime = ZonedDateTime.now();
-    private OffsetDateTime offsetDateTime = OffsetDateTime.now();
+    private LocalDateTime localDateTime = LocalDateTime.now().truncatedTo(ChronoUnit.MILLIS);
+    private ZonedDateTime zonedDateTime = ZonedDateTime.now().truncatedTo(ChronoUnit.MILLIS);
+    private OffsetDateTime offsetDateTime = OffsetDateTime.now().truncatedTo(ChronoUnit.MILLIS);
     private LocalDate localDate = LocalDate.now();
-    private LocalTime localTime = LocalTime.now();
-    private Instant instant = Instant.now();
+    private LocalTime localTime = LocalTime.now().truncatedTo(ChronoUnit.MILLIS);
+    private Instant instant = Instant.now().truncatedTo(ChronoUnit.MILLIS);
     private UUID uuid = UUID.randomUUID();
     @MappedProperty(definition = "DECIMAL(24) NOT NULL")
     private BigDecimal bigDecimal = new BigDecimal(Long.MAX_VALUE + "000");
     private TimeZone timeZone = TimeZone.getTimeZone("GMT");
     private Charset charset = StandardCharsets.UTF_8;
 
-    @DateCreated
+    @DateCreated(truncatedTo = ChronoUnit.MILLIS)
     private Instant dateCreated;
 
-    @DateUpdated
+    @DateUpdated(truncatedTo = ChronoUnit.MILLIS)
     private Instant dateUpdated;
 
     public BasicTypes() throws MalformedURLException {

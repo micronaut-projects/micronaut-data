@@ -66,6 +66,7 @@ abstract class AbstractRepositorySpec extends Specification {
     abstract StudentRepository getStudentRepository()
     abstract CarRepository getCarRepository()
     abstract BasicTypesRepository getBasicTypeRepository()
+    abstract TimezoneBasicTypesRepository getTimezoneBasicTypeRepository()
 
     abstract Map<String, String> getProperties()
 
@@ -147,7 +148,6 @@ abstract class AbstractRepositorySpec extends Specification {
         return false
     }
 
-    @IgnoreIf({ jvm.isJava15Compatible() })
     void "test save and retrieve basic types"() {
         when: "we save a new book"
         def book = basicTypeRepository.save(new BasicTypes())
@@ -255,6 +255,65 @@ abstract class AbstractRepositorySpec extends Specification {
         retrievedBookProj.offsetDateTime == book.offsetDateTime
         retrievedBookProj.dateCreated == book.dateCreated
         retrievedBookProj.dateUpdated == book.dateUpdated
+    }
+
+    void "test save and retrieve timezone basic types"() {
+        if (!timezoneBasicTypeRepository) {
+            return
+        }
+        when: "we save a new book"
+        def book = timezoneBasicTypeRepository.save(new TimezoneBasicTypes())
+
+        then: "The ID is assigned"
+        book.myId != null
+
+        when:"A book is found"
+        def retrievedBook = timezoneBasicTypeRepository.findById(book.myId).orElse(null)
+
+        then:"The book is correct"
+        retrievedBook.instant == book.instant
+        retrievedBook.instantWithTimezone == book.instantWithTimezone
+        retrievedBook.timestamp == book.timestamp
+        retrievedBook.timestampWithTimezone == book.timestampWithTimezone
+        retrievedBook.localDateTime == book.localDateTime
+        retrievedBook.zonedDateTime == book.zonedDateTime
+        retrievedBook.zonedDateTimeWithTimezone == book.zonedDateTimeWithTimezone
+        retrievedBook.offsetDateTime == book.offsetDateTime
+        retrievedBook.offsetDateTimeWithTimezone == book.offsetDateTimeWithTimezone
+
+        when:
+        def retrievedBookProj = timezoneBasicTypeRepository.queryById(book.myId)
+
+        then:"The book is correct"
+        retrievedBookProj.instant == book.instant
+        retrievedBookProj.instantWithTimezone == book.instantWithTimezone
+        retrievedBookProj.timestamp == book.timestamp
+        retrievedBookProj.timestampWithTimezone == book.timestampWithTimezone
+        retrievedBookProj.localDateTime == book.localDateTime
+        retrievedBookProj.zonedDateTime == book.zonedDateTime
+        retrievedBookProj.zonedDateTimeWithTimezone == book.zonedDateTimeWithTimezone
+        retrievedBookProj.offsetDateTime == book.offsetDateTime
+        retrievedBookProj.offsetDateTimeWithTimezone == book.offsetDateTimeWithTimezone
+        retrievedBookProj.localDateTime == book.localDateTime
+        retrievedBookProj.zonedDateTime == book.zonedDateTime
+        retrievedBookProj.offsetDateTime == book.offsetDateTime
+
+        when:
+        retrievedBookProj = timezoneBasicTypeRepository.findAllById(book.myId).iterator().next()
+
+        then:"The book is correct"
+        retrievedBookProj.instant == book.instant
+        retrievedBookProj.instantWithTimezone == book.instantWithTimezone
+        retrievedBookProj.timestamp == book.timestamp
+        retrievedBookProj.timestampWithTimezone == book.timestampWithTimezone
+        retrievedBookProj.localDateTime == book.localDateTime
+        retrievedBookProj.zonedDateTime == book.zonedDateTime
+        retrievedBookProj.zonedDateTimeWithTimezone == book.zonedDateTimeWithTimezone
+        retrievedBookProj.offsetDateTime == book.offsetDateTime
+        retrievedBookProj.offsetDateTimeWithTimezone == book.offsetDateTimeWithTimezone
+        retrievedBookProj.localDateTime == book.localDateTime
+        retrievedBookProj.zonedDateTime == book.zonedDateTime
+        retrievedBookProj.offsetDateTime == book.offsetDateTime
     }
 
     @IgnoreIf({ !jvm.isJava11Compatible() })

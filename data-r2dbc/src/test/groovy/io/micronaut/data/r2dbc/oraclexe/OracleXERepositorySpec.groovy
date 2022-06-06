@@ -136,9 +136,16 @@ class OracleXERepositorySpec extends AbstractRepositorySpec implements OracleXET
         return context.getBean(OracleXECarRepository)
     }
 
+    @Memoized
     @Override
     BasicTypesRepository getBasicTypeRepository() {
         return context.getBean(OracleXEBasicTypesRepository)
+    }
+
+    @Memoized
+    @Override
+    TimezoneBasicTypesRepository getTimezoneBasicTypeRepository() {
+        return context.getBean(OracleXETimezoneBasicTypesRepository)
     }
 
     @Override
