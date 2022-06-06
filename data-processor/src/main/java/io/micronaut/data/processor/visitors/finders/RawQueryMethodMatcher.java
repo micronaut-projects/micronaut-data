@@ -126,8 +126,8 @@ public class RawQueryMethodMatcher implements MethodMatcher {
                         resultType = matchContext.getRootEntity().getType();
                     } else {
                         if (operationType == DataMethod.OperationType.QUERY) {
-                            if (resultType.hasAnnotation(Introspected.class)) {
-                                if (!resultType.hasAnnotation(MappedEntity.class)) {
+                            if (resultType.hasStereotype(Introspected.class)) {
+                                if (!resultType.hasStereotype(MappedEntity.class)) {
                                     isDto = true;
                                 }
                             }

@@ -16,10 +16,12 @@
 package io.micronaut.data.document.tck.entities;
 
 
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
-import io.micronaut.data.annotation.MappedProperty;
+
+import java.time.LocalDate;
 
 @MappedEntity
 public class Person {
@@ -30,6 +32,9 @@ public class Person {
     private String name;
     private int age;
     private boolean enabled = true;
+
+    @Nullable
+    private LocalDate dateOfBirth;
 
     public String getId() {
         return id;
@@ -61,6 +66,14 @@ public class Person {
 
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
+    }
+
+    public LocalDate getDateOfBirth() {
+        return dateOfBirth;
+    }
+
+    public void setDateOfBirth(LocalDate dateOfBirth) {
+        this.dateOfBirth = dateOfBirth;
     }
 
     @Override

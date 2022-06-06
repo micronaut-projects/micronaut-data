@@ -58,7 +58,7 @@ class MongoIdsSpec extends Specification implements MongoTestPropertyProvider {
             def one = dbRepositoryOperations.findOne(EntityObjectId, persisted.myId)
         then:
             one.myId == persisted.myId
-            when:
+        when:
             def found = database.getCollection("entities_object_ids", BsonDocument).find().first()
         then:
             found._id instanceof BsonObjectId

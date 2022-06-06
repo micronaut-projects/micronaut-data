@@ -150,8 +150,8 @@ public abstract class AbstractReactiveEntityOperations<Ctx extends OperationCont
     /**
      * @return The rows updated
      */
-    public Mono<Long> getRowsUpdated() {
-        return data.filter(this::notVetoed).map(d -> d.rowsUpdated).switchIfEmpty(Mono.just(0L));
+    public Mono<Number> getRowsUpdated() {
+        return data.filter(this::notVetoed).<Number>map(d -> d.rowsUpdated).switchIfEmpty(Mono.just(0L));
     }
 
     /**

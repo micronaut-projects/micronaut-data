@@ -16,6 +16,10 @@
 package io.micronaut.data.mongodb.operations;
 
 import com.mongodb.client.model.Collation;
+import com.mongodb.client.model.DeleteOptions;
+import com.mongodb.client.model.InsertManyOptions;
+import com.mongodb.client.model.InsertOneOptions;
+import com.mongodb.client.model.ReplaceOptions;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.context.BeanContext;
 import io.micronaut.core.annotation.AnnotationMetadata;
@@ -25,6 +29,7 @@ import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.Repository;
+import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
@@ -37,6 +42,7 @@ import io.micronaut.data.model.runtime.StoredQuery;
 import io.micronaut.data.mongodb.annotation.MongoRepository;
 import io.micronaut.data.mongodb.operations.options.MongoAggregationOptions;
 import io.micronaut.data.mongodb.operations.options.MongoFindOptions;
+import io.micronaut.data.mongodb.operations.options.MongoOptionsUtils;
 import io.micronaut.data.operations.HintsCapableRepository;
 import io.micronaut.data.repository.GenericRepository;
 import io.micronaut.data.runtime.config.DataSettings;
@@ -52,6 +58,7 @@ import io.micronaut.inject.BeanDefinition;
 import io.micronaut.inject.ExecutableMethod;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import org.bson.BsonDocument;
+import org.bson.BsonDocumentWrapper;
 import org.bson.BsonNull;
 import org.bson.BsonValue;
 import org.bson.codecs.configuration.CodecRegistry;
@@ -64,6 +71,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 
 /**
@@ -95,6 +104,8 @@ abstract class AbstractMongoRepositoryOperations<Dtb, Cnt, PS> extends AbstractR
             return conversionService;
         }
     };
+
+    private final ConcurrentMap<RepositoryMethodKey, Object> options = new ConcurrentHashMap<>(50);
 
     /**
      * Default constructor.
@@ -128,6 +139,22 @@ abstract class AbstractMongoRepositoryOperations<Dtb, Cnt, PS> extends AbstractR
             }
         }
         this.repoDatabaseConfig = Collections.unmodifiableMap(repoDatabaseConfig);
+    }
+
+    protected final ReplaceOptions getReplaceOptions(AnnotationMetadata annotationMetadata) {
+        return MongoOptionsUtils.buildReplaceOptions(annotationMetadata).orElseGet(ReplaceOptions::new);
+    }
+
+    protected final InsertOneOptions getInsertOneOptions(AnnotationMetadata annotationMetadata) {
+        return MongoOptionsUtils.buildInsertOneOptions(annotationMetadata).orElseGet(InsertOneOptions::new);
+    }
+
+    protected final InsertManyOptions getInsertManyOptions(AnnotationMetadata annotationMetadata) {
+        return MongoOptionsUtils.buildInsertManyOptions(annotationMetadata).orElseGet(InsertManyOptions::new);
+    }
+
+    protected final DeleteOptions getDeleteOptions(AnnotationMetadata annotationMetadata) {
+        return MongoOptionsUtils.buildDeleteOptions(annotationMetadata, true).orElseGet(DeleteOptions::new);
     }
 
     protected abstract Dtb getDatabase(RuntimePersistentEntity<?> persistentEntity, Class<?> repository);
@@ -274,14 +301,24 @@ abstract class AbstractMongoRepositoryOperations<Dtb, Cnt, PS> extends AbstractR
         return ConversionContext.DEFAULT;
     }
 
+    protected final <T> Bson createFilterIdAndVersion(RuntimePersistentEntity<T> persistentEntity, T entity, CodecRegistry codecRegistry) {
+        BsonDocument bsonDocument = BsonDocumentWrapper.asBsonDocument(entity, codecRegistry);
+        BsonDocument filter = new BsonDocument();
+        filter.put(MongoUtils.ID, bsonDocument.get(MongoUtils.ID));
+        RuntimePersistentProperty<T> version = persistentEntity.getVersion();
+        if (version != null) {
+            filter.put(version.getPersistedName(), bsonDocument.get(version.getPersistedName()));
+        }
+        return filter;
+    }
+
     protected void logFind(MongoFind find) {
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new StringBuilder("Executing Mongo 'find'");
         MongoFindOptions options = find.getOptions();
         if (options != null) {
+            sb.append(" with");
             Bson filter = options.getFilter();
-            if (filter != null) {
-                sb.append(" filter: ").append(filter.toBsonDocument().toJson());
-            }
+            sb.append(" filter: ").append(filter == null ? "{}" : filter.toBsonDocument().toJson());
             Bson sort = options.getSort();
             if (sort != null) {
                 sb.append(" sort: ").append(sort.toBsonDocument().toJson());
@@ -295,24 +332,21 @@ abstract class AbstractMongoRepositoryOperations<Dtb, Cnt, PS> extends AbstractR
                 sb.append(" collation: ").append(collation);
             }
         }
-        if (sb.length() == 0) {
-            QUERY_LOG.debug("Executing exists Mongo 'find'");
-        } else {
-            QUERY_LOG.debug("Executing exists Mongo 'find' with" + sb);
-        }
+        QUERY_LOG.debug(sb.toString());
     }
 
     protected void logAggregate(MongoAggregation aggregation) {
         MongoAggregationOptions options = aggregation.getOptions();
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new StringBuilder("Executing Mongo 'aggregate'");
         if (options != null) {
+            sb.append(" with");
             sb.append(" pipeline: ").append(aggregation.getPipeline().stream().map(e -> e.toBsonDocument().toJson()).collect(Collectors.toList()));
             Collation collation = options.getCollation();
             if (collation != null) {
                 sb.append(" collation: ").append(collation);
             }
         }
-        QUERY_LOG.debug("Executing exists Mongo 'aggregate' with" + sb);
+        QUERY_LOG.debug(sb.toString());
     }
 
 }
