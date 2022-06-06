@@ -32,6 +32,9 @@ import io.micronaut.data.runtime.date.DateTimeProvider;
 import jakarta.inject.Singleton;
 
 import java.lang.annotation.Annotation;
+import java.time.Instant;
+import java.time.OffsetDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Predicate;
@@ -87,12 +90,26 @@ public class AutoTimestampEntityEventListener extends AutoPopulatedEntityEventLi
     @Override
     @NonNull
     public Object populate(RuntimePersistentProperty<?> property, @Nullable Object previousValue) {
-        return conversionService.convertRequired(dateTimeProvider.getNow(), property.getArgument());
+        Object now = dateTimeProvider.getNow();
+        ChronoUnit truncateToValue = truncateToDateUpdated(property.getAnnotationMetadata());
+        now = truncate(now, truncateToValue);
+        return conversionService.convertRequired(now, property.getArgument());
+    }
+
+    private Object truncate(Object now, ChronoUnit truncateToValue) {
+        if (truncateToValue != null) {
+            if (now instanceof OffsetDateTime) {
+                now = ((OffsetDateTime) now).truncatedTo(truncateToValue);
+            } else {
+                now = conversionService.convertRequired(now, Instant.class).truncatedTo(truncateToValue);
+            }
+        }
+        return now;
     }
 
     private void autoTimestampIfNecessary(@NonNull EntityEventContext<Object> context, boolean isUpdate) {
         final RuntimePersistentProperty<Object>[] applicableProperties = getApplicableProperties(context.getPersistentEntity());
-        final Object now = dateTimeProvider.getNow();
+        Object now = dateTimeProvider.getNow();
         for (RuntimePersistentProperty<Object> property : applicableProperties) {
             if (isUpdate) {
                 if (!property.getAnnotationMetadata().booleanValue(AutoPopulated.class, AutoPopulated.UPDATEABLE).orElse(true)) {
@@ -100,16 +117,25 @@ public class AutoTimestampEntityEventListener extends AutoPopulatedEntityEventLi
                 }
             }
 
-            @SuppressWarnings("unchecked")
             final BeanProperty<Object, Object> beanProperty = (BeanProperty<Object, Object>) property.getProperty();
             final Class<?> propertyType = property.getType();
-            if (propertyType.isInstance(now)) {
-                context.setProperty(beanProperty, now);
+            ChronoUnit truncateToValue = isUpdate ? truncateToDateUpdated(property.getAnnotationMetadata()) : truncateToDateCreated(property.getAnnotationMetadata());
+            Object propertyNow = truncate(now, truncateToValue);
+            if (propertyType.isInstance(propertyNow)) {
+                context.setProperty(beanProperty, propertyNow);
             } else {
-                conversionService.convert(now, propertyType).ifPresent(o -> {
-                    context.setProperty(beanProperty, o);
-                });
+                conversionService.convert(propertyNow, propertyType).ifPresent(o -> context.setProperty(beanProperty, o));
             }
         }
+    }
+
+    @Nullable
+    private ChronoUnit truncateToDateCreated(@NonNull AnnotationMetadata annotationMetadata) {
+        return annotationMetadata.enumValue(DateCreated.class, ChronoUnit.class).filter(cu -> cu != ChronoUnit.FOREVER).orElse(null);
+    }
+
+    @Nullable
+    private ChronoUnit truncateToDateUpdated(@NonNull AnnotationMetadata annotationMetadata) {
+        return annotationMetadata.enumValue(DateUpdated.class, ChronoUnit.class).filter(cu -> cu != ChronoUnit.FOREVER).orElse(null);
     }
 }

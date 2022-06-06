@@ -80,10 +80,10 @@ public class BasicTypes {
     private TimeZone timeZone = TimeZone.getTimeZone("GMT");
     private Charset charset = StandardCharsets.UTF_8;
 
-    @DateCreated
+    @DateCreated(truncatedTo = ChronoUnit.MILLIS)
     private Instant dateCreated;
 
-    @DateUpdated
+    @DateUpdated(truncatedTo = ChronoUnit.MILLIS)
     private Instant dateUpdated;
 
     public BasicTypes() throws MalformedURLException {
