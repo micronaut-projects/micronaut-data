@@ -10,7 +10,7 @@ import org.junit.jupiter.api.TestInstance
 
 @MicronautTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class BookRepositorySpec : AbstractTest() {
+class BookRepositorySpec : AbstractTest(false) {
 
     @Inject
     lateinit var blockingBookRepository: BlockingBookRepository
