@@ -81,7 +81,7 @@ public class DataConfiguration implements DataSettings {
         }
 
         /**
-         * @return Whether the first page is 1
+         * @return Whether the first page parameter starts at one
          */
         public boolean isStartFromPageOne() {
             return startFromPageOne;
@@ -89,6 +89,8 @@ public class DataConfiguration implements DataSettings {
 
         /**
          * This parameter is used to shift the provided page number back one when this is true.
+         * So when the page parameter is entered as one, the first page (0) is provided.
+         *
          * @param startFromPageOne Whether the first page is 1
          */
         public void setStartFromPageOne(boolean startFromPageOne) {
@@ -112,7 +114,7 @@ public class DataConfiguration implements DataSettings {
 
         /**
          * @return the page size to use when binding {@link io.micronaut.data.model.Pageable}
-         * objects and no size parameter is used. By default is set to the same vale as {@link #maxPageSize}
+         * objects and no size parameter is used. By default is set to the same value as {@link #maxPageSize}
          */
         public int getDefaultPageSize() {
             return defaultPageSize == null ? maxPageSize : defaultPageSize;

@@ -110,8 +110,8 @@ class PageableRequestArgumentBinderSpec extends Specification {
 
         where:
         page | pageNumber | startFromPageOne
-        "1"  | 0          | true // first page is shifted to 0
-        "5"  | 4          | true // fifth page is shifted to 4
-        "0"  | 0          | true // 0 page is still 0
+        "1"  | 0          | true  // first page is shifted to 0
+        "5"  | 4          | true  // fifth page is shifted to 4
+        "0"  | 0          | true  // 0 page is still 0
     }
 }
