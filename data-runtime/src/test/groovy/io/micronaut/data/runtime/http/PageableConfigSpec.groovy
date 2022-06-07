@@ -28,7 +28,8 @@ class PageableConfigSpec extends Specification {
                 'micronaut.data.pageable.default-page-size': 10,
                 'micronaut.data.pageable.sort-parameter-name': 's',
                 'micronaut.data.pageable.page-parameter-name': 'index',
-                'micronaut.data.pageable.size-parameter-name': 'max'
+                'micronaut.data.pageable.size-parameter-name': 'max',
+                'micronaut.data.pageable.start-from-page-one': true
         )
         DataConfiguration.PageableConfiguration configuration = context.getBean(DataConfiguration.PageableConfiguration)
 
@@ -38,6 +39,7 @@ class PageableConfigSpec extends Specification {
         configuration.sortParameterName == 's'
         configuration.pageParameterName == 'index'
         configuration.sizeParameterName == 'max'
+        configuration.startFromPageOne
 
         cleanup:
         context.close()
