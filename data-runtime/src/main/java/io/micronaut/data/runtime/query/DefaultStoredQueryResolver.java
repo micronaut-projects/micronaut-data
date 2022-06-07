@@ -88,6 +88,10 @@ public abstract class DefaultStoredQueryResolver implements StoredQueryResolver 
                                                         List<QueryParameterBinding> queryParameters,
                                                         boolean pageable,
                                                         boolean isSingleResult) {
+        if (queryParts == null) {
+            queryParts = new String[0];
+        }
+        String[] finalQueryParts = queryParts;
         return new StoredQuery<E, QR>() {
             @Override
             public Class<E> getRootEntity() {
@@ -106,7 +110,7 @@ public abstract class DefaultStoredQueryResolver implements StoredQueryResolver 
 
             @Override
             public String[] getExpandableQueryParts() {
-                return queryParts;
+                return finalQueryParts;
             }
 
             @Override
@@ -166,6 +170,10 @@ public abstract class DefaultStoredQueryResolver implements StoredQueryResolver 
                                                             String query,
                                                             String[] queryParts,
                                                             List<QueryParameterBinding> queryParameters) {
+        if (queryParts == null) {
+            queryParts = new String[0];
+        }
+        String[] finalQueryParts = queryParts;
         return new StoredQuery<Object, Long>() {
 
             @Override
@@ -185,7 +193,7 @@ public abstract class DefaultStoredQueryResolver implements StoredQueryResolver 
 
             @Override
             public String[] getExpandableQueryParts() {
-                return queryParts;
+                return finalQueryParts;
             }
 
             @Override

@@ -21,6 +21,7 @@ import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.data.model.naming.NamingStrategy;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Optional;
@@ -186,6 +187,25 @@ public class PersistentPropertyPath {
             path = joiner.toString();
         }
         return path;
+    }
+
+    /**
+     * @return The array path
+     */
+    @NonNull
+    public String[] getArrayPath() {
+        if (path == null) {
+            if (associations.isEmpty()) {
+                return new String[]{property.getName()};
+            }
+            List<String> strings = new ArrayList<>(associations.size() + 1);
+            for (Association association : associations) {
+                strings.add(association.getName());
+            }
+            strings.add(property.getName());
+            return strings.toArray(new String[0]);
+        }
+        return new String[0];
     }
 
     /**

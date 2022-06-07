@@ -23,6 +23,7 @@ import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.mongodb.operations.options.MongoFindOptions;
 import io.micronaut.data.runtime.query.internal.DefaultPreparedQuery;
+import io.micronaut.data.runtime.query.internal.DelegatePreparedQuery;
 import io.micronaut.data.runtime.query.internal.DelegateStoredQuery;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;

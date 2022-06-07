@@ -43,11 +43,9 @@ import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.data.exceptions.DataAccessException;
-import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.PersistentProperty;
-import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
 import io.micronaut.data.model.runtime.DeleteBatchOperation;
 import io.micronaut.data.model.runtime.DeleteOperation;
@@ -114,7 +112,7 @@ import java.util.stream.StreamSupport;
 @RequiresSyncMongo
 @EachBean(MongoClient.class)
 @Internal
-public final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOperations<MongoDatabase, ClientSession, Object> implements
+public final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOperations<MongoDatabase, ClientSession> implements
         MongoRepositoryOperations,
         AsyncCapableRepository,
         ReactiveCapableRepository,
@@ -666,11 +664,6 @@ public final class DefaultMongoRepositoryOperations extends AbstractMongoReposit
             }
         }
         return entity;
-    }
-
-    @Override
-    public void setStatementParameter(Object preparedStatement, int index, DataType dataType, Object value, Dialect dialect) {
-
     }
 
     private <T, R> MongoCollection<R> getCollection(MongoDatabase database, RuntimePersistentEntity<T> persistentEntity, Class<R> resultType) {

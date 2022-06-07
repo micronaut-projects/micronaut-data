@@ -13,22 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.runtime.operations.internal;
+package io.micronaut.data.runtime.operations.internal.sql;
 
+import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.context.ApplicationContextProvider;
 import io.micronaut.context.BeanContext;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.convert.ConversionService;
 import io.micronaut.data.annotation.AutoPopulated;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.exceptions.DataAccessException;
+import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.DataType;
-import io.micronaut.data.model.Embedded;
+import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.PersistentEntity;
+import io.micronaut.data.model.PersistentEntityUtils;
 import io.micronaut.data.model.PersistentProperty;
+import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.query.QueryModel;
 import io.micronaut.data.model.query.QueryParameter;
 import io.micronaut.data.model.query.builder.QueryResult;
@@ -41,19 +46,28 @@ import io.micronaut.data.model.runtime.RuntimeAssociation;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
+import io.micronaut.data.model.runtime.StoredQuery;
+import io.micronaut.data.operations.HintsCapableRepository;
 import io.micronaut.data.repository.GenericRepository;
 import io.micronaut.data.runtime.config.DataSettings;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.date.DateTimeProvider;
 import io.micronaut.data.runtime.mapper.QueryStatement;
 import io.micronaut.data.runtime.mapper.ResultReader;
+import io.micronaut.data.runtime.operations.internal.AbstractRepositoryOperations;
+import io.micronaut.data.runtime.query.DefaultPreparedQueryResolver;
+import io.micronaut.data.runtime.query.DefaultStoredQueryResolver;
+import io.micronaut.data.runtime.query.PreparedQueryResolver;
+import io.micronaut.data.runtime.query.StoredQueryResolver;
 import io.micronaut.http.codec.MediaTypeCodec;
 import io.micronaut.inject.BeanDefinition;
+import io.micronaut.inject.ExecutableMethod;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import org.slf4j.Logger;
 
 import java.nio.charset.StandardCharsets;
 import java.util.AbstractMap;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -66,7 +80,6 @@ import java.util.stream.Stream;
 /**
  * Abstract SQL repository implementation not specifically bound to JDBC.
  *
- * @param <Cnt> The connection type
  * @param <RS>  The result set type
  * @param <PS>  The prepared statement type
  * @param <Exc> The exception type
@@ -75,9 +88,11 @@ import java.util.stream.Stream;
  * @since 1.0.0
  */
 @Internal
-public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends Exception>
-        extends AbstractRepositoryOperations<Cnt, PS>
-        implements ApplicationContextProvider, OpContext<Cnt, PS> {
+public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Exception>
+        extends AbstractRepositoryOperations implements ApplicationContextProvider,
+        PreparedQueryResolver,
+        StoredQueryResolver,
+        HintsCapableRepository {
     protected static final Logger QUERY_LOG = DataSettings.QUERY_LOG;
     protected static final SqlQueryBuilder DEFAULT_SQL_BUILDER = new SqlQueryBuilder();
     @SuppressWarnings("WeakerAccess")
@@ -87,9 +102,23 @@ public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends E
     @SuppressWarnings("WeakerAccess")
     protected final QueryStatement<PS, Integer> preparedStatementWriter;
     protected final Map<Class, SqlQueryBuilder> queryBuilders = new HashMap<>(10);
-    private final Map<QueryKey, DBOperation> entityInserts = new ConcurrentHashMap<>(10);
-    private final Map<QueryKey, DBOperation> entityUpdates = new ConcurrentHashMap<>(10);
+    private final Map<QueryKey, SqlStoredQuery> entityInserts = new ConcurrentHashMap<>(10);
+    private final Map<QueryKey, SqlStoredQuery> entityUpdates = new ConcurrentHashMap<>(10);
     private final Map<Association, String> associationInserts = new ConcurrentHashMap<>(10);
+
+    private final DefaultStoredQueryResolver defaultStoredQueryResolver = new DefaultStoredQueryResolver() {
+        @Override
+        protected HintsCapableRepository getHintsCapableRepository() {
+            return AbstractSqlRepositoryOperations.this;
+        }
+    };
+
+    private final DefaultPreparedQueryResolver defaultPreparedQueryResolver = new DefaultPreparedQueryResolver() {
+        @Override
+        protected ConversionService getConversionService() {
+            return conversionService;
+        }
+    };
 
     /**
      * Default constructor.
@@ -132,10 +161,76 @@ public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends E
         }
     }
 
+    @Override
+    public <E, R> PreparedQuery<E, R> resolveQuery(MethodInvocationContext<?, ?> context, StoredQuery<E, R> storedQuery, Pageable pageable) {
+        PreparedQuery<E, R> preparedQuery = defaultPreparedQueryResolver.resolveQuery(context, storedQuery, pageable);
+        return new DefaultSqlPreparedQuery<>(preparedQuery);
+    }
+
+    @Override
+    public <E, R> PreparedQuery<E, R> resolveCountQuery(MethodInvocationContext<?, ?> context, StoredQuery<E, R> storedQuery, Pageable pageable) {
+        PreparedQuery<E, R> preparedQuery = defaultPreparedQueryResolver.resolveCountQuery(context, storedQuery, pageable);
+        return new DefaultSqlPreparedQuery<>(preparedQuery);
+    }
+
+    @Override
+    public <E, R> StoredQuery<E, R> resolveQuery(MethodInvocationContext<?, ?> context, Class<E> entityClass, Class<R> resultType) {
+        StoredQuery<E, R> storedQuery = defaultStoredQueryResolver.resolveQuery(context, entityClass, resultType);
+        Class<?> repositoryType = context.getTarget().getClass();
+        SqlQueryBuilder queryBuilder = queryBuilders.getOrDefault(repositoryType, DEFAULT_SQL_BUILDER);
+        RuntimePersistentEntity<E> runtimePersistentEntity = runtimeEntityRegistry.getEntity(storedQuery.getRootEntity());
+        return new DefaultSqlStoredQuery<>(storedQuery, runtimePersistentEntity, queryBuilder);
+    }
+
+    @Override
+    public <E, R> StoredQuery<E, R> resolveCountQuery(MethodInvocationContext<?, ?> context, Class<E> entityClass, Class<R> resultType) {
+        StoredQuery<E, R> storedQuery = defaultStoredQueryResolver.resolveCountQuery(context, entityClass, resultType);
+        Class<?> repositoryType = context.getTarget().getClass();
+        SqlQueryBuilder queryBuilder = queryBuilders.getOrDefault(repositoryType, DEFAULT_SQL_BUILDER);
+        RuntimePersistentEntity<E> runtimePersistentEntity = runtimeEntityRegistry.getEntity(storedQuery.getRootEntity());
+        return new DefaultSqlStoredQuery<>(storedQuery, runtimePersistentEntity, queryBuilder);
+    }
+
+    @Override
+    public <E, QR> StoredQuery<E, QR> createStoredQuery(ExecutableMethod<?, ?> executableMethod,
+                                                        DataMethod.OperationType operationType,
+                                                        String name,
+                                                        AnnotationMetadata annotationMetadata,
+                                                        Class<Object> rootEntity,
+                                                        String query,
+                                                        String update,
+                                                        String[] queryParts,
+                                                        List<QueryParameterBinding> queryParameters,
+                                                        boolean hasPageable,
+                                                        boolean isSingleResult) {
+        StoredQuery<E, QR> storedQuery = defaultStoredQueryResolver.createStoredQuery(executableMethod, operationType, name, annotationMetadata,
+                rootEntity, query, update, queryParts, queryParameters, hasPageable, isSingleResult);
+        Class<?> repositoryType = executableMethod.getDeclaringType();
+        SqlQueryBuilder queryBuilder = queryBuilders.getOrDefault(repositoryType, DEFAULT_SQL_BUILDER);
+        RuntimePersistentEntity<E> runtimePersistentEntity = runtimeEntityRegistry.getEntity(storedQuery.getRootEntity());
+        return new DefaultSqlStoredQuery<>(storedQuery, runtimePersistentEntity, queryBuilder);
+    }
+
+    @Override
+    public StoredQuery<Object, Long> createCountStoredQuery(ExecutableMethod<?, ?> executableMethod,
+                                                            DataMethod.OperationType operationType,
+                                                            String name,
+                                                            AnnotationMetadata annotationMetadata,
+                                                            Class<Object> rootEntity,
+                                                            String query,
+                                                            String[] queryParts,
+                                                            List<QueryParameterBinding> queryParameters) {
+        StoredQuery<Object, Long> storedQuery = defaultStoredQueryResolver.createCountStoredQuery(executableMethod, operationType, name, annotationMetadata,
+                rootEntity, query, queryParts, queryParameters);
+        Class<?> repositoryType = executableMethod.getDeclaringType();
+        SqlQueryBuilder queryBuilder = queryBuilders.getOrDefault(repositoryType, DEFAULT_SQL_BUILDER);
+        RuntimePersistentEntity<Object> runtimePersistentEntity = runtimeEntityRegistry.getEntity(storedQuery.getRootEntity());
+        return new DefaultSqlStoredQuery<>(storedQuery, runtimePersistentEntity, queryBuilder);
+    }
+
     /**
      * Prepare a statement for execution.
      *
-     * @param connection        The connection
      * @param statementFunction The statement function
      * @param preparedQuery     The prepared query
      * @param isUpdate          Is this an update
@@ -144,22 +239,17 @@ public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends E
      * @param <R>               The query result type
      * @return The prepared statement
      */
-    protected <T, R> PS prepareStatement(
-            Cnt connection,
-            StatementSupplier<PS> statementFunction,
-            @NonNull PreparedQuery<T, R> preparedQuery,
-            boolean isUpdate,
-            boolean isSingleResult) throws Exc {
-        SqlQueryBuilder queryBuilder = queryBuilders.getOrDefault(preparedQuery.getRepositoryType(), DEFAULT_SQL_BUILDER);
-        RuntimePersistentEntity<T> persistentEntity = getEntity(preparedQuery.getRootEntity());
-
-        PreparedQueryDBOperation pqSqlOperation = new PreparedQueryDBOperation(preparedQuery, queryBuilder);
-        pqSqlOperation.checkForParameterToBeExpanded(persistentEntity, null);
+    protected <T, R> PS prepareStatement(StatementSupplier<PS> statementFunction,
+                                         @NonNull PreparedQuery<T, R> preparedQuery,
+                                         boolean isUpdate,
+                                         boolean isSingleResult) throws Exc {
+        SqlPreparedQuery<T, R> sqlPreparedQuery = getSqlPreparedQuery(preparedQuery);
+        sqlPreparedQuery.prepare(null);
         if (!isUpdate) {
-            pqSqlOperation.attachPageable(preparedQuery.getPageable(), isSingleResult, persistentEntity, queryBuilder);
+            sqlPreparedQuery.attachPageable(preparedQuery.getPageable(), isSingleResult);
         }
 
-        String query = pqSqlOperation.getQuery();
+        String query = sqlPreparedQuery.getQuery();
         if (QUERY_LOG.isDebugEnabled()) {
             QUERY_LOG.debug("Executing Query: {}", query);
         }
@@ -169,8 +259,6 @@ public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends E
         } catch (Exception e) {
             throw new DataAccessException("Unable to prepare query [" + query + "]: " + e.getMessage(), e);
         }
-        pqSqlOperation.setParameters(this, connection, ps, persistentEntity, null, null);
-
         return ps;
     }
 
@@ -183,8 +271,7 @@ public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends E
      * @param value             The value
      * @param dialect           The dialect
      */
-    @Override
-    public void setStatementParameter(PS preparedStatement, int index, DataType dataType, Object value, Dialect dialect) {
+    protected void setStatementParameter(PS preparedStatement, int index, DataType dataType, Object value, Dialect dialect) {
         switch (dataType) {
             case UUID:
                 if (value != null && dialect.requiresStringUUID(dataType)) {
@@ -216,11 +303,7 @@ public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends E
         if (QUERY_LOG.isTraceEnabled()) {
             QUERY_LOG.trace("Binding parameter at position {} to value {} with data type: {}", index, value, dataType);
         }
-        preparedStatementWriter.setDynamic(
-                preparedStatement,
-                index,
-                dataType,
-                value);
+        preparedStatementWriter.setDynamic(preparedStatement, index, dataType, value);
     }
 
     /**
@@ -230,21 +313,22 @@ public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends E
      * @param repositoryType     The repository type
      * @param rootEntity         The root entity
      * @param persistentEntity   The persistent entity
+     * @param <E>                The entity type
      * @return The insert
      */
-    protected @NonNull
-    DBOperation resolveEntityInsert(
+    @NonNull
+    protected <E> SqlStoredQuery<E, E> resolveEntityInsert(
             AnnotationMetadata annotationMetadata,
             Class<?> repositoryType,
-            @NonNull Class<?> rootEntity,
-            @NonNull RuntimePersistentEntity<?> persistentEntity) {
+            @NonNull Class<E> rootEntity,
+            @NonNull RuntimePersistentEntity<E> persistentEntity) {
 
         //noinspection unchecked
         return entityInserts.computeIfAbsent(new QueryKey(repositoryType, rootEntity), (queryKey) -> {
             final SqlQueryBuilder queryBuilder = queryBuilders.getOrDefault(repositoryType, DEFAULT_SQL_BUILDER);
             final QueryResult queryResult = queryBuilder.buildInsert(annotationMetadata, persistentEntity);
 
-            return new QueryResultSqlOperation(queryBuilder, queryResult);
+            return new DefaultSqlStoredQuery<>(new QueryResultStoredQuery<>(queryResult, rootEntity, rootEntity), persistentEntity, queryBuilder);
         });
     }
 
@@ -274,14 +358,14 @@ public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends E
      * @param repositoryType     The repository type
      * @param rootEntity         The root entity
      * @param persistentEntity   The persistent entity
+     * @param <E>                The entity type
      * @return The insert
      */
-    protected @NonNull
-    DBOperation resolveEntityUpdate(
-            AnnotationMetadata annotationMetadata,
-            Class<?> repositoryType,
-            @NonNull Class<?> rootEntity,
-            @NonNull RuntimePersistentEntity<?> persistentEntity) {
+    @NonNull
+    protected <E> SqlStoredQuery<E, E> resolveEntityUpdate(AnnotationMetadata annotationMetadata,
+                                                           Class<?> repositoryType,
+                                                           @NonNull Class<E> rootEntity,
+                                                           @NonNull RuntimePersistentEntity<E> persistentEntity) {
 
         final QueryKey key = new QueryKey(repositoryType, rootEntity);
         //noinspection unchecked
@@ -311,7 +395,7 @@ public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends E
                     updateProperties
             );
 
-            return new QueryResultSqlOperation(queryBuilder, queryResult);
+            return new DefaultSqlStoredQuery<>(new QueryResultStoredQuery<>(queryResult, rootEntity, rootEntity), persistentEntity, queryBuilder);
         });
     }
 
@@ -319,63 +403,91 @@ public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends E
      * Resolve SQL insert association operation.
      *
      * @param repositoryType   The repository type
-     * @param dialect          The dialect
      * @param association      The association
      * @param persistentEntity The persistent entity
      * @param entity           The entity
      * @param <T>              The entity type
      * @return The operation
      */
-    protected <T> DBOperation resolveSqlInsertAssociation(Class<?> repositoryType, Dialect dialect, RuntimeAssociation<T> association, RuntimePersistentEntity<T> persistentEntity, T entity) {
+    protected <T> SqlStoredQuery<T, ?> resolveSqlInsertAssociation(Class<?> repositoryType, RuntimeAssociation<T> association, RuntimePersistentEntity<T> persistentEntity, T entity) {
         String sqlInsert = resolveAssociationInsert(repositoryType, persistentEntity, association);
-        return new DBOperation(sqlInsert, dialect) {
+        final SqlQueryBuilder queryBuilder = queryBuilders.getOrDefault(repositoryType, DEFAULT_SQL_BUILDER);
+        List<QueryParameterBinding> parameters = new ArrayList<>();
+        for (Map.Entry<PersistentProperty, Object> property : idPropertiesWithValues(persistentEntity.getIdentity(), entity).collect(Collectors.toList())) {
+            parameters.add(new QueryParameterBinding() {
 
-            @Override
-            public <T, Cnt, PS> void setParameters(OpContext<Cnt, PS> context, Cnt connection, PS ps, RuntimePersistentEntity<T> pe, T e, Map<QueryParameterBinding, Object> previousValues) {
-                int i = 0;
-                for (Map.Entry<PersistentProperty, Object> property : idPropertiesWithValues(persistentEntity.getIdentity(), entity).collect(Collectors.toList())) {
-                    Object value = context.convert(connection, property.getValue(), (RuntimePersistentProperty<?>) property.getKey());
-                    context.setStatementParameter(
-                            ps,
-                            shiftIndex(i++),
-                            property.getKey().getDataType(),
-                            value,
-                            dialect);
+                @Override
+                public String getName() {
+                    return property.getKey().getName();
                 }
-                for (Map.Entry<PersistentProperty, Object> property : idPropertiesWithValues(pe.getIdentity(), e).collect(Collectors.toList())) {
-                    Object value = context.convert(connection, property.getValue(), (RuntimePersistentProperty<?>) property.getKey());
-                    context.setStatementParameter(
-                            ps,
-                            shiftIndex(i++),
-                            property.getKey().getDataType(),
-                            value,
-                            dialect);
+
+                @Override
+                public DataType getDataType() {
+                    return property.getKey().getDataType();
                 }
-            }
-        };
+
+                @Override
+                public Object getValue() {
+                    return property.getValue();
+                }
+            });
+        }
+        for (PersistentPropertyPath pp : idProperties(association.getAssociatedEntity().getIdentity()).collect(Collectors.toList())) {
+            parameters.add(new QueryParameterBinding() {
+
+                @Override
+                public String getName() {
+                    return pp.getProperty().getName();
+                }
+
+                @Override
+                public DataType getDataType() {
+                    return pp.getProperty().getDataType();
+                }
+
+                @Override
+                public String[] getPropertyPath() {
+                    return pp.getArrayPath();
+                }
+            });
+        }
+
+        RuntimePersistentEntity associatedEntity = association.getAssociatedEntity();
+        return new DefaultSqlStoredQuery<>(new BasicStoredQuery<>(sqlInsert, new String[0], parameters, persistentEntity.getIntrospection().getBeanType(), Object.class), associatedEntity, queryBuilder);
+    }
+
+    private Stream<PersistentPropertyPath> idProperties(PersistentProperty property) {
+        List<PersistentPropertyPath> paths = new ArrayList<>();
+        PersistentEntityUtils.traversePersistentProperties(property, (associations, persistentProperty) -> {
+            paths.add(new PersistentPropertyPath(associations, property));
+        });
+        return paths.stream();
     }
 
     private Stream<Map.Entry<PersistentProperty, Object>> idPropertiesWithValues(PersistentProperty property, Object value) {
-        Object propertyValue = ((RuntimePersistentProperty) property).getProperty().get(value);
-        if (property instanceof Embedded) {
-            Embedded embedded = (Embedded) property;
-            PersistentEntity embeddedEntity = embedded.getAssociatedEntity();
-            return embeddedEntity.getPersistentProperties()
-                    .stream()
-                    .flatMap(prop -> idPropertiesWithValues(prop, propertyValue));
-        } else if (property instanceof Association) {
-            Association association = (Association) property;
-            if (association.isForeignKey()) {
-                return Stream.empty();
-            }
-            PersistentEntity associatedEntity = association.getAssociatedEntity();
-            PersistentProperty identity = associatedEntity.getIdentity();
-            if (identity == null) {
-                throw new IllegalStateException("Identity cannot be missing for: " + associatedEntity);
-            }
-            return idPropertiesWithValues(identity, propertyValue);
+        List<Map.Entry<PersistentProperty, Object>> values = new ArrayList<>();
+        PersistentEntityUtils.traversePersistentProperties(property, (associations, persistentProperty) -> {
+            values.add(new AbstractMap.SimpleEntry<>(persistentProperty, new PersistentPropertyPath(associations, property).getPropertyValue(value)));
+        });
+        return values.stream();
+    }
+
+    protected final <E, R> SqlPreparedQuery<E, R> getSqlPreparedQuery(PreparedQuery<E, R> preparedQuery) {
+        if (preparedQuery instanceof SqlPreparedQuery) {
+            return (SqlPreparedQuery<E, R>) preparedQuery;
         }
-        return Stream.of(new AbstractMap.SimpleEntry<>(property, propertyValue));
+        throw new IllegalStateException("Expected for prepared query to be of type: SqlPreparedQuery");
+    }
+
+    protected final <E, R> SqlStoredQuery<E, R> getSqlStoredQuery(StoredQuery<E, R> storedQuery) {
+        if (storedQuery instanceof SqlStoredQuery) {
+            SqlStoredQuery<E, R> sqlStoredQuery = (SqlStoredQuery<E, R>) storedQuery;
+            if (sqlStoredQuery.isExpandableQuery() && !(sqlStoredQuery instanceof SqlPreparedQuery)) {
+                return new DefaultSqlPreparedQuery<>(sqlStoredQuery);
+            }
+            return sqlStoredQuery;
+        }
+        throw new IllegalStateException("Expected for prepared query to be of type: SqlStoredQuery");
     }
 
     /**

@@ -24,9 +24,7 @@ import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.context.BeanContext;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.core.convert.ConversionService;
-import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.intercept.RepositoryMethodKey;
@@ -80,12 +78,11 @@ import java.util.stream.Collectors;
  *
  * @param <Dtb> The database type
  * @param <Cnt> The connection
- * @param <PS>  The prepared statement
  * @author Denis Stepanov
  * @since 3.3
  */
 @Internal
-abstract class AbstractMongoRepositoryOperations<Dtb, Cnt, PS> extends AbstractRepositoryOperations<Cnt, PS> implements HintsCapableRepository, PreparedQueryResolver, StoredQueryResolver {
+abstract class AbstractMongoRepositoryOperations<Dtb, Cnt> extends AbstractRepositoryOperations implements HintsCapableRepository, PreparedQueryResolver, StoredQueryResolver {
 
     protected static final Logger QUERY_LOG = DataSettings.QUERY_LOG;
     protected static final BsonDocument EMPTY = new BsonDocument();
@@ -291,14 +288,6 @@ abstract class AbstractMongoRepositoryOperations<Dtb, Cnt, PS> extends AbstractR
         document.put(persistentEntity.getPersistedName(), MongoUtils.entityIdValue(conversionService, persistentEntity, value, codecRegistry));
         document.put(childPersistentEntity.getPersistedName(), MongoUtils.entityIdValue(conversionService, childPersistentEntity, child, codecRegistry));
         return document;
-    }
-
-    @Override
-    protected ConversionContext createTypeConversionContext(Cnt connection, RuntimePersistentProperty<?> property, Argument<?> argument) {
-        if (argument != null) {
-            return ConversionContext.of(argument);
-        }
-        return ConversionContext.DEFAULT;
     }
 
     protected final <T> Bson createFilterIdAndVersion(RuntimePersistentEntity<T> persistentEntity, T entity, CodecRegistry codecRegistry) {

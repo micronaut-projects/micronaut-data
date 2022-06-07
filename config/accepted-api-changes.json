@@ -1,84 +1,84 @@
 [
-    {
-        "type": "io.micronaut.transaction.interceptor.CoroutineTxHelper",
-        "member": "Method io.micronaut.transaction.interceptor.CoroutineTxHelper.setupCoroutineContext(io.micronaut.aop.kotlin.KotlinInterceptedMethod)",
-        "reason": "Internal method"
-    },
-    {
-        "type": "io.micronaut.transaction.interceptor.TxSynchronousContext",
-        "member": "Method io.micronaut.transaction.interceptor.TxSynchronousContext.restoreThreadContext(kotlin.coroutines.CoroutineContext,io.micronaut.transaction.support.TransactionSynchronizationManager$State)",
-        "reason": "Internal method"
-    },
-    {
-        "type": "io.micronaut.transaction.interceptor.TxSynchronousContext",
-        "member": "Method io.micronaut.transaction.interceptor.TxSynchronousContext.updateThreadContext(kotlin.coroutines.CoroutineContext)",
-        "reason": "Internal method"
-    },
-    {
-        "type": "io.micronaut.transaction.interceptor.TxSynchronousContext",
-        "member": "Constructor io.micronaut.transaction.interceptor.TxSynchronousContext(io.micronaut.transaction.support.TransactionSynchronizationManager$State)",
-        "reason": "Internal method"
-    },
-    {
-        "type": "io.micronaut.transaction.support.TransactionSynchronizationManager",
-        "member": "Class io.micronaut.transaction.support.TransactionSynchronizationManager",
-        "reason": "Accepted changes"
-    },
-    {
-        "type": "io.micronaut.transaction.support.TransactionSynchronizationUtils",
-        "member": "Method io.micronaut.transaction.support.TransactionSynchronizationUtils.triggerAfterCommit()",
-        "reason": "Internal method"
-    },
-    {
-        "type": "io.micronaut.transaction.support.TransactionSynchronizationUtils",
-        "member": "Method io.micronaut.transaction.support.TransactionSynchronizationUtils.triggerAfterCompletion(io.micronaut.transaction.support.TransactionSynchronization$Status)",
-        "reason": "Internal method"
-    },
-    {
-        "type": "io.micronaut.transaction.support.TransactionSynchronizationUtils",
-        "member": "Method io.micronaut.transaction.support.TransactionSynchronizationUtils.triggerBeforeCommit(boolean)",
-        "reason": "Internal method"
-    },
-    {
-        "type": "io.micronaut.transaction.support.TransactionSynchronizationUtils",
-        "member": "Method io.micronaut.transaction.support.TransactionSynchronizationUtils.triggerBeforeCompletion()",
-        "reason": "Internal method"
-    },
-    {
-        "type": "io.micronaut.transaction.support.TransactionSynchronizationUtils",
-        "member": "Method io.micronaut.transaction.support.TransactionSynchronizationUtils.triggerFlush()",
-        "reason": "Internal method"
-    },
-    {
-        "type": "io.micronaut.transaction.support.AbstractSynchronousTransactionManager",
-        "member": "Method io.micronaut.transaction.support.AbstractSynchronousTransactionManager.getTransactionSynchronization()",
-        "reason": "Internal method"
-    },
-    {
-        "type": "io.micronaut.transaction.jdbc.DataSourceTransactionManager",
-        "member": "Class io.micronaut.transaction.jdbc.DataSourceTransactionManager",
-        "reason": "Internal method"
-    },
-    {
+  {
+    "type": "io.micronaut.transaction.interceptor.CoroutineTxHelper",
+    "member": "Method io.micronaut.transaction.interceptor.CoroutineTxHelper.setupCoroutineContext(io.micronaut.aop.kotlin.KotlinInterceptedMethod)",
+    "reason": "Internal method"
+  },
+  {
+    "type": "io.micronaut.transaction.interceptor.TxSynchronousContext",
+    "member": "Method io.micronaut.transaction.interceptor.TxSynchronousContext.restoreThreadContext(kotlin.coroutines.CoroutineContext,io.micronaut.transaction.support.TransactionSynchronizationManager$State)",
+    "reason": "Internal method"
+  },
+  {
+    "type": "io.micronaut.transaction.interceptor.TxSynchronousContext",
+    "member": "Method io.micronaut.transaction.interceptor.TxSynchronousContext.updateThreadContext(kotlin.coroutines.CoroutineContext)",
+    "reason": "Internal method"
+  },
+  {
+    "type": "io.micronaut.transaction.interceptor.TxSynchronousContext",
+    "member": "Constructor io.micronaut.transaction.interceptor.TxSynchronousContext(io.micronaut.transaction.support.TransactionSynchronizationManager$State)",
+    "reason": "Internal method"
+  },
+  {
+    "type": "io.micronaut.transaction.support.TransactionSynchronizationManager",
+    "member": "Class io.micronaut.transaction.support.TransactionSynchronizationManager",
+    "reason": "Accepted changes"
+  },
+  {
+    "type": "io.micronaut.transaction.support.TransactionSynchronizationUtils",
+    "member": "Method io.micronaut.transaction.support.TransactionSynchronizationUtils.triggerAfterCommit()",
+    "reason": "Internal method"
+  },
+  {
+    "type": "io.micronaut.transaction.support.TransactionSynchronizationUtils",
+    "member": "Method io.micronaut.transaction.support.TransactionSynchronizationUtils.triggerAfterCompletion(io.micronaut.transaction.support.TransactionSynchronization$Status)",
+    "reason": "Internal method"
+  },
+  {
+    "type": "io.micronaut.transaction.support.TransactionSynchronizationUtils",
+    "member": "Method io.micronaut.transaction.support.TransactionSynchronizationUtils.triggerBeforeCommit(boolean)",
+    "reason": "Internal method"
+  },
+  {
+    "type": "io.micronaut.transaction.support.TransactionSynchronizationUtils",
+    "member": "Method io.micronaut.transaction.support.TransactionSynchronizationUtils.triggerBeforeCompletion()",
+    "reason": "Internal method"
+  },
+  {
+    "type": "io.micronaut.transaction.support.TransactionSynchronizationUtils",
+    "member": "Method io.micronaut.transaction.support.TransactionSynchronizationUtils.triggerFlush()",
+    "reason": "Internal method"
+  },
+  {
+    "type": "io.micronaut.transaction.support.AbstractSynchronousTransactionManager",
+    "member": "Method io.micronaut.transaction.support.AbstractSynchronousTransactionManager.getTransactionSynchronization()",
+    "reason": "Internal method"
+  },
+  {
+    "type": "io.micronaut.transaction.jdbc.DataSourceTransactionManager",
+    "member": "Class io.micronaut.transaction.jdbc.DataSourceTransactionManager",
+    "reason": "Internal method"
+  },
+  {
     "type": "io.micronaut.data.processor.visitors.finders.AbstractPrefixPatternMethodMatcher",
     "member": "Class io.micronaut.data.processor.visitors.finders.AbstractPrefixPatternMethodMatcher",
     "reason": "Class is considered internal API"
-},
-    {
-        "type": "io.micronaut.data.processor.visitors.finders.AbstractPrefixPatternMethodMatcher",
-        "member": "Constructor io.micronaut.data.processor.visitors.finders.AbstractPrefixPatternMethodMatcher(java.lang.String[])",
-        "reason": "Class is considered internal API"
-    },
-    {
-        "type": "io.micronaut.data.processor.visitors.finders.SaveEntityMethodMatcher",
-        "member": "Class io.micronaut.data.processor.visitors.finders.SaveEntityMethodMatcher",
-        "reason": "Class is considered internal API"
-    },
-    {
-        "type": "io.micronaut.data.processor.visitors.finders.SaveEntityMethodMatcher",
-        "member": "Field PREFIXES",
-        "reason": "Class is considered internal API"
-    },
+  },
+  {
+    "type": "io.micronaut.data.processor.visitors.finders.AbstractPrefixPatternMethodMatcher",
+    "member": "Constructor io.micronaut.data.processor.visitors.finders.AbstractPrefixPatternMethodMatcher(java.lang.String[])",
+    "reason": "Class is considered internal API"
+  },
+  {
+    "type": "io.micronaut.data.processor.visitors.finders.SaveEntityMethodMatcher",
+    "member": "Class io.micronaut.data.processor.visitors.finders.SaveEntityMethodMatcher",
+    "reason": "Class is considered internal API"
+  },
+  {
+    "type": "io.micronaut.data.processor.visitors.finders.SaveEntityMethodMatcher",
+    "member": "Field PREFIXES",
+    "reason": "Class is considered internal API"
+  },
   {
     "type": "io.micronaut.data.mongodb.serde.$DataCodecRegistry$Definition$Reference",
     "member": "Class io.micronaut.data.mongodb.serde.$DataCodecRegistry$Definition$Reference",
@@ -109,164 +109,219 @@
     "member": "Constructor io.micronaut.data.mongodb.serde.$DataCodecRegistry$Definition$Reference()",
     "reason": "Internal class"
   },
-    {
-        "type": "io.micronaut.data.mongodb.operations.DefaultReactiveMongoRepositoryOperations",
-        "member": "Method io.micronaut.data.mongodb.operations.DefaultReactiveMongoRepositoryOperations.withTransaction(io.micronaut.transaction.reactive.ReactiveTransactionStatus,io.micronaut.transaction.reactive.ReactiveTransactionOperations$TransactionalCallback)",
-        "reason": "Experimental method"
-    },
-    {
-        "type": "io.micronaut.data.mongodb.operations.MongoReactorRepositoryOperations",
-        "member": "Class io.micronaut.data.mongodb.operations.MongoReactorRepositoryOperations",
-        "reason": "Experimental method"
-    },
-    {
-        "type": "io.micronaut.data.mongodb.operations.MongoReactorRepositoryOperations",
-        "member": "Field CLIENT_SESSION_CONTEXT_KEY",
-        "reason": "Experimental method"
-    },
-    {
-        "type": "io.micronaut.data.mongodb.operations.MongoReactorRepositoryOperations",
-        "member": "Method io.micronaut.data.mongodb.operations.MongoReactorRepositoryOperations.withTransaction(io.micronaut.transaction.reactive.ReactiveTransactionStatus,io.micronaut.transaction.reactive.ReactiveTransactionOperations$TransactionalCallback)",
-        "reason": "Experimental method"
-    },
-    {
-        "type": "io.micronaut.data.mongodb.operations.MongoReactorRepositoryOperations",
-        "member": "Implemented interface io.micronaut.data.mongodb.operations.MongoReactiveRepositoryOperations",
-        "reason": "Experimental method"
-    },
-    {
-        "type": "io.micronaut.transaction.interceptor.TransactionalInterceptor",
-        "member": "Method io.micronaut.transaction.interceptor.TransactionalInterceptor.cleanupTransactionInfo(io.micronaut.transaction.interceptor.TransactionalInterceptor$TransactionInfo)",
-        "reason": "Removed deprecated method"
-    },
-    {
-        "type": "io.micronaut.transaction.interceptor.TransactionalInterceptor",
-        "member": "Method io.micronaut.transaction.interceptor.TransactionalInterceptor.commitTransactionAfterReturning(io.micronaut.transaction.interceptor.TransactionalInterceptor$TransactionInfo)",
-        "reason": "Removed deprecated method"
-    },
-    {
-        "type": "io.micronaut.transaction.interceptor.TransactionalInterceptor",
-        "member": "Method io.micronaut.transaction.interceptor.TransactionalInterceptor.completeTransactionAfterThrowing(io.micronaut.transaction.interceptor.TransactionalInterceptor$TransactionInfo,java.lang.Throwable)",
-        "reason": "Removed deprecated method"
-    },
-    {
-        "type": "io.micronaut.transaction.interceptor.TransactionalInterceptor",
-        "member": "Method io.micronaut.transaction.interceptor.TransactionalInterceptor.createTransactionIfNecessary(io.micronaut.transaction.SynchronousTransactionManager,io.micronaut.transaction.interceptor.TransactionAttribute,io.micronaut.inject.ExecutableMethod)",
-        "reason": "Removed deprecated method"
-    },
-    {
-        "type": "io.micronaut.transaction.interceptor.TransactionalInterceptor",
-        "member": "Method io.micronaut.transaction.interceptor.TransactionalInterceptor.prepareTransactionInfo(io.micronaut.transaction.SynchronousTransactionManager,io.micronaut.transaction.interceptor.TransactionAttribute,io.micronaut.inject.ExecutableMethod,io.micronaut.transaction.TransactionStatus)",
-        "reason": "Removed deprecated method"
-    },
-    {
-        "type": "io.micronaut.transaction.interceptor.TransactionalInterceptor",
-        "member": "Method io.micronaut.transaction.interceptor.TransactionalInterceptor.resolveTransactionDefinition(io.micronaut.inject.ExecutableMethod)",
-        "reason": "Removed deprecated method"
-    },
-    {
-        "type": "io.micronaut.transaction.interceptor.TransactionalInterceptor",
-        "member": "Constructor io.micronaut.transaction.interceptor.TransactionalInterceptor(io.micronaut.context.BeanLocator,io.micronaut.transaction.interceptor.CoroutineTxHelper)",
-        "reason": "Removed deprecated method"
-    },
-    {
-        "type": "io.micronaut.transaction.interceptor.TransactionalInterceptor$TransactionInfo",
-        "member": "Class io.micronaut.transaction.interceptor.TransactionalInterceptor$TransactionInfo",
-        "reason": "Removed deprecated class"
-    },
-    {
-        "type": "io.micronaut.transaction.interceptor.TransactionalInterceptor$TransactionInfo",
-        "member": "Method io.micronaut.transaction.interceptor.TransactionalInterceptor$TransactionInfo.getJoinpointIdentification()",
-        "reason": "Removed deprecated class"
-    },
-    {
-        "type": "io.micronaut.transaction.interceptor.TransactionalInterceptor$TransactionInfo",
-        "member": "Method io.micronaut.transaction.interceptor.TransactionalInterceptor$TransactionInfo.getTransactionManager()",
-        "reason": "Removed deprecated class"
-    },
-    {
-        "type": "io.micronaut.transaction.interceptor.TransactionalInterceptor$TransactionInfo",
-        "member": "Method io.micronaut.transaction.interceptor.TransactionalInterceptor$TransactionInfo.getTransactionManager()",
-        "reason": "Removed deprecated class"
-    },
-    {
-        "type": "io.micronaut.transaction.interceptor.TransactionalInterceptor$TransactionInfo",
-        "member": "Method io.micronaut.transaction.interceptor.TransactionalInterceptor$TransactionInfo.hasTransaction()",
-        "reason": "Removed deprecated class"
-    },
-    {
-        "type": "io.micronaut.transaction.interceptor.TransactionalInterceptor$TransactionInfo",
-        "member": "Method io.micronaut.transaction.interceptor.TransactionalInterceptor$TransactionInfo.newTransactionStatus(io.micronaut.transaction.TransactionStatus)",
-        "reason": "Removed deprecated class"
-    },
-    {
-        "type": "io.micronaut.transaction.interceptor.TransactionalInterceptor$TransactionInfo",
-        "member": "Constructor io.micronaut.transaction.interceptor.TransactionalInterceptor$TransactionInfo(io.micronaut.transaction.SynchronousTransactionManager,io.micronaut.transaction.interceptor.TransactionAttribute,io.micronaut.inject.ExecutableMethod)",
-        "reason": "Removed deprecated class"
-    },
-    {
-        "type": "io.micronaut.transaction.interceptor.TransactionalInterceptor$TransactionInfo",
-        "member": "Method io.micronaut.transaction.interceptor.TransactionalInterceptor$TransactionInfo.getTransactionStatus()",
-        "reason": "Removed deprecated class"
-    },
-    {
-        "type": "io.micronaut.transaction.TransactionDefinition",
-        "member": "Class io.micronaut.transaction.TransactionDefinition",
-        "reason": "Added default methods"
-    },
-    {
-        "type": "io.micronaut.transaction.TransactionDefinition",
-        "member": "Method io.micronaut.transaction.TransactionDefinition.getDontRollbackOn()",
-        "reason": "Added default method"
-    },
-    {
-        "type": "io.micronaut.transaction.TransactionDefinition",
-        "member": "Method io.micronaut.transaction.TransactionDefinition.getRollbackOn()",
-        "reason": "Added default method"
-    },
-    {
-        "type": "io.micronaut.transaction.TransactionDefinition",
-        "member": "Method io.micronaut.transaction.TransactionDefinition.rollbackOn(java.lang.Throwable)",
-        "reason": "Added default method"
-    },
-    {
-        "type": "io.micronaut.data.runtime.mapper.QueryStatement",
-        "member": "Class io.micronaut.data.runtime.mapper.QueryStatement",
-        "reason": "Added a default method"
-    },
-    {
-        "type": "io.micronaut.data.runtime.mapper.QueryStatement",
-        "member": "Method io.micronaut.data.runtime.mapper.QueryStatement.setTimestamp(java.lang.Object,java.lang.Object,java.time.Instant)",
-        "reason": "Added a default method"
-    },
-    {
-        "type": "io.micronaut.data.r2dbc.mapper.R2dbcQueryStatement",
-        "member": "Class io.micronaut.data.r2dbc.mapper.R2dbcQueryStatement",
-        "reason": "Added a default method"
-    },
-    {
-        "type": "io.micronaut.data.r2dbc.mapper.R2dbcQueryStatement",
-        "member": "Method io.micronaut.data.r2dbc.mapper.R2dbcQueryStatement.setTimestamp(io.r2dbc.spi.Statement,java.lang.Integer,java.util.Date)",
-        "reason": "Added a default method"
-    },
-    {
-        "type": "io.micronaut.data.r2dbc.mapper.R2dbcQueryStatement",
-        "member": "Method io.micronaut.data.r2dbc.mapper.R2dbcQueryStatement.setTimestamp(java.lang.Object,java.lang.Object,java.util.Date)",
-        "reason": "Added a default method"
-    },
-    {
-        "type": "io.micronaut.data.jdbc.mapper.JdbcQueryStatement",
-        "member": "Class io.micronaut.data.jdbc.mapper.JdbcQueryStatement",
-        "reason": "Added a default method"
-    },
-    {
-        "type": "io.micronaut.data.jdbc.mapper.JdbcQueryStatement",
-        "member": "Method io.micronaut.data.jdbc.mapper.JdbcQueryStatement.setTimestamp(java.sql.PreparedStatement,java.lang.Integer,java.util.Date)",
-        "reason": "Added a default method"
-    },
-    {
-        "type": "io.micronaut.data.jdbc.mapper.JdbcQueryStatement",
-        "member": "Method io.micronaut.data.jdbc.mapper.JdbcQueryStatement.setTimestamp(java.lang.Object,java.lang.Object,java.util.Date)",
-        "reason": "Added a default method"
-    }
+  {
+    "type": "io.micronaut.data.mongodb.operations.DefaultReactiveMongoRepositoryOperations",
+    "member": "Method io.micronaut.data.mongodb.operations.DefaultReactiveMongoRepositoryOperations.withTransaction(io.micronaut.transaction.reactive.ReactiveTransactionStatus,io.micronaut.transaction.reactive.ReactiveTransactionOperations$TransactionalCallback)",
+    "reason": "Experimental method"
+  },
+  {
+    "type": "io.micronaut.data.mongodb.operations.MongoReactorRepositoryOperations",
+    "member": "Class io.micronaut.data.mongodb.operations.MongoReactorRepositoryOperations",
+    "reason": "Experimental method"
+  },
+  {
+    "type": "io.micronaut.data.mongodb.operations.MongoReactorRepositoryOperations",
+    "member": "Field CLIENT_SESSION_CONTEXT_KEY",
+    "reason": "Experimental method"
+  },
+  {
+    "type": "io.micronaut.data.mongodb.operations.MongoReactorRepositoryOperations",
+    "member": "Method io.micronaut.data.mongodb.operations.MongoReactorRepositoryOperations.withTransaction(io.micronaut.transaction.reactive.ReactiveTransactionStatus,io.micronaut.transaction.reactive.ReactiveTransactionOperations$TransactionalCallback)",
+    "reason": "Experimental method"
+  },
+  {
+    "type": "io.micronaut.data.mongodb.operations.MongoReactorRepositoryOperations",
+    "member": "Implemented interface io.micronaut.data.mongodb.operations.MongoReactiveRepositoryOperations",
+    "reason": "Experimental method"
+  },
+  {
+    "type": "io.micronaut.transaction.interceptor.TransactionalInterceptor",
+    "member": "Method io.micronaut.transaction.interceptor.TransactionalInterceptor.cleanupTransactionInfo(io.micronaut.transaction.interceptor.TransactionalInterceptor$TransactionInfo)",
+    "reason": "Removed deprecated method"
+  },
+  {
+    "type": "io.micronaut.transaction.interceptor.TransactionalInterceptor",
+    "member": "Method io.micronaut.transaction.interceptor.TransactionalInterceptor.commitTransactionAfterReturning(io.micronaut.transaction.interceptor.TransactionalInterceptor$TransactionInfo)",
+    "reason": "Removed deprecated method"
+  },
+  {
+    "type": "io.micronaut.transaction.interceptor.TransactionalInterceptor",
+    "member": "Method io.micronaut.transaction.interceptor.TransactionalInterceptor.completeTransactionAfterThrowing(io.micronaut.transaction.interceptor.TransactionalInterceptor$TransactionInfo,java.lang.Throwable)",
+    "reason": "Removed deprecated method"
+  },
+  {
+    "type": "io.micronaut.transaction.interceptor.TransactionalInterceptor",
+    "member": "Method io.micronaut.transaction.interceptor.TransactionalInterceptor.createTransactionIfNecessary(io.micronaut.transaction.SynchronousTransactionManager,io.micronaut.transaction.interceptor.TransactionAttribute,io.micronaut.inject.ExecutableMethod)",
+    "reason": "Removed deprecated method"
+  },
+  {
+    "type": "io.micronaut.transaction.interceptor.TransactionalInterceptor",
+    "member": "Method io.micronaut.transaction.interceptor.TransactionalInterceptor.prepareTransactionInfo(io.micronaut.transaction.SynchronousTransactionManager,io.micronaut.transaction.interceptor.TransactionAttribute,io.micronaut.inject.ExecutableMethod,io.micronaut.transaction.TransactionStatus)",
+    "reason": "Removed deprecated method"
+  },
+  {
+    "type": "io.micronaut.transaction.interceptor.TransactionalInterceptor",
+    "member": "Method io.micronaut.transaction.interceptor.TransactionalInterceptor.resolveTransactionDefinition(io.micronaut.inject.ExecutableMethod)",
+    "reason": "Removed deprecated method"
+  },
+  {
+    "type": "io.micronaut.transaction.interceptor.TransactionalInterceptor",
+    "member": "Constructor io.micronaut.transaction.interceptor.TransactionalInterceptor(io.micronaut.context.BeanLocator,io.micronaut.transaction.interceptor.CoroutineTxHelper)",
+    "reason": "Removed deprecated method"
+  },
+  {
+    "type": "io.micronaut.transaction.interceptor.TransactionalInterceptor$TransactionInfo",
+    "member": "Class io.micronaut.transaction.interceptor.TransactionalInterceptor$TransactionInfo",
+    "reason": "Removed deprecated class"
+  },
+  {
+    "type": "io.micronaut.transaction.interceptor.TransactionalInterceptor$TransactionInfo",
+    "member": "Method io.micronaut.transaction.interceptor.TransactionalInterceptor$TransactionInfo.getJoinpointIdentification()",
+    "reason": "Removed deprecated class"
+  },
+  {
+    "type": "io.micronaut.transaction.interceptor.TransactionalInterceptor$TransactionInfo",
+    "member": "Method io.micronaut.transaction.interceptor.TransactionalInterceptor$TransactionInfo.getTransactionManager()",
+    "reason": "Removed deprecated class"
+  },
+  {
+    "type": "io.micronaut.transaction.interceptor.TransactionalInterceptor$TransactionInfo",
+    "member": "Method io.micronaut.transaction.interceptor.TransactionalInterceptor$TransactionInfo.getTransactionManager()",
+    "reason": "Removed deprecated class"
+  },
+  {
+    "type": "io.micronaut.transaction.interceptor.TransactionalInterceptor$TransactionInfo",
+    "member": "Method io.micronaut.transaction.interceptor.TransactionalInterceptor$TransactionInfo.hasTransaction()",
+    "reason": "Removed deprecated class"
+  },
+  {
+    "type": "io.micronaut.transaction.interceptor.TransactionalInterceptor$TransactionInfo",
+    "member": "Method io.micronaut.transaction.interceptor.TransactionalInterceptor$TransactionInfo.newTransactionStatus(io.micronaut.transaction.TransactionStatus)",
+    "reason": "Removed deprecated class"
+  },
+  {
+    "type": "io.micronaut.transaction.interceptor.TransactionalInterceptor$TransactionInfo",
+    "member": "Constructor io.micronaut.transaction.interceptor.TransactionalInterceptor$TransactionInfo(io.micronaut.transaction.SynchronousTransactionManager,io.micronaut.transaction.interceptor.TransactionAttribute,io.micronaut.inject.ExecutableMethod)",
+    "reason": "Removed deprecated class"
+  },
+  {
+    "type": "io.micronaut.transaction.interceptor.TransactionalInterceptor$TransactionInfo",
+    "member": "Method io.micronaut.transaction.interceptor.TransactionalInterceptor$TransactionInfo.getTransactionStatus()",
+    "reason": "Removed deprecated class"
+  },
+  {
+    "type": "io.micronaut.transaction.TransactionDefinition",
+    "member": "Class io.micronaut.transaction.TransactionDefinition",
+    "reason": "Added default methods"
+  },
+  {
+    "type": "io.micronaut.transaction.TransactionDefinition",
+    "member": "Method io.micronaut.transaction.TransactionDefinition.getDontRollbackOn()",
+    "reason": "Added default method"
+  },
+  {
+    "type": "io.micronaut.transaction.TransactionDefinition",
+    "member": "Method io.micronaut.transaction.TransactionDefinition.getRollbackOn()",
+    "reason": "Added default method"
+  },
+  {
+    "type": "io.micronaut.transaction.TransactionDefinition",
+    "member": "Method io.micronaut.transaction.TransactionDefinition.rollbackOn(java.lang.Throwable)",
+    "reason": "Added default method"
+  },
+  {
+    "type": "io.micronaut.data.runtime.mapper.QueryStatement",
+    "member": "Class io.micronaut.data.runtime.mapper.QueryStatement",
+    "reason": "Added a default method"
+  },
+  {
+    "type": "io.micronaut.data.runtime.mapper.QueryStatement",
+    "member": "Method io.micronaut.data.runtime.mapper.QueryStatement.setTimestamp(java.lang.Object,java.lang.Object,java.time.Instant)",
+    "reason": "Added a default method"
+  },
+  {
+    "type": "io.micronaut.data.r2dbc.mapper.R2dbcQueryStatement",
+    "member": "Class io.micronaut.data.r2dbc.mapper.R2dbcQueryStatement",
+    "reason": "Added a default method"
+  },
+  {
+    "type": "io.micronaut.data.r2dbc.mapper.R2dbcQueryStatement",
+    "member": "Method io.micronaut.data.r2dbc.mapper.R2dbcQueryStatement.setTimestamp(io.r2dbc.spi.Statement,java.lang.Integer,java.util.Date)",
+    "reason": "Added a default method"
+  },
+  {
+    "type": "io.micronaut.data.r2dbc.mapper.R2dbcQueryStatement",
+    "member": "Method io.micronaut.data.r2dbc.mapper.R2dbcQueryStatement.setTimestamp(java.lang.Object,java.lang.Object,java.util.Date)",
+    "reason": "Added a default method"
+  },
+  {
+    "type": "io.micronaut.data.jdbc.mapper.JdbcQueryStatement",
+    "member": "Class io.micronaut.data.jdbc.mapper.JdbcQueryStatement",
+    "reason": "Added a default method"
+  },
+  {
+    "type": "io.micronaut.data.jdbc.mapper.JdbcQueryStatement",
+    "member": "Method io.micronaut.data.jdbc.mapper.JdbcQueryStatement.setTimestamp(java.sql.PreparedStatement,java.lang.Integer,java.util.Date)",
+    "reason": "Added a default method"
+  },
+  {
+    "type": "io.micronaut.data.jdbc.mapper.JdbcQueryStatement",
+    "member": "Method io.micronaut.data.jdbc.mapper.JdbcQueryStatement.setTimestamp(java.lang.Object,java.lang.Object,java.util.Date)",
+    "reason": "Added a default method"
+  },
+  {
+    "type": "io.micronaut.data.model.runtime.QueryParameterBinding",
+    "member": "Class io.micronaut.data.model.runtime.QueryParameterBinding",
+    "reason": "Added a default method"
+  },
+  {
+    "type": "io.micronaut.data.model.runtime.QueryParameterBinding",
+    "member": "Method io.micronaut.data.model.runtime.QueryParameterBinding.getDataType()",
+    "reason": "Added a default method"
+  },
+  {
+    "type": "io.micronaut.data.model.runtime.QueryParameterBinding",
+    "member": "Method io.micronaut.data.model.runtime.QueryParameterBinding.getName()",
+    "reason": "Added a default method"
+  },
+  {
+    "type": "io.micronaut.data.model.runtime.QueryParameterBinding",
+    "member": "Method io.micronaut.data.model.runtime.QueryParameterBinding.getParameterBindingPath()",
+    "reason": "Added a default method"
+  },
+  {
+    "type": "io.micronaut.data.model.runtime.QueryParameterBinding",
+    "member": "Method io.micronaut.data.model.runtime.QueryParameterBinding.getParameterConverterClass()",
+    "reason": "Added a default method"
+  },
+  {
+    "type": "io.micronaut.data.model.runtime.QueryParameterBinding",
+    "member": "Method io.micronaut.data.model.runtime.QueryParameterBinding.getParameterIndex()",
+    "reason": "Added a default method"
+  },
+  {
+    "type": "io.micronaut.data.model.runtime.QueryParameterBinding",
+    "member": "Method io.micronaut.data.model.runtime.QueryParameterBinding.getPreviousPopulatedValueParameter()",
+    "reason": "Added a default method"
+  },
+  {
+    "type": "io.micronaut.data.model.runtime.QueryParameterBinding",
+    "member": "Method io.micronaut.data.model.runtime.QueryParameterBinding.getPropertyPath()",
+    "reason": "Added a default method"
+  },
+  {
+    "type": "io.micronaut.data.model.runtime.QueryParameterBinding",
+    "member": "Method io.micronaut.data.model.runtime.QueryParameterBinding.getValue()",
+    "reason": "Added a default method"
+  },
+  {
+    "type": "io.micronaut.data.model.runtime.QueryParameterBinding",
+    "member": "Method io.micronaut.data.model.runtime.QueryParameterBinding.isAutoPopulated()",
+    "reason": "Added a default method"
+  },
+  {
+    "type": "io.micronaut.data.model.runtime.QueryParameterBinding",
+    "member": "Method io.micronaut.data.model.runtime.QueryParameterBinding.isRequiresPreviousPopulatedValue()",
+    "reason": "Added a default method"
+  }
 ]

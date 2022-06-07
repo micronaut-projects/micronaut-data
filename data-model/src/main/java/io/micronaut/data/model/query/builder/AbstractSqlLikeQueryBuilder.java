@@ -31,6 +31,7 @@ import io.micronaut.data.annotation.repeatable.WhereSpecifications;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.Embedded;
 import io.micronaut.data.model.PersistentEntity;
+import io.micronaut.data.model.PersistentEntityUtils;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.Sort;
@@ -46,7 +47,6 @@ import io.micronaut.data.model.query.builder.sql.Dialect;
 import javax.validation.constraints.NotNull;
 import java.util.AbstractMap;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -1475,15 +1475,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
      * @param consumer         The function to invoke on every property
      */
     protected void traversePersistentProperties(PersistentEntity persistentEntity, BiConsumer<List<Association>, PersistentProperty> consumer) {
-        if (persistentEntity.getIdentity() != null) {
-            traversePersistentProperties(Collections.emptyList(), persistentEntity.getIdentity(), consumer);
-        }
-        if (persistentEntity.getVersion() != null) {
-            traversePersistentProperties(Collections.emptyList(), persistentEntity.getVersion(), consumer);
-        }
-        for (PersistentProperty property : persistentEntity.getPersistentProperties()) {
-            traversePersistentProperties(Collections.emptyList(), property, consumer);
-        }
+        PersistentEntityUtils.traversePersistentProperties(persistentEntity, consumer);
     }
 
     /**
@@ -1495,49 +1487,13 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
      * @param consumer         The function to invoke on every property
      */
     protected void traversePersistentProperties(PersistentEntity persistentEntity, boolean includeIdentity, boolean includeVersion, BiConsumer<List<Association>, PersistentProperty> consumer) {
-        if (includeIdentity && persistentEntity.getIdentity() != null) {
-            traversePersistentProperties(Collections.emptyList(), persistentEntity.getIdentity(), consumer);
-        }
-        if (includeVersion && persistentEntity.getVersion() != null) {
-            traversePersistentProperties(Collections.emptyList(), persistentEntity.getVersion(), consumer);
-        }
-        for (PersistentProperty property : persistentEntity.getPersistentProperties()) {
-            traversePersistentProperties(Collections.emptyList(), property, consumer);
-        }
+        PersistentEntityUtils.traversePersistentProperties(persistentEntity, includeIdentity, includeVersion, consumer);
     }
 
     private void traversePersistentProperties(List<Association> associations,
                                               PersistentProperty property,
                                               BiConsumer<List<Association>, PersistentProperty> consumerProperty) {
-        if (property instanceof Embedded) {
-            Embedded embedded = (Embedded) property;
-            PersistentEntity embeddedEntity = embedded.getAssociatedEntity();
-            Collection<? extends PersistentProperty> embeddedProperties = embeddedEntity.getPersistentProperties();
-            List<Association> newAssociations = new ArrayList<>(associations);
-            newAssociations.add((Association) property);
-            for (PersistentProperty embeddedProperty : embeddedProperties) {
-                traversePersistentProperties(newAssociations, embeddedProperty, consumerProperty);
-            }
-        } else if (property instanceof Association) {
-            Association association = (Association) property;
-            if (association.isForeignKey()) {
-                return;
-            }
-            List<Association> newAssociations = new ArrayList<>(associations);
-            newAssociations.add((Association) property);
-            PersistentEntity associatedEntity = association.getAssociatedEntity();
-            PersistentProperty assocIdentity = associatedEntity.getIdentity();
-            if (assocIdentity == null) {
-                throw new IllegalStateException("Identity cannot be missing for: " + associatedEntity);
-            }
-            if (assocIdentity instanceof Association) {
-                traversePersistentProperties(newAssociations, assocIdentity, consumerProperty);
-            } else {
-                consumerProperty.accept(newAssociations, assocIdentity);
-            }
-        } else {
-            consumerProperty.accept(associations, property);
-        }
+        PersistentEntityUtils.traversePersistentProperties(associations, property, consumerProperty);
     }
 
     private Optional<String> getDataTransformerValue(String alias, PersistentProperty prop, String val) {

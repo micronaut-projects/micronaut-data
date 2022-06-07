@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2021 original authors
+ * Copyright 2017-2022 original authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,35 +13,36 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.runtime.operations.internal;
+package io.micronaut.data.runtime.operations.internal.sql;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.reflect.ClassUtils;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.query.builder.QueryResult;
-import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.runtime.QueryParameterBinding;
 
 import java.util.stream.Collectors;
 
 /**
- * Implementation of {@link StoredSqlOperation} that retrieves data from {@link QueryResult}.
+ * The basic {@link io.micronaut.data.model.runtime.StoredQuery} created from {@link QueryResult}.
+ *
+ * @param <E> The entity type
+ * @param <R> The result type
+ * @author Denis Stepanov
+ * @since 3.5.0
  */
 @Internal
-public class QueryResultSqlOperation extends StoredSqlOperation {
+final class QueryResultStoredQuery<E, R> extends BasicStoredQuery<E, R> {
 
-    /**
-     * Creates a new instance.
-     *
-     * @param queryBuilder       The queryBuilder
-     * @param queryResult        The query result
-     */
-    public QueryResultSqlOperation(SqlQueryBuilder queryBuilder, QueryResult queryResult) {
-        super(queryBuilder,
+    public QueryResultStoredQuery(QueryResult queryResult, Class<E> rootEntity, Class<R> resultType) {
+        super(
                 queryResult.getQuery(),
-                queryResult.getParameterBindings().stream().anyMatch(io.micronaut.data.model.query.builder.QueryParameterBinding::isExpandable) ? queryResult.getQueryParts().toArray(new String[0]) : null,
-                queryResult.getParameterBindings().stream().map(QueryResultSqlOperation::map).collect(Collectors.toList()),
-                false);
+                queryResult.getParameterBindings().stream()
+                        .anyMatch(io.micronaut.data.model.query.builder.QueryParameterBinding::isExpandable) ? queryResult.getQueryParts().toArray(new String[0]) : null,
+                queryResult.getParameterBindings().stream().map(QueryResultStoredQuery::map).collect(Collectors.toList()),
+                rootEntity,
+                resultType
+        );
     }
 
     private static QueryParameterBinding map(io.micronaut.data.model.query.builder.QueryParameterBinding binding) {
@@ -59,6 +60,9 @@ public class QueryResultSqlOperation extends StoredSqlOperation {
 
             @Override
             public Class<?> getParameterConverterClass() {
+                if (binding.getConverterClassName() == null) {
+                    return null;
+                }
                 return ClassUtils.forName(binding.getConverterClassName(), null).orElseThrow(IllegalStateException::new);
             }
 
@@ -93,5 +97,4 @@ public class QueryResultSqlOperation extends StoredSqlOperation {
             }
         };
     }
-
 }
