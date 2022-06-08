@@ -100,7 +100,10 @@ public class SpringPageableRequestArgumentBinder implements TypedRequestArgument
             sort = Sort.unsorted();
         }
 
-        if (configuration.isStartFromPageOne() && page > 0) {
+        if (configuration.isStartFromPageOne()) {
+            if (page < 1) {
+                throw new IllegalArgumentException(String.format("%s parameter starts at 1", configuration.getPageParameterName()));
+            }
             page--;
         }
 

@@ -112,6 +112,20 @@ class PageableRequestArgumentBinderSpec extends Specification {
         page | pageNumber | startFromPageOne
         "1"  | 0          | true  // first page is shifted to 0
         "5"  | 4          | true  // fifth page is shifted to 4
-        "0"  | 0          | true  // 0 page is still 0
+    }
+
+    void 'test IllegalArgumentException is thrown when startFromPageOne is true and page provided is 0'() {
+        given:
+        def configuration = new DataConfiguration.PageableConfiguration()
+        configuration.startFromPageOne = true
+        PageableRequestArgumentBinder binder = new PageableRequestArgumentBinder(configuration)
+        def get = HttpRequest.GET('/')
+        get.parameters.add("page", "0")
+
+        when:
+        binder.bind(ConversionContext.of(Pageable), get).get()
+
+        then:
+        thrown(IllegalArgumentException)
     }
 }

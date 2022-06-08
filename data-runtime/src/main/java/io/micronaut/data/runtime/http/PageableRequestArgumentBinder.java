@@ -26,6 +26,7 @@ import io.micronaut.http.HttpRequest;
 import io.micronaut.http.bind.binders.RequestArgumentBinder;
 import io.micronaut.http.bind.binders.TypedRequestArgumentBinder;
 
+import io.micronaut.http.exceptions.HttpStatusException;
 import jakarta.inject.Singleton;
 import java.util.List;
 import java.util.Locale;
@@ -96,7 +97,10 @@ public class PageableRequestArgumentBinder implements TypedRequestArgumentBinder
             sort = Sort.of(orders);
         }
 
-        if (configuration.isStartFromPageOne() && page > 0) {
+        if (configuration.isStartFromPageOne()) {
+            if (page < 1) {
+                throw new IllegalArgumentException(String.format("%s parameter starts at 1", configuration.getPageParameterName()));
+            }
             page--;
         }
 
