@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.mongodb.operations;
+package io.micronaut.data.runtime.query.internal;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
@@ -22,7 +22,6 @@ import io.micronaut.core.type.Argument;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.model.runtime.StoredQuery;
-import io.micronaut.data.runtime.query.internal.DelegateStoredQuery;
 
 import java.util.Map;
 import java.util.Optional;
@@ -36,7 +35,7 @@ import java.util.Optional;
  * @since 3.3.
  */
 @Internal
-interface DelegatePreparedQuery<E, R> extends PreparedQuery<E, R>, DelegateStoredQuery<E, R> {
+public interface DelegatePreparedQuery<E, R> extends PreparedQuery<E, R>, DelegateStoredQuery<E, R> {
 
     /**
      * @return The delegate

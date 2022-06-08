@@ -24,17 +24,10 @@ import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.context.BeanContext;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.convert.ConversionContext;
-import io.micronaut.core.convert.ConversionService;
-import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.Repository;
-import io.micronaut.data.intercept.RepositoryMethodKey;
-import io.micronaut.data.intercept.annotation.DataMethod;
-import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
 import io.micronaut.data.model.runtime.PreparedQuery;
-import io.micronaut.data.model.runtime.QueryParameterBinding;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
@@ -49,13 +42,11 @@ import io.micronaut.data.runtime.config.DataSettings;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.date.DateTimeProvider;
 import io.micronaut.data.runtime.operations.internal.AbstractRepositoryOperations;
-import io.micronaut.data.runtime.query.DefaultPreparedQueryResolver;
-import io.micronaut.data.runtime.query.DefaultStoredQueryResolver;
-import io.micronaut.data.runtime.query.PreparedQueryResolver;
-import io.micronaut.data.runtime.query.StoredQueryResolver;
+import io.micronaut.data.runtime.query.MethodContextAwareStoredQueryDecorator;
+import io.micronaut.data.runtime.query.PreparedQueryDecorator;
+import io.micronaut.data.runtime.query.internal.QueryResultStoredQuery;
 import io.micronaut.http.codec.MediaTypeCodec;
 import io.micronaut.inject.BeanDefinition;
-import io.micronaut.inject.ExecutableMethod;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
@@ -71,41 +62,22 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 
 /**
  * Shared implementation of Mongo sync and reactive repositories.
  *
  * @param <Dtb> The database type
- * @param <Cnt> The connection
- * @param <PS>  The prepared statement
  * @author Denis Stepanov
  * @since 3.3
  */
 @Internal
-abstract class AbstractMongoRepositoryOperations<Dtb, Cnt, PS> extends AbstractRepositoryOperations<Cnt, PS> implements HintsCapableRepository, PreparedQueryResolver, StoredQueryResolver {
+abstract class AbstractMongoRepositoryOperations<Dtb> extends AbstractRepositoryOperations
+        implements HintsCapableRepository, PreparedQueryDecorator, MethodContextAwareStoredQueryDecorator {
 
     protected static final Logger QUERY_LOG = DataSettings.QUERY_LOG;
     protected static final BsonDocument EMPTY = new BsonDocument();
     protected final Map<Class, String> repoDatabaseConfig;
-
-    private final DefaultStoredQueryResolver defaultStoredQueryResolver = new DefaultStoredQueryResolver() {
-        @Override
-        protected HintsCapableRepository getHintsCapableRepository() {
-            return AbstractMongoRepositoryOperations.this;
-        }
-    };
-
-    private final DefaultPreparedQueryResolver defaultPreparedQueryResolver = new DefaultPreparedQueryResolver() {
-        @Override
-        protected ConversionService getConversionService() {
-            return conversionService;
-        }
-    };
-
-    private final ConcurrentMap<RepositoryMethodKey, Object> options = new ConcurrentHashMap<>(50);
 
     /**
      * Default constructor.
@@ -176,81 +148,26 @@ abstract class AbstractMongoRepositoryOperations<Dtb, Cnt, PS> extends AbstractR
     }
 
     @Override
-    public <E, R> PreparedQuery<E, R> resolveQuery(MethodInvocationContext<?, ?> context,
-                                                   StoredQuery<E, R> storedQuery,
-                                                   Pageable pageable) {
-        PreparedQuery<E, R> preparedQuery = defaultPreparedQueryResolver.resolveQuery(context, storedQuery, pageable);
+    public <E, R> PreparedQuery<E, R> decorate(PreparedQuery<E, R> preparedQuery) {
         return new DefaultMongoPreparedQuery<>(preparedQuery);
     }
 
     @Override
-    public <E, R> PreparedQuery<E, R> resolveCountQuery(MethodInvocationContext<?, ?> context,
-                                                        StoredQuery<E, R> storedQuery,
-                                                        Pageable pageable) {
-
-        PreparedQuery<E, R> preparedQuery = defaultPreparedQueryResolver.resolveCountQuery(context, storedQuery, pageable);
-        return new DefaultMongoPreparedQuery<>(preparedQuery);
-    }
-
-    @Override
-    public <E, R> StoredQuery<E, R> resolveQuery(MethodInvocationContext<?, ?> context, Class<E> entityClass, Class<R> resultType) {
-        StoredQuery<E, R> storedQuery = defaultStoredQueryResolver.resolveQuery(context, entityClass, resultType);
+    public <E, R> StoredQuery<E, R> decorate(MethodInvocationContext<?, ?> context, StoredQuery<E, R> storedQuery) {
         RuntimePersistentEntity<E> persistentEntity = runtimeEntityRegistry.getEntity(storedQuery.getRootEntity());
         Class<?> repositoryType = context.getTarget().getClass();
         Dtb database = getDatabase(persistentEntity, repositoryType);
         CodecRegistry codecRegistry = getCodecRegistry(database);
+        if (storedQuery instanceof QueryResultStoredQuery) {
+            QueryResultStoredQuery<?, ?> resultStoredQuery = (QueryResultStoredQuery) storedQuery;
+            String update = resultStoredQuery.getQueryResult().getUpdate();
+            if (update != null) {
+                return new DefaultMongoStoredQuery<>(storedQuery, codecRegistry, attributeConverterRegistry,
+                        runtimeEntityRegistry, conversionService, persistentEntity, database, resultStoredQuery.getOperationType(), update);
+            }
+        }
         return new DefaultMongoStoredQuery<>(storedQuery, codecRegistry, attributeConverterRegistry,
                 runtimeEntityRegistry, conversionService, persistentEntity, database);
-    }
-
-    @Override
-    public <E, R> StoredQuery<E, R> resolveCountQuery(MethodInvocationContext<?, ?> context, Class<E> entityClass, Class<R> resultType) {
-        StoredQuery<E, R> storedQuery = defaultStoredQueryResolver.resolveCountQuery(context, entityClass, resultType);
-        Class<?> repositoryType = context.getTarget().getClass();
-        RuntimePersistentEntity<E> persistentEntity = runtimeEntityRegistry.getEntity(storedQuery.getRootEntity());
-        Dtb database = getDatabase(persistentEntity, repositoryType);
-        CodecRegistry codecRegistry = getCodecRegistry(database);
-        return new DefaultMongoStoredQuery<>(storedQuery, codecRegistry, attributeConverterRegistry,
-                runtimeEntityRegistry, conversionService, persistentEntity, database);
-    }
-
-    @Override
-    public <E, QR> StoredQuery<E, QR> createStoredQuery(ExecutableMethod<?, ?> executableMethod,
-                                                        DataMethod.OperationType operationType,
-                                                        String name,
-                                                        AnnotationMetadata annotationMetadata,
-                                                        Class<Object> rootEntity,
-                                                        String query,
-                                                        String update,
-                                                        String[] queryParts,
-                                                        List<QueryParameterBinding> queryParameters,
-                                                        boolean hasPageable,
-                                                        boolean isSingleResult) {
-        StoredQuery<E, QR> storedQuery = defaultStoredQueryResolver.createStoredQuery(executableMethod, operationType, name, annotationMetadata,
-                rootEntity, query, update, queryParts, queryParameters, hasPageable, isSingleResult);
-        Class<?> repositoryType = executableMethod.getDeclaringType();
-        RuntimePersistentEntity<E> persistentEntity = runtimeEntityRegistry.getEntity(storedQuery.getRootEntity());
-        Dtb database = getDatabase(persistentEntity, repositoryType);
-        CodecRegistry codecRegistry = getCodecRegistry(database);
-        return new DefaultMongoStoredQuery<>(storedQuery, codecRegistry, attributeConverterRegistry, runtimeEntityRegistry, conversionService, persistentEntity, database, operationType, update);
-    }
-
-    @Override
-    public StoredQuery<Object, Long> createCountStoredQuery(ExecutableMethod<?, ?> executableMethod,
-                                                            DataMethod.OperationType operationType,
-                                                            String name,
-                                                            AnnotationMetadata annotationMetadata,
-                                                            Class<Object> rootEntity,
-                                                            String query,
-                                                            String[] queryParts,
-                                                            List<QueryParameterBinding> queryParameters) {
-        StoredQuery<Object, Long> storedQuery = defaultStoredQueryResolver.createCountStoredQuery(executableMethod, operationType, name, annotationMetadata,
-                rootEntity, query, queryParts, queryParameters);
-        Class<?> repositoryType = executableMethod.getDeclaringType();
-        RuntimePersistentEntity<Object> persistentEntity = runtimeEntityRegistry.getEntity(storedQuery.getRootEntity());
-        Dtb database = getDatabase(persistentEntity, repositoryType);
-        CodecRegistry codecRegistry = getCodecRegistry(database);
-        return new DefaultMongoStoredQuery<>(storedQuery, codecRegistry, attributeConverterRegistry, runtimeEntityRegistry, conversionService, persistentEntity, database, operationType, null);
     }
 
     protected <R> R convertResult(CodecRegistry codecRegistry,
@@ -291,14 +208,6 @@ abstract class AbstractMongoRepositoryOperations<Dtb, Cnt, PS> extends AbstractR
         document.put(persistentEntity.getPersistedName(), MongoUtils.entityIdValue(conversionService, persistentEntity, value, codecRegistry));
         document.put(childPersistentEntity.getPersistedName(), MongoUtils.entityIdValue(conversionService, childPersistentEntity, child, codecRegistry));
         return document;
-    }
-
-    @Override
-    protected ConversionContext createTypeConversionContext(Cnt connection, RuntimePersistentProperty<?> property, Argument<?> argument) {
-        if (argument != null) {
-            return ConversionContext.of(argument);
-        }
-        return ConversionContext.DEFAULT;
     }
 
     protected final <T> Bson createFilterIdAndVersion(RuntimePersistentEntity<T> persistentEntity, T entity, CodecRegistry codecRegistry) {

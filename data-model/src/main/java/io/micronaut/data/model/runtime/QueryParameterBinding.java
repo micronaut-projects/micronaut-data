@@ -33,7 +33,9 @@ public interface QueryParameterBinding {
      * @return The name of the parameter
      */
     @Nullable
-    String getName();
+    default String getName() {
+        return null;
+    }
 
     /**
      * @return The required name of the parameter or throws exception
@@ -51,30 +53,40 @@ public interface QueryParameterBinding {
      * @return The data type
      */
     @Nullable
-    DataType getDataType();
+    default DataType getDataType() {
+        return null;
+    }
 
     /**
      * @return The parameter converter class
      */
     @Nullable
-    Class<?> getParameterConverterClass();
+    default Class<?> getParameterConverterClass() {
+        return null;
+    }
 
     /**
      * @return The parameter index
      */
-    int getParameterIndex();
+    default int getParameterIndex() {
+        return -1;
+    }
 
     /**
      * @return The parameter binding property path.
      */
     @Nullable
-    String[] getParameterBindingPath();
+    default String[] getParameterBindingPath() {
+        return null;
+    }
 
     /**
      * @return The property path.
      */
     @Nullable
-    String[] getPropertyPath();
+    default String[] getPropertyPath() {
+        return null;
+    }
 
     /**
      * @return The required property path or throws and exception.
@@ -91,23 +103,34 @@ public interface QueryParameterBinding {
     /**
      * @return if property is auto-populated
      */
-    boolean isAutoPopulated();
+    default boolean isAutoPopulated() {
+        return false;
+    }
 
     /**
      * @return if property is auto-populated and binding requires previous value to be set.
      */
-    boolean isRequiresPreviousPopulatedValue();
+    default boolean isRequiresPreviousPopulatedValue() {
+        return false;
+    }
 
     /**
      * @return The previous value of the auto-populated property for cases when the property is mapped to the method parameter.
      */
     @Nullable
-    QueryParameterBinding getPreviousPopulatedValueParameter();
+    default QueryParameterBinding getPreviousPopulatedValueParameter() {
+        return null;
+    }
 
     /**
      * @return Is expandable parameter
      */
     default boolean isExpandable() {
         return false;
+    }
+
+    @Nullable
+    default Object getValue() {
+        return null;
     }
 }

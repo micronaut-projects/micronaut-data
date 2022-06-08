@@ -25,15 +25,11 @@ import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.context.annotation.Primary;
-import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.util.StringUtils;
-import io.micronaut.data.intercept.annotation.DataMethod;
-import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.runtime.PreparedQuery;
-import io.micronaut.data.model.runtime.QueryParameterBinding;
 import io.micronaut.data.model.runtime.StoredQuery;
 import io.micronaut.data.mongodb.conf.RequiresReactiveMongo;
 import io.micronaut.data.mongodb.operations.DefaultReactiveMongoRepositoryOperations;
@@ -43,12 +39,10 @@ import io.micronaut.data.operations.async.AsyncCapableRepository;
 import io.micronaut.data.operations.reactive.BlockingReactorRepositoryOperations;
 import io.micronaut.data.operations.reactive.ReactorReactiveRepositoryOperations;
 import io.micronaut.data.runtime.operations.ExecutorAsyncOperations;
-import io.micronaut.data.runtime.query.PreparedQueryResolver;
-import io.micronaut.data.runtime.query.StoredQueryResolver;
-import io.micronaut.inject.ExecutableMethod;
+import io.micronaut.data.runtime.query.MethodContextAwareStoredQueryDecorator;
+import io.micronaut.data.runtime.query.PreparedQueryDecorator;
 import jakarta.inject.Singleton;
 
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -92,8 +86,8 @@ final class MongoReactiveFactory {
             BlockingReactorRepositoryOperations,
             AsyncCapableRepository,
             HintsCapableRepository,
-            StoredQueryResolver,
-            PreparedQueryResolver {
+            MethodContextAwareStoredQueryDecorator,
+            PreparedQueryDecorator {
 
         private final DefaultReactiveMongoRepositoryOperations reactiveOperations;
         private ExecutorService executorService;
@@ -143,43 +137,15 @@ final class MongoReactiveFactory {
         }
 
         @Override
-        public <E, R> PreparedQuery<E, R> resolveQuery(MethodInvocationContext<?, ?> context, StoredQuery<E, R> storedQuery, Pageable pageable) {
-            return reactiveOperations.resolveQuery(context, storedQuery, pageable);
+        public <E, R> StoredQuery<E, R> decorate(MethodInvocationContext<?, ?> context, StoredQuery<E, R> storedQuery) {
+            return reactiveOperations.decorate(context, storedQuery);
         }
 
         @Override
-        public <E, R> PreparedQuery<E, R> resolveCountQuery(MethodInvocationContext<?, ?> context, StoredQuery<E, R> storedQuery, Pageable pageable) {
-            return reactiveOperations.resolveCountQuery(context, storedQuery, pageable);
+        public <E, R> PreparedQuery<E, R> decorate(PreparedQuery<E, R> preparedQuery) {
+            return reactiveOperations.decorate(preparedQuery);
         }
 
-        @Override
-        public <E, R> StoredQuery<E, R> resolveQuery(MethodInvocationContext<?, ?> context, Class<E> entityClass, Class<R> resultType) {
-            return reactiveOperations.resolveQuery(context, entityClass, resultType);
-        }
-
-        @Override
-        public <E, R> StoredQuery<E, R> resolveCountQuery(MethodInvocationContext<?, ?> context, Class<E> entityClass, Class<R> resultType) {
-            return reactiveOperations.resolveCountQuery(context, entityClass, resultType);
-        }
-
-        @Override
-        public <E, QR> StoredQuery<E, QR> createStoredQuery(ExecutableMethod<?, ?> executableMethod,
-                                                            DataMethod.OperationType operationType,
-                                                            String name, AnnotationMetadata annotationMetadata,
-                                                            Class<Object> rootEntity, String query, String update,
-                                                            String[] queryParts, List<QueryParameterBinding> queryParameters,
-                                                            boolean hasPageable, boolean isSingleResult) {
-            return reactiveOperations.createStoredQuery(executableMethod, operationType, name, annotationMetadata, rootEntity, query, update, queryParts, queryParameters, hasPageable, isSingleResult);
-        }
-
-        @Override
-        public StoredQuery<Object, Long> createCountStoredQuery(ExecutableMethod<?, ?> executableMethod,
-                                                                DataMethod.OperationType operationType,
-                                                                String name, AnnotationMetadata annotationMetadata,
-                                                                Class<Object> rootEntity, String query, String[] queryParts,
-                                                                List<QueryParameterBinding> queryParameters) {
-            return reactiveOperations.createCountStoredQuery(executableMethod, operationType, name, annotationMetadata, rootEntity, query, queryParts, queryParameters);
-        }
     }
 
 }

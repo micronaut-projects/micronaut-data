@@ -30,6 +30,7 @@ import io.micronaut.data.model.Association;
 import io.micronaut.data.model.Embedded;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.PersistentEntity;
+import io.micronaut.data.model.PersistentEntityUtils;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.Sort;
@@ -1019,35 +1020,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
     private void traversePersistentProperties(List<Association> associations,
                                               PersistentProperty property,
                                               BiConsumer<List<Association>, PersistentProperty> consumerProperty) {
-        if (property instanceof Embedded) {
-            Embedded embedded = (Embedded) property;
-            PersistentEntity embeddedEntity = embedded.getAssociatedEntity();
-            Collection<? extends PersistentProperty> embeddedProperties = embeddedEntity.getPersistentProperties();
-            List<Association> newAssociations = new ArrayList<>(associations);
-            newAssociations.add((Association) property);
-            for (PersistentProperty embeddedProperty : embeddedProperties) {
-                traversePersistentProperties(newAssociations, embeddedProperty, consumerProperty);
-            }
-        } else if (property instanceof Association) {
-            Association association = (Association) property;
-            if (association.isForeignKey()) {
-                return;
-            }
-            List<Association> newAssociations = new ArrayList<>(associations);
-            newAssociations.add((Association) property);
-            PersistentEntity associatedEntity = association.getAssociatedEntity();
-            PersistentProperty assocIdentity = associatedEntity.getIdentity();
-            if (assocIdentity == null) {
-                throw new IllegalStateException("Identity cannot be missing for: " + associatedEntity);
-            }
-            if (assocIdentity instanceof Association) {
-                traversePersistentProperties(newAssociations, assocIdentity, consumerProperty);
-            } else {
-                consumerProperty.accept(newAssociations, assocIdentity);
-            }
-        } else {
-            consumerProperty.accept(associations, property);
-        }
+        PersistentEntityUtils.traversePersistentProperties(associations, property, consumerProperty);
     }
 
     private static final class RawJsonValue {

@@ -17,6 +17,7 @@ package io.micronaut.data.runtime.query;
 
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.annotation.AnnotationMetadata;
+import io.micronaut.core.annotation.Experimental;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.runtime.QueryParameterBinding;
 import io.micronaut.data.model.runtime.StoredQuery;
@@ -30,6 +31,7 @@ import java.util.List;
  * @author Denis Stepanov
  * @since 3.3
  */
+@Experimental
 public interface StoredQueryResolver {
 
     /**

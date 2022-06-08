@@ -36,13 +36,9 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.beans.BeanProperty;
-import io.micronaut.core.convert.ConversionContext;
-import io.micronaut.core.type.Argument;
 import io.micronaut.data.exceptions.DataAccessException;
-import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.PersistentProperty;
-import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
 import io.micronaut.data.model.runtime.DeleteBatchOperation;
 import io.micronaut.data.model.runtime.DeleteOperation;
@@ -112,7 +108,7 @@ import java.util.stream.Collectors;
 @RequiresReactiveMongo
 @EachBean(MongoClient.class)
 @Internal
-public class DefaultReactiveMongoRepositoryOperations extends AbstractMongoRepositoryOperations<MongoDatabase, ClientSession, Object>
+public class DefaultReactiveMongoRepositoryOperations extends AbstractMongoRepositoryOperations<MongoDatabase>
         implements MongoReactorRepositoryOperations,
         ReactorReactiveRepositoryOperations,
         ReactiveCascadeOperations.ReactiveCascadeOperationsHelper<DefaultReactiveMongoRepositoryOperations.MongoOperationContext>,
@@ -626,16 +622,6 @@ public class DefaultReactiveMongoRepositoryOperations extends AbstractMongoRepos
             }
         }
         return entity;
-    }
-
-    @Override
-    protected ConversionContext createTypeConversionContext(ClientSession connection, RuntimePersistentProperty<?> property, Argument<?> argument) {
-        return null;
-    }
-
-    @Override
-    public void setStatementParameter(Object preparedStatement, int index, DataType dataType, Object value, Dialect dialect) {
-
     }
 
     private <T> MongoCollection<T> getCollection(RuntimePersistentEntity<T> persistentEntity, Class<?> repositoryClass) {

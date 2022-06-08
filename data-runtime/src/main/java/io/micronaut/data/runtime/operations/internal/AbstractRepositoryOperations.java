@@ -20,9 +20,6 @@ import io.micronaut.context.ApplicationContextProvider;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
-import io.micronaut.core.convert.ConversionContext;
-import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.event.EntityEventContext;
@@ -36,7 +33,6 @@ import io.micronaut.data.model.runtime.AttributeConverterRegistry;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
-import io.micronaut.data.model.runtime.convert.AttributeConverter;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.date.DateTimeProvider;
 import io.micronaut.data.runtime.event.DefaultEntityEventContext;
@@ -50,15 +46,13 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
 /**
- * Abstract SQL repository implementation not specifically bound to JDBC.
+ * Abstract repository implementation.
  *
- * @param <Cnt> The connection type
- * @param <PS>  The prepared statement
  * @author Denis Stepanov
  * @since 3.1.0
  */
 @Internal
-public abstract class AbstractRepositoryOperations<Cnt, PS> implements ApplicationContextProvider, OpContext<Cnt, PS> {
+public abstract class AbstractRepositoryOperations implements ApplicationContextProvider {
     protected final MediaTypeCodec jsonCodec;
     protected final EntityEventListener<Object> entityEventRegistry;
     protected final DateTimeProvider dateTimeProvider;
@@ -111,11 +105,6 @@ public abstract class AbstractRepositoryOperations<Cnt, PS> implements Applicati
         return runtimeEntityRegistry.getEntity(type);
     }
 
-    @Override
-    public RuntimeEntityRegistry getRuntimeEntityRegistry() {
-        return runtimeEntityRegistry;
-    }
-
     /**
      * Trigger the post load event.
      *
@@ -130,16 +119,6 @@ public abstract class AbstractRepositoryOperations<Cnt, PS> implements Applicati
         final DefaultEntityEventContext<T> event = new DefaultEntityEventContext<>(pe, entity);
         entityEventRegistry.postLoad((EntityEventContext<Object>) event);
         return event.getEntity();
-    }
-
-    /**
-     * Used to define the index whether it is 1 based (JDBC) or 0 based (R2DBC).
-     *
-     * @param i The index to shift
-     * @return the index
-     */
-    public int shiftIndex(int i) {
-        return i + 1;
     }
 
     /**
@@ -199,34 +178,4 @@ public abstract class AbstractRepositoryOperations<Cnt, PS> implements Applicati
         return onlySingleEndedJoins;
     }
 
-    @Override
-    public Object convert(Cnt connection, Object value, RuntimePersistentProperty<?> property) {
-        AttributeConverter<Object, Object> converter = property.getConverter();
-        if (converter != null) {
-            return converter.convertToPersistedValue(value, createTypeConversionContext(connection, property, property.getArgument()));
-        }
-        return value;
-    }
-
-    @Override
-    public Object convert(Class<?> converterClass, Cnt connection, Object value, @Nullable Argument<?> argument) {
-        if (converterClass == null) {
-            return value;
-        }
-        AttributeConverter<Object, Object> converter = attributeConverterRegistry.getConverter(converterClass);
-        ConversionContext conversionContext = createTypeConversionContext(connection, null, argument);
-        return converter.convertToPersistedValue(value, conversionContext);
-    }
-
-    /**
-     * Creates implementation specific conversion context.
-     *
-     * @param connection The connection
-     * @param property   The property
-     * @param argument   The argument
-     * @return new {@link ConversionContext}
-     */
-    protected abstract ConversionContext createTypeConversionContext(Cnt connection,
-                                                                     @Nullable RuntimePersistentProperty<?> property,
-                                                                     @Nullable Argument<?> argument);
 }
