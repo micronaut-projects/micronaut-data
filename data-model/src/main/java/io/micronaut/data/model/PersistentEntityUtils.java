@@ -30,7 +30,10 @@ import java.util.function.BiConsumer;
  * @since 3.5.0
  */
 @Internal
-public class PersistentEntityUtils {
+public final class PersistentEntityUtils {
+
+    private PersistentEntityUtils() {
+    }
 
     /**
      * Traverses properties that should be persisted.

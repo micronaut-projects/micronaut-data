@@ -17,30 +17,25 @@ package io.micronaut.data.runtime.query;
 
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.annotation.Experimental;
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.data.model.Pageable;
-import io.micronaut.data.model.runtime.PagedQuery;
+import io.micronaut.data.model.runtime.StoredQuery;
 
 /**
- * Paged query resolver.
+ * Special version of stored query decorator that is aware of the method invocation context.
  *
  * @author Denis Stepanov
- * @since 3.3
+ * @since 3.5.0
  */
 @Experimental
-public interface PagedQueryResolver {
+public interface MethodContextAwareStoredQueryDecorator {
 
     /**
-     * Paged query resolved from the method context.
+     * Decorate stored query.
      *
-     * @param context     The method context
-     * @param entityClass The entity class
-     * @param pageable    The pageable
+     * @param context     The context
+     * @param storedQuery The query to be decorated
      * @param <E>         The entity type
-     * @return The paged query
+     * @param <R>         The result type
+     * @return decorated stored query
      */
-    <E> PagedQuery<E> resolveQuery(@NonNull MethodInvocationContext<?, ?> context,
-                                   @NonNull Class<E> entityClass,
-                                   @NonNull Pageable pageable);
-
+    <E, R> StoredQuery<E, R> decorate(MethodInvocationContext<?, ?> context, StoredQuery<E, R> storedQuery);
 }

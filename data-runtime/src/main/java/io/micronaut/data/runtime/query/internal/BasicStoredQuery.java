@@ -13,11 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.runtime.operations.internal.sql;
+package io.micronaut.data.runtime.query.internal;
 
+import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.type.Argument;
+import io.micronaut.data.annotation.RepositoryConfiguration;
 import io.micronaut.data.model.DataType;
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.runtime.QueryParameterBinding;
 import io.micronaut.data.model.runtime.StoredQuery;
 
@@ -34,23 +37,57 @@ import java.util.List;
 @Internal
 public class BasicStoredQuery<E, R> implements StoredQuery<E, R> {
 
+    private final String name;
+    private final AnnotationMetadata annotationMetadata;
     private final String query;
     private final String[] expandableQueryParts;
     private final List<QueryParameterBinding> queryParameterBindings;
     private final Class<E> rootEntity;
     private final Class<R> resultType;
+    private final boolean pageable;
+    private final boolean isSingleResult;
+    private final boolean isCount;
+    private final DataType resultDataType;
 
-    public BasicStoredQuery(String query, String[] expandableQueryParts, List<QueryParameterBinding> queryParameterBindings, Class<E> rootEntity, Class<R> resultType) {
+    public BasicStoredQuery(String query,
+                            String[] expandableQueryParts,
+                            List<QueryParameterBinding> queryParameterBindings,
+                            Class<E> rootEntity,
+                            Class<R> resultType) {
+        this("Custom query", AnnotationMetadata.EMPTY_METADATA, query, expandableQueryParts, queryParameterBindings, rootEntity, resultType, false, false, false);
+    }
+
+    public BasicStoredQuery(String name,
+                            AnnotationMetadata annotationMetadata,
+                            String query,
+                            String[] expandableQueryParts,
+                            List<QueryParameterBinding> queryParameterBindings,
+                            Class<E> rootEntity,
+                            Class<R> resultType,
+                            boolean pageable,
+                            boolean isSingleResult,
+                            boolean isCount) {
+        this.name = name;
+        this.annotationMetadata = annotationMetadata;
         this.query = query;
         this.expandableQueryParts = expandableQueryParts == null ? new String[0] : expandableQueryParts;
         this.queryParameterBindings = queryParameterBindings;
         this.rootEntity = rootEntity;
         this.resultType = resultType;
+        this.pageable = pageable;
+        this.isSingleResult = isSingleResult;
+        this.isCount = isCount;
+        this.resultDataType = isCount ? DataType.forType(resultType) : DataType.ENTITY;
+    }
+
+    @Override
+    public AnnotationMetadata getAnnotationMetadata() {
+        return annotationMetadata;
     }
 
     @Override
     public String getName() {
-        return "Custom query";
+        return name;
     }
 
     @Override
@@ -70,12 +107,12 @@ public class BasicStoredQuery<E, R> implements StoredQuery<E, R> {
 
     @Override
     public DataType getResultDataType() {
-        return DataType.ENTITY;
+        return resultDataType;
     }
 
     @Override
     public boolean hasPageable() {
-        return false;
+        return pageable;
     }
 
     @Override
@@ -95,21 +132,23 @@ public class BasicStoredQuery<E, R> implements StoredQuery<E, R> {
 
     @Override
     public boolean useNumericPlaceholders() {
-        return false;
+        return annotationMetadata.classValue(RepositoryConfiguration.class, "queryBuilder")
+                .map(c -> c == SqlQueryBuilder.class).orElse(false);
     }
 
     @Override
     public boolean isCount() {
-        return false;
+        return isCount;
     }
 
     @Override
     public boolean isSingleResult() {
-        return false;
+        return isSingleResult;
     }
 
     @Override
     public boolean hasResultConsumer() {
         return false;
     }
+
 }

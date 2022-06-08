@@ -15,32 +15,25 @@
  */
 package io.micronaut.data.runtime.query;
 
-import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.annotation.Experimental;
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.data.model.Pageable;
-import io.micronaut.data.model.runtime.PagedQuery;
+import io.micronaut.data.model.runtime.PreparedQuery;
 
 /**
- * Paged query resolver.
+ * Prepared query decorator.
  *
  * @author Denis Stepanov
- * @since 3.3
+ * @since 3.5.0
  */
 @Experimental
-public interface PagedQueryResolver {
+public interface PreparedQueryDecorator {
 
     /**
-     * Paged query resolved from the method context.
+     * Decorate prepared query.
      *
-     * @param context     The method context
-     * @param entityClass The entity class
-     * @param pageable    The pageable
-     * @param <E>         The entity type
-     * @return The paged query
+     * @param preparedQuery The query to be decorated
+     * @param <E>           The entity type
+     * @param <R>           The result type
+     * @return decorated prepared query
      */
-    <E> PagedQuery<E> resolveQuery(@NonNull MethodInvocationContext<?, ?> context,
-                                   @NonNull Class<E> entityClass,
-                                   @NonNull Pageable pageable);
-
+    <E, R> PreparedQuery<E, R> decorate(PreparedQuery<E, R> preparedQuery);
 }

@@ -971,7 +971,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         }
 
         private PreparedStatement prepare(Connection connection, SqlStoredQuery storedQuery) throws SQLException {
-            if (SqlPreparedQuery.class.isInstance(storedQuery)) {
+            if (storedQuery instanceof SqlPreparedQuery) {
                 ((SqlPreparedQuery) storedQuery).prepare(entity);
             }
             if (insert) {

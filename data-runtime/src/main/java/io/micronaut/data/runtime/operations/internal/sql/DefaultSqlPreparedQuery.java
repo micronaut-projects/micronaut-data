@@ -34,6 +34,7 @@ import io.micronaut.data.runtime.query.internal.DelegateStoredQuery;
 
 import java.lang.reflect.Array;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.Map;
 
 /**
@@ -145,7 +146,7 @@ final class DefaultSqlPreparedQuery<E, R> implements SqlPreparedQuery<E, R>, Del
         sqlStoredQuery.bindParameters(binder, this.invocationContext, entity, previousValues);
     }
 
-    private <T> int getQueryParameterValueSize(QueryParameterBinding parameter) {
+    private int getQueryParameterValueSize(QueryParameterBinding parameter) {
         int parameterIndex = parameter.getParameterIndex();
         if (parameterIndex == -1) {
             return 1;
@@ -225,7 +226,9 @@ final class DefaultSqlPreparedQuery<E, R> implements SqlPreparedQuery<E, R>, Del
             return ((Collection) value).size();
         } else if (value instanceof Iterable) {
             int i = 0;
-            for (Object ignored : ((Iterable) value)) {
+            Iterator<?> iterator = ((Iterable<?>) value).iterator();
+            while (iterator.hasNext()) {
+                iterator.next();
                 i++;
             }
             return i;

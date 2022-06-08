@@ -112,7 +112,7 @@ import java.util.stream.StreamSupport;
 @RequiresSyncMongo
 @EachBean(MongoClient.class)
 @Internal
-public final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOperations<MongoDatabase, ClientSession> implements
+public final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOperations<MongoDatabase> implements
         MongoRepositoryOperations,
         AsyncCapableRepository,
         ReactiveCapableRepository,
