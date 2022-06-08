@@ -17,7 +17,7 @@
     catch(err) {
     }
 //-->
-var methods = {"i0":10,"i1":10,"i2":10,"i3":10,"i4":10,"i5":10,"i6":9,"i7":9,"i8":10};
+var methods = {"i0":10,"i1":10,"i2":10,"i3":10,"i4":10,"i5":10,"i6":10,"i7":9,"i8":9,"i9":10};
 var tabs = {65535:["t0","All Methods"],1:["t1","Static Methods"],2:["t2","Instance Methods"],8:["t4","Concrete Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -172,37 +172,41 @@ extends java.lang.Object</pre>
 </td>
 </tr>
 <tr id="i1" class="rowColor">
+<td class="colFirst"><code>java.lang.String[]</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/model/PersistentPropertyPath.html#getArrayPath--">getArrayPath</a></span>()</code>&nbsp;</td>
+</tr>
+<tr id="i2" class="altColor">
 <td class="colFirst"><code>java.util.List&lt;<a href="../../../../io/micronaut/data/model/Association.html" title="interface in io.micronaut.data.model">Association</a>&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/model/PersistentPropertyPath.html#getAssociations--">getAssociations</a></span>()</code>&nbsp;</td>
 </tr>
-<tr id="i2" class="altColor">
+<tr id="i3" class="rowColor">
 <td class="colFirst"><code><a href="../../../../io/micronaut/data/model/naming/NamingStrategy.html" title="interface in io.micronaut.data.model.naming">NamingStrategy</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/model/PersistentPropertyPath.html#getNamingStrategy--">getNamingStrategy</a></span>()</code>
 <div class="block">Get naming strategy for thpe property.</div>
 </td>
 </tr>
-<tr id="i3" class="rowColor">
+<tr id="i4" class="altColor">
 <td class="colFirst"><code>java.lang.String</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/model/PersistentPropertyPath.html#getPath--">getPath</a></span>()</code>&nbsp;</td>
 </tr>
-<tr id="i4" class="altColor">
+<tr id="i5" class="rowColor">
 <td class="colFirst"><code><a href="../../../../io/micronaut/data/model/PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/model/PersistentPropertyPath.html#getProperty--">getProperty</a></span>()</code>&nbsp;</td>
 </tr>
-<tr id="i5" class="rowColor">
+<tr id="i6" class="altColor">
 <td class="colFirst"><code>java.lang.Object</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/model/PersistentPropertyPath.html#getPropertyValue-java.lang.Object-">getPropertyValue</a></span>(java.lang.Object&nbsp;bean)</code>
 <div class="block">Gets property path value.</div>
 </td>
 </tr>
-<tr id="i6" class="altColor">
+<tr id="i7" class="rowColor">
 <td class="colFirst"><code>static <a href="../../../../io/micronaut/data/model/PersistentPropertyPath.html" title="class in io.micronaut.data.model">PersistentPropertyPath</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/model/PersistentPropertyPath.html#of-java.util.List-io.micronaut.data.model.PersistentProperty-">of</a></span>(java.util.List&lt;<a href="../../../../io/micronaut/data/model/Association.html" title="interface in io.micronaut.data.model">Association</a>&gt;&nbsp;associations,
   <a href="../../../../io/micronaut/data/model/PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a>&nbsp;property)</code>
 <div class="block">Creates <a href="../../../../io/micronaut/data/model/PersistentPropertyPath.html" title="class in io.micronaut.data.model"><code>PersistentPropertyPath</code></a> or <a href="../../../../io/micronaut/data/model/PersistentAssociationPath.html" title="class in io.micronaut.data.model"><code>PersistentAssociationPath</code></a>.</div>
 </td>
 </tr>
-<tr id="i7" class="rowColor">
+<tr id="i8" class="altColor">
 <td class="colFirst"><code>static <a href="../../../../io/micronaut/data/model/PersistentPropertyPath.html" title="class in io.micronaut.data.model">PersistentPropertyPath</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/model/PersistentPropertyPath.html#of-java.util.List-io.micronaut.data.model.PersistentProperty-java.lang.String-">of</a></span>(java.util.List&lt;<a href="../../../../io/micronaut/data/model/Association.html" title="interface in io.micronaut.data.model">Association</a>&gt;&nbsp;associations,
   <a href="../../../../io/micronaut/data/model/PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a>&nbsp;property,
@@ -210,7 +214,7 @@ extends java.lang.Object</pre>
 <div class="block">Creates <a href="../../../../io/micronaut/data/model/PersistentPropertyPath.html" title="class in io.micronaut.data.model"><code>PersistentPropertyPath</code></a> or <a href="../../../../io/micronaut/data/model/PersistentAssociationPath.html" title="class in io.micronaut.data.model"><code>PersistentAssociationPath</code></a>.</div>
 </td>
 </tr>
-<tr id="i8" class="altColor">
+<tr id="i9" class="rowColor">
 <td class="colFirst"><code>java.lang.Object</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/model/PersistentPropertyPath.html#setPropertyValue-java.lang.Object-java.lang.Object-">setPropertyValue</a></span>(java.lang.Object&nbsp;bean,
                 java.lang.Object&nbsp;value)</code>
@@ -400,6 +404,20 @@ public&nbsp;java.lang.String&nbsp;getPath()</pre>
 <dl>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>The path</dd>
+</dl>
+</li>
+</ul>
+<a name="getArrayPath--">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>getArrayPath</h4>
+<pre>@NonNull
+public&nbsp;java.lang.String[]&nbsp;getArrayPath()</pre>
+<dl>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>The array path</dd>
 </dl>
 </li>
 </ul>

@@ -208,19 +208,19 @@ extends <a href="../../../../../../io/micronaut/data/runtime/intercept/AbstractQ
 <th class="colLast" scope="col">Method and Description</th>
 </tr>
 <tr id="i0" class="altColor">
-<td class="colFirst"><code>protected <a href="../../../../../../io/micronaut/data/repository/jpa/criteria/DeleteSpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria">DeleteSpecification</a>&lt;java.lang.Object&gt;</code></td>
+<td class="colFirst"><code>protected &lt;K&gt;&nbsp;<a href="../../../../../../io/micronaut/data/repository/jpa/criteria/DeleteSpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria">DeleteSpecification</a>&lt;K&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/intercept/criteria/AbstractSpecificationInterceptor.html#getDeleteSpecification-io.micronaut.aop.MethodInvocationContext-">getDeleteSpecification</a></span>(io.micronaut.aop.MethodInvocationContext&lt;?,?&gt;&nbsp;context)</code>
 <div class="block">Find <a href="../../../../../../io/micronaut/data/repository/jpa/criteria/DeleteSpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria"><code>DeleteSpecification</code></a> in context.</div>
 </td>
 </tr>
 <tr id="i1" class="rowColor">
-<td class="colFirst"><code>protected <a href="../../../../../../io/micronaut/data/repository/jpa/criteria/QuerySpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria">QuerySpecification</a>&lt;java.lang.Object&gt;</code></td>
+<td class="colFirst"><code>protected &lt;K&gt;&nbsp;<a href="../../../../../../io/micronaut/data/repository/jpa/criteria/QuerySpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria">QuerySpecification</a>&lt;K&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/intercept/criteria/AbstractSpecificationInterceptor.html#getQuerySpecification-io.micronaut.aop.MethodInvocationContext-">getQuerySpecification</a></span>(io.micronaut.aop.MethodInvocationContext&lt;?,?&gt;&nbsp;context)</code>
 <div class="block">Find <a href="../../../../../../io/micronaut/data/repository/jpa/criteria/QuerySpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria"><code>QuerySpecification</code></a> in context.</div>
 </td>
 </tr>
 <tr id="i2" class="altColor">
-<td class="colFirst"><code>protected <a href="../../../../../../io/micronaut/data/repository/jpa/criteria/UpdateSpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria">UpdateSpecification</a>&lt;java.lang.Object&gt;</code></td>
+<td class="colFirst"><code>protected &lt;K&gt;&nbsp;<a href="../../../../../../io/micronaut/data/repository/jpa/criteria/UpdateSpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria">UpdateSpecification</a>&lt;K&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/intercept/criteria/AbstractSpecificationInterceptor.html#getUpdateSpecification-io.micronaut.aop.MethodInvocationContext-">getUpdateSpecification</a></span>(io.micronaut.aop.MethodInvocationContext&lt;?,?&gt;&nbsp;context)</code>
 <div class="block">Find <a href="../../../../../../io/micronaut/data/repository/jpa/criteria/UpdateSpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria"><code>UpdateSpecification</code></a> in context.</div>
 </td>
@@ -295,9 +295,10 @@ extends <a href="../../../../../../io/micronaut/data/runtime/intercept/AbstractQ
 <ul class="blockList">
 <li class="blockList">
 <h4>preparedQueryForCriteria</h4>
-<pre>protected final&nbsp;&lt;E,QR&gt;&nbsp;<a href="../../../../../../io/micronaut/data/model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;E,QR&gt;&nbsp;preparedQueryForCriteria(<a href="../../../../../../io/micronaut/data/intercept/RepositoryMethodKey.html" title="class in io.micronaut.data.intercept">RepositoryMethodKey</a>&nbsp;methodKey,
-                                                                    io.micronaut.aop.MethodInvocationContext&lt;<a href="../../../../../../io/micronaut/data/runtime/intercept/criteria/AbstractSpecificationInterceptor.html" title="type parameter in AbstractSpecificationInterceptor">T</a>,<a href="../../../../../../io/micronaut/data/runtime/intercept/criteria/AbstractSpecificationInterceptor.html" title="type parameter in AbstractSpecificationInterceptor">R</a>&gt;&nbsp;context,
-                                                                    <a href="../../../../../../io/micronaut/data/runtime/intercept/criteria/AbstractSpecificationInterceptor.Type.html" title="enum in io.micronaut.data.runtime.intercept.criteria">AbstractSpecificationInterceptor.Type</a>&nbsp;type)</pre>
+<pre>@NonNull
+protected final&nbsp;&lt;E,QR&gt;&nbsp;<a href="../../../../../../io/micronaut/data/model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;E,QR&gt;&nbsp;preparedQueryForCriteria(<a href="../../../../../../io/micronaut/data/intercept/RepositoryMethodKey.html" title="class in io.micronaut.data.intercept">RepositoryMethodKey</a>&nbsp;methodKey,
+                                                                             io.micronaut.aop.MethodInvocationContext&lt;<a href="../../../../../../io/micronaut/data/runtime/intercept/criteria/AbstractSpecificationInterceptor.html" title="type parameter in AbstractSpecificationInterceptor">T</a>,<a href="../../../../../../io/micronaut/data/runtime/intercept/criteria/AbstractSpecificationInterceptor.html" title="type parameter in AbstractSpecificationInterceptor">R</a>&gt;&nbsp;context,
+                                                                             <a href="../../../../../../io/micronaut/data/runtime/intercept/criteria/AbstractSpecificationInterceptor.Type.html" title="enum in io.micronaut.data.runtime.intercept.criteria">AbstractSpecificationInterceptor.Type</a>&nbsp;type)</pre>
 </li>
 </ul>
 <a name="getQuerySpecification-io.micronaut.aop.MethodInvocationContext-">
@@ -307,9 +308,11 @@ extends <a href="../../../../../../io/micronaut/data/runtime/intercept/AbstractQ
 <li class="blockList">
 <h4>getQuerySpecification</h4>
 <pre>@Nullable
-protected&nbsp;<a href="../../../../../../io/micronaut/data/repository/jpa/criteria/QuerySpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria">QuerySpecification</a>&lt;java.lang.Object&gt;&nbsp;getQuerySpecification(io.micronaut.aop.MethodInvocationContext&lt;?,?&gt;&nbsp;context)</pre>
+protected&nbsp;&lt;K&gt;&nbsp;<a href="../../../../../../io/micronaut/data/repository/jpa/criteria/QuerySpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria">QuerySpecification</a>&lt;K&gt;&nbsp;getQuerySpecification(io.micronaut.aop.MethodInvocationContext&lt;?,?&gt;&nbsp;context)</pre>
 <div class="block">Find <a href="../../../../../../io/micronaut/data/repository/jpa/criteria/QuerySpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria"><code>QuerySpecification</code></a> in context.</div>
 <dl>
+<dt><span class="paramLabel">Type Parameters:</span></dt>
+<dd><code>K</code> - the specification entity root type</dd>
 <dt><span class="paramLabel">Parameters:</span></dt>
 <dd><code>context</code> - The context</dd>
 <dt><span class="returnLabel">Returns:</span></dt>
@@ -324,9 +327,11 @@ protected&nbsp;<a href="../../../../../../io/micronaut/data/repository/jpa/crite
 <li class="blockList">
 <h4>getDeleteSpecification</h4>
 <pre>@Nullable
-protected&nbsp;<a href="../../../../../../io/micronaut/data/repository/jpa/criteria/DeleteSpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria">DeleteSpecification</a>&lt;java.lang.Object&gt;&nbsp;getDeleteSpecification(io.micronaut.aop.MethodInvocationContext&lt;?,?&gt;&nbsp;context)</pre>
+protected&nbsp;&lt;K&gt;&nbsp;<a href="../../../../../../io/micronaut/data/repository/jpa/criteria/DeleteSpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria">DeleteSpecification</a>&lt;K&gt;&nbsp;getDeleteSpecification(io.micronaut.aop.MethodInvocationContext&lt;?,?&gt;&nbsp;context)</pre>
 <div class="block">Find <a href="../../../../../../io/micronaut/data/repository/jpa/criteria/DeleteSpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria"><code>DeleteSpecification</code></a> in context.</div>
 <dl>
+<dt><span class="paramLabel">Type Parameters:</span></dt>
+<dd><code>K</code> - the specification entity root type</dd>
 <dt><span class="paramLabel">Parameters:</span></dt>
 <dd><code>context</code> - The context</dd>
 <dt><span class="returnLabel">Returns:</span></dt>
@@ -341,9 +346,11 @@ protected&nbsp;<a href="../../../../../../io/micronaut/data/repository/jpa/crite
 <li class="blockList">
 <h4>getUpdateSpecification</h4>
 <pre>@Nullable
-protected&nbsp;<a href="../../../../../../io/micronaut/data/repository/jpa/criteria/UpdateSpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria">UpdateSpecification</a>&lt;java.lang.Object&gt;&nbsp;getUpdateSpecification(io.micronaut.aop.MethodInvocationContext&lt;?,?&gt;&nbsp;context)</pre>
+protected&nbsp;&lt;K&gt;&nbsp;<a href="../../../../../../io/micronaut/data/repository/jpa/criteria/UpdateSpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria">UpdateSpecification</a>&lt;K&gt;&nbsp;getUpdateSpecification(io.micronaut.aop.MethodInvocationContext&lt;?,?&gt;&nbsp;context)</pre>
 <div class="block">Find <a href="../../../../../../io/micronaut/data/repository/jpa/criteria/UpdateSpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria"><code>UpdateSpecification</code></a> in context.</div>
 <dl>
+<dt><span class="paramLabel">Type Parameters:</span></dt>
+<dd><code>K</code> - the specification entity root type</dd>
 <dt><span class="paramLabel">Parameters:</span></dt>
 <dd><code>context</code> - The context</dd>
 <dt><span class="returnLabel">Returns:</span></dt>

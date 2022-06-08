@@ -42,7 +42,7 @@
 <div class="subNav">
 <ul class="navList">
 <li><a href="../../../../../../io/micronaut/data/runtime/operations/package-summary.html">Prev&nbsp;Package</a></li>
-<li><a href="../../../../../../io/micronaut/data/runtime/query/package-summary.html">Next&nbsp;Package</a></li>
+<li><a href="../../../../../../io/micronaut/data/runtime/operations/internal/sql/package-summary.html">Next&nbsp;Package</a></li>
 </ul>
 <ul class="navList">
 <li><a href="../../../../../../index.html?io/micronaut/data/runtime/operations/internal/package-summary.html" target="_top">Frames</a></li>
@@ -81,18 +81,6 @@
 </tr>
 <tbody>
 <tr class="altColor">
-<td class="colFirst"><a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.StatementSupplier.html" title="interface in io.micronaut.data.runtime.operations.internal">AbstractSqlRepositoryOperations.StatementSupplier</a>&lt;PS&gt;</td>
-<td class="colLast">
-<div class="block">Functional interface used to supply a statement.</div>
-</td>
-</tr>
-<tr class="rowColor">
-<td class="colFirst"><a href="../../../../../../io/micronaut/data/runtime/operations/internal/OpContext.html" title="interface in io.micronaut.data.runtime.operations.internal">OpContext</a>&lt;Cnt,PS&gt;</td>
-<td class="colLast">
-<div class="block">The internal context.</div>
-</td>
-</tr>
-<tr class="altColor">
 <td class="colFirst"><a href="../../../../../../io/micronaut/data/runtime/operations/internal/ReactiveCascadeOperations.ReactiveCascadeOperationsHelper.html" title="interface in io.micronaut.data.runtime.operations.internal">ReactiveCascadeOperations.ReactiveCascadeOperationsHelper</a>&lt;Ctx extends <a href="../../../../../../io/micronaut/data/runtime/operations/internal/OperationContext.html" title="class in io.micronaut.data.runtime.operations.internal">OperationContext</a>&gt;</td>
 <td class="colLast">
 <div class="block">The cascade operations helper.</div>
@@ -128,33 +116,21 @@
 </td>
 </tr>
 <tr class="altColor">
-<td class="colFirst"><a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractRepositoryOperations.html" title="class in io.micronaut.data.runtime.operations.internal">AbstractRepositoryOperations</a>&lt;Cnt,PS&gt;</td>
+<td class="colFirst"><a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractRepositoryOperations.html" title="class in io.micronaut.data.runtime.operations.internal">AbstractRepositoryOperations</a></td>
 <td class="colLast">
-<div class="block">Abstract SQL repository implementation not specifically bound to JDBC.</div>
+<div class="block">Abstract repository implementation.</div>
 </td>
 </tr>
 <tr class="rowColor">
-<td class="colFirst"><a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.html" title="class in io.micronaut.data.runtime.operations.internal">AbstractSqlRepositoryOperations</a>&lt;Cnt,RS,PS,Exc extends java.lang.Exception&gt;</td>
-<td class="colLast">
-<div class="block">Abstract SQL repository implementation not specifically bound to JDBC.</div>
-</td>
-</tr>
-<tr class="altColor">
 <td class="colFirst"><a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSyncEntitiesOperations.html" title="class in io.micronaut.data.runtime.operations.internal">AbstractSyncEntitiesOperations</a>&lt;Ctx extends <a href="../../../../../../io/micronaut/data/runtime/operations/internal/OperationContext.html" title="class in io.micronaut.data.runtime.operations.internal">OperationContext</a>,T,Exc extends java.lang.Exception&gt;</td>
 <td class="colLast">
 <div class="block">Abstract synchronous entities operations.</div>
 </td>
 </tr>
-<tr class="altColor">
+<tr class="rowColor">
 <td class="colFirst"><a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSyncEntityOperations.html" title="class in io.micronaut.data.runtime.operations.internal">AbstractSyncEntityOperations</a>&lt;Ctx extends <a href="../../../../../../io/micronaut/data/runtime/operations/internal/OperationContext.html" title="class in io.micronaut.data.runtime.operations.internal">OperationContext</a>,T,Exc extends java.lang.Exception&gt;</td>
 <td class="colLast">
 <div class="block">Abstract synchronous entity operations.</div>
-</td>
-</tr>
-<tr class="rowColor">
-<td class="colFirst"><a href="../../../../../../io/micronaut/data/runtime/operations/internal/DBOperation.html" title="class in io.micronaut.data.runtime.operations.internal">DBOperation</a></td>
-<td class="colLast">
-<div class="block">The db operation.</div>
 </td>
 </tr>
 <tr class="altColor">
@@ -167,18 +143,6 @@
 <td class="colFirst"><a href="../../../../../../io/micronaut/data/runtime/operations/internal/OperationContext.html" title="class in io.micronaut.data.runtime.operations.internal">OperationContext</a></td>
 <td class="colLast">
 <div class="block">The operation context.</div>
-</td>
-</tr>
-<tr class="altColor">
-<td class="colFirst"><a href="../../../../../../io/micronaut/data/runtime/operations/internal/PreparedQueryDBOperation.html" title="class in io.micronaut.data.runtime.operations.internal">PreparedQueryDBOperation</a></td>
-<td class="colLast">
-<div class="block">Implementation of the DB operation based on <a href="../../../../../../io/micronaut/data/model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime"><code>PreparedQuery</code></a>.</div>
-</td>
-</tr>
-<tr class="rowColor">
-<td class="colFirst"><a href="../../../../../../io/micronaut/data/runtime/operations/internal/QueryResultSqlOperation.html" title="class in io.micronaut.data.runtime.operations.internal">QueryResultSqlOperation</a></td>
-<td class="colLast">
-<div class="block">Implementation of <a href="../../../../../../io/micronaut/data/runtime/operations/internal/StoredSqlOperation.html" title="class in io.micronaut.data.runtime.operations.internal"><code>StoredSqlOperation</code></a> that retrieves data from <a href="../../../../../../io/micronaut/data/model/query/builder/QueryResult.html" title="interface in io.micronaut.data.model.query.builder"><code>QueryResult</code></a>.</div>
 </td>
 </tr>
 <tr class="altColor">
@@ -197,18 +161,6 @@
 <td class="colFirst"><a href="../../../../../../io/micronaut/data/runtime/operations/internal/ReactiveEntityOperations.html" title="class in io.micronaut.data.runtime.operations.internal">ReactiveEntityOperations</a>&lt;T,Exc extends java.lang.Exception&gt;</td>
 <td class="colLast">
 <div class="block">The reactive entity operations container.</div>
-</td>
-</tr>
-<tr class="rowColor">
-<td class="colFirst"><a href="../../../../../../io/micronaut/data/runtime/operations/internal/StoredQuerySqlOperation.html" title="class in io.micronaut.data.runtime.operations.internal">StoredQuerySqlOperation</a></td>
-<td class="colLast">
-<div class="block">Implementation of <a href="../../../../../../io/micronaut/data/runtime/operations/internal/StoredSqlOperation.html" title="class in io.micronaut.data.runtime.operations.internal"><code>StoredSqlOperation</code></a> that retrieves data from <a href="../../../../../../io/micronaut/data/model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime"><code>StoredQuery</code></a>.</div>
-</td>
-</tr>
-<tr class="altColor">
-<td class="colFirst"><a href="../../../../../../io/micronaut/data/runtime/operations/internal/StoredSqlOperation.html" title="class in io.micronaut.data.runtime.operations.internal">StoredSqlOperation</a></td>
-<td class="colLast">
-<div class="block">Implementation of <a href="../../../../../../io/micronaut/data/runtime/operations/internal/DBOperation.html" title="class in io.micronaut.data.runtime.operations.internal"><code>DBOperation</code></a> that uses bindging paths.</div>
 </td>
 </tr>
 <tr class="rowColor">
@@ -255,7 +207,7 @@
 <div class="subNav">
 <ul class="navList">
 <li><a href="../../../../../../io/micronaut/data/runtime/operations/package-summary.html">Prev&nbsp;Package</a></li>
-<li><a href="../../../../../../io/micronaut/data/runtime/query/package-summary.html">Next&nbsp;Package</a></li>
+<li><a href="../../../../../../io/micronaut/data/runtime/operations/internal/sql/package-summary.html">Next&nbsp;Package</a></li>
 </ul>
 <ul class="navList">
 <li><a href="../../../../../../index.html?io/micronaut/data/runtime/operations/internal/package-summary.html" target="_top">Frames</a></li>

@@ -17,8 +17,8 @@
     catch(err) {
     }
 //-->
-var methods = {"i0":6,"i1":6,"i2":6,"i3":6,"i4":6,"i5":6,"i6":6,"i7":18,"i8":18,"i9":6,"i10":18,"i11":6};
-var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],4:["t3","Abstract Methods"],16:["t5","Default Methods"]};
+var methods = {"i0":18,"i1":18,"i2":18,"i3":18,"i4":18,"i5":18,"i6":18,"i7":18,"i8":18,"i9":18,"i10":18,"i11":18,"i12":18};
+var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],16:["t5","Default Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
 var tableTab = "tableTab";
@@ -124,37 +124,37 @@ var activeTableTab = "activeTableTab";
 </a>
 <h3>Method Summary</h3>
 <table class="memberSummary" border="0" cellpadding="3" cellspacing="0" summary="Method Summary table, listing methods, and an explanation">
-<caption><span id="t0" class="activeTableTab"><span>All Methods</span><span class="tabEnd">&nbsp;</span></span><span id="t2" class="tableTab"><span><a href="javascript:show(2);">Instance Methods</a></span><span class="tabEnd">&nbsp;</span></span><span id="t3" class="tableTab"><span><a href="javascript:show(4);">Abstract Methods</a></span><span class="tabEnd">&nbsp;</span></span><span id="t5" class="tableTab"><span><a href="javascript:show(16);">Default Methods</a></span><span class="tabEnd">&nbsp;</span></span></caption>
+<caption><span id="t0" class="activeTableTab"><span>All Methods</span><span class="tabEnd">&nbsp;</span></span><span id="t2" class="tableTab"><span><a href="javascript:show(2);">Instance Methods</a></span><span class="tabEnd">&nbsp;</span></span><span id="t5" class="tableTab"><span><a href="javascript:show(16);">Default Methods</a></span><span class="tabEnd">&nbsp;</span></span></caption>
 <tr>
 <th class="colFirst" scope="col">Modifier and Type</th>
 <th class="colLast" scope="col">Method and Description</th>
 </tr>
 <tr id="i0" class="altColor">
-<td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/DataType.html" title="enum in io.micronaut.data.model">DataType</a></code></td>
+<td class="colFirst"><code>default <a href="../../../../../io/micronaut/data/model/DataType.html" title="enum in io.micronaut.data.model">DataType</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/runtime/QueryParameterBinding.html#getDataType--">getDataType</a></span>()</code>&nbsp;</td>
 </tr>
 <tr id="i1" class="rowColor">
-<td class="colFirst"><code>java.lang.String</code></td>
+<td class="colFirst"><code>default java.lang.String</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/runtime/QueryParameterBinding.html#getName--">getName</a></span>()</code>&nbsp;</td>
 </tr>
 <tr id="i2" class="altColor">
-<td class="colFirst"><code>java.lang.String[]</code></td>
+<td class="colFirst"><code>default java.lang.String[]</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/runtime/QueryParameterBinding.html#getParameterBindingPath--">getParameterBindingPath</a></span>()</code>&nbsp;</td>
 </tr>
 <tr id="i3" class="rowColor">
-<td class="colFirst"><code>java.lang.Class&lt;?&gt;</code></td>
+<td class="colFirst"><code>default java.lang.Class&lt;?&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/runtime/QueryParameterBinding.html#getParameterConverterClass--">getParameterConverterClass</a></span>()</code>&nbsp;</td>
 </tr>
 <tr id="i4" class="altColor">
-<td class="colFirst"><code>int</code></td>
+<td class="colFirst"><code>default int</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/runtime/QueryParameterBinding.html#getParameterIndex--">getParameterIndex</a></span>()</code>&nbsp;</td>
 </tr>
 <tr id="i5" class="rowColor">
-<td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/runtime/QueryParameterBinding.html" title="interface in io.micronaut.data.model.runtime">QueryParameterBinding</a></code></td>
+<td class="colFirst"><code>default <a href="../../../../../io/micronaut/data/model/runtime/QueryParameterBinding.html" title="interface in io.micronaut.data.model.runtime">QueryParameterBinding</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/runtime/QueryParameterBinding.html#getPreviousPopulatedValueParameter--">getPreviousPopulatedValueParameter</a></span>()</code>&nbsp;</td>
 </tr>
 <tr id="i6" class="altColor">
-<td class="colFirst"><code>java.lang.String[]</code></td>
+<td class="colFirst"><code>default java.lang.String[]</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/runtime/QueryParameterBinding.html#getPropertyPath--">getPropertyPath</a></span>()</code>&nbsp;</td>
 </tr>
 <tr id="i7" class="rowColor">
@@ -166,15 +166,19 @@ var activeTableTab = "activeTableTab";
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/runtime/QueryParameterBinding.html#getRequiredPropertyPath--">getRequiredPropertyPath</a></span>()</code>&nbsp;</td>
 </tr>
 <tr id="i9" class="rowColor">
-<td class="colFirst"><code>boolean</code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/runtime/QueryParameterBinding.html#isAutoPopulated--">isAutoPopulated</a></span>()</code>&nbsp;</td>
+<td class="colFirst"><code>default java.lang.Object</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/runtime/QueryParameterBinding.html#getValue--">getValue</a></span>()</code>&nbsp;</td>
 </tr>
 <tr id="i10" class="altColor">
 <td class="colFirst"><code>default boolean</code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/runtime/QueryParameterBinding.html#isExpandable--">isExpandable</a></span>()</code>&nbsp;</td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/runtime/QueryParameterBinding.html#isAutoPopulated--">isAutoPopulated</a></span>()</code>&nbsp;</td>
 </tr>
 <tr id="i11" class="rowColor">
-<td class="colFirst"><code>boolean</code></td>
+<td class="colFirst"><code>default boolean</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/runtime/QueryParameterBinding.html#isExpandable--">isExpandable</a></span>()</code>&nbsp;</td>
+</tr>
+<tr id="i12" class="altColor">
+<td class="colFirst"><code>default boolean</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/runtime/QueryParameterBinding.html#isRequiresPreviousPopulatedValue--">isRequiresPreviousPopulatedValue</a></span>()</code>&nbsp;</td>
 </tr>
 </table>
@@ -199,7 +203,7 @@ var activeTableTab = "activeTableTab";
 <li class="blockList">
 <h4>getName</h4>
 <pre>@Nullable
-java.lang.String&nbsp;getName()</pre>
+default&nbsp;java.lang.String&nbsp;getName()</pre>
 <dl>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>The name of the parameter</dd>
@@ -227,7 +231,7 @@ default&nbsp;java.lang.String&nbsp;getRequiredName()</pre>
 <li class="blockList">
 <h4>getDataType</h4>
 <pre>@Nullable
-<a href="../../../../../io/micronaut/data/model/DataType.html" title="enum in io.micronaut.data.model">DataType</a>&nbsp;getDataType()</pre>
+default&nbsp;<a href="../../../../../io/micronaut/data/model/DataType.html" title="enum in io.micronaut.data.model">DataType</a>&nbsp;getDataType()</pre>
 <dl>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>The data type</dd>
@@ -241,7 +245,7 @@ default&nbsp;java.lang.String&nbsp;getRequiredName()</pre>
 <li class="blockList">
 <h4>getParameterConverterClass</h4>
 <pre>@Nullable
-java.lang.Class&lt;?&gt;&nbsp;getParameterConverterClass()</pre>
+default&nbsp;java.lang.Class&lt;?&gt;&nbsp;getParameterConverterClass()</pre>
 <dl>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>The parameter converter class</dd>
@@ -254,7 +258,7 @@ java.lang.Class&lt;?&gt;&nbsp;getParameterConverterClass()</pre>
 <ul class="blockList">
 <li class="blockList">
 <h4>getParameterIndex</h4>
-<pre>int&nbsp;getParameterIndex()</pre>
+<pre>default&nbsp;int&nbsp;getParameterIndex()</pre>
 <dl>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>The parameter index</dd>
@@ -268,7 +272,7 @@ java.lang.Class&lt;?&gt;&nbsp;getParameterConverterClass()</pre>
 <li class="blockList">
 <h4>getParameterBindingPath</h4>
 <pre>@Nullable
-java.lang.String[]&nbsp;getParameterBindingPath()</pre>
+default&nbsp;java.lang.String[]&nbsp;getParameterBindingPath()</pre>
 <dl>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>The parameter binding property path.</dd>
@@ -282,7 +286,7 @@ java.lang.String[]&nbsp;getParameterBindingPath()</pre>
 <li class="blockList">
 <h4>getPropertyPath</h4>
 <pre>@Nullable
-java.lang.String[]&nbsp;getPropertyPath()</pre>
+default&nbsp;java.lang.String[]&nbsp;getPropertyPath()</pre>
 <dl>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>The property path.</dd>
@@ -309,7 +313,7 @@ default&nbsp;java.lang.String[]&nbsp;getRequiredPropertyPath()</pre>
 <ul class="blockList">
 <li class="blockList">
 <h4>isAutoPopulated</h4>
-<pre>boolean&nbsp;isAutoPopulated()</pre>
+<pre>default&nbsp;boolean&nbsp;isAutoPopulated()</pre>
 <dl>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>if property is auto-populated</dd>
@@ -322,7 +326,7 @@ default&nbsp;java.lang.String[]&nbsp;getRequiredPropertyPath()</pre>
 <ul class="blockList">
 <li class="blockList">
 <h4>isRequiresPreviousPopulatedValue</h4>
-<pre>boolean&nbsp;isRequiresPreviousPopulatedValue()</pre>
+<pre>default&nbsp;boolean&nbsp;isRequiresPreviousPopulatedValue()</pre>
 <dl>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>if property is auto-populated and binding requires previous value to be set.</dd>
@@ -336,7 +340,7 @@ default&nbsp;java.lang.String[]&nbsp;getRequiredPropertyPath()</pre>
 <li class="blockList">
 <h4>getPreviousPopulatedValueParameter</h4>
 <pre>@Nullable
-<a href="../../../../../io/micronaut/data/model/runtime/QueryParameterBinding.html" title="interface in io.micronaut.data.model.runtime">QueryParameterBinding</a>&nbsp;getPreviousPopulatedValueParameter()</pre>
+default&nbsp;<a href="../../../../../io/micronaut/data/model/runtime/QueryParameterBinding.html" title="interface in io.micronaut.data.model.runtime">QueryParameterBinding</a>&nbsp;getPreviousPopulatedValueParameter()</pre>
 <dl>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>The previous value of the auto-populated property for cases when the property is mapped to the method parameter.</dd>
@@ -346,7 +350,7 @@ default&nbsp;java.lang.String[]&nbsp;getRequiredPropertyPath()</pre>
 <a name="isExpandable--">
 <!--   -->
 </a>
-<ul class="blockListLast">
+<ul class="blockList">
 <li class="blockList">
 <h4>isExpandable</h4>
 <pre>default&nbsp;boolean&nbsp;isExpandable()</pre>
@@ -354,6 +358,16 @@ default&nbsp;java.lang.String[]&nbsp;getRequiredPropertyPath()</pre>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>Is expandable parameter</dd>
 </dl>
+</li>
+</ul>
+<a name="getValue--">
+<!--   -->
+</a>
+<ul class="blockListLast">
+<li class="blockList">
+<h4>getValue</h4>
+<pre>@Nullable
+default&nbsp;java.lang.Object&nbsp;getValue()</pre>
 </li>
 </ul>
 </li>

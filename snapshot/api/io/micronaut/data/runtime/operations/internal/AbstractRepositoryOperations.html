@@ -17,8 +17,8 @@
     catch(err) {
     }
 //-->
-var methods = {"i0":10,"i1":10,"i2":10,"i3":6,"i4":10,"i5":10,"i6":10,"i7":10,"i8":10,"i9":10,"i10":10,"i11":10};
-var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],4:["t3","Abstract Methods"],8:["t4","Concrete Methods"]};
+var methods = {"i0":10,"i1":10,"i2":10,"i3":10,"i4":10,"i5":10,"i6":10};
+var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],8:["t4","Concrete Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
 var tableTab = "tableTab";
@@ -48,7 +48,7 @@ var activeTableTab = "activeTableTab";
 <div class="subNav">
 <ul class="navList">
 <li><a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractReactiveEntityOperations.Data.html" title="class in io.micronaut.data.runtime.operations.internal"><span class="typeNameLink">Prev&nbsp;Class</span></a></li>
-<li><a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.html" title="class in io.micronaut.data.runtime.operations.internal"><span class="typeNameLink">Next&nbsp;Class</span></a></li>
+<li><a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSyncEntitiesOperations.html" title="class in io.micronaut.data.runtime.operations.internal"><span class="typeNameLink">Next&nbsp;Class</span></a></li>
 </ul>
 <ul class="navList">
 <li><a href="../../../../../../index.html?io/micronaut/data/runtime/operations/internal/AbstractRepositoryOperations.html" target="_top">Frames</a></li>
@@ -91,14 +91,14 @@ var activeTableTab = "activeTableTab";
 <!-- ======== START OF CLASS DATA ======== -->
 <div class="header">
 <div class="subTitle">io.micronaut.data.runtime.operations.internal</div>
-<h2 title="Class AbstractRepositoryOperations" class="title">Class AbstractRepositoryOperations&lt;Cnt,PS&gt;</h2>
+<h2 title="Class AbstractRepositoryOperations" class="title">Class AbstractRepositoryOperations</h2>
 </div>
 <div class="contentContainer">
 <ul class="inheritance">
 <li>java.lang.Object</li>
 <li>
 <ul class="inheritance">
-<li>io.micronaut.data.runtime.operations.internal.AbstractRepositoryOperations&lt;Cnt,PS&gt;</li>
+<li>io.micronaut.data.runtime.operations.internal.AbstractRepositoryOperations</li>
 </ul>
 </li>
 </ul>
@@ -106,25 +106,20 @@ var activeTableTab = "activeTableTab";
 <ul class="blockList">
 <li class="blockList">
 <dl>
-<dt><span class="paramLabel">Type Parameters:</span></dt>
-<dd><code>Cnt</code> - The connection type</dd>
-<dd><code>PS</code> - The prepared statement</dd>
-</dl>
-<dl>
 <dt>All Implemented Interfaces:</dt>
-<dd>io.micronaut.context.ApplicationContextProvider, <a href="../../../../../../io/micronaut/data/runtime/operations/internal/OpContext.html" title="interface in io.micronaut.data.runtime.operations.internal">OpContext</a>&lt;Cnt,PS&gt;</dd>
+<dd>io.micronaut.context.ApplicationContextProvider</dd>
 </dl>
 <dl>
 <dt>Direct Known Subclasses:</dt>
-<dd><a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.html" title="class in io.micronaut.data.runtime.operations.internal">AbstractSqlRepositoryOperations</a>, <a href="../../../../../../io/micronaut/data/mongodb/operations/DefaultMongoRepositoryOperations.html" title="class in io.micronaut.data.mongodb.operations">DefaultMongoRepositoryOperations</a>, <a href="../../../../../../io/micronaut/data/mongodb/operations/DefaultReactiveMongoRepositoryOperations.html" title="class in io.micronaut.data.mongodb.operations">DefaultReactiveMongoRepositoryOperations</a></dd>
+<dd><a href="../../../../../../io/micronaut/data/runtime/operations/internal/sql/AbstractSqlRepositoryOperations.html" title="class in io.micronaut.data.runtime.operations.internal.sql">AbstractSqlRepositoryOperations</a>, <a href="../../../../../../io/micronaut/data/mongodb/operations/DefaultMongoRepositoryOperations.html" title="class in io.micronaut.data.mongodb.operations">DefaultMongoRepositoryOperations</a>, <a href="../../../../../../io/micronaut/data/mongodb/operations/DefaultReactiveMongoRepositoryOperations.html" title="class in io.micronaut.data.mongodb.operations">DefaultReactiveMongoRepositoryOperations</a></dd>
 </dl>
 <hr>
 <br>
 <pre>@Internal
-public abstract class <span class="typeNameLabel">AbstractRepositoryOperations&lt;Cnt,PS&gt;</span>
+public abstract class <span class="typeNameLabel">AbstractRepositoryOperations</span>
 extends java.lang.Object
-implements io.micronaut.context.ApplicationContextProvider, <a href="../../../../../../io/micronaut/data/runtime/operations/internal/OpContext.html" title="interface in io.micronaut.data.runtime.operations.internal">OpContext</a>&lt;Cnt,PS&gt;</pre>
-<div class="block">Abstract SQL repository implementation not specifically bound to JDBC.</div>
+implements io.micronaut.context.ApplicationContextProvider</pre>
+<div class="block">Abstract repository implementation.</div>
 <dl>
 <dt><span class="simpleTagLabel">Since:</span></dt>
 <dd>3.1.0</dd>
@@ -208,7 +203,7 @@ implements io.micronaut.context.ApplicationContextProvider, <a href="../../../..
 </a>
 <h3>Method Summary</h3>
 <table class="memberSummary" border="0" cellpadding="3" cellspacing="0" summary="Method Summary table, listing methods, and an explanation">
-<caption><span id="t0" class="activeTableTab"><span>All Methods</span><span class="tabEnd">&nbsp;</span></span><span id="t2" class="tableTab"><span><a href="javascript:show(2);">Instance Methods</a></span><span class="tabEnd">&nbsp;</span></span><span id="t3" class="tableTab"><span><a href="javascript:show(4);">Abstract Methods</a></span><span class="tabEnd">&nbsp;</span></span><span id="t4" class="tableTab"><span><a href="javascript:show(8);">Concrete Methods</a></span><span class="tabEnd">&nbsp;</span></span></caption>
+<caption><span id="t0" class="activeTableTab"><span>All Methods</span><span class="tabEnd">&nbsp;</span></span><span id="t2" class="tableTab"><span><a href="javascript:show(2);">Instance Methods</a></span><span class="tabEnd">&nbsp;</span></span><span id="t4" class="tableTab"><span><a href="javascript:show(8);">Concrete Methods</a></span><span class="tabEnd">&nbsp;</span></span></caption>
 <tr>
 <th class="colFirst" scope="col">Modifier and Type</th>
 <th class="colLast" scope="col">Method and Description</th>
@@ -221,70 +216,31 @@ implements io.micronaut.context.ApplicationContextProvider, <a href="../../../..
 </td>
 </tr>
 <tr id="i1" class="rowColor">
-<td class="colFirst"><code>java.lang.Object</code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractRepositoryOperations.html#convert-java.lang.Class-Cnt-java.lang.Object-io.micronaut.core.type.Argument-">convert</a></span>(java.lang.Class&lt;?&gt;&nbsp;converterClass,
-       <a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractRepositoryOperations.html" title="type parameter in AbstractRepositoryOperations">Cnt</a>&nbsp;connection,
-       java.lang.Object&nbsp;value,
-       io.micronaut.core.type.Argument&lt;?&gt;&nbsp;argument)</code>
-<div class="block">Convert the property value if needed.</div>
-</td>
-</tr>
-<tr id="i2" class="altColor">
-<td class="colFirst"><code>java.lang.Object</code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractRepositoryOperations.html#convert-Cnt-java.lang.Object-io.micronaut.data.model.runtime.RuntimePersistentProperty-">convert</a></span>(<a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractRepositoryOperations.html" title="type parameter in AbstractRepositoryOperations">Cnt</a>&nbsp;connection,
-       java.lang.Object&nbsp;value,
-       <a href="../../../../../../io/micronaut/data/model/runtime/RuntimePersistentProperty.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentProperty</a>&lt;?&gt;&nbsp;property)</code>
-<div class="block">Convert the property value if needed.</div>
-</td>
-</tr>
-<tr id="i3" class="rowColor">
-<td class="colFirst"><code>protected abstract io.micronaut.core.convert.ConversionContext</code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractRepositoryOperations.html#createTypeConversionContext-Cnt-io.micronaut.data.model.runtime.RuntimePersistentProperty-io.micronaut.core.type.Argument-">createTypeConversionContext</a></span>(<a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractRepositoryOperations.html" title="type parameter in AbstractRepositoryOperations">Cnt</a>&nbsp;connection,
-                           <a href="../../../../../../io/micronaut/data/model/runtime/RuntimePersistentProperty.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentProperty</a>&lt;?&gt;&nbsp;property,
-                           io.micronaut.core.type.Argument&lt;?&gt;&nbsp;argument)</code>
-<div class="block">Creates implementation specific conversion context.</div>
-</td>
-</tr>
-<tr id="i4" class="altColor">
 <td class="colFirst"><code>io.micronaut.context.ApplicationContext</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractRepositoryOperations.html#getApplicationContext--">getApplicationContext</a></span>()</code>&nbsp;</td>
 </tr>
-<tr id="i5" class="rowColor">
+<tr id="i2" class="altColor">
 <td class="colFirst"><code><a href="../../../../../../io/micronaut/data/runtime/convert/DataConversionService.html" title="interface in io.micronaut.data.runtime.convert">DataConversionService</a>&lt;?&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractRepositoryOperations.html#getConversionService--">getConversionService</a></span>()</code>&nbsp;</td>
 </tr>
-<tr id="i6" class="altColor">
+<tr id="i3" class="rowColor">
 <td class="colFirst"><code>&lt;T&gt;&nbsp;<a href="../../../../../../io/micronaut/data/model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;T&gt;</code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractRepositoryOperations.html#getEntity-java.lang.Class-">getEntity</a></span>(java.lang.Class&lt;T&gt;&nbsp;type)</code>
-<div class="block">Get persistent entity by type.</div>
-</td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractRepositoryOperations.html#getEntity-java.lang.Class-">getEntity</a></span>(java.lang.Class&lt;T&gt;&nbsp;type)</code>&nbsp;</td>
 </tr>
-<tr id="i7" class="rowColor">
+<tr id="i4" class="altColor">
 <td class="colFirst"><code>protected <a href="../../../../../../io/micronaut/data/model/runtime/RuntimePersistentProperty.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentProperty</a>&lt;java.lang.Object&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractRepositoryOperations.html#getIdReader-java.lang.Object-">getIdReader</a></span>(java.lang.Object&nbsp;o)</code>
 <div class="block">Obtain an ID reader for the given object.</div>
 </td>
 </tr>
-<tr id="i8" class="altColor">
-<td class="colFirst"><code><a href="../../../../../../io/micronaut/data/model/runtime/RuntimeEntityRegistry.html" title="interface in io.micronaut.data.model.runtime">RuntimeEntityRegistry</a></code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractRepositoryOperations.html#getRuntimeEntityRegistry--">getRuntimeEntityRegistry</a></span>()</code>
-<div class="block">Get runtime entity registry.</div>
-</td>
-</tr>
-<tr id="i9" class="rowColor">
+<tr id="i5" class="rowColor">
 <td class="colFirst"><code>protected boolean</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractRepositoryOperations.html#isOnlySingleEndedJoins-io.micronaut.data.model.runtime.RuntimePersistentEntity-java.util.Set-">isOnlySingleEndedJoins</a></span>(<a href="../../../../../../io/micronaut/data/model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;?&gt;&nbsp;rootPersistentEntity,
                       java.util.Set&lt;<a href="../../../../../../io/micronaut/data/model/query/JoinPath.html" title="class in io.micronaut.data.model.query">JoinPath</a>&gt;&nbsp;joinFetchPaths)</code>
 <div class="block">Check if joined associated are all single ended (Can produce only one result).</div>
 </td>
 </tr>
-<tr id="i10" class="altColor">
-<td class="colFirst"><code>int</code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractRepositoryOperations.html#shiftIndex-int-">shiftIndex</a></span>(int&nbsp;i)</code>
-<div class="block">Used to define the index whether it is 1 based (JDBC) or 0 based (R2DBC).</div>
-</td>
-</tr>
-<tr id="i11" class="rowColor">
+<tr id="i6" class="altColor">
 <td class="colFirst"><code>protected &lt;T&gt;&nbsp;T</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractRepositoryOperations.html#triggerPostLoad-T-io.micronaut.data.model.runtime.RuntimePersistentEntity-io.micronaut.core.annotation.AnnotationMetadata-">triggerPostLoad</a></span>(T&nbsp;entity,
                <a href="../../../../../../io/micronaut/data/model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;T&gt;&nbsp;pe,
@@ -299,13 +255,6 @@ implements io.micronaut.context.ApplicationContextProvider, <a href="../../../..
 </a>
 <h3>Methods inherited from class&nbsp;java.lang.Object</h3>
 <code>clone, equals, finalize, getClass, hashCode, notify, notifyAll, toString, wait, wait, wait</code></li>
-</ul>
-<ul class="blockList">
-<li class="blockList"><a name="methods.inherited.from.class.io.micronaut.data.runtime.operations.internal.OpContext">
-<!--   -->
-</a>
-<h3>Methods inherited from interface&nbsp;io.micronaut.data.runtime.operations.internal.<a href="../../../../../../io/micronaut/data/runtime/operations/internal/OpContext.html" title="interface in io.micronaut.data.runtime.operations.internal">OpContext</a></h3>
-<code><a href="../../../../../../io/micronaut/data/runtime/operations/internal/OpContext.html#setStatementParameter-PS-int-io.micronaut.data.model.DataType-java.lang.Object-io.micronaut.data.model.query.builder.sql.Dialect-">setStatementParameter</a></code></li>
 </ul>
 </li>
 </ul>
@@ -448,35 +397,6 @@ implements io.micronaut.context.ApplicationContextProvider, <a href="../../../..
 <pre>@NonNull
 public final&nbsp;&lt;T&gt;&nbsp;<a href="../../../../../../io/micronaut/data/model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;T&gt;&nbsp;getEntity(@NonNull
                                                                java.lang.Class&lt;T&gt;&nbsp;type)</pre>
-<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../../../io/micronaut/data/runtime/operations/internal/OpContext.html#getEntity-java.lang.Class-">OpContext</a></code></span></div>
-<div class="block">Get persistent entity by type.</div>
-<dl>
-<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
-<dd><code><a href="../../../../../../io/micronaut/data/runtime/operations/internal/OpContext.html#getEntity-java.lang.Class-">getEntity</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../../io/micronaut/data/runtime/operations/internal/OpContext.html" title="interface in io.micronaut.data.runtime.operations.internal">OpContext</a>&lt;<a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractRepositoryOperations.html" title="type parameter in AbstractRepositoryOperations">Cnt</a>,<a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractRepositoryOperations.html" title="type parameter in AbstractRepositoryOperations">PS</a>&gt;</code></dd>
-<dt><span class="paramLabel">Type Parameters:</span></dt>
-<dd><code>T</code> - The type</dd>
-<dt><span class="paramLabel">Parameters:</span></dt>
-<dd><code>type</code> - The type class</dd>
-<dt><span class="returnLabel">Returns:</span></dt>
-<dd>persistent entity</dd>
-</dl>
-</li>
-</ul>
-<a name="getRuntimeEntityRegistry--">
-<!--   -->
-</a>
-<ul class="blockList">
-<li class="blockList">
-<h4>getRuntimeEntityRegistry</h4>
-<pre>public&nbsp;<a href="../../../../../../io/micronaut/data/model/runtime/RuntimeEntityRegistry.html" title="interface in io.micronaut.data.model.runtime">RuntimeEntityRegistry</a>&nbsp;getRuntimeEntityRegistry()</pre>
-<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../../../io/micronaut/data/runtime/operations/internal/OpContext.html#getRuntimeEntityRegistry--">OpContext</a></code></span></div>
-<div class="block">Get runtime entity registry.</div>
-<dl>
-<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
-<dd><code><a href="../../../../../../io/micronaut/data/runtime/operations/internal/OpContext.html#getRuntimeEntityRegistry--">getRuntimeEntityRegistry</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../../io/micronaut/data/runtime/operations/internal/OpContext.html" title="interface in io.micronaut.data.runtime.operations.internal">OpContext</a>&lt;<a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractRepositoryOperations.html" title="type parameter in AbstractRepositoryOperations">Cnt</a>,<a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractRepositoryOperations.html" title="type parameter in AbstractRepositoryOperations">PS</a>&gt;</code></dd>
-<dt><span class="returnLabel">Returns:</span></dt>
-<dd>the registry</dd>
-</dl>
 </li>
 </ul>
 <a name="triggerPostLoad-java.lang.Object-io.micronaut.data.model.runtime.RuntimePersistentEntity-io.micronaut.core.annotation.AnnotationMetadata-">
@@ -501,24 +421,6 @@ public final&nbsp;&lt;T&gt;&nbsp;<a href="../../../../../../io/micronaut/data/mo
 <dd><code>annotationMetadata</code> - The annotation metadata</dd>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>The entity, possibly modified</dd>
-</dl>
-</li>
-</ul>
-<a name="shiftIndex-int-">
-<!--   -->
-</a>
-<ul class="blockList">
-<li class="blockList">
-<h4>shiftIndex</h4>
-<pre>public&nbsp;int&nbsp;shiftIndex(int&nbsp;i)</pre>
-<div class="block">Used to define the index whether it is 1 based (JDBC) or 0 based (R2DBC).</div>
-<dl>
-<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
-<dd><code><a href="../../../../../../io/micronaut/data/runtime/operations/internal/OpContext.html#shiftIndex-int-">shiftIndex</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../../io/micronaut/data/runtime/operations/internal/OpContext.html" title="interface in io.micronaut.data.runtime.operations.internal">OpContext</a>&lt;<a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractRepositoryOperations.html" title="type parameter in AbstractRepositoryOperations">Cnt</a>,<a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractRepositoryOperations.html" title="type parameter in AbstractRepositoryOperations">PS</a>&gt;</code></dd>
-<dt><span class="paramLabel">Parameters:</span></dt>
-<dd><code>i</code> - The index to shift</dd>
-<dt><span class="returnLabel">Returns:</span></dt>
-<dd>the index</dd>
 </dl>
 </li>
 </ul>
@@ -559,7 +461,7 @@ protected final&nbsp;<a href="../../../../../../io/micronaut/data/model/runtime/
 <a name="isOnlySingleEndedJoins-io.micronaut.data.model.runtime.RuntimePersistentEntity-java.util.Set-">
 <!--   -->
 </a>
-<ul class="blockList">
+<ul class="blockListLast">
 <li class="blockList">
 <h4>isOnlySingleEndedJoins</h4>
 <pre>protected&nbsp;boolean&nbsp;isOnlySingleEndedJoins(<a href="../../../../../../io/micronaut/data/model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;?&gt;&nbsp;rootPersistentEntity,
@@ -571,81 +473,6 @@ protected final&nbsp;<a href="../../../../../../io/micronaut/data/model/runtime/
 <dd><code>joinFetchPaths</code> - The join paths</dd>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>true if there are no "many" joins</dd>
-</dl>
-</li>
-</ul>
-<a name="convert-java.lang.Object-java.lang.Object-io.micronaut.data.model.runtime.RuntimePersistentProperty-">
-<!--   -->
-</a><a name="convert-Cnt-java.lang.Object-io.micronaut.data.model.runtime.RuntimePersistentProperty-">
-<!--   -->
-</a>
-<ul class="blockList">
-<li class="blockList">
-<h4>convert</h4>
-<pre>public&nbsp;java.lang.Object&nbsp;convert(<a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractRepositoryOperations.html" title="type parameter in AbstractRepositoryOperations">Cnt</a>&nbsp;connection,
-                                java.lang.Object&nbsp;value,
-                                <a href="../../../../../../io/micronaut/data/model/runtime/RuntimePersistentProperty.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentProperty</a>&lt;?&gt;&nbsp;property)</pre>
-<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../../../io/micronaut/data/runtime/operations/internal/OpContext.html#convert-Cnt-java.lang.Object-io.micronaut.data.model.runtime.RuntimePersistentProperty-">OpContext</a></code></span></div>
-<div class="block">Convert the property value if needed.</div>
-<dl>
-<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
-<dd><code><a href="../../../../../../io/micronaut/data/runtime/operations/internal/OpContext.html#convert-Cnt-java.lang.Object-io.micronaut.data.model.runtime.RuntimePersistentProperty-">convert</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../../io/micronaut/data/runtime/operations/internal/OpContext.html" title="interface in io.micronaut.data.runtime.operations.internal">OpContext</a>&lt;<a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractRepositoryOperations.html" title="type parameter in AbstractRepositoryOperations">Cnt</a>,<a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractRepositoryOperations.html" title="type parameter in AbstractRepositoryOperations">PS</a>&gt;</code></dd>
-<dt><span class="paramLabel">Parameters:</span></dt>
-<dd><code>connection</code> - the connection</dd>
-<dt><span class="returnLabel">Returns:</span></dt>
-<dd>converter value</dd>
-</dl>
-</li>
-</ul>
-<a name="convert-java.lang.Class-java.lang.Object-java.lang.Object-io.micronaut.core.type.Argument-">
-<!--   -->
-</a><a name="convert-java.lang.Class-Cnt-java.lang.Object-io.micronaut.core.type.Argument-">
-<!--   -->
-</a>
-<ul class="blockList">
-<li class="blockList">
-<h4>convert</h4>
-<pre>public&nbsp;java.lang.Object&nbsp;convert(java.lang.Class&lt;?&gt;&nbsp;converterClass,
-                                <a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractRepositoryOperations.html" title="type parameter in AbstractRepositoryOperations">Cnt</a>&nbsp;connection,
-                                java.lang.Object&nbsp;value,
-                                @Nullable
-                                io.micronaut.core.type.Argument&lt;?&gt;&nbsp;argument)</pre>
-<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../../../io/micronaut/data/runtime/operations/internal/OpContext.html#convert-java.lang.Class-Cnt-java.lang.Object-io.micronaut.core.type.Argument-">OpContext</a></code></span></div>
-<div class="block">Convert the property value if needed.</div>
-<dl>
-<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
-<dd><code><a href="../../../../../../io/micronaut/data/runtime/operations/internal/OpContext.html#convert-java.lang.Class-Cnt-java.lang.Object-io.micronaut.core.type.Argument-">convert</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../../io/micronaut/data/runtime/operations/internal/OpContext.html" title="interface in io.micronaut.data.runtime.operations.internal">OpContext</a>&lt;<a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractRepositoryOperations.html" title="type parameter in AbstractRepositoryOperations">Cnt</a>,<a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractRepositoryOperations.html" title="type parameter in AbstractRepositoryOperations">PS</a>&gt;</code></dd>
-<dt><span class="paramLabel">Parameters:</span></dt>
-<dd><code>converterClass</code> - the converter class</dd>
-<dd><code>connection</code> - the connection</dd>
-<dd><code>value</code> - the value</dd>
-<dd><code>argument</code> - the argument</dd>
-<dt><span class="returnLabel">Returns:</span></dt>
-<dd>converter value</dd>
-</dl>
-</li>
-</ul>
-<a name="createTypeConversionContext-java.lang.Object-io.micronaut.data.model.runtime.RuntimePersistentProperty-io.micronaut.core.type.Argument-">
-<!--   -->
-</a><a name="createTypeConversionContext-Cnt-io.micronaut.data.model.runtime.RuntimePersistentProperty-io.micronaut.core.type.Argument-">
-<!--   -->
-</a>
-<ul class="blockListLast">
-<li class="blockList">
-<h4>createTypeConversionContext</h4>
-<pre>protected abstract&nbsp;io.micronaut.core.convert.ConversionContext&nbsp;createTypeConversionContext(<a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractRepositoryOperations.html" title="type parameter in AbstractRepositoryOperations">Cnt</a>&nbsp;connection,
-                                                                                           @Nullable
-                                                                                           <a href="../../../../../../io/micronaut/data/model/runtime/RuntimePersistentProperty.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentProperty</a>&lt;?&gt;&nbsp;property,
-                                                                                           @Nullable
-                                                                                           io.micronaut.core.type.Argument&lt;?&gt;&nbsp;argument)</pre>
-<div class="block">Creates implementation specific conversion context.</div>
-<dl>
-<dt><span class="paramLabel">Parameters:</span></dt>
-<dd><code>connection</code> - The connection</dd>
-<dd><code>property</code> - The property</dd>
-<dd><code>argument</code> - The argument</dd>
-<dt><span class="returnLabel">Returns:</span></dt>
-<dd>new <code>ConversionContext</code></dd>
 </dl>
 </li>
 </ul>
@@ -677,7 +504,7 @@ protected final&nbsp;<a href="../../../../../../io/micronaut/data/model/runtime/
 <div class="subNav">
 <ul class="navList">
 <li><a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractReactiveEntityOperations.Data.html" title="class in io.micronaut.data.runtime.operations.internal"><span class="typeNameLink">Prev&nbsp;Class</span></a></li>
-<li><a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.html" title="class in io.micronaut.data.runtime.operations.internal"><span class="typeNameLink">Next&nbsp;Class</span></a></li>
+<li><a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSyncEntitiesOperations.html" title="class in io.micronaut.data.runtime.operations.internal"><span class="typeNameLink">Next&nbsp;Class</span></a></li>
 </ul>
 <ul class="navList">
 <li><a href="../../../../../../index.html?io/micronaut/data/runtime/operations/internal/AbstractRepositoryOperations.html" target="_top">Frames</a></li>
