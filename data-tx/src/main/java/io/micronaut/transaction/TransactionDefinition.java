@@ -54,12 +54,22 @@ public interface TransactionDefinition {
      * The default transaction definition.
      */
     TransactionDefinition DEFAULT = new TransactionDefinition() {
+
+        @Override
+        public String getName() {
+            return "DEFAULT";
+        }
     };
 
     /**
      * A read only definition.
      */
     TransactionDefinition READ_ONLY = new TransactionDefinition() {
+
+        @Override
+        public String getName() {
+            return "READ_ONLY";
+        }
 
         @Override
         public boolean isReadOnly() {
@@ -336,6 +346,18 @@ public interface TransactionDefinition {
      */
     static @NonNull TransactionDefinition of(@NonNull Propagation propagationBehaviour) {
         return new DefaultTransactionDefinition(propagationBehaviour);
+    }
+
+    /**
+     * Create a new {@link TransactionDefinition} with a given name.
+     * @param name The name
+     * @return The definition
+     * @since 3.5.0
+     */
+    static @NonNull TransactionDefinition named(@NonNull String name) {
+        DefaultTransactionDefinition definition = new DefaultTransactionDefinition();
+        definition.setName(name);
+        return definition;
     }
 
     /**

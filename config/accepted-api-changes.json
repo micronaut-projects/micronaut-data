@@ -323,5 +323,10 @@
     "type": "io.micronaut.data.model.runtime.QueryParameterBinding",
     "member": "Method io.micronaut.data.model.runtime.QueryParameterBinding.isRequiresPreviousPopulatedValue()",
     "reason": "Added a default method"
+  },
+  {
+    "type": "io.micronaut.transaction.TransactionDefinition",
+    "member": "Method io.micronaut.transaction.TransactionDefinition.named(java.lang.String)",
+    "reason": "Static method"
   }
 ]

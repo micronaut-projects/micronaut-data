@@ -36,16 +36,36 @@ import java.util.Objects;
  */
 public class DefaultTransactionDefinition implements TransactionDefinition, Serializable {
 
-    /** Prefix for the propagation constants defined in TransactionDefinition. */
+    /**
+     * Prefix for the propagation constants defined in TransactionDefinition.
+     *
+     * @deprecated not used field will be removed in the future major version
+     */
+    @Deprecated
     public static final String PREFIX_PROPAGATION = "PROPAGATION_";
 
-    /** Prefix for the isolation constants defined in TransactionDefinition. */
+    /**
+     * Prefix for the isolation constants defined in TransactionDefinition.
+     *
+     * @deprecated not used field will be removed in the future major version
+     */
+    @Deprecated
     public static final String PREFIX_ISOLATION = "ISOLATION_";
 
-    /** Prefix for transaction timeout values in description strings. */
+    /**
+     *  Prefix for transaction timeout values in description strings.
+     *
+     * @deprecated not used field will be removed in the future major version
+     */
+    @Deprecated
     public static final String PREFIX_TIMEOUT = "timeout_";
 
-    /** Marker for read-only transactions in description strings. */
+    /**
+     * Marker for read-only transactions in description strings.
+     *
+     * @deprecated not used field will be removed in the future major version
+     */
+    @Deprecated
     public static final String READ_ONLY_MARKER = "readOnly";
 
     private Propagation propagationBehavior = Propagation.REQUIRED;
@@ -59,9 +79,9 @@ public class DefaultTransactionDefinition implements TransactionDefinition, Seri
     @Nullable
     private String name;
 
-    private Collection<Class<? extends Throwable>> rollbackOn;
+    private Collection<Class<? extends Throwable>> rollbackOn = Collections.emptyList();
 
-    private Collection<Class<? extends Throwable>> dontRollbackOn;
+    private Collection<Class<? extends Throwable>> dontRollbackOn = Collections.emptyList();
 
     /**
      * Create a new DefaultTransactionDefinition, with default settings.
@@ -287,32 +307,30 @@ public class DefaultTransactionDefinition implements TransactionDefinition, Seri
         return toString().hashCode();
     }
 
-    /**
-     * Return an identifying description for this transaction definition.
-     */
     @Override
     public String toString() {
-        return getDefinitionDescription().toString();
-    }
-
-    /**
-     * Return an identifying description for this transaction definition.
-     * <p>Available to subclasses, for inclusion in their {@code toString()} result.
-     */
-    private StringBuilder getDefinitionDescription() {
-        StringBuilder result = new StringBuilder();
-        result.append(this.propagationBehavior.ordinal());
-        result.append(',');
-        result.append(this.isolationLevel.getCode());
+        final StringBuilder sb = new StringBuilder("[");
+        sb.append("name='").append(name).append('\'');
+        if (propagationBehavior != Propagation.REQUIRED) {
+            sb.append(", propagationBehavior=").append(propagationBehavior);
+        }
+        if (isolationLevel != Isolation.DEFAULT) {
+            sb.append(", isolationLevel=").append(isolationLevel);
+        }
         if (this.timeout != TIMEOUT_DEFAULT) {
-            result.append(',');
-            result.append(PREFIX_TIMEOUT).append(this.timeout);
+            sb.append(", timeout=").append(timeout);
         }
-        if (this.readOnly) {
-            result.append(',');
-            result.append(READ_ONLY_MARKER);
+        if (readOnly) {
+            sb.append(", readOnly=").append(readOnly);
         }
-        return result;
+        if (!rollbackOn.isEmpty()) {
+            sb.append(", rollbackOn=").append(rollbackOn);
+        }
+        if (!dontRollbackOn.isEmpty()) {
+            sb.append(", dontRollbackOn=").append(dontRollbackOn);
+        }
+        sb.append(']');
+        return sb.toString();
     }
 
 }

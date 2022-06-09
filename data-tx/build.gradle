@@ -15,7 +15,9 @@ dependencies {
     compileOnly mn.micronaut.spring
     compileOnly libs.micronaut.sql.jdbc
     compileOnly libs.spring.jdbc
-    compileOnly mn.micronaut.test.core
+//    compileOnly mn.micronaut.test.core
+    compileOnly libs.micronaut.test.core
+    compileOnly libs.micronaut.test.spock
     compileOnly mn.micronaut.core.reactive
     compileOnly mn.jackson.annotations
 

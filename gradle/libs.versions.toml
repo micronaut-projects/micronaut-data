@@ -1,6 +1,6 @@
 [versions]
 micronaut = "3.5.0"
-micronaut-test = "3.0.5"
+micronaut-test = "3.4.0-SNAPSHOT"
 micronaut-serde = "1.1.0"
 micronaut-sql = "4.4.0"
 micronaut-docs = "2.0.0"
@@ -99,6 +99,11 @@ benchmark-spring-data-mongodb-driver-sync = { module = "org.mongodb:mongodb-driv
 
 jetbrains-annotations = { module = "org.jetbrains:annotations", version.ref = "jetbrains-annotations" }
 
+# Test
+
+micronaut-test-core = { module = "io.micronaut.test:micronaut-test-core", version.ref = "micronaut-test" }
+micronaut-test-spock = { module = "io.micronaut.test:micronaut-test-spock", version.ref = "micronaut-test" }
+
 # JPA
 
 micronaut-sql-hibernate-jpa = { module = "io.micronaut.sql:micronaut-hibernate-jpa", version.ref = "micronaut-sql" }
@@ -168,7 +173,7 @@ mongodb-driver-reactive = { module = "org.mongodb:mongodb-driver-reactivestreams
 micronaut-mongo-reactive = { module = "io.micronaut.mongodb:micronaut-mongo-reactive", version.ref = "micronaut-mongo" }
 micronaut-mongo-sync = { module = "io.micronaut.mongodb:micronaut-mongo-sync", version.ref = "micronaut-mongo" }
 
-#PLUGINS
+# PLUGINS
 
 gradle-micronaut = { module = "io.micronaut.gradle:micronaut-gradle-plugin", version.ref = "micronaut-gradle-plugin" }
 gradle-kotlin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin-gradle-plugin" }

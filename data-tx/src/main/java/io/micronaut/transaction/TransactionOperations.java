@@ -46,7 +46,7 @@ public interface TransactionOperations<T> {
     boolean hasConnection();
 
     /**
-     * Execute a read-only transaction within the context of the function.
+     * Execute a transaction within the context of the function.
      *
      * @param definition The transaction definition
      * @param callback The call back
