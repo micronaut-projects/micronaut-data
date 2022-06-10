@@ -17,7 +17,6 @@ package io.micronaut.data.runtime.intercept.reactive;
 
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.async.publisher.Publishers;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.intercept.reactive.FindSliceReactiveInterceptor;
@@ -26,15 +25,15 @@ import io.micronaut.data.model.Slice;
 import io.micronaut.data.model.runtime.PagedQuery;
 import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.operations.RepositoryOperations;
+import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 
 /**
  * Default implementation of {@link FindSliceReactiveInterceptor}.
  * @author graemerocher
  * @since 1.0.0
  */
-public class DefaultFindSliceReactiveInterceptor extends AbstractReactiveInterceptor<Object, Object>
+public class DefaultFindSliceReactiveInterceptor extends AbstractPublisherInterceptor
         implements FindSliceReactiveInterceptor<Object, Object> {
     /**
      * Default constructor.
@@ -46,22 +45,14 @@ public class DefaultFindSliceReactiveInterceptor extends AbstractReactiveInterce
     }
 
     @Override
-    public Object intercept(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Object> context) {
+    public Publisher<?> interceptPublisher(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Object> context) {
         if (context.hasAnnotation(Query.class)) {
             PreparedQuery<Object, Object> preparedQuery = (PreparedQuery<Object, Object>) prepareQuery(methodKey, context);
             Pageable pageable = preparedQuery.getPageable();
-
-            Mono<Slice<Object>> publisher = Flux.from(reactiveOperations.findAll(preparedQuery))
-                    .collectList().map(objects -> Slice.of(objects, pageable));
-            return Publishers.convertPublisher(publisher, context.getReturnType().getType());
-
-        } else {
-            PagedQuery<Object> pagedQuery = getPagedQuery(context);
-            Mono<? extends Slice<?>> result = Flux.from(reactiveOperations.findAll(pagedQuery))
-                    .collectList().map(objects ->
-                            Slice.of(objects, pagedQuery.getPageable())
-                    );
-            return Publishers.convertPublisher(result, context.getReturnType().getType());
+            return Flux.from(reactiveOperations.findAll(preparedQuery)).collectList().map(objects -> Slice.of(objects, pageable));
         }
+        PagedQuery<Object> pagedQuery = getPagedQuery(context);
+        return Flux.from(reactiveOperations.findAll(pagedQuery))
+                .collectList().map(objects -> Slice.of(objects, pagedQuery.getPageable()));
     }
 }

@@ -48,9 +48,8 @@ final class R2dbcTransactionManagerFactory {
 
     @EachBean(ConnectionFactory.class)
     <T> AsyncTransactionOperations<T> buildAsyncTransactionOperations(@Parameter ReactorReactiveTransactionOperations<T> reactiveTransactionOperations,
-                                                                      @Nullable CoroutineTxHelper coroutineTxHelper,
-                                                                      @Named(TaskExecutors.IO) ExecutorService executorService) {
-        return new AsyncUsingReactiveTransactionOperations<>(reactiveTransactionOperations, coroutineTxHelper, executorService);
+                                                                      @Nullable CoroutineTxHelper coroutineTxHelper) {
+        return new AsyncUsingReactiveTransactionOperations<>(reactiveTransactionOperations, coroutineTxHelper);
     }
 
 }

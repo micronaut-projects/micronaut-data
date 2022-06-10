@@ -23,7 +23,8 @@ import io.micronaut.transaction.SynchronousTransactionManager;
 import io.micronaut.transaction.async.AsyncTransactionOperations;
 import io.micronaut.transaction.async.AsyncUsingSyncTransactionOperations;
 import io.micronaut.transaction.interceptor.CoroutineTxHelper;
-import org.hibernate.SessionFactory;
+
+import javax.sql.DataSource;
 
 /**
  * Build additional transaction manager to support using synchronous transaction manager with async methods.
@@ -35,7 +36,7 @@ import org.hibernate.SessionFactory;
 @Factory
 final class HibernateTransactionManagersFactory {
 
-    @EachBean(SessionFactory.class)
+    @EachBean(DataSource.class)
     <T> AsyncTransactionOperations<T> buildPrimaryAsyncTransactionOperations(@Parameter SynchronousTransactionManager<T> synchronousTransactionManager,
                                                                              CoroutineTxHelper coroutineTxHelper) {
         return new AsyncUsingSyncTransactionOperations<>(synchronousTransactionManager, coroutineTxHelper);

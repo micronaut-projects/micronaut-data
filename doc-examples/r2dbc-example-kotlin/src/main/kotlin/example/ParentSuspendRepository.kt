@@ -20,4 +20,6 @@ interface ParentSuspendRepository : GenericRepository<Parent, Int> {
 
     @Transactional(Transactional.TxType.MANDATORY)
     suspend fun queryById(id: Int): Optional<Parent>
+
+    suspend fun count(): Long
 }

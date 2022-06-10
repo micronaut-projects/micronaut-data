@@ -54,11 +54,15 @@ public class DefaultFindPageAsyncInterceptor<T> extends AbstractAsyncInterceptor
             PreparedQuery<?, Number> countQuery = prepareCountQuery(methodKey, context);
             TransactionSynchronizationManager.TransactionSynchronizationState state = TransactionSynchronizationManager.getState();
             return asyncDatastoreOperations.findOne(countQuery)
-                    .thenCompose(total -> TransactionSynchronizationManager.withState(state, () -> asyncDatastoreOperations.findAll(preparedQuery)
+                .thenCompose(total -> {
+                    try (TransactionSynchronizationManager.TransactionSynchronizationStateOp ignore = TransactionSynchronizationManager.withState(state)) {
+                        return asyncDatastoreOperations.findAll(preparedQuery)
                             .thenApply(objects -> {
                                 List<Object> resultList = CollectionUtils.iterableToList((Iterable<Object>) objects);
                                 return Page.of(resultList, getPageable(context), total.longValue());
-                            })));
+                            });
+                    }
+                });
 
         } else {
             return asyncDatastoreOperations.findPage(getPagedQuery(context));

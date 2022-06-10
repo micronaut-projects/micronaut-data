@@ -1,0 +1,25 @@
+plugins {
+    id "java"
+    id "io.micronaut.application"
+    id "io.micronaut.build.internal.data-example-java11"
+}
+
+application {
+    mainClass = "example.Application"
+}
+
+micronaut {
+    version micronautVersion
+    runtime "netty"
+    testRuntime "junit5"
+}
+
+dependencies {
+    annotationProcessor projects.dataProcessor
+    implementation "io.micronaut:micronaut-http-client"
+    implementation projects.dataHibernateReactive
+    runtimeOnly "ch.qos.logback:logback-classic"
+    runtimeOnly libs.drivers.vertx.pg
+
+    testImplementation libs.testcontainers.postgresql
+}

@@ -15,10 +15,8 @@
  */
 package io.micronaut.data.runtime.intercept.reactive;
 
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.aop.MethodInvocationContext;
-import io.micronaut.core.async.publisher.Publishers;
-import io.micronaut.core.type.Argument;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.intercept.reactive.DeleteAllReactiveInterceptor;
 import io.micronaut.data.model.runtime.PreparedQuery;
@@ -33,7 +31,7 @@ import java.util.Optional;
  * @author graemerocher
  * @since 1.0.0
  */
-public class DefaultDeleteAllReactiveInterceptor extends AbstractReactiveInterceptor<Object, Object> implements DeleteAllReactiveInterceptor<Object, Object> {
+public class DefaultDeleteAllReactiveInterceptor extends AbstractPublisherInterceptor implements DeleteAllReactiveInterceptor<Object, Object> {
     /**
      * Default constructor.
      *
@@ -44,20 +42,16 @@ public class DefaultDeleteAllReactiveInterceptor extends AbstractReactiveInterce
     }
 
     @Override
-    public Object intercept(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Object> context) {
-        Argument<Object> arg = context.getReturnType().asArgument();
+    public Publisher<?> interceptPublisher(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Object> context) {
         Optional<Iterable<Object>> deleteEntities = findEntitiesParameter(context, Object.class);
         Optional<Object> deleteEntity = findEntityParameter(context, Object.class);
-        Publisher publisher;
         if (!deleteEntity.isPresent() && !deleteEntities.isPresent()) {
             PreparedQuery<?, Number> preparedQuery = (PreparedQuery<?, Number>) prepareQuery(methodKey, context);
-            publisher = reactiveOperations.executeDelete(preparedQuery);
+            return reactiveOperations.executeDelete(preparedQuery);
         } else if (deleteEntity.isPresent()) {
-            publisher = reactiveOperations.delete(getDeleteOperation(context, deleteEntity.get()));
-        } else {
-            publisher = reactiveOperations.deleteAll(getDeleteBatchOperation(context, deleteEntities.get()));
+            return reactiveOperations.delete(getDeleteOperation(context, deleteEntity.get()));
         }
-        return Publishers.convertPublisher(publisher, arg.getType());
+        return reactiveOperations.deleteAll(getDeleteBatchOperation(context, deleteEntities.get()));
     }
 }
 

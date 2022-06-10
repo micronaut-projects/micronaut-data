@@ -22,4 +22,6 @@ interface ParentSuspendRepositoryForCustomDb : GenericRepository<Parent, Int> {
 
     suspend fun update(@NonNull entity: Parent): Parent
 
+    suspend fun count(): Long
+
 }

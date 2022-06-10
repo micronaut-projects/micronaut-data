@@ -17,13 +17,10 @@ package io.micronaut.data.runtime.intercept.reactive;
 
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.async.publisher.Publishers;
-import io.micronaut.core.type.Argument;
-import io.micronaut.core.type.ReturnType;
 import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.intercept.reactive.SaveOneReactiveInterceptor;
 import io.micronaut.data.operations.RepositoryOperations;
-import reactor.core.publisher.Flux;
+import org.reactivestreams.Publisher;
 import reactor.core.publisher.Mono;
 
 import java.util.Map;
@@ -33,7 +30,7 @@ import java.util.Map;
  * @author graemerocher
  * @since 1.0.0
  */
-public class DefaultSaveOneReactiveInterceptor extends AbstractReactiveInterceptor<Object, Object>
+public class DefaultSaveOneReactiveInterceptor extends AbstractCountOrEntityPublisherInterceptor
         implements SaveOneReactiveInterceptor<Object, Object> {
     /**
      * Default constructor.
@@ -45,20 +42,13 @@ public class DefaultSaveOneReactiveInterceptor extends AbstractReactiveIntercept
     }
 
     @Override
-    public Object intercept(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Object> context) {
+    public Publisher<?> interceptPublisher(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Object> context) {
         Class<?> rootEntity = getRequiredRootEntity(context);
         Map<String, Object> parameterValueMap = getParameterValueMap(context);
 
-        Flux<Object> publisher = Mono.fromCallable(() -> {
+        return Mono.fromCallable(() -> {
             Object o = instantiateEntity(rootEntity, parameterValueMap);
             return getInsertOperation(context, o);
         }).flatMapMany(reactiveOperations::persist);
-        ReturnType<Object> rt = context.getReturnType();
-        Argument<?> reactiveValue = context.getReturnType().asArgument().getFirstTypeVariable().orElse(Argument.OBJECT_ARGUMENT);
-        if (isNumber(reactiveValue.getType())) {
-            return operations.getConversionService().convert(count(publisher), rt.getType())
-                    .orElseThrow(() -> new IllegalStateException("Unsupported return type: " + rt.getType()));
-        }
-        return Publishers.convertPublisher(publisher, context.getReturnType().getType());
     }
 }

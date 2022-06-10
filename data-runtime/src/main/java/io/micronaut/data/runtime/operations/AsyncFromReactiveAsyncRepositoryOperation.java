@@ -27,15 +27,14 @@ import io.micronaut.data.model.runtime.UpdateBatchOperation;
 import io.micronaut.data.model.runtime.UpdateOperation;
 import io.micronaut.data.operations.async.AsyncRepositoryOperations;
 import io.micronaut.data.operations.reactive.ReactiveRepositoryOperations;
+import io.micronaut.transaction.support.TransactionSynchronizationManager;
 import org.reactivestreams.Publisher;
-import org.reactivestreams.Subscriber;
-import org.reactivestreams.Subscription;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import reactor.util.context.Context;
+import reactor.util.context.ContextView;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
 
@@ -163,64 +162,17 @@ public class AsyncFromReactiveAsyncRepositoryOperation implements AsyncRepositor
     }
 
     private <T> CompletionStage<Iterable<T>> toIterableCompletionStage(Publisher<T> publisher) {
-        CompletableFuture<Iterable<T>> cs = new CompletableFuture<>();
-        publisher.subscribe(new Subscriber<T>() {
-
-            private List<T> values;
-
-            @Override
-            public void onSubscribe(Subscription s) {
-                values = new ArrayList<>();
-                s.request(Long.MAX_VALUE);
-            }
-
-            @Override
-            public void onNext(T value) {
-                synchronized (this) {
-                    values.add(value);
-                }
-            }
-
-            @Override
-            public void onError(Throwable ex) {
-                cs.completeExceptionally(ex);
-            }
-
-            @Override
-            public void onComplete() {
-                cs.complete(values == null ? Collections.emptyList() : values);
-            }
-        });
-        return cs;
+        return Flux.from(publisher)
+            .contextWrite(TransactionSynchronizationManager.getResourceOrDefault(ContextView.class, Context.empty()))
+            .collectList()
+            .map(v -> (Iterable<T>) v)
+            .toFuture();
     }
 
     private <T> CompletionStage<T> toCompletionStage(Publisher<T> publisher) {
-        CompletableFuture<T> cs = new CompletableFuture<>();
-        publisher.subscribe(new Subscriber<T>() {
-
-            T value;
-
-            @Override
-            public void onSubscribe(Subscription s) {
-                s.request(1);
-            }
-
-            @Override
-            public void onNext(T value) {
-                this.value = value;
-            }
-
-            @Override
-            public void onError(Throwable ex) {
-                cs.completeExceptionally(ex);
-            }
-
-            @Override
-            public void onComplete() {
-                cs.complete(value);
-            }
-        });
-        return cs;
+        return Mono.from(publisher)
+            .contextWrite(TransactionSynchronizationManager.getResourceOrDefault(ContextView.class, Context.empty()))
+            .toFuture();
     }
 
 }

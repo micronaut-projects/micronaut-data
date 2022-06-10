@@ -25,9 +25,11 @@ import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Join;
+import io.micronaut.data.annotation.QueryHint;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.annotation.Where;
+import io.micronaut.data.annotation.repeatable.QueryHints;
 import io.micronaut.data.intercept.DataInterceptor;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.Association;
@@ -504,7 +506,7 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
                                                            String restrictionName,
                                                            SourcePersistentEntityCriteriaBuilder cb,
                                                            @Nullable
-                                                                   Expression<?> expression) {
+                                                           Expression<?> expression) {
         if (requiredParameters == 0) {
             return Collections.emptyList();
         }
@@ -658,7 +660,14 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
         if (matchContext.getMethodElement().hasAnnotation(Join.class)) {
             return false;
         }
-        final boolean repositoryHasWhere = new AnnotationMetadataHierarchy(matchContext.getRepositoryClass(), matchContext.getMethodElement()).hasAnnotation(Where.class);
+        AnnotationMetadataHierarchy metadataHierarchy = new AnnotationMetadataHierarchy(matchContext.getRepositoryClass(), matchContext.getMethodElement());
+        if (metadataHierarchy.hasAnnotation("io.micronaut.data.jpa.annotation.EntityGraph")) {
+            return false;
+        }
+        if (metadataHierarchy.hasAnnotation(QueryHint.class) || metadataHierarchy.hasAnnotation(QueryHints.class)) {
+            return false;
+        }
+        final boolean repositoryHasWhere = metadataHierarchy.hasAnnotation(Where.class);
         final boolean entityHasWhere = matchContext.getRootEntity().hasAnnotation(Where.class);
         return !repositoryHasWhere && !entityHasWhere;
     }

@@ -17,9 +17,6 @@ package io.micronaut.data.runtime.intercept.reactive;
 
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.async.publisher.Publishers;
-import io.micronaut.core.type.Argument;
-import io.micronaut.core.type.ReturnType;
 import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.intercept.reactive.UpdateEntityReactiveInterceptor;
 import io.micronaut.data.operations.RepositoryOperations;
@@ -30,7 +27,7 @@ import org.reactivestreams.Publisher;
  * @author graemerocher
  * @since 1.0.0
  */
-public class DefaultUpdateEntityReactiveInterceptor extends AbstractReactiveInterceptor<Object, Object>
+public class DefaultUpdateEntityReactiveInterceptor extends AbstractCountOrEntityPublisherInterceptor
         implements UpdateEntityReactiveInterceptor<Object, Object> {
     /**
      * Default constructor.
@@ -42,15 +39,8 @@ public class DefaultUpdateEntityReactiveInterceptor extends AbstractReactiveInte
     }
 
     @Override
-    public Object intercept(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Object> context) {
+    public Publisher<?> interceptPublisher(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Object> context) {
         Object entity = getEntityParameter(context, Object.class);
-        Publisher<Object> rs = reactiveOperations.update(getUpdateOperation(context, entity));
-        ReturnType<Object> rt = context.getReturnType();
-        Argument<?> reactiveValue = context.getReturnType().asArgument().getFirstTypeVariable().orElse(Argument.OBJECT_ARGUMENT);
-        if (isNumber(reactiveValue.getType())) {
-            return operations.getConversionService().convert(count(rs), rt.asArgument())
-                    .orElseThrow(() -> new IllegalStateException("Unsupported return type: " + rt.getType()));
-        }
-        return Publishers.convertPublisher(rs, context.getReturnType().getType());
+        return reactiveOperations.update(getUpdateOperation(context, entity));
     }
 }

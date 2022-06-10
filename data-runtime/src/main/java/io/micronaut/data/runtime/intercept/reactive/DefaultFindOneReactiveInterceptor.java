@@ -15,9 +15,8 @@
  */
 package io.micronaut.data.runtime.intercept.reactive;
 
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.aop.MethodInvocationContext;
-import io.micronaut.core.async.publisher.Publishers;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.intercept.reactive.FindOneReactiveInterceptor;
 import io.micronaut.data.model.runtime.PreparedQuery;
@@ -29,7 +28,7 @@ import org.reactivestreams.Publisher;
  * @author graemerocher
  * @since 1.0.0
  */
-public class DefaultFindOneReactiveInterceptor extends AbstractReactiveInterceptor<Object, Object>
+public class DefaultFindOneReactiveInterceptor extends AbstractPublisherInterceptor
         implements FindOneReactiveInterceptor<Object, Object> {
     /**
      * Default constructor.
@@ -41,9 +40,8 @@ public class DefaultFindOneReactiveInterceptor extends AbstractReactiveIntercept
     }
 
     @Override
-    public Object intercept(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Object> context) {
+    public Publisher<?> interceptPublisher(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Object> context) {
         PreparedQuery<Object, Object> preparedQuery = (PreparedQuery<Object, Object>) prepareQuery(methodKey, context);
-        Publisher<Object> publisher = reactiveOperations.findOptional(preparedQuery);
-        return Publishers.convertPublisher(publisher, context.getReturnType().getType());
+        return reactiveOperations.findOptional(preparedQuery);
     }
 }

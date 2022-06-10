@@ -15,9 +15,8 @@
  */
 package io.micronaut.data.runtime.intercept.reactive;
 
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.aop.MethodInvocationContext;
-import io.micronaut.core.async.publisher.Publishers;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.intercept.reactive.CountReactiveInterceptor;
@@ -30,7 +29,7 @@ import org.reactivestreams.Publisher;
  * @author graemerocher
  * @since 1.0.0
  */
-public class DefaultCountReactiveInterceptor extends AbstractReactiveInterceptor<Object, Object>
+public class DefaultCountReactiveInterceptor extends AbstractPublisherInterceptor
         implements CountReactiveInterceptor<Object, Object> {
     /**
      * Default constructor.
@@ -42,19 +41,11 @@ public class DefaultCountReactiveInterceptor extends AbstractReactiveInterceptor
     }
 
     @Override
-    public Object intercept(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Object> context) {
+    public Publisher<?> interceptPublisher(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Object> context) {
         if (context.hasAnnotation(Query.class)) {
             PreparedQuery<?, Long> preparedQuery = prepareQuery(methodKey, context, Long.class);
-            return Publishers.convertPublisher(
-                    reactiveOperations.findAll(preparedQuery),
-                    context.getReturnType().getType()
-            );
-        } else {
-            Publisher<Long> result = reactiveOperations.count(getPagedQuery(context));
-            return Publishers.convertPublisher(
-                    result,
-                    context.getReturnType().getType()
-            );
+            return reactiveOperations.findAll(preparedQuery);
         }
+        return reactiveOperations.count(getPagedQuery(context));
     }
 }

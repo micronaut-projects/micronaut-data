@@ -14,5 +14,7 @@
     </root>
 
     <logger name="io.micronaut" level="INFO"/>
+    <logger name="io.micronaut.data" level="DEBUG"/>
+    <logger name="io.micronaut.transaction" level="DEBUG"/>
 
 </configuration>

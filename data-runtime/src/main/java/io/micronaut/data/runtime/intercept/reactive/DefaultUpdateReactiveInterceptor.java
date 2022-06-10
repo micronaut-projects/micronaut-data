@@ -15,10 +15,8 @@
  */
 package io.micronaut.data.runtime.intercept.reactive;
 
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.aop.MethodInvocationContext;
-import io.micronaut.core.async.publisher.Publishers;
-import io.micronaut.core.type.ReturnType;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.intercept.reactive.UpdateReactiveInterceptor;
 import io.micronaut.data.model.runtime.PreparedQuery;
@@ -31,7 +29,7 @@ import org.reactivestreams.Publisher;
  * @author graemerocher
  * @since 1.0.0
  */
-public class DefaultUpdateReactiveInterceptor extends AbstractReactiveInterceptor<Object, Object>
+public class DefaultUpdateReactiveInterceptor extends AbstractPublisherInterceptor
         implements UpdateReactiveInterceptor<Object, Object> {
     /**
      * Default constructor.
@@ -43,10 +41,8 @@ public class DefaultUpdateReactiveInterceptor extends AbstractReactiveIntercepto
     }
 
     @Override
-    public Object intercept(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Object> context) {
+    public Publisher<?> interceptPublisher(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Object> context) {
         PreparedQuery<?, Number> preparedQuery = (PreparedQuery<?, Number>) prepareQuery(methodKey, context);
-        ReturnType<Object> returnType = context.getReturnType();
-        Publisher<Number> publisher = reactiveOperations.executeUpdate(preparedQuery);
-        return Publishers.convertPublisher(publisher, returnType.getType());
+        return reactiveOperations.executeUpdate(preparedQuery);
     }
 }

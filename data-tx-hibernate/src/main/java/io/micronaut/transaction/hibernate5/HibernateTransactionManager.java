@@ -84,8 +84,7 @@ import java.util.Objects;
  * @see DataSourceUtils#releaseConnection
  * @see io.micronaut.transaction.jdbc.DataSourceTransactionManager
  */
-@SuppressWarnings("serial")
-@EachBean(SessionFactory.class)
+@EachBean(DataSource.class)
 @Replaces(DataSourceTransactionManager.class)
 @TypeHint(HibernateTransactionManager.class)
 public class HibernateTransactionManager extends AbstractSynchronousTransactionManager<Connection>
@@ -115,8 +114,8 @@ public class HibernateTransactionManager extends AbstractSynchronousTransactionM
      * @param entityInterceptor The configured entity interceptor
      */
     public HibernateTransactionManager(
-            SessionFactory sessionFactory,
-            @Parameter DataSource dataSource,
+            @Parameter SessionFactory sessionFactory,
+            DataSource dataSource,
             @Nullable Interceptor entityInterceptor) {
         this(sessionFactory, dataSource, entityInterceptor, null);
     }
@@ -130,8 +129,8 @@ public class HibernateTransactionManager extends AbstractSynchronousTransactionM
      */
     @Inject
     public HibernateTransactionManager(
-            SessionFactory sessionFactory,
-            @Parameter DataSource dataSource,
+            @Parameter SessionFactory sessionFactory,
+            DataSource dataSource,
             @Nullable Interceptor entityInterceptor,
             @Parameter String name) {
         this.sessionFactory = sessionFactory;

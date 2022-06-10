@@ -17,18 +17,18 @@ package io.micronaut.data.runtime.intercept.reactive;
 
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.async.publisher.Publishers;
 import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.intercept.reactive.ExistsByReactiveInterceptor;
 import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.operations.RepositoryOperations;
+import org.reactivestreams.Publisher;
 
 /**
  * Default implementation of {@link ExistsByReactiveInterceptor}.
  * @author graemerocher
  * @since 1.0.0
  */
-public class DefaultExistsByReactiveInterceptor extends AbstractReactiveInterceptor<Object, Object>
+public class DefaultExistsByReactiveInterceptor extends AbstractPublisherInterceptor
         implements ExistsByReactiveInterceptor<Object, Object> {
     /**
      * Default constructor.
@@ -40,8 +40,8 @@ public class DefaultExistsByReactiveInterceptor extends AbstractReactiveIntercep
     }
 
     @Override
-    public Object intercept(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Object> context) {
+    public Publisher<?> interceptPublisher(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Object> context) {
         PreparedQuery<?, Boolean> preparedQuery = prepareQuery(methodKey, context, null);
-        return Publishers.convertPublisher(reactiveOperations.exists(preparedQuery), context.getReturnType().getType());
+        return reactiveOperations.exists(preparedQuery);
     }
 }

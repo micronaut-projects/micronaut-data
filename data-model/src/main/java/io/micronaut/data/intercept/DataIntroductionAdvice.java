@@ -18,6 +18,7 @@ package io.micronaut.data.intercept;
 import io.micronaut.aop.InterceptedMethod;
 import io.micronaut.aop.MethodInterceptor;
 import io.micronaut.aop.MethodInvocationContext;
+import io.micronaut.aop.kotlin.KotlinInterceptedMethod;
 import io.micronaut.context.BeanLocator;
 import io.micronaut.context.Qualifier;
 import io.micronaut.context.exceptions.ConfigurationException;
@@ -36,10 +37,13 @@ import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.operations.PrimaryRepositoryOperations;
 import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.inject.qualifiers.Qualifiers;
+import io.micronaut.transaction.interceptor.CoroutineTxHelper;
+import io.micronaut.transaction.support.TransactionSynchronizationManager;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
@@ -58,15 +62,18 @@ public final class DataIntroductionAdvice implements MethodInterceptor<Object, O
 
     private final BeanLocator beanLocator;
     private final Map<RepositoryMethodKey, DataInterceptor> interceptorMap = new ConcurrentHashMap<>(20);
+    private final CoroutineTxHelper coroutineTxHelper;
 
     /**
      * Default constructor.
      *
-     * @param beanLocator The bean locator.
+     * @param beanLocator       The bean locator.
+     * @param coroutineTxHelper
      */
     @Inject
-    public DataIntroductionAdvice(@NonNull BeanLocator beanLocator) {
+    public DataIntroductionAdvice(@NonNull BeanLocator beanLocator, @Nullable CoroutineTxHelper coroutineTxHelper) {
         this.beanLocator = beanLocator;
+        this.coroutineTxHelper = coroutineTxHelper;
     }
 
     @Override
@@ -117,7 +124,7 @@ public final class DataIntroductionAdvice implements MethodInterceptor<Object, O
                 case PUBLISHER:
                     return interceptedMethod.handleResult(dataInterceptor.intercept(key, context));
                 case COMPLETION_STAGE:
-                    return interceptedMethod.handleResult(interceptCompletionStage(context, (CompletionStage<?>) dataInterceptor.intercept(key, context)));
+                    return interceptedMethod.handleResult(interceptCompletionStage(interceptedMethod, context, dataInterceptor, key));
                 case SYNCHRONOUS:
                     return dataInterceptor.intercept(key, context);
                 default:
@@ -128,7 +135,17 @@ public final class DataIntroductionAdvice implements MethodInterceptor<Object, O
         }
     }
 
-    private Object interceptCompletionStage(MethodInvocationContext<Object, Object> context, CompletionStage<?> completionStage) {
+    private Object interceptCompletionStage(InterceptedMethod interceptedMethod,
+                                            MethodInvocationContext<Object, Object> context,
+                                            DataInterceptor<Object, Object> dataInterceptor,
+                                            RepositoryMethodKey key) {
+        TransactionSynchronizationManager.TransactionSynchronizationState state = null;
+        if (interceptedMethod instanceof KotlinInterceptedMethod) {
+            KotlinInterceptedMethod kotlinInterceptedMethod = (KotlinInterceptedMethod) interceptedMethod;
+            state = Objects.requireNonNull(coroutineTxHelper).getTxState(kotlinInterceptedMethod);
+        }
+        CompletionStage<?> completionStage = TransactionSynchronizationManager.decorateCompletionStage(state,
+            () -> (CompletionStage<?>) dataInterceptor.intercept(key, context));
         CompletableFuture<Object> completableFuture = new CompletableFuture<>();
         completionStage.whenComplete((value, throwable) -> {
             if (throwable == null) {

@@ -15,9 +15,8 @@
  */
 package io.micronaut.data.runtime.intercept.reactive;
 
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.aop.MethodInvocationContext;
-import io.micronaut.core.async.publisher.Publishers;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.intercept.reactive.DeleteOneReactiveInterceptor;
 import io.micronaut.data.operations.RepositoryOperations;
@@ -28,7 +27,7 @@ import org.reactivestreams.Publisher;
  * @author graemerocher
  * @since 1.0.0
  */
-public class DefaultDeleteOneReactiveInterceptor extends AbstractReactiveInterceptor<Object, Object> implements DeleteOneReactiveInterceptor<Object, Object> {
+public class DefaultDeleteOneReactiveInterceptor extends AbstractPublisherInterceptor implements DeleteOneReactiveInterceptor<Object, Object> {
     /**
      * Default constructor.
      *
@@ -39,17 +38,12 @@ public class DefaultDeleteOneReactiveInterceptor extends AbstractReactiveInterce
     }
 
     @Override
-    public Object intercept(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Object> context) {
+    public Publisher<?> interceptPublisher(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Object> context) {
         Object entity = getEntityParameter(context, Object.class);
         if (entity != null) {
-            Publisher<Number> publisher = reactiveOperations.delete(getDeleteOperation(context, entity));
-            return Publishers.convertPublisher(
-                    publisher,
-                    context.getReturnType().getType()
-            );
-        } else {
-            throw new IllegalArgumentException("Entity to delete cannot be null");
+            return reactiveOperations.delete(getDeleteOperation(context, entity));
         }
+        throw new IllegalArgumentException("Entity to delete cannot be null");
     }
 }
 
