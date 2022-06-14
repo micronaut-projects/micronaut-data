@@ -41,7 +41,9 @@ include 'data-document-tck'
 
 // implementations
 include 'data-hibernate-jpa'
-include 'data-hibernate-reactive'
+if (JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_11)) {
+    include 'data-hibernate-reactive'
+}
 include 'data-tx-hibernate'
 include 'data-jdbc'
 include 'data-r2dbc'

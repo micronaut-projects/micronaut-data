@@ -7,7 +7,6 @@ snippet::example.AuthorService[project-base="doc-examples/r2dbc-example", source
 
 This same declarative logic can be done programmatically as well by injecting the api:data.r2dbc.operations.R2dbcOperations[] interface:
 
-
 snippet::example.BookControllerTest[project-base="doc-examples/r2dbc-example", source="test", indent="0", tags="programmatic-tx"]
 
 In the above case the `withTransaction` method is used to initiate a transaction.
