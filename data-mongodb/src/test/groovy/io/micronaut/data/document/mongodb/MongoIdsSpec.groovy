@@ -19,6 +19,7 @@ import com.mongodb.client.MongoClient
 import groovy.transform.CompileStatic
 import io.micronaut.core.convert.value.ConvertibleValues
 import io.micronaut.core.type.Argument
+import io.micronaut.data.annotation.AutoPopulated
 import io.micronaut.data.annotation.GeneratedValue
 import io.micronaut.data.annotation.Id
 import io.micronaut.data.annotation.MappedEntity
@@ -155,6 +156,7 @@ class MongoIdsSpec extends Specification implements MongoTestPropertyProvider {
     static class EntityUUID {
 
         @BsonRepresentation(BsonType.STRING)
+        @AutoPopulated
         @Id
         UUID myId
 
