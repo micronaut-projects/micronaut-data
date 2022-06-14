@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.hibernate.hr.reactive
+package io.micronaut.data.hibernate.reactive
 
 import io.micronaut.context.annotation.Property
 import io.micronaut.data.hibernate.entities.UserWithWhere

@@ -1,4 +1,4 @@
-package io.micronaut.data.hibernate.hr.sort;
+package io.micronaut.data.hibernate.sort;
 
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.annotation.Query;

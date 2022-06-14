@@ -28,6 +28,8 @@ import java.util.function.Function;
 /**
  * Hibernate reactive repository operations.
  *
+ * This interface is experimental might change in the future.
+ *
  * @author Denis Stepanov
  * @since 3.5.0
  */
@@ -38,7 +40,7 @@ public interface HibernateReactorRepositoryOperations extends ReactorReactiveRep
     /**
      * Execute with a new or existing session.
      *
-     * @param work The fork
+     * @param work The work
      * @param <T>  The published item
      * @return The produced result publisher
      */
@@ -47,7 +49,7 @@ public interface HibernateReactorRepositoryOperations extends ReactorReactiveRep
     /**
      * Execute with a new or existing session.
      *
-     * @param work The fork
+     * @param work The work
      * @param <T>  The published item
      * @return The produced result publisher
      */

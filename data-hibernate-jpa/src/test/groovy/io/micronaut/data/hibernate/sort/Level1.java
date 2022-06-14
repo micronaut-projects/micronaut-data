@@ -1,4 +1,4 @@
-package io.micronaut.data.hibernate.hr.sort;
+package io.micronaut.data.hibernate.sort;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;

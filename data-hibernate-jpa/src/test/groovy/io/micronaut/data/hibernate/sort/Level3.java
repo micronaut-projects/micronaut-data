@@ -1,4 +1,4 @@
-package io.micronaut.data.hibernate.hr.sort;
+package io.micronaut.data.hibernate.sort;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 

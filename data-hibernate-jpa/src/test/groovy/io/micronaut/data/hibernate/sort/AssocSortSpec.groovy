@@ -1,4 +1,4 @@
-package io.micronaut.data.hibernate.hr.sort
+package io.micronaut.data.hibernate.sort
 
 import io.micronaut.context.annotation.Property
 import io.micronaut.data.model.Sort
