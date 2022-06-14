@@ -1,4 +1,4 @@
-As seen in the <<quickStart, Quick Start>> repositories in Micronaut Data are defined as interfaces that are annotated with the ann:data.annotation.Repository[] annotation.
+Micronaut Data repositories are defined as interfaces that are annotated with the ann:data.annotation.Repository[] annotation.
 
 The ann:data.annotation.Repository[] annotation accepts an optional string value which represents the name of the connection or datasource in a multiple datasource scenario. By default Micronaut Data will look for the default datasource.
 
@@ -53,6 +53,6 @@ The following table summarizes the repository interfaces that come with Micronau
 
 Note that in addition to interfaces you can also define repositories as abstract classes:
 
-snippet::example.AbstractBookRepository[project-base="doc-examples/example", source="main"]
+snippet::example.AbstractBookRepository[project-base="doc-examples/hibernate-example", source="main"]
 
-As you can see from the above example, using abstract classes can be useful as it allows you to combine custom code that interacts with JPA and repository interface code implemented automatically by Micronaut Data.
+As you can see from the above example, using abstract classes can be useful as it allows you to combine custom code that interacts with a repository interface code implemented automatically by Micronaut Data.

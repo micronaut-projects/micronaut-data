@@ -1,0 +1,6 @@
+The following sections describe shared concepts of all Micronaut Data modules:
+
+- <<repositories, Repositories>> - use existing or create a custom repository
+- <<querying, Querying>> - define a repository method to access your data
+- <<dataUpdates, Data access>> - data access operations
+- <<transactions, Transactions>> - transactional access support

@@ -1,17 +1,17 @@
 Deleting can be performed in a number of ways. To delete everything (use with care!) you can use `deleteAll`:
 
-snippet::example.BookRepository[project-base="doc-examples/example", source="main", tags="deleteall", indent="0"]
+snippet::example.BookRepository[project-base="doc-examples/hibernate-example", source="main", tags="deleteall", indent="0"]
 
 NOTE: `deleteAll` does not cascade. Delete all foreign key references first or use `delete` on all individual items.
 
 To delete by ID or by the value of a property you can specify a parameter that matches a property of an entity:
 
-snippet::example.BookRepository[project-base="doc-examples/example", source="main", tags="deleteone", indent="0"]
+snippet::example.BookRepository[project-base="doc-examples/hibernate-example", source="main", tags="deleteone", indent="0"]
 
 Finally, you can also use the `deleteBy*` pattern (the method must start with `delete`, `remove`, `erase` or `eliminate`) and any finder expression, for example:
 
-snippet::example.BookRepository[project-base="doc-examples/example", source="main", tags="deleteby", indent="0"]
+snippet::example.BookRepository[project-base="doc-examples/hibernate-example", source="main", tags="deleteby", indent="0"]
 
 You can also specify A custom query for a delete method:
 
-snippet::example.BookRepository[project-base="doc-examples/example", source="main", tags="deleteCustomQuery", indent="0"]
+snippet::example.BookRepository[project-base="doc-examples/hibernate-example", source="main", tags="deleteCustomQuery", indent="0"]

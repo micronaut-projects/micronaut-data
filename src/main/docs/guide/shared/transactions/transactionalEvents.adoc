@@ -2,7 +2,7 @@ You can write event listeners that are transaction aware using the ann:transacti
 
 The following demonstrates an example:
 
-snippet::example.BookManager[project-base="doc-examples/example", source="main", indent="0"]
+snippet::example.BookManager[project-base="doc-examples/hibernate-example", source="main", indent="0"]
 
 <1> The `BookManager` class receives an instance of `ApplicationEventPublisher`.
 <2> When the event is published if there is a running transaction then it will only trigger the listener once the transaction is committed.

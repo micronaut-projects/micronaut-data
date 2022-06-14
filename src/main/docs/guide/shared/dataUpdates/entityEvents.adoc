@@ -32,13 +32,13 @@ TIP: You can also use the JPA annotations in the `javax.persistence` package if 
 
 Each event listener annotation can be applied to an instance method of an entity class (a JPA entity or a class annotated with ann:data.annotation.MappedEntity) in which case the method must return `void` and have zero arguments for example:
 
-snippet::example.Account[project-base="doc-examples/example", source="main", indent="0"]
+snippet::example.Account[project-base="doc-examples/hibernate-example", source="main", indent="0"]
 
 The above example defines a `@PrePersist` listener that encodes the password (in a not very secure base64 format, clearly not recommended!) prior to inserting into the database.
 
 In addition, the annotations can be applied to any instance method of a Micronaut bean, in which case the method must return `void` and have a single argument that is the entity type (note the type can be `Object` to listener for all events). For example:
 
-snippet::example.AccountUsernameValidator[project-base="doc-examples/example", source="main", indent="0"]
+snippet::example.AccountUsernameValidator[project-base="doc-examples/hibernate-example", source="main", indent="0"]
 
 The above listener serves to validate the account username prior to any insert.
 
@@ -72,7 +72,7 @@ Finally, it is also possible to define a Micronaut bean that implements the api:
 
 For example the following Micronaut factory bean defines listeners that are executed before and after the `Book` entity is persisted:
 
-snippet::example.BookListeners[project-base="doc-examples/example", source="main", indent="0"]
+snippet::example.BookListeners[project-base="doc-examples/hibernate-example", source="main", indent="0"]
 
 <1> The factory returns a bean of type api:data.event.listeners.PrePersistListener[] that includes `Book` as the generic argument
 <2> The `PrePersistListener` can return `false` if the operation should not proceed, if this case `true` is returned

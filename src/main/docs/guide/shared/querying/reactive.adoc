@@ -6,11 +6,11 @@ If the backing implementation natively supports reactive types at the driver lev
 
 The following is an example of a couple of reactive methods:
 
-snippet::example.ProductRepository[project-base="doc-examples/example", source="main",tags="reactive", indent="0"]
+snippet::example.ProductRepository[project-base="doc-examples/hibernate-example", source="main",tags="reactive", indent="0"]
 
 The above example defines two methods that use reactive return types from RxJava 2, the API for which you can use to compose query operations:
 
-snippet::example.ProductRepositorySpec[project-base="doc-examples/example"tags="reactive", indent="0"]
+snippet::example.ProductRepositorySpec[project-base="doc-examples/hibernate-example"tags="reactive", indent="0"]
 
 In the case of JPA each operation will run with its own transaction and session, hence care needs to be taken to fetch the correct data and avoid detached objects.
 

@@ -1,20 +1,59 @@
-To get started with Micronaut Data JDBC add the following dependency to your annotation processor path:
+The quickest way to get started is to create a new Micronaut application with https://micronaut.io/launch/[Micronaut Launch] and choose the `data-jdbc`, a database driver and a database migration framework features. This can also be done via CLI.
 
-dependency:io.micronaut.data:micronaut-data-processor[scope="annotationProcessor", version="{version}"]
+.Creating a JDBC application with Micronaut Launch
+[cols=3*]
+|===
+|
+|*Gradle*
+|*Maven*
 
-NOTE: For Kotlin the dependency should be in the `kapt` scope and for Groovy it should be in `compileOnly` scope.
+|*Java*
 
-You should then configure a compile scoped dependency on the `micronaut-data-jdbc` module:
+|https://micronaut.io/launch?features=data-jdbc&features=flyway&features=mysql&features=jdbc-hikari&lang=JAVA&build=GRADLE[Open,role=external]
+|https://micronaut.io/launch?features=data-jdbc&features=flyway&features=mysql&features=jdbc-hikari&lang=JAVA&build=MAVEN[Open,role=external]
 
-dependency:io.micronaut.data:micronaut-data-jdbc[version="{version}"]
 
-You should also ensure you have the JDBC driver and connection pool dependencies configured. For example for H2 in-memory database driver:
+|*Kotlin*
 
-dependency:com.h2database:h2[scope="runtime"]
+|https://micronaut.io/launch?features=data-jdbc&features=flyway&features=mysql&features=jdbc-hikari&lang=KOTLIN&build=GRADLE[Open,role=external]
+|https://micronaut.io/launch?features=data-jdbc&features=flyway&features=mysql&features=jdbc-hikari&lang=KOTLIN&build=MAVEN[Open,role=external]
 
-And Hikari connection pool:
+|*Groovy*
+
+|https://micronaut.io/launch?features=data-jdbc&features=flyway&features=mysql&features=jdbc-hikari&lang=GROOVY&build=GRADLE[Open,role=external]
+|https://micronaut.io/launch?features=data-jdbc&features=flyway&features=mysql&features=jdbc-hikari&lang=GROOVY&build=MAVEN[Open,role=external]
+
+|===
+
+.Creating an application with the CLI
+[source,bash]
+----
+# For Maven add: --build maven
+$ mn create-app --lang java example --features data-jdbc,flyway,mysql,jdbc-hikari
+----
+
+Or via `curl`:
+
+.Creating an application with `curl`
+[source,bash]
+----
+# For Maven add to the URL: &build=maven
+$ curl https://launch.micronaut.io/demo.zip?lang=java&features=data-jdbc,flyway,mysql,jdbc-hikari -o demo.zip && unzip demo.zip -d demo && cd demo
+----
+
+The generated application will have a compile-scoped dependency on the `micronaut-data-jdbc` module and will use MySQL since we passed the `mysql` feature adding dependency on the JDBC driver for MySQL:
+
+dependency:io.micronaut.data:micronaut-data-jdbc[]
+
+You should also ensure you have the JDBC driver and connection pool dependencies configured:
 
 dependency:io.micronaut.sql:micronaut-jdbc-hikari[scope="runtime"]
+
+The annotation processor needs to have the Micronaut Data processor dependency properly setup to enable compile-time generation and evaluation:
+
+dependency:io.micronaut.data:micronaut-data-processor[scope="annotationProcessor"]
+
+NOTE: For Kotlin the dependency should be in the `kapt` scope and for Groovy it should be in `compileOnly` scope.
 
 Next up you need to configure at least one data source. The following snippet from `application.yml` is an example of configuring the default JDBC data source:
 
@@ -75,6 +114,6 @@ snippet::example.BookRepositorySpec[project-base="doc-examples/jdbc-example", ta
 
 To delete an instance use `deleteById`:
 
-snippet::example.BookRepositorySpec[project-base="doc-examples/example", tags="delete", indent="0"]
+snippet::example.BookRepositorySpec[project-base="doc-examples/hibernate-example", tags="delete", indent="0"]
 
 Congratulations you have implemented your first Micronaut Data JDBC repository! Read on to find out more.

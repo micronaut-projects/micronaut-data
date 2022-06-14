@@ -2,39 +2,44 @@ introduction:
   title: Introduction
   whatsNew: What's New?
   releaseHistory: Release History
-quickStart:
-  title: Quick Start
 buildConfig:
   title: Build Configuration
-repositories:
-  title: Repository Interfaces
-querying:
-  title: Writing Queries
-  criteria: Query Criteria
-  pagination: Pagination
-  ordering: Ordering
-  projections: Query Projections
-  dto: DTO Projections
-  joinQueries: Join Queries
-  explicitQueries: Explicit Queries
-  whereAnnotation: Modifying Queries with @Where
-  nativeQueries: Native Queries
-  async: Asynchronous Queries
-  reactive: Reactive Queries
-  specifications: JPA specifications
-dataUpdates:
-  title: Inserting and modifying data
-  inserts: Inserting
-  updates: Updating
-  deletes: Deleting
-  timestamps: Entity Timestamps
-  entityEvents: Entity Events
+shared:
+  title: Shared Concepts
+  repositories:
+    title: Repository Interfaces
+  querying:
+    title: Writing Queries
+    criteria: Query Criteria
+    pagination: Pagination
+    ordering: Ordering
+    projections: Query Projections
+    dto: DTO Projections
+    explicitQueries: Explicit Queries
+    whereAnnotation: Modifying Queries with @Where
+    async: Asynchronous Queries
+    reactive: Reactive Queries
+  dataUpdates:
+    title: Accessing data
+    inserts: Inserting
+    updates: Updating
+    deletes: Deleting
+    timestamps: Entity Timestamps
+    entityEvents: Entity Events
   transactions:
     title: Transactions
     programmaticTransactions: Programmatic Transactions
     transactionalEvents: Transactional Events
-howItWorks:
-  title: How Micronaut Data Works
+
+hibernate:
+  title: Micronaut Data JPA Hibernate
+  hibernateQuickStart:
+    title: Quick Start
+  hibernateJoinQueries: Join queries
+  hibernateExplicitQueries: Explicit queries
+  hibernateNativeQueries: Native queries
+  hibernateSpecifications: JPA specifications
+
 sql:
   title: Micronaut Data with SQL
   dbc:
@@ -46,11 +51,11 @@ sql:
     dbcConfiguration: Configuration
     dbcRepositories:
       title: Repositories
-      sqlInserts: Inserts and Updates
+      sqlInserts: Accessing data
       optimisticLocking: Optimistic locking
       pessimisticLocking: Pessimistic Locking
     dbcCriteriaSpecifications:
-      title: Respositories with Criteria API
+      title: Repositories with Criteria API
       criteriaExecuteQuery: Querying
       criteriaExecuteUpdate: Updating
       criteriaExecuteDelete: Deleting
@@ -83,7 +88,7 @@ mongo:
   mongoQuickStart: Quick Start
   mongoRepositories:
     title: Repositories
-    mongoInsertsAndUpdates: Inserts and Updates
+    mongoInsertsAndUpdates: Accessing data
     mongoCustomQueries: Custom Queries and Options
   mongoMapping:
     title: Mapping Entities
@@ -97,12 +102,14 @@ mongo:
   mongoJoinQueries: Join Queries
   mongoAttributeConverter: Using Attribute Converter
   mongoCriteriaSpecifications:
-    title: Respositories with Criteria API
+    title: Repositories with Criteria API
     mongoCriteriaExecuteQuery: Querying
     mongoCriteriaExecuteUpdate: Updating
     mongoCriteriaExecuteDelete: Deleting
     mongoOtherRepositoryVariations: Other repository variations
   mongoOptimisticLocking: Optimistic locking
+howItWorks:
+  title: How Micronaut Data Works
 graal:
   title: Going Native with GraalVM
 spring:

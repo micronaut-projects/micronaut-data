@@ -9,7 +9,7 @@ Micronaut Data is inspired by https://gorm.grails.org[GORM] and https://spring.i
 
 Micronaut Data provides a general API for translating a compile time Query model into a query at compilation time and provides runtime support for the following backends:
 
-* JPA (Hibernate)
+* <<hibernate, JPA (Hibernate)>>
 * <<sql, SQL (JDBC, R2DBC)>>
 * <<mongo, MongoDB>>
 
@@ -19,14 +19,14 @@ The following sections will take you through the basics of querying and using Mi
 
 At a fundamental level however what Micronaut Data does can be summed up in the following snippets. Given the following interface:
 
-snippet::example.BookRepository[project-base="doc-examples/example", source="main", tags="repository"]
+snippet::example.BookRepository[project-base="doc-examples/hibernate-example", source="main", tags="repository"]
 
 <1> The `@Repository` annotation designates `BookRepository` as a data repository. Since, it is is an interface, the `@Repository` annotation provides implementations at compilation time.
 <2> By extending api:data.repository.CrudRepository[] you enable automatic generation of CRUD (Create, Read, Update, Delete) operations.
 
 Micronaut Data computes the query for the `find` method automatically at compilation time making it available at runtime via annotation metadata:
 
-snippet::example.BookRepositorySpec[project-base="doc-examples/example", tags="metadata", indent="0"]
+snippet::example.BookRepositorySpec[project-base="doc-examples/hibernate-example", tags="metadata", indent="0"]
 
 <1> The https://docs.micronaut.io/latest/api/io/micronaut/inject/BeanDefinition.html[BeanDefinition] is retrieved from the https://docs.micronaut.io/latest/api/io/micronaut/context/BeanContext.html[BeanContext]
 <2> The `find` method is retrieved

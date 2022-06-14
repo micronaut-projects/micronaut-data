@@ -1,4 +1,44 @@
-Let's generate a new Micronaut application with https://micronaut.io/launch/[Micronaut Launch] and choose the `data-r2dbc`, `mysql` and `flyway` features.
+The quickest way to get started is to create a new Micronaut application with https://micronaut.io/launch/[Micronaut Launch] and `data-r2dbc`, a database driver and a database migration framework features. This can also be done via CLI.
+
+.Creating a R2DBC application with Micronaut Launch
+[cols=3*]
+|===
+|
+|*Gradle*
+|*Maven*
+
+|*Java*
+
+|https://micronaut.io/launch?features=data-r2dbc&features=mysql&lang=JAVA&build=GRADLE[Open,role=external]
+|https://micronaut.io/launch?features=data-r2dbc&features=mysql&lang=JAVA&build=MAVEN[Open,role=external]
+
+|*Kotlin*
+
+|https://micronaut.io/launch?features=data-r2dbc&features=mysql&lang=KOTLIN&build=GRADLE[Open,role=external]
+|https://micronaut.io/launch?features=data-r2dbc&features=mysql&lang=KOTLIN&build=MAVEN[Open,role=external]
+
+|*Groovy*
+
+|https://micronaut.io/launch?features=data-r2dbc&features=mysql&lang=GROOVY&build=GRADLE[Open,role=external]
+|https://micronaut.io/launch?features=data-r2dbc&features=mysql&lang=GROOVY&build=MAVEN[Open,role=external]
+
+|===
+
+.Creating an application with the CLI
+[source,bash]
+----
+# For Maven add: --build maven
+$ mn create-app --lang java example --features data-r2dbc,flyway,mysql
+----
+
+Or via `curl`:
+
+.Creating an application with `curl`
+[source,bash]
+----
+# For Maven add to the URL: &build=maven
+$ curl https://launch.micronaut.io/demo.zip?lang=java&features=data-r2dbc,flyway,mysql -o demo.zip && unzip demo.zip -d demo && cd demo
+----
 
 The generated application will use MySQL since we passed the `mysql` feature adding dependency on the R2DBC driver for MySQL:
 

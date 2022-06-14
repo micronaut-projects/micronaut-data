@@ -2,7 +2,7 @@ You can use the api:transaction.SynchronousTransactionManager[] API to perform p
 
 The following demonstrates an example:
 
-snippet::example.ProductManager[project-base="doc-examples/example", source="main", indent="0"]
+snippet::example.ProductManager[project-base="doc-examples/hibernate-example", source="main", indent="0"]
 
 <1> The constructor is injected with the api:transaction.SynchronousTransactionManager[] and a transaction-aware `EntityManager`
 <2> The `save` method uses the `executeWrite` method to execute a write transaction within the context of the passed lambda.
