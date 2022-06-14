@@ -15,9 +15,16 @@
  */
 package io.micronaut.data.hibernate.reactive;
 
+import io.micronaut.context.annotation.Parameter;
+import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Repository;
-import io.micronaut.data.tck.repositories.CompanyRepository;
-
+import io.micronaut.data.repository.reactive.ReactorCrudRepository;
+import io.micronaut.data.tck.entities.Company;
+import reactor.core.publisher.Mono;
 
 @Repository
-public interface CompanyRepo extends CompanyRepository {}
+public interface CompanyRepo extends ReactorCrudRepository<Company, Long> {
+
+    Mono<Void> update(@Id Long id, @Parameter("name") String name);
+}
+

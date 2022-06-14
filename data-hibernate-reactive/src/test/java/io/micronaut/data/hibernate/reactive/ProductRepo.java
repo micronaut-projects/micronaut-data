@@ -15,9 +15,16 @@
  */
 package io.micronaut.data.hibernate.reactive;
 
+import io.micronaut.context.annotation.Parameter;
+import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Repository;
-import io.micronaut.data.tck.repositories.ProductRepository;
+import io.micronaut.data.repository.reactive.ReactorCrudRepository;
+import io.micronaut.data.tck.entities.Product;
+import reactor.core.publisher.Mono;
+
+import java.math.BigDecimal;
 
 @Repository
-public interface ProductRepo extends ProductRepository {
+public interface ProductRepo extends ReactorCrudRepository<Product,Long> {
+    Mono<Void> update(@Id Long id, @Parameter("price") BigDecimal price);
 }

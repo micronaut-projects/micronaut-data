@@ -16,9 +16,9 @@
 package io.micronaut.data.hibernate.reactive;
 
 import io.micronaut.data.annotation.Repository;
-import io.micronaut.data.repository.CrudRepository;
+import io.micronaut.data.repository.reactive.ReactorCrudRepository;
 import io.micronaut.data.tck.entities.Face;
 
 @Repository
-public interface FaceRepo extends CrudRepository<Face, Long> {
+public interface FaceRepo extends ReactorCrudRepository<Face, Long> {
 }

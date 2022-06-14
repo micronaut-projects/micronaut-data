@@ -15,22 +15,18 @@
  */
 package io.micronaut.data.hibernate.reactive
 
-import io.micronaut.context.annotation.Property
 import io.micronaut.data.tck.entities.Company
 import io.micronaut.data.tck.entities.Face
 import io.micronaut.data.tck.entities.Product
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
+import jakarta.inject.Inject
 import spock.lang.IgnoreIf
 import spock.lang.Shared
 import spock.lang.Specification
 
-import jakarta.inject.Inject
-
 @MicronautTest(transactional = false, packages = "io.micronaut.data.tck.entities")
-@Property(name = "datasources.default.name", value = "mydb")
-@Property(name = 'jpa.default.properties.hibernate.hbm2ddl.auto', value = 'create-drop')
 @IgnoreIf({ jvm.isJava15Compatible() })
-class AutoTimestampSpec extends Specification {
+class AutoTimestampSpec extends Specification implements PostgresHibernateReactiveProperties {
 
     @Shared
     @Inject
@@ -47,18 +43,18 @@ class AutoTimestampSpec extends Specification {
     void "test java.util.Date date created and last updated"() {
         when:
         def company = new Company("Apple", new URL("https://apple.com"))
-        companyRepo.save(company)
+        companyRepo.save(company).block()
         def dateCreated = company.dateCreated
 
         then:
         company.myId != null
         dateCreated != null
         company.dateCreated.toInstant().toEpochMilli() == company.lastUpdated.toEpochMilli()
-        companyRepo.findById(company.myId).get().dateCreated == company.dateCreated
+        companyRepo.findById(company.myId).block().dateCreated == company.dateCreated
 
         when:
-        companyRepo.update(company.myId, "Changed")
-        def company2 = companyRepo.findById(company.myId).orElse(null)
+        companyRepo.update(company.myId, "Changed").block()
+        def company2 = companyRepo.findById(company.myId).block()
 
         then:
         company.dateCreated.time == dateCreated.time
@@ -70,19 +66,19 @@ class AutoTimestampSpec extends Specification {
     void "test java.time.LocalDateTime date created and last updated"() {
         when:
         def product = new Product("Foo", BigDecimal.ONE)
-        productRepo.save(product)
+        productRepo.save(product).block()
         def dateCreated = product.dateCreated
 
         then:
         product.id != null
         dateCreated != null
         product.dateCreated == product.lastUpdated
-        productRepo.findById(product.id).get().dateCreated == product.dateCreated
+        productRepo.findById(product.id).block().dateCreated == product.dateCreated
 
         when:
         product.changePrice()
-        productRepo.update(product.id, BigDecimal.TEN)
-        def product2 = productRepo.findById(product.id).orElse(null)
+        productRepo.update(product.id, BigDecimal.TEN).block()
+        def product2 = productRepo.findById(product.id).block()
 
         then:
         product.dateCreated == dateCreated
@@ -94,19 +90,19 @@ class AutoTimestampSpec extends Specification {
     void "test java.time.Instant date created and last updated"() {
         when:
         def face = new Face("Foo")
-        taskRepo.save(face)
+        taskRepo.save(face).block()
         def dateCreated = face.dateCreated
 
         then:
         face.id != null
         dateCreated != null
         face.dateCreated == face.lastUpdated
-        taskRepo.findById(face.id).get().dateCreated == face.dateCreated
+        taskRepo.findById(face.id).block().dateCreated == face.dateCreated
 
         when:
         face.setName("Bar")
-        taskRepo.update(face)
-        def task2 = taskRepo.findById(face.id).orElse(null)
+        taskRepo.update(face).block()
+        def task2 = taskRepo.findById(face.id).block()
 
         then:
         face.dateCreated == dateCreated
