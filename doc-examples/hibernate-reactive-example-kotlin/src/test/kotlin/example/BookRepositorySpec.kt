@@ -6,15 +6,13 @@ import jakarta.inject.Inject
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.*
-import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
-import java.util.*
 
 @MicronautTest(transactional = false)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class BookRepositoryTest : PostgresHibernateReactiveProperties {
+class BookRepositorySpec : PostgresHibernateReactiveProperties {
 
     // tag::inject[]
     @Inject

@@ -1,6 +1,5 @@
 package example
 
-
 import io.micronaut.data.annotation.Id
 import io.micronaut.data.annotation.Repository
 import io.micronaut.data.model.Page
@@ -13,17 +12,27 @@ import reactor.core.publisher.Mono
 import javax.transaction.Transactional
 import java.util.function.Consumer
 
-@Repository
-abstract class BookRepository implements ReactorCrudRepository<Book, Long> {
+// tag::repository[]
+@Repository // <1>
+abstract class BookRepository implements ReactorCrudRepository<Book, Long> { // <2>
 
+    // tag::read[]
     abstract Mono<Book> find(String title);
-
-    abstract Flux<Book> findByPagesGreaterThan(int pageCount, Pageable pageable);
 
     abstract Mono<Page<Book>> findByTitleLike(String title, Pageable pageable);
 
-    abstract Mono<Slice<Book>> list(Pageable pageable);
+    abstract Mono<BookDTO> findOne(String title);
 
+    abstract Flux<Book> findByPagesGreaterThan(int pageCount, Pageable pageable);
+
+    abstract Mono<Slice<Book>> list(Pageable pageable);
+    // end::read[]
+
+    // tag::save[]
+    abstract Mono<Book> save(Book entity);
+    // end::save[]
+
+    // tag::update[]
     @Transactional
     Mono<Void> findByIdAndUpdate(Long id, Consumer<Book> bookConsumer) {
         return findById(id).map(book -> {
@@ -32,17 +41,16 @@ abstract class BookRepository implements ReactorCrudRepository<Book, Long> {
         }).then()
     }
 
-    abstract Mono<Book> save(Book entity);
-
     abstract Mono<Book> update(Book newBook);
 
     abstract Mono<Void> update(@Id Long id, int pages);
+    // end::update[]
 
+    // tag::delete[]
     @Override
     abstract Mono<Long> deleteAll();
 
     abstract Mono<Void> delete(String title);
-
-    abstract Mono<BookDTO> findOne(String title);
-
+    // end::delete[]
 }
+// end::repository[]

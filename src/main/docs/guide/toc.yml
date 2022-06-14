@@ -39,7 +39,7 @@ hibernate:
   hibernateExplicitQueries: Explicit queries
   hibernateNativeQueries: Native queries
   hibernateSpecifications: JPA specifications
-
+  hibernateReactive: Hibernate Reactive
 sql:
   title: Micronaut Data with SQL
   dbc:

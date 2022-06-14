@@ -1,0 +1,11 @@
+jpa:
+  default:
+    reactive: true
+    properties:
+      hibernate:
+        hbm2ddl:
+          auto: create-drop
+        connection:
+          url: jdbc:mysql://localhost:3307/my_db
+          username: myUser
+          password: myPassword

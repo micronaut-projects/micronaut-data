@@ -64,7 +64,7 @@ final class HibernateRepositoryOperationsFactory {
         if (jpaConfiguration == null || !jpaConfiguration.isReactive()) {
             return new HibernateJpaOperations(
                 sessionFactory,
-                transactionOperations.find(qualifier).get(),
+                transactionOperations.find(qualifier).orElseThrow(),
                 executorService,
                 runtimeEntityRegistry,
                 dataConversionService

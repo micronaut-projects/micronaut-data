@@ -9,7 +9,7 @@ Micronaut Data is inspired by https://gorm.grails.org[GORM] and https://spring.i
 
 Micronaut Data provides a general API for translating a compile time Query model into a query at compilation time and provides runtime support for the following backends:
 
-* <<hibernate, JPA (Hibernate)>>
+* <<hibernate, JPA (Hibernate)>> and <<hibernateReactive, Hibernate Reactive>>
 * <<sql, SQL (JDBC, R2DBC)>>
 * <<mongo, MongoDB>>
 

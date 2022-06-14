@@ -13,16 +13,21 @@ import reactor.core.publisher.Mono;
 import javax.transaction.Transactional;
 import java.util.function.Consumer;
 
-@Repository
-interface BookRepository extends ReactorCrudRepository<Book, Long> {
+// tag::repository[]
+@Repository // <1>
+interface BookRepository extends ReactorCrudRepository<Book, Long> { // <2>
 
+    // tag::read[]
     Mono<Book> find(String title);
+
+    Mono<BookDTO> findOne(String title);
 
     Flux<Book> findByPagesGreaterThan(int pageCount, Pageable pageable);
 
     Mono<Page<Book>> findByTitleLike(String title, Pageable pageable);
 
     Mono<Slice<Book>> list(Pageable pageable);
+    // end::read[]
 
     @Transactional
     default Mono<Void> findByIdAndUpdate(Long id, Consumer<Book> bookConsumer) {
@@ -32,17 +37,21 @@ interface BookRepository extends ReactorCrudRepository<Book, Long> {
         }).then();
     }
 
+    // tag::save[]
     Mono<Book> save(Book entity);
+    // end::save[]
 
+    // tag::update[]
     Mono<Book> update(Book newBook);
 
     Mono<Void> update(@Id Long id, int pages);
+    // end::delete[]
 
+    // tag::delete[]
     @Override
     Mono<Long> deleteAll();
 
     Mono<Void> delete(String title);
-
-    Mono<BookDTO> findOne(String title);
-
+    // end::delete[]
 }
+// end::repository[]

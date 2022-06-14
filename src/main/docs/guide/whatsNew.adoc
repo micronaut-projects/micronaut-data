@@ -1,3 +1,7 @@
+=== Micronaut Data 3.5
+- Hibernate Reactive
+- Improved transaction handling
+
 === Micronaut Data 3.4
 - New async, reactive and coroutines repositories to support pagination
 - Propagating synchronous transaction state in Kotlin's coroutines

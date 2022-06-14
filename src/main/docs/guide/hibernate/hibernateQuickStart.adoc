@@ -115,5 +115,3 @@ snippet::example.BookRepositorySpec[project-base="doc-examples/hibernate-example
 To delete an instance use `deleteById`:
 
 snippet::example.BookRepositorySpec[project-base="doc-examples/hibernate-example", tags="delete", indent="0"]
-
-Congratulations you have implemented your first Micronaut Data repository! Read on to find out more.

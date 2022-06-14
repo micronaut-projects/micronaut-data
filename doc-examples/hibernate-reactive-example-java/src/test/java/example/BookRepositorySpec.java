@@ -18,7 +18,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @MicronautTest(transactional = false)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class BookRepositoryTest implements PostgresHibernateReactiveProperties {
+class BookRepositorySpec implements PostgresHibernateReactiveProperties {
 
     // tag::inject[]
     @Inject
