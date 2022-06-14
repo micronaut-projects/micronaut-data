@@ -47,6 +47,12 @@ Hibernate reactive is non-blocking and requires one of the reactive repositories
 
 |api:data.repository.kotlin.CoroutineCrudRepository[]
 |Extends api:data.repository.GenericRepository[] and is using Kotlin coroutines for reactive CRUD operations
+
+|api:data.repository.jpa.reactive.ReactiveStreamsJpaSpecificationExecutor[]
+|Reactive JPA Criteria executor
+
+|api:data.repository.jpa.reactive.ReactorJpaSpecificationExecutor[]
+|Reactive JPA Criteria executor that exposes methods using Reactor `Flux`/`Mono` classes
 |===
 
 Simple example of the reactive repository:
