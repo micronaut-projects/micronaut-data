@@ -69,6 +69,9 @@ public interface HibernateReactorRepositoryOperations extends ReactorReactiveRep
      */
     Mono<Void> flush();
 
+    /**
+     * @return {@link CriteriaBuilder} that can be used to work with criteria.
+     */
     CriteriaBuilder getCriteriaBuilder();
 
 }
