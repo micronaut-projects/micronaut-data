@@ -79,16 +79,16 @@ class DtoSpec extends Specification implements PostgresHibernateReactiveProperti
 
     void "test dto projection"() {
         when:
-        def results = bookDtoRepository.findByTitleLike("The%")
+        def results = bookDtoRepository.findByTitleLike("The%").collectList().block()
 
         then:
         results.size() == 3
         results.every { it instanceof BookDto }
         results.every { it.title.startsWith("The")}
-        bookDtoRepository.findOneByTitle("The Stand").title == "The Stand"
+        bookDtoRepository.findOneByTitle("The Stand").block().title == "The Stand"
 
         when:"paged result check"
-        def result = bookDtoRepository.searchByTitleLike("The%", Pageable.from(0))
+        def result = bookDtoRepository.searchByTitleLike("The%", Pageable.from(0)).block()
 
         then:"the result is correct"
         result.totalSize == 3

@@ -15,9 +15,28 @@
  */
 package io.micronaut.data.hibernate.reactive;
 
+import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.Repository;
+import io.micronaut.data.model.Page;
+import io.micronaut.data.model.Pageable;
+import io.micronaut.data.repository.reactive.ReactorCrudRepository;
+import io.micronaut.data.tck.entities.Book;
+import io.micronaut.data.tck.entities.BookDto;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 @Repository
-public interface BookDtoRepository extends io.micronaut.data.tck.repositories.BookDtoRepository {
+public interface BookDtoRepository extends ReactorCrudRepository<Book, Long> {
+
+    @Query("select * from book b where b.title = :title")
+    Mono<BookDto> findByTitleWithQuery(String title);
+
+    Flux<BookDto> findByTitleLike(String title);
+
+    Mono<BookDto> findOneByTitle(String title);
+
+    Mono<Page<BookDto>> searchByTitleLike(String title, Pageable pageable);
+
+    Mono<Page<BookDto>> queryAll(Pageable pageable);
 
 }
