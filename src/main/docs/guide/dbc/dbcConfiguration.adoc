@@ -4,36 +4,6 @@ Micronaut Data JDBC requires that an appropriate `java.sql.DataSource` bean is c
 
 You can either do this manually or use the https://micronaut-projects.github.io/micronaut-sql/latest/guide/#jdbc[Micronaut JDBC] module which provides out-of-the-box support for configuring connection pooling with either Tomcat JDBC, Hikari, Commons DBCP or Oracle UCP.
 
-=== R2DBC driver
-
-Micronaut Data R2DBC requires driver configuration using https://micronaut-projects.github.io/micronaut-r2dbc/latest/guide/#jdbc[Micronaut R2DBC]
-
-.The following drivers are available as of this writing.
-[cols=2*]
-|===
-|*Database*
-|*Dependency*
-
-|The H2 database
-|`io.r2dbc:r2dbc-h2`
-
-|MySQL
-|`dev.miku:r2dbc-mysql`
-
-|MariaDB
-|`org.mariadb:r2dbc-mariadb`
-
-|Postgres
-|`io.r2dbc:r2dbc-postgresql`
-
-|SQL Server
-|`io.r2dbc:r2dbc-mssql`
-
-|Oracle
-|`com.oracle.database.r2dbc:oracle-r2dbc`
-
-|===
-
 === SQL Logging
 
 You can enable SQL logging by enabling trace logging for the `io.micronaut.data.query` logger. For example in `logback.xml`:

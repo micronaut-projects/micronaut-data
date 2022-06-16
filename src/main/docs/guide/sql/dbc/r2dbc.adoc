@@ -1,1 +1,0 @@
-The R2DBC implementation is fully reactive and bring some differences comparing to JPA or Micronaut Data JDBC.

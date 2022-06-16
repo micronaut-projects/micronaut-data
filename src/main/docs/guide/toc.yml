@@ -39,50 +39,46 @@ hibernate:
   hibernateExplicitQueries: Explicit queries
   hibernateNativeQueries: Native queries
   hibernateSpecifications: JPA specifications
-  hibernateReactive: Hibernate Reactive
-sql:
-  title: Micronaut Data with SQL
-  dbc:
-    title: Micronaut Data JDBC / R2DBC
-    dbcQuickStart:
-      title: Quick Start
-      jdbcQuickStart: JDBC
-      r2dbcQuickStart: R2DBC
-    dbcConfiguration: Configuration
-    dbcRepositories:
-      title: Repositories
-      sqlInserts: Accessing data
-      optimisticLocking: Optimistic locking
-      pessimisticLocking: Pessimistic Locking
-    dbcCriteriaSpecifications:
-      title: Repositories with Criteria API
-      criteriaExecuteQuery: Querying
-      criteriaExecuteUpdate: Updating
-      criteriaExecuteDelete: Deleting
-      otherRepositoryVariations: Other repository variations
-    sqlMapping:
-      title: Mapping Entities
-      sqlAnnotations: SQL Annotations
-      sqlExpandableQueries: Expandable queries
-      sqlIdGenerator: ID Generation
-      sqlCompositeId: Composite Primary Keys
-      sqlConstructorArguments: Constructor Arguments
-      sqlNaming: SQL Naming Strategies
-      sqlAssociationMapping: Association Mapping
-      sqlAssociationFetching: Association Fetching
-      columnTransformer: Using @ColumnTransformer
-      sqlJsonType: JSON Column Support
-      javaRecords: Support for Java 16 Records
-      kotlinData: Support for Kotlin immutable data classes
-    dbcDataTypes: Data Types
-    dbcAttributeConverter: Using Attribute Converter
-    dbcJoinQueries: Join Queries
-    dbcNativeQueries: Explicit Queries
-    r2dbc:
-      title: R2DBC specifics
-      r2querying: Reactive repositories
-      r2transactionManagement: Transactions
-      r2entityEvents: Reactive Entity Events
+hibernateReactive: Micronaut Data Hibernate Reactive  
+dbc:
+  title: Micronaut Data JDBC 
+  jdbcQuickStart: Quick Start
+  dbcConfiguration: Configuration
+  dbcRepositories:
+    title: Repositories
+    sqlInserts: Accessing data
+    optimisticLocking: Optimistic locking
+    pessimisticLocking: Pessimistic Locking
+  dbcCriteriaSpecifications:
+    title: Repositories with Criteria API
+    criteriaExecuteQuery: Querying
+    criteriaExecuteUpdate: Updating
+    criteriaExecuteDelete: Deleting
+    otherRepositoryVariations: Other repository variations
+  sqlMapping:
+    title: Mapping Entities
+    sqlAnnotations: SQL Annotations
+    sqlExpandableQueries: Expandable queries
+    sqlIdGenerator: ID Generation
+    sqlCompositeId: Composite Primary Keys
+    sqlConstructorArguments: Constructor Arguments
+    sqlNaming: SQL Naming Strategies
+    sqlAssociationMapping: Association Mapping
+    sqlAssociationFetching: Association Fetching
+    columnTransformer: Using @ColumnTransformer
+    sqlJsonType: JSON Column Support
+    javaRecords: Support for Java 16 Records
+    kotlinData: Support for Kotlin immutable data classes
+  dbcDataTypes: Data Types
+  dbcAttributeConverter: Using Attribute Converter
+  dbcJoinQueries: Join Queries
+  dbcNativeQueries: Explicit Queries
+r2dbc:
+  title: Micronaut Data R2DBC
+  r2dbcQuickStart: Quick Start
+  r2querying: Reactive repositories
+  r2transactionManagement: Transactions
+  r2entityEvents: Reactive Entity Events
 mongo:
   title: Micronaut Data MongoDB
   mongoQuickStart: Quick Start
