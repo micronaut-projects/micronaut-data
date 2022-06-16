@@ -76,6 +76,7 @@ dbc:
 r2dbc:
   title: Micronaut Data R2DBC
   r2dbcQuickStart: Quick Start
+  r2dbcConfiguration: Configuration
   r2querying: Reactive repositories
   r2transactionManagement: Transactions
   r2entityEvents: Reactive Entity Events

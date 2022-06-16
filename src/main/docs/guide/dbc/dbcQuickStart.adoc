@@ -1,1 +1,0 @@
-The following sections setup simple applications and describe which dependencies are required.
