@@ -517,7 +517,7 @@ public class HibernateJpaOperations extends AbstractHibernateOperations<Session,
         );
     }
 
-    private class ListResultCollector<R> extends ResultCollector<R> {
+    private final class ListResultCollector<R> extends ResultCollector<R> {
 
         private List<R> result;
 
@@ -532,7 +532,7 @@ public class HibernateJpaOperations extends AbstractHibernateOperations<Session,
         }
     }
 
-    private class StreamResultCollector<R> extends ResultCollector<R> {
+    private final class StreamResultCollector<R> extends ResultCollector<R> {
 
         private Stream<R> result;
 
@@ -547,7 +547,7 @@ public class HibernateJpaOperations extends AbstractHibernateOperations<Session,
         }
     }
 
-    private class SingleResultCollector<R> extends ResultCollector<R> {
+    private final class SingleResultCollector<R> extends ResultCollector<R> {
 
         private R result;
 
@@ -565,7 +565,7 @@ public class HibernateJpaOperations extends AbstractHibernateOperations<Session,
         }
     }
 
-    private class FirstResultCollector<R> extends ResultCollector<R> {
+    private final class FirstResultCollector<R> extends ResultCollector<R> {
 
         private R result;
 

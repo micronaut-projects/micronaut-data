@@ -16,6 +16,7 @@
 package io.micronaut.data.hibernate.reactive.operations;
 
 import io.micronaut.core.annotation.Experimental;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.operations.reactive.ReactorReactiveRepositoryOperations;
 import io.micronaut.transaction.reactive.ReactorReactiveTransactionOperations;
 import org.hibernate.reactive.stage.Stage;
@@ -44,7 +45,8 @@ public interface HibernateReactorRepositoryOperations extends ReactorReactiveRep
      * @param <T>  The published item
      * @return The produced result publisher
      */
-    <T> Mono<T> withSession(Function<Stage.Session, Mono<T>> work);
+    @NonNull
+    <T> Mono<T> withSession(@NonNull Function<Stage.Session, Mono<T>> work);
 
     /**
      * Execute with a new or existing session.
@@ -53,7 +55,8 @@ public interface HibernateReactorRepositoryOperations extends ReactorReactiveRep
      * @param <T>  The published item
      * @return The produced result publisher
      */
-    <T> Flux<T> withSessionFlux(Function<Stage.Session, Flux<T>> work);
+    @NonNull
+    <T> Flux<T> withSessionFlux(@NonNull Function<Stage.Session, Flux<T>> work);
 
     /**
      * Persist and flush the entity.
@@ -61,17 +64,20 @@ public interface HibernateReactorRepositoryOperations extends ReactorReactiveRep
      * @param entity The entity
      * @return The operation publisher
      */
-    Mono<Void> persistAndFlush(Object entity);
+    @NonNull
+    Mono<Void> persistAndFlush(@NonNull Object entity);
 
     /**
      * Flush the current session.
      * @return The operation publisher
      */
+    @NonNull
     Mono<Void> flush();
 
     /**
      * @return {@link CriteriaBuilder} that can be used to work with criteria.
      */
+    @NonNull
     CriteriaBuilder getCriteriaBuilder();
 
 }

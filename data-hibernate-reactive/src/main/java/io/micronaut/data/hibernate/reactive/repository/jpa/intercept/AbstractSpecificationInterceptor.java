@@ -16,6 +16,7 @@
 package io.micronaut.data.hibernate.reactive.repository.jpa.intercept;
 
 import io.micronaut.aop.MethodInvocationContext;
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.hibernate.reactive.operations.HibernateReactorRepositoryOperations;
 import io.micronaut.data.jpa.repository.criteria.Specification;
@@ -38,6 +39,7 @@ import java.util.List;
  * @author Denis Stepanov
  * @since 3.5.0
  */
+@Internal
 public abstract class AbstractSpecificationInterceptor extends AbstractPublisherInterceptor {
 
     protected final HibernateReactorRepositoryOperations operations;

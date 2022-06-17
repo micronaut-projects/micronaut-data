@@ -17,7 +17,7 @@ dependencies {
     api libs.micronaut.reactor
     api projects.dataHibernateJpa
     api (libs.micronaut.sql.hibernate.reactive) {
-        exclude group: 'io.smallrye.reactive'
+        exclude group: 'io.smallrye.reactive', module: 'mutiny'
     }
 
     testAnnotationProcessor mn.micronaut.inject.java

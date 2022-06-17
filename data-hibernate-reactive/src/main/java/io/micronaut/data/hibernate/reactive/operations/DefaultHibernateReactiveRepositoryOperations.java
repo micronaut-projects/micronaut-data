@@ -527,7 +527,7 @@ final class DefaultHibernateReactiveRepositoryOperations extends AbstractHiberna
         }
     }
 
-    private class ListResultCollector<R> extends ResultCollector<R> {
+    private final class ListResultCollector<R> extends ResultCollector<R> {
 
         private Flux<R> result;
 
@@ -543,7 +543,7 @@ final class DefaultHibernateReactiveRepositoryOperations extends AbstractHiberna
         }
     }
 
-    private class SingleResultCollector<R> extends ResultCollector<R> {
+    private final class SingleResultCollector<R> extends ResultCollector<R> {
 
         private Mono<R> result;
 
@@ -559,7 +559,7 @@ final class DefaultHibernateReactiveRepositoryOperations extends AbstractHiberna
 
     }
 
-    private class FirstResultCollector<R> extends ResultCollector<R> {
+    private final class FirstResultCollector<R> extends ResultCollector<R> {
 
         private Mono<R> result;
 
@@ -588,7 +588,7 @@ final class DefaultHibernateReactiveRepositoryOperations extends AbstractHiberna
         private final Stage.Transaction transaction;
         private final boolean isNew;
 
-        public DefaultReactiveTransactionStatus(Stage.Session session, Stage.Transaction transaction, boolean isNew) {
+        private DefaultReactiveTransactionStatus(Stage.Session session, Stage.Transaction transaction, boolean isNew) {
             this.session = session;
             this.transaction = transaction;
             this.isNew = isNew;
