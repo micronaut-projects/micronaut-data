@@ -10,17 +10,25 @@ dependency:io.micronaut.data:micronaut-data-hibernate-reactive[]
 
 NOTE: Hibernate Reactive requires Java 11 and Hibernate 5
 
-The configuration differs from the ordinary <<hibernateQuickStart, Hibernate quick start>> in a way how the data source is configured. Hibernate Reactive doesn't use JDBC drivers, but instead it's using https://vertx.io/docs/#databases[Vertx database drivers]. You would need to select a proper driver for your database:
+The configuration differs from the ordinary <<hibernateQuickStart, Hibernate quick start>> since Hibernate Reactive does not use traditional JDBC drivers but instead custom drivers provided by the https://vertx.io/docs/#databases[Vertx project]. You  need to select an appropriate driver for your database:
+
+For MySQL:
 
 dependency:vertx-mysql-client[groupId="io.vertx"]
 
+For Postgres:
+
 dependency:vertx-pg-client[groupId="io.vertx"]
+
+For Microsoft SQLServer:
 
 dependency:vertx-mssql-client[groupId="io.vertx"]
 
+For Oracle:
+
 dependency:vertx-oracle-client[groupId="io.vertx"]
 
-And configure it based on https://micronaut-projects.github.io/micronaut-sql/snapshot/guide/index.html#hibernate[Micronaut SQL Hibernate Reactive support].
+And configure it based on https://micronaut-projects.github.io/micronaut-sql/latest/guide/index.html#hibernate[Micronaut SQL Hibernate Reactive support].
 
 .Example YAML configuration
 [source,yaml]
@@ -28,7 +36,7 @@ And configure it based on https://micronaut-projects.github.io/micronaut-sql/sna
 include::doc-examples/hibernate-reactive-example-java/src/main/resources/application.yml[]
 ----
 
-Hibernate reactive is non-blocking and requires one of the reactive repositories:
+Hibernate reactive is non-blocking that repository interfaces and classes you define extend one of the reactive repositories:
 
 .Builtin Reactive Repository Interfaces
 [cols=2*]
@@ -55,7 +63,7 @@ Hibernate reactive is non-blocking and requires one of the reactive repositories
 |Reactive JPA Criteria executor that exposes methods using Reactor `Flux`/`Mono` classes
 |===
 
-Simple example of the reactive repository:
+The following is an example Hibernate Reactive repository:
 
 snippet::example.BookRepository[project-base="doc-examples/hibernate-reactive-example", source="main", tags="repository"]
 

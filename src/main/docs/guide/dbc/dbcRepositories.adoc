@@ -3,19 +3,17 @@ As seen in the <<jdbcQuickStart, Quick Start>> JDBC / R2DBC repositories in Micr
 
 In a multiple datasource scenario, the ann:io.micronaut.data.annotation.Repository[] and ann:io.micronaut.transaction.annotation.TransactionalAdvice[] annotations can be used to specify the datasource configuration to use. By default Micronaut Data will look for the default datasource.
 
-For example: 
+For example:
 [source,java]
 ----
-@Repository("inventoryDataSource") // <1>
-@JdbcRepository(dialect = Dialect.ORACLE) // <2>
-@TransactionalAdvice("inventoryDataSource") // <3>
+@JdbcRepository(dialect = Dialect.ORACLE, dataSource = "inventoryDataSource") // <1>
+@TransactionalAdvice("inventoryDataSource") // <2>
 public interface PhoneRepository extends CrudRepository<Phone, Integer> {
     Optional<Phone> findByAssetId(@NotNull Integer assetId);
 }
 ----
-<1> @Repository annotation, pointing to data source configuration 'inventoryDataSource'
-<2> @JdbcRepository with a specific dialect.
-<3> @TransactionalAdvice annotation, pointing to the data source configuration 'inventoryDataSource'
+<1> @JdbcRepository with a specific dialect and data source configuration 'inventoryDataSource'
+<2> @TransactionalAdvice annotation, pointing to the data source configuration 'inventoryDataSource'
 
 
 The entity to treat as the root entity for the purposes of querying is established either from the method signature or from the generic type parameter specified to the api:data.repository.GenericRepository[] interface.

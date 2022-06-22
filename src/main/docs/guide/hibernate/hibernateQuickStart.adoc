@@ -1,4 +1,8 @@
-The quickest way to get started is to create a new Micronaut application with https://micronaut.io/launch/[Micronaut Launch] and choose the `data-jpa`, a database driver, pooling and a database migration framework features:
+The quickest way to get started is to create a new Micronaut application with https://micronaut.io/launch/[Micronaut Launch] and choose the `data-jpa`, a database driver, pooling and a database migration framework features.
+
+TIP: You can also find a great guide on building Micronaut Data JPA applications including sample code in a variety of languages in the Micronaut Guide: https://guides.micronaut.io/latest/micronaut-jpa-hibernate.html[Access a Database with Micronaut Data JPA]
+
+Clicking on one of the links in the table below will take you to https://micronaut.io/launch/[Micronaut Launch] with the appropriate options already pre-configured with your selected language and build tool:
 
 .Creating an application with Micronaut Launch
 
