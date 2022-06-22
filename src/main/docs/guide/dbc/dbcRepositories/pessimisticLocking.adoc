@@ -2,7 +2,6 @@ Pessimistic locking is supported through the use of `find*ForUpdate` methods.
 
 [source,java]
 ----
-@Repository
 @JdbcRepository(dialect = Dialect.POSTGRES)
 public interface AccountBalanceRepository extends CrudRepository<AccountBalance, Long> {
 
@@ -25,7 +24,6 @@ All `find` methods can be declared as `ForUpdate`:
 
 [source,java]
 ----
-@Repository
 @JdbcRepository(dialect = Dialect.POSTGRES)
 public interface BookRepository extends CrudRepository<Book, Long> {
 

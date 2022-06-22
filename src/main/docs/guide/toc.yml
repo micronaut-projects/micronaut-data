@@ -39,11 +39,20 @@ hibernate:
   hibernateExplicitQueries: Explicit queries
   hibernateNativeQueries: Native queries
   hibernateSpecifications: JPA specifications
-hibernateReactive: Micronaut Data Hibernate Reactive  
+hibernateReactive: Micronaut Data Hibernate Reactive
 dbc:
-  title: Micronaut Data JDBC 
-  jdbcQuickStart: Quick Start
-  dbcConfiguration: Configuration
+  title: Micronaut Data JDBC and R2DBC
+  jdbc:
+    title: JDBC
+    jdbcQuickStart: Quick Start
+    jdbcConfiguration: Configuration
+  r2dbc:
+    title: R2DBC
+    r2dbcQuickStart: Quick Start
+    r2dbcConfiguration: Configuration
+    r2querying: Reactive repositories
+    r2transactionManagement: Transactions
+    r2entityEvents: Reactive Entity Events
   dbcRepositories:
     title: Repositories
     sqlInserts: Accessing data
@@ -73,13 +82,6 @@ dbc:
   dbcAttributeConverter: Using Attribute Converter
   dbcJoinQueries: Join Queries
   dbcNativeQueries: Explicit Queries
-r2dbc:
-  title: Micronaut Data R2DBC
-  r2dbcQuickStart: Quick Start
-  r2dbcConfiguration: Configuration
-  r2querying: Reactive repositories
-  r2transactionManagement: Transactions
-  r2entityEvents: Reactive Entity Events
 mongo:
   title: Micronaut Data MongoDB
   mongoQuickStart: Quick Start
