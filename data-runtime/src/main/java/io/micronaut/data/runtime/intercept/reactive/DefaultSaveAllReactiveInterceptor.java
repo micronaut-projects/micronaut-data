@@ -17,9 +17,6 @@ package io.micronaut.data.runtime.intercept.reactive;
 
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.async.publisher.Publishers;
-import io.micronaut.core.type.Argument;
-import io.micronaut.core.type.ReturnType;
 import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.intercept.reactive.SaveAllReactiveInterceptor;
 import io.micronaut.data.operations.RepositoryOperations;
@@ -30,7 +27,7 @@ import org.reactivestreams.Publisher;
  * @author graemerocher
  * @since 1.0.0
  */
-public class DefaultSaveAllReactiveInterceptor extends AbstractReactiveInterceptor<Object, Object>
+public class DefaultSaveAllReactiveInterceptor extends AbstractCountOrEntityPublisherInterceptor
         implements SaveAllReactiveInterceptor<Object, Object> {
     /**
      * Default constructor.
@@ -42,15 +39,8 @@ public class DefaultSaveAllReactiveInterceptor extends AbstractReactiveIntercept
     }
 
     @Override
-    public Object intercept(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Object> context) {
+    public Publisher<?> interceptPublisher(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Object> context) {
         Iterable<Object> iterable = getEntitiesParameter(context, Object.class);
-        Publisher<Object> publisher = reactiveOperations.persistAll(getInsertBatchOperation(context, iterable));
-        ReturnType<Object> rt = context.getReturnType();
-        Argument<?> reactiveValue = context.getReturnType().asArgument().getFirstTypeVariable().orElse(Argument.OBJECT_ARGUMENT);
-        if (isNumber(reactiveValue.getType())) {
-            return operations.getConversionService().convert(count(publisher), rt.getType())
-                    .orElseThrow(() -> new IllegalStateException("Unsupported return type: " + rt.getType()));
-        }
-        return Publishers.convertPublisher(publisher, context.getReturnType().getType());
+        return reactiveOperations.persistAll(getInsertBatchOperation(context, iterable));
     }
 }

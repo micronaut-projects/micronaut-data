@@ -1,12 +1,84 @@
+The quickest way to get started is to create a new Micronaut application with https://micronaut.io/launch/[Micronaut Launch] and choose the `data-mongodb` or `data-mongodb-async`.
+
+
+TIP: You can also find a great guides on building Micronaut Data MongoDB applications including sample code in a variety of languages in the Micronaut Guides: https://guides.micronaut.io/latest/micronaut-data-mongodb-synchronous.html[Access a MongoDB Database with Micronaut Data MongoDB] and https://guides.micronaut.io/latest/micronaut-data-mongodb-asynchronous.html[Access a MongoDB Database Asynchronously with Micronaut Data MongoDB and Reactive Streams]
+
+Clicking on one of the links in the table below will take you to https://micronaut.io/launch/[Micronaut Launch] with the appropriate options already pre-configured with your selected language and build tool:
+
+
+.Creating a MongoDB application with Micronaut Launch
+
+[cols=3*]
+|===
+|
+|*Gradle*
+|*Maven*
+
+|*Java*
+|https://micronaut.io/launch?features=data-mongodb&lang=JAVA&build=GRADLE[Open]
+|https://micronaut.io/launch?features=data-mongodb&lang=JAVA&build=MAVEN[Open]
+
+
+|*Kotlin*
+|https://micronaut.io/launch?features=data-mongodb&lang=JAVA&build=GRADLE[Open]
+|https://micronaut.io/launch?features=data-mongodb&lang=JAVA&build=MAVEN[Open]
+
+|*Groovy*
+|https://micronaut.io/launch?features=data-mongodb&lang=GROOVY&build=GRADLE[Open]
+|https://micronaut.io/launch?features=data-mongodb&lang=GROOVY&build=MAVEN[Open]
+
+|===
+
+.Creating a reactive MongoDB application with Micronaut Launch
+
+[cols=3*]
+|===
+|
+|*Gradle*
+|*Maven*
+
+|*Java*
+|https://micronaut.io/launch?features=data-mongodb-async&lang=JAVA&build=GRADLE[Open]
+|https://micronaut.io/launch?features=data-mongodb-async&lang=JAVA&build=MAVEN[Open]
+
+
+|*Kotlin*
+|https://micronaut.io/launch?features=data-mongodb-async&lang=JAVA&build=GRADLE[Open]
+|https://micronaut.io/launch?features=data-mongodb-async&lang=JAVA&build=MAVEN[Open]
+
+|*Groovy*
+|https://micronaut.io/launch?features=data-mongodb-async&lang=GROOVY&build=GRADLE[Open]
+|https://micronaut.io/launch?features=data-mongodb-async&lang=GROOVY&build=MAVEN[Open]
+
+|===
+
+.Creating an application with the CLI
+[source,bash]
+----
+# For Maven add: --build maven
+$ mn create-app --lang java example --features data-mongodb
+----
+
+Or via `curl`:
+
+.Creating an application with `curl`
+[source,bash]
+----
+# For Maven add to the URL: &build=maven
+$ curl https://launch.micronaut.io/demo.zip?lang=java&features=data-mongodb -o demo.zip && unzip demo.zip -d demo && cd demo
+----
+
+Pre-generated applications should have everything properly setup. You can follow the manual configuration instructions for proper understanding of the dependency setup.
+
 To get started with Micronaut Data MongoDB add the following dependency to your annotation processor path:
 
-dependency:io.micronaut.data:micronaut-data-document-processor[scope="annotationProcessor", version="{version}"]
+dependency:io.micronaut.data:micronaut-data-document-processor[scope="annotationProcessor""]
 
 NOTE: For Kotlin the dependency should be in the `kapt` scope and for Groovy it should be in `compileOnly` scope.
 
 You should then configure a compile-scoped dependency on the `micronaut-data-mongodb` module:
 
-dependency:io.micronaut.data:micronaut-data-mongodb[version="{version}"]
+dependency:io.micronaut.data:micronaut-data-mongodb[]
 
 And include MongoDB Sync driver:
 

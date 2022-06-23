@@ -140,7 +140,9 @@ public abstract class AbstractSynchronousTransactionManager<T> extends AbstractS
 
     @Override
     public <R> R execute(@NonNull TransactionDefinition definition, @NonNull TransactionCallback<T, R> callback) {
-        return TransactionSynchronizationManager.withGuardedState(() -> execute(findOrCreateState(), definition, callback));
+        try (TransactionSynchronizationManager.TransactionSynchronizationStateOp ignore = TransactionSynchronizationManager.withGuardedState()) {
+            return execute(findOrCreateState(), definition, callback);
+        }
     }
 
     @Override

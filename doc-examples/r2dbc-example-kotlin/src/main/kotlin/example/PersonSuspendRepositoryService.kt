@@ -139,6 +139,18 @@ open class PersonSuspendRepositoryService(private val parentSuspendRepository: P
         return count
     }
 
+    suspend fun suspendCount(): Long {
+        val count = parentSuspendRepository.count()
+        LoggerFactory.getLogger(this::class.java).info("Stored $count records")
+        return count
+    }
+
+    suspend fun suspendCountForCustomDb(): Long {
+        val count = parentSuspendRepositoryForCustomDb.count()
+        LoggerFactory.getLogger(this::class.java).info("Stored $count records")
+        return count
+    }
+
     open fun justError() {
         throw RuntimeException("exception")
     }

@@ -1,0 +1,5 @@
+Micronaut Data R2DBC is designed for users who prefer a lower-level experience and working directly with SQL and wish to build non-blocking, reactive applications.
+
+Following sections contains R2DBC specific configuration and documentation.
+
+

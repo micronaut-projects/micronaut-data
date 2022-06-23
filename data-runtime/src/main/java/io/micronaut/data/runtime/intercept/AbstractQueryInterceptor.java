@@ -192,18 +192,20 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
         boolean isOptional = false;
         if (type == Optional.class) {
             argumentType = argumentType.getFirstTypeVariable().orElse(Argument.OBJECT_ARGUMENT);
-            type = argumentType.getType();
             isOptional = true;
         }
-        if (!type.isInstance(o)) {
-            Object finalO = o;
-            o = operations.getConversionService().convert(o, argumentType)
-                    .orElseThrow(() -> new IllegalStateException("Unexpected return type: " + finalO));
-        }
+        o = convertOne(o, argumentType);
         if (isOptional) {
             return Optional.of(o);
         }
         return o;
+    }
+
+    protected final Object convertOne(Object o, Argument<?> argumentType) {
+        if (argumentType.isInstance(o)) {
+            return o;
+        }
+        return operations.getConversionService().convertRequired(o, argumentType);
     }
 
     /**

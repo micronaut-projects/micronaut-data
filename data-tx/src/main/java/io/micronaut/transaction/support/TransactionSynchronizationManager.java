@@ -27,6 +27,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.function.Supplier;
 
 /**
@@ -143,7 +145,7 @@ public abstract class TransactionSynchronizationManager {
         Object value = doGetResource(getInternalState().getResources(), actualKey);
         if (value != null && LOG.isTraceEnabled()) {
             LOG.trace("Retrieved value [" + value + "] for key [" + actualKey + "] bound to thread [" +
-                    Thread.currentThread().getName() + "]");
+                Thread.currentThread().getName() + "]");
         }
         return value;
     }
@@ -203,11 +205,11 @@ public abstract class TransactionSynchronizationManager {
         }
         if (oldValue != null) {
             throw new IllegalStateException("Already value [" + oldValue + "] for key [" +
-                    actualKey + "] bound to thread [" + Thread.currentThread().getName() + "]");
+                actualKey + "] bound to thread [" + Thread.currentThread().getName() + "]");
         }
         if (LOG.isTraceEnabled()) {
             LOG.trace("Bound value [" + value + "] for key [" + actualKey + "] to thread [" +
-                    Thread.currentThread().getName() + "]");
+                Thread.currentThread().getName() + "]");
         }
     }
 
@@ -224,7 +226,7 @@ public abstract class TransactionSynchronizationManager {
         Object value = doUnbindResource(getInternalState().getResources(), actualKey);
         if (value == null) {
             throw new IllegalStateException(
-                    "No value for key [" + actualKey + "] bound to thread [" + Thread.currentThread().getName() + "]");
+                "No value for key [" + actualKey + "] bound to thread [" + Thread.currentThread().getName() + "]");
         }
         return value;
     }
@@ -253,7 +255,7 @@ public abstract class TransactionSynchronizationManager {
         }
         if (value != null && LOG.isTraceEnabled()) {
             LOG.trace("Removed value [" + value + "] for key [" + actualKey + "] from thread [" +
-                    Thread.currentThread().getName() + "]");
+                Thread.currentThread().getName() + "]");
         }
         return value;
     }
@@ -271,7 +273,7 @@ public abstract class TransactionSynchronizationManager {
         SynchronousTransactionState value = doUnbindResource(getInternalState().getStates(), actualKey);
         if (value == null) {
             throw new IllegalStateException(
-                    "No value for key [" + actualKey + "] bound to thread [" + Thread.currentThread().getName() + "]");
+                "No value for key [" + actualKey + "] bound to thread [" + Thread.currentThread().getName() + "]");
         }
         return value;
     }
@@ -383,7 +385,7 @@ public abstract class TransactionSynchronizationManager {
      */
     @Deprecated
     public static void registerSynchronization(TransactionSynchronization synchronization)
-            throws IllegalStateException {
+        throws IllegalStateException {
         getRequiredDefaultState().registerSynchronization(synchronization);
     }
 
@@ -622,9 +624,9 @@ public abstract class TransactionSynchronizationManager {
     /**
      * Execute provided supplier with setup state in the thread-local. Afterwards update the state with the modifications done to it.
      *
-     * @param state The state
+     * @param state    The state
      * @param supplier The supplier to be executed
-     * @param <T> The supplied type
+     * @param <T>      The supplied type
      * @return The suppler return value
      * @author Denis Stepanov
      * @since 3.4.0
@@ -641,25 +643,85 @@ public abstract class TransactionSynchronizationManager {
     }
 
     /**
+     * Decorate completion stage supplier with the transaction state.
+     *
+     * @param state    The state
+     * @param supplier The supplier to be executed
+     * @param <T>      The supplied type
+     * @return The suppler return value
+     * @author Denis Stepanov
+     * @since 3.5.0
+     */
+    @Internal
+    public static <T> CompletionStage<T> decorateCompletionStage(@Nullable TransactionSynchronizationState state, Supplier<CompletionStage<T>> supplier) {
+        if (state == null) {
+            return supplier.get();
+        }
+        try (TransactionSynchronizationStateOp ignore = withState(state)) {
+            CompletableFuture<T> completableFuture = new CompletableFuture<>();
+            supplier.get().whenComplete((value, throwable) -> {
+                try (TransactionSynchronizationStateOp ignore2 = withState(state)) {
+                    if (throwable != null) {
+                        completableFuture.completeExceptionally(throwable);
+                    } else {
+                        completableFuture.complete(value);
+                    }
+                }
+            });
+            return completableFuture;
+        }
+    }
+
+    /**
+     * Execute provided supplier with setup state in the thread-local. Afterwards update the state with the modifications done to it.
+     *
+     * @param state The state
+     * @return The suppler return value
+     * @author Denis Stepanov
+     * @since 3.5.0
+     */
+    @Internal
+    public static TransactionSynchronizationStateOp withState(@Nullable TransactionSynchronizationState state) {
+        TransactionSynchronizationState previousState = getState();
+        setState(state);
+        return new TransactionSynchronizationStateOp() {
+
+            @Override
+            public TransactionSynchronizationState getState() {
+                return state;
+            }
+
+            @Override
+            public TransactionSynchronizationState getOrCreateState() {
+                return TransactionSynchronizationManager.getOrCreateState();
+            }
+
+            @Override
+            public void close() {
+                setState(previousState);
+            }
+        };
+    }
+
+    /**
      * Execute provided supplier with setup state in the thread-local. Make sure the thread-local state is cleanup afterwards.
      *
-     * @param supplier The result supplier
-     * @param <T> The result type
      * @return 3.5.0
      */
     @Internal
-    public static <T> T withGuardedState(Supplier<T> supplier) {
+    public static TransactionSynchronizationStateOp withGuardedState() {
         TransactionSynchronizationState previousState = getState();
-        return withState(previousState == null ? null : previousState.copy(), supplier);
+        TransactionSynchronizationState newState = previousState == null ? null : previousState.copy();
+        return withState(newState);
     }
 
     /**
      * Decorate the supplier with possible propagated state in thread-local.
-     *
+     * <p>
      * It's used to propagated TX state down to the async functions.
      *
      * @param supplier The supplier to be decorated
-     * @param <T> The supplied type
+     * @param <T>      The supplied type
      * @return The decorated supplier
      * @author Denis Stepanov
      * @since 3.4.0
@@ -670,7 +732,11 @@ public abstract class TransactionSynchronizationManager {
         if (state == null) {
             return supplier;
         }
-        return () -> withState(state, supplier);
+        return () -> {
+            try (TransactionSynchronizationStateOp ignore = withState(state)) {
+                return supplier.get();
+            }
+        };
     }
 
     /**
@@ -680,6 +746,28 @@ public abstract class TransactionSynchronizationManager {
     public interface TransactionSynchronizationState {
 
         TransactionSynchronizationState copy();
+    }
+
+
+    /**
+     * The transaction synchronization state autocloseable operation.
+     */
+    public interface TransactionSynchronizationStateOp extends AutoCloseable {
+
+        /**
+         * @return the state
+         */
+        @Nullable
+        TransactionSynchronizationState getState();
+
+        /**
+         * @return the state
+         */
+        @NonNull
+        TransactionSynchronizationState getOrCreateState();
+
+        @Override
+        void close();
     }
 
     /**

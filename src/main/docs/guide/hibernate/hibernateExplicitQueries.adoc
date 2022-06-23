@@ -1,0 +1,7 @@
+If you want to have more control over the query generated at the compile-time then you can use the ann:data.annotation.Query[] annotation to specify an explicit query:
+
+snippet::example.BookRepository[project-base="doc-examples/hibernate-example", source="main", tags="explicit", indent="0"]
+
+You specify named parameters using colon (`:`) followed by the name and these must match a parameter specified to the method otherwise a compilation error will occur, use backslash `\:` to escape the colon that is not a parameter specification.
+
+Note that if the method returns a api:data.model.Page[] for pagination then you must additionally specify a query that performs the equivalent count using the `countQuery` member of the ann:data.annotation.Query[] annotation.

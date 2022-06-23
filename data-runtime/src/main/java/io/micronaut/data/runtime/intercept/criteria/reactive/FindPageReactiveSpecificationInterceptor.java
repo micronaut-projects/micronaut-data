@@ -66,9 +66,9 @@ public class FindPageReactiveSpecificationInterceptor extends AbstractReactiveSp
             TransactionSynchronizationManager.TransactionSynchronizationState state = TransactionSynchronizationManager.getState();
 
             result = Flux.from(reactiveOperations.findAll(preparedQuery)).collectList().flatMap(list -> {
-                return TransactionSynchronizationManager.withState(state, () -> {
+                try (TransactionSynchronizationManager.TransactionSynchronizationStateOp ignore = TransactionSynchronizationManager.withState(state)) {
                     return Mono.from(reactiveOperations.findOne(countQuery)).map(count -> Page.of(list, getPageable(context), count.longValue()));
-                });
+                }
             });
         }
         return Publishers.convertPublisher(result, context.getReturnType().getType());

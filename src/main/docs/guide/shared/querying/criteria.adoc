@@ -1,0 +1,112 @@
+The previous example presented a simple `findByTitle` query which searches for all `Book` instances that have a `title` property _equal to_ the given value.
+
+This is the simplest type of query supported by Micronaut Data, but you can use an optional suffix on the property name to modify the type of criterion to apply.
+
+For example the following query pattern will execute a query that finds only `Book` instances that have a page count greater than the given value:
+
+snippet::example.BookRepository[project-base="doc-examples/hibernate-example", source="main", tags="greaterthan", indent="0"]
+
+The following table summarizes the possible expressions and behaviour:
+
+.Property Criterion Expressions
+[cols=3*]
+|===
+|*Example Suffix*
+|*Description*
+|*Sample*
+
+|`After`
+|Find results where the property is after the given value
+|`findByDateCreatedAfter`
+
+|`Before`
+|Find results where the property is before the given value
+|`findByDateCreatedBefore`
+
+|`Contains`
+|Find results where the property contains the given value
+|`findByTitleContains`
+
+|`StartsWith` or `StartingWith`
+|Find results where the property starts with the given value
+|`findByTitleStartsWith`
+
+|`EndsWith` or `EndingWith`
+|Find results where the property ends with the given value
+|`findByTitleEndsWith`
+
+|`Equals` or `Equal`
+|Find results equal to the given value
+|`findByTitleEquals`
+
+|`NotEquals` or `NotEqual`
+|Find results not equal to the given value
+|`findByTitleNotEquals`
+
+|`GreaterThan`
+|Find results where the property is greater than the given value
+|`findByPagesGreaterThan`
+
+|`GreaterThanEquals`
+|Find results where the property is greater than or equal to the given value
+|`findByPagesGreaterThanEquals`
+
+|`LessThan`
+|Find results where the property is less than the given value
+|`findByPagesLessThan`
+
+|`LessThanEquals`
+|Find results where the property is less than or equal to the given value
+|`findByPagesLessThanEquals`
+
+|`Like`
+|Finds string values "like" the given expression
+|`findByTitleLike`
+
+|`Ilike`
+|Case insensitive "like" query
+|`findByTitleIlike`
+
+|`InList` or `In`
+|Find results where the property is that are contained within the given list
+|`findByTitleInList`
+
+|`Between` or `InRange`
+|Find results where the property is between the given values
+|`findByDateCreatedBetween`
+
+|`IsNull`
+|Finds results where the property is `null`
+|`findByAuthorIsNull`
+
+|`IsNotNull`
+|Finds results where the property is not `null`
+|`findByAuthorIsNotNull`
+
+|`IsEmpty`
+|Finds results where the property is empty or `null`
+|`findByAuthorIsEmpty`
+
+|`IsNotEmpty`
+|Finds results where the property is not empty or `null`
+|`findByAuthorIsNotEmpty`
+
+|`True`
+|Finds results where the property is true
+|`findByAuthorEnabledTrue`
+
+|`False`
+|Finds results where the property is false
+|`findByAuthorEnabledFalse`
+
+|===
+
+TIP: Any of these criterion expressions can be negated by adding the word `Not` before the expression (for example `NotInList`).
+
+You can combine multiple criterion by separating them with `And` or `Or` logical operators. For example:
+
+snippet::example.BookRepository[project-base="doc-examples/hibernate-example", source="main", tags="logical", indent="0"]
+
+The above example uses `Or` to express a greater than condition and a like condition.
+
+You can also negate any of the aforementioned expressions by adding `Not` prior the name of the expression (example `NotTrue` or `NotContain`).

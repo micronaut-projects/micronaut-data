@@ -68,14 +68,14 @@ final class MongoReactiveTransactionManagerFactory {
     <T> AsyncTransactionOperations<T> buildPrimaryAsyncTransactionOperations(@Primary ReactorReactiveTransactionOperations<T> reactiveTransactionOperations,
                                                                              @Nullable CoroutineTxHelper coroutineTxHelper,
                                                                              @Named(TaskExecutors.IO) ExecutorService executorService) {
-        return new AsyncUsingReactiveTransactionOperations<>(reactiveTransactionOperations, coroutineTxHelper, executorService);
+        return new AsyncUsingReactiveTransactionOperations<>(reactiveTransactionOperations, coroutineTxHelper);
     }
 
     @EachBean(NamedMongoConfiguration.class)
     <T> AsyncTransactionOperations<T> buildAsyncTransactionOperations(@Parameter ReactorReactiveTransactionOperations<T> reactiveTransactionOperations,
                                                                       @Nullable CoroutineTxHelper coroutineTxHelper,
                                                                       @Named(TaskExecutors.IO) ExecutorService executorService) {
-        return new AsyncUsingReactiveTransactionOperations<>(reactiveTransactionOperations, coroutineTxHelper, executorService);
+        return new AsyncUsingReactiveTransactionOperations<>(reactiveTransactionOperations, coroutineTxHelper);
     }
 
 }

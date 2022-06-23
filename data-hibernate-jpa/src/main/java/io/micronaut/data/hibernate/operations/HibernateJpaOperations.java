@@ -23,25 +23,13 @@ import io.micronaut.core.annotation.Creator;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.annotation.TypeHint;
-import io.micronaut.core.beans.BeanIntrospection;
-import io.micronaut.core.beans.BeanProperty;
-import io.micronaut.core.beans.BeanWrapper;
-import io.micronaut.core.beans.exceptions.IntrospectionException;
 import io.micronaut.core.convert.ConversionService;
-import io.micronaut.core.reflect.ReflectionUtils;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArgumentUtils;
-import io.micronaut.core.util.ArrayUtils;
-import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.QueryHint;
-import io.micronaut.data.jpa.annotation.EntityGraph;
 import io.micronaut.data.jpa.operations.JpaRepositoryOperations;
-import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
-import io.micronaut.data.model.PersistentPropertyPath;
-import io.micronaut.data.model.Sort;
-import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder;
 import io.micronaut.data.model.runtime.DeleteBatchOperation;
 import io.micronaut.data.model.runtime.DeleteOperation;
 import io.micronaut.data.model.runtime.InsertBatchOperation;
@@ -51,7 +39,6 @@ import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.model.runtime.QueryParameterBinding;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
-import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.model.runtime.StoredQuery;
 import io.micronaut.data.model.runtime.UpdateBatchOperation;
 import io.micronaut.data.model.runtime.UpdateOperation;
@@ -59,7 +46,6 @@ import io.micronaut.data.operations.async.AsyncCapableRepository;
 import io.micronaut.data.operations.reactive.ReactiveCapableRepository;
 import io.micronaut.data.operations.reactive.ReactiveRepositoryOperations;
 import io.micronaut.data.runtime.convert.DataConversionService;
-import io.micronaut.data.runtime.mapper.BeanIntrospectionMapper;
 import io.micronaut.data.runtime.operations.ExecutorAsyncOperations;
 import io.micronaut.data.runtime.operations.ExecutorReactiveOperations;
 import io.micronaut.jdbc.spring.HibernatePresenceCondition;
@@ -67,11 +53,7 @@ import io.micronaut.transaction.TransactionOperations;
 import jakarta.inject.Named;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
-import org.hibernate.graph.AttributeNode;
-import org.hibernate.graph.Graph;
 import org.hibernate.graph.RootGraph;
-import org.hibernate.graph.SubGraph;
-import org.hibernate.query.NativeQuery;
 import org.hibernate.query.Query;
 import org.hibernate.type.Type;
 
@@ -79,13 +61,8 @@ import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.FlushModeType;
 import javax.persistence.Tuple;
-import javax.persistence.TupleElement;
-import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Expression;
-import javax.persistence.criteria.Order;
-import javax.persistence.criteria.Path;
-import javax.persistence.criteria.Root;
+import javax.sql.DataSource;
 import java.io.Serializable;
 import java.sql.Connection;
 import java.util.ArrayList;
@@ -93,14 +70,11 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
-import java.util.TreeSet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -110,19 +84,15 @@ import java.util.stream.Stream;
  * @author graemerocher
  * @since 1.0
  */
-@EachBean(SessionFactory.class)
+@EachBean(DataSource.class)
 @TypeHint(HibernatePresenceCondition.class)
-public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCapableRepository, ReactiveCapableRepository {
+public class HibernateJpaOperations extends AbstractHibernateOperations<Session, Query<?>>
+        implements JpaRepositoryOperations, AsyncCapableRepository, ReactiveCapableRepository {
 
-    private static final String ENTITY_GRAPH_FETCH = "javax.persistence.fetchgraph";
-    private static final String ENTITY_GRAPH_LOAD = "javax.persistence.loadgraph";
-    private static final JpaQueryBuilder QUERY_BUILDER = new JpaQueryBuilder();
     private final SessionFactory sessionFactory;
     private final TransactionOperations<Connection> transactionOperations;
-    private final RuntimeEntityRegistry runtimeEntityRegistry;
     private ExecutorAsyncOperations asyncOperations;
     private ExecutorService executorService;
-    private final ConversionService<?> dataConversionService;
 
     /**
      * Default constructor.
@@ -151,196 +121,139 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
      * @param dataConversionService The data conversion service
      */
     @Creator
-    protected HibernateJpaOperations(
-            @NonNull SessionFactory sessionFactory,
+    public HibernateJpaOperations(
+            @NonNull @Parameter SessionFactory sessionFactory,
             @NonNull @Parameter TransactionOperations<Connection> transactionOperations,
             @Named("io") @Nullable ExecutorService executorService,
             RuntimeEntityRegistry runtimeEntityRegistry,
             DataConversionService<?> dataConversionService) {
+        super(runtimeEntityRegistry, dataConversionService);
         ArgumentUtils.requireNonNull("sessionFactory", sessionFactory);
-        this.runtimeEntityRegistry = runtimeEntityRegistry;
         this.sessionFactory = sessionFactory;
         this.transactionOperations = transactionOperations;
         this.executorService = executorService;
-        // Backwards compatibility should be removed in the next version
-        this.dataConversionService = dataConversionService == null ? ConversionService.SHARED : dataConversionService;
+    }
+
+    @Override
+    public <T> RuntimePersistentEntity<T> getEntity(Class<T> type) {
+        return runtimeEntityRegistry.getEntity(type);
     }
 
     @Override
     public ApplicationContext getApplicationContext() {
-        return runtimeEntityRegistry.getApplicationContext();
+        return super.getApplicationContext();
     }
 
     @Override
     public ConversionService<?> getConversionService() {
-        return dataConversionService;
+        return super.getConversionService();
+    }
+
+    @Override
+    protected void setParameter(Query<?> query, String parameterName, Object value) {
+        query.setParameter(parameterName, value);
+    }
+
+    @Override
+    protected void setParameter(Query<?> query, String parameterName, Object value, Argument argument) {
+        if (value == null) {
+            Type valueType = sessionFactory.getTypeHelper().heuristicType(argument.getType().getName());
+            query.setParameter(parameterName, null, valueType);
+        } else {
+            query.setParameter(parameterName, value);
+        }
+    }
+
+    @Override
+    protected void setParameterList(Query<?> query, String parameterName, Collection<Object> value) {
+        query.setParameterList(parameterName, value);
+    }
+
+    @Override
+    protected void setParameterList(Query<?> query, String parameterName, Collection<Object> value, Argument argument) {
+        Type valueType = sessionFactory.getTypeHelper().heuristicType(argument.getType().getName());
+        if (value == null) {
+            value = Collections.emptyList();
+        }
+        if (valueType != null) {
+            query.setParameterList(parameterName, value, valueType);
+        } else {
+            query.setParameterList(parameterName, value);
+        }
+    }
+
+    @Override
+    protected void setHint(Query<?> query, String hintName, Object value) {
+        query.setHint(hintName, value);
+    }
+
+    @Override
+    protected <T> RootGraph<T> getEntityGraph(Session session, Class<T> entityType, String graphName) {
+        return (RootGraph<T>) session.getEntityGraph(graphName);
+    }
+
+    @Override
+    protected <T> RootGraph<T> createEntityGraph(Session session, Class<T> entityType) {
+        return session.createEntityGraph(entityType);
+    }
+
+    @Override
+    protected Query<?> createQuery(Session session, String query, Class<?> resultType) {
+        if (resultType == null) {
+            return session.createQuery(query);
+        }
+        return session.createQuery(query, resultType);
+    }
+
+    @Override
+    protected Query<?> createNativeQuery(Session session, String query, Class<?> resultType) {
+        if (resultType == null) {
+            return session.createNativeQuery(query);
+        }
+        return session.createNativeQuery(query, resultType);
+    }
+
+    @Override
+    protected Query<?> createQuery(Session session, CriteriaQuery<?> criteriaQuery) {
+        return session.createQuery(criteriaQuery);
+    }
+
+    @Override
+    protected void setOffset(Query<?> query, int offset) {
+        query.setFirstResult(offset);
+    }
+
+    @Override
+    protected void setMaxResults(Query<?> query, int max) {
+        query.setMaxResults(max);
     }
 
     @NonNull
     @Override
     public Map<String, Object> getQueryHints(@NonNull StoredQuery<?, ?> storedQuery) {
-        AnnotationMetadata annotationMetadata = storedQuery.getAnnotationMetadata();
-        if (annotationMetadata.hasAnnotation(EntityGraph.class)) {
-            String hint = annotationMetadata.stringValue(EntityGraph.class, "hint").orElse(ENTITY_GRAPH_FETCH);
-            String graphName = annotationMetadata.stringValue(EntityGraph.class).orElse(null);
-            String[] paths = annotationMetadata.stringValues(EntityGraph.class, "attributePaths");
-            // If the graphName is set, it takes precedence over the attributeNames
-            if (graphName != null) {
-                return Collections.singletonMap(hint, graphName);
-            } else if (ArrayUtils.isNotEmpty(paths)) {
-                return Collections.singletonMap(hint, paths);
-            }
-        }
-        return Collections.emptyMap();
+        return super.getQueryHints(storedQuery);
     }
 
     @Nullable
     @Override
     public <T> T findOne(@NonNull Class<T> type, @NonNull Serializable id) {
-        return transactionOperations.executeRead(status -> {
-            final Session session = sessionFactory.getCurrentSession();
-            return session.byId(type).load(id);
-        });
+        return transactionOperations.executeRead(status -> sessionFactory.getCurrentSession().byId(type).load(id));
     }
 
     @NonNull
     @Override
     public <T> T load(@NonNull Class<T> type, @NonNull Serializable id) {
-        return transactionOperations.executeRead(status -> {
-            final Session session = sessionFactory.getCurrentSession();
-            return session.load(type, id);
-        });
+        return transactionOperations.executeRead(status -> sessionFactory.getCurrentSession().load(type, id));
     }
 
     @Nullable
     @Override
     public <T, R> R findOne(@NonNull PreparedQuery<T, R> preparedQuery) {
         return transactionOperations.executeRead(status -> {
-            Class<R> resultType = preparedQuery.getResultType();
-            String query = preparedQuery.getQuery();
-
-            Session currentSession = sessionFactory.getCurrentSession();
-            if (preparedQuery.isDtoProjection()) {
-                Query<Tuple> q;
-                if (preparedQuery.isNative()) {
-                    q = currentSession.createNativeQuery(query, Tuple.class);
-                } else if (query.toLowerCase(Locale.ENGLISH).startsWith("select new ")) {
-                    Query<R> dtoQuery = currentSession.createQuery(query, resultType);
-                    bindParameters(dtoQuery, preparedQuery, query);
-                    bindQueryHints(dtoQuery, preparedQuery, currentSession);
-                    return dtoQuery.uniqueResult();
-                } else {
-                    q = currentSession.createQuery(query, Tuple.class);
-                }
-                bindParameters(q, preparedQuery, query);
-                bindQueryHints(q, preparedQuery, currentSession);
-                Tuple tuple = first(q);
-                if (tuple != null) {
-                    return (new BeanIntrospectionMapper<Tuple, R>() {
-                        @Override
-                        public Object read(Tuple tuple1, String alias) {
-                            return tuple1.get(alias);
-                        }
-
-                        @Override
-                        public ConversionService<?> getConversionService() {
-                            return dataConversionService;
-                        }
-
-                    }).map(tuple, resultType);
-                }
-                return null;
-            } else {
-                Query<R> q;
-                if (preparedQuery.isNative()) {
-                    if (DataType.ENTITY.equals(preparedQuery.getResultDataType())) {
-                        q = currentSession.createNativeQuery(query, resultType);
-                    } else {
-                        q = currentSession.createNativeQuery(query);
-                    }
-                } else {
-                    q = currentSession.createQuery(query, resultType);
-                }
-                bindParameters(q, preparedQuery, query);
-                bindQueryHints(q, preparedQuery, currentSession);
-                return first(q);
-            }
+            FirstResultCollector<R> collector = new FirstResultCollector<>();
+            collectFindOne(sessionFactory.getCurrentSession(), preparedQuery, collector);
+            return collector.result;
         });
-    }
-
-    private <T> T first(Query<T> q) {
-        q.setMaxResults(1);
-        Iterator<T> iterator = q.list().iterator();
-        if (iterator.hasNext()) {
-            return iterator.next();
-        }
-        return null;
-    }
-
-    private <T, R> void bindParameters(Query<?> q, @NonNull PreparedQuery<T, R> preparedQuery, String query) {
-        for (QueryParameterBinding queryParameterBinding : preparedQuery.getQueryBindings()) {
-            String parameterName = Objects.requireNonNull(queryParameterBinding.getName(), "Parameter name cannot be null!");
-            Object value;
-            if (queryParameterBinding.getParameterIndex() != -1) {
-                value = resolveParameterValue(queryParameterBinding, preparedQuery.getParameterArray());
-            } else if (queryParameterBinding.isAutoPopulated()) {
-                String[] propertyPath = queryParameterBinding.getRequiredPropertyPath();
-                RuntimePersistentEntity<T> persistentEntity = getEntity(preparedQuery.getRootEntity());
-                PersistentPropertyPath pp = persistentEntity.getPropertyPath(propertyPath);
-                if (pp == null) {
-                    throw new IllegalStateException("Cannot find auto populated property: " + String.join(".", propertyPath));
-                }
-                RuntimePersistentProperty<?> persistentProperty = (RuntimePersistentProperty) pp.getProperty();
-                Object previousValue = null;
-                QueryParameterBinding previousPopulatedValueParameter = queryParameterBinding.getPreviousPopulatedValueParameter();
-                if (previousPopulatedValueParameter != null) {
-                    if (previousPopulatedValueParameter.getParameterIndex() == -1) {
-                        throw new IllegalStateException("Previous value parameter cannot be bind!");
-                    }
-                    previousValue = resolveParameterValue(previousPopulatedValueParameter, preparedQuery.getParameterArray());
-                }
-                value = runtimeEntityRegistry.autoPopulateRuntimeProperty(persistentProperty, previousValue);
-            } else {
-                throw new IllegalStateException("Invalid query [" + query + "]. Unable to establish parameter value for parameter at name: " + parameterName);
-            }
-            if (preparedQuery.isNative()) {
-                int parameterIndex = queryParameterBinding.getParameterIndex();
-                Argument<?> argument = preparedQuery.getArguments()[parameterIndex];
-                Class<?> argumentType = argument.getType();
-                if (Collection.class.isAssignableFrom(argumentType)) {
-                    Type valueType = sessionFactory.getTypeHelper().heuristicType(argument.getFirstTypeVariable().orElse(Argument.OBJECT_ARGUMENT).getType().getName());
-                    if (valueType != null) {
-                        q.setParameterList(parameterName, value == null ? Collections.emptyList() : (Collection<?>) value, valueType);
-                        continue;
-                    }
-                } else if (Object[].class.isAssignableFrom(argumentType)) {
-                    q.setParameterList(parameterName, value == null ? ArrayUtils.EMPTY_OBJECT_ARRAY : (Object[]) value);
-                    continue;
-                } else if (value == null) {
-                    Type type = sessionFactory.getTypeHelper().heuristicType(argumentType.getName());
-                    if (type != null) {
-                        q.setParameter(parameterName, null, type);
-                        continue;
-                    }
-                }
-            }
-            q.setParameter(parameterName, value);
-        }
-    }
-
-    private Object resolveParameterValue(QueryParameterBinding queryParameterBinding, Object[] queryParameters) {
-        Object value;
-        value = queryParameters[queryParameterBinding.getParameterIndex()];
-        String[] parameterBindingPath = queryParameterBinding.getParameterBindingPath();
-        if (parameterBindingPath != null) {
-            for (String prop : parameterBindingPath) {
-                if (value == null) {
-                    break;
-                }
-                value = BeanWrapper.getWrapper(value).getRequiredProperty(prop, Argument.OBJECT_ARGUMENT);
-            }
-        }
-        return value;
     }
 
     @Override
@@ -350,181 +263,60 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
 
     @NonNull
     @Override
-    public <T> Iterable<T> findAll(@NonNull PagedQuery<T> query) {
+    public <T> Iterable<T> findAll(@NonNull PagedQuery<T> pagedQuery) {
+        return transactionOperations.executeRead(status -> findPaged(getCurrentSession(), pagedQuery));
+    }
+
+    @NonNull
+    @Override
+    public <T> Stream<T> findStream(@NonNull PagedQuery<T> pagedQuery) {
+        return transactionOperations.executeRead(status -> {
+            StreamResultCollector<T> collector = new StreamResultCollector<>();
+            collectPagedResults(sessionFactory.getCriteriaBuilder(), getCurrentSession(), pagedQuery, collector);
+            return collector.result;
+        });
+
+    }
+
+    @Override
+    public <R> Page<R> findPage(@NonNull PagedQuery<R> pagedQuery) {
         return transactionOperations.executeRead(status -> {
             Session session = getCurrentSession();
-            CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
-            Query<T> q = buildCriteriaQuery(session, query.getRootEntity(), criteriaBuilder, query.getPageable());
-            bindQueryHints(q, query, session);
-            return q.list();
+            return Page.of(
+                    findPaged(session, pagedQuery),
+                    pagedQuery.getPageable(),
+                    countOf(session, pagedQuery, pagedQuery.getPageable())
+            );
         });
     }
 
     @Override
     public <T> long count(PagedQuery<T> pagedQuery) {
-        return transactionOperations.executeRead(status -> {
-            Session session = getCurrentSession();
-            CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
-            CriteriaQuery<Long> query = criteriaBuilder.createQuery(Long.class);
-            Root<T> root = query.from(pagedQuery.getRootEntity());
-            query = query.select(criteriaBuilder.count(root));
-            Query<Long> q = session.createQuery(
-                    query
-            );
-            Pageable pageable = pagedQuery.getPageable();
-            bindCriteriaSort(query, root, criteriaBuilder, pageable);
-            bindPageable(q, pageable);
-            bindQueryHints(q, pagedQuery, session);
+        return transactionOperations.executeRead(status -> countOf(getCurrentSession(), pagedQuery, null));
+    }
 
-            return q.getSingleResult();
-        });
+    private <T> List<T> findPaged(Session session, PagedQuery<T> pagedQuery) {
+        ListResultCollector<T> collector = new ListResultCollector<>();
+        collectPagedResults(sessionFactory.getCriteriaBuilder(), session, pagedQuery, collector);
+        return collector.result;
+    }
+
+    private <T> Long countOf(Session session, PagedQuery<T> pagedQuery, @Nullable Pageable pageable) {
+        SingleResultCollector<Long> collector = new SingleResultCollector<>();
+        collectCountOf(sessionFactory.getCriteriaBuilder(), session, pagedQuery.getRootEntity(), pageable, collector);
+        return collector.result;
     }
 
     @NonNull
     @Override
     public <T, R> Iterable<R> findAll(@NonNull PreparedQuery<T, R> preparedQuery) {
         return transactionOperations.executeRead(status -> {
-            Session entityManager = sessionFactory.getCurrentSession();
-            String queryStr = preparedQuery.getQuery();
-            Pageable pageable = preparedQuery.getPageable();
-            if (pageable != Pageable.UNPAGED) {
-                Sort sort = pageable.getSort();
-                if (sort.isSorted()) {
-                    queryStr += QUERY_BUILDER.buildOrderBy(queryStr, getEntity(preparedQuery.getRootEntity()), sort).getQuery();
-                }
-            }
-            if (preparedQuery.isDtoProjection()) {
-                Query<Tuple> q;
-                if (preparedQuery.isNative()) {
-                    q = entityManager.createNativeQuery(queryStr, Tuple.class);
-                } else if (queryStr.toLowerCase(Locale.ENGLISH).startsWith("select new ")) {
-                    Class<R> wrapperType = ReflectionUtils.getWrapperType(preparedQuery.getResultType());
-                    Query<R> query = entityManager.createQuery(queryStr, wrapperType);
-                    bindPreparedQuery(query, preparedQuery, entityManager, queryStr);
-                    return query.list();
-                } else {
-                    q = entityManager.createQuery(queryStr, Tuple.class);
-                }
-                bindPreparedQuery(q, preparedQuery, entityManager, queryStr);
-                return q.stream()
-                        .map(tuple -> {
-                            Set<String> properties = tuple.getElements().stream().map(TupleElement::getAlias).collect(Collectors.toCollection(() -> new TreeSet<>(String.CASE_INSENSITIVE_ORDER)));
-                            return (new BeanIntrospectionMapper<Tuple, R>() {
-                                @Override
-                                public Object read(Tuple tuple1, String alias) {
-                                    if (!properties.contains(alias)) {
-                                        return null;
-                                    }
-                                    return tuple1.get(alias);
-                                }
-
-                                @Override
-                                public ConversionService<?> getConversionService() {
-                                    return dataConversionService;
-                                }
-
-                            }).map(tuple, preparedQuery.getResultType());
-                        })
-                        .collect(Collectors.toList());
-            } else {
-                Class<R> wrapperType = ReflectionUtils.getWrapperType(preparedQuery.getResultType());
-                Query<R> q;
-                if (preparedQuery.isNative()) {
-                    if (DataType.ENTITY.equals(preparedQuery.getResultDataType())) {
-                        q = entityManager.createNativeQuery(queryStr, wrapperType);
-                    } else {
-                        q = entityManager.createNativeQuery(queryStr);
-                    }
-                } else {
-                    q = entityManager.createQuery(queryStr, wrapperType);
-                }
-                bindPreparedQuery(q, preparedQuery, entityManager, queryStr);
-                return q.list();
-            }
+            ListResultCollector<R> resultCollector = new ListResultCollector<>();
+            collectFindAll(sessionFactory.getCurrentSession(), preparedQuery, resultCollector);
+            return resultCollector.result;
         });
     }
 
-    private <T, R> void bindPreparedQuery(Query<?> q, @NonNull PreparedQuery<T, R> preparedQuery, Session currentSession, String query) {
-        bindParameters(q, preparedQuery, query);
-        bindPageable(q, preparedQuery.getPageable());
-        bindQueryHints(q, preparedQuery, currentSession);
-    }
-
-    private <T> void bindQueryHints(Query<?> q, @NonNull PagedQuery<T> preparedQuery, @NonNull Session session) {
-        Map<String, Object> queryHints = preparedQuery.getQueryHints();
-        if (CollectionUtils.isNotEmpty(queryHints)) {
-            for (Map.Entry<String, Object> entry : queryHints.entrySet()) {
-                String hintName = entry.getKey();
-                Object value = entry.getValue();
-                if (ENTITY_GRAPH_FETCH.equals(hintName) || ENTITY_GRAPH_LOAD.equals(hintName)) {
-                    String graphName = preparedQuery.getAnnotationMetadata().stringValue(EntityGraph.class).orElse(null);
-                    if (graphName != null) {
-                        RootGraph<?> entityGraph = session.getEntityGraph(graphName);
-                        q.setHint(hintName, entityGraph);
-                    } else if (value instanceof String[]) {
-                        String[] pathsDefinitions = (String[]) value;
-                        if (ArrayUtils.isNotEmpty(pathsDefinitions)) {
-                            RootGraph<T> entityGraph = createGraph(pathsDefinitions, session, preparedQuery.getRootEntity());
-                            q.setHint(hintName, entityGraph);
-                        }
-                    }
-                } else {
-                    q.setHint(hintName, value);
-                }
-            }
-        }
-    }
-
-    /**
-     * Create an EntityGraph from the collection of paths provided. It ensures that only one SubGraph for each component
-     * of the path is created within the graph.
-     * @param paths Array of paths to add to the EntityGraph
-     * @param session The hibernate session
-     * @param rootEntity The root entity class
-     * @param <T>
-     * @return A RootGraph created from the paths
-     */
-    private static <T> RootGraph<T> createGraph(@NonNull String[] paths, @NonNull Session session, @NonNull Class<T> rootEntity) {
-        RootGraph<T> rootGraph = session.createEntityGraph(rootEntity);
-        for (String path : paths) {
-            if (path.trim().equals("")) {
-                continue;
-            }
-            String[] parts = path.split("\\.");
-            if (parts.length == 1) {
-                AttributeNode<?> attrNode = rootGraph.findAttributeNode(path);
-                if (attrNode == null) {
-                    rootGraph.addAttributeNode(path);
-                }
-            } else {
-                Graph<?> graph = rootGraph;
-                for (int i = 0; i < parts.length; i++) {
-                    String part = parts[i];
-                    // Check if the node already exists at this level
-                    AttributeNode<?> attrNode = graph.findAttributeNode(part);
-                    if (attrNode != null) {
-                        SubGraph<?> subGraph = attrNode.getSubGraphs().isEmpty() ? null : attrNode.getSubGraphs().values().iterator().next();
-                        // If this is not a leaf and the subgraph doesn't exist, create it
-                        if (subGraph == null && i < parts.length - 1) {
-                            graph = graph.addSubGraph(part);
-                        } else if (subGraph != null) {
-                            // Otherwise, keep the existing one for the child node
-                            graph = subGraph;
-                        }
-                    } else if (i == parts.length - 1) {
-                        // If this is a leaf, create an attribute node
-                        graph.addAttributeNode(part);
-                    } else {
-                        // Otherwise, create a subgraph
-                        graph = graph.addSubGraph(part);
-                    }
-                }
-            }
-        }
-        return rootGraph;
-    }
-
-    @SuppressWarnings("ConstantConditions")
     @Override
     public <T> T persist(@NonNull InsertOperation<T> operation) {
         return transactionOperations.executeWrite(status -> {
@@ -532,10 +324,7 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
 
             EntityManager entityManager = sessionFactory.getCurrentSession();
             entityManager.persist(entity);
-            flushIfNecessary(
-                    entityManager,
-                    operation.getAnnotationMetadata()
-            );
+            flushIfNecessary(entityManager, operation.getAnnotationMetadata());
             return entity;
         });
     }
@@ -597,9 +386,7 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
         });
     }
 
-    private void flushIfNecessary(
-            EntityManager entityManager,
-            AnnotationMetadata annotationMetadata) {
+    private void flushIfNecessary(EntityManager entityManager, AnnotationMetadata annotationMetadata) {
         if (annotationMetadata.hasAnnotation(QueryHint.class)) {
             FlushModeType flushModeType = getFlushModeType(annotationMetadata);
             if (flushModeType == FlushModeType.AUTO) {
@@ -654,187 +441,25 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
     }
 
     private int executeEntityUpdate(StoredQuery<?, ?> storedQuery, Object entity) {
-        Query query = getCurrentSession().createQuery(storedQuery.getQuery());
+        Query<?> query = getCurrentSession().createQuery(storedQuery.getQuery());
         for (QueryParameterBinding queryParameterBinding : storedQuery.getQueryBindings()) {
             query.setParameter(queryParameterBinding.getRequiredName(), getParameterValue(queryParameterBinding.getRequiredPropertyPath(), entity));
         }
         return query.executeUpdate();
     }
 
-    private Object getParameterValue(String[] propertyPath, Object value) {
-        for (String property : propertyPath) {
-            Object finalValue = value;
-            BeanProperty beanProperty = BeanIntrospection.getIntrospection(value.getClass())
-                    .getProperty(property).orElseThrow(() -> new IntrospectionException("Cannot find a property: '" + property + "' on bean: " + finalValue));
-            value = beanProperty.get(value);
-            if (value == null) {
-                return null;
-            }
-        }
-        return value;
-    }
-
     @NonNull
     @Override
     public <T, R> Stream<R> findStream(@NonNull PreparedQuery<T, R> preparedQuery) {
-        //noinspection ConstantConditions
         return transactionOperations.executeRead(status -> {
-            String query = preparedQuery.getQuery();
-            Pageable pageable = preparedQuery.getPageable();
-            Session currentSession = getCurrentSession();
-            Class<R> resultType = preparedQuery.getResultType();
-            boolean isNativeQuery = preparedQuery.isNative();
-            if (preparedQuery.isDtoProjection()) {
-                Query<Tuple> q;
-
-                if (isNativeQuery) {
-                    q = currentSession
-                            .createNativeQuery(query, Tuple.class);
-                } else {
-                    q = currentSession
-                            .createQuery(query, Tuple.class);
-                }
-                bindParameters(q, preparedQuery, query);
-                bindPageable(q, pageable);
-                return q.stream()
-                        .map(tuple -> (new BeanIntrospectionMapper<Tuple, R>() {
-                            @Override
-                            public Object read(Tuple tuple1, String alias) {
-                                return tuple1.get(alias);
-                            }
-
-                            @Override
-                            public ConversionService<?> getConversionService() {
-                                return dataConversionService;
-                            }
-
-                        }).map(tuple, resultType));
-
-            } else {
-
-                Query<R> q;
-                @SuppressWarnings("unchecked")
-                Class<R> wrapperType = ReflectionUtils.getWrapperType(resultType);
-                if (isNativeQuery) {
-                    Class<T> rootEntity = preparedQuery.getRootEntity();
-                    if (wrapperType != rootEntity) {
-                        NativeQuery<Tuple> nativeQuery = currentSession.createNativeQuery(query, Tuple.class);
-                        bindParameters(nativeQuery, preparedQuery, query);
-                        bindPageable(nativeQuery, pageable);
-                        return nativeQuery.stream()
-                                .map(tuple -> {
-                                    Object o = tuple.get(0);
-                                    if (wrapperType.isInstance(o)) {
-                                        return (R) o;
-                                    } else {
-                                        return dataConversionService.convertRequired(
-                                                o,
-                                                wrapperType
-                                        );
-                                    }
-                                });
-                    } else {
-                        q = currentSession.createNativeQuery(query, wrapperType);
-                    }
-                } else {
-                    q = currentSession.createQuery(query, wrapperType);
-                }
-                bindParameters(q, preparedQuery, query);
-                bindPageable(q, pageable);
-
-                return q.stream();
-            }
-        });
-    }
-
-    @NonNull
-    @Override
-    public <T> Stream<T> findStream(@NonNull PagedQuery<T> pagedQuery) {
-        Session session = getCurrentSession();
-        Class<T> entity = pagedQuery.getRootEntity();
-        CriteriaQuery<T> query = session.getCriteriaBuilder().createQuery(entity);
-        query.from(entity);
-        Query<T> q = session.createQuery(
-                query
-        );
-        bindPageable(q, pagedQuery.getPageable());
-
-        return q.stream();
-    }
-
-    @Override
-    public <R> Page<R> findPage(@NonNull PagedQuery<R> query) {
-        //noinspection ConstantConditions
-        return transactionOperations.executeRead(status -> {
-            Session session = getCurrentSession();
-            CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
-            Class<R> entity = query.getRootEntity();
-            Pageable pageable = query.getPageable();
-            Query<R> q = buildCriteriaQuery(session, entity, criteriaBuilder, pageable);
-            List<R> resultList = q.list();
-            CriteriaQuery<Long> countQuery = criteriaBuilder.createQuery(Long.class);
-            countQuery.select(criteriaBuilder.count(countQuery.from(entity)));
-            Long total = session.createQuery(countQuery).getSingleResult();
-            return Page.of(resultList, pageable, total);
+            StreamResultCollector<R> resultCollector = new StreamResultCollector<>();
+            collectFindAll(sessionFactory.getCurrentSession(), preparedQuery, resultCollector);
+            return resultCollector.result;
         });
     }
 
     private Session getCurrentSession() {
         return sessionFactory.getCurrentSession();
-    }
-
-    private FlushModeType getFlushModeType(AnnotationMetadata annotationMetadata) {
-        return annotationMetadata.getAnnotationValuesByType(QueryHint.class)
-                .stream()
-                .filter(av -> FlushModeType.class.getName().equals(av.stringValue("name").orElse(null)))
-                .map(av -> av.enumValue("value", FlushModeType.class))
-                .findFirst()
-                .orElse(Optional.empty()).orElse(null);
-    }
-
-    private <T> Query<T> buildCriteriaQuery(Session session, @NonNull Class<T> rootEntity, CriteriaBuilder criteriaBuilder, @NonNull Pageable pageable) {
-        CriteriaQuery<T> query = criteriaBuilder.createQuery(rootEntity);
-        Root<T> root = query.from(rootEntity);
-        bindCriteriaSort(query, root, criteriaBuilder, pageable);
-        Query<T> q = session.createQuery(
-                query
-        );
-        bindPageable(q, pageable);
-        return q;
-    }
-
-    private <T> void bindPageable(Query<T> q, @NonNull Pageable pageable) {
-        if (pageable == Pageable.UNPAGED) {
-            // no pagination
-            return;
-        }
-
-        int max = pageable.getSize();
-        if (max > 0) {
-            q.setMaxResults(max);
-        }
-        long offset = pageable.getOffset();
-        if (offset > 0) {
-            q.setFirstResult((int) offset);
-        }
-    }
-
-    private <T> void bindCriteriaSort(CriteriaQuery<T> criteriaQuery, Root<?> root, CriteriaBuilder builder, @NonNull Sort sort) {
-        List<Order> orders = new ArrayList<>();
-        for (Sort.Order order : sort.getOrderBy()) {
-            Path<String> path = root.get(order.getProperty());
-            Expression expression = order.isIgnoreCase() ? builder.lower(path) : path;
-            switch (order.getDirection()) {
-
-                case DESC:
-                    orders.add(builder.desc(expression));
-                    continue;
-                default:
-                case ASC:
-                    orders.add(builder.asc(expression));
-            }
-        }
-        criteriaQuery.orderBy(orders);
     }
 
     @NonNull
@@ -890,6 +515,81 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
                     return null;
                 }
         );
+    }
+
+    private final class ListResultCollector<R> extends ResultCollector<R> {
+
+        private List<R> result;
+
+        @Override
+        protected void collectTuple(Query<?> query, Function<Tuple, R> fn) {
+            result = ((List<Tuple>) query.list()).stream().map(fn).collect(Collectors.toList());
+        }
+
+        @Override
+        protected void collect(Query<?> query) {
+            result = (List<R>) query.list();
+        }
+    }
+
+    private final class StreamResultCollector<R> extends ResultCollector<R> {
+
+        private Stream<R> result;
+
+        @Override
+        protected void collectTuple(Query<?> query, Function<Tuple, R> fn) {
+            result = ((Stream<Tuple>) query.stream()).map(fn);
+        }
+
+        @Override
+        protected void collect(Query<?> query) {
+            result = (Stream<R>) query.stream();
+        }
+    }
+
+    private final class SingleResultCollector<R> extends ResultCollector<R> {
+
+        private R result;
+
+        @Override
+        protected void collectTuple(Query<?> query, Function<Tuple, R> fn) {
+            Tuple tuple = (Tuple) query.getSingleResult();
+            if (tuple != null) {
+                this.result = fn.apply(tuple);
+            }
+        }
+
+        @Override
+        protected void collect(Query<?> query) {
+            result = (R) query.getSingleResult();
+        }
+    }
+
+    private final class FirstResultCollector<R> extends ResultCollector<R> {
+
+        private R result;
+
+        @Override
+        protected void collectTuple(Query<?> query, Function<Tuple, R> fn) {
+            Tuple tuple = (Tuple) getFirst(query);
+            if (tuple != null) {
+                this.result = fn.apply(tuple);
+            }
+        }
+
+        @Override
+        protected void collect(Query<?> query) {
+            result = (R) getFirst(query);
+        }
+
+        private <T> T getFirst(Query<T> q) {
+            q.setMaxResults(1);
+            Iterator<T> iterator = q.list().iterator();
+            if (iterator.hasNext()) {
+                return iterator.next();
+            }
+            return null;
+        }
     }
 
 }

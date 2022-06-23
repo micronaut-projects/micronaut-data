@@ -1,0 +1,5 @@
+Micronaut Data JDBC is designed for users who prefer a lower-level experience and working directly with SQL.
+
+Following sections contains JDBC specific configuration and documentation.
+
+

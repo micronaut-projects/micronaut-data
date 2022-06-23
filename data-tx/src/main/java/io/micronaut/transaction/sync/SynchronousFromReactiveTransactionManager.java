@@ -24,6 +24,7 @@ import io.micronaut.transaction.exceptions.TransactionException;
 import io.micronaut.transaction.reactive.ReactiveTransactionStatus;
 import io.micronaut.transaction.reactive.ReactorReactiveTransactionOperations;
 import io.micronaut.transaction.support.TransactionSynchronizationManager;
+import io.micronaut.transaction.support.TransactionSynchronizationManager.TransactionSynchronizationStateOp;
 import org.jetbrains.annotations.NotNull;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Scheduler;
@@ -80,20 +81,19 @@ public final class SynchronousFromReactiveTransactionManager<T> implements Synch
 
     @Override
     public <R> R execute(TransactionDefinition definition, TransactionCallback<T, R> callback) {
-        return TransactionSynchronizationManager.withGuardedState(() -> {
-            TransactionSynchronizationManager.TransactionSynchronizationState state = TransactionSynchronizationManager.getOrCreateState();
+        try (TransactionSynchronizationStateOp op = TransactionSynchronizationManager.withGuardedState()) {
+            TransactionSynchronizationManager.TransactionSynchronizationState state = op.getOrCreateState();
             Context previousContext = (Context) TransactionSynchronizationManager.unbindResourceIfPossible(ContextView.class);
             Mono<R> result = reactiveTransactionOperations.withTransactionMono(definition, status -> {
                 return Mono.deferContextual(contextView -> {
-                    return Mono.justOrEmpty(TransactionSynchronizationManager.withState(state, () -> {
+                    try (TransactionSynchronizationStateOp ignore = TransactionSynchronizationManager.withState(state)) {
                         TransactionSynchronizationManager.bindResource(ContextView.class, contextView);
-                        return callback.apply(new DefaultTransactionStatus<>(status));
-                    }));
+                        return Mono.justOrEmpty(callback.apply(new DefaultTransactionStatus<>(status)));
+                    }
                 }).doAfterTerminate(() -> {
-                    TransactionSynchronizationManager.withState(state, () -> {
+                    try (TransactionSynchronizationStateOp ignore = TransactionSynchronizationManager.withState(state)) {
                         TransactionSynchronizationManager.unbindResourceIfPossible(ContextView.class);
-                        return null;
-                    });
+                    }
                 }).subscribeOn(scheduler);
             });
             if (previousContext != null) {
@@ -105,7 +105,7 @@ public final class SynchronousFromReactiveTransactionManager<T> implements Synch
                 }
                 return e;
             }).block();
-        });
+        }
     }
 
     @Override
@@ -121,7 +121,7 @@ public final class SynchronousFromReactiveTransactionManager<T> implements Synch
     @NotNull
     private IllegalStateException noSupported() {
         return new IllegalStateException("This synchronous transaction manager is implemented using blocking of the reactive transaction manager " +
-                "and only supports 'execute', 'executeRead' and 'executeWrite' methods.");
+            "and only supports 'execute', 'executeRead' and 'executeWrite' methods.");
     }
 
     private final class DefaultTransactionStatus<K> implements TransactionStatus<K> {

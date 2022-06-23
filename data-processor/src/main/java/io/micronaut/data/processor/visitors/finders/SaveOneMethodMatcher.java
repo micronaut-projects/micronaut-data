@@ -177,14 +177,14 @@ public class SaveOneMethodMatcher extends AbstractPrefixPatternMethodMatcher {
      */
     private static boolean isValidSaveReturnType(@NonNull MatchContext matchContext, boolean entityArgumentNotRequired) {
         ClassElement returnType = matchContext.getReturnType();
-        if (TypeUtils.isVoid(returnType) || TypeUtils.isNumber(returnType)) {
-            return true;
-        }
         if (TypeUtils.isReactiveOrFuture(returnType)) {
             returnType = returnType.getFirstTypeArgument().orElse(null);
         }
         if (returnType == null) {
             return false;
+        }
+        if (TypeUtils.isVoid(returnType) || TypeUtils.isNumber(returnType)) {
+            return true;
         }
         if (TypeUtils.isNumber(returnType)) {
             return true;

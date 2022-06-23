@@ -15,9 +15,8 @@
  */
 package io.micronaut.data.runtime.intercept.reactive;
 
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.aop.MethodInvocationContext;
-import io.micronaut.core.async.publisher.Publishers;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.intercept.reactive.FindPageReactiveInterceptor;
@@ -30,11 +29,12 @@ import reactor.core.publisher.Flux;
 
 /**
  * Default implementation of {@link FindPageReactiveInterceptor}.
+ *
  * @author graemerocher
  * @since 1.0.0
  */
-public class DefaultFindPageReactiveInterceptor extends AbstractReactiveInterceptor<Object, Object>
-        implements FindPageReactiveInterceptor<Object, Object> {
+public class DefaultFindPageReactiveInterceptor extends AbstractPublisherInterceptor
+    implements FindPageReactiveInterceptor<Object, Object> {
     /**
      * Default constructor.
      *
@@ -45,24 +45,23 @@ public class DefaultFindPageReactiveInterceptor extends AbstractReactiveIntercep
     }
 
     @Override
-    public Object intercept(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Object> context) {
-        Publisher<Page<Object>> publisher;
+    public Publisher<?> interceptPublisher(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Object> context) {
         if (context.hasAnnotation(Query.class)) {
             PreparedQuery<?, ?> preparedQuery = prepareQuery(methodKey, context);
             PreparedQuery<?, Number> countQuery = prepareCountQuery(methodKey, context);
 
             TransactionSynchronizationManager.TransactionSynchronizationState state = TransactionSynchronizationManager.getState();
 
-            publisher = Flux.from(reactiveOperations.findOne(countQuery))
-                    .flatMap(total -> TransactionSynchronizationManager.withState(state, () -> {
+            return Flux.from(reactiveOperations.findOne(countQuery))
+                .flatMap(total -> {
+                    try (TransactionSynchronizationManager.TransactionSynchronizationStateOp ignore = TransactionSynchronizationManager.withState(state)) {
                         Flux<Object> resultList = Flux.from(reactiveOperations.findAll(preparedQuery));
                         return resultList.collectList().map(list ->
-                                Page.of(list, preparedQuery.getPageable(), total.longValue())
+                            Page.of(list, preparedQuery.getPageable(), total.longValue())
                         );
-                    }));
-        } else {
-            publisher = reactiveOperations.findPage(getPagedQuery(context));
+                    }
+                });
         }
-        return Publishers.convertPublisher(publisher, context.getReturnType().getType());
+        return reactiveOperations.findPage(getPagedQuery(context));
     }
 }

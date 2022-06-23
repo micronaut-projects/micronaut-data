@@ -1,6 +1,11 @@
 plugins {
     id "io.micronaut.build.internal.docs"
     id "io.micronaut.build.internal.quality-reporting"
+    id "io.micronaut.build.internal.data-dependencies"
+}
+
+micronautBuild {
+    sourceCompatibility = "11"
 }
 
 if (System.getenv("SONAR_TOKEN") != null) {

@@ -1,0 +1,1 @@
+Micronaut Data JPA adds a support to have repositories with compile-time generated queries, JPA Criteria and a transaction management.

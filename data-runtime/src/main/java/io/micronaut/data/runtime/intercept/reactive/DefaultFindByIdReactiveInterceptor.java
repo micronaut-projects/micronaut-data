@@ -15,9 +15,8 @@
  */
 package io.micronaut.data.runtime.intercept.reactive;
 
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.aop.MethodInvocationContext;
-import io.micronaut.core.async.publisher.Publishers;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.intercept.reactive.FindByIdReactiveInterceptor;
 import io.micronaut.data.operations.RepositoryOperations;
@@ -30,7 +29,7 @@ import java.io.Serializable;
  * @author graemerocher
  * @since 1.0.0
  */
-public class DefaultFindByIdReactiveInterceptor extends AbstractReactiveInterceptor<Object, Object>
+public class DefaultFindByIdReactiveInterceptor extends AbstractPublisherInterceptor
         implements FindByIdReactiveInterceptor<Object, Object> {
     /**
      * Default constructor.
@@ -42,13 +41,12 @@ public class DefaultFindByIdReactiveInterceptor extends AbstractReactiveIntercep
     }
 
     @Override
-    public Object intercept(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Object> context) {
+    public Publisher<?> interceptPublisher(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Object> context) {
         Class<?> rootEntity = getRequiredRootEntity(context);
         Object id = context.getParameterValues()[0];
         if (!(id instanceof Serializable)) {
             throw new IllegalArgumentException("Entity IDs must be serializable!");
         }
-        Publisher<Object> publisher = reactiveOperations.findOne((Class<Object>) rootEntity, (Serializable) id);
-        return Publishers.convertPublisher(publisher, context.getReturnType().getType());
+        return reactiveOperations.findOne((Class<Object>) rootEntity, (Serializable) id);
     }
 }

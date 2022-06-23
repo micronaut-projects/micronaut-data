@@ -1,0 +1,15 @@
+Micronaut Data JDBC / R2DBC is an implementation that pre-computes native SQL queries (given a particular database dialect) and provides a repository implementation that is a simple data mapper between a native result set and an entity.
+
+Micronaut Data JDBC / R2DBC supports all the features of Micronaut Data for JPA including <<criteria, dynamic finders>>, <<pagination,pagination>>, <<projections,projections>>, <<dto,Data Transfer Objects (DTO)>>, <<dataUpdates, Batch Updates>>, <<optimisticLocking, Optimistic locking>> and so on.
+
+However, Micronaut Data JDBC / R2DBC is not an Object Relational Mapping (ORM) implementation and does not and will not include any of the following concepts:
+
+* Lazy Loading or Proxying of Associations
+* Dirty Checking
+* Persistence Contexts / Sessions
+* First Level Caching and Entity Proxies
+
+Micronaut Data JDBC / R2DBC is designed for users who prefer a lower-level experience and working directly with SQL.
+
+NOTE: Micronaut Data JDBC / R2DBC is useful for implementing the majority of the simple SQL queries that exist in a typical application and does not include any runtime query building DSLs. For more complex queries Micronaut Data JDBC / R2DBC can be paired with one of the many great existing Java SQL DSLs out there like https://www.jooq.org[JOOQ], http://www.querydsl.com[QueryDSL], https://github.com/requery/requery[Requery] or even JPA.
+

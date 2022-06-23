@@ -1,0 +1,62 @@
+=== JDBC driver
+
+Micronaut Data JDBC requires that an appropriate `java.sql.DataSource` bean is configured.
+
+You can either do this manually or use the https://micronaut-projects.github.io/micronaut-sql/latest/guide/#jdbc[Micronaut JDBC] module which provides out-of-the-box support for configuring connection pooling with either Tomcat JDBC, Hikari, Commons DBCP or Oracle UCP.
+
+=== SQL Logging
+
+You can enable SQL logging by enabling trace logging for the `io.micronaut.data.query` logger. For example in `logback.xml`:
+
+.Enabling SQL Query Logging
+[source,xml]
+----
+<logger name="io.micronaut.data.query" level="trace" />
+----
+
+=== Creating the Schema
+
+To create the database schema it is recommended you pair Micronaut Data with a SQL migration tool such as https://micronaut-projects.github.io/micronaut-flyway/latest/guide/index.html[Flyway] or https://micronaut-projects.github.io/micronaut-liquibase/latest/guide/index.html[Liquibase].
+
+SQL migration tools provide more complete support for creating and evolving your schema across a range of databases.
+
+If you want to quickly test out Micronaut Data then you can set the `schema-generate` option of the data source to `create-drop` as well as the appropriate schema name:
+
+NOTE: Most of the database migration tools use JDBC driver to make DB changes. If you use R2DBC you would need to separately configure JDBC data source.
+
+.Using `schema-generate`
+[source,yaml]
+----
+include::doc-examples/jdbc-example-java/src/main/resources/application.yml[]
+----
+
+The `schema-generate` option is currently only recommended for simple applications, testing and demos and is not considered production-ready. The dialect set in configuration is the dialect that will be used to generate the schema.
+
+=== Setting the Dialect
+
+As seen in the YAML above you should also configure the dialect. Although queries are precomputed in the repository some cases (like pagination) still require the dialect to specified. The following table summarizes the supported dialects:
+
+.Supported JDBC / R2DBC Dialects
+[cols=2*]
+|===
+|*Dialect*
+|*Description*
+
+|api:data.model.query.builder.sql.Dialect#H2[]
+|The H2 database (typically used for in-memory testing)
+
+|api:data.model.query.builder.sql.Dialect#MYSQL[]
+|MySQL 5.5 or above
+
+|api:data.model.query.builder.sql.Dialect#POSTGRES[]
+|Postgres 9.5 or above
+
+|api:data.model.query.builder.sql.Dialect#SQL_SERVER[]
+|SQL Server 2012 or above
+
+|api:data.model.query.builder.sql.Dialect#ORACLE[]
+|Oracle 12c or above
+
+|===
+
+IMPORTANT: The dialect setting in configuration does *not* replace the need to ensure the correct dialect is set at the repository. If the dialect is H2 in configuration, the repository should have `@JdbcRepository(dialect = Dialect.H2)` / `@R2dbcRepository(dialect = Dialect.H2)`. Because repositories are computed at compile time, the configuration value is not known at that time.

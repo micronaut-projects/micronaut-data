@@ -35,14 +35,11 @@ import java.util.Arrays;
 @Internal
 public final class TransactionUtil {
 
-    private static final TransactionDefinition NO_TRANSACTION = new TransactionDefinition() {
-    };
-
     private TransactionUtil() {
     }
 
     /**
-     * Creates a transaction definition from a given name and annotation metadata provider
+     * Creates a transaction definition from a given name and annotation metadata provider.
      *
      * @param name                       The name
      * @param annotationMetadataProvider The annotation metadata

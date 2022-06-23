@@ -15,9 +15,8 @@
  */
 package io.micronaut.data.runtime.intercept.reactive;
 
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.aop.MethodInvocationContext;
-import io.micronaut.core.async.publisher.Publishers;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.intercept.reactive.FindAllReactiveInterceptor;
@@ -30,7 +29,7 @@ import org.reactivestreams.Publisher;
  * @author graemerocher
  * @since 1.0.0
  */
-public class DefaultFindAllReactiveInterceptor extends AbstractReactiveInterceptor<Object, Object>
+public class DefaultFindAllReactiveInterceptor extends AbstractPublisherInterceptor
         implements FindAllReactiveInterceptor<Object, Object> {
     /**
      * Default constructor.
@@ -42,15 +41,11 @@ public class DefaultFindAllReactiveInterceptor extends AbstractReactiveIntercept
     }
 
     @Override
-    public Object intercept(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Object> context) {
-        Publisher<?> publisher;
+    public Publisher<?> interceptPublisher(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Object> context) {
         if (context.hasAnnotation(Query.class)) {
             PreparedQuery<?, ?> preparedQuery = prepareQuery(methodKey, context);
-            publisher = reactiveOperations.findAll(preparedQuery);
-
-        } else {
-            publisher = reactiveOperations.findAll(getPagedQuery(context));
+            return reactiveOperations.findAll(preparedQuery);
         }
-        return Publishers.convertPublisher(publisher, context.getReturnType().getType());
+        return reactiveOperations.findAll(getPagedQuery(context));
     }
 }

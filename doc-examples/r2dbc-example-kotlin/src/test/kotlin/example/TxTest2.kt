@@ -2,12 +2,15 @@ package example
 
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest
 import jakarta.inject.Inject
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
+import org.junit.Ignore
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.Assertions.assertTrue
 import java.util.*
 
-@MicronautTest(transactional = false, rollback = false)
+@MicronautTest(transactional = false)
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class TxTest2 : AbstractTest(false) {
@@ -58,7 +61,7 @@ class TxTest2 : AbstractTest(false) {
             service.coroutinesStore()
         }
 
-        Assertions.assertEquals(0, service.count())
+        Assertions.assertEquals(0, service.suspendCount())
     }
 
     @Test
@@ -68,7 +71,7 @@ class TxTest2 : AbstractTest(false) {
             service.coroutinesGenericStore()
         }
 
-        Assertions.assertEquals(0, service.count())
+        Assertions.assertEquals(0, service.suspendCount())
     }
 
     @Test
@@ -117,8 +120,8 @@ class TxTest2 : AbstractTest(false) {
         assertThrows<RuntimeException> {
             service.coroutinesStoreWithCustomDBNotTransactional()
         }
-        Assertions.assertEquals(0, service.count())
-        Assertions.assertEquals(1, service.countForCustomDb()) // Custom DB save is not transactional
+        Assertions.assertEquals(0, service.suspendCount())
+        Assertions.assertEquals(1, service.suspendCountForCustomDb()) // Custom DB save is not transactional
     }
 
     @Test
@@ -128,8 +131,8 @@ class TxTest2 : AbstractTest(false) {
             assertThrows<RuntimeException> {
                 service.coroutinesStoreWithCustomDBTransactional()
             }
-            Assertions.assertEquals(0, service.count())
-            Assertions.assertEquals(0, service.countForCustomDb())
+            Assertions.assertEquals(0, service.suspendCount())
+            Assertions.assertEquals(0, service.suspendCountForCustomDb())
         }
         runBlocking {
             assertThrows<RuntimeException> {
@@ -147,16 +150,18 @@ class TxTest2 : AbstractTest(false) {
             assertThrows<RuntimeException> {
                 service.coroutinesGenericStoreWithCustomDb()
             }
-            Assertions.assertEquals(0, service.count())
-            Assertions.assertEquals(0, service.countForCustomDb())
+            Assertions.assertEquals(0, service.suspendCount())
+            Assertions.assertEquals(0, service.suspendCountForCustomDb())
         }
         runBlocking {
             assertThrows<RuntimeException> {
                 service.coroutinesGenericStoreWithCustomDb()
             }
+            withContext(Dispatchers.IO) {
+                Assertions.assertEquals(0, service.count())
+                Assertions.assertEquals(0, service.countForCustomDb())
+            }
         }
-        Assertions.assertEquals(0, service.count())
-        Assertions.assertEquals(0, service.countForCustomDb())
     }
 
 }

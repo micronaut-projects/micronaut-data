@@ -106,10 +106,6 @@ public class SaveEntityMethodMatcher extends AbstractPrefixPatternMethodMatcher 
      */
     static boolean isValidSaveReturnType(@NonNull MatchContext matchContext) {
         ClassElement returnType = matchContext.getReturnType();
-        if (TypeUtils.isVoid(returnType) || TypeUtils.isNumber(returnType)) {
-            return true;
-        }
-
         if (TypeUtils.isReactiveOrFuture(returnType)) {
             returnType = returnType.getFirstTypeArgument().orElse(null);
         }
@@ -117,7 +113,10 @@ public class SaveEntityMethodMatcher extends AbstractPrefixPatternMethodMatcher 
             // Skip for Completable etc.
             return true;
         }
-        if (TypeUtils.isNumber(returnType) || TypeUtils.isIterableOfEntity(returnType)) {
+        if (TypeUtils.isVoid(returnType) || TypeUtils.isNumber(returnType)) {
+            return true;
+        }
+        if (TypeUtils.isIterableOfEntity(returnType)) {
             return true;
         } else if (returnType.isAssignable(Iterable.class)) {
             // This doesn't return correct class for generic type 'S':

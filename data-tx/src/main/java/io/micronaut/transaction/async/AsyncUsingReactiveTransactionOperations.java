@@ -24,14 +24,12 @@ import io.micronaut.transaction.interceptor.KotlinInterceptedMethodAsyncResultSu
 import io.micronaut.transaction.reactive.ReactiveTransactionStatus;
 import io.micronaut.transaction.reactive.ReactorReactiveTransactionOperations;
 import io.micronaut.transaction.support.TransactionSynchronizationManager;
+import io.micronaut.transaction.support.TransactionSynchronizationManager.TransactionSynchronizationStateOp;
 import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Scheduler;
-import reactor.core.scheduler.Schedulers;
 import reactor.util.context.ContextView;
 
 import java.util.Objects;
 import java.util.concurrent.CompletionStage;
-import java.util.concurrent.ExecutorService;
 import java.util.function.Function;
 
 /**
@@ -47,22 +45,18 @@ public final class AsyncUsingReactiveTransactionOperations<C> implements AsyncTr
     private final ReactorReactiveTransactionOperations<C> reactiveTransactionOperations;
     @Nullable
     private final CoroutineTxHelper coroutineTxHelper;
-    private final Scheduler scheduler;
 
     public AsyncUsingReactiveTransactionOperations(ReactorReactiveTransactionOperations<C> reactiveTransactionOperations,
-                                                   @Nullable CoroutineTxHelper coroutineTxHelper,
-                                                   ExecutorService blockingExecutorService) {
+                                                   @Nullable CoroutineTxHelper coroutineTxHelper) {
         this.reactiveTransactionOperations = reactiveTransactionOperations;
         this.coroutineTxHelper = coroutineTxHelper;
-        this.scheduler = Schedulers.fromExecutorService(blockingExecutorService);
     }
 
     @Override
     public <T> CompletionStage<T> withTransaction(TransactionDefinition definition,
                                                   Function<AsyncTransactionStatus<C>, CompletionStage<T>> handler) {
-
-        return TransactionSynchronizationManager.withGuardedState(() -> {
-            TransactionSynchronizationManager.TransactionSynchronizationState state = TransactionSynchronizationManager.getOrCreateState();
+        try (TransactionSynchronizationStateOp op = TransactionSynchronizationManager.withGuardedState()) {
+            TransactionSynchronizationManager.TransactionSynchronizationState state = op.getOrCreateState();
             if (coroutineTxHelper != null && handler instanceof KotlinInterceptedMethodAsyncResultSupplier) {
                 KotlinInterceptedMethod kotlinInterceptedMethod = ((KotlinInterceptedMethodAsyncResultSupplier) handler).getKotlinInterceptedMethod();
                 Objects.requireNonNull(coroutineTxHelper).setupTxState(kotlinInterceptedMethod, state);
@@ -72,26 +66,24 @@ public final class AsyncUsingReactiveTransactionOperations<C> implements AsyncTr
             ContextView previousContext = (ContextView) TransactionSynchronizationManager.getResource(ContextView.class);
             Mono<T> result = Mono.from(reactiveTransactionOperations.withTransaction(definition, status -> {
                 return Mono.deferContextual(contextView -> {
-                            return TransactionSynchronizationManager.withState(state, () -> {
-                                TransactionSynchronizationManager.rebindResource(ContextView.class, contextView);
-                                return Mono.fromCompletionStage(handler.apply(new DefaultAsyncTransactionStatus<>(status)));
-                            });
-                        })
-                        .doAfterTerminate(() -> {
-                            TransactionSynchronizationManager.withState(state, () -> {
-                                TransactionSynchronizationManager.unbindResourceIfPossible(ContextView.class);
-                                return null;
-                            });
-                        })
-                        .publishOn(scheduler);
+                        try (TransactionSynchronizationStateOp ignore = TransactionSynchronizationManager.withState(state)) {
+                            TransactionSynchronizationManager.rebindResource(ContextView.class, contextView);
+                        }
+                        return Mono.fromCompletionStage(() ->
+                            TransactionSynchronizationManager.decorateCompletionStage(state,
+                                () -> handler.apply(new DefaultAsyncTransactionStatus<>(status))));
+                    })
+                    .doAfterTerminate(() -> {
+                        try (TransactionSynchronizationStateOp ignore = TransactionSynchronizationManager.withState(state)) {
+                            TransactionSynchronizationManager.unbindResourceIfPossible(ContextView.class);
+                        }
+                    });
             }));
             if (previousContext != null) {
                 result = result.contextWrite(previousContext);
             }
-            return result
-                    .publishOn(scheduler)
-                    .toFuture();
-        });
+            return result.toFuture();
+        }
     }
 
     private static final class DefaultAsyncTransactionStatus<T> implements AsyncTransactionStatus<T> {

@@ -413,7 +413,7 @@ public abstract class AbstractSynchronousStateTransactionManager<T> implements S
             case NESTED:
                 SuspendedResourcesHolder suspendedResources = suspend(state, null);
                 if (debugEnabled) {
-                    logger.debug("Creating new transaction with name [{}]: {}", definition.getName(), definition);
+                    logger.debug("Creating new transaction: {}", definition);
                 }
                 try {
                     boolean newSynchronization = (getTransactionSynchronization() != Synchronization.NEVER);

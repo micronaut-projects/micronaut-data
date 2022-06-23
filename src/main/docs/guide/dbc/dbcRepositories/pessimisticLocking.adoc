@@ -1,0 +1,41 @@
+Pessimistic locking is supported through the use of `find*ForUpdate` methods.
+
+[source,java]
+----
+@JdbcRepository(dialect = Dialect.POSTGRES)
+public interface AccountBalanceRepository extends CrudRepository<AccountBalance, Long> {
+
+    AccountBalance findByIdForUpdate(Long id); // <1>
+
+    @Transactional // <2>
+    void addToBalance(Long id, BigInteger amount) {
+        AccountBalance accountBalance = findByIdForUpdate(id); // <3>
+        accountBalance.addAmount(amount);
+        update(accountBalance); // <4>
+    }
+}
+----
+<1> The `ForUpdate` suffix indicates that the selected record should be locked.
+<2> Both read and write operations are wrapped in a single transaction.
+<3> A locking read is performed, preventing other queries from accessing the record.
+<4> The record is updated safely.
+
+All `find` methods can be declared as `ForUpdate`:
+
+[source,java]
+----
+@JdbcRepository(dialect = Dialect.POSTGRES)
+public interface BookRepository extends CrudRepository<Book, Long> {
+
+    @Join("author")
+    Optional<Book> findByIdForUpdate(Long id);
+
+    List<Book> findAllOrderByTotalPagesForUpdate();
+
+    List<Book> findByTitleForUpdate(String title);
+}
+----
+
+The queries generated for these methods make use of the `FOR UPDATE` SQL clause or the `UPDLOCK` and `ROWLOCK` query hints in the case of SQL Server.
+
+WARNING: The semantics of the `FOR UPDATE` clause may vary depending on the database. Make sure to check the relevant documentation for your engine.

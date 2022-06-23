@@ -2,10 +2,7 @@ import java.time.Duration
 
 plugins {
     id "java-library"
-}
-
-repositories {
-    mavenCentral()
+    id "io.micronaut.build.internal.data-dependencies"
 }
 
 group "io.micronaut.data"
@@ -14,19 +11,6 @@ version projectVersion
 java {
     targetCompatibility = JavaVersion.VERSION_1_8
     sourceCompatibility = JavaVersion.VERSION_1_8
-}
-
-configurations {
-    all {
-        resolutionStrategy.eachDependency { DependencyResolveDetails details ->
-            if (details.requested.name == 'groovy-all') {
-                throw new GradleException("Dependency 'groovy-all' not allowed!")
-            }
-            if (details.requested.group == 'io.micronaut') {
-                details.useVersion "$micronautVersion"
-            }
-        }
-    }
 }
 
 tasks.withType(JavaCompile).configureEach {

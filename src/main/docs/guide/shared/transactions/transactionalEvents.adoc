@@ -1,0 +1,11 @@
+You can write event listeners that are transaction aware using the ann:transaction.annotation.TransactionalEventListener[] annotation.
+
+The following demonstrates an example:
+
+snippet::example.BookManager[project-base="doc-examples/hibernate-example", source="main", indent="0"]
+
+<1> The `BookManager` class receives an instance of `ApplicationEventPublisher`.
+<2> When the event is published if there is a running transaction then it will only trigger the listener once the transaction is committed.
+<3> The listener itself is annotated with ann:transaction.annotation.TransactionalEventListener[]
+
+TIP: You can set the value of the ann:transaction.annotation.TransactionalEventListener[] annotation to bind the listener to a particular transaction phase.

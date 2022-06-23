@@ -27,11 +27,7 @@ import io.micronaut.test.context.TestContext;
 import io.micronaut.test.context.TestExecutionListener;
 import io.micronaut.test.extensions.AbstractMicronautExtension;
 import io.micronaut.transaction.SynchronousTransactionManager;
-import io.micronaut.transaction.TransactionStatus;
-import io.micronaut.transaction.support.DefaultTransactionDefinition;
-import io.micronaut.transaction.sync.SynchronousFromReactiveTransactionManager;
-
-import java.util.concurrent.atomic.AtomicInteger;
+import jakarta.inject.Provider;
 
 /**
  * Adds support for MicronautTest transactional handling.
@@ -45,78 +41,58 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Replaces(SpringTransactionTestExecutionListener.class)
 @Internal
 public class DefaultTestTransactionExecutionListener implements TestExecutionListener {
-    private final SynchronousTransactionManager<Object> transactionManager;
-    private final TransactionMode transactionMode;
-    private TransactionStatus<Object> tx;
-    private final AtomicInteger counter = new AtomicInteger();
-    private final AtomicInteger setupCounter = new AtomicInteger();
-    private final boolean rollback;
+    private final TestExecutionListener delegate;
 
     /**
-     * @param transactionManager Spring's {@code PlatformTransactionManager}
-     * @param rollback {@code true} if the transaction should be rollback
-     * @param transactionMode  The transaction mode
+     * @param transactionManagerProvider transaction manager provider
+     * @param rollback                   {@code true} if the transaction should be rollback
+     * @param transactionMode            The transaction mode
      */
-    protected DefaultTestTransactionExecutionListener(
-            SynchronousTransactionManager<Object> transactionManager,
+    DefaultTestTransactionExecutionListener(
+            Provider<SynchronousTransactionManager<Object>> transactionManagerProvider,
             @Property(name = AbstractMicronautExtension.TEST_ROLLBACK, defaultValue = "true") boolean rollback,
             @Property(name = AbstractMicronautExtension.TEST_TRANSACTION_MODE, defaultValue = "SEPARATE_TRANSACTIONS") TransactionMode transactionMode) {
 
-        if (transactionManager instanceof SynchronousFromReactiveTransactionManager) {
-            throw new IllegalStateException("Transaction mode is not supported when the synchronous transaction manager is created using Reactive transaction manager!");
-        }
-
-        this.transactionManager = transactionManager;
-        this.rollback = rollback;
-        this.transactionMode = transactionMode;
-    }
-
-    @Override
-    public void beforeSetupTest(TestContext testContext) {
-        beforeTestExecution(testContext);
-    }
-
-    @Override
-    public void afterSetupTest(TestContext testContext) {
-        if (transactionMode.equals(TransactionMode.SINGLE_TRANSACTION)) {
-            setupCounter.getAndIncrement();
+        if (transactionMode == TransactionMode.SINGLE_TRANSACTION) {
+            SynchronousTransactionManager<Object> transactionManager = transactionManagerProvider.get();
+            delegate = new DefaultTestSingleTransactionExecutionListener(transactionManager, rollback);
         } else {
-            afterTestExecution(false);
+            // TestMethodInterceptor is handing transactions
+            delegate = new NoopTestExecutionListener();
         }
     }
 
     @Override
-    public void beforeCleanupTest(TestContext testContext) {
-        beforeTestExecution(testContext);
+    public void beforeSetupTest(TestContext testContext) throws Exception {
+        delegate.beforeSetupTest(testContext);
     }
 
     @Override
-    public void afterCleanupTest(TestContext testContext) {
-        afterTestExecution(false);
+    public void afterSetupTest(TestContext testContext) throws Exception {
+        delegate.afterSetupTest(testContext);
     }
 
     @Override
-    public void afterTestExecution(TestContext testContext) {
-        if (transactionMode.equals(TransactionMode.SINGLE_TRANSACTION)) {
-            counter.addAndGet(-setupCounter.getAndSet(0));
-        }
-        afterTestExecution(this.rollback);
+    public void beforeCleanupTest(TestContext testContext) throws Exception {
+        delegate.beforeCleanupTest(testContext);
     }
 
     @Override
-    public void beforeTestExecution(TestContext testContext) {
-        if (counter.getAndIncrement() == 0) {
-            tx = transactionManager.getTransaction(new DefaultTransactionDefinition());
-        }
+    public void afterCleanupTest(TestContext testContext) throws Exception {
+        delegate.afterCleanupTest(testContext);
     }
 
-    private void afterTestExecution(boolean rollback) {
-        if (counter.decrementAndGet() == 0) {
-            if (rollback) {
-                transactionManager.rollback(tx);
-            } else {
-                transactionManager.commit(tx);
-            }
-        }
+    @Override
+    public void beforeTestExecution(TestContext testContext) throws Exception {
+        delegate.beforeTestExecution(testContext);
     }
+
+    @Override
+    public void afterTestExecution(TestContext testContext) throws Exception {
+        delegate.afterTestExecution(testContext);
+    }
+
+    private static final class NoopTestExecutionListener implements TestExecutionListener {
+    }
+
 }

@@ -18,6 +18,8 @@ package io.micronaut.transaction.interceptor;
 import io.micronaut.aop.kotlin.KotlinInterceptedMethod;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.transaction.support.TransactionSynchronizationManager;
 import jakarta.inject.Singleton;
 import kotlin.coroutines.CoroutineContext;
@@ -42,9 +44,22 @@ public final class CoroutineTxHelper {
     public void setupTxState(KotlinInterceptedMethod kotlinInterceptedMethod,
                              TransactionSynchronizationManager.TransactionSynchronizationState state) {
         CoroutineContext coroutineContext = kotlinInterceptedMethod.getCoroutineContext()
-                .minusKey(TxSynchronousContext.Key)
-                .plus(new TxSynchronousContext(state));
+            .minusKey(TxSynchronousContext.Key)
+            .plus(new TxSynchronousContext(state));
         kotlinInterceptedMethod.updateCoroutineContext(coroutineContext);
+    }
+
+    /**
+     * Find the TX state.
+     *
+     * @param kotlinInterceptedMethod The intercepted method
+     * @return the state
+     */
+    @Nullable
+    public TransactionSynchronizationManager.TransactionSynchronizationState getTxState(@NonNull KotlinInterceptedMethod kotlinInterceptedMethod) {
+        TxSynchronousContext txSynchronousContext = kotlinInterceptedMethod.getCoroutineContext().get(TxSynchronousContext.Key);
+        return txSynchronousContext != null ? txSynchronousContext.getState() : TransactionSynchronizationManager.getState();
+
     }
 
 }

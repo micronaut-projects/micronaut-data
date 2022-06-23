@@ -53,8 +53,8 @@ public final class AsyncUsingSyncTransactionOperations<C> implements AsyncTransa
     @Override
     public <T> CompletionStage<T> withTransaction(TransactionDefinition definition,
                                                   Function<AsyncTransactionStatus<C>, CompletionStage<T>> handler) {
-        return TransactionSynchronizationManager.withGuardedState(() -> {
-            TransactionSynchronizationManager.TransactionSynchronizationState state = TransactionSynchronizationManager.getOrCreateState();
+        try (TransactionSynchronizationManager.TransactionSynchronizationStateOp op = TransactionSynchronizationManager.withGuardedState()) {
+            TransactionSynchronizationManager.TransactionSynchronizationState state = op.getOrCreateState();
             if (coroutineTxHelper != null && handler instanceof KotlinInterceptedMethodAsyncResultSupplier) {
                 Objects.requireNonNull(coroutineTxHelper).setupTxState(
                         ((KotlinInterceptedMethodAsyncResultSupplier) handler).getKotlinInterceptedMethod(), state);
@@ -72,22 +72,23 @@ public final class AsyncUsingSyncTransactionOperations<C> implements AsyncTransa
 
             CompletableFuture<T> newResult = new CompletableFuture<>();
             // Last step to complete the TX, we need to use `withState` to properly setup thread-locals for the TX manager
-            result.whenComplete((o, throwable) -> TransactionSynchronizationManager.withState(state, () -> {
-                if (throwable == null) {
-                    synchronousTransactionManager.commit(status);
-                    newResult.complete(o);
-                } else {
-                    try {
-                        synchronousTransactionManager.rollback(status);
-                    } catch (Exception e) {
-                        // Ignore rethrow
+            result.whenComplete((o, throwable) -> {
+                try (TransactionSynchronizationManager.TransactionSynchronizationStateOp ignore = TransactionSynchronizationManager.withState(state)) {
+                    if (throwable == null) {
+                        synchronousTransactionManager.commit(status);
+                        newResult.complete(o);
+                    } else {
+                        try {
+                            synchronousTransactionManager.rollback(status);
+                        } catch (Exception e) {
+                            // Ignore rethrow
+                        }
+                        newResult.completeExceptionally(throwable);
                     }
-                    newResult.completeExceptionally(throwable);
                 }
-                return null;
-            }));
+            });
             return newResult;
-        });
+        }
     }
 
     private static final class DefaultAsyncTransactionStatus<T> implements AsyncTransactionStatus<T> {
