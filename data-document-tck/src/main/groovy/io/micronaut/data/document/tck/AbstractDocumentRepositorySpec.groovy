@@ -444,6 +444,19 @@ abstract class AbstractDocumentRepositorySpec extends Specification {
             personRepository.readAgeByNameRegex("J.*").sort() == [35,40]
     }
 
+    void "test date project on single property"() {
+        given:
+            savePersons(["Jeff", "Jonas", "Denis", "Kevin", "Jojo"])
+
+        expect:
+            personRepository.findMaxDateOfBirthByNameRegex("J.*") == LocalDate.of(1986 , 06, 05)
+            personRepository.findMinDateOfBirthByNameRegex("J.*") == LocalDate.of(1986, 06, 1)
+            personRepository.findByDateOfBirthGreaterThan(LocalDate.of(1986, 06, 3))*.name == ["Kevin", "Jojo"]
+            personRepository.findByDateOfBirthGreaterThanEquals(LocalDate.of(1986, 06, 3))*.name == ["Denis", "Kevin", "Jojo"]
+            personRepository.findByDateOfBirthLessThan(LocalDate.of(1986, 06, 3))*.name == ["Jeff", "Jonas"]
+            personRepository.findByDateOfBirthLessThanEquals(LocalDate.of(1986, 06, 3))*.name == ["Jeff", "Jonas", "Denis"]
+    }
+
     void "test null argument handling" () {
         given:
             savePersons(["Jeff", "James"])

@@ -328,5 +328,80 @@
     "type": "io.micronaut.transaction.TransactionDefinition",
     "member": "Method io.micronaut.transaction.TransactionDefinition.named(java.lang.String)",
     "reason": "Static method"
+  },
+  {
+      "type": "io.micronaut.data.processor.visitors.finders.AbstractPrefixPatternMethodMatcher",
+      "member": "Constructor io.micronaut.data.processor.visitors.finders.AbstractPrefixPatternMethodMatcher(java.lang.String[])",
+      "reason": "Class is considered internal API"
+  },
+  {
+      "type": "io.micronaut.data.processor.visitors.finders.SaveEntityMethodMatcher",
+      "member": "Class io.micronaut.data.processor.visitors.finders.SaveEntityMethodMatcher",
+      "reason": "Class is considered internal API"
+  },
+  {
+      "type": "io.micronaut.data.processor.visitors.finders.SaveEntityMethodMatcher",
+      "member": "Field PREFIXES",
+      "reason": "Class is considered internal API"
+  },
+  {
+      "type": "io.micronaut.data.runtime.mapper.QueryStatement",
+      "member": "Class io.micronaut.data.runtime.mapper.QueryStatement",
+      "reason": "Added a default method"
+  },
+  {
+      "type": "io.micronaut.data.runtime.mapper.QueryStatement",
+      "member": "Method io.micronaut.data.runtime.mapper.QueryStatement.setTimestamp(java.lang.Object,java.lang.Object,java.time.Instant)",
+      "reason": "Added a default method"
+  },
+  {
+      "type": "io.micronaut.data.r2dbc.mapper.R2dbcQueryStatement",
+      "member": "Class io.micronaut.data.r2dbc.mapper.R2dbcQueryStatement",
+      "reason": "Added a default method"
+  },
+  {
+      "type": "io.micronaut.data.r2dbc.mapper.R2dbcQueryStatement",
+      "member": "Method io.micronaut.data.r2dbc.mapper.R2dbcQueryStatement.setTimestamp(io.r2dbc.spi.Statement,java.lang.Integer,java.util.Date)",
+      "reason": "Added a default method"
+  },
+  {
+      "type": "io.micronaut.data.r2dbc.mapper.R2dbcQueryStatement",
+      "member": "Method io.micronaut.data.r2dbc.mapper.R2dbcQueryStatement.setTimestamp(java.lang.Object,java.lang.Object,java.util.Date)",
+      "reason": "Added a default method"
+  },
+  {
+      "type": "io.micronaut.data.jdbc.mapper.JdbcQueryStatement",
+      "member": "Class io.micronaut.data.jdbc.mapper.JdbcQueryStatement",
+      "reason": "Added a default method"
+  },
+  {
+      "type": "io.micronaut.data.jdbc.mapper.JdbcQueryStatement",
+      "member": "Method io.micronaut.data.jdbc.mapper.JdbcQueryStatement.setTimestamp(java.sql.PreparedStatement,java.lang.Integer,java.util.Date)",
+      "reason": "Added a default method"
+  },
+  {
+      "type": "io.micronaut.data.jdbc.mapper.JdbcQueryStatement",
+      "member": "Method io.micronaut.data.jdbc.mapper.JdbcQueryStatement.setTimestamp(java.lang.Object,java.lang.Object,java.util.Date)",
+      "reason": "Added a default method"
+  },
+  {
+      "type": "io.micronaut.data.model.jpa.criteria.IPredicate",
+      "member": "Class io.micronaut.data.model.jpa.criteria.IPredicate",
+      "reason": "Experimental class with a new default method"
+  },
+  {
+      "type": "io.micronaut.data.model.jpa.criteria.IPredicate",
+      "member": "Method io.micronaut.data.model.jpa.criteria.IPredicate.isComparable()",
+      "reason": "Experimental class with a new default method"
+  },
+  {
+      "type": "io.micronaut.data.model.jpa.criteria.PersistentPropertyPath",
+      "member": "Class io.micronaut.data.model.jpa.criteria.PersistentPropertyPath",
+      "reason": "Experimental class with a new default method"
+  },
+  {
+      "type": "io.micronaut.data.model.jpa.criteria.PersistentPropertyPath",
+      "member": "Method io.micronaut.data.model.jpa.criteria.PersistentPropertyPath.isComparable()",
+      "reason": "Experimental class with a new default method"
   }
 ]

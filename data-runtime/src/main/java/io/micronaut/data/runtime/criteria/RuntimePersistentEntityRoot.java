@@ -61,6 +61,11 @@ final class RuntimePersistentEntityRoot<T> extends AbstractRuntimePersistentEnti
     }
 
     @Override
+    public boolean isComparable() {
+        return false;
+    }
+
+    @Override
     public EntityType<T> getModel() {
         throw notSupportedOperation();
     }

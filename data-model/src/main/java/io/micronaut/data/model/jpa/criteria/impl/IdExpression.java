@@ -65,6 +65,15 @@ public final class IdExpression<E, T> implements IExpression<T>, SelectionVisita
     }
 
     @Override
+    public boolean isComparable() {
+        PersistentEntity persistentEntity = root.getPersistentEntity();
+        if (persistentEntity.hasCompositeIdentity()) {
+            return false;
+        }
+        return root.get(persistentEntity.getIdentity().getName()).isComparable();
+    }
+
+    @Override
     public Class<? extends T> getJavaType() {
         PersistentEntity persistentEntity = root.getPersistentEntity();
         if (persistentEntity.hasCompositeIdentity()) {

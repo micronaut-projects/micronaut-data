@@ -18,18 +18,16 @@ package io.micronaut.data.hibernate
 import io.micronaut.context.annotation.Property
 import io.micronaut.data.tck.entities.Company
 import io.micronaut.data.tck.entities.Face
-import io.micronaut.data.tck.entities.Product
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
-import spock.lang.IgnoreIf
+import jakarta.inject.Inject
 import spock.lang.Shared
 import spock.lang.Specification
 
-import jakarta.inject.Inject
+import java.time.temporal.ChronoUnit
 
 @MicronautTest(transactional = false, packages = "io.micronaut.data.tck.entities")
 @Property(name = "datasources.default.name", value = "mydb")
 @Property(name = 'jpa.default.properties.hibernate.hbm2ddl.auto', value = 'create-drop')
-@IgnoreIf({ jvm.isJava15Compatible() })
 class AutoTimestampSpec extends Specification {
 
     @Shared
@@ -38,11 +36,23 @@ class AutoTimestampSpec extends Specification {
 
     @Shared
     @Inject
+    CompanyRepoService companyRepoService
+
+    @Shared
+    @Inject
+    AuditCompanyRepository auditCompanyRepository
+
+    @Shared
+    @Inject
     ProductRepo productRepo
 
     @Shared
     @Inject
     FaceRepo taskRepo
+
+    def setup() {
+        companyRepo.deleteAll()
+    }
 
     void "test java.util.Date date created and last updated"() {
         when:
@@ -53,7 +63,7 @@ class AutoTimestampSpec extends Specification {
         then:
         company.myId != null
         dateCreated != null
-        company.dateCreated.toInstant().toEpochMilli() == company.lastUpdated.toEpochMilli()
+        company.dateCreated.toInstant().truncatedTo(ChronoUnit.MILLIS) == company.lastUpdated.truncatedTo(ChronoUnit.MILLIS)
         companyRepo.findById(company.myId).get().dateCreated == company.dateCreated
 
         when:
@@ -64,44 +74,34 @@ class AutoTimestampSpec extends Specification {
         company.dateCreated.time == dateCreated.time
         company.dateCreated.time == company2.dateCreated.time
         company2.name == 'Changed'
-        company2.lastUpdated.toEpochMilli() > company2.dateCreated.toInstant().toEpochMilli()
+        company2.lastUpdated.truncatedTo(ChronoUnit.MILLIS) > company2.dateCreated.toInstant().truncatedTo(ChronoUnit.MILLIS)
     }
 
-    void "test java.time.LocalDateTime date created and last updated"() {
+    void "test java.util.Date date created and last updated transactional"() {
         when:
-        def product = new Product("Foo", BigDecimal.ONE)
-        productRepo.save(product)
-        def dateCreated = product.dateCreated
+        def company = new AuditCompany()
+        company.setName("Apple")
+        auditCompanyRepository.save(company)
+        def dateCreated = company.dateCreated
 
         then:
-        product.id != null
-        dateCreated != null
-        product.dateCreated == product.lastUpdated
-        productRepo.findById(product.id).get().dateCreated == product.dateCreated
-
-        when:
-        product.changePrice()
-        productRepo.update(product.id, BigDecimal.TEN)
-        def product2 = productRepo.findById(product.id).orElse(null)
-
-        then:
-        product.dateCreated == dateCreated
-        product.dateCreated == product2.dateCreated
-        product2.price == BigDecimal.TEN
-        product2.lastUpdated > product2.dateCreated
+        company.id
+        company.createUser
+        company.dateCreated
+        company.dateCreated.truncatedTo(ChronoUnit.MILLIS) == company.dateUpdated.truncatedTo(ChronoUnit.MILLIS)
     }
 
     void "test java.time.Instant date created and last updated"() {
         when:
         def face = new Face("Foo")
         taskRepo.save(face)
-        def dateCreated = face.dateCreated
+        def dateCreated = face.dateCreated.truncatedTo(ChronoUnit.MILLIS)
 
         then:
         face.id != null
         dateCreated != null
-        face.dateCreated == face.lastUpdated
-        taskRepo.findById(face.id).get().dateCreated == face.dateCreated
+        face.dateCreated.truncatedTo(ChronoUnit.MILLIS) == face.lastUpdated.truncatedTo(ChronoUnit.MILLIS)
+        taskRepo.findById(face.id).get().dateCreated.truncatedTo(ChronoUnit.MILLIS) == face.dateCreated.truncatedTo(ChronoUnit.MILLIS)
 
         when:
         face.setName("Bar")
@@ -109,9 +109,9 @@ class AutoTimestampSpec extends Specification {
         def task2 = taskRepo.findById(face.id).orElse(null)
 
         then:
-        face.dateCreated == dateCreated
-        face.dateCreated == task2.dateCreated
+        face.dateCreated.truncatedTo(ChronoUnit.MILLIS) == dateCreated.truncatedTo(ChronoUnit.MILLIS)
+        face.dateCreated.truncatedTo(ChronoUnit.MILLIS) == task2.dateCreated.truncatedTo(ChronoUnit.MILLIS)
         task2.name == "Bar"
-        task2.lastUpdated > task2.dateCreated
+        task2.lastUpdated.truncatedTo(ChronoUnit.MILLIS) > task2.dateCreated.truncatedTo(ChronoUnit.MILLIS)
     }
 }

@@ -30,7 +30,7 @@ import javax.persistence.criteria.CriteriaQuery
 import javax.persistence.criteria.Predicate
 import javax.persistence.criteria.Root
 
-@MicronautTest(rollback = false, packages = "io.micronaut.data.tck.entities")
+@MicronautTest(transactional = false, packages = "io.micronaut.data.tck.entities")
 @Property(name = "datasources.default.name", value = "mydb")
 @Property(name = 'jpa.default.properties.hibernate.hbm2ddl.auto', value = 'create-drop')
 @Stepwise
@@ -101,6 +101,7 @@ class JpaSpecificationCrudRepositorySpec extends Specification {
         sorted.first().name == "James"
         sorted.last().name == "Jeff"
 
+        !crudRepository.findOne(JpaSpecificationCrudRepository.Specifications.nameEquals("NotFound")).isPresent()
         crudRepository.findOne(JpaSpecificationCrudRepository.Specifications.nameEquals("James")).get().name == "James"
         def page2Req = Pageable.from(1, 2, Sort.of(Sort.Order.asc("age")))
         def page1Req = Pageable.from(0, 2, Sort.of(Sort.Order.asc("age")))
@@ -110,8 +111,6 @@ class JpaSpecificationCrudRepositorySpec extends Specification {
         page2.content*.name == ["Bob", "Jeff"]
         page1.size == 2
         page1.content*.name == ["James", "Fred"]
-
-
     }
 
     void "test delete by id"() {

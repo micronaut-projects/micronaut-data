@@ -54,6 +54,11 @@ public final class LiteralExpression<T> implements IExpression<T>, SelectionVisi
     }
 
     @Override
+    public boolean isComparable() {
+        return value instanceof Comparable;
+    }
+
+    @Override
     public Class<? extends T> getJavaType() {
         return (Class<? extends T>) value.getClass();
     }

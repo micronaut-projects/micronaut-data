@@ -214,6 +214,18 @@ public class TypeUtils {
     }
 
     /**
+     * Is the type a number.
+     * @param type The type
+     * @return True if is a number
+     */
+    public static boolean isComparable(@Nullable ClassElement type) {
+        if (type == null) {
+            return false;
+        }
+        return type.isAssignable(Comparable.class) || isNumber(type) || isBoolean(type);
+    }
+
+    /**
      * Is the type void.
      * @param type The type
      * @return True if is void
