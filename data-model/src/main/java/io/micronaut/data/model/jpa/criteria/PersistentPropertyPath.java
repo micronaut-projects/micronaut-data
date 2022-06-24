@@ -60,13 +60,19 @@ public interface PersistentPropertyPath<T> extends Path<T>, IExpression<T> {
         return joiner.toString();
     }
 
+    @Override
     default boolean isBoolean() {
-        return getProperty().isAssignable(Boolean.class) || getProperty().isAssignable(boolean.class);
+        return CriteriaUtils.isBoolean(getJavaType());
     }
 
     @Override
     default boolean isNumeric() {
         return CriteriaUtils.isNumeric(getJavaType());
+    }
+
+    @Override
+    default boolean isComparable() {
+        return CriteriaUtils.isComparable(getJavaType());
     }
 
     @Override

@@ -37,4 +37,8 @@ public interface IPredicate extends Predicate, IExpression<Boolean> {
         return false;
     }
 
+    @Override
+    default boolean isComparable() {
+        return true;
+    }
 }

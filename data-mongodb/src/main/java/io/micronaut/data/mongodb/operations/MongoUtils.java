@@ -37,6 +37,7 @@ import org.bson.codecs.pojo.annotations.BsonRepresentation;
 import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
 
+import java.time.Instant;
 import java.util.Date;
 
 /**
@@ -113,6 +114,8 @@ public final class MongoUtils {
                 return bsonValue.asDecimal128().getValue();
             case BOOLEAN:
                 return bsonValue.asBoolean().getValue();
+            case DATE_TIME:
+                return Instant.ofEpochMilli(bsonValue.asDateTime().getValue());
             case NULL:
                 return null;
             default:

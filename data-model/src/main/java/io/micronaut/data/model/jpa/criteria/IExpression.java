@@ -44,6 +44,11 @@ public interface IExpression<T> extends Expression<T>, ISelection<T> {
      */
     boolean isNumeric();
 
+    /**
+     * @return true if the expression is of comparable type
+     */
+    boolean isComparable();
+
     @Override
     @NonNull
     default Predicate isNull() {

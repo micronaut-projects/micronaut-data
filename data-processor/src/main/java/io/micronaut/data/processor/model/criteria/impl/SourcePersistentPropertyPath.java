@@ -41,4 +41,9 @@ interface SourcePersistentPropertyPath<T> extends PersistentPropertyPath<T> {
     default boolean isNumeric() {
         return TypeUtils.isNumber(getProperty().getType());
     }
+
+    @Override
+    default boolean isComparable() {
+        return TypeUtils.isComparable(getProperty().getType());
+    }
 }

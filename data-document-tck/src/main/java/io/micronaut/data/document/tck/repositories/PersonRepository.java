@@ -83,6 +83,18 @@ public interface PersonRepository extends CrudRepository<Person, String>, Pageab
 
     long getAvgAgeByNameRegex(String name);
 
+    LocalDate findMaxDateOfBirthByNameRegex(String name);
+
+    LocalDate findMinDateOfBirthByNameRegex(String name);
+
+    List<Person> findByDateOfBirthGreaterThan(LocalDate localDate);
+
+    List<Person> findByDateOfBirthGreaterThanEquals(LocalDate localDate);
+
+    List<Person> findByDateOfBirthLessThan(LocalDate localDate);
+
+    List<Person> findByDateOfBirthLessThanEquals(LocalDate localDate);
+
     List<Integer> readAgeByNameRegex(String name);
 
     List<Person> findByNameRegexOrderByAge(String name);
