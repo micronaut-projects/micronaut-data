@@ -32,6 +32,7 @@ import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
+import java.util.Optional;
 
 /**
  * Implementation of {@code findOne(Specification)} for JPA specifications.
@@ -87,6 +88,8 @@ public class FindOneSpecificationInterceptor extends AbstractSpecificationInterc
         } catch (NoResultException e) {
             if (context.isNullable()) {
                 return null;
+            } else if (context.getReturnType().isOptional()) {
+                return Optional.empty();
             } else {
                 throw new EmptyResultException();
             }
