@@ -17,7 +17,7 @@
     catch(err) {
     }
 //-->
-var methods = {"i0":18,"i1":18,"i2":18,"i3":18,"i4":18,"i5":6,"i6":18,"i7":18,"i8":6};
+var methods = {"i0":18,"i1":18,"i2":18,"i3":18,"i4":18,"i5":6,"i6":6,"i7":18,"i8":18,"i9":6};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],4:["t3","Abstract Methods"],16:["t5","Default Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -167,14 +167,18 @@ extends jakarta.persistence.criteria.Expression&lt;T&gt;, <a href="../../../../.
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/model/jpa/criteria/IExpression.html#isBoolean--">isBoolean</a></span>()</code>&nbsp;</td>
 </tr>
 <tr id="i6" class="altColor">
-<td class="colFirst"><code>default jakarta.persistence.criteria.Predicate</code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/model/jpa/criteria/IExpression.html#isNotNull--">isNotNull</a></span>()</code>&nbsp;</td>
+<td class="colFirst"><code>boolean</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/model/jpa/criteria/IExpression.html#isComparable--">isComparable</a></span>()</code>&nbsp;</td>
 </tr>
 <tr id="i7" class="rowColor">
 <td class="colFirst"><code>default jakarta.persistence.criteria.Predicate</code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/model/jpa/criteria/IExpression.html#isNull--">isNull</a></span>()</code>&nbsp;</td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/model/jpa/criteria/IExpression.html#isNotNull--">isNotNull</a></span>()</code>&nbsp;</td>
 </tr>
 <tr id="i8" class="altColor">
+<td class="colFirst"><code>default jakarta.persistence.criteria.Predicate</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/model/jpa/criteria/IExpression.html#isNull--">isNull</a></span>()</code>&nbsp;</td>
+</tr>
+<tr id="i9" class="rowColor">
 <td class="colFirst"><code>boolean</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/model/jpa/criteria/IExpression.html#isNumeric--">isNumeric</a></span>()</code>&nbsp;</td>
 </tr>
@@ -230,6 +234,19 @@ extends jakarta.persistence.criteria.Expression&lt;T&gt;, <a href="../../../../.
 <dl>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>true if the expression is of numeric type</dd>
+</dl>
+</li>
+</ul>
+<a name="isComparable--">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>isComparable</h4>
+<pre>boolean&nbsp;isComparable()</pre>
+<dl>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>true if the expression is of comparable type</dd>
 </dl>
 </li>
 </ul>

@@ -17,7 +17,7 @@
     catch(err) {
     }
 //-->
-var methods = {"i0":9,"i1":9,"i2":9,"i3":9,"i4":9,"i5":9,"i6":9,"i7":9,"i8":9,"i9":9,"i10":9,"i11":9,"i12":9};
+var methods = {"i0":9,"i1":9,"i2":9,"i3":9,"i4":9,"i5":9,"i6":9,"i7":9,"i8":9,"i9":9,"i10":9,"i11":9,"i12":9,"i13":9,"i14":9,"i15":9,"i16":9};
 var tabs = {65535:["t0","All Methods"],1:["t1","Static Methods"],8:["t4","Concrete Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -145,45 +145,61 @@ extends java.lang.Object</pre>
 </tr>
 <tr id="i2" class="altColor">
 <td class="colFirst"><code>static boolean</code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../../io/micronaut/data/model/jpa/criteria/impl/CriteriaUtils.html#isNumeric-java.lang.Class-">isNumeric</a></span>(java.lang.Class&lt;?&gt;&nbsp;clazz)</code>&nbsp;</td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../../io/micronaut/data/model/jpa/criteria/impl/CriteriaUtils.html#isBoolean-java.lang.Class-">isBoolean</a></span>(java.lang.Class&lt;?&gt;&nbsp;clazz)</code>&nbsp;</td>
 </tr>
 <tr id="i3" class="rowColor">
+<td class="colFirst"><code>static boolean</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../../io/micronaut/data/model/jpa/criteria/impl/CriteriaUtils.html#isComparable-java.lang.Class-">isComparable</a></span>(java.lang.Class&lt;?&gt;&nbsp;clazz)</code>&nbsp;</td>
+</tr>
+<tr id="i4" class="altColor">
+<td class="colFirst"><code>static boolean</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../../io/micronaut/data/model/jpa/criteria/impl/CriteriaUtils.html#isNumeric-java.lang.Class-">isNumeric</a></span>(java.lang.Class&lt;?&gt;&nbsp;clazz)</code>&nbsp;</td>
+</tr>
+<tr id="i5" class="rowColor">
 <td class="colFirst"><code>static java.lang.IllegalStateException</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../../io/micronaut/data/model/jpa/criteria/impl/CriteriaUtils.html#notSupportedOperation--">notSupportedOperation</a></span>()</code>&nbsp;</td>
 </tr>
-<tr id="i4" class="altColor">
+<tr id="i6" class="altColor">
 <td class="colFirst"><code>static <a href="../../../../../../../io/micronaut/data/model/jpa/criteria/IExpression.html" title="interface in io.micronaut.data.model.jpa.criteria">IExpression</a>&lt;java.lang.Boolean&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../../io/micronaut/data/model/jpa/criteria/impl/CriteriaUtils.html#requireBoolExpression-jakarta.persistence.criteria.Expression-">requireBoolExpression</a></span>(jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;exp)</code>&nbsp;</td>
 </tr>
-<tr id="i5" class="rowColor">
+<tr id="i7" class="rowColor">
 <td class="colFirst"><code>static java.util.List&lt;<a href="../../../../../../../io/micronaut/data/model/jpa/criteria/IExpression.html" title="interface in io.micronaut.data.model.jpa.criteria">IExpression</a>&lt;java.lang.Boolean&gt;&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../../io/micronaut/data/model/jpa/criteria/impl/CriteriaUtils.html#requireBoolExpressions-java.lang.Iterable-">requireBoolExpressions</a></span>(java.lang.Iterable&lt;? extends jakarta.persistence.criteria.Expression&lt;?&gt;&gt;&nbsp;restrictions)</code>&nbsp;</td>
 </tr>
-<tr id="i6" class="altColor">
+<tr id="i8" class="altColor">
 <td class="colFirst"><code>static &lt;T&gt;&nbsp;<a href="../../../../../../../io/micronaut/data/model/jpa/criteria/PersistentPropertyPath.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentPropertyPath</a>&lt;T&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../../io/micronaut/data/model/jpa/criteria/impl/CriteriaUtils.html#requireBoolProperty-jakarta.persistence.criteria.Expression-">requireBoolProperty</a></span>(jakarta.persistence.criteria.Expression&lt;java.lang.Boolean&gt;&nbsp;exp)</code>&nbsp;</td>
 </tr>
-<tr id="i7" class="rowColor">
+<tr id="i9" class="rowColor">
+<td class="colFirst"><code>static &lt;T&gt;&nbsp;<a href="../../../../../../../io/micronaut/data/model/jpa/criteria/PersistentPropertyPath.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentPropertyPath</a>&lt;T&gt;</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../../io/micronaut/data/model/jpa/criteria/impl/CriteriaUtils.html#requireComparableProperty-jakarta.persistence.criteria.Expression-">requireComparableProperty</a></span>(jakarta.persistence.criteria.Expression&lt;T&gt;&nbsp;exp)</code>&nbsp;</td>
+</tr>
+<tr id="i10" class="altColor">
+<td class="colFirst"><code>static &lt;T&gt;&nbsp;jakarta.persistence.criteria.Expression&lt;T&gt;</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../../io/micronaut/data/model/jpa/criteria/impl/CriteriaUtils.html#requireComparablePropertyParameterOrLiteral-jakarta.persistence.criteria.Expression-">requireComparablePropertyParameterOrLiteral</a></span>(jakarta.persistence.criteria.Expression&lt;T&gt;&nbsp;exp)</code>&nbsp;</td>
+</tr>
+<tr id="i11" class="rowColor">
 <td class="colFirst"><code>static &lt;T&gt;&nbsp;<a href="../../../../../../../io/micronaut/data/model/jpa/criteria/PersistentPropertyPath.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentPropertyPath</a>&lt;T&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../../io/micronaut/data/model/jpa/criteria/impl/CriteriaUtils.html#requireNumericProperty-jakarta.persistence.criteria.Expression-">requireNumericProperty</a></span>(jakarta.persistence.criteria.Expression&lt;T&gt;&nbsp;exp)</code>&nbsp;</td>
 </tr>
-<tr id="i8" class="altColor">
+<tr id="i12" class="altColor">
 <td class="colFirst"><code>static &lt;T&gt;&nbsp;jakarta.persistence.criteria.Expression&lt;T&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../../io/micronaut/data/model/jpa/criteria/impl/CriteriaUtils.html#requireNumericPropertyParameterOrLiteral-jakarta.persistence.criteria.Expression-">requireNumericPropertyParameterOrLiteral</a></span>(jakarta.persistence.criteria.Expression&lt;T&gt;&nbsp;exp)</code>&nbsp;</td>
 </tr>
-<tr id="i9" class="rowColor">
+<tr id="i13" class="rowColor">
 <td class="colFirst"><code>static &lt;T&gt;&nbsp;jakarta.persistence.criteria.ParameterExpression&lt;T&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../../io/micronaut/data/model/jpa/criteria/impl/CriteriaUtils.html#requireParameter-jakarta.persistence.criteria.Expression-">requireParameter</a></span>(jakarta.persistence.criteria.Expression&lt;T&gt;&nbsp;exp)</code>&nbsp;</td>
 </tr>
-<tr id="i10" class="altColor">
+<tr id="i14" class="altColor">
 <td class="colFirst"><code>static &lt;T&gt;&nbsp;<a href="../../../../../../../io/micronaut/data/model/jpa/criteria/PersistentPropertyPath.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentPropertyPath</a>&lt;T&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../../io/micronaut/data/model/jpa/criteria/impl/CriteriaUtils.html#requireProperty-jakarta.persistence.criteria.Expression-">requireProperty</a></span>(jakarta.persistence.criteria.Expression&lt;? extends T&gt;&nbsp;exp)</code>&nbsp;</td>
 </tr>
-<tr id="i11" class="rowColor">
+<tr id="i15" class="rowColor">
 <td class="colFirst"><code>static &lt;T&gt;&nbsp;<a href="../../../../../../../io/micronaut/data/model/jpa/criteria/IExpression.html" title="interface in io.micronaut.data.model.jpa.criteria">IExpression</a>&lt;T&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../../io/micronaut/data/model/jpa/criteria/impl/CriteriaUtils.html#requirePropertyOrRoot-jakarta.persistence.criteria.Expression-">requirePropertyOrRoot</a></span>(jakarta.persistence.criteria.Expression&lt;T&gt;&nbsp;exp)</code>&nbsp;</td>
 </tr>
-<tr id="i12" class="altColor">
+<tr id="i16" class="altColor">
 <td class="colFirst"><code>static &lt;T&gt;&nbsp;jakarta.persistence.criteria.Expression&lt;T&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../../io/micronaut/data/model/jpa/criteria/impl/CriteriaUtils.html#requirePropertyParameterOrLiteral-jakarta.persistence.criteria.Expression-">requirePropertyParameterOrLiteral</a></span>(jakarta.persistence.criteria.Expression&lt;T&gt;&nbsp;exp)</code>&nbsp;</td>
 </tr>
@@ -217,6 +233,26 @@ extends java.lang.Object</pre>
 <h4>isNumeric</h4>
 <pre>public static&nbsp;boolean&nbsp;isNumeric(@NonNull
                                 java.lang.Class&lt;?&gt;&nbsp;clazz)</pre>
+</li>
+</ul>
+<a name="isBoolean-java.lang.Class-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>isBoolean</h4>
+<pre>public static&nbsp;boolean&nbsp;isBoolean(@NonNull
+                                java.lang.Class&lt;?&gt;&nbsp;clazz)</pre>
+</li>
+</ul>
+<a name="isComparable-java.lang.Class-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>isComparable</h4>
+<pre>public static&nbsp;boolean&nbsp;isComparable(@NonNull
+                                   java.lang.Class&lt;?&gt;&nbsp;clazz)</pre>
 </li>
 </ul>
 <a name="requireBoolExpressions-java.lang.Iterable-">
@@ -253,6 +289,24 @@ extends java.lang.Object</pre>
 <li class="blockList">
 <h4>requireNumericProperty</h4>
 <pre>public static&nbsp;&lt;T&gt;&nbsp;<a href="../../../../../../../io/micronaut/data/model/jpa/criteria/PersistentPropertyPath.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentPropertyPath</a>&lt;T&gt;&nbsp;requireNumericProperty(jakarta.persistence.criteria.Expression&lt;T&gt;&nbsp;exp)</pre>
+</li>
+</ul>
+<a name="requireComparableProperty-jakarta.persistence.criteria.Expression-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>requireComparableProperty</h4>
+<pre>public static&nbsp;&lt;T&gt;&nbsp;<a href="../../../../../../../io/micronaut/data/model/jpa/criteria/PersistentPropertyPath.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentPropertyPath</a>&lt;T&gt;&nbsp;requireComparableProperty(jakarta.persistence.criteria.Expression&lt;T&gt;&nbsp;exp)</pre>
+</li>
+</ul>
+<a name="requireComparablePropertyParameterOrLiteral-jakarta.persistence.criteria.Expression-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>requireComparablePropertyParameterOrLiteral</h4>
+<pre>public static&nbsp;&lt;T&gt;&nbsp;jakarta.persistence.criteria.Expression&lt;T&gt;&nbsp;requireComparablePropertyParameterOrLiteral(jakarta.persistence.criteria.Expression&lt;T&gt;&nbsp;exp)</pre>
 </li>
 </ul>
 <a name="requireNumericPropertyParameterOrLiteral-jakarta.persistence.criteria.Expression-">
