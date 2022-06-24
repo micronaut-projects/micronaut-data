@@ -98,7 +98,6 @@ io.micronaut.data.runtime.mapper
 io.micronaut.data.runtime.mapper.sql
 io.micronaut.data.runtime.operations
 io.micronaut.data.runtime.operations.internal
-io.micronaut.data.runtime.operations.internal.sql
 io.micronaut.data.runtime.query
 io.micronaut.data.runtime.query.internal
 io.micronaut.data.runtime.support
@@ -111,7 +110,6 @@ io.micronaut.data.spring.runtime
 io.micronaut.data.spring.runtime.http
 io.micronaut.transaction
 io.micronaut.transaction.annotation
-io.micronaut.transaction.async
 io.micronaut.transaction.exceptions
 io.micronaut.transaction.hibernate5
 io.micronaut.transaction.interceptor
@@ -121,5 +119,4 @@ io.micronaut.transaction.jdbc.exceptions
 io.micronaut.transaction.jpa
 io.micronaut.transaction.reactive
 io.micronaut.transaction.support
-io.micronaut.transaction.sync
 io.micronaut.transaction.test
