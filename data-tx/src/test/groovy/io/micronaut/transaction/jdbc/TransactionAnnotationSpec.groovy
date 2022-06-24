@@ -3,13 +3,15 @@ package io.micronaut.transaction.jdbc
 import io.micronaut.context.BeanDefinitionRegistry
 import io.micronaut.context.annotation.Property
 import io.micronaut.context.event.ApplicationEventPublisher
+import io.micronaut.scheduling.annotation.Async
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import io.micronaut.transaction.annotation.TransactionalEventListener
-import spock.lang.Specification
-import spock.lang.Stepwise
-
 import jakarta.inject.Inject
 import jakarta.inject.Singleton
+import spock.lang.Specification
+import spock.lang.Stepwise
+import spock.util.concurrent.AsyncConditions
+
 import javax.transaction.Transactional
 import java.sql.Connection
 
@@ -21,52 +23,83 @@ class TransactionAnnotationSpec extends Specification {
     @Inject TestService testService
     @Inject BeanDefinitionRegistry registry
 
+    AsyncConditions asyncConditions = new AsyncConditions()
+
     void "test transactional annotation handling"() {
         given:
-        testService.init()
-        
+            testService.init()
+
         when:"an insert is performed in a transaction"
-        testService.insertWithTransaction()
+            testService.insertWithTransaction()
 
         then:"The insert worked"
-        testService.lastEvent?.title == "The Stand"
-        testService.readTransactionally() == 1
+            testService.lastEvent?.title == "The Stand"
+            testService.readTransactionally() == 1
 
         when:"A transaction is rolled back"
-        testService.lastEvent = null
-        testService.insertAndRollback()
+            testService.lastEvent = null
+            testService.insertAndRollback()
 
         then:
-        def e = thrown(RuntimeException)
-        e.message == 'Bad things happened'
-        testService.lastEvent == null
-        testService.readTransactionally() == 1
+            def e = thrown(RuntimeException)
+            e.message == 'Bad things happened'
+            testService.lastEvent == null
+            testService.readTransactionally() == 1
 
 
         when:"A transaction is rolled back"
-        testService.insertAndRollbackChecked()
+            testService.insertAndRollbackChecked()
 
         then:
-        def e2 = thrown(Exception)
-        e2.message == 'Bad things happened'
-        testService.lastEvent == null
-        testService.readTransactionally() == 1
+            def e2 = thrown(Exception)
+            e2.message == 'Bad things happened'
+            testService.lastEvent == null
+            testService.readTransactionally() == 1
 
         when:"A transaction is rolled back but the exception ignored"
-        testService.insertAndRollbackDontRollbackOn()
+            testService.insertAndRollbackDontRollbackOn()
 
         then:
-        thrown(IOException)
-        testService.readTransactionally() == 2
-        testService.lastEvent
+            thrown(IOException)
+            testService.readTransactionally() == 2
+            testService.lastEvent
 
 
         when:"Test that connections are never exhausted"
-        int i = 0
-        200.times { i += testService.readTransactionally() }
+            int i = 0
+            200.times { i += testService.readTransactionally() }
 
         then:"We're ok at it completed"
-        i == 400
+            i == 400
+    }
+
+    void "test transactional1"() {
+        given:
+            testService.init()
+
+        when:
+            testService.doWork1()
+
+        then:
+            asyncConditions.evaluate {
+                testService.readTransactionally() == 4
+            }
+    }
+
+    void "test transactional calling #workMethod"() {
+        given:
+            testService.init()
+
+        when:
+            testService."$workMethod"()
+
+        then:
+            asyncConditions.evaluate {
+                testService.readTransactionally() == 4
+            }
+
+        where:
+            workMethod << ["doWork1", "doWork2", "doWork3", "doWork4", "doWork5"]
     }
 
     @Singleton
@@ -77,24 +110,22 @@ class TransactionAnnotationSpec extends Specification {
 
         @Transactional
         void init() {
-                connection.prepareStatement("drop table book if exists").execute()
-                connection.prepareStatement("create table book (id bigint not null auto_increment, pages integer not null, title varchar(255), primary key (id))").execute()
+            connection.prepareStatement("drop table book if exists").execute()
+            connection.prepareStatement("create table book (id bigint not null auto_increment, pages integer not null, title varchar(255), primary key (id))").execute()
 
+            connection.prepareStatement("drop table book if exists").execute()
+            connection.prepareStatement("create table book (id bigint not null auto_increment, pages integer not null, title varchar(255), primary key (id))").execute()
         }
 
-         @Transactional
+        @Transactional
         void insertWithTransaction() {
-            def ps1 = connection.prepareStatement("insert into book (pages, title) values(100, 'The Stand')")
-            ps1.execute()
-            ps1.close()
+            addBook('The Shining')
             eventPublisher.publishEvent(new NewBookEvent("The Stand"))
         }
 
         @Transactional
         void insertAndRollback() {
-            def ps1 = connection.prepareStatement("insert into book (pages, title) values(200, 'The Shining')")
-            ps1.execute()
-            ps1.close()
+            addBook('The Shining')
             eventPublisher.publishEvent(new NewBookEvent("The Shining"))
             throw new RuntimeException("Bad things happened")
         }
@@ -102,18 +133,14 @@ class TransactionAnnotationSpec extends Specification {
 
         @Transactional
         void insertAndRollbackChecked() {
-            def ps1 = connection.prepareStatement("insert into book (pages, title) values(200, 'The Shining')")
-            ps1.execute()
-            ps1.close()
+            addBook('The Shining')
             eventPublisher.publishEvent(new NewBookEvent("The Shining"))
             throw new Exception("Bad things happened")
         }
 
         @Transactional(dontRollbackOn = IOException)
         void insertAndRollbackDontRollbackOn() {
-            def ps1 = connection.prepareStatement("insert into book (pages, title) values(200, 'The Shining')")
-            ps1.execute()
-            ps1.close()
+            addBook('The Shining')
             eventPublisher.publishEvent(new NewBookEvent("The Shining"))
             throw new IOException("Bad things happened")
         }
@@ -137,6 +164,92 @@ class TransactionAnnotationSpec extends Specification {
         void afterCommit(NewBookEvent event) {
             lastEvent = event
         }
+
+        @Transactional
+        void doWork1() {
+            doReadOnly("ABC")
+            doInnerWork("XYZ")
+            notSupports()
+            notSupportsAsync()
+            doMandatoryInnerWork("YES")
+            doInnerWorkAsync("FooBar")
+        }
+
+        @Transactional(Transactional.TxType.REQUIRES_NEW)
+        void doWork2() {
+            doReadOnly("ABC")
+            doInnerWork("XYZ")
+            notSupports()
+            notSupportsAsync()
+            doMandatoryInnerWork("YES")
+            doInnerWorkAsync("FooBar")
+        }
+
+        @Transactional
+        @Async
+        void doWork3() {
+            doReadOnly("ABC")
+            doInnerWork("XYZ")
+            notSupports()
+            notSupportsAsync()
+            doMandatoryInnerWork("YES")
+            doInnerWorkAsync("FooBar")
+        }
+
+        @Transactional(Transactional.TxType.REQUIRES_NEW)
+        @Async
+        void doWork4() {
+            doReadOnly("ABC")
+            doInnerWork("XYZ")
+            notSupports()
+            notSupportsAsync()
+            doMandatoryInnerWork("YES")
+            doInnerWorkAsync("FooBar")
+        }
+
+        void doWork5() {
+            doReadOnly("ABC")
+            doInnerWork("XYZ")
+            notSupports()
+            notSupportsAsync()
+            doInnerWorkAsync("FooBar")
+        }
+
+        @Transactional
+        void doReadOnly(String book) {
+            addBook(book)
+        }
+
+        @Transactional(Transactional.TxType.REQUIRES_NEW)
+        void doInnerWork(String book) {
+            addBook(book)
+        }
+
+        @Transactional(Transactional.TxType.MANDATORY)
+        void doMandatoryInnerWork(String book) {
+            addBook(book)
+        }
+
+        @Transactional(Transactional.TxType.REQUIRES_NEW)
+        @Async
+        void doInnerWorkAsync(String book) {
+            addBook(book)
+        }
+
+        @Transactional(Transactional.TxType.NOT_SUPPORTED)
+        void notSupports() {
+        }
+
+        @Transactional(Transactional.TxType.NOT_SUPPORTED)
+        @Async
+        void notSupportsAsync() {
+        }
+
+        private void addBook(String book) {
+            def ps1 = connection.prepareStatement("insert into book (pages, title) values(200, '$book')")
+            ps1.execute()
+            ps1.close()
+        }
     }
 
     static class NewBookEvent {
@@ -147,3 +260,4 @@ class TransactionAnnotationSpec extends Specification {
         }
     }
 }
+

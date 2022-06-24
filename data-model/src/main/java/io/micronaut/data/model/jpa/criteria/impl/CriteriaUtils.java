@@ -54,6 +54,14 @@ public final class CriteriaUtils {
         return Number.class.isAssignableFrom(clazz);
     }
 
+    public static boolean isBoolean(@NonNull Class<?> clazz) {
+        return Boolean.class.isAssignableFrom(clazz) || boolean.class.isAssignableFrom(clazz);
+    }
+
+    public static boolean isComparable(@NonNull Class<?> clazz) {
+        return Comparable.class.isAssignableFrom(clazz) || isNumeric(clazz) ;
+    }
+
     public static List<IExpression<Boolean>> requireBoolExpressions(Iterable<? extends Expression<?>> restrictions) {
         return CollectionUtils.iterableToList(restrictions).stream().map(CriteriaUtils::requireBoolExpression).collect(Collectors.toList());
     }
@@ -89,6 +97,39 @@ public final class CriteriaUtils {
             return propertyPath;
         }
         throw new IllegalStateException("Expression is expected to be a property path! Got: " + exp);
+    }
+
+    public static <T> PersistentPropertyPath<T> requireComparableProperty(Expression<T> exp) {
+        if (exp instanceof PersistentPropertyPath) {
+            PersistentPropertyPath<T> propertyPath = (PersistentPropertyPath<T>) exp;
+            if (!propertyPath.isComparable()) {
+                throw new IllegalStateException("Expected a comparable expression property! Got: " + exp);
+            }
+            return propertyPath;
+        }
+        throw new IllegalStateException("Expression is expected to be a property path! Got: " + exp);
+    }
+
+    public static <T> Expression<T> requireComparablePropertyParameterOrLiteral(Expression<T> exp) {
+        exp = requirePropertyParameterOrLiteral(exp);
+        if (exp instanceof PersistentPropertyPath) {
+            PersistentPropertyPath<?> propertyPath = (PersistentPropertyPath<?>) exp;
+            if (!propertyPath.isComparable()) {
+                throw new IllegalStateException("Expected a comparable expression property! Got: " + exp);
+            }
+            return exp;
+        }
+        if (exp instanceof ParameterExpression) {
+            // TODO: validation
+            return exp;
+        }
+        if (exp instanceof LiteralExpression) {
+            if (((LiteralExpression<T>) exp).getValue() instanceof Comparable) {
+                return exp;
+            }
+            throw new IllegalStateException("Expected a comparable expression property! Got: " + exp);
+        }
+        return exp;
     }
 
     public static <T> Expression<T> requireNumericPropertyParameterOrLiteral(Expression<T> exp) {
