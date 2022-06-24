@@ -1320,6 +1320,8 @@ abstract class AbstractRepositorySpec extends Specification {
         then:"no error occurs"
         results.size() == 2
         results.first().name == 'Google'
+        company2 = companyRepository.findById(company2.myId).get()
+        google = companyRepository.findById(google.myId).get()
 
         then:
         companyRepository.findMaxLastUpdated() == company2.lastUpdated
