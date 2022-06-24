@@ -1117,8 +1117,11 @@ public abstract class AbstractSynchronousStateTransactionManager<T> implements S
         }
         if (status.isNewTransaction()) {
             doCleanupAfterCompletion(state, status.getTransaction());
-            doDestroyState(state);
-        } else if (status.getSuspendedResources() != null) {
+            if (status.getSuspendedResources() == null) {
+                doDestroyState(state);
+            }
+        }
+        if (status.getSuspendedResources() != null) {
             if (status.isDebug()) {
                 logger.debug("Resuming suspended transaction after completion of inner transaction");
             }
