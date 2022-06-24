@@ -67,6 +67,14 @@ public final class AggregateExpression<T, E> implements IExpression<E>, Selectio
     }
 
     @Override
+    public boolean isComparable() {
+        if (expressionType != null) {
+            return CriteriaUtils.isComparable(expressionType);
+        }
+        return false;
+    }
+
+    @Override
     public Class<E> getJavaType() {
         if (expressionType == null) {
             return (Class<E>) expression.getJavaType();

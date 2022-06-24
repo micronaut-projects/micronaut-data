@@ -20,8 +20,18 @@ import io.micronaut.data.annotation.Id;
 import io.micronaut.data.repository.PageableRepository;
 import io.micronaut.data.tck.entities.Company;
 
+import java.time.Instant;
+
 public interface CompanyRepository extends PageableRepository<Company, Long> {
 
     void update(@Id Long id, @Parameter("name") String name);
+
+    Instant findMaxLastUpdated();
+
+    Instant findMinLastUpdated();
+
+    Company findByLastUpdatedGreaterThan(Instant date);
+
+    Company findByLastUpdatedLessThan(Instant date);
 }
 

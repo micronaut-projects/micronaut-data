@@ -21,6 +21,7 @@ import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.naming.NameUtils;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
+import io.micronaut.data.model.jpa.criteria.PersistentPropertyPath;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Selection;
 
@@ -74,7 +75,8 @@ public final class Projections {
 
         @Override
         public Selection<?> createProjection(CriteriaBuilder cb, PersistentEntityRoot<?> entityRoot, String propertyName) {
-            return cb.max(entityRoot.get(propertyName));
+            PersistentPropertyPath prop = entityRoot.get(propertyName);
+            return prop.isNumeric() ? cb.max(prop) : cb.greatest(prop);
         }
 
         @Override
@@ -90,7 +92,8 @@ public final class Projections {
 
         @Override
         public Selection<?> createProjection(CriteriaBuilder cb, PersistentEntityRoot<?> entityRoot, String propertyName) {
-            return cb.min(entityRoot.get(propertyName));
+            PersistentPropertyPath prop = entityRoot.get(propertyName);
+            return prop.isNumeric() ? cb.min(prop) : cb.least(prop);
         }
 
         @Override

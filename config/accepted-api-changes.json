@@ -118,5 +118,25 @@
         "type": "io.micronaut.data.jdbc.mapper.JdbcQueryStatement",
         "member": "Method io.micronaut.data.jdbc.mapper.JdbcQueryStatement.setTimestamp(java.lang.Object,java.lang.Object,java.util.Date)",
         "reason": "Added a default method"
+    },
+    {
+        "type": "io.micronaut.data.model.jpa.criteria.IPredicate",
+        "member": "Class io.micronaut.data.model.jpa.criteria.IPredicate",
+        "reason": "Experimental class with a new default method"
+    },
+    {
+        "type": "io.micronaut.data.model.jpa.criteria.IPredicate",
+        "member": "Method io.micronaut.data.model.jpa.criteria.IPredicate.isComparable()",
+        "reason": "Experimental class with a new default method"
+    },
+    {
+        "type": "io.micronaut.data.model.jpa.criteria.PersistentPropertyPath",
+        "member": "Class io.micronaut.data.model.jpa.criteria.PersistentPropertyPath",
+        "reason": "Experimental class with a new default method"
+    },
+    {
+        "type": "io.micronaut.data.model.jpa.criteria.PersistentPropertyPath",
+        "member": "Method io.micronaut.data.model.jpa.criteria.PersistentPropertyPath.isComparable()",
+        "reason": "Experimental class with a new default method"
     }
 ]

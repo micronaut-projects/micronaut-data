@@ -80,7 +80,7 @@ public class ColumnIndexR2dbcResultReader implements ResultReader<Row, Integer> 
             case BYTE:
                 return resultSet.get(index, Byte.class);
             case TIMESTAMP:
-                return resultSet.get(index, Timestamp.class);
+                return readConvertible(resultSet, index, Timestamp.class);
             case DATE:
                 return resultSet.get(index, Date.class);
             case CHARACTER:

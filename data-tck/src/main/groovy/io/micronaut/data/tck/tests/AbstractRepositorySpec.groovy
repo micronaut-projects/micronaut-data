@@ -25,7 +25,25 @@ import io.micronaut.data.repository.jpa.criteria.DeleteSpecification
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
 import io.micronaut.data.repository.jpa.criteria.QuerySpecification
 import io.micronaut.data.repository.jpa.criteria.UpdateSpecification
-import io.micronaut.data.tck.entities.*
+import io.micronaut.data.tck.entities.Author
+import io.micronaut.data.tck.entities.AuthorBooksDto
+import io.micronaut.data.tck.entities.BasicTypes
+import io.micronaut.data.tck.entities.Book
+import io.micronaut.data.tck.entities.BookDto
+import io.micronaut.data.tck.entities.Car
+import io.micronaut.data.tck.entities.City
+import io.micronaut.data.tck.entities.Company
+import io.micronaut.data.tck.entities.Country
+import io.micronaut.data.tck.entities.CountryRegion
+import io.micronaut.data.tck.entities.CountryRegionCity
+import io.micronaut.data.tck.entities.Face
+import io.micronaut.data.tck.entities.Food
+import io.micronaut.data.tck.entities.Meal
+import io.micronaut.data.tck.entities.Nose
+import io.micronaut.data.tck.entities.Page
+import io.micronaut.data.tck.entities.Person
+import io.micronaut.data.tck.entities.Student
+import io.micronaut.data.tck.entities.TimezoneBasicTypes
 import io.micronaut.data.tck.jdbc.entities.Role
 import io.micronaut.data.tck.jdbc.entities.UserRole
 import io.micronaut.data.tck.repositories.*
@@ -34,10 +52,15 @@ import jakarta.persistence.criteria.CriteriaBuilder
 import jakarta.persistence.criteria.CriteriaUpdate
 import jakarta.persistence.criteria.Predicate
 import jakarta.persistence.criteria.Root
-import spock.lang.*
+import spock.lang.AutoCleanup
+import spock.lang.IgnoreIf
+import spock.lang.Shared
+import spock.lang.Specification
+import spock.lang.Unroll
 
 import java.sql.Connection
 import java.time.LocalDate
+import java.time.ZoneId
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.stream.Collectors
@@ -1298,8 +1321,25 @@ abstract class AbstractRepositorySpec extends Specification {
         results.size() == 2
         results.first().name == 'Google'
 
+        when:
+        company2 = companyRepository.findById(company2.myId).get()
+        google = companyRepository.findById(google.myId).get()
+
+        then:
+        companyRepository.findMaxLastUpdated() == company2.lastUpdated
+        companyRepository.findMinLastUpdated() == google.lastUpdated
+        companyRepository.findByLastUpdatedGreaterThan(google.lastUpdated).myId == company2.myId
+        companyRepository.findByLastUpdatedLessThan(company2.lastUpdated).myId == google.myId
+
         cleanup:
         companyRepository.deleteAll()
+    }
+
+    LocalDate toLocalDate(Date date) {
+        if (date instanceof java.sql.Date) {
+            return date.toLocalDate()
+        }
+        date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate()
     }
 
     void "test one-to-many mappedBy"() {
