@@ -1,6 +1,6 @@
 [versions]
 micronaut = "3.5.0"
-micronaut-test = "3.4.0-SNAPSHOT"
+micronaut-test = "3.4.0"
 micronaut-serde = "1.1.0"
 micronaut-sql = "4.5.0-SNAPSHOT"
 micronaut-docs = "2.0.0"
