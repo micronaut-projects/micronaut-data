@@ -15,18 +15,26 @@
  */
 package io.micronaut.data.runtime.criteria;
 
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityCriteriaUpdate;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
+import io.micronaut.data.runtime.criteria.metamodel.StaticMetamodelInitializer;
 
+@Internal
 final class RuntimePersistentEntityCriteriaUpdate<T> extends AbstractPersistentEntityCriteriaUpdate<T> {
 
     private final RuntimeEntityRegistry runtimeEntityRegistry;
+    private final StaticMetamodelInitializer staticMetamodelInitializer;
 
-    public RuntimePersistentEntityCriteriaUpdate(RuntimeEntityRegistry runtimeEntityRegistry) {
+    public RuntimePersistentEntityCriteriaUpdate(RuntimeEntityRegistry runtimeEntityRegistry,
+                                                 Class<T> root,
+                                                 StaticMetamodelInitializer staticMetamodelInitializer) {
         this.runtimeEntityRegistry = runtimeEntityRegistry;
+        this.staticMetamodelInitializer = staticMetamodelInitializer;
+        from(root);
     }
 
     @Override
@@ -36,10 +44,12 @@ final class RuntimePersistentEntityCriteriaUpdate<T> extends AbstractPersistentE
 
     @Override
     public PersistentEntityRoot<T> from(PersistentEntity persistentEntity) {
-        if (entityRoot != null) {
+        RuntimePersistentEntity<T> runtimePersistentEntity = (RuntimePersistentEntity<T>) persistentEntity;
+        if (entityRoot != null && !entityRoot.getJavaType().equals(runtimePersistentEntity.getIntrospection().getBeanType())) {
             throw new IllegalStateException("The root entity is already specified!");
         }
-        RuntimePersistentEntityRoot<T> newEntityRoot = new RuntimePersistentEntityRoot<>((RuntimePersistentEntity<T>) persistentEntity);
+        staticMetamodelInitializer.initializeMetadata(runtimePersistentEntity);
+        RuntimePersistentEntityRoot<T> newEntityRoot = new RuntimePersistentEntityRoot<>(runtimePersistentEntity);
         entityRoot = newEntityRoot;
         return newEntityRoot;
     }

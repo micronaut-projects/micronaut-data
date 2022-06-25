@@ -1,13 +1,17 @@
 package io.micronaut.data.runtime.criteria;
 
-import io.micronaut.data.annotation.*;
-import java.math.*;
-import java.util.List;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.ManyToOne;
 
-@MappedEntity
+import java.math.BigDecimal;
+
+@Entity
 class OtherEntity {
     @Id
-    @GeneratedValue(GeneratedValue.Type.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String name;
     private boolean enabled;
@@ -15,9 +19,11 @@ class OtherEntity {
     private Long age;
     private BigDecimal amount;
     private BigDecimal budget;
-    @Relation(value = Relation.Kind.MANY_TO_ONE)
+//    @Relation(value = Relation.Kind.MANY_TO_ONE)
+    @ManyToOne
     private Test test;
-    @Relation(value = Relation.Kind.MANY_TO_ONE)
+    @ManyToOne
+//    @Relation(value = Relation.Kind.MANY_TO_ONE)
     private SimpleEntity simple;
 
     public OtherEntity(String name) {

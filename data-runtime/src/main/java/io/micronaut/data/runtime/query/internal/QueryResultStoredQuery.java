@@ -74,12 +74,30 @@ public final class QueryResultStoredQuery<E, R> extends BasicStoredQuery<E, R> {
         return new QueryResultStoredQuery<>(name, annotationMetadata, queryResult, rootEntity, rootEntity, false, true, false, operationType);
     }
 
+    public static <T, R> QueryResultStoredQuery<T, R> single(DataMethod.OperationType operationType,
+                                                          String name,
+                                                          AnnotationMetadata annotationMetadata,
+                                                          QueryResult queryResult,
+                                                          Class<T> rootEntity,
+                                                          Class<R> resultType) {
+        return new QueryResultStoredQuery<>(name, annotationMetadata, queryResult, rootEntity, resultType == Object.class ? resultType : resultType,false, true, false, operationType);
+    }
+
     public static <T> QueryResultStoredQuery<T, T> many(String name,
                                                            AnnotationMetadata annotationMetadata,
                                                            QueryResult queryResult,
                                                            Class<T> rootEntity,
                                                            boolean pageable) {
         return new QueryResultStoredQuery<>(name, annotationMetadata, queryResult, rootEntity, rootEntity, pageable, false, false, DataMethod.OperationType.QUERY);
+    }
+
+    public static <T, R> QueryResultStoredQuery<T, R> many(String name,
+                                                           AnnotationMetadata annotationMetadata,
+                                                           QueryResult queryResult,
+                                                           Class<T> rootEntity,
+                                                           Class<R> resultType,
+                                                           boolean pageable) {
+        return new QueryResultStoredQuery<>(name, annotationMetadata, queryResult, rootEntity, resultType == Object.class ? resultType : resultType, pageable, false, false, DataMethod.OperationType.QUERY);
     }
 
     public static <T> QueryResultStoredQuery<T, Long> count(String name,

@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.runtime.criteria;
 
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.jpa.criteria.PersistentAssociationPath;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityPath;
@@ -25,6 +26,8 @@ import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+@Internal
 
 interface RuntimePersistentEntityPath<T> extends PersistentEntityPath<T> {
 

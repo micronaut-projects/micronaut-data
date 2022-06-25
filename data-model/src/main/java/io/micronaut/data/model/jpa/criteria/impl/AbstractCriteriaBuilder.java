@@ -468,7 +468,7 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
 
     @Override
     @NonNull
-    public <Y extends Comparable<? super Y>> Predicate greaterThan(@NonNull Expression<? extends Y> x, Y y) {
+    public <Y extends Comparable<? super Y>> Predicate greaterThan(@NonNull Expression<? extends Y> x, @NonNull Y y) {
         return comparable(x, y, PredicateBinaryOp.GREATER_THAN);
     }
 
@@ -480,7 +480,7 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
 
     @Override
     @NonNull
-    public <Y extends Comparable<? super Y>> Predicate greaterThanOrEqualTo(@NonNull Expression<? extends Y> x, Y y) {
+    public <Y extends Comparable<? super Y>> Predicate greaterThanOrEqualTo(@NonNull Expression<? extends Y> x, @NonNull Y y) {
         return comparable(x, y, PredicateBinaryOp.GREATER_THAN_OR_EQUALS);
     }
 

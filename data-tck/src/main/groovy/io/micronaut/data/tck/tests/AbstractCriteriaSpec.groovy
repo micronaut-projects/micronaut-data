@@ -140,7 +140,11 @@ abstract class AbstractCriteriaSpec extends Specification {
                                 cb.equal(root.get("amount"), othersJoin.get("amount")),
                                 cb.equal(root.get("amount"), simpleJoin.get("amount")),
                         )
-                    } as Specification
+                    } as Specification,
+                    { root, query, cb ->
+                        root.join("others", JoinType.INNER)
+                        return null
+                    } as Specification,
             ]
             expectedQuery << [
                     'SELECT test_."id",test_."name",test_."enabled2",test_."enabled",test_."age",test_."amount",test_."budget" ' +
@@ -151,7 +155,8 @@ abstract class AbstractCriteriaSpec extends Specification {
                     'SELECT test_."id",test_."name",test_."enabled2",test_."enabled",test_."age",test_."amount",test_."budget" ' +
                             'FROM "test" test_ INNER JOIN "other_entity" test_others_ ON test_."id"=test_others_."test_id" ' +
                             'INNER JOIN "simple_entity" test_others_simple_ ON test_others_."simple_id"=test_others_simple_."id" ' +
-                            'WHERE (test_."amount"=test_others_."amount" AND test_."amount"=test_others_simple_."amount")'
+                            'WHERE (test_."amount"=test_others_."amount" AND test_."amount"=test_others_simple_."amount")',
+                    'SELECT test_."id",test_."name",test_."enabled2",test_."enabled",test_."age",test_."amount",test_."budget" FROM "test" test_ INNER JOIN "other_entity" test_others_ ON test_."id"=test_others_."test_id"'
             ]
     }
 
@@ -221,7 +226,7 @@ abstract class AbstractCriteriaSpec extends Specification {
     void "test #predicate predicate produces where query: #expectedWhereQuery"() {
         given:
             PersistentEntityRoot entityRoot = createRoot(criteriaQuery)
-            criteriaQuery.where(criteriaBuilder."$predicate"(entityRoot.get(property)))
+            criteriaQuery.where(predicateProp(predicate, entityRoot, property))
             def whereSqlQuery = getWhereQueryPart(criteriaQuery)
 
         expect:
@@ -244,7 +249,7 @@ abstract class AbstractCriteriaSpec extends Specification {
     void "test not #predicate predicate produces where query: #expectedWhereQuery"() {
         given:
             PersistentEntityRoot entityRoot = createRoot(criteriaQuery)
-            criteriaQuery.where(criteriaBuilder."$predicate"(entityRoot.get(property)).not())
+            criteriaQuery.where(predicateProp(predicate, entityRoot, property).not())
             def whereSqlQuery = getWhereQueryPart(criteriaQuery)
 
         expect:
@@ -267,7 +272,7 @@ abstract class AbstractCriteriaSpec extends Specification {
     void "test properties #predicate predicate produces where query: #expectedWhereQuery"() {
         given:
             PersistentEntityRoot entityRoot = createRoot(criteriaQuery)
-            criteriaQuery.where(criteriaBuilder."$predicate"(entityRoot.get(property1), entityRoot.get(property2)))
+            criteriaQuery.where(predicateProps(predicate, entityRoot, property1, property2))
             def whereSqlQuery = getWhereQueryPart(criteriaQuery)
 
         expect:
@@ -291,7 +296,7 @@ abstract class AbstractCriteriaSpec extends Specification {
     void "test properties not #predicate predicate produces where query: #expectedWhereQuery"() {
         given:
             PersistentEntityRoot entityRoot = createRoot(criteriaQuery)
-            criteriaQuery.where(criteriaBuilder."$predicate"(entityRoot.get(property1), entityRoot.get(property2)).not())
+            criteriaQuery.where(predicateProps(predicate, entityRoot, property1, property2).not())
             def whereSqlQuery = getWhereQueryPart(criteriaQuery)
 
         expect:
@@ -315,7 +320,7 @@ abstract class AbstractCriteriaSpec extends Specification {
     void "test property value #predicate predicate produces where query: #expectedWhereQuery"() {
         given:
             PersistentEntityRoot entityRoot = createRoot(criteriaQuery)
-            criteriaQuery.where(criteriaBuilder."$predicate"(entityRoot.get(property1), value))
+            criteriaQuery.where(predicateValue(predicate, entityRoot, property1, value))
             def whereSqlQuery = getWhereQueryPart(criteriaQuery)
 
         expect:
@@ -339,7 +344,7 @@ abstract class AbstractCriteriaSpec extends Specification {
     void "test property value not #predicate predicate produces where query: #expectedWhereQuery"() {
         given:
             PersistentEntityRoot entityRoot = createRoot(criteriaQuery)
-            criteriaQuery.where(criteriaBuilder."$predicate"(entityRoot.get(property1), value).not())
+            criteriaQuery.where(predicateValue(predicate, entityRoot, property1, value).not())
             def whereSqlQuery = getWhereQueryPart(criteriaQuery)
 
         expect:
@@ -363,7 +368,7 @@ abstract class AbstractCriteriaSpec extends Specification {
     void "test #projection projection produces selection: #expectedSelectQuery"() {
         given:
             PersistentEntityRoot entityRoot = createRoot(criteriaQuery)
-            criteriaQuery.select(criteriaBuilder."$projection"(entityRoot.get(property)))
+            criteriaQuery.select(project(projection, entityRoot, property))
             String selectSqlQuery = getSelectQueryPart(criteriaQuery)
 
         expect:
@@ -377,6 +382,22 @@ abstract class AbstractCriteriaSpec extends Specification {
             "age"    | "min"           | 'MIN(test_."age")'
 // TODO:            "age"    | "count"    | 'COUNT(test_."age")'
             "age"    | "countDistinct" | 'COUNT(DISTINCT(test_."age"))'
+    }
+
+    protected Selection project(String projection, PersistentEntityRoot root,  String property) {
+        criteriaBuilder."$projection"(root.get(property))
+    }
+
+    protected Predicate predicateValue(String predicate, PersistentEntityRoot root, String property, Object value) {
+        criteriaBuilder."$predicate"(root.get(property), value)
+    }
+
+    protected Predicate predicateProp(String predicate, PersistentEntityRoot root, String property1) {
+        criteriaBuilder."$predicate"(root.get(property1))
+    }
+
+    protected Predicate predicateProps(String predicate, PersistentEntityRoot root, String property1, String property2) {
+        criteriaBuilder."$predicate"(root.get(property1), root.get(property2))
     }
 
     private static String getSelectQueryPart(PersistentEntityCriteriaQuery<Object> query) {

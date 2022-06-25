@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.runtime.criteria;
 
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.model.Association;
@@ -27,7 +28,16 @@ import jakarta.persistence.criteria.Path;
 import java.util.ArrayList;
 import java.util.List;
 
-final class RuntimePersistentAssociationPath<Owner, E> extends AbstractRuntimePersistentEntityJoinSupport<Owner, E>
+/**
+ * The runtime associated path.
+ *
+ * @param <Owner> The association owner type
+ * @param <E>     The association entity type
+ * @author Denis Stepanov
+ * @since 3.2
+ */
+@Internal
+class RuntimePersistentAssociationPath<Owner, E> extends AbstractRuntimePersistentEntityJoinSupport<Owner, E>
         implements RuntimePersistentEntityPath<E>, PersistentAssociationPath<Owner, E> {
 
     private final Path<?> parentPath;

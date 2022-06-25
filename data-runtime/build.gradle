@@ -1,8 +1,12 @@
 plugins {
 	id "io.micronaut.build.internal.data-module"
+    id "io.micronaut.build.internal.data-kotlin"
+    id "org.jetbrains.kotlin.kapt"
 }
 
 dependencies {
+	kapt mn.micronaut.inject.java
+    kapt libs.micronaut.docs
 	annotationProcessor mn.micronaut.inject.java
 	annotationProcessor libs.micronaut.docs
 
@@ -22,5 +26,19 @@ dependencies {
 	testImplementation projects.dataProcessor
 	testImplementation mn.micronaut.inject.groovy
 	testImplementation mn.micronaut.http
+	testImplementation mn.micronaut.test.junit5
 	testImplementation projects.dataTck
+}
+
+dependencies {
+    testRuntimeOnly libs.jupiter.engine
+
+    kaptTest mn.micronaut.inject.java
+    kaptTest projects.dataProcessor
+    testAnnotationProcessor mn.micronaut.inject.java
+    testAnnotationProcessor projects.dataProcessor
+}
+
+test {
+    useJUnitPlatform()
 }

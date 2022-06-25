@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.model.jpa.criteria.impl;
 
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.jpa.criteria.IExpression;
@@ -55,6 +56,7 @@ import static io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils.requirePro
  * @author Denis Stepanov
  * @since 3.2
  */
+@Internal
 public abstract class AbstractPersistentEntityCriteriaUpdate<T> implements PersistentEntityCriteriaUpdate<T>,
         QueryResultPersistentEntityCriteriaQuery {
 

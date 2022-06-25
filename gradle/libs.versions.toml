@@ -16,6 +16,7 @@ javax-transaction = "1.3"
 jakarta-transaction = "2.0.1"
 
 hibernate = "5.6.9.Final"
+hibernate6 = "6.1.0.Final"
 
 spring-data = "2.6.4"
 spring = "5.3.21"
@@ -106,6 +107,8 @@ jetbrains-annotations = { module = "org.jetbrains:annotations", version.ref = "j
 micronaut-test-core = { module = "io.micronaut.test:micronaut-test-core", version.ref = "micronaut-test" }
 micronaut-test-spock = { module = "io.micronaut.test:micronaut-test-spock", version.ref = "micronaut-test" }
 
+jupiter-engine = { module = 'org.junit.jupiter:junit-jupiter-engine' }
+
 # JPA
 
 micronaut-sql-hibernate-jpa = { module = "io.micronaut.sql:micronaut-hibernate-jpa", version.ref = "micronaut-sql" }
@@ -114,6 +117,8 @@ micronaut-sql-hibernate-jpa-spring = { module = "io.micronaut.sql:micronaut-hibe
 
 hibernate-core = { module = "org.hibernate:hibernate-core", version.ref = "hibernate" }
 hibernate-jpamodelgen = { module = "org.hibernate:hibernate-jpamodelgen", version.ref = "hibernate" }
+
+hibernate6-jpamodelgen = { module = "org.hibernate:hibernate-jpamodelgen", version.ref = "hibernate6" }
 
 spring-data-jpa = { module = "org.springframework.data:spring-data-jpa", version.ref = "spring-data" }
 spring-data-commons = { module = "org.springframework.data:spring-data-commons", version.ref = "spring-data" }

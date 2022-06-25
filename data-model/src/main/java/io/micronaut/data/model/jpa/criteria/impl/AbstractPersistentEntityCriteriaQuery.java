@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.model.jpa.criteria.impl;
 
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.Sort;
@@ -62,9 +63,11 @@ import static io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils.requirePro
  * @author Denis Stepanov
  * @since 3.2
  */
+@Internal
 public abstract class AbstractPersistentEntityCriteriaQuery<T> implements PersistentEntityCriteriaQuery<T>,
         QueryResultPersistentEntityCriteriaQuery {
 
+    protected final Class<T> resultType;
     protected Predicate predicate;
     protected Selection<?> selection;
     protected PersistentEntityRoot<?> entityRoot;
@@ -73,6 +76,10 @@ public abstract class AbstractPersistentEntityCriteriaQuery<T> implements Persis
     protected int offset = 0;
     protected boolean forUpdate;
     protected boolean distinct;
+
+    protected AbstractPersistentEntityCriteriaQuery(Class<T> resultType) {
+        this.resultType = resultType;
+    }
 
     @Override
     public QueryResult buildQuery(QueryBuilder queryBuilder) {
@@ -248,7 +255,7 @@ public abstract class AbstractPersistentEntityCriteriaQuery<T> implements Persis
     @Override
     public Set<Root<?>> getRoots() {
         if (entityRoot != null) {
-            return Collections.singleton((Root) entityRoot);
+            return Collections.singleton(entityRoot);
         }
         return Collections.emptySet();
     }
@@ -270,7 +277,7 @@ public abstract class AbstractPersistentEntityCriteriaQuery<T> implements Persis
 
     @Override
     public Class<T> getResultType() {
-        return null;
+        return resultType;
     }
 
     @Override

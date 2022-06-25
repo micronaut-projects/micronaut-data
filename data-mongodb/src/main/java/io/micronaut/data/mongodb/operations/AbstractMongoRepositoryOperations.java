@@ -24,6 +24,9 @@ import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.context.BeanContext;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.beans.BeanIntrospection;
+import io.micronaut.core.beans.BeanIntrospector;
+import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
@@ -41,6 +44,7 @@ import io.micronaut.data.repository.GenericRepository;
 import io.micronaut.data.runtime.config.DataSettings;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.date.DateTimeProvider;
+import io.micronaut.data.runtime.mapper.BeanIntrospectionMapper;
 import io.micronaut.data.runtime.operations.internal.AbstractRepositoryOperations;
 import io.micronaut.data.runtime.query.MethodContextAwareStoredQueryDecorator;
 import io.micronaut.data.runtime.query.PreparedQueryDecorator;
@@ -176,6 +180,25 @@ abstract class AbstractMongoRepositoryOperations<Dtb> extends AbstractRepository
                                   boolean isDtoProjection) {
         if (resultType == BsonDocument.class) {
             return (R) result;
+        }
+        Optional<BeanIntrospection<R>> introspection = BeanIntrospector.SHARED.findIntrospection(resultType);
+        if (introspection.isPresent()) {
+            return (new BeanIntrospectionMapper<BsonDocument, R>() {
+                @Override
+                public Object read(BsonDocument document, String alias) {
+                    BsonValue bsonValue = document.get(alias);
+                    if (bsonValue == null) {
+                        return null;
+                    }
+                    return MongoUtils.toValue(bsonValue);
+                }
+
+                @Override
+                public ConversionService<?> getConversionService() {
+                    return conversionService;
+                }
+
+            }).map(result, resultType);
         }
         BsonValue value;
         if (result == null) {

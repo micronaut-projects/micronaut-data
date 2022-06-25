@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.model.jpa.criteria.impl.selection;
 
-import io.micronaut.core.annotation.Experimental;
+import io.micronaut.core.annotation.Internal;
 
 /**
  * The aggregate type.
@@ -23,7 +23,7 @@ import io.micronaut.core.annotation.Experimental;
  * @author Denis Stepanov
  * @since 3.2
  */
-@Experimental
+@Internal
 public enum AggregateType {
     AVG, SUM, MAX, MIN, COUNT, COUNT_DISTINCT
 }

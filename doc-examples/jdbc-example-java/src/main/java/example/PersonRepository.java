@@ -64,14 +64,14 @@ public interface PersonRepository extends CrudRepository<Person, Long>, JpaSpeci
         }
 
         static PredicateSpecification<Person> ageIsLessThan(int age) {
-            return (root, criteriaBuilder) -> criteriaBuilder.lessThan(root.get("age"), age);
+            return (root, criteriaBuilder) -> criteriaBuilder.lessThan(root.get(Person_.age), age);
         }
 
         // end::specifications[]
         static UpdateSpecification<Person> setNewName(String newName) {
             return (root, query, criteriaBuilder) -> {
                 // tag::setUpdate[]
-                query.set(root.get("name"), newName);
+                query.set(root.get(Person_.name), newName);
                 // end::setUpdate[]
                 return null;
             };

@@ -15,18 +15,26 @@
  */
 package io.micronaut.data.runtime.criteria;
 
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityCriteriaQuery;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
+import io.micronaut.data.runtime.criteria.metamodel.StaticMetamodelInitializer;
 
+@Internal
 final class RuntimePersistentEntityCriteriaQuery<T> extends AbstractPersistentEntityCriteriaQuery<T> {
 
     private final RuntimeEntityRegistry runtimeEntityRegistry;
+    private final StaticMetamodelInitializer staticMetamodelInitializer;
 
-    public RuntimePersistentEntityCriteriaQuery(RuntimeEntityRegistry runtimeEntityRegistry) {
+    public RuntimePersistentEntityCriteriaQuery(RuntimeEntityRegistry runtimeEntityRegistry,
+                                                StaticMetamodelInitializer staticMetamodelInitializer,
+                                                Class<T> resultType) {
+        super(resultType);
         this.runtimeEntityRegistry = runtimeEntityRegistry;
+        this.staticMetamodelInitializer = staticMetamodelInitializer;
     }
 
     @Override
@@ -38,7 +46,9 @@ final class RuntimePersistentEntityCriteriaQuery<T> extends AbstractPersistentEn
         if (entityRoot != null) {
             throw new IllegalStateException("The root entity is already specified!");
         }
-        RuntimePersistentEntityRoot<X> newEntityRoot = new RuntimePersistentEntityRoot<X>((RuntimePersistentEntity<X>) persistentEntity);
+        RuntimePersistentEntity<X> runtimePersistentEntity = (RuntimePersistentEntity<X>) persistentEntity;
+        staticMetamodelInitializer.initializeMetadata(runtimePersistentEntity);
+        RuntimePersistentEntityRoot<X> newEntityRoot = new RuntimePersistentEntityRoot<X>(runtimePersistentEntity);
         entityRoot = newEntityRoot;
         return newEntityRoot;
     }

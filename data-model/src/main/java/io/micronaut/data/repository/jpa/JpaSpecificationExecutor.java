@@ -20,6 +20,9 @@ import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
+import io.micronaut.data.repository.jpa.criteria.CriteriaDeleteBuilder;
+import io.micronaut.data.repository.jpa.criteria.CriteriaQueryBuilder;
+import io.micronaut.data.repository.jpa.criteria.CriteriaUpdateBuilder;
 import io.micronaut.data.repository.jpa.criteria.DeleteSpecification;
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification;
 import io.micronaut.data.repository.jpa.criteria.QuerySpecification;
@@ -114,6 +117,30 @@ public interface JpaSpecificationExecutor<T> {
     List<T> findAll(@Nullable PredicateSpecification<T> spec, Sort sort);
 
     /**
+     * Find all using build criteria query.
+     *
+     * @param builder The criteria query builder
+     * @param <R> the result type
+     *
+     * @return the number records updated.
+     * @since 3.5.0
+     */
+    @NonNull
+    <R> List<R> findAll(@Nullable CriteriaQueryBuilder<R> builder);
+
+    /**
+     * Find one using build criteria query.
+     *
+     * @param builder The criteria query builder
+     * @param <R> the result type
+     *
+     * @return the number records updated.
+     * @since 3.5.0
+     */
+    @NonNull
+    <R> R findOne(@Nullable CriteriaQueryBuilder<R> builder);
+
+    /**
      * Returns the number of instances that the given {@link QuerySpecification} will return.
      *
      * @param spec The query specification
@@ -146,11 +173,29 @@ public interface JpaSpecificationExecutor<T> {
     long deleteAll(@Nullable PredicateSpecification<T> spec);
 
     /**
+     * Delete all entities using build criteria query.
+     *
+     * @param builder The delete criteria query builder
+     * @return the number records updated.
+     * @since 3.5.0
+     */
+    long deleteAll(@Nullable CriteriaDeleteBuilder<T> builder);
+
+    /**
      * Updates all entities matching the given {@link UpdateSpecification}.
      *
      * @param spec The update specification
      * @return the number records updated.
      */
     long updateAll(@Nullable UpdateSpecification<T> spec);
+
+    /**
+     * Updates all entities using build criteria query.
+     *
+     * @param builder The update criteria query builder
+     * @return the number records updated.
+     * @since 3.5.0
+     */
+    long updateAll(@Nullable CriteriaUpdateBuilder<T> builder);
 
 }

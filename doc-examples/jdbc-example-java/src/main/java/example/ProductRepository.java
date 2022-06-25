@@ -5,6 +5,7 @@ import io.micronaut.data.annotation.*;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.repository.CrudRepository;
+import io.micronaut.data.repository.jpa.criteria.PredicateSpecification;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 
@@ -40,6 +41,18 @@ public interface ProductRepository extends CrudRepository<Product, Long> {
     @Join(value = "manufacturer", alias = "m_")
     List<Product> searchProducts(String name);
     // end::native[]
+
+    // tag::specifications[]
+    class Specifications {
+
+//            cb.equal(root.join(Product::manufacturer).get(Manufacturer::name), name)
+        static PredicateSpecification<Person> manufacturerNameEquals(String name) {
+            return (root, criteriaBuilder) -> null;
+        }
+
+    }
+    // tag::specifications[]
+
 // tag::join[]
 // tag::async[]
 }

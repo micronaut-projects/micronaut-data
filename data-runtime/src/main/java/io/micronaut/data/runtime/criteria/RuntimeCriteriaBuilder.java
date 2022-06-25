@@ -20,6 +20,8 @@ import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQuery;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaUpdate;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractCriteriaBuilder;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
+import io.micronaut.data.runtime.criteria.metamodel.StaticMetamodelInitializer;
+import jakarta.inject.Singleton;
 
 /**
  * The runtime implementation of {@link AbstractCriteriaBuilder}.
@@ -27,9 +29,11 @@ import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
  * @author Denis Stepanov
  * @since 3.2
  */
+@Singleton
 public class RuntimeCriteriaBuilder extends AbstractCriteriaBuilder {
 
     private final RuntimeEntityRegistry runtimeEntityRegistry;
+    private final StaticMetamodelInitializer staticMetamodelInitializer = new StaticMetamodelInitializer();
 
     public RuntimeCriteriaBuilder(RuntimeEntityRegistry runtimeEntityRegistry) {
         this.runtimeEntityRegistry = runtimeEntityRegistry;
@@ -37,21 +41,21 @@ public class RuntimeCriteriaBuilder extends AbstractCriteriaBuilder {
 
     @Override
     public PersistentEntityCriteriaQuery<Object> createQuery() {
-        return new RuntimePersistentEntityCriteriaQuery<>(runtimeEntityRegistry);
+        return new RuntimePersistentEntityCriteriaQuery<>(runtimeEntityRegistry, staticMetamodelInitializer, Object.class);
     }
 
     @Override
     public <T> PersistentEntityCriteriaQuery<T> createQuery(Class<T> resultClass) {
-        return new RuntimePersistentEntityCriteriaQuery<>(runtimeEntityRegistry);
+        return new RuntimePersistentEntityCriteriaQuery<>(runtimeEntityRegistry, staticMetamodelInitializer, resultClass);
     }
 
     @Override
     public <T> PersistentEntityCriteriaUpdate<T> createCriteriaUpdate(Class<T> targetEntity) {
-        return new RuntimePersistentEntityCriteriaUpdate<>(runtimeEntityRegistry);
+        return new RuntimePersistentEntityCriteriaUpdate<>(runtimeEntityRegistry, targetEntity, staticMetamodelInitializer);
     }
 
     @Override
     public <T> PersistentEntityCriteriaDelete<T> createCriteriaDelete(Class<T> targetEntity) {
-        return new RuntimePersistentEntityCriteriaDelete<>(runtimeEntityRegistry, targetEntity);
+        return new RuntimePersistentEntityCriteriaDelete<>(runtimeEntityRegistry, targetEntity, staticMetamodelInitializer);
     }
 }

@@ -1,5 +1,6 @@
 package example
 
+import example.ProductRepository.Specifications.manufacturerNameEquals
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.*
@@ -41,14 +42,13 @@ internal class ProductRepositorySpec : AbstractMongoSpec() {
     }
 
     @Test
-    @Throws(Exception::class)
     fun testAsync() {
         // tag::async[]
         val total = productRepository.findByNameRegex(".*o.*")
                 .thenCompose { product -> productRepository.countByManufacturerName(product.manufacturer?.name) }
                 .get(1000, TimeUnit.SECONDS)
 
-        Assertions.assertEquals(
+        assertEquals(
                 2,
                 total
         )
@@ -56,7 +56,6 @@ internal class ProductRepositorySpec : AbstractMongoSpec() {
     }
 
     @Test
-    @Throws(Exception::class)
     fun testReactive() {
         // tag::reactive[]
         val total = productRepository.queryByNameRegex(".*o.*")
@@ -67,10 +66,24 @@ internal class ProductRepositorySpec : AbstractMongoSpec() {
                 .defaultIfEmpty(0L)
                 .blockingGet()
 
-        Assertions.assertEquals(
+        assertEquals(
                 2,
                 total
         )
         // end::reactive[]
     }
+
+    @Test
+    fun testCriteriaJoin() {
+        val samsung = manufacturerRepository.save("Samsung")
+        productRepository.save(
+                Product(null,
+                        "Android",
+                        samsung
+                )
+        )
+        assertEquals(2, productRepository.findAll(manufacturerNameEquals("Apple")).size)
+        assertEquals(1, productRepository.findAll(manufacturerNameEquals("Samsung")).size)
+    }
+
 }

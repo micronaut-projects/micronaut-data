@@ -716,7 +716,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
     }
 
     private void addProjection(Map<String, Object> groupBy, QueryModel.PropertyProjection pr, String op) {
-        groupBy.put(pr.getPropertyName(), singletonMap(op, "$" + pr.getPropertyName()));
+        groupBy.put(pr.getAlias().orElse(pr.getPropertyName()), singletonMap(op, "$" + pr.getPropertyName()));
     }
 
     @NonNull

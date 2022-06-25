@@ -1,13 +1,17 @@
 package io.micronaut.data.runtime.criteria;
 
-import io.micronaut.data.annotation.*;
-import java.math.*;
+import io.micronaut.data.annotation.Id;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.OneToMany;
+
+import java.math.BigDecimal;
 import java.util.List;
 
-@MappedEntity
+@Entity
 class Test {
     @Id
-    @GeneratedValue(GeneratedValue.Type.IDENTITY)
+    @jakarta.persistence.GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String name;
     private boolean enabled;
@@ -16,7 +20,8 @@ class Test {
     private BigDecimal amount;
     private BigDecimal budget;
 
-    @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = "test")
+//    @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = "test")
+    @OneToMany(mappedBy = "test")
     private List<OtherEntity> others;
 
     public Test(String name) {
