@@ -64,6 +64,7 @@ dbc:
     criteriaExecuteUpdate: Updating
     criteriaExecuteDelete: Deleting
     otherRepositoryVariations: Other repository variations
+    typeSafeJava: Type-Safe Java queries
   sqlMapping:
     title: Mapping Entities
     sqlAnnotations: SQL Annotations

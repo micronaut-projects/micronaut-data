@@ -80,7 +80,7 @@ public final class QueryResultStoredQuery<E, R> extends BasicStoredQuery<E, R> {
                                                           QueryResult queryResult,
                                                           Class<T> rootEntity,
                                                           Class<R> resultType) {
-        return new QueryResultStoredQuery<>(name, annotationMetadata, queryResult, rootEntity, resultType == Object.class ? resultType : resultType,false, true, false, operationType);
+        return new QueryResultStoredQuery<>(name, annotationMetadata, queryResult, rootEntity, resultType == Object.class ? (Class<R>) rootEntity : resultType,false, true, false, operationType);
     }
 
     public static <T> QueryResultStoredQuery<T, T> many(String name,
@@ -97,7 +97,7 @@ public final class QueryResultStoredQuery<E, R> extends BasicStoredQuery<E, R> {
                                                            Class<T> rootEntity,
                                                            Class<R> resultType,
                                                            boolean pageable) {
-        return new QueryResultStoredQuery<>(name, annotationMetadata, queryResult, rootEntity, resultType == Object.class ? resultType : resultType, pageable, false, false, DataMethod.OperationType.QUERY);
+        return new QueryResultStoredQuery<>(name, annotationMetadata, queryResult, rootEntity, resultType == Object.class ? (Class<R>) rootEntity : resultType, pageable, false, false, DataMethod.OperationType.QUERY);
     }
 
     public static <T> QueryResultStoredQuery<T, Long> count(String name,

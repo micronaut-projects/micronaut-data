@@ -198,7 +198,8 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
                 if (param instanceof Sort && param != pageable) {
                     Sort sort = (Sort) param;
                     if (sort.isSorted()) {
-                        criteriaQuery.orderBy(getOrders(sort, criteriaQuery.getRoots().stream().findFirst().get(), criteriaBuilder));
+                        Root<?> root = criteriaQuery.getRoots().stream().findFirst().orElseThrow(() -> new IllegalStateException("The root not found!"));
+                        criteriaQuery.orderBy(getOrders(sort, root, criteriaBuilder));
                         break;
                     }
                 }

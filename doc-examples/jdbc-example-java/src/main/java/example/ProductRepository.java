@@ -16,10 +16,11 @@ import java.util.concurrent.CompletableFuture;
 // tag::async[]
 @JdbcRepository(dialect = Dialect.H2)
 public interface ProductRepository extends CrudRepository<Product, Long> {
-// end::join[]
+    // end::join[]
 // end::async[]
     // tag::join[]
-    @Join(value = "manufacturer", type = Join.Type.FETCH) // <1>
+    @Join(value = "manufacturer", type = Join.Type.FETCH)
+    // <1>
     List<Product> list();
     // end::join[]
 
@@ -28,6 +29,7 @@ public interface ProductRepository extends CrudRepository<Product, Long> {
     CompletableFuture<Product> findByNameContains(String str);
 
     CompletableFuture<Long> countByManufacturerName(String name);
+
     // end::async[]
     // tag::reactive[]
     @Join("manufacturer")
@@ -42,16 +44,15 @@ public interface ProductRepository extends CrudRepository<Product, Long> {
     List<Product> searchProducts(String name);
     // end::native[]
 
-    // tag::specifications[]
     class Specifications {
+        // tag::typesafe[]
 
-//            cb.equal(root.join(Product::manufacturer).get(Manufacturer::name), name)
-        static PredicateSpecification<Person> manufacturerNameEquals(String name) {
-            return (root, criteriaBuilder) -> null;
+        static PredicateSpecification<Product> manufacturerNameEquals(String name) {
+            return (root, cb) -> cb.equal(root.join(Product_.manufacturer).get(Manufacturer_.name), name);
         }
 
+        // end::typesafe[]
     }
-    // tag::specifications[]
 
 // tag::join[]
 // tag::async[]

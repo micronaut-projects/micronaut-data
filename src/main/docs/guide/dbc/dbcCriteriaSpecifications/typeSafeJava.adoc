@@ -1,0 +1,49 @@
+Jakarta Persistence Criteria API supports type-safe queries by using static metamodel that are generated at the compile-time.
+
+The metamodel generator will generate a corresponding metamodel class with an underscore suffix letter e.g. an entity `MyEntity` will have a corresponding metamodel entity generated with a name `MyEntity_` and it will be in the same package as the original entity. Every field in the newly generated entity will correspond to the entity's property and can be used as a property reference.
+
+Example from the https://jakarta.ee/specifications/persistence/3.0/jakarta-persistence-spec-3.0.html#a10643[official API specification]:
+
+[source,java]
+----
+CriteriaBuilder cb = ...
+CriteriaQuery<String> q = cb.createQuery(String.class);
+Root<Customer> customer = q.from(Customer.class);
+Join<Customer, Order> order = customer.join(Customer_.orders);
+Join<Order, Item> item = order.join(Order_.lineItems);
+q.select(customer.get(Customer_.name))
+.where(cb.equal(item.get(Item_.product).get(Product_.productType), "printer"));
+----
+
+Micronaut Data at this moment doesn't provide a way to generate the static metadata, the only supported way is to use Jakarta Persistence annotations in combination with Hibernate JPA Static Metamodel Generator which will generate the metamodel even so, we don't use Hibernate.
+
+To configure the metamodel generator simply add the following dependency to the annotation processor classpath:
+
+dependency:hibernate-jpamodelgen-jakarta[groupId="org.hibernate"]
+
+NOTE: We are using Hibernate Jakarta variation dependency because Hibernate 5 is still using `javax` JPA package
+
+And we need to include the generated classes on the Java classpath to have them accessible:
+
+Example for Gradle builds:
+
+[source,groovy]
+----
+sourceSets {
+    generated {
+        java {
+            srcDirs = ["$build/generated/java"]
+        }
+    }
+}
+----
+
+If everything is correctly set up you should be able to see the generated metamodel classes in the IDE code completion and be able to use them:
+
+snippet::example.PersonRepository[project-base="doc-examples/jdbc-example",source="main" tags="typesafe",indent="0"]
+
+---
+
+snippet::example.ProductRepository[project-base="doc-examples/jdbc-example",source="main" tags="typesafe",indent="0"]
+
+NOTE: More information about the static metamodel can be found in the https://jakarta.ee/specifications/persistence/3.0/jakarta-persistence-spec-3.0.html#a6933[official specification]

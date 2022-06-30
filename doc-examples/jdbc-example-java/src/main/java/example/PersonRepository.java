@@ -58,9 +58,10 @@ public interface PersonRepository extends CrudRepository<Person, Long>, JpaSpeci
     // tag::specifications[]
     // tag::allSpecifications[]
     class Specifications {
+        // tag::typesafe[]
 
         static PredicateSpecification<Person> nameEquals(String name) {
-            return (root, criteriaBuilder) -> criteriaBuilder.equal(root.get("name"), name);
+            return (root, criteriaBuilder) -> criteriaBuilder.equal(root.get(Person_.name), name);
         }
 
         static PredicateSpecification<Person> ageIsLessThan(int age) {
@@ -77,6 +78,7 @@ public interface PersonRepository extends CrudRepository<Person, Long>, JpaSpeci
             };
         }
         // tag::specifications[]
+        // end::typesafe[]
     }
     // end::allSpecifications[]
     // end::specifications[]
