@@ -25,6 +25,33 @@ import kotlin.reflect.KProperty
 import kotlin.reflect.KProperty1
 
 @Experimental
+fun <E, Y> KProperty<Y?>.asPath(root: Root<E>): Path<Y> = root.get(name)
+
+@Experimental
+operator fun <X, V> Path<X>.get(prop: KProperty1<out X, V>): Path<V> {
+    return get(prop.name)
+}
+
+@Experimental
+fun <E, I, K : Collection<I>?> From<*, E>.joinMany(prop: KProperty1<out E, K>, joinType: JoinType? = null): Join<E, I> {
+    return if (joinType == null) {
+        this.join(prop.name)
+    } else {
+        this.join(prop.name, joinType)
+    }
+}
+
+@Experimental
+fun <E, I> From<*, E>.joinOne(prop: KProperty1<out E, I>, joinType: JoinType? = null): Join<E, I> {
+    return if (joinType == null) {
+        this.join(prop.name)
+    } else {
+        this.join(prop.name, joinType)
+    }
+}
+
+
+@Experimental
 inline fun <reified E> where(noinline dsl: Where<E>.() -> Unit) = WherePredicate(dsl)
 
 @Experimental
@@ -301,28 +328,4 @@ class Where<T>(var root: Root<T>, var criteriaBuilder: CriteriaBuilder) {
         criteriaBuilder.or(*predicates.toTypedArray())
     }
 
-}
-
-@Experimental
-fun <E, Y> KProperty<Y?>.asPath(root: Root<E>): Path<Y> = root.get(name)
-
-@Experimental
-operator fun <X, V> Path<X>.get(prop: KProperty1<X, V>): Path<V> {
-    return get(prop.name)
-}
-
-fun <E, I, K : Collection<I>?> From<*, E>.joinMany(prop: KProperty1<out E, K>, joinType: JoinType? = null): Join<E, I> {
-    return if (joinType == null) {
-        this.join(prop.name)
-    } else {
-        this.join(prop.name, joinType)
-    }
-}
-
-fun <E, I> From<*, E>.joinOne(prop: KProperty1<out E, I>, joinType: JoinType? = null): Join<E, I> {
-    return if (joinType == null) {
-        this.join(prop.name)
-    } else {
-        this.join(prop.name, joinType)
-    }
 }

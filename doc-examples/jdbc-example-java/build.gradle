@@ -20,7 +20,7 @@ micronaut {
 
 dependencies {
     annotationProcessor projects.dataProcessor
-    annotationProcessor libs.hibernate6.jpamodelgen
+    annotationProcessor libs.hibernate.jpamodelgen.jakarta
     annotationProcessor "io.micronaut:micronaut-validation"
     implementation project(":data-jdbc")
     implementation 'io.micronaut.rxjava2:micronaut-rxjava2'
