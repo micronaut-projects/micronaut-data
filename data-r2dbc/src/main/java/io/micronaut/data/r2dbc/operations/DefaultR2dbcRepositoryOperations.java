@@ -329,7 +329,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         if (LOG.isDebugEnabled()) {
             LOG.debug("Creating a new Connection for DataSource: " + dataSourceName);
         }
-        return Flux.usingWhen(connectionFactory.create(), connection -> {
+        return Mono.from(connectionFactory.create()).flatMapMany(connection -> {
             Supplier<Publisher<Void>> cancelCallback = () -> {
                 if (LOG.isDebugEnabled()) {
                     LOG.debug("Closing Connection for DataSource: " + dataSourceName);
@@ -337,7 +337,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                 return connection.close();
             };
             return handler.apply(connection, cancelCallback);
-        }, connection -> Mono.empty());
+        });
     }
 
     private IsolationLevel getIsolationLevel(TransactionDefinition definition) {
@@ -409,14 +409,14 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                 }
                 return withConnectionWithCancelCallback((connection, cancelCallback) -> {
                         if (LOG.isDebugEnabled()) {
-                            LOG.debug("Transaction Begin for DataSource: {}", dataSourceName);
+                            LOG.debug("Transaction: {} begin for dataSource: {}", definition.getName(), dataSourceName);
                         }
-                        DefaultReactiveTransactionStatus status = new DefaultReactiveTransactionStatus(connection, true);
+                        DefaultReactiveTransactionStatus status = new DefaultReactiveTransactionStatus(definition, connection, true);
                         Mono<Boolean> resourceSupplier;
                         if (definition.getIsolationLevel() != TransactionDefinition.DEFAULT.getIsolationLevel()) {
                             IsolationLevel isolationLevel = getIsolationLevel(definition);
                             if (LOG.isDebugEnabled()) {
-                                LOG.debug("Setting Isolation Level ({}) for Transaction on DataSource: {}", isolationLevel, dataSourceName);
+                                LOG.debug("Setting Isolation Level ({}) for transaction: {} for dataSource: {}", isolationLevel, definition.getName(), dataSourceName);
                             }
                             if (isolationLevel != null) {
                                 resourceSupplier = Flux.from(connection.setTransactionIsolationLevel(isolationLevel))
@@ -457,41 +457,46 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                                    Throwable throwable,
                                    Supplier<Publisher<Void>> cancelConnection) {
         if (LOG.isWarnEnabled()) {
-            LOG.warn("Rolling back transaction on error: " + throwable.getMessage(), throwable);
+            LOG.warn("Rolling back transaction: {} on error: {} for dataSource {}",
+                status.getDefinition().getName(), throwable.getMessage(), dataSourceName, throwable);
         }
         if (!definition.rollbackOn(throwable)) {
             return doCommit(status, cancelConnection);
         }
-        return doRollback(status, cancelConnection)
+        return rollback(status, cancelConnection)
             .onErrorResume((rollbackError) -> {
                 if (rollbackError != throwable && LOG.isWarnEnabled()) {
-                    LOG.warn("Error occurred during transaction rollback: " + rollbackError.getMessage(), rollbackError);
+                    LOG.warn("Error occurred during transaction: {} rollback failed with: {} for dataSource {}",
+                        status.getDefinition().getName(), rollbackError.getMessage(), dataSourceName, rollbackError);
                 }
                 return Mono.error(throwable);
             });
     }
 
-    private Flux<Void> doRollback(DefaultReactiveTransactionStatus status, Supplier<Publisher<Void>> cancelConnection) {
-        return Flux.from(status.getConnection().rollbackTransaction())
-            .hasElements()
-            .flatMapMany(ignore -> cancelConnection.get())
-            .doFinally((sig) -> status.completed = true);
+    private Flux<Void> rollback(DefaultReactiveTransactionStatus status, Supplier<Publisher<Void>> cancelConnection) {
+        return Flux.from(status.getConnection().rollbackTransaction()).as(flux -> finishTx(flux, status, cancelConnection));
     }
 
     private Flux<Void> doCommit(DefaultReactiveTransactionStatus status, Supplier<Publisher<Void>> cancelConnection) {
         if (status.isRollbackOnly()) {
             if (LOG.isDebugEnabled()) {
-                LOG.debug("Rolling back transaction on DataSource {}.", dataSourceName);
+                LOG.debug("Rolling back transaction: {} for dataSource {}", status.getDefinition().getName(), dataSourceName);
             }
-            return doRollback(status, cancelConnection);
+            return rollback(status, cancelConnection);
         }
         if (LOG.isDebugEnabled()) {
-            LOG.debug("Committing transaction for DataSource {}.", dataSourceName);
+            LOG.debug("Committing transaction: {} for dataSource {}", status.getDefinition().getName(), dataSourceName);
         }
-        return Flux.from(status.getConnection().commitTransaction())
-            .hasElements()
-            .flatMapMany(ignore -> cancelConnection.get())
-            .doFinally(sig -> status.completed = true);
+        return Flux.from(status.getConnection().commitTransaction()).as(flux -> finishTx(flux, status, cancelConnection));
+
+    }
+
+    private Flux<Void> finishTx(Flux<Void> flux, DefaultReactiveTransactionStatus status, Supplier<Publisher<Void>> cancelConnection) {
+        return flux.hasElements()
+            .flatMapMany(ignore -> {
+                status.completed = true;
+                return cancelConnection.get();
+            });
     }
 
     private static <R> Mono<R> toSingleResult(Flux<R> flux) {
@@ -536,14 +541,20 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
      * Represents the current reactive transaction status.
      */
     private static final class DefaultReactiveTransactionStatus implements ReactiveTransactionStatus<Connection> {
+        private final TransactionDefinition definition;
         private final Connection connection;
         private final boolean isNew;
         private boolean rollbackOnly;
         private boolean completed;
 
-        public DefaultReactiveTransactionStatus(Connection connection, boolean isNew) {
+        public DefaultReactiveTransactionStatus(TransactionDefinition definition, Connection connection, boolean isNew) {
+            this.definition = definition;
             this.connection = connection;
             this.isNew = isNew;
+        }
+
+        public TransactionDefinition getDefinition() {
+            return definition;
         }
 
         @Override

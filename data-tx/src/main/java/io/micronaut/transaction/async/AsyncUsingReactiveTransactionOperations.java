@@ -25,10 +25,14 @@ import io.micronaut.transaction.reactive.ReactiveTransactionStatus;
 import io.micronaut.transaction.reactive.ReactorReactiveTransactionOperations;
 import io.micronaut.transaction.support.TransactionSynchronizationManager;
 import io.micronaut.transaction.support.TransactionSynchronizationManager.TransactionSynchronizationStateOp;
+import org.reactivestreams.Publisher;
+import org.reactivestreams.Subscription;
+import reactor.core.CoreSubscriber;
 import reactor.core.publisher.Mono;
 import reactor.util.context.ContextView;
 
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
 
@@ -64,7 +68,7 @@ public final class AsyncUsingReactiveTransactionOperations<C> implements AsyncTr
             // Reactive transaction manager applied on Kotlin coroutine
             // Use reactive transaction manager to open a transaction and send the Reactor context in the coroutine context
             ContextView previousContext = (ContextView) TransactionSynchronizationManager.getResource(ContextView.class);
-            Mono<T> result = Mono.from(reactiveTransactionOperations.withTransaction(definition, status -> {
+            Mono<T> result = Mono.fromDirect(reactiveTransactionOperations.withTransaction(definition, status -> {
                 return Mono.deferContextual(contextView -> {
                         try (TransactionSynchronizationStateOp ignore = TransactionSynchronizationManager.withState(state)) {
                             TransactionSynchronizationManager.rebindResource(ContextView.class, contextView);
@@ -82,8 +86,37 @@ public final class AsyncUsingReactiveTransactionOperations<C> implements AsyncTr
             if (previousContext != null) {
                 result = result.contextWrite(previousContext);
             }
-            return result.toFuture();
+            return onCompleteCompleteFuture(result);
         }
+    }
+
+    private static <T> CompletableFuture<T> onCompleteCompleteFuture(Publisher<T> publisher) {
+        CompletableFuture<T> completableFuture = new CompletableFuture<>();
+        publisher.subscribe(new CoreSubscriber<T>() {
+
+            private T result;
+
+            @Override
+            public void onSubscribe(Subscription s) {
+                s.request(1);
+            }
+
+            @Override
+            public void onNext(T t) {
+                result = t;
+            }
+
+            @Override
+            public void onError(Throwable t) {
+                completableFuture.completeExceptionally(t);
+            }
+
+            @Override
+            public void onComplete() {
+                completableFuture.complete(result);
+            }
+        });
+        return completableFuture;
     }
 
     private static final class DefaultAsyncTransactionStatus<T> implements AsyncTransactionStatus<T> {

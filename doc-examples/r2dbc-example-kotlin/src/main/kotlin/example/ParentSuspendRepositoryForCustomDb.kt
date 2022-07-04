@@ -24,4 +24,6 @@ interface ParentSuspendRepositoryForCustomDb : GenericRepository<Parent, Int> {
 
     suspend fun count(): Long
 
+    suspend fun deleteAll()
+
 }
