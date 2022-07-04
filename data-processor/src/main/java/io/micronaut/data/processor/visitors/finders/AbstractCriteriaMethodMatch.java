@@ -64,6 +64,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * Abstract criteria matcher.
@@ -82,7 +83,7 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
     private static final String NOT = "Not";
 
     private static final Pattern[] OPERATOR_PATTERNS;
-    private static final Pattern PROPERTY_RESTRICTIONS_PATTERN;
+    private static final List<String> PROPERTY_RESTRICTIONS;
     private static final Pattern RESTRICTIONS_PATTERN;
 
     static {
@@ -90,10 +91,10 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
         for (int i = 0; i < OPERATORS.length; i++) {
             OPERATOR_PATTERNS[i] = Pattern.compile("(\\w+)(" + OPERATORS[i] + ")(\\p{Upper})(\\w+)");
         }
-        List<String> propertyRestrictionElements = new ArrayList<>(Restrictions.PROPERTY_RESTRICTIONS_MAP.keySet());
-        propertyRestrictionElements.sort(Comparator.comparingInt(String::length).thenComparing(String.CASE_INSENSITIVE_ORDER).reversed());
-        String prExpressionPattern = String.join("|", propertyRestrictionElements);
-        PROPERTY_RESTRICTIONS_PATTERN = Pattern.compile("\\p{Upper}[\\p{Lower}\\d]+(" + prExpressionPattern + ")");
+        PROPERTY_RESTRICTIONS = Restrictions.PROPERTY_RESTRICTIONS_MAP.keySet()
+            .stream()
+            .sorted(Comparator.comparingInt(String::length).thenComparing(String.CASE_INSENSITIVE_ORDER).reversed())
+            .collect(Collectors.toList());
         List<String> restrictionElements = new ArrayList<>(Restrictions.RESTRICTIONS_MAP.keySet());
         restrictionElements.sort(Comparator.comparingInt(String::length).thenComparing(String.CASE_INSENSITIVE_ORDER).reversed());
         String rExpressionPattern = String.join("|", restrictionElements);
@@ -393,9 +394,9 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
                                               PersistentEntityRoot<T> root,
                                               SourcePersistentEntityCriteriaBuilder cb,
                                               Iterator<ParameterElement> parameters) {
-        Matcher matcher = PROPERTY_RESTRICTIONS_PATTERN.matcher(expression);
-        if (matcher.find()) {
-            String restrictionName = matcher.group(1);
+        Optional<String> optionalRestrictionName = PROPERTY_RESTRICTIONS.stream().filter(expression::endsWith).findFirst();
+        if (optionalRestrictionName.isPresent()) {
+            String restrictionName = optionalRestrictionName.get();
             String propertyName = extractPropertyName(expression, restrictionName);
             if (StringUtils.isEmpty(propertyName)) {
                 throw new MatchFailedException("Missing property name for restriction: " + restrictionName);
@@ -411,7 +412,7 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
             return getPropertyRestriction(propertyName, root, cb, parameters, restriction);
         }
 
-        matcher = RESTRICTIONS_PATTERN.matcher(expression);
+        Matcher matcher = RESTRICTIONS_PATTERN.matcher(expression);
         if (matcher.find()) {
             String restrictionName = matcher.group(1);
             Restrictions.Restriction<?> restriction = Restrictions.findRestriction(restrictionName);
