@@ -16,7 +16,6 @@
 package io.micronaut.data.hibernate.reactive
 
 import io.micronaut.data.annotation.Repository
-import io.micronaut.data.repository.reactive.ReactorCrudRepository
 import io.micronaut.data.tck.entities.Person
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
@@ -26,7 +25,7 @@ import spock.lang.Specification
 class MultipleDataSourceSpec extends Specification implements PostgresWithOtherHibernateReactiveProperties {
 
     @Inject PersonCrudRepository personRepository
-    @Inject OtherPersonRepository otherPersonRepository
+    @Inject @Repository('other') PersonCrudRepository otherPersonRepository
 
     void "test multiple data sources"() {
         when:
@@ -44,8 +43,4 @@ class MultipleDataSourceSpec extends Specification implements PostgresWithOtherH
         otherPersonRepository.findAll().collectList().block()[0].name == "Joe"
     }
 
-
-    @Repository('other')
-    static interface OtherPersonRepository extends ReactorCrudRepository<Person, Long> {
-    }
 }

@@ -17,12 +17,10 @@ package io.micronaut.data.hibernate
 
 import io.micronaut.context.annotation.Property
 import io.micronaut.data.annotation.Repository
-import io.micronaut.data.repository.CrudRepository
 import io.micronaut.data.tck.entities.Person
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
-import spock.lang.Specification
-
 import jakarta.inject.Inject
+import spock.lang.Specification
 
 @MicronautTest(packages = "io.micronaut.data.tck.entities", transactional = false)
 @Property(name = "datasources.default.name", value = "mydb")
@@ -32,7 +30,8 @@ import jakarta.inject.Inject
 class MultipleDataSourceSpec extends Specification {
 
     @Inject PersonCrudRepository personRepository
-    @Inject OtherPersonRepository otherPersonRepository
+    @Repository('other')
+    @Inject PersonCrudRepository otherPersonRepository
 
     void "test multiple data sources"() {
         when:
@@ -48,11 +47,5 @@ class MultipleDataSourceSpec extends Specification {
 
         then:
         otherPersonRepository.findAll().toList()[0].name == "Joe"
-    }
-
-
-    @Repository('other')
-    static interface OtherPersonRepository extends CrudRepository<Person, Long>{
-
     }
 }
