@@ -17,6 +17,7 @@ package io.micronaut.data.runtime.intercept.criteria;
 
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.annotation.AnnotationMetadata;
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.beans.BeanIntrospection;
@@ -26,16 +27,16 @@ import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
-import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaDelete;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQuery;
-import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaUpdate;
 import io.micronaut.data.model.jpa.criteria.impl.QueryResultPersistentEntityCriteriaQuery;
 import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.model.runtime.PreparedQuery;
-import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.model.runtime.StoredQuery;
 import io.micronaut.data.operations.RepositoryOperations;
+import io.micronaut.data.repository.jpa.criteria.CriteriaDeleteBuilder;
+import io.micronaut.data.repository.jpa.criteria.CriteriaQueryBuilder;
+import io.micronaut.data.repository.jpa.criteria.CriteriaUpdateBuilder;
 import io.micronaut.data.repository.jpa.criteria.DeleteSpecification;
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification;
 import io.micronaut.data.repository.jpa.criteria.QuerySpecification;
@@ -47,6 +48,9 @@ import io.micronaut.data.runtime.query.PreparedQueryDecorator;
 import io.micronaut.data.runtime.query.StoredQueryDecorator;
 import io.micronaut.data.runtime.query.internal.QueryResultStoredQuery;
 import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaDelete;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.CriteriaUpdate;
 import jakarta.persistence.criteria.Order;
 import jakarta.persistence.criteria.Path;
 import jakarta.persistence.criteria.Predicate;
@@ -65,6 +69,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author Denis Stepanov
  * @since 3.2
  */
+@Internal
 public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQueryInterceptor<T, R> {
 
     private final Map<RepositoryMethodKey, QueryBuilder> sqlQueryBuilderForRepositories = new ConcurrentHashMap<>();
@@ -79,8 +84,7 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
      */
     protected AbstractSpecificationInterceptor(RepositoryOperations operations) {
         super(operations);
-        RuntimeEntityRegistry runtimeEntityRegistry = operations.getApplicationContext().getBean(RuntimeEntityRegistry.class);
-        this.criteriaBuilder = new RuntimeCriteriaBuilder(runtimeEntityRegistry);
+        this.criteriaBuilder = operations.getApplicationContext().getBean(RuntimeCriteriaBuilder.class);
         if (operations instanceof MethodContextAwareStoredQueryDecorator) {
             storedQueryDecorator = (MethodContextAwareStoredQueryDecorator) operations;
         } else if (operations instanceof StoredQueryDecorator) {
@@ -150,37 +154,19 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
     }
 
     private <E> StoredQuery<E, ?> buildUpdateAll(MethodInvocationContext<T, R> context, QueryBuilder sqlQueryBuilder) {
-        StoredQuery<E, ?> storedQuery;
-        Class<E> rootEntity = getRequiredRootEntity(context);
-        UpdateSpecification<E> specification = getUpdateSpecification(context);
-        PersistentEntityCriteriaUpdate<E> criteriaUpdate = criteriaBuilder.createCriteriaUpdate(rootEntity);
-        Root<E> root = criteriaUpdate.from(rootEntity);
-        if (specification != null) {
-            Predicate predicate = specification.toPredicate(root, criteriaUpdate, criteriaBuilder);
-            if (predicate != null) {
-                criteriaUpdate.where(predicate);
-            }
-        }
+        CriteriaUpdateBuilder<E> criteriaUpdateBuilder = getCriteriaUpdateBuilder(context);
+        CriteriaUpdate<E> criteriaUpdate = criteriaUpdateBuilder.build(criteriaBuilder);
         QueryResult queryResult = ((QueryResultPersistentEntityCriteriaQuery) criteriaUpdate).buildQuery(sqlQueryBuilder);
-        storedQuery = QueryResultStoredQuery.single(DataMethod.OperationType.UPDATE, context.getName(), context.getAnnotationMetadata(), queryResult, rootEntity);
-        return storedQuery;
+        return QueryResultStoredQuery.single(DataMethod.OperationType.UPDATE, context.getName(),
+            context.getAnnotationMetadata(), queryResult, (Class<E>) criteriaUpdate.getRoot().getJavaType());
     }
 
     private <E> StoredQuery<E, ?> buildDeleteAll(MethodInvocationContext<T, R> context, QueryBuilder sqlQueryBuilder) {
-        StoredQuery<E, ?> storedQuery;
-        Class<E> rootEntity = getRequiredRootEntity(context);
-        DeleteSpecification<E> specification = getDeleteSpecification(context);
-        PersistentEntityCriteriaDelete<E> criteriaDelete = criteriaBuilder.createCriteriaDelete(rootEntity);
-        Root<E> root = criteriaDelete.from(rootEntity);
-        if (specification != null) {
-            Predicate predicate = specification.toPredicate(root, criteriaDelete, criteriaBuilder);
-            if (predicate != null) {
-                criteriaDelete.where(predicate);
-            }
-        }
+        CriteriaDeleteBuilder<E> criteriaDeleteBuilder = getCriteriaDeleteBuilder(context);
+        CriteriaDelete<E> criteriaDelete = criteriaDeleteBuilder.build(criteriaBuilder);
         QueryResult queryResult = ((QueryResultPersistentEntityCriteriaQuery) criteriaDelete).buildQuery(sqlQueryBuilder);
-        storedQuery = QueryResultStoredQuery.single(DataMethod.OperationType.DELETE, context.getName(), context.getAnnotationMetadata(), queryResult, rootEntity);
-        return storedQuery;
+        return QueryResultStoredQuery.single(DataMethod.OperationType.DELETE, context.getName(),
+            context.getAnnotationMetadata(), queryResult, (Class<E>) criteriaDelete.getRoot().getJavaType());
     }
 
     private <E> StoredQuery<E, ?> buildCount(MethodInvocationContext<T, R> context, QueryBuilder sqlQueryBuilder) {
@@ -202,24 +188,17 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
         return storedQuery;
     }
 
-    private <E> StoredQuery<E, ?> buildFind(MethodInvocationContext<T, R> context, Type type, Pageable pageable, QueryBuilder sqlQueryBuilder) {
+    private <E> StoredQuery<E, Object> buildFind(MethodInvocationContext<T, R> context, Type type, Pageable pageable, QueryBuilder sqlQueryBuilder) {
         Class<E> rootEntity = getRequiredRootEntity(context);
-        QuerySpecification<E> specification = getQuerySpecification(context);
-        PersistentEntityCriteriaQuery<E> criteriaQuery = criteriaBuilder.createQuery(rootEntity);
-        Root<E> root = criteriaQuery.from(rootEntity);
-
-        if (specification != null) {
-            Predicate predicate = specification.toPredicate(root, criteriaQuery, criteriaBuilder);
-            if (predicate != null) {
-                criteriaQuery.where(predicate);
-            }
-        }
+        CriteriaQueryBuilder<Object> builder = getCriteriaQueryBuilder(context);
+        CriteriaQuery<Object> criteriaQuery = builder.build(criteriaBuilder);
 
         if (type == Type.FIND_ALL) {
             for (Object param : context.getParameterValues()) {
                 if (param instanceof Sort && param != pageable) {
                     Sort sort = (Sort) param;
                     if (sort.isSorted()) {
+                        Root<?> root = criteriaQuery.getRoots().stream().findFirst().orElseThrow(() -> new IllegalStateException("The root not found!"));
                         criteriaQuery.orderBy(getOrders(sort, root, criteriaBuilder));
                         break;
                     }
@@ -227,7 +206,10 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
             }
         }
         QueryResult queryResult = ((QueryResultPersistentEntityCriteriaQuery) criteriaQuery).buildQuery(sqlQueryBuilder);
-        return QueryResultStoredQuery.many(context.getName(), context.getAnnotationMetadata(), queryResult, rootEntity, !pageable.isUnpaged());
+        if (type == Type.FIND_ONE) {
+            return QueryResultStoredQuery.single(DataMethod.OperationType.QUERY, context.getName(), context.getAnnotationMetadata(), queryResult, rootEntity, criteriaQuery.getResultType());
+        }
+        return QueryResultStoredQuery.many(context.getName(), context.getAnnotationMetadata(), queryResult, rootEntity, criteriaQuery.getResultType(), !pageable.isUnpaged());
     }
 
     /**
@@ -254,6 +236,35 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
     }
 
     /**
+     * Find {@link io.micronaut.data.repository.jpa.criteria.CriteriaQueryBuilder}
+     * or {@link io.micronaut.data.repository.jpa.criteria.QuerySpecification} in context.
+     *
+     * @param context The context
+     * @return found specification
+     * @param <K> the result type
+     */
+    @NonNull
+    protected <K> CriteriaQueryBuilder<K> getCriteriaQueryBuilder(MethodInvocationContext<?, ?> context) {
+        final Object parameterValue = context.getParameterValues()[0];
+        if (parameterValue instanceof CriteriaQueryBuilder) {
+            return (CriteriaQueryBuilder) parameterValue;
+        }
+        return criteriaBuilder -> {
+            Class<K> rootEntity = getRequiredRootEntity(context);
+            QuerySpecification<K> specification = getQuerySpecification(context);
+            CriteriaQuery<K> criteriaQuery = criteriaBuilder.createQuery(rootEntity);
+            Root<K> root = criteriaQuery.from(rootEntity);
+            if (specification != null) {
+                Predicate predicate = specification.toPredicate(root, criteriaQuery, criteriaBuilder);
+                if (predicate != null) {
+                    criteriaQuery.where(predicate);
+                }
+            }
+            return criteriaQuery;
+        };
+    }
+
+    /**
      * Find {@link io.micronaut.data.repository.jpa.criteria.DeleteSpecification} in context.
      *
      * @param context The context
@@ -277,6 +288,35 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
     }
 
     /**
+     * Find {@link io.micronaut.data.repository.jpa.criteria.CriteriaDeleteBuilder}
+     * or {@link io.micronaut.data.repository.jpa.criteria.QuerySpecification} in context.
+     *
+     * @param context The context
+     * @return found specification
+     * @param <K> the result type
+     */
+    @NonNull
+    protected <K> CriteriaDeleteBuilder<K> getCriteriaDeleteBuilder(MethodInvocationContext<?, ?> context) {
+        final Object parameterValue = context.getParameterValues()[0];
+        if (parameterValue instanceof CriteriaDeleteBuilder) {
+            return (CriteriaDeleteBuilder) parameterValue;
+        }
+        return criteriaBuilder -> {
+            Class<K> rootEntity = getRequiredRootEntity(context);
+            DeleteSpecification<K> specification = getDeleteSpecification(context);
+            CriteriaDelete<K> criteriaDelete = criteriaBuilder.createCriteriaDelete(rootEntity);
+            Root<K> root = criteriaDelete.from(rootEntity);
+            if (specification != null) {
+                Predicate predicate = specification.toPredicate(root, criteriaDelete, criteriaBuilder);
+                if (predicate != null) {
+                    criteriaDelete.where(predicate);
+                }
+            }
+            return criteriaDelete;
+        };
+    }
+
+    /**
      * Find {@link io.micronaut.data.repository.jpa.criteria.UpdateSpecification} in context.
      *
      * @param context The context
@@ -294,6 +334,35 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
             return null;
         }
         throw new IllegalArgumentException("Argument must be an instance of: " + UpdateSpecification.class);
+    }
+
+    /**
+     * Find {@link io.micronaut.data.repository.jpa.criteria.CriteriaUpdateBuilder}
+     * or {@link io.micronaut.data.repository.jpa.criteria.QuerySpecification} in context.
+     *
+     * @param context The context
+     * @return found specification
+     * @param <K> the result type
+     */
+    @NonNull
+    protected <K> CriteriaUpdateBuilder<K> getCriteriaUpdateBuilder(MethodInvocationContext<?, ?> context) {
+        final Object parameterValue = context.getParameterValues()[0];
+        if (parameterValue instanceof CriteriaUpdateBuilder) {
+            return (CriteriaUpdateBuilder) parameterValue;
+        }
+        return criteriaBuilder -> {
+            Class<K> rootEntity = getRequiredRootEntity(context);
+            UpdateSpecification<K> specification = getUpdateSpecification(context);
+            CriteriaUpdate<K> criteriaUpdate = criteriaBuilder.createCriteriaUpdate(rootEntity);
+            Root<K> root = criteriaUpdate.from(rootEntity);
+            if (specification != null) {
+                Predicate predicate = specification.toPredicate(root, criteriaUpdate, criteriaBuilder);
+                if (predicate != null) {
+                    criteriaUpdate.where(predicate);
+                }
+            }
+            return criteriaUpdate;
+        };
     }
 
     private List<Order> getOrders(Sort sort, Root<?> root, CriteriaBuilder cb) {

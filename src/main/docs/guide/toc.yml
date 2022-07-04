@@ -30,6 +30,7 @@ shared:
     title: Transactions
     programmaticTransactions: Programmatic Transactions
     transactionalEvents: Transactional Events
+  kotlinCriteria: Kotlin Criteria API extensions
 
 hibernate:
   title: Micronaut Data JPA Hibernate
@@ -64,6 +65,7 @@ dbc:
     criteriaExecuteUpdate: Updating
     criteriaExecuteDelete: Deleting
     otherRepositoryVariations: Other repository variations
+    typeSafeJava: Type-Safe Java queries
   sqlMapping:
     title: Mapping Entities
     sqlAnnotations: SQL Annotations

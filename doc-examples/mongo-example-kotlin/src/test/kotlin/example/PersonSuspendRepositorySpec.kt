@@ -1,8 +1,10 @@
 package example
 
 import example.PersonRepository.Specifications.ageIsLessThan
+import example.PersonRepository.Specifications.ageIsLessThan2
 import example.PersonRepository.Specifications.nameEquals
-import example.PersonRepository.Specifications.setNewName
+import example.PersonRepository.Specifications.nameEquals2
+import example.PersonRepository.Specifications.setNewName2
 import jakarta.inject.Inject
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification.not
@@ -42,7 +44,7 @@ internal class PersonSuspendRepositorySpec : AbstractMongoSpec() {
         val denis: Person? = personRepository.findOne(nameEquals("Denis"))
         val countAgeLess30: Long = personRepository.count(ageIsLessThan(30))
         val countAgeLess20: Long = personRepository.count(ageIsLessThan(20))
-        val countAgeLess30NotDenis: Long = personRepository.count(ageIsLessThan(30).and(not(nameEquals("Denis"))))
+        val countAgeLess30NotDenis: Long = personRepository.count(ageIsLessThan2(30).and(not(nameEquals2("Denis"))))
         val people = personRepository.findAll(PredicateSpecification.where(nameEquals("Denis").or(nameEquals("Josh")))).toList()
         // end::find[]
         Assertions.assertNotNull(denis)
@@ -75,7 +77,7 @@ internal class PersonSuspendRepositorySpec : AbstractMongoSpec() {
         Assertions.assertTrue(all.stream().anyMatch { p: Person -> p.name == "Josh" })
 
         // tag::update[]
-        val recordsUpdated = personRepository.updateAll(setNewName("Steven").where(nameEquals("Denis")))
+        val recordsUpdated = personRepository.updateAll(setNewName2("Steven").where(nameEquals("Denis")))
         // end::update[]
         Assertions.assertEquals(1, recordsUpdated)
         all = personRepository.findAll(empty).toList()

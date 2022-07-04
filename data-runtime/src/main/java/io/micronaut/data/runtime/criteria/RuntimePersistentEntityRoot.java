@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.runtime.criteria;
 
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.model.jpa.criteria.impl.SelectionVisitor;
@@ -26,6 +27,14 @@ import java.util.List;
 
 import static io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils.notSupportedOperation;
 
+/**
+ * The runtime entity root.
+ *
+ * @param <T> The  entity type
+ * @author Denis Stepanov
+ * @since 3.2
+ */
+@Internal
 final class RuntimePersistentEntityRoot<T> extends AbstractRuntimePersistentEntityJoinSupport<T, T>
         implements RuntimePersistentEntityPath<T>, PersistentEntityRoot<T> {
 

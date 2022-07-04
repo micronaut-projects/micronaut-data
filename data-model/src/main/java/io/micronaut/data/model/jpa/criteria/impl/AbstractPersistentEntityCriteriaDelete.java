@@ -84,10 +84,7 @@ public abstract class AbstractPersistentEntityCriteriaDelete<T> implements Persi
 
     @Override
     public PersistentEntityRoot<T> from(EntityType<T> entity) {
-        if (entityRoot != null) {
-            throw new IllegalStateException("The root entity is already specified!");
-        }
-        return null;
+        throw CriteriaUtils.notSupportedOperation();
     }
 
     @Override

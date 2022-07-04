@@ -5,6 +5,7 @@ import io.micronaut.data.annotation.*;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.repository.CrudRepository;
+import io.micronaut.data.repository.jpa.criteria.PredicateSpecification;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 
@@ -15,10 +16,11 @@ import java.util.concurrent.CompletableFuture;
 // tag::async[]
 @JdbcRepository(dialect = Dialect.H2)
 public interface ProductRepository extends CrudRepository<Product, Long> {
-// end::join[]
+    // end::join[]
 // end::async[]
     // tag::join[]
-    @Join(value = "manufacturer", type = Join.Type.FETCH) // <1>
+    @Join(value = "manufacturer", type = Join.Type.FETCH)
+    // <1>
     List<Product> list();
     // end::join[]
 
@@ -27,6 +29,7 @@ public interface ProductRepository extends CrudRepository<Product, Long> {
     CompletableFuture<Product> findByNameContains(String str);
 
     CompletableFuture<Long> countByManufacturerName(String name);
+
     // end::async[]
     // tag::reactive[]
     @Join("manufacturer")
@@ -40,6 +43,17 @@ public interface ProductRepository extends CrudRepository<Product, Long> {
     @Join(value = "manufacturer", alias = "m_")
     List<Product> searchProducts(String name);
     // end::native[]
+
+    class Specifications {
+        // tag::typesafe[]
+
+        static PredicateSpecification<Product> manufacturerNameEquals(String name) {
+            return (root, cb) -> cb.equal(root.join(Product_.manufacturer).get(Manufacturer_.name), name);
+        }
+
+        // end::typesafe[]
+    }
+
 // tag::join[]
 // tag::async[]
 }

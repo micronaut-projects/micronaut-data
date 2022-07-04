@@ -1,15 +1,18 @@
 package example
 
-import io.micronaut.data.mongodb.annotation.MongoRepository
 import io.micronaut.data.model.Page
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
+import io.micronaut.data.mongodb.annotation.MongoRepository
 import io.micronaut.data.repository.CrudRepository
 import io.micronaut.data.repository.jpa.JpaSpecificationExecutor
 import io.micronaut.data.repository.jpa.criteria.DeleteSpecification
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
 import io.micronaut.data.repository.jpa.criteria.QuerySpecification
 import io.micronaut.data.repository.jpa.criteria.UpdateSpecification
+import io.micronaut.data.runtime.criteria.get
+import io.micronaut.data.runtime.criteria.update
+import io.micronaut.data.runtime.criteria.where
 import org.bson.types.ObjectId
 import java.util.*
 
@@ -85,19 +88,43 @@ interface PersonRepository : CrudRepository<Person, ObjectId>, JpaSpecificationE
     // tag::specifications[]
     // tag::allSpecifications[]
     object Specifications {
+        // tag::where[]
+        fun nameEquals(name: String?) = where<Person> { root[Person::name] eq name }
 
-        fun nameEquals(name: String?) = PredicateSpecification<Person> { root, criteriaBuilder ->
-            criteriaBuilder.equal(root.get<Any>("name"), name)
-        }
+        fun ageIsLessThan(age: Int) = where<Person> { root[Person::age] lt age }
+        // end::where[]
 
-        fun ageIsLessThan(age: Int) = PredicateSpecification<Person> { root, criteriaBuilder ->
-            criteriaBuilder.lessThan(root.get("age"), age)
+        // tag::or[]
+        fun nameOrAgeMatches(age: Int, name: String?) = where<Person> {
+            or {
+                root[Person::name] eq name
+                root[Person::age] lt age
+            }
         }
+        // end::or[]
 
         // end::specifications[]
-        fun setNewName(newName: String) = UpdateSpecification<Person> { root, query, criteriaBuilder ->
+        // tag::setUpdate[]
+        fun updateName(newName: String, existingName: String) = update<Person> {
+            set(Person::name, newName)
+            where {
+                root[Person::name] eq existingName
+            }
+        }
+        // end::setUpdate[]
+
+        // Different style using the criteria builder
+        fun nameEquals2(name: String?) = PredicateSpecification { root, criteriaBuilder ->
+            criteriaBuilder.equal(root[Person::name], name)
+        }
+
+        fun ageIsLessThan2(age: Int) = PredicateSpecification { root, criteriaBuilder ->
+            criteriaBuilder.lessThan(root[Person::age], age)
+        }
+
+        fun setNewName2(newName: String) = UpdateSpecification { root, query, criteriaBuilder ->
             // tag::setUpdate[]
-            query.set(root.get("name"), newName)
+            query.set(root[Person::name], newName)
             // end::setUpdate[]
             null
         }
@@ -108,3 +135,4 @@ interface PersonRepository : CrudRepository<Person, ObjectId>, JpaSpecificationE
     // end::specifications[]
     // tag::repository[]
 }
+

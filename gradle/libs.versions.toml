@@ -106,6 +106,8 @@ jetbrains-annotations = { module = "org.jetbrains:annotations", version.ref = "j
 micronaut-test-core = { module = "io.micronaut.test:micronaut-test-core", version.ref = "micronaut-test" }
 micronaut-test-spock = { module = "io.micronaut.test:micronaut-test-spock", version.ref = "micronaut-test" }
 
+jupiter-engine = { module = 'org.junit.jupiter:junit-jupiter-engine' }
+
 # JPA
 
 micronaut-sql-hibernate-jpa = { module = "io.micronaut.sql:micronaut-hibernate-jpa", version.ref = "micronaut-sql" }
@@ -114,6 +116,7 @@ micronaut-sql-hibernate-jpa-spring = { module = "io.micronaut.sql:micronaut-hibe
 
 hibernate-core = { module = "org.hibernate:hibernate-core", version.ref = "hibernate" }
 hibernate-jpamodelgen = { module = "org.hibernate:hibernate-jpamodelgen", version.ref = "hibernate" }
+hibernate-jpamodelgen-jakarta = { module = "org.hibernate:hibernate-jpamodelgen-jakarta", version.ref = "hibernate" }
 
 spring-data-jpa = { module = "org.springframework.data:spring-data-jpa", version.ref = "spring-data" }
 spring-data-commons = { module = "org.springframework.data:spring-data-commons", version.ref = "spring-data" }

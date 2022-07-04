@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.runtime.criteria;
 
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentPropertyPath;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
@@ -22,6 +23,15 @@ import jakarta.persistence.criteria.Path;
 
 import java.util.List;
 
+/**
+ * The runtime property path.
+ *
+ * @param <I> The entity type
+ * @param <T> The property type
+ * @author Denis Stepanov
+ * @since 3.2
+ */
+@Internal
 final class RuntimePersistentPropertyPathImpl<I, T> extends AbstractPersistentPropertyPath<T> {
 
     private final Path<?> parentPath;
@@ -43,14 +53,10 @@ final class RuntimePersistentPropertyPathImpl<I, T> extends AbstractPersistentPr
         return (Class<? extends T>) runtimePersistentProperty.getType();
     }
 
-    public RuntimePersistentProperty<I> getRuntimePersistentProperty() {
-        return runtimePersistentProperty;
-    }
-
     @Override
     public String toString() {
         return "RuntimePersistentPropertyPath{" +
-                "runtimePersistentProperty=" + runtimePersistentProperty +
-                '}';
+            "runtimePersistentProperty=" + runtimePersistentProperty +
+            '}';
     }
 }

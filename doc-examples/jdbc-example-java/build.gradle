@@ -19,7 +19,8 @@ micronaut {
 }
 
 dependencies {
-    annotationProcessor project(":data-processor")
+    annotationProcessor projects.dataProcessor
+    annotationProcessor libs.hibernate.jpamodelgen.jakarta
     annotationProcessor "io.micronaut:micronaut-validation"
     implementation project(":data-jdbc")
     implementation 'io.micronaut.rxjava2:micronaut-rxjava2'
@@ -30,4 +31,12 @@ dependencies {
     implementation libs.javax.transaction.api
     runtimeOnly "ch.qos.logback:logback-classic"
     runtimeOnly "com.h2database:h2"
+}
+
+sourceSets {
+    generated {
+        java {
+            srcDirs = ["$build/generated/java"]
+        }
+    }
 }

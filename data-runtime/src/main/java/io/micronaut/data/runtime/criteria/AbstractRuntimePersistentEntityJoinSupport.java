@@ -15,13 +15,17 @@
  */
 package io.micronaut.data.runtime.criteria;
 
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.jpa.criteria.PersistentAssociationPath;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityJoinSupport;
 import io.micronaut.data.model.runtime.RuntimeAssociation;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
+@Internal
 abstract class AbstractRuntimePersistentEntityJoinSupport<T, J> extends AbstractPersistentEntityJoinSupport<T, J> {
 
     protected abstract List<Association> getCurrentPath();
@@ -30,7 +34,17 @@ abstract class AbstractRuntimePersistentEntityJoinSupport<T, J> extends Abstract
     protected <X, Y> PersistentAssociationPath<X, Y> createJoinAssociation(Association association,
                                                                            io.micronaut.data.annotation.Join.Type associationJoinType,
                                                                            String alias) {
-        return new RuntimePersistentAssociationPath<>(this, (RuntimeAssociation) association, getCurrentPath(), associationJoinType, alias);
+        Class<?> type = ((RuntimeAssociation<?>) association).getProperty().getType();
+        if (List.class.isAssignableFrom(type)) {
+            return new RuntimePersistentListAssociationPath<X, Y>(this, (RuntimeAssociation) association, getCurrentPath(), associationJoinType, alias);
+        }
+        if (Set.class.isAssignableFrom(type)) {
+            return new RuntimePersistentSetAssociationPath<X, Y>(this, (RuntimeAssociation) association, getCurrentPath(), associationJoinType, alias);
+        }
+        if (Collection.class.isAssignableFrom(type)) {
+            return new RuntimePersistentCollectionAssociationPath<X, Y>(this, (RuntimeAssociation) association, getCurrentPath(), associationJoinType, alias);
+        }
+        return new RuntimePersistentAssociationPath<X, Y>(this, (RuntimeAssociation) association, getCurrentPath(), associationJoinType, alias);
     }
 
 }

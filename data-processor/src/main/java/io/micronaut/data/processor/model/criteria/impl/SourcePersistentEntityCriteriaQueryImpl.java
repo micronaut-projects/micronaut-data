@@ -53,6 +53,7 @@ final class SourcePersistentEntityCriteriaQueryImpl<T> extends AbstractPersisten
     private final Function<ClassElement, SourcePersistentEntity> entityResolver;
 
     public SourcePersistentEntityCriteriaQueryImpl(Function<ClassElement, SourcePersistentEntity> entityResolver) {
+        super((Class<T>) Object.class);
         this.entityResolver = entityResolver;
     }
 
