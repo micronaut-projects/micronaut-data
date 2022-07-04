@@ -206,11 +206,6 @@ class H2RepositorySpec extends AbstractRepositorySpec implements H2TestPropertyP
         return true
     }
 
-    void "test repositories are singleton"() {
-        expect:
-            pr.is(context.getBean(H2PersonRepository))
-    }
-
     void "test manual joining on many ended association"() {
         given:
         saveSampleBooks()
