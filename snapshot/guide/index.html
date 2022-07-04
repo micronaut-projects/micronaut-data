@@ -142,6 +142,8 @@
         
         <div class="toc-item" style="margin-left:20px" id="toc-item-transactionalEvents"><a href="#transactionalEvents"><strong>3.4.2</strong><span>Transactional Events</span></a></div>
         
+        <div class="toc-item" style="margin-left:10px" id="toc-item-kotlinCriteria"><a href="#kotlinCriteria"><strong>3.5</strong><span>Kotlin Criteria API extensions</span></a></div>
+        
         <div class="toc-item" style="margin-left:0px" id="toc-item-hibernate"><a href="#hibernate"><strong>4</strong><span>Micronaut Data JPA Hibernate</span></a></div>
         
         <div class="toc-item" style="margin-left:10px" id="toc-item-hibernateQuickStart"><a href="#hibernateQuickStart"><strong>4.1</strong><span>Quick Start</span></a></div>
@@ -193,6 +195,8 @@
         <div class="toc-item" style="margin-left:20px" id="toc-item-criteriaExecuteDelete"><a href="#criteriaExecuteDelete"><strong>6.4.3</strong><span>Deleting</span></a></div>
         
         <div class="toc-item" style="margin-left:20px" id="toc-item-otherRepositoryVariations"><a href="#otherRepositoryVariations"><strong>6.4.4</strong><span>Other repository variations</span></a></div>
+        
+        <div class="toc-item" style="margin-left:20px" id="toc-item-typeSafeJava"><a href="#typeSafeJava"><strong>6.4.5</strong><span>Type-Safe Java queries</span></a></div>
         
         <div class="toc-item" style="margin-left:10px" id="toc-item-sqlMapping"><a href="#sqlMapping"><strong>6.5</strong><span>Mapping Entities</span></a></div>
         
@@ -506,6 +510,12 @@ fun testAnnotationMetadata() {
 <ul>
 <li>
 <p>Hibernate Reactive</p>
+</li>
+<li>
+<p>Type-safe Java Criteria</p>
+</li>
+<li>
+<p>Type-safe Kotlin Criteria and builders</p>
 </li>
 <li>
 <p>Improved transaction handling</p>
@@ -3456,6 +3466,129 @@ You can set the value of the <a href="../api/io/micronaut/transaction/annotation
 </td>
 </tr>
 </table>
+</div>
+
+<h2 id="kotlinCriteria"><a class="anchor" href="#kotlinCriteria"></a>3.5 Kotlin Criteria API extensions</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/shared/kotlinCriteria.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>Micronaut Data includes experimental extensions and query builders for Jakarta Criteria API which simplifies writing queries with Kotlin.</p>
+</div>
+<div class="paragraph">
+<p>Extensions and builders are located in <code>io.micronaut.data.runtime.criteria.KCriteriaBuilderExt</code> file.</p>
+</div>
+<div class="paragraph">
+<p>There are simple extension methods that simplify working with the criteria API:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>KProperty.asPath(jakarta.persistence.criteria.Root): jakarta.persistence.criteria.Path</code> - Extension on the <code>KProperty</code> allowing to get type-safe property path: <code>Person::name.asPath(root)</code></p>
+</li>
+<li>
+<p><code>operator Path.get(KProperty1): Path</code> chain property access: <code>root[Person::parent][Parent::name]</code></p>
+</li>
+<li>
+<p><code>From.joinMany(KProperty1, JoinType): Join</code> join <code>*-to-many</code> relationship</p>
+</li>
+<li>
+<p><code>From.joinOne(KProperty1, JoinType): Join</code> join <code>*-to-one</code> relationship</p>
+</li>
+</ul>
+</div>
+<div class="sect2">
+<h3 id="_predicate_builder">Predicate builder</h3>
+<div class="paragraph">
+<p>To implement a simple predicate query a function <code>where</code> can be used:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">fun nameEquals(name: String?) = where&lt;Person&gt; { root[Person::name] eq name }
+
+fun ageIsLessThan(age: Int) = where&lt;Person&gt; { root[Person::age] lt age }</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>There are contextual extension functions added to <code>jakarta.persistence.criteria.Expression</code> allowing to use predicate methods from <code>jakarta.persistence.criteria.CriteriaBuilder</code> directly on an expression instance. Most of them are infix functions allowing to use the syntax: <code>root[Person::name] eq "Xyz"</code>.</p>
+</div>
+<div class="paragraph">
+<p>It&#8217;s possible to use <code>and</code>, <code>or</code> for conjunction/disjunction and <code>not</code> for the negation:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">fun nameOrAgeMatches(age: Int, name: String?) = where&lt;Person&gt; {
+    or {
+        root[Person::name] eq name
+        root[Person::age] lt age
+    }
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>It&#8217;s possible to use <code>where</code> predicate builder with following methods in <a href="../api/io/micronaut/data/repository/JpaSpecificationExecutor.html">JpaSpecificationExecutor</a>:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>findOne(io.micronaut.data.repository.jpa.criteria.PredicateSpecification)</code></p>
+</li>
+<li>
+<p><code>findAll(io.micronaut.data.repository.jpa.criteria.PredicateSpecification)</code></p>
+</li>
+<li>
+<p><code>findAll(io.micronaut.data.repository.jpa.criteria.PredicateSpecification, io.micronaut.data.model.Sort)</code></p>
+</li>
+<li>
+<p><code>findAll(io.micronaut.data.repository.jpa.criteria.PredicateSpecification, io.micronaut.data.model.Pageable)</code></p>
+</li>
+<li>
+<p><code>count(io.micronaut.data.repository.jpa.criteria.PredicateSpecification)</code></p>
+</li>
+<li>
+<p><code>deleteAll(io.micronaut.data.repository.jpa.criteria.PredicateSpecification)</code></p>
+</li>
+</ul>
+</div>
+<div class="listingblock">
+<div class="title">Example using a join</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">personRepository.findOne(where {
+    val manufacturer = root.joinOne(Product::manufacturer)
+    manufacturer[Manufacturer::name] eq name
+})</code></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="title">Example deleting</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">val recordsDeleted = personRepository.deleteAll(where {
+    root[Person::name] eq "Denis"
+})</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_update_builder">Update builder</h3>
+<div class="paragraph">
+<p>To implement an update query a function <code>update</code> can be used:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">val updateQuery = update&lt;Person&gt; {
+    set(Person::name, "Frank")
+    where {
+        root[Person::name] eq "Denis"
+    }
+}
+personRepository.updateAll(updateQuery)</code></pre>
+</div>
+</div>
 </div>
 
 <h1 id="hibernate"><a class="anchor" href="#hibernate"></a>4 Micronaut Data JPA Hibernate</h1>
@@ -7114,11 +7247,11 @@ fun count(spec: QuerySpecification&lt;Person&gt;?): Long</code></pre>
 <pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">class Specifications {
 
     static PredicateSpecification&lt;Person&gt; nameEquals(String name) {
-        return (root, criteriaBuilder) -&gt; criteriaBuilder.equal(root.get("name"), name);
+        return (root, criteriaBuilder) -&gt; criteriaBuilder.equal(root.get(Person_.name), name);
     }
 
     static PredicateSpecification&lt;Person&gt; ageIsLessThan(int age) {
-        return (root, criteriaBuilder) -&gt; criteriaBuilder.lessThan(root.get("age"), age);
+        return (root, criteriaBuilder) -&gt; criteriaBuilder.lessThan(root.get(Person_.age), age);
     }
 
 }</code></pre>
@@ -7281,7 +7414,7 @@ public interface UpdateSpecification&lt;T&gt; {
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">query.set(root.get("name"), newName);</code></pre>
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">query.set(root.get(Person_.name), newName);</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -7302,16 +7435,16 @@ public interface UpdateSpecification&lt;T&gt; {
 <pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">class Specifications {
 
     static PredicateSpecification&lt;Person&gt; nameEquals(String name) {
-        return (root, criteriaBuilder) -&gt; criteriaBuilder.equal(root.get("name"), name);
+        return (root, criteriaBuilder) -&gt; criteriaBuilder.equal(root.get(Person_.name), name);
     }
 
     static PredicateSpecification&lt;Person&gt; ageIsLessThan(int age) {
-        return (root, criteriaBuilder) -&gt; criteriaBuilder.lessThan(root.get("age"), age);
+        return (root, criteriaBuilder) -&gt; criteriaBuilder.lessThan(root.get(Person_.age), age);
     }
 
     static UpdateSpecification&lt;Person&gt; setNewName(String newName) {
         return (root, query, criteriaBuilder) -&gt; {
-            query.set(root.get("name"), newName);
+            query.set(root.get(Person_.name), newName);
             return null;
         };
     }
@@ -7464,11 +7597,11 @@ public interface DeleteSpecification&lt;T&gt; {
 <pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">class Specifications {
 
     static PredicateSpecification&lt;Person&gt; nameEquals(String name) {
-        return (root, criteriaBuilder) -&gt; criteriaBuilder.equal(root.get("name"), name);
+        return (root, criteriaBuilder) -&gt; criteriaBuilder.equal(root.get(Person_.name), name);
     }
 
     static PredicateSpecification&lt;Person&gt; ageIsLessThan(int age) {
-        return (root, criteriaBuilder) -&gt; criteriaBuilder.lessThan(root.get("age"), age);
+        return (root, criteriaBuilder) -&gt; criteriaBuilder.lessThan(root.get(Person_.age), age);
     }
 
 }</code></pre>
@@ -7568,6 +7701,151 @@ public interface DeleteSpecification&lt;T&gt; {
 </tr>
 </tbody>
 </table>
+
+<h2 id="typeSafeJava"><a class="anchor" href="#typeSafeJava"></a>6.4.5 Type-Safe Java queries</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/dbc/dbcCriteriaSpecifications/typeSafeJava.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>Jakarta Persistence Criteria API supports type-safe queries by using static metamodel that are generated at compilation time.</p>
+</div>
+<div class="paragraph">
+<p>The metamodel generator will generate a corresponding metamodel class with an underscore suffix letter e.g. an entity <code>MyEntity</code> will have a corresponding metamodel entity generated with a name <code>MyEntity_</code> and it will be in the same package as the original entity. Every field in the newly generated entity will correspond to the entity&#8217;s property and can be used as a property reference.</p>
+</div>
+<div class="paragraph">
+<p>Example from the <a href="https://jakarta.ee/specifications/persistence/3.0/jakarta-persistence-spec-3.0.html#a10643">official API specification</a>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">CriteriaBuilder cb = ...
+CriteriaQuery&lt;String&gt; q = cb.createQuery(String.class);
+Root&lt;Customer&gt; customer = q.from(Customer.class);
+Join&lt;Customer, Order&gt; order = customer.join(Customer_.orders);
+Join&lt;Order, Item&gt; item = order.join(Order_.lineItems);
+q.select(customer.get(Customer_.name))
+.where(cb.equal(item.get(Item_.product).get(Product_.productType), "printer"));</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Note that as of this writing you cannot use Micronaut Data annotations (those found in the io.micronaut.data.annotation package) to generate static JPA metadata, the only supported way is to use Jakarta Persistence annotations (located in the jakarta.persistence package) in combination with Hibernate JPA Static Metamodel Generator which will generate the metamodel even if at runtime you do not actually use Hibernate, but instead use Micronaut Data JDBC.</p>
+</div>
+<div class="paragraph">
+<p>To configure the metamodel generator simply add the following dependency to the annotation processor classpath:</p>
+</div>
+<div class="paragraph">
+<p>        <div class="listingblock multi-language-sample">
+<div class="title"></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">annotationProcessor(<span class="hljs-string">"org.hibernate:hibernate-jpamodelgen-jakarta")</span></code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="title"></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="maven">&lt;annotationProcessorPaths&gt;
+    &lt;path&gt;
+        &lt;groupId&gt;org.hibernate&lt;/groupId&gt;
+        &lt;artifactId&gt;hibernate-jpamodelgen-jakarta&lt;/artifactId&gt;
+    &lt;/path&gt;
+&lt;/annotationProcessorPaths&gt;</code></pre>
+</div>
+</div></p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+The Hibernate 5 version of <code>hibernate-jpamodelgen-jakarta</code> is required because prior versions of Hibernate are still using the <code>javax.persistence</code> package
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>And we need to include the generated classes on the Java classpath to have them accessible:</p>
+</div>
+<div class="paragraph">
+<p>Example for Gradle builds:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">sourceSets {
+    generated {
+        java {
+            srcDirs = ["$build/generated/java"]
+        }
+    }
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>If everything is correctly set up you should be able to see the generated metamodel classes in the IDE code completion and be able to use them:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">static PredicateSpecification&lt;Person&gt; nameEquals(String name) {
+    return (root, criteriaBuilder) -&gt; criteriaBuilder.equal(root.get(Person_.name), name);
+}
+
+static PredicateSpecification&lt;Person&gt; ageIsLessThan(int age) {
+    return (root, criteriaBuilder) -&gt; criteriaBuilder.lessThan(root.get(Person_.age), age);
+}
+
+static UpdateSpecification&lt;Person&gt; setNewName(String newName) {
+    return (root, query, criteriaBuilder) -&gt; {
+        query.set(root.get(Person_.name), newName);
+        return null;
+    };
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy"></code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin"></code></pre>
+</div>
+</div>
+<hr>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">static PredicateSpecification&lt;Product&gt; manufacturerNameEquals(String name) {
+    return (root, cb) -&gt; cb.equal(root.join(Product_.manufacturer).get(Manufacturer_.name), name);
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy"></code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin"></code></pre>
+</div>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+More information about the static metamodel can be found in the <a href="https://jakarta.ee/specifications/persistence/3.0/jakarta-persistence-spec-3.0.html#a6933">official specification</a>
+</td>
+</tr>
+</table>
+</div>
 
 <h2 id="sqlMapping"><a class="anchor" href="#sqlMapping"></a>6.5 Mapping Entities</h2>
 
@@ -8973,7 +9251,8 @@ data class Manufacturer(
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@JdbcRepository(dialect = Dialect.H2)
 public interface ProductRepository extends CrudRepository&lt;Product, Long&gt; {
-    @Join(value = "manufacturer", type = Join.Type.FETCH) // <b class="conum">(1)</b>
+    @Join(value = "manufacturer", type = Join.Type.FETCH)
+    // <b class="conum">(1)</b>
     List&lt;Product&gt; list();
 }</code></pre>
 </div>
@@ -10832,7 +11111,7 @@ public interface ProductRepository extends CrudRepository&lt;Product, ObjectId&g
 <div class="listingblock multi-language-sample">
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">@MongoRepository
-interface ProductRepository : CrudRepository&lt;Product, ObjectId&gt; {
+interface ProductRepository : CrudRepository&lt;Product, ObjectId&gt;, JpaSpecificationExecutor&lt;Product&gt; {
     @Join("manufacturer") // <b class="conum">(1)</b>
     fun list(): List&lt;Product&gt;
 }</code></pre>
@@ -11438,13 +11717,15 @@ fun count(spec: QuerySpecification&lt;Person&gt;?): Long</code></pre>
 <div class="listingblock multi-language-sample">
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">object Specifications {
+    fun nameEquals(name: String?) = where&lt;Person&gt; { root[Person::name] eq name }
 
-    fun nameEquals(name: String?) = PredicateSpecification&lt;Person&gt; { root, criteriaBuilder -&gt;
-        criteriaBuilder.equal(root.get&lt;Any&gt;("name"), name)
-    }
+    fun ageIsLessThan(age: Int) = where&lt;Person&gt; { root[Person::age] lt age }
 
-    fun ageIsLessThan(age: Int) = PredicateSpecification&lt;Person&gt; { root, criteriaBuilder -&gt;
-        criteriaBuilder.lessThan(root.get("age"), age)
+    fun nameOrAgeMatches(age: Int, name: String?) = where&lt;Person&gt; {
+        or {
+            root[Person::name] eq name
+            root[Person::age] lt age
+        }
     }
 
 }</code></pre>
@@ -11587,7 +11868,13 @@ public interface UpdateSpecification&lt;T&gt; {
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">query.set(root.get("name"), newName)</code></pre>
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">fun updateName(newName: String, existingName: String) = update&lt;Person&gt; {
+    set(Person::name, newName)
+    where {
+        root[Person::name] eq existingName
+    }
+}
+    query.set(root[Person::name], newName)</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -11638,17 +11925,35 @@ public interface UpdateSpecification&lt;T&gt; {
 <div class="listingblock multi-language-sample">
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">object Specifications {
+    fun nameEquals(name: String?) = where&lt;Person&gt; { root[Person::name] eq name }
 
-    fun nameEquals(name: String?) = PredicateSpecification&lt;Person&gt; { root, criteriaBuilder -&gt;
-        criteriaBuilder.equal(root.get&lt;Any&gt;("name"), name)
+    fun ageIsLessThan(age: Int) = where&lt;Person&gt; { root[Person::age] lt age }
+
+    fun nameOrAgeMatches(age: Int, name: String?) = where&lt;Person&gt; {
+        or {
+            root[Person::name] eq name
+            root[Person::age] lt age
+        }
     }
 
-    fun ageIsLessThan(age: Int) = PredicateSpecification&lt;Person&gt; { root, criteriaBuilder -&gt;
-        criteriaBuilder.lessThan(root.get("age"), age)
+    fun updateName(newName: String, existingName: String) = update&lt;Person&gt; {
+        set(Person::name, newName)
+        where {
+            root[Person::name] eq existingName
+        }
     }
 
-    fun setNewName(newName: String) = UpdateSpecification&lt;Person&gt; { root, query, criteriaBuilder -&gt;
-        query.set(root.get("name"), newName)
+    // Different style using the criteria builder
+    fun nameEquals2(name: String?) = PredicateSpecification { root, criteriaBuilder -&gt;
+        criteriaBuilder.equal(root[Person::name], name)
+    }
+
+    fun ageIsLessThan2(age: Int) = PredicateSpecification { root, criteriaBuilder -&gt;
+        criteriaBuilder.lessThan(root[Person::age], age)
+    }
+
+    fun setNewName2(newName: String) = UpdateSpecification { root, query, criteriaBuilder -&gt;
+        query.set(root[Person::name], newName)
         null
     }
 
@@ -11670,7 +11975,7 @@ public interface UpdateSpecification&lt;T&gt; {
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">val recordsUpdated = personRepository.updateAll(setNewName("Steven").where(nameEquals("Denis")))</code></pre>
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">val recordsUpdated = personRepository.updateAll(updateName("Steven", "Denis"))</code></pre>
 </div>
 </div>
 
@@ -11788,13 +12093,15 @@ public interface DeleteSpecification&lt;T&gt; {
 <div class="listingblock multi-language-sample">
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">object Specifications {
+    fun nameEquals(name: String?) = where&lt;Person&gt; { root[Person::name] eq name }
 
-    fun nameEquals(name: String?) = PredicateSpecification&lt;Person&gt; { root, criteriaBuilder -&gt;
-        criteriaBuilder.equal(root.get&lt;Any&gt;("name"), name)
-    }
+    fun ageIsLessThan(age: Int) = where&lt;Person&gt; { root[Person::age] lt age }
 
-    fun ageIsLessThan(age: Int) = PredicateSpecification&lt;Person&gt; { root, criteriaBuilder -&gt;
-        criteriaBuilder.lessThan(root.get("age"), age)
+    fun nameOrAgeMatches(age: Int, name: String?) = where&lt;Person&gt; {
+        or {
+            root[Person::name] eq name
+            root[Person::age] lt age
+        }
     }
 
 }</code></pre>
@@ -11815,7 +12122,13 @@ public interface DeleteSpecification&lt;T&gt; {
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">val recordsDeleted = personRepository.deleteAll(PredicateSpecification.where(nameEquals("Denis")))</code></pre>
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">val recordsDeleted = personRepository.deleteAll(PredicateSpecification.where(nameEquals("Denis")))
+val recordsDeleted = personRepository.deleteAll(where {
+    root[Person::name] eq "Denis"
+})
+val recordsDeleted = personRepository.deleteAll(where {
+    root[Person::name] eq "Denis"
+})</code></pre>
 </div>
 </div>
 

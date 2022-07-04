@@ -184,7 +184,7 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <dd>
 <div class="block">The abstract implementation of <a href="io/micronaut/data/model/jpa/criteria/PersistentEntityCriteriaQuery.html" title="interface in io.micronaut.data.model.jpa.criteria"><code>PersistentEntityCriteriaQuery</code></a>.</div>
 </dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentEntityCriteriaQuery.html#%3Cinit%3E()">AbstractPersistentEntityCriteriaQuery()</a></span> - Constructor for class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentEntityCriteriaQuery.html" title="class in io.micronaut.data.model.jpa.criteria.impl">AbstractPersistentEntityCriteriaQuery</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentEntityCriteriaQuery.html#%3Cinit%3E(java.lang.Class)">AbstractPersistentEntityCriteriaQuery(Class&lt;T&gt;)</a></span> - Constructor for class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentEntityCriteriaQuery.html" title="class in io.micronaut.data.model.jpa.criteria.impl">AbstractPersistentEntityCriteriaQuery</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentEntityCriteriaUpdate.html" title="class in io.micronaut.data.model.jpa.criteria.impl"><span class="typeNameLink">AbstractPersistentEntityCriteriaUpdate</span></a>&lt;<a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentEntityCriteriaUpdate.html" title="type parameter in AbstractPersistentEntityCriteriaUpdate">T</a>&gt; - Class in <a href="io/micronaut/data/model/jpa/criteria/impl/package-summary.html">io.micronaut.data.model.jpa.criteria.impl</a></dt>
 <dd>
@@ -1169,6 +1169,18 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/processor/visitors/finders/criteria/UpdateCriteriaMethodMatch.html#build(io.micronaut.data.processor.visitors.MethodMatchContext)">build(MethodMatchContext)</a></span> - Method in class io.micronaut.data.processor.visitors.finders.criteria.<a href="io/micronaut/data/processor/visitors/finders/criteria/UpdateCriteriaMethodMatch.html" title="class in io.micronaut.data.processor.visitors.finders.criteria">UpdateCriteriaMethodMatch</a></dt>
 <dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/repository/jpa/criteria/CriteriaDeleteBuilder.html#build(jakarta.persistence.criteria.CriteriaBuilder)">build(CriteriaBuilder)</a></span> - Method in interface io.micronaut.data.repository.jpa.criteria.<a href="io/micronaut/data/repository/jpa/criteria/CriteriaDeleteBuilder.html" title="interface in io.micronaut.data.repository.jpa.criteria">CriteriaDeleteBuilder</a></dt>
+<dd>
+<div class="block">Creates a delete query.</div>
+</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/repository/jpa/criteria/CriteriaQueryBuilder.html#build(jakarta.persistence.criteria.CriteriaBuilder)">build(CriteriaBuilder)</a></span> - Method in interface io.micronaut.data.repository.jpa.criteria.<a href="io/micronaut/data/repository/jpa/criteria/CriteriaQueryBuilder.html" title="interface in io.micronaut.data.repository.jpa.criteria">CriteriaQueryBuilder</a></dt>
+<dd>
+<div class="block">Creates a query.</div>
+</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/repository/jpa/criteria/CriteriaUpdateBuilder.html#build(jakarta.persistence.criteria.CriteriaBuilder)">build(CriteriaBuilder)</a></span> - Method in interface io.micronaut.data.repository.jpa.criteria.<a href="io/micronaut/data/repository/jpa/criteria/CriteriaUpdateBuilder.html" title="interface in io.micronaut.data.repository.jpa.criteria">CriteriaUpdateBuilder</a></dt>
+<dd>
+<div class="block">Creates a build query.</div>
+</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/mongodb/operations/options/MongoOptionsUtils.html#buildAggregateOptions(io.micronaut.core.annotation.AnnotationMetadata)">buildAggregateOptions(AnnotationMetadata)</a></span> - Static method in class io.micronaut.data.mongodb.operations.options.<a href="io/micronaut/data/mongodb/operations/options/MongoOptionsUtils.html" title="class in io.micronaut.data.mongodb.operations.options">MongoOptionsUtils</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html#buildBatchCreateTableStatement(io.micronaut.data.model.PersistentEntity...)">buildBatchCreateTableStatement(PersistentEntity...)</a></span> - Method in class io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html" title="class in io.micronaut.data.model.query.builder.sql">SqlQueryBuilder</a></dt>
@@ -2209,6 +2221,18 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <div class="block">Interface used for the construction of queries at compilation time an implementation may optionally
  provide an implementation of this at runtime.</div>
 </dd>
+<dt><a href="io/micronaut/data/repository/jpa/criteria/CriteriaDeleteBuilder.html" title="interface in io.micronaut.data.repository.jpa.criteria"><span class="typeNameLink">CriteriaDeleteBuilder</span></a>&lt;<a href="io/micronaut/data/repository/jpa/criteria/CriteriaDeleteBuilder.html" title="type parameter in CriteriaDeleteBuilder">E</a>&gt; - Interface in <a href="io/micronaut/data/repository/jpa/criteria/package-summary.html">io.micronaut.data.repository.jpa.criteria</a></dt>
+<dd>
+<div class="block">Delete query criteria builder specification.</div>
+</dd>
+<dt><a href="io/micronaut/data/repository/jpa/criteria/CriteriaQueryBuilder.html" title="interface in io.micronaut.data.repository.jpa.criteria"><span class="typeNameLink">CriteriaQueryBuilder</span></a>&lt;<a href="io/micronaut/data/repository/jpa/criteria/CriteriaQueryBuilder.html" title="type parameter in CriteriaQueryBuilder">R</a>&gt; - Interface in <a href="io/micronaut/data/repository/jpa/criteria/package-summary.html">io.micronaut.data.repository.jpa.criteria</a></dt>
+<dd>
+<div class="block">Query criteria builder specification.</div>
+</dd>
+<dt><a href="io/micronaut/data/repository/jpa/criteria/CriteriaUpdateBuilder.html" title="interface in io.micronaut.data.repository.jpa.criteria"><span class="typeNameLink">CriteriaUpdateBuilder</span></a>&lt;<a href="io/micronaut/data/repository/jpa/criteria/CriteriaUpdateBuilder.html" title="type parameter in CriteriaUpdateBuilder">E</a>&gt; - Interface in <a href="io/micronaut/data/repository/jpa/criteria/package-summary.html">io.micronaut.data.repository.jpa.criteria</a></dt>
+<dd>
+<div class="block">Update query criteria builder specification.</div>
+</dd>
 <dt><a href="io/micronaut/data/model/jpa/criteria/impl/CriteriaUtils.html" title="class in io.micronaut.data.model.jpa.criteria.impl"><span class="typeNameLink">CriteriaUtils</span></a> - Class in <a href="io/micronaut/data/model/jpa/criteria/impl/package-summary.html">io.micronaut.data.model.jpa.criteria.impl</a></dt>
 <dd>
 <div class="block">Criteria util class.</div>
@@ -3177,6 +3201,10 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/operations/ReactorToAsyncOperationsAdaptor.html#deleteAll(io.micronaut.data.model.runtime.DeleteBatchOperation)">deleteAll(DeleteBatchOperation&lt;T&gt;)</a></span> - Method in class io.micronaut.data.runtime.operations.<a href="io/micronaut/data/runtime/operations/ReactorToAsyncOperationsAdaptor.html" title="class in io.micronaut.data.runtime.operations">ReactorToAsyncOperationsAdaptor</a></dt>
 <dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/repository/jpa/JpaSpecificationExecutor.html#deleteAll(io.micronaut.data.repository.jpa.criteria.CriteriaDeleteBuilder)">deleteAll(CriteriaDeleteBuilder&lt;T&gt;)</a></span> - Method in interface io.micronaut.data.repository.jpa.<a href="io/micronaut/data/repository/jpa/JpaSpecificationExecutor.html" title="interface in io.micronaut.data.repository.jpa">JpaSpecificationExecutor</a></dt>
+<dd>
+<div class="block">Delete all entities using build criteria query.</div>
+</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/repository/jpa/async/AsyncJpaSpecificationExecutor.html#deleteAll(io.micronaut.data.repository.jpa.criteria.DeleteSpecification)">deleteAll(DeleteSpecification&lt;T&gt;)</a></span> - Method in interface io.micronaut.data.repository.jpa.async.<a href="io/micronaut/data/repository/jpa/async/AsyncJpaSpecificationExecutor.html" title="interface in io.micronaut.data.repository.jpa.async">AsyncJpaSpecificationExecutor</a></dt>
 <dd>
 <div class="block">Deletes all entities matching the given <a href="io/micronaut/data/repository/jpa/criteria/DeleteSpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria"><code>DeleteSpecification</code></a>.</div>
@@ -4448,6 +4476,10 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <dd>
 <div class="block">Finds a page of records.</div>
 </dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/repository/jpa/JpaSpecificationExecutor.html#findAll(io.micronaut.data.repository.jpa.criteria.CriteriaQueryBuilder)">findAll(CriteriaQueryBuilder&lt;R&gt;)</a></span> - Method in interface io.micronaut.data.repository.jpa.<a href="io/micronaut/data/repository/jpa/JpaSpecificationExecutor.html" title="interface in io.micronaut.data.repository.jpa">JpaSpecificationExecutor</a></dt>
+<dd>
+<div class="block">Find all using build criteria query.</div>
+</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/repository/jpa/async/AsyncJpaSpecificationExecutor.html#findAll(io.micronaut.data.repository.jpa.criteria.PredicateSpecification)">findAll(PredicateSpecification&lt;T&gt;)</a></span> - Method in interface io.micronaut.data.repository.jpa.async.<a href="io/micronaut/data/repository/jpa/async/AsyncJpaSpecificationExecutor.html" title="interface in io.micronaut.data.repository.jpa.async">AsyncJpaSpecificationExecutor</a></dt>
 <dd>
 <div class="block">Returns all entities matching the given <a href="io/micronaut/data/repository/jpa/criteria/PredicateSpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria"><code>PredicateSpecification</code></a>.</div>
@@ -4718,6 +4750,10 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <dt><span class="memberNameLink"><a href="io/micronaut/data/mongodb/repository/MongoQueryExecutor.html#findOne(io.micronaut.data.mongodb.operations.options.MongoFindOptions)">findOne(MongoFindOptions)</a></span> - Method in interface io.micronaut.data.mongodb.repository.<a href="io/micronaut/data/mongodb/repository/MongoQueryExecutor.html" title="interface in io.micronaut.data.mongodb.repository">MongoQueryExecutor</a></dt>
 <dd>
 <div class="block">Finds one result.</div>
+</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/repository/jpa/JpaSpecificationExecutor.html#findOne(io.micronaut.data.repository.jpa.criteria.CriteriaQueryBuilder)">findOne(CriteriaQueryBuilder&lt;R&gt;)</a></span> - Method in interface io.micronaut.data.repository.jpa.<a href="io/micronaut/data/repository/jpa/JpaSpecificationExecutor.html" title="interface in io.micronaut.data.repository.jpa">JpaSpecificationExecutor</a></dt>
+<dd>
+<div class="block">Find one using build criteria query.</div>
 </dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/repository/jpa/async/AsyncJpaSpecificationExecutor.html#findOne(io.micronaut.data.repository.jpa.criteria.PredicateSpecification)">findOne(PredicateSpecification&lt;T&gt;)</a></span> - Method in interface io.micronaut.data.repository.jpa.async.<a href="io/micronaut/data/repository/jpa/async/AsyncJpaSpecificationExecutor.html" title="interface in io.micronaut.data.repository.jpa.async">AsyncJpaSpecificationExecutor</a></dt>
 <dd>
@@ -5725,6 +5761,21 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/hibernate/reactive/operations/HibernateReactorRepositoryOperations.html#getCriteriaBuilder()">getCriteriaBuilder()</a></span> - Method in interface io.micronaut.data.hibernate.reactive.operations.<a href="io/micronaut/data/hibernate/reactive/operations/HibernateReactorRepositoryOperations.html" title="interface in io.micronaut.data.hibernate.reactive.operations">HibernateReactorRepositoryOperations</a></dt>
 <dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/intercept/criteria/AbstractSpecificationInterceptor.html#getCriteriaDeleteBuilder(io.micronaut.aop.MethodInvocationContext)">getCriteriaDeleteBuilder(MethodInvocationContext&lt;?, ?&gt;)</a></span> - Method in class io.micronaut.data.runtime.intercept.criteria.<a href="io/micronaut/data/runtime/intercept/criteria/AbstractSpecificationInterceptor.html" title="class in io.micronaut.data.runtime.intercept.criteria">AbstractSpecificationInterceptor</a></dt>
+<dd>
+<div class="block">Find <a href="io/micronaut/data/repository/jpa/criteria/CriteriaDeleteBuilder.html" title="interface in io.micronaut.data.repository.jpa.criteria"><code>CriteriaDeleteBuilder</code></a>
+ or <a href="io/micronaut/data/repository/jpa/criteria/QuerySpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria"><code>QuerySpecification</code></a> in context.</div>
+</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/intercept/criteria/AbstractSpecificationInterceptor.html#getCriteriaQueryBuilder(io.micronaut.aop.MethodInvocationContext)">getCriteriaQueryBuilder(MethodInvocationContext&lt;?, ?&gt;)</a></span> - Method in class io.micronaut.data.runtime.intercept.criteria.<a href="io/micronaut/data/runtime/intercept/criteria/AbstractSpecificationInterceptor.html" title="class in io.micronaut.data.runtime.intercept.criteria">AbstractSpecificationInterceptor</a></dt>
+<dd>
+<div class="block">Find <a href="io/micronaut/data/repository/jpa/criteria/CriteriaQueryBuilder.html" title="interface in io.micronaut.data.repository.jpa.criteria"><code>CriteriaQueryBuilder</code></a>
+ or <a href="io/micronaut/data/repository/jpa/criteria/QuerySpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria"><code>QuerySpecification</code></a> in context.</div>
+</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/intercept/criteria/AbstractSpecificationInterceptor.html#getCriteriaUpdateBuilder(io.micronaut.aop.MethodInvocationContext)">getCriteriaUpdateBuilder(MethodInvocationContext&lt;?, ?&gt;)</a></span> - Method in class io.micronaut.data.runtime.intercept.criteria.<a href="io/micronaut/data/runtime/intercept/criteria/AbstractSpecificationInterceptor.html" title="class in io.micronaut.data.runtime.intercept.criteria">AbstractSpecificationInterceptor</a></dt>
+<dd>
+<div class="block">Find <a href="io/micronaut/data/repository/jpa/criteria/CriteriaUpdateBuilder.html" title="interface in io.micronaut.data.repository.jpa.criteria"><code>CriteriaUpdateBuilder</code></a>
+ or <a href="io/micronaut/data/repository/jpa/criteria/QuerySpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria"><code>QuerySpecification</code></a> in context.</div>
+</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/hibernate/operations/HibernateJpaOperations.html#getCurrentEntityManager()">getCurrentEntityManager()</a></span> - Method in class io.micronaut.data.hibernate.operations.<a href="io/micronaut/data/hibernate/operations/HibernateJpaOperations.html" title="class in io.micronaut.data.hibernate.operations">HibernateJpaOperations</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/jpa/operations/JpaRepositoryOperations.html#getCurrentEntityManager()">getCurrentEntityManager()</a></span> - Method in interface io.micronaut.data.jpa.operations.<a href="io/micronaut/data/jpa/operations/JpaRepositoryOperations.html" title="interface in io.micronaut.data.jpa.operations">JpaRepositoryOperations</a></dt>
@@ -6285,6 +6336,12 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentPropertyPath.html#getModel()">getModel()</a></span> - Method in class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentPropertyPath.html" title="class in io.micronaut.data.model.jpa.criteria.impl">AbstractPersistentPropertyPath</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/PersistentAssociationPath.html#getModel()">getModel()</a></span> - Method in interface io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentAssociationPath</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/PersistentCollectionAssociationPath.html#getModel()">getModel()</a></span> - Method in interface io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentCollectionAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentCollectionAssociationPath</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/PersistentListAssociationPath.html#getModel()">getModel()</a></span> - Method in interface io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentListAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentListAssociationPath</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/PersistentSetAssociationPath.html#getModel()">getModel()</a></span> - Method in interface io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentSetAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentSetAssociationPath</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/mongodb/init/AbstractMongoCollectionsCreator.html#getMongoFactory(java.lang.Class,io.micronaut.context.BeanLocator,io.micronaut.configuration.mongo.core.AbstractMongoConfiguration)">getMongoFactory(Class&lt;M&gt;, BeanLocator, AbstractMongoConfiguration)</a></span> - Method in class io.micronaut.data.mongodb.init.<a href="io/micronaut/data/mongodb/init/AbstractMongoCollectionsCreator.html" title="class in io.micronaut.data.mongodb.init">AbstractMongoCollectionsCreator</a></dt>
 <dd>
@@ -8273,6 +8330,8 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <dd>
 <div class="block">Initialize the collections.</div>
 </dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/criteria/metamodel/StaticMetamodelInitializer.html#initializeMetadata(io.micronaut.data.model.runtime.RuntimePersistentEntity)">initializeMetadata(RuntimePersistentEntity&lt;T&gt;)</a></span> - Method in class io.micronaut.data.runtime.criteria.metamodel.<a href="io/micronaut/data/runtime/criteria/metamodel/StaticMetamodelInitializer.html" title="class in io.micronaut.data.runtime.criteria.metamodel">StaticMetamodelInitializer</a></dt>
+<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/transaction/support/DefaultSynchronousTransactionState.html#initSynchronization()">initSynchronization()</a></span> - Method in class io.micronaut.transaction.support.<a href="io/micronaut/transaction/support/DefaultSynchronousTransactionState.html" title="class in io.micronaut.transaction.support">DefaultSynchronousTransactionState</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/transaction/support/SynchronousTransactionState.html#initSynchronization()">initSynchronization()</a></span> - Method in interface io.micronaut.transaction.support.<a href="io/micronaut/transaction/support/SynchronousTransactionState.html" title="interface in io.micronaut.transaction.support">SynchronousTransactionState</a></dt>
@@ -8812,6 +8871,8 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <dt><a href="io/micronaut/data/runtime/convert/package-summary.html">io.micronaut.data.runtime.convert</a> - package io.micronaut.data.runtime.convert</dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/criteria/package-summary.html">io.micronaut.data.runtime.criteria</a> - package io.micronaut.data.runtime.criteria</dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/runtime/criteria/metamodel/package-summary.html">io.micronaut.data.runtime.criteria.metamodel</a> - package io.micronaut.data.runtime.criteria.metamodel</dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/date/package-summary.html">io.micronaut.data.runtime.date</a> - package io.micronaut.data.runtime.date</dt>
 <dd>&nbsp;</dd>
@@ -9839,9 +9900,17 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <dd>
 <div class="block">Join on the given association.</div>
 </dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/PersistentEntityFrom.html#join(jakarta.persistence.metamodel.CollectionAttribute)">join(CollectionAttribute&lt;? super AssociatedEntityType, Y&gt;)</a></span> - Method in interface io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityFrom.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityFrom</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/PersistentEntityFrom.html#join(jakarta.persistence.metamodel.CollectionAttribute,jakarta.persistence.criteria.JoinType)">join(CollectionAttribute&lt;? super AssociatedEntityType, Y&gt;, JoinType)</a></span> - Method in interface io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityFrom.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityFrom</a></dt>
+<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentEntityJoinSupport.html#join(jakarta.persistence.metamodel.CollectionAttribute)">join(CollectionAttribute&lt;? super E, Y&gt;)</a></span> - Method in class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentEntityJoinSupport.html" title="class in io.micronaut.data.model.jpa.criteria.impl">AbstractPersistentEntityJoinSupport</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentEntityJoinSupport.html#join(jakarta.persistence.metamodel.CollectionAttribute,jakarta.persistence.criteria.JoinType)">join(CollectionAttribute&lt;? super E, Y&gt;, JoinType)</a></span> - Method in class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentEntityJoinSupport.html" title="class in io.micronaut.data.model.jpa.criteria.impl">AbstractPersistentEntityJoinSupport</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/PersistentEntityFrom.html#join(jakarta.persistence.metamodel.ListAttribute)">join(ListAttribute&lt;? super AssociatedEntityType, Y&gt;)</a></span> - Method in interface io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityFrom.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityFrom</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/PersistentEntityFrom.html#join(jakarta.persistence.metamodel.ListAttribute,jakarta.persistence.criteria.JoinType)">join(ListAttribute&lt;? super AssociatedEntityType, Y&gt;, JoinType)</a></span> - Method in interface io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityFrom.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityFrom</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentEntityJoinSupport.html#join(jakarta.persistence.metamodel.ListAttribute)">join(ListAttribute&lt;? super E, Y&gt;)</a></span> - Method in class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentEntityJoinSupport.html" title="class in io.micronaut.data.model.jpa.criteria.impl">AbstractPersistentEntityJoinSupport</a></dt>
 <dd>&nbsp;</dd>
@@ -9851,9 +9920,17 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentEntityJoinSupport.html#join(jakarta.persistence.metamodel.MapAttribute,jakarta.persistence.criteria.JoinType)">join(MapAttribute&lt;? super E, K, V&gt;, JoinType)</a></span> - Method in class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentEntityJoinSupport.html" title="class in io.micronaut.data.model.jpa.criteria.impl">AbstractPersistentEntityJoinSupport</a></dt>
 <dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/PersistentEntityFrom.html#join(jakarta.persistence.metamodel.SetAttribute)">join(SetAttribute&lt;? super AssociatedEntityType, Y&gt;)</a></span> - Method in interface io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityFrom.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityFrom</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/PersistentEntityFrom.html#join(jakarta.persistence.metamodel.SetAttribute,jakarta.persistence.criteria.JoinType)">join(SetAttribute&lt;? super AssociatedEntityType, Y&gt;, JoinType)</a></span> - Method in interface io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityFrom.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityFrom</a></dt>
+<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentEntityJoinSupport.html#join(jakarta.persistence.metamodel.SetAttribute)">join(SetAttribute&lt;? super E, Y&gt;)</a></span> - Method in class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentEntityJoinSupport.html" title="class in io.micronaut.data.model.jpa.criteria.impl">AbstractPersistentEntityJoinSupport</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentEntityJoinSupport.html#join(jakarta.persistence.metamodel.SetAttribute,jakarta.persistence.criteria.JoinType)">join(SetAttribute&lt;? super E, Y&gt;, JoinType)</a></span> - Method in class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentEntityJoinSupport.html" title="class in io.micronaut.data.model.jpa.criteria.impl">AbstractPersistentEntityJoinSupport</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/PersistentEntityFrom.html#join(jakarta.persistence.metamodel.SingularAttribute)">join(SingularAttribute&lt;? super AssociatedEntityType, Y&gt;)</a></span> - Method in interface io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityFrom.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityFrom</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/PersistentEntityFrom.html#join(jakarta.persistence.metamodel.SingularAttribute,jakarta.persistence.criteria.JoinType)">join(SingularAttribute&lt;? super AssociatedEntityType, Y&gt;, JoinType)</a></span> - Method in interface io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityFrom.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityFrom</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentEntityJoinSupport.html#join(jakarta.persistence.metamodel.SingularAttribute)">join(SingularAttribute&lt;? super E, Y&gt;)</a></span> - Method in class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentEntityJoinSupport.html" title="class in io.micronaut.data.model.jpa.criteria.impl">AbstractPersistentEntityJoinSupport</a></dt>
 <dd>&nbsp;</dd>
@@ -9891,6 +9968,8 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 </dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentEntityJoinSupport.html#join(java.lang.String,jakarta.persistence.criteria.JoinType)">join(String, JoinType)</a></span> - Method in class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentEntityJoinSupport.html" title="class in io.micronaut.data.model.jpa.criteria.impl">AbstractPersistentEntityJoinSupport</a></dt>
 <dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/PersistentEntityFrom.html#join(java.lang.String,jakarta.persistence.criteria.JoinType)">join(String, JoinType)</a></span> - Method in interface io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityFrom.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityFrom</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/annotation/Join.html" title="annotation in io.micronaut.data.annotation"><span class="typeNameLink">Join</span></a> - Annotation Type in <a href="io/micronaut/data/annotation/package-summary.html">io.micronaut.data.annotation</a></dt>
 <dd>
 <div class="block">A @Join defines how a join for a particular association path should be generated.</div>
@@ -9901,7 +9980,11 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 </dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentEntityJoinSupport.html#joinCollection(java.lang.String)">joinCollection(String)</a></span> - Method in class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentEntityJoinSupport.html" title="class in io.micronaut.data.model.jpa.criteria.impl">AbstractPersistentEntityJoinSupport</a></dt>
 <dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/PersistentEntityFrom.html#joinCollection(java.lang.String)">joinCollection(String)</a></span> - Method in interface io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityFrom.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityFrom</a></dt>
+<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentEntityJoinSupport.html#joinCollection(java.lang.String,jakarta.persistence.criteria.JoinType)">joinCollection(String, JoinType)</a></span> - Method in class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentEntityJoinSupport.html" title="class in io.micronaut.data.model.jpa.criteria.impl">AbstractPersistentEntityJoinSupport</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/PersistentEntityFrom.html#joinCollection(java.lang.String,jakarta.persistence.criteria.JoinType)">joinCollection(String, JoinType)</a></span> - Method in interface io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityFrom.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityFrom</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/jdbc/annotation/JoinColumn.html" title="annotation in io.micronaut.data.jdbc.annotation"><span class="typeNameLink">JoinColumn</span></a> - Annotation Type in <a href="io/micronaut/data/jdbc/annotation/package-summary.html">io.micronaut.data.jdbc.annotation</a></dt>
 <dd>
@@ -9943,7 +10026,11 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 </dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentEntityJoinSupport.html#joinList(java.lang.String)">joinList(String)</a></span> - Method in class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentEntityJoinSupport.html" title="class in io.micronaut.data.model.jpa.criteria.impl">AbstractPersistentEntityJoinSupport</a></dt>
 <dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/PersistentEntityFrom.html#joinList(java.lang.String)">joinList(String)</a></span> - Method in interface io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityFrom.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityFrom</a></dt>
+<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentEntityJoinSupport.html#joinList(java.lang.String,jakarta.persistence.criteria.JoinType)">joinList(String, JoinType)</a></span> - Method in class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentEntityJoinSupport.html" title="class in io.micronaut.data.model.jpa.criteria.impl">AbstractPersistentEntityJoinSupport</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/PersistentEntityFrom.html#joinList(java.lang.String,jakarta.persistence.criteria.JoinType)">joinList(String, JoinType)</a></span> - Method in interface io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityFrom.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityFrom</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentEntityJoinSupport.html#joinMap(java.lang.String)">joinMap(String)</a></span> - Method in class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentEntityJoinSupport.html" title="class in io.micronaut.data.model.jpa.criteria.impl">AbstractPersistentEntityJoinSupport</a></dt>
 <dd>&nbsp;</dd>
@@ -9961,7 +10048,11 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentEntityJoinSupport.html#joinSet(java.lang.String)">joinSet(String)</a></span> - Method in class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentEntityJoinSupport.html" title="class in io.micronaut.data.model.jpa.criteria.impl">AbstractPersistentEntityJoinSupport</a></dt>
 <dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/PersistentEntityFrom.html#joinSet(java.lang.String)">joinSet(String)</a></span> - Method in interface io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityFrom.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityFrom</a></dt>
+<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentEntityJoinSupport.html#joinSet(java.lang.String,jakarta.persistence.criteria.JoinType)">joinSet(String, JoinType)</a></span> - Method in class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentEntityJoinSupport.html" title="class in io.micronaut.data.model.jpa.criteria.impl">AbstractPersistentEntityJoinSupport</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/PersistentEntityFrom.html#joinSet(java.lang.String,jakarta.persistence.criteria.JoinType)">joinSet(String, JoinType)</a></span> - Method in interface io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityFrom.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityFrom</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/annotation/repeatable/JoinSpecifications.html" title="annotation in io.micronaut.data.annotation.repeatable"><span class="typeNameLink">JoinSpecifications</span></a> - Annotation Type in <a href="io/micronaut/data/annotation/repeatable/package-summary.html">io.micronaut.data.annotation.repeatable</a></dt>
 <dd>
@@ -10356,6 +10447,8 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 </dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/query/internal/QueryResultStoredQuery.html#many(java.lang.String,io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.query.builder.QueryResult,java.lang.Class,boolean)">many(String, AnnotationMetadata, QueryResult, Class&lt;T&gt;, boolean)</a></span> - Static method in class io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/QueryResultStoredQuery.html" title="class in io.micronaut.data.runtime.query.internal">QueryResultStoredQuery</a></dt>
 <dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/query/internal/QueryResultStoredQuery.html#many(java.lang.String,io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.query.builder.QueryResult,java.lang.Class,java.lang.Class,boolean)">many(String, AnnotationMetadata, QueryResult, Class&lt;T&gt;, Class&lt;R&gt;, boolean)</a></span> - Static method in class io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/QueryResultStoredQuery.html" title="class in io.micronaut.data.runtime.query.internal">QueryResultStoredQuery</a></dt>
+<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/annotation/Relation.Kind.html#MANY_TO_MANY">MANY_TO_MANY</a></span> - io.micronaut.data.annotation.<a href="io/micronaut/data/annotation/Relation.Kind.html" title="enum in io.micronaut.data.annotation">Relation.Kind</a></dt>
 <dd>
 <div class="block">Many to many association.</div>
@@ -10409,6 +10502,8 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <dt><span class="memberNameLink"><a href="io/micronaut/data/document/processor/mapper/MappedPropertyMapper.html#map(io.micronaut.core.annotation.AnnotationValue,io.micronaut.inject.visitor.VisitorContext)">map(AnnotationValue&lt;MappedProperty&gt;, VisitorContext)</a></span> - Method in class io.micronaut.data.document.processor.mapper.<a href="io/micronaut/data/document/processor/mapper/MappedPropertyMapper.html" title="class in io.micronaut.data.document.processor.mapper">MappedPropertyMapper</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/document/processor/mapper/MappedRelationMapper.html#map(io.micronaut.core.annotation.AnnotationValue,io.micronaut.inject.visitor.VisitorContext)">map(AnnotationValue&lt;Relation&gt;, VisitorContext)</a></span> - Method in class io.micronaut.data.document.processor.mapper.<a href="io/micronaut/data/document/processor/mapper/MappedRelationMapper.html" title="class in io.micronaut.data.document.processor.mapper">MappedRelationMapper</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/processor/mappers/jpa/jakarta/StaticMetamodelAnnotationMapper.html#map(io.micronaut.core.annotation.AnnotationValue,io.micronaut.inject.visitor.VisitorContext)">map(AnnotationValue&lt;StaticMetamodel&gt;, VisitorContext)</a></span> - Method in class io.micronaut.data.processor.mappers.jpa.jakarta.<a href="io/micronaut/data/processor/mappers/jpa/jakarta/StaticMetamodelAnnotationMapper.html" title="class in io.micronaut.data.processor.mappers.jpa.jakarta">StaticMetamodelAnnotationMapper</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/processor/mappers/jpa/jx/ColumnAnnotationMapper.html#map(io.micronaut.core.annotation.AnnotationValue,io.micronaut.inject.visitor.VisitorContext)">map(AnnotationValue&lt;Annotation&gt;, VisitorContext)</a></span> - Method in class io.micronaut.data.processor.mappers.jpa.jx.<a href="io/micronaut/data/processor/mappers/jpa/jx/ColumnAnnotationMapper.html" title="class in io.micronaut.data.processor.mappers.jpa.jx">ColumnAnnotationMapper</a></dt>
 <dd>&nbsp;</dd>
@@ -11671,7 +11766,19 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 </dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/PersistentAssociationPath.html#on(jakarta.persistence.criteria.Expression)">on(Expression&lt;Boolean&gt;)</a></span> - Method in interface io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentAssociationPath</a></dt>
 <dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/PersistentCollectionAssociationPath.html#on(jakarta.persistence.criteria.Expression)">on(Expression&lt;Boolean&gt;)</a></span> - Method in interface io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentCollectionAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentCollectionAssociationPath</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/PersistentListAssociationPath.html#on(jakarta.persistence.criteria.Expression)">on(Expression&lt;Boolean&gt;)</a></span> - Method in interface io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentListAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentListAssociationPath</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/PersistentSetAssociationPath.html#on(jakarta.persistence.criteria.Expression)">on(Expression&lt;Boolean&gt;)</a></span> - Method in interface io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentSetAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentSetAssociationPath</a></dt>
+<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/PersistentAssociationPath.html#on(jakarta.persistence.criteria.Predicate...)">on(Predicate...)</a></span> - Method in interface io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentAssociationPath</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/PersistentCollectionAssociationPath.html#on(jakarta.persistence.criteria.Predicate...)">on(Predicate...)</a></span> - Method in interface io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentCollectionAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentCollectionAssociationPath</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/PersistentListAssociationPath.html#on(jakarta.persistence.criteria.Predicate...)">on(Predicate...)</a></span> - Method in interface io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentListAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentListAssociationPath</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/PersistentSetAssociationPath.html#on(jakarta.persistence.criteria.Predicate...)">on(Predicate...)</a></span> - Method in interface io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentSetAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentSetAssociationPath</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/transaction/jdbc/TransactionAwareDataSource.html#onCreated(io.micronaut.context.event.BeanCreatedEvent)">onCreated(BeanCreatedEvent&lt;DataSource&gt;)</a></span> - Method in class io.micronaut.transaction.jdbc.<a href="io/micronaut/transaction/jdbc/TransactionAwareDataSource.html" title="class in io.micronaut.transaction.jdbc">TransactionAwareDataSource</a></dt>
 <dd>&nbsp;</dd>
@@ -12061,6 +12168,10 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/PersistentAssociationPath.html#%3Cinit%3E(java.util.List,io.micronaut.data.model.Association,java.lang.String)">PersistentAssociationPath(List&lt;Association&gt;, Association, String)</a></span> - Constructor for class io.micronaut.data.model.<a href="io/micronaut/data/model/PersistentAssociationPath.html" title="class in io.micronaut.data.model">PersistentAssociationPath</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/model/jpa/criteria/PersistentCollectionAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentCollectionAssociationPath</span></a>&lt;<a href="io/micronaut/data/model/jpa/criteria/PersistentCollectionAssociationPath.html" title="type parameter in PersistentCollectionAssociationPath">OwnerType</a>,&#8203;<a href="io/micronaut/data/model/jpa/criteria/PersistentCollectionAssociationPath.html" title="type parameter in PersistentCollectionAssociationPath">AssociatedEntityType</a>&gt; - Interface in <a href="io/micronaut/data/model/jpa/criteria/package-summary.html">io.micronaut.data.model.jpa.criteria</a></dt>
+<dd>
+<div class="block">The persistent entity association path.</div>
+</dd>
 <dt><a href="io/micronaut/data/model/PersistentElement.html" title="interface in io.micronaut.data.model"><span class="typeNameLink">PersistentElement</span></a> - Interface in <a href="io/micronaut/data/model/package-summary.html">io.micronaut.data.model</a></dt>
 <dd>
 <div class="block">Shared interface for a persistent element whether it be a type or a property.</div>
@@ -12068,6 +12179,10 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <dt><a href="io/micronaut/data/model/PersistentEntity.html" title="interface in io.micronaut.data.model"><span class="typeNameLink">PersistentEntity</span></a> - Interface in <a href="io/micronaut/data/model/package-summary.html">io.micronaut.data.model</a></dt>
 <dd>
 <div class="block">Models a persistent entity and provides an API that can be used both within the compiler and at runtime.</div>
+</dd>
+<dt><a href="io/micronaut/data/model/jpa/criteria/PersistentEntityCollectionJoin.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentEntityCollectionJoin</span></a>&lt;<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityCollectionJoin.html" title="type parameter in PersistentEntityCollectionJoin">OwnerType</a>,&#8203;<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityCollectionJoin.html" title="type parameter in PersistentEntityCollectionJoin">AssociatedEntityType</a>&gt; - Interface in <a href="io/micronaut/data/model/jpa/criteria/package-summary.html">io.micronaut.data.model.jpa.criteria</a></dt>
+<dd>
+<div class="block">The persistent entity collection <code>Join</code>.</div>
 </dd>
 <dt><a href="io/micronaut/data/model/jpa/criteria/PersistentEntityCriteriaBuilder.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentEntityCriteriaBuilder</span></a> - Interface in <a href="io/micronaut/data/model/jpa/criteria/package-summary.html">io.micronaut.data.model.jpa.criteria</a></dt>
 <dd>
@@ -12093,6 +12208,10 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <dd>
 <div class="block">The persistent entity <code>Join</code>.</div>
 </dd>
+<dt><a href="io/micronaut/data/model/jpa/criteria/PersistentEntityListJoin.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentEntityListJoin</span></a>&lt;<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityListJoin.html" title="type parameter in PersistentEntityListJoin">OwnerType</a>,&#8203;<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityListJoin.html" title="type parameter in PersistentEntityListJoin">AssociatedEntityType</a>&gt; - Interface in <a href="io/micronaut/data/model/jpa/criteria/package-summary.html">io.micronaut.data.model.jpa.criteria</a></dt>
+<dd>
+<div class="block">The persistent entity list <code>Join</code>.</div>
+</dd>
 <dt><a href="io/micronaut/data/model/jpa/criteria/PersistentEntityPath.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentEntityPath</span></a>&lt;<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityPath.html" title="type parameter in PersistentEntityPath">T</a>&gt; - Interface in <a href="io/micronaut/data/model/jpa/criteria/package-summary.html">io.micronaut.data.model.jpa.criteria</a></dt>
 <dd>
 <div class="block">The persistent entity <code>Path</code>.</div>
@@ -12101,9 +12220,17 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <dd>
 <div class="block">The persistent entity <code>Root</code>.</div>
 </dd>
+<dt><a href="io/micronaut/data/model/jpa/criteria/PersistentEntitySetJoin.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentEntitySetJoin</span></a>&lt;<a href="io/micronaut/data/model/jpa/criteria/PersistentEntitySetJoin.html" title="type parameter in PersistentEntitySetJoin">OwnerType</a>,&#8203;<a href="io/micronaut/data/model/jpa/criteria/PersistentEntitySetJoin.html" title="type parameter in PersistentEntitySetJoin">AssociatedEntityType</a>&gt; - Interface in <a href="io/micronaut/data/model/jpa/criteria/package-summary.html">io.micronaut.data.model.jpa.criteria</a></dt>
+<dd>
+<div class="block">The persistent entity set <code>Join</code>.</div>
+</dd>
 <dt><a href="io/micronaut/data/model/PersistentEntityUtils.html" title="class in io.micronaut.data.model"><span class="typeNameLink">PersistentEntityUtils</span></a> - Class in <a href="io/micronaut/data/model/package-summary.html">io.micronaut.data.model</a></dt>
 <dd>
 <div class="block">Persistent entity utils.</div>
+</dd>
+<dt><a href="io/micronaut/data/model/jpa/criteria/PersistentListAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentListAssociationPath</span></a>&lt;<a href="io/micronaut/data/model/jpa/criteria/PersistentListAssociationPath.html" title="type parameter in PersistentListAssociationPath">OwnerType</a>,&#8203;<a href="io/micronaut/data/model/jpa/criteria/PersistentListAssociationPath.html" title="type parameter in PersistentListAssociationPath">AssociatedEntityType</a>&gt; - Interface in <a href="io/micronaut/data/model/jpa/criteria/package-summary.html">io.micronaut.data.model.jpa.criteria</a></dt>
+<dd>
+<div class="block">The persistent entity association path.</div>
 </dd>
 <dt><a href="io/micronaut/data/model/PersistentProperty.html" title="interface in io.micronaut.data.model"><span class="typeNameLink">PersistentProperty</span></a> - Interface in <a href="io/micronaut/data/model/package-summary.html">io.micronaut.data.model</a></dt>
 <dd>
@@ -12167,6 +12294,10 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 </dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/impl/predicate/PersistentPropertyUnaryPredicate.html#%3Cinit%3E(io.micronaut.data.model.jpa.criteria.PersistentPropertyPath,io.micronaut.data.model.jpa.criteria.impl.predicate.PredicateUnaryOp)">PersistentPropertyUnaryPredicate(PersistentPropertyPath&lt;T&gt;, PredicateUnaryOp)</a></span> - Constructor for class io.micronaut.data.model.jpa.criteria.impl.predicate.<a href="io/micronaut/data/model/jpa/criteria/impl/predicate/PersistentPropertyUnaryPredicate.html" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate">PersistentPropertyUnaryPredicate</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/model/jpa/criteria/PersistentSetAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentSetAssociationPath</span></a>&lt;<a href="io/micronaut/data/model/jpa/criteria/PersistentSetAssociationPath.html" title="type parameter in PersistentSetAssociationPath">OwnerType</a>,&#8203;<a href="io/micronaut/data/model/jpa/criteria/PersistentSetAssociationPath.html" title="type parameter in PersistentSetAssociationPath">AssociatedEntityType</a>&gt; - Interface in <a href="io/micronaut/data/model/jpa/criteria/package-summary.html">io.micronaut.data.model.jpa.criteria</a></dt>
+<dd>
+<div class="block">The persistent entity association path.</div>
+</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/operations/internal/ReactiveCascadeOperations.ReactiveCascadeOperationsHelper.html#persistManyAssociation(Ctx,io.micronaut.data.model.runtime.RuntimeAssociation,java.lang.Object,io.micronaut.data.model.runtime.RuntimePersistentEntity,java.lang.Object,io.micronaut.data.model.runtime.RuntimePersistentEntity)">persistManyAssociation(Ctx, RuntimeAssociation, Object, RuntimePersistentEntity&lt;Object&gt;, Object, RuntimePersistentEntity&lt;Object&gt;)</a></span> - Method in interface io.micronaut.data.runtime.operations.internal.<a href="io/micronaut/data/runtime/operations/internal/ReactiveCascadeOperations.ReactiveCascadeOperationsHelper.html" title="interface in io.micronaut.data.runtime.operations.internal">ReactiveCascadeOperations.ReactiveCascadeOperationsHelper</a></dt>
 <dd>
 <div class="block">Persist JOIN table relationship.</div>
@@ -14318,6 +14449,8 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <dd>
 <div class="block">A result reader is a type that is capable of reading data from the given result set type.</div>
 </dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentEntityCriteriaQuery.html#resultType">resultType</a></span> - Variable in class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentEntityCriteriaQuery.html" title="class in io.micronaut.data.model.jpa.criteria.impl">AbstractPersistentEntityCriteriaQuery</a></dt>
+<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/intercept/annotation/DataMethod.html#resultType()">resultType()</a></span> - Method in annotation type io.micronaut.data.intercept.annotation.<a href="io/micronaut/data/intercept/annotation/DataMethod.html" title="annotation in io.micronaut.data.intercept.annotation">DataMethod</a></dt>
 <dd>
 <div class="block">The computed result type.</div>
@@ -15278,6 +15411,8 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 </dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/query/internal/QueryResultStoredQuery.html#single(io.micronaut.data.intercept.annotation.DataMethod.OperationType,java.lang.String,io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.query.builder.QueryResult,java.lang.Class)">single(DataMethod.OperationType, String, AnnotationMetadata, QueryResult, Class&lt;T&gt;)</a></span> - Static method in class io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/QueryResultStoredQuery.html" title="class in io.micronaut.data.runtime.query.internal">QueryResultStoredQuery</a></dt>
 <dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/query/internal/QueryResultStoredQuery.html#single(io.micronaut.data.intercept.annotation.DataMethod.OperationType,java.lang.String,io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.query.builder.QueryResult,java.lang.Class,java.lang.Class)">single(DataMethod.OperationType, String, AnnotationMetadata, QueryResult, Class&lt;T&gt;, Class&lt;R&gt;)</a></span> - Static method in class io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/QueryResultStoredQuery.html" title="class in io.micronaut.data.runtime.query.internal">QueryResultStoredQuery</a></dt>
+<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/jpa/criteria/impl/AbstractCriteriaBuilder.html#size(C)">size(C)</a></span> - Method in class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/AbstractCriteriaBuilder.html" title="class in io.micronaut.data.model.jpa.criteria.impl">AbstractCriteriaBuilder</a></dt>
 <dd>
 <div class="block">Not supported yet.</div>
@@ -15720,6 +15855,18 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <dd>
 <div class="block">Checks if the expression x starts with the expression y ignoring case.</div>
 </dd>
+<dt><a href="io/micronaut/data/processor/mappers/jpa/jakarta/StaticMetamodelAnnotationMapper.html" title="class in io.micronaut.data.processor.mappers.jpa.jakarta"><span class="typeNameLink">StaticMetamodelAnnotationMapper</span></a> - Class in <a href="io/micronaut/data/processor/mappers/jpa/jakarta/package-summary.html">io.micronaut.data.processor.mappers.jpa.jakarta</a></dt>
+<dd>
+<div class="block">Mapping <code>StaticMetamodel</code> to have reflective access.</div>
+</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/processor/mappers/jpa/jakarta/StaticMetamodelAnnotationMapper.html#%3Cinit%3E()">StaticMetamodelAnnotationMapper()</a></span> - Constructor for class io.micronaut.data.processor.mappers.jpa.jakarta.<a href="io/micronaut/data/processor/mappers/jpa/jakarta/StaticMetamodelAnnotationMapper.html" title="class in io.micronaut.data.processor.mappers.jpa.jakarta">StaticMetamodelAnnotationMapper</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/runtime/criteria/metamodel/StaticMetamodelInitializer.html" title="class in io.micronaut.data.runtime.criteria.metamodel"><span class="typeNameLink">StaticMetamodelInitializer</span></a> - Class in <a href="io/micronaut/data/runtime/criteria/metamodel/package-summary.html">io.micronaut.data.runtime.criteria.metamodel</a></dt>
+<dd>
+<div class="block">Static metadata properties initializer.</div>
+</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/criteria/metamodel/StaticMetamodelInitializer.html#%3Cinit%3E()">StaticMetamodelInitializer()</a></span> - Constructor for class io.micronaut.data.runtime.criteria.metamodel.<a href="io/micronaut/data/runtime/criteria/metamodel/StaticMetamodelInitializer.html" title="class in io.micronaut.data.runtime.criteria.metamodel">StaticMetamodelInitializer</a></dt>
+<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/transaction/reactive/ReactiveTransactionStatus.html#STATUS">STATUS</a></span> - Static variable in interface io.micronaut.transaction.reactive.<a href="io/micronaut/transaction/reactive/ReactiveTransactionStatus.html" title="interface in io.micronaut.transaction.reactive">ReactiveTransactionStatus</a></dt>
 <dd>
 <div class="deprecationBlock"><span class="deprecatedLabel">Deprecated.</span>
@@ -16738,6 +16885,10 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/operations/ReactorToAsyncOperationsAdaptor.html#updateAll(io.micronaut.data.model.runtime.UpdateBatchOperation)">updateAll(UpdateBatchOperation&lt;T&gt;)</a></span> - Method in class io.micronaut.data.runtime.operations.<a href="io/micronaut/data/runtime/operations/ReactorToAsyncOperationsAdaptor.html" title="class in io.micronaut.data.runtime.operations">ReactorToAsyncOperationsAdaptor</a></dt>
 <dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/repository/jpa/JpaSpecificationExecutor.html#updateAll(io.micronaut.data.repository.jpa.criteria.CriteriaUpdateBuilder)">updateAll(CriteriaUpdateBuilder&lt;T&gt;)</a></span> - Method in interface io.micronaut.data.repository.jpa.<a href="io/micronaut/data/repository/jpa/JpaSpecificationExecutor.html" title="interface in io.micronaut.data.repository.jpa">JpaSpecificationExecutor</a></dt>
+<dd>
+<div class="block">Updates all entities using build criteria query.</div>
+</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/repository/jpa/async/AsyncJpaSpecificationExecutor.html#updateAll(io.micronaut.data.repository.jpa.criteria.UpdateSpecification)">updateAll(UpdateSpecification&lt;T&gt;)</a></span> - Method in interface io.micronaut.data.repository.jpa.async.<a href="io/micronaut/data/repository/jpa/async/AsyncJpaSpecificationExecutor.html" title="interface in io.micronaut.data.repository.jpa.async">AsyncJpaSpecificationExecutor</a></dt>
 <dd>
 <div class="block">Updates all entities matching the given <a href="io/micronaut/data/repository/jpa/criteria/UpdateSpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria"><code>UpdateSpecification</code></a>.</div>

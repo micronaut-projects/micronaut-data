@@ -26,7 +26,7 @@
     catch(err) {
     }
 //-->
-var data = {"i0":6,"i1":6,"i2":6,"i3":6,"i4":6,"i5":6,"i6":6,"i7":6,"i8":6,"i9":6,"i10":6,"i11":6,"i12":6};
+var data = {"i0":6,"i1":6,"i2":6,"i3":6,"i4":6,"i5":6,"i6":6,"i7":6,"i8":6,"i9":6,"i10":6,"i11":6,"i12":6,"i13":6,"i14":6,"i15":6,"i16":6};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],4:["t3","Abstract Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -172,26 +172,40 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 </tr>
 <tr id="i2" class="altColor">
 <td class="colFirst"><code>long</code></td>
+<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#deleteAll(io.micronaut.data.repository.jpa.criteria.CriteriaDeleteBuilder)">deleteAll</a></span>&#8203;(<a href="criteria/CriteriaDeleteBuilder.html" title="interface in io.micronaut.data.repository.jpa.criteria">CriteriaDeleteBuilder</a>&lt;<a href="JpaSpecificationExecutor.html" title="type parameter in JpaSpecificationExecutor">T</a>&gt;&nbsp;builder)</code></th>
+<td class="colLast">
+<div class="block">Delete all entities using build criteria query.</div>
+</td>
+</tr>
+<tr id="i3" class="rowColor">
+<td class="colFirst"><code>long</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#deleteAll(io.micronaut.data.repository.jpa.criteria.DeleteSpecification)">deleteAll</a></span>&#8203;(<a href="criteria/DeleteSpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria">DeleteSpecification</a>&lt;<a href="JpaSpecificationExecutor.html" title="type parameter in JpaSpecificationExecutor">T</a>&gt;&nbsp;spec)</code></th>
 <td class="colLast">
 <div class="block">Deletes all entities matching the given <a href="criteria/DeleteSpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria"><code>DeleteSpecification</code></a>.</div>
 </td>
 </tr>
-<tr id="i3" class="rowColor">
+<tr id="i4" class="altColor">
 <td class="colFirst"><code>long</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#deleteAll(io.micronaut.data.repository.jpa.criteria.PredicateSpecification)">deleteAll</a></span>&#8203;(<a href="criteria/PredicateSpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria">PredicateSpecification</a>&lt;<a href="JpaSpecificationExecutor.html" title="type parameter in JpaSpecificationExecutor">T</a>&gt;&nbsp;spec)</code></th>
 <td class="colLast">
 <div class="block">Deletes all entities matching the given <a href="criteria/PredicateSpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria"><code>PredicateSpecification</code></a>.</div>
 </td>
 </tr>
-<tr id="i4" class="altColor">
+<tr id="i5" class="rowColor">
+<td class="colFirst"><code>&lt;R&gt;&nbsp;java.util.List&lt;R&gt;</code></td>
+<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#findAll(io.micronaut.data.repository.jpa.criteria.CriteriaQueryBuilder)">findAll</a></span>&#8203;(<a href="criteria/CriteriaQueryBuilder.html" title="interface in io.micronaut.data.repository.jpa.criteria">CriteriaQueryBuilder</a>&lt;R&gt;&nbsp;builder)</code></th>
+<td class="colLast">
+<div class="block">Find all using build criteria query.</div>
+</td>
+</tr>
+<tr id="i6" class="altColor">
 <td class="colFirst"><code>java.util.List&lt;<a href="JpaSpecificationExecutor.html" title="type parameter in JpaSpecificationExecutor">T</a>&gt;</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#findAll(io.micronaut.data.repository.jpa.criteria.PredicateSpecification)">findAll</a></span>&#8203;(<a href="criteria/PredicateSpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria">PredicateSpecification</a>&lt;<a href="JpaSpecificationExecutor.html" title="type parameter in JpaSpecificationExecutor">T</a>&gt;&nbsp;spec)</code></th>
 <td class="colLast">
 <div class="block">Returns all entities matching the given <a href="criteria/PredicateSpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria"><code>PredicateSpecification</code></a>.</div>
 </td>
 </tr>
-<tr id="i5" class="rowColor">
+<tr id="i7" class="rowColor">
 <td class="colFirst"><code><a href="../../model/Page.html" title="interface in io.micronaut.data.model">Page</a>&lt;<a href="JpaSpecificationExecutor.html" title="type parameter in JpaSpecificationExecutor">T</a>&gt;</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#findAll(io.micronaut.data.repository.jpa.criteria.PredicateSpecification,io.micronaut.data.model.Pageable)">findAll</a></span>&#8203;(<a href="criteria/PredicateSpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria">PredicateSpecification</a>&lt;<a href="JpaSpecificationExecutor.html" title="type parameter in JpaSpecificationExecutor">T</a>&gt;&nbsp;spec,
        <a href="../../model/Pageable.html" title="interface in io.micronaut.data.model">Pageable</a>&nbsp;pageable)</code></th>
@@ -199,7 +213,7 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <div class="block">Returns a <a href="../../model/Page.html" title="interface in io.micronaut.data.model"><code>Page</code></a> of entities matching the given <a href="criteria/QuerySpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria"><code>QuerySpecification</code></a>.</div>
 </td>
 </tr>
-<tr id="i6" class="altColor">
+<tr id="i8" class="altColor">
 <td class="colFirst"><code>java.util.List&lt;<a href="JpaSpecificationExecutor.html" title="type parameter in JpaSpecificationExecutor">T</a>&gt;</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#findAll(io.micronaut.data.repository.jpa.criteria.PredicateSpecification,io.micronaut.data.model.Sort)">findAll</a></span>&#8203;(<a href="criteria/PredicateSpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria">PredicateSpecification</a>&lt;<a href="JpaSpecificationExecutor.html" title="type parameter in JpaSpecificationExecutor">T</a>&gt;&nbsp;spec,
        <a href="../../model/Sort.html" title="interface in io.micronaut.data.model">Sort</a>&nbsp;sort)</code></th>
@@ -207,14 +221,14 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <div class="block">Returns all entities matching the given <a href="criteria/QuerySpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria"><code>QuerySpecification</code></a> and <a href="../../model/Sort.html" title="interface in io.micronaut.data.model"><code>Sort</code></a>.</div>
 </td>
 </tr>
-<tr id="i7" class="rowColor">
+<tr id="i9" class="rowColor">
 <td class="colFirst"><code>java.util.List&lt;<a href="JpaSpecificationExecutor.html" title="type parameter in JpaSpecificationExecutor">T</a>&gt;</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#findAll(io.micronaut.data.repository.jpa.criteria.QuerySpecification)">findAll</a></span>&#8203;(<a href="criteria/QuerySpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria">QuerySpecification</a>&lt;<a href="JpaSpecificationExecutor.html" title="type parameter in JpaSpecificationExecutor">T</a>&gt;&nbsp;spec)</code></th>
 <td class="colLast">
 <div class="block">Returns all entities matching the given <a href="criteria/QuerySpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria"><code>QuerySpecification</code></a>.</div>
 </td>
 </tr>
-<tr id="i8" class="altColor">
+<tr id="i10" class="altColor">
 <td class="colFirst"><code><a href="../../model/Page.html" title="interface in io.micronaut.data.model">Page</a>&lt;<a href="JpaSpecificationExecutor.html" title="type parameter in JpaSpecificationExecutor">T</a>&gt;</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#findAll(io.micronaut.data.repository.jpa.criteria.QuerySpecification,io.micronaut.data.model.Pageable)">findAll</a></span>&#8203;(<a href="criteria/QuerySpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria">QuerySpecification</a>&lt;<a href="JpaSpecificationExecutor.html" title="type parameter in JpaSpecificationExecutor">T</a>&gt;&nbsp;spec,
        <a href="../../model/Pageable.html" title="interface in io.micronaut.data.model">Pageable</a>&nbsp;pageable)</code></th>
@@ -222,7 +236,7 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <div class="block">Returns a <a href="../../model/Page.html" title="interface in io.micronaut.data.model"><code>Page</code></a> of entities matching the given <a href="criteria/QuerySpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria"><code>QuerySpecification</code></a>.</div>
 </td>
 </tr>
-<tr id="i9" class="rowColor">
+<tr id="i11" class="rowColor">
 <td class="colFirst"><code>java.util.List&lt;<a href="JpaSpecificationExecutor.html" title="type parameter in JpaSpecificationExecutor">T</a>&gt;</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#findAll(io.micronaut.data.repository.jpa.criteria.QuerySpecification,io.micronaut.data.model.Sort)">findAll</a></span>&#8203;(<a href="criteria/QuerySpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria">QuerySpecification</a>&lt;<a href="JpaSpecificationExecutor.html" title="type parameter in JpaSpecificationExecutor">T</a>&gt;&nbsp;spec,
        <a href="../../model/Sort.html" title="interface in io.micronaut.data.model">Sort</a>&nbsp;sort)</code></th>
@@ -230,21 +244,35 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <div class="block">Returns all entities matching the given <a href="criteria/QuerySpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria"><code>QuerySpecification</code></a> and <a href="../../model/Sort.html" title="interface in io.micronaut.data.model"><code>Sort</code></a>.</div>
 </td>
 </tr>
-<tr id="i10" class="altColor">
+<tr id="i12" class="altColor">
+<td class="colFirst"><code>&lt;R&gt;&nbsp;R</code></td>
+<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#findOne(io.micronaut.data.repository.jpa.criteria.CriteriaQueryBuilder)">findOne</a></span>&#8203;(<a href="criteria/CriteriaQueryBuilder.html" title="interface in io.micronaut.data.repository.jpa.criteria">CriteriaQueryBuilder</a>&lt;R&gt;&nbsp;builder)</code></th>
+<td class="colLast">
+<div class="block">Find one using build criteria query.</div>
+</td>
+</tr>
+<tr id="i13" class="rowColor">
 <td class="colFirst"><code>java.util.Optional&lt;<a href="JpaSpecificationExecutor.html" title="type parameter in JpaSpecificationExecutor">T</a>&gt;</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#findOne(io.micronaut.data.repository.jpa.criteria.PredicateSpecification)">findOne</a></span>&#8203;(<a href="criteria/PredicateSpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria">PredicateSpecification</a>&lt;<a href="JpaSpecificationExecutor.html" title="type parameter in JpaSpecificationExecutor">T</a>&gt;&nbsp;spec)</code></th>
 <td class="colLast">
 <div class="block">Returns a single entity matching the given <a href="criteria/PredicateSpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria"><code>PredicateSpecification</code></a>.</div>
 </td>
 </tr>
-<tr id="i11" class="rowColor">
+<tr id="i14" class="altColor">
 <td class="colFirst"><code>java.util.Optional&lt;<a href="JpaSpecificationExecutor.html" title="type parameter in JpaSpecificationExecutor">T</a>&gt;</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#findOne(io.micronaut.data.repository.jpa.criteria.QuerySpecification)">findOne</a></span>&#8203;(<a href="criteria/QuerySpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria">QuerySpecification</a>&lt;<a href="JpaSpecificationExecutor.html" title="type parameter in JpaSpecificationExecutor">T</a>&gt;&nbsp;spec)</code></th>
 <td class="colLast">
 <div class="block">Returns a single entity matching the given <a href="criteria/QuerySpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria"><code>QuerySpecification</code></a>.</div>
 </td>
 </tr>
-<tr id="i12" class="altColor">
+<tr id="i15" class="rowColor">
+<td class="colFirst"><code>long</code></td>
+<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#updateAll(io.micronaut.data.repository.jpa.criteria.CriteriaUpdateBuilder)">updateAll</a></span>&#8203;(<a href="criteria/CriteriaUpdateBuilder.html" title="interface in io.micronaut.data.repository.jpa.criteria">CriteriaUpdateBuilder</a>&lt;<a href="JpaSpecificationExecutor.html" title="type parameter in JpaSpecificationExecutor">T</a>&gt;&nbsp;builder)</code></th>
+<td class="colLast">
+<div class="block">Updates all entities using build criteria query.</div>
+</td>
+</tr>
+<tr id="i16" class="altColor">
 <td class="colFirst"><code>long</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#updateAll(io.micronaut.data.repository.jpa.criteria.UpdateSpecification)">updateAll</a></span>&#8203;(<a href="criteria/UpdateSpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria">UpdateSpecification</a>&lt;<a href="JpaSpecificationExecutor.html" title="type parameter in JpaSpecificationExecutor">T</a>&gt;&nbsp;spec)</code></th>
 <td class="colLast">
@@ -418,6 +446,50 @@ java.util.List&lt;<a href="JpaSpecificationExecutor.html" title="type parameter 
 </dl>
 </li>
 </ul>
+<a id="findAll(io.micronaut.data.repository.jpa.criteria.CriteriaQueryBuilder)">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>findAll</h4>
+<pre class="methodSignature">@NonNull
+&lt;R&gt;&nbsp;java.util.List&lt;R&gt;&nbsp;findAll&#8203;(@Nullable
+                              <a href="criteria/CriteriaQueryBuilder.html" title="interface in io.micronaut.data.repository.jpa.criteria">CriteriaQueryBuilder</a>&lt;R&gt;&nbsp;builder)</pre>
+<div class="block">Find all using build criteria query.</div>
+<dl>
+<dt><span class="paramLabel">Type Parameters:</span></dt>
+<dd><code>R</code> - the result type</dd>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>builder</code> - The criteria query builder</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>the number records updated.</dd>
+<dt><span class="simpleTagLabel">Since:</span></dt>
+<dd>3.5.0</dd>
+</dl>
+</li>
+</ul>
+<a id="findOne(io.micronaut.data.repository.jpa.criteria.CriteriaQueryBuilder)">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>findOne</h4>
+<pre class="methodSignature">@NonNull
+&lt;R&gt;&nbsp;R&nbsp;findOne&#8203;(@Nullable
+              <a href="criteria/CriteriaQueryBuilder.html" title="interface in io.micronaut.data.repository.jpa.criteria">CriteriaQueryBuilder</a>&lt;R&gt;&nbsp;builder)</pre>
+<div class="block">Find one using build criteria query.</div>
+<dl>
+<dt><span class="paramLabel">Type Parameters:</span></dt>
+<dd><code>R</code> - the result type</dd>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>builder</code> - The criteria query builder</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>the number records updated.</dd>
+<dt><span class="simpleTagLabel">Since:</span></dt>
+<dd>3.5.0</dd>
+</dl>
+</li>
+</ul>
 <a id="count(io.micronaut.data.repository.jpa.criteria.QuerySpecification)">
 <!--   -->
 </a>
@@ -486,10 +558,29 @@ java.util.List&lt;<a href="JpaSpecificationExecutor.html" title="type parameter 
 </dl>
 </li>
 </ul>
+<a id="deleteAll(io.micronaut.data.repository.jpa.criteria.CriteriaDeleteBuilder)">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>deleteAll</h4>
+<pre class="methodSignature">long&nbsp;deleteAll&#8203;(@Nullable
+               <a href="criteria/CriteriaDeleteBuilder.html" title="interface in io.micronaut.data.repository.jpa.criteria">CriteriaDeleteBuilder</a>&lt;<a href="JpaSpecificationExecutor.html" title="type parameter in JpaSpecificationExecutor">T</a>&gt;&nbsp;builder)</pre>
+<div class="block">Delete all entities using build criteria query.</div>
+<dl>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>builder</code> - The delete criteria query builder</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>the number records updated.</dd>
+<dt><span class="simpleTagLabel">Since:</span></dt>
+<dd>3.5.0</dd>
+</dl>
+</li>
+</ul>
 <a id="updateAll(io.micronaut.data.repository.jpa.criteria.UpdateSpecification)">
 <!--   -->
 </a>
-<ul class="blockListLast">
+<ul class="blockList">
 <li class="blockList">
 <h4>updateAll</h4>
 <pre class="methodSignature">long&nbsp;updateAll&#8203;(@Nullable
@@ -500,6 +591,25 @@ java.util.List&lt;<a href="JpaSpecificationExecutor.html" title="type parameter 
 <dd><code>spec</code> - The update specification</dd>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>the number records updated.</dd>
+</dl>
+</li>
+</ul>
+<a id="updateAll(io.micronaut.data.repository.jpa.criteria.CriteriaUpdateBuilder)">
+<!--   -->
+</a>
+<ul class="blockListLast">
+<li class="blockList">
+<h4>updateAll</h4>
+<pre class="methodSignature">long&nbsp;updateAll&#8203;(@Nullable
+               <a href="criteria/CriteriaUpdateBuilder.html" title="interface in io.micronaut.data.repository.jpa.criteria">CriteriaUpdateBuilder</a>&lt;<a href="JpaSpecificationExecutor.html" title="type parameter in JpaSpecificationExecutor">T</a>&gt;&nbsp;builder)</pre>
+<div class="block">Updates all entities using build criteria query.</div>
+<dl>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>builder</code> - The update criteria query builder</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>the number records updated.</dd>
+<dt><span class="simpleTagLabel">Since:</span></dt>
+<dd>3.5.0</dd>
 </dl>
 </li>
 </ul>

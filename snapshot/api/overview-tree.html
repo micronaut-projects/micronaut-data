@@ -184,6 +184,7 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <li><a href="io/micronaut/data/runtime/config/package-tree.html">io.micronaut.data.runtime.config</a>, </li>
 <li><a href="io/micronaut/data/runtime/convert/package-tree.html">io.micronaut.data.runtime.convert</a>, </li>
 <li><a href="io/micronaut/data/runtime/criteria/package-tree.html">io.micronaut.data.runtime.criteria</a>, </li>
+<li><a href="io/micronaut/data/runtime/criteria/metamodel/package-tree.html">io.micronaut.data.runtime.criteria.metamodel</a>, </li>
 <li><a href="io/micronaut/data/runtime/date/package-tree.html">io.micronaut.data.runtime.date</a>, </li>
 <li><a href="io/micronaut/data/runtime/event/package-tree.html">io.micronaut.data.runtime.event</a>, </li>
 <li><a href="io/micronaut/data/runtime/event/listeners/package-tree.html">io.micronaut.data.runtime.event.listeners</a>, </li>
@@ -985,6 +986,8 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <li class="circle">io.micronaut.data.processor.mappers.spring.<a href="io/micronaut/data/processor/mappers/spring/SpringTransientMapper.html" title="class in io.micronaut.data.processor.mappers.spring"><span class="typeNameLink">SpringTransientMapper</span></a> (implements io.micronaut.inject.annotation.NamedAnnotationMapper)</li>
 <li class="circle">io.micronaut.data.processor.mappers.spring.<a href="io/micronaut/data/processor/mappers/spring/SpringVersionMapper.html" title="class in io.micronaut.data.processor.mappers.spring"><span class="typeNameLink">SpringVersionMapper</span></a> (implements io.micronaut.inject.annotation.NamedAnnotationMapper)</li>
 <li class="circle">io.micronaut.data.runtime.mapper.sql.<a href="io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.html" title="class in io.micronaut.data.runtime.mapper.sql"><span class="typeNameLink">SqlResultEntityTypeMapper</span></a>&lt;RS,&#8203;R&gt; (implements io.micronaut.data.runtime.mapper.sql.<a href="io/micronaut/data/runtime/mapper/sql/SqlTypeMapper.html" title="interface in io.micronaut.data.runtime.mapper.sql">SqlTypeMapper</a>&lt;RS,&#8203;R&gt;)</li>
+<li class="circle">io.micronaut.data.processor.mappers.jpa.jakarta.<a href="io/micronaut/data/processor/mappers/jpa/jakarta/StaticMetamodelAnnotationMapper.html" title="class in io.micronaut.data.processor.mappers.jpa.jakarta"><span class="typeNameLink">StaticMetamodelAnnotationMapper</span></a> (implements io.micronaut.inject.annotation.AnnotationMapper&lt;T&gt;)</li>
+<li class="circle">io.micronaut.data.runtime.criteria.metamodel.<a href="io/micronaut/data/runtime/criteria/metamodel/StaticMetamodelInitializer.html" title="class in io.micronaut.data.runtime.criteria.metamodel"><span class="typeNameLink">StaticMetamodelInitializer</span></a></li>
 <li class="circle">io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/StoredQueryParameter.html" title="class in io.micronaut.data.runtime.query.internal"><span class="typeNameLink">StoredQueryParameter</span></a> (implements io.micronaut.data.model.runtime.<a href="io/micronaut/data/model/runtime/QueryParameterBinding.html" title="interface in io.micronaut.data.model.runtime">QueryParameterBinding</a>)</li>
 <li class="circle">io.micronaut.data.runtime.operations.internal.<a href="io/micronaut/data/runtime/operations/internal/SyncCascadeOperations.html" title="class in io.micronaut.data.runtime.operations.internal"><span class="typeNameLink">SyncCascadeOperations</span></a>&lt;Ctx&gt;</li>
 <li class="circle">io.micronaut.data.runtime.operations.internal.<a href="io/micronaut/data/runtime/operations/internal/SyncEntitiesOperations.html" title="class in io.micronaut.data.runtime.operations.internal"><span class="typeNameLink">SyncEntitiesOperations</span></a>&lt;T,&#8203;Exc&gt;
@@ -1379,6 +1382,9 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 </li>
 </ul>
 </li>
+<li class="circle">io.micronaut.data.repository.jpa.criteria.<a href="io/micronaut/data/repository/jpa/criteria/CriteriaDeleteBuilder.html" title="interface in io.micronaut.data.repository.jpa.criteria"><span class="typeNameLink">CriteriaDeleteBuilder</span></a>&lt;E&gt;</li>
+<li class="circle">io.micronaut.data.repository.jpa.criteria.<a href="io/micronaut/data/repository/jpa/criteria/CriteriaQueryBuilder.html" title="interface in io.micronaut.data.repository.jpa.criteria"><span class="typeNameLink">CriteriaQueryBuilder</span></a>&lt;R&gt;</li>
+<li class="circle">io.micronaut.data.repository.jpa.criteria.<a href="io/micronaut/data/repository/jpa/criteria/CriteriaUpdateBuilder.html" title="interface in io.micronaut.data.repository.jpa.criteria"><span class="typeNameLink">CriteriaUpdateBuilder</span></a>&lt;E&gt;</li>
 <li class="circle">io.micronaut.data.intercept.<a href="io/micronaut/data/intercept/DataInterceptor.html" title="interface in io.micronaut.data.intercept"><span class="typeNameLink">DataInterceptor</span></a>&lt;T,&#8203;R&gt;
 <ul>
 <li class="circle">io.micronaut.data.intercept.async.<a href="io/micronaut/data/intercept/async/CountAsyncInterceptor.html" title="interface in io.micronaut.data.intercept.async"><span class="typeNameLink">CountAsyncInterceptor</span></a>&lt;T&gt;</li>
@@ -1466,7 +1472,59 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <ul>
 <li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityJoin.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentEntityJoin</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityFrom.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityFrom</a>&lt;OwnerType,&#8203;AssociatedEntityType&gt;)
 <ul>
-<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentAssociationPath</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentPropertyPath.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentPropertyPath</a>&lt;T&gt;)</li>
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentAssociationPath</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentPropertyPath.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentPropertyPath</a>&lt;T&gt;)
+<ul>
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentCollectionAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentCollectionAssociationPath</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityCollectionJoin.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCollectionJoin</a>&lt;OwnerType,&#8203;AssociatedEntityType&gt;)</li>
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentListAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentListAssociationPath</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityListJoin.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityListJoin</a>&lt;OwnerType,&#8203;AssociatedEntityType&gt;)</li>
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentSetAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentSetAssociationPath</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntitySetJoin.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntitySetJoin</a>&lt;OwnerType,&#8203;AssociatedEntityType&gt;)</li>
+</ul>
+</li>
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityCollectionJoin.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentEntityCollectionJoin</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends jakarta.persistence.criteria.CollectionJoin&lt;Z,&#8203;E&gt;)
+<ul>
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentCollectionAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentCollectionAssociationPath</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentAssociationPath</a>&lt;OwnerType,&#8203;AssociatedEntityType&gt;)</li>
+</ul>
+</li>
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityListJoin.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentEntityListJoin</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends jakarta.persistence.criteria.ListJoin&lt;Z,&#8203;E&gt;)
+<ul>
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentListAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentListAssociationPath</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentAssociationPath</a>&lt;OwnerType,&#8203;AssociatedEntityType&gt;)</li>
+</ul>
+</li>
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntitySetJoin.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentEntitySetJoin</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends jakarta.persistence.criteria.SetJoin&lt;Z,&#8203;E&gt;)
+<ul>
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentSetAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentSetAssociationPath</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentAssociationPath</a>&lt;OwnerType,&#8203;AssociatedEntityType&gt;)</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="circle">jakarta.persistence.criteria.PluralJoin&lt;Z,&#8203;C,&#8203;E&gt;
+<ul>
+<li class="circle">jakarta.persistence.criteria.CollectionJoin&lt;Z,&#8203;E&gt;
+<ul>
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityCollectionJoin.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentEntityCollectionJoin</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityJoin.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityJoin</a>&lt;OwnerType,&#8203;AssociatedEntityType&gt;)
+<ul>
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentCollectionAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentCollectionAssociationPath</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentAssociationPath</a>&lt;OwnerType,&#8203;AssociatedEntityType&gt;)</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="circle">jakarta.persistence.criteria.ListJoin&lt;Z,&#8203;E&gt;
+<ul>
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityListJoin.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentEntityListJoin</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityJoin.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityJoin</a>&lt;OwnerType,&#8203;AssociatedEntityType&gt;)
+<ul>
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentListAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentListAssociationPath</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentAssociationPath</a>&lt;OwnerType,&#8203;AssociatedEntityType&gt;)</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="circle">jakarta.persistence.criteria.SetJoin&lt;Z,&#8203;E&gt;
+<ul>
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntitySetJoin.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentEntitySetJoin</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityJoin.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityJoin</a>&lt;OwnerType,&#8203;AssociatedEntityType&gt;)
+<ul>
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentSetAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentSetAssociationPath</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentAssociationPath</a>&lt;OwnerType,&#8203;AssociatedEntityType&gt;)</li>
+</ul>
+</li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -1475,7 +1533,28 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <ul>
 <li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityJoin.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentEntityJoin</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends jakarta.persistence.criteria.Join&lt;Z,&#8203;X&gt;)
 <ul>
-<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentAssociationPath</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentPropertyPath.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentPropertyPath</a>&lt;T&gt;)</li>
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentAssociationPath</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentPropertyPath.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentPropertyPath</a>&lt;T&gt;)
+<ul>
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentCollectionAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentCollectionAssociationPath</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityCollectionJoin.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCollectionJoin</a>&lt;OwnerType,&#8203;AssociatedEntityType&gt;)</li>
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentListAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentListAssociationPath</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityListJoin.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityListJoin</a>&lt;OwnerType,&#8203;AssociatedEntityType&gt;)</li>
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentSetAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentSetAssociationPath</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntitySetJoin.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntitySetJoin</a>&lt;OwnerType,&#8203;AssociatedEntityType&gt;)</li>
+</ul>
+</li>
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityCollectionJoin.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentEntityCollectionJoin</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends jakarta.persistence.criteria.CollectionJoin&lt;Z,&#8203;E&gt;)
+<ul>
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentCollectionAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentCollectionAssociationPath</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentAssociationPath</a>&lt;OwnerType,&#8203;AssociatedEntityType&gt;)</li>
+</ul>
+</li>
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityListJoin.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentEntityListJoin</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends jakarta.persistence.criteria.ListJoin&lt;Z,&#8203;E&gt;)
+<ul>
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentListAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentListAssociationPath</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentAssociationPath</a>&lt;OwnerType,&#8203;AssociatedEntityType&gt;)</li>
+</ul>
+</li>
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntitySetJoin.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentEntitySetJoin</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends jakarta.persistence.criteria.SetJoin&lt;Z,&#8203;E&gt;)
+<ul>
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentSetAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentSetAssociationPath</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentAssociationPath</a>&lt;OwnerType,&#8203;AssociatedEntityType&gt;)</li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityRoot.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentEntityRoot</span></a>&lt;T&gt; (also extends jakarta.persistence.criteria.Root&lt;X&gt;)</li>
@@ -1866,7 +1945,28 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <ul>
 <li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityJoin.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentEntityJoin</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends jakarta.persistence.criteria.Join&lt;Z,&#8203;X&gt;)
 <ul>
-<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentAssociationPath</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentPropertyPath.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentPropertyPath</a>&lt;T&gt;)</li>
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentAssociationPath</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentPropertyPath.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentPropertyPath</a>&lt;T&gt;)
+<ul>
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentCollectionAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentCollectionAssociationPath</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityCollectionJoin.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCollectionJoin</a>&lt;OwnerType,&#8203;AssociatedEntityType&gt;)</li>
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentListAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentListAssociationPath</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityListJoin.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityListJoin</a>&lt;OwnerType,&#8203;AssociatedEntityType&gt;)</li>
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentSetAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentSetAssociationPath</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntitySetJoin.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntitySetJoin</a>&lt;OwnerType,&#8203;AssociatedEntityType&gt;)</li>
+</ul>
+</li>
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityCollectionJoin.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentEntityCollectionJoin</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends jakarta.persistence.criteria.CollectionJoin&lt;Z,&#8203;E&gt;)
+<ul>
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentCollectionAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentCollectionAssociationPath</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentAssociationPath</a>&lt;OwnerType,&#8203;AssociatedEntityType&gt;)</li>
+</ul>
+</li>
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityListJoin.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentEntityListJoin</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends jakarta.persistence.criteria.ListJoin&lt;Z,&#8203;E&gt;)
+<ul>
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentListAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentListAssociationPath</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentAssociationPath</a>&lt;OwnerType,&#8203;AssociatedEntityType&gt;)</li>
+</ul>
+</li>
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntitySetJoin.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentEntitySetJoin</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends jakarta.persistence.criteria.SetJoin&lt;Z,&#8203;E&gt;)
+<ul>
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentSetAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentSetAssociationPath</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentAssociationPath</a>&lt;OwnerType,&#8203;AssociatedEntityType&gt;)</li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityRoot.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentEntityRoot</span></a>&lt;T&gt; (also extends jakarta.persistence.criteria.Root&lt;X&gt;)</li>
@@ -1876,7 +1976,13 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 </li>
 <li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentPropertyPath.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentPropertyPath</span></a>&lt;T&gt; (also extends jakarta.persistence.criteria.Path&lt;X&gt;)
 <ul>
-<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentAssociationPath</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityJoin.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityJoin</a>&lt;OwnerType,&#8203;AssociatedEntityType&gt;)</li>
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentAssociationPath</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityJoin.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityJoin</a>&lt;OwnerType,&#8203;AssociatedEntityType&gt;)
+<ul>
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentCollectionAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentCollectionAssociationPath</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityCollectionJoin.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCollectionJoin</a>&lt;OwnerType,&#8203;AssociatedEntityType&gt;)</li>
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentListAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentListAssociationPath</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityListJoin.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityListJoin</a>&lt;OwnerType,&#8203;AssociatedEntityType&gt;)</li>
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentSetAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentSetAssociationPath</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntitySetJoin.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntitySetJoin</a>&lt;OwnerType,&#8203;AssociatedEntityType&gt;)</li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -1889,7 +1995,59 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <ul>
 <li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityJoin.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentEntityJoin</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityFrom.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityFrom</a>&lt;OwnerType,&#8203;AssociatedEntityType&gt;)
 <ul>
-<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentAssociationPath</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentPropertyPath.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentPropertyPath</a>&lt;T&gt;)</li>
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentAssociationPath</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentPropertyPath.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentPropertyPath</a>&lt;T&gt;)
+<ul>
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentCollectionAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentCollectionAssociationPath</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityCollectionJoin.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCollectionJoin</a>&lt;OwnerType,&#8203;AssociatedEntityType&gt;)</li>
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentListAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentListAssociationPath</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityListJoin.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityListJoin</a>&lt;OwnerType,&#8203;AssociatedEntityType&gt;)</li>
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentSetAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentSetAssociationPath</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntitySetJoin.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntitySetJoin</a>&lt;OwnerType,&#8203;AssociatedEntityType&gt;)</li>
+</ul>
+</li>
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityCollectionJoin.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentEntityCollectionJoin</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends jakarta.persistence.criteria.CollectionJoin&lt;Z,&#8203;E&gt;)
+<ul>
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentCollectionAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentCollectionAssociationPath</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentAssociationPath</a>&lt;OwnerType,&#8203;AssociatedEntityType&gt;)</li>
+</ul>
+</li>
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityListJoin.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentEntityListJoin</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends jakarta.persistence.criteria.ListJoin&lt;Z,&#8203;E&gt;)
+<ul>
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentListAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentListAssociationPath</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentAssociationPath</a>&lt;OwnerType,&#8203;AssociatedEntityType&gt;)</li>
+</ul>
+</li>
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntitySetJoin.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentEntitySetJoin</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends jakarta.persistence.criteria.SetJoin&lt;Z,&#8203;E&gt;)
+<ul>
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentSetAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentSetAssociationPath</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentAssociationPath</a>&lt;OwnerType,&#8203;AssociatedEntityType&gt;)</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="circle">jakarta.persistence.criteria.PluralJoin&lt;Z,&#8203;C,&#8203;E&gt;
+<ul>
+<li class="circle">jakarta.persistence.criteria.CollectionJoin&lt;Z,&#8203;E&gt;
+<ul>
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityCollectionJoin.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentEntityCollectionJoin</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityJoin.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityJoin</a>&lt;OwnerType,&#8203;AssociatedEntityType&gt;)
+<ul>
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentCollectionAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentCollectionAssociationPath</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentAssociationPath</a>&lt;OwnerType,&#8203;AssociatedEntityType&gt;)</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="circle">jakarta.persistence.criteria.ListJoin&lt;Z,&#8203;E&gt;
+<ul>
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityListJoin.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentEntityListJoin</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityJoin.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityJoin</a>&lt;OwnerType,&#8203;AssociatedEntityType&gt;)
+<ul>
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentListAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentListAssociationPath</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentAssociationPath</a>&lt;OwnerType,&#8203;AssociatedEntityType&gt;)</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="circle">jakarta.persistence.criteria.SetJoin&lt;Z,&#8203;E&gt;
+<ul>
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntitySetJoin.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentEntitySetJoin</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityJoin.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityJoin</a>&lt;OwnerType,&#8203;AssociatedEntityType&gt;)
+<ul>
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentSetAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentSetAssociationPath</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentAssociationPath</a>&lt;OwnerType,&#8203;AssociatedEntityType&gt;)</li>
+</ul>
+</li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -1898,7 +2056,28 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <ul>
 <li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityJoin.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentEntityJoin</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends jakarta.persistence.criteria.Join&lt;Z,&#8203;X&gt;)
 <ul>
-<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentAssociationPath</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentPropertyPath.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentPropertyPath</a>&lt;T&gt;)</li>
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentAssociationPath</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentPropertyPath.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentPropertyPath</a>&lt;T&gt;)
+<ul>
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentCollectionAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentCollectionAssociationPath</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityCollectionJoin.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCollectionJoin</a>&lt;OwnerType,&#8203;AssociatedEntityType&gt;)</li>
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentListAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentListAssociationPath</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityListJoin.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityListJoin</a>&lt;OwnerType,&#8203;AssociatedEntityType&gt;)</li>
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentSetAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentSetAssociationPath</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntitySetJoin.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntitySetJoin</a>&lt;OwnerType,&#8203;AssociatedEntityType&gt;)</li>
+</ul>
+</li>
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityCollectionJoin.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentEntityCollectionJoin</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends jakarta.persistence.criteria.CollectionJoin&lt;Z,&#8203;E&gt;)
+<ul>
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentCollectionAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentCollectionAssociationPath</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentAssociationPath</a>&lt;OwnerType,&#8203;AssociatedEntityType&gt;)</li>
+</ul>
+</li>
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityListJoin.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentEntityListJoin</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends jakarta.persistence.criteria.ListJoin&lt;Z,&#8203;E&gt;)
+<ul>
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentListAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentListAssociationPath</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentAssociationPath</a>&lt;OwnerType,&#8203;AssociatedEntityType&gt;)</li>
+</ul>
+</li>
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntitySetJoin.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentEntitySetJoin</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends jakarta.persistence.criteria.SetJoin&lt;Z,&#8203;E&gt;)
+<ul>
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentSetAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentSetAssociationPath</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentAssociationPath</a>&lt;OwnerType,&#8203;AssociatedEntityType&gt;)</li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityRoot.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentEntityRoot</span></a>&lt;T&gt; (also extends jakarta.persistence.criteria.Root&lt;X&gt;)</li>
@@ -1917,7 +2096,28 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <ul>
 <li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityJoin.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentEntityJoin</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends jakarta.persistence.criteria.Join&lt;Z,&#8203;X&gt;)
 <ul>
-<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentAssociationPath</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentPropertyPath.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentPropertyPath</a>&lt;T&gt;)</li>
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentAssociationPath</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentPropertyPath.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentPropertyPath</a>&lt;T&gt;)
+<ul>
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentCollectionAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentCollectionAssociationPath</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityCollectionJoin.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCollectionJoin</a>&lt;OwnerType,&#8203;AssociatedEntityType&gt;)</li>
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentListAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentListAssociationPath</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityListJoin.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityListJoin</a>&lt;OwnerType,&#8203;AssociatedEntityType&gt;)</li>
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentSetAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentSetAssociationPath</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntitySetJoin.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntitySetJoin</a>&lt;OwnerType,&#8203;AssociatedEntityType&gt;)</li>
+</ul>
+</li>
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityCollectionJoin.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentEntityCollectionJoin</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends jakarta.persistence.criteria.CollectionJoin&lt;Z,&#8203;E&gt;)
+<ul>
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentCollectionAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentCollectionAssociationPath</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentAssociationPath</a>&lt;OwnerType,&#8203;AssociatedEntityType&gt;)</li>
+</ul>
+</li>
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityListJoin.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentEntityListJoin</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends jakarta.persistence.criteria.ListJoin&lt;Z,&#8203;E&gt;)
+<ul>
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentListAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentListAssociationPath</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentAssociationPath</a>&lt;OwnerType,&#8203;AssociatedEntityType&gt;)</li>
+</ul>
+</li>
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntitySetJoin.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentEntitySetJoin</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends jakarta.persistence.criteria.SetJoin&lt;Z,&#8203;E&gt;)
+<ul>
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentSetAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentSetAssociationPath</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentAssociationPath</a>&lt;OwnerType,&#8203;AssociatedEntityType&gt;)</li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityRoot.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentEntityRoot</span></a>&lt;T&gt; (also extends jakarta.persistence.criteria.Root&lt;X&gt;)</li>
@@ -1927,7 +2127,13 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 </li>
 <li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentPropertyPath.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentPropertyPath</span></a>&lt;T&gt; (also extends io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/IExpression.html" title="interface in io.micronaut.data.model.jpa.criteria">IExpression</a>&lt;T&gt;)
 <ul>
-<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentAssociationPath</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityJoin.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityJoin</a>&lt;OwnerType,&#8203;AssociatedEntityType&gt;)</li>
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentAssociationPath</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityJoin.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityJoin</a>&lt;OwnerType,&#8203;AssociatedEntityType&gt;)
+<ul>
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentCollectionAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentCollectionAssociationPath</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityCollectionJoin.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCollectionJoin</a>&lt;OwnerType,&#8203;AssociatedEntityType&gt;)</li>
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentListAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentListAssociationPath</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityListJoin.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityListJoin</a>&lt;OwnerType,&#8203;AssociatedEntityType&gt;)</li>
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentSetAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentSetAssociationPath</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntitySetJoin.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntitySetJoin</a>&lt;OwnerType,&#8203;AssociatedEntityType&gt;)</li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -1950,7 +2156,28 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <ul>
 <li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityJoin.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentEntityJoin</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends jakarta.persistence.criteria.Join&lt;Z,&#8203;X&gt;)
 <ul>
-<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentAssociationPath</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentPropertyPath.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentPropertyPath</a>&lt;T&gt;)</li>
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentAssociationPath</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentPropertyPath.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentPropertyPath</a>&lt;T&gt;)
+<ul>
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentCollectionAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentCollectionAssociationPath</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityCollectionJoin.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCollectionJoin</a>&lt;OwnerType,&#8203;AssociatedEntityType&gt;)</li>
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentListAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentListAssociationPath</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityListJoin.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityListJoin</a>&lt;OwnerType,&#8203;AssociatedEntityType&gt;)</li>
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentSetAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentSetAssociationPath</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntitySetJoin.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntitySetJoin</a>&lt;OwnerType,&#8203;AssociatedEntityType&gt;)</li>
+</ul>
+</li>
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityCollectionJoin.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentEntityCollectionJoin</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends jakarta.persistence.criteria.CollectionJoin&lt;Z,&#8203;E&gt;)
+<ul>
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentCollectionAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentCollectionAssociationPath</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentAssociationPath</a>&lt;OwnerType,&#8203;AssociatedEntityType&gt;)</li>
+</ul>
+</li>
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityListJoin.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentEntityListJoin</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends jakarta.persistence.criteria.ListJoin&lt;Z,&#8203;E&gt;)
+<ul>
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentListAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentListAssociationPath</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentAssociationPath</a>&lt;OwnerType,&#8203;AssociatedEntityType&gt;)</li>
+</ul>
+</li>
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntitySetJoin.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentEntitySetJoin</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends jakarta.persistence.criteria.SetJoin&lt;Z,&#8203;E&gt;)
+<ul>
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentSetAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentSetAssociationPath</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentAssociationPath</a>&lt;OwnerType,&#8203;AssociatedEntityType&gt;)</li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityRoot.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentEntityRoot</span></a>&lt;T&gt; (also extends jakarta.persistence.criteria.Root&lt;X&gt;)</li>
@@ -1960,7 +2187,13 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 </li>
 <li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentPropertyPath.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentPropertyPath</span></a>&lt;T&gt; (also extends jakarta.persistence.criteria.Path&lt;X&gt;)
 <ul>
-<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentAssociationPath</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityJoin.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityJoin</a>&lt;OwnerType,&#8203;AssociatedEntityType&gt;)</li>
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentAssociationPath</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityJoin.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityJoin</a>&lt;OwnerType,&#8203;AssociatedEntityType&gt;)
+<ul>
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentCollectionAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentCollectionAssociationPath</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityCollectionJoin.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCollectionJoin</a>&lt;OwnerType,&#8203;AssociatedEntityType&gt;)</li>
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentListAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentListAssociationPath</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityListJoin.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityListJoin</a>&lt;OwnerType,&#8203;AssociatedEntityType&gt;)</li>
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentSetAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria"><span class="typeNameLink">PersistentSetAssociationPath</span></a>&lt;OwnerType,&#8203;AssociatedEntityType&gt; (also extends io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntitySetJoin.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntitySetJoin</a>&lt;OwnerType,&#8203;AssociatedEntityType&gt;)</li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>

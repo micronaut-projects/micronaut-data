@@ -138,7 +138,8 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <dd><code><a href="QueryModelPersistentEntityCriteriaQuery.html" title="interface in io.micronaut.data.model.jpa.criteria.impl">QueryModelPersistentEntityCriteriaQuery</a></code>, <code><a href="QueryResultPersistentEntityCriteriaQuery.html" title="interface in io.micronaut.data.model.jpa.criteria.impl">QueryResultPersistentEntityCriteriaQuery</a></code>, <code><a href="../PersistentEntityCriteriaQuery.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaQuery</a>&lt;T&gt;</code>, <code>jakarta.persistence.criteria.AbstractQuery&lt;T&gt;</code>, <code>jakarta.persistence.criteria.CommonAbstractCriteria</code>, <code>jakarta.persistence.criteria.CriteriaQuery&lt;T&gt;</code></dd>
 </dl>
 <hr>
-<pre>public abstract class <span class="typeNameLabel">AbstractPersistentEntityCriteriaQuery&lt;T&gt;</span>
+<pre>@Internal
+public abstract class <span class="typeNameLabel">AbstractPersistentEntityCriteriaQuery&lt;T&gt;</span>
 extends java.lang.Object
 implements <a href="../PersistentEntityCriteriaQuery.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaQuery</a>&lt;T&gt;, <a href="QueryResultPersistentEntityCriteriaQuery.html" title="interface in io.micronaut.data.model.jpa.criteria.impl">QueryResultPersistentEntityCriteriaQuery</a></pre>
 <div class="block">The abstract implementation of <a href="../PersistentEntityCriteriaQuery.html" title="interface in io.micronaut.data.model.jpa.criteria"><code>PersistentEntityCriteriaQuery</code></a>.</div>
@@ -204,6 +205,11 @@ implements <a href="../PersistentEntityCriteriaQuery.html" title="interface in i
 <td class="colLast">&nbsp;</td>
 </tr>
 <tr class="rowColor">
+<td class="colFirst"><code>protected java.lang.Class&lt;<a href="AbstractPersistentEntityCriteriaQuery.html" title="type parameter in AbstractPersistentEntityCriteriaQuery">T</a>&gt;</code></td>
+<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#resultType">resultType</a></span></code></th>
+<td class="colLast">&nbsp;</td>
+</tr>
+<tr class="altColor">
 <td class="colFirst"><code>protected jakarta.persistence.criteria.Selection&lt;?&gt;</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#selection">selection</a></span></code></th>
 <td class="colLast">&nbsp;</td>
@@ -222,11 +228,13 @@ implements <a href="../PersistentEntityCriteriaQuery.html" title="interface in i
 <table class="memberSummary">
 <caption><span>Constructors</span><span class="tabEnd">&nbsp;</span></caption>
 <tr>
-<th class="colFirst" scope="col">Constructor</th>
+<th class="colFirst" scope="col">Modifier</th>
+<th class="colSecond" scope="col">Constructor</th>
 <th class="colLast" scope="col">Description</th>
 </tr>
 <tr class="altColor">
-<th class="colConstructorName" scope="row"><code><span class="memberNameLink"><a href="#%3Cinit%3E()">AbstractPersistentEntityCriteriaQuery</a></span>()</code></th>
+<td class="colFirst"><code>protected </code></td>
+<th class="colConstructorName" scope="row"><code><span class="memberNameLink"><a href="#%3Cinit%3E(java.lang.Class)">AbstractPersistentEntityCriteriaQuery</a></span>&#8203;(java.lang.Class&lt;<a href="AbstractPersistentEntityCriteriaQuery.html" title="type parameter in AbstractPersistentEntityCriteriaQuery">T</a>&gt;&nbsp;resultType)</code></th>
 <td class="colLast">&nbsp;</td>
 </tr>
 </table>
@@ -431,6 +439,15 @@ implements <a href="../PersistentEntityCriteriaQuery.html" title="interface in i
 <!--   -->
 </a>
 <h3>Field Detail</h3>
+<a id="resultType">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>resultType</h4>
+<pre>protected final&nbsp;java.lang.Class&lt;<a href="AbstractPersistentEntityCriteriaQuery.html" title="type parameter in AbstractPersistentEntityCriteriaQuery">T</a>&gt; resultType</pre>
+</li>
+</ul>
 <a id="predicate">
 <!--   -->
 </a>
@@ -513,13 +530,13 @@ implements <a href="../PersistentEntityCriteriaQuery.html" title="interface in i
 <!--   -->
 </a>
 <h3>Constructor Detail</h3>
-<a id="&lt;init&gt;()">
+<a id="&lt;init&gt;(java.lang.Class)">
 <!--   -->
 </a>
 <ul class="blockListLast">
 <li class="blockList">
 <h4>AbstractPersistentEntityCriteriaQuery</h4>
-<pre>public&nbsp;AbstractPersistentEntityCriteriaQuery()</pre>
+<pre>protected&nbsp;AbstractPersistentEntityCriteriaQuery&#8203;(java.lang.Class&lt;<a href="AbstractPersistentEntityCriteriaQuery.html" title="type parameter in AbstractPersistentEntityCriteriaQuery">T</a>&gt;&nbsp;resultType)</pre>
 </li>
 </ul>
 </li>

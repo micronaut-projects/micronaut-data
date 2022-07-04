@@ -26,7 +26,7 @@
     catch(err) {
     }
 //-->
-var data = {"i0":10,"i1":10,"i2":10,"i3":10};
+var data = {"i0":10,"i1":10,"i2":10,"i3":10,"i4":10,"i5":10,"i6":10};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],8:["t4","Concrete Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -148,7 +148,8 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <dd><code><a href="async/AbstractAsyncSpecificationInterceptor.html" title="class in io.micronaut.data.runtime.intercept.criteria.async">AbstractAsyncSpecificationInterceptor</a></code>, <code><a href="reactive/AbstractReactiveSpecificationInterceptor.html" title="class in io.micronaut.data.runtime.intercept.criteria.reactive">AbstractReactiveSpecificationInterceptor</a></code>, <code><a href="CountSpecificationInterceptor.html" title="class in io.micronaut.data.runtime.intercept.criteria">CountSpecificationInterceptor</a></code>, <code><a href="DeleteAllSpecificationInterceptor.html" title="class in io.micronaut.data.runtime.intercept.criteria">DeleteAllSpecificationInterceptor</a></code>, <code><a href="FindAllSpecificationInterceptor.html" title="class in io.micronaut.data.runtime.intercept.criteria">FindAllSpecificationInterceptor</a></code>, <code><a href="FindOneSpecificationInterceptor.html" title="class in io.micronaut.data.runtime.intercept.criteria">FindOneSpecificationInterceptor</a></code>, <code><a href="FindPageSpecificationInterceptor.html" title="class in io.micronaut.data.runtime.intercept.criteria">FindPageSpecificationInterceptor</a></code>, <code><a href="UpdateAllSpecificationInterceptor.html" title="class in io.micronaut.data.runtime.intercept.criteria">UpdateAllSpecificationInterceptor</a></code></dd>
 </dl>
 <hr>
-<pre>public abstract class <span class="typeNameLabel">AbstractSpecificationInterceptor&lt;T,&#8203;R&gt;</span>
+<pre>@Internal
+public abstract class <span class="typeNameLabel">AbstractSpecificationInterceptor&lt;T,&#8203;R&gt;</span>
 extends <a href="../AbstractQueryInterceptor.html" title="class in io.micronaut.data.runtime.intercept">AbstractQueryInterceptor</a>&lt;T,&#8203;R&gt;</pre>
 <div class="block">Abstract specification interceptor.</div>
 <dl>
@@ -243,27 +244,51 @@ extends <a href="../AbstractQueryInterceptor.html" title="class in io.micronaut.
 <th class="colLast" scope="col">Description</th>
 </tr>
 <tr id="i0" class="altColor">
+<td class="colFirst"><code>protected &lt;K&gt;&nbsp;<a href="../../../repository/jpa/criteria/CriteriaDeleteBuilder.html" title="interface in io.micronaut.data.repository.jpa.criteria">CriteriaDeleteBuilder</a>&lt;K&gt;</code></td>
+<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getCriteriaDeleteBuilder(io.micronaut.aop.MethodInvocationContext)">getCriteriaDeleteBuilder</a></span>&#8203;(io.micronaut.aop.MethodInvocationContext&lt;?,&#8203;?&gt;&nbsp;context)</code></th>
+<td class="colLast">
+<div class="block">Find <a href="../../../repository/jpa/criteria/CriteriaDeleteBuilder.html" title="interface in io.micronaut.data.repository.jpa.criteria"><code>CriteriaDeleteBuilder</code></a>
+ or <a href="../../../repository/jpa/criteria/QuerySpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria"><code>QuerySpecification</code></a> in context.</div>
+</td>
+</tr>
+<tr id="i1" class="rowColor">
+<td class="colFirst"><code>protected &lt;K&gt;&nbsp;<a href="../../../repository/jpa/criteria/CriteriaQueryBuilder.html" title="interface in io.micronaut.data.repository.jpa.criteria">CriteriaQueryBuilder</a>&lt;K&gt;</code></td>
+<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getCriteriaQueryBuilder(io.micronaut.aop.MethodInvocationContext)">getCriteriaQueryBuilder</a></span>&#8203;(io.micronaut.aop.MethodInvocationContext&lt;?,&#8203;?&gt;&nbsp;context)</code></th>
+<td class="colLast">
+<div class="block">Find <a href="../../../repository/jpa/criteria/CriteriaQueryBuilder.html" title="interface in io.micronaut.data.repository.jpa.criteria"><code>CriteriaQueryBuilder</code></a>
+ or <a href="../../../repository/jpa/criteria/QuerySpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria"><code>QuerySpecification</code></a> in context.</div>
+</td>
+</tr>
+<tr id="i2" class="altColor">
+<td class="colFirst"><code>protected &lt;K&gt;&nbsp;<a href="../../../repository/jpa/criteria/CriteriaUpdateBuilder.html" title="interface in io.micronaut.data.repository.jpa.criteria">CriteriaUpdateBuilder</a>&lt;K&gt;</code></td>
+<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getCriteriaUpdateBuilder(io.micronaut.aop.MethodInvocationContext)">getCriteriaUpdateBuilder</a></span>&#8203;(io.micronaut.aop.MethodInvocationContext&lt;?,&#8203;?&gt;&nbsp;context)</code></th>
+<td class="colLast">
+<div class="block">Find <a href="../../../repository/jpa/criteria/CriteriaUpdateBuilder.html" title="interface in io.micronaut.data.repository.jpa.criteria"><code>CriteriaUpdateBuilder</code></a>
+ or <a href="../../../repository/jpa/criteria/QuerySpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria"><code>QuerySpecification</code></a> in context.</div>
+</td>
+</tr>
+<tr id="i3" class="rowColor">
 <td class="colFirst"><code>protected &lt;K&gt;&nbsp;<a href="../../../repository/jpa/criteria/DeleteSpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria">DeleteSpecification</a>&lt;K&gt;</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getDeleteSpecification(io.micronaut.aop.MethodInvocationContext)">getDeleteSpecification</a></span>&#8203;(io.micronaut.aop.MethodInvocationContext&lt;?,&#8203;?&gt;&nbsp;context)</code></th>
 <td class="colLast">
 <div class="block">Find <a href="../../../repository/jpa/criteria/DeleteSpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria"><code>DeleteSpecification</code></a> in context.</div>
 </td>
 </tr>
-<tr id="i1" class="rowColor">
+<tr id="i4" class="altColor">
 <td class="colFirst"><code>protected &lt;K&gt;&nbsp;<a href="../../../repository/jpa/criteria/QuerySpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria">QuerySpecification</a>&lt;K&gt;</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getQuerySpecification(io.micronaut.aop.MethodInvocationContext)">getQuerySpecification</a></span>&#8203;(io.micronaut.aop.MethodInvocationContext&lt;?,&#8203;?&gt;&nbsp;context)</code></th>
 <td class="colLast">
 <div class="block">Find <a href="../../../repository/jpa/criteria/QuerySpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria"><code>QuerySpecification</code></a> in context.</div>
 </td>
 </tr>
-<tr id="i2" class="altColor">
+<tr id="i5" class="rowColor">
 <td class="colFirst"><code>protected &lt;K&gt;&nbsp;<a href="../../../repository/jpa/criteria/UpdateSpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria">UpdateSpecification</a>&lt;K&gt;</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getUpdateSpecification(io.micronaut.aop.MethodInvocationContext)">getUpdateSpecification</a></span>&#8203;(io.micronaut.aop.MethodInvocationContext&lt;?,&#8203;?&gt;&nbsp;context)</code></th>
 <td class="colLast">
 <div class="block">Find <a href="../../../repository/jpa/criteria/UpdateSpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria"><code>UpdateSpecification</code></a> in context.</div>
 </td>
 </tr>
-<tr id="i3" class="rowColor">
+<tr id="i6" class="altColor">
 <td class="colFirst"><code>protected &lt;E,&#8203;QR&gt;<br><a href="../../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;E,&#8203;QR&gt;</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#preparedQueryForCriteria(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext,io.micronaut.data.runtime.intercept.criteria.AbstractSpecificationInterceptor.Type)">preparedQueryForCriteria</a></span>&#8203;(<a href="../../../intercept/RepositoryMethodKey.html" title="class in io.micronaut.data.intercept">RepositoryMethodKey</a>&nbsp;methodKey,
                         io.micronaut.aop.MethodInvocationContext&lt;<a href="AbstractSpecificationInterceptor.html" title="type parameter in AbstractSpecificationInterceptor">T</a>,&#8203;<a href="AbstractSpecificationInterceptor.html" title="type parameter in AbstractSpecificationInterceptor">R</a>&gt;&nbsp;context,
@@ -363,6 +388,26 @@ protected&nbsp;&lt;K&gt;&nbsp;<a href="../../../repository/jpa/criteria/QuerySpe
 </dl>
 </li>
 </ul>
+<a id="getCriteriaQueryBuilder(io.micronaut.aop.MethodInvocationContext)">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>getCriteriaQueryBuilder</h4>
+<pre class="methodSignature">@NonNull
+protected&nbsp;&lt;K&gt;&nbsp;<a href="../../../repository/jpa/criteria/CriteriaQueryBuilder.html" title="interface in io.micronaut.data.repository.jpa.criteria">CriteriaQueryBuilder</a>&lt;K&gt;&nbsp;getCriteriaQueryBuilder&#8203;(io.micronaut.aop.MethodInvocationContext&lt;?,&#8203;?&gt;&nbsp;context)</pre>
+<div class="block">Find <a href="../../../repository/jpa/criteria/CriteriaQueryBuilder.html" title="interface in io.micronaut.data.repository.jpa.criteria"><code>CriteriaQueryBuilder</code></a>
+ or <a href="../../../repository/jpa/criteria/QuerySpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria"><code>QuerySpecification</code></a> in context.</div>
+<dl>
+<dt><span class="paramLabel">Type Parameters:</span></dt>
+<dd><code>K</code> - the result type</dd>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>context</code> - The context</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>found specification</dd>
+</dl>
+</li>
+</ul>
 <a id="getDeleteSpecification(io.micronaut.aop.MethodInvocationContext)">
 <!--   -->
 </a>
@@ -382,10 +427,30 @@ protected&nbsp;&lt;K&gt;&nbsp;<a href="../../../repository/jpa/criteria/DeleteSp
 </dl>
 </li>
 </ul>
+<a id="getCriteriaDeleteBuilder(io.micronaut.aop.MethodInvocationContext)">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>getCriteriaDeleteBuilder</h4>
+<pre class="methodSignature">@NonNull
+protected&nbsp;&lt;K&gt;&nbsp;<a href="../../../repository/jpa/criteria/CriteriaDeleteBuilder.html" title="interface in io.micronaut.data.repository.jpa.criteria">CriteriaDeleteBuilder</a>&lt;K&gt;&nbsp;getCriteriaDeleteBuilder&#8203;(io.micronaut.aop.MethodInvocationContext&lt;?,&#8203;?&gt;&nbsp;context)</pre>
+<div class="block">Find <a href="../../../repository/jpa/criteria/CriteriaDeleteBuilder.html" title="interface in io.micronaut.data.repository.jpa.criteria"><code>CriteriaDeleteBuilder</code></a>
+ or <a href="../../../repository/jpa/criteria/QuerySpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria"><code>QuerySpecification</code></a> in context.</div>
+<dl>
+<dt><span class="paramLabel">Type Parameters:</span></dt>
+<dd><code>K</code> - the result type</dd>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>context</code> - The context</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>found specification</dd>
+</dl>
+</li>
+</ul>
 <a id="getUpdateSpecification(io.micronaut.aop.MethodInvocationContext)">
 <!--   -->
 </a>
-<ul class="blockListLast">
+<ul class="blockList">
 <li class="blockList">
 <h4>getUpdateSpecification</h4>
 <pre class="methodSignature">@Nullable
@@ -394,6 +459,26 @@ protected&nbsp;&lt;K&gt;&nbsp;<a href="../../../repository/jpa/criteria/UpdateSp
 <dl>
 <dt><span class="paramLabel">Type Parameters:</span></dt>
 <dd><code>K</code> - the specification entity root type</dd>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>context</code> - The context</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>found specification</dd>
+</dl>
+</li>
+</ul>
+<a id="getCriteriaUpdateBuilder(io.micronaut.aop.MethodInvocationContext)">
+<!--   -->
+</a>
+<ul class="blockListLast">
+<li class="blockList">
+<h4>getCriteriaUpdateBuilder</h4>
+<pre class="methodSignature">@NonNull
+protected&nbsp;&lt;K&gt;&nbsp;<a href="../../../repository/jpa/criteria/CriteriaUpdateBuilder.html" title="interface in io.micronaut.data.repository.jpa.criteria">CriteriaUpdateBuilder</a>&lt;K&gt;&nbsp;getCriteriaUpdateBuilder&#8203;(io.micronaut.aop.MethodInvocationContext&lt;?,&#8203;?&gt;&nbsp;context)</pre>
+<div class="block">Find <a href="../../../repository/jpa/criteria/CriteriaUpdateBuilder.html" title="interface in io.micronaut.data.repository.jpa.criteria"><code>CriteriaUpdateBuilder</code></a>
+ or <a href="../../../repository/jpa/criteria/QuerySpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria"><code>QuerySpecification</code></a> in context.</div>
+<dl>
+<dt><span class="paramLabel">Type Parameters:</span></dt>
+<dd><code>K</code> - the result type</dd>
 <dt><span class="paramLabel">Parameters:</span></dt>
 <dd><code>context</code> - The context</dd>
 <dt><span class="returnLabel">Returns:</span></dt>

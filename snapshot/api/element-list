@@ -87,6 +87,7 @@ io.micronaut.data.repository.reactive
 io.micronaut.data.runtime.config
 io.micronaut.data.runtime.convert
 io.micronaut.data.runtime.criteria
+io.micronaut.data.runtime.criteria.metamodel
 io.micronaut.data.runtime.date
 io.micronaut.data.runtime.event
 io.micronaut.data.runtime.event.listeners
