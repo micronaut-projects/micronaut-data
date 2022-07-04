@@ -30,6 +30,7 @@ shared:
     title: Transactions
     programmaticTransactions: Programmatic Transactions
     transactionalEvents: Transactional Events
+  kotlinCriteria: Kotlin Criteria API extensions
 
 hibernate:
   title: Micronaut Data JPA Hibernate

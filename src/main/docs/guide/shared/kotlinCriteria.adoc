@@ -1,0 +1,77 @@
+Micronaut Data includes experimental extensions and query builders for Jakarta Criteria API which simplifies writing queries with Kotlin.
+
+Extensions and builders are located in `io.micronaut.data.runtime.criteria.KCriteriaBuilderExt` file.
+
+There are simple extension methods that simplify working with the criteria API:
+
+- `KProperty.asPath(jakarta.persistence.criteria.Root): jakarta.persistence.criteria.Path` - Extension on the `KProperty` allowing to get type-safe property path: `Person::name.asPath(root)`
+
+- `operator Path.get(KProperty1): Path` chain property access: `root[Person::parent][Parent::name]`
+
+- `From.joinMany(KProperty1, JoinType): Join` join `*-to-many` relationship
+
+- `From.joinOne(KProperty1, JoinType): Join` join `*-to-one` relationship
+
+=== Predicate builder
+To implement a simple predicate query a function `where` can be used:
+
+[source,kotlin]
+----
+fun nameEquals(name: String?) = where<Person> { root[Person::name] eq name }
+
+fun ageIsLessThan(age: Int) = where<Person> { root[Person::age] lt age }
+----
+
+There are contextual extension functions added to `jakarta.persistence.criteria.Expression` allowing to use predicate methods from `jakarta.persistence.criteria.CriteriaBuilder` directly on an expression instance. Most of them are infix functions allowing to use the syntax: `root[Person::name] eq "Xyz"`.
+
+It's possible to use `and`, `or` for conjunction/disjunction and `not` for the negation:
+
+[source,kotlin]
+----
+fun nameOrAgeMatches(age: Int, name: String?) = where<Person> {
+    or {
+        root[Person::name] eq name
+        root[Person::age] lt age
+    }
+}
+----
+
+It's possible to use `where` predicate builder with following methods in api:data.repository.JpaSpecificationExecutor[]:
+
+- `findOne(io.micronaut.data.repository.jpa.criteria.PredicateSpecification)`
+- `findAll(io.micronaut.data.repository.jpa.criteria.PredicateSpecification)`
+- `findAll(io.micronaut.data.repository.jpa.criteria.PredicateSpecification, io.micronaut.data.model.Sort)`
+- `findAll(io.micronaut.data.repository.jpa.criteria.PredicateSpecification, io.micronaut.data.model.Pageable)`
+- `count(io.micronaut.data.repository.jpa.criteria.PredicateSpecification)`
+- `deleteAll(io.micronaut.data.repository.jpa.criteria.PredicateSpecification)`
+
+.Example using a join
+[source,kotlin]
+----
+personRepository.findOne(where {
+    val manufacturer = root.joinOne(Product::manufacturer)
+    manufacturer[Manufacturer::name] eq name
+})
+----
+
+.Example deleting
+[source,kotlin]
+----
+val recordsDeleted = personRepository.deleteAll(where {
+    root[Person::name] eq "Denis"
+})
+----
+
+=== Update builder
+To implement an update query a function `update` can be used:
+
+[source,kotlin]
+----
+val updateQuery = update<Person> {
+    set(Person::name, "Frank")
+    where {
+        root[Person::name] eq "Denis"
+    }
+}
+personRepository.updateAll(updateQuery)
+----

@@ -50,7 +50,6 @@ fun <E, I> From<*, E>.joinOne(prop: KProperty1<out E, I>, joinType: JoinType? = 
     }
 }
 
-
 @Experimental
 inline fun <reified E> where(noinline dsl: Where<E>.() -> Unit) = WherePredicate(dsl)
 
@@ -59,9 +58,6 @@ inline fun <reified E, reified R> query(noinline dsl: SelectQuery<E, R>.() -> Un
 
 @Experimental
 inline fun <reified E> update(noinline dsl: UpdateQuery<E>.() -> Unit) = UpdateQueryBuilder(dsl, E::class.java)
-
-@Experimental
-inline fun <reified E> delete(noinline dsl: Where<E>.() -> Unit) = DeleteQueryBuilder(dsl, E::class.java)
 
 @Experimental
 class QueryBuilder<E, R>(private var dsl: SelectQuery<E, R>.() -> Unit, private var entityType: Class<E>, var resultType: Class<R>) : CriteriaQueryBuilder<R> {

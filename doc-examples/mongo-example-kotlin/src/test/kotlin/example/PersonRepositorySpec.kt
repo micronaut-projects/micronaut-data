@@ -6,7 +6,6 @@ import example.PersonRepository.Specifications.updateName
 import jakarta.inject.Inject
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification.not
-import io.micronaut.data.runtime.criteria.delete
 import io.micronaut.data.runtime.criteria.get
 import io.micronaut.data.runtime.criteria.query
 import io.micronaut.data.runtime.criteria.where
@@ -118,7 +117,7 @@ class PersonRepositorySpec : AbstractMongoSpec() {
         Assertions.assertEquals(2, all.size)
 
         // tag::delete[]
-        val recordsDeleted = personRepository.deleteAll(delete<Person> {
+        val recordsDeleted = personRepository.deleteAll(where {
             root[Person::name] eq "Denis"
         })
         // end::delete[]

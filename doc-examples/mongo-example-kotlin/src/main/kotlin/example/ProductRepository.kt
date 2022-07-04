@@ -5,9 +5,9 @@ import io.micronaut.data.annotation.Join
 import io.micronaut.data.mongodb.annotation.MongoRepository
 import io.micronaut.data.repository.CrudRepository
 import io.micronaut.data.repository.jpa.JpaSpecificationExecutor
-import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
 import io.micronaut.data.runtime.criteria.get
 import io.micronaut.data.runtime.criteria.joinOne
+import io.micronaut.data.runtime.criteria.where
 import io.reactivex.Maybe
 import io.reactivex.Single
 import org.bson.types.ObjectId
@@ -42,8 +42,9 @@ interface ProductRepository : CrudRepository<Product, ObjectId>, JpaSpecificatio
     // tag::specifications[]
     object Specifications {
 
-        fun manufacturerNameEquals(name: String?) = PredicateSpecification { root, cb ->
-            cb.equal(root.joinOne(Product::manufacturer)[Manufacturer::name], name)
+        fun manufacturerNameEquals(name: String?) = where<Product> {
+            val manufacturer = root.joinOne(Product::manufacturer)
+            manufacturer[Manufacturer::name] eq name
         }
 
         // tag::specifications[]

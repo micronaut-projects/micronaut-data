@@ -1,5 +1,7 @@
 === Micronaut Data 3.5
 - Hibernate Reactive
+- Type-safe Java Criteria
+- Type-safe Kotlin Criteria and builders
 - Improved transaction handling
 
 === Micronaut Data 3.4

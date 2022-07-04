@@ -88,10 +88,20 @@ interface PersonRepository : CrudRepository<Person, ObjectId>, JpaSpecificationE
     // tag::specifications[]
     // tag::allSpecifications[]
     object Specifications {
-
+        // tag::where[]
         fun nameEquals(name: String?) = where<Person> { root[Person::name] eq name }
 
         fun ageIsLessThan(age: Int) = where<Person> { root[Person::age] lt age }
+        // end::where[]
+
+        // tag::or[]
+        fun nameOrAgeMatches(age: Int, name: String?) = where<Person> {
+            or {
+                root[Person::name] eq name
+                root[Person::age] lt age
+            }
+        }
+        // end::or[]
 
         // end::specifications[]
         // tag::setUpdate[]
@@ -105,16 +115,16 @@ interface PersonRepository : CrudRepository<Person, ObjectId>, JpaSpecificationE
 
         // Different style using the criteria builder
         fun nameEquals2(name: String?) = PredicateSpecification { root, criteriaBuilder ->
-            criteriaBuilder.equal(root.get(Person::name), name)
+            criteriaBuilder.equal(root[Person::name], name)
         }
 
         fun ageIsLessThan2(age: Int) = PredicateSpecification { root, criteriaBuilder ->
-            criteriaBuilder.lessThan(root.get(Person::age), age)
+            criteriaBuilder.lessThan(root[Person::age], age)
         }
 
         fun setNewName2(newName: String) = UpdateSpecification { root, query, criteriaBuilder ->
             // tag::setUpdate[]
-            query.set(root.get(Person::name), newName)
+            query.set(root[Person::name], newName)
             // end::setUpdate[]
             null
         }

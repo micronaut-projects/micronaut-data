@@ -2,10 +2,7 @@ package io.micronaut.data.runtime.criteria.ext
 
 import io.micronaut.data.model.jpa.criteria.impl.QueryResultPersistentEntityCriteriaQuery
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
-import io.micronaut.data.runtime.criteria.RuntimeCriteriaBuilder
-import io.micronaut.data.runtime.criteria.get
-import io.micronaut.data.runtime.criteria.joinMany
-import io.micronaut.data.runtime.criteria.query
+import io.micronaut.data.runtime.criteria.*
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
@@ -47,10 +44,10 @@ class KCriteriaBuilderExtKtTest(var runtimeCriteriaBuilder: RuntimeCriteriaBuild
                     root[TestEntity::enabled].notEqualsNull()
                 }
                 not {
-                    root[TestEntity::enabled].eq(true)
-                    root[TestEntity::enabled].ne(false)
-                    root[TestEntity::enabled].equal(true)
-                    root[TestEntity::enabled].notEqual(false)
+                    root[TestEntity::enabled] eq true
+                    root[TestEntity::enabled] ne false
+                    root[TestEntity::enabled] equal true
+                    root[TestEntity::enabled] notEqual false
                 }
                 or {
                     (root[TestEntity::name] lessThan "A")
@@ -154,6 +151,20 @@ class KCriteriaBuilderExtKtTest(var runtimeCriteriaBuilder: RuntimeCriteriaBuild
         val q = criteriaQuery.buildQuery(SqlQueryBuilder()).query
 
         Assertions.assertEquals(q, """SELECT AVG(other_entity_."age"),MAX(other_entity_."age"),MIN(other_entity_."age"),MAX(other_entity_."name"),MIN(other_entity_."name") FROM "other_entity" other_entity_ WHERE (other_entity_."name" = 'Xyz')""")
+    }
+
+    @Test
+    fun testUpdate() {
+        val updateQuery = update<OtherEntity> {
+            set(OtherEntity::name, "xx")
+            where {
+                root[OtherEntity::name] eq "Xyz"
+            }
+        }
+        val criteriaQuery = updateQuery.build(runtimeCriteriaBuilder) as QueryResultPersistentEntityCriteriaQuery
+        val q = criteriaQuery.buildQuery(SqlQueryBuilder()).query
+
+        Assertions.assertEquals(q, """UPDATE "other_entity" SET name='xx' WHERE ("name" = 'Xyz')""")
     }
 
 }
