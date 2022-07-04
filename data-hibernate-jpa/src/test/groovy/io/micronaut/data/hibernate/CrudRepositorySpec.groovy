@@ -57,7 +57,6 @@ class CrudRepositorySpec extends Specification {
 
         then:"the instance is persisted"
         person.id != null
-        crudRepository.is(context.getBean(PersonCrudRepository))
         crudRepository.findById(person.id).isPresent()
         !crudRepository.findById(1000L).isPresent()
         crudRepository.get(person.id).name == 'Fred'
