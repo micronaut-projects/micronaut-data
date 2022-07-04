@@ -32,6 +32,11 @@ class MultipleDataSourceSpec extends Specification {
     @Inject
     DbService service
 
+    void cleanup() {
+        personRepository.deleteAll()
+        otherPersonRepository.deleteAll()
+    }
+
     void "test multiple data sources"() {
         when:
             personRepository.save(new Person(name: "Fred"))
