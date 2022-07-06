@@ -161,7 +161,7 @@ import java.util.UUID;
 @JdbcRepository(dialect= Dialect.MYSQL)
 @io.micronaut.context.annotation.Executable
 interface FoodRepository extends CrudRepository<Food, UUID> {
-    
+
     @Join("meal")
     Optional<Food> queryById(UUID uuid);
 }
@@ -186,11 +186,11 @@ import java.util.UUID;
 @JdbcRepository(dialect= Dialect.MYSQL)
 @io.micronaut.context.annotation.Executable
 interface CustomIdEntityRepository extends CrudRepository<CustomIdEntity, Long> {
-    
+
     Optional<CustomIdEntity> findByCustomId(Long customId);
-    
+
     boolean existsByCustomId(Long customId);
-    
+
     void deleteByCustomId(Long customId);
 }
 """)
@@ -320,7 +320,7 @@ import io.micronaut.data.tck.jdbc.entities.UserRoleId;
 
 @JdbcRepository(dialect= Dialect.MYSQL)
 interface UserRoleRepository extends GenericRepository<UserRole, UserRoleId> {
-    
+
     @Join("role")
     Iterable<Role> findRoleByUser(User user);
 }
@@ -380,6 +380,34 @@ interface FacesRepository extends CrudRepository<Face, Long> {
 
         expect:
         query == 'SELECT COUNT(*) FROM `face` face_ INNER JOIN `nose` face_nose_ ON face_.`id`=face_nose_.`face_id` WHERE (face_nose_.`id` = ?)'
+
+    }
+
+    void "test In in properties"() {
+        given:
+        def repository = buildRepository('test.PurchaseRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.model.entities.Purchase;
+import io.micronaut.data.tck.entities.Face;
+import java.util.UUID;
+
+@JdbcRepository(dialect= Dialect.MYSQL)
+@io.micronaut.context.annotation.Executable
+interface PurchaseRepository extends CrudRepository<Purchase, Long> {
+
+    @Join("invoice")
+    Purchase findByNameAndInvoiceId(String n, Long id);
+
+    Purchase findByCustomerIdAndShouldReceiveCopyOfInvoiceTrue(Long id, Boolean should);
+}
+""")
+        def query1 = getQuery(repository.getRequiredMethod("findByNameAndInvoiceId", String, Long))
+        def query2 = getQuery(repository.getRequiredMethod("findByCustomerIdAndShouldReceiveCopyOfInvoiceTrue", Long, Boolean))
+
+        expect:
+        query1 == 'SELECT purchase_.`id`,purchase_.`version`,purchase_.`name`,purchase_.`invoice_id`,purchase_.`customer_id`,purchase_.`should_receive_copy_of_invoice`,purchase_invoice_.`version` AS invoice_version,purchase_invoice_.`name` AS invoice_name FROM `purchase` purchase_ INNER JOIN `invoice` purchase_invoice_ ON purchase_.`invoice_id`=purchase_invoice_.`id` WHERE (purchase_.`name` = ? AND purchase_.`invoice_id` = ?)'
+        query2 == 'SELECT purchase_.`id`,purchase_.`version`,purchase_.`name`,purchase_.`invoice_id`,purchase_.`customer_id`,purchase_.`should_receive_copy_of_invoice` FROM `purchase` purchase_ WHERE (purchase_.`customer_id` = ? AND purchase_.`should_receive_copy_of_invoice` = TRUE )'
 
     }
 }

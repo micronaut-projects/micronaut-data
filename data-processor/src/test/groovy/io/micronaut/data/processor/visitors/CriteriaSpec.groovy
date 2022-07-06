@@ -36,7 +36,7 @@ import io.micronaut.data.model.entities.Person;
 @Repository
 @io.micronaut.context.annotation.Executable
 interface MyInterface {
-    Person $methodName($sig);    
+    Person $methodName($sig);
 }
 
 """)
