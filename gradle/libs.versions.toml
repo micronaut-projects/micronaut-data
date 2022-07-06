@@ -37,7 +37,7 @@ mssql-jdbc-driver = "8.4.1.jre8"
 r2dbc = "1.0.0.RELEASE"
 r2dbc-pool = "0.9.1.RELEASE"
 
-oracle-r2dbc-driver = "0.4.0"
+oracle-r2dbc-driver = "1.0.0"
 mysql-r2dbc-driver = "0.8.2.RELEASE"
 h2-r2dbc-driver = "0.8.5.RELEASE"
 mariadb-r2dbc-driver = "1.1.2"
