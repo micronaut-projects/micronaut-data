@@ -1,21 +1,30 @@
 package example
 
+import com.mongodb.reactivestreams.client.ClientSession
+import io.micronaut.transaction.TransactionExecution
 import io.micronaut.transaction.annotation.TransactionalAdvice
+import io.micronaut.transaction.reactive.ReactorReactiveTransactionOperations
+import io.micronaut.transaction.support.TransactionSynchronizationManager
+import jakarta.inject.Named
 import jakarta.inject.Singleton
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import org.bson.types.ObjectId
 import org.slf4j.LoggerFactory
+import reactor.util.context.ContextView
 import java.lang.Thread.currentThread
 import java.util.*
 import javax.transaction.Transactional
 
 @Singleton
-open class PersonSuspendRepositoryService(private val parentSuspendRepository: ParentSuspendRepository,
-                                          private val parentSuspendRepositoryForCustomDb: ParentSuspendRepositoryForCustomDb,
-                                          private val parentRepository: ParentRepository,
-                                          private val parentRepositoryForCustomDb: ParentRepositoryForCustomDb) {
+open class PersonSuspendRepositoryService(
+        private val txManager: ReactorReactiveTransactionOperations<ClientSession>,
+        @Named("custom") private val txCustomManager: ReactorReactiveTransactionOperations<ClientSession>,
+        private val parentSuspendRepository: ParentSuspendRepository,
+        private val parentSuspendRepositoryForCustomDb: ParentSuspendRepositoryForCustomDb,
+        private val parentRepository: ParentRepository,
+        private val parentRepositoryForCustomDb: ParentRepositoryForCustomDb) {
 
     open fun saveOne() {
         parentRepository.save(Parent("xyz", Collections.emptyList()))
@@ -41,6 +50,53 @@ open class PersonSuspendRepositoryService(private val parentSuspendRepository: P
     @Transactional
     open suspend fun saveForCustomDb(p: Parent) {
         parentSuspendRepositoryForCustomDb.save(p)
+    }
+
+
+    @TransactionalAdvice("custom")
+    open suspend fun deleteAllForCustomDb2(): TransactionExecution {
+        val txStatus: TransactionExecution = getCustomTxStatus()
+        if (txStatus.isCompleted || !txStatus.isNewTransaction) {
+            throw RuntimeException()
+        }
+        parentSuspendRepositoryForCustomDb.deleteAll()
+        return txStatus
+    }
+
+    @TransactionalAdvice("custom")
+    open suspend fun saveForCustomDb2(p: Parent): TransactionExecution {
+        val txStatus: TransactionExecution = getCustomTxStatus()
+        if (txStatus.isCompleted || !txStatus.isNewTransaction) {
+            throw RuntimeException()
+        }
+        parentSuspendRepositoryForCustomDb.save(p)
+        return txStatus
+    }
+
+    @Transactional
+    open suspend fun saveTwo(p1: Parent, p2: Parent) {
+        val current: TransactionExecution = getTxStatus()
+        if (!current.isNewTransaction && current.isCompleted) {
+            throw IllegalStateException()
+        }
+        val txStatus1 = saveOneMandatory(p1)
+        val txStatus2 = saveOneMandatory(p2)
+        if (current == txStatus1 || current == txStatus2 || txStatus1 == txStatus2) {
+            throw IllegalStateException()
+        }
+        if (txStatus1.isNewTransaction || txStatus1.isCompleted || txStatus2.isNewTransaction || txStatus1.isCompleted) {
+            throw IllegalStateException()
+        }
+    }
+
+    @Transactional(Transactional.TxType.MANDATORY)
+    open suspend fun saveOneMandatory(p: Parent): TransactionExecution {
+        val txStatus: TransactionExecution = getTxStatus()
+        if (txStatus.isNewTransaction && txStatus.isCompleted) {
+            throw IllegalStateException()
+        }
+        parentSuspendRepository.save(p)
+        return txStatus
     }
 
     @Transactional
@@ -143,5 +199,11 @@ open class PersonSuspendRepositoryService(private val parentSuspendRepository: P
     open fun justError() {
         throw RuntimeException("exception")
     }
+
+    private fun getTxStatus() =
+            txManager.getTransactionStatus(TransactionSynchronizationManager.getResource(ContextView::class.java) as ContextView)
+
+    private fun getCustomTxStatus() =
+            txCustomManager.getTransactionStatus(TransactionSynchronizationManager.getResource(ContextView::class.java) as ContextView)
 
 }

@@ -2,6 +2,7 @@ package example
 
 import io.micronaut.transaction.annotation.TransactionalAdvice
 import jakarta.inject.Singleton
+import jakarta.transaction.Transactional
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
@@ -9,13 +10,13 @@ import org.bson.types.ObjectId
 import org.slf4j.LoggerFactory
 import java.lang.Thread.currentThread
 import java.util.*
-import jakarta.transaction.Transactional
 
 @Singleton
-open class PersonSuspendRepositoryService(private val parentSuspendRepository: ParentSuspendRepository,
-                                          private val parentSuspendRepositoryForCustomDb: ParentSuspendRepositoryForCustomDb,
-                                          private val parentRepository: ParentRepository,
-                                          private val parentRepositoryForCustomDb: ParentRepositoryForCustomDb) {
+open class PersonSuspendRepositoryService(
+        private val parentSuspendRepository: ParentSuspendRepository,
+        private val parentSuspendRepositoryForCustomDb: ParentSuspendRepositoryForCustomDb,
+        private val parentRepository: ParentRepository,
+        private val parentRepositoryForCustomDb: ParentRepositoryForCustomDb) {
 
     open fun saveOne() {
         parentRepository.save(Parent("xyz", Collections.emptyList()))
@@ -41,6 +42,27 @@ open class PersonSuspendRepositoryService(private val parentSuspendRepository: P
     @Transactional
     open suspend fun saveForCustomDb(p: Parent) {
         parentSuspendRepositoryForCustomDb.save(p)
+    }
+
+    @TransactionalAdvice("custom")
+    open suspend fun deleteAllForCustomDb2() {
+        parentSuspendRepositoryForCustomDb.deleteAll()
+    }
+
+    @TransactionalAdvice("custom")
+    open suspend fun saveForCustomDb2(p: Parent) {
+        parentSuspendRepositoryForCustomDb.save(p)
+    }
+
+    @javax.transaction.Transactional
+    open suspend fun saveTwo(p1: Parent, p2: Parent) {
+        saveOneMandatory(p1)
+        saveOneMandatory(p2)
+    }
+
+    @Transactional(Transactional.TxType.MANDATORY)
+    open suspend fun saveOneMandatory(p: Parent) {
+        parentSuspendRepository.save(p)
     }
 
     @Transactional

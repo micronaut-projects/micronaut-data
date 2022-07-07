@@ -109,10 +109,10 @@ import java.util.stream.Collectors;
 @EachBean(MongoClient.class)
 @Internal
 public class DefaultReactiveMongoRepositoryOperations extends AbstractMongoRepositoryOperations<MongoDatabase>
-        implements MongoReactorRepositoryOperations,
-        ReactorReactiveRepositoryOperations,
-        ReactiveCascadeOperations.ReactiveCascadeOperationsHelper<DefaultReactiveMongoRepositoryOperations.MongoOperationContext>,
-        ReactorReactiveTransactionOperations<ClientSession> {
+    implements MongoReactorRepositoryOperations,
+    ReactorReactiveRepositoryOperations,
+    ReactiveCascadeOperations.ReactiveCascadeOperationsHelper<DefaultReactiveMongoRepositoryOperations.MongoOperationContext>,
+    ReactorReactiveTransactionOperations<ClientSession> {
     private static final Logger LOG = LoggerFactory.getLogger(DefaultReactiveMongoRepositoryOperations.class);
     private static final Logger QUERY_LOG = DataSettings.QUERY_LOG;
     private static final String NAME = "mongodb.reactive";
@@ -254,7 +254,7 @@ public class DefaultReactiveMongoRepositoryOperations extends AbstractMongoRepos
             if (storedQuery != null) {
                 MongoStoredQuery<T, ?, MongoDatabase> mongoStoredQuery = getMongoStoredQuery(storedQuery);
                 MongoReactiveEntitiesOperation<T> op = createMongoUpdateOneInBulkOperation(ctx, mongoStoredQuery.getRuntimePersistentEntity(),
-                        Collections.singletonList(operation.getEntity()), mongoStoredQuery);
+                    Collections.singletonList(operation.getEntity()), mongoStoredQuery);
                 op.update();
                 return op.getEntities().next();
             }
@@ -285,7 +285,7 @@ public class DefaultReactiveMongoRepositoryOperations extends AbstractMongoRepos
             if (storedQuery != null) {
                 MongoStoredQuery<T, Number, MongoDatabase> mongoStoredQuery = (MongoStoredQuery) getMongoStoredQuery(storedQuery);
                 MongoReactiveEntitiesOperation<T> op = createMongoDeleteOneInBulkOperation(ctx, mongoStoredQuery.getRuntimePersistentEntity(),
-                        Collections.singletonList(operation.getEntity()), mongoStoredQuery);
+                    Collections.singletonList(operation.getEntity()), mongoStoredQuery);
                 op.update();
                 return op.getRowsUpdated();
             }
@@ -327,7 +327,7 @@ public class DefaultReactiveMongoRepositoryOperations extends AbstractMongoRepos
                 QUERY_LOG.debug("Executing Mongo 'updateMany' with filter: {} and update: {}", updateMany.getFilter().toBsonDocument().toJson(), updateMany.getUpdate().toBsonDocument().toJson());
             }
             return Mono.from(getCollection(mongoPreparedQuery)
-                    .updateMany(clientSession, updateMany.getFilter(), updateMany.getUpdate(), updateMany.getOptions())).map(updateResult -> {
+                .updateMany(clientSession, updateMany.getFilter(), updateMany.getUpdate(), updateMany.getOptions())).map(updateResult -> {
                 if (mongoPreparedQuery.isOptimisticLock()) {
                     checkOptimisticLocking(1, (int) updateResult.getModifiedCount());
                 }
@@ -345,7 +345,7 @@ public class DefaultReactiveMongoRepositoryOperations extends AbstractMongoRepos
                 QUERY_LOG.debug("Executing Mongo 'deleteMany' with filter: {}", deleteMany.getFilter().toBsonDocument().toJson());
             }
             return Mono.from(getCollection(mongoPreparedQuery).
-                    deleteMany(clientSession, deleteMany.getFilter(), deleteMany.getOptions())).map(deleteResult -> {
+                deleteMany(clientSession, deleteMany.getFilter(), deleteMany.getOptions())).map(deleteResult -> {
                 if (mongoPreparedQuery.isOptimisticLock()) {
                     checkOptimisticLocking(1, (int) deleteResult.getDeletedCount());
                 }
@@ -382,8 +382,8 @@ public class DefaultReactiveMongoRepositoryOperations extends AbstractMongoRepos
                 QUERY_LOG.debug("Executing Mongo 'aggregate' with pipeline: {}", aggregation.getPipeline().stream().map(e -> e.toBsonDocument().toJson()).collect(Collectors.toList()));
             }
             return Mono.from(aggregate(clientSession, preparedQuery, BsonDocument.class).first())
-                    .map(bsonDocument -> convertResult(database.getCodecRegistry(), resultType, bsonDocument, false))
-                    .switchIfEmpty(Mono.defer(() -> Mono.just(conversionService.convertRequired(0, resultType))));
+                .map(bsonDocument -> convertResult(database.getCodecRegistry(), resultType, bsonDocument, false))
+                .switchIfEmpty(Mono.defer(() -> Mono.just(conversionService.convertRequired(0, resultType))));
         } else {
             MongoFind find = preparedQuery.getFind();
             MongoFindOptions options = find.getOptions();
@@ -393,21 +393,21 @@ public class DefaultReactiveMongoRepositoryOperations extends AbstractMongoRepos
                 QUERY_LOG.debug("Executing Mongo 'countDocuments' with filter: {}", filter.toBsonDocument().toJson());
             }
             return Mono.from(getCollection(database, persistentEntity, BsonDocument.class)
-                            .countDocuments(clientSession, filter))
-                    .map(count -> conversionService.convertRequired(count, resultType));
+                    .countDocuments(clientSession, filter))
+                .map(count -> conversionService.convertRequired(count, resultType));
         }
     }
 
     private <T, R> Mono<R> findOneFiltered(ClientSession clientSession, MongoPreparedQuery<T, R, MongoDatabase> preparedQuery) {
         return Mono.from(find(clientSession, preparedQuery).limit(1).first())
-                .map(r -> {
-                    Class<T> type = preparedQuery.getRootEntity();
-                    RuntimePersistentEntity<T> persistentEntity = preparedQuery.getRuntimePersistentEntity();
-                    if (type.isInstance(r)) {
-                        return (R) triggerPostLoad(preparedQuery.getAnnotationMetadata(), persistentEntity, type.cast(r));
-                    }
-                    return r;
-                });
+            .map(r -> {
+                Class<T> type = preparedQuery.getRootEntity();
+                RuntimePersistentEntity<T> persistentEntity = preparedQuery.getRuntimePersistentEntity();
+                if (type.isInstance(r)) {
+                    return (R) triggerPostLoad(preparedQuery.getAnnotationMetadata(), persistentEntity, type.cast(r));
+                }
+                return r;
+            });
     }
 
     private <T, R> Mono<R> findOneAggregated(ClientSession clientSession, MongoPreparedQuery<T, R, MongoDatabase> preparedQuery) {
@@ -415,16 +415,16 @@ public class DefaultReactiveMongoRepositoryOperations extends AbstractMongoRepos
         Class<T> type = preparedQuery.getRootEntity();
         if (!resultType.isAssignableFrom(type)) {
             return Mono.from(aggregate(clientSession, preparedQuery, BsonDocument.class).first())
-                    .map(bsonDocument -> convertResult(preparedQuery.getDatabase().getCodecRegistry(), resultType, bsonDocument, preparedQuery.isDtoProjection()));
+                .map(bsonDocument -> convertResult(preparedQuery.getDatabase().getCodecRegistry(), resultType, bsonDocument, preparedQuery.isDtoProjection()));
         }
         return Mono.from(aggregate(clientSession, preparedQuery).first())
-                .map(r -> {
-                    RuntimePersistentEntity<T> persistentEntity = preparedQuery.getRuntimePersistentEntity();
-                    if (type.isInstance(r)) {
-                        return (R) triggerPostLoad(preparedQuery.getAnnotationMetadata(), persistentEntity, type.cast(r));
-                    }
-                    return r;
-                });
+            .map(r -> {
+                RuntimePersistentEntity<T> persistentEntity = preparedQuery.getRuntimePersistentEntity();
+                if (type.isInstance(r)) {
+                    return (R) triggerPostLoad(preparedQuery.getAnnotationMetadata(), persistentEntity, type.cast(r));
+                }
+                return r;
+            });
     }
 
     private <T, R> Flux<R> findAllAggregated(ClientSession clientSession, MongoPreparedQuery<T, R, MongoDatabase> preparedQuery, boolean isDtoProjection) {
@@ -433,7 +433,7 @@ public class DefaultReactiveMongoRepositoryOperations extends AbstractMongoRepos
         Flux<R> aggregate;
         if (!resultType.isAssignableFrom(type)) {
             aggregate = Flux.from(aggregate(clientSession, preparedQuery, BsonDocument.class))
-                    .map(result -> convertResult(preparedQuery.getDatabase().getCodecRegistry(), resultType, result, isDtoProjection));
+                .map(result -> convertResult(preparedQuery.getDatabase().getCodecRegistry(), resultType, result, isDtoProjection));
         } else {
             aggregate = Flux.from(aggregate(clientSession, preparedQuery));
         }
@@ -717,7 +717,7 @@ public class DefaultReactiveMongoRepositoryOperations extends AbstractMongoRepos
                 LOG.debug("Creating a new client session for MongoDB configuration: {}", serverName);
             }
             return Mono.usingWhen(mongoClient.startSession(), cs -> function.apply(cs)
-                    .contextWrite(ctx -> ctx.put(currentSessionKey, cs)), connection -> {
+                .contextWrite(ctx -> ctx.put(currentSessionKey, cs)), connection -> {
                 if (LOG.isDebugEnabled()) {
                     LOG.debug("Closing Connection for MongoDB configuration: {}", serverName);
                 }
@@ -739,14 +739,14 @@ public class DefaultReactiveMongoRepositoryOperations extends AbstractMongoRepos
                 LOG.debug("Creating a new client session for MongoDB configuration: {}", serverName);
             }
             return Flux.usingWhen(mongoClient.startSession(),
-                    cs -> function.apply(cs).contextWrite(ctx -> ctx.put(currentSessionKey, cs)),
-                    connection -> {
-                        if (LOG.isDebugEnabled()) {
-                            LOG.debug("Closing Connection for MongoDB configuration: {}", serverName);
-                        }
-                        connection.close();
-                        return Mono.empty();
-                    });
+                cs -> function.apply(cs).contextWrite(ctx -> ctx.put(currentSessionKey, cs)),
+                connection -> {
+                    if (LOG.isDebugEnabled()) {
+                        LOG.debug("Closing Connection for MongoDB configuration: {}", serverName);
+                    }
+                    connection.close();
+                    return Mono.empty();
+                });
         });
     }
 
@@ -1057,15 +1057,17 @@ public class DefaultReactiveMongoRepositoryOperations extends AbstractMongoRepos
         Objects.requireNonNull(handler, "Callback handler cannot be null");
 
         return Flux.deferContextual(contextView -> {
-            Object o = getTransactionStatus(contextView);
+            ReactiveTransactionStatus<ClientSession> transactionStatus = getTransactionStatus(contextView);
             TransactionDefinition.Propagation propagationBehavior = definition.getPropagationBehavior();
-            if (o instanceof ReactiveTransactionStatus) {
+            if (transactionStatus != null) {
                 // existing transaction, use it
                 if (propagationBehavior == TransactionDefinition.Propagation.NOT_SUPPORTED || propagationBehavior == TransactionDefinition.Propagation.NEVER) {
                     return Flux.error(new TransactionUsageException("Found an existing transaction but propagation behaviour doesn't support it: " + propagationBehavior));
                 }
+                ReactiveTransactionStatus<ClientSession> existingTransaction = existingTransaction(transactionStatus);
                 try {
-                    return handler.doInTransaction((ReactiveTransactionStatus<ClientSession>) o);
+                    return Flux.from(handler.doInTransaction(existingTransaction))
+                        .contextWrite(ctx -> ctx.put(txStatusKey, existingTransaction));
                 } catch (Exception e) {
                     return Flux.error(new TransactionSystemException("Error invoking doInTransaction handler: " + e.getMessage(), e));
                 }
@@ -1095,18 +1097,18 @@ public class DefaultReactiveMongoRepositoryOperations extends AbstractMongoRepos
                         if (LOG.isWarnEnabled()) {
                             LOG.warn("Rolling back transaction on error: " + throwable.getMessage(), throwable);
                         }
-                        Mono<?> mono;
+                        Flux<Void> abort;
                         if (definition.rollbackOn(throwable)) {
-                            mono = Flux.from(sts.getConnection().abortTransaction()).hasElements();
+                            abort = Flux.from(sts.getConnection().abortTransaction());
                         } else {
-                            mono = Mono.error(throwable);
+                            abort = Flux.error(throwable);
                         }
-                        return mono.onErrorResume((rollbackError) -> {
+                        return abort.onErrorResume((rollbackError) -> {
                             if (rollbackError != throwable && LOG.isWarnEnabled()) {
                                 LOG.warn("Error occurred during transaction rollback: " + rollbackError.getMessage(), rollbackError);
                             }
                             return Mono.error(throwable);
-                        }).doFinally((sig) -> status.completed = true);
+                        }).as(flux -> doFinish(flux, status));
 
                     }, this::doCommit);
                 });
@@ -1115,18 +1117,54 @@ public class DefaultReactiveMongoRepositoryOperations extends AbstractMongoRepos
 
     }
 
+    private ReactiveTransactionStatus<ClientSession> existingTransaction(ReactiveTransactionStatus<ClientSession> existing) {
+        return new ReactiveTransactionStatus<ClientSession>() {
+            @Override
+            public ClientSession getConnection() {
+                return existing.getConnection();
+            }
+
+            @Override
+            public boolean isNewTransaction() {
+                return false;
+            }
+
+            @Override
+            public void setRollbackOnly() {
+                existing.setRollbackOnly();
+            }
+
+            @Override
+            public boolean isRollbackOnly() {
+                return existing.isRollbackOnly();
+            }
+
+            @Override
+            public boolean isCompleted() {
+                return existing.isCompleted();
+            }
+        };
+    }
+
     private Publisher<Void> doCommit(DefaultReactiveTransactionStatus status) {
         if (status.isRollbackOnly()) {
             if (LOG.isDebugEnabled()) {
                 LOG.debug("Rolling back transaction on MongoDB configuration {}.", status);
             }
-            return Flux.from(status.getConnection().abortTransaction()).doFinally(sig -> status.completed = true);
+            return Flux.from(status.getConnection().abortTransaction()).as(flux -> doFinish(flux, status));
         } else {
             if (LOG.isDebugEnabled()) {
                 LOG.debug("Committing transaction for MongoDB configuration {}.", status);
             }
-            return Flux.from(status.getConnection().commitTransaction()).doFinally(sig -> status.completed = true);
+            return Flux.from(status.getConnection().commitTransaction()).as(flux -> doFinish(flux, status));
         }
+    }
+
+    private <T> Publisher<Void> doFinish(Flux<T> flux, DefaultReactiveTransactionStatus status) {
+        return flux.hasElements().map(ignore -> {
+                status.completed = true;
+                return ignore;
+            }).then();
     }
 
     /**

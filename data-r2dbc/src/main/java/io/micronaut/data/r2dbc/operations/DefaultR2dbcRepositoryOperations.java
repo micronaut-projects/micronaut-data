@@ -397,13 +397,14 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                 if (propagationBehavior == TransactionDefinition.Propagation.NOT_SUPPORTED || propagationBehavior == TransactionDefinition.Propagation.NEVER) {
                     return Flux.error(new TransactionUsageException("Found an existing transaction but propagation behaviour doesn't support it: " + propagationBehavior));
                 }
+                ReactiveTransactionStatus<Connection> existingTransaction = existingTransaction(transactionStatus);
                 try {
-                    return handler.doInTransaction(transactionStatus);
+                    return Flux.from(handler.doInTransaction(existingTransaction))
+                        .contextWrite(ctx -> ctx.put(txStatusKey, existingTransaction));
                 } catch (Exception e) {
                     return Flux.error(new TransactionSystemException("Error invoking doInTransaction handler: " + e.getMessage(), e));
                 }
             } else {
-
                 if (propagationBehavior == TransactionDefinition.Propagation.MANDATORY) {
                     return Flux.error(new NoTransactionException("Expected an existing transaction, but none was found in the Reactive context."));
                 }
@@ -440,7 +441,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                                             .put(txDefinitionKey, definition)
                                     );
                                 } catch (Exception e) {
-                                    return Mono.error(new TransactionSystemException("Error invoking doInTransaction handler: " + e.getMessage(), e));
+                                    return Flux.error(new TransactionSystemException("Error invoking doInTransaction handler: " + e.getMessage(), e));
                                 }
                             },
                             onSuccess,
@@ -497,6 +498,35 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                 status.completed = true;
                 return cancelConnection.get();
             });
+    }
+
+    private ReactiveTransactionStatus<Connection> existingTransaction(ReactiveTransactionStatus<Connection> existing) {
+        return new ReactiveTransactionStatus<Connection>() {
+            @Override
+            public Connection getConnection() {
+                return existing.getConnection();
+            }
+
+            @Override
+            public boolean isNewTransaction() {
+                return false;
+            }
+
+            @Override
+            public void setRollbackOnly() {
+                existing.setRollbackOnly();
+            }
+
+            @Override
+            public boolean isRollbackOnly() {
+                return existing.isRollbackOnly();
+            }
+
+            @Override
+            public boolean isCompleted() {
+                return existing.isCompleted();
+            }
+        };
     }
 
     private static <R> Mono<R> toSingleResult(Flux<R> flux) {
