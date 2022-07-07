@@ -134,7 +134,7 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <dd><code>io.micronaut.aop.Interceptor&lt;java.lang.Object,&#8203;java.lang.Object&gt;</code>, <code>io.micronaut.aop.MethodInterceptor&lt;java.lang.Object,&#8203;java.lang.Object&gt;</code>, <code>io.micronaut.core.order.Ordered</code></dd>
 </dl>
 <hr>
-<pre>@Singleton
+<pre>@Prototype
 @Internal
 public final class <span class="typeNameLabel">DataIntroductionAdvice</span>
 extends java.lang.Object
@@ -191,8 +191,9 @@ implements io.micronaut.aop.MethodInterceptor&lt;java.lang.Object,&#8203;java.la
 <th class="colLast" scope="col">Description</th>
 </tr>
 <tr class="altColor">
-<th class="colConstructorName" scope="row"><code><span class="memberNameLink"><a href="#%3Cinit%3E(io.micronaut.context.BeanLocator,io.micronaut.transaction.interceptor.CoroutineTxHelper)">DataIntroductionAdvice</a></span>&#8203;(io.micronaut.context.BeanLocator&nbsp;beanLocator,
-                      <a href="../../transaction/interceptor/CoroutineTxHelper.html" title="class in io.micronaut.transaction.interceptor">CoroutineTxHelper</a>&nbsp;coroutineTxHelper)</code></th>
+<th class="colConstructorName" scope="row"><code><span class="memberNameLink"><a href="#%3Cinit%3E(io.micronaut.data.intercept.DataInterceptorResolver,io.micronaut.transaction.interceptor.CoroutineTxHelper,io.micronaut.inject.InjectionPoint)">DataIntroductionAdvice</a></span>&#8203;(io.micronaut.data.intercept.DataInterceptorResolver&nbsp;dataInterceptorResolver,
+                      <a href="../../transaction/interceptor/CoroutineTxHelper.html" title="class in io.micronaut.transaction.interceptor">CoroutineTxHelper</a>&nbsp;coroutineTxHelper,
+                      io.micronaut.inject.InjectionPoint&lt;?&gt;&nbsp;injectionPoint)</code></th>
 <td class="colLast">
 <div class="block">Default constructor.</div>
 </td>
@@ -258,7 +259,7 @@ implements io.micronaut.aop.MethodInterceptor&lt;java.lang.Object,&#8203;java.la
 <!--   -->
 </a>
 <h3>Constructor Detail</h3>
-<a id="&lt;init&gt;(io.micronaut.context.BeanLocator,io.micronaut.transaction.interceptor.CoroutineTxHelper)">
+<a id="&lt;init&gt;(io.micronaut.data.intercept.DataInterceptorResolver,io.micronaut.transaction.interceptor.CoroutineTxHelper,io.micronaut.inject.InjectionPoint)">
 <!--   -->
 </a>
 <ul class="blockListLast">
@@ -266,14 +267,17 @@ implements io.micronaut.aop.MethodInterceptor&lt;java.lang.Object,&#8203;java.la
 <h4>DataIntroductionAdvice</h4>
 <pre>@Inject
 public&nbsp;DataIntroductionAdvice&#8203;(@NonNull
-                              io.micronaut.context.BeanLocator&nbsp;beanLocator,
+                              io.micronaut.data.intercept.DataInterceptorResolver&nbsp;dataInterceptorResolver,
                               @Nullable
-                              <a href="../../transaction/interceptor/CoroutineTxHelper.html" title="class in io.micronaut.transaction.interceptor">CoroutineTxHelper</a>&nbsp;coroutineTxHelper)</pre>
+                              <a href="../../transaction/interceptor/CoroutineTxHelper.html" title="class in io.micronaut.transaction.interceptor">CoroutineTxHelper</a>&nbsp;coroutineTxHelper,
+                              @Nullable
+                              io.micronaut.inject.InjectionPoint&lt;?&gt;&nbsp;injectionPoint)</pre>
 <div class="block">Default constructor.</div>
 <dl>
 <dt><span class="paramLabel">Parameters:</span></dt>
-<dd><code>beanLocator</code> - The bean locator.</dd>
-<dd><code>coroutineTxHelper</code> - </dd>
+<dd><code>dataInterceptorResolver</code> - The data interceptor resolver</dd>
+<dd><code>coroutineTxHelper</code> - The coroutines helper</dd>
+<dd><code>injectionPoint</code> - The injection point</dd>
 </dl>
 </li>
 </ul>
