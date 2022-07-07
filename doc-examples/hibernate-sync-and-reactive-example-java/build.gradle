@@ -16,6 +16,7 @@ micronaut {
 
 dependencies {
     annotationProcessor projects.dataProcessor
+    implementation "io.micronaut.reactor:micronaut-reactor"
     implementation "io.micronaut:micronaut-http-client"
     implementation projects.dataHibernateReactive
     runtimeOnly "ch.qos.logback:logback-classic"
