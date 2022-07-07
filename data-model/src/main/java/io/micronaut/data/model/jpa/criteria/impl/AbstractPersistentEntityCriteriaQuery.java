@@ -16,6 +16,7 @@
 package io.micronaut.data.model.jpa.criteria.impl;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.Sort;
@@ -41,7 +42,6 @@ import jakarta.persistence.criteria.Root;
 import jakarta.persistence.criteria.Selection;
 import jakarta.persistence.criteria.Subquery;
 import jakarta.persistence.metamodel.EntityType;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -86,7 +86,7 @@ public abstract class AbstractPersistentEntityCriteriaQuery<T> implements Persis
         return queryBuilder.buildQuery(getQueryModel());
     }
 
-    @NotNull
+    @NonNull
     @Override
     public QueryModel getQueryModel() {
         if (entityRoot == null) {
@@ -96,7 +96,7 @@ public abstract class AbstractPersistentEntityCriteriaQuery<T> implements Persis
         Joiner joiner = new Joiner();
         if (predicate instanceof PredicateVisitable) {
             PredicateVisitable predicate = (PredicateVisitable) this.predicate;
-            predicate.accept(new QueryModelPredicateVisitor(qm));
+            predicate.accept(createPredicateVisitor(qm));
             predicate.accept(joiner);
         }
         if (selection instanceof SelectionVisitable) {
@@ -133,6 +133,16 @@ public abstract class AbstractPersistentEntityCriteriaQuery<T> implements Persis
             qm.forUpdate();
         }
         return qm;
+    }
+
+    /**
+     * Creates query model predicate visitor.
+     * @param queryModel The query model
+     * @return the visitor
+     */
+    @NonNull
+    protected QueryModelPredicateVisitor createPredicateVisitor(QueryModel queryModel) {
+        return new QueryModelPredicateVisitor(queryModel);
     }
 
     @Override

@@ -12,6 +12,8 @@ import io.micronaut.inject.ast.ClassElement
 import jakarta.persistence.criteria.CriteriaDelete
 import jakarta.persistence.criteria.CriteriaQuery
 import jakarta.persistence.criteria.CriteriaUpdate
+import jakarta.persistence.criteria.Expression
+import spock.lang.Unroll
 
 import java.util.function.Function
 
@@ -62,6 +64,190 @@ class CriteriaSpec extends AbstractCriteriaSpec {
         return query.from(testEntityElement)
     }
 
+    @Unroll
+    void "test criteria predicate"(Specification specification) {
+        given:
+            PersistentEntityRoot entityRoot = createRoot(criteriaQuery)
+            def predicate = specification.toPredicate(entityRoot, criteriaQuery, criteriaBuilder)
+            if (predicate) {
+                criteriaQuery.where(predicate)
+            }
+            String whereSqlQuery = getWhereQueryPart(criteriaQuery)
+
+        expect:
+            whereSqlQuery == expectedWhereQuery
+
+        where:
+            specification << [
+                    { root, query, cb ->
+                        root.get("amount").in(100, 200)
+                    } as Specification,
+                    { root, query, cb ->
+                        root.get("amount").in(100, 200).not()
+                    } as Specification,
+                    { root, query, cb ->
+                        cb.in(root.get("amount")).value(100).value(200)
+                    } as Specification,
+                    { root, query, cb ->
+                        cb.in(root.get("amount")).value(100).value(200).not()
+                    } as Specification,
+                    { root, query, cb ->
+                        def parameter = cb.parameter(Integer)
+                        root.get("amount").in([parameter] as Expression<?>[])
+                    } as Specification,
+                    { root, query, cb ->
+                        def parameter = cb.parameter(Integer)
+                        root.get("amount").in([parameter] as Expression<?>[]).not()
+                    } as Specification,
+                    { root, query, cb ->
+                        cb.between(root.get("enabled"), true, false)
+                    } as Specification,
+                    { root, query, cb ->
+                        def parameter = cb.parameter(Integer)
+                        cb.between(root.get("amount"), parameter, parameter)
+                    } as Specification,
+                    { root, query, cb ->
+                        query.where(root.get("enabled"))
+                        null
+                    } as Specification,
+                    { root, query, cb ->
+                        query.where(root.get("enabled"))
+                        query.orderBy(cb.desc(root.get("amount")), cb.asc(root.get("budget")))
+                        null
+                    } as Specification,
+                    { root, query, cb ->
+                        def pred1 = cb.or(root.get("enabled"), root.get("enabled2"))
+                        def pred2 = cb.or(pred1, cb.equal(root.get("amount"), 100))
+                        def andPred = cb.and(cb.equal(root.get("budget"), 200), pred2)
+                        andPred
+                    } as Specification
+            ]
+            expectedWhereQuery << [
+                    '(test_."amount" IN (100,200))',
+                    '(test_."amount" NOT IN (100,200))',
+                    '(test_."amount" IN (100,200))',
+                    '(test_."amount" NOT IN (100,200))',
+                    '(test_."amount" IN (?))',
+                    '(test_."amount" NOT IN (?))',
+                    '((test_."enabled" >= TRUE AND test_."enabled" <= FALSE))',
+                    '((test_."amount" >= ? AND test_."amount" <= ?))',
+                    '(test_."enabled" = TRUE )',
+                    '(test_."enabled" = TRUE ) ORDER BY test_."amount" DESC,test_."budget" ASC',
+                    '(test_."budget" = 200 AND ((test_."enabled" = TRUE  OR test_."enabled2" = TRUE ) OR test_."amount" = 100))'
+            ]
+    }
+
+
+    @Unroll
+    void "test delete"(DeleteSpecification specification) {
+        given:
+            PersistentEntityRoot entityRoot = createRoot(criteriaDelete)
+            def predicate = specification.toPredicate(entityRoot, criteriaDelete, criteriaBuilder)
+            if (predicate) {
+                criteriaDelete.where(predicate)
+            }
+            String sqlQuery = getSqlQuery(criteriaDelete)
+
+        expect:
+            sqlQuery == expectedQuery
+
+        where:
+            specification << [
+                    { root, query, cb ->
+                        cb.ge(root.get("amount"), 1000)
+                    } as DeleteSpecification,
+            ]
+            expectedQuery << [
+                    'DELETE  FROM "test"  WHERE ("amount" >= 1000)',
+            ]
+    }
+
+    @Unroll
+    void "test update"(UpdateSpecification specification) {
+        given:
+            PersistentEntityRoot entityRoot = createRoot(criteriaUpdate)
+            def predicate = specification.toPredicate(entityRoot, criteriaUpdate, criteriaBuilder)
+            if (predicate) {
+                criteriaUpdate.where(predicate)
+            }
+            String sqlQuery = getSqlQuery(criteriaUpdate)
+
+        expect:
+            sqlQuery == expectedQuery
+
+        where:
+            specification << [
+                    { root, query, cb ->
+                        query.set("name", "ABC")
+                        query.set(root.get("amount"), 123)
+                        cb.ge(root.get("amount"), 1000)
+                    } as UpdateSpecification,
+                    { root, query, cb ->
+                        query.set("name", cb.parameter(String))
+                        query.set(root.get("amount"), cb.parameter(Integer))
+                        cb.ge(root.get("amount"), 1000)
+                    } as UpdateSpecification,
+                    { root, query, cb ->
+                        query.set("name", "test")
+                        query.set(root.get("amount"), cb.parameter(Integer))
+                        cb.ge(root.get("amount"), 1000)
+                    } as UpdateSpecification,
+            ]
+            expectedQuery << [
+                    'UPDATE "test" SET name=\'ABC\',amount=123 WHERE ("amount" >= 1000)',
+                    'UPDATE "test" SET "name"=?,"amount"=? WHERE ("amount" >= 1000)',
+                    'UPDATE "test" SET name=\'test\',"amount"=? WHERE ("amount" >= 1000)',
+            ]
+    }
+
+    @Unroll
+    void "test property value #predicate predicate produces where query: #expectedWhereQuery"() {
+        given:
+            PersistentEntityRoot entityRoot = createRoot(criteriaQuery)
+            criteriaQuery.where(predicateValue(predicate, entityRoot, property1, value))
+            def whereSqlQuery = getWhereQueryPart(criteriaQuery)
+
+        expect:
+            whereSqlQuery == expectedWhereQuery
+
+        where:
+            property1 | value                   | predicate              | expectedWhereQuery
+            "enabled" | true                    | "equal"                | '(test_."enabled" = TRUE)'
+            "enabled" | true                    | "notEqual"             | '(test_."enabled" != TRUE)'
+            "enabled" | true                    | "greaterThan"          | '(test_."enabled" > TRUE)'
+            "enabled" | true                    | "greaterThanOrEqualTo" | '(test_."enabled" >= TRUE)'
+            "enabled" | true                    | "lessThan"             | '(test_."enabled" < TRUE)'
+            "enabled" | true                    | "lessThanOrEqualTo"    | '(test_."enabled" <= TRUE)'
+            "amount"  | BigDecimal.valueOf(100) | "gt"                   | '(test_."amount" > 100)'
+            "amount"  | BigDecimal.valueOf(100) | "ge"                   | '(test_."amount" >= 100)'
+            "amount"  | BigDecimal.valueOf(100) | "lt"                   | '(test_."amount" < 100)'
+            "amount"  | BigDecimal.valueOf(100) | "le"                   | '(test_."amount" <= 100)'
+    }
+
+    @Unroll
+    void "test property value not #predicate predicate produces where query: #expectedWhereQuery"() {
+        given:
+            PersistentEntityRoot entityRoot = createRoot(criteriaQuery)
+            criteriaQuery.where(predicateValue(predicate, entityRoot, property1, value).not())
+            def whereSqlQuery = getWhereQueryPart(criteriaQuery)
+
+        expect:
+            whereSqlQuery == expectedWhereQuery
+
+        where:
+            property1 | value                   | predicate              | expectedWhereQuery
+            "enabled" | true                    | "equal"                | '(test_."enabled" != TRUE)'
+            "enabled" | true                    | "notEqual"             | '(test_."enabled" = TRUE)'
+            "enabled" | true                    | "greaterThan"          | '( NOT(test_."enabled" > TRUE))'
+            "enabled" | true                    | "greaterThanOrEqualTo" | '( NOT(test_."enabled" >= TRUE))'
+            "enabled" | true                    | "lessThan"             | '( NOT(test_."enabled" < TRUE))'
+            "enabled" | true                    | "lessThanOrEqualTo"    | '( NOT(test_."enabled" <= TRUE))'
+            "amount"  | BigDecimal.valueOf(100) | "gt"                   | '( NOT(test_."amount" > 100))'
+            "amount"  | BigDecimal.valueOf(100) | "ge"                   | '( NOT(test_."amount" >= 100))'
+            "amount"  | BigDecimal.valueOf(100) | "lt"                   | '( NOT(test_."amount" < 100))'
+            "amount"  | BigDecimal.valueOf(100) | "le"                   | '( NOT(test_."amount" <= 100))'
+    }
+
     private ClassElement buildCustomElement() {
         new CustomAbstractDataSpec().buildClassElement("""
 package test;
@@ -80,7 +266,7 @@ class Test {
     private Long age;
     private BigDecimal amount;
     private BigDecimal budget;
-    
+
     @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = "test")
     private List<OtherEntity> others;
 
@@ -91,7 +277,7 @@ class Test {
     public String getName() {
         return name;
     }
-    
+
     public Long getId() {
         return id;
     }
@@ -99,7 +285,7 @@ class Test {
     public void setId(Long id) {
         this.id = id;
     }
-    
+
     public Boolean getEnabled2() {
         return enabled2;
     }
@@ -111,19 +297,19 @@ class Test {
     public boolean isEnabled() {
         return enabled;
     }
-    
+
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
     }
-    
+
     public Long getAge() {
         return age;
     }
-    
+
     public void setAge(Long age) {
         this.age = age;
     }
-    
+
     public BigDecimal getAmount() {
         return amount;
     }
@@ -131,7 +317,7 @@ class Test {
     public void setAmount(BigDecimal amount) {
         this.amount = amount;
     }
-    
+
     public BigDecimal getBudget() {
         return budget;
     }
@@ -139,11 +325,11 @@ class Test {
     public void setBudget(BigDecimal budget) {
         this.budget = budget;
     }
-    
+
     public List<OtherEntity> getOthers() {
         return others;
     }
-    
+
     public void setOthers(List<OtherEntity> others) {
         this.others = others;
     }
@@ -164,7 +350,7 @@ class OtherEntity {
     private Test test;
     @Relation(value = Relation.Kind.MANY_TO_ONE)
     private SimpleEntity simple;
-    
+
     public OtherEntity(String name) {
         this.name = name;
     }
@@ -172,7 +358,7 @@ class OtherEntity {
     public String getName() {
         return name;
     }
-    
+
     public Long getId() {
         return id;
     }
@@ -180,7 +366,7 @@ class OtherEntity {
     public void setId(Long id) {
         this.id = id;
     }
-    
+
     public Boolean getEnabled2() {
         return enabled2;
     }
@@ -192,19 +378,19 @@ class OtherEntity {
     public boolean isEnabled() {
         return enabled;
     }
-    
+
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
     }
-    
+
     public Long getAge() {
         return age;
     }
-    
+
     public void setAge(Long age) {
         this.age = age;
     }
-    
+
     public BigDecimal getAmount() {
         return amount;
     }
@@ -212,7 +398,7 @@ class OtherEntity {
     public void setAmount(BigDecimal amount) {
         this.amount = amount;
     }
-    
+
     public BigDecimal getBudget() {
         return budget;
     }
@@ -220,7 +406,7 @@ class OtherEntity {
     public void setBudget(BigDecimal budget) {
         this.budget = budget;
     }
-    
+
     public Test getTest() {
         return test;
     }
@@ -228,7 +414,7 @@ class OtherEntity {
     public void setTest(Test test) {
         this.test = test;
     }
-    
+
     public SimpleEntity getSimple() {
         return simple;
     }
@@ -250,7 +436,7 @@ class SimpleEntity {
     private Long age;
     private BigDecimal amount;
     private BigDecimal budget;
-    
+
     public SimpleEntity(String name) {
         this.name = name;
     }
@@ -258,7 +444,7 @@ class SimpleEntity {
     public String getName() {
         return name;
     }
-    
+
     public Long getId() {
         return id;
     }
@@ -266,7 +452,7 @@ class SimpleEntity {
     public void setId(Long id) {
         this.id = id;
     }
-    
+
     public Boolean getEnabled2() {
         return enabled2;
     }
@@ -278,19 +464,19 @@ class SimpleEntity {
     public boolean isEnabled() {
         return enabled;
     }
-    
+
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
     }
-    
+
     public Long getAge() {
         return age;
     }
-    
+
     public void setAge(Long age) {
         this.age = age;
     }
-    
+
     public BigDecimal getAmount() {
         return amount;
     }
@@ -298,7 +484,7 @@ class SimpleEntity {
     public void setAmount(BigDecimal amount) {
         this.amount = amount;
     }
-    
+
     public BigDecimal getBudget() {
         return budget;
     }

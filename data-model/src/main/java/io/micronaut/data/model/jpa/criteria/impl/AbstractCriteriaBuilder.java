@@ -844,25 +844,51 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
 
     @Override
     @NonNull
-    public <T> Expression<T> literal(@NonNull T value) {
+    public <T> Expression<T> literal(@Nullable T value) {
         return new LiteralExpression<>(value);
     }
 
-    /**
-     * Not supported yet.
-     *
-     * {@inheritDoc}
-     */
     @Override
     @NonNull
     public <T> Expression<T> nullLiteral(@NonNull Class<T> x) {
-        throw notSupportedOperation();
+        return new LiteralExpression<>(null);
     }
 
     @Override
     @NonNull
     public <T> ParameterExpression<T> parameter(@NonNull Class<T> paramClass) {
-        return new ParameterExpressionImpl<T>(paramClass, null) {
+        return parameter(paramClass, null, null);
+    }
+
+    private String[] asStringPath(List<Association> associations, PersistentProperty property) {
+        if (associations.isEmpty()) {
+            return new String[]{property.getName()};
+        }
+        List<String> path = new ArrayList<>(associations.size() + 1);
+        for (Association association : associations) {
+            path.add(association.getName());
+        }
+        path.add(property.getName());
+        return path.toArray(new String[0]);
+    }
+
+    @Override
+    public <T> ParameterExpression<T> parameter(@NonNull Class<T> paramClass, @NonNull String name) {
+        return parameter(paramClass, name, null);
+    }
+
+    /**
+     * Create a new parameter with possible constant value.
+     *
+     * @param paramClass The param calss
+     * @param name       The param name
+     * @param value      The param value
+     * @param <T>        The param type
+     * @return the parameter expression
+     */
+    @NonNull
+    public <T> ParameterExpression<T> parameter(@NonNull Class<T> paramClass, @Nullable String name, @Nullable Object value) {
+        return new ParameterExpressionImpl<T>(paramClass, name) {
 
             @Override
             public QueryParameterBinding bind(BindingContext bindingContext) {
@@ -888,46 +914,10 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
                     public boolean isExpandable() {
                         return bindingContext.isExpandable();
                     }
-                };
-            }
-        };
-    }
-
-    private String[] asStringPath(List<Association> associations, PersistentProperty property) {
-        if (associations.isEmpty()) {
-            return new String[]{property.getName()};
-        }
-        List<String> path = new ArrayList<>(associations.size() + 1);
-        for (Association association : associations) {
-            path.add(association.getName());
-        }
-        path.add(property.getName());
-        return path.toArray(new String[0]);
-    }
-
-    @Override
-    @NonNull
-    public <T> ParameterExpression<T> parameter(@NonNull Class<T> paramClass, @NonNull String name) {
-        return new ParameterExpressionImpl<T>(paramClass, name) {
-
-            @Override
-            public QueryParameterBinding bind(BindingContext bindingContext) {
-                String name = bindingContext.getName() == null ? String.valueOf(bindingContext.getIndex()) : bindingContext.getName();
-                PersistentPropertyPath outgoingQueryParameterProperty = bindingContext.getOutgoingQueryParameterProperty();
-                return new QueryParameterBinding() {
-                    @Override
-                    public String getKey() {
-                        return name;
-                    }
 
                     @Override
-                    public DataType getDataType() {
-                        return outgoingQueryParameterProperty.getProperty().getDataType();
-                    }
-
-                    @Override
-                    public String[] getPropertyPath() {
-                        return asStringPath(outgoingQueryParameterProperty.getAssociations(), outgoingQueryParameterProperty.getProperty());
+                    public Object getValue() {
+                        return value;
                     }
                 };
             }

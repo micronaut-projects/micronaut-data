@@ -688,17 +688,17 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         String tableAlias = propertyPath.getTableAlias();
         boolean escape = propertyPath.shouldEscape();
         NamingStrategy namingStrategy = propertyPath.getNamingStrategy();
-        int length = sb.length();
+        boolean[] needsTrimming = {false};
         traversePersistentProperties(propertyPath.getAssociations(), propertyPath.getProperty(), (associations, property) -> {
             String columnName = namingStrategy.mappedName(associations, property);
             if (escape) {
                 columnName = quote(columnName);
             }
             sb.append(tableAlias).append(DOT).append(columnName).append(COMMA);
+            needsTrimming[0] = true;
         });
-        int newLength = sb.length();
-        if (length != newLength) {
-            sb.setLength(newLength - 1);
+        if (needsTrimming[0]) {
+            sb.setLength(sb.length() - 1);
         }
     }
 
@@ -903,22 +903,17 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
 
     private void handleJunction(CriteriaContext ctx, QueryModel.Junction criteria) {
         StringBuilder whereClause = ctx.query();
-        int length = whereClause.length();
         final String operator = criteria instanceof QueryModel.Conjunction ? LOGICAL_AND : LOGICAL_OR;
-        for (QueryModel.Criterion criterion : criteria.getCriteria()) {
+        for (Iterator<QueryModel.Criterion> iterator = criteria.getCriteria().iterator(); iterator.hasNext(); ) {
+            QueryModel.Criterion criterion = iterator.next();
             CriterionHandler<QueryModel.Criterion> criterionHandler = queryHandlers.get(criterion.getClass());
             if (criterionHandler == null) {
                 throw new IllegalArgumentException("Queries of type " + criterion.getClass().getSimpleName() + " are not supported by this implementation");
             }
-            int beforeHandleLength = whereClause.length();
             criterionHandler.handle(ctx, criterion);
-            if (beforeHandleLength != whereClause.length()) {
+            if (iterator.hasNext()) {
                 whereClause.append(operator);
             }
-        }
-        int newLength = whereClause.length();
-        if (newLength != length) {
-            whereClause.setLength(newLength - operator.length());
         }
     }
 
@@ -954,8 +949,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             NamingStrategy namingStrategy = propertyPath.getNamingStrategy();
             boolean shouldEscape = propertyPath.shouldEscape();
 
-            int length = whereClause.length();
-
+            boolean[] needsTrimming = {false};
             traversePersistentProperties(propertyPath.getAssociations(), propertyPath.getProperty(), (associations, property) -> {
                 String readTransformer = getDataTransformerReadValue(currentAlias, property).orElse(null);
                 if (readTransformer != null) {
@@ -977,11 +971,11 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                         newBindingContext(parameterPropertyPath, PersistentPropertyPath.of(associations, property))
                 );
                 whereClause.append(LOGICAL_AND);
+                needsTrimming[0] = true;
             });
 
-            int newLength = whereClause.length();
-            if (newLength != length) {
-                whereClause.setLength(newLength - LOGICAL_AND.length());
+            if (needsTrimming[0]) {
+                whereClause.setLength(whereClause.length() - LOGICAL_AND.length());
             }
 
         } else {
@@ -1063,7 +1057,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                 .filter(e -> !(e.getValue() instanceof QueryParameter) || !e.getKey().getProperty().isGenerated())
                 .collect(Collectors.toList());
 
-        int length = queryString.length();
+        boolean[] needsTrimming = {false};
         if (!computePropertyPaths()) {
             for (Map.Entry<QueryPropertyPath, Object> entry : update) {
                 QueryPropertyPath propertyPath = entry.getKey();
@@ -1081,6 +1075,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                     queryString.append(asLiteral(entry.getValue()));
                 }
                 queryString.append(COMMA);
+                needsTrimming[0] = true;
             }
         } else {
             NamingStrategy namingStrategy = queryState.getEntity().getNamingStrategy();
@@ -1107,6 +1102,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                             );
                         });
                         queryString.append(COMMA);
+                        needsTrimming[0] = true;
                     });
                 } else {
                     String tableAlias = propertyPath.getTableAlias();
@@ -1116,12 +1112,12 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                     queryString.append(propertyPath.getPath()).append('=');
                     queryString.append(asLiteral(entry.getValue()));
                     queryString.append(COMMA);
+                    needsTrimming[0] = true;
                 }
             }
         }
-        int newLength = queryString.length();
-        if (length != newLength) {
-            queryString.setLength(newLength - 1);
+        if (needsTrimming[0]) {
+            queryString.setLength(queryString.length() - 1);
         }
     }
 

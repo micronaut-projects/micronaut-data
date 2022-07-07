@@ -122,17 +122,17 @@ class StaticCriteriaSpec extends AbstractCriteriaSpec {
                     } as Specification
             ]
             expectedWhereQuery << [
-                    '(test_."amount" IN (100,200))',
-                    '(test_."amount" NOT IN (100,200))',
-                    '(test_."amount" IN (100,200))',
-                    '(test_."amount" NOT IN (100,200))',
                     '(test_."amount" IN (?))',
                     '(test_."amount" NOT IN (?))',
-                    '((test_."enabled" >= TRUE AND test_."enabled" <= FALSE))',
+                    '(test_."amount" IN (?))',
+                    '(test_."amount" NOT IN (?))',
+                    '(test_."amount" IN (?))',
+                    '(test_."amount" NOT IN (?))',
+                    '((test_."enabled" >= ? AND test_."enabled" <= ?))',
                     '((test_."amount" >= ? AND test_."amount" <= ?))',
                     '(test_."enabled" = TRUE )',
                     '(test_."enabled" = TRUE ) ORDER BY test_."amount" DESC,test_."budget" ASC',
-                    '(test_."budget" = 200 AND ((test_."enabled" = TRUE  OR test_."enabled2" = TRUE ) OR test_."amount" = 100))'
+                    '(test_."budget" = ? AND ((test_."enabled" = TRUE  OR test_."enabled2" = TRUE ) OR test_."amount" = ?))'
             ]
     }
 
@@ -219,7 +219,7 @@ class StaticCriteriaSpec extends AbstractCriteriaSpec {
                     } as DeleteSpecification,
             ]
             expectedQuery << [
-                    'DELETE  FROM "test"  WHERE ("amount" >= 1000)',
+                    'DELETE  FROM "test"  WHERE ("amount" >= ?)',
             ]
     }
 
@@ -255,9 +255,9 @@ class StaticCriteriaSpec extends AbstractCriteriaSpec {
                     } as UpdateSpecification,
             ]
             expectedQuery << [
-                    'UPDATE "test" SET name=\'ABC\',amount=123 WHERE ("amount" >= 1000)',
-                    'UPDATE "test" SET "name"=?,"amount"=? WHERE ("amount" >= 1000)',
-                    'UPDATE "test" SET name=\'test\',"amount"=? WHERE ("amount" >= 1000)',
+                    'UPDATE "test" SET "name"=?,"amount"=? WHERE ("amount" >= ?)',
+                    'UPDATE "test" SET "name"=?,"amount"=? WHERE ("amount" >= ?)',
+                    'UPDATE "test" SET "name"=?,"amount"=? WHERE ("amount" >= ?)',
             ]
     }
 

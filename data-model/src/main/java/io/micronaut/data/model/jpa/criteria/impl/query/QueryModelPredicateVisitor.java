@@ -54,7 +54,7 @@ import java.util.stream.Collectors;
  * @since 3.2
  */
 @Internal
-public final class QueryModelPredicateVisitor implements PredicateVisitor {
+public class QueryModelPredicateVisitor implements PredicateVisitor {
 
     private final QueryModel queryModel;
     private State state = new State();
@@ -63,7 +63,7 @@ public final class QueryModelPredicateVisitor implements PredicateVisitor {
         this.queryModel = queryModel;
     }
 
-    public void visit(IExpression<Boolean> expression) {
+    private void visit(IExpression<Boolean> expression) {
         if (expression instanceof PredicateVisitable) {
             ((PredicateVisitable) expression).accept(this);
         } else if (expression instanceof PersistentPropertyPath) {
