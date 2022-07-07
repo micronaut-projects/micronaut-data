@@ -26,7 +26,7 @@
     catch(err) {
     }
 //-->
-var data = {"i0":18,"i1":6,"i2":6,"i3":18,"i4":18,"i5":18,"i6":18,"i7":18,"i8":18};
+var data = {"i0":18,"i1":6,"i2":6,"i3":18,"i4":18,"i5":18,"i6":18,"i7":18,"i8":18,"i9":18};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],4:["t3","Abstract Methods"],16:["t5","Default Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -182,16 +182,23 @@ public interface <span class="typeNameLabel">QueryParameterBinding</span></pre>
 <td class="colLast">&nbsp;</td>
 </tr>
 <tr id="i6" class="altColor">
+<td class="colFirst"><code>default java.lang.Object</code></td>
+<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getValue()">getValue</a></span>()</code></th>
+<td class="colLast">
+<div class="block">The constant runtime value.</div>
+</td>
+</tr>
+<tr id="i7" class="rowColor">
 <td class="colFirst"><code>default boolean</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#isAutoPopulated()">isAutoPopulated</a></span>()</code></th>
 <td class="colLast">&nbsp;</td>
 </tr>
-<tr id="i7" class="rowColor">
+<tr id="i8" class="altColor">
 <td class="colFirst"><code>default boolean</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#isExpandable()">isExpandable</a></span>()</code></th>
 <td class="colLast">&nbsp;</td>
 </tr>
-<tr id="i8" class="altColor">
+<tr id="i9" class="rowColor">
 <td class="colFirst"><code>default boolean</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#isRequiresPreviousPopulatedValue()">isRequiresPreviousPopulatedValue</a></span>()</code></th>
 <td class="colLast">&nbsp;</td>
@@ -323,13 +330,30 @@ default&nbsp;java.lang.String[]&nbsp;getPropertyPath()</pre>
 <a id="isExpandable()">
 <!--   -->
 </a>
-<ul class="blockListLast">
+<ul class="blockList">
 <li class="blockList">
 <h4>isExpandable</h4>
 <pre class="methodSignature">default&nbsp;boolean&nbsp;isExpandable()</pre>
 <dl>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>Is expandable parameter</dd>
+</dl>
+</li>
+</ul>
+<a id="getValue()">
+<!--   -->
+</a>
+<ul class="blockListLast">
+<li class="blockList">
+<h4>getValue</h4>
+<pre class="methodSignature">@Nullable
+default&nbsp;java.lang.Object&nbsp;getValue()</pre>
+<div class="block">The constant runtime value.</div>
+<dl>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>The value or null</dd>
+<dt><span class="simpleTagLabel">Since:</span></dt>
+<dd>3.5.0</dd>
 </dl>
 </li>
 </ul>

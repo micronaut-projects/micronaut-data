@@ -26,7 +26,7 @@
     catch(err) {
     }
 //-->
-var data = {"i0":10,"i1":6,"i2":10,"i3":6,"i4":10,"i5":10,"i6":10,"i7":10,"i8":10,"i9":10,"i10":10};
+var data = {"i0":10,"i1":10,"i2":6,"i3":10,"i4":6,"i5":10,"i6":10,"i7":10,"i8":10,"i9":10,"i10":10,"i11":10};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],4:["t3","Abstract Methods"],8:["t4","Concrete Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -224,51 +224,58 @@ implements <a href="../PersistentEntityCriteriaDelete.html" title="interface in 
 <td class="colLast">&nbsp;</td>
 </tr>
 <tr id="i1" class="rowColor">
+<td class="colFirst"><code>protected <a href="query/QueryModelPredicateVisitor.html" title="class in io.micronaut.data.model.jpa.criteria.impl.query">QueryModelPredicateVisitor</a></code></td>
+<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#createPredicateVisitor(io.micronaut.data.model.query.QueryModel)">createPredicateVisitor</a></span>&#8203;(<a href="../../../query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;queryModel)</code></th>
+<td class="colLast">
+<div class="block">Creates query model predicate visitor.</div>
+</td>
+</tr>
+<tr id="i2" class="altColor">
 <td class="colFirst"><code>abstract <a href="../PersistentEntityRoot.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityRoot</a>&lt;<a href="AbstractPersistentEntityCriteriaDelete.html" title="type parameter in AbstractPersistentEntityCriteriaDelete">T</a>&gt;</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#from(io.micronaut.data.model.PersistentEntity)">from</a></span>&#8203;(<a href="../../../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;persistentEntity)</code></th>
 <td class="colLast">&nbsp;</td>
 </tr>
-<tr id="i2" class="altColor">
+<tr id="i3" class="rowColor">
 <td class="colFirst"><code><a href="../PersistentEntityRoot.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityRoot</a>&lt;<a href="AbstractPersistentEntityCriteriaDelete.html" title="type parameter in AbstractPersistentEntityCriteriaDelete">T</a>&gt;</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#from(jakarta.persistence.metamodel.EntityType)">from</a></span>&#8203;(jakarta.persistence.metamodel.EntityType&lt;<a href="AbstractPersistentEntityCriteriaDelete.html" title="type parameter in AbstractPersistentEntityCriteriaDelete">T</a>&gt;&nbsp;entity)</code></th>
 <td class="colLast">&nbsp;</td>
 </tr>
-<tr id="i3" class="rowColor">
+<tr id="i4" class="altColor">
 <td class="colFirst"><code>abstract <a href="../PersistentEntityRoot.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityRoot</a>&lt;<a href="AbstractPersistentEntityCriteriaDelete.html" title="type parameter in AbstractPersistentEntityCriteriaDelete">T</a>&gt;</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#from(java.lang.Class)">from</a></span>&#8203;(java.lang.Class&lt;<a href="AbstractPersistentEntityCriteriaDelete.html" title="type parameter in AbstractPersistentEntityCriteriaDelete">T</a>&gt;&nbsp;entityClass)</code></th>
 <td class="colLast">&nbsp;</td>
 </tr>
-<tr id="i4" class="altColor">
+<tr id="i5" class="rowColor">
 <td class="colFirst"><code><a href="../../../query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getQueryModel()">getQueryModel</a></span>()</code></th>
 <td class="colLast">&nbsp;</td>
 </tr>
-<tr id="i5" class="rowColor">
+<tr id="i6" class="altColor">
 <td class="colFirst"><code>jakarta.persistence.criteria.Predicate</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getRestriction()">getRestriction</a></span>()</code></th>
 <td class="colLast">&nbsp;</td>
 </tr>
-<tr id="i6" class="altColor">
+<tr id="i7" class="rowColor">
 <td class="colFirst"><code><a href="../PersistentEntityRoot.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityRoot</a>&lt;<a href="AbstractPersistentEntityCriteriaDelete.html" title="type parameter in AbstractPersistentEntityCriteriaDelete">T</a>&gt;</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getRoot()">getRoot</a></span>()</code></th>
 <td class="colLast">&nbsp;</td>
 </tr>
-<tr id="i7" class="rowColor">
+<tr id="i8" class="altColor">
 <td class="colFirst"><code>boolean</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#hasVersionRestriction()">hasVersionRestriction</a></span>()</code></th>
 <td class="colLast">&nbsp;</td>
 </tr>
-<tr id="i8" class="altColor">
+<tr id="i9" class="rowColor">
 <td class="colFirst"><code>&lt;U&gt;&nbsp;jakarta.persistence.criteria.Subquery&lt;U&gt;</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#subquery(java.lang.Class)">subquery</a></span>&#8203;(java.lang.Class&lt;U&gt;&nbsp;type)</code></th>
 <td class="colLast">&nbsp;</td>
 </tr>
-<tr id="i9" class="rowColor">
+<tr id="i10" class="altColor">
 <td class="colFirst"><code><a href="../PersistentEntityCriteriaDelete.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaDelete</a>&lt;<a href="AbstractPersistentEntityCriteriaDelete.html" title="type parameter in AbstractPersistentEntityCriteriaDelete">T</a>&gt;</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#where(jakarta.persistence.criteria.Expression)">where</a></span>&#8203;(jakarta.persistence.criteria.Expression&lt;java.lang.Boolean&gt;&nbsp;restriction)</code></th>
 <td class="colLast">&nbsp;</td>
 </tr>
-<tr id="i10" class="altColor">
+<tr id="i11" class="rowColor">
 <td class="colFirst"><code><a href="../PersistentEntityCriteriaDelete.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaDelete</a>&lt;<a href="AbstractPersistentEntityCriteriaDelete.html" title="type parameter in AbstractPersistentEntityCriteriaDelete">T</a>&gt;</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#where(jakarta.persistence.criteria.Predicate...)">where</a></span>&#8203;(jakarta.persistence.criteria.Predicate...&nbsp;restrictions)</code></th>
 <td class="colLast">&nbsp;</td>
@@ -354,6 +361,23 @@ implements <a href="../PersistentEntityCriteriaDelete.html" title="interface in 
 <dl>
 <dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
 <dd><code><a href="QueryModelPersistentEntityCriteriaQuery.html#getQueryModel()">getQueryModel</a></code>&nbsp;in interface&nbsp;<code><a href="QueryModelPersistentEntityCriteriaQuery.html" title="interface in io.micronaut.data.model.jpa.criteria.impl">QueryModelPersistentEntityCriteriaQuery</a></code></dd>
+</dl>
+</li>
+</ul>
+<a id="createPredicateVisitor(io.micronaut.data.model.query.QueryModel)">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>createPredicateVisitor</h4>
+<pre class="methodSignature">@NonNull
+protected&nbsp;<a href="query/QueryModelPredicateVisitor.html" title="class in io.micronaut.data.model.jpa.criteria.impl.query">QueryModelPredicateVisitor</a>&nbsp;createPredicateVisitor&#8203;(<a href="../../../query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;queryModel)</pre>
+<div class="block">Creates query model predicate visitor.</div>
+<dl>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>queryModel</code> - The query model</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>the visitor</dd>
 </dl>
 </li>
 </ul>

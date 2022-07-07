@@ -26,7 +26,7 @@
     catch(err) {
     }
 //-->
-var data = {"i0":10,"i1":6,"i2":10,"i3":6,"i4":10,"i5":10,"i6":10,"i7":10,"i8":10,"i9":10,"i10":10,"i11":10,"i12":10,"i13":10,"i14":10,"i15":10,"i16":10,"i17":10,"i18":10};
+var data = {"i0":10,"i1":10,"i2":6,"i3":10,"i4":6,"i5":10,"i6":10,"i7":10,"i8":10,"i9":10,"i10":10,"i11":10,"i12":10,"i13":10,"i14":10,"i15":10,"i16":10,"i17":10,"i18":10,"i19":10};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],4:["t3","Abstract Methods"],8:["t4","Concrete Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -229,81 +229,88 @@ implements <a href="../PersistentEntityCriteriaUpdate.html" title="interface in 
 <td class="colLast">&nbsp;</td>
 </tr>
 <tr id="i1" class="rowColor">
+<td class="colFirst"><code>protected <a href="query/QueryModelPredicateVisitor.html" title="class in io.micronaut.data.model.jpa.criteria.impl.query">QueryModelPredicateVisitor</a></code></td>
+<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#createPredicateVisitor(io.micronaut.data.model.query.QueryModel)">createPredicateVisitor</a></span>&#8203;(<a href="../../../query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;queryModel)</code></th>
+<td class="colLast">
+<div class="block">Creates query model predicate visitor.</div>
+</td>
+</tr>
+<tr id="i2" class="altColor">
 <td class="colFirst"><code>abstract <a href="../PersistentEntityRoot.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityRoot</a>&lt;<a href="AbstractPersistentEntityCriteriaUpdate.html" title="type parameter in AbstractPersistentEntityCriteriaUpdate">T</a>&gt;</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#from(io.micronaut.data.model.PersistentEntity)">from</a></span>&#8203;(<a href="../../../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;persistentEntity)</code></th>
 <td class="colLast">&nbsp;</td>
 </tr>
-<tr id="i2" class="altColor">
+<tr id="i3" class="rowColor">
 <td class="colFirst"><code><a href="../PersistentEntityRoot.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityRoot</a>&lt;<a href="AbstractPersistentEntityCriteriaUpdate.html" title="type parameter in AbstractPersistentEntityCriteriaUpdate">T</a>&gt;</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#from(jakarta.persistence.metamodel.EntityType)">from</a></span>&#8203;(jakarta.persistence.metamodel.EntityType&lt;<a href="AbstractPersistentEntityCriteriaUpdate.html" title="type parameter in AbstractPersistentEntityCriteriaUpdate">T</a>&gt;&nbsp;entity)</code></th>
 <td class="colLast">&nbsp;</td>
 </tr>
-<tr id="i3" class="rowColor">
+<tr id="i4" class="altColor">
 <td class="colFirst"><code>abstract <a href="../PersistentEntityRoot.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityRoot</a>&lt;<a href="AbstractPersistentEntityCriteriaUpdate.html" title="type parameter in AbstractPersistentEntityCriteriaUpdate">T</a>&gt;</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#from(java.lang.Class)">from</a></span>&#8203;(java.lang.Class&lt;<a href="AbstractPersistentEntityCriteriaUpdate.html" title="type parameter in AbstractPersistentEntityCriteriaUpdate">T</a>&gt;&nbsp;entityClass)</code></th>
 <td class="colLast">&nbsp;</td>
 </tr>
-<tr id="i4" class="altColor">
+<tr id="i5" class="rowColor">
 <td class="colFirst"><code>java.util.Set&lt;jakarta.persistence.criteria.ParameterExpression&lt;?&gt;&gt;</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getParameters()">getParameters</a></span>()</code></th>
 <td class="colLast">&nbsp;</td>
 </tr>
-<tr id="i5" class="rowColor">
-<td class="colFirst"><code>@NotNull <a href="../../../query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a></code></td>
+<tr id="i6" class="altColor">
+<td class="colFirst"><code><a href="../../../query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getQueryModel()">getQueryModel</a></span>()</code></th>
 <td class="colLast">&nbsp;</td>
 </tr>
-<tr id="i6" class="altColor">
+<tr id="i7" class="rowColor">
 <td class="colFirst"><code>jakarta.persistence.criteria.Predicate</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getRestriction()">getRestriction</a></span>()</code></th>
 <td class="colLast">&nbsp;</td>
 </tr>
-<tr id="i7" class="rowColor">
+<tr id="i8" class="altColor">
 <td class="colFirst"><code><a href="../PersistentEntityRoot.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityRoot</a>&lt;<a href="AbstractPersistentEntityCriteriaUpdate.html" title="type parameter in AbstractPersistentEntityCriteriaUpdate">T</a>&gt;</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getRoot()">getRoot</a></span>()</code></th>
 <td class="colLast">&nbsp;</td>
 </tr>
-<tr id="i8" class="altColor">
+<tr id="i9" class="rowColor">
 <td class="colFirst"><code>java.util.Map&lt;java.lang.String,&#8203;java.lang.Object&gt;</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getUpdateValues()">getUpdateValues</a></span>()</code></th>
 <td class="colLast">&nbsp;</td>
 </tr>
-<tr id="i9" class="rowColor">
+<tr id="i10" class="altColor">
 <td class="colFirst"><code>boolean</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#hasVersionRestriction()">hasVersionRestriction</a></span>()</code></th>
 <td class="colLast">&nbsp;</td>
 </tr>
-<tr id="i10" class="altColor">
+<tr id="i11" class="rowColor">
 <td class="colFirst"><code>&lt;Y&gt;&nbsp;<a href="../PersistentEntityCriteriaUpdate.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaUpdate</a>&lt;<a href="AbstractPersistentEntityCriteriaUpdate.html" title="type parameter in AbstractPersistentEntityCriteriaUpdate">T</a>&gt;</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#set(jakarta.persistence.criteria.Path,jakarta.persistence.criteria.Expression)">set</a></span>&#8203;(jakarta.persistence.criteria.Path&lt;Y&gt;&nbsp;attribute,
    jakarta.persistence.criteria.Expression&lt;? extends Y&gt;&nbsp;value)</code></th>
 <td class="colLast">&nbsp;</td>
 </tr>
-<tr id="i11" class="rowColor">
+<tr id="i12" class="altColor">
 <td class="colFirst"><code>&lt;Y,&#8203;X extends Y&gt;<br><a href="../PersistentEntityCriteriaUpdate.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaUpdate</a>&lt;<a href="AbstractPersistentEntityCriteriaUpdate.html" title="type parameter in AbstractPersistentEntityCriteriaUpdate">T</a>&gt;</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#set(jakarta.persistence.criteria.Path,X)">set</a></span>&#8203;(jakarta.persistence.criteria.Path&lt;Y&gt;&nbsp;attribute,
    X&nbsp;value)</code></th>
 <td class="colLast">&nbsp;</td>
 </tr>
-<tr id="i12" class="altColor">
+<tr id="i13" class="rowColor">
 <td class="colFirst"><code>&lt;Y&gt;&nbsp;<a href="../PersistentEntityCriteriaUpdate.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaUpdate</a>&lt;<a href="AbstractPersistentEntityCriteriaUpdate.html" title="type parameter in AbstractPersistentEntityCriteriaUpdate">T</a>&gt;</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#set(jakarta.persistence.metamodel.SingularAttribute,jakarta.persistence.criteria.Expression)">set</a></span>&#8203;(jakarta.persistence.metamodel.SingularAttribute&lt;? super <a href="AbstractPersistentEntityCriteriaUpdate.html" title="type parameter in AbstractPersistentEntityCriteriaUpdate">T</a>,&#8203;Y&gt;&nbsp;attribute,
    jakarta.persistence.criteria.Expression&lt;? extends Y&gt;&nbsp;value)</code></th>
 <td class="colLast">&nbsp;</td>
 </tr>
-<tr id="i13" class="rowColor">
+<tr id="i14" class="altColor">
 <td class="colFirst"><code>&lt;Y,&#8203;X extends Y&gt;<br><a href="../PersistentEntityCriteriaUpdate.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaUpdate</a>&lt;<a href="AbstractPersistentEntityCriteriaUpdate.html" title="type parameter in AbstractPersistentEntityCriteriaUpdate">T</a>&gt;</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#set(jakarta.persistence.metamodel.SingularAttribute,X)">set</a></span>&#8203;(jakarta.persistence.metamodel.SingularAttribute&lt;? super <a href="AbstractPersistentEntityCriteriaUpdate.html" title="type parameter in AbstractPersistentEntityCriteriaUpdate">T</a>,&#8203;Y&gt;&nbsp;attribute,
    X&nbsp;value)</code></th>
 <td class="colLast">&nbsp;</td>
 </tr>
-<tr id="i14" class="altColor">
+<tr id="i15" class="rowColor">
 <td class="colFirst"><code><a href="../PersistentEntityCriteriaUpdate.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaUpdate</a>&lt;<a href="AbstractPersistentEntityCriteriaUpdate.html" title="type parameter in AbstractPersistentEntityCriteriaUpdate">T</a>&gt;</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#set(java.lang.String,java.lang.Object)">set</a></span>&#8203;(java.lang.String&nbsp;attributeName,
    java.lang.Object&nbsp;value)</code></th>
 <td class="colLast">&nbsp;</td>
 </tr>
-<tr id="i15" class="rowColor">
+<tr id="i16" class="altColor">
 <td class="colFirst"><code>protected void</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#setValue(java.lang.String,java.lang.Object)">setValue</a></span>&#8203;(java.lang.String&nbsp;attributeName,
         java.lang.Object&nbsp;value)</code></th>
@@ -311,17 +318,17 @@ implements <a href="../PersistentEntityCriteriaUpdate.html" title="interface in 
 <div class="block">Set update value.</div>
 </td>
 </tr>
-<tr id="i16" class="altColor">
+<tr id="i17" class="rowColor">
 <td class="colFirst"><code>&lt;U&gt;&nbsp;jakarta.persistence.criteria.Subquery&lt;U&gt;</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#subquery(java.lang.Class)">subquery</a></span>&#8203;(java.lang.Class&lt;U&gt;&nbsp;type)</code></th>
 <td class="colLast">&nbsp;</td>
 </tr>
-<tr id="i17" class="rowColor">
+<tr id="i18" class="altColor">
 <td class="colFirst"><code><a href="../PersistentEntityCriteriaUpdate.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaUpdate</a>&lt;<a href="AbstractPersistentEntityCriteriaUpdate.html" title="type parameter in AbstractPersistentEntityCriteriaUpdate">T</a>&gt;</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#where(jakarta.persistence.criteria.Expression)">where</a></span>&#8203;(jakarta.persistence.criteria.Expression&lt;java.lang.Boolean&gt;&nbsp;restriction)</code></th>
 <td class="colLast">&nbsp;</td>
 </tr>
-<tr id="i18" class="altColor">
+<tr id="i19" class="rowColor">
 <td class="colFirst"><code><a href="../PersistentEntityCriteriaUpdate.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaUpdate</a>&lt;<a href="AbstractPersistentEntityCriteriaUpdate.html" title="type parameter in AbstractPersistentEntityCriteriaUpdate">T</a>&gt;</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#where(jakarta.persistence.criteria.Predicate...)">where</a></span>&#8203;(jakarta.persistence.criteria.Predicate...&nbsp;restrictions)</code></th>
 <td class="colLast">&nbsp;</td>
@@ -425,11 +432,27 @@ implements <a href="../PersistentEntityCriteriaUpdate.html" title="interface in 
 <ul class="blockList">
 <li class="blockList">
 <h4>getQueryModel</h4>
-<pre class="methodSignature">@NotNull
-public&nbsp;@NotNull <a href="../../../query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;getQueryModel()</pre>
+<pre class="methodSignature">@NonNull
+public&nbsp;<a href="../../../query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;getQueryModel()</pre>
 <dl>
 <dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
 <dd><code><a href="QueryModelPersistentEntityCriteriaQuery.html#getQueryModel()">getQueryModel</a></code>&nbsp;in interface&nbsp;<code><a href="QueryModelPersistentEntityCriteriaQuery.html" title="interface in io.micronaut.data.model.jpa.criteria.impl">QueryModelPersistentEntityCriteriaQuery</a></code></dd>
+</dl>
+</li>
+</ul>
+<a id="createPredicateVisitor(io.micronaut.data.model.query.QueryModel)">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>createPredicateVisitor</h4>
+<pre class="methodSignature">protected&nbsp;<a href="query/QueryModelPredicateVisitor.html" title="class in io.micronaut.data.model.jpa.criteria.impl.query">QueryModelPredicateVisitor</a>&nbsp;createPredicateVisitor&#8203;(<a href="../../../query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;queryModel)</pre>
+<div class="block">Creates query model predicate visitor.</div>
+<dl>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>queryModel</code> - The query model</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>the visitor</dd>
 </dl>
 </li>
 </ul>

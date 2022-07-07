@@ -169,6 +169,10 @@ implements <a href="../IExpression.html" title="interface in io.micronaut.data.m
 <th class="colLast" scope="col">Description</th>
 </tr>
 <tr class="altColor">
+<th class="colConstructorName" scope="row"><code><span class="memberNameLink"><a href="#%3Cinit%3E(java.lang.Class)">LiteralExpression</a></span>&#8203;(java.lang.Class&lt;<a href="LiteralExpression.html" title="type parameter in LiteralExpression">T</a>&gt;&nbsp;clazz)</code></th>
+<td class="colLast">&nbsp;</td>
+</tr>
+<tr class="rowColor">
 <th class="colConstructorName" scope="row"><code><span class="memberNameLink"><a href="#%3Cinit%3E(T)">LiteralExpression</a></span>&#8203;(<a href="LiteralExpression.html" title="type parameter in LiteralExpression">T</a>&nbsp;object)</code></th>
 <td class="colLast">&nbsp;</td>
 </tr>
@@ -263,6 +267,15 @@ implements <a href="../IExpression.html" title="interface in io.micronaut.data.m
 <!--   -->
 </a>
 <h3>Constructor Detail</h3>
+<a id="&lt;init&gt;(java.lang.Class)">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>LiteralExpression</h4>
+<pre>public&nbsp;LiteralExpression&#8203;(java.lang.Class&lt;<a href="LiteralExpression.html" title="type parameter in LiteralExpression">T</a>&gt;&nbsp;clazz)</pre>
+</li>
+</ul>
 <a id="&lt;init&gt;(java.lang.Object)">
 <!--   -->
 </a><a id="&lt;init&gt;(T)">
@@ -271,7 +284,8 @@ implements <a href="../IExpression.html" title="interface in io.micronaut.data.m
 <ul class="blockListLast">
 <li class="blockList">
 <h4>LiteralExpression</h4>
-<pre>public&nbsp;LiteralExpression&#8203;(<a href="LiteralExpression.html" title="type parameter in LiteralExpression">T</a>&nbsp;object)</pre>
+<pre>public&nbsp;LiteralExpression&#8203;(@Nullable
+                         <a href="LiteralExpression.html" title="type parameter in LiteralExpression">T</a>&nbsp;object)</pre>
 </li>
 </ul>
 </li>
@@ -357,7 +371,8 @@ implements <a href="../IExpression.html" title="interface in io.micronaut.data.m
 <ul class="blockList">
 <li class="blockList">
 <h4>getJavaType</h4>
-<pre class="methodSignature">public&nbsp;java.lang.Class&lt;? extends <a href="LiteralExpression.html" title="type parameter in LiteralExpression">T</a>&gt;&nbsp;getJavaType()</pre>
+<pre class="methodSignature">@Nullable
+public&nbsp;java.lang.Class&lt;? extends <a href="LiteralExpression.html" title="type parameter in LiteralExpression">T</a>&gt;&nbsp;getJavaType()</pre>
 <dl>
 <dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
 <dd><code>getJavaType</code>&nbsp;in interface&nbsp;<code>jakarta.persistence.TupleElement&lt;<a href="LiteralExpression.html" title="type parameter in LiteralExpression">T</a>&gt;</code></dd>
