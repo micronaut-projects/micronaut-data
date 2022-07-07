@@ -16,6 +16,7 @@
 package io.micronaut.data.model.jpa.criteria.impl;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.jpa.criteria.IExpression;
@@ -62,13 +63,23 @@ public abstract class AbstractPersistentEntityCriteriaDelete<T> implements Persi
         Joiner joiner = new Joiner();
         if (predicate instanceof PredicateVisitable) {
             PredicateVisitable predicate = (PredicateVisitable) this.predicate;
-            predicate.accept(new QueryModelPredicateVisitor(qm));
+            predicate.accept(createPredicateVisitor(qm));
             predicate.accept(joiner);
         }
         for (Map.Entry<String, Joiner.Joined> e : joiner.getJoins().entrySet()) {
             qm.join(e.getKey(), Optional.ofNullable(e.getValue().getType()).orElse(Join.Type.DEFAULT), e.getValue().getAlias());
         }
         return qm;
+    }
+
+    /**
+     * Creates query model predicate visitor.
+     * @param queryModel The query model
+     * @return the visitor
+     */
+    @NonNull
+    protected QueryModelPredicateVisitor createPredicateVisitor(QueryModel queryModel) {
+        return new QueryModelPredicateVisitor(queryModel);
     }
 
     @Override

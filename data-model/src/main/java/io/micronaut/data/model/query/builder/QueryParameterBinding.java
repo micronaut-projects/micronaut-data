@@ -90,4 +90,14 @@ public interface QueryParameterBinding {
         return false;
     }
 
+    /**
+     * The constant runtime value.
+     *
+     * @return The value or null
+     * @since 3.5.0
+     */
+    @Nullable
+    default Object getValue() {
+        return null;
+    }
 }

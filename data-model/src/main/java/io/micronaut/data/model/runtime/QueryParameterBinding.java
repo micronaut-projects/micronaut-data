@@ -129,6 +129,11 @@ public interface QueryParameterBinding {
         return false;
     }
 
+    /**
+     * The constant runtime value for the parameter.
+     *
+     * @return the value or null
+     */
     @Nullable
     default Object getValue() {
         return null;

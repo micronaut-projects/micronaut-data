@@ -16,6 +16,7 @@
 package io.micronaut.data.model.jpa.criteria.impl.predicate;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.model.jpa.criteria.impl.LiteralExpression;
 import io.micronaut.data.model.jpa.criteria.PersistentPropertyPath;
 import io.micronaut.data.model.jpa.criteria.impl.PredicateVisitor;
@@ -48,6 +49,7 @@ public final class PersistentPropertyInValuesPredicate<T> extends AbstractPersis
         this.values = new ArrayList<>(values);
     }
 
+    @NonNull
     public List<Expression<?>> getValues() {
         return values;
     }

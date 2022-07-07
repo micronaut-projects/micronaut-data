@@ -166,14 +166,14 @@ class MongoCriteriaSpec extends Specification {
                     } as Specification
             ]
             expectedWhereQuery << [
-                    '{$and:[{enabled:{$gte:true}},{enabled:{$lte:false}}]}',
+                    '{$and:[{enabled:{$gte:{$mn_qp:0}}},{enabled:{$lte:{$mn_qp:1}}}]}',
                     '{$and:[{amount:{$gte:{$mn_qp:0}}},{amount:{$lte:{$mn_qp:1}}}]}',
                     '{enabled:{$eq:true}}',
                     '[{$match:{enabled:{$eq:true}}},{$sort:{amount:-1,budget:1}}]',
                     '{enabled:{$eq:true}}',
                     '{$and:[{enabled:{$eq:true}},{enabled:{$eq:true}}]}',
-                    '''{name:{$in:['A','B','C']}}''',
-                    '''{name:{$nin:['A','B','C']}}''',
+                    '''{name:{$in:[{$mn_qp:0}]}}''',
+                    '''{name:{$nin:[{$mn_qp:0}]}}''',
             ]
     }
 
@@ -217,8 +217,8 @@ class MongoCriteriaSpec extends Specification {
             expectedQuery << [
                     '''[{$lookup:{from:'other_entity',localField:'_id',foreignField:'test._id',as:'others'}},{$match:{$expr:{$eq:['$amount','$others.amount']}}}]''',
                     '''[{$lookup:{from:'other_entity',localField:'_id',foreignField:'test._id',pipeline:[{$lookup:{from:'simple_entity',localField:'simple._id',foreignField:'_id',as:'simple'}},{$unwind:{path:'$simple',preserveNullAndEmptyArrays:true}}],as:'others'}},{$match:{$and:[{$expr:{$eq:['$amount','$others.amount']}},{$expr:{$eq:['$amount','$others.simple.amount']}}]}}]''',
-                    '''[{$lookup:{from:'other_entity',localField:'oneOther._id',foreignField:'_id',as:'oneOther'}},{$unwind:{path:'$oneOther',preserveNullAndEmptyArrays:true}},{$match:{'oneOther.name':{$eq:'xyz'}}}]''',
-                    '''[{$lookup:{from:'other_entity',localField:'manyToOneOther._id',foreignField:'_id',as:'manyToOneOther'}},{$unwind:{path:'$manyToOneOther',preserveNullAndEmptyArrays:true}},{$match:{'manyToOneOther.name':{$eq:'xyz'}}}]'''
+                    '''[{$lookup:{from:'other_entity',localField:'oneOther._id',foreignField:'_id',as:'oneOther'}},{$unwind:{path:'$oneOther',preserveNullAndEmptyArrays:true}},{$match:{'oneOther.name':{$eq:{$mn_qp:0}}}}]''',
+                    '''[{$lookup:{from:'other_entity',localField:'manyToOneOther._id',foreignField:'_id',as:'manyToOneOther'}},{$unwind:{path:'$manyToOneOther',preserveNullAndEmptyArrays:true}},{$match:{'manyToOneOther.name':{$eq:{$mn_qp:0}}}}]'''
             ]
     }
 
@@ -270,7 +270,7 @@ class MongoCriteriaSpec extends Specification {
                     } as DeleteSpecification,
             ]
             expectedQuery << [
-                    '''{amount:{$gte:1000}}''',
+                    '''{amount:{$gte:{$mn_qp:0}}}''',
             ]
     }
 
@@ -298,23 +298,23 @@ class MongoCriteriaSpec extends Specification {
                     { root, query, cb ->
                         query.set("name", cb.parameter(String))
                         query.set(root.get("amount"), cb.parameter(Integer))
-                        cb.ge(root.get("amount"), 1000)
+                        cb.lessThan(root.get("amount"), 1000)
                     } as UpdateSpecification,
                     { root, query, cb ->
                         query.set("name", "test")
                         query.set(root.get("amount"), cb.parameter(Integer))
-                        cb.ge(root.get("amount"), 1000)
+                        cb.le(root.get("amount"), 1000)
                     } as UpdateSpecification,
             ]
             expectedPredicateQuery << [
-                    '''{amount:{$gte:1000}}''',
-                    '''{amount:{$gte:1000}}''',
-                    '''{amount:{$gte:1000}}''',
+                    '''{amount:{$gte:{$mn_qp:0}}}''',
+                    '''{amount:{$lt:{$mn_qp:0}}}''',
+                    '''{amount:{$lte:{$mn_qp:0}}}''',
             ]
             expectedUpdateQuery << [
-                    '''{$set:{name:'ABC',amount:123}}''',
-                    '''{$set:{name:{$mn_qp:0},amount:{$mn_qp:1}}}''',
-                    '''{$set:{name:'test',amount:{$mn_qp:0}}}''',
+                    '''{$set:{name:{$mn_qp:1},amount:{$mn_qp:2}}}''',
+                    '''{$set:{name:{$mn_qp:1},amount:{$mn_qp:2}}}''',
+                    '''{$set:{name:{$mn_qp:1},amount:{$mn_qp:2}}}''',
             ]
     }
 
@@ -426,16 +426,16 @@ class MongoCriteriaSpec extends Specification {
 
         where:
             property1 | value                   | predicate              | expectedWhereQuery
-            "enabled" | true                    | "equal"                | '{enabled:{$eq:true}}'
-            "enabled" | true                    | "notEqual"             | '{enabled:{$ne:true}}'
-            "enabled" | true                    | "greaterThan"          | '{enabled:{$gt:true}}'
-            "enabled" | true                    | "greaterThanOrEqualTo" | '{enabled:{$gte:true}}'
-            "enabled" | true                    | "lessThan"             | '{enabled:{$lt:true}}'
-            "enabled" | true                    | "lessThanOrEqualTo"    | '{enabled:{$lte:true}}'
-            "amount"  | BigDecimal.valueOf(100) | "gt"                   | '{amount:{$gt:100}}'
-            "amount"  | BigDecimal.valueOf(100) | "ge"                   | '{amount:{$gte:100}}'
-            "amount"  | BigDecimal.valueOf(100) | "lt"                   | '{amount:{$lt:100}}'
-            "amount"  | BigDecimal.valueOf(100) | "le"                   | '{amount:{$lte:100}}'
+            "enabled" | true                    | "equal"                | '{enabled:{$eq:{$mn_qp:0}}}'
+            "enabled" | true                    | "notEqual"             | '{enabled:{$ne:{$mn_qp:0}}}'
+            "enabled" | true                    | "greaterThan"          | '{enabled:{$gt:{$mn_qp:0}}}'
+            "enabled" | true                    | "greaterThanOrEqualTo" | '{enabled:{$gte:{$mn_qp:0}}}'
+            "enabled" | true                    | "lessThan"             | '{enabled:{$lt:{$mn_qp:0}}}'
+            "enabled" | true                    | "lessThanOrEqualTo"    | '{enabled:{$lte:{$mn_qp:0}}}'
+            "amount"  | BigDecimal.valueOf(100) | "gt"                   | '{amount:{$gt:{$mn_qp:0}}}'
+            "amount"  | BigDecimal.valueOf(100) | "ge"                   | '{amount:{$gte:{$mn_qp:0}}}'
+            "amount"  | BigDecimal.valueOf(100) | "lt"                   | '{amount:{$lt:{$mn_qp:0}}}'
+            "amount"  | BigDecimal.valueOf(100) | "le"                   | '{amount:{$lte:{$mn_qp:0}}}'
     }
 
     @Unroll
@@ -450,16 +450,16 @@ class MongoCriteriaSpec extends Specification {
 
         where:
             property1 | value                   | predicate              | expectedWhereQuery
-            "enabled" | true                    | "equal"                | '{enabled:{$ne:true}}'
-            "enabled" | true                    | "notEqual"             | '{enabled:{$eq:true}}'
-            "enabled" | true                    | "greaterThan"          | '{enabled:{$not:{$gt:true}}}'
-            "enabled" | true                    | "greaterThanOrEqualTo" | '{enabled:{$not:{$gte:true}}}'
-            "enabled" | true                    | "lessThan"             | '{enabled:{$not:{$lt:true}}}'
-            "enabled" | true                    | "lessThanOrEqualTo"    | '{enabled:{$not:{$lte:true}}}'
-            "amount"  | BigDecimal.valueOf(100) | "gt"                   | '{amount:{$not:{$gt:100}}}'
-            "amount"  | BigDecimal.valueOf(100) | "ge"                   | '{amount:{$not:{$gte:100}}}'
-            "amount"  | BigDecimal.valueOf(100) | "lt"                   | '{amount:{$not:{$lt:100}}}'
-            "amount"  | BigDecimal.valueOf(100) | "le"                   | '{amount:{$not:{$lte:100}}}'
+            "enabled" | true                    | "equal"                | '{enabled:{$ne:{$mn_qp:0}}}'
+            "enabled" | true                    | "notEqual"             | '{enabled:{$eq:{$mn_qp:0}}}'
+            "enabled" | true                    | "greaterThan"          | '{enabled:{$not:{$gt:{$mn_qp:0}}}}'
+            "enabled" | true                    | "greaterThanOrEqualTo" | '{enabled:{$not:{$gte:{$mn_qp:0}}}}'
+            "enabled" | true                    | "lessThan"             | '{enabled:{$not:{$lt:{$mn_qp:0}}}}'
+            "enabled" | true                    | "lessThanOrEqualTo"    | '{enabled:{$not:{$lte:{$mn_qp:0}}}}'
+            "amount"  | BigDecimal.valueOf(100) | "gt"                   | '{amount:{$not:{$gt:{$mn_qp:0}}}}'
+            "amount"  | BigDecimal.valueOf(100) | "ge"                   | '{amount:{$not:{$gte:{$mn_qp:0}}}}'
+            "amount"  | BigDecimal.valueOf(100) | "lt"                   | '{amount:{$not:{$lt:{$mn_qp:0}}}}'
+            "amount"  | BigDecimal.valueOf(100) | "le"                   | '{amount:{$not:{$lte:{$mn_qp:0}}}}'
     }
 
     private static String getQuery(PersistentEntityCriteriaQuery<Object> query) {

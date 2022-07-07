@@ -16,6 +16,7 @@
 package io.micronaut.data.model.jpa.criteria.impl;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.model.jpa.criteria.IExpression;
 
 /**
@@ -28,9 +29,17 @@ import io.micronaut.data.model.jpa.criteria.IExpression;
 @Internal
 public final class LiteralExpression<T> implements IExpression<T>, SelectionVisitable {
 
+    private final Class<T> clazz;
+    @Nullable
     private final T value;
 
-    public LiteralExpression(T object) {
+    public LiteralExpression(Class<T> clazz) {
+        this.clazz = clazz;
+        this.value = null;
+    }
+
+    public LiteralExpression(@Nullable T object) {
+        this.clazz = object == null ? null : (Class<T>) object.getClass();
         this.value = object;
     }
 
@@ -59,8 +68,9 @@ public final class LiteralExpression<T> implements IExpression<T>, SelectionVisi
     }
 
     @Override
+    @Nullable
     public Class<? extends T> getJavaType() {
-        return (Class<? extends T>) value.getClass();
+        return clazz;
     }
 
     @Override

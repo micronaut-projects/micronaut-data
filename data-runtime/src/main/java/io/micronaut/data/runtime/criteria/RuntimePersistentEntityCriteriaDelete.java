@@ -17,8 +17,11 @@ package io.micronaut.data.runtime.criteria;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.PersistentEntity;
+import io.micronaut.data.model.jpa.criteria.impl.AbstractCriteriaBuilder;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityCriteriaDelete;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
+import io.micronaut.data.model.jpa.criteria.impl.query.QueryModelPredicateVisitor;
+import io.micronaut.data.model.query.QueryModel;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.runtime.criteria.metamodel.StaticMetamodelInitializer;
@@ -26,12 +29,15 @@ import io.micronaut.data.runtime.criteria.metamodel.StaticMetamodelInitializer;
 @Internal
 final class RuntimePersistentEntityCriteriaDelete<T> extends AbstractPersistentEntityCriteriaDelete<T> {
 
+    private final AbstractCriteriaBuilder criteriaBuilder;
     private final RuntimeEntityRegistry runtimeEntityRegistry;
     private final StaticMetamodelInitializer staticMetamodelInitializer;
 
-    public RuntimePersistentEntityCriteriaDelete(RuntimeEntityRegistry runtimeEntityRegistry,
+    public RuntimePersistentEntityCriteriaDelete(AbstractCriteriaBuilder criteriaBuilder,
                                                  Class<T> root,
+                                                 RuntimeEntityRegistry runtimeEntityRegistry,
                                                  StaticMetamodelInitializer staticMetamodelInitializer) {
+        this.criteriaBuilder = criteriaBuilder;
         this.runtimeEntityRegistry = runtimeEntityRegistry;
         this.staticMetamodelInitializer = staticMetamodelInitializer;
         from(root);
@@ -52,6 +58,11 @@ final class RuntimePersistentEntityCriteriaDelete<T> extends AbstractPersistentE
         RuntimePersistentEntityRoot<T> newEntityRoot = new RuntimePersistentEntityRoot<>(runtimePersistentEntity);
         entityRoot = newEntityRoot;
         return newEntityRoot;
+    }
+
+    @Override
+    protected QueryModelPredicateVisitor createPredicateVisitor(QueryModel queryModel) {
+        return new LiteralsAsParametersQueryModelPredicateVisitor(criteriaBuilder, queryModel);
     }
 
 }

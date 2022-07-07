@@ -80,7 +80,7 @@ public final class QueryResultStoredQuery<E, R> extends BasicStoredQuery<E, R> {
                                                           QueryResult queryResult,
                                                           Class<T> rootEntity,
                                                           Class<R> resultType) {
-        return new QueryResultStoredQuery<>(name, annotationMetadata, queryResult, rootEntity, resultType == Object.class ? (Class<R>) rootEntity : resultType,false, true, false, operationType);
+        return new QueryResultStoredQuery<>(name, annotationMetadata, queryResult, rootEntity, resultType == Object.class ? (Class<R>) rootEntity : resultType, false, true, false, operationType);
     }
 
     public static <T> QueryResultStoredQuery<T, T> many(String name,
@@ -197,6 +197,11 @@ public final class QueryResultStoredQuery<E, R> extends BasicStoredQuery<E, R> {
         @Override
         public boolean isExpandable() {
             return p.isExpandable();
+        }
+
+        @Override
+        public Object getValue() {
+            return p.getValue();
         }
     }
 }

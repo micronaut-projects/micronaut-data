@@ -41,21 +41,21 @@ public class RuntimeCriteriaBuilder extends AbstractCriteriaBuilder {
 
     @Override
     public PersistentEntityCriteriaQuery<Object> createQuery() {
-        return new RuntimePersistentEntityCriteriaQuery<>(runtimeEntityRegistry, staticMetamodelInitializer, Object.class);
+        return new RuntimePersistentEntityCriteriaQuery<>(this, staticMetamodelInitializer, Object.class, runtimeEntityRegistry);
     }
 
     @Override
     public <T> PersistentEntityCriteriaQuery<T> createQuery(Class<T> resultClass) {
-        return new RuntimePersistentEntityCriteriaQuery<>(runtimeEntityRegistry, staticMetamodelInitializer, resultClass);
+        return new RuntimePersistentEntityCriteriaQuery<>(this, staticMetamodelInitializer, resultClass, runtimeEntityRegistry);
     }
 
     @Override
     public <T> PersistentEntityCriteriaUpdate<T> createCriteriaUpdate(Class<T> targetEntity) {
-        return new RuntimePersistentEntityCriteriaUpdate<>(runtimeEntityRegistry, targetEntity, staticMetamodelInitializer);
+        return new RuntimePersistentEntityCriteriaUpdate<>(this, targetEntity, runtimeEntityRegistry, staticMetamodelInitializer);
     }
 
     @Override
     public <T> PersistentEntityCriteriaDelete<T> createCriteriaDelete(Class<T> targetEntity) {
-        return new RuntimePersistentEntityCriteriaDelete<>(runtimeEntityRegistry, targetEntity, staticMetamodelInitializer);
+        return new RuntimePersistentEntityCriteriaDelete<>(this, targetEntity, runtimeEntityRegistry, staticMetamodelInitializer);
     }
 }

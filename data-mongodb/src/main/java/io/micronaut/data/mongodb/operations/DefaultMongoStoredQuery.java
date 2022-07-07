@@ -390,35 +390,37 @@ final class DefaultMongoStoredQuery<E, R, Dtb> implements DelegateStoredQuery<E,
         return value;
     }
 
-    private <QE, QR, T> BsonValue getValue(int index,
-                                           QueryParameterBinding queryParameterBinding,
-                                           InvocationContext<?, ?> invocationContext,
-                                           RuntimePersistentEntity<T> persistentEntity,
-                                           CodecRegistry codecRegistry, E entity) {
+    private <T> BsonValue getValue(int index,
+                                   QueryParameterBinding queryParameterBinding,
+                                   InvocationContext<?, ?> invocationContext,
+                                   RuntimePersistentEntity<T> persistentEntity,
+                                   CodecRegistry codecRegistry, E entity) {
         Class<?> parameterConverter = queryParameterBinding.getParameterConverterClass();
-        Object value;
-        if (queryParameterBinding.getParameterIndex() != -1) {
-            requireInvocationContext(invocationContext);
-            value = resolveParameterValue(queryParameterBinding, invocationContext.getParameterValues());
-        } else if (queryParameterBinding.isAutoPopulated()) {
-            PersistentPropertyPath pp = getRequiredPropertyPath(queryParameterBinding, persistentEntity);
-            RuntimePersistentProperty<?> persistentProperty = (RuntimePersistentProperty) pp.getProperty();
-            Object previousValue = null;
-            QueryParameterBinding previousPopulatedValueParameter = queryParameterBinding.getPreviousPopulatedValueParameter();
-            if (previousPopulatedValueParameter != null) {
-                if (previousPopulatedValueParameter.getParameterIndex() == -1) {
-                    throw new IllegalStateException("Previous value parameter cannot be bind!");
+        Object value = queryParameterBinding.getValue();
+        if (value == null) {
+            if (queryParameterBinding.getParameterIndex() != -1) {
+                requireInvocationContext(invocationContext);
+                value = resolveParameterValue(queryParameterBinding, invocationContext.getParameterValues());
+            } else if (queryParameterBinding.isAutoPopulated()) {
+                PersistentPropertyPath pp = getRequiredPropertyPath(queryParameterBinding, persistentEntity);
+                RuntimePersistentProperty<?> persistentProperty = (RuntimePersistentProperty) pp.getProperty();
+                Object previousValue = null;
+                QueryParameterBinding previousPopulatedValueParameter = queryParameterBinding.getPreviousPopulatedValueParameter();
+                if (previousPopulatedValueParameter != null) {
+                    if (previousPopulatedValueParameter.getParameterIndex() == -1) {
+                        throw new IllegalStateException("Previous value parameter cannot be bind!");
+                    }
+                    previousValue = resolveParameterValue(previousPopulatedValueParameter, invocationContext.getParameterValues());
                 }
-                previousValue = resolveParameterValue(previousPopulatedValueParameter, invocationContext.getParameterValues());
+                value = runtimeEntityRegistry.autoPopulateRuntimeProperty(persistentProperty, previousValue);
+                value = convert(value, persistentProperty);
+                parameterConverter = null;
+            } else if (entity != null) {
+                PersistentPropertyPath pp = getRequiredPropertyPath(queryParameterBinding, persistentEntity);
+                value = pp.getPropertyValue(entity);
+            } else {
+                throw new IllegalStateException("Invalid query [" + "]. Unable to establish parameter value for parameter at position: " + (index + 1));
             }
-            value = runtimeEntityRegistry.autoPopulateRuntimeProperty(persistentProperty, previousValue);
-            value = convert(value, persistentProperty);
-            parameterConverter = null;
-        } else if (entity != null) {
-            PersistentPropertyPath pp = getRequiredPropertyPath(queryParameterBinding, persistentEntity);
-            value = pp.getPropertyValue(entity);
-        } else {
-            throw new IllegalStateException("Invalid query [" + "]. Unable to establish parameter value for parameter at position: " + (index + 1));
         }
 
         DataType dataType = queryParameterBinding.getDataType();
