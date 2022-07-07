@@ -25,6 +25,7 @@ dependencies {
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-reactive"
     implementation "io.micronaut:micronaut-http-client"
     implementation projects.dataHibernateReactive
+    implementation "io.micronaut.reactor:micronaut-reactor"
 
     runtimeOnly "ch.qos.logback:logback-classic"
     runtimeOnly libs.drivers.vertx.pg

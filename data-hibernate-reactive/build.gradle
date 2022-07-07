@@ -14,11 +14,12 @@ dependencies {
     annotationProcessor mn.micronaut.inject.java
     annotationProcessor mn.micronaut.graal
 
-    api libs.micronaut.reactor
     api projects.dataHibernateJpa
     api (libs.micronaut.sql.hibernate.reactive) {
         exclude group: 'io.smallrye.reactive', module: 'mutiny'
     }
+
+    implementation libs.micronaut.reactor
 
     testAnnotationProcessor mn.micronaut.inject.java
     testAnnotationProcessor projects.dataProcessor
