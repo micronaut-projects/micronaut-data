@@ -1,5 +1,7 @@
 package example
 
+import io.micronaut.data.annotation.Repository
+import io.micronaut.data.mongodb.annotation.MongoRepository
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest
 import jakarta.inject.Inject
 import kotlinx.coroutines.runBlocking
@@ -17,7 +19,8 @@ class MongoTxTest : AbstractMongoSpec() {
     @Inject
     private lateinit var repository: ParentRepository
     @Inject
-    private lateinit var repositoryForCustomDb: ParentRepositoryForCustomDb
+    @Repository("custom")
+    private lateinit var repositoryForCustomDb: ParentRepository
     @Inject
     private lateinit var service: PersonSuspendRepositoryService
 

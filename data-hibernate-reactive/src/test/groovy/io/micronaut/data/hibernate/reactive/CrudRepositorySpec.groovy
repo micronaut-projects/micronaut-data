@@ -52,7 +52,6 @@ class CrudRepositorySpec extends Specification implements PostgresHibernateReact
 
         then:"the instance is persisted"
         person.id != null
-        crudRepository.is(context.getBean(PersonCrudRepository))
         crudRepository.findById(person.id).blockOptional().isPresent()
         !crudRepository.findById(1000L).blockOptional().isPresent()
         crudRepository.getById(person.id).block().name == 'Fred'

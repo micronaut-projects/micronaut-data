@@ -16,11 +16,15 @@
 package io.micronaut.data.annotation;
 
 import io.micronaut.aop.Introduction;
+import io.micronaut.context.annotation.Prototype;
 import io.micronaut.context.annotation.Type;
 import io.micronaut.data.intercept.DataIntroductionAdvice;
 
-import jakarta.inject.Singleton;
-import java.lang.annotation.*;
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
  * Designates a type of a data repository. If the type is an interface or abstract
@@ -31,10 +35,10 @@ import java.lang.annotation.*;
  */
 @Introduction
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.ANNOTATION_TYPE, ElementType.TYPE})
+@Target({ElementType.PARAMETER, ElementType.ANNOTATION_TYPE, ElementType.TYPE, ElementType.FIELD})
 @Documented
 @Type(DataIntroductionAdvice.class)
-@Singleton
+@Prototype
 public @interface Repository {
     /**
      * The name of the underlying datasource connection name. In a multiple data source scenario this will
