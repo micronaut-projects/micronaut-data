@@ -81,6 +81,9 @@ public final class AsyncUsingReactiveTransactionOperations<C> implements AsyncTr
                         try (TransactionSynchronizationStateOp ignore = TransactionSynchronizationManager.withState(state)) {
                             TransactionSynchronizationManager.unbindResourceIfPossible(ContextView.class);
                         }
+                        if (previousContext != null) {
+                            TransactionSynchronizationManager.bindResource(ContextView.class, previousContext);
+                        }
                     });
             }));
             if (previousContext != null) {

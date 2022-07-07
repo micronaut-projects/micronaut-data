@@ -2,7 +2,9 @@ package example
 
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest
 import jakarta.inject.Inject
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.Assertions.assertTrue
 import java.util.*
@@ -159,4 +161,36 @@ class MongoTxTest : AbstractMongoSpec() {
         Assertions.assertEquals(0, service.countForCustomDb())
     }
 
+    @Test
+    @Order(12)
+    fun save() {
+        runBlocking {
+            val status1 = service.deleteAllForCustomDb2()
+            assertTrue(status1.isCompleted)
+            val status2 = service.saveForCustomDb2(Parent("xyz", Collections.emptyList()))
+            assertTrue(status2.isCompleted)
+        }
+        runBlocking {
+            withContext(Dispatchers.IO) {
+                Assertions.assertEquals(0, service.count())
+                Assertions.assertEquals(1, service.countForCustomDb())
+            }
+        }
+    }
+
+    @Test
+    @Order(13)
+    fun saveTwo() {
+        runBlocking {
+            service.saveTwo(
+                    Parent("xyz", Collections.emptyList()),
+                    Parent("abc", Collections.emptyList())
+            )
+        }
+        runBlocking {
+            withContext(Dispatchers.IO) {
+                Assertions.assertEquals(2, service.count())
+            }
+        }
+    }
 }

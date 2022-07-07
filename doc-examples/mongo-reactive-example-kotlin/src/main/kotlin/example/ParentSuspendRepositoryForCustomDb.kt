@@ -21,4 +21,5 @@ interface ParentSuspendRepositoryForCustomDb : GenericRepository<Parent, ObjectI
 
     suspend fun update(@NonNull entity: Parent): Parent
 
+    suspend fun deleteAll()
 }
