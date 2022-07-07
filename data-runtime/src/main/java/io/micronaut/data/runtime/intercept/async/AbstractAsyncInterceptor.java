@@ -77,7 +77,7 @@ public abstract class AbstractAsyncInterceptor<T, R> extends AbstractQueryInterc
     protected Number convertNumberToReturnType(MethodInvocationContext<?, ?> context, Number number) {
         Argument<?> firstTypeVar = findReturnType(context, Argument.LONG);
         Class<?> type = firstTypeVar.getType();
-        if (type == Object.class || type == Void.class) {
+        if (type == Object.class || type == Void.class || type == void.class) {
             return null;
         }
         if (number == null) {

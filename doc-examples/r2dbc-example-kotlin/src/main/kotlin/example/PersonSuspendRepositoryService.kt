@@ -1,17 +1,24 @@
 package example
 
+import io.micronaut.transaction.TransactionExecution
 import io.micronaut.transaction.annotation.TransactionalAdvice
+import io.micronaut.transaction.reactive.ReactorReactiveTransactionOperations
+import io.micronaut.transaction.support.TransactionSynchronizationManager
+import io.r2dbc.spi.Connection
+import jakarta.inject.Named
 import jakarta.inject.Singleton
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import org.slf4j.LoggerFactory
+import reactor.util.context.ContextView
 import java.lang.Thread.currentThread
 import java.util.*
 import javax.transaction.Transactional
 
 @Singleton
-open class PersonSuspendRepositoryService(private val parentSuspendRepository: ParentSuspendRepository,
+open class PersonSuspendRepositoryService(@Named("custom") private val txManager: ReactorReactiveTransactionOperations<Connection>,
+                                          private val parentSuspendRepository: ParentSuspendRepository,
                                           private val parentSuspendRepositoryForCustomDb: ParentSuspendRepositoryForCustomDb,
                                           private val parentRepository: ParentRepository,
                                           private val parentRepositoryForCustomDb: ParentRepositoryForCustomDb) {
@@ -40,6 +47,26 @@ open class PersonSuspendRepositoryService(private val parentSuspendRepository: P
     @Transactional
     open suspend fun saveForCustomDb(p: Parent) {
         parentSuspendRepositoryForCustomDb.save(p)
+    }
+
+    @TransactionalAdvice("custom")
+    open suspend fun deleteAllForCustomDb2() : TransactionExecution {
+        val txStatus: TransactionExecution = txManager.getTransactionStatus(TransactionSynchronizationManager.getResource(ContextView::class.java) as ContextView)
+        if (txStatus.isCompleted || !txStatus.isNewTransaction) {
+            throw RuntimeException()
+        }
+        parentSuspendRepositoryForCustomDb.deleteAll()
+        return txStatus
+    }
+
+    @TransactionalAdvice("custom")
+    open suspend fun saveForCustomDb2(p: Parent) : TransactionExecution  {
+        val txStatus: TransactionExecution = txManager.getTransactionStatus(TransactionSynchronizationManager.getResource(ContextView::class.java) as ContextView)
+        if (txStatus.isCompleted || !txStatus.isNewTransaction) {
+            throw RuntimeException()
+        }
+        parentSuspendRepositoryForCustomDb.save(p)
+        return txStatus
     }
 
     @Transactional

@@ -164,4 +164,23 @@ class TxTest2 : AbstractTest(false) {
         }
     }
 
+    @Test
+    @Order(12)
+    fun save() {
+        val statuses = runBlocking {
+            val status1 = service.deleteAllForCustomDb2()
+            assertTrue(status1.isCompleted)
+            val status2 = service.saveForCustomDb2(Parent("xyz", Collections.emptyList()))
+            assertTrue(status2.isCompleted)
+            return@runBlocking listOf(status1, status2)
+        }
+        runBlocking {
+            assertTrue(statuses[1].isCompleted)
+            withContext(Dispatchers.IO) {
+                Assertions.assertEquals(0, service.count())
+                Assertions.assertEquals(1, service.countForCustomDb())
+            }
+        }
+    }
+
 }
