@@ -18,6 +18,7 @@ package io.micronaut.data.mongodb.annotation;
 import io.micronaut.context.annotation.AliasFor;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.annotation.RepositoryConfiguration;
+import io.micronaut.data.document.annotation.DocumentProcessorRequired;
 import io.micronaut.data.document.model.query.builder.MongoQueryBuilder;
 import io.micronaut.data.mongodb.operations.MongoRepositoryOperations;
 
@@ -43,6 +44,7 @@ import java.lang.annotation.Target;
 @Target({ElementType.ANNOTATION_TYPE, ElementType.TYPE})
 @Documented
 @Repository
+@DocumentProcessorRequired
 public @interface MongoRepository {
 
     /**
