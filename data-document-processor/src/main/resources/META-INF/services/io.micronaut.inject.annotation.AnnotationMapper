@@ -3,3 +3,4 @@ io.micronaut.data.document.processor.mapper.MappedIdMapper
 io.micronaut.data.document.processor.mapper.MappedPropertyMapper
 io.micronaut.data.document.processor.mapper.MappedRelationMapper
 io.micronaut.data.document.processor.mapper.EmbeddableMapper
+io.micronaut.data.document.processor.mapper.MongoRepositoryProcessedMapper

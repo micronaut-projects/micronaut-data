@@ -54,7 +54,7 @@ import $returnType.name;
 @Repository
 @io.micronaut.context.annotation.Executable
 interface MyInterface {
-    $returnType.simpleName $method(${arguments.entrySet().collect { "$it.value.name $it.key" }.join(',')});    
+    $returnType.simpleName $method(${arguments.entrySet().collect { "$it.value.name $it.key" }.join(',')});
 }
 
 
@@ -92,7 +92,7 @@ import io.micronaut.data.model.Pageable;
 @Repository
 @io.micronaut.context.annotation.Executable
 interface MyInterface {
-    List<$returnType.simpleName> $method(${arguments.entrySet().collect { "$it.value.name $it.key" }.join(',')}, Pageable pager);    
+    List<$returnType.simpleName> $method(${arguments.entrySet().collect { "$it.value.name $it.key" }.join(',')}, Pageable pager);
 }
 
 
@@ -123,6 +123,43 @@ interface MyInterface {
         }
         def names = getQueryParameterNames(method)
         return names.size() == argumentTypes.size()
+    }
+
+    void "test document processor requirement"() {
+        when:
+            buildBeanDefinition('io.micronaut.data.document.annotation.MyInterface' + BeanDefinitionVisitor.PROXY_SUFFIX, """
+package io.micronaut.data.document.annotation;
+
+import io.micronaut.data.annotation.Repository;
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
+@MyRepository
+interface MyInterface {
+}
+
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ElementType.ANNOTATION_TYPE, ElementType.TYPE})
+@Documented
+@interface DocumentProcessorRequired {
+}
+
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ElementType.ANNOTATION_TYPE, ElementType.TYPE})
+@Documented
+@Repository
+@DocumentProcessorRequired
+@interface MyRepository {
+}
+
+
+""")
+        then:
+            def e = thrown(RuntimeException)
+            e.message.contains "Repository is required to be processed by the data-document-processor. Make sure it's included as a dependency to the annotation processor classpath!"
     }
 
     @Override

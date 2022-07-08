@@ -25,6 +25,7 @@ import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.io.service.SoftServiceLoader;
 import io.micronaut.core.order.OrderUtil;
+import io.micronaut.core.reflect.ClassUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.Query;
@@ -84,6 +85,7 @@ import java.util.stream.Collectors;
 public class RepositoryTypeElementVisitor implements TypeElementVisitor<Repository, Object> {
 
     public static final String SPRING_REPO = "org.springframework.data.repository.Repository";
+    private static final boolean IS_DOCUMENT_ANNOTATION_PROCESSOR = ClassUtils.isPresent("io.micronaut.data.document.processor.mapper.MappedEntityMapper", RepositoryTypeElementVisitor.class.getClassLoader());
 
     private ClassElement currentClass;
     private ClassElement currentRepository;
@@ -131,6 +133,13 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
             currentClass = null;
             return;
         }
+        if (element.hasStereotype("io.micronaut.data.document.annotation.DocumentProcessorRequired") && !IS_DOCUMENT_ANNOTATION_PROCESSOR) {
+            context.fail("Repository is required to be processed by the data-document-processor. " +
+                "Make sure it's included as a dependency to the annotation processor classpath!", element);
+            failing = true;
+            return;
+        }
+
         this.currentClass = element;
 
         entityResolver = new Function<ClassElement, SourcePersistentEntity>() {
