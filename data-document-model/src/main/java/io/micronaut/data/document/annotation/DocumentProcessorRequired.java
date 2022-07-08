@@ -15,6 +15,8 @@
  */
 package io.micronaut.data.document.annotation;
 
+import io.micronaut.core.annotation.Internal;
+
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -29,6 +31,7 @@ import java.lang.annotation.Target;
  * @author Denis Stepanov
  * @since 3.5.0
  */
+@Internal
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.ANNOTATION_TYPE, ElementType.TYPE})
 @Documented
