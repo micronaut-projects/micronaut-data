@@ -22,9 +22,9 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Requires a repository to be processed by the document annotation processor.
+ * Requires the repository to be processed by the data-document-processor.
  *
- * Allows to detect miss-configuration when only the data processor is included on the annotation processor classpath.
+ * Allows to detect miss-configuration when only the data-processor is included on the annotation processor classpath.
  *
  * @author Denis Stepanov
  * @since 3.5.0
