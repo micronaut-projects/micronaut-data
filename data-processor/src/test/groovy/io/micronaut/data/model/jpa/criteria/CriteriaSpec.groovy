@@ -131,9 +131,9 @@ class CriteriaSpec extends AbstractCriteriaSpec {
                     '(test_."amount" NOT IN (?))',
                     '((test_."enabled" >= TRUE AND test_."enabled" <= FALSE))',
                     '((test_."amount" >= ? AND test_."amount" <= ?))',
-                    '(test_."enabled" = TRUE )',
-                    '(test_."enabled" = TRUE ) ORDER BY test_."amount" DESC,test_."budget" ASC',
-                    '(test_."budget" = 200 AND ((test_."enabled" = TRUE  OR test_."enabled2" = TRUE ) OR test_."amount" = 100))'
+                    '(test_."enabled" = TRUE)',
+                    '(test_."enabled" = TRUE) ORDER BY test_."amount" DESC,test_."budget" ASC',
+                    '(test_."budget" = 200 AND ((test_."enabled" = TRUE OR test_."enabled2" = TRUE) OR test_."amount" = 100))'
             ]
     }
 
@@ -194,9 +194,9 @@ class CriteriaSpec extends AbstractCriteriaSpec {
                     } as UpdateSpecification,
             ]
             expectedQuery << [
-                    'UPDATE "test" SET name=\'ABC\',amount=123 WHERE ("amount" >= 1000)',
+                    'UPDATE "test" SET "name"=\'ABC\',"amount"=123 WHERE ("amount" >= 1000)',
                     'UPDATE "test" SET "name"=?,"amount"=? WHERE ("amount" >= 1000)',
-                    'UPDATE "test" SET name=\'test\',"amount"=? WHERE ("amount" >= 1000)',
+                    'UPDATE "test" SET "name"=\'test\',"amount"=? WHERE ("amount" >= 1000)',
             ]
     }
 
@@ -238,14 +238,14 @@ class CriteriaSpec extends AbstractCriteriaSpec {
             property1 | value                   | predicate              | expectedWhereQuery
             "enabled" | true                    | "equal"                | '(test_."enabled" != TRUE)'
             "enabled" | true                    | "notEqual"             | '(test_."enabled" = TRUE)'
-            "enabled" | true                    | "greaterThan"          | '( NOT(test_."enabled" > TRUE))'
-            "enabled" | true                    | "greaterThanOrEqualTo" | '( NOT(test_."enabled" >= TRUE))'
-            "enabled" | true                    | "lessThan"             | '( NOT(test_."enabled" < TRUE))'
-            "enabled" | true                    | "lessThanOrEqualTo"    | '( NOT(test_."enabled" <= TRUE))'
-            "amount"  | BigDecimal.valueOf(100) | "gt"                   | '( NOT(test_."amount" > 100))'
-            "amount"  | BigDecimal.valueOf(100) | "ge"                   | '( NOT(test_."amount" >= 100))'
-            "amount"  | BigDecimal.valueOf(100) | "lt"                   | '( NOT(test_."amount" < 100))'
-            "amount"  | BigDecimal.valueOf(100) | "le"                   | '( NOT(test_."amount" <= 100))'
+            "enabled" | true                    | "greaterThan"          | '(NOT(test_."enabled" > TRUE))'
+            "enabled" | true                    | "greaterThanOrEqualTo" | '(NOT(test_."enabled" >= TRUE))'
+            "enabled" | true                    | "lessThan"             | '(NOT(test_."enabled" < TRUE))'
+            "enabled" | true                    | "lessThanOrEqualTo"    | '(NOT(test_."enabled" <= TRUE))'
+            "amount"  | BigDecimal.valueOf(100) | "gt"                   | '(NOT(test_."amount" > 100))'
+            "amount"  | BigDecimal.valueOf(100) | "ge"                   | '(NOT(test_."amount" >= 100))'
+            "amount"  | BigDecimal.valueOf(100) | "lt"                   | '(NOT(test_."amount" < 100))'
+            "amount"  | BigDecimal.valueOf(100) | "le"                   | '(NOT(test_."amount" <= 100))'
     }
 
     private ClassElement buildCustomElement() {

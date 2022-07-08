@@ -39,6 +39,7 @@ public enum PredicateBinaryOp {
     LIKE,
     REGEX,
     CONTAINS,
+    CONTAINS_IGNORE_CASE,
     STARTS_WITH,
     ENDS_WITH,
     STARTS_WITH_IGNORE_CASE,

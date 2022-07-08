@@ -341,6 +341,11 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
     }
 
     @Override
+    public Predicate containsStringIgnoreCase(Expression<String> x, Expression<String> y) {
+        return new PersistentPropertyBinaryPredicate<>(requireProperty(x), requirePropertyParameterOrLiteral(y), PredicateBinaryOp.CONTAINS_IGNORE_CASE);
+    }
+
+    @Override
     @NonNull
     public Predicate equalStringIgnoreCase(@NonNull Expression<String> x, @NonNull String y) {
         return new PersistentPropertyBinaryPredicate<>(requireProperty(x), literal(y), PredicateBinaryOp.EQUALS_IGNORE_CASE);

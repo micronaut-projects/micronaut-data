@@ -110,7 +110,7 @@ class JpaQueryBuilderSpec extends Specification {
         Person | 'lt'   | 'name'   | '<'
         Person | 'ge'   | 'name'   | '>='
         Person | 'le'   | 'name'   | '<='
-        Person | 'like' | 'name'   | 'like'
+        Person | 'like' | 'name'   | 'LIKE'
         Person | 'ne'   | 'name'   | '!='
     }
 
@@ -201,7 +201,7 @@ class JpaQueryBuilderSpec extends Specification {
         expect:
         encodedQuery != null
         encodedQuery.query ==
-                "SELECT $alias FROM $entity.name AS $alias WHERE ($alias.$property $operator )"
+                "SELECT $alias FROM $entity.name AS $alias WHERE ($alias.$property $operator)"
         encodedQuery.parameters.isEmpty()
 
         where:

@@ -57,6 +57,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Locale;
@@ -1139,39 +1140,20 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         }
     }
 
+    /**
+     * @param partsWriters The parts writers
+     */
     @Override
-    protected String formatStartsWith() {
+    protected void concat(StringBuilder writer, Collection<Runnable> partsWriters) {
         if (dialect == Dialect.ORACLE) {
-            return " LIKE '%' || ";
+            for (Iterator<Runnable> iterator = partsWriters.iterator(); iterator.hasNext(); ) {
+                iterator.next().run();
+                if (iterator.hasNext()) {
+                    writer.append(" || ");
+                }
+            }
         } else {
-            return super.formatStartsWith();
-        }
-    }
-
-    @Override
-    protected String formEndsWithEnd() {
-        if (dialect == Dialect.ORACLE) {
-            return " ";
-        } else {
-            return super.formEndsWithEnd();
-        }
-    }
-
-    @Override
-    protected String formatEndsWith() {
-        if (dialect == Dialect.ORACLE) {
-            return " || '%'";
-        } else {
-            return super.formatEndsWith();
-        }
-    }
-
-    @Override
-    protected String formatStartsWithBeginning() {
-        if (dialect == Dialect.ORACLE) {
-            return " LIKE ";
-        } else {
-            return super.formatStartsWithBeginning();
+            super.concat(writer, partsWriters);
         }
     }
 

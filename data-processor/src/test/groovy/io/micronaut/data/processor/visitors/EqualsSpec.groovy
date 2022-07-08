@@ -58,7 +58,7 @@ interface MyInterface extends GenericRepository<Person, Long> {
 
         where:
         alias   | method                 | returnType | arguments     | interceptor        | expectedQuery
-        alias() | "findByNameIgnoreCase" | "Person"   | "String name" | FindOneInterceptor | "SELECT $alias FROM $Person.name AS $alias WHERE (lower(${alias}.name) = lower(:p1))"
+        alias() | "findByNameIgnoreCase" | "Person"   | "String name" | FindOneInterceptor | "SELECT $alias FROM $Person.name AS $alias WHERE (LOWER(${alias}.name) = LOWER(:p1))"
         alias() | "findByName"           | "Person"   | "String name" | FindOneInterceptor | "SELECT $alias FROM $Person.name AS $alias WHERE (${alias}.name = :p1)"
         alias() | "findByNameEquals"      | "Person"   | "String name" | FindOneInterceptor | "SELECT $alias FROM $Person.name AS $alias WHERE (${alias}.name = :p1)"
         alias() | "findByNameEqual"      | "Person"   | "String name" | FindOneInterceptor | "SELECT $alias FROM $Person.name AS $alias WHERE (${alias}.name = :p1)"

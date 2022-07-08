@@ -201,6 +201,8 @@ public class QueryModelPredicateVisitor implements PredicateVisitor {
                 return Restrictions.lte(leftProperty, rightProperty);
             case CONTAINS:
                 return Restrictions.contains(leftProperty, rightProperty);
+            case CONTAINS_IGNORE_CASE:
+                return Restrictions.contains(leftProperty, rightProperty).ignoreCase(true);
             case ENDS_WITH:
                 return Restrictions.endsWith(leftProperty, rightProperty);
             case STARTS_WITH:

@@ -30,10 +30,10 @@ class WhereAnnotationSpec extends AbstractDataSpec {
 @io.micronaut.context.annotation.Executable
 interface TestRepository extends CrudRepository<User, Long> {
     int countByIdGreaterThan(Long id);
-    @Join("category") 
+    @Join("category")
     List<User> list();
-    
-    @Join("category") 
+
+    @Join("category")
     @Where("@.xyz = true")
     @Where("@.abc > 12")
     List<User> findByIdIsNotNull();
@@ -47,7 +47,7 @@ class User {
     private boolean enabled;
     @Relation(value = Relation.Kind.MANY_TO_ONE)
     private Category category;
-    
+
     public Long getId() {
         return id;
     }
@@ -62,15 +62,15 @@ class User {
 
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
-    }   
-     
+    }
+
     public Category getCategory() {
         return category;
     }
 
     public void setCategory(Category category) {
         this.category = category;
-    }     
+    }
 }
 
 @MappedEntity
@@ -78,7 +78,7 @@ class User {
 class Category {
     @Id
     private Long id;
-    
+
     public Long getId() {
         return id;
     }
@@ -107,7 +107,7 @@ class Category {
         repository.getRequiredMethod("findAll")
                 .stringValue(Query).get() == "SELECT user_ FROM test.User AS user_ WHERE (user_.enabled = true)"
         repository.getRequiredMethod("findByIdIsNotNull")
-                .stringValue(Query).get() == "SELECT user_ FROM test.User AS user_ JOIN FETCH user_.category user_category_ WHERE (user_.id IS NOT NULL  AND (user_.xyz = true AND user_.abc > 12))"
+                .stringValue(Query).get() == "SELECT user_ FROM test.User AS user_ JOIN FETCH user_.category user_category_ WHERE (user_.id IS NOT NULL AND (user_.xyz = true AND user_.abc > 12))"
     }
 
     void "test parameterized @Where declaration - fails compile"() {
@@ -143,7 +143,7 @@ interface TestRepository extends GenericRepository<Person, Long> {
         def parameterBinding = TestUtils.getParameterBindingIndexes(method)
 
         expect:
-        query == "SELECT COUNT(person_) FROM $Person.name AS person_ WHERE (person_.name like :p1 AND (age >:p2))"
+        query == "SELECT COUNT(person_) FROM $Person.name AS person_ WHERE (person_.name LIKE :p1 AND (age >:p2))"
         parameterBinding.length == 2
     }
 
@@ -172,7 +172,7 @@ interface TestRepository extends CrudRepository<Person, Long> {
                 .stringValue(Query).get() == "SELECT COUNT(person_) FROM $Person.name AS person_ WHERE (person_.age > 18)"
 
         repository.getRequiredMethod("countByNameLike", String)
-            .stringValue(Query).get() == "SELECT COUNT(person_) FROM $Person.name AS person_ WHERE (person_.name like :p1 AND (person_.age > 18))"
+            .stringValue(Query).get() == "SELECT COUNT(person_) FROM $Person.name AS person_ WHERE (person_.name LIKE :p1 AND (person_.age > 18))"
     }
 
     void "test build @Where on entity and reactive repository"() {

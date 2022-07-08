@@ -48,9 +48,15 @@ public interface AuthorRepository extends CrudRepository<Author, Long> {
 
     Author findByNameStartsWith(String name);
 
+    Author findByNameStartsWithIgnoreCase(String name);
+
     List<Author> findByNameContains(String name);
 
+    List<Author> findByNameContainsIgnoreCase(String name);
+
     Stream<Author> queryByNameContains(String name);
+
+    Author findByNameEndsWithIgnoreCase(String name);
 
     Author findByNameEndsWith(String name);
 

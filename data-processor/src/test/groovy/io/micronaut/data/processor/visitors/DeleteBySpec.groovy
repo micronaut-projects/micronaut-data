@@ -42,8 +42,8 @@ class DeleteBySpec extends AbstractDataMethodSpec {
         "int"      | "deleteByName"                      | "String name"   | DeleteAllInterceptor | "DELETE $Person.name  AS person_ WHERE (person_.name = :p1)"
         "Long"     | "deleteByName"                      | "String name"   | DeleteAllInterceptor | "DELETE $Person.name  AS person_ WHERE (person_.name = :p1)"
         "Number"   | "deleteByName"                      | "String name"   | DeleteAllInterceptor | "DELETE $Person.name  AS person_ WHERE (person_.name = :p1)"
-        "Number"   | "deleteByNameIsEmptyOrNameIsNull"   | "String name"   | DeleteAllInterceptor | "DELETE io.micronaut.data.model.entities.Person  AS person_ WHERE ((person_.name IS NULL OR person_.name = ''  OR person_.name IS NULL ))"
-        "Number"   | "deleteByNameIsEmptyOrNameIsNull"   | "Person person" | DeleteOneInterceptor | "DELETE io.micronaut.data.model.entities.Person  AS person_ WHERE ((person_.name IS NULL OR person_.name = ''  OR person_.name IS NULL ))"
-        "Number"   | "deleteByNameIsEmptyOrNameIsNull"   | ""              | DeleteAllInterceptor | "DELETE io.micronaut.data.model.entities.Person  AS person_ WHERE ((person_.name IS NULL OR person_.name = ''  OR person_.name IS NULL ))"
+        "Number"   | "deleteByNameIsEmptyOrNameIsNull"   | "String name"   | DeleteAllInterceptor | "DELETE io.micronaut.data.model.entities.Person  AS person_ WHERE ((person_.name IS NULL OR person_.name = '' OR person_.name IS NULL))"
+        "Number"   | "deleteByNameIsEmptyOrNameIsNull"   | "Person person" | DeleteOneInterceptor | "DELETE io.micronaut.data.model.entities.Person  AS person_ WHERE ((person_.name IS NULL OR person_.name = '' OR person_.name IS NULL))"
+        "Number"   | "deleteByNameIsEmptyOrNameIsNull"   | ""              | DeleteAllInterceptor | "DELETE io.micronaut.data.model.entities.Person  AS person_ WHERE ((person_.name IS NULL OR person_.name = '' OR person_.name IS NULL))"
     }
 }
