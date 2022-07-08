@@ -2,6 +2,7 @@ io.micronaut.data.annotation
 io.micronaut.data.annotation.event
 io.micronaut.data.annotation.repeatable
 io.micronaut.data.annotation.sql
+io.micronaut.data.document.annotation
 io.micronaut.data.document.model.query.builder
 io.micronaut.data.document.mongo
 io.micronaut.data.document.processor.mapper
