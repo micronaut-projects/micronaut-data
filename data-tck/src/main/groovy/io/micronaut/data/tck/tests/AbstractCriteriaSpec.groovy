@@ -99,15 +99,15 @@ abstract class AbstractCriteriaSpec extends Specification {
 
         where:
             property   | predicate   | expectedWhereQuery
-            "enabled"  | "isTrue"    | '(test_."enabled" = TRUE )'
-            "enabled2" | "isTrue"    | '(test_."enabled2" = TRUE )'
-            "enabled"  | "isFalse"   | '(test_."enabled" = FALSE )'
-            "enabled2" | "isFalse"   | '(test_."enabled2" = FALSE )'
-            "enabled"  | "isNull"    | '(test_."enabled" IS NULL )'
-            "enabled2" | "isNull"    | '(test_."enabled2" IS NULL )'
-            "enabled"  | "isNotNull" | '(test_."enabled" IS NOT NULL )'
-            "enabled2" | "isNotNull" | '(test_."enabled2" IS NOT NULL )'
-            "name"     | "isNotNull" | '(test_."name" IS NOT NULL )'
+            "enabled"  | "isTrue"    | '(test_."enabled" = TRUE)'
+            "enabled2" | "isTrue"    | '(test_."enabled2" = TRUE)'
+            "enabled"  | "isFalse"   | '(test_."enabled" = FALSE)'
+            "enabled2" | "isFalse"   | '(test_."enabled2" = FALSE)'
+            "enabled"  | "isNull"    | '(test_."enabled" IS NULL)'
+            "enabled2" | "isNull"    | '(test_."enabled2" IS NULL)'
+            "enabled"  | "isNotNull" | '(test_."enabled" IS NOT NULL)'
+            "enabled2" | "isNotNull" | '(test_."enabled2" IS NOT NULL)'
+            "name"     | "isNotNull" | '(test_."name" IS NOT NULL)'
     }
 
     @Unroll
@@ -122,15 +122,15 @@ abstract class AbstractCriteriaSpec extends Specification {
 
         where:
             property   | predicate   | expectedWhereQuery
-            "enabled"  | "isTrue"    | '(test_."enabled" = FALSE )'
-            "enabled2" | "isTrue"    | '(test_."enabled2" = FALSE )'
-            "enabled"  | "isFalse"   | '(test_."enabled" = TRUE )'
-            "enabled2" | "isFalse"   | '(test_."enabled2" = TRUE )'
-            "enabled"  | "isNull"    | '(test_."enabled" IS NOT NULL )'
-            "enabled2" | "isNull"    | '(test_."enabled2" IS NOT NULL )'
-            "enabled"  | "isNotNull" | '(test_."enabled" IS NULL )'
-            "enabled2" | "isNotNull" | '(test_."enabled2" IS NULL )'
-            "name"     | "isNotNull" | '(test_."name" IS NULL )'
+            "enabled"  | "isTrue"    | '(test_."enabled" = FALSE)'
+            "enabled2" | "isTrue"    | '(test_."enabled2" = FALSE)'
+            "enabled"  | "isFalse"   | '(test_."enabled" = TRUE)'
+            "enabled2" | "isFalse"   | '(test_."enabled2" = TRUE)'
+            "enabled"  | "isNull"    | '(test_."enabled" IS NOT NULL)'
+            "enabled2" | "isNull"    | '(test_."enabled2" IS NOT NULL)'
+            "enabled"  | "isNotNull" | '(test_."enabled" IS NULL)'
+            "enabled2" | "isNotNull" | '(test_."enabled2" IS NULL)'
+            "name"     | "isNotNull" | '(test_."name" IS NULL)'
     }
 
     @Unroll
@@ -171,14 +171,14 @@ abstract class AbstractCriteriaSpec extends Specification {
             property1 | property2  | predicate              | expectedWhereQuery
             "enabled" | "enabled2" | "equal"                | '(test_."enabled"!=test_."enabled2")'
             "enabled" | "enabled2" | "notEqual"             | '(test_."enabled"=test_."enabled2")'
-            "enabled" | "enabled2" | "greaterThan"          | '( NOT(test_."enabled">test_."enabled2"))'
-            "enabled" | "enabled2" | "greaterThanOrEqualTo" | '( NOT(test_."enabled">=test_."enabled2"))'
-            "enabled" | "enabled2" | "lessThan"             | '( NOT(test_."enabled"<test_."enabled2"))'
-            "enabled" | "enabled2" | "lessThanOrEqualTo"    | '( NOT(test_."enabled"<=test_."enabled2"))'
-            "amount"  | "budget"   | "gt"                   | '( NOT(test_."amount">test_."budget"))'
-            "amount"  | "budget"   | "ge"                   | '( NOT(test_."amount">=test_."budget"))'
-            "amount"  | "budget"   | "lt"                   | '( NOT(test_."amount"<test_."budget"))'
-            "amount"  | "budget"   | "le"                   | '( NOT(test_."amount"<=test_."budget"))'
+            "enabled" | "enabled2" | "greaterThan"          | '(NOT(test_."enabled">test_."enabled2"))'
+            "enabled" | "enabled2" | "greaterThanOrEqualTo" | '(NOT(test_."enabled">=test_."enabled2"))'
+            "enabled" | "enabled2" | "lessThan"             | '(NOT(test_."enabled"<test_."enabled2"))'
+            "enabled" | "enabled2" | "lessThanOrEqualTo"    | '(NOT(test_."enabled"<=test_."enabled2"))'
+            "amount"  | "budget"   | "gt"                   | '(NOT(test_."amount">test_."budget"))'
+            "amount"  | "budget"   | "ge"                   | '(NOT(test_."amount">=test_."budget"))'
+            "amount"  | "budget"   | "lt"                   | '(NOT(test_."amount"<test_."budget"))'
+            "amount"  | "budget"   | "le"                   | '(NOT(test_."amount"<=test_."budget"))'
     }
 
     @Unroll

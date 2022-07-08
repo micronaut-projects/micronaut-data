@@ -123,6 +123,15 @@ public interface PersistentEntityCriteriaBuilder extends CriteriaBuilder {
     Predicate containsString(Expression<String> x, Expression<String> y);
 
     /**
+     * Checks if the expression x contains the expression y ignoring case.
+     *
+     * @param x The expression
+     * @param y The expression
+     * @return a new predicate
+     */
+    Predicate containsStringIgnoreCase(Expression<String> x, Expression<String> y);
+
+    /**
      * Checks if the expression x equals a string y ignoring case.
      *
      * @param x The expression

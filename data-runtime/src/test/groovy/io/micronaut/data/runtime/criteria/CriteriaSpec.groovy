@@ -138,9 +138,9 @@ class CriteriaSpec extends AbstractCriteriaSpec {
                     '(test_."amount" NOT IN (?))',
                     '((test_."enabled" >= ? AND test_."enabled" <= ?))',
                     '((test_."amount" >= ? AND test_."amount" <= ?))',
-                    '(test_."enabled" = TRUE )',
-                    '(test_."enabled" = TRUE ) ORDER BY test_."amount" DESC,test_."budget" ASC',
-                    '(test_."budget" = ? AND ((test_."enabled" = TRUE  OR test_."enabled2" = TRUE ) OR test_."amount" = ?))'
+                    '(test_."enabled" = TRUE)',
+                    '(test_."enabled" = TRUE) ORDER BY test_."amount" DESC,test_."budget" ASC',
+                    '(test_."budget" = ? AND ((test_."enabled" = TRUE OR test_."enabled2" = TRUE) OR test_."amount" = ?))'
             ]
     }
 
@@ -221,14 +221,14 @@ class CriteriaSpec extends AbstractCriteriaSpec {
             property1 | property2  | predicate              | expectedWhereQuery
             "enabled" | "enabled2" | "equal"                | '(test_."enabled"!=test_."enabled2")'
             "enabled" | "enabled2" | "notEqual"             | '(test_."enabled"=test_."enabled2")'
-            "enabled" | "enabled2" | "greaterThan"          | '( NOT(test_."enabled">test_."enabled2"))'
-            "enabled" | "enabled2" | "greaterThanOrEqualTo" | '( NOT(test_."enabled">=test_."enabled2"))'
-            "enabled" | "enabled2" | "lessThan"             | '( NOT(test_."enabled"<test_."enabled2"))'
-            "enabled" | "enabled2" | "lessThanOrEqualTo"    | '( NOT(test_."enabled"<=test_."enabled2"))'
-            "amount"  | "budget"   | "gt"                   | '( NOT(test_."amount">test_."budget"))'
-            "amount"  | "budget"   | "ge"                   | '( NOT(test_."amount">=test_."budget"))'
-            "amount"  | "budget"   | "lt"                   | '( NOT(test_."amount"<test_."budget"))'
-            "amount"  | "budget"   | "le"                   | '( NOT(test_."amount"<=test_."budget"))'
+            "enabled" | "enabled2" | "greaterThan"          | '(NOT(test_."enabled">test_."enabled2"))'
+            "enabled" | "enabled2" | "greaterThanOrEqualTo" | '(NOT(test_."enabled">=test_."enabled2"))'
+            "enabled" | "enabled2" | "lessThan"             | '(NOT(test_."enabled"<test_."enabled2"))'
+            "enabled" | "enabled2" | "lessThanOrEqualTo"    | '(NOT(test_."enabled"<=test_."enabled2"))'
+            "amount"  | "budget"   | "gt"                   | '(NOT(test_."amount">test_."budget"))'
+            "amount"  | "budget"   | "ge"                   | '(NOT(test_."amount">=test_."budget"))'
+            "amount"  | "budget"   | "lt"                   | '(NOT(test_."amount"<test_."budget"))'
+            "amount"  | "budget"   | "le"                   | '(NOT(test_."amount"<=test_."budget"))'
     }
 
     @Unroll
@@ -269,15 +269,14 @@ class CriteriaSpec extends AbstractCriteriaSpec {
             property1 | value                   | predicate              | expectedWhereQuery
             "enabled" | true                    | "equal"                | '(test_."enabled" != ?)'
             "enabled" | true                    | "notEqual"             | '(test_."enabled" = ?)'
-            "enabled" | true                    | "greaterThan"          | '( NOT(test_."enabled" > ?))'
-            "enabled" | true                    | "greaterThanOrEqualTo" | '( NOT(test_."enabled" >= ?))'
-            "enabled" | true                    | "lessThan"             | '( NOT(test_."enabled" < ?))'
-            "enabled" | true                    | "lessThanOrEqualTo"    | '( NOT(test_."enabled" <= ?))'
-            "amount"  | BigDecimal.valueOf(100) | "gt"                   | '( NOT(test_."amount" > ?))'
-            "amount"  | BigDecimal.valueOf(100) | "ge"                   | '( NOT(test_."amount" >= ?))'
-            "amount"  | BigDecimal.valueOf(100) | "lt"                   | '( NOT(test_."amount" < ?))'
-            "amount"  | BigDecimal.valueOf(100) | "le"                   | '( NOT(test_."amount" <= ?))'
+            "enabled" | true                    | "greaterThan"          | '(NOT(test_."enabled" > ?))'
+            "enabled" | true                    | "greaterThanOrEqualTo" | '(NOT(test_."enabled" >= ?))'
+            "enabled" | true                    | "lessThan"             | '(NOT(test_."enabled" < ?))'
+            "enabled" | true                    | "lessThanOrEqualTo"    | '(NOT(test_."enabled" <= ?))'
+            "amount"  | BigDecimal.valueOf(100) | "gt"                   | '(NOT(test_."amount" > ?))'
+            "amount"  | BigDecimal.valueOf(100) | "ge"                   | '(NOT(test_."amount" >= ?))'
+            "amount"  | BigDecimal.valueOf(100) | "lt"                   | '(NOT(test_."amount" < ?))'
+            "amount"  | BigDecimal.valueOf(100) | "le"                   | '(NOT(test_."amount" <= ?))'
     }
-
 
 }

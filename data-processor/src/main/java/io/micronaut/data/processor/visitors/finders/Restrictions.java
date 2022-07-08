@@ -241,6 +241,33 @@ public final class Restrictions {
     }
 
     /**
+     * Contains with criterion IgnoreCase.
+     */
+    public static class PropertyContainsIgnoreCase extends SinglePropertyExpressionRestriction<String> {
+
+        public PropertyContainsIgnoreCase() {
+            super(PersistentEntityCriteriaBuilder::containsStringIgnoreCase);
+        }
+
+        @Override
+        public String getName() {
+            return "ContainsIgnoreCase";
+        }
+    }
+
+    /**
+     * Contains with criterion.
+     */
+    public static class PropertyContainingIgnoreCase extends PropertyContainsIgnoreCase {
+
+        @Override
+        public String getName() {
+            return "ContainingIgnoreCase";
+        }
+
+    }
+
+    /**
      * Contains with criterion.
      */
     public static class PropertyContaining extends PropertyContains {
@@ -278,6 +305,31 @@ public final class Restrictions {
         }
     }
 
+    /**
+     * Starts with criterion.
+     */
+    public static class PropertyStartingWithIgnoreCase extends PropertyStartsWithIgnoreCase {
+
+        @Override
+        public String getName() {
+            return "StartingWithIgnoreCase";
+        }
+    }
+
+    /**
+     * Starts with criterion.
+     */
+    public static class PropertyStartsWithIgnoreCase extends SinglePropertyExpressionRestriction<String> {
+
+        public PropertyStartsWithIgnoreCase() {
+            super(PersistentEntityCriteriaBuilder::startsWithStringIgnoreCase);
+        }
+
+        @Override
+        public String getName() {
+            return "StartsWithIgnoreCase";
+        }
+    }
 
     /**
      * Ends with criterion.
@@ -302,6 +354,33 @@ public final class Restrictions {
         @Override
         public String getName() {
             return "EndingWith";
+        }
+    }
+
+    /**
+     * Ends with criterion.
+     */
+    public static class PropertyEndingWithIgnoreCase extends SinglePropertyExpressionRestriction<String> {
+
+        public PropertyEndingWithIgnoreCase() {
+            super(PersistentEntityCriteriaBuilder::endingWithStringIgnoreCase);
+        }
+
+        @Override
+        public String getName() {
+            return "EndingWithIgnoreCase";
+        }
+    }
+
+
+    /**
+     * Ends with criterion.
+     */
+    public static class PropertyEndsWithIgnoreCase extends PropertyEndingWithIgnoreCase {
+
+        @Override
+        public String getName() {
+            return "EndsWithIgnoreCase";
         }
     }
 

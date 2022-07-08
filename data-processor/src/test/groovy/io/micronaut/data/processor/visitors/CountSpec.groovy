@@ -67,7 +67,7 @@ interface MyInterface extends GenericRepository<Person, Long> {
         "countDistinctNameByName" | "Long"                  | "String name" | CountInterceptor         | Long       | "SELECT COUNT(DISTINCT(person_.name))"
         "countDistinctNameByName" | "Single<Long>"          | "String name" | CountReactiveInterceptor | Long       | "SELECT COUNT(DISTINCT(person_.name))"
         "countDistinctName"       | "CompletionStage<Long>" | "String name" | CountAsyncInterceptor    | Long       | "SELECT COUNT(DISTINCT(person_.name))"
-        "getAvgAgeByNameLike"     | "long"                  | "String name" | FindOneInterceptor       | Number     | "SELECT AVG(person_.age) FROM io.micronaut.data.model.entities.Person AS person_ WHERE (person_.name like :p1)"
-        "getSumAgeByNameLike"     | "long"                  | "String name" | FindOneInterceptor       | Number     | "SELECT SUM(person_.age) FROM io.micronaut.data.model.entities.Person AS person_ WHERE (person_.name like :p1)"
+        "getAvgAgeByNameLike"     | "long"                  | "String name" | FindOneInterceptor       | Number     | "SELECT AVG(person_.age) FROM io.micronaut.data.model.entities.Person AS person_ WHERE (person_.name LIKE :p1)"
+        "getSumAgeByNameLike"     | "long"                  | "String name" | FindOneInterceptor       | Number     | "SELECT SUM(person_.age) FROM io.micronaut.data.model.entities.Person AS person_ WHERE (person_.name LIKE :p1)"
     }
 }

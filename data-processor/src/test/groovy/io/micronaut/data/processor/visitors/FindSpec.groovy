@@ -43,7 +43,7 @@ class Player {
     private Long id;
     private Team team;
     private String name;
-       
+
     public String getName() {
         return name;
     }
@@ -51,7 +51,7 @@ class Player {
     public void setName(String name) {
         this.name = name;
     }
-       
+
     public Long getId() {
         return id;
     }
@@ -59,11 +59,11 @@ class Player {
     public void setId(Long id) {
         this.id = id;
     }
-    
+
     public void setTeam(Team team) {
         this.team = team;
     }
-    
+
     public Team getTeam() {
         return team;
     }
@@ -79,7 +79,7 @@ class Team {
     private Integer externalTeamId;
     private String externalTeam;
     private String name;
-       
+
     public String getName() {
         return name;
     }
@@ -87,7 +87,7 @@ class Team {
     public void setName(String name) {
         this.name = name;
     }
-               
+
     public Long getId() {
         return id;
     }
@@ -95,8 +95,8 @@ class Team {
     public void setId(Long id) {
         this.id = id;
     }
-    
-           
+
+
     public Integer getExternalTeamId() {
         return externalTeamId;
     }
@@ -104,7 +104,7 @@ class Team {
     public void setExternalTeamId(Integer externalTeamId) {
         this.externalTeamId = externalTeamId;
     }
-    
+
     public String getExternalTeam() {
         return externalTeam;
     }
@@ -147,7 +147,7 @@ class DeviceInfo {
     @javax.persistence.ManyToOne
     @javax.persistence.JoinColumn(name="manufacturer_id")
     public DeviceManufacturer manufacturer;
-    
+
     public Long getId() {
         return id;
     }
@@ -163,19 +163,19 @@ class DeviceInfo {
     public void setManufacturerDeviceId(String manufacturerDeviceId) {
         this.manufacturerDeviceId = manufacturerDeviceId;
     }
-        
+
     public DeviceManufacturer getManufacturer() {
         return manufacturer;
     }
 
     public void setManufacturer(DeviceManufacturer manufacturerDeviceId) {
         this.manufacturer = manufacturer;
-    }        
+    }
 }
 
 @javax.persistence.Entity
 class DeviceManufacturer {
-    
+
     @javax.persistence.Id
     private Long id;
     public Long getId() {
@@ -185,7 +185,7 @@ class DeviceManufacturer {
     public void setId(Long id) {
         this.id = id;
     }
-    
+
 }
 
 @Repository
@@ -266,11 +266,11 @@ import io.micronaut.data.repository.GenericRepository;
 interface MyInterface extends GenericRepository<Person, Long> {
 
     Person find(Long id);
-    
+
     Person find(Long id, String name);
-    
+
     Person findById(Long id);
-    
+
     Iterable<Person> findByIds(Iterable<Long> ids);
 }
 """)
@@ -308,7 +308,7 @@ class Player {
 
     @Relation(Relation.Kind.MANY_TO_ONE)
     private Team team;
-    
+
     public String getName() {
         return name;
     }
@@ -316,7 +316,7 @@ class Player {
     public void setName(String name) {
         this.name = name;
     }
-        
+
     public Integer getId() {
         return id;
     }
@@ -324,11 +324,11 @@ class Player {
     public void setId(Integer id) {
         this.id = id;
     }
-    
+
     public void setTeam(Team team) {
         this.team = team;
     }
-    
+
     public Team getTeam() {
         return this.team;
     }
@@ -340,15 +340,15 @@ class Team {
     @Id
     private Integer id;
     private String name;
-    
+
     public String getName() {
         return name;
     }
 
     public void setName(String name) {
         this.name = name;
-    }    
-    
+    }
+
     public Integer getId() {
         return id;
     }
@@ -373,7 +373,7 @@ import java.util.UUID;
 interface RestaurantRepository extends CrudRepository<Restaurant, Long> {
 
     Restaurant findByAddressZipCodeLike(String name);
-    
+
     Restaurant findByAddressZipCodeIlike(String name);
 }
 """)
@@ -384,9 +384,8 @@ interface RestaurantRepository extends CrudRepository<Restaurant, Long> {
                 .stringValue(Query).get()
 
         expect: "The query contains the correct embedded property name"
-        query1.contains('WHERE (restaurant_.`address_zip_code` like ?')
-        query2.contains('WHERE (lower(restaurant_.`address_zip_code`) like lower(?)')
-
+        query1.contains('WHERE (restaurant_.`address_zip_code` LIKE ?')
+        query2.contains('WHERE (LOWER(restaurant_.`address_zip_code`) LIKE LOWER(?)')
     }
 
     void "test top"() {
@@ -401,7 +400,7 @@ import io.micronaut.data.tck.entities.Book;
 interface TestRepository extends CrudRepository<Book, Long> {
 
     List<Book> findTop30OrderByTitle();
-    
+
 }
 """)
         when:
@@ -424,7 +423,7 @@ import io.micronaut.data.tck.entities.Author;
 interface TestRepository extends CrudRepository<Book, Long> {
 
     Author findAuthorById(@Id Long id);
-    
+
 }
 """)
         when:
@@ -446,13 +445,13 @@ import io.micronaut.data.tck.entities.Person;
 interface TestRepository extends CrudRepository<Person, Long> {
 
     int find${projection}AgeByNameLike(String name);
-    
+
 }
 """)
         when:
             def method = repository.findPossibleMethods("find${projection}AgeByNameLike").findFirst().get()
         then:
-            method.stringValue(Query).get() == """SELECT ${projection.toUpperCase()}(person_."age") FROM "person" person_ WHERE (person_."name" like ?)"""
+            method.stringValue(Query).get() == """SELECT ${projection.toUpperCase()}(person_."age") FROM "person" person_ WHERE (person_."name" LIKE ?)"""
         where:
             projection << ['Min', 'Max', 'Sum', "Avg"]
     }

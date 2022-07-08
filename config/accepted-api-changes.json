@@ -403,5 +403,40 @@
       "type": "io.micronaut.data.model.jpa.criteria.PersistentPropertyPath",
       "member": "Method io.micronaut.data.model.jpa.criteria.PersistentPropertyPath.isComparable()",
       "reason": "Experimental class with a new default method"
+  },
+  {
+    "type": "io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder",
+    "member": "Class io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder",
+    "reason": "Internal"
+  },
+  {
+    "type": "io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder",
+    "member": "Field NOT_CLAUSE",
+    "reason": "Internal"
+  },
+  {
+    "type": "io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder",
+    "member": "Method io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder.formatEndsWith()",
+    "reason": "Internal"
+  },
+  {
+    "type": "io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder",
+    "member": "Method io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder.formatStartsWith()",
+    "reason": "Internal"
+  },
+  {
+    "type": "io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder",
+    "member": "Method io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder.formatStartsWithBeginning()",
+    "reason": "Internal"
+  },
+  {
+    "type": "io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder",
+    "member": "Method io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder.formEndsWithEnd()",
+    "reason": "Internal"
+  },
+  {
+    "type": "io.micronaut.data.model.query.builder.sql.SqlQueryBuilder",
+    "member": "Class io.micronaut.data.model.query.builder.sql.SqlQueryBuilder",
+    "reason": "Internal"
   }
 ]

@@ -296,7 +296,7 @@ interface MyRepository {
         Person | 'lt'   | 'someId' | '<'
         Person | 'ge'   | 'someId' | '>='
         Person | 'le'   | 'someId' | '<='
-        Person | 'like' | 'someId' | 'like'
+        Person | 'like' | 'someId' | 'LIKE'
         Person | 'ne'   | 'someId' | '!='
     }
 

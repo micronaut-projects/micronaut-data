@@ -934,6 +934,16 @@ abstract class AbstractRepositorySpec extends Specification {
         authorRepository.findByNameIgnoreCase("don winslow").name == "Don Winslow"
     }
 
+    void "test string comparison methods ignore case"() {
+        given:
+        setupBooks()
+
+        expect:
+        authorRepository.findByNameContainsIgnoreCase("KIN").size() == 1
+        authorRepository.findByNameStartsWithIgnoreCase("DON")
+        authorRepository.findByNameEndsWithIgnoreCase("KING")
+    }
+
     void "test stream string comparison methods"() {
         if (!transactionManager.isPresent()) {
             return
