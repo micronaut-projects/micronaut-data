@@ -26,7 +26,7 @@
     catch(err) {
     }
 //-->
-var data = {"i0":10,"i1":10,"i2":10,"i3":6,"i4":10,"i5":10,"i6":10,"i7":10,"i8":10,"i9":6,"i10":10,"i11":10,"i12":10,"i13":10,"i14":10,"i15":6,"i16":10,"i17":6,"i18":10,"i19":10,"i20":10,"i21":10,"i22":10,"i23":6,"i24":10,"i25":10,"i26":10,"i27":10,"i28":10,"i29":6,"i30":10,"i31":10,"i32":6,"i33":10,"i34":10,"i35":6,"i36":6,"i37":6,"i38":10,"i39":10,"i40":10,"i41":10};
+var data = {"i0":10,"i1":10,"i2":10,"i3":6,"i4":10,"i5":10,"i6":10,"i7":10,"i8":10,"i9":6,"i10":10,"i11":10,"i12":10,"i13":10,"i14":10,"i15":6,"i16":10,"i17":6,"i18":10,"i19":10,"i20":6,"i21":10,"i22":10,"i23":10,"i24":10,"i25":10,"i26":6,"i27":10,"i28":10,"i29":6,"i30":10,"i31":10,"i32":6,"i33":6,"i34":6,"i35":10,"i36":10,"i37":10,"i38":10};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],4:["t3","Abstract Methods"],8:["t4","Concrete Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -368,7 +368,7 @@ implements <a href="QueryBuilder.html" title="interface in io.micronaut.data.mod
 </tr>
 <tr class="altColor">
 <td class="colFirst"><code>protected static java.lang.String</code></td>
-<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#NOT_CLAUSE">NOT_CLAUSE</a></span></code></th>
+<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#NOT">NOT</a></span></code></th>
 <td class="colLast">&nbsp;</td>
 </tr>
 <tr class="rowColor">
@@ -604,8 +604,9 @@ implements <a href="QueryBuilder.html" title="interface in io.micronaut.data.mod
 </td>
 </tr>
 <tr id="i16" class="altColor">
-<td class="colFirst"><code>protected java.lang.String</code></td>
-<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#formatEndsWith()">formatEndsWith</a></span>()</code></th>
+<td class="colFirst"><code>protected void</code></td>
+<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#concat(java.lang.StringBuilder,java.util.Collection)">concat</a></span>&#8203;(java.lang.StringBuilder&nbsp;writer,
+      java.util.Collection&lt;java.lang.Runnable&gt;&nbsp;partsWriters)</code></th>
 <td class="colLast">&nbsp;</td>
 </tr>
 <tr id="i17" class="rowColor">
@@ -617,41 +618,26 @@ implements <a href="QueryBuilder.html" title="interface in io.micronaut.data.mod
 </tr>
 <tr id="i18" class="altColor">
 <td class="colFirst"><code>protected java.lang.String</code></td>
-<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#formatStartsWith()">formatStartsWith</a></span>()</code></th>
-<td class="colLast">&nbsp;</td>
-</tr>
-<tr id="i19" class="rowColor">
-<td class="colFirst"><code>protected java.lang.String</code></td>
-<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#formatStartsWithBeginning()">formatStartsWithBeginning</a></span>()</code></th>
-<td class="colLast">&nbsp;</td>
-</tr>
-<tr id="i20" class="altColor">
-<td class="colFirst"><code>protected java.lang.String</code></td>
-<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#formEndsWithEnd()">formEndsWithEnd</a></span>()</code></th>
-<td class="colLast">&nbsp;</td>
-</tr>
-<tr id="i21" class="rowColor">
-<td class="colFirst"><code>protected java.lang.String</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getAliasName(io.micronaut.data.model.PersistentEntity)">getAliasName</a></span>&#8203;(<a href="../../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;entity)</code></th>
 <td class="colLast">
 <div class="block">Get an alias name for the given entity.</div>
 </td>
 </tr>
-<tr id="i22" class="altColor">
+<tr id="i19" class="rowColor">
 <td class="colFirst"><code>java.lang.String</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getAliasName(io.micronaut.data.model.query.JoinPath)">getAliasName</a></span>&#8203;(<a href="../JoinPath.html" title="class in io.micronaut.data.model.query">JoinPath</a>&nbsp;joinPath)</code></th>
 <td class="colLast">
 <div class="block">Get the alias name.</div>
 </td>
 </tr>
-<tr id="i23" class="rowColor">
+<tr id="i20" class="altColor">
 <td class="colFirst"><code>protected abstract java.lang.String</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getColumnName(io.micronaut.data.model.PersistentProperty)">getColumnName</a></span>&#8203;(<a href="../../PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a>&nbsp;persistentProperty)</code></th>
 <td class="colLast">
 <div class="block">Get the column name for the given property.</div>
 </td>
 </tr>
-<tr id="i24" class="altColor">
+<tr id="i21" class="rowColor">
 <td class="colFirst"><code>protected java.util.Optional&lt;java.lang.String&gt;</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getDataTransformerReadValue(java.lang.String,io.micronaut.data.model.PersistentProperty)">getDataTransformerReadValue</a></span>&#8203;(java.lang.String&nbsp;alias,
                            <a href="../../PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a>&nbsp;prop)</code></th>
@@ -659,7 +645,7 @@ implements <a href="QueryBuilder.html" title="interface in io.micronaut.data.mod
 <div class="block">Returns transformed value if the data transformer id defined.</div>
 </td>
 </tr>
-<tr id="i25" class="rowColor">
+<tr id="i22" class="altColor">
 <td class="colFirst"><code>protected java.util.Optional&lt;java.lang.String&gt;</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getDataTransformerWriteValue(java.lang.String,io.micronaut.data.model.PersistentProperty)">getDataTransformerWriteValue</a></span>&#8203;(java.lang.String&nbsp;alias,
                             <a href="../../PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a>&nbsp;prop)</code></th>
@@ -667,42 +653,42 @@ implements <a href="QueryBuilder.html" title="interface in io.micronaut.data.mod
 <div class="block">Returns transformed value if the data transformer id defined.</div>
 </td>
 </tr>
-<tr id="i26" class="altColor">
+<tr id="i23" class="rowColor">
 <td class="colFirst"><code>protected <a href="sql/Dialect.html" title="enum in io.micronaut.data.model.query.builder.sql">Dialect</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getDialect()">getDialect</a></span>()</code></th>
 <td class="colLast">
 <div class="block">Get dialect.</div>
 </td>
 </tr>
-<tr id="i27" class="rowColor">
+<tr id="i24" class="altColor">
 <td class="colFirst"><code>protected java.lang.String</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getPathOnlyAliasName(io.micronaut.data.model.query.JoinPath)">getPathOnlyAliasName</a></span>&#8203;(<a href="../JoinPath.html" title="class in io.micronaut.data.model.query">JoinPath</a>&nbsp;joinPath)</code></th>
 <td class="colLast">
 <div class="block">Get the alias name for just the join path.</div>
 </td>
 </tr>
-<tr id="i28" class="altColor">
+<tr id="i25" class="rowColor">
 <td class="colFirst"><code>protected java.lang.String</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getTableAsKeyword()">getTableAsKeyword</a></span>()</code></th>
 <td class="colLast">
 <div class="block">Get the AS keyword to use for table aliases.</div>
 </td>
 </tr>
-<tr id="i29" class="rowColor">
+<tr id="i26" class="altColor">
 <td class="colFirst"><code>protected abstract java.lang.String</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getTableName(io.micronaut.data.model.PersistentEntity)">getTableName</a></span>&#8203;(<a href="../../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;entity)</code></th>
 <td class="colLast">
 <div class="block">Get the table name for the given entity.</div>
 </td>
 </tr>
-<tr id="i30" class="altColor">
+<tr id="i27" class="rowColor">
 <td class="colFirst"><code>protected java.lang.String</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getUnescapedTableName(io.micronaut.data.model.PersistentEntity)">getUnescapedTableName</a></span>&#8203;(<a href="../../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;entity)</code></th>
 <td class="colLast">
 <div class="block">Get the table name for the given entity.</div>
 </td>
 </tr>
-<tr id="i31" class="rowColor">
+<tr id="i28" class="altColor">
 <td class="colFirst"><code>protected void</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#handleSubQuery(io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder.CriteriaContext,io.micronaut.data.model.query.QueryModel.SubqueryCriterion,java.lang.String)">handleSubQuery</a></span>&#8203;(<a href="AbstractSqlLikeQueryBuilder.CriteriaContext.html" title="interface in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder.CriteriaContext</a>&nbsp;ctx,
               <a href="../QueryModel.SubqueryCriterion.html" title="class in io.micronaut.data.model.query">QueryModel.SubqueryCriterion</a>&nbsp;subqueryCriterion,
@@ -711,35 +697,35 @@ implements <a href="QueryBuilder.html" title="interface in io.micronaut.data.mod
 <div class="block">For handling subqueries.</div>
 </td>
 </tr>
-<tr id="i32" class="altColor">
+<tr id="i29" class="rowColor">
 <td class="colFirst"><code>protected abstract boolean</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#isAliasForBatch()">isAliasForBatch</a></span>()</code></th>
 <td class="colLast">
 <div class="block">Should aliases be used in batch statements.</div>
 </td>
 </tr>
-<tr id="i33" class="rowColor">
+<tr id="i30" class="altColor">
 <td class="colFirst"><code>protected boolean</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#isExpandEmbedded()">isExpandEmbedded</a></span>()</code></th>
 <td class="colLast">
 <div class="block">Should embedded queries by expanded by the implementation.</div>
 </td>
 </tr>
-<tr id="i34" class="altColor">
+<tr id="i31" class="rowColor">
 <td class="colFirst"><code>protected java.lang.String</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#quote(java.lang.String)">quote</a></span>&#8203;(java.lang.String&nbsp;persistedName)</code></th>
 <td class="colLast">
 <div class="block">Quote a column name for the dialect.</div>
 </td>
 </tr>
-<tr id="i35" class="rowColor">
+<tr id="i32" class="altColor">
 <td class="colFirst"><code>abstract java.lang.String</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#resolveJoinType(io.micronaut.data.annotation.Join.Type)">resolveJoinType</a></span>&#8203;(<a href="../../../annotation/Join.Type.html" title="enum in io.micronaut.data.annotation">Join.Type</a>&nbsp;jt)</code></th>
 <td class="colLast">
 <div class="block">Resolves the join type.</div>
 </td>
 </tr>
-<tr id="i36" class="altColor">
+<tr id="i33" class="rowColor">
 <td class="colFirst"><code>protected abstract void</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#selectAllColumns(io.micronaut.data.model.PersistentEntity,java.lang.String,java.lang.StringBuilder)">selectAllColumns</a></span>&#8203;(<a href="../../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;entity,
                 java.lang.String&nbsp;alias,
@@ -748,7 +734,7 @@ implements <a href="QueryBuilder.html" title="interface in io.micronaut.data.mod
 <div class="block">Selects all columns for the given entity and alias.</div>
 </td>
 </tr>
-<tr id="i37" class="rowColor">
+<tr id="i34" class="altColor">
 <td class="colFirst"><code>protected abstract void</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#selectAllColumns(io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder.QueryState,java.lang.StringBuilder)">selectAllColumns</a></span>&#8203;(<a href="AbstractSqlLikeQueryBuilder.QueryState.html" title="class in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder.QueryState</a>&nbsp;queryState,
                 java.lang.StringBuilder&nbsp;queryBuffer)</code></th>
@@ -756,14 +742,14 @@ implements <a href="QueryBuilder.html" title="interface in io.micronaut.data.mod
 <div class="block">Obtain the string that selects all columns from the entity.</div>
 </td>
 </tr>
-<tr id="i38" class="altColor">
+<tr id="i35" class="rowColor">
 <td class="colFirst"><code>protected boolean</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#shouldEscape(io.micronaut.data.model.PersistentEntity)">shouldEscape</a></span>&#8203;(<a href="../../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;entity)</code></th>
 <td class="colLast">
 <div class="block">Whether queries should be escaped for the given entity.</div>
 </td>
 </tr>
-<tr id="i39" class="rowColor">
+<tr id="i36" class="altColor">
 <td class="colFirst"><code>protected void</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#traversePersistentProperties(io.micronaut.data.model.PersistentEntity,boolean,boolean,java.util.function.BiConsumer)">traversePersistentProperties</a></span>&#8203;(<a href="../../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;persistentEntity,
                             boolean&nbsp;includeIdentity,
@@ -773,7 +759,7 @@ implements <a href="QueryBuilder.html" title="interface in io.micronaut.data.mod
 <div class="block">Traverses properties that should be persisted.</div>
 </td>
 </tr>
-<tr id="i40" class="altColor">
+<tr id="i37" class="rowColor">
 <td class="colFirst"><code>protected void</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#traversePersistentProperties(io.micronaut.data.model.PersistentEntity,java.util.function.BiConsumer)">traversePersistentProperties</a></span>&#8203;(<a href="../../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;persistentEntity,
                             java.util.function.BiConsumer&lt;java.util.List&lt;<a href="../../Association.html" title="interface in io.micronaut.data.model">Association</a>&gt;,&#8203;<a href="../../PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a>&gt;&nbsp;consumer)</code></th>
@@ -781,7 +767,7 @@ implements <a href="QueryBuilder.html" title="interface in io.micronaut.data.mod
 <div class="block">Traverses properties that should be persisted.</div>
 </td>
 </tr>
-<tr id="i41" class="rowColor">
+<tr id="i38" class="altColor">
 <td class="colFirst"><code>protected void</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#traversePersistentProperties(io.micronaut.data.model.PersistentProperty,java.util.function.BiConsumer)">traversePersistentProperties</a></span>&#8203;(<a href="../../PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a>&nbsp;property,
                             java.util.function.BiConsumer&lt;java.util.List&lt;<a href="../../Association.html" title="interface in io.micronaut.data.model">Association</a>&gt;,&#8203;<a href="../../PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a>&gt;&nbsp;consumer)</code></th>
@@ -950,16 +936,16 @@ implements <a href="QueryBuilder.html" title="interface in io.micronaut.data.mod
 </dl>
 </li>
 </ul>
-<a id="NOT_CLAUSE">
+<a id="NOT">
 <!--   -->
 </a>
 <ul class="blockList">
 <li class="blockList">
-<h4>NOT_CLAUSE</h4>
-<pre>protected static final&nbsp;java.lang.String NOT_CLAUSE</pre>
+<h4>NOT</h4>
+<pre>protected static final&nbsp;java.lang.String NOT</pre>
 <dl>
 <dt><span class="seeLabel">See Also:</span></dt>
-<dd><a href="../../../../../../constant-values.html#io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder.NOT_CLAUSE">Constant Field Values</a></dd>
+<dd><a href="../../../../../../constant-values.html#io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder.NOT">Constant Field Values</a></dd>
 </dl>
 </li>
 </ul>
@@ -1384,55 +1370,18 @@ protected&nbsp;java.lang.String&nbsp;asLiteral&#8203;(@Nullable
 </dl>
 </li>
 </ul>
-<a id="formEndsWithEnd()">
+<a id="concat(java.lang.StringBuilder,java.util.Collection)">
 <!--   -->
 </a>
 <ul class="blockList">
 <li class="blockList">
-<h4>formEndsWithEnd</h4>
-<pre class="methodSignature">protected&nbsp;java.lang.String&nbsp;formEndsWithEnd()</pre>
+<h4>concat</h4>
+<pre class="methodSignature">protected&nbsp;void&nbsp;concat&#8203;(java.lang.StringBuilder&nbsp;writer,
+                      java.util.Collection&lt;java.lang.Runnable&gt;&nbsp;partsWriters)</pre>
 <dl>
-<dt><span class="returnLabel">Returns:</span></dt>
-<dd>Formats end of an ends with expression</dd>
-</dl>
-</li>
-</ul>
-<a id="formatStartsWithBeginning()">
-<!--   -->
-</a>
-<ul class="blockList">
-<li class="blockList">
-<h4>formatStartsWithBeginning</h4>
-<pre class="methodSignature">protected&nbsp;java.lang.String&nbsp;formatStartsWithBeginning()</pre>
-<dl>
-<dt><span class="returnLabel">Returns:</span></dt>
-<dd>Formats the beginning of an starts with expression</dd>
-</dl>
-</li>
-</ul>
-<a id="formatEndsWith()">
-<!--   -->
-</a>
-<ul class="blockList">
-<li class="blockList">
-<h4>formatEndsWith</h4>
-<pre class="methodSignature">protected&nbsp;java.lang.String&nbsp;formatEndsWith()</pre>
-<dl>
-<dt><span class="returnLabel">Returns:</span></dt>
-<dd>Formats the ends with expression.</dd>
-</dl>
-</li>
-</ul>
-<a id="formatStartsWith()">
-<!--   -->
-</a>
-<ul class="blockList">
-<li class="blockList">
-<h4>formatStartsWith</h4>
-<pre class="methodSignature">protected&nbsp;java.lang.String&nbsp;formatStartsWith()</pre>
-<dl>
-<dt><span class="returnLabel">Returns:</span></dt>
-<dd>Formats the starts with expression.</dd>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>writer</code> - The writer</dd>
+<dd><code>partsWriters</code> - The parts writers</dd>
 </dl>
 </li>
 </ul>
