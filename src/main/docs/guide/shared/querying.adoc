@@ -56,27 +56,61 @@ The following table summarizes the possible alternative patterns, behaviour and 
 .Method Patterns and Return Types
 [cols=3*]
 |===
-|*Method Pattern*
-|*Expected Return Type*
+|*Method Prefix*
+|*Supported Return Types*
 |*Description*
 
-|`countBy*`
+|`findBy`, `getBy`, `queryBy`, `retrieveBy`, `readBy`, `searchBy` following by <<criteria, criteria>> with method parameters for criteria predicates
+|An entity or any common `Iterable<E>` type, `Stream<E>`, `Optional<E>`, `Page<E>`, `Slice<E>`
+|Find one or many records matching criteria
+
+|`find`, `get`, `query`, `retrieve`, `read`, `search` with zero or many method parameters to match
+|An entity or any common `Iterable<E>` type, `Stream<E>`, `Optional<E>`, `Page<E>`, `Slice<E>`
+|Find one or many records matching properties (every method parameter should have a name after the property it wants to match)
+
+|`countBy` following by <<criteria, criteria>> with method parameters for criteria predicates
 |A primitive number of an instance of `java.lang.Number`
-|Counts the number of records
+|Counts the number of records matching criteria
 
-|`existsBy*`
+|`count` with zero or many method parameters to match
+|A primitive number of an instance of `java.lang.Number`
+|Counts the number of records matching properties
+
+|`existsBy` following by <<criteria, criteria>> with method parameters for criteria predicates
 |A primitive or wrapper `boolean`
-|Checks whether a record exists
+|Checks whether a record exists matching criteria
 
-|`deleteBy*`
-|A `void` or `Number` return type
-|Batch delete for the given finder
+|`exists` with zero or many method parameters to match
+|A primitive or wrapper `boolean`
+|Checks whether a record exists matching properties
 
-|`updateBy*`
+|`delete`, `remove`, `erase`, `eliminate` with an entity or entities method parameter
 |A `void` or `Number` return type
-|Batch update for the given finder
+|Delete one or many entries
+
+|`deleteBy`, `removeBy`, `eraseBy`, `eliminateBy` following by <<criteria, criteria>> with parameters for criteria predicates
+|A `void` or `Number` return type
+|Batch delete matching criteria
+
+|`delete`, `remove`, `erase`, `eliminate` with zero or many method parameters to match
+|A `void` or `Number` return type
+|Batch delete where parameter/s represents an entity's property (must be named the same)
+
+|`update` with an entity or entities parameter
+|A `void` or `Number` return type
+|Update one or many entities
+
+|`update` + properties to update + `By` following by <<criteria, criteria>> with method parameters to match following by parameters for criteria predicates
+|A `void` or `Number` return type
+|Batch update by properties
+
+|`update` with by method parameters to match (annotated @Id or @Version) followed by method parameters to update
+|A `void` or `Number` return type
+|Batch update where parameter/s represents an entity's property (must be named the same)
 
 |===
+
+Note that every method prefix can have `One` or `All` suffix: `findOneByTitle`, `countAllByTitle` etc.
 
 TIP: More details about the batch update variants of these methods is covered in the <<dataUpdates, Data Updates>> section.
 
