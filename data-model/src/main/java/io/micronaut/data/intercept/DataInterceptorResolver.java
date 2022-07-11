@@ -59,11 +59,7 @@ final class DataInterceptorResolver {
     DataInterceptor<Object, Object> resolve(@NonNull RepositoryMethodKey key,
                                             @NonNull MethodInvocationContext<Object, Object> context,
                                             @Nullable InjectionPoint<?> injectionPoint) {
-        return interceptors.compute(key, (k, interceptor) -> {
-            if (interceptor != null) {
-                return interceptor;
-            }
-
+        return interceptors.computeIfAbsent(key, (k) -> {
             final String dataSourceName = context.stringValue(Repository.class)
                 .orElseGet(() -> injectionPoint == null ? null : injectionPoint.getAnnotationMetadata().stringValue(Repository.class).orElse(null));
             final Class<?> operationsType = context.classValue(RepositoryConfiguration.class, "operations")
