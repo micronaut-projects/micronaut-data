@@ -49,76 +49,72 @@ import java.util.concurrent.ConcurrentHashMap;
 @Singleton
 final class DataInterceptorResolver {
 
-    private final BeanLocator beanLocator;
-    private final Map<RepositoryMethodKey, DataInterceptor> interceptorMap = new ConcurrentHashMap<>(20);
+    private final BeanLocator locator;
+    private final Map<RepositoryMethodKey, DataInterceptor<? super Object, ? super Object>> interceptors = new ConcurrentHashMap<>();
 
-    DataInterceptorResolver(BeanLocator beanLocator) {
-        this.beanLocator = beanLocator;
+    DataInterceptorResolver(BeanLocator locator) {
+        this.locator = locator;
     }
 
     DataInterceptor<Object, Object> resolve(@NonNull RepositoryMethodKey key,
                                             @NonNull MethodInvocationContext<Object, Object> context,
                                             @Nullable InjectionPoint<?> injectionPoint) {
-         DataInterceptor<Object, Object> dataInterceptor = interceptorMap.get(key);
-         if (dataInterceptor != null) {
-             return dataInterceptor;
-         }
-         String dataSourceName = context.stringValue(Repository.class)
-             .orElseGet(() -> injectionPoint == null ? null : injectionPoint.getAnnotationMetadata().stringValue(Repository.class).orElse(null));
-         Class<?> operationsType = context.classValue(RepositoryConfiguration.class, "operations")
-             .orElse(PrimaryRepositoryOperations.class);
-         Class<?> interceptorType = context
-             .classValue(DataMethod.class, DataMethod.META_MEMBER_INTERCEPTOR)
-             .orElse(null);
-
-         if (interceptorType != null && DataInterceptor.class.isAssignableFrom(interceptorType)) {
-             DataInterceptor<Object, Object> childInterceptor =
-                 findInterceptor(dataSourceName, operationsType, interceptorType);
-             interceptorMap.put(key, childInterceptor);
-             return childInterceptor;
-         }
-        final AnnotationValue<DataMethod> declaredAnnotation = context.getDeclaredAnnotation(DataMethod.class);
-        if (declaredAnnotation != null) {
-            interceptorType = declaredAnnotation.classValue(DataMethod.META_MEMBER_INTERCEPTOR).orElse(null);
-            if (interceptorType != null && DataInterceptor.class.isAssignableFrom(interceptorType)) {
-                DataInterceptor<Object, Object> childInterceptor =
-                    findInterceptor(dataSourceName, operationsType, interceptorType);
-                interceptorMap.put(key, childInterceptor);
-                return childInterceptor;
+        return interceptors.compute(key, (k, interceptor) -> {
+            if (interceptor != null) {
+                return interceptor;
             }
-        }
 
-        final String interceptorName = context.getAnnotationMetadata().stringValue(DataMethod.class, DataMethod.META_MEMBER_INTERCEPTOR).orElse(null);
-        if (interceptorName != null) {
-            throw new IllegalStateException("Micronaut Data Interceptor [" + interceptorName + "] is not on the classpath but required by the method: " + context.getExecutableMethod().toString());
-        }
-        throw new IllegalStateException("Micronaut Data method is missing compilation time query information. Ensure that the Micronaut Data annotation processors are declared in your build and try again with a clean re-build.");
+            final String dataSourceName = context.stringValue(Repository.class)
+                .orElseGet(() -> injectionPoint == null ? null : injectionPoint.getAnnotationMetadata().stringValue(Repository.class).orElse(null));
+            final Class<?> operationsType = context.classValue(RepositoryConfiguration.class, "operations")
+                .orElse(PrimaryRepositoryOperations.class);
+            final Class<?> interceptorType = context
+                .classValue(DataMethod.class, DataMethod.META_MEMBER_INTERCEPTOR)
+                .orElseGet(() -> {
+                    final AnnotationValue<DataMethod> declaredAnnotation = context.getDeclaredAnnotation(DataMethod.class);
+                    if (declaredAnnotation == null) {
+                        return null;
+                    }
+                    return declaredAnnotation.classValue(DataMethod.META_MEMBER_INTERCEPTOR).orElse(null);
+                });
+
+            if (interceptorType != null && DataInterceptor.class.isAssignableFrom(interceptorType)) {
+                return findInterceptor(dataSourceName, operationsType, interceptorType);
+            }
+
+            final String interceptorName = context.getAnnotationMetadata().stringValue(DataMethod.class, DataMethod.META_MEMBER_INTERCEPTOR).orElse(null);
+            if (interceptorName != null) {
+                throw new IllegalStateException("Micronaut Data Interceptor [" + interceptorName + "] is not on the classpath but required by the method: " + context.getExecutableMethod().toString());
+            }
+            throw new IllegalStateException("Micronaut Data method is missing compilation time query information. Ensure that the Micronaut Data annotation processors are declared in your build and try again with a clean re-build.");
+        });
     }
 
     @NonNull
     private DataInterceptor<Object, Object> findInterceptor(@Nullable String dataSourceName,
                                                             @NonNull Class<?> operationsType,
                                                             @NonNull Class<?> interceptorType) {
-        DataInterceptor interceptor;
         if (!RepositoryOperations.class.isAssignableFrom(operationsType)) {
             throw new IllegalArgumentException("Repository type must be an instance of RepositoryOperations!");
         }
 
-        RepositoryOperations datastore;
+        final RepositoryOperations datastore;
         try {
             if (dataSourceName != null) {
-                Qualifier qualifier = Qualifiers.byName(dataSourceName);
-                datastore = (RepositoryOperations) beanLocator.getBean(operationsType, qualifier);
+                final Qualifier qualifier = Qualifiers.byName(dataSourceName);
+                datastore = (RepositoryOperations) locator.getBean(operationsType, qualifier);
             } else {
-                datastore = (RepositoryOperations) beanLocator.getBean(operationsType);
+                datastore = (RepositoryOperations) locator.getBean(operationsType);
             }
         } catch (NoSuchBeanException e) {
             throw new ConfigurationException("No backing RepositoryOperations configured for repository. Check your configuration and try again", e);
         }
-        BeanIntrospection<Object> introspection = BeanIntrospector.SHARED.findIntrospections(ref ->
+        final BeanIntrospection<Object> introspection = BeanIntrospector.SHARED.findIntrospections(ref ->
             ref.isPresent() && interceptorType.isAssignableFrom(ref.getBeanType())).stream().findFirst().orElseThrow(() ->
             new DataAccessException("No Data interceptor found for type: " + interceptorType)
         );
+
+        final DataInterceptor interceptor;
         if (introspection.getConstructorArguments().length == 0) {
             interceptor = (DataInterceptor) introspection.instantiate();
         } else {
