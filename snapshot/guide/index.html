@@ -1096,32 +1096,75 @@ Methods with <code>Stream&lt;Book&gt;</code> results need to be used with a 'try
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Method Pattern</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Expected Return Type</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Method Prefix</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Supported Return Types</strong></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Description</strong></p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>countBy*</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>findBy</code>, <code>getBy</code>, <code>queryBy</code>, <code>retrieveBy</code>, <code>readBy</code>, <code>searchBy</code> following by <a href="#criteria">criteria</a> with method parameters for criteria predicates</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">An entity or any common <code>Iterable&lt;E&gt;</code> type, <code>Stream&lt;E&gt;</code>, <code>Optional&lt;E&gt;</code>, <code>Page&lt;E&gt;</code>, <code>Slice&lt;E&gt;</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Find one or many records matching criteria</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>find</code>, <code>get</code>, <code>query</code>, <code>retrieve</code>, <code>read</code>, <code>search</code> with zero or many method parameters to match</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">An entity or any common <code>Iterable&lt;E&gt;</code> type, <code>Stream&lt;E&gt;</code>, <code>Optional&lt;E&gt;</code>, <code>Page&lt;E&gt;</code>, <code>Slice&lt;E&gt;</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Find one or many records matching properties (every method parameter should have a name after the property it wants to match)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>countBy</code> following by <a href="#criteria">criteria</a> with method parameters for criteria predicates</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">A primitive number of an instance of <code>java.lang.Number</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Counts the number of records</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Counts the number of records matching criteria</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>existsBy*</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>count</code> with zero or many method parameters to match</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">A primitive number of an instance of <code>java.lang.Number</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Counts the number of records matching properties</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>existsBy</code> following by <a href="#criteria">criteria</a> with method parameters for criteria predicates</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">A primitive or wrapper <code>boolean</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Checks whether a record exists</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Checks whether a record exists matching criteria</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>deleteBy*</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">A <code>void</code> or <code>Number</code> return type</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Batch delete for the given finder</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>exists</code> with zero or many method parameters to match</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">A primitive or wrapper <code>boolean</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Checks whether a record exists matching properties</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>updateBy*</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>delete</code>, <code>remove</code>, <code>erase</code>, <code>eliminate</code> with an entity or entities method parameter</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">A <code>void</code> or <code>Number</code> return type</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Batch update for the given finder</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Delete one or many entries</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>deleteBy</code>, <code>removeBy</code>, <code>eraseBy</code>, <code>eliminateBy</code> following by <a href="#criteria">criteria</a> with parameters for criteria predicates</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">A <code>void</code> or <code>Number</code> return type</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Batch delete matching criteria</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>delete</code>, <code>remove</code>, <code>erase</code>, <code>eliminate</code> with zero or many method parameters to match</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">A <code>void</code> or <code>Number</code> return type</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Batch delete where parameter/s represents an entity&#8217;s property (must be named the same)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>update</code> with an entity or entities parameter</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">A <code>void</code> or <code>Number</code> return type</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Update one or many entities</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>update</code> + properties to update + <code>By</code> following by <a href="#criteria">criteria</a> with method parameters to match following by parameters for criteria predicates</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">A <code>void</code> or <code>Number</code> return type</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Batch update by properties</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>update</code> with by method parameters to match (annotated @Id or @Version) followed by method parameters to update</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">A <code>void</code> or <code>Number</code> return type</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Batch update where parameter/s represents an entity&#8217;s property (must be named the same)</p></td>
 </tr>
 </tbody>
 </table>
+<div class="paragraph">
+<p>Note that every method prefix can have <code>One</code> or <code>All</code> suffix: <code>findOneByTitle</code>, <code>countAllByTitle</code> etc.</p>
+</div>
 <div class="admonitionblock tip">
 <table>
 <tr>
