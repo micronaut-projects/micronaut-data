@@ -58,6 +58,11 @@ public abstract class AbstractReactiveInterceptor<T, R> extends AbstractQueryInt
      * @return the size
      */
     protected Publisher<Integer> count(Publisher<?> publisher) {
-        return Flux.from(publisher).count().map(Long::intValue);
+        return Flux.from(publisher).map(v -> {
+            if (v instanceof Number) {
+                return ((Number) v).longValue();
+            }
+            return 1L;
+        }).reduce(0L, Long::sum).map(Long::intValue);
     }
 }

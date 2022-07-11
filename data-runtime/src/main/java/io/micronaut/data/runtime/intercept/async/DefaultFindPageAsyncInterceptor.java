@@ -32,11 +32,11 @@ import java.util.concurrent.CompletionStage;
 /**
  * Default implementation of {@link FindPageAsyncInterceptor}.
  *
- * @param <T> The declaring type
  * @author graemerocher
  * @since 1.0.0
  */
-public class DefaultFindPageAsyncInterceptor<T> extends AbstractAsyncInterceptor<T, Page<Object>> implements FindPageAsyncInterceptor<T> {
+public class DefaultFindPageAsyncInterceptor extends AbstractConvertCompletionStageInterceptor<Page<Object>> implements FindPageAsyncInterceptor<Object> {
+
     /**
      * Default constructor.
      *
@@ -46,9 +46,8 @@ public class DefaultFindPageAsyncInterceptor<T> extends AbstractAsyncInterceptor
         super(datastore);
     }
 
-    @SuppressWarnings("unchecked")
     @Override
-    public CompletionStage<Page<Object>> intercept(RepositoryMethodKey methodKey, MethodInvocationContext<T, CompletionStage<Page<Object>>> context) {
+    protected CompletionStage<?> interceptCompletionStage(RepositoryMethodKey methodKey, MethodInvocationContext<Object, CompletionStage<Page<Object>>> context) {
         if (context.hasAnnotation(Query.class)) {
             PreparedQuery<?, ?> preparedQuery = prepareQuery(methodKey, context);
             PreparedQuery<?, Number> countQuery = prepareCountQuery(methodKey, context);
@@ -64,8 +63,8 @@ public class DefaultFindPageAsyncInterceptor<T> extends AbstractAsyncInterceptor
                     }
                 });
 
-        } else {
-            return asyncDatastoreOperations.findPage(getPagedQuery(context));
         }
+        return asyncDatastoreOperations.findPage(getPagedQuery(context));
     }
+
 }

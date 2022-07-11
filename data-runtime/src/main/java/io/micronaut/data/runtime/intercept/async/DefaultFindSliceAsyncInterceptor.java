@@ -33,11 +33,11 @@ import java.util.concurrent.CompletionStage;
 /**
  * Default implementation of {@link FindSliceAsyncInterceptor}.
  *
- * @param <T> The declaring type
  * @author graemerocher
  * @since 1.0.0
  */
-public class DefaultFindSliceAsyncInterceptor<T> extends AbstractAsyncInterceptor<T, Slice<Object>> implements FindSliceAsyncInterceptor<T> {
+public class DefaultFindSliceAsyncInterceptor extends AbstractConvertCompletionStageInterceptor<Slice<Object>> implements FindSliceAsyncInterceptor<Object> {
+
     /**
      * Default constructor.
      *
@@ -47,23 +47,20 @@ public class DefaultFindSliceAsyncInterceptor<T> extends AbstractAsyncIntercepto
         super(datastore);
     }
 
-    @SuppressWarnings("unchecked")
     @Override
-    public CompletionStage<Slice<Object>> intercept(RepositoryMethodKey methodKey, MethodInvocationContext<T, CompletionStage<Slice<Object>>> context) {
+    protected CompletionStage<?> interceptCompletionStage(RepositoryMethodKey methodKey, MethodInvocationContext<Object, CompletionStage<Slice<Object>>> context) {
         if (context.hasAnnotation(Query.class)) {
             PreparedQuery<?, ?> preparedQuery = prepareQuery(methodKey, context);
             Pageable pageable = preparedQuery.getPageable();
             return asyncDatastoreOperations.findAll(preparedQuery)
-                    .thenApply(objects ->
-                            Slice.of((List<Object>) CollectionUtils.iterableToList(objects), pageable)
-                    );
+                .thenApply(objects -> Slice.of((List<Object>) CollectionUtils.iterableToList(objects), pageable));
 
-        } else {
-            PagedQuery<Object> pagedQuery = getPagedQuery(context);
-            return asyncDatastoreOperations.findAll(pagedQuery).thenApply(objects ->
-                    Slice.of(CollectionUtils.iterableToList(objects), pagedQuery.getPageable())
-            );
         }
+        PagedQuery<Object> pagedQuery = getPagedQuery(context);
+        return asyncDatastoreOperations.findAll(pagedQuery).thenApply(objects ->
+            Slice.of(CollectionUtils.iterableToList(objects), pagedQuery.getPageable())
+        );
     }
+
 }
 

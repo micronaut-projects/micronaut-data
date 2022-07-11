@@ -17,25 +17,21 @@ package io.micronaut.data.runtime.intercept.async;
 
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.type.Argument;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.intercept.async.FindAllAsyncInterceptor;
 import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.operations.RepositoryOperations;
 
-import java.util.Collections;
 import java.util.concurrent.CompletionStage;
-import java.util.function.Function;
 
 /**
  * The default implementation of {@link FindAllAsyncInterceptor}.
  *
- * @param <T> The declaring type
  * @author graemerocher
  * @since 1.0.0
  */
-public class DefaultFindAllAsyncInterceptor<T> extends AbstractAsyncInterceptor<T, Iterable<Object>> implements FindAllAsyncInterceptor<T> {
+public class DefaultFindAllAsyncInterceptor extends AbstractConvertCompletionStageInterceptor<Iterable<Object>> implements FindAllAsyncInterceptor<Object> {
 
     /**
      * Default constructor.
@@ -46,24 +42,13 @@ public class DefaultFindAllAsyncInterceptor<T> extends AbstractAsyncInterceptor<
         super(datastore);
     }
 
-    @SuppressWarnings("unchecked")
     @Override
-    public CompletionStage<Iterable<Object>> intercept(RepositoryMethodKey methodKey, MethodInvocationContext<T, CompletionStage<Iterable<Object>>> context) {
-        CompletionStage<? extends Iterable<?>> future;
+    protected CompletionStage<?> interceptCompletionStage(RepositoryMethodKey methodKey, MethodInvocationContext<Object, CompletionStage<Iterable<Object>>> context) {
         if (context.hasAnnotation(Query.class)) {
             PreparedQuery<?, ?> preparedQuery = prepareQuery(methodKey, context);
-            future = asyncDatastoreOperations.findAll(preparedQuery);
-
-        } else {
-            future = asyncDatastoreOperations.findAll(getPagedQuery(context));
+            return asyncDatastoreOperations.findAll(preparedQuery);
         }
-        return future.thenApply((Function<Iterable<?>, Iterable<Object>>) iterable -> {
-            Argument<?> argument = findReturnType(context, LIST_OF_OBJECTS);
-            Iterable<Object> result = (Iterable<Object>) operations.getConversionService().convert(
-                    iterable,
-                    argument
-            ).orElse(null);
-            return result == null ? Collections.emptyList() : result;
-        });
+        return asyncDatastoreOperations.findAll(getPagedQuery(context));
     }
+
 }

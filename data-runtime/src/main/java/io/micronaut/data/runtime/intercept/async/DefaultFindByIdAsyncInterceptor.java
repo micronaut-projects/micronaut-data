@@ -27,9 +27,9 @@ import java.util.concurrent.CompletionStage;
 /**
  * Default implementation that handles lookup by ID asynchronously.
  *
- * @param <T> The declaring type.
  */
-public class DefaultFindByIdAsyncInterceptor<T> extends AbstractAsyncInterceptor<T, Object> implements FindByIdAsyncInterceptor<T> {
+public class DefaultFindByIdAsyncInterceptor extends AbstractConvertCompletionStageInterceptor<Object> implements FindByIdAsyncInterceptor<Object> {
+
     /**
      * Default constructor.
      *
@@ -39,15 +39,14 @@ public class DefaultFindByIdAsyncInterceptor<T> extends AbstractAsyncInterceptor
         super(datastore);
     }
 
-    @SuppressWarnings("unchecked")
     @Override
-    public CompletionStage<Object> intercept(RepositoryMethodKey methodKey, MethodInvocationContext<T, CompletionStage<Object>> context) {
+    protected CompletionStage<?> interceptCompletionStage(RepositoryMethodKey methodKey, MethodInvocationContext<Object, CompletionStage<Object>> context) {
         Class<?> rootEntity = getRequiredRootEntity(context);
         Object id = context.getParameterValues()[0];
         if (!(id instanceof Serializable)) {
             throw new IllegalArgumentException("Entity IDs must be serializable!");
         }
-        return asyncDatastoreOperations.findOne((Class<Object>) rootEntity, (Serializable) id)
-                .thenApply(o -> convertOne(context, o));
+        return asyncDatastoreOperations.findOne((Class<Object>) rootEntity, (Serializable) id);
     }
+
 }

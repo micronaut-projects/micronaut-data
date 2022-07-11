@@ -17,7 +17,6 @@ package io.micronaut.data.runtime.intercept.async;
 
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.type.Argument;
 import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.intercept.async.UpdateAllEntriesAsyncInterceptor;
 import io.micronaut.data.operations.RepositoryOperations;
@@ -31,8 +30,8 @@ import java.util.concurrent.CompletionStage;
  * @author Denis Stepanov
  * @since 2.4.0
  */
-public class DefaultUpdateAllAsyncEntitiesInterceptor<T> extends AbstractAsyncInterceptor<T, Object>
-        implements UpdateAllEntriesAsyncInterceptor<T, CompletionStage<Object>> {
+public class DefaultUpdateAllAsyncEntitiesInterceptor extends AbstractCountConvertCompletionStageInterceptor
+        implements UpdateAllEntriesAsyncInterceptor<Object, CompletionStage<Object>> {
 
     /**
      * Default constructor.
@@ -44,18 +43,10 @@ public class DefaultUpdateAllAsyncEntitiesInterceptor<T> extends AbstractAsyncIn
     }
 
     @Override
-    public CompletionStage<Object> intercept(RepositoryMethodKey methodKey, MethodInvocationContext<T, CompletionStage<Object>> context) {
-        Iterable<T> iterable = (Iterable<T>) getEntitiesParameter(context, Object.class);
-        //noinspection unchecked
-        Class<T> rootEntity = (Class<T>) getRequiredRootEntity(context);
-        CompletionStage<Iterable<T>> future = asyncDatastoreOperations.updateAll(getUpdateAllBatchOperation(context, rootEntity, iterable));
-        Argument<?> csValueArgument = findReturnType(context, LIST_OF_OBJECTS);
-        if (isNumber(csValueArgument.getType())) {
-            return future.thenApply(it -> convertNumberToReturnType(context, count(it)));
-        }
-        return future.thenApply(it -> operations.getConversionService().convertRequired(
-                it,
-                csValueArgument
-        ));
+    protected CompletionStage<?> interceptCompletionStage(RepositoryMethodKey methodKey, MethodInvocationContext<Object, CompletionStage<Object>> context) {
+        Iterable<Object> iterable = getEntitiesParameter(context, Object.class);
+        Class<Object> rootEntity = getRequiredRootEntity(context);
+        return asyncDatastoreOperations.updateAll(getUpdateAllBatchOperation(context, rootEntity, iterable));
     }
+
 }

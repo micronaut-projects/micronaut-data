@@ -27,7 +27,7 @@ import org.reactivestreams.Publisher;
  * @author graemerocher
  * @since 1.0.0
  */
-public class DefaultDeleteOneReactiveInterceptor extends AbstractPublisherInterceptor implements DeleteOneReactiveInterceptor<Object, Object> {
+public class DefaultDeleteOneReactiveInterceptor extends AbstractCountOrEntityPublisherInterceptor implements DeleteOneReactiveInterceptor<Object, Object> {
     /**
      * Default constructor.
      *
