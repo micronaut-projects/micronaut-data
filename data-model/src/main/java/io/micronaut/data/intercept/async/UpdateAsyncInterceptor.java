@@ -26,5 +26,5 @@ import java.util.concurrent.CompletionStage;
  * @author graemerocher
  * @since 1.0
  */
-public interface UpdateAsyncInterceptor<T> extends DataInterceptor<T, CompletionStage<Number>> {
+public interface UpdateAsyncInterceptor<T> extends DataInterceptor<T, CompletionStage<Object>> {
 }

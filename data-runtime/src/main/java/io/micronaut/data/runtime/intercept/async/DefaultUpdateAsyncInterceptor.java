@@ -15,22 +15,22 @@
  */
 package io.micronaut.data.runtime.intercept.async;
 
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.aop.MethodInvocationContext;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.intercept.RepositoryMethodKey;
-import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.intercept.async.UpdateAsyncInterceptor;
 import io.micronaut.data.model.runtime.PreparedQuery;
+import io.micronaut.data.operations.RepositoryOperations;
 
 import java.util.concurrent.CompletionStage;
 
 /**
  * Default implementation of {@link UpdateAsyncInterceptor}.
- * @param <T> The declaring type
  * @author graemerocher
  * @since 1.0.0
  */
-public class DefaultUpdateAsyncInterceptor<T> extends AbstractAsyncInterceptor<T, Number> implements UpdateAsyncInterceptor<T> {
+public class DefaultUpdateAsyncInterceptor extends AbstractCountConvertCompletionStageInterceptor implements UpdateAsyncInterceptor<Object> {
+
     /**
      * Default constructor.
      *
@@ -41,9 +41,9 @@ public class DefaultUpdateAsyncInterceptor<T> extends AbstractAsyncInterceptor<T
     }
 
     @Override
-    public CompletionStage<Number> intercept(RepositoryMethodKey methodKey, MethodInvocationContext<T, CompletionStage<Number>> context) {
+    protected CompletionStage<?> interceptCompletionStage(RepositoryMethodKey methodKey, MethodInvocationContext<Object, CompletionStage<Object>> context) {
         PreparedQuery<?, Number> preparedQuery = (PreparedQuery<?, Number>) prepareQuery(methodKey, context);
-        return asyncDatastoreOperations.executeUpdate(preparedQuery)
-                .thenApply(n -> convertNumberToReturnType(context, n));
+        return asyncDatastoreOperations.executeUpdate(preparedQuery);
     }
+
 }

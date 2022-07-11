@@ -33,7 +33,8 @@ import java.util.concurrent.CompletionStage;
  * @author graemerocher
  * @since 1.0.0
  */
-public class DefaultDeleteAllAsyncInterceptor<T> extends AbstractAsyncInterceptor<T, Object> implements DeleteAllAsyncInterceptor<T, Object> {
+public class DefaultDeleteAllAsyncInterceptor<T> extends AbstractCountConvertCompletionStageInterceptor implements DeleteAllAsyncInterceptor<Object, Object> {
+
     /**
      * Default constructor.
      *
@@ -44,19 +45,16 @@ public class DefaultDeleteAllAsyncInterceptor<T> extends AbstractAsyncIntercepto
     }
 
     @Override
-    public CompletionStage<Object> intercept(RepositoryMethodKey methodKey, MethodInvocationContext<T, CompletionStage<Object>> context) {
+    protected CompletionStage<?> interceptCompletionStage(RepositoryMethodKey methodKey, MethodInvocationContext<Object, CompletionStage<Object>> context) {
         Optional<Iterable<Object>> deleteEntities = findEntitiesParameter(context, Object.class);
         Optional<Object> deleteEntity = findEntityParameter(context, Object.class);
-        CompletionStage<Number> cs;
         if (!deleteEntity.isPresent() && !deleteEntities.isPresent()) {
             PreparedQuery<?, Number> preparedQuery = (PreparedQuery<?, Number>) prepareQuery(methodKey, context);
-            cs = asyncDatastoreOperations.executeDelete(preparedQuery);
+            return asyncDatastoreOperations.executeDelete(preparedQuery);
         } else if (deleteEntity.isPresent()) {
-            cs = asyncDatastoreOperations.delete(getDeleteOperation(context, deleteEntity.get()));
-        } else {
-            cs = asyncDatastoreOperations.deleteAll(getDeleteBatchOperation(context, deleteEntities.get()));
+            return asyncDatastoreOperations.delete(getDeleteOperation(context, deleteEntity.get()));
         }
-        return cs.thenApply(number -> convertNumberToReturnType(context, number));
+        return asyncDatastoreOperations.deleteAll(getDeleteBatchOperation(context, deleteEntities.get()));
     }
 
 }

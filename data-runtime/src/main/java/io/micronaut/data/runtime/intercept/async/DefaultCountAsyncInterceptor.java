@@ -55,8 +55,7 @@ public class DefaultCountAsyncInterceptor<T> extends AbstractAsyncInterceptor<T,
                         }
                         return result;
                     });
-        } else {
-            return asyncDatastoreOperations.count(getPagedQuery(context));
         }
+        return asyncDatastoreOperations.count(getPagedQuery(context));
     }
 }

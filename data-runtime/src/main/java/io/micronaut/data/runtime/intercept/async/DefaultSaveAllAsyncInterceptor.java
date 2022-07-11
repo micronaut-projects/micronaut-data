@@ -17,7 +17,6 @@ package io.micronaut.data.runtime.intercept.async;
 
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.type.Argument;
 import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.intercept.async.SaveAllAsyncInterceptor;
 import io.micronaut.data.operations.RepositoryOperations;
@@ -30,7 +29,8 @@ import java.util.concurrent.CompletionStage;
  * @author graemerocher
  * @since 1.0.0
  */
-public class DefaultSaveAllAsyncInterceptor<T> extends AbstractAsyncInterceptor<T, Object> implements SaveAllAsyncInterceptor<T> {
+public class DefaultSaveAllAsyncInterceptor<T> extends AbstractCountConvertCompletionStageInterceptor implements SaveAllAsyncInterceptor<Object> {
+
     /**
      * Default constructor.
      *
@@ -41,14 +41,10 @@ public class DefaultSaveAllAsyncInterceptor<T> extends AbstractAsyncInterceptor<
     }
 
     @Override
-    public CompletionStage<Object> intercept(RepositoryMethodKey methodKey, MethodInvocationContext<T, CompletionStage<Object>> context) {
+    protected CompletionStage<?> interceptCompletionStage(RepositoryMethodKey methodKey, MethodInvocationContext<Object, CompletionStage<Object>> context) {
         Iterable<Object> iterable = getEntitiesParameter(context, Object.class);
-        CompletionStage<Iterable<Object>> cs = asyncDatastoreOperations.persistAll(getInsertBatchOperation(context, iterable));
-        Argument<?> csValueArgument = getReturnType(context);
-        if (isNumber(csValueArgument.getType())) {
-            return cs.thenApply(it -> operations.getConversionService().convertRequired(count(it), csValueArgument));
-        }
-        return (CompletionStage) cs;
+        return asyncDatastoreOperations.persistAll(getInsertBatchOperation(context, iterable));
     }
+
 }
 

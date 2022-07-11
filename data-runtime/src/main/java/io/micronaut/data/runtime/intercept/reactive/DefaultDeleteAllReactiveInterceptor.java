@@ -31,7 +31,7 @@ import java.util.Optional;
  * @author graemerocher
  * @since 1.0.0
  */
-public class DefaultDeleteAllReactiveInterceptor extends AbstractPublisherInterceptor implements DeleteAllReactiveInterceptor<Object, Object> {
+public class DefaultDeleteAllReactiveInterceptor extends AbstractCountOrEntityPublisherInterceptor implements DeleteAllReactiveInterceptor<Object, Object> {
     /**
      * Default constructor.
      *

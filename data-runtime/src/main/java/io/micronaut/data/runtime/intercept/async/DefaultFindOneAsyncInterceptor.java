@@ -27,9 +27,9 @@ import java.util.concurrent.CompletionStage;
 /**
  * Default implementation of the {@link FindOneAsyncInterceptor} interface.
  *
- * @param <T> The declaring type.
  */
-public class DefaultFindOneAsyncInterceptor<T> extends AbstractAsyncInterceptor<T, Object> implements FindOneAsyncInterceptor<T> {
+public class DefaultFindOneAsyncInterceptor extends AbstractConvertCompletionStageInterceptor<Object> implements FindOneAsyncInterceptor<Object> {
+
     /**
      * Default constructor.
      *
@@ -39,12 +39,10 @@ public class DefaultFindOneAsyncInterceptor<T> extends AbstractAsyncInterceptor<
         super(datastore);
     }
 
-    @SuppressWarnings("unchecked")
     @Override
-    public CompletionStage<Object> intercept(RepositoryMethodKey methodKey, MethodInvocationContext<T, CompletionStage<Object>> context) {
+    protected CompletionStage<?> interceptCompletionStage(RepositoryMethodKey methodKey, MethodInvocationContext<Object, CompletionStage<Object>> context) {
         PreparedQuery<Object, Object> preparedQuery = (PreparedQuery<Object, Object>) prepareQuery(methodKey, context);
-        return asyncDatastoreOperations.findOne(preparedQuery)
-                .thenApply(o -> convertOne(context, o));
+        return asyncDatastoreOperations.findOne(preparedQuery);
     }
 
 }
