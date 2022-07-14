@@ -65,6 +65,12 @@ jobs:
           check_name: Java CI / Test Report (${{ matrix.java }})
           report_paths: '**/build/test-results/test/TEST-*.xml'
           check_retries: 'true'
+      - name: "📜 Upload binary compatibility check results"
+        if: always()
+        uses: actions/upload-artifact@v2
+        with:
+          name: binary-compatibility-reports
+          path: "**/build/reports/binary-compatibility-*.html"
       - name: Publish to Sonatype Snapshots
         if: success() && github.event_name == 'push' && matrix.java == '11'
         env:
