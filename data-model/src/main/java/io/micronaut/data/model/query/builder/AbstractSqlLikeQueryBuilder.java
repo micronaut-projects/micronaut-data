@@ -22,11 +22,7 @@ import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
-import io.micronaut.data.annotation.DataTransformer;
-import io.micronaut.data.annotation.Join;
-import io.micronaut.data.annotation.MappedEntity;
-import io.micronaut.data.annotation.TypeRole;
-import io.micronaut.data.annotation.Where;
+import io.micronaut.data.annotation.*;
 import io.micronaut.data.annotation.repeatable.WhereSpecifications;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.Embedded;
@@ -865,6 +861,9 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
     }
 
     private String buildAdditionalWhereString(String alias, PersistentEntity entity, AnnotationMetadata annotationMetadata) {
+        if (annotationMetadata.hasAnnotation(IgnoreWhere.class)) {
+            return "";
+        }
         final String whereStr = resolveWhereForAnnotationMetadata(alias, annotationMetadata);
         if (StringUtils.isNotEmpty(whereStr)) {
             return whereStr;

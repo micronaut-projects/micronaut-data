@@ -37,6 +37,10 @@ interface TestRepository extends CrudRepository<User, Long> {
     @Where("@.xyz = true")
     @Where("@.abc > 12")
     List<User> findByIdIsNotNull();
+
+    @Join("category")
+    @IgnoreWhere
+    List<User> findByIdIsNull();
 }
 
 @MappedEntity
@@ -108,6 +112,8 @@ class Category {
                 .stringValue(Query).get() == "SELECT user_ FROM test.User AS user_ WHERE (user_.enabled = true)"
         repository.getRequiredMethod("findByIdIsNotNull")
                 .stringValue(Query).get() == "SELECT user_ FROM test.User AS user_ JOIN FETCH user_.category user_category_ WHERE (user_.id IS NOT NULL AND (user_.xyz = true AND user_.abc > 12))"
+        repository.getRequiredMethod("findByIdIsNull")
+                .stringValue(Query).get() == "SELECT user_ FROM test.User AS user_ JOIN FETCH user_.category user_category_ WHERE (user_.id IS NULL)"
     }
 
     void "test parameterized @Where declaration - fails compile"() {
