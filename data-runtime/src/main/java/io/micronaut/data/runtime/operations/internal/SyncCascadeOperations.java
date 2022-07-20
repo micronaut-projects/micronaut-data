@@ -115,48 +115,56 @@ public final class SyncCascadeOperations<Ctx extends OperationContext> extends A
                 CascadeManyOp cascadeManyOp = (CascadeManyOp) cascadeOp;
                 RuntimePersistentEntity<Object> childPersistentEntity = cascadeManyOp.childPersistentEntity;
 
+                boolean modified = false;
                 List<Object> entities;
                 if (cascadeType == Relation.Cascade.UPDATE) {
                     entities = CollectionUtils.iterableToList(cascadeManyOp.children);
                     for (ListIterator<Object> iterator = entities.listIterator(); iterator.hasNext(); ) {
                         Object child = iterator.next();
-                        if (ctx.persisted.contains(child)) {
-                            continue;
+                        if (!ctx.persisted.contains(child)) {
+                            RuntimePersistentProperty<Object> identity = childPersistentEntity.getIdentity();
+                            Object value;
+                            if (identity.getProperty().get(child) == null) {
+                                value = helper.persistOne(ctx, child, childPersistentEntity);
+                            } else {
+                                value = helper.updateOne(ctx, child, childPersistentEntity);
+                            }
+                            iterator.set(value);
+                            modified = true;
                         }
-                        RuntimePersistentProperty<Object> identity = childPersistentEntity.getIdentity();
-                        Object value;
-                        if (identity.getProperty().get(child) == null) {
-                            value = helper.persistOne(ctx, child, childPersistentEntity);
-                        } else {
-                            value = helper.updateOne(ctx, child, childPersistentEntity);
-                        }
-                        iterator.set(value);
                     }
                 } else if (cascadeType == Relation.Cascade.PERSIST) {
                     if (helper.isSupportsBatchInsert(ctx, childPersistentEntity)) {
                         RuntimePersistentProperty<Object> identity = childPersistentEntity.getIdentity();
-                        Predicate<Object> veto = val -> ctx.persisted.contains(val) || identity.getProperty().get(val) != null && !(identity instanceof Association);
+                        boolean[] allVetoed = {true};
+                        Predicate<Object> veto = val -> {
+                            boolean doVeto = ctx.persisted.contains(val) || identity.getProperty().get(val) != null && !(identity instanceof Association);
+                            allVetoed[0] = allVetoed[0] && doVeto;
+                            return doVeto;
+                        };
                         entities = helper.persistBatch(ctx, cascadeManyOp.children, childPersistentEntity, veto);
+                        modified = !allVetoed[0];
                     } else {
                         entities = CollectionUtils.iterableToList(cascadeManyOp.children);
                         for (ListIterator<Object> iterator = entities.listIterator(); iterator.hasNext(); ) {
                             Object child = iterator.next();
-                            if (ctx.persisted.contains(child)) {
-                                continue;
+                            if (!ctx.persisted.contains(child)) {
+                                RuntimePersistentProperty<Object> identity = childPersistentEntity.getIdentity();
+                                if (identity.getProperty().get(child) == null) {
+                                    Object persisted = helper.persistOne(ctx, child, childPersistentEntity);
+                                    iterator.set(persisted);
+                                    modified = true;
+                                }
                             }
-                            RuntimePersistentProperty<Object> identity = childPersistentEntity.getIdentity();
-                            if (identity.getProperty().get(child) != null) {
-                                continue;
-                            }
-                            Object persisted = helper.persistOne(ctx, child, childPersistentEntity);
-                            iterator.set(persisted);
                         }
                     }
                 } else {
                     continue;
                 }
 
-                entity = afterCascadedMany(entity, cascadeOp.ctx.associations, cascadeManyOp.children, entities);
+                if (modified) {
+                    entity = afterCascadedMany(entity, cascadeOp.ctx.associations, cascadeManyOp.children, entities);
+                }
 
                 RuntimeAssociation<Object> association = (RuntimeAssociation) cascadeOp.ctx.getAssociation();
                 if (SqlQueryBuilder.isForeignKeyWithJoinTable(association) && !entities.isEmpty()) {
