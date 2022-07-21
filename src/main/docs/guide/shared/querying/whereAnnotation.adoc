@@ -17,3 +17,10 @@ snippet::example.UserRepository[project-base="doc-examples/jdbc-example", source
 
 All other queries performed on the entity will include `enabled = true` in the query statement.
 
+It is also possible to override an entities ann:data.annotation.Where[] annotation by annotating a repository method with it.
+The `findDisabled` example would then be:
+
+snippet::example.UserRepositoryWithWhere[project-base="doc-examples/jdbc-example", source="main"]
+
+If you want to remove a ann:data.annotation.Where[] criteria from a particular repository method, you can use ann:data.annotation.IgnoreWhere[].
+

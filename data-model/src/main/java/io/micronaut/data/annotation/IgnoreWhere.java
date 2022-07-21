@@ -19,10 +19,12 @@ import java.lang.annotation.*;
 
 /**
  * The {@code IgnoreWhere} annotation prevents the generation of additional criteria for this query.
+ * @since 3.5.1
  * @author Nick Hensel
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE, ElementType.TYPE})
+@Documented
 @Inherited
 public @interface IgnoreWhere {
 }
