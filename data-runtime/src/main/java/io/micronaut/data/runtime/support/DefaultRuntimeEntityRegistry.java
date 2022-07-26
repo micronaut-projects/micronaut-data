@@ -109,12 +109,8 @@ final class DefaultRuntimeEntityRegistry implements RuntimeEntityRegistry, Appli
     @Override
     public <T> RuntimePersistentEntity<T> getEntity(@NonNull Class<T> type) {
         ArgumentUtils.requireNonNull("type", type);
-        RuntimePersistentEntity<T> entity = entities.get(type);
-        if (entity == null) {
-            entity = newEntity(type);
-            entities.put(type, entity);
-        }
-        return entity;
+        // we need atomicity here, since entites are compared by identity (==)
+        return entities.computeIfAbsent(type, this::newEntity);
     }
 
     @NonNull
