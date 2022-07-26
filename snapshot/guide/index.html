@@ -811,7 +811,7 @@ Lombok plugins like the Gradle plugin <code>io.franzbecker.gradle-lombok</code> 
 <p>The <a href="../api/io/micronaut/data/annotation/Repository.html">@Repository</a> annotation accepts an optional string value which represents the name of the connection or datasource in a multiple datasource scenario. By default, Micronaut Data will look for the default datasource.</p>
 </div>
 <div class="paragraph">
-<p>It&#8217;s possible to annotate the repository injection point with <a href="../api/io/micronaut/data/annotation/Repository.html">@Repository</a> and set the data source name. Note that you cannot inject generic repositories, each repository needs to be bind to an entity.</p>
+<p>It&#8217;s possible to annotate the repository injection point with <a href="../api/io/micronaut/data/annotation/Repository.html">@Repository</a> and set the data source name. Note that you cannot inject generic repositories, each repository needs to be bound to an entity.</p>
 </div>
 <div class="paragraph">
 <p>The entity to treat as the root entity for the purposes of querying is established either from the method signature or from the generic type parameter specified to the <a href="../api/io/micronaut/data/repository/GenericRepository.html">GenericRepository</a> interface.</p>
@@ -960,7 +960,7 @@ abstract class AbstractBookRepository(private val entityManager: EntityManager) 
 </div>
 </div>
 <div class="paragraph">
-<p>As you can see from the above example, using abstract classes can be useful as it allows you to combine custom code that interacts with a repository interface code implemented automatically by Micronaut Data.</p>
+<p>As you can see from the above example, using abstract classes can be useful as it allows you to combine custom code that interacts with a repository interface implemented automatically by Micronaut Data.</p>
 </div>
 
 <h2 id="querying"><a class="anchor" href="#querying"></a>3.2 Writing Queries</h2>
@@ -2034,6 +2034,30 @@ interface UserRepository : CrudRepository&lt;User, Long&gt; { // <b class="conum
 </div>
 <div class="paragraph">
 <p>All other queries performed on the entity will include <code>enabled = true</code> in the query statement.</p>
+</div>
+<div class="paragraph">
+<p>It is also possible to override an entities <a href="../api/io/micronaut/data/annotation/Where.html">@Where</a> annotation by annotating a repository method with it.
+The <code>findDisabled</code> example would then be:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">package example;
+
+import io.micronaut.data.annotation.Where;
+
+import java.util.List;
+
+public interface UserRepositoryWithWhere {
+
+    // ...
+
+    @Where("@.enabled = false")
+    List&lt;User&gt; findDisabled();
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>If you want to remove a <a href="../api/io/micronaut/data/annotation/Where.html">@Where</a> criteria from a particular repository method, you can use <a href="../api/io/micronaut/data/annotation/IgnoreWhere.html">@IgnoreWhere</a>.</p>
 </div>
 
 <h2 id="async"><a class="anchor" href="#async"></a>3.2.8 Asynchronous Queries</h2>
