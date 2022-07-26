@@ -84,6 +84,10 @@ class TestUtils {
         return getDataTypes(metadata.getAnnotation(DataMethod))
     }
 
+    static boolean isExpandableQuery(AnnotationMetadataProvider metadata) {
+        return metadata.getAnnotation(DataMethod).booleanValue(DataMethod.META_MEMBER_EXPANDABLE_QUERY)
+    }
+
     static DataType[] getDataTypes(AnnotationValue<DataMethod> annotationValue) {
         return annotationValue.getAnnotations(DataMethod.META_MEMBER_PARAMETERS, DataMethodQueryParameter)
                 .stream()
@@ -95,6 +99,12 @@ class TestUtils {
                     return Stream.empty()
                 })
                 .toArray(DataType[]::new)
+    }
+
+    static boolean anyParameterExpandable(AnnotationMetadataProvider metadata) {
+        return metadata.getAnnotation(DataMethod).getAnnotations(DataMethod.META_MEMBER_PARAMETERS, DataMethodQueryParameter)
+                .stream()
+                .anyMatch(p -> p.booleanValue(DataMethodQueryParameter.META_MEMBER_EXPANDABLE).orElse(false))
     }
 
     static String[] getQueryParameterNames(AnnotationValue<DataMethod> annotationValue) {

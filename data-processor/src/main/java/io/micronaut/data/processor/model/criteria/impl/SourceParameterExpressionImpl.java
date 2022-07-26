@@ -191,10 +191,7 @@ public final class SourceParameterExpressionImpl extends ParameterExpressionImpl
         if (dataType == DataType.JSON) {
             return false;
         }
-        if (!dataType.isArray() && (parameterElement == null || parameterElement.getType().isAssignable(Iterable.class.getName()))) {
-            return true;
-        }
-        return false;
+        return !dataType.isArray() && (parameterElement != null && parameterElement.getType().isAssignable(Iterable.class.getName()));
     }
 
     private String[] getBindingPath(PersistentPropertyPath parameterProperty, PersistentPropertyPath bindedPath) {
