@@ -2,7 +2,7 @@ Micronaut Data repositories are defined as interfaces that are annotated with th
 
 The ann:data.annotation.Repository[] annotation accepts an optional string value which represents the name of the connection or datasource in a multiple datasource scenario. By default, Micronaut Data will look for the default datasource.
 
-It's possible to annotate the repository injection point with ann:data.annotation.Repository[] and set the data source name. Note that you cannot inject generic repositories, each repository needs to be bind to an entity.
+It's possible to annotate the repository injection point with ann:data.annotation.Repository[] and set the data source name. Note that you cannot inject generic repositories, each repository needs to be bound to an entity.
 
 The entity to treat as the root entity for the purposes of querying is established either from the method signature or from the generic type parameter specified to the api:data.repository.GenericRepository[] interface.
 
@@ -57,4 +57,4 @@ Note that in addition to interfaces you can also define repositories as abstract
 
 snippet::example.AbstractBookRepository[project-base="doc-examples/hibernate-example", source="main"]
 
-As you can see from the above example, using abstract classes can be useful as it allows you to combine custom code that interacts with a repository interface code implemented automatically by Micronaut Data.
+As you can see from the above example, using abstract classes can be useful as it allows you to combine custom code that interacts with a repository interface implemented automatically by Micronaut Data.
