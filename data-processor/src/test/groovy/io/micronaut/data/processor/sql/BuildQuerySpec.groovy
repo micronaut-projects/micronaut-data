@@ -22,12 +22,14 @@ import io.micronaut.data.processor.visitors.AbstractDataSpec
 import spock.lang.Issue
 import spock.lang.Unroll
 
+import static io.micronaut.data.processor.visitors.TestUtils.anyParameterExpandable
 import static io.micronaut.data.processor.visitors.TestUtils.getDataTypes
 import static io.micronaut.data.processor.visitors.TestUtils.getParameterBindingIndexes
 import static io.micronaut.data.processor.visitors.TestUtils.getParameterBindingPaths
 import static io.micronaut.data.processor.visitors.TestUtils.getParameterPropertyPaths
 import static io.micronaut.data.processor.visitors.TestUtils.getQuery
 import static io.micronaut.data.processor.visitors.TestUtils.getRawQuery
+import static io.micronaut.data.processor.visitors.TestUtils.isExpandableQuery
 
 class BuildQuerySpec extends AbstractDataSpec {
 
@@ -298,11 +300,25 @@ interface MealRepository extends CrudRepository<Meal, Long> {
 }
 """)
 
-            def query = getQuery(repository.getRequiredMethod("countDistinctByFoodsAlternativeMealCurrentBloodGlucoseInList", List))
+        when:
+            def countMethod = repository.getRequiredMethod("countDistinctByFoodsAlternativeMealCurrentBloodGlucoseInList", List)
 
-        expect:
-            query == 'SELECT COUNT(*) FROM `meal` meal_ INNER JOIN `food` meal_foods_ ON meal_.`mid`=meal_foods_.`fk_meal_id` INNER JOIN `meal` meal_foods_alternative_meal_ ON meal_foods_.`fk_alt_meal`=meal_foods_alternative_meal_.`mid` WHERE (meal_foods_alternative_meal_.`current_blood_glucose` IN (?))'
+        then:
+            getQuery(countMethod) == 'SELECT COUNT(*) FROM `meal` meal_ INNER JOIN `food` meal_foods_ ON meal_.`mid`=meal_foods_.`fk_meal_id` INNER JOIN `meal` meal_foods_alternative_meal_ ON meal_foods_.`fk_alt_meal`=meal_foods_alternative_meal_.`mid` WHERE (meal_foods_alternative_meal_.`current_blood_glucose` IN (?))'
+            isExpandableQuery(countMethod)
+            anyParameterExpandable(countMethod)
 
+        when:
+            def saveMethod = repository.findPossibleMethods("save").findAny().get()
+        then:
+            !isExpandableQuery(saveMethod)
+            !anyParameterExpandable(saveMethod)
+
+        when:
+            def updateMethod = repository.findPossibleMethods("update").findAny().get()
+        then:
+            !isExpandableQuery(updateMethod)
+            !anyParameterExpandable(updateMethod)
     }
 
     void "test find by relation"() {
