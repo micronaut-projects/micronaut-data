@@ -28,7 +28,7 @@ vertx = "4.3.2"
 
 oracle-jdbc-driver = "21.6.0.0.1"
 mariadb-jdbc-driver = "2.7.6"
-mysql-jdbc-driver = "8.0.29"
+mysql-jdbc-driver = "8.0.30"
 postgres-jdbc-driver = "42.4.0"
 mssql-jdbc-driver = "8.4.1.jre8"
 
