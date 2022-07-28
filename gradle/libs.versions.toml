@@ -2,7 +2,7 @@
 micronaut = "3.5.0"
 micronaut-test = "3.4.0"
 micronaut-serde = "1.1.0"
-micronaut-sql = "4.6.1"
+micronaut-sql = "4.6.2"
 micronaut-docs = "2.0.0"
 micronaut-gradle-plugin = "3.4.1"
 micronaut-mongo = "4.3.0"
