@@ -625,7 +625,8 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                 Connection connection = status.getConnection();
                 Statement statement = prepareStatement(connection::createStatement, preparedQuery, false, true);
                 preparedQuery.bindParameters(new R2dbcParameterBinder(connection, statement, preparedQuery.getDialect()));
-                return executeAndMapEachRowSingle(statement, row -> true);
+                return executeAndMapEachRow(statement, row -> true).collectList()
+                    .map(records -> !records.isEmpty() && records.stream().allMatch(v -> v));
             });
         }
 
