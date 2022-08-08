@@ -6,6 +6,7 @@ The currently supported databases are:
 * Postgres
 * Oracle
 * MariaDB
+* MySQL
 * MS SQLServer
 
 Micronaut Data will automatically detect the driver and configure the driver correctly for each database as appropriate.
