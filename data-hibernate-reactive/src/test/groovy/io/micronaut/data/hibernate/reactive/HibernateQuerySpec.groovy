@@ -498,6 +498,13 @@ class HibernateQuerySpec extends Specification implements PostgresHibernateReact
             bookRepository.findAllByTitleStartsWith("Xyz").collectList().block().size() == 1
     }
 
+    void "test limit with native query"() {
+        when:
+            def firstBook = bookRepository.findFirstBook().block()
+        then:
+            firstBook != null
+    }
+
     void "test custom delete"() {
         when:
             def author = authorRepository.searchByName("Stephen King").block()
