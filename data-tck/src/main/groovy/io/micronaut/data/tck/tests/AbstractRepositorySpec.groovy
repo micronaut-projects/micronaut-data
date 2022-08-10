@@ -68,6 +68,7 @@ import java.util.concurrent.TimeUnit
 import java.util.stream.Collectors
 
 import static io.micronaut.data.repository.jpa.criteria.QuerySpecification.where
+import static io.micronaut.data.tck.repositories.PersonRepository.Specifications.idsIn
 import static io.micronaut.data.tck.repositories.PersonRepository.Specifications.nameEquals
 
 abstract class AbstractRepositorySpec extends Specification {
@@ -2059,6 +2060,17 @@ abstract class AbstractRepositorySpec extends Specification {
         then:
             countAppByNullByPredicateSpec == 2
             countAppByNullByQuerySpec == 2
+        when:
+            def ids = personRepository.findAll().collect { p -> p.getId() }
+            long count = ids.size()
+            def countByIds = count == 0 ? 0 : personRepository.count(idsIn(ids.toArray(new Long[0])))
+        then:
+            countByIds == count
+        when:
+            def jeffPerson = personRepository.findOne(nameEquals("Jeff")).get();
+            def foundByIdPerson = personRepository.findOne(idsIn(jeffPerson.getId())).get()
+        then:
+            jeffPerson.getId() == foundByIdPerson.getId() && jeffPerson.getName() == foundByIdPerson.getName()
         when:
             def deleted = personRepository.deleteAll(nameEquals("Jeff"))
             def all = personRepository.findAll().toList()
