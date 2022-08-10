@@ -148,16 +148,13 @@ final class DefaultSqlPreparedQuery<E, R> implements SqlPreparedQuery<E, R>, Del
 
     private int getQueryParameterValueSize(QueryParameterBinding parameter) {
         int parameterIndex = parameter.getParameterIndex();
+        Object value;
         if (parameterIndex == -1) {
-            // If parameter (in criteria for example) is multivalued then actual parameter value size is
-            // the size of that Collection, Iterable or array.
-            // Issue https://github.com/micronaut-projects/micronaut-data/issues/1678
-            if (isMultivaluedParameter(parameter.getValue())) {
-                return sizeOf(parameter.getValue());
-            }
-            return 1;
+            value = parameter.getValue();
+        } else {
+            value = preparedQuery.getParameterArray()[parameterIndex];
         }
-        return sizeOf(preparedQuery.getParameterArray()[parameterIndex]);
+        return sizeOf(value);
     }
 
     public void attachPageable(Pageable pageable, boolean isSingleResult) {
@@ -244,16 +241,4 @@ final class DefaultSqlPreparedQuery<E, R> implements SqlPreparedQuery<E, R>, Del
         return 1;
     }
 
-    /**
-     * Gets an indicator telling whether parameter value holds multiple values (for example param for IN criteria).
-     *
-     * @param parameterValue the parameter value
-     * @return true if parameter is multivalued (Collection, Iterable or an array)
-     */
-    private boolean isMultivaluedParameter(Object parameterValue) {
-        if (parameterValue == null) {
-            return false;
-        }
-        return parameterValue instanceof Collection || parameterValue instanceof Iterable || parameterValue.getClass().isArray();
-    }
 }
