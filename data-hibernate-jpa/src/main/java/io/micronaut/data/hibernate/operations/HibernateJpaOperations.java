@@ -250,7 +250,7 @@ public class HibernateJpaOperations extends AbstractHibernateOperations<Session,
     @Override
     public <T, R> R findOne(@NonNull PreparedQuery<T, R> preparedQuery) {
         return transactionOperations.executeRead(status -> {
-            FirstResultCollector<R> collector = new FirstResultCollector<>();
+            FirstResultCollector<R> collector = new FirstResultCollector<>(!preparedQuery.isNative());
             collectFindOne(sessionFactory.getCurrentSession(), preparedQuery, collector);
             return collector.result;
         });
@@ -567,7 +567,12 @@ public class HibernateJpaOperations extends AbstractHibernateOperations<Session,
 
     private final class FirstResultCollector<R> extends ResultCollector<R> {
 
+        private final boolean limitOne;
         private R result;
+
+        private FirstResultCollector(boolean limitOne) {
+            this.limitOne = limitOne;
+        }
 
         @Override
         protected void collectTuple(Query<?> query, Function<Tuple, R> fn) {
@@ -583,7 +588,9 @@ public class HibernateJpaOperations extends AbstractHibernateOperations<Session,
         }
 
         private <T> T getFirst(Query<T> q) {
-            q.setMaxResults(1);
+            if (limitOne) {
+                q.setMaxResults(1);
+            }
             Iterator<T> iterator = q.list().iterator();
             if (iterator.hasNext()) {
                 return iterator.next();

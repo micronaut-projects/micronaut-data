@@ -524,6 +524,13 @@ abstract class AbstractHibernateQuerySpec extends AbstractQuerySpec {
             bookRepository.findAllByTitleStartsWith("Xyz").size() == 1
     }
 
+    void "test limit with native query" () {
+        when:
+            def firstBook = bookRepository.findFirstBook();
+        then:
+            firstBook != null
+    }
+
     void "test custom delete"() {
         when:
             def author = authorRepository.searchByName("Stephen King")
