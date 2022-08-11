@@ -162,4 +162,7 @@ public interface BookRepository extends ReactorPageableRepository<Book, Long>, R
 
     @Query(value = "select * from book b where b.title like :arg0 limit 5", nativeQuery = true)
     Flux<Book> listNativeBooks(String arg0);
+
+    @Query(value = "select * from book limit 1", nativeQuery = true)
+    Mono<Book> findFirstBook();
 }

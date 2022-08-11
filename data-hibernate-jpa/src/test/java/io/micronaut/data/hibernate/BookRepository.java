@@ -111,4 +111,7 @@ public abstract class BookRepository extends io.micronaut.data.tck.repositories.
 
     @Query("DELETE FROM Book WHERE title = :name")
     public abstract int deleteCustomByName(String name);
+
+    @Query(nativeQuery = true, value = "select * from book limit 1")
+    public abstract Book findFirstBook();
 }

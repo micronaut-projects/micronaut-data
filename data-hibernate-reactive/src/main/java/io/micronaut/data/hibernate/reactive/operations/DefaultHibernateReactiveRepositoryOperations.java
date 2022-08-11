@@ -227,7 +227,7 @@ final class DefaultHibernateReactiveRepositoryOperations extends AbstractHiberna
     @Override
     public <T, R> Mono<R> findOne(PreparedQuery<T, R> preparedQuery) {
         return operation(session -> {
-            FirstResultCollector<R> collector = new FirstResultCollector<>();
+            FirstResultCollector<R> collector = new FirstResultCollector<>(!preparedQuery.isNative());
             collectFindOne(session, preparedQuery, collector);
             return collector.result;
         });
@@ -561,7 +561,10 @@ final class DefaultHibernateReactiveRepositoryOperations extends AbstractHiberna
 
     private final class FirstResultCollector<R> extends ResultCollector<R> {
 
+        private final boolean limitOne;
         private Mono<R> result;
+
+        private FirstResultCollector(boolean limitOne) { this.limitOne = limitOne; }
 
         @Override
         protected void collectTuple(Stage.Query<?> query, Function<Tuple, R> fn) {
@@ -574,7 +577,9 @@ final class DefaultHibernateReactiveRepositoryOperations extends AbstractHiberna
         }
 
         private <T> Mono<T> getFirst(Stage.Query<T> q) {
-            q.setMaxResults(1);
+            if (limitOne) {
+                q.setMaxResults(1);
+            }
             return helper.list(q).next();
         }
 
