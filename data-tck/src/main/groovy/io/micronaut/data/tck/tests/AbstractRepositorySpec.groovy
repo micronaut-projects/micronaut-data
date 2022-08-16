@@ -2120,12 +2120,15 @@ abstract class AbstractRepositorySpec extends Specification {
 
         when:
         def bookLoadedUsingFindAll = bookRepository.findAll().iterator().next()
-        def bookLoadedWithCriteriaApi = bookRepository.findOne(titleEquals(book.title))
+        def bookLoadedUsingFindOneWithCriteriaApi = bookRepository.findOne(titleEquals(book.title)).get()
+        def bookLoadedUsingFindAllWithCriteriaApi = bookRepository.findAll(titleEquals(book.title)).get(0)
 
         then:
         bookLoadedUsingFindAll.genre.name != null
-        bookLoadedWithCriteriaApi.present == true
-        bookLoadedWithCriteriaApi.get().genre.name != null
+        bookLoadedUsingFindOneWithCriteriaApi != null
+        bookLoadedUsingFindOneWithCriteriaApi.genre.name == genre.name
+        bookLoadedUsingFindAllWithCriteriaApi != null
+        bookLoadedUsingFindAllWithCriteriaApi.genre.name == genre.name
     }
 
     private GregorianCalendar getYearMonthDay(Date dateCreated) {
