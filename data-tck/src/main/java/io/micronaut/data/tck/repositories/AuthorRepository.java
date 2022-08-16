@@ -38,6 +38,7 @@ public interface AuthorRepository extends CrudRepository<Author, Long> {
     @Override
     @Join(value = "books", alias = "b", type = Join.Type.LEFT_FETCH)
     @Join(value = "books.pages", alias = "bp", type = Join.Type.LEFT_FETCH)
+    @Join(value = "books.genre", alias = "bg", type = Join.Type.LEFT_FETCH)
     Optional<Author> findById(@NonNull @NotNull Long aLong);
 
     Author findByName(String name);

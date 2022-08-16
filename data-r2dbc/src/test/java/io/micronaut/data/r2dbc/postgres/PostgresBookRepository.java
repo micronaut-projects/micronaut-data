@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.r2dbc.postgres;
 
+import io.micronaut.data.annotation.Join;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.TypeDef;
 import io.micronaut.data.model.DataType;
@@ -27,6 +28,7 @@ import io.micronaut.core.annotation.Nullable;
 import java.util.List;
 
 @R2dbcRepository(dialect = Dialect.POSTGRES)
+@Join(value = "genre", type = Join.Type.LEFT_FETCH)
 public abstract class PostgresBookRepository extends BookRepository {
     public PostgresBookRepository(PostgresAuthorRepository authorRepository) {
         super(authorRepository);

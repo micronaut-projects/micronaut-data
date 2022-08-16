@@ -13,17 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.r2dbc.sqlserver;
+package io.micronaut.data.r2dbc.postgres;
 
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.r2dbc.annotation.R2dbcRepository;
-import io.micronaut.data.tck.repositories.BookRepository;
+import io.micronaut.data.tck.entities.Author;
+import io.micronaut.data.tck.repositories.AuthorRepository;
+import io.micronaut.data.tck.repositories.GenreRepository;
 
-@R2dbcRepository(dialect = Dialect.SQL_SERVER)
-@Join(value = "genre", type = Join.Type.LEFT_FETCH)
-public abstract class MSBookRepository extends BookRepository {
-    public MSBookRepository(MSAuthorRepository authorRepository) {
-        super(authorRepository);
-    }
+import java.util.List;
+
+@R2dbcRepository(dialect = Dialect.POSTGRES)
+public interface PostgresGenreRepository extends GenreRepository {
 }

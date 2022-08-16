@@ -29,7 +29,7 @@ class H2RepositorySpec extends AbstractRepositorySpec implements H2TestPropertyP
 
     @Override
     GenreRepository getGenreRepository() {
-        return genreRepo
+        return context.getBean(H2GenreRepository)
     }
 
     @Memoized
