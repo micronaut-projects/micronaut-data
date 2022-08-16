@@ -38,6 +38,7 @@ import io.micronaut.data.tck.entities.CountryRegion
 import io.micronaut.data.tck.entities.CountryRegionCity
 import io.micronaut.data.tck.entities.Face
 import io.micronaut.data.tck.entities.Food
+import io.micronaut.data.tck.entities.Genre
 import io.micronaut.data.tck.entities.Meal
 import io.micronaut.data.tck.entities.Nose
 import io.micronaut.data.tck.entities.Page
@@ -70,12 +71,14 @@ import java.util.stream.Collectors
 import static io.micronaut.data.repository.jpa.criteria.QuerySpecification.where
 import static io.micronaut.data.tck.repositories.PersonRepository.Specifications.idsIn
 import static io.micronaut.data.tck.repositories.PersonRepository.Specifications.nameEquals
+import static io.micronaut.data.tck.repositories.BookSpecifications.titleEquals
 
 abstract class AbstractRepositorySpec extends Specification {
 
     abstract PersonRepository getPersonRepository()
     abstract BookRepository getBookRepository()
     abstract AuthorRepository getAuthorRepository()
+    abstract GenreRepository getGenreRepository()
     abstract CompanyRepository getCompanyRepository()
     abstract BookDtoRepository getBookDtoRepository()
     abstract CountryRepository getCountryRepository()
@@ -2102,6 +2105,27 @@ abstract class AbstractRepositorySpec extends Specification {
         then:
             deleted == 1
             personRepository.count(nameEquals("Xyz")) == 0
+    }
+
+    void "test join/fetch"() {
+        given:
+        def genre = new Genre()
+        genre.setName("Dystopia")
+        genreRepository.save(genre)
+
+        def book = new Book()
+        book.setTitle("1984")
+        book.setGenre(genre)
+        bookRepository.save(book)
+
+        when:
+        def bookLoadedUsingFindAll = bookRepository.findAll().iterator().next()
+        def bookLoadedWithCriteriaApi = bookRepository.findOne(titleEquals(book.title))
+
+        then:
+        bookLoadedUsingFindAll.genre.name != null
+        bookLoadedWithCriteriaApi.present == true
+        bookLoadedWithCriteriaApi.get().genre.name != null
     }
 
     private GregorianCalendar getYearMonthDay(Date dateCreated) {

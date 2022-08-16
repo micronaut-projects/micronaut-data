@@ -35,6 +35,12 @@ class PostgresRepositorySpec extends AbstractRepositorySpec implements PostgresT
 
     @Memoized
     @Override
+    GenreRepository getGenreRepository() {
+        return context.getBean(PostgresGenreRepository)
+    }
+
+    @Memoized
+    @Override
     PostgresAuthorRepository getAuthorRepository() {
         return context.getBean(PostgresAuthorRepository)
     }

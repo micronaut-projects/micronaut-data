@@ -25,6 +25,7 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
+import javax.persistence.OneToOne;
 import javax.persistence.PostLoad;
 import javax.persistence.PostPersist;
 import javax.persistence.PostRemove;
@@ -47,6 +48,9 @@ public class Book {
 
     @ManyToOne(fetch = FetchType.LAZY)
     private Author author;
+
+    @OneToOne(fetch = FetchType.EAGER)
+    private Genre genre;
 
     @ManyToOne
     private Publisher publisher;
@@ -125,6 +129,14 @@ public class Book {
 
     public void setAuthor(Author author) {
         this.author = author;
+    }
+
+    public Genre getGenre() {
+        return genre;
+    }
+
+    public void setGenre(Genre genre) {
+        this.genre = genre;
     }
 
     public Long getId() {

@@ -35,6 +35,12 @@ class SqlServerRepositorySpec extends AbstractRepositorySpec implements MSSQLTes
 
     @Memoized
     @Override
+    GenreRepository getGenreRepository() {
+        return context.getBean(MSGenreRepository)
+    }
+
+    @Memoized
+    @Override
     AuthorRepository getAuthorRepository() {
         return context.getBean(MSAuthorRepository)
     }

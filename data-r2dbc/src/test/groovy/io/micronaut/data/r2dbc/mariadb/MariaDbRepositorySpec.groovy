@@ -36,6 +36,12 @@ class MariaDbRepositorySpec extends AbstractRepositorySpec implements MariaDbTes
 
     @Memoized
     @Override
+    GenreRepository getGenreRepository() {
+        return context.getBean(MySqlGenreRepository)
+    }
+
+    @Memoized
+    @Override
     AuthorRepository getAuthorRepository() {
         return context.getBean(MySqlAuthorRepository)
     }
