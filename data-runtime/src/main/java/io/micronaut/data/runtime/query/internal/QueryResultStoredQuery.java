@@ -26,7 +26,9 @@ import io.micronaut.data.model.runtime.QueryParameterBinding;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -54,7 +56,7 @@ public final class QueryResultStoredQuery<E, R> extends BasicStoredQuery<E, R> {
                                   boolean isSingleResult,
                                   boolean isCount,
                                   DataMethod.OperationType operationType,
-                                  Set<JoinPath> joinPaths) {
+                                  Collection<JoinPath> joinPaths) {
         super(name,
                 annotationMetadata,
                 queryResult.getQuery(),
@@ -69,7 +71,7 @@ public final class QueryResultStoredQuery<E, R> extends BasicStoredQuery<E, R> {
         );
         this.queryResult = queryResult;
         this.operationType = operationType;
-        this.joinPaths = joinPaths;
+        this.joinPaths = joinPaths == null ? Collections.emptySet() : Collections.unmodifiableSet(new HashSet<>(joinPaths));
     }
 
     public static <T> QueryResultStoredQuery<T, T> single(DataMethod.OperationType operationType,
@@ -86,7 +88,7 @@ public final class QueryResultStoredQuery<E, R> extends BasicStoredQuery<E, R> {
                                                           QueryResult queryResult,
                                                           Class<T> rootEntity,
                                                           Class<R> resultType,
-                                                          Set<JoinPath> joinPaths) {
+                                                          Collection<JoinPath> joinPaths) {
         return new QueryResultStoredQuery<>(name, annotationMetadata, queryResult, rootEntity, resultType == Object.class ? (Class<R>) rootEntity : resultType, false, true, false, operationType, joinPaths);
     }
 
@@ -104,7 +106,7 @@ public final class QueryResultStoredQuery<E, R> extends BasicStoredQuery<E, R> {
                                                            Class<T> rootEntity,
                                                            Class<R> resultType,
                                                            boolean pageable,
-                                                           Set<JoinPath> joinPaths) {
+                                                           Collection<JoinPath> joinPaths) {
         return new QueryResultStoredQuery<>(name, annotationMetadata, queryResult, rootEntity, resultType == Object.class ? (Class<R>) rootEntity : resultType, pageable, false, false, DataMethod.OperationType.QUERY, joinPaths);
     }
 
@@ -135,7 +137,7 @@ public final class QueryResultStoredQuery<E, R> extends BasicStoredQuery<E, R> {
 
     @Override
     public Set<JoinPath> getJoinFetchPaths() {
-        return joinPaths == null ? Collections.emptySet() : Collections.unmodifiableSet(joinPaths);
+        return joinPaths;
     }
 
     private static class QueryResultParameterBinding implements QueryParameterBinding {

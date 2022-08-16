@@ -213,14 +213,13 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
         }
         QueryResultPersistentEntityCriteriaQuery queryModelCriteriaQuery = (QueryResultPersistentEntityCriteriaQuery)criteriaQuery;
         Collection<JoinPath> joinPaths = queryModelCriteriaQuery.getQueryModel().getJoinPaths();
-        Set<JoinPath> joinPathSet = joinPaths == null ? Collections.emptySet() : Collections.unmodifiableSet(new HashSet<>(joinPaths));
         QueryResult queryResult = queryModelCriteriaQuery.buildQuery(sqlQueryBuilder);
         if (type == Type.FIND_ONE) {
             return QueryResultStoredQuery.single(DataMethod.OperationType.QUERY, context.getName(), context.getAnnotationMetadata(),
-                queryResult, rootEntity, criteriaQuery.getResultType(), joinPathSet);
+                queryResult, rootEntity, criteriaQuery.getResultType(), joinPaths);
         }
         return QueryResultStoredQuery.many(context.getName(), context.getAnnotationMetadata(), queryResult, rootEntity,
-            criteriaQuery.getResultType(), !pageable.isUnpaged(), joinPathSet);
+            criteriaQuery.getResultType(), !pageable.isUnpaged(), joinPaths);
     }
 
     /**
