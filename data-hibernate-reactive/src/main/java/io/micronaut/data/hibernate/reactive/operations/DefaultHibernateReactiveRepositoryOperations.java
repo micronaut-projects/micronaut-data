@@ -564,7 +564,9 @@ final class DefaultHibernateReactiveRepositoryOperations extends AbstractHiberna
         private final boolean limitOne;
         private Mono<R> result;
 
-        private FirstResultCollector(boolean limitOne) { this.limitOne = limitOne; }
+        private FirstResultCollector(boolean limitOne) {
+            this.limitOne = limitOne;
+        }
 
         @Override
         protected void collectTuple(Stage.Query<?> query, Function<Tuple, R> fn) {
