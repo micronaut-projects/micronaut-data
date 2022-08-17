@@ -207,7 +207,7 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
                 }
             }
         }
-        QueryResultPersistentEntityCriteriaQuery queryModelCriteriaQuery = (QueryResultPersistentEntityCriteriaQuery)criteriaQuery;
+        QueryResultPersistentEntityCriteriaQuery queryModelCriteriaQuery = (QueryResultPersistentEntityCriteriaQuery) criteriaQuery;
         Collection<JoinPath> joinPaths = queryModelCriteriaQuery.getQueryModel().getJoinPaths();
         QueryResult queryResult = queryModelCriteriaQuery.buildQuery(sqlQueryBuilder);
         if (type == Type.FIND_ONE) {
