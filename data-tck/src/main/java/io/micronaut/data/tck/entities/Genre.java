@@ -1,8 +1,6 @@
 package io.micronaut.data.tck.entities;
 
 import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
 
 @Entity
 public class Genre extends GenericEntity<Long> {
