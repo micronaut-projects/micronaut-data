@@ -26,7 +26,7 @@
     catch(err) {
     }
 //-->
-var data = {"i0":9,"i1":10,"i2":10,"i3":9,"i4":9,"i5":9,"i6":9};
+var data = {"i0":9,"i1":10,"i2":10,"i3":10,"i4":9,"i5":9,"i6":9,"i7":9};
 var tabs = {65535:["t0","All Methods"],1:["t1","Static Methods"],2:["t2","Instance Methods"],8:["t4","Concrete Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -191,7 +191,7 @@ extends <a href="BasicStoredQuery.html" title="class in io.micronaut.data.runtim
 <th class="colLast" scope="col">Description</th>
 </tr>
 <tr class="altColor">
-<th class="colConstructorName" scope="row"><code><span class="memberNameLink"><a href="#%3Cinit%3E(java.lang.String,io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.query.builder.QueryResult,java.lang.Class,java.lang.Class,boolean,boolean,boolean,io.micronaut.data.intercept.annotation.DataMethod.OperationType)">QueryResultStoredQuery</a></span>&#8203;(java.lang.String&nbsp;name,
+<th class="colConstructorName" scope="row"><code><span class="memberNameLink"><a href="#%3Cinit%3E(java.lang.String,io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.query.builder.QueryResult,java.lang.Class,java.lang.Class,boolean,boolean,boolean,io.micronaut.data.intercept.annotation.DataMethod.OperationType,java.util.Collection)">QueryResultStoredQuery</a></span>&#8203;(java.lang.String&nbsp;name,
                       io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
                       <a href="../../../model/query/builder/QueryResult.html" title="interface in io.micronaut.data.model.query.builder">QueryResult</a>&nbsp;queryResult,
                       java.lang.Class&lt;<a href="QueryResultStoredQuery.html" title="type parameter in QueryResultStoredQuery">E</a>&gt;&nbsp;rootEntity,
@@ -199,7 +199,8 @@ extends <a href="BasicStoredQuery.html" title="class in io.micronaut.data.runtim
                       boolean&nbsp;pageable,
                       boolean&nbsp;isSingleResult,
                       boolean&nbsp;isCount,
-                      <a href="../../../intercept/annotation/DataMethod.OperationType.html" title="enum in io.micronaut.data.intercept.annotation">DataMethod.OperationType</a>&nbsp;operationType)</code></th>
+                      <a href="../../../intercept/annotation/DataMethod.OperationType.html" title="enum in io.micronaut.data.intercept.annotation">DataMethod.OperationType</a>&nbsp;operationType,
+                      java.util.Collection&lt;<a href="../../../model/query/JoinPath.html" title="class in io.micronaut.data.model.query">JoinPath</a>&gt;&nbsp;joinPaths)</code></th>
 <td class="colLast">&nbsp;</td>
 </tr>
 </table>
@@ -229,16 +230,21 @@ extends <a href="BasicStoredQuery.html" title="class in io.micronaut.data.runtim
 <td class="colLast">&nbsp;</td>
 </tr>
 <tr id="i1" class="rowColor">
+<td class="colFirst"><code>java.util.Set&lt;<a href="../../../model/query/JoinPath.html" title="class in io.micronaut.data.model.query">JoinPath</a>&gt;</code></td>
+<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getJoinFetchPaths()">getJoinFetchPaths</a></span>()</code></th>
+<td class="colLast">&nbsp;</td>
+</tr>
+<tr id="i2" class="altColor">
 <td class="colFirst"><code><a href="../../../intercept/annotation/DataMethod.OperationType.html" title="enum in io.micronaut.data.intercept.annotation">DataMethod.OperationType</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getOperationType()">getOperationType</a></span>()</code></th>
 <td class="colLast">&nbsp;</td>
 </tr>
-<tr id="i2" class="altColor">
+<tr id="i3" class="rowColor">
 <td class="colFirst"><code><a href="../../../model/query/builder/QueryResult.html" title="interface in io.micronaut.data.model.query.builder">QueryResult</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getQueryResult()">getQueryResult</a></span>()</code></th>
 <td class="colLast">&nbsp;</td>
 </tr>
-<tr id="i3" class="rowColor">
+<tr id="i4" class="altColor">
 <td class="colFirst"><code>static &lt;T&gt;&nbsp;<a href="QueryResultStoredQuery.html" title="class in io.micronaut.data.runtime.query.internal">QueryResultStoredQuery</a>&lt;T,&#8203;T&gt;</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#many(java.lang.String,io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.query.builder.QueryResult,java.lang.Class,boolean)">many</a></span>&#8203;(java.lang.String&nbsp;name,
     io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
@@ -247,17 +253,18 @@ extends <a href="BasicStoredQuery.html" title="class in io.micronaut.data.runtim
     boolean&nbsp;pageable)</code></th>
 <td class="colLast">&nbsp;</td>
 </tr>
-<tr id="i4" class="altColor">
+<tr id="i5" class="rowColor">
 <td class="colFirst"><code>static &lt;T,&#8203;R&gt;<br><a href="QueryResultStoredQuery.html" title="class in io.micronaut.data.runtime.query.internal">QueryResultStoredQuery</a>&lt;T,&#8203;R&gt;</code></td>
-<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#many(java.lang.String,io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.query.builder.QueryResult,java.lang.Class,java.lang.Class,boolean)">many</a></span>&#8203;(java.lang.String&nbsp;name,
+<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#many(java.lang.String,io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.query.builder.QueryResult,java.lang.Class,java.lang.Class,boolean,java.util.Collection)">many</a></span>&#8203;(java.lang.String&nbsp;name,
     io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
     <a href="../../../model/query/builder/QueryResult.html" title="interface in io.micronaut.data.model.query.builder">QueryResult</a>&nbsp;queryResult,
     java.lang.Class&lt;T&gt;&nbsp;rootEntity,
     java.lang.Class&lt;R&gt;&nbsp;resultType,
-    boolean&nbsp;pageable)</code></th>
+    boolean&nbsp;pageable,
+    java.util.Collection&lt;<a href="../../../model/query/JoinPath.html" title="class in io.micronaut.data.model.query">JoinPath</a>&gt;&nbsp;joinPaths)</code></th>
 <td class="colLast">&nbsp;</td>
 </tr>
-<tr id="i5" class="rowColor">
+<tr id="i6" class="altColor">
 <td class="colFirst"><code>static &lt;T&gt;&nbsp;<a href="QueryResultStoredQuery.html" title="class in io.micronaut.data.runtime.query.internal">QueryResultStoredQuery</a>&lt;T,&#8203;T&gt;</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#single(io.micronaut.data.intercept.annotation.DataMethod.OperationType,java.lang.String,io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.query.builder.QueryResult,java.lang.Class)">single</a></span>&#8203;(<a href="../../../intercept/annotation/DataMethod.OperationType.html" title="enum in io.micronaut.data.intercept.annotation">DataMethod.OperationType</a>&nbsp;operationType,
       java.lang.String&nbsp;name,
@@ -266,14 +273,15 @@ extends <a href="BasicStoredQuery.html" title="class in io.micronaut.data.runtim
       java.lang.Class&lt;T&gt;&nbsp;rootEntity)</code></th>
 <td class="colLast">&nbsp;</td>
 </tr>
-<tr id="i6" class="altColor">
+<tr id="i7" class="rowColor">
 <td class="colFirst"><code>static &lt;T,&#8203;R&gt;<br><a href="QueryResultStoredQuery.html" title="class in io.micronaut.data.runtime.query.internal">QueryResultStoredQuery</a>&lt;T,&#8203;R&gt;</code></td>
-<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#single(io.micronaut.data.intercept.annotation.DataMethod.OperationType,java.lang.String,io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.query.builder.QueryResult,java.lang.Class,java.lang.Class)">single</a></span>&#8203;(<a href="../../../intercept/annotation/DataMethod.OperationType.html" title="enum in io.micronaut.data.intercept.annotation">DataMethod.OperationType</a>&nbsp;operationType,
+<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#single(io.micronaut.data.intercept.annotation.DataMethod.OperationType,java.lang.String,io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.query.builder.QueryResult,java.lang.Class,java.lang.Class,java.util.Collection)">single</a></span>&#8203;(<a href="../../../intercept/annotation/DataMethod.OperationType.html" title="enum in io.micronaut.data.intercept.annotation">DataMethod.OperationType</a>&nbsp;operationType,
       java.lang.String&nbsp;name,
       io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
       <a href="../../../model/query/builder/QueryResult.html" title="interface in io.micronaut.data.model.query.builder">QueryResult</a>&nbsp;queryResult,
       java.lang.Class&lt;T&gt;&nbsp;rootEntity,
-      java.lang.Class&lt;R&gt;&nbsp;resultType)</code></th>
+      java.lang.Class&lt;R&gt;&nbsp;resultType,
+      java.util.Collection&lt;<a href="../../../model/query/JoinPath.html" title="class in io.micronaut.data.model.query">JoinPath</a>&gt;&nbsp;joinPaths)</code></th>
 <td class="colLast">&nbsp;</td>
 </tr>
 </table>
@@ -317,7 +325,7 @@ extends <a href="BasicStoredQuery.html" title="class in io.micronaut.data.runtim
 <!--   -->
 </a>
 <h3>Methods inherited from interface&nbsp;io.micronaut.data.model.runtime.<a href="../../../model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a></h3>
-<code><a href="../../../model/runtime/StoredQuery.html#getArgumentTypes()">getArgumentTypes</a>, <a href="../../../model/runtime/StoredQuery.html#getEntityIdentifierType()">getEntityIdentifierType</a>, <a href="../../../model/runtime/StoredQuery.html#getIndexedParameterAutoPopulatedPreviousPropertyIndexes()">getIndexedParameterAutoPopulatedPreviousPropertyIndexes</a>, <a href="../../../model/runtime/StoredQuery.html#getIndexedParameterAutoPopulatedPreviousPropertyPaths()">getIndexedParameterAutoPopulatedPreviousPropertyPaths</a>, <a href="../../../model/runtime/StoredQuery.html#getIndexedParameterAutoPopulatedPropertyPaths()">getIndexedParameterAutoPopulatedPropertyPaths</a>, <a href="../../../model/runtime/StoredQuery.html#getIndexedParameterBinding()">getIndexedParameterBinding</a>, <a href="../../../model/runtime/StoredQuery.html#getIndexedParameterPaths()">getIndexedParameterPaths</a>, <a href="../../../model/runtime/StoredQuery.html#getIndexedParameterTypes()">getIndexedParameterTypes</a>, <a href="../../../model/runtime/StoredQuery.html#getJoinFetchPaths()">getJoinFetchPaths</a>, <a href="../../../model/runtime/StoredQuery.html#getLastUpdatedProperty()">getLastUpdatedProperty</a>, <a href="../../../model/runtime/StoredQuery.html#getParameterBinding()">getParameterBinding</a>, <a href="../../../model/runtime/StoredQuery.html#getParameterNames()">getParameterNames</a>, <a href="../../../model/runtime/StoredQuery.html#getQueryHints()">getQueryHints</a>, <a href="../../../model/runtime/StoredQuery.html#hasInExpression()">hasInExpression</a>, <a href="../../../model/runtime/StoredQuery.html#isDtoProjection()">isDtoProjection</a>, <a href="../../../model/runtime/StoredQuery.html#isNative()">isNative</a>, <a href="../../../model/runtime/StoredQuery.html#isOptimisticLock()">isOptimisticLock</a></code></li>
+<code><a href="../../../model/runtime/StoredQuery.html#getArgumentTypes()">getArgumentTypes</a>, <a href="../../../model/runtime/StoredQuery.html#getEntityIdentifierType()">getEntityIdentifierType</a>, <a href="../../../model/runtime/StoredQuery.html#getIndexedParameterAutoPopulatedPreviousPropertyIndexes()">getIndexedParameterAutoPopulatedPreviousPropertyIndexes</a>, <a href="../../../model/runtime/StoredQuery.html#getIndexedParameterAutoPopulatedPreviousPropertyPaths()">getIndexedParameterAutoPopulatedPreviousPropertyPaths</a>, <a href="../../../model/runtime/StoredQuery.html#getIndexedParameterAutoPopulatedPropertyPaths()">getIndexedParameterAutoPopulatedPropertyPaths</a>, <a href="../../../model/runtime/StoredQuery.html#getIndexedParameterBinding()">getIndexedParameterBinding</a>, <a href="../../../model/runtime/StoredQuery.html#getIndexedParameterPaths()">getIndexedParameterPaths</a>, <a href="../../../model/runtime/StoredQuery.html#getIndexedParameterTypes()">getIndexedParameterTypes</a>, <a href="../../../model/runtime/StoredQuery.html#getLastUpdatedProperty()">getLastUpdatedProperty</a>, <a href="../../../model/runtime/StoredQuery.html#getParameterBinding()">getParameterBinding</a>, <a href="../../../model/runtime/StoredQuery.html#getParameterNames()">getParameterNames</a>, <a href="../../../model/runtime/StoredQuery.html#getQueryHints()">getQueryHints</a>, <a href="../../../model/runtime/StoredQuery.html#hasInExpression()">hasInExpression</a>, <a href="../../../model/runtime/StoredQuery.html#isDtoProjection()">isDtoProjection</a>, <a href="../../../model/runtime/StoredQuery.html#isNative()">isNative</a>, <a href="../../../model/runtime/StoredQuery.html#isOptimisticLock()">isOptimisticLock</a></code></li>
 </ul>
 </li>
 </ul>
@@ -335,7 +343,7 @@ extends <a href="BasicStoredQuery.html" title="class in io.micronaut.data.runtim
 <!--   -->
 </a>
 <h3>Constructor Detail</h3>
-<a id="&lt;init&gt;(java.lang.String,io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.query.builder.QueryResult,java.lang.Class,java.lang.Class,boolean,boolean,boolean,io.micronaut.data.intercept.annotation.DataMethod.OperationType)">
+<a id="&lt;init&gt;(java.lang.String,io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.query.builder.QueryResult,java.lang.Class,java.lang.Class,boolean,boolean,boolean,io.micronaut.data.intercept.annotation.DataMethod.OperationType,java.util.Collection)">
 <!--   -->
 </a>
 <ul class="blockListLast">
@@ -349,7 +357,8 @@ extends <a href="BasicStoredQuery.html" title="class in io.micronaut.data.runtim
                               boolean&nbsp;pageable,
                               boolean&nbsp;isSingleResult,
                               boolean&nbsp;isCount,
-                              <a href="../../../intercept/annotation/DataMethod.OperationType.html" title="enum in io.micronaut.data.intercept.annotation">DataMethod.OperationType</a>&nbsp;operationType)</pre>
+                              <a href="../../../intercept/annotation/DataMethod.OperationType.html" title="enum in io.micronaut.data.intercept.annotation">DataMethod.OperationType</a>&nbsp;operationType,
+                              java.util.Collection&lt;<a href="../../../model/query/JoinPath.html" title="class in io.micronaut.data.model.query">JoinPath</a>&gt;&nbsp;joinPaths)</pre>
 </li>
 </ul>
 </li>
@@ -375,7 +384,7 @@ extends <a href="BasicStoredQuery.html" title="class in io.micronaut.data.runtim
                                                            java.lang.Class&lt;T&gt;&nbsp;rootEntity)</pre>
 </li>
 </ul>
-<a id="single(io.micronaut.data.intercept.annotation.DataMethod.OperationType,java.lang.String,io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.query.builder.QueryResult,java.lang.Class,java.lang.Class)">
+<a id="single(io.micronaut.data.intercept.annotation.DataMethod.OperationType,java.lang.String,io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.query.builder.QueryResult,java.lang.Class,java.lang.Class,java.util.Collection)">
 <!--   -->
 </a>
 <ul class="blockList">
@@ -386,7 +395,8 @@ extends <a href="BasicStoredQuery.html" title="class in io.micronaut.data.runtim
                                                                    io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
                                                                    <a href="../../../model/query/builder/QueryResult.html" title="interface in io.micronaut.data.model.query.builder">QueryResult</a>&nbsp;queryResult,
                                                                    java.lang.Class&lt;T&gt;&nbsp;rootEntity,
-                                                                   java.lang.Class&lt;R&gt;&nbsp;resultType)</pre>
+                                                                   java.lang.Class&lt;R&gt;&nbsp;resultType,
+                                                                   java.util.Collection&lt;<a href="../../../model/query/JoinPath.html" title="class in io.micronaut.data.model.query">JoinPath</a>&gt;&nbsp;joinPaths)</pre>
 </li>
 </ul>
 <a id="many(java.lang.String,io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.query.builder.QueryResult,java.lang.Class,boolean)">
@@ -402,7 +412,7 @@ extends <a href="BasicStoredQuery.html" title="class in io.micronaut.data.runtim
                                                          boolean&nbsp;pageable)</pre>
 </li>
 </ul>
-<a id="many(java.lang.String,io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.query.builder.QueryResult,java.lang.Class,java.lang.Class,boolean)">
+<a id="many(java.lang.String,io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.query.builder.QueryResult,java.lang.Class,java.lang.Class,boolean,java.util.Collection)">
 <!--   -->
 </a>
 <ul class="blockList">
@@ -413,7 +423,8 @@ extends <a href="BasicStoredQuery.html" title="class in io.micronaut.data.runtim
                                                                  <a href="../../../model/query/builder/QueryResult.html" title="interface in io.micronaut.data.model.query.builder">QueryResult</a>&nbsp;queryResult,
                                                                  java.lang.Class&lt;T&gt;&nbsp;rootEntity,
                                                                  java.lang.Class&lt;R&gt;&nbsp;resultType,
-                                                                 boolean&nbsp;pageable)</pre>
+                                                                 boolean&nbsp;pageable,
+                                                                 java.util.Collection&lt;<a href="../../../model/query/JoinPath.html" title="class in io.micronaut.data.model.query">JoinPath</a>&gt;&nbsp;joinPaths)</pre>
 </li>
 </ul>
 <a id="count(java.lang.String,io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.query.builder.QueryResult,java.lang.Class)">
@@ -440,10 +451,23 @@ extends <a href="BasicStoredQuery.html" title="class in io.micronaut.data.runtim
 <a id="getOperationType()">
 <!--   -->
 </a>
-<ul class="blockListLast">
+<ul class="blockList">
 <li class="blockList">
 <h4>getOperationType</h4>
 <pre class="methodSignature">public&nbsp;<a href="../../../intercept/annotation/DataMethod.OperationType.html" title="enum in io.micronaut.data.intercept.annotation">DataMethod.OperationType</a>&nbsp;getOperationType()</pre>
+</li>
+</ul>
+<a id="getJoinFetchPaths()">
+<!--   -->
+</a>
+<ul class="blockListLast">
+<li class="blockList">
+<h4>getJoinFetchPaths</h4>
+<pre class="methodSignature">public&nbsp;java.util.Set&lt;<a href="../../../model/query/JoinPath.html" title="class in io.micronaut.data.model.query">JoinPath</a>&gt;&nbsp;getJoinFetchPaths()</pre>
+<dl>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>The join paths that require a fetch</dd>
+</dl>
 </li>
 </ul>
 </li>
