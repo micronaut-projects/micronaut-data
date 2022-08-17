@@ -15,9 +15,7 @@
  */
 package io.micronaut.data.jdbc.oraclexe;
 
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.annotation.Expandable;
-import io.micronaut.data.annotation.Join;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.TypeDef;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
@@ -31,7 +29,6 @@ import java.util.Collection;
 import java.util.List;
 
 @JdbcRepository(dialect = Dialect.ORACLE)
-@Join(value = "genre", type = Join.Type.LEFT_FETCH)
 public abstract class OracleXEBookRepository extends BookRepository {
     public OracleXEBookRepository(OracleXEAuthorRepository authorRepository) {
         super(authorRepository);

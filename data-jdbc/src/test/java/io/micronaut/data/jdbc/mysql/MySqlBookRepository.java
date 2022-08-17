@@ -15,7 +15,6 @@
  */
 package io.micronaut.data.jdbc.mysql;
 
-import io.micronaut.data.annotation.Join;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.tck.entities.Book;
@@ -26,7 +25,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @JdbcRepository(dialect = Dialect.MYSQL)
-@Join(value = "genre", type = Join.Type.LEFT_FETCH)
 public abstract class MySqlBookRepository extends BookRepository {
     public MySqlBookRepository(MySqlAuthorRepository authorRepository) {
         super(authorRepository);

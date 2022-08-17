@@ -28,6 +28,5 @@ public interface ShelfRepository extends GenericRepository<Shelf, Long> {
 
     @Join(value = "books", type = Join.Type.LEFT_FETCH, alias = "b_")
     @Join(value = "books.pages", type = Join.Type.LEFT_FETCH, alias = "p_")
-    @Join(value = "books.genre", type = Join.Type.LEFT_FETCH, alias = "g_")
     Optional<Shelf> findById(Long id);
 }

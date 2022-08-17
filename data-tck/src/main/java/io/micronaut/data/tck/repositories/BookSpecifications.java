@@ -12,4 +12,13 @@ public class BookSpecifications {
             return criteriaBuilder.equal(root.get("title"), title);
         };
     }
+
+    public static PredicateSpecification<Book> justJoin() {
+        return (root, criteriaBuilder) -> {
+            ((PersistentEntityFrom) root).join("genre", io.micronaut.data.annotation.Join.Type.LEFT_FETCH);
+            return null;
+        };
+    }
+
+    private BookSpecifications() {}
 }

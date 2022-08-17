@@ -49,7 +49,7 @@ public class Book {
     @ManyToOne(fetch = FetchType.LAZY)
     private Author author;
 
-    @OneToOne(fetch = FetchType.EAGER)
+    @OneToOne
     private Genre genre;
 
     @ManyToOne

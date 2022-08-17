@@ -5,26 +5,15 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 
 @Entity
-public class Genre {
-    @Id
-    @GeneratedValue
-    private Long id;
+public class Genre extends GenericEntity<Long> {
 
-    private String name;
+    private String genreName;
 
-    public Long getId() {
-        return id;
+    public String getGenreName() {
+        return genreName;
     }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
+    public void setGenreName(String genreName) {
+        this.genreName = genreName;
     }
 }

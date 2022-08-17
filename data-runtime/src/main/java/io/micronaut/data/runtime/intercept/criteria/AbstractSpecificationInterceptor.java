@@ -30,6 +30,7 @@ import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQuery;
 import io.micronaut.data.model.jpa.criteria.impl.QueryResultPersistentEntityCriteriaQuery;
 import io.micronaut.data.model.query.JoinPath;
+import io.micronaut.data.model.query.QueryModel;
 import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.model.runtime.PreparedQuery;
@@ -208,8 +209,9 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
             }
         }
         QueryResultPersistentEntityCriteriaQuery queryModelCriteriaQuery = (QueryResultPersistentEntityCriteriaQuery) criteriaQuery;
-        Collection<JoinPath> joinPaths = queryModelCriteriaQuery.getQueryModel().getJoinPaths();
-        QueryResult queryResult = queryModelCriteriaQuery.buildQuery(sqlQueryBuilder);
+        QueryModel queryModel = queryModelCriteriaQuery.getQueryModel();
+        Collection<JoinPath> joinPaths = queryModel.getJoinPaths();
+        QueryResult queryResult = sqlQueryBuilder.buildQuery(queryModel);
         if (type == Type.FIND_ONE) {
             return QueryResultStoredQuery.single(DataMethod.OperationType.QUERY, context.getName(), context.getAnnotationMetadata(),
                 queryResult, rootEntity, criteriaQuery.getResultType(), joinPaths);

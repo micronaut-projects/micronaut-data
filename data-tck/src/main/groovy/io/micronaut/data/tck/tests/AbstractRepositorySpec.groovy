@@ -72,6 +72,7 @@ import static io.micronaut.data.repository.jpa.criteria.QuerySpecification.where
 import static io.micronaut.data.tck.repositories.PersonRepository.Specifications.idsIn
 import static io.micronaut.data.tck.repositories.PersonRepository.Specifications.nameEquals
 import static io.micronaut.data.tck.repositories.BookSpecifications.titleEquals
+import static io.micronaut.data.tck.repositories.BookSpecifications.justJoin
 
 abstract class AbstractRepositorySpec extends Specification {
 
@@ -2110,7 +2111,7 @@ abstract class AbstractRepositorySpec extends Specification {
     void "test join/fetch"() {
         given:
         def genre = new Genre()
-        genre.setName("Dystopia")
+        genre.setGenreName("Dystopia")
         genreRepository.save(genre)
 
         def book = new Book()
@@ -2119,18 +2120,21 @@ abstract class AbstractRepositorySpec extends Specification {
         bookRepository.save(book)
 
         when:
-        def bookLoadedUsingFindAll = bookRepository.findAll().iterator().next()
+        def bookLoadedUsingFindAll = bookRepository.findAllByGenre(genre).get(0)
         def bookLoadedUsingFindOneWithCriteriaApi = bookRepository.findOne(titleEquals(book.title)).get()
         def bookNotFoundUsingFindOneWithCriteriaApi = bookRepository.findOne(titleEquals("non_existing_book_" + System.currentTimeMillis()))
         def bookLoadedUsingFindAllWithCriteriaApi = bookRepository.findAll(titleEquals(book.title)).get(0)
+        def bookLoadedUsingFindAllWithCriteriaApiJoinOnly = bookRepository.findAll(justJoin()).get(0)
 
         then:
-        bookLoadedUsingFindAll.genre.name != null
+        bookLoadedUsingFindAll.genre.genreName != null
         bookLoadedUsingFindOneWithCriteriaApi != null
-        bookLoadedUsingFindOneWithCriteriaApi.genre.name == genre.name
+        bookLoadedUsingFindOneWithCriteriaApi.genre.genreName == genre.genreName
         bookNotFoundUsingFindOneWithCriteriaApi.present == false
         bookLoadedUsingFindAllWithCriteriaApi != null
-        bookLoadedUsingFindAllWithCriteriaApi.genre.name == genre.name
+        bookLoadedUsingFindAllWithCriteriaApi.genre.genreName == genre.genreName
+        bookLoadedUsingFindAllWithCriteriaApiJoinOnly != null
+        bookLoadedUsingFindAllWithCriteriaApiJoinOnly.genre.genreName != null
     }
 
     private GregorianCalendar getYearMonthDay(Date dateCreated) {

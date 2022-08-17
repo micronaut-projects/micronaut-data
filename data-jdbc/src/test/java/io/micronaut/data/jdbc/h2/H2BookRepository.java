@@ -15,7 +15,6 @@
  */
 package io.micronaut.data.jdbc.h2;
 
-import io.micronaut.data.annotation.Join;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.Where;
 import io.micronaut.data.exceptions.EmptyResultException;
@@ -32,7 +31,6 @@ import java.util.List;
 import java.util.Set;
 
 @JdbcRepository(dialect = Dialect.H2)
-@Join(value = "genre", type = Join.Type.LEFT_FETCH)
 public abstract class H2BookRepository extends io.micronaut.data.tck.repositories.BookRepository {
     private final JdbcOperations jdbcOperations;
 

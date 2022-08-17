@@ -16,7 +16,6 @@
 package io.micronaut.data.r2dbc.oraclexe;
 
 import io.micronaut.data.annotation.Expandable;
-import io.micronaut.data.annotation.Join;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.TypeDef;
 import io.micronaut.data.model.DataType;
@@ -30,7 +29,6 @@ import java.util.Collection;
 import java.util.List;
 
 @R2dbcRepository(dialect = Dialect.ORACLE)
-@Join(value = "genre", type = Join.Type.LEFT_FETCH)
 public abstract class OracleXEBookRepository extends BookRepository {
     public OracleXEBookRepository(OracleXEAuthorRepository authorRepository) {
         super(authorRepository);

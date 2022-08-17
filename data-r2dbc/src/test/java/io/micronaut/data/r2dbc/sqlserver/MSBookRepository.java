@@ -15,13 +15,11 @@
  */
 package io.micronaut.data.r2dbc.sqlserver;
 
-import io.micronaut.data.annotation.Join;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.r2dbc.annotation.R2dbcRepository;
 import io.micronaut.data.tck.repositories.BookRepository;
 
 @R2dbcRepository(dialect = Dialect.SQL_SERVER)
-@Join(value = "genre", type = Join.Type.LEFT_FETCH)
 public abstract class MSBookRepository extends BookRepository {
     public MSBookRepository(MSAuthorRepository authorRepository) {
         super(authorRepository);
