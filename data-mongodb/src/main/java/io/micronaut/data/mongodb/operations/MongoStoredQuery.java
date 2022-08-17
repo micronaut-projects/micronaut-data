@@ -17,25 +17,24 @@ package io.micronaut.data.mongodb.operations;
 
 import io.micronaut.aop.InvocationContext;
 import io.micronaut.core.annotation.Experimental;
+import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.StoredQuery;
-import io.micronaut.data.runtime.operations.internal.query.PersistentEntityAwareQuery;
 
 /**
  * MongoDB's {@link StoredQuery}.
  *
  * @param <E>   The entity type
  * @param <R>   The result type
- * @param <Dtb> The database type
  * @author Denis Stepanov
  * @since 3.3.
  */
 @Experimental
-public interface MongoStoredQuery<E, R, Dtb> extends StoredQuery<E, R>, PersistentEntityAwareQuery<E> {
+public interface MongoStoredQuery<E, R> extends StoredQuery<E, R> {
 
     /**
-     * @return The associated databae
+     * @return The persistent entity
      */
-    Dtb getDatabase();
+    RuntimePersistentEntity<E> getRuntimePersistentEntity();
 
     /**
      * @return Is aggregation query?

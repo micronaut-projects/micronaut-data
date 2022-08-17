@@ -23,23 +23,23 @@ import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.MappedProperty
 import io.micronaut.data.annotation.Query
 import io.micronaut.data.annotation.TypeDef
-import io.micronaut.data.jdbc.DatabaseTestPropertyProvider
 import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.jdbc.convert.JdbcConversionContext
 import io.micronaut.data.model.DataType
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.model.runtime.convert.AttributeConverter
 import io.micronaut.data.repository.PageableRepository
+import io.micronaut.transaction.jdbc.DelegatingDataSource
 import jakarta.inject.Singleton
-import org.testcontainers.containers.JdbcDatabaseContainer
 import spock.lang.AutoCleanup
 import spock.lang.Shared
 import spock.lang.Specification
 
+import javax.sql.DataSource
 import java.sql.Array
 import java.sql.Connection
 
-class PostgresEnumsSpec extends Specification implements DatabaseTestPropertyProvider {
+class PostgresEnumsSpec extends Specification implements PostgresTestPropertyProvider {
 
     @AutoCleanup
     @Shared
@@ -48,16 +48,6 @@ class PostgresEnumsSpec extends Specification implements DatabaseTestPropertyPro
     @Override
     Dialect dialect() {
         return Dialect.POSTGRES
-    }
-
-    @Override
-    void startContainer(JdbcDatabaseContainer container) {
-        DatabaseTestPropertyProvider.super.startContainer(container)
-        try (Connection connection = container.createConnection("")) {
-            try (def st = connection.prepareCall("""CREATE TYPE happiness AS ENUM ('happy', 'very_happy', 'ecstatic');""")) {
-                st.execute()
-            }
-        }
     }
 
     def "test native enums"() {

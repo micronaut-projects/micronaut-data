@@ -21,26 +21,23 @@ import com.mongodb.client.model.InsertManyOptions;
 import com.mongodb.client.model.InsertOneOptions;
 import com.mongodb.client.model.ReplaceOptions;
 import io.micronaut.aop.MethodInvocationContext;
-import io.micronaut.context.BeanContext;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.beans.BeanIntrospector;
 import io.micronaut.core.convert.ConversionService;
-import io.micronaut.core.util.StringUtils;
-import io.micronaut.data.annotation.Repository;
+import io.micronaut.core.util.SupplierUtil;
+import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
 import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.model.runtime.StoredQuery;
-import io.micronaut.data.mongodb.annotation.MongoRepository;
 import io.micronaut.data.mongodb.operations.options.MongoAggregationOptions;
 import io.micronaut.data.mongodb.operations.options.MongoFindOptions;
 import io.micronaut.data.mongodb.operations.options.MongoOptionsUtils;
 import io.micronaut.data.operations.HintsCapableRepository;
-import io.micronaut.data.repository.GenericRepository;
 import io.micronaut.data.runtime.config.DataSettings;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.date.DateTimeProvider;
@@ -50,8 +47,6 @@ import io.micronaut.data.runtime.query.MethodContextAwareStoredQueryDecorator;
 import io.micronaut.data.runtime.query.PreparedQueryDecorator;
 import io.micronaut.data.runtime.query.internal.QueryResultStoredQuery;
 import io.micronaut.http.codec.MediaTypeCodec;
-import io.micronaut.inject.BeanDefinition;
-import io.micronaut.inject.qualifiers.Qualifiers;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
 import org.bson.BsonNull;
@@ -60,12 +55,10 @@ import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 import org.slf4j.Logger;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /**
@@ -78,43 +71,33 @@ import java.util.stream.Collectors;
 @Internal
 abstract class AbstractMongoRepositoryOperations<Dtb> extends AbstractRepositoryOperations
         implements HintsCapableRepository, PreparedQueryDecorator, MethodContextAwareStoredQueryDecorator {
-
-    protected static final Logger QUERY_LOG = DataSettings.QUERY_LOG;
     protected static final BsonDocument EMPTY = new BsonDocument();
-    protected final Map<Class, String> repoDatabaseConfig;
+    protected static final Logger QUERY_LOG = DataSettings.QUERY_LOG;
+
+    protected final MongoCollectionNameProvider collectionNameProvider;
+    protected final MongoDatabaseNameProvider databaseNameProvider;
 
     /**
      * Default constructor.
      *
-     * @param server                     The server
-     * @param beanContext                The bean context
      * @param codecs                     The media type codecs
      * @param dateTimeProvider           The date time provider
      * @param runtimeEntityRegistry      The entity registry
      * @param conversionService          The conversion service
      * @param attributeConverterRegistry The attribute converter registry
+     * @param collectionNameProvider     The collection name provider
+     * @param databaseNameProvider       The database name provider
      */
-    protected AbstractMongoRepositoryOperations(String server,
-                                                BeanContext beanContext,
-                                                List<MediaTypeCodec> codecs,
+    protected AbstractMongoRepositoryOperations(List<MediaTypeCodec> codecs,
                                                 DateTimeProvider<Object> dateTimeProvider,
                                                 RuntimeEntityRegistry runtimeEntityRegistry,
                                                 DataConversionService<?> conversionService,
-                                                AttributeConverterRegistry attributeConverterRegistry) {
+                                                AttributeConverterRegistry attributeConverterRegistry,
+                                                MongoCollectionNameProvider collectionNameProvider,
+                                                MongoDatabaseNameProvider databaseNameProvider) {
         super(codecs, dateTimeProvider, runtimeEntityRegistry, conversionService, attributeConverterRegistry);
-        Collection<BeanDefinition<GenericRepository>> beanDefinitions = beanContext
-                .getBeanDefinitions(GenericRepository.class, Qualifiers.byStereotype(MongoRepository.class));
-        HashMap<Class, String> repoDatabaseConfig = new HashMap<>();
-        for (BeanDefinition<GenericRepository> beanDefinition : beanDefinitions) {
-            String targetSrv = beanDefinition.stringValue(Repository.class).orElse(null);
-            if (targetSrv == null || targetSrv.isEmpty() || targetSrv.equalsIgnoreCase(server)) {
-                String database = beanDefinition.stringValue(MongoRepository.class, "databaseName").orElse(null);
-                if (StringUtils.isNotEmpty(database)) {
-                    repoDatabaseConfig.put(beanDefinition.getBeanType(), database);
-                }
-            }
-        }
-        this.repoDatabaseConfig = Collections.unmodifiableMap(repoDatabaseConfig);
+        this.collectionNameProvider = collectionNameProvider;
+        this.databaseNameProvider = databaseNameProvider;
     }
 
     protected final ReplaceOptions getReplaceOptions(AnnotationMetadata annotationMetadata) {
@@ -133,20 +116,20 @@ abstract class AbstractMongoRepositoryOperations<Dtb> extends AbstractRepository
         return MongoOptionsUtils.buildDeleteOptions(annotationMetadata, true).orElseGet(DeleteOptions::new);
     }
 
-    protected abstract Dtb getDatabase(RuntimePersistentEntity<?> persistentEntity, Class<?> repository);
+    protected abstract Dtb getDatabase(PersistentEntity persistentEntity, Class<?> repository);
 
     protected abstract CodecRegistry getCodecRegistry(Dtb database);
 
-    protected <E, R> MongoStoredQuery<E, R, Dtb> getMongoStoredQuery(StoredQuery<E, R> storedQuery) {
+    protected <E, R> MongoStoredQuery<E, R> getMongoStoredQuery(StoredQuery<E, R> storedQuery) {
         if (storedQuery instanceof MongoStoredQuery) {
-            return (MongoStoredQuery<E, R, Dtb>) storedQuery;
+            return (MongoStoredQuery<E, R>) storedQuery;
         }
         throw new IllegalStateException("Expected for stored query to be of type: MongoStoredQuery");
     }
 
-    protected <E, R> MongoPreparedQuery<E, R, Dtb> getMongoPreparedQuery(PreparedQuery<E, R> preparedQuery) {
+    protected <E, R> MongoPreparedQuery<E, R> getMongoPreparedQuery(PreparedQuery<E, R> preparedQuery) {
         if (preparedQuery instanceof MongoPreparedQuery) {
-            return (MongoPreparedQuery<E, R, Dtb>) preparedQuery;
+            return (MongoPreparedQuery<E, R>) preparedQuery;
         }
         throw new IllegalStateException("Expected for prepared query to be of type: MongoPreparedQuery");
     }
@@ -160,18 +143,18 @@ abstract class AbstractMongoRepositoryOperations<Dtb> extends AbstractRepository
     public <E, R> StoredQuery<E, R> decorate(MethodInvocationContext<?, ?> context, StoredQuery<E, R> storedQuery) {
         RuntimePersistentEntity<E> persistentEntity = runtimeEntityRegistry.getEntity(storedQuery.getRootEntity());
         Class<?> repositoryType = context.getTarget().getClass();
-        Dtb database = getDatabase(persistentEntity, repositoryType);
-        CodecRegistry codecRegistry = getCodecRegistry(database);
+        // CodecRegistry is per MongoClient and can be memoized
+        Supplier<CodecRegistry> codecRegistry = SupplierUtil.memoizedNonEmpty(() -> getCodecRegistry(getDatabase(persistentEntity, repositoryType)));
         if (storedQuery instanceof QueryResultStoredQuery) {
             QueryResultStoredQuery<?, ?> resultStoredQuery = (QueryResultStoredQuery) storedQuery;
             String update = resultStoredQuery.getQueryResult().getUpdate();
             if (update != null) {
                 return new DefaultMongoStoredQuery<>(storedQuery, codecRegistry, attributeConverterRegistry,
-                        runtimeEntityRegistry, conversionService, persistentEntity, database, resultStoredQuery.getOperationType(), update);
+                        runtimeEntityRegistry, conversionService, persistentEntity, resultStoredQuery.getOperationType(), update);
             }
         }
         return new DefaultMongoStoredQuery<>(storedQuery, codecRegistry, attributeConverterRegistry,
-                runtimeEntityRegistry, conversionService, persistentEntity, database);
+                runtimeEntityRegistry, conversionService, persistentEntity);
     }
 
     protected <R> R convertResult(CodecRegistry codecRegistry,

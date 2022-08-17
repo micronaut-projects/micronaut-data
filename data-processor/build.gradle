@@ -21,6 +21,4 @@ dependencies {
 	}
 	testImplementation libs.spring.data.jpa
 	testImplementation projects.dataTck
-	// Remove this after TX PR is merged
-	implementation("org.jetbrains:annotations:23.0.0")
 }

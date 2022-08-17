@@ -11,4 +11,8 @@ data class Product(@field:Id @GeneratedValue
                    var id: ObjectId?,
                    var name: String,
                    @Relation(Relation.Kind.MANY_TO_ONE)
-                   var manufacturer: Manufacturer?)
+                   var manufacturer: Manufacturer?) {
+
+    constructor(name: String, manufacturer: Manufacturer?) : this(null, name, manufacturer)
+
+}

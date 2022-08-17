@@ -73,12 +73,16 @@ include 'doc-examples:jdbc-example-kotlin'
 if (JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_15)) {
     include 'doc-examples:jdbc-example-records-java'
 }
+include 'doc-examples:jdbc-multitenancy-datasource-example-java'
+include 'doc-examples:jdbc-multitenancy-schema-example-java'
 
 include 'doc-examples:jdbc-and-r2dbc-example-java'
 
 include 'doc-examples:r2dbc-example-java'
 include 'doc-examples:r2dbc-example-groovy'
 include 'doc-examples:r2dbc-example-kotlin'
+include 'doc-examples:r2dbc-multitenancy-datasource-example-java'
+include 'doc-examples:r2dbc-multitenancy-schema-example-java'
 
 include 'doc-examples:mongo-example-java'
 include 'doc-examples:mongo-example-groovy'
@@ -87,6 +91,9 @@ include 'doc-examples:mongo-reactive-example-kotlin'
 if (JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_15)) {
     include 'doc-examples:mongo-example-records-java'
 }
+include 'doc-examples:mongo-multitenancy-database-example-java'
+include 'doc-examples:mongo-multitenancy-datasource-example-java'
+
 include 'doc-examples:azure-cosmos-example-java'
 include 'doc-examples:azure-cosmos-example-groovy'
 include 'doc-examples:azure-cosmos-example-kotlin'

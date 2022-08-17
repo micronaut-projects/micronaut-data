@@ -15,20 +15,35 @@
  */
 package io.micronaut.data.jdbc.h2
 
-import io.micronaut.data.jdbc.DatabaseTestPropertyProvider
-import io.micronaut.data.model.query.builder.sql.Dialect
-import org.testcontainers.containers.JdbcDatabaseContainer
+import io.micronaut.data.runtime.config.SchemaGenerate
+import io.micronaut.test.support.TestPropertyProvider
 
-trait H2TestPropertyProvider implements DatabaseTestPropertyProvider {
+trait H2TestPropertyProvider implements TestPropertyProvider {
 
-    @Override
-    String jdbcUrl(JdbcDatabaseContainer container) {
-        "jdbc:h2:mem:mydb;LOCK_TIMEOUT=10000;DB_CLOSE_ON_EXIT=FALSE"
+    SchemaGenerate schemaGenerate() {
+        return SchemaGenerate.CREATE
     }
 
-    @Override
-    Dialect dialect() {
-        Dialect.H2
+    List<String> packages() {
+        def currentClassPackage = getClass().package.name
+        return Arrays.asList(currentClassPackage, "io.micronaut.data.tck.entities", "io.micronaut.data.tck.jdbc.entities")
+    }
+
+    Map<String, String> getProperties() {
+        return getH2DataSourceProperties("default")
+    }
+
+    Map<String, String> getH2DataSourceProperties(String dataSourceName) {
+        def prefix = 'datasources.' + dataSourceName
+        return [
+                (prefix + '.url')            : "jdbc:h2:mem:${dataSourceName};LOCK_TIMEOUT=10000;DB_CLOSE_ON_EXIT=FALSE",
+                (prefix + '.schema-generate'): schemaGenerate(),
+                (prefix + '.dialect')        : 'h2',
+                (prefix + '.username')       : '',
+                (prefix + '.password')       : '',
+                (prefix + '.packages')       : packages(),
+                (prefix + '.driverClassName'): "org.h2.Driver"
+        ] as Map<String, String>
     }
 
 }

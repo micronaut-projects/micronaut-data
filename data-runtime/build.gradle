@@ -17,6 +17,7 @@ dependencies {
 	compileOnly mn.micronaut.http
 	compileOnly libs.jakarta.persistence.api
 	compileOnly libs.javax.persistence.api
+    compileOnly mn.micronaut.multitenancy
 
 	testAnnotationProcessor mn.micronaut.inject.java
 	testAnnotationProcessor projects.dataProcessor

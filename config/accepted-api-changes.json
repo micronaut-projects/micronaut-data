@@ -473,5 +473,130 @@
     "type": "io.micronaut.data.model.query.builder.QueryResult",
     "member": "Method io.micronaut.data.model.query.builder.QueryResult.of(java.lang.String,java.util.List,java.util.List,java.util.Map,int,long,java.util.Collection)",
     "reason": "QueryResult needs to return joins so we can use it to override in the annotation if needed"
+  },
+  {
+    "type": "io.micronaut.data.intercept.$DataIntroductionAdvice$Definition$Reference",
+    "member": "Field $ANNOTATION_METADATA",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.intercept.$DataIntroductionAdvice$Definition$Reference",
+    "member": "Constructor io.micronaut.data.intercept.$DataIntroductionAdvice$Definition$Reference()",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.mongodb.database.$MongoFactory$Definition$Reference",
+    "member": "Field $ANNOTATION_METADATA",
+    "reason": "Internal class removed"
+  },
+  {
+    "type": "io.micronaut.data.mongodb.database.$MongoFactory$Definition$Reference",
+    "member": "Constructor io.micronaut.data.mongodb.database.$MongoFactory$Definition$Reference()",
+    "reason": "Internal class removed"
+  },
+  {
+    "type": "io.micronaut.data.mongodb.database.$MongoFactory$NamedMongoDatabaseFactory1$Definition$Reference",
+    "member": "Field $ANNOTATION_METADATA",
+    "reason": "Internal class removed"
+  },
+  {
+    "type": "io.micronaut.data.mongodb.database.$MongoFactory$NamedMongoDatabaseFactory1$Definition$Reference",
+    "member": "Constructor io.micronaut.data.mongodb.database.$MongoFactory$NamedMongoDatabaseFactory1$Definition$Reference()",
+    "reason": "Internal class removed"
+  },
+  {
+    "type": "io.micronaut.data.mongodb.database.$MongoFactory$PrimaryMongoDatabaseFactory0$Definition$Reference",
+    "member": "Field $ANNOTATION_METADATA",
+    "reason": "Internal class removed"
+  },
+  {
+    "type": "io.micronaut.data.mongodb.database.$MongoFactory$PrimaryMongoDatabaseFactory0$Definition$Reference",
+    "member": "Constructor io.micronaut.data.mongodb.database.$MongoFactory$PrimaryMongoDatabaseFactory0$Definition$Reference()",
+    "reason": "Internal class removed"
+  },
+  {
+    "type": "io.micronaut.data.mongodb.database.$MongoReactiveFactory$NamedMongoDatabaseFactory1$Definition$Reference",
+    "member": "Field $ANNOTATION_METADATA",
+    "reason": "Internal class removed"
+  },
+  {
+    "type": "io.micronaut.data.mongodb.database.$MongoReactiveFactory$NamedMongoDatabaseFactory1$Definition$Reference",
+    "member": "Constructor io.micronaut.data.mongodb.database.$MongoReactiveFactory$NamedMongoDatabaseFactory1$Definition$Reference()",
+    "reason": "Internal class removed"
+  },
+  {
+    "type": "io.micronaut.data.mongodb.database.$MongoReactiveFactory$PrimaryMongoDatabaseFactory0$Definition$Reference",
+    "member": "Field $ANNOTATION_METADATA",
+    "reason": "Internal class removed"
+  },
+  {
+    "type": "io.micronaut.data.mongodb.database.$MongoReactiveFactory$PrimaryMongoDatabaseFactory0$Definition$Reference",
+    "member": "Constructor io.micronaut.data.mongodb.database.$MongoReactiveFactory$PrimaryMongoDatabaseFactory0$Definition$Reference()",
+    "reason": "Internal class removed"
+  },
+  {
+    "type": "io.micronaut.data.mongodb.database.$MongoReactiveFactory$SyncOperations2$Definition$Reference",
+    "member": "Field $ANNOTATION_METADATA",
+    "reason": "Internal class removed"
+  },
+  {
+    "type": "io.micronaut.data.mongodb.database.$MongoReactiveFactory$SyncOperations2$Definition$Reference",
+    "member": "Constructor io.micronaut.data.mongodb.database.$MongoReactiveFactory$SyncOperations2$Definition$Reference()",
+    "reason": "Internal class removed"
+  },
+  {
+    "type": "io.micronaut.data.mongodb.database.SimpleMongoDatabaseFactory",
+    "member": "Constructor io.micronaut.data.mongodb.database.SimpleMongoDatabaseFactory(com.mongodb.client.MongoClient,java.lang.String)",
+    "reason": "Internal class removed"
+  },
+  {
+    "type": "io.micronaut.data.mongodb.database.SimpleMongoDatabaseFactory",
+    "member": "Implemented interface io.micronaut.data.mongodb.database.MongoDatabaseFactory",
+    "reason": "Internal class removed"
+  },
+  {
+    "type": "io.micronaut.data.mongodb.database.SimpleReactiveMongoDatabaseFactory",
+    "member": "Constructor io.micronaut.data.mongodb.database.SimpleReactiveMongoDatabaseFactory(com.mongodb.reactivestreams.client.MongoClient,java.lang.String)",
+    "reason": "Internal class removed"
+  },
+  {
+    "type": "io.micronaut.data.mongodb.database.SimpleReactiveMongoDatabaseFactory",
+    "member": "Implemented interface io.micronaut.data.mongodb.database.ReactiveMongoDatabaseFactory",
+    "reason": "Internal class removed"
+  },
+  {
+    "type": "io.micronaut.data.mongodb.database.UnknownMongoDatabaseFactory",
+    "member": "Constructor io.micronaut.data.mongodb.database.UnknownMongoDatabaseFactory()",
+    "reason": "Internal class removed"
+  },
+  {
+    "type": "io.micronaut.data.mongodb.database.UnknownMongoDatabaseFactory",
+    "member": "Implemented interface io.micronaut.data.mongodb.database.MongoDatabaseFactory",
+    "reason": "Internal class removed"
+  },
+  {
+    "type": "io.micronaut.data.mongodb.database.UnknownReactiveMongoDatabaseFactory",
+    "member": "Constructor io.micronaut.data.mongodb.database.UnknownReactiveMongoDatabaseFactory()",
+    "reason": "Internal class removed"
+  },
+  {
+    "type": "io.micronaut.data.mongodb.database.UnknownReactiveMongoDatabaseFactory",
+    "member": "Implemented interface io.micronaut.data.mongodb.database.ReactiveMongoDatabaseFactory",
+    "reason": "Internal class removed"
+  },
+  {
+    "type": "io.micronaut.data.mongodb.transaction.$MongoSynchronousTransactionManager$Definition$Reference",
+    "member": "Field $ANNOTATION_METADATA",
+    "reason": "Internal class removed"
+  },
+  {
+    "type": "io.micronaut.data.mongodb.transaction.$MongoSynchronousTransactionManager$Definition$Reference",
+    "member": "Constructor io.micronaut.data.mongodb.transaction.$MongoSynchronousTransactionManager$Definition$Reference()",
+    "reason": "Internal class removed"
+  },
+  {
+    "type": "io.micronaut.data.r2dbc.config.DataR2dbcConfiguration",
+    "member": "Constructor io.micronaut.data.r2dbc.config.DataR2dbcConfiguration(java.lang.String,io.r2dbc.spi.ConnectionFactory,io.micronaut.data.r2dbc.operations.R2dbcOperations)",
+    "reason": "Constructor changed"
   }
 ]

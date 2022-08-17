@@ -15,7 +15,8 @@
  */
 package io.micronaut.data.mongodb.init;
 
-import com.mongodb.client.MongoDatabase;
+import com.mongodb.reactivestreams.client.MongoClient;
+import com.mongodb.reactivestreams.client.MongoDatabase;
 import io.micronaut.configuration.mongo.core.AbstractMongoConfiguration;
 import io.micronaut.context.BeanLocator;
 import io.micronaut.context.annotation.Context;
@@ -26,14 +27,15 @@ import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.mongodb.conf.MongoDataConfiguration;
 import io.micronaut.data.mongodb.conf.RequiresSyncMongo;
-import io.micronaut.data.mongodb.database.MongoDatabaseFactory;
+import io.micronaut.data.mongodb.operations.MongoDatabaseNameProvider;
+import reactor.core.publisher.Flux;
 
 import javax.annotation.PostConstruct;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * MongoDB's collections creator.
@@ -53,7 +55,8 @@ public final class MongoCollectionsCreator extends AbstractMongoCollectionsCreat
                     List<AbstractMongoConfiguration> mongoConfigurations) {
 
         super.initialize(runtimeEntityRegistry, mongoConfigurations, mongoConfiguration -> {
-            MongoDatabaseFactory mongoDatabaseFactory = getMongoFactory(MongoDatabaseFactory.class, beanLocator, mongoConfiguration);
+            MongoClient mongoClient = getMongoFactory(MongoClient.class, beanLocator, mongoConfiguration);
+            MongoDatabaseNameProvider mongoDatabaseNameProvider = getMongoFactory(MongoDatabaseNameProvider.class, beanLocator, mongoConfiguration);
             Map<String, Set<String>> databaseCollections = new HashMap<>();
             return new DatabaseOperations<MongoDatabase>() {
 
@@ -64,12 +67,12 @@ public final class MongoCollectionsCreator extends AbstractMongoCollectionsCreat
 
                 @Override
                 public MongoDatabase find(PersistentEntity persistentEntity) {
-                    return mongoDatabaseFactory.getDatabase(persistentEntity);
+                    return mongoClient.getDatabase(mongoDatabaseNameProvider.provide(persistentEntity));
                 }
 
                 @Override
                 public Set<String> listCollectionNames(MongoDatabase database) {
-                    return databaseCollections.computeIfAbsent(database.getName(), s -> database.listCollectionNames().into(new HashSet<>()));
+                    return databaseCollections.computeIfAbsent(database.getName(), s -> Flux.from(database.listCollectionNames()).collect(Collectors.toSet()).block());
                 }
 
                 @Override

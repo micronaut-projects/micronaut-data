@@ -1,0 +1,18 @@
+micronaut:
+  data:
+    multi-tenancy:
+      mode: DATASOURCE
+  multitenancy:
+    tenantresolver:
+      httpheader:
+        enabled: true
+
+datasources:
+  foo:
+    db-type: postgresql
+    schema-generate: CREATE_DROP
+    dialect: POSTGRES
+  bar:
+    db-type: postgresql
+    schema-generate: CREATE_DROP
+    dialect: POSTGRES

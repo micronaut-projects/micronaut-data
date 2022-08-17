@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.mongodb.init;
 
+import com.mongodb.reactivestreams.client.MongoClient;
 import com.mongodb.reactivestreams.client.MongoDatabase;
 import io.micronaut.configuration.mongo.core.AbstractMongoConfiguration;
 import io.micronaut.context.BeanLocator;
@@ -26,7 +27,7 @@ import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.mongodb.conf.MongoDataConfiguration;
 import io.micronaut.data.mongodb.conf.RequiresReactiveMongo;
-import io.micronaut.data.mongodb.database.ReactiveMongoDatabaseFactory;
+import io.micronaut.data.mongodb.operations.MongoDatabaseNameProvider;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -55,7 +56,8 @@ public final class MongoReactiveCollectionsCreator extends AbstractMongoCollecti
                     List<AbstractMongoConfiguration> mongoConfigurations) {
 
         super.initialize(runtimeEntityRegistry, mongoConfigurations, mongoConfiguration -> {
-            ReactiveMongoDatabaseFactory mongoDatabaseFactory = getMongoFactory(ReactiveMongoDatabaseFactory.class, beanLocator, mongoConfiguration);
+            MongoClient mongoClient = getMongoFactory(MongoClient.class, beanLocator, mongoConfiguration);
+            MongoDatabaseNameProvider mongoDatabaseNameProvider = getMongoFactory(MongoDatabaseNameProvider.class, beanLocator, mongoConfiguration);
             Map<String, Set<String>> databaseCollections = new HashMap<>();
             return new DatabaseOperations<MongoDatabase>() {
 
@@ -66,7 +68,7 @@ public final class MongoReactiveCollectionsCreator extends AbstractMongoCollecti
 
                 @Override
                 public MongoDatabase find(PersistentEntity persistentEntity) {
-                    return mongoDatabaseFactory.getDatabase(persistentEntity);
+                    return mongoClient.getDatabase(mongoDatabaseNameProvider.provide(persistentEntity));
                 }
 
                 @Override

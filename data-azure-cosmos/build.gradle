@@ -3,13 +3,16 @@ plugins {
     id 'io.micronaut.test-resources'
 }
 
+//println libs.versions.micronaut.class
+
 micronaut {
-    version = '3.7.3'
+    version = libs.versions.micronaut.asProvider().get()
     testResources {
         enabled = true
         inferClasspath = false
     }
 }
+
 micronautBuild {
     binaryCompatibility {
         enabled = false

@@ -15,20 +15,13 @@
  */
 package io.micronaut.data.mongodb.database;
 
-import com.mongodb.ConnectionString;
-import com.mongodb.reactivestreams.client.MongoClient;
 import io.micronaut.aop.MethodInvocationContext;
-import io.micronaut.configuration.mongo.core.DefaultMongoConfiguration;
-import io.micronaut.configuration.mongo.core.NamedMongoConfiguration;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Factory;
-import io.micronaut.context.annotation.Parameter;
-import io.micronaut.context.annotation.Primary;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.convert.ConversionService;
-import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.model.runtime.StoredQuery;
 import io.micronaut.data.mongodb.conf.RequiresReactiveMongo;
@@ -54,26 +47,6 @@ import java.util.concurrent.Executors;
 @Internal
 @Factory
 final class MongoReactiveFactory {
-
-    @Primary
-    @Singleton
-    ReactiveMongoDatabaseFactory primaryMongoDatabaseFactory(DefaultMongoConfiguration mongoConfiguration, @Primary MongoClient mongoClient) {
-        return mongoConfiguration.getConnectionString()
-                .map(ConnectionString::getDatabase)
-                .filter(StringUtils::isNotEmpty)
-                .<ReactiveMongoDatabaseFactory>map(databaseName -> new SimpleReactiveMongoDatabaseFactory(mongoClient, databaseName))
-                .orElseGet(UnknownReactiveMongoDatabaseFactory::new);
-    }
-
-    @EachBean(NamedMongoConfiguration.class)
-    @Singleton
-    ReactiveMongoDatabaseFactory namedMongoDatabaseFactory(NamedMongoConfiguration mongoConfiguration, @Parameter MongoClient mongoClient) {
-        return mongoConfiguration.getConnectionString()
-                .map(ConnectionString::getDatabase)
-                .filter(StringUtils::isNotEmpty)
-                .<ReactiveMongoDatabaseFactory>map(databaseName -> new SimpleReactiveMongoDatabaseFactory(mongoClient, databaseName))
-                .orElseGet(UnknownReactiveMongoDatabaseFactory::new);
-    }
 
     @EachBean(DefaultReactiveMongoRepositoryOperations.class)
     @Singleton

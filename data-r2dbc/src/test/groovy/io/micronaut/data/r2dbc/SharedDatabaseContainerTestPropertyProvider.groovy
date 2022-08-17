@@ -1,19 +1,27 @@
 package io.micronaut.data.r2dbc
 
+import io.micronaut.testresources.client.TestResourcesClient
+import io.micronaut.testresources.client.TestResourcesClientFactory
 
-import org.testcontainers.containers.JdbcDatabaseContainer
+import java.lang.reflect.Method
 
-trait SharedDatabaseContainerTestPropertyProvider implements DatabaseTestPropertyProvider {
+trait SharedTestResourcesDatabaseTestPropertyProvider implements TestResourcesDatabaseTestPropertyProvider {
 
     abstract int sharedSpecsCount()
 
-    @Override
-    JdbcDatabaseContainer getDatabaseContainer(String driverName) {
-        return DbHolder.getContainerOrCreate(driverName, () -> super.getDatabaseContainer(driverName))
-    }
-
     def cleanupSpec() {
-        DbHolder.cleanup(driverName(), sharedSpecsCount())
+        int testsCompleted = DbHolder.DB_TYPE_TEST_COUNT.compute(dbType(), (dbType, val) -> val ? val + 1 : 1)
+        if (testsCompleted == sharedSpecsCount()) {
+            URL config = SharedTestResourcesDatabaseTestPropertyProvider.class.getResource("/test-resources.properties")
+            try {
+                Method m = TestResourcesClientFactory.class.getDeclaredMethod("configuredAt", URL.class)
+                m.setAccessible(true)
+                TestResourcesClient testResourcesClient = (TestResourcesClient) m.invoke(null, config)
+                testResourcesClient.closeScope(dbType())
+            } catch (Exception e) {
+                // Ignore
+            }
+        }
     }
 
 }

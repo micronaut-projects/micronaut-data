@@ -30,6 +30,7 @@ import io.micronaut.data.repository.jpa.criteria.PredicateSpecification;
 import io.micronaut.data.tck.entities.Person;
 import io.micronaut.data.tck.entities.TotalDto;
 import io.reactivex.Single;
+import jakarta.persistence.criteria.JoinType;
 
 import java.util.Arrays;
 import java.util.List;
@@ -158,7 +159,7 @@ public interface PersonRepository extends CrudRepository<Person, Long>, Pageable
         }
 
         public static PredicateSpecification<Person> nameEqualsCaseInsensitive(String name) {
-            return (root, criteriaBuilder) -> criteriaBuilder.equal(criteriaBuilder.lower(root.get("name")), name.toLowerCase());
+            return (root, criteriaBuilder) -> criteriaBuilder.equal(criteriaBuilder.lower(root.join("name", JoinType.LEFT)), name.toLowerCase());
         }
 
         public static PredicateSpecification<Person> idsIn(Long... ids) {

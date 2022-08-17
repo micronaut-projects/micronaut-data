@@ -51,6 +51,13 @@ public interface ProductRepository extends CrudRepository<Product, Long> {
             return (root, cb) -> cb.equal(root.join(Product_.manufacturer).get(Manufacturer_.name), name);
         }
 
+        static PredicateSpecification<Product> joined() {
+            return (root, cb) -> {
+                root.join("manufacturer");
+                return null;
+            };
+        }
+
         // end::typesafe[]
     }
 

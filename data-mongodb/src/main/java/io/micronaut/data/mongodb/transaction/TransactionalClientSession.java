@@ -26,7 +26,7 @@ import io.micronaut.core.annotation.Internal;
  * @author Denis Stepanov
  * @since 3.3
  */
-@EachBean(MongoSynchronousTransactionManager.class)
+@EachBean(MongoSynchronousTransactionManagerImpl.class)
 @TransactionalClientSessionAdvice
 @Internal
 public interface TransactionalClientSession extends ClientSession {

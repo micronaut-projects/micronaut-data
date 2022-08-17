@@ -18,6 +18,7 @@ package io.micronaut.data.jdbc.config;
 import io.micronaut.context.annotation.EachProperty;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.naming.Named;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.runtime.config.SchemaGenerate;
@@ -43,10 +44,13 @@ public class DataJdbcConfiguration implements Named {
     private Dialect dialect = Dialect.ANSI;
     private List<String> packages = new ArrayList<>(3);
     private final String name;
+    @Nullable
+    private String schemaGenerateName;
+    @Nullable
+    private List<String> schemaGenerateNames;
 
     /**
      * If true, {@link io.micronaut.transaction.TransactionOperations} will be used for the operation.
-     *
      * This should be false by default in v4 as it adds additional overhead.
      */
     private boolean transactionPerOperation = true;
@@ -160,5 +164,35 @@ public class DataJdbcConfiguration implements Named {
      */
     public void setAllowConnectionPerOperation(boolean allowConnectionPerOperation) {
         this.allowConnectionPerOperation = allowConnectionPerOperation;
+    }
+
+    /**
+     * @return The schema name that should be used for generating
+     */
+    @Nullable
+    public String getSchemaGenerateName() {
+        return schemaGenerateName;
+    }
+
+    /**
+     * @param schemaGenerateName The schema name that should be used for generating
+     */
+    public void setSchemaGenerateName(@Nullable String schemaGenerateName) {
+        this.schemaGenerateName = schemaGenerateName;
+    }
+
+    /**
+     * @return The schema names that should be used for generating
+     */
+    @Nullable
+    public List<String> getSchemaGenerateNames() {
+        return schemaGenerateNames;
+    }
+
+    /**
+     * @param schemaGenerateNames The schema names that should be used for generating
+     */
+    public void setSchemaGenerateNames(@Nullable List<String> schemaGenerateNames) {
+        this.schemaGenerateNames = schemaGenerateNames;
     }
 }
