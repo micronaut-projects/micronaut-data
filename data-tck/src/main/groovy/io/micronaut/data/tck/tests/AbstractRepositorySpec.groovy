@@ -38,6 +38,7 @@ import io.micronaut.data.tck.entities.CountryRegion
 import io.micronaut.data.tck.entities.CountryRegionCity
 import io.micronaut.data.tck.entities.Face
 import io.micronaut.data.tck.entities.Food
+import io.micronaut.data.tck.entities.Genre
 import io.micronaut.data.tck.entities.Meal
 import io.micronaut.data.tck.entities.Nose
 import io.micronaut.data.tck.entities.Page
@@ -70,12 +71,15 @@ import java.util.stream.Collectors
 import static io.micronaut.data.repository.jpa.criteria.QuerySpecification.where
 import static io.micronaut.data.tck.repositories.PersonRepository.Specifications.idsIn
 import static io.micronaut.data.tck.repositories.PersonRepository.Specifications.nameEquals
+import static io.micronaut.data.tck.repositories.BookSpecifications.titleEquals
+import static io.micronaut.data.tck.repositories.BookSpecifications.justJoin
 
 abstract class AbstractRepositorySpec extends Specification {
 
     abstract PersonRepository getPersonRepository()
     abstract BookRepository getBookRepository()
     abstract AuthorRepository getAuthorRepository()
+    abstract GenreRepository getGenreRepository()
     abstract CompanyRepository getCompanyRepository()
     abstract BookDtoRepository getBookDtoRepository()
     abstract CountryRepository getCountryRepository()
@@ -2102,6 +2106,35 @@ abstract class AbstractRepositorySpec extends Specification {
         then:
             deleted == 1
             personRepository.count(nameEquals("Xyz")) == 0
+    }
+
+    void "test join/fetch"() {
+        given:
+        def genre = new Genre()
+        genre.setGenreName("Dystopia")
+        genreRepository.save(genre)
+
+        def book = new Book()
+        book.setTitle("1984")
+        book.setGenre(genre)
+        bookRepository.save(book)
+
+        when:
+        def bookLoadedUsingFindAll = bookRepository.findAllByGenre(genre).get(0)
+        def bookLoadedUsingFindOneWithCriteriaApi = bookRepository.findOne(titleEquals(book.title)).get()
+        def bookNotFoundUsingFindOneWithCriteriaApi = bookRepository.findOne(titleEquals("non_existing_book_" + System.currentTimeMillis()))
+        def bookLoadedUsingFindAllWithCriteriaApi = bookRepository.findAll(titleEquals(book.title)).get(0)
+        def bookLoadedUsingFindAllWithCriteriaApiJoinOnly = bookRepository.findAll(justJoin()).get(0)
+
+        then:
+        bookLoadedUsingFindAll.genre.genreName != null
+        bookLoadedUsingFindOneWithCriteriaApi != null
+        bookLoadedUsingFindOneWithCriteriaApi.genre.genreName == genre.genreName
+        bookNotFoundUsingFindOneWithCriteriaApi.present == false
+        bookLoadedUsingFindAllWithCriteriaApi != null
+        bookLoadedUsingFindAllWithCriteriaApi.genre.genreName == genre.genreName
+        bookLoadedUsingFindAllWithCriteriaApiJoinOnly != null
+        bookLoadedUsingFindAllWithCriteriaApiJoinOnly.genre.genreName != null
     }
 
     private GregorianCalendar getYearMonthDay(Date dateCreated) {

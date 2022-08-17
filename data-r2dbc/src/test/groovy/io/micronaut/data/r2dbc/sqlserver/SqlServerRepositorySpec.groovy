@@ -34,6 +34,12 @@ class SqlServerRepositorySpec extends AbstractRepositorySpec implements SqlServe
 
     @Memoized
     @Override
+    GenreRepository getGenreRepository() {
+        return context.getBean(MSGenreRepository)
+    }
+
+    @Memoized
+    @Override
     BookRepository getBookRepository() {
         return context.getBean(MSBookRepository)
     }

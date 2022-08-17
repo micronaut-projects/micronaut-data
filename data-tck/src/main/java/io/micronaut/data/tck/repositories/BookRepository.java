@@ -27,17 +27,19 @@ import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.repository.PageableRepository;
+import io.micronaut.data.repository.jpa.JpaSpecificationExecutor;
 import io.micronaut.data.tck.entities.Author;
 import io.micronaut.data.tck.entities.AuthorBooksDto;
 import io.micronaut.data.tck.entities.Book;
 import io.micronaut.data.tck.entities.BookDto;
+import io.micronaut.data.tck.entities.Genre;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Stream;
 
-public abstract class BookRepository implements PageableRepository<Book, Long> {
+public abstract class BookRepository implements PageableRepository<Book, Long>, JpaSpecificationExecutor<Book> {
 
     @Join(value = "author", alias = "auth")
     public abstract Book queryByTitle(String title);
@@ -141,4 +143,7 @@ public abstract class BookRepository implements PageableRepository<Book, Long> {
     public abstract Book save(String title, int totalPages, Author author);
 
     public abstract int deleteByAuthor(Author author);
+
+    @Join(value = "genre", type = Join.Type.LEFT_FETCH)
+    public abstract List<Book> findAllByGenre(Genre genre);
 }

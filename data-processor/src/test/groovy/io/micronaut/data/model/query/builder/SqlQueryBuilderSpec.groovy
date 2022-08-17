@@ -145,7 +145,22 @@ interface MyRepository {
         def encoded = encoder.buildQuery(q)
 
         expect:
-        encoded.query == 'SELECT book_.`id`,book_.`author_id`,book_.`title`,book_.`total_pages`,book_.`publisher_id`,book_.`last_updated`,book_author_.`name` AS author_name,book_author_.`nick_name` AS author_nick_name FROM `book` book_ INNER JOIN `author` book_author_ ON book_.`author_id`=book_author_.`id` WHERE (book_.`id` = ?)'
+        encoded.query == 'SELECT book_.`id`,book_.`author_id`,book_.`genre_id`,book_.`title`,book_.`total_pages`,book_.`publisher_id`,book_.`last_updated`,book_author_.`name` AS author_name,book_author_.`nick_name` AS author_nick_name FROM `book` book_ INNER JOIN `author` book_author_ ON book_.`author_id`=book_author_.`id` WHERE (book_.`id` = ?)'
+
+    }
+
+    void "test encode to-one join - single level, two join entities"() {
+        given:
+        PersistentEntity entity = PersistentEntity.of(Book)
+        QueryModel q = QueryModel.from(entity)
+        q.idEq(new QueryParameter("test"))
+        q.join(entity.getPropertyByName("author") as Association, Join.Type.FETCH)
+        q.join(entity.getPropertyByName("genre") as Association, Join.Type.LEFT_FETCH)
+        QueryBuilder encoder = new SqlQueryBuilder(Dialect.H2)
+        def encoded = encoder.buildQuery(q)
+
+        expect:
+        encoded.query == 'SELECT book_.`id`,book_.`author_id`,book_.`genre_id`,book_.`title`,book_.`total_pages`,book_.`publisher_id`,book_.`last_updated`,book_genre_.`genre_name` AS genre_genre_name,book_author_.`name` AS author_name,book_author_.`nick_name` AS author_nick_name FROM `book` book_ LEFT JOIN `genre` book_genre_ ON book_.`genre_id`=book_genre_.`id` INNER JOIN `author` book_author_ ON book_.`author_id`=book_author_.`id` WHERE (book_.`id` = ?)'
 
     }
 

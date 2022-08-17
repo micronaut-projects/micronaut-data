@@ -40,6 +40,12 @@ class OracleXERepositorySpec extends AbstractRepositorySpec implements OracleTes
 
     @Memoized
     @Override
+    GenreRepository getGenreRepository() {
+        return context.getBean(OracleXEGenreRepository)
+    }
+
+    @Memoized
+    @Override
     AuthorRepository getAuthorRepository() {
         return context.getBean(OracleXEAuthorRepository)
     }
