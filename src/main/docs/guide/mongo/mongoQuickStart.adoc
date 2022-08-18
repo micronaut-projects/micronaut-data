@@ -38,17 +38,17 @@ Clicking on one of the links in the table below will take you to https://microna
 |*Maven*
 
 |*Java*
-|https://micronaut.io/launch?features=data-mongodb-async&lang=JAVA&build=GRADLE[Open]
-|https://micronaut.io/launch?features=data-mongodb-async&lang=JAVA&build=MAVEN[Open]
+|https://micronaut.io/launch?features=data-mongodb-reactive&lang=JAVA&build=GRADLE[Open]
+|https://micronaut.io/launch?features=data-mongodb-reactive&lang=JAVA&build=MAVEN[Open]
 
 
 |*Kotlin*
-|https://micronaut.io/launch?features=data-mongodb-async&lang=JAVA&build=GRADLE[Open]
-|https://micronaut.io/launch?features=data-mongodb-async&lang=JAVA&build=MAVEN[Open]
+|https://micronaut.io/launch?features=data-mongodb-reactive&lang=JAVA&build=GRADLE[Open]
+|https://micronaut.io/launch?features=data-mongodb-reactive&lang=JAVA&build=MAVEN[Open]
 
 |*Groovy*
-|https://micronaut.io/launch?features=data-mongodb-async&lang=GROOVY&build=GRADLE[Open]
-|https://micronaut.io/launch?features=data-mongodb-async&lang=GROOVY&build=MAVEN[Open]
+|https://micronaut.io/launch?features=data-mongodb-reactive&lang=GROOVY&build=GRADLE[Open]
+|https://micronaut.io/launch?features=data-mongodb-reactive&lang=GROOVY&build=MAVEN[Open]
 
 |===
 
