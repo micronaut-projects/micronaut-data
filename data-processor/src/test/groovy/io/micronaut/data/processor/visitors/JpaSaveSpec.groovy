@@ -16,6 +16,7 @@
 package io.micronaut.data.processor.visitors
 
 
+import io.micronaut.data.model.entities.Company;
 import io.micronaut.data.intercept.SaveOneInterceptor
 import io.micronaut.data.intercept.annotation.DataMethod
 import io.micronaut.inject.BeanDefinition
@@ -28,6 +29,7 @@ class JpaSaveSpec extends AbstractDataSpec {
         BeanDefinition beanDefinition = buildBeanDefinition('test.MyInterface' + BeanDefinitionVisitor.PROXY_SUFFIX, """
 package test;
 
+import io.micronaut.data.model.entities.Company;
 import io.micronaut.data.model.entities.Person;
 import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.data.annotation.Repository;
@@ -41,12 +43,14 @@ import io.micronaut.data.repository.GenericRepository;
 interface MyInterface extends GenericRepository<Person, Long> {
 
     Person save(String name, int age, String publicId);
+
+    Person save(String name, int age, String publicId, Company company);
     
 }
 """)
 
         when: "save method is retrieved"
-        def updateMethod = beanDefinition.getRequiredMethod("save", String, int.class, String)
+        def updateMethod = beanDefinition.getRequiredMethod("save", String, int.class, String, Company.class)
         def updateAnn = updateMethod.synthesize(DataMethod)
 
         then: "It was correctly compiled"

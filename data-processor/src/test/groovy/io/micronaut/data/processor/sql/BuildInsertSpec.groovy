@@ -307,8 +307,8 @@ interface MyInterface extends CrudRepository<Person, Long> {
         def method = beanDefinition.getRequiredMethod("save", Person)
 
         expect:
-        getQuery(method) == 'INSERT INTO "person" ("name","age","enabled","public_id") VALUES (?,?,?,?)'
-        getParameterPropertyPaths(method) == ['name', 'age', 'enabled', 'publicId'] as String[]
+        getQuery(method) == 'INSERT INTO "person" ("name","age","enabled","public_id","company_id") VALUES (?,?,?,?,?)'
+        getParameterPropertyPaths(method) == ['name', 'age', 'enabled', 'publicId', 'company.myId'] as String[]
     }
 
     @PendingFeature(reason = "Bug in Micronaut core. Fixed by https://github.com/micronaut-projects/micronaut-core/commit/f6a488677d587be309d5b0abd8925c9a098cfdf9")

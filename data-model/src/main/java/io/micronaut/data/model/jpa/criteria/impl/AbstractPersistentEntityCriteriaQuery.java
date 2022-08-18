@@ -114,8 +114,7 @@ public abstract class AbstractPersistentEntityCriteriaQuery<T> implements Persis
             List<Sort.Order> sortOrders = orders.stream().map(o -> {
                 PersistentPropertyPath<?> propertyPath = requireProperty(o.getExpression());
                 joiner.joinIfNeeded(propertyPath);
-                String name = propertyPath.getProperty().getName();
-                //todo  path
+                String name = propertyPath.getPathAsString();
                 if (o.isAscending()) {
                     return Sort.Order.asc(name);
                 }

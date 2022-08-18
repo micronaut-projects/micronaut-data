@@ -368,10 +368,15 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
     }
 
     private <T> io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<Object> findOrderProperty(PersistentEntityRoot<T> root, String propertyName) {
-        if (root.getPersistentEntity().getPropertyByName(propertyName) == null) {
-            throw new MatchFailedException("Cannot order by non-existent property: " + propertyName);
+        if (root.getPersistentEntity().getPropertyByName(propertyName) != null) {
+            return root.get(propertyName);
         }
-        return root.get(propertyName);
+        // Look at association paths
+        io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<Object> property = findProperty(root, propertyName);
+        if (property != null) {
+            return property;
+        }
+        throw new MatchFailedException("Cannot order by non-existent property: " + propertyName);
     }
 
     /**
