@@ -21,10 +21,16 @@ import io.micronaut.data.tck.entities.ShipmentId;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.repository.CrudRepository;
 
+import java.util.List;
+
 @JdbcRepository(dialect = Dialect.H2)
 public interface ShipmentRepository extends CrudRepository<Shipment, ShipmentId> {
 
     Shipment findByShipmentIdCountry(String country);
 
     Shipment findByShipmentIdCountryAndShipmentIdCity(String country, String city);
+
+    List<Shipment> findAllOrderByShipmentIdCityDesc();
+
+    List<Shipment> findAllOrderByShipmentIdCountryAndShipmentIdCityDesc();
 }
