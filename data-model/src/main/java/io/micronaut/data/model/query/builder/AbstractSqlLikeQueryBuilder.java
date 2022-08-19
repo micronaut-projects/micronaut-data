@@ -595,6 +595,58 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             .append(logicalName);
     }
 
+    protected void selectAllColumnsFromJoinPaths(QueryState queryState, StringBuilder queryBuffer, Collection<JoinPath> allPaths) {
+        if (CollectionUtils.isNotEmpty(allPaths)) {
+
+            Collection<JoinPath> joinPaths = allPaths.stream().filter(jp -> {
+                Join.Type jt = jp.getJoinType();
+                return jt.name().contains("FETCH");
+            }).collect(Collectors.toList());
+
+            if (CollectionUtils.isNotEmpty(joinPaths)) {
+                for (JoinPath joinPath : joinPaths) {
+                    Association association = joinPath.getAssociation();
+                    if (association instanceof Embedded) {
+                        // joins on embedded don't make sense
+                        continue;
+                    }
+
+                    PersistentEntity associatedEntity = association.getAssociatedEntity();
+                    NamingStrategy namingStrategy = associatedEntity.getNamingStrategy();
+
+                    String aliasName = getAliasName(joinPath);
+                    String joinPathAlias = getPathOnlyAliasName(joinPath);
+
+                    queryBuffer.append(COMMA);
+
+                    boolean includeIdentity = false;
+                    if (association.isForeignKey()) {
+                        // in the case of a foreign key association the ID is not in the table
+                        // so we need to retrieve it
+                        includeIdentity = true;
+                    }
+                    traversePersistentProperties(associatedEntity, includeIdentity, true, (propertyAssociations, prop) -> {
+                        String columnName;
+                        if (computePropertyPaths()) {
+                            columnName = namingStrategy.mappedName(propertyAssociations, prop);
+                        } else {
+                            columnName = asPath(propertyAssociations, prop);
+                        }
+                        queryBuffer
+                            .append(aliasName)
+                            .append(DOT)
+                            .append(queryState.shouldEscape() ? quote(columnName) : columnName)
+                            .append(AS_CLAUSE)
+                            .append(joinPathAlias)
+                            .append(columnName)
+                            .append(COMMA);
+                    });
+                    queryBuffer.setLength(queryBuffer.length() - 1);
+                }
+            }
+        }
+    }
+
     /**
      * Whether queries should be escaped for the given entity.
      *
@@ -628,6 +680,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         if (projectionList.isEmpty()) {
             selectAllColumns(queryState, queryString);
         } else {
+            List<String> addedProperties = new ArrayList<>(projectionList.size());
             for (Iterator i = projectionList.iterator(); i.hasNext(); ) {
                 QueryModel.Projection projection = (QueryModel.Projection) i.next();
                 if (projection instanceof QueryModel.LiteralProjection) {
@@ -676,6 +729,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                         if (propertyPath == null) {
                             throw new IllegalArgumentException("Cannot project on non-existent property: " + propertyName);
                         }
+                        addedProperties.add(propertyName);
                         PersistentProperty property = propertyPath.getProperty();
                         if (property instanceof Association && !(property instanceof Embedded)) {
                             if (!queryState.isJoined(propertyPath.getPath())) {
@@ -696,6 +750,24 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                 if (i.hasNext()) {
                     queryString.append(COMMA);
                 }
+            }
+
+            if (!addedProperties.isEmpty()) {
+                Collection<JoinPath> selectJoinPaths = queryState.getQueryModel().getJoinPaths().stream()
+                    .filter(jp -> {
+                        if (addedProperties.contains(jp.getPath())) {
+                            return false;
+                        }
+                        boolean result = true;
+                        for (String addedProperty : addedProperties) {
+                            result = result && jp.getPath().startsWith(addedProperty);
+                            if (!result) {
+                                break;
+                            }
+                        }
+                        return result;
+                    }).collect(Collectors.toList());
+                selectAllColumnsFromJoinPaths(queryState, queryString, selectJoinPaths);
             }
         }
     }

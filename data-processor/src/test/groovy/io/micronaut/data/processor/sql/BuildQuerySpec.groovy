@@ -150,6 +150,35 @@ interface MealRepository extends CrudRepository<Meal, Long> {
 
     }
 
+    void "test join query on collection with composite id"() {
+        given:
+        def repository = buildRepository('test.ApplicationRepository', """
+import io.micronaut.context.annotation.Executable;
+import io.micronaut.data.annotation.Join;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.CrudRepository;
+import io.micronaut.data.tck.entities.Application;
+import io.micronaut.data.tck.entities.Template;
+
+import java.util.Optional;
+
+@JdbcRepository(dialect = Dialect.H2)
+interface ApplicationRepository extends CrudRepository<Application, Long> {
+
+    @Join(value = "template.questions", type = Join.Type.LEFT_FETCH)
+    //@Executable
+    Optional<Template> findTemplateById(Long id);
+}
+""")
+
+        def query = getQuery(repository.getRequiredMethod("findTemplateById", Long))
+
+        expect:"The query contains the correct join"
+        query.contains('LEFT JOIN `questions` application_template_questions_ ON application_template_.`id`=application_template_questions_.`template_id`')
+
+    }
+
     void "test join query with custom foreign key"() {
         given:
         def repository = buildRepository('test.FoodRepository', """
@@ -343,9 +372,10 @@ interface UserRoleRepository extends GenericRepository<UserRole, UserRoleId> {
 """)
 
             def method = repository.findPossibleMethods("findRoleByUser").findAny().get()
+            def query = getQuery(method)
 
         expect:
-            getQuery(method) == 'SELECT user_role_id_role_.`id`,user_role_id_role_.`name` FROM `user_role_composite` user_role_ INNER JOIN `role_composite` user_role_id_role_ ON user_role_.`id_role_id`=user_role_id_role_.`id` WHERE (user_role_.`id_user_id` = ?)'
+            query == 'SELECT user_role_id_role_.`id`,user_role_id_role_.`name` FROM `user_role_composite` user_role_ INNER JOIN `role_composite` user_role_id_role_ ON user_role_.`id_role_id`=user_role_id_role_.`id` WHERE (user_role_.`id_user_id` = ?)'
             getParameterBindingIndexes(method) == ["0"] as String[]
             getParameterBindingPaths(method) == ["id"] as String[]
             getParameterPropertyPaths(method) == ["id.user.id"] as String[]

@@ -23,6 +23,7 @@ import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.beans.BeanWrapper;
 import io.micronaut.core.convert.ConversionContext;
+import io.micronaut.core.naming.NameUtils;
 import io.micronaut.core.reflect.exception.InstantiationException;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArgumentUtils;
@@ -758,6 +759,10 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
 
         private <K> MappingContext<K> joinAssociation(Map<String, JoinPath> joinPaths, Association association) {
             JoinPath jp = findJoinPath(joinPaths, association);
+            if (jp == null) {
+                // String assocPath = NameUtils.decapitalize(association.toString());
+                // jp = joinPaths.get(assocPath);
+            }
             RuntimePersistentEntity<K> associatedEntity = (RuntimePersistentEntity<K>) association.getAssociatedEntity();
             return new MappingContext<>(
                     rootPersistentEntity,
