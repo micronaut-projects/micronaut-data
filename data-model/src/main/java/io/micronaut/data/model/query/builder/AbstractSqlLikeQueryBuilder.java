@@ -595,7 +595,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             .append(logicalName);
     }
 
-    protected void selectAllColumnsFromJoinPaths(QueryState queryState, StringBuilder queryBuffer, Collection<JoinPath> allPaths) {
+    protected final void selectAllColumnsFromJoinPaths(QueryState queryState, StringBuilder queryBuffer, Collection<JoinPath> allPaths) {
         if (CollectionUtils.isNotEmpty(allPaths)) {
 
             Collection<JoinPath> joinPaths = allPaths.stream().filter(jp -> {
@@ -752,6 +752,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                 }
             }
 
+            // When fields were added by projections then we need to force joins or else will be skipped
             if (!addedProperties.isEmpty()) {
                 Collection<JoinPath> selectJoinPaths = queryState.getQueryModel().getJoinPaths().stream()
                     .filter(jp -> {

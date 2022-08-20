@@ -37,7 +37,7 @@ class H2TemplateQuestionsSpec extends Specification {
             question.setText("How are you?")
             questionRepository.save(question)
 
-            def app = new Application() {}
+            def app = new Application()
             app.setTemplate(template)
             appRepository.save(app)
         when:
