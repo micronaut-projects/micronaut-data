@@ -147,6 +147,8 @@ public interface PersonRepository extends CrudRepository<Person, Long>, Pageable
     @Query("DELETE FROM person WHERE name = :xyz")
     int deleteCustomSingleNoEntity(String xyz);
 
+    List<Person> findAllByAgeInRange(int from, int to);
+
     class Specifications {
 
         public static PredicateSpecification<Person> nameEquals(String name) {
