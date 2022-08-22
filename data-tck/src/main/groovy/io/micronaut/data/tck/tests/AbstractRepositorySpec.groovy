@@ -1008,6 +1008,19 @@ abstract class AbstractRepositorySpec extends Specification {
         personRepository.findByNameLikeOrderByAgeDesc("J%")*.age == [40,35]
     }
 
+    void "test find by age InRange"() {
+        given:
+
+        personRepository.save(new Person(name: "Jeff", age: 40))
+        personRepository.saveAll([
+                new Person(name: "Ivan", age: 30),
+                new Person(name: "James", age: 35)
+        ])
+
+        expect:
+        personRepository.findAllByAgeInRange(20, 50).size() >= 3
+    }
+
     void "test dto projection"() {
         given:
         saveSampleBooks()

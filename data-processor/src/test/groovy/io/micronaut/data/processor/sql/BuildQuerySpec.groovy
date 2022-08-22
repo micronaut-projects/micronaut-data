@@ -426,4 +426,27 @@ interface PurchaseRepository extends CrudRepository<Purchase, Long> {
         query2 == 'SELECT purchase_.`id`,purchase_.`version`,purchase_.`name`,purchase_.`invoice_id`,purchase_.`customer_id`,purchase_.`should_receive_copy_of_invoice` FROM `purchase` purchase_ WHERE (purchase_.`customer_id` = ? AND purchase_.`should_receive_copy_of_invoice` = TRUE)'
 
     }
+
+    void "test query using InRange"() {
+        given:
+        def repository = buildRepository('test.MealRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.tck.entities.Meal;
+import java.util.UUID;
+
+@JdbcRepository(dialect= Dialect.MYSQL)
+@io.micronaut.context.annotation.Executable
+interface MealRepository extends CrudRepository<Meal, Long> {
+
+    Meal findByCurrentBloodGlucoseInRange(int from, int to);
+}
+""")
+
+        def query = getQuery(repository.getRequiredMethod("findByCurrentBloodGlucoseInRange", int, int))
+
+        expect:"The query contains the correct where clause for InRange (same as Between)"
+        query.contains('WHERE ((meal_.`current_blood_glucose` >= ? AND meal_.`current_blood_glucose` <= ?))')
+
+    }
 }
