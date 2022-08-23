@@ -787,7 +787,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                         } else {
                             columnName = asPath(propertyAssociations, prop);
                         }
-                        String columnAlias = prop.getAnnotationMetadata().stringValue(MappedProperty.class, MappedProperty.ALIAS).orElse("");
+                        String columnAlias = getColumnAlias(prop);
 
                         queryBuffer
                                 .append(aliasName)
@@ -828,16 +828,15 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         int length = sb.length();
         traversePersistentProperties(entity, (associations, property) -> {
             String transformed = getDataTransformerReadValue(alias, property).orElse(null);
-            String columnAlias = property.getAnnotationMetadata().stringValue(MappedProperty.class, MappedProperty.ALIAS).orElse("");
+            String columnAlias = getColumnAlias(property);
+            boolean useAlias = StringUtils.isNotEmpty(columnAlias);
             if (transformed != null) {
-                sb.append(transformed).append(AS_CLAUSE).append(StringUtils.isNotEmpty(columnAlias) ? columnAlias : property.getPersistedName());
+                sb.append(transformed).append(AS_CLAUSE).append(useAlias ? columnAlias : property.getPersistedName());
             } else {
                 String column = namingStrategy.mappedName(associations, property);
-                if (escape) {
-                    column = quote(column);
-                }
+                column = escapeColumnIfNeeded(column, escape);
                 sb.append(alias).append(DOT).append(column);
-                if (StringUtils.isNotEmpty(columnAlias)) {
+                if (useAlias) {
                     sb.append(AS_CLAUSE).append(columnAlias);
                 }
             }
@@ -852,6 +851,23 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         } else {
             sb.setLength(newLength - 1);
         }
+    }
+
+    /**
+     * Gets column alias if defined as alias field on MappedProperty annotation on the mapping field.
+     *
+     * @param property the persisent propert
+     * @return column alias if defined, otherwise an empty string
+     */
+    private String getColumnAlias(PersistentProperty property) {
+        return property.getAnnotationMetadata().stringValue(MappedProperty.class, MappedProperty.ALIAS).orElse("");
+    }
+
+    private String escapeColumnIfNeeded(String column, boolean escape) {
+        if (escape) {
+            return quote(column);
+        }
+        return column;
     }
 
     private boolean canUseWildcardForSelect(PersistentEntity entity) {

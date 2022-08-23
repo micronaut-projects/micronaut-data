@@ -38,6 +38,7 @@ import io.micronaut.data.tck.entities.Challenge
 import io.micronaut.data.tck.entities.City
 import io.micronaut.data.tck.entities.CountryRegion
 import io.micronaut.data.tck.entities.Meal
+import io.micronaut.data.tck.entities.Product
 import io.micronaut.data.tck.entities.Restaurant
 import io.micronaut.data.tck.entities.Sale
 import io.micronaut.data.tck.entities.Shipment
@@ -458,6 +459,13 @@ interface MyRepository {
         then:
         statements[0] == 'CREATE TABLE "shipment_with_index" ("shipment_id" BIGINT PRIMARY KEY AUTO_INCREMENT,"field" VARCHAR(255) NOT NULL,"taxCode" VARCHAR(255) NOT NULL);'
         statements[1] == 'CREATE UNIQUE INDEX idx_shipment_with_index_field_taxcode ON "shipment_with_index" (field, taxCode);'
+
+        when:
+        def productStatements = encoder.buildCreateTableStatements(getRuntimePersistentEntity(Product))
+
+        then:
+        productStatements.length == 1
+        productStatements[0] == 'CREATE TABLE "product" ("id" BIGINT PRIMARY KEY AUTO_INCREMENT,"name" VARCHAR(255) NOT NULL,"price" DECIMAL NOT NULL,"loooooooooooooooooooooooooooooooooooooooooooooooooooooooong_name" VARCHAR(255),"date_created" TIMESTAMP,"last_updated" TIMESTAMP,"category_id" BIGINT);'
     }
 
     void "test build create index from field annotation"() {
