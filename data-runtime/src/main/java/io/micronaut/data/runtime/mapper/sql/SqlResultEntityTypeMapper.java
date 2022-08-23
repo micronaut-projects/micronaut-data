@@ -28,8 +28,10 @@ import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
+import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.Embeddable;
 import io.micronaut.data.annotation.EmbeddedId;
+import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.annotation.TypeDef;
 import io.micronaut.data.exceptions.DataAccessException;
@@ -569,7 +571,10 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
 
     private <K> Object readProperty(RS rs, MappingContext<K> ctx, RuntimePersistentProperty<K> prop) {
         String columnName = ctx.namingStrategy.mappedName(ctx.embeddedPath, prop);
-        if (ctx.prefix != null && ctx.prefix.length() != 0) {
+        String columnAlias = prop.getAnnotationMetadata().stringValue(MappedProperty.class, MappedProperty.ALIAS).orElse("");
+        if (StringUtils.isNotEmpty(columnAlias)) {
+            columnName = columnAlias;
+        } else if (ctx.prefix != null && ctx.prefix.length() != 0) {
             columnName = ctx.prefix + columnName;
         }
         Object result = resultReader.readDynamic(rs, columnName, prop.getDataType());

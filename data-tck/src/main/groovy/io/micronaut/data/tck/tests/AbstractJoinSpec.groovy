@@ -67,6 +67,7 @@ abstract class AbstractJoinSpec extends Specification {
             Product product = new Product()
             product.setName("Product#"+j)
             product.changePrice(j)
+            product.setLoooooooooooooooooooooooooooooooooooooooooooooooooooooooongName("LongName#" + j);
 
             if (j%2==0) {
                 //product.setCategoryId(category2.getId())
@@ -104,6 +105,11 @@ abstract class AbstractJoinSpec extends Specification {
 
         when: "Join and order by id"
         categories = categoryRepository.findAllOrderById()
+        categories.forEach(c -> {
+           c.getProductList().forEach(p -> {
+              p.getLoooooooooooooooooooooooooooooooooooooooooooooooooooooooongName().startsWith("LongName#") == true
+           });
+        });
         categoriesMap = categories.stream().collect(toMap(a -> a.getId() , a -> a));
 
         then:

@@ -16,6 +16,7 @@
 package io.micronaut.data.tck.entities;
 
 import io.micronaut.data.annotation.DateUpdated;
+import io.micronaut.data.annotation.MappedProperty;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;

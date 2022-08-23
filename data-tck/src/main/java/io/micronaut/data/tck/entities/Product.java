@@ -16,8 +16,10 @@
 package io.micronaut.data.tck.entities;
 
 import io.micronaut.core.annotation.Creator;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.annotation.DateCreated;
 import io.micronaut.data.annotation.DateUpdated;
+import io.micronaut.data.annotation.MappedProperty;
 
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -39,6 +41,10 @@ public class Product {
     private String name;
 
     private BigDecimal price;
+
+    @Nullable
+    @MappedProperty(alias = "ln")
+    private String loooooooooooooooooooooooooooooooooooooooooooooooooooooooongName;
 
     @DateCreated
     private LocalDateTime dateCreated;
@@ -73,6 +79,14 @@ public class Product {
 
     public BigDecimal getPrice() {
         return price;
+    }
+
+    public String getLoooooooooooooooooooooooooooooooooooooooooooooooooooooooongName() {
+        return loooooooooooooooooooooooooooooooooooooooooooooooooooooooongName;
+    }
+
+    public void setLoooooooooooooooooooooooooooooooooooooooooooooooooooooooongName(String value) {
+        this.loooooooooooooooooooooooooooooooooooooooooooooooooooooooongName = value;
     }
 
     public void setDateCreated(LocalDateTime dateCreated) {

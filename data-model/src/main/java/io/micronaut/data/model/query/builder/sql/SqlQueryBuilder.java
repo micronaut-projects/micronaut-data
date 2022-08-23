@@ -787,14 +787,19 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                         } else {
                             columnName = asPath(propertyAssociations, prop);
                         }
+                        String columnAlias = prop.getAnnotationMetadata().stringValue(MappedProperty.class, MappedProperty.ALIAS).orElse("");
+
                         queryBuffer
                                 .append(aliasName)
                                 .append(DOT)
                                 .append(queryState.shouldEscape() ? quote(columnName) : columnName)
-                                .append(AS_CLAUSE)
-                                .append(joinPathAlias)
-                                .append(columnName)
-                                .append(COMMA);
+                                .append(AS_CLAUSE);
+                        if (StringUtils.isNotEmpty(columnAlias)) {
+                            queryBuffer.append(columnAlias);
+                        } else {
+                            queryBuffer.append(joinPathAlias).append(columnName);
+                        }
+                        queryBuffer.append(COMMA);
                     });
                     queryBuffer.setLength(queryBuffer.length() - 1);
                 }
@@ -823,14 +828,18 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         int length = sb.length();
         traversePersistentProperties(entity, (associations, property) -> {
             String transformed = getDataTransformerReadValue(alias, property).orElse(null);
+            String columnAlias = property.getAnnotationMetadata().stringValue(MappedProperty.class, MappedProperty.ALIAS).orElse("");
             if (transformed != null) {
-                sb.append(transformed).append(AS_CLAUSE).append(property.getPersistedName());
+                sb.append(transformed).append(AS_CLAUSE).append(StringUtils.isNotEmpty(columnAlias) ? columnAlias : property.getPersistedName());
             } else {
                 String column = namingStrategy.mappedName(associations, property);
                 if (escape) {
                     column = quote(column);
                 }
                 sb.append(alias).append(DOT).append(column);
+                if (StringUtils.isNotEmpty(columnAlias)) {
+                    sb.append(AS_CLAUSE).append(columnAlias);
+                }
             }
             sb.append(COMMA);
         });
