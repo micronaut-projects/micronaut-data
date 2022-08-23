@@ -17,6 +17,7 @@ package io.micronaut.data.r2dbc.mariadb
 
 import groovy.transform.Memoized
 import io.micronaut.data.r2dbc.mysql.MySqlCategoryRepository
+import io.micronaut.data.r2dbc.mysql.MySqlProductDtoRepository
 import io.micronaut.data.r2dbc.mysql.MySqlProductRepository
 import io.micronaut.data.tck.repositories.CategoryRepository
 import io.micronaut.data.tck.repositories.ProductDtoRepository
