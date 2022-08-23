@@ -17,6 +17,7 @@ package io.micronaut.data.jdbc.sqlserver
 
 import groovy.transform.Memoized
 import io.micronaut.data.tck.repositories.CategoryRepository
+import io.micronaut.data.tck.repositories.ProductDtoRepository
 import io.micronaut.data.tck.repositories.ProductRepository
 import io.micronaut.data.tck.tests.AbstractJoinSpec
 
@@ -34,4 +35,9 @@ class SqlServerJoinSpec extends AbstractJoinSpec implements MSSQLTestPropertyPro
         return context.getBean(MSProductRepository)
     }
 
+    @Memoized
+    @Override
+    ProductDtoRepository getProductDtoRepository() {
+        return context.getBean(MSProductDtoRepository)
+    }
 }

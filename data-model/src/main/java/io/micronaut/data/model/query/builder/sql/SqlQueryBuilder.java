@@ -853,16 +853,6 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         }
     }
 
-    /**
-     * Gets column alias if defined as alias field on MappedProperty annotation on the mapping field.
-     *
-     * @param property the persisent propert
-     * @return column alias if defined, otherwise an empty string
-     */
-    private String getColumnAlias(PersistentProperty property) {
-        return property.getAnnotationMetadata().stringValue(MappedProperty.class, MappedProperty.ALIAS).orElse("");
-    }
-
     private String escapeColumnIfNeeded(String column, boolean escape) {
         if (escape) {
             return quote(column);

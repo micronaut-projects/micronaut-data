@@ -43,8 +43,8 @@ public class Product {
     private BigDecimal price;
 
     @Nullable
-    @MappedProperty(alias = "ln")
-    private String loooooooooooooooooooooooooooooooooooooooooooooooooooooooongName;
+    @MappedProperty(value = "loooooooooooooooooooooooooooooooooooooooooooooooooooooooong_name", alias = "long_name")
+    private String longName;
 
     @DateCreated
     private LocalDateTime dateCreated;
@@ -81,12 +81,12 @@ public class Product {
         return price;
     }
 
-    public String getLoooooooooooooooooooooooooooooooooooooooooooooooooooooooongName() {
-        return loooooooooooooooooooooooooooooooooooooooooooooooooooooooongName;
+    public String getLongName() {
+        return longName;
     }
 
-    public void setLoooooooooooooooooooooooooooooooooooooooooooooooooooooooongName(String value) {
-        this.loooooooooooooooooooooooooooooooooooooooooooooooooooooooongName = value;
+    public void setLongName(String value) {
+        this.longName = value;
     }
 
     public void setDateCreated(LocalDateTime dateCreated) {

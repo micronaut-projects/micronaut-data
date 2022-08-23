@@ -26,6 +26,7 @@ import io.micronaut.data.annotation.DataTransformer;
 import io.micronaut.data.annotation.IgnoreWhere;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.annotation.Where;
 import io.micronaut.data.annotation.repeatable.WhereSpecifications;
@@ -702,6 +703,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
 
     private void appendPropertyProjection(StringBuilder sb, QueryPropertyPath propertyPath) {
         if (!computePropertyPaths()) {
+            // TODO: Verify this path
             sb.append(propertyPath.getTableAlias()).append(DOT).append(propertyPath.getPath());
             return;
         }
@@ -714,7 +716,12 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             if (escape) {
                 columnName = quote(columnName);
             }
-            sb.append(tableAlias).append(DOT).append(columnName).append(COMMA);
+            sb.append(tableAlias).append(DOT).append(columnName);
+            String columnAlias = getColumnAlias(property);
+            if (StringUtils.isNotEmpty(columnAlias)) {
+                sb.append(AS_CLAUSE).append(columnAlias);
+            }
+            sb.append(COMMA);
             needsTrimming[0] = true;
         });
         if (needsTrimming[0]) {
@@ -1585,6 +1592,16 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
      */
     protected <T extends QueryModel.Criterion> void addCriterionHandler(Class<T> clazz, CriterionHandler<T> handler) {
         queryHandlers.put(clazz, handler);
+    }
+
+    /**
+     * Gets column alias if defined as alias field on MappedProperty annotation on the mapping field.
+     *
+     * @param property the persisent propert
+     * @return column alias if defined, otherwise an empty string
+     */
+    protected final String getColumnAlias(PersistentProperty property) {
+        return property.getAnnotationMetadata().stringValue(MappedProperty.class, MappedProperty.ALIAS).orElse("");
     }
 
     /**

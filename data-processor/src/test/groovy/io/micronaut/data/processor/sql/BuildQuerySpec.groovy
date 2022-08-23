@@ -454,4 +454,29 @@ interface MealRepository extends CrudRepository<Meal, Long> {
         query.contains('WHERE ((meal_.`current_blood_glucose` >= ? AND meal_.`current_blood_glucose` <= ?))')
 
     }
+
+    void "test build DTO repo with MappedProperty alias"() {
+        given:
+        def repository = buildRepository('test.ProductDtoRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.tck.entities.Product;
+import io.micronaut.data.tck.entities.ProductDto;
+
+@JdbcRepository(dialect = Dialect.MYSQL)
+interface ProductDtoRepository extends GenericRepository<Product, Long> {
+
+    List<ProductDto> findByNameLike(String name);
+}
+
+""")
+        def method = repository.getRequiredMethod("findByNameLike", String)
+        def query = getQuery(method)
+
+
+        expect:
+        method.isTrue(DataMethod, DataMethod.META_MEMBER_DTO)
+        query == 'SELECT product_.`name`,product_.`price`,product_.`loooooooooooooooooooooooooooooooooooooooooooooooooooooooong_name` AS long_name,product_.`date_created`,product_.`last_updated` FROM `product` product_ WHERE (product_.`name` LIKE ?)'
+
+    }
 }

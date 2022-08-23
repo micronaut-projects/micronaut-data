@@ -75,6 +75,7 @@ public @interface MappedProperty {
 
     /**
      * @return The column alias to use for the query
+     * @since 3.8.0
      */
     String alias() default "";
 }
