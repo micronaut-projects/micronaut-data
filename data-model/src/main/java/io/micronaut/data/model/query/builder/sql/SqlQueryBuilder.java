@@ -817,10 +817,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     @Override
     public void selectAllColumns(PersistentEntity entity, String alias, StringBuilder sb) {
         if (canUseWildcardForSelect(entity)) {
-            if (alias != null) {
-                sb.append(alias).append(DOT);
-            }
-            sb.append("*");
+            selectAllColumns(sb, alias);
             return;
         }
         boolean escape = shouldEscape(entity);
@@ -844,15 +841,31 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         });
         int newLength = sb.length();
         if (newLength == length) {
-            if (alias != null) {
-                sb.append(alias).append(DOT);
-            }
-            sb.append("*");
+            selectAllColumns(sb, alias);
         } else {
             sb.setLength(newLength - 1);
         }
     }
 
+    /**
+     * Appends '*' symbol (meaning all columns selection) to the string builder representing query.
+     * @param sb the string builder representing query
+     * @param alias an alias, if not null will be apended with '.' before '*' symbol
+     */
+    private void selectAllColumns(StringBuilder sb, String alias) {
+        if (alias != null) {
+            sb.append(alias).append(DOT);
+        }
+        sb.append("*");
+    }
+
+    /**
+     * Returns escaped (quoted) column if escape needed.
+     *
+     * @param column the column
+     * @param escape an indicator telling whether column needs to be escaped (quoted)
+     * @return escaped (quoted) column if instructed to do so, otherwise original column value
+     */
     private String escapeColumnIfNeeded(String column, boolean escape) {
         if (escape) {
             return quote(column);
