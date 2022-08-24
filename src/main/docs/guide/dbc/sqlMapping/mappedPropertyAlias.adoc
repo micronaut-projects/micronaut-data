@@ -7,4 +7,4 @@ snippet::example.Person[project-base="doc-examples/jdbc-example", source="main"]
 In this example, original column name `long_name_column_legacy_system` will be returned in a result from the database as `long_name`.
 When `alias` property is set then be careful when writing custom or native queries to return field as indicated in `alias` value.
 
-It is not supported in Mongo data. Also it is being ignored on associations so it makes sense only on fields/columns mappings.
+Setting `alias` in MappedProperty on assocations does not have an effect as it makes sense only on fields/columns mappings.
