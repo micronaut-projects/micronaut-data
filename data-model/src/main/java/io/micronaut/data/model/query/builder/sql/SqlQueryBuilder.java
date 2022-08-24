@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.model.query.builder.sql;
 
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
@@ -751,7 +752,60 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         QueryModel queryModel = queryState.getQueryModel();
 
         Collection<JoinPath> allPaths = queryModel.getJoinPaths();
-        selectAllColumnsFromJoinPaths(queryState, queryBuffer, allPaths);
+        selectAllClumnsFromJoinPaths(queryState, queryBuffer, allPaths);
+    }
+
+    @Internal
+    protected void selectAllClumnsFromJoinPaths(QueryState queryState, StringBuilder queryBuffer, Collection<JoinPath> allPaths) {
+        if (CollectionUtils.isNotEmpty(allPaths)) {
+
+            Collection<JoinPath> joinPaths = allPaths.stream().filter(jp -> {
+                Join.Type jt = jp.getJoinType();
+                return jt.name().contains("FETCH");
+            }).collect(Collectors.toList());
+
+            if (CollectionUtils.isNotEmpty(joinPaths)) {
+                for (JoinPath joinPath : joinPaths) {
+                    Association association = joinPath.getAssociation();
+                    if (association instanceof Embedded) {
+                        // joins on embedded don't make sense
+                        continue;
+                    }
+
+                    PersistentEntity associatedEntity = association.getAssociatedEntity();
+                    NamingStrategy namingStrategy = associatedEntity.getNamingStrategy();
+
+                    String aliasName = getAliasName(joinPath);
+                    String joinPathAlias = getPathOnlyAliasName(joinPath);
+
+                    queryBuffer.append(COMMA);
+
+                    boolean includeIdentity = false;
+                    if (association.isForeignKey()) {
+                        // in the case of a foreign key association the ID is not in the table
+                        // so we need to retrieve it
+                        includeIdentity = true;
+                    }
+                    traversePersistentProperties(associatedEntity, includeIdentity, true, (propertyAssociations, prop) -> {
+                        String columnName;
+                        if (computePropertyPaths()) {
+                            columnName = namingStrategy.mappedName(propertyAssociations, prop);
+                        } else {
+                            columnName = asPath(propertyAssociations, prop);
+                        }
+                        queryBuffer
+                                .append(aliasName)
+                                .append(DOT)
+                                .append(queryState.shouldEscape() ? quote(columnName) : columnName)
+                                .append(AS_CLAUSE)
+                                .append(joinPathAlias)
+                                .append(columnName)
+                                .append(COMMA);
+                    });
+                    queryBuffer.setLength(queryBuffer.length() - 1);
+                }
+            }
+        }
     }
 
     /**

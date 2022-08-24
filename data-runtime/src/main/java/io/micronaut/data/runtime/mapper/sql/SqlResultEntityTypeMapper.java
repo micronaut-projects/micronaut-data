@@ -760,8 +760,8 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
         private <K> MappingContext<K> joinAssociation(Map<String, JoinPath> joinPaths, Association association) {
             JoinPath jp = findJoinPath(joinPaths, association);
             if (jp == null) {
-                // String assocPath = NameUtils.decapitalize(association.toString());
-                // jp = joinPaths.get(assocPath);
+                 String assocPath = NameUtils.decapitalize(association.toString());
+                 jp = joinPaths.get(assocPath);
             }
             RuntimePersistentEntity<K> associatedEntity = (RuntimePersistentEntity<K>) association.getAssociatedEntity();
             return new MappingContext<>(

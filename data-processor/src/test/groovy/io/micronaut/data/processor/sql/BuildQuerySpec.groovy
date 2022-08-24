@@ -157,14 +157,14 @@ import io.micronaut.context.annotation.Executable;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
-import io.micronaut.data.repository.CrudRepository;
+import io.micronaut.data.repository.GenericRepository;
 import io.micronaut.data.tck.entities.Application;
 import io.micronaut.data.tck.entities.Template;
 
 import java.util.Optional;
 
 @JdbcRepository(dialect = Dialect.H2)
-interface ApplicationRepository extends CrudRepository<Application, Long> {
+interface ApplicationRepository extends GenericRepository<Application, Long> {
 
     @Join(value = "template.questions", type = Join.Type.LEFT_FETCH)
     //@Executable
@@ -174,8 +174,8 @@ interface ApplicationRepository extends CrudRepository<Application, Long> {
 
         def query = getQuery(repository.getRequiredMethod("findTemplateById", Long))
 
-        expect:"The query contains the correct join"
-        query.contains('LEFT JOIN `questions` application_template_questions_ ON application_template_.`id`=application_template_questions_.`template_id`')
+        expect:
+        query == "SELECT template_.`id`,template_.`enabled`,application_template_questions_.`id` AS template_questions_id,application_template_questions_.`text` AS template_questions_text,application_template_questions_.`template_id` AS template_questions_template_id,application_template_questions_.`number` AS template_questions_number FROM `applications` application_ LEFT JOIN `templates` application_template_ ON application_.`template_id`=application_template_.`id` LEFT JOIN `questions` application_template_questions_ ON application_template_.`id`=application_template_questions_.`template_id` WHERE (application_.`id` = ?)"
 
     }
 

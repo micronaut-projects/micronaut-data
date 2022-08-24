@@ -13,6 +13,5 @@ import java.util.Optional;
 public interface ApplicationRepository extends CrudRepository<Application, Long> {
 
     @Join(value = "template.questions", type = Join.Type.LEFT_FETCH)
-    //@Executable
     Optional<Template> findTemplateById(Long id);
 }
