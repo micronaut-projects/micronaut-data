@@ -688,8 +688,8 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                                 queryString.setLength(queryString.length() - 1);
                                 continue;
                             }
-                            String associationAlias = getAliasName(association.getAssociatedEntity());
-                            selectAllColumns(((Association) property).getAssociatedEntity(), associationAlias, queryString);
+                            String joinAlias = queryState.computeAlias(propertyPath.getPath());
+                            selectAllColumns(((Association) property).getAssociatedEntity(), joinAlias, queryString);
                             Collection<JoinPath> joinPaths = queryState.getQueryModel().getJoinPaths();
                             Collection<JoinPath> newJoinPaths = new ArrayList<>(joinPaths.size());
                             for (JoinPath joinPath : joinPaths) {
