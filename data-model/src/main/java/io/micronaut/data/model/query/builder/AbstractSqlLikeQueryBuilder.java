@@ -703,7 +703,6 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
 
     private void appendPropertyProjection(StringBuilder sb, QueryPropertyPath propertyPath) {
         if (!computePropertyPaths()) {
-            // Make sure this path is verified
             sb.append(propertyPath.getTableAlias()).append(DOT).append(propertyPath.getPath());
             return;
         }

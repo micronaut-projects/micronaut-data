@@ -25,6 +25,7 @@ import io.micronaut.data.tck.entities.Author
 import io.micronaut.data.tck.entities.Book
 import io.micronaut.data.tck.entities.EntityIdClass
 import io.micronaut.data.tck.entities.EntityWithIdClass
+import io.micronaut.data.tck.entities.Product
 import io.micronaut.data.tck.entities.Student
 import io.micronaut.data.tck.tests.AbstractQuerySpec
 import jakarta.inject.Inject
@@ -59,6 +60,10 @@ abstract class AbstractHibernateQuerySpec extends AbstractQuerySpec {
     @Shared
     @Inject
     UserWithWhereRepository userWithWhereRepository
+
+    @Shared
+    @Inject
+    ProductRepo productRepo
 
     void "test @where with nullable property values"() {
         when:
@@ -627,6 +632,21 @@ abstract class AbstractHibernateQuerySpec extends AbstractQuerySpec {
             value.totalSize == 2
             value.content.size() == 2
             value.content[0].title == "Pet Cemetery"
+    }
+
+    void "test loading entity with MappedProperty and alias"() {
+        given:
+            def product = new Product("prod1", 20)
+            product.setLongName("prod name1")
+            product = productRepo.save(product)
+        when:
+            def loadedProd = productRepo.findById(product.getId()).get()
+        then:
+            loadedProd != null
+            loadedProd.id == product.id
+            loadedProd.longName == product.longName
+        cleanup:
+          productRepo.deleteAll()
     }
 
     private static Specification<Book> testJoin(String value) {

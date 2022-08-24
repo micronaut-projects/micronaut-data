@@ -16,16 +16,18 @@
 package io.micronaut.data.tck.repositories;
 
 import io.micronaut.core.annotation.NonNull;
-import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.repository.CrudRepository;
+import io.micronaut.data.repository.jpa.JpaSpecificationExecutor;
+import io.micronaut.data.repository.jpa.criteria.PredicateSpecification;
 import io.micronaut.data.tck.entities.Food;
 
 import javax.validation.constraints.NotNull;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-public interface FoodRepository extends CrudRepository<Food, UUID> {
+public interface FoodRepository extends CrudRepository<Food, UUID>, JpaSpecificationExecutor<Food> {
     @NonNull
     @Override
     @Join("meal")
@@ -37,4 +39,12 @@ public interface FoodRepository extends CrudRepository<Food, UUID> {
 
     @Join("meal")
     Food findByMealMidForUpdate(Long mid);
+
+    List<Food> findAllByKeyOrderByLongName(String key);
+
+    class Specifications {
+        public static PredicateSpecification<Food> keyEquals(String key) {
+            return (root, criteriaBuilder) -> criteriaBuilder.equal(root.get("key"), key);
+        }
+    }
 }

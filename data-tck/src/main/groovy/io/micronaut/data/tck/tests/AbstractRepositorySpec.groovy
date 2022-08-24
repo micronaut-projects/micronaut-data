@@ -2119,6 +2119,22 @@ abstract class AbstractRepositorySpec extends Specification {
         then:
             deleted == 1
             personRepository.count(nameEquals("Xyz")) == 0
+
+        when:
+            def meal = mealRepository.save(new Meal(10))
+            def food = new Food("food", 80, 200, meal)
+            food.setLongName("long name")
+            food = foodRepository.save(food)
+        then:
+            // Verify order by works on alias mapped property
+            def foods = foodRepository.findAllByKeyOrderByLongName(food.key);
+            foods.size() == 1
+            foods[0].key == food.key
+            foods[0].longName == food.longName
+
+            def loadedFood = foodRepository.findOne(FoodRepository.Specifications.keyEquals(food.key)).get()
+            loadedFood.key == food.key
+            loadedFood.longName == food.longName
     }
 
     void "test join/fetch"() {

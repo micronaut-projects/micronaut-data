@@ -360,7 +360,7 @@ interface MyInterface extends CrudRepository<Food, UUID> {
         expect:
 
         getQuery(method) == 'UPDATE "food" SET "key"=?,"carbohydrates"=?,"portion_grams"=?,"updated_on"=?,"fk_meal_id"=?,"fk_alt_meal"=?,"loooooooooooooooooooooooooooooooooooooooooooooooooooooooong_name"=? WHERE ("fid" = ?)'
-        getParameterPropertyPaths(method) == ["key", "carbohydrates", "portionGrams", "updatedOn", "meal.mid", "alternativeMeal.mid", "loooooooooooooooooooooooooooooooooooooooooooooooooooooooongName", "fid"] as String[]
+        getParameterPropertyPaths(method) == ["key", "carbohydrates", "portionGrams", "updatedOn", "meal.mid", "alternativeMeal.mid", "longName", "fid"] as String[]
     }
 
     void "test build custom SQL insert"() {
