@@ -2,6 +2,7 @@
 package example;
 
 import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.MappedProperty;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 
@@ -13,18 +14,21 @@ public class Person {
     private Long id;
     private String name;
     private int age;
+    @MappedProperty(value = "long_name_column_legacy_system", alias = "long_name")
+    private String longName;
 
     public Person() {
     }
 
-    public Person(String name, int age) {
-        this(null, name, age);
+    public Person(String name, int age, String longName) {
+        this(null, name, age, longName);
     }
 
-    public Person(Long id, String name, int age) {
+    public Person(Long id, String name, int age, String longName) {
         this.id = id;
         this.name = name;
         this.age = age;
+        this.longName = longName;
     }
 
     public Long getId() {
@@ -49,5 +53,13 @@ public class Person {
 
     public void setAge(int age) {
         this.age = age;
+    }
+
+    public String getLongName() {
+        return longName;
+    }
+
+    public void setLongName(String longName) {
+        this.longName = longName;
     }
 }

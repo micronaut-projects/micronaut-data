@@ -77,6 +77,7 @@ dbc:
     sqlAssociationMapping: Association Mapping
     sqlAssociationFetching: Association Fetching
     columnTransformer: Using @ColumnTransformer
+    mappedPropertyAlias: Using @MappedProperty alias
     sqlJsonType: JSON Column Support
     javaRecords: Support for Java 16 Records
     kotlinData: Support for Kotlin immutable data classes

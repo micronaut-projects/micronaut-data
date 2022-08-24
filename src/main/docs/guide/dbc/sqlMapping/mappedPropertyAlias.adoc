@@ -1,0 +1,10 @@
+If there is a need to return column name in the result set as custom name, there is `alias` property in the ann:data.annotation.MappedProperty[] annotation.
+
+It can be useful, for example, in legacy columns that might be too long for the query result (when combined with table aliases can exceed max column length).
+
+snippet::example.Person[project-base="doc-examples/jdbc-example", source="main"]
+
+In this example, original column name `long_name_column_legacy_system` will be returned in a result from the database as `long_name`.
+When `alias` property is set then be careful when writing custom or native queries to return field as indicated in `alias` value.
+
+It is not supported in Mongo data. Also it is being ignored on associations so it makes sense only on fields/columns mappings.

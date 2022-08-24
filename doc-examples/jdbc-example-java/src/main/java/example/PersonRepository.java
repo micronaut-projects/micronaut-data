@@ -64,6 +64,10 @@ public interface PersonRepository extends CrudRepository<Person, Long>, JpaSpeci
             return (root, criteriaBuilder) -> criteriaBuilder.equal(root.get(Person_.name), name);
         }
 
+        static PredicateSpecification<Person> longNameEquals(String longName) {
+            return (root, criteriaBuilder) -> criteriaBuilder.equal(root.get(Person_.longName), longName);
+        }
+
         static PredicateSpecification<Person> ageIsLessThan(int age) {
             return (root, criteriaBuilder) -> criteriaBuilder.lessThan(root.get(Person_.age), age);
         }

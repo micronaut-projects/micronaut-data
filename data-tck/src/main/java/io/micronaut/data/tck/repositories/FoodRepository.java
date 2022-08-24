@@ -43,6 +43,9 @@ public interface FoodRepository extends CrudRepository<Food, UUID>, JpaSpecifica
     List<Food> findAllByKeyOrderByLongName(String key);
 
     class Specifications {
+
+        private Specifications() {}
+
         public static PredicateSpecification<Food> keyEquals(String key) {
             return (root, criteriaBuilder) -> criteriaBuilder.equal(root.get("key"), key);
         }
