@@ -12,6 +12,6 @@ import java.util.Optional;
 @JdbcRepository(dialect = Dialect.H2)
 public interface ApplicationRepository extends CrudRepository<Application, Long> {
 
-    @Join(value = "template.questions", type = Join.Type.LEFT_FETCH)
+    @Join(value = "template.questions", type = Join.Type.LEFT_FETCH, alias = "tq")
     Optional<Template> findTemplateById(Long id);
 }

@@ -24,6 +24,7 @@ import spock.lang.Unroll
 
 import static io.micronaut.data.processor.visitors.TestUtils.anyParameterExpandable
 import static io.micronaut.data.processor.visitors.TestUtils.getDataTypes
+import static io.micronaut.data.processor.visitors.TestUtils.getJoins
 import static io.micronaut.data.processor.visitors.TestUtils.getParameterBindingIndexes
 import static io.micronaut.data.processor.visitors.TestUtils.getParameterBindingPaths
 import static io.micronaut.data.processor.visitors.TestUtils.getParameterPropertyPaths
@@ -172,10 +173,15 @@ interface ApplicationRepository extends GenericRepository<Application, Long> {
 }
 """)
 
-        def query = getQuery(repository.getRequiredMethod("findTemplateById", Long))
+
+        def method = repository.getRequiredMethod("findTemplateById", Long)
+        def query = getQuery(method)
+        def joins = getJoins(method)
 
         expect:
-        query == "SELECT template_.`id`,template_.`enabled`,application_template_questions_.`id` AS template_questions_id,application_template_questions_.`text` AS template_questions_text,application_template_questions_.`template_id` AS template_questions_template_id,application_template_questions_.`number` AS template_questions_number FROM `applications` application_ LEFT JOIN `templates` application_template_ ON application_.`template_id`=application_template_.`id` LEFT JOIN `questions` application_template_questions_ ON application_template_.`id`=application_template_questions_.`template_id` WHERE (application_.`id` = ?)"
+        query == "SELECT application_template_.`id`,application_template_.`enabled`,application_template_questions_.`id` AS questions_id,application_template_questions_.`text` AS questions_text,application_template_questions_.`template_id` AS questions_template_id,application_template_questions_.`number` AS questions_number FROM `applications` application_ LEFT JOIN `templates` application_template_ ON application_.`template_id`=application_template_.`id` LEFT JOIN `questions` application_template_questions_ ON application_template_.`id`=application_template_questions_.`template_id` WHERE (application_.`id` = ?)"
+        joins.size() == 1
+        joins.keySet() == ["questions"] as Set
 
     }
 

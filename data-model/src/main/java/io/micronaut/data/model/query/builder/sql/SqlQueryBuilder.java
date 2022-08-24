@@ -21,6 +21,7 @@ import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Creator;
 import io.micronaut.core.annotation.Experimental;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
@@ -752,11 +753,15 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         QueryModel queryModel = queryState.getQueryModel();
 
         Collection<JoinPath> allPaths = queryModel.getJoinPaths();
-        selectAllClumnsFromJoinPaths(queryState, queryBuffer, allPaths);
+        selectAllColumnsFromJoinPaths(queryState, queryBuffer, allPaths, null);
     }
 
     @Internal
-    protected void selectAllClumnsFromJoinPaths(QueryState queryState, StringBuilder queryBuffer, Collection<JoinPath> allPaths) {
+    protected void selectAllColumnsFromJoinPaths(QueryState queryState,
+                                                 StringBuilder queryBuffer,
+                                                 Collection<JoinPath> allPaths,
+                                                 @Nullable
+                                                 Map<JoinPath, String> joinAliasOverride) {
         if (CollectionUtils.isNotEmpty(allPaths)) {
 
             Collection<JoinPath> joinPaths = allPaths.stream().filter(jp -> {
@@ -775,8 +780,9 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                     PersistentEntity associatedEntity = association.getAssociatedEntity();
                     NamingStrategy namingStrategy = associatedEntity.getNamingStrategy();
 
-                    String aliasName = getAliasName(joinPath);
-                    String joinPathAlias = getPathOnlyAliasName(joinPath);
+                    String joinAlias = joinAliasOverride == null ? getAliasName(joinPath) : joinAliasOverride.get(joinPath);
+                    Objects.requireNonNull(joinAlias);
+                    String columnPrefixName = getPathOnlyAliasName(joinPath);
 
                     queryBuffer.append(COMMA);
 
@@ -794,11 +800,11 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                             columnName = asPath(propertyAssociations, prop);
                         }
                         queryBuffer
-                                .append(aliasName)
+                                .append(joinAlias)
                                 .append(DOT)
                                 .append(queryState.shouldEscape() ? quote(columnName) : columnName)
                                 .append(AS_CLAUSE)
-                                .append(joinPathAlias)
+                                .append(columnPrefixName)
                                 .append(columnName)
                                 .append(COMMA);
                     });
