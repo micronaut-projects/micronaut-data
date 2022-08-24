@@ -59,6 +59,10 @@ public class Food {
     @MappedProperty("fk_alt_meal")
     private Meal alternativeMeal;
 
+    @Nullable
+    @MappedProperty(value = "loooooooooooooooooooooooooooooooooooooooooooooooooooooooong_name", alias = "ln")
+    private String longName;
+
     public Food(
             @Size(max = 36) @NotNull String key,
             @Size(max = 9999) @NotNull int carbohydrates,
@@ -151,5 +155,14 @@ public class Food {
 
     public void setAlternativeMeal(@Nullable Meal alternativeMeal) {
         this.alternativeMeal = alternativeMeal;
+    }
+
+    @Nullable
+    public String getLongName() {
+        return longName;
+    }
+
+    public void setLongName(@Nullable String value) {
+        this.longName = value;
     }
 }

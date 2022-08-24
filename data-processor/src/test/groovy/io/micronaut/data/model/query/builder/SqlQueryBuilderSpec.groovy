@@ -38,6 +38,7 @@ import io.micronaut.data.tck.entities.Challenge
 import io.micronaut.data.tck.entities.City
 import io.micronaut.data.tck.entities.CountryRegion
 import io.micronaut.data.tck.entities.Meal
+import io.micronaut.data.tck.entities.Product
 import io.micronaut.data.tck.entities.Restaurant
 import io.micronaut.data.tck.entities.Sale
 import io.micronaut.data.tck.entities.Shipment
@@ -402,7 +403,7 @@ interface MyRepository {
                     'SELECT user_role_."id_user_id",user_role_."id_role_id" FROM "user_role_composite" user_role_ WHERE (user_role_."id_user_id" = ? AND user_role_."id_role_id" = ?)',
                     'SELECT challenge_."id",challenge_."token",challenge_."authentication_id",challenge_authentication_device_."NAME" AS authentication_device_NAME,challenge_authentication_device_."USER_ID" AS authentication_device_USER_ID,challenge_authentication_device_user_."NAME" AS authentication_device_user_NAME,challenge_authentication_."DESCRIPTION" AS authentication_DESCRIPTION,challenge_authentication_."DEVICE_ID" AS authentication_DEVICE_ID FROM "challenge" challenge_ INNER JOIN "AUTHENTICATION" challenge_authentication_ ON challenge_."authentication_id"=challenge_authentication_."ID" INNER JOIN "DEVICE" challenge_authentication_device_ ON challenge_authentication_."DEVICE_ID"=challenge_authentication_device_."ID" INNER JOIN "USER" challenge_authentication_device_user_ ON challenge_authentication_device_."USER_ID"=challenge_authentication_device_user_."ID" WHERE (challenge_."id" = ?)',
                     'SELECT user_role_id_role_."id",user_role_id_role_."name" FROM "user_role_composite" user_role_ INNER JOIN "role_composite" user_role_id_role_ ON user_role_."id_role_id"=user_role_id_role_."id" WHERE (user_role_."id_user_id" = ?)',
-                    'SELECT meal_."mid",meal_."current_blood_glucose",meal_."created_on",meal_."updated_on",meal_foods_."fid" AS foods_fid,meal_foods_."key" AS foods_key,meal_foods_."carbohydrates" AS foods_carbohydrates,meal_foods_."portion_grams" AS foods_portion_grams,meal_foods_."created_on" AS foods_created_on,meal_foods_."updated_on" AS foods_updated_on,meal_foods_."fk_meal_id" AS foods_fk_meal_id,meal_foods_."fk_alt_meal" AS foods_fk_alt_meal FROM "meal" meal_ INNER JOIN "food" meal_foods_ ON meal_."mid"=meal_foods_."fk_meal_id" WHERE (meal_."mid" = ?)'
+                    'SELECT meal_."mid",meal_."current_blood_glucose",meal_."created_on",meal_."updated_on",meal_foods_."fid" AS foods_fid,meal_foods_."key" AS foods_key,meal_foods_."carbohydrates" AS foods_carbohydrates,meal_foods_."portion_grams" AS foods_portion_grams,meal_foods_."created_on" AS foods_created_on,meal_foods_."updated_on" AS foods_updated_on,meal_foods_."fk_meal_id" AS foods_fk_meal_id,meal_foods_."fk_alt_meal" AS foods_fk_alt_meal,meal_foods_."loooooooooooooooooooooooooooooooooooooooooooooooooooooooong_name" AS ln FROM "meal" meal_ INNER JOIN "food" meal_foods_ ON meal_."mid"=meal_foods_."fk_meal_id" WHERE (meal_."mid" = ?)'
             ]
     }
 
@@ -458,6 +459,13 @@ interface MyRepository {
         then:
         statements[0] == 'CREATE TABLE "shipment_with_index" ("shipment_id" BIGINT PRIMARY KEY AUTO_INCREMENT,"field" VARCHAR(255) NOT NULL,"taxCode" VARCHAR(255) NOT NULL);'
         statements[1] == 'CREATE UNIQUE INDEX idx_shipment_with_index_field_taxcode ON "shipment_with_index" (field, taxCode);'
+
+        when:
+        def productStatements = encoder.buildCreateTableStatements(getRuntimePersistentEntity(Product))
+
+        then:
+        productStatements.length == 1
+        productStatements[0] == 'CREATE TABLE "product" ("id" BIGINT PRIMARY KEY AUTO_INCREMENT,"name" VARCHAR(255) NOT NULL,"price" DECIMAL NOT NULL,"loooooooooooooooooooooooooooooooooooooooooooooooooooooooong_name" VARCHAR(255),"date_created" TIMESTAMP,"last_updated" TIMESTAMP,"category_id" BIGINT);'
     }
 
     void "test build create index from field annotation"() {

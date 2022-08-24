@@ -3,6 +3,7 @@ package io.micronaut.data.r2dbc.mysql;
 import io.micronaut.data.annotation.DataTransformer;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.MappedProperty;
 
 import javax.persistence.Column;
 import java.util.UUID;
@@ -18,6 +19,7 @@ public class MySqlUuidEntity {
 
     @Column(columnDefinition = "binary(16)")
     @DataTransformer(read = "BIN_TO_UUID(@.id2)", write = "UUID_TO_BIN(?)")
+    @MappedProperty(alias = "alt_id")
     private UUID id2;
 
     @Column

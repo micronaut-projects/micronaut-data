@@ -787,14 +787,19 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                         } else {
                             columnName = asPath(propertyAssociations, prop);
                         }
+                        String columnAlias = getColumnAlias(prop);
+
                         queryBuffer
                                 .append(aliasName)
                                 .append(DOT)
                                 .append(queryState.shouldEscape() ? quote(columnName) : columnName)
-                                .append(AS_CLAUSE)
-                                .append(joinPathAlias)
-                                .append(columnName)
-                                .append(COMMA);
+                                .append(AS_CLAUSE);
+                        if (StringUtils.isNotEmpty(columnAlias)) {
+                            queryBuffer.append(columnAlias);
+                        } else {
+                            queryBuffer.append(joinPathAlias).append(columnName);
+                        }
+                        queryBuffer.append(COMMA);
                     });
                     queryBuffer.setLength(queryBuffer.length() - 1);
                 }
@@ -812,10 +817,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     @Override
     public void selectAllColumns(PersistentEntity entity, String alias, StringBuilder sb) {
         if (canUseWildcardForSelect(entity)) {
-            if (alias != null) {
-                sb.append(alias).append(DOT);
-            }
-            sb.append("*");
+            selectAllColumns(sb, alias);
             return;
         }
         boolean escape = shouldEscape(entity);
@@ -823,26 +825,52 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         int length = sb.length();
         traversePersistentProperties(entity, (associations, property) -> {
             String transformed = getDataTransformerReadValue(alias, property).orElse(null);
+            String columnAlias = getColumnAlias(property);
+            boolean useAlias = StringUtils.isNotEmpty(columnAlias);
             if (transformed != null) {
-                sb.append(transformed).append(AS_CLAUSE).append(property.getPersistedName());
+                sb.append(transformed).append(AS_CLAUSE).append(useAlias ? columnAlias : property.getPersistedName());
             } else {
                 String column = namingStrategy.mappedName(associations, property);
-                if (escape) {
-                    column = quote(column);
-                }
+                column = escapeColumnIfNeeded(column, escape);
                 sb.append(alias).append(DOT).append(column);
+                if (useAlias) {
+                    sb.append(AS_CLAUSE).append(columnAlias);
+                }
             }
             sb.append(COMMA);
         });
         int newLength = sb.length();
         if (newLength == length) {
-            if (alias != null) {
-                sb.append(alias).append(DOT);
-            }
-            sb.append("*");
+            selectAllColumns(sb, alias);
         } else {
             sb.setLength(newLength - 1);
         }
+    }
+
+    /**
+     * Appends '*' symbol (meaning all columns selection) to the string builder representing query.
+     * @param sb the string builder representing query
+     * @param alias an alias, if not null will be apended with '.' before '*' symbol
+     */
+    private void selectAllColumns(StringBuilder sb, String alias) {
+        if (alias != null) {
+            sb.append(alias).append(DOT);
+        }
+        sb.append("*");
+    }
+
+    /**
+     * Returns escaped (quoted) column if escape needed.
+     *
+     * @param column the column
+     * @param escape an indicator telling whether column needs to be escaped (quoted)
+     * @return escaped (quoted) column if instructed to do so, otherwise original column value
+     */
+    private String escapeColumnIfNeeded(String column, boolean escape) {
+        if (escape) {
+            return quote(column);
+        }
+        return column;
     }
 
     private boolean canUseWildcardForSelect(PersistentEntity entity) {

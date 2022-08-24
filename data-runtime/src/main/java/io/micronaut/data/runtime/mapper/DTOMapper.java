@@ -20,6 +20,8 @@ import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.convert.exceptions.ConversionErrorException;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArgumentUtils;
+import io.micronaut.core.util.StringUtils;
+import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.TypeDef;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.DataType;
@@ -135,6 +137,10 @@ public class DTOMapper<T, S, R> implements BeanIntrospectionMapper<S, R> {
     public @Nullable Object read(@NonNull S resultSet, @NonNull RuntimePersistentProperty<?> property) {
         String propertyName = property.getPersistedName();
         DataType dataType = property.getDataType();
+        String aliasPropertyName = property.getAnnotationMetadata().stringValue(MappedProperty.class, MappedProperty.ALIAS).orElse("");
+        if (StringUtils.isNotEmpty(aliasPropertyName)) {
+            propertyName = aliasPropertyName;
+        }
         if (dataType == DataType.JSON && jsonCodec != null) {
             String data = resultReader.readString(resultSet, propertyName);
             return jsonCodec.decode(property.getArgument(), data);

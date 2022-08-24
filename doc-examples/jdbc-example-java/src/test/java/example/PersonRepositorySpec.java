@@ -11,6 +11,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import static example.PersonRepository.Specifications.ageIsLessThan;
+import static example.PersonRepository.Specifications.longNameEquals;
 import static example.PersonRepository.Specifications.nameEquals;
 import static example.PersonRepository.Specifications.setNewName;
 import static io.micronaut.data.repository.jpa.criteria.PredicateSpecification.not;
@@ -30,11 +31,13 @@ class PersonRepositorySpec {
         personRepository.saveAll(Arrays.asList(
                 new Person(
                         "Denis",
-                        13
+                        13,
+                    "Denis The Team Lead"
                 ),
                 new Person(
                         "Josh",
-                        22
+                        22,
+                    "Josh PM"
                 )
         ));
     }
@@ -49,6 +52,8 @@ class PersonRepositorySpec {
         // tag::find[]
         Person denis = personRepository.findOne(nameEquals("Denis")).orElse(null);
 
+        Person josh = personRepository.findOne(longNameEquals("Josh PM")).orElse(null);
+
         long countAgeLess30 = personRepository.count(ageIsLessThan(30));
 
         long countAgeLess20 = personRepository.count(ageIsLessThan(20));
@@ -59,6 +64,9 @@ class PersonRepositorySpec {
         // end::find[]
 
         assertNotNull(denis);
+        assertEquals("Denis The Team Lead", denis.getLongName());
+        assertNotNull(josh);
+        assertEquals("Josh PM", josh.getLongName());
         assertEquals(2, countAgeLess30);
         assertEquals(1, countAgeLess20);
         assertEquals(1, countAgeLess30NotDenis);

@@ -16,6 +16,7 @@
 package io.micronaut.data.tck.entities;
 
 import io.micronaut.data.annotation.DateUpdated;
+import io.micronaut.data.annotation.MappedProperty;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
@@ -47,6 +48,8 @@ public class Book {
     private int totalPages;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    // Should not affect query or column reads
+    @MappedProperty(alias = "au")
     private Author author;
 
     @OneToOne
