@@ -1589,6 +1589,7 @@ abstract class AbstractRepositorySpec extends Specification {
         when:
         def book = bookRepository.findByTitle("Pet Cemetery")
         def author = bookRepository.findAuthorById(book.id)
+        def authorJoinDefault = bookRepository.getAuthorById(book.id)
         def books = bookRepository.findAuthorBooksById(book.id)
 
         then:
@@ -1605,6 +1606,8 @@ abstract class AbstractRepositorySpec extends Specification {
         authorBookNames.size() == bookNames.size()
         authorBookNames.containsAll(bookNames)
         bookNames.containsAll(authorBookNames)
+        // author joined by default join, make sure works as the one with left join
+        authorJoinDefault.books.size() == 2
 
         cleanup:
         cleanupBooks()

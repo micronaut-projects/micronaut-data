@@ -84,6 +84,10 @@ public abstract class BookRepository implements PageableRepository<Book, Long>, 
     @Join(value = "author.books", type = Join.Type.LEFT_FETCH)
     public abstract Author findAuthorById(Long id);
 
+    // Join with default join type
+    @Join(value = "author.books")
+    public abstract Author getAuthorById(Long id);
+
     public abstract List<Book> findAuthorBooksById(Long id);
 
     @Query(value = "select * from book b where b.title like :arg0 limit 5", nativeQuery = true)
