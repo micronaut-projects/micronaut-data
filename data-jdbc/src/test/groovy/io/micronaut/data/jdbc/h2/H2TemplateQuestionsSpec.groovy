@@ -41,13 +41,13 @@ class H2TemplateQuestionsSpec extends Specification {
             app.setTemplate(template)
             appRepository.save(app)
         when:
-            //def loadedTempl = templateRepository.findById(template.getId())
-            def optTempl = appRepository.findTemplateById(app.getId())
+            def optTemplateLoadedById = templateRepository.findById(template.getId())
+            def optTemplateLoadedByAppId = appRepository.findTemplateById(app.getId())
         then:
-            //loadedTempl.present == true
-            //loadedTempl.get().questions.size() > 0
-            optTempl.present == true
-            optTempl.get().questions.size() > 0
+            optTemplateLoadedById.present == true
+            optTemplateLoadedById.get().questions.size() > 0
+            optTemplateLoadedByAppId.present == true
+            optTemplateLoadedByAppId.get().questions.size() > 0
     }
 
 }
