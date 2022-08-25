@@ -48,6 +48,12 @@ class H2TemplateQuestionsSpec extends Specification {
             optTemplateLoadedById.get().questions.size() > 0
             optTemplateLoadedByAppId.present == true
             optTemplateLoadedByAppId.get().questions.size() > 0
+
+        when:
+            def questions = appRepository.findTemplateQuestionsById(app.getId())
+        then:
+            questions != null
+            questions.size() > 0
     }
 
 }

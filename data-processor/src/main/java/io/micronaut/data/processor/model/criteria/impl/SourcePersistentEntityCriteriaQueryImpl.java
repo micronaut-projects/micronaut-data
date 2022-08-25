@@ -88,7 +88,11 @@ final class SourcePersistentEntityCriteriaQueryImpl<T> extends AbstractPersisten
 
                 @Override
                 public void visit(PersistentPropertyPath<?> persistentPropertyPath) {
-                    result[0] = ((SourcePersistentPropertyPath) persistentPropertyPath).getProperty().getType().getName();
+                    ClassElement type = ((SourcePersistentPropertyPath) persistentPropertyPath).getProperty().getType();
+                    if (TypeUtils.isContainerType(type)) {
+                        type = type.getFirstTypeArgument().orElse(type);
+                    }
+                    result[0] = type.getName();
                 }
 
                 @Override
@@ -98,7 +102,11 @@ final class SourcePersistentEntityCriteriaQueryImpl<T> extends AbstractPersisten
 
                 @Override
                 public void visit(PersistentEntityRoot<?> entityRoot) {
-                    result[0] = ((SourcePersistentEntity) entityRoot.getPersistentEntity()).getType().getName();
+                    ClassElement type = ((SourcePersistentEntity) entityRoot.getPersistentEntity()).getType().getType();
+                    if (TypeUtils.isContainerType(type)) {
+                        type = type.getFirstTypeArgument().orElse(type);
+                    }
+                    result[0] = type.getName();
                 }
 
                 @Override

@@ -1592,6 +1592,9 @@ abstract class AbstractRepositorySpec extends Specification {
 
         then:
         author.name == "Stephen King"
+        author.books != null
+        // Verify books collection is fetched
+        author.books.size() > 0
 
         cleanup:
         cleanupBooks()

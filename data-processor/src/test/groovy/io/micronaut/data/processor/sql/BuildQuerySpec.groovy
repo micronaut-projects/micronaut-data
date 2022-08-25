@@ -161,6 +161,7 @@ import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.repository.GenericRepository;
 import io.micronaut.data.tck.entities.Application;
 import io.micronaut.data.tck.entities.Template;
+import io.micronaut.data.tck.entities.Question;
 
 import java.util.Optional;
 
@@ -168,8 +169,9 @@ import java.util.Optional;
 interface ApplicationRepository extends GenericRepository<Application, Long> {
 
     @Join(value = "template.questions", type = Join.Type.LEFT_FETCH)
-    //@Executable
     Optional<Template> findTemplateById(Long id);
+
+    List<Question> findTemplateQuestionsById(int id);
 }
 """)
 
@@ -178,11 +180,14 @@ interface ApplicationRepository extends GenericRepository<Application, Long> {
         def query = getQuery(method)
         def joins = getJoins(method)
 
+        def query2 = getQuery(repository.getRequiredMethod("findTemplateQuestionsById", int))
+
         expect:
         query == "SELECT application_template_.`id`,application_template_.`enabled`,application_template_questions_.`id` AS questions_id,application_template_questions_.`text` AS questions_text,application_template_questions_.`template_id` AS questions_template_id,application_template_questions_.`number` AS questions_number FROM `applications` application_ LEFT JOIN `templates` application_template_ ON application_.`template_id`=application_template_.`id` LEFT JOIN `questions` application_template_questions_ ON application_template_.`id`=application_template_questions_.`template_id` WHERE (application_.`id` = ?)"
         joins.size() == 1
         joins.keySet() == ["questions"] as Set
 
+        query2 == "SELECT application_template_questions_.`id`,application_template_questions_.`text`,application_template_questions_.`template_id`,application_template_questions_.`number` FROM `applications` application_ INNER JOIN `templates` application_template_ ON application_.`template_id`=application_template_.`id` INNER JOIN `questions` application_template_questions_ ON application_template_.`id`=application_template_questions_.`template_id` WHERE (application_.`id` = ?)"
     }
 
     void "test join query with custom foreign key"() {
