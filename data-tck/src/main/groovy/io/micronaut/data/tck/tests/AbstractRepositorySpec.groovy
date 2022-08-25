@@ -25,26 +25,7 @@ import io.micronaut.data.repository.jpa.criteria.DeleteSpecification
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
 import io.micronaut.data.repository.jpa.criteria.QuerySpecification
 import io.micronaut.data.repository.jpa.criteria.UpdateSpecification
-import io.micronaut.data.tck.entities.Author
-import io.micronaut.data.tck.entities.AuthorBooksDto
-import io.micronaut.data.tck.entities.BasicTypes
-import io.micronaut.data.tck.entities.Book
-import io.micronaut.data.tck.entities.BookDto
-import io.micronaut.data.tck.entities.Car
-import io.micronaut.data.tck.entities.City
-import io.micronaut.data.tck.entities.Company
-import io.micronaut.data.tck.entities.Country
-import io.micronaut.data.tck.entities.CountryRegion
-import io.micronaut.data.tck.entities.CountryRegionCity
-import io.micronaut.data.tck.entities.Face
-import io.micronaut.data.tck.entities.Food
-import io.micronaut.data.tck.entities.Genre
-import io.micronaut.data.tck.entities.Meal
-import io.micronaut.data.tck.entities.Nose
-import io.micronaut.data.tck.entities.Page
-import io.micronaut.data.tck.entities.Person
-import io.micronaut.data.tck.entities.Student
-import io.micronaut.data.tck.entities.TimezoneBasicTypes
+import io.micronaut.data.tck.entities.*
 import io.micronaut.data.tck.jdbc.entities.Role
 import io.micronaut.data.tck.jdbc.entities.UserRole
 import io.micronaut.data.tck.repositories.*
@@ -55,11 +36,7 @@ import jakarta.persistence.criteria.CriteriaBuilder
 import jakarta.persistence.criteria.CriteriaUpdate
 import jakarta.persistence.criteria.Predicate
 import jakarta.persistence.criteria.Root
-import spock.lang.AutoCleanup
-import spock.lang.IgnoreIf
-import spock.lang.Shared
-import spock.lang.Specification
-import spock.lang.Unroll
+import spock.lang.*
 
 import java.sql.Connection
 import java.time.LocalDate
@@ -69,10 +46,10 @@ import java.util.concurrent.TimeUnit
 import java.util.stream.Collectors
 
 import static io.micronaut.data.repository.jpa.criteria.QuerySpecification.where
+import static io.micronaut.data.tck.repositories.BookSpecifications.justJoin
+import static io.micronaut.data.tck.repositories.BookSpecifications.titleEquals
 import static io.micronaut.data.tck.repositories.PersonRepository.Specifications.idsIn
 import static io.micronaut.data.tck.repositories.PersonRepository.Specifications.nameEquals
-import static io.micronaut.data.tck.repositories.BookSpecifications.titleEquals
-import static io.micronaut.data.tck.repositories.BookSpecifications.justJoin
 
 abstract class AbstractRepositorySpec extends Specification {
 
@@ -1589,12 +1566,22 @@ abstract class AbstractRepositorySpec extends Specification {
         when:
         def book = bookRepository.findByTitle("Pet Cemetery")
         def author = bookRepository.findAuthorById(book.id)
+        def books = bookRepository.findAuthorBooksById(book.id)
 
         then:
         author.name == "Stephen King"
-        author.books != null
         // Verify books collection is fetched
+        author.books != null
         author.books.size() > 0
+        // Verify books can be loaded via author mapping by book id
+        books != null
+        books.size() > 0
+        // Verify exact same books are fetched via both queries
+        def authorBookNames = author.books.stream().map(b -> b.title).collect(Collectors.toList())
+        def bookNames = books.stream().map(b -> b.title).collect(Collectors.toList())
+        authorBookNames.size() == bookNames.size()
+        authorBookNames.containsAll(bookNames)
+        bookNames.containsAll(authorBookNames)
 
         cleanup:
         cleanupBooks()

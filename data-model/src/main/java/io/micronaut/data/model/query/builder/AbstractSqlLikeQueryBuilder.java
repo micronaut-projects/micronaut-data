@@ -567,6 +567,9 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
     protected abstract void selectAllColumns(PersistentEntity entity, String alias, StringBuilder queryBuffer);
 
     @Internal
+    /**
+     * Does nothing but subclasses might override and implement new behavior.
+     */
     protected void selectAllColumnsFromJoinPaths(QueryState queryState,
                                                  StringBuilder queryBuffer,
                                                  Collection<JoinPath> allPaths,

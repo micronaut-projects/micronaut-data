@@ -151,43 +151,45 @@ interface MealRepository extends CrudRepository<Meal, Long> {
 
     }
 
-    void "test join query on collection with composite id"() {
+    void "test join query on collection via association entity"() {
         given:
-        def repository = buildRepository('test.ApplicationRepository', """
+        def repository = buildRepository('test.BookRepository', """
 import io.micronaut.context.annotation.Executable;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.repository.GenericRepository;
-import io.micronaut.data.tck.entities.Application;
-import io.micronaut.data.tck.entities.Template;
-import io.micronaut.data.tck.entities.Question;
+import io.micronaut.data.tck.entities.Author;
+import io.micronaut.data.tck.entities.Book;
 
 import java.util.Optional;
 
 @JdbcRepository(dialect = Dialect.H2)
-interface ApplicationRepository extends GenericRepository<Application, Long> {
+interface BookRepository extends GenericRepository<Book, Long> {
 
-    @Join(value = "template.questions", type = Join.Type.LEFT_FETCH)
-    Optional<Template> findTemplateById(Long id);
+    @Join(value = "author.books", type = Join.Type.LEFT_FETCH)
+    public abstract Author findAuthorById(@Id Long id);
 
-    List<Question> findTemplateQuestionsById(int id);
+    public abstract List<Book> findAuthorBooksById(@Id Long id);
 }
 """)
 
 
-        def method = repository.getRequiredMethod("findTemplateById", Long)
-        def query = getQuery(method)
-        def joins = getJoins(method)
+        def authorMethod = repository.getRequiredMethod("findAuthorById", Long)
+        def authorQuery = getQuery(authorMethod)
+        def authorJoins = getJoins(authorMethod)
 
-        def query2 = getQuery(repository.getRequiredMethod("findTemplateQuestionsById", int))
+        def booksMethod = repository.getRequiredMethod("findAuthorBooksById", Long)
+        def booksQuery = getQuery(booksMethod)
+        def booksJoins = getJoins(booksMethod)
 
         expect:
-        query == "SELECT application_template_.`id`,application_template_.`enabled`,application_template_questions_.`id` AS questions_id,application_template_questions_.`text` AS questions_text,application_template_questions_.`template_id` AS questions_template_id,application_template_questions_.`number` AS questions_number FROM `applications` application_ LEFT JOIN `templates` application_template_ ON application_.`template_id`=application_template_.`id` LEFT JOIN `questions` application_template_questions_ ON application_template_.`id`=application_template_questions_.`template_id` WHERE (application_.`id` = ?)"
-        joins.size() == 1
-        joins.keySet() == ["questions"] as Set
+        authorQuery == "SELECT book_author_.`id`,book_author_.`name`,book_author_.`nick_name`,book_author_books_.`id` AS books_id,book_author_books_.`author_id` AS books_author_id,book_author_books_.`genre_id` AS books_genre_id,book_author_books_.`title` AS books_title,book_author_books_.`total_pages` AS books_total_pages,book_author_books_.`publisher_id` AS books_publisher_id,book_author_books_.`last_updated` AS books_last_updated FROM `book` book_ LEFT JOIN `author` book_author_ ON book_.`author_id`=book_author_.`id` LEFT JOIN `book` book_author_books_ ON book_author_.`id`=book_author_books_.`author_id` WHERE (book_.`id` = ?)"
+        authorJoins.size() == 1
+        authorJoins.keySet() == ["books"] as Set
 
-        query2 == "SELECT application_template_questions_.`id`,application_template_questions_.`text`,application_template_questions_.`template_id`,application_template_questions_.`number` FROM `applications` application_ INNER JOIN `templates` application_template_ ON application_.`template_id`=application_template_.`id` INNER JOIN `questions` application_template_questions_ ON application_template_.`id`=application_template_questions_.`template_id` WHERE (application_.`id` = ?)"
+        booksQuery == "SELECT book_author_books_.`id`,book_author_books_.`author_id`,book_author_books_.`genre_id`,book_author_books_.`title`,book_author_books_.`total_pages`,book_author_books_.`publisher_id`,book_author_books_.`last_updated` FROM `book` book_ INNER JOIN `author` book_author_ ON book_.`author_id`=book_author_.`id` INNER JOIN `book` book_author_books_ ON book_author_.`id`=book_author_books_.`author_id` WHERE (book_.`id` = ?)"
+        booksJoins.size() == 0
     }
 
     void "test join query with custom foreign key"() {
