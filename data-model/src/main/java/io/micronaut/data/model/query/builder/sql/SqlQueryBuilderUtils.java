@@ -17,6 +17,8 @@ package io.micronaut.data.model.query.builder.sql;
 
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
+
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.exceptions.MappingException;
 import io.micronaut.data.model.Association;
@@ -32,6 +34,7 @@ import java.util.OptionalInt;
 /**
  * The utility methods for query builders.
  */
+@Internal
 final class SqlQueryBuilderUtils {
 
     private SqlQueryBuilderUtils() { }
