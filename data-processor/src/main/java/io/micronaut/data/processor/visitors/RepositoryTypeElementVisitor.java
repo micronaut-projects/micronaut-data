@@ -354,7 +354,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                 }
 
                 Collection<JoinPath> joinPaths = queryResult.getJoinPaths();
-                if (!joinPaths.isEmpty()) {
+                if (CollectionUtils.isNotEmpty(joinPaths)) {
                     // Only apply the changes if joins aren't empty.
                     // Implementation might choose to return an empty array to skip the modification of existing annotations.
                     element.removeAnnotation(Join.class);
