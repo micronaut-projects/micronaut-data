@@ -176,7 +176,7 @@ public interface QueryResult {
             @NonNull Map<String, String> additionalRequiredParameters,
             int max,
             long offset) {
-        return of(query, queryParts, parameterBindings, additionalRequiredParameters, max, offset, null);
+        return of(query, queryParts, parameterBindings, additionalRequiredParameters, max, offset, Collections.emptyList());
     }
 
     /**
