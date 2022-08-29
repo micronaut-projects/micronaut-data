@@ -4,7 +4,7 @@ micronaut-test = "3.4.0"
 micronaut-serde = "1.1.0"
 micronaut-sql = "4.6.3"
 micronaut-docs = "2.0.0"
-micronaut-gradle-plugin = "3.4.1"
+micronaut-gradle-plugin = "3.5.1"
 micronaut-mongo = "4.3.0"
 
 groovy = "3.0.12"
@@ -23,6 +23,8 @@ spring = "5.3.22"
 mongodb = "4.7.1"
 
 vertx = "4.3.2"
+
+azure-cosmos = "LATEST"
 
 # JDBC Drivers
 
@@ -155,6 +157,10 @@ drivers-r2dbc-mysql = { module = "dev.miku:r2dbc-mysql", version.ref = "mysql-r2
 drivers-r2dbc-mssql = { module = "io.r2dbc:r2dbc-mssql", version.ref = "mssql-r2dbc-driver" }
 drivers-r2dbc-postgresql = { module = "org.postgresql:r2dbc-postgresql", version.ref = "postgresql-r2dbc-driver" }
 
+# Azure Cosmos
+
+azure-cosmos = { module = "com.azure:azure-cosmos", version.ref = "azure-cosmos" }
+
 # TESTCONTAINERS
 
 testcontainers-bom = { module = "org.testcontainers:testcontainers-bom", version.ref = "testcontainers" }
@@ -166,11 +172,13 @@ testcontainers-mssqlserver = { module = "org.testcontainers:mssqlserver" }
 testcontainers-oracle = { module = "org.testcontainers:oracle-xe" }
 testcontainers-r2dbc = { module = "org.testcontainers:r2dbc" }
 testcontainers-mongodb = { module = "org.testcontainers:mongodb" }
+testcontainers-azure = { module = "org.testcontainers:azure" }
 
 # SERDE
 
 micronaut-serde-processor = { module = "io.micronaut.serde:micronaut-serde-processor", version.ref = "micronaut-serde" }
 micronaut-serde-bson = { module = "io.micronaut.serde:micronaut-serde-bson", version.ref = "micronaut-serde" }
+micronaut-serde-jackson = { module = "io.micronaut.serde:micronaut-serde-jackson", version.ref = "micronaut-serde" }
 micronaut-serde-api = { module = "io.micronaut.serde:micronaut-serde-api", version.ref = "micronaut-serde" }
 micronaut-serde-support = { module = "io.micronaut.serde:micronaut-serde-support", version.ref = "micronaut-serde" }
 

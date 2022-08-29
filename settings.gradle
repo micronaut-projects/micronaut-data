@@ -48,6 +48,7 @@ include 'data-tx-hibernate'
 include 'data-jdbc'
 include 'data-r2dbc'
 include 'data-mongodb'
+include 'data-azure-cosmos'
 
 // Spring compatibility
 include 'data-spring'
