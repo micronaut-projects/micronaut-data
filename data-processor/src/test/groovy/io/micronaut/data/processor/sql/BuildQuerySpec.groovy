@@ -151,47 +151,6 @@ interface MealRepository extends CrudRepository<Meal, Long> {
 
     }
 
-    void "test join query on collection via association entity"() {
-        given:
-        def repository = buildRepository('test.BookRepository', """
-import io.micronaut.context.annotation.Executable;
-import io.micronaut.data.annotation.Join;
-import io.micronaut.data.jdbc.annotation.JdbcRepository;
-import io.micronaut.data.model.query.builder.sql.Dialect;
-import io.micronaut.data.repository.GenericRepository;
-import io.micronaut.data.tck.entities.Author;
-import io.micronaut.data.tck.entities.Book;
-
-import java.util.Optional;
-
-@JdbcRepository(dialect = Dialect.H2)
-interface BookRepository extends GenericRepository<Book, Long> {
-
-    @Join(value = "author.books", type = Join.Type.LEFT_FETCH)
-    public abstract Author findAuthorById(@Id Long id);
-
-    public abstract List<Book> findAuthorBooksById(@Id Long id);
-}
-""")
-
-
-        def authorMethod = repository.getRequiredMethod("findAuthorById", Long)
-        def authorQuery = getQuery(authorMethod)
-        def authorJoins = getJoins(authorMethod)
-
-        def booksMethod = repository.getRequiredMethod("findAuthorBooksById", Long)
-        def booksQuery = getQuery(booksMethod)
-        def booksJoins = getJoins(booksMethod)
-
-        expect:
-        authorQuery == "SELECT book_author_.`id`,book_author_.`name`,book_author_.`nick_name`,book_author_books_.`id` AS books_id,book_author_books_.`author_id` AS books_author_id,book_author_books_.`genre_id` AS books_genre_id,book_author_books_.`title` AS books_title,book_author_books_.`total_pages` AS books_total_pages,book_author_books_.`publisher_id` AS books_publisher_id,book_author_books_.`last_updated` AS books_last_updated FROM `book` book_ LEFT JOIN `author` book_author_ ON book_.`author_id`=book_author_.`id` LEFT JOIN `book` book_author_books_ ON book_author_.`id`=book_author_books_.`author_id` WHERE (book_.`id` = ?)"
-        authorJoins.size() == 1
-        authorJoins.keySet() == ["books"] as Set
-
-        booksQuery == "SELECT book_author_books_.`id`,book_author_books_.`author_id`,book_author_books_.`genre_id`,book_author_books_.`title`,book_author_books_.`total_pages`,book_author_books_.`publisher_id`,book_author_books_.`last_updated` FROM `book` book_ INNER JOIN `author` book_author_ ON book_.`author_id`=book_author_.`id` INNER JOIN `book` book_author_books_ ON book_author_.`id`=book_author_books_.`author_id` WHERE (book_.`id` = ?)"
-        booksJoins.size() == 0
-    }
-
     void "test join query with custom foreign key"() {
         given:
         def repository = buildRepository('test.FoodRepository', """
@@ -490,6 +449,50 @@ interface MealRepository extends CrudRepository<Meal, Long> {
 
         expect:"The query contains the correct where clause for InRange (same as Between)"
         query.contains('WHERE ((meal_.`current_blood_glucose` >= ? AND meal_.`current_blood_glucose` <= ?))')
+
+    }
+
+    void "test join query in repo via maped entity"() {
+        given:
+        def repository = buildRepository('test.PageRepository', """
+import io.micronaut.context.annotation.Executable;
+import io.micronaut.data.annotation.Join;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Page;
+import io.micronaut.data.tck.entities.Book;
+import io.micronaut.data.tck.entities.Chapter;
+import java.util.Optional;
+@JdbcRepository(dialect = Dialect.H2)
+interface PageRepository extends GenericRepository<Page, Long> {
+
+    @Join(value = "book.chapters", type = Join.Type.LEFT_FETCH)
+    Optional<Book> findBookById(Long id);
+
+    List<Chapter> findBookChaptersById(Long id);
+
+    @Join(value = "book.chapters.book", type = Join.Type.FETCH)
+    List<Chapter> findBookChaptersByIdAndNum(Long id, long num);
+}
+""")
+
+        def method = repository.getRequiredMethod("findBookById", Long)
+        def query = getQuery(method)
+        def joins = getJoins(method)
+        def chaptersQuery = getQuery(repository.getRequiredMethod("findBookChaptersById", Long))
+        def chaptersBookJoinMethod = repository.getRequiredMethod("findBookChaptersByIdAndNum", Long, long)
+        def chaptersBookJoinQuery = getQuery(chaptersBookJoinMethod)
+        def chaptersBookJoinJoins = getJoins(chaptersBookJoinMethod)
+
+        expect:
+        query == "SELECT page_book_.`id`,page_book_.`author_id`,page_book_.`genre_id`,page_book_.`title`,page_book_.`total_pages`,page_book_.`publisher_id`,page_book_.`last_updated`,page_book_chapters_.`id` AS chapters_id,page_book_chapters_.`pages` AS chapters_pages,page_book_chapters_.`book_id` AS chapters_book_id,page_book_chapters_.`title` AS chapters_title FROM `page` page_ LEFT JOIN `book` page_book_ ON page_.`book_id`=page_book_.`id` LEFT JOIN `chapter` page_book_chapters_ ON page_book_.`id`=page_book_chapters_.`book_id` WHERE (page_.`id` = ?)"
+        joins.size() == 1
+        joins.keySet() == ["chapters"] as Set
+        chaptersQuery == "SELECT page_book_chapters_.`id`,page_book_chapters_.`pages`,page_book_chapters_.`book_id`,page_book_chapters_.`title` FROM `page` page_ INNER JOIN `book` page_book_ ON page_.`book_id`=page_book_.`id` INNER JOIN `chapter` page_book_chapters_ ON page_book_.`id`=page_book_chapters_.`book_id` WHERE (page_.`id` = ?)"
+        chaptersBookJoinQuery == "SELECT page_book_chapters_.`id`,page_book_chapters_.`pages`,page_book_chapters_.`book_id`,page_book_chapters_.`title`,page_book_chapters_book_.`author_id` AS book_author_id,page_book_chapters_book_.`genre_id` AS book_genre_id,page_book_chapters_book_.`title` AS book_title,page_book_chapters_book_.`total_pages` AS book_total_pages,page_book_chapters_book_.`publisher_id` AS book_publisher_id,page_book_chapters_book_.`last_updated` AS book_last_updated FROM `page` page_ INNER JOIN `book` page_book_ ON page_.`book_id`=page_book_.`id` INNER JOIN `chapter` page_book_chapters_ ON page_book_.`id`=page_book_chapters_.`book_id` INNER JOIN `book` page_book_chapters_book_ ON page_book_chapters_.`book_id`=page_book_chapters_book_.`id` WHERE (page_.`id` = ? AND page_.`num` = ?)"
+        chaptersBookJoinJoins.size() == 1
+        chaptersBookJoinJoins.keySet() == ["book"] as Set
 
     }
 }

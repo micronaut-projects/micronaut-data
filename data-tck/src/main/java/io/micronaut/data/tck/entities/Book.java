@@ -58,6 +58,9 @@ public class Book {
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "book")
     private List<Page> pages = new ArrayList<>();
 
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "book")
+    private List<Chapter> chapters = new ArrayList<>();
+
     @Transient
     public int prePersist, postPersist, preUpdate, postUpdate, preRemove, postRemove, postLoad;
 
@@ -178,4 +181,8 @@ public class Book {
     public void setLastUpdated(LocalDateTime lastUpdated) {
         this.lastUpdated = lastUpdated;
     }
+
+    public List<Chapter> getChapters() { return chapters; }
+
+    public void setChapters(List<Chapter> chapters) { this.chapters = chapters; }
 }
