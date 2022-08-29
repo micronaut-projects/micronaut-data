@@ -28,6 +28,7 @@ import io.micronaut.data.model.jpa.criteria.impl.SelectionVisitor;
 import io.micronaut.data.model.jpa.criteria.impl.selection.AggregateExpression;
 import io.micronaut.data.model.jpa.criteria.impl.selection.AliasedSelection;
 import io.micronaut.data.model.jpa.criteria.impl.selection.CompoundSelection;
+import io.micronaut.data.processor.model.SourceAssociation;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.SourcePersistentProperty;
 import io.micronaut.data.processor.model.criteria.SourcePersistentEntityCriteriaQuery;
@@ -88,7 +89,12 @@ final class SourcePersistentEntityCriteriaQueryImpl<T> extends AbstractPersisten
 
                 @Override
                 public void visit(PersistentPropertyPath<?> persistentPropertyPath) {
-                    result[0] = ((SourcePersistentPropertyPath) persistentPropertyPath).getProperty().getType().getName();
+                    if (persistentPropertyPath.getProperty() instanceof SourceAssociation) {
+                        SourceAssociation sourceAssociation = (SourceAssociation) persistentPropertyPath.getProperty();
+                        result[0] = sourceAssociation.getAssociatedEntity().getType().getName();
+                    } else {
+                        result[0] = ((SourcePersistentPropertyPath) persistentPropertyPath).getProperty().getType().getName();
+                    }
                 }
 
                 @Override

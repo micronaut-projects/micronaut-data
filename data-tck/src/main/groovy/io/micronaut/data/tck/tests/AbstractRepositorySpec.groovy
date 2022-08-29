@@ -31,6 +31,7 @@ import io.micronaut.data.tck.entities.BasicTypes
 import io.micronaut.data.tck.entities.Book
 import io.micronaut.data.tck.entities.BookDto
 import io.micronaut.data.tck.entities.Car
+import io.micronaut.data.tck.entities.Chapter
 import io.micronaut.data.tck.entities.City
 import io.micronaut.data.tck.entities.Company
 import io.micronaut.data.tck.entities.Country
@@ -69,10 +70,10 @@ import java.util.concurrent.TimeUnit
 import java.util.stream.Collectors
 
 import static io.micronaut.data.repository.jpa.criteria.QuerySpecification.where
+import static io.micronaut.data.tck.repositories.BookSpecifications.justJoin
+import static io.micronaut.data.tck.repositories.BookSpecifications.titleEquals
 import static io.micronaut.data.tck.repositories.PersonRepository.Specifications.idsIn
 import static io.micronaut.data.tck.repositories.PersonRepository.Specifications.nameEquals
-import static io.micronaut.data.tck.repositories.BookSpecifications.titleEquals
-import static io.micronaut.data.tck.repositories.BookSpecifications.justJoin
 
 abstract class AbstractRepositorySpec extends Specification {
 
@@ -97,6 +98,7 @@ abstract class AbstractRepositorySpec extends Specification {
     abstract CarRepository getCarRepository()
     abstract BasicTypesRepository getBasicTypeRepository()
     abstract TimezoneBasicTypesRepository getTimezoneBasicTypeRepository()
+    abstract PageRepository getPageRepository()
 
     abstract Map<String, String> getProperties()
 
@@ -2148,6 +2150,80 @@ abstract class AbstractRepositorySpec extends Specification {
         bookLoadedUsingFindAllWithCriteriaApi.genre.genreName == genre.genreName
         bookLoadedUsingFindAllWithCriteriaApiJoinOnly != null
         bookLoadedUsingFindAllWithCriteriaApiJoinOnly.genre.genreName != null
+    }
+
+    void "test loading books vs page repository and joins"() {
+        given:
+
+        def book1 = new Book()
+        book1.title = "Book1"
+        def page1 = new Page()
+        page1.num = 1
+        def page2 = new Page()
+        page2.num = 21
+        book1.getPages().add(page1)
+        book1.getPages().add(page2)
+        def chapter1 = new Chapter()
+        chapter1.title = "Ch1"
+        chapter1.pages = 20
+        book1.getChapters().add(chapter1)
+        def chapter2 = new Chapter()
+        chapter2.title = "Ch2"
+        chapter2.pages = 10
+        book1.getChapters().add(chapter2)
+        bookRepository.save(book1)
+
+        def book2 = new Book()
+        book2.title = "Book2"
+        def page3 = new Page()
+        page3.num = 3
+        book2.getPages().add(page3)
+        def chapter3 = new Chapter()
+        chapter3.title = "ChBook2_1"
+        chapter3.pages = 15
+        book2.getChapters().add(chapter3)
+        bookRepository.save(book2)
+
+        when:
+        def loadedBookViaPage1 = pageRepository.findBookById(page1.id)
+        def loadedBookViaPage3 = pageRepository.findBookById(page3.id)
+        then:
+        loadedBookViaPage1.present == true
+        loadedBookViaPage3.present == true
+        // chapters are loaded
+        loadedBookViaPage1.get().chapters.size() == 2
+        loadedBookViaPage3.get().chapters.size() == 1
+
+        when: "Loaded chapters without book joined"
+        def loadedChaptersViaPage1 = pageRepository.findBookChaptersById(page1.id)
+        def loadedChaptersViaPage3 = pageRepository.findBookChaptersById(page3.id)
+        then:
+        loadedChaptersViaPage1.size() == 2
+        loadedChaptersViaPage1[0].book.id == page1.book.id
+        loadedChaptersViaPage1[1].book.id == page1.book.id
+        // book not joined, only book with id loaded
+        loadedChaptersViaPage1[0].book.title == null
+        loadedChaptersViaPage1[1].book.title == null
+        loadedChaptersViaPage3.size() == 1
+        loadedChaptersViaPage3[0].book.id == page3.book.id
+        loadedChaptersViaPage3[0].book.title == null
+
+        when: "Loaded chapters with book joined"
+        def loadedChaptersViaPage1BookJoined = pageRepository.findBookChaptersByIdAndNum(page1.id, page1.num)
+        def loadedChaptersViaPage3BookJoined = pageRepository.findBookChaptersByIdAndNum(page3.id, page3.num)
+        then:
+        loadedChaptersViaPage1BookJoined.size() == 2
+        loadedChaptersViaPage1BookJoined[0].book.id == page1.book.id
+        loadedChaptersViaPage1BookJoined[1].book.id == page1.book.id
+        // book IS joined and fully loaded including title
+        loadedChaptersViaPage1BookJoined[0].book.title == page1.book.title
+        loadedChaptersViaPage1BookJoined[1].book.title == page1.book.title
+        loadedChaptersViaPage3BookJoined.size() == 1
+        loadedChaptersViaPage3BookJoined[0].book.id == page3.book.id
+        loadedChaptersViaPage3BookJoined[0].book.title == page3.book.title
+
+        cleanup:
+        cleanupBooks()
     }
 
     private GregorianCalendar getYearMonthDay(Date dateCreated) {

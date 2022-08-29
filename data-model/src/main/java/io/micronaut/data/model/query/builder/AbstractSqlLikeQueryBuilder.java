@@ -461,7 +461,8 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             queryState.getParameterBindings(),
             queryState.getAdditionalRequiredParameters(),
             query.getMax(),
-            query.getOffset()
+            query.getOffset(),
+            queryState.getJoinPaths()
         );
     }
 
@@ -564,6 +565,17 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
      * @param queryBuffer The buffer to append the columns
      */
     protected abstract void selectAllColumns(PersistentEntity entity, String alias, StringBuilder queryBuffer);
+
+    @Internal
+    /**
+     * Does nothing but subclasses might override and implement new behavior.
+     */
+    protected void selectAllColumnsFromJoinPaths(QueryState queryState,
+                                                 StringBuilder queryBuffer,
+                                                 Collection<JoinPath> allPaths,
+                                                 @Nullable
+                                                 Map<JoinPath, String> joinAliasOverride) {
+    }
 
     /**
      * Begins the query state.
@@ -678,12 +690,38 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                         }
                         PersistentProperty property = propertyPath.getProperty();
                         if (property instanceof Association && !(property instanceof Embedded)) {
-                            if (!queryState.isJoined(propertyPath.getPath())) {
+                            String joinedPath = propertyPath.getPath();
+                            if (!queryState.isJoined(joinedPath)) {
                                 queryString.setLength(queryString.length() - 1);
                                 continue;
                             }
                             String joinAlias = queryState.computeAlias(propertyPath.getPath());
                             selectAllColumns(((Association) property).getAssociatedEntity(), joinAlias, queryString);
+                            Collection<JoinPath> joinPaths = queryState.getQueryModel().getJoinPaths();
+                            List<JoinPath> newJoinPaths = new ArrayList<>(joinPaths.size());
+                            Map<JoinPath, String> joinAliasOverride = new HashMap<>();
+                            Map<JoinPath, String> columnAliasOverride = new HashMap<>();
+                            for (JoinPath joinPath : joinPaths) {
+                                if (joinPath.getPath().startsWith(joinedPath) && !joinPath.getPath().equals(joinedPath)) {
+                                    int removedItems = 1;
+                                    for (int k = 0; k < joinedPath.length(); k++) {
+                                        if (joinedPath.charAt(k) == '.') {
+                                            removedItems++;
+                                        }
+                                    }
+                                    JoinPath newJoinPath = new JoinPath(
+                                        joinPath.getPath().substring(joinedPath.length() + 1),
+                                        Arrays.copyOfRange(joinPath.getAssociationPath(), removedItems, joinPath.getAssociationPath().length),
+                                        joinPath.getJoinType(),
+                                        joinPath.getAlias().orElse(null)
+                                    );
+                                    newJoinPaths.add(newJoinPath);
+                                    joinAliasOverride.put(newJoinPath, getAliasName(joinPath));
+                                    columnAliasOverride.put(newJoinPath, getPathOnlyAliasName(joinPath));
+                                }
+                            }
+                            queryState.setJoinPaths(newJoinPaths);
+                            selectAllColumnsFromJoinPaths(queryState, queryString, newJoinPaths, joinAliasOverride);
                         } else {
                             appendPropertyProjection(queryString, findProperty(queryState, propertyName, null));
                         }
@@ -1646,6 +1684,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         private final QueryModel queryObject;
         private final boolean escape;
         private final PersistentEntity entity;
+        private List<JoinPath> joinPaths = new ArrayList<>();
 
         private QueryState(QueryModel query, boolean allowJoins, boolean useAlias) {
             this.allowJoins = allowJoins;
@@ -1739,6 +1778,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
          * @return The alias
          */
         public String applyJoin(@NonNull JoinPath jp) {
+            joinPaths.add(jp);
             String joinAlias = appliedJoinPaths.get(jp.getPath());
             if (joinAlias != null) {
                 return joinAlias;
@@ -1843,6 +1883,14 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             );
             queryParts.add(query.toString());
             query.setLength(0);
+        }
+
+        public List<JoinPath> getJoinPaths() {
+            return joinPaths;
+        }
+
+        public void setJoinPaths(List<JoinPath> joinPaths) {
+            this.joinPaths = joinPaths;
         }
     }
 
