@@ -46,25 +46,25 @@ import java.util.Map;
  * @since 3.5.0
  */
 @Internal
-final class DefaultSqlPreparedQuery<E, R> implements SqlPreparedQuery<E, R>, DelegatePreparedQuery<E, R> {
+public final class DefaultSqlPreparedQuery<E, R> implements SqlPreparedQuery<E, R>, DelegatePreparedQuery<E, R> {
 
     private final PreparedQuery<E, R> preparedQuery;
     private final InvocationContext<?, ?> invocationContext;
     private final SqlStoredQuery<E, R> sqlStoredQuery;
     private String query;
 
-    protected DefaultSqlPreparedQuery(PreparedQuery<E, R> preparedQuery) {
+    public DefaultSqlPreparedQuery(PreparedQuery<E, R> preparedQuery) {
         this(preparedQuery, (SqlStoredQuery<E, R>) ((DelegateStoredQuery<Object, Object>) preparedQuery).getStoredQueryDelegate());
     }
 
-    protected DefaultSqlPreparedQuery(PreparedQuery<E, R> preparedQuery, SqlStoredQuery<E, R> sqlStoredQuery) {
+    public DefaultSqlPreparedQuery(PreparedQuery<E, R> preparedQuery, SqlStoredQuery<E, R> sqlStoredQuery) {
         this.preparedQuery = preparedQuery;
         this.invocationContext = ((DefaultPreparedQuery) preparedQuery).getContext();
         this.sqlStoredQuery = (SqlStoredQuery<E, R>) ((DelegateStoredQuery<Object, Object>) preparedQuery).getStoredQueryDelegate();
         this.query = sqlStoredQuery.getQuery();
     }
 
-    protected DefaultSqlPreparedQuery(SqlStoredQuery<E, R> sqlStoredQuery) {
+    public DefaultSqlPreparedQuery(SqlStoredQuery<E, R> sqlStoredQuery) {
         this.preparedQuery = new DummyPreparedQuery<>(sqlStoredQuery);
         this.invocationContext = null;
         this.sqlStoredQuery = (SqlStoredQuery<E, R>) ((DelegateStoredQuery<Object, Object>) preparedQuery).getStoredQueryDelegate();

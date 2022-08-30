@@ -25,6 +25,7 @@ import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
+import io.micronaut.data.model.runtime.DelegatingQueryParameterBinding;
 import io.micronaut.data.model.runtime.QueryParameterBinding;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
@@ -37,6 +38,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -50,7 +52,7 @@ import java.util.stream.Collectors;
  * @since 3.5.0
  */
 @Internal
-final class DefaultSqlStoredQuery<E, R> implements SqlStoredQuery<E, R>, DelegateStoredQuery<E, R> {
+public final class DefaultSqlStoredQuery<E, R> implements SqlStoredQuery<E, R>, DelegateStoredQuery<E, R> {
 
     private final StoredQuery<E, R> storedQuery;
     private final RuntimePersistentEntity<E> runtimePersistentEntity;
@@ -145,7 +147,6 @@ final class DefaultSqlStoredQuery<E, R> implements SqlStoredQuery<E, R>, Delegat
                                QueryParameterBinding binding) {
         RuntimePersistentEntity<E> persistentEntity = getPersistentEntity();
         Class<?> parameterConverter = binding.getParameterConverterClass();
-        DataType dataType = binding.getDataType();
         Object value = binding.getValue();
         RuntimePersistentProperty<?> persistentProperty = null;
         Argument<?> argument = null;
@@ -184,19 +185,37 @@ final class DefaultSqlStoredQuery<E, R> implements SqlStoredQuery<E, R>, Delegat
                 value = pp.getPropertyValue(entity);
                 persistentProperty = (RuntimePersistentProperty<?>) pp.getProperty();
             } else {
-                throw new IllegalStateException("Invalid query [" + getQuery() + "]. Unable to establish parameter value for parameter at position: " + binder.currentIndex());
+                int currentIndex = binder.currentIndex();
+                if (currentIndex != -1) {
+                    throw new IllegalStateException("Invalid query [" + getQuery() + "]. Unable to establish parameter value for parameter at position: " + currentIndex);
+                } else {
+                    throw new IllegalStateException("Invalid query [" + getQuery() + "]. Unable to establish parameter value for parameter: " + binding.getName());
+                }
             }
         }
 
         if (persistentProperty != null) {
             argument = persistentProperty.getArgument();
-            dataType = persistentProperty.getDataType();
+            if (binding.getDataType() != persistentProperty.getDataType()) {
+                RuntimePersistentProperty<?> finalPersistentProperty = persistentProperty;
+                binding = new DelegatingQueryParameterBinding(binding) {
+
+                    @Override
+                    public DataType getDataType() {
+                        return finalPersistentProperty.getDataType();
+                    }
+                };
+            }
         }
 
-        List<Object> values = binding.isExpandable() ? expandValue(value, dataType) : Collections.singletonList(value);
+        List<Object> values = binding.isExpandable() ? expandValue(value, binding.getDataType()) : null;
         if (values != null && values.isEmpty()) {
             // Empty collections / array should always set at least one value
             value = null;
+            values = null;
+        } else if (values != null && values.size() == 1) {
+            // Bind as one if the expanded collections is just one item
+            value = values.iterator().next();
             values = null;
         }
         if (values == null) {
@@ -205,16 +224,19 @@ final class DefaultSqlStoredQuery<E, R> implements SqlStoredQuery<E, R>, Delegat
             } else if (persistentProperty != null) {
                 value = binder.convert(value, persistentProperty);
             }
-            binder.bind(dataType, value);
+            binder.bindOne(binding, value);
         } else {
-            for (Object v : values) {
+            values = new ArrayList<>(values);
+            for (ListIterator<Object> iterator = values.listIterator(); iterator.hasNext(); ) {
+                Object v = iterator.next();
                 if (parameterConverter != null) {
                     v = binder.convert(parameterConverter, v, argument);
                 } else if (persistentProperty != null) {
                     v = binder.convert(v, persistentProperty);
                 }
-                binder.bind(dataType, v);
+                iterator.set(v);
             }
+            binder.bindMany(binding, values);
         }
     }
 

@@ -30,7 +30,7 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
     @Shared
     ApplicationContext context = ApplicationContext.run(properties)
 
-    def "simple test"() {
+    def "test find by id"() {
         given:
             def bookRepository = context.getBean(CosmosBookRepository)
             Book book = new Book()
@@ -42,6 +42,31 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
             def optionalBook = bookRepository.queryById(book.id)
         then:
             optionalBook
+    }
+
+    def "test find with query"() {
+        given:
+            def bookRepository = context.getBean(CosmosBookRepository)
+            Book book1 = new Book()
+            book1.id = UUID.randomUUID().toString()
+            book1.title = "The Stand"
+            book1.totalPages = 1000
+            Book book2 = new Book()
+            book2.id = UUID.randomUUID().toString()
+            book2.title = "Ice And Fire"
+            book2.totalPages = 200
+        when:
+            bookRepository.save(book1)
+            bookRepository.save(book2)
+            def optionalBook = bookRepository.findById(book1.id)
+        then:
+            optionalBook.isPresent()
+            optionalBook.get().title == "The Stand"
+        when:
+            def foundBook = bookRepository.searchByTitle("Ice And Fire")
+        then:
+            foundBook
+            foundBook.title == "Ice And Fire"
     }
 
     def "should get cosmos client"() {

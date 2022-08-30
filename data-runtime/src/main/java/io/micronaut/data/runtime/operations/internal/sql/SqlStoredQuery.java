@@ -20,7 +20,6 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.type.Argument;
-import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.runtime.QueryParameterBinding;
@@ -28,6 +27,7 @@ import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.model.runtime.StoredQuery;
 
+import java.util.Collection;
 import java.util.Map;
 
 /**
@@ -123,15 +123,25 @@ public interface SqlStoredQuery<E, R> extends StoredQuery<E, R> {
         /**
          * Bind the value.
          *
-         * @param dataType The value data type
+         * @param binding The binding
          * @param value    The value
          */
-        void bind(@NonNull DataType dataType, @Nullable Object value);
+        void bindOne(@NonNull QueryParameterBinding binding, @Nullable Object value);
+
+        /**
+         * Bind multiple values.
+         *
+         * @param binding The binding
+         * @param values  The values
+         */
+        void bindMany(@NonNull QueryParameterBinding binding, @NonNull Collection<Object> values);
 
         /**
          * @return current index
          */
-        int currentIndex();
+        default int currentIndex() {
+            return -1;
+        }
 
     }
 }

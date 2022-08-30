@@ -54,6 +54,8 @@ public abstract class BookRepository implements PageableRepository<Book, String>
     @Join("author")
     public abstract Book findByTitle(String title);
 
+    public abstract Book searchByTitle(String title);
+
     public abstract long updateAuthor(@Parameter("id") @Id String id, @Parameter("author") Author author);
 
     public abstract int deleteByIdAndAuthorId(String id, String authorId);

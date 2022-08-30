@@ -99,6 +99,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -935,9 +936,16 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         }
 
         @Override
-        public void bind(DataType dataType, Object value) {
-            setStatementParameter(ps, index, dataType, value, dialect);
+        public void bindOne(QueryParameterBinding binding, Object value) {
+            setStatementParameter(ps, index, binding.getDataType(), value, dialect);
             index++;
+        }
+
+        @Override
+        public void bindMany(QueryParameterBinding binding, Collection<Object> values) {
+            for (Object value : values) {
+                bindOne(binding, value);
+            }
         }
 
         @Override

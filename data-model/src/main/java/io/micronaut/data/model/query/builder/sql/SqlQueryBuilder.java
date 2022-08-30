@@ -136,6 +136,9 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                         dialectConfig.stringValue("positionalParameterFormat").ifPresent(format ->
                                 dc.positionalFormatter = format
                         );
+                        dialectConfig.stringValue("positionalParameterName").ifPresent(format ->
+                                dc.positionalNameFormatter = format
+                        );
                         dialectConfig.booleanValue("escapeQueries").ifPresent(escape ->
                                 dc.escapeQueries = escape
                         );
@@ -1620,13 +1623,16 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     @Override
     public Placeholder formatParameter(int index) {
         DialectConfig dialectConfig = perDialectConfig.get(dialect);
-        if (dialectConfig != null && dialectConfig.positionalFormatter != null) {
-            return new Placeholder(
-                    String.format(dialectConfig.positionalFormatter, index),
-                    String.valueOf(index)
-            );
+        String name;
+        if (dialectConfig != null && dialectConfig.positionalNameFormatter != null) {
+            name = String.format(dialectConfig.positionalNameFormatter, index);
         } else {
-            return new Placeholder("?", String.valueOf(index));
+            name = String.valueOf(index);
+        }
+        if (dialectConfig != null && dialectConfig.positionalFormatter != null) {
+            return new Placeholder(String.format(dialectConfig.positionalFormatter, name), name);
+        } else {
+            return new Placeholder("?", name);
         }
     }
 
@@ -1990,6 +1996,15 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         return DEFAULT_POSITIONAL_PARAMETER_MARKER;
     }
 
+    @Override
+    public String positionalParameterName() {
+        DialectConfig dialectConfig = perDialectConfig.get(dialect);
+        if (dialectConfig != null && dialectConfig.positionalNameFormatter != null) {
+            return dialectConfig.positionalNameFormatter;
+        }
+        return "";
+    }
+
     /**
      * @return The regex pattern for positional parameters.
      */
@@ -2025,6 +2040,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     private static class DialectConfig {
         Boolean escapeQueries;
         String positionalFormatter;
+        String positionalNameFormatter;
     }
 
     private static class IndexConfiguration {

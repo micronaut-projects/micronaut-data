@@ -20,7 +20,9 @@ import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.annotation.RepositoryConfiguration;
 import io.micronaut.data.cosmos.operations.CosmosRepositoryOperations;
 import io.micronaut.data.document.annotation.DocumentProcessorRequired;
+import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
+import io.micronaut.data.model.query.builder.sql.SqlQueryConfiguration;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
@@ -38,7 +40,15 @@ import java.lang.annotation.Target;
         queryBuilder = SqlQueryBuilder.class,
         operations = CosmosRepositoryOperations.class,
         implicitQueries = true,
-        namedParameters = false
+        namedParameters = true
+)
+@SqlQueryConfiguration(
+    @SqlQueryConfiguration.DialectConfiguration(
+        dialect = Dialect.ANSI,
+        positionalParameterFormat = "@%s",
+        positionalParameterName = "p%s",
+        escapeQueries = false
+    )
 )
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.ANNOTATION_TYPE, ElementType.TYPE})
