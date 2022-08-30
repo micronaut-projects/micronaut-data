@@ -70,8 +70,8 @@ import java.util.concurrent.TimeUnit
 import java.util.stream.Collectors
 
 import static io.micronaut.data.repository.jpa.criteria.QuerySpecification.where
-import static io.micronaut.data.tck.repositories.BookSpecifications.justJoin
 import static io.micronaut.data.tck.repositories.BookSpecifications.titleEquals
+import static io.micronaut.data.tck.repositories.BookSpecifications.titleEqualsWithJoin
 import static io.micronaut.data.tck.repositories.PersonRepository.Specifications.idsIn
 import static io.micronaut.data.tck.repositories.PersonRepository.Specifications.nameEquals
 
@@ -2135,21 +2135,24 @@ abstract class AbstractRepositorySpec extends Specification {
         bookRepository.save(book)
 
         when:
-        def bookLoadedUsingFindAll = bookRepository.findAllByGenre(genre).get(0)
+        def bookLoadedUsingFindAllByGenre = bookRepository.findAllByGenre(genre).get(0)
         def bookLoadedUsingFindOneWithCriteriaApi = bookRepository.findOne(titleEquals(book.title)).get()
         def bookNotFoundUsingFindOneWithCriteriaApi = bookRepository.findOne(titleEquals("non_existing_book_" + System.currentTimeMillis()))
         def bookLoadedUsingFindAllWithCriteriaApi = bookRepository.findAll(titleEquals(book.title)).get(0)
-        def bookLoadedUsingFindAllWithCriteriaApiJoinOnly = bookRepository.findAll(justJoin()).get(0)
+        def bookLoadedUsingFindAllByCriteriaWithoutAnnotationJoin = bookRepository.findAllByCriteria(titleEqualsWithJoin(book.title)).get(0)
+        def bookLoadedUsingFindAllWithCriteriaApiAndJoins = bookRepository.findAll(titleEqualsWithJoin(book.title)).get(0)
 
         then:
-        bookLoadedUsingFindAll.genre.genreName != null
+        bookLoadedUsingFindAllByGenre.genre.genreName != null
         bookLoadedUsingFindOneWithCriteriaApi != null
         bookLoadedUsingFindOneWithCriteriaApi.genre.genreName == genre.genreName
         bookNotFoundUsingFindOneWithCriteriaApi.present == false
         bookLoadedUsingFindAllWithCriteriaApi != null
         bookLoadedUsingFindAllWithCriteriaApi.genre.genreName == genre.genreName
-        bookLoadedUsingFindAllWithCriteriaApiJoinOnly != null
-        bookLoadedUsingFindAllWithCriteriaApiJoinOnly.genre.genreName != null
+        bookLoadedUsingFindAllByCriteriaWithoutAnnotationJoin != null
+        bookLoadedUsingFindAllByCriteriaWithoutAnnotationJoin.genre.genreName != null
+        bookLoadedUsingFindAllWithCriteriaApiAndJoins != null
+        bookLoadedUsingFindAllWithCriteriaApiAndJoins.genre.genreName != null
     }
 
     void "test loading books vs page repository and joins"() {
