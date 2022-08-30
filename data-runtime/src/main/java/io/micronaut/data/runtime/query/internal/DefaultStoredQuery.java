@@ -28,7 +28,7 @@ import io.micronaut.data.annotation.RepositoryConfiguration;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.intercept.annotation.DataMethodQueryParameter;
-import io.micronaut.data.model.Association;
+import io.micronaut.data.model.AssociationUtils;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
@@ -46,7 +46,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import static io.micronaut.data.intercept.annotation.DataMethod.META_MEMBER_PAGE_SIZE;
 
@@ -195,14 +194,7 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
     @Override
     public Set<JoinPath> getJoinFetchPaths() {
         if (joinFetchPaths == null) {
-            Set<JoinPath> set = method.getAnnotationValuesByType(Join.class).stream().filter(
-                    this::isJoinFetch
-            ).map(av -> {
-                String path = av.stringValue().orElseThrow(() -> new IllegalStateException("Should not include annotations without a value definition"));
-                String alias = av.stringValue("alias").orElse(null);
-                // only the alias and path is needed, don't materialize the rest
-                return new JoinPath(path, new Association[0], Join.Type.DEFAULT, alias);
-            }).collect(Collectors.toSet());
+            Set<JoinPath> set = AssociationUtils.getJoinFetchPaths(method);
             this.joinFetchPaths = set.isEmpty() ? Collections.emptySet() : Collections.unmodifiableSet(set);
         }
         return joinFetchPaths;

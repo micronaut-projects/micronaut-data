@@ -22,15 +22,17 @@ import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.type.Argument;
+import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.RepositoryConfiguration;
 import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.intercept.annotation.DataMethod;
+import io.micronaut.data.model.AssociationUtils;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQuery;
+import io.micronaut.data.model.jpa.criteria.PersistentEntityFrom;
 import io.micronaut.data.model.jpa.criteria.impl.QueryResultPersistentEntityCriteriaQuery;
 import io.micronaut.data.model.query.JoinPath;
-import io.micronaut.data.model.query.QueryModel;
 import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.model.runtime.PreparedQuery;
@@ -59,9 +61,9 @@ import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -76,6 +78,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQueryInterceptor<T, R> {
 
     private final Map<RepositoryMethodKey, QueryBuilder> sqlQueryBuilderForRepositories = new ConcurrentHashMap<>();
+    private final Map<RepositoryMethodKey, Set<JoinPath>> methodsJoinPaths = new ConcurrentHashMap<>();
     private final RuntimeCriteriaBuilder criteriaBuilder;
     private final MethodContextAwareStoredQueryDecorator storedQueryDecorator;
     private final PreparedQueryDecorator preparedQueryDecorator;
@@ -139,9 +142,11 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
                 }
         );
 
+        Set<JoinPath> joinPaths = methodsJoinPaths.computeIfAbsent(methodKey, repositoryMethodKey -> AssociationUtils.getJoinFetchPaths(context, false));
+
         StoredQuery<E, ?> storedQuery;
         if (type == Type.FIND_ALL || type == Type.FIND_ONE || type == Type.FIND_PAGE) {
-            storedQuery = buildFind(context, type, pageable, sqlQueryBuilder);
+            storedQuery = buildFind(context, type, pageable, sqlQueryBuilder, joinPaths);
         } else if (type == Type.COUNT) {
             storedQuery = buildCount(context, sqlQueryBuilder);
         } else if (type == Type.DELETE_ALL) {
@@ -191,9 +196,9 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
         return storedQuery;
     }
 
-    private <E> StoredQuery<E, Object> buildFind(MethodInvocationContext<T, R> context, Type type, Pageable pageable, QueryBuilder sqlQueryBuilder) {
+    private <E> StoredQuery<E, Object> buildFind(MethodInvocationContext<T, R> context, Type type, Pageable pageable, QueryBuilder sqlQueryBuilder, Set<JoinPath> joinPaths) {
         Class<E> rootEntity = getRequiredRootEntity(context);
-        CriteriaQueryBuilder<Object> builder = getCriteriaQueryBuilder(context);
+        CriteriaQueryBuilder<Object> builder = getCriteriaQueryBuilder(context, joinPaths);
         CriteriaQuery<Object> criteriaQuery = builder.build(criteriaBuilder);
 
         if (type == Type.FIND_ALL) {
@@ -208,10 +213,7 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
                 }
             }
         }
-        QueryResultPersistentEntityCriteriaQuery queryModelCriteriaQuery = (QueryResultPersistentEntityCriteriaQuery) criteriaQuery;
-        QueryModel queryModel = queryModelCriteriaQuery.getQueryModel();
-        Collection<JoinPath> joinPaths = queryModel.getJoinPaths();
-        QueryResult queryResult = sqlQueryBuilder.buildQuery(queryModel);
+        QueryResult queryResult = ((QueryResultPersistentEntityCriteriaQuery) criteriaQuery).buildQuery(sqlQueryBuilder);
         if (type == Type.FIND_ONE) {
             return QueryResultStoredQuery.single(DataMethod.OperationType.QUERY, context.getName(), context.getAnnotationMetadata(),
                 queryResult, rootEntity, criteriaQuery.getResultType(), joinPaths);
@@ -248,11 +250,12 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
      * or {@link io.micronaut.data.repository.jpa.criteria.QuerySpecification} in context.
      *
      * @param context The context
+     * @param joinPaths The join fetch paths
      * @return found specification
      * @param <K> the result type
      */
     @NonNull
-    protected <K> CriteriaQueryBuilder<K> getCriteriaQueryBuilder(MethodInvocationContext<?, ?> context) {
+    protected <K> CriteriaQueryBuilder<K> getCriteriaQueryBuilder(MethodInvocationContext<?, ?> context, Set<JoinPath> joinPaths) {
         final Object parameterValue = context.getParameterValues()[0];
         if (parameterValue instanceof CriteriaQueryBuilder) {
             return (CriteriaQueryBuilder) parameterValue;
@@ -266,6 +269,16 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
                 Predicate predicate = specification.toPredicate(root, criteriaQuery, criteriaBuilder);
                 if (predicate != null) {
                     criteriaQuery.where(predicate);
+                }
+            }
+            if (CollectionUtils.isNotEmpty(joinPaths)) {
+                PersistentEntityFrom<K, ?> criteriaEntity = ((PersistentEntityFrom<K, ?>) root);
+                for (JoinPath joinPath : joinPaths) {
+                    if (joinPath.getAlias().isPresent()) {
+                        criteriaEntity.join(joinPath.getPath(), joinPath.getJoinType(), joinPath.getAlias().get());
+                    } else {
+                        criteriaEntity.join(joinPath.getPath(), joinPath.getJoinType());
+                    }
                 }
             }
             return criteriaQuery;
