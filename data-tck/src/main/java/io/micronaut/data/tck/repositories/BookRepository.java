@@ -156,4 +156,6 @@ public abstract class BookRepository implements PageableRepository<Book, Long>, 
     @Override
     @Join(value = "genre", type = Join.Type.LEFT_FETCH)
     public abstract  List<Book> findAll(@Nullable PredicateSpecification<Book> spec);
+
+    public abstract List<Book> findAllByCriteria(PredicateSpecification<Book> spec);
 }

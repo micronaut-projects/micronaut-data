@@ -217,14 +217,6 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
         return this.hasResultConsumer;
     }
 
-    private boolean isJoinFetch(AnnotationValue<Join> av) {
-        if (!av.stringValue().isPresent()) {
-            return false;
-        }
-        Optional<String> type = av.stringValue("type");
-        return !type.isPresent() || type.get().contains("FETCH");
-    }
-
     @Override
     public boolean isCount() {
         return isCount;

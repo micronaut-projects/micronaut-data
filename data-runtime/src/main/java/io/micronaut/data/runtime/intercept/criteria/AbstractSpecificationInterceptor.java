@@ -33,6 +33,7 @@ import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQuery;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityFrom;
 import io.micronaut.data.model.jpa.criteria.impl.QueryResultPersistentEntityCriteriaQuery;
 import io.micronaut.data.model.query.JoinPath;
+import io.micronaut.data.model.query.QueryModel;
 import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.model.runtime.PreparedQuery;
@@ -61,10 +62,14 @@ import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * Abstract specification interceptor.
@@ -142,10 +147,10 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
                 }
         );
 
-        Set<JoinPath> joinPaths = methodsJoinPaths.computeIfAbsent(methodKey, repositoryMethodKey -> AssociationUtils.getJoinFetchPaths(context, false));
-
         StoredQuery<E, ?> storedQuery;
         if (type == Type.FIND_ALL || type == Type.FIND_ONE || type == Type.FIND_PAGE) {
+            Set<JoinPath> joinPaths = methodsJoinPaths.computeIfAbsent(methodKey, repositoryMethodKey ->
+                AssociationUtils.getJoinFetchPaths(context, false));
             storedQuery = buildFind(context, type, pageable, sqlQueryBuilder, joinPaths);
         } else if (type == Type.COUNT) {
             storedQuery = buildCount(context, sqlQueryBuilder);
@@ -196,9 +201,10 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
         return storedQuery;
     }
 
-    private <E> StoredQuery<E, Object> buildFind(MethodInvocationContext<T, R> context, Type type, Pageable pageable, QueryBuilder sqlQueryBuilder, Set<JoinPath> joinPaths) {
+    private <E> StoredQuery<E, Object> buildFind(MethodInvocationContext<T, R> context, Type type, Pageable pageable, QueryBuilder sqlQueryBuilder,
+                                                 Set<JoinPath> annotationJoinPaths) {
         Class<E> rootEntity = getRequiredRootEntity(context);
-        CriteriaQueryBuilder<Object> builder = getCriteriaQueryBuilder(context, joinPaths);
+        CriteriaQueryBuilder<Object> builder = getCriteriaQueryBuilder(context, annotationJoinPaths);
         CriteriaQuery<Object> criteriaQuery = builder.build(criteriaBuilder);
 
         if (type == Type.FIND_ALL) {
@@ -213,7 +219,12 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
                 }
             }
         }
-        QueryResult queryResult = ((QueryResultPersistentEntityCriteriaQuery) criteriaQuery).buildQuery(sqlQueryBuilder);
+        Set<JoinPath> joinPaths = new HashSet<>(annotationJoinPaths);
+        QueryResultPersistentEntityCriteriaQuery queryModelCriteriaQuery = (QueryResultPersistentEntityCriteriaQuery) criteriaQuery;
+        QueryModel queryModel = queryModelCriteriaQuery.getQueryModel();
+        Collection<JoinPath> queryJoinPaths = queryModel.getJoinPaths();
+        QueryResult queryResult = sqlQueryBuilder.buildQuery(queryModel);
+        joinPaths = mergeJoinPaths(joinPaths, queryJoinPaths);
         if (type == Type.FIND_ONE) {
             return QueryResultStoredQuery.single(DataMethod.OperationType.QUERY, context.getName(), context.getAnnotationMetadata(),
                 queryResult, rootEntity, criteriaQuery.getResultType(), joinPaths);
@@ -274,15 +285,27 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
             if (CollectionUtils.isNotEmpty(joinPaths)) {
                 PersistentEntityFrom<K, ?> criteriaEntity = ((PersistentEntityFrom<K, ?>) root);
                 for (JoinPath joinPath : joinPaths) {
-                    if (joinPath.getAlias().isPresent()) {
-                        criteriaEntity.join(joinPath.getPath(), joinPath.getJoinType(), joinPath.getAlias().get());
-                    } else {
-                        criteriaEntity.join(joinPath.getPath(), joinPath.getJoinType());
-                    }
+                    join(criteriaEntity, joinPath);
                 }
             }
             return criteriaQuery;
         };
+    }
+
+    private <K> void join(PersistentEntityFrom<K, ?> criteriaEntity, JoinPath joinPath) {
+        if (joinPath.getAlias().isPresent()) {
+            criteriaEntity.join(joinPath.getPath(), joinPath.getJoinType(), joinPath.getAlias().get());
+        } else {
+            criteriaEntity.join(joinPath.getPath(), joinPath.getJoinType());
+        }
+    }
+
+    private Set<JoinPath> mergeJoinPaths(Set<JoinPath> joinPaths, Collection<JoinPath> additionalJoinPaths) {
+        if (CollectionUtils.isNotEmpty(additionalJoinPaths)) {
+            Map<String, JoinPath> joinPathsByPath = joinPaths.stream().collect(Collectors.toMap(JoinPath::getPath, Function.identity()));
+            joinPaths.addAll(additionalJoinPaths.stream().filter(jp -> !joinPathsByPath.containsKey(jp.getPath())).collect(Collectors.toSet()));
+        }
+        return joinPaths;
     }
 
     /**
