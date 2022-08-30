@@ -224,7 +224,7 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
         QueryModel queryModel = queryModelCriteriaQuery.getQueryModel();
         Collection<JoinPath> queryJoinPaths = queryModel.getJoinPaths();
         QueryResult queryResult = sqlQueryBuilder.buildQuery(queryModel);
-        Set<JoinPath> joinPaths = mergeJoinPaths(new HashSet<>(annotationJoinPaths), queryJoinPaths);
+        Set<JoinPath> joinPaths = mergeJoinPaths(annotationJoinPaths, queryJoinPaths);
         if (type == Type.FIND_ONE) {
             return QueryResultStoredQuery.single(DataMethod.OperationType.QUERY, context.getName(), context.getAnnotationMetadata(),
                 queryResult, rootEntity, criteriaQuery.getResultType(), joinPaths);
@@ -302,11 +302,15 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
     }
 
     private Set<JoinPath> mergeJoinPaths(Set<JoinPath> joinPaths, Collection<JoinPath> additionalJoinPaths) {
-        if (CollectionUtils.isNotEmpty(additionalJoinPaths)) {
-            Map<String, JoinPath> joinPathsByPath = joinPaths.stream().collect(Collectors.toMap(JoinPath::getPath, Function.identity()));
-            joinPaths.addAll(additionalJoinPaths.stream().filter(jp -> !joinPathsByPath.containsKey(jp.getPath())).collect(Collectors.toSet()));
+        Set<JoinPath> resultPaths = new HashSet<>(5);
+        if (CollectionUtils.isNotEmpty(joinPaths)) {
+            resultPaths.addAll(joinPaths);
         }
-        return joinPaths;
+        if (CollectionUtils.isNotEmpty(additionalJoinPaths)) {
+            Map<String, JoinPath> existingPathsByPath = resultPaths.stream().collect(Collectors.toMap(JoinPath::getPath, Function.identity()));
+            resultPaths.addAll(additionalJoinPaths.stream().filter(jp -> !existingPathsByPath.containsKey(jp.getPath())).collect(Collectors.toSet()));
+        }
+        return resultPaths;
     }
 
     /**
