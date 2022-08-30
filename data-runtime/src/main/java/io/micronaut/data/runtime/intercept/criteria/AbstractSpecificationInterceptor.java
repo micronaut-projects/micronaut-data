@@ -66,6 +66,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
@@ -219,12 +220,11 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
                 }
             }
         }
-        Set<JoinPath> joinPaths = new HashSet<>(annotationJoinPaths);
         QueryResultPersistentEntityCriteriaQuery queryModelCriteriaQuery = (QueryResultPersistentEntityCriteriaQuery) criteriaQuery;
         QueryModel queryModel = queryModelCriteriaQuery.getQueryModel();
         Collection<JoinPath> queryJoinPaths = queryModel.getJoinPaths();
         QueryResult queryResult = sqlQueryBuilder.buildQuery(queryModel);
-        joinPaths = mergeJoinPaths(joinPaths, queryJoinPaths);
+        Set<JoinPath> joinPaths = mergeJoinPaths(new HashSet<>(annotationJoinPaths), queryJoinPaths);
         if (type == Type.FIND_ONE) {
             return QueryResultStoredQuery.single(DataMethod.OperationType.QUERY, context.getName(), context.getAnnotationMetadata(),
                 queryResult, rootEntity, criteriaQuery.getResultType(), joinPaths);
@@ -293,8 +293,9 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
     }
 
     private <K> void join(PersistentEntityFrom<K, ?> criteriaEntity, JoinPath joinPath) {
-        if (joinPath.getAlias().isPresent()) {
-            criteriaEntity.join(joinPath.getPath(), joinPath.getJoinType(), joinPath.getAlias().get());
+        Optional<String> optAlias = joinPath.getAlias();
+        if (optAlias.isPresent()) {
+            criteriaEntity.join(joinPath.getPath(), joinPath.getJoinType(), optAlias.get());
         } else {
             criteriaEntity.join(joinPath.getPath(), joinPath.getJoinType());
         }
