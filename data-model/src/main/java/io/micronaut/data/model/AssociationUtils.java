@@ -47,27 +47,12 @@ public final class AssociationUtils {
      * @return the join paths, if none defined and not of type FETCH then an empty set
      */
     public static Set<JoinPath> getJoinFetchPaths(AnnotationMetadata annotationMetadata) {
-        return getJoinFetchPaths(annotationMetadata, true);
-    }
-
-    /**
-     * Gets the join paths from the annotation metadata.
-     * @param annotationMetadata the annotation metadata
-     * @param ignoreJoinType an indicator telling whether join type in the annotation is ignored and then {@link Join.Type#DEFAULT} will be used
-     * @return the join paths, if none defined and not of type FETCH then an empty set
-     */
-    public static Set<JoinPath> getJoinFetchPaths(AnnotationMetadata annotationMetadata, boolean ignoreJoinType) {
         return annotationMetadata.getAnnotationValuesByType(Join.class).stream().filter(
             AssociationUtils::isJoinFetch
         ).map(av -> {
             String path = av.stringValue().orElseThrow(() -> new IllegalStateException("Should not include annotations without a value definition"));
+            Join.Type joinType = av.get("type", Join.Type.class).orElse(Join.Type.DEFAULT);
             String alias = av.stringValue("alias").orElse(null);
-            Join.Type joinType;
-            if (ignoreJoinType) {
-                joinType = Join.Type.DEFAULT;
-            } else {
-                joinType = av.get("type", Join.Type.class).orElse(Join.Type.DEFAULT);
-            }
             return new JoinPath(path, new Association[0], joinType, alias);
         }).collect(Collectors.toSet());
     }

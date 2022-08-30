@@ -150,7 +150,7 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
         StoredQuery<E, ?> storedQuery;
         if (type == Type.FIND_ALL || type == Type.FIND_ONE || type == Type.FIND_PAGE) {
             Set<JoinPath> joinPaths = methodsJoinPaths.computeIfAbsent(methodKey, repositoryMethodKey ->
-                AssociationUtils.getJoinFetchPaths(context, false));
+                AssociationUtils.getJoinFetchPaths(context));
             storedQuery = buildFind(context, type, pageable, sqlQueryBuilder, joinPaths);
         } else if (type == Type.COUNT) {
             storedQuery = buildCount(context, sqlQueryBuilder);
