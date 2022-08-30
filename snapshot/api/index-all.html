@@ -881,6 +881,10 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 </dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/operations/internal/OperationContext.html#associations">associations</a></span> - Variable in class io.micronaut.data.runtime.operations.internal.<a href="io/micronaut/data/runtime/operations/internal/OperationContext.html" title="class in io.micronaut.data.runtime.operations.internal">OperationContext</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/model/AssociationUtils.html" title="class in io.micronaut.data.model"><span class="typeNameLink">AssociationUtils</span></a> - Class in <a href="io/micronaut/data/model/package-summary.html">io.micronaut.data.model</a></dt>
+<dd>
+<div class="block">Internal association utilities.</div>
+</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/hibernate/operations/HibernateJpaOperations.html#async()">async()</a></span> - Method in class io.micronaut.data.hibernate.operations.<a href="io/micronaut/data/hibernate/operations/HibernateJpaOperations.html" title="class in io.micronaut.data.hibernate.operations">HibernateJpaOperations</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/jdbc/operations/DefaultJdbcRepositoryOperations.html#async()">async()</a></span> - Method in class io.micronaut.data.jdbc.operations.<a href="io/micronaut/data/jdbc/operations/DefaultJdbcRepositoryOperations.html" title="class in io.micronaut.data.jdbc.operations">DefaultJdbcRepositoryOperations</a></dt>
@@ -5794,7 +5798,7 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <div class="block">Find <a href="io/micronaut/data/repository/jpa/criteria/CriteriaDeleteBuilder.html" title="interface in io.micronaut.data.repository.jpa.criteria"><code>CriteriaDeleteBuilder</code></a>
  or <a href="io/micronaut/data/repository/jpa/criteria/QuerySpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria"><code>QuerySpecification</code></a> in context.</div>
 </dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/intercept/criteria/AbstractSpecificationInterceptor.html#getCriteriaQueryBuilder(io.micronaut.aop.MethodInvocationContext)">getCriteriaQueryBuilder(MethodInvocationContext&lt;?, ?&gt;)</a></span> - Method in class io.micronaut.data.runtime.intercept.criteria.<a href="io/micronaut/data/runtime/intercept/criteria/AbstractSpecificationInterceptor.html" title="class in io.micronaut.data.runtime.intercept.criteria">AbstractSpecificationInterceptor</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/intercept/criteria/AbstractSpecificationInterceptor.html#getCriteriaQueryBuilder(io.micronaut.aop.MethodInvocationContext,java.util.Set)">getCriteriaQueryBuilder(MethodInvocationContext&lt;?, ?&gt;, Set&lt;JoinPath&gt;)</a></span> - Method in class io.micronaut.data.runtime.intercept.criteria.<a href="io/micronaut/data/runtime/intercept/criteria/AbstractSpecificationInterceptor.html" title="class in io.micronaut.data.runtime.intercept.criteria">AbstractSpecificationInterceptor</a></dt>
 <dd>
 <div class="block">Find <a href="io/micronaut/data/repository/jpa/criteria/CriteriaQueryBuilder.html" title="interface in io.micronaut.data.repository.jpa.criteria"><code>CriteriaQueryBuilder</code></a>
  or <a href="io/micronaut/data/repository/jpa/criteria/QuerySpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria"><code>QuerySpecification</code></a> in context.</div>
@@ -6283,6 +6287,10 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/query/internal/QueryResultStoredQuery.html#getJoinFetchPaths()">getJoinFetchPaths()</a></span> - Method in class io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/QueryResultStoredQuery.html" title="class in io.micronaut.data.runtime.query.internal">QueryResultStoredQuery</a></dt>
 <dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/AssociationUtils.html#getJoinFetchPaths(io.micronaut.core.annotation.AnnotationMetadata)">getJoinFetchPaths(AnnotationMetadata)</a></span> - Static method in class io.micronaut.data.model.<a href="io/micronaut/data/model/AssociationUtils.html" title="class in io.micronaut.data.model">AssociationUtils</a></dt>
+<dd>
+<div class="block">Gets the join paths from the annotation metadata.</div>
+</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/DefaultQuery.html#getJoinPath(java.lang.String)">getJoinPath(String)</a></span> - Method in class io.micronaut.data.model.query.<a href="io/micronaut/data/model/query/DefaultQuery.html" title="class in io.micronaut.data.model.query">DefaultQuery</a></dt>
 <dd>
 <div class="block">Obtain the joint for for a given association.</div>
