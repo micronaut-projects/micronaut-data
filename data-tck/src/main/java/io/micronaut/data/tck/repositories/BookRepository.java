@@ -158,4 +158,6 @@ public abstract class BookRepository implements PageableRepository<Book, Long>, 
     public abstract  List<Book> findAll(@Nullable PredicateSpecification<Book> spec);
 
     public abstract List<Book> findAllByCriteria(PredicateSpecification<Book> spec);
+
+    public abstract Book findByTitleOrAuthorAndId(String title, Author author, Long id);
 }

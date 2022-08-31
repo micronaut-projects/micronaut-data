@@ -2229,6 +2229,26 @@ abstract class AbstractRepositorySpec extends Specification {
         cleanupBooks()
     }
 
+    void "test finding by And and Or combined"() {
+        given:
+        setupBooks()
+
+        when:
+        def book = bookRepository.findByTitle("Pet Cemetery")
+        def author = bookRepository.findAuthorById(book.id)
+        def verificationBook = bookRepository.findByTitleOrAuthorAndId(book.title, author, book.id)
+
+        then:
+        author.name == "Stephen King"
+        verificationBook != null
+        verificationBook.id == book.id
+        verificationBook.title == book.title
+        verificationBook.author.id == book.author.id
+
+        cleanup:
+        cleanupBooks()
+    }
+
     private GregorianCalendar getYearMonthDay(Date dateCreated) {
         def cal = dateCreated.toCalendar()
         def localDate = LocalDate.of(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH) + 1, cal.get(Calendar.DAY_OF_MONTH))
