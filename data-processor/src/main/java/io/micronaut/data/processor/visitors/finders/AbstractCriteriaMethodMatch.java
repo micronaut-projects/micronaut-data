@@ -373,7 +373,7 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
                         // Since split was done first by And operator we may have queryParameters with Or predicate
                         // If queryParameters is actual Or expression we need to further extract predicates
                         // And not try to find actual method predicate from the property (queryParameter) containing Or expression
-                        if (OPERATOR_OR != operatorInUse && orPattern.matcher(queryParameter).find()) {
+                        if (!OPERATOR_OR.equals(operatorInUse) && orPattern.matcher(queryParameter).find()) {
                             opPredicates.add(extractPredicates(queryParameter, parametersIt, root, cb));
                         } else {
                             opPredicates.add(
