@@ -18,7 +18,9 @@ package io.micronaut.data.processor.sql
 import io.micronaut.data.intercept.annotation.DataMethod
 import io.micronaut.data.model.DataType
 import io.micronaut.data.model.Pageable
+import io.micronaut.data.model.entities.Invoice
 import io.micronaut.data.processor.visitors.AbstractDataSpec
+import io.micronaut.data.tck.entities.Author
 import spock.lang.Issue
 import spock.lang.Unroll
 
@@ -116,16 +118,19 @@ import io.micronaut.data.tck.entities.Author;
 interface MyInterface extends CrudRepository<Book, Long> {
 
     Author findAuthorById(@Id Long id);
+
+    Book findByTitleOrAuthorAndId(String title, Author author, Long id);
 }
 """
         )
 
         when:
-        String query = getQuery(repository.getRequiredMethod("findAuthorById", Long))
+        String query1 = getQuery(repository.getRequiredMethod("findAuthorById", Long))
+        String query2 = getQuery(repository.getRequiredMethod("findByTitleOrAuthorAndId", String, Author, Long))
 
         then:
-        query == 'SELECT book_author_.`id`,book_author_.`name`,book_author_.`nick_name` FROM `book` book_ INNER JOIN `author` book_author_ ON book_.`author_id`=book_author_.`id` WHERE (book_.`id` = ?)'
-
+        query1 == 'SELECT book_author_.`id`,book_author_.`name`,book_author_.`nick_name` FROM `book` book_ INNER JOIN `author` book_author_ ON book_.`author_id`=book_author_.`id` WHERE (book_.`id` = ?)'
+        query2.endsWith('WHERE ((book_.`title` = ? OR book_.`author_id` = ?) AND book_.`id` = ?)')
     }
 
     void "test join query on collection with custom ID name"() {
@@ -407,6 +412,7 @@ interface FacesRepository extends CrudRepository<Face, Long> {
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.entities.Purchase;
+import io.micronaut.data.model.entities.Invoice;
 import io.micronaut.data.tck.entities.Face;
 import java.util.UUID;
 
@@ -418,14 +424,18 @@ interface PurchaseRepository extends CrudRepository<Purchase, Long> {
     Purchase findByNameAndInvoiceId(String n, Long id);
 
     Purchase findByCustomerIdAndShouldReceiveCopyOfInvoiceTrue(Long id, Boolean should);
+
+    Purchase findByCustomerIdOrInvoiceAndShouldReceiveCopyOfInvoiceTrue(Long id, Invoice invoice);
 }
 """)
         def query1 = getQuery(repository.getRequiredMethod("findByNameAndInvoiceId", String, Long))
         def query2 = getQuery(repository.getRequiredMethod("findByCustomerIdAndShouldReceiveCopyOfInvoiceTrue", Long, Boolean))
+        def query3 = getQuery(repository.getRequiredMethod("findByCustomerIdOrInvoiceAndShouldReceiveCopyOfInvoiceTrue", Long, Invoice))
 
         expect:
         query1 == 'SELECT purchase_.`id`,purchase_.`version`,purchase_.`name`,purchase_.`invoice_id`,purchase_.`customer_id`,purchase_.`should_receive_copy_of_invoice`,purchase_invoice_.`version` AS invoice_version,purchase_invoice_.`name` AS invoice_name FROM `purchase` purchase_ INNER JOIN `invoice` purchase_invoice_ ON purchase_.`invoice_id`=purchase_invoice_.`id` WHERE (purchase_.`name` = ? AND purchase_.`invoice_id` = ?)'
         query2 == 'SELECT purchase_.`id`,purchase_.`version`,purchase_.`name`,purchase_.`invoice_id`,purchase_.`customer_id`,purchase_.`should_receive_copy_of_invoice` FROM `purchase` purchase_ WHERE (purchase_.`customer_id` = ? AND purchase_.`should_receive_copy_of_invoice` = TRUE)'
+        query3.endsWith('WHERE ((purchase_.`customer_id` = ? OR purchase_.`invoice_id` = ?) AND purchase_.`should_receive_copy_of_invoice` = TRUE)')
 
     }
 
