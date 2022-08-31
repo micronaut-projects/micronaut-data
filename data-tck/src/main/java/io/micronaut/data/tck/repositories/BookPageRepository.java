@@ -16,11 +16,16 @@
 package io.micronaut.data.tck.repositories;
 
 import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Author;
 import io.micronaut.data.tck.entities.Book;
 import io.micronaut.data.tck.entities.BookPage;
 import io.micronaut.data.tck.entities.Page;
 
+import java.util.List;
+
 public interface BookPageRepository extends GenericRepository<BookPage, Object> {
 
     BookPage save(Book book, Page page);
+
+    List<BookPage> findByBookAuthor(Author author);
 }

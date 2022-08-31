@@ -505,4 +505,31 @@ interface PageRepository extends GenericRepository<Page, Long> {
         chaptersBookJoinJoins.keySet() == ["book"] as Set
 
     }
+
+    void "test query by non joined property"() {
+        given:
+        def repository = buildRepository('test.BookPageRepository', """
+import io.micronaut.data.annotation.Join;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Author;
+import io.micronaut.data.tck.entities.Page;
+import io.micronaut.data.tck.entities.Book;
+import io.micronaut.data.tck.entities.BookPage;
+import java.util.Optional;
+@JdbcRepository(dialect = Dialect.H2)
+interface BookPageRepository extends GenericRepository<BookPage, Object> {
+
+    List<BookPage> findByBookAuthor(Author author);
+}
+""")
+
+        def method = repository.getRequiredMethod("findByBookAuthor", Author)
+        def query = getQuery(method)
+
+        expect:
+        query == "SELECT book_page_.`book_id`,book_page_.`page_id` FROM `book_page` book_page_ WHERE (book_page_.`book_author_id` = ?)"
+
+    }
 }

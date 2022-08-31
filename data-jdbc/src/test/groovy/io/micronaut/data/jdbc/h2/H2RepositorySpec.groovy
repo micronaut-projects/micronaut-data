@@ -16,6 +16,10 @@
 package io.micronaut.data.jdbc.h2
 
 import groovy.transform.Memoized
+import io.micronaut.data.tck.entities.Author
+import io.micronaut.data.tck.entities.Book
+import io.micronaut.data.tck.entities.BookPage
+import io.micronaut.data.tck.entities.Page
 import io.micronaut.data.tck.repositories.AuthorRepository
 import io.micronaut.data.tck.repositories.BasicTypesRepository
 import io.micronaut.data.tck.repositories.BookDtoRepository
@@ -102,6 +106,9 @@ class H2RepositorySpec extends AbstractRepositorySpec implements H2TestPropertyP
 
     @Shared
     H2PageRepository pageRepo = context.getBean(H2PageRepository)
+
+    @Shared
+    H2BookPageRepository bookPageRepo = context.getBean(H2BookPageRepository)
 
     @Override
     NoseRepository getNoseRepository() {
@@ -271,6 +278,32 @@ class H2RepositorySpec extends AbstractRepositorySpec implements H2TestPropertyP
 
         then:
         cleanupData()
+    }
+
+    void "test bookPage relation query by author"() {
+        given:
+        def author = new Author()
+        author.name = "Author1"
+        author.nickName = "Aut1"
+        authorRepository.save(author)
+        def book = new Book()
+        book.title = "Book1"
+        book.author = author
+        def page = new Page()
+        page.num = 1
+        book.getPages().add(page)
+        bookRepository.save(book)
+        def bookPage = new BookPage()
+        bookPage.book = book
+        bookPage.page = page
+        bookPageRepo.save(book, page)
+        when:
+        def loadedBookPages = bookPageRepo.findByBookAuthor(author)
+        then:
+        loadedBookPages.size() > 0
+        cleanup:
+        cleanupBooks()
+
     }
 
 }
