@@ -253,7 +253,8 @@ extends <a href="../AbstractQueryInterceptor.html" title="class in io.micronaut.
 </tr>
 <tr id="i1" class="rowColor">
 <td class="colFirst"><code>protected &lt;K&gt;&nbsp;<a href="../../../repository/jpa/criteria/CriteriaQueryBuilder.html" title="interface in io.micronaut.data.repository.jpa.criteria">CriteriaQueryBuilder</a>&lt;K&gt;</code></td>
-<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getCriteriaQueryBuilder(io.micronaut.aop.MethodInvocationContext)">getCriteriaQueryBuilder</a></span>&#8203;(io.micronaut.aop.MethodInvocationContext&lt;?,&#8203;?&gt;&nbsp;context)</code></th>
+<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getCriteriaQueryBuilder(io.micronaut.aop.MethodInvocationContext,java.util.Set)">getCriteriaQueryBuilder</a></span>&#8203;(io.micronaut.aop.MethodInvocationContext&lt;?,&#8203;?&gt;&nbsp;context,
+                       java.util.Set&lt;<a href="../../../model/query/JoinPath.html" title="class in io.micronaut.data.model.query">JoinPath</a>&gt;&nbsp;joinPaths)</code></th>
 <td class="colLast">
 <div class="block">Find <a href="../../../repository/jpa/criteria/CriteriaQueryBuilder.html" title="interface in io.micronaut.data.repository.jpa.criteria"><code>CriteriaQueryBuilder</code></a>
  or <a href="../../../repository/jpa/criteria/QuerySpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria"><code>QuerySpecification</code></a> in context.</div>
@@ -388,14 +389,15 @@ protected&nbsp;&lt;K&gt;&nbsp;<a href="../../../repository/jpa/criteria/QuerySpe
 </dl>
 </li>
 </ul>
-<a id="getCriteriaQueryBuilder(io.micronaut.aop.MethodInvocationContext)">
+<a id="getCriteriaQueryBuilder(io.micronaut.aop.MethodInvocationContext,java.util.Set)">
 <!--   -->
 </a>
 <ul class="blockList">
 <li class="blockList">
 <h4>getCriteriaQueryBuilder</h4>
 <pre class="methodSignature">@NonNull
-protected&nbsp;&lt;K&gt;&nbsp;<a href="../../../repository/jpa/criteria/CriteriaQueryBuilder.html" title="interface in io.micronaut.data.repository.jpa.criteria">CriteriaQueryBuilder</a>&lt;K&gt;&nbsp;getCriteriaQueryBuilder&#8203;(io.micronaut.aop.MethodInvocationContext&lt;?,&#8203;?&gt;&nbsp;context)</pre>
+protected&nbsp;&lt;K&gt;&nbsp;<a href="../../../repository/jpa/criteria/CriteriaQueryBuilder.html" title="interface in io.micronaut.data.repository.jpa.criteria">CriteriaQueryBuilder</a>&lt;K&gt;&nbsp;getCriteriaQueryBuilder&#8203;(io.micronaut.aop.MethodInvocationContext&lt;?,&#8203;?&gt;&nbsp;context,
+                                                              java.util.Set&lt;<a href="../../../model/query/JoinPath.html" title="class in io.micronaut.data.model.query">JoinPath</a>&gt;&nbsp;joinPaths)</pre>
 <div class="block">Find <a href="../../../repository/jpa/criteria/CriteriaQueryBuilder.html" title="interface in io.micronaut.data.repository.jpa.criteria"><code>CriteriaQueryBuilder</code></a>
  or <a href="../../../repository/jpa/criteria/QuerySpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria"><code>QuerySpecification</code></a> in context.</div>
 <dl>
@@ -403,6 +405,7 @@ protected&nbsp;&lt;K&gt;&nbsp;<a href="../../../repository/jpa/criteria/Criteria
 <dd><code>K</code> - the result type</dd>
 <dt><span class="paramLabel">Parameters:</span></dt>
 <dd><code>context</code> - The context</dd>
+<dd><code>joinPaths</code> - The join fetch paths</dd>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>found specification</dd>
 </dl>
