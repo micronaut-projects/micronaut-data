@@ -26,8 +26,6 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.mongodb.conf.RequiresReactiveMongo;
 import io.micronaut.scheduling.TaskExecutors;
-import io.micronaut.transaction.SynchronousTransactionManager;
-import io.micronaut.transaction.async.AsyncTransactionOperations;
 import io.micronaut.transaction.async.AsyncUsingReactiveTransactionOperations;
 import io.micronaut.transaction.interceptor.CoroutineTxHelper;
 import io.micronaut.transaction.reactive.ReactorReactiveTransactionOperations;
@@ -51,30 +49,30 @@ final class MongoReactiveTransactionManagerFactory {
     @Requires(missingProperty = MongoSettings.MONGODB_SERVERS)
     @Primary
     @Singleton
-    <T> SynchronousTransactionManager<T> buildPrimarySynchronousTransactionManager(@Primary ReactorReactiveTransactionOperations<T> reactiveTransactionOperations,
-                                                                                   @Named(TaskExecutors.IO) ExecutorService executorService) {
+    <T> SynchronousFromReactiveTransactionManager<T> buildPrimarySynchronousTransactionManager(@Primary ReactorReactiveTransactionOperations<T> reactiveTransactionOperations,
+                                                                                               @Named(TaskExecutors.IO) ExecutorService executorService) {
         return new SynchronousFromReactiveTransactionManager<>(reactiveTransactionOperations, executorService);
     }
 
     @EachBean(NamedMongoConfiguration.class)
-    <T> SynchronousTransactionManager<T> buildSynchronousTransactionManager(@Parameter ReactorReactiveTransactionOperations<T> reactiveTransactionOperations,
-                                                                            @Named(TaskExecutors.IO) ExecutorService executorService) {
+    <T> SynchronousFromReactiveTransactionManager<T> buildSynchronousTransactionManager(@Parameter ReactorReactiveTransactionOperations<T> reactiveTransactionOperations,
+                                                                                        @Named(TaskExecutors.IO) ExecutorService executorService) {
         return new SynchronousFromReactiveTransactionManager<>(reactiveTransactionOperations, executorService);
     }
 
     @Requires(missingProperty = MongoSettings.MONGODB_SERVERS)
     @Primary
     @Singleton
-    <T> AsyncTransactionOperations<T> buildPrimaryAsyncTransactionOperations(@Primary ReactorReactiveTransactionOperations<T> reactiveTransactionOperations,
-                                                                             @Nullable CoroutineTxHelper coroutineTxHelper,
-                                                                             @Named(TaskExecutors.IO) ExecutorService executorService) {
+    <T> AsyncUsingReactiveTransactionOperations<T> buildPrimaryAsyncTransactionOperations(@Primary ReactorReactiveTransactionOperations<T> reactiveTransactionOperations,
+                                                                                          @Nullable CoroutineTxHelper coroutineTxHelper,
+                                                                                          @Named(TaskExecutors.IO) ExecutorService executorService) {
         return new AsyncUsingReactiveTransactionOperations<>(reactiveTransactionOperations, coroutineTxHelper);
     }
 
     @EachBean(NamedMongoConfiguration.class)
-    <T> AsyncTransactionOperations<T> buildAsyncTransactionOperations(@Parameter ReactorReactiveTransactionOperations<T> reactiveTransactionOperations,
-                                                                      @Nullable CoroutineTxHelper coroutineTxHelper,
-                                                                      @Named(TaskExecutors.IO) ExecutorService executorService) {
+    <T> AsyncUsingReactiveTransactionOperations<T> buildAsyncTransactionOperations(@Parameter ReactorReactiveTransactionOperations<T> reactiveTransactionOperations,
+                                                                                   @Nullable CoroutineTxHelper coroutineTxHelper,
+                                                                                   @Named(TaskExecutors.IO) ExecutorService executorService) {
         return new AsyncUsingReactiveTransactionOperations<>(reactiveTransactionOperations, coroutineTxHelper);
     }
 
