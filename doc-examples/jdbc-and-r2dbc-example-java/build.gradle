@@ -1,0 +1,36 @@
+plugins {
+    id "java"
+    id "io.micronaut.application"
+    id "io.micronaut.build.internal.data-example"
+}
+
+repositories {
+    mavenCentral()
+}
+
+application {
+    mainClass = "example.Application"
+}
+
+micronaut {
+    version micronautVersion
+    runtime "netty"
+    testRuntime "junit5"
+}
+
+dependencies {
+    annotationProcessor projects.dataProcessor
+    annotationProcessor "io.micronaut:micronaut-validation"
+    implementation projects.dataJdbc
+    implementation projects.dataR2dbc
+    implementation 'io.micronaut.rxjava2:micronaut-rxjava2'
+    implementation "io.micronaut:micronaut-http-client"
+    implementation "io.micronaut:micronaut-validation"
+    implementation "io.micronaut.sql:micronaut-jdbc-tomcat"
+    implementation libs.jakarta.persistence.api
+    implementation libs.javax.transaction.api
+    runtimeOnly "ch.qos.logback:logback-classic"
+    runtimeOnly libs.h2
+    runtimeOnly libs.drivers.r2dbc.h2
+
+}
