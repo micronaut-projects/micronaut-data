@@ -180,7 +180,7 @@ abstract class AbstractJoinSpec extends Specification {
         product.price == 10
 
         when:
-        def products = productDtoRepository.findByNameLike("Product%")
+        def products = productDtoRepository.findByNameLikeOrderByName("Product%")
 
         then:
         products.size() == 2
