@@ -35,7 +35,7 @@ mssql-jdbc-driver = "8.4.1.jre8"
 # R2DBC Drivers
 
 r2dbc = "1.0.0.RELEASE"
-r2dbc-pool = "0.9.1.RELEASE"
+r2dbc-pool = "0.9.2.RELEASE"
 
 oracle-r2dbc-driver = "1.0.0"
 mysql-r2dbc-driver = "0.8.2.RELEASE"
