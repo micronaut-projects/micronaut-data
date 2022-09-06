@@ -17,6 +17,7 @@ package io.micronaut.data.r2dbc.h2
 
 import groovy.transform.Memoized
 import io.micronaut.data.tck.repositories.CategoryRepository
+import io.micronaut.data.tck.repositories.ProductDtoRepository
 import io.micronaut.data.tck.repositories.ProductRepository
 import io.micronaut.data.tck.tests.AbstractJoinSpec
 
@@ -34,4 +35,9 @@ class H2DbJoinSpec extends AbstractJoinSpec implements H2TestPropertyProvider {
         return context.getBean(H2ProductRepository)
     }
 
+    @Memoized
+    @Override
+    ProductDtoRepository getProductDtoRepository() {
+        return context.getBean(H2ProductDtoRepository)
+    }
 }

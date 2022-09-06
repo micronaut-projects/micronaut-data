@@ -27,8 +27,10 @@ import io.micronaut.data.tck.repositories.CountryRegionCityRepository
 import io.micronaut.data.tck.repositories.CountryRepository
 import io.micronaut.data.tck.repositories.FaceRepository
 import io.micronaut.data.tck.repositories.FoodRepository
+import io.micronaut.data.tck.repositories.GenreRepository
 import io.micronaut.data.tck.repositories.MealRepository
 import io.micronaut.data.tck.repositories.NoseRepository
+import io.micronaut.data.tck.repositories.PersonRepository
 import io.micronaut.data.tck.repositories.RegionRepository
 import io.micronaut.data.tck.repositories.RoleRepository
 import io.micronaut.data.tck.repositories.StudentRepository
@@ -45,6 +47,9 @@ class H2RepositorySpec extends AbstractRepositorySpec implements H2TestPropertyP
 
     @Shared
     H2BookRepository br = context.getBean(H2BookRepository)
+
+    @Shared
+    GenreRepository genreRepo = context.getBean(H2GenreRepository)
 
     @Shared
     H2AuthorRepository ar = context.getBean(H2AuthorRepository)
@@ -105,13 +110,18 @@ class H2RepositorySpec extends AbstractRepositorySpec implements H2TestPropertyP
     }
 
     @Override
-    H2PersonRepository getPersonRepository() {
+    PersonRepository getPersonRepository() {
         return pr
     }
 
     @Override
     BookRepository getBookRepository() {
         return br
+    }
+
+    @Override
+    GenreRepository getGenreRepository() {
+        return genreRepo
     }
 
     @Override

@@ -166,13 +166,18 @@ interface FoodRepository extends CrudRepository<Food, UUID> {
 
     @Join("meal")
     Optional<Food> queryById(UUID uuid);
+
+    // Without join to meal
+    Optional<Food> findById(UUID uuid);
 }
 """)
 
         def query = getQuery(repository.getRequiredMethod("queryById", UUID))
+        def queryFind = getQuery(repository.getRequiredMethod("findById", UUID))
 
         expect:
-        query == 'SELECT food_.`fid`,food_.`key`,food_.`carbohydrates`,food_.`portion_grams`,food_.`created_on`,food_.`updated_on`,food_.`fk_meal_id`,food_.`fk_alt_meal`,food_meal_.`current_blood_glucose` AS meal_current_blood_glucose,food_meal_.`created_on` AS meal_created_on,food_meal_.`updated_on` AS meal_updated_on FROM `food` food_ INNER JOIN `meal` food_meal_ ON food_.`fk_meal_id`=food_meal_.`mid` WHERE (food_.`fid` = ?)'
+        query == 'SELECT food_.`fid`,food_.`key`,food_.`carbohydrates`,food_.`portion_grams`,food_.`created_on`,food_.`updated_on`,food_.`fk_meal_id`,food_.`fk_alt_meal`,food_.`loooooooooooooooooooooooooooooooooooooooooooooooooooooooong_name` AS ln,food_meal_.`current_blood_glucose` AS meal_current_blood_glucose,food_meal_.`created_on` AS meal_created_on,food_meal_.`updated_on` AS meal_updated_on FROM `food` food_ INNER JOIN `meal` food_meal_ ON food_.`fk_meal_id`=food_meal_.`mid` WHERE (food_.`fid` = ?)'
+        queryFind == 'SELECT food_.`fid`,food_.`key`,food_.`carbohydrates`,food_.`portion_grams`,food_.`created_on`,food_.`updated_on`,food_.`fk_meal_id`,food_.`fk_alt_meal`,food_.`loooooooooooooooooooooooooooooooooooooooooooooooooooooooong_name` AS ln FROM `food` food_ WHERE (food_.`fid` = ?)'
 
     }
 
@@ -424,6 +429,54 @@ interface PurchaseRepository extends CrudRepository<Purchase, Long> {
         expect:
         query1 == 'SELECT purchase_.`id`,purchase_.`version`,purchase_.`name`,purchase_.`invoice_id`,purchase_.`customer_id`,purchase_.`should_receive_copy_of_invoice`,purchase_invoice_.`version` AS invoice_version,purchase_invoice_.`name` AS invoice_name FROM `purchase` purchase_ INNER JOIN `invoice` purchase_invoice_ ON purchase_.`invoice_id`=purchase_invoice_.`id` WHERE (purchase_.`name` = ? AND purchase_.`invoice_id` = ?)'
         query2 == 'SELECT purchase_.`id`,purchase_.`version`,purchase_.`name`,purchase_.`invoice_id`,purchase_.`customer_id`,purchase_.`should_receive_copy_of_invoice` FROM `purchase` purchase_ WHERE (purchase_.`customer_id` = ? AND purchase_.`should_receive_copy_of_invoice` = TRUE)'
+
+    }
+
+    void "test query using InRange"() {
+        given:
+        def repository = buildRepository('test.MealRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.tck.entities.Meal;
+import java.util.UUID;
+
+@JdbcRepository(dialect= Dialect.MYSQL)
+@io.micronaut.context.annotation.Executable
+interface MealRepository extends CrudRepository<Meal, Long> {
+
+    Meal findByCurrentBloodGlucoseInRange(int from, int to);
+}
+""")
+
+        def query = getQuery(repository.getRequiredMethod("findByCurrentBloodGlucoseInRange", int, int))
+
+        expect:"The query contains the correct where clause for InRange (same as Between)"
+        query.contains('WHERE ((meal_.`current_blood_glucose` >= ? AND meal_.`current_blood_glucose` <= ?))')
+
+    }
+
+    void "test build DTO repo with MappedProperty alias"() {
+        given:
+        def repository = buildRepository('test.ProductDtoRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.tck.entities.Product;
+import io.micronaut.data.tck.entities.ProductDto;
+
+@JdbcRepository(dialect = Dialect.MYSQL)
+interface ProductDtoRepository extends GenericRepository<Product, Long> {
+
+    List<ProductDto> findByNameLike(String name);
+}
+
+""")
+        def method = repository.getRequiredMethod("findByNameLike", String)
+        def query = getQuery(method)
+
+
+        expect:
+        method.isTrue(DataMethod, DataMethod.META_MEMBER_DTO)
+        query == 'SELECT product_.`name`,product_.`price`,product_.`loooooooooooooooooooooooooooooooooooooooooooooooooooooooong_name` AS long_name,product_.`date_created`,product_.`last_updated` FROM `product` product_ WHERE (product_.`name` LIKE ?)'
 
     }
 }

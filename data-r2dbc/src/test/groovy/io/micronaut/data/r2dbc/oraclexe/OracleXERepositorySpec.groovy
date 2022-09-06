@@ -36,6 +36,12 @@ class OracleXERepositorySpec extends AbstractRepositorySpec implements OracleXET
 
     @Memoized
     @Override
+    GenreRepository getGenreRepository() {
+        return context.getBean(OracleXEGenreRepository)
+    }
+
+    @Memoized
+    @Override
     OracleXEBookRepository getBookRepository() {
         return context.getBean(OracleXEBookRepository)
     }

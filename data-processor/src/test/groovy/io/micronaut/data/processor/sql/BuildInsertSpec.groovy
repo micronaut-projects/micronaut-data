@@ -55,7 +55,7 @@ class Test {
     public String getName() {
         return name;
     }
-    
+
     public Long getId() {
         return id;
     }
@@ -94,7 +94,7 @@ import io.micronaut.data.model.query.builder.sql.Dialect;
 @io.micronaut.context.annotation.Executable
 interface MyInterface extends GenericRepository<Test, Long> {
     Test save(String name);
-    
+
     Test findById(Long id);
 }
 
@@ -112,7 +112,7 @@ class Test {
     public String getName() {
         return name;
     }
-    
+
     public Long getId() {
         return id;
     }
@@ -156,7 +156,7 @@ class Test {
     public String getName() {
         return name;
     }
-    
+
     public UUID getId() {
         return id;
     }
@@ -195,7 +195,7 @@ import io.micronaut.data.model.query.builder.sql.Dialect;
 @io.micronaut.context.annotation.Executable
 interface MyInterface extends GenericRepository<Test, UUID> {
     Test save(String name);
-    
+
     Test findById(UUID id);
 }
 
@@ -213,7 +213,7 @@ class Test {
     public String getName() {
         return name;
     }
-    
+
     public UUID getId() {
         return id;
     }
@@ -307,8 +307,8 @@ interface MyInterface extends CrudRepository<Person, Long> {
         def method = beanDefinition.getRequiredMethod("save", Person)
 
         expect:
-        getQuery(method) == 'INSERT INTO "person" ("name","age","enabled","public_id") VALUES (?,?,?,?)'
-        getParameterPropertyPaths(method) == ['name', 'age', 'enabled', 'publicId'] as String[]
+        getQuery(method) == 'INSERT INTO "person" ("name","age","enabled","public_id","company_id") VALUES (?,?,?,?,?)'
+        getParameterPropertyPaths(method) == ['name', 'age', 'enabled', 'publicId', 'company.myId'] as String[]
     }
 
     @PendingFeature(reason = "Bug in Micronaut core. Fixed by https://github.com/micronaut-projects/micronaut-core/commit/f6a488677d587be309d5b0abd8925c9a098cfdf9")
@@ -359,8 +359,8 @@ interface MyInterface extends CrudRepository<Food, UUID> {
         def method = beanDefinition.findPossibleMethods("update").findFirst().get()
         expect:
 
-        getQuery(method) == 'UPDATE "food" SET "key"=?,"carbohydrates"=?,"portion_grams"=?,"updated_on"=?,"fk_meal_id"=?,"fk_alt_meal"=? WHERE ("fid" = ?)'
-        getParameterPropertyPaths(method) == ["key", "carbohydrates", "portionGrams", "updatedOn", "meal.mid", "alternativeMeal.mid", "fid"] as String[]
+        getQuery(method) == 'UPDATE "food" SET "key"=?,"carbohydrates"=?,"portion_grams"=?,"updated_on"=?,"fk_meal_id"=?,"fk_alt_meal"=?,"loooooooooooooooooooooooooooooooooooooooooooooooooooooooong_name"=? WHERE ("fid" = ?)'
+        getParameterPropertyPaths(method) == ["key", "carbohydrates", "portionGrams", "updatedOn", "meal.mid", "alternativeMeal.mid", "longName", "fid"] as String[]
     }
 
     void "test build custom SQL insert"() {
@@ -387,7 +387,7 @@ interface MyInterface extends CrudRepository<Food, UUID> {
     void saveCustomSingle(Food food);
 
     Food saveCustom2(UUID fid, String key, int carbohydrates, Meal meal);
-    
+
 }
 """)
         when:
@@ -403,7 +403,7 @@ interface MyInterface extends CrudRepository<Food, UUID> {
         when:
         def save = beanDefinition.findPossibleMethods("saveCustom2").findFirst().get()
         then:
-        getQuery(save) == 'INSERT INTO "food" ("key","carbohydrates","portion_grams","created_on","updated_on","fk_meal_id","fk_alt_meal","fid") VALUES (?,?,?,?,?,?,?,?)'
+        getQuery(save) == 'INSERT INTO "food" ("key","carbohydrates","portion_grams","created_on","updated_on","fk_meal_id","fk_alt_meal","loooooooooooooooooooooooooooooooooooooooooooooooooooooooong_name","fid") VALUES (?,?,?,?,?,?,?,?,?)'
         getDataInterceptor(save) == "io.micronaut.data.intercept.SaveOneInterceptor"
     }
 }

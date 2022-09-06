@@ -2,10 +2,10 @@
 micronaut = "3.5.0"
 micronaut-test = "3.4.0"
 micronaut-serde = "1.1.0"
-micronaut-sql = "4.6.2"
+micronaut-sql = "4.6.3"
 micronaut-docs = "2.0.0"
-micronaut-gradle-plugin = "3.4.1"
-micronaut-mongo = "4.3.0"
+micronaut-gradle-plugin = "3.5.3"
+micronaut-mongo = "4.4.0"
 
 groovy = "3.0.12"
 
@@ -20,16 +20,16 @@ hibernate = "5.6.10.Final"
 spring-data = "2.6.4"
 spring = "5.3.22"
 
-mongodb = "4.6.1"
+mongodb = "4.7.1"
 
-vertx = "4.3.2"
+vertx = "4.3.3"
 
 # JDBC Drivers
 
-oracle-jdbc-driver = "21.6.0.0.1"
+oracle-jdbc-driver = "21.7.0.0"
 mariadb-jdbc-driver = "2.7.6"
 mysql-jdbc-driver = "8.0.30"
-postgres-jdbc-driver = "42.4.0"
+postgres-jdbc-driver = "42.5.0"
 mssql-jdbc-driver = "8.4.1.jre8"
 
 # R2DBC Drivers
@@ -60,7 +60,7 @@ jetbrains-annotations = "23.0.0"
 kotlin-gradle-plugin = "1.7.10"
 jmh-gradle-plugin = "0.6.6"
 spring-boot-gradle-plugin = "2.6.7"
-spring-dependency-management-gradle-plugin = "1.0.12.RELEASE"
+spring-dependency-management-gradle-plugin = "1.0.13.RELEASE"
 shadow-gradle-plugin = "7.1.2"
 
 [libraries]

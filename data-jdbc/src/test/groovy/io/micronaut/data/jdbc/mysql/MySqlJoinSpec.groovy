@@ -17,6 +17,7 @@ package io.micronaut.data.jdbc.mysql
 
 import groovy.transform.Memoized
 import io.micronaut.data.tck.repositories.CategoryRepository
+import io.micronaut.data.tck.repositories.ProductDtoRepository
 import io.micronaut.data.tck.repositories.ProductRepository
 import io.micronaut.data.tck.tests.AbstractJoinSpec
 
@@ -34,4 +35,9 @@ class MySqlJoinSpec extends AbstractJoinSpec implements MySQLTestPropertyProvide
         return context.getBean(MySqlProductRepository)
     }
 
+    @Memoized
+    @Override
+    ProductDtoRepository getProductDtoRepository() {
+        return context.getBean(MySqlProductDtoRepository)
+    }
 }

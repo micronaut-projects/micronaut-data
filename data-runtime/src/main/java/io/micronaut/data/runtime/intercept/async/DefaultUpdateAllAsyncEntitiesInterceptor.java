@@ -26,7 +26,6 @@ import java.util.concurrent.CompletionStage;
 /**
  * Default implementation of {@link UpdateAllEntriesAsyncInterceptor}.
  *
- * @param <T> The declaring type
  * @author Denis Stepanov
  * @since 2.4.0
  */

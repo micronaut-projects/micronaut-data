@@ -148,10 +148,13 @@ final class DefaultSqlPreparedQuery<E, R> implements SqlPreparedQuery<E, R>, Del
 
     private int getQueryParameterValueSize(QueryParameterBinding parameter) {
         int parameterIndex = parameter.getParameterIndex();
+        Object value;
         if (parameterIndex == -1) {
-            return 1;
+            value = parameter.getValue();
+        } else {
+            value = preparedQuery.getParameterArray()[parameterIndex];
         }
-        return sizeOf(preparedQuery.getParameterArray()[parameterIndex]);
+        return sizeOf(value);
     }
 
     public void attachPageable(Pageable pageable, boolean isSingleResult) {

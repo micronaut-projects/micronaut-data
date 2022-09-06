@@ -16,6 +16,7 @@
 package io.micronaut.data.tck.entities;
 
 import io.micronaut.data.annotation.DateUpdated;
+import io.micronaut.data.annotation.MappedProperty;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
@@ -25,6 +26,7 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
+import javax.persistence.OneToOne;
 import javax.persistence.PostLoad;
 import javax.persistence.PostPersist;
 import javax.persistence.PostRemove;
@@ -46,7 +48,12 @@ public class Book {
     private int totalPages;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    // Should not affect query or column reads
+    @MappedProperty(alias = "au")
     private Author author;
+
+    @OneToOne
+    private Genre genre;
 
     @ManyToOne
     private Publisher publisher;
@@ -125,6 +132,14 @@ public class Book {
 
     public void setAuthor(Author author) {
         this.author = author;
+    }
+
+    public Genre getGenre() {
+        return genre;
+    }
+
+    public void setGenre(Genre genre) {
+        this.genre = genre;
     }
 
     public Long getId() {

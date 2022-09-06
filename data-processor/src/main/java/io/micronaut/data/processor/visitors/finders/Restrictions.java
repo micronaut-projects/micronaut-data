@@ -500,6 +500,11 @@ public final class Restrictions {
      * @param <T> The property type
      */
     public static class PropertyInRange<T extends Comparable<? super T>> extends PropertyBetween<T> {
+
+        @Override
+        public String getName() {
+            return "InRange";
+        }
     }
 
     /**

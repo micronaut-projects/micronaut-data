@@ -31,6 +31,7 @@ import io.micronaut.data.tck.entities.Person;
 import io.micronaut.data.tck.entities.TotalDto;
 import io.reactivex.Single;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -146,6 +147,8 @@ public interface PersonRepository extends CrudRepository<Person, Long>, Pageable
     @Query("DELETE FROM person WHERE name = :xyz")
     int deleteCustomSingleNoEntity(String xyz);
 
+    List<Person> findAllByAgeInRange(int from, int to);
+
     class Specifications {
 
         public static PredicateSpecification<Person> nameEquals(String name) {
@@ -154,6 +157,10 @@ public interface PersonRepository extends CrudRepository<Person, Long>, Pageable
 
         public static PredicateSpecification<Person> nameEqualsCaseInsensitive(String name) {
             return (root, criteriaBuilder) -> criteriaBuilder.equal(criteriaBuilder.lower(root.get("name")), name.toLowerCase());
+        }
+
+        public static PredicateSpecification<Person> idsIn(Long... ids) {
+            return (root, criteriaBuilder) -> root.get("id").in(Arrays.asList(ids));
         }
     }
 }

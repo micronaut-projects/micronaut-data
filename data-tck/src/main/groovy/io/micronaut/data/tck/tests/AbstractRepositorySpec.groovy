@@ -38,6 +38,7 @@ import io.micronaut.data.tck.entities.CountryRegion
 import io.micronaut.data.tck.entities.CountryRegionCity
 import io.micronaut.data.tck.entities.Face
 import io.micronaut.data.tck.entities.Food
+import io.micronaut.data.tck.entities.Genre
 import io.micronaut.data.tck.entities.Meal
 import io.micronaut.data.tck.entities.Nose
 import io.micronaut.data.tck.entities.Page
@@ -68,13 +69,17 @@ import java.util.concurrent.TimeUnit
 import java.util.stream.Collectors
 
 import static io.micronaut.data.repository.jpa.criteria.QuerySpecification.where
+import static io.micronaut.data.tck.repositories.PersonRepository.Specifications.idsIn
 import static io.micronaut.data.tck.repositories.PersonRepository.Specifications.nameEquals
+import static io.micronaut.data.tck.repositories.BookSpecifications.titleEquals
+import static io.micronaut.data.tck.repositories.BookSpecifications.justJoin
 
 abstract class AbstractRepositorySpec extends Specification {
 
     abstract PersonRepository getPersonRepository()
     abstract BookRepository getBookRepository()
     abstract AuthorRepository getAuthorRepository()
+    abstract GenreRepository getGenreRepository()
     abstract CompanyRepository getCompanyRepository()
     abstract BookDtoRepository getBookDtoRepository()
     abstract CountryRepository getCountryRepository()
@@ -1001,6 +1006,19 @@ abstract class AbstractRepositorySpec extends Specification {
         personRepository.readAgeByNameLike("J%").sort() == [35,40]
         personRepository.findByNameLikeOrderByAge("J%")*.age == [35,40]
         personRepository.findByNameLikeOrderByAgeDesc("J%")*.age == [40,35]
+    }
+
+    void "test find by age InRange"() {
+        given:
+
+        personRepository.save(new Person(name: "Jeff", age: 40))
+        personRepository.saveAll([
+                new Person(name: "Ivan", age: 30),
+                new Person(name: "James", age: 35)
+        ])
+
+        expect:
+        personRepository.findAllByAgeInRange(20, 50).size() >= 3
     }
 
     void "test dto projection"() {
@@ -2060,6 +2078,17 @@ abstract class AbstractRepositorySpec extends Specification {
             countAppByNullByPredicateSpec == 2
             countAppByNullByQuerySpec == 2
         when:
+            def ids = personRepository.findAll().collect { p -> p.getId() }
+            long count = ids.size()
+            def countByIds = count == 0 ? 0 : personRepository.count(idsIn(ids.toArray(new Long[0])))
+        then:
+            countByIds == count
+        when:
+            def jeffPerson = personRepository.findOne(nameEquals("Jeff")).get();
+            def foundByIdPerson = personRepository.findOne(idsIn(jeffPerson.getId())).get()
+        then:
+            jeffPerson.getId() == foundByIdPerson.getId() && jeffPerson.getName() == foundByIdPerson.getName()
+        when:
             def deleted = personRepository.deleteAll(nameEquals("Jeff"))
             def all = personRepository.findAll().toList()
         then:
@@ -2090,6 +2119,51 @@ abstract class AbstractRepositorySpec extends Specification {
         then:
             deleted == 1
             personRepository.count(nameEquals("Xyz")) == 0
+
+        when:
+            def meal = mealRepository.save(new Meal(10))
+            def food = new Food("food", 80, 200, meal)
+            food.setLongName("long name")
+            food = foodRepository.save(food)
+        then:
+            // Verify order by works on alias mapped property
+            def foods = foodRepository.findAllByKeyOrderByLongName(food.key);
+            foods.size() == 1
+            foods[0].key == food.key
+            foods[0].longName == food.longName
+
+            def loadedFood = foodRepository.findOne(FoodRepository.Specifications.keyEquals(food.key)).get()
+            loadedFood.key == food.key
+            loadedFood.longName == food.longName
+    }
+
+    void "test join/fetch"() {
+        given:
+        def genre = new Genre()
+        genre.setGenreName("Dystopia")
+        genreRepository.save(genre)
+
+        def book = new Book()
+        book.setTitle("1984")
+        book.setGenre(genre)
+        bookRepository.save(book)
+
+        when:
+        def bookLoadedUsingFindAll = bookRepository.findAllByGenre(genre).get(0)
+        def bookLoadedUsingFindOneWithCriteriaApi = bookRepository.findOne(titleEquals(book.title)).get()
+        def bookNotFoundUsingFindOneWithCriteriaApi = bookRepository.findOne(titleEquals("non_existing_book_" + System.currentTimeMillis()))
+        def bookLoadedUsingFindAllWithCriteriaApi = bookRepository.findAll(titleEquals(book.title)).get(0)
+        def bookLoadedUsingFindAllWithCriteriaApiJoinOnly = bookRepository.findAll(justJoin()).get(0)
+
+        then:
+        bookLoadedUsingFindAll.genre.genreName != null
+        bookLoadedUsingFindOneWithCriteriaApi != null
+        bookLoadedUsingFindOneWithCriteriaApi.genre.genreName == genre.genreName
+        bookNotFoundUsingFindOneWithCriteriaApi.present == false
+        bookLoadedUsingFindAllWithCriteriaApi != null
+        bookLoadedUsingFindAllWithCriteriaApi.genre.genreName == genre.genreName
+        bookLoadedUsingFindAllWithCriteriaApiJoinOnly != null
+        bookLoadedUsingFindAllWithCriteriaApiJoinOnly.genre.genreName != null
     }
 
     private GregorianCalendar getYearMonthDay(Date dateCreated) {

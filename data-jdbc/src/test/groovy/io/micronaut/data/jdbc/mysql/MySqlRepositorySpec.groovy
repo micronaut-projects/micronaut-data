@@ -31,8 +31,14 @@ class MySqlRepositorySpec extends AbstractRepositorySpec implements MySQLTestPro
 
     @Memoized
     @Override
-    MySqlBookRepository getBookRepository() {
+    BookRepository getBookRepository() {
         return context.getBean(MySqlBookRepository)
+    }
+
+    @Memoized
+    @Override
+    GenreRepository getGenreRepository() {
+        return context.getBean(MySqlGenreRepository)
     }
 
     @Memoized

@@ -18,6 +18,7 @@ package io.micronaut.data.model.entities
 import javax.persistence.Entity
 import javax.persistence.GeneratedValue
 import javax.persistence.Id
+import javax.persistence.OneToOne
 
 @Entity
 class Person {
@@ -36,4 +37,7 @@ class Person {
     boolean enabled = true
 
     String publicId
+
+    @OneToOne
+    Company company
 }

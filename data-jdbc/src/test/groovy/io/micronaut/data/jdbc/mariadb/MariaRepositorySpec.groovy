@@ -36,6 +36,12 @@ class MariaRepositorySpec extends AbstractRepositorySpec implements MariaTestPro
 
     @Memoized
     @Override
+    GenreRepository getGenreRepository() {
+        return context.getBean(MySqlGenreRepository)
+    }
+
+    @Memoized
+    @Override
     AuthorRepository getAuthorRepository() {
         return context.getBean(MySqlAuthorRepository)
     }

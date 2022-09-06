@@ -114,6 +114,22 @@ class H2EmbeddedIdSpec extends Specification {
         foundByCountryAndCIty.shipmentId.country == "g"
         foundByCountryAndCIty.shipmentId.city == "h"
 
+        when:"Find all order by association path"
+        def foundAllOrderByCityDesc = repository.findAllOrderByShipmentIdCityDesc()
+        def foundAllOrderByCountryCityDesc = repository.findAllOrderByShipmentIdCountryAndShipmentIdCityDesc()
+
+        then:
+        foundAllOrderByCityDesc.size() == 2
+        foundAllOrderByCityDesc[0].field == "test4"
+        foundAllOrderByCityDesc[0].shipmentId.country == id4.country
+        foundAllOrderByCityDesc[0].shipmentId.city == id4.city
+        foundAllOrderByCityDesc[1].field == "test3"
+        foundAllOrderByCityDesc[1].shipmentId.country == id3.country
+        foundAllOrderByCityDesc[1].shipmentId.city == id3.city
+        foundAllOrderByCountryCityDesc.size() == 2
+        foundAllOrderByCountryCityDesc[0].field == "test3"
+        foundAllOrderByCountryCityDesc[1].field == "test4"
+
         when:"deleteAll is used with an iterable"
         repository.deleteAll([all.first()])
 

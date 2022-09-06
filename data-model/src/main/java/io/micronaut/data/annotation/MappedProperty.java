@@ -38,6 +38,11 @@ public @interface MappedProperty {
     String EMBEDDED_PROPERTIES = "embeddedProperties";
 
     /**
+     * name of the meta-annotation member to store the mapped property (column) alias configuration.
+     */
+    String ALIAS = "alias";
+
+    /**
      * The destination the property is persisted to. This could be the column name etc. or some external form.
      *
      * @return The destination
@@ -67,4 +72,10 @@ public @interface MappedProperty {
      * @return A string-based definition of the property type.
      */
     String definition() default "";
+
+    /**
+     * @return The column alias to use for the query
+     * @since 3.8.0
+     */
+    String alias() default "";
 }
