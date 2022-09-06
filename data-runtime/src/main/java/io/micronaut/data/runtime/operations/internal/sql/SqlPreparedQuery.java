@@ -18,11 +18,10 @@ package io.micronaut.data.runtime.operations.internal.sql;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.model.Pageable;
-import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.runtime.operations.internal.query.BindableParametersPreparedQuery;
 
 /**
- * SQL version of {@link PreparedQuery}.
+ * SQL version of {@link SqlStoredQuery}.
  * The instance of a prepared query has mutable state compared to a stored query.
  *
  * @param <E> The entity type

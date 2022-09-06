@@ -21,14 +21,13 @@ import io.micronaut.core.type.Argument;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.model.runtime.StoredQuery;
-import io.micronaut.data.runtime.operations.internal.sql.SqlPreparedQuery;
 import io.micronaut.data.runtime.query.internal.DelegateStoredQuery;
 
 import java.util.Collections;
 import java.util.Map;
 
 /**
- * The dummy prepared statement, that allows creating {@link SqlPreparedQuery} without actual prepared statement.
+ * The dummy prepared statement, that allows creating {@link StoredQuery} without actual prepared statement.
  *
  * @param <E> The entity type
  * @param <R> The result type

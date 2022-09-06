@@ -48,6 +48,14 @@ public class DefaultBindableParametersPreparedQuery<E, R> implements BindablePar
         this.storedQuery = unwrap(((DefaultPreparedQuery<E, R>) preparedQuery).getStoredQueryDelegate());
     }
 
+    public DefaultBindableParametersPreparedQuery(PreparedQuery<E, R> preparedQuery,
+                                                  InvocationContext<?, ?> invocationContext,
+                                                  BindableParametersStoredQuery<E, R> storedQuery) {
+        this.preparedQuery = preparedQuery;
+        this.invocationContext = invocationContext;
+        this.storedQuery = storedQuery;
+    }
+
     private static <X, Y> BindableParametersStoredQuery<X, Y> unwrap(StoredQuery<X, Y> storedQuery) {
         if (storedQuery instanceof BindableParametersStoredQuery) {
             return (BindableParametersStoredQuery<X, Y>) storedQuery;
@@ -56,14 +64,6 @@ public class DefaultBindableParametersPreparedQuery<E, R> implements BindablePar
             return unwrap(storedQuery);
         }
         throw new RuntimeException("Cannot unwrap BindableParametersStoredQuery");
-    }
-
-    public DefaultBindableParametersPreparedQuery(PreparedQuery<E, R> preparedQuery,
-                                                  InvocationContext<?, ?> invocationContext,
-                                                  BindableParametersStoredQuery<E, R> storedQuery) {
-        this.preparedQuery = preparedQuery;
-        this.invocationContext = invocationContext;
-        this.storedQuery = storedQuery;
     }
 
     @Override

@@ -19,13 +19,12 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.runtime.QueryParameterBinding;
-import io.micronaut.data.model.runtime.StoredQuery;
 import io.micronaut.data.runtime.operations.internal.query.BindableParametersStoredQuery;
 
 import java.util.Map;
 
 /**
- * SQL version of {@link StoredQuery} carrying extra SQL related data.
+ * SQL version of {@link BindableParametersStoredQuery} carrying extra SQL related data.
  *
  * @param <E> The entity type
  * @param <R> The result type
