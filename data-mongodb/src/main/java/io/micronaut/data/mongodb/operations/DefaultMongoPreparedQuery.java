@@ -45,12 +45,12 @@ import java.util.stream.Collectors;
 @Internal
 final class DefaultMongoPreparedQuery<E, R, Dtb> extends DefaultBindableParametersPreparedQuery<E, R> implements DelegatePreparedQuery<E, R>, MongoPreparedQuery<E, R, Dtb> {
 
-    private final DefaultPreparedQuery<E, R> preparedQuery;
+    private final DefaultPreparedQuery<E, R> defaultPreparedQuery;
     private final MongoStoredQuery<E, R, Dtb> mongoStoredQuery;
 
     public DefaultMongoPreparedQuery(PreparedQuery<E, R> preparedQuery) {
         super(preparedQuery);
-        this.preparedQuery = (DefaultPreparedQuery<E, R>) preparedQuery;
+        this.defaultPreparedQuery = (DefaultPreparedQuery<E, R>) preparedQuery;
         this.mongoStoredQuery = (MongoStoredQuery<E, R, Dtb>) ((DelegateStoredQuery<Object, Object>) preparedQuery).getStoredQueryDelegate();
     }
 
@@ -66,7 +66,7 @@ final class DefaultMongoPreparedQuery<E, R, Dtb> extends DefaultBindableParamete
 
     @Override
     public MongoAggregation getAggregation() {
-        MongoAggregation aggregation = mongoStoredQuery.getAggregation(preparedQuery.getContext());
+        MongoAggregation aggregation = mongoStoredQuery.getAggregation(defaultPreparedQuery.getContext());
         Pageable pageable = getPageable();
         if (pageable != Pageable.UNPAGED) {
             List<Bson> pipeline = new ArrayList<>(aggregation.getPipeline());
@@ -78,8 +78,8 @@ final class DefaultMongoPreparedQuery<E, R, Dtb> extends DefaultBindableParamete
 
     @Override
     public MongoFind getFind() {
-        MongoFind find = mongoStoredQuery.getFind(preparedQuery.getContext());
-        Pageable pageable = preparedQuery.getPageable();
+        MongoFind find = mongoStoredQuery.getFind(defaultPreparedQuery.getContext());
+        Pageable pageable = defaultPreparedQuery.getPageable();
         if (pageable != Pageable.UNPAGED) {
             MongoFindOptions findOptions = find.getOptions();
             MongoFindOptions options = findOptions == null ? new MongoFindOptions() : new MongoFindOptions(findOptions);
@@ -97,17 +97,17 @@ final class DefaultMongoPreparedQuery<E, R, Dtb> extends DefaultBindableParamete
 
     @Override
     public MongoUpdate getUpdateMany() {
-        return mongoStoredQuery.getUpdateMany(preparedQuery.getContext());
+        return mongoStoredQuery.getUpdateMany(defaultPreparedQuery.getContext());
     }
 
     @Override
     public MongoDelete getDeleteMany() {
-        return mongoStoredQuery.getDeleteMany(preparedQuery.getContext());
+        return mongoStoredQuery.getDeleteMany(defaultPreparedQuery.getContext());
     }
 
     @Override
     public PreparedQuery<E, R> getPreparedQueryDelegate() {
-        return preparedQuery;
+        return defaultPreparedQuery;
     }
 
     private int applyPageable(Pageable pageable, List<Bson> pipeline) {

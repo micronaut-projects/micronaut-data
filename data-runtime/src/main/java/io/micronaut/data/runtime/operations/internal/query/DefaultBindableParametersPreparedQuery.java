@@ -17,6 +17,7 @@ package io.micronaut.data.runtime.operations.internal.query;
 
 import io.micronaut.aop.InvocationContext;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.model.runtime.QueryParameterBinding;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
@@ -63,7 +64,7 @@ public class DefaultBindableParametersPreparedQuery<E, R> implements BindablePar
         if (storedQuery instanceof DelegateStoredQuery) {
             return unwrap(storedQuery);
         }
-        throw new RuntimeException("Cannot unwrap BindableParametersStoredQuery");
+        throw new DataAccessException("Cannot unwrap BindableParametersStoredQuery");
     }
 
     @Override

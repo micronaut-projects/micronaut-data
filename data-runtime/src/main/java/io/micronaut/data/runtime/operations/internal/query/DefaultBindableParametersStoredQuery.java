@@ -225,7 +225,7 @@ public class DefaultBindableParametersStoredQuery<E, R> implements BindableParam
         }
     }
 
-    private <T> PersistentPropertyPath getRequiredPropertyPath(QueryParameterBinding queryParameterBinding, RuntimePersistentEntity<T> persistentEntity) {
+    protected final <T> PersistentPropertyPath getRequiredPropertyPath(QueryParameterBinding queryParameterBinding, RuntimePersistentEntity<T> persistentEntity) {
         String[] propertyPath = queryParameterBinding.getRequiredPropertyPath();
         PersistentPropertyPath pp = persistentEntity.getPropertyPath(propertyPath);
         if (pp == null) {
@@ -234,7 +234,7 @@ public class DefaultBindableParametersStoredQuery<E, R> implements BindableParam
         return pp;
     }
 
-    private void requireInvocationContext(InvocationContext<?, ?> invocationContext) {
+    protected final void requireInvocationContext(InvocationContext<?, ?> invocationContext) {
         if (invocationContext == null) {
             throw new IllegalStateException("Invocation context is required!");
         }

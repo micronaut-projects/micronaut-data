@@ -441,9 +441,7 @@ final class DefaultMongoStoredQuery<E, R, Dtb> extends DefaultBindableParameters
         return value;
     }
 
-    private <T> BsonValue getValue(QueryParameterBinding queryParameterBinding,
-                                   Object value) {
-
+    private BsonValue getValue(QueryParameterBinding queryParameterBinding, Object value) {
         // Check if the parameter is not an id which might be represented as String but needs to mapped as ObjectId
         if (value instanceof String && queryParameterBinding.getPropertyPath() != null) {
             // TODO: improve id recognition
@@ -468,21 +466,6 @@ final class DefaultMongoStoredQuery<E, R, Dtb> extends DefaultBindableParameters
             return new BsonArray(values.stream().map(val -> MongoUtils.toBsonValue(conversionService, val, codecRegistry)).collect(Collectors.toList()));
         }
         return MongoUtils.toBsonValue(conversionService, value, codecRegistry);
-    }
-
-    private void requireInvocationContext(InvocationContext<?, ?> invocationContext) {
-        if (invocationContext == null) {
-            throw new IllegalStateException("Invocation context is required!");
-        }
-    }
-
-    private <T> PersistentPropertyPath getRequiredPropertyPath(QueryParameterBinding queryParameterBinding, RuntimePersistentEntity<T> persistentEntity) {
-        String[] propertyPath = queryParameterBinding.getRequiredPropertyPath();
-        PersistentPropertyPath pp = persistentEntity.getPropertyPath(propertyPath);
-        if (pp == null) {
-            throw new IllegalStateException("Cannot find auto populated property: " + String.join(".", propertyPath));
-        }
-        return pp;
     }
 
     @Override

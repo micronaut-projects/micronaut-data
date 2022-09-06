@@ -314,13 +314,13 @@ public abstract class AbstractHibernateOperations<S, Q> implements HintsCapableR
             } else if (queryStr.toLowerCase(Locale.ENGLISH).startsWith("select new ")) {
                 Class<R> wrapperType = ReflectionUtils.getWrapperType(preparedQuery.getResultType());
                 Q query = createQuery(session, queryStr, wrapperType);
-                bindPreparedQuery(query, preparedQuery, session, queryStr);
+                bindPreparedQuery(query, preparedQuery, session);
                 resultCollector.collect(query);
                 return;
             } else {
                 q = createQuery(session, queryStr, Tuple.class);
             }
-            bindPreparedQuery(q, preparedQuery, session, queryStr);
+            bindPreparedQuery(q, preparedQuery, session);
             resultCollector.collectTuple(q, tuple -> {
                 Set<String> properties = tuple.getElements().stream().map(TupleElement::getAlias).collect(Collectors.toCollection(() -> new TreeSet<>(String.CASE_INSENSITIVE_ORDER)));
                 return (new BeanIntrospectionMapper<Tuple, R>() {
@@ -346,7 +346,7 @@ public abstract class AbstractHibernateOperations<S, Q> implements HintsCapableR
                 Class<T> rootEntity = preparedQuery.getRootEntity();
                 if (wrapperType != rootEntity) {
                     Q nativeQuery = createNativeQuery(session, queryStr, Tuple.class);
-                    bindPreparedQuery(nativeQuery, preparedQuery, session, queryStr);
+                    bindPreparedQuery(nativeQuery, preparedQuery, session);
                     resultCollector.collectTuple(nativeQuery, tuple -> {
                         Object o = tuple.get(0);
                         if (wrapperType.isInstance(o)) {
@@ -361,7 +361,7 @@ public abstract class AbstractHibernateOperations<S, Q> implements HintsCapableR
             } else {
                 q = createQuery(session, queryStr, wrapperType);
             }
-            bindPreparedQuery(q, preparedQuery, session, queryStr);
+            bindPreparedQuery(q, preparedQuery, session);
             resultCollector.collect(q);
         }
     }
@@ -427,7 +427,7 @@ public abstract class AbstractHibernateOperations<S, Q> implements HintsCapableR
         });
     }
 
-    private <T, R> void bindPreparedQuery(Q q, @NonNull PreparedQuery<T, R> preparedQuery, S currentSession, String query) {
+    private <T, R> void bindPreparedQuery(Q q, @NonNull PreparedQuery<T, R> preparedQuery, S currentSession) {
         bindParameters(q, preparedQuery);
         bindPageable(q, preparedQuery.getPageable());
         bindQueryHints(q, preparedQuery, currentSession);
