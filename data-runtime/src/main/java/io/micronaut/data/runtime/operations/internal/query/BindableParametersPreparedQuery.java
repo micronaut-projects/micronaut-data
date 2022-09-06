@@ -13,39 +13,42 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.runtime.operations.internal.sql;
+package io.micronaut.data.runtime.operations.internal.query;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Nullable;
-import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.runtime.PreparedQuery;
-import io.micronaut.data.runtime.operations.internal.query.BindableParametersPreparedQuery;
+import io.micronaut.data.model.runtime.QueryParameterBinding;
+
+import java.util.Map;
 
 /**
- * SQL version of {@link PreparedQuery}.
- * The instance of a prepared query has mutable state compared to a stored query.
+ * Bindable parameters version of {@link PreparedQuery}.
  *
  * @param <E> The entity type
  * @param <R> The result type
  * @author Denis Stepanov
- * @since 3.5.0
+ * @since 3.8.0
  */
 @Internal
-public interface SqlPreparedQuery<E, R> extends BindableParametersPreparedQuery<E, R>, SqlStoredQuery<E, R> {
+public interface BindableParametersPreparedQuery<E, R> extends PreparedQuery<E, R>, BindableParametersStoredQuery<E, R> {
 
     /**
-     * Prepare query. The internal SQL query can be altered based on the requirements.
+     * Bind query parameters.
      *
-     * @param entity The entity instance
+     * @param binder         The binder
+     * @param entity         The entity
+     * @param previousValues The previous auto-populated collected values
      */
-    void prepare(@Nullable E entity);
+    void bindParameters(Binder binder, @Nullable E entity, @Nullable Map<QueryParameterBinding, Object> previousValues);
 
     /**
-     * Modify the query according to the pageable.
+     * Bind query parameters.
      *
-     * @param pageable       The pageable
-     * @param isSingleResult is single result
+     * @param binder The binder
      */
-    void attachPageable(Pageable pageable, boolean isSingleResult);
+    default void bindParameters(Binder binder) {
+        bindParameters(binder, null, null);
+    }
 
 }

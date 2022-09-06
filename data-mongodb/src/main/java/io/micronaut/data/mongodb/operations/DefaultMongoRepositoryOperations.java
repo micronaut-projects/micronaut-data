@@ -186,7 +186,7 @@ public final class DefaultMongoRepositoryOperations extends AbstractMongoReposit
 
     private <T, R> R getCount(ClientSession clientSession, MongoPreparedQuery<T, R, MongoDatabase> preparedQuery) {
         Class<R> resultType = preparedQuery.getResultType();
-        RuntimePersistentEntity<T> persistentEntity = preparedQuery.getRuntimePersistentEntity();
+        RuntimePersistentEntity<T> persistentEntity = preparedQuery.getPersistentEntity();
         MongoDatabase database = preparedQuery.getDatabase();
         if (preparedQuery.isAggregate()) {
             MongoAggregation aggregation = preparedQuery.getAggregation();
@@ -289,7 +289,7 @@ public final class DefaultMongoRepositoryOperations extends AbstractMongoReposit
                 .limit(1)
                 .map(r -> {
                     Class<T> type = preparedQuery.getRootEntity();
-                    RuntimePersistentEntity<T> persistentEntity = preparedQuery.getRuntimePersistentEntity();
+                    RuntimePersistentEntity<T> persistentEntity = preparedQuery.getPersistentEntity();
                     if (type.isInstance(r)) {
                         return (R) triggerPostLoad(preparedQuery.getAnnotationMetadata(), persistentEntity, type.cast(r));
                     }
@@ -306,7 +306,7 @@ public final class DefaultMongoRepositoryOperations extends AbstractMongoReposit
             return convertResult(database.getCodecRegistry(), resultType, result, preparedQuery.isDtoProjection());
         }
         return aggregate(clientSession, preparedQuery).map(r -> {
-            RuntimePersistentEntity<T> persistentEntity = preparedQuery.getRuntimePersistentEntity();
+            RuntimePersistentEntity<T> persistentEntity = preparedQuery.getPersistentEntity();
             if (type.isInstance(r)) {
                 return (R) triggerPostLoad(preparedQuery.getAnnotationMetadata(), persistentEntity, type.cast(r));
             }
@@ -361,7 +361,7 @@ public final class DefaultMongoRepositoryOperations extends AbstractMongoReposit
         if (QUERY_LOG.isDebugEnabled()) {
             logFind(find);
         }
-        MongoCollection<MR> collection = getCollection(preparedQuery.getDatabase(), preparedQuery.getRuntimePersistentEntity(), resultType);
+        MongoCollection<MR> collection = getCollection(preparedQuery.getDatabase(), preparedQuery.getPersistentEntity(), resultType);
         FindIterable<MR> findIterable = collection.find(clientSession, resultType);
         return applyFindOptions(find.getOptions(), findIterable);
     }
@@ -452,7 +452,7 @@ public final class DefaultMongoRepositoryOperations extends AbstractMongoReposit
     private <T, R, MR> AggregateIterable<MR> aggregate(ClientSession clientSession,
                                                        MongoPreparedQuery<T, R, MongoDatabase> preparedQuery,
                                                        Class<MR> resultType) {
-        MongoCollection<MR> collection = getCollection(preparedQuery.getDatabase(), preparedQuery.getRuntimePersistentEntity(), resultType);
+        MongoCollection<MR> collection = getCollection(preparedQuery.getDatabase(), preparedQuery.getPersistentEntity(), resultType);
         MongoAggregation aggregation = preparedQuery.getAggregation();
         if (QUERY_LOG.isDebugEnabled()) {
             logAggregate(aggregation);
@@ -523,7 +523,7 @@ public final class DefaultMongoRepositoryOperations extends AbstractMongoReposit
             StoredQuery<T, ?> storedQuery = operation.getStoredQuery();
             if (storedQuery != null) {
                 MongoStoredQuery<T, ?, MongoDatabase> mongoStoredQuery = getMongoStoredQuery(storedQuery);
-                MongoEntitiesOperation<T> op = createMongoUpdateOneInBulkOperation(ctx, mongoStoredQuery.getRuntimePersistentEntity(),
+                MongoEntitiesOperation<T> op = createMongoUpdateOneInBulkOperation(ctx, mongoStoredQuery.getPersistentEntity(),
                         Collections.singletonList(operation.getEntity()), mongoStoredQuery);
                 op.update();
                 return op.getEntities().iterator().next();
@@ -539,7 +539,7 @@ public final class DefaultMongoRepositoryOperations extends AbstractMongoReposit
             StoredQuery<T, ?> storedQuery = operation.getStoredQuery();
             if (storedQuery != null) {
                 MongoStoredQuery<T, ?, MongoDatabase> mongoStoredQuery = getMongoStoredQuery(storedQuery);
-                MongoEntitiesOperation<T> op = createMongoUpdateOneInBulkOperation(ctx, mongoStoredQuery.getRuntimePersistentEntity(), operation, mongoStoredQuery);
+                MongoEntitiesOperation<T> op = createMongoUpdateOneInBulkOperation(ctx, mongoStoredQuery.getPersistentEntity(), operation, mongoStoredQuery);
                 op.update();
                 return op.getEntities();
             }
@@ -556,7 +556,7 @@ public final class DefaultMongoRepositoryOperations extends AbstractMongoReposit
             StoredQuery<T, ?> storedQuery = operation.getStoredQuery();
             if (storedQuery != null) {
                 MongoStoredQuery<T, ?, MongoDatabase> mongoStoredQuery = getMongoStoredQuery(storedQuery);
-                MongoEntitiesOperation<T> op = createMongoDeleteOneInBulkOperation(ctx, mongoStoredQuery.getRuntimePersistentEntity(), Collections.singletonList(operation.getEntity()), mongoStoredQuery);
+                MongoEntitiesOperation<T> op = createMongoDeleteOneInBulkOperation(ctx, mongoStoredQuery.getPersistentEntity(), Collections.singletonList(operation.getEntity()), mongoStoredQuery);
                 op.delete();
                 return (int) op.modifiedCount;
             }
@@ -574,7 +574,7 @@ public final class DefaultMongoRepositoryOperations extends AbstractMongoReposit
             StoredQuery<T, ?> storedQuery = operation.getStoredQuery();
             if (storedQuery != null) {
                 MongoStoredQuery<T, ?, MongoDatabase> mongoStoredQuery = getMongoStoredQuery(storedQuery);
-                MongoEntitiesOperation<T> op = createMongoDeleteOneInBulkOperation(ctx, mongoStoredQuery.getRuntimePersistentEntity(), operation, mongoStoredQuery);
+                MongoEntitiesOperation<T> op = createMongoDeleteOneInBulkOperation(ctx, mongoStoredQuery.getPersistentEntity(), operation, mongoStoredQuery);
                 op.delete();
                 return Optional.of(op.modifiedCount);
             }
@@ -625,11 +625,11 @@ public final class DefaultMongoRepositoryOperations extends AbstractMongoReposit
     }
 
     private <E> MongoCollection<E> getCollection(MongoPreparedQuery<E, ?, MongoDatabase> preparedQuery) {
-        return getCollection(preparedQuery.getDatabase(), preparedQuery.getRuntimePersistentEntity(), preparedQuery.getRootEntity());
+        return getCollection(preparedQuery.getDatabase(), preparedQuery.getPersistentEntity(), preparedQuery.getRootEntity());
     }
 
     private <E> MongoCollection<E> getCollection(MongoStoredQuery<E, ?, MongoDatabase> storedQuery) {
-        return getCollection(storedQuery.getDatabase(), storedQuery.getRuntimePersistentEntity(), storedQuery.getRootEntity());
+        return getCollection(storedQuery.getDatabase(), storedQuery.getPersistentEntity(), storedQuery.getRootEntity());
     }
 
     private <K> K triggerPostLoad(AnnotationMetadata annotationMetadata, RuntimePersistentEntity<K> persistentEntity, K entity) {

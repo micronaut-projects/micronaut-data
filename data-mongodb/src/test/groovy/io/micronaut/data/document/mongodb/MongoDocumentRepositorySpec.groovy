@@ -34,6 +34,35 @@ class MongoDocumentRepositorySpec extends AbstractDocumentRepositorySpec impleme
 
     MongoClient mongoClient = context.getBean(MongoClient)
 
+    void "test IN queries2"() {
+        given:
+            setupBooks()
+        when:
+            def books1 = bookRepository.listByTitleIn(null as Collection)
+        then:
+            books1.size() == 0
+        when:
+            def books2 = bookRepository.listByTitleIn(["The Stand", "Along Came a Spider", "FFF"] as Collection)
+        then:
+            books2.size() == 2
+        when:
+            def books3 = bookRepository.listByTitleIn([] as Collection)
+        then:
+            books3.size() == 0
+        when:
+            def books4 = bookRepository.listByTitleIn(null as String[])
+        then:
+            books4.size() == 0
+        when:
+            def books5 = bookRepository.listByTitleIn(new String[] {"The Stand", "Along Came a Spider", "FFF"})
+        then:
+            books5.size() == 2
+        when:
+            def books6 = bookRepository.listByTitleIn(new String[0])
+        then:
+            books6.size() == 0
+    }
+
     void "test id mapping"() {
         given:
             savePersons(["Dennis", "Jeff", "James", "Dennis"])

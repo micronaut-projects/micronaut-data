@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.runtime.operations.internal.sql;
+package io.micronaut.data.runtime.operations.internal.query;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.convert.value.ConvertibleValues;
@@ -21,6 +21,7 @@ import io.micronaut.core.type.Argument;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.model.runtime.StoredQuery;
+import io.micronaut.data.runtime.operations.internal.sql.SqlPreparedQuery;
 import io.micronaut.data.runtime.query.internal.DelegateStoredQuery;
 
 import java.util.Collections;
@@ -35,7 +36,7 @@ import java.util.Map;
  * @since 3.5.0
  */
 @Internal
-final class DummyPreparedQuery<E, R> implements PreparedQuery<E, R>, DelegateStoredQuery<E, R> {
+public final class DummyPreparedQuery<E, R> implements PreparedQuery<E, R>, DelegateStoredQuery<E, R> {
 
     private final StoredQuery<E, R> storedQuery;
 

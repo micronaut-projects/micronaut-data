@@ -19,6 +19,7 @@ import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.jpa.operations.JpaRepositoryOperations;
+import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.model.runtime.StoredQuery;
 import io.micronaut.data.operations.HintsCapableRepository;
@@ -28,6 +29,8 @@ import io.micronaut.data.operations.reactive.BlockingExecutorReactorRepositoryOp
 import io.micronaut.data.operations.reactive.ReactorReactiveRepositoryOperations;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.operations.AsyncFromReactiveAsyncRepositoryOperation;
+import io.micronaut.data.runtime.query.PreparedQueryDecorator;
+import io.micronaut.data.runtime.query.StoredQueryDecorator;
 import jakarta.annotation.PreDestroy;
 import org.hibernate.SessionFactory;
 import reactor.core.publisher.Mono;
@@ -50,7 +53,7 @@ import java.util.function.Function;
  */
 @Internal
 final class DefaultHibernateReactiveSynchronousRepositoryOperations implements BlockingExecutorReactorRepositoryOperations,
-        JpaRepositoryOperations, AsyncCapableRepository, HintsCapableRepository, Closeable {
+        JpaRepositoryOperations, AsyncCapableRepository, HintsCapableRepository, Closeable, PreparedQueryDecorator, StoredQueryDecorator {
 
     private final ApplicationContext applicationContext;
     private final DefaultHibernateReactiveRepositoryOperations reactiveRepositoryOperations;
@@ -136,5 +139,15 @@ final class DefaultHibernateReactiveSynchronousRepositoryOperations implements B
 
     private <T> T notSupported() {
         throw new IllegalStateException("Method isn't supported for Hibernate Reactive");
+    }
+
+    @Override
+    public <E, R> PreparedQuery<E, R> decorate(PreparedQuery<E, R> preparedQuery) {
+        return reactiveRepositoryOperations.decorate(preparedQuery);
+    }
+
+    @Override
+    public <E, R> StoredQuery<E, R> decorate(StoredQuery<E, R> storedQuery) {
+        return reactiveRepositoryOperations.decorate(storedQuery);
     }
 }
