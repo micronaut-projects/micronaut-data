@@ -17,8 +17,8 @@ package io.micronaut.data.mongodb.operations;
 
 import io.micronaut.aop.InvocationContext;
 import io.micronaut.core.annotation.Experimental;
-import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.StoredQuery;
+import io.micronaut.data.runtime.operations.internal.query.PersistentEntityAwareQuery;
 
 /**
  * MongoDB's {@link StoredQuery}.
@@ -30,12 +30,7 @@ import io.micronaut.data.model.runtime.StoredQuery;
  * @since 3.3.
  */
 @Experimental
-public interface MongoStoredQuery<E, R, Dtb> extends StoredQuery<E, R> {
-
-    /**
-     * @return The persistent entity
-     */
-    RuntimePersistentEntity<E> getRuntimePersistentEntity();
+public interface MongoStoredQuery<E, R, Dtb> extends StoredQuery<E, R>, PersistentEntityAwareQuery<E> {
 
     /**
      * @return The associated databae
