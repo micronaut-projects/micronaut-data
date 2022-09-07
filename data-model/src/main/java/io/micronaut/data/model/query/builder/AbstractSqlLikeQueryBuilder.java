@@ -708,7 +708,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         }
         String tableAlias = propertyPath.getTableAlias();
         boolean escape = propertyPath.shouldEscape();
-        NamingStrategy namingStrategy = propertyPath.getNamingStrategy();
+        NamingStrategy namingStrategy = getNamingStrategy(propertyPath);
         boolean[] needsTrimming = {false};
         traversePersistentProperties(propertyPath.getAssociations(), propertyPath.getProperty(), (associations, property) -> {
             String columnName = namingStrategy.mappedName(associations, property);
@@ -728,6 +728,14 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         }
     }
 
+    protected NamingStrategy getNamingStrategy(QueryPropertyPath propertyPath) {
+        return propertyPath.getNamingStrategy();
+    }
+
+    protected NamingStrategy getNamingStrategy(PersistentEntity entity) {
+        return entity.getNamingStrategy();
+    }
+
     private void appendFunctionProjection(
         PersistentEntity entity,
         String functionName,
@@ -740,7 +748,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         }
         String columnName;
         if (computePropertyPaths()) {
-            columnName = entity.getNamingStrategy().mappedName(propertyPath.getAssociations(), propertyPath.getProperty());
+            columnName = getNamingStrategy(entity).mappedName(propertyPath.getAssociations(), propertyPath.getProperty());
             if (shouldEscape(entity)) {
                 columnName = quote(columnName);
             }
@@ -975,7 +983,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             }
 
             String currentAlias = propertyPath.getTableAlias();
-            NamingStrategy namingStrategy = propertyPath.getNamingStrategy();
+            NamingStrategy namingStrategy = getNamingStrategy(propertyPath);
             boolean shouldEscape = propertyPath.shouldEscape();
 
             boolean[] needsTrimming = {false};
@@ -1107,7 +1115,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                 needsTrimming[0] = true;
             }
         } else {
-            NamingStrategy namingStrategy = queryState.getEntity().getNamingStrategy();
+            NamingStrategy namingStrategy = getNamingStrategy(queryState.getEntity());
             for (Map.Entry<QueryPropertyPath, Object> entry : update) {
                 QueryPropertyPath propertyPath = entry.getKey();
                 if (entry.getValue() instanceof BindingParameter) {
@@ -1975,6 +1983,14 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
          */
         public NamingStrategy getNamingStrategy() {
             return propertyPath.getNamingStrategy();
+        }
+
+        /**
+         *
+         * @return finds naming strategy
+         */
+        public Optional<NamingStrategy> findNamingStrategy() {
+            return propertyPath.findNamingStrategy();
         }
 
         /**

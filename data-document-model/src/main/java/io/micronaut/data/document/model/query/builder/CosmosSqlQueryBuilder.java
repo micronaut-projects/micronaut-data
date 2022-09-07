@@ -54,4 +54,14 @@ public final class CosmosSqlQueryBuilder extends SqlQueryBuilder {
     protected void appendProjectionRowCount(StringBuilder queryString, String logicalName) {
         queryString.append(SELECT_COUNT);
     }
+
+    @Override
+    protected NamingStrategy getNamingStrategy(PersistentEntity entity) {
+        return entity.findNamingStrategy().orElseGet(NamingStrategies.Raw::new); // Make a constant?
+    }
+
+    @Override
+    protected NamingStrategy getNamingStrategy(QueryPropertyPath propertyPath) {
+        return propertyPath.findNamingStrategy().orElseGet(NamingStrategies.Raw::new);
+    }
 }
