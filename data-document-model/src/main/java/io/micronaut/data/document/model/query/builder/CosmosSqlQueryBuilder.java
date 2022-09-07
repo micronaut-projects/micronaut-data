@@ -18,6 +18,7 @@ package io.micronaut.data.document.model.query.builder;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Creator;
 import io.micronaut.data.model.PersistentEntity;
+import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.naming.NamingStrategies;
 import io.micronaut.data.model.naming.NamingStrategy;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
@@ -61,7 +62,7 @@ public final class CosmosSqlQueryBuilder extends SqlQueryBuilder {
     }
 
     @Override
-    protected NamingStrategy getNamingStrategy(QueryPropertyPath propertyPath) {
+    protected NamingStrategy getNamingStrategy(PersistentPropertyPath propertyPath) {
         return propertyPath.findNamingStrategy().orElseGet(NamingStrategies.Raw::new);
     }
 }
