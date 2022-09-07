@@ -11,6 +11,7 @@ micronautBom {
     } as Spec<String>)
 }
 
+
 tasks.named("checkVersionCatalogCompatibility") {
     onlyIf {
         JavaVersion.current().isJava11Compatible()
