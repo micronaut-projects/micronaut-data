@@ -148,12 +148,23 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
             storedQuery = buildDeleteAll(context, sqlQueryBuilder);
         } else if (type == Type.UPDATE_ALL) {
             storedQuery = buildUpdateAll(context, sqlQueryBuilder);
+        } else if (type == Type.EXISTS) {
+          storedQuery = buildExists(context, sqlQueryBuilder);
         } else {
             throw new IllegalStateException("Unknown criteria type: " + type);
         }
         storedQuery = storedQueryDecorator.decorate(context, storedQuery);
         PreparedQuery<E, QR> preparedQuery = (PreparedQuery<E, QR>) preparedQueryResolver.resolveQuery(context, storedQuery, pageable);
         return preparedQueryDecorator.decorate(preparedQuery);
+    }
+
+    private <E> StoredQuery<E, ?> buildExists(MethodInvocationContext<T, R> context, QueryBuilder sqlQueryBuilder) {
+        Class<E> rootEntity = getRequiredRootEntity(context);
+        CriteriaUpdateBuilder<E> criteriaUpdateBuilder = getCriteriaUpdateBuilder(context);
+        CriteriaUpdate<E> criteriaUpdate = criteriaUpdateBuilder.build(criteriaBuilder);
+        QueryResult queryResult = ((QueryResultPersistentEntityCriteriaQuery) criteriaUpdate).buildQuery(sqlQueryBuilder);
+        return QueryResultStoredQuery.single(DataMethod.OperationType.EXISTS, context.getName(),
+            context.getAnnotationMetadata(), queryResult, rootEntity);
     }
 
     private <E> StoredQuery<E, ?> buildUpdateAll(MethodInvocationContext<T, R> context, QueryBuilder sqlQueryBuilder) {
@@ -383,7 +394,7 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
     }
 
     protected enum Type {
-        COUNT, FIND_ONE, FIND_PAGE, FIND_ALL, DELETE_ALL, UPDATE_ALL
+        COUNT, FIND_ONE, FIND_PAGE, FIND_ALL, DELETE_ALL, UPDATE_ALL, EXISTS
     }
 
 }

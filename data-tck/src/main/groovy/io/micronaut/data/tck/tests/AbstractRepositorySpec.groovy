@@ -2135,6 +2135,23 @@ abstract class AbstractRepositorySpec extends Specification {
             def loadedFood = foodRepository.findOne(FoodRepository.Specifications.keyEquals(food.key)).get()
             loadedFood.key == food.key
             loadedFood.longName == food.longName
+        when:
+            def existsAllByPredicateSpec = personRepository.exists(nameEquals("Jeff"))
+        then:
+            existsAllByPredicateSpec
+        when:
+            def existsOneByPredicateSpec = personRepository.exists(nameEquals("NotJeff"))
+        then:
+            !existsOneByPredicateSpec
+        when:
+            def existsAllByQuerySpec = personRepository.exists(where(nameEquals("Jeff")));
+        then:
+            existsAllByQuerySpec
+        when:
+            def existsOneByQuerySpec = personRepository.exists(where(nameEquals("NotJeff")))
+        then:
+            !existsOneByQuerySpec
+
     }
 
     void "test join/fetch"() {
