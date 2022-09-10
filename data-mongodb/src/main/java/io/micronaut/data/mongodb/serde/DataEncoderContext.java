@@ -86,7 +86,7 @@ final class DataEncoderContext implements Serializer.EncoderContext {
 
     @Override
     public boolean hasView(Class<?>... views) {
-        return parent.hasView(views);
+        return true;
     }
 
     @Override

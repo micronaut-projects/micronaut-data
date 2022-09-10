@@ -210,4 +210,10 @@ final class DataDecoderContext implements Deserializer.DecoderContext {
     public void popManagedRef() {
         parent.popManagedRef();
     }
+
+    @Override
+    public boolean hasView(Class<?>... views) {
+        return true;
+    }
+
 }
