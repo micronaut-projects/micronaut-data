@@ -34,7 +34,7 @@ import java.util.regex.Matcher;
  * @since 3.8
  */
 @Internal
-public class ExistsSpecificationMethodMatcher extends AbstractSpecificationMethodMatcher {
+public final class ExistsSpecificationMethodMatcher extends AbstractSpecificationMethodMatcher {
 
     public ExistsSpecificationMethodMatcher() {
         super("exists");

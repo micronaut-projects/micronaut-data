@@ -130,6 +130,26 @@ public interface ReactiveStreamsJpaSpecificationExecutor<T> {
     Publisher<Long> count(@Nullable PredicateSpecification<T> spec);
 
     /**
+     * Returns whether an instance was found for the given {@link QuerySpecification}.
+     *
+     * @param spec The query specification
+     * @return the number of instances.
+     * @since 3.8
+     */
+    @NonNull
+    Publisher<Boolean> exists(@Nullable QuerySpecification<T> spec);
+
+    /**
+     * Returns whether an instance was found for the given {@link PredicateSpecification}.
+     *
+     * @param spec The query specification
+     * @return the number of instances.
+     * @since 3.8
+     */
+    @NonNull
+    Publisher<Boolean> exists(@Nullable PredicateSpecification<T> spec);
+
+    /**
      * Deletes all entities matching the given {@link DeleteSpecification}.
      *
      * @param spec The delete specification

@@ -160,11 +160,12 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
 
     private <E> StoredQuery<E, ?> buildExists(MethodInvocationContext<T, R> context, QueryBuilder sqlQueryBuilder) {
         Class<E> rootEntity = getRequiredRootEntity(context);
-        CriteriaUpdateBuilder<E> criteriaUpdateBuilder = getCriteriaUpdateBuilder(context);
-        CriteriaUpdate<E> criteriaUpdate = criteriaUpdateBuilder.build(criteriaBuilder);
-        QueryResult queryResult = ((QueryResultPersistentEntityCriteriaQuery) criteriaUpdate).buildQuery(sqlQueryBuilder);
-        return QueryResultStoredQuery.single(DataMethod.OperationType.EXISTS, context.getName(),
-            context.getAnnotationMetadata(), queryResult, rootEntity);
+        CriteriaQueryBuilder<E> builder = getCriteriaQueryBuilder(context);
+        CriteriaQuery<E> criteriaQuery = builder.build(criteriaBuilder);
+        QueryResult queryResult = ((QueryResultPersistentEntityCriteriaQuery) criteriaQuery).buildQuery(sqlQueryBuilder);
+
+        return QueryResultStoredQuery.single(DataMethod.OperationType.EXISTS, context.getName(), context.getAnnotationMetadata(),
+            queryResult, rootEntity);
     }
 
     private <E> StoredQuery<E, ?> buildUpdateAll(MethodInvocationContext<T, R> context, QueryBuilder sqlQueryBuilder) {

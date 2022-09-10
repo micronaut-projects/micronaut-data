@@ -515,6 +515,17 @@ abstract class AbstractAsyncRepositorySpec extends Specification {
         then:
             deleted == 1
             personRepository.count(nameEquals("Xyz")).get() == 0
+        when:
+            savePersons(["Jeff"])
+            def existsPredicateSpec = personRepository.exists(nameEquals("Jeff")).get()
+            def existsNotPredicateSpec = personRepository.exists(nameEquals("NotJeff")).get()
+            def existsQuerySpec = personRepository.exists(where(nameEquals("Jeff"))).get()
+            def existsNotQuerySpec = personRepository.exists(where(nameEquals("NotJeff"))).get()
+        then:
+            existsPredicateSpec
+            !existsNotPredicateSpec
+            existsQuerySpec
+            !existsNotQuerySpec
     }
 
     def setupPersonsForPageableTest() {
