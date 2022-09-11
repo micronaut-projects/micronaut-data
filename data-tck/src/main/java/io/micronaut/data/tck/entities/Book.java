@@ -48,7 +48,6 @@ public class Book {
     private int totalPages;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    // Should not affect query or column reads
     @MappedProperty(alias = "au")
     private Author author;
 

@@ -101,10 +101,10 @@ interface MyInterface2 extends CrudRepository<CustomBook, Long> {
             rawQuery == 'SELECT * FROM arrays_entity WHERE stringArray::varchar[] && ARRAY[?]'
     }
 
-    void "test to-one join on repository type that inherits from CrudRepository"() {
+    void "test join on repository type that inherits from CrudRepository"() {
         given:
         def repository = buildRepository('test.MyInterface', """
-import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.annotation.Id;import io.micronaut.data.annotation.Join;import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.tck.entities.Book;
 import io.micronaut.data.tck.entities.Author;
@@ -115,6 +115,9 @@ import io.micronaut.data.tck.entities.Author;
 interface MyInterface extends CrudRepository<Book, Long> {
 
     Author findAuthorById(@Id Long id);
+
+    @Join("author")
+    Book findBookById(@Id Long id);
 }
 """
         )
@@ -123,7 +126,14 @@ interface MyInterface extends CrudRepository<Book, Long> {
         String query = getQuery(repository.getRequiredMethod("findAuthorById", Long))
 
         then:
-        query == 'SELECT book_author_.`id`,book_author_.`name`,book_author_.`nick_name` FROM `book` book_ INNER JOIN `author` book_author_ ON book_.`author_id`=book_author_.`id` WHERE (book_.`id` = ?)'
+        query == 'SELECT au.`id`,au.`name`,au.`nick_name` FROM `book` book_ INNER JOIN `author` au ON book_.`author_id`=au.`id` WHERE (book_.`id` = ?)'
+
+        when:
+        String joinedQuery = getQuery(repository.getRequiredMethod("findBookById", Long))
+        println(joinedQuery)
+
+        then:
+        joinedQuery == 'SELECT book_.`id`,book_.`author_id`,book_.`genre_id`,book_.`title`,book_.`total_pages`,book_.`publisher_id`,book_.`last_updated`,au.`name` AS auname,au.`nick_name` AS aunick_name FROM `book` book_ INNER JOIN `author` au ON book_.`author_id`=au.`id` WHERE (book_.`id` = ?)'
 
     }
 
