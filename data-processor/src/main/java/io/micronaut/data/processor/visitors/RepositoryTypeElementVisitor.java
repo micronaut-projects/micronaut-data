@@ -28,13 +28,10 @@ import io.micronaut.core.order.OrderUtil;
 import io.micronaut.core.reflect.ClassUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
-import io.micronaut.data.annotation.Join;
-import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.annotation.RepositoryConfiguration;
 import io.micronaut.data.annotation.TypeRole;
-import io.micronaut.data.annotation.repeatable.JoinSpecifications;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.intercept.annotation.DataMethodQueryParameter;
 import io.micronaut.data.model.DataType;
@@ -253,28 +250,6 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                         parameters,
                         entityResolver
                 );
-
-                // choose right join alias
-                // ignore pageable methods because they don't support join aliases
-                if (element.hasAnnotation(JoinSpecifications.class) && !methodMatchContext.hasParameterInRole(TypeRole.PAGEABLE)) {
-                    List<AnnotationValue<Join>> annotationValuesByType = element.getAnnotationValuesByType(Join.class);
-                    element.removeAnnotation(Join.class);
-                    for (int i = 0; i < annotationValuesByType.size(); i++) {
-                        AnnotationValue<Join> join = annotationValuesByType.get(i);
-                        if (!join.stringValue("alias").isPresent()) {
-                            String joinValue = join.getRequiredValue(String.class);
-                            PersistentProperty property = entity.getPropertyByPath(joinValue).get();
-                            AnnotationValue<MappedProperty> mappedAnnotation = property.getAnnotation(MappedProperty.class);
-                            if (mappedAnnotation != null) {
-                                AnnotationValue<Join> newJoin = AnnotationValue.builder(join, join.getRetentionPolicy())
-                                    .member("alias", mappedAnnotation.stringValue("alias").orElse(null))
-                                    .build();
-                                annotationValuesByType.set(i, newJoin);
-                            }
-                        }
-                    }
-                    annotationValuesByType.forEach(element::annotate);
-                }
 
                 for (MethodMatcher finder : methodsMatchers) {
                     MethodMatcher.MethodMatch matcher = finder.match(methodMatchContext);

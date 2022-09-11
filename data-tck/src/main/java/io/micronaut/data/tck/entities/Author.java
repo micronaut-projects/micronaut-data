@@ -15,6 +15,8 @@
  */
 package io.micronaut.data.tck.entities;
 
+import io.micronaut.data.annotation.MappedProperty;
+
 import java.util.HashSet;
 import java.util.Set;
 
@@ -38,6 +40,10 @@ public class Author {
 
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "author")
     private Set<Book> books = new HashSet<>();
+
+    @MappedProperty(alias = "ob")
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "author")
+    private Set<Book> otherBooks = new HashSet<>();
 
     public Long getId() {
         return id;
@@ -79,5 +85,13 @@ public class Author {
                 ", nickName='" + nickName + '\'' +
                 ", books=" + books +
                 '}';
+    }
+
+    public Set<Book> getOtherBooks() {
+        return otherBooks;
+    }
+
+    public void setOtherBooks(Set<Book> otherBooks) {
+        this.otherBooks = otherBooks;
     }
 }

@@ -51,6 +51,9 @@ public class Book {
     @MappedProperty(alias = "au")
     private Author author;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    private Author coAuthor;
+
     @OneToOne
     private Genre genre;
 
@@ -179,5 +182,13 @@ public class Book {
 
     public void setLastUpdated(LocalDateTime lastUpdated) {
         this.lastUpdated = lastUpdated;
+    }
+
+    public Author getCoAuthor() {
+        return coAuthor;
+    }
+
+    public void setCoAuthor(Author coAuthor) {
+        this.coAuthor = coAuthor;
     }
 }
