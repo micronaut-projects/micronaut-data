@@ -9,7 +9,6 @@ dependencies {
 
     api projects.dataRuntime
 
-    implementation mn.micronaut.http
     implementation mn.micronaut.sql.jdbc
 
     compileOnly libs.micronaut.rxjava2
