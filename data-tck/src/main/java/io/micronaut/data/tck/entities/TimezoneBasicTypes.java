@@ -20,6 +20,7 @@ import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.MappedProperty;
 
+import java.sql.Time;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -50,6 +51,8 @@ public class TimezoneBasicTypes {
     private Timestamp timestamp = Timestamp.from(Instant.now().truncatedTo(ChronoUnit.MILLIS));
     @MappedProperty(definition = "timestamp with time zone")
     private Timestamp timestampWithTimezone = Timestamp.from(Instant.now().truncatedTo(ChronoUnit.MILLIS));
+
+    private Time time = Time.valueOf(LocalTime.now());
 
     public Long getMyId() {
         return myId;
@@ -145,5 +148,13 @@ public class TimezoneBasicTypes {
 
     public void setTimestampWithTimezone(Timestamp timestampWithTimezone) {
         this.timestampWithTimezone = timestampWithTimezone;
+    }
+
+    public Time getTime() {
+        return time;
+    }
+
+    public void setTime(Time time) {
+        this.time = time;
     }
 }

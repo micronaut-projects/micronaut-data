@@ -35,6 +35,7 @@ import java.math.BigInteger;
 import java.net.URI;
 import java.net.URL;
 import java.nio.charset.Charset;
+import java.sql.Time;
 import java.sql.Timestamp;
 import java.time.Year;
 import java.time.YearMonth;
@@ -433,6 +434,9 @@ public class TypeUtils {
                     return DataType.TIMESTAMP;
                 }
             } else if (type.isAssignable(Date.class)) {
+                if (type.isAssignable(Time.class)) {
+                    return DataType.TIME;
+                }
                 if (type.isAssignable(Timestamp.class)) {
                     return DataType.TIMESTAMP;
                 } else {

@@ -30,6 +30,7 @@ import java.sql.Blob;
 import java.sql.Clob;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Time;
 import java.util.Date;
 
 /**
@@ -104,6 +105,15 @@ public final class ColumnNameResultSetReader implements ResultReader<ResultSet, 
     public Date readTimestamp(ResultSet resultSet, String index) {
         try {
             return resultSet.getTimestamp(index);
+        } catch (SQLException e) {
+            throw exceptionForColumn(index, e);
+        }
+    }
+
+    @Override
+    public Time readTime(ResultSet resultSet, String index) {
+        try {
+            return resultSet.getTime(index);
         } catch (SQLException e) {
             throw exceptionForColumn(index, e);
         }

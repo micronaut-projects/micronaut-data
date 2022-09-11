@@ -83,6 +83,9 @@ public class JdbcQueryStatement implements QueryStatement<PreparedStatement, Int
                     case TIMESTAMP:
                         statement.setNull(index, Types.TIMESTAMP);
                         return this;
+                    case TIME:
+                        statement.setNull(index, Types.TIME);
+                        return this;
                     case OBJECT:
                         statement.setNull(index, Types.OTHER);
                         return this;
@@ -131,6 +134,20 @@ public class JdbcQueryStatement implements QueryStatement<PreparedStatement, Int
                 statement.setNull(name, Types.TIMESTAMP);
             } else {
                 statement.setTimestamp(name, Timestamp.from(instant));
+            }
+        } catch (SQLException e) {
+            throw newDataAccessException(e);
+        }
+        return this;
+    }
+
+    @Override
+    public QueryStatement<PreparedStatement, Integer> setTime(PreparedStatement statement, Integer name, Time instant) {
+        try {
+            if (instant == null) {
+                statement.setNull(name, Types.TIME);
+            } else {
+                statement.setTime(name, instant);
             }
         } catch (SQLException e) {
             throw newDataAccessException(e);

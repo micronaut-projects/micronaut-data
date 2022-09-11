@@ -30,6 +30,7 @@ import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
 import java.nio.ByteBuffer;
+import java.sql.Time;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -187,6 +188,11 @@ public class ColumnNameR2dbcResultReader implements ResultReader<Row, String> {
             return Date.from(localDateTime.atZone(ZoneId.systemDefault()).toInstant());
         }
         return null;
+    }
+
+    @Override
+    public Time readTime(Row resultSet, String index) {
+        return resultSet.get(index, Time.class);
     }
 
     @Nullable

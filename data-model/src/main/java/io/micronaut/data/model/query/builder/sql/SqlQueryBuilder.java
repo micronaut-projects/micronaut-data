@@ -1720,6 +1720,17 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                     }
                 }
                 break;
+            case TIME:
+                if (dialect == Dialect.ORACLE) {
+                    // OracleDB doesn't have a TIME type, so DATE is used
+                    column += " DATE ";
+                } else {
+                    column += " TIME(6) ";
+                }
+                if (required) {
+                    column += " NOT NULL ";
+                }
+                break;
             case DATE:
                 column += " DATE";
                 if (required) {

@@ -29,6 +29,7 @@ import java.sql.Blob;
 import java.sql.Clob;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.Date;
 
@@ -79,6 +80,15 @@ public final class ColumnIndexResultSetReader implements ResultReader<ResultSet,
     public Timestamp readTimestamp(ResultSet resultSet, Integer index) {
         try {
             return resultSet.getTimestamp(index);
+        } catch (SQLException e) {
+            throw exceptionForColumn(index, e);
+        }
+    }
+
+    @Override
+    public Time readTime(ResultSet resultSet, Integer index) {
+        try {
+            return resultSet.getTime(index);
         } catch (SQLException e) {
             throw exceptionForColumn(index, e);
         }

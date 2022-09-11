@@ -26,6 +26,7 @@ import io.micronaut.data.runtime.mapper.ResultReader;
 import io.r2dbc.spi.Row;
 
 import java.math.BigDecimal;
+import java.sql.Time;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -144,6 +145,11 @@ public class ColumnIndexR2dbcResultReader implements ResultReader<Row, Integer> 
             return Date.from(localDateTime.atZone(ZoneId.systemDefault()).toInstant());
         }
         return null;
+    }
+
+    @Override
+    public Time readTime(Row resultSet, Integer index) {
+        return resultSet.get(index, Time.class);
     }
 
     @Nullable
