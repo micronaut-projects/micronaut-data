@@ -161,6 +161,7 @@ public interface JpaSpecificationExecutor<T> {
      *
      * @param spec The query specification
      * @return the number of instances.
+     * @since 3.8
      */
     boolean exists(@Nullable QuerySpecification<T> spec);
 
@@ -169,6 +170,7 @@ public interface JpaSpecificationExecutor<T> {
      *
      * @param spec The query specification
      * @return the number of instances.
+     * @since 3.8
      */
     boolean exists(@Nullable PredicateSpecification<T> spec);
 
