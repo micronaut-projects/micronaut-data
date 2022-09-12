@@ -16,7 +16,6 @@
 package io.micronaut.data.tck.entities;
 
 import io.micronaut.data.annotation.DateUpdated;
-import io.micronaut.data.annotation.MappedProperty;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
@@ -48,11 +47,7 @@ public class Book {
     private int totalPages;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @MappedProperty(alias = "au")
     private Author author;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    private Author coAuthor;
 
     @OneToOne
     private Genre genre;
@@ -182,13 +177,5 @@ public class Book {
 
     public void setLastUpdated(LocalDateTime lastUpdated) {
         this.lastUpdated = lastUpdated;
-    }
-
-    public Author getCoAuthor() {
-        return coAuthor;
-    }
-
-    public void setCoAuthor(Author coAuthor) {
-        this.coAuthor = coAuthor;
     }
 }

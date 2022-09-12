@@ -104,30 +104,32 @@ interface MyInterface2 extends CrudRepository<CustomBook, Long> {
     void "test join on repository type that inherits from CrudRepository"() {
         given:
         def repository = buildRepository('test.MyInterface', """
-import io.micronaut.data.annotation.Id;import io.micronaut.data.annotation.Join;import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.Join;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
-import io.micronaut.data.tck.entities.Book;
-import io.micronaut.data.tck.entities.Author;
+import io.micronaut.data.processor.sql.AliasAuthor;
+import io.micronaut.data.processor.sql.AliasBook;
 
 @JdbcRepository(dialect= Dialect.MYSQL)
 @Join("author")
 @io.micronaut.context.annotation.Executable
-interface MyInterface extends CrudRepository<Book, Long> {
+interface MyInterface extends CrudRepository<AliasBook, Long> {
 
-    Author findAuthorById(@Id Long id);
+    AliasAuthor findAuthorById(@Id Long id);
 
     @Join("author")
-    Book findBookById(@Id Long id);
+    AliasBook findAliasBookById(@Id Long id);
 
     @Join("coAuthor")
-    Book findOneById(@Id Long id);
+    AliasBook findOneById(@Id Long id);
 
     @Join("coAuthor")
     @Join("coAuthor.otherBooks")
-    Book findOne(Long id);
+    AliasBook findOne(Long id);
 
     @Join("author.otherBooks")
-    Book findBook(Long id);
+    AliasBook findAliasBook(Long id);
 }
 """
         )
@@ -138,12 +140,12 @@ interface MyInterface extends CrudRepository<Book, Long> {
         query == sql
 
         where:
-        method           | sql
-        'findAuthorById' | 'SELECT au.`id`,au.`name`,au.`nick_name` FROM `book` book_ INNER JOIN `author` au ON book_.`author_id`=au.`id` WHERE (book_.`id` = ?)'
-        'findBookById'   | 'SELECT book_.`id`,book_.`author_id`,book_.`genre_id`,book_.`title`,book_.`total_pages`,book_.`publisher_id`,book_.`last_updated`,book_.`co_author_id`,au.`name` AS auname,au.`nick_name` AS aunick_name FROM `book` book_ INNER JOIN `author` au ON book_.`author_id`=au.`id` WHERE (book_.`id` = ?)'
-        'findOneById'    | 'SELECT book_.`id`,book_.`author_id`,book_.`genre_id`,book_.`title`,book_.`total_pages`,book_.`publisher_id`,book_.`last_updated`,book_.`co_author_id`,book_co_author_.`name` AS co_author_name,book_co_author_.`nick_name` AS co_author_nick_name,au.`name` AS auname,au.`nick_name` AS aunick_name FROM `book` book_ INNER JOIN `author` au ON book_.`author_id`=au.`id` INNER JOIN `author` book_co_author_ ON book_.`co_author_id`=book_co_author_.`id` WHERE (book_.`id` = ?)'
-        'findOne'        | 'SELECT book_.`id`,book_.`author_id`,book_.`genre_id`,book_.`title`,book_.`total_pages`,book_.`publisher_id`,book_.`last_updated`,book_.`co_author_id`,book_co_author_.`name` AS co_author_name,book_co_author_.`nick_name` AS co_author_nick_name,au.`name` AS auname,au.`nick_name` AS aunick_name,book_co_author_ob.`id` AS co_author_obid,book_co_author_ob.`author_id` AS co_author_obauthor_id,book_co_author_ob.`genre_id` AS co_author_obgenre_id,book_co_author_ob.`title` AS co_author_obtitle,book_co_author_ob.`total_pages` AS co_author_obtotal_pages,book_co_author_ob.`publisher_id` AS co_author_obpublisher_id,book_co_author_ob.`last_updated` AS co_author_oblast_updated,book_co_author_ob.`co_author_id` AS co_author_obco_author_id FROM `book` book_ INNER JOIN `author` au ON book_.`author_id`=au.`id` INNER JOIN `author` book_co_author_ ON book_.`co_author_id`=book_co_author_.`id` INNER JOIN `book` book_co_author_ob ON book_co_author_.`id`=book_co_author_ob.`author_id` WHERE (book_.`id` = ?)'
-        'findBook'       | 'SELECT book_.`id`,book_.`author_id`,book_.`genre_id`,book_.`title`,book_.`total_pages`,book_.`publisher_id`,book_.`last_updated`,book_.`co_author_id`,au_ob.`id` AS au_obid,au_ob.`author_id` AS au_obauthor_id,au_ob.`genre_id` AS au_obgenre_id,au_ob.`title` AS au_obtitle,au_ob.`total_pages` AS au_obtotal_pages,au_ob.`publisher_id` AS au_obpublisher_id,au_ob.`last_updated` AS au_oblast_updated,au_ob.`co_author_id` AS au_obco_author_id,au.`name` AS auname,au.`nick_name` AS aunick_name FROM `book` book_ INNER JOIN `author` au ON book_.`author_id`=au.`id` INNER JOIN `book` au_ob ON au.`id`=au_ob.`author_id` WHERE (book_.`id` = ?)'
+        method                  | sql
+        'findAuthorById'        | 'SELECT au.`id`,au.`name`,au.`nick_name` FROM `alias_book` alias_book_ INNER JOIN `alias_author` au ON alias_book_.`author_id`=au.`id` WHERE (alias_book_.`id` = ?)'
+        'findAliasBookById'     | 'SELECT alias_book_.`id`,alias_book_.`title`,alias_book_.`total_pages`,alias_book_.`last_updated`,alias_book_.`author_id`,alias_book_.`co_author_id`,au.`name` AS auname,au.`nick_name` AS aunick_name FROM `alias_book` alias_book_ INNER JOIN `alias_author` au ON alias_book_.`author_id`=au.`id` WHERE (alias_book_.`id` = ?)'
+        'findOneById'           | 'SELECT alias_book_.`id`,alias_book_.`title`,alias_book_.`total_pages`,alias_book_.`last_updated`,alias_book_.`author_id`,alias_book_.`co_author_id`,alias_book_co_author_.`name` AS co_author_name,alias_book_co_author_.`nick_name` AS co_author_nick_name,au.`name` AS auname,au.`nick_name` AS aunick_name FROM `alias_book` alias_book_ INNER JOIN `alias_author` au ON alias_book_.`author_id`=au.`id` INNER JOIN `alias_author` alias_book_co_author_ ON alias_book_.`co_author_id`=alias_book_co_author_.`id` WHERE (alias_book_.`id` = ?)'
+        'findOne'               | 'SELECT alias_book_.`id`,alias_book_.`title`,alias_book_.`total_pages`,alias_book_.`last_updated`,alias_book_.`author_id`,alias_book_.`co_author_id`,alias_book_co_author_.`name` AS co_author_name,alias_book_co_author_.`nick_name` AS co_author_nick_name,au.`name` AS auname,au.`nick_name` AS aunick_name,alias_book_co_author_ob.`id` AS co_author_obid,alias_book_co_author_ob.`title` AS co_author_obtitle,alias_book_co_author_ob.`total_pages` AS co_author_obtotal_pages,alias_book_co_author_ob.`last_updated` AS co_author_oblast_updated,alias_book_co_author_ob.`author_id` AS co_author_obauthor_id,alias_book_co_author_ob.`co_author_id` AS co_author_obco_author_id FROM `alias_book` alias_book_ INNER JOIN `alias_author` au ON alias_book_.`author_id`=au.`id` INNER JOIN `alias_author` alias_book_co_author_ ON alias_book_.`co_author_id`=alias_book_co_author_.`id` INNER JOIN `alias_book` alias_book_co_author_ob ON alias_book_co_author_.`id`=alias_book_co_author_ob.`author_id` WHERE (alias_book_.`id` = ?)'
+        'findAliasBook'         | 'SELECT alias_book_.`id`,alias_book_.`title`,alias_book_.`total_pages`,alias_book_.`last_updated`,alias_book_.`author_id`,alias_book_.`co_author_id`,au_ob.`id` AS au_obid,au_ob.`title` AS au_obtitle,au_ob.`total_pages` AS au_obtotal_pages,au_ob.`last_updated` AS au_oblast_updated,au_ob.`author_id` AS au_obauthor_id,au_ob.`co_author_id` AS au_obco_author_id,au.`name` AS auname,au.`nick_name` AS aunick_name FROM `alias_book` alias_book_ INNER JOIN `alias_author` au ON alias_book_.`author_id`=au.`id` INNER JOIN `alias_book` au_ob ON au.`id`=au_ob.`author_id` WHERE (alias_book_.`id` = ?)'
     }
 
     void "test join query on collection with custom ID name"() {

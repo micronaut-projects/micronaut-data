@@ -13,7 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.tck.entities;
+package io.micronaut.data.processor.sql;
+
+import io.micronaut.data.annotation.MappedProperty;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -26,7 +28,7 @@ import javax.persistence.Id;
 import javax.persistence.OneToMany;
 
 @Entity
-public class Author {
+public class AliasAuthor {
 
     @Id
     @GeneratedValue
@@ -37,7 +39,11 @@ public class Author {
     private String nickName;
 
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "author")
-    private Set<Book> books = new HashSet<>();
+    private Set<AliasBook> books = new HashSet<>();
+
+    @MappedProperty(alias = "ob")
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "author")
+    private Set<AliasBook> otherBooks = new HashSet<>();
 
     public Long getId() {
         return id;
@@ -55,14 +61,6 @@ public class Author {
         this.name = name;
     }
 
-    public Set<Book> getBooks() {
-        return books;
-    }
-
-    public void setBooks(Set<Book> books) {
-        this.books = books;
-    }
-
     public String getNickName() {
         return nickName;
     }
@@ -71,13 +69,29 @@ public class Author {
         this.nickName = nickName;
     }
 
+    public Set<AliasBook> getBooks() {
+        return books;
+    }
+
+    public void setBooks(Set<AliasBook> books) {
+        this.books = books;
+    }
+
     @Override
     public String toString() {
         return "Author{" +
-                "id=" + id +
-                ", name='" + name + '\'' +
-                ", nickName='" + nickName + '\'' +
-                ", books=" + books +
-                '}';
+            "id=" + id +
+            ", name='" + name + '\'' +
+            ", nickName='" + nickName + '\'' +
+            ", books=" + books +
+            '}';
+    }
+
+    public Set<AliasBook> getOtherBooks() {
+        return otherBooks;
+    }
+
+    public void setOtherBooks(Set<AliasBook> otherBooks) {
+        this.otherBooks = otherBooks;
     }
 }
