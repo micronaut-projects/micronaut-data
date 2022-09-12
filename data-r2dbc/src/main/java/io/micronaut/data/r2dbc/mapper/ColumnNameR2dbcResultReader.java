@@ -97,6 +97,8 @@ public class ColumnNameR2dbcResultReader implements ResultReader<Row, String> {
                 return readDynamic(resultSet, index, Instant.class);
             case DATE:
                 return readDynamic(resultSet, index, LocalDate.class);
+            case TIME:
+                return readDynamic(resultSet, index, Time.class);
             case CHARACTER:
                 return readDynamic(resultSet, index, Character.class);
             case FLOAT:
