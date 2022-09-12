@@ -372,6 +372,7 @@ final class DataConversionServiceFactory {
         conversionService.addConverter(LocalDateTime.class, LocalDate.class, LocalDateTime::toLocalDate);
         conversionService.addConverter(LocalDateTime.class, LocalTime.class, LocalDateTime::toLocalTime);
         conversionService.addConverter(LocalDateTime.class, ZonedDateTime.class, localDateTime -> localDateTime.atZone(ZoneId.systemDefault()));
+        conversionService.addConverter(LocalDateTime.class, Time.class, localDateTime -> Time.valueOf(localDateTime.toLocalTime()));
 
         // OffsetDateTime
         conversionService.addConverter(OffsetDateTime.class, Date.class, offsetDateTime -> Date.from(offsetDateTime.toInstant()));

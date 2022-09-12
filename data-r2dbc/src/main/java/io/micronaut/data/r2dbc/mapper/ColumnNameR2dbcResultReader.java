@@ -192,15 +192,6 @@ public class ColumnNameR2dbcResultReader implements ResultReader<Row, String> {
         return null;
     }
 
-    @Override
-    public Time readTime(Row resultSet, String index) {
-        Object time = resultSet.get(index);
-        if (time != null) {
-            return convertRequired(time, Time.class);
-        }
-        return null;
-    }
-
     @Nullable
     @Override
     public String readString(Row resultSet, String name) {
