@@ -761,10 +761,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                                                  Map<JoinPath, String> joinAliasOverride) {
         if (CollectionUtils.isNotEmpty(allPaths)) {
 
-            Collection<JoinPath> joinPaths = allPaths.stream().filter(jp -> {
-                Join.Type jt = jp.getJoinType();
-                return jt.name().contains("FETCH");
-            }).collect(Collectors.toList());
+            Collection<JoinPath> joinPaths = allPaths.stream().filter(jp -> jp.getJoinType().isFetch()).collect(Collectors.toList());
 
             if (CollectionUtils.isNotEmpty(joinPaths)) {
                 for (JoinPath joinPath : joinPaths) {

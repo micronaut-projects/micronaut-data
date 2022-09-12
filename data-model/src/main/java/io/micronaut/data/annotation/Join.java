@@ -56,6 +56,13 @@ public @interface Join {
         RIGHT_FETCH,
         FETCH,
         INNER,
-        OUTER
+        OUTER;
+
+        /**
+         * @return an indicator telling whether join type is fetching
+         */
+        public boolean isFetch() {
+            return this.name().contains("FETCH");
+        }
     }
 }
