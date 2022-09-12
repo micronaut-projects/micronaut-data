@@ -506,7 +506,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             String joinPathAlias = getPathOnlyAliasName(joinPath);
 
             // if "root association" has a declared alias, don't add entity alias as a prefix to match behavior of @Join(alias= "...")
-            if(joinPath.getAssociationPath()[0].hasDeclaredAliasName()) {
+            if (joinPath.getAssociationPath()[0].hasDeclaredAliasName()) {
                 return joinPathAlias;
             }
 
