@@ -24,7 +24,7 @@ public class BookSpecifications {
 
     public static PredicateSpecification<Book> hasChapter(String chapterTitle) {
         return (root, criteriaBuilder) -> {
-            PersistentEntityJoin<?, ?> join = ((PersistentEntityFrom) root).join("chapters");
+            PersistentEntityJoin<?, ?> join = ((PersistentEntityFrom<?, ?>) root).join("chapters");
             return criteriaBuilder.equal(join.get(TITLE_FIELD), chapterTitle);
         };
     }
