@@ -160,4 +160,9 @@ public abstract class BookRepository implements PageableRepository<Book, Long>, 
     public abstract List<Book> findAllByCriteria(PredicateSpecification<Book> spec);
 
     public abstract Book findByTitleOrAuthorAndId(String title, Author author, Long id);
+
+    public abstract List<Book> findAllByChaptersTitle(String chapterTitle);
+
+    @Join(value = "chapters", type = Join.Type.LEFT_FETCH)
+    public abstract List<Book> findAllByChaptersTitleAndTitle(String chapterTitle, String title);
 }

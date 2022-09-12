@@ -762,8 +762,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         if (CollectionUtils.isNotEmpty(allPaths)) {
 
             Collection<JoinPath> joinPaths = allPaths.stream().filter(jp -> {
-                Join.Type jt = jp.getJoinType();
-                return jt.name().contains("FETCH");
+                return jp.getJoinType().isFetch();
             }).collect(Collectors.toList());
 
             if (CollectionUtils.isNotEmpty(joinPaths)) {

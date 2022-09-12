@@ -70,6 +70,7 @@ import java.util.concurrent.TimeUnit
 import java.util.stream.Collectors
 
 import static io.micronaut.data.repository.jpa.criteria.QuerySpecification.where
+import static io.micronaut.data.tck.repositories.BookSpecifications.hasChapter
 import static io.micronaut.data.tck.repositories.BookSpecifications.titleEquals
 import static io.micronaut.data.tck.repositories.BookSpecifications.titleEqualsWithJoin
 import static io.micronaut.data.tck.repositories.PersonRepository.Specifications.idsIn
@@ -2132,6 +2133,14 @@ abstract class AbstractRepositorySpec extends Specification {
         def book = new Book()
         book.setTitle("1984")
         book.setGenre(genre)
+        def ch1 = new Chapter()
+        ch1.setTitle("Ch1")
+        ch1.setPages(10)
+        book.getChapters().add(ch1)
+        def ch2 = new Chapter()
+        ch2.setTitle("Ch2")
+        ch2.setPages(5)
+        book.getChapters().add(ch2)
         bookRepository.save(book)
 
         when:
@@ -2141,6 +2150,10 @@ abstract class AbstractRepositorySpec extends Specification {
         def bookLoadedUsingFindAllWithCriteriaApi = bookRepository.findAll(titleEquals(book.title)).get(0)
         def bookLoadedUsingFindAllByCriteriaWithoutAnnotationJoin = bookRepository.findAllByCriteria(titleEqualsWithJoin(book.title)).get(0)
         def bookLoadedUsingFindAllWithCriteriaApiAndJoins = bookRepository.findAll(titleEqualsWithJoin(book.title)).get(0)
+        def bookLoadedUsingJoinCriteriaByChapterTitle = bookRepository.findOne(hasChapter("Ch1"))
+        def bookNotLoadedUsingJoinCriteriaByChapterTitle = bookRepository.findOne(hasChapter("Ch32"))
+        def booksLoadedByChapterTitleQuery = bookRepository.findAllByChaptersTitle("Ch1")
+        def booksLoadedByChapterTitleAndBookTitleQuery = bookRepository.findAllByChaptersTitleAndTitle("Ch1", book.title)
 
         then:
         bookLoadedUsingFindAllByGenre.genre.genreName != null
@@ -2153,6 +2166,18 @@ abstract class AbstractRepositorySpec extends Specification {
         bookLoadedUsingFindAllByCriteriaWithoutAnnotationJoin.genre.genreName != null
         bookLoadedUsingFindAllWithCriteriaApiAndJoins != null
         bookLoadedUsingFindAllWithCriteriaApiAndJoins.genre.genreName != null
+        bookLoadedUsingJoinCriteriaByChapterTitle.present
+        bookLoadedUsingJoinCriteriaByChapterTitle.get().id == book.id
+        !bookNotLoadedUsingJoinCriteriaByChapterTitle.present
+        booksLoadedByChapterTitleQuery.size() > 0
+        booksLoadedByChapterTitleQuery[0].id == book.id
+        // Chapters not loaded
+        CollectionUtils.isEmpty(booksLoadedByChapterTitleQuery[0].chapters)
+        // Loaded book and also expected chapters to be loaded
+        booksLoadedByChapterTitleAndBookTitleQuery.size() > 0
+        booksLoadedByChapterTitleAndBookTitleQuery[0].id == book.id
+        // Chapters not loaded
+        !CollectionUtils.isEmpty(booksLoadedByChapterTitleAndBookTitleQuery[0].chapters)
     }
 
     void "test loading books vs page repository and joins"() {

@@ -1,6 +1,7 @@
 package io.micronaut.data.tck.repositories;
 
 import io.micronaut.data.model.jpa.criteria.PersistentEntityFrom;
+import io.micronaut.data.model.jpa.criteria.PersistentEntityJoin;
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification;
 import io.micronaut.data.tck.entities.Book;
 
@@ -16,6 +17,13 @@ public class BookSpecifications {
         return (root, criteriaBuilder) -> {
             ((PersistentEntityFrom) root).join("genre", io.micronaut.data.annotation.Join.Type.LEFT_FETCH);
             return criteriaBuilder.equal(root.get("title"), title);
+        };
+    }
+
+    public static PredicateSpecification<Book> hasChapter(String chapterTitle) {
+        return (root, criteriaBuilder) -> {
+            PersistentEntityJoin join = ((PersistentEntityFrom) root).join("chapters");
+            return criteriaBuilder.equal(join.get("title"), chapterTitle);
         };
     }
 
