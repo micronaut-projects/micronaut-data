@@ -26,7 +26,6 @@ import io.micronaut.data.runtime.mapper.ResultReader;
 import io.r2dbc.spi.Row;
 
 import java.math.BigDecimal;
-import java.sql.Time;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
