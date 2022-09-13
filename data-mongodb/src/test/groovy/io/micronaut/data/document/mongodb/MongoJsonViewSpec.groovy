@@ -28,12 +28,6 @@ class MongoJsonViewSpec extends Specification implements MongoTestPropertyProvid
     @Inject
     PlanetRepository planetRepository = applicationContext.getBean(PlanetRepository)
 
-    Map<String, String> getTestProperties() {
-        def properties = getProperties()
-        properties.put("micronaut.data.mongodb.ignore-json-views", true)
-        return properties
-    }
-
     @Property(name = "micronaut.data.mongodb.ignore-json-views", value = "true")
     void 'test-encode-with-json-view'() {
         given:
