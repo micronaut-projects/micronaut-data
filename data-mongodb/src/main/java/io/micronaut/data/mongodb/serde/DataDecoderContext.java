@@ -218,7 +218,7 @@ final class DataDecoderContext implements Deserializer.DecoderContext {
 
     @Override
     public boolean hasView(Class<?>... views) {
-        return this.mongoDataConfiguration.isIgnoreJsonViews();
+        return this.mongoDataConfiguration.isIgnoreJsonViews() || parent.hasView(views);
     }
 
 }
