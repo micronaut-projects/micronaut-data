@@ -28,6 +28,7 @@ import io.micronaut.data.document.serde.OneRelationDeserializer;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.convert.AttributeConverter;
+import io.micronaut.data.mongodb.conf.MongoDataConfiguration;
 import io.micronaut.serde.Decoder;
 import io.micronaut.serde.Deserializer;
 import io.micronaut.serde.bson.BsonReaderDecoder;
@@ -56,6 +57,7 @@ final class DataDecoderContext implements Deserializer.DecoderContext {
 
     private final Argument<ObjectId> OBJECT_ID = Argument.of(ObjectId.class);
 
+    private MongoDataConfiguration mongoDataConfiguration;
     private final AttributeConverterRegistry attributeConverterRegistry;
     private final Argument argument;
     private final RuntimePersistentEntity<Object> runtimePersistentEntity;
@@ -65,17 +67,20 @@ final class DataDecoderContext implements Deserializer.DecoderContext {
     /**
      * Default constructor.
      *
+     * @param mongoDataConfiguration     The Mongo data configuration
      * @param attributeConverterRegistry The attributeConverterRegistry
      * @param argument                   The argument
      * @param runtimePersistentEntity    The runtime persistent entity
      * @param parent                     The parent context
      * @param codecRegistry              The codec registry
      */
-    DataDecoderContext(AttributeConverterRegistry attributeConverterRegistry,
+    DataDecoderContext(MongoDataConfiguration mongoDataConfiguration,
+                       AttributeConverterRegistry attributeConverterRegistry,
                        Argument argument,
                        RuntimePersistentEntity<Object> runtimePersistentEntity,
                        Deserializer.DecoderContext parent,
                        CodecRegistry codecRegistry) {
+        this.mongoDataConfiguration = mongoDataConfiguration;
         this.attributeConverterRegistry = attributeConverterRegistry;
         this.argument = argument;
         this.runtimePersistentEntity = runtimePersistentEntity;
@@ -213,7 +218,7 @@ final class DataDecoderContext implements Deserializer.DecoderContext {
 
     @Override
     public boolean hasView(Class<?>... views) {
-        return true;
+        return this.mongoDataConfiguration.isIgnoreJsonViews();
     }
 
 }
