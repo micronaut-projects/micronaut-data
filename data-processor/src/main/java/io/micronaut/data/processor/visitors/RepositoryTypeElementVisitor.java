@@ -238,7 +238,6 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
 
             try {
                 SourcePersistentEntity entity = resolvePersistentEntity(element, parametersInRole);
-
                 MethodMatchContext methodMatchContext = new MethodMatchContext(
                         queryEncoder,
                         currentRepository,

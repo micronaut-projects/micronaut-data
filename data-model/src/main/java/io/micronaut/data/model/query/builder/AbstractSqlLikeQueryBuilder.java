@@ -504,6 +504,12 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
     public String getAliasName(JoinPath joinPath) {
         return joinPath.getAlias().orElseGet(() -> {
             String joinPathAlias = getPathOnlyAliasName(joinPath);
+
+            // if "root association" has a declared alias, don't add entity alias as a prefix to match behavior of @Join(alias= "...")
+            if (joinPath.getAssociationPath()[0].hasDeclaredAliasName()) {
+                return joinPathAlias;
+            }
+
             PersistentEntity owner = joinPath.getAssociationPath()[0].getOwner();
             String ownerAlias = getAliasName(owner);
             if (ownerAlias.endsWith("_") && joinPathAlias.startsWith("_")) {
@@ -523,8 +529,14 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
     @NonNull
     protected String getPathOnlyAliasName(JoinPath joinPath) {
         return joinPath.getAlias().orElseGet(() -> {
-            String p = joinPath.getPath().replace('.', '_');
-            return NamingStrategy.DEFAULT.mappedName(p) + "_";
+            String p = "";
+            for (Association ass : joinPath.getAssociationPath()) {
+                p += ass.getAliasName();
+                if (ass.hasDeclaredAliasName() && ass != joinPath.getAssociation()) {
+                    p += "_";
+                }
+            }
+            return p;
         });
     }
 
