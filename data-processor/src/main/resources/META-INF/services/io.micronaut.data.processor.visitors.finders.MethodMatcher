@@ -4,6 +4,7 @@ io.micronaut.data.processor.visitors.finders.spec.FindOneSpecificationMethodMatc
 io.micronaut.data.processor.visitors.finders.spec.CountSpecificationMethodMatcher
 io.micronaut.data.processor.visitors.finders.spec.DeleteAllSpecificationMethodMatcher
 io.micronaut.data.processor.visitors.finders.spec.UpdateAllSpecificationMethodMatcher
+io.micronaut.data.processor.visitors.finders.spec.ExistsSpecificationMethodMatcher
 io.micronaut.data.processor.visitors.finders.RawQueryMethodMatcher
 io.micronaut.data.processor.visitors.finders.ExistsMethodMatcher
 io.micronaut.data.processor.visitors.finders.DeleteMethodMatcher
