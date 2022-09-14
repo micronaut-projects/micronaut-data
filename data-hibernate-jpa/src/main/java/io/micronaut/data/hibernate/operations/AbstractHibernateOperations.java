@@ -22,7 +22,6 @@ import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.beans.BeanProperty;
-import io.micronaut.core.beans.BeanWrapper;
 import io.micronaut.core.beans.exceptions.IntrospectionException;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.reflect.ReflectionUtils;
@@ -32,7 +31,6 @@ import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.QueryHint;
 import io.micronaut.data.jpa.annotation.EntityGraph;
 import io.micronaut.data.model.Pageable;
-import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder;
 import io.micronaut.data.model.runtime.PagedQuery;
@@ -45,6 +43,12 @@ import io.micronaut.data.model.runtime.StoredQuery;
 import io.micronaut.data.operations.HintsCapableRepository;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.mapper.BeanIntrospectionMapper;
+import io.micronaut.data.runtime.operations.internal.query.BindableParametersPreparedQuery;
+import io.micronaut.data.runtime.operations.internal.query.BindableParametersStoredQuery;
+import io.micronaut.data.runtime.operations.internal.query.DefaultBindableParametersPreparedQuery;
+import io.micronaut.data.runtime.operations.internal.query.DefaultBindableParametersStoredQuery;
+import io.micronaut.data.runtime.query.PreparedQueryDecorator;
+import io.micronaut.data.runtime.query.StoredQueryDecorator;
 import org.hibernate.graph.AttributeNode;
 import org.hibernate.graph.Graph;
 import org.hibernate.graph.RootGraph;
@@ -82,7 +86,7 @@ import java.util.stream.Collectors;
  * @since 3.5.0
  */
 @Internal
-public abstract class AbstractHibernateOperations<S, Q> implements HintsCapableRepository {
+public abstract class AbstractHibernateOperations<S, Q> implements HintsCapableRepository, PreparedQueryDecorator, StoredQueryDecorator {
 
     private static final JpaQueryBuilder QUERY_BUILDER = new JpaQueryBuilder();
     private static final String ENTITY_GRAPH_FETCH = "javax.persistence.fetchgraph";
@@ -101,6 +105,17 @@ public abstract class AbstractHibernateOperations<S, Q> implements HintsCapableR
         this.runtimeEntityRegistry = runtimeEntityRegistry;
         // Backwards compatibility should be removed in the next version
         this.dataConversionService = dataConversionService == null ? ConversionService.SHARED : dataConversionService;
+    }
+
+    @Override
+    public <E, R> PreparedQuery<E, R> decorate(PreparedQuery<E, R> preparedQuery) {
+        return new DefaultBindableParametersPreparedQuery<>(preparedQuery);
+    }
+
+    @Override
+    public <E, R> StoredQuery<E, R> decorate(StoredQuery<E, R> storedQuery) {
+        RuntimePersistentEntity<E> runtimePersistentEntity = runtimeEntityRegistry.getEntity(storedQuery.getRootEntity());
+        return new DefaultBindableParametersStoredQuery<>(storedQuery, runtimePersistentEntity);
     }
 
     /**
@@ -299,13 +314,13 @@ public abstract class AbstractHibernateOperations<S, Q> implements HintsCapableR
             } else if (queryStr.toLowerCase(Locale.ENGLISH).startsWith("select new ")) {
                 Class<R> wrapperType = ReflectionUtils.getWrapperType(preparedQuery.getResultType());
                 Q query = createQuery(session, queryStr, wrapperType);
-                bindPreparedQuery(query, preparedQuery, session, queryStr);
+                bindPreparedQuery(query, preparedQuery, session);
                 resultCollector.collect(query);
                 return;
             } else {
                 q = createQuery(session, queryStr, Tuple.class);
             }
-            bindPreparedQuery(q, preparedQuery, session, queryStr);
+            bindPreparedQuery(q, preparedQuery, session);
             resultCollector.collectTuple(q, tuple -> {
                 Set<String> properties = tuple.getElements().stream().map(TupleElement::getAlias).collect(Collectors.toCollection(() -> new TreeSet<>(String.CASE_INSENSITIVE_ORDER)));
                 return (new BeanIntrospectionMapper<Tuple, R>() {
@@ -331,7 +346,7 @@ public abstract class AbstractHibernateOperations<S, Q> implements HintsCapableR
                 Class<T> rootEntity = preparedQuery.getRootEntity();
                 if (wrapperType != rootEntity) {
                     Q nativeQuery = createNativeQuery(session, queryStr, Tuple.class);
-                    bindPreparedQuery(nativeQuery, preparedQuery, session, queryStr);
+                    bindPreparedQuery(nativeQuery, preparedQuery, session);
                     resultCollector.collectTuple(nativeQuery, tuple -> {
                         Object o = tuple.get(0);
                         if (wrapperType.isInstance(o)) {
@@ -346,7 +361,7 @@ public abstract class AbstractHibernateOperations<S, Q> implements HintsCapableR
             } else {
                 q = createQuery(session, queryStr, wrapperType);
             }
-            bindPreparedQuery(q, preparedQuery, session, queryStr);
+            bindPreparedQuery(q, preparedQuery, session);
             resultCollector.collect(q);
         }
     }
@@ -356,70 +371,64 @@ public abstract class AbstractHibernateOperations<S, Q> implements HintsCapableR
      *
      * @param q             The query
      * @param preparedQuery THe prepared query
-     * @param query         The string query
      * @param <T>           The entity type
      * @param <R>           The result type
      */
-    protected <T, R> void bindParameters(Q q, @NonNull PreparedQuery<T, R> preparedQuery, String query) {
-        for (QueryParameterBinding queryParameterBinding : preparedQuery.getQueryBindings()) {
-            String parameterName = Objects.requireNonNull(queryParameterBinding.getName(), "Parameter name cannot be null!");
-            Object value;
-            if (queryParameterBinding.getParameterIndex() != -1) {
-                value = resolveParameterValue(queryParameterBinding, preparedQuery.getParameterArray());
-            } else if (queryParameterBinding.isAutoPopulated()) {
-                String[] propertyPath = queryParameterBinding.getRequiredPropertyPath();
-                RuntimePersistentEntity<T> persistentEntity = getEntity(preparedQuery.getRootEntity());
-                PersistentPropertyPath pp = persistentEntity.getPropertyPath(propertyPath);
-                if (pp == null) {
-                    throw new IllegalStateException("Cannot find auto populated property: " + String.join(".", propertyPath));
-                }
-                RuntimePersistentProperty<?> persistentProperty = (RuntimePersistentProperty) pp.getProperty();
-                Object previousValue = null;
-                QueryParameterBinding previousPopulatedValueParameter = queryParameterBinding.getPreviousPopulatedValueParameter();
-                if (previousPopulatedValueParameter != null) {
-                    if (previousPopulatedValueParameter.getParameterIndex() == -1) {
-                        throw new IllegalStateException("Previous value parameter cannot be bind!");
+    protected <T, R> void bindParameters(Q q, @NonNull PreparedQuery<T, R> preparedQuery) {
+        BindableParametersPreparedQuery<T, R> bindableParametersPreparedQuery = getBindableParametersPreparedQuery(preparedQuery);
+        bindableParametersPreparedQuery.bindParameters(new BindableParametersStoredQuery.Binder() {
+            @Override
+            public Object autoPopulateRuntimeProperty(RuntimePersistentProperty<?> persistentProperty, Object previousValue) {
+                return runtimeEntityRegistry.autoPopulateRuntimeProperty(persistentProperty, previousValue);
+            }
+
+            @Override
+            public Object convert(Object value, RuntimePersistentProperty<?> property) {
+                return value;
+            }
+
+            @Override
+            public Object convert(Class<?> converterClass, Object value, Argument<?> argument) {
+                return value;
+            }
+
+            @Override
+            public void bindOne(QueryParameterBinding binding, Object value) {
+                String parameterName = Objects.requireNonNull(binding.getName(), "Parameter name cannot be null!");
+                if (preparedQuery.isNative()) {
+                    int parameterIndex = binding.getParameterIndex();
+                    Argument<?> argument = preparedQuery.getArguments()[parameterIndex];
+                    Class<?> argumentType = argument.getType();
+                    if (Collection.class.isAssignableFrom(argumentType)) {
+                        setParameterList(q, parameterName, value == null ? Collections.emptyList() : (Collection<Object>) value, argument.getFirstTypeVariable().orElse(Argument.OBJECT_ARGUMENT));
+                    } else if (Object[].class.isAssignableFrom(argumentType)) {
+                        Collection<Object> coll;
+                        if (value == null) {
+                            coll = Collections.emptyList();
+                        } else if (value instanceof Collection) {
+                            coll = (Collection<Object>) value;
+                        } else {
+                            coll = Arrays.asList((Object[]) value);
+                        }
+                        setParameterList(q, parameterName, coll);
+                    } else {
+                        setParameter(q, parameterName, value, argument);
                     }
-                    previousValue = resolveParameterValue(previousPopulatedValueParameter, preparedQuery.getParameterArray());
-                }
-                value = runtimeEntityRegistry.autoPopulateRuntimeProperty(persistentProperty, previousValue);
-            } else {
-                throw new IllegalStateException("Invalid query [" + query + "]. Unable to establish parameter value for parameter at name: " + parameterName);
-            }
-            if (preparedQuery.isNative()) {
-                int parameterIndex = queryParameterBinding.getParameterIndex();
-                Argument<?> argument = preparedQuery.getArguments()[parameterIndex];
-                Class<?> argumentType = argument.getType();
-                if (Collection.class.isAssignableFrom(argumentType)) {
-                    setParameterList(q, parameterName, value == null ? Collections.emptyList() : (Collection<Object>) value, argument.getFirstTypeVariable().orElse(Argument.OBJECT_ARGUMENT));
-                } else if (Object[].class.isAssignableFrom(argumentType)) {
-                    setParameterList(q, parameterName, value == null ? Collections.emptyList() : Arrays.asList((Object[]) value));
                 } else {
-                    setParameter(q, parameterName, value, argument);
+                    setParameter(q, parameterName, value);
                 }
-            } else {
-                setParameter(q, parameterName, value);
             }
-        }
+
+            @Override
+            public void bindMany(QueryParameterBinding binding, Collection<Object> values) {
+                bindOne(binding, values);
+            }
+
+        });
     }
 
-    private Object resolveParameterValue(QueryParameterBinding queryParameterBinding, Object[] queryParameters) {
-        Object value;
-        value = queryParameters[queryParameterBinding.getParameterIndex()];
-        String[] parameterBindingPath = queryParameterBinding.getParameterBindingPath();
-        if (parameterBindingPath != null) {
-            for (String prop : parameterBindingPath) {
-                if (value == null) {
-                    break;
-                }
-                value = BeanWrapper.getWrapper(value).getRequiredProperty(prop, Argument.OBJECT_ARGUMENT);
-            }
-        }
-        return value;
-    }
-
-    private <T, R> void bindPreparedQuery(Q q, @NonNull PreparedQuery<T, R> preparedQuery, S currentSession, String query) {
-        bindParameters(q, preparedQuery, query);
+    private <T, R> void bindPreparedQuery(Q q, @NonNull PreparedQuery<T, R> preparedQuery, S currentSession) {
+        bindParameters(q, preparedQuery);
         bindPageable(q, preparedQuery.getPageable());
         bindQueryHints(q, preparedQuery, currentSession);
     }
@@ -569,6 +578,13 @@ public abstract class AbstractHibernateOperations<S, Q> implements HintsCapableR
             }
         }
         criteriaQuery.orderBy(orders);
+    }
+
+    private <E, R> BindableParametersPreparedQuery<E, R> getBindableParametersPreparedQuery(PreparedQuery<E, R> preparedQuery) {
+        if (preparedQuery instanceof BindableParametersPreparedQuery) {
+            return (BindableParametersPreparedQuery<E, R>) preparedQuery;
+        }
+        throw new IllegalStateException("Expected for prepared query to be of type: BindableParametersPreparedQuery");
     }
 
     /**

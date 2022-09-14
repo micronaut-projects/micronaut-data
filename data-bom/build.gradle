@@ -10,3 +10,10 @@ micronautBom {
         p.name.contains('benchmark') || p.name.contains('example') || p.name.endsWith('-tck')
     } as Spec<String>)
 }
+
+
+tasks.named("checkVersionCatalogCompatibility") {
+    onlyIf {
+        JavaVersion.current().isJava11Compatible()
+    }
+}

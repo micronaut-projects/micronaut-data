@@ -20,8 +20,8 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.runtime.PreparedQuery;
-import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.mongodb.operations.options.MongoFindOptions;
+import io.micronaut.data.runtime.operations.internal.query.DefaultBindableParametersPreparedQuery;
 import io.micronaut.data.runtime.query.internal.DefaultPreparedQuery;
 import io.micronaut.data.runtime.query.internal.DelegatePreparedQuery;
 import io.micronaut.data.runtime.query.internal.DelegateStoredQuery;
@@ -43,19 +43,15 @@ import java.util.stream.Collectors;
  * @since 3.3.
  */
 @Internal
-final class DefaultMongoPreparedQuery<E, R, Dtb> implements DelegatePreparedQuery<E, R>, MongoPreparedQuery<E, R, Dtb> {
+final class DefaultMongoPreparedQuery<E, R, Dtb> extends DefaultBindableParametersPreparedQuery<E, R> implements DelegatePreparedQuery<E, R>, MongoPreparedQuery<E, R, Dtb> {
 
-    private final DefaultPreparedQuery<E, R> preparedQuery;
+    private final DefaultPreparedQuery<E, R> defaultPreparedQuery;
     private final MongoStoredQuery<E, R, Dtb> mongoStoredQuery;
 
     public DefaultMongoPreparedQuery(PreparedQuery<E, R> preparedQuery) {
-        this.preparedQuery = (DefaultPreparedQuery<E, R>) preparedQuery;
+        super(preparedQuery);
+        this.defaultPreparedQuery = (DefaultPreparedQuery<E, R>) preparedQuery;
         this.mongoStoredQuery = (MongoStoredQuery<E, R, Dtb>) ((DelegateStoredQuery<Object, Object>) preparedQuery).getStoredQueryDelegate();
-    }
-
-    @Override
-    public RuntimePersistentEntity<E> getRuntimePersistentEntity() {
-        return mongoStoredQuery.getRuntimePersistentEntity();
     }
 
     @Override
@@ -70,7 +66,7 @@ final class DefaultMongoPreparedQuery<E, R, Dtb> implements DelegatePreparedQuer
 
     @Override
     public MongoAggregation getAggregation() {
-        MongoAggregation aggregation = mongoStoredQuery.getAggregation(preparedQuery.getContext());
+        MongoAggregation aggregation = mongoStoredQuery.getAggregation(defaultPreparedQuery.getContext());
         Pageable pageable = getPageable();
         if (pageable != Pageable.UNPAGED) {
             List<Bson> pipeline = new ArrayList<>(aggregation.getPipeline());
@@ -82,8 +78,8 @@ final class DefaultMongoPreparedQuery<E, R, Dtb> implements DelegatePreparedQuer
 
     @Override
     public MongoFind getFind() {
-        MongoFind find = mongoStoredQuery.getFind(preparedQuery.getContext());
-        Pageable pageable = preparedQuery.getPageable();
+        MongoFind find = mongoStoredQuery.getFind(defaultPreparedQuery.getContext());
+        Pageable pageable = defaultPreparedQuery.getPageable();
         if (pageable != Pageable.UNPAGED) {
             MongoFindOptions findOptions = find.getOptions();
             MongoFindOptions options = findOptions == null ? new MongoFindOptions() : new MongoFindOptions(findOptions);
@@ -91,7 +87,7 @@ final class DefaultMongoPreparedQuery<E, R, Dtb> implements DelegatePreparedQuer
             Sort pageableSort = pageable.getSort();
             if (pageableSort.isSorted()) {
                 Bson sort = pageableSort.getOrderBy().stream().map(order -> order.isAscending() ? Sorts.ascending(order.getProperty()) : Sorts.descending(order.getProperty()))
-                        .collect(Collectors.collectingAndThen(Collectors.toList(), Sorts::orderBy));
+                    .collect(Collectors.collectingAndThen(Collectors.toList(), Sorts::orderBy));
                 options.sort(sort);
             }
             return new MongoFind(options);
@@ -101,17 +97,17 @@ final class DefaultMongoPreparedQuery<E, R, Dtb> implements DelegatePreparedQuer
 
     @Override
     public MongoUpdate getUpdateMany() {
-        return mongoStoredQuery.getUpdateMany(preparedQuery.getContext());
+        return mongoStoredQuery.getUpdateMany(defaultPreparedQuery.getContext());
     }
 
     @Override
     public MongoDelete getDeleteMany() {
-        return mongoStoredQuery.getDeleteMany(preparedQuery.getContext());
+        return mongoStoredQuery.getDeleteMany(defaultPreparedQuery.getContext());
     }
 
     @Override
     public PreparedQuery<E, R> getPreparedQueryDelegate() {
-        return preparedQuery;
+        return defaultPreparedQuery;
     }
 
     private int applyPageable(Pageable pageable, List<Bson> pipeline) {

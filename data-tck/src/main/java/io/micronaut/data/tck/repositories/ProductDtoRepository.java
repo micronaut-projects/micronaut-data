@@ -26,8 +26,8 @@ import java.util.Optional;
 public interface ProductDtoRepository extends GenericRepository<Product, Long> {
 
     @Query("select p.id, p.name, p.price, p.loooooooooooooooooooooooooooooooooooooooooooooooooooooooong_name AS long_name, " +
-        "p.date_created, p.last_updated from product p where p.name = :name")
+        "p.date_created, p.last_updated from product p where p.name = :name order by p.name")
     Optional<ProductDto> findByNameWithQuery(String name);
 
-    List<ProductDto> findByNameLike(String name);
+    List<ProductDto> findByNameLikeOrderByName(String name);
 }

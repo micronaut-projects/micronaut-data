@@ -245,6 +245,13 @@ public class TypeUtils {
                 (type.isAssignable(Boolean.class) || (type.isPrimitive() && type.getName().equals("boolean")));
     }
 
+    public static boolean isValidExistsReturnType(MatchContext context) {
+        return (doesReturnBoolean(context.getMethodElement()) ||
+            (isReactiveOrFuture(context.getReturnType()) && isBoolean(
+                context.getReturnType().getFirstTypeArgument().orElse(null)
+            )));
+    }
+
     /**
      * Retruns true if no type argument is present, a void argument is present or a boolean argument is present.
      * @param type The type

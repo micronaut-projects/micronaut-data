@@ -28,6 +28,7 @@ import io.micronaut.data.document.serde.OneRelationSerializer;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
+import io.micronaut.data.mongodb.conf.MongoDataConfiguration;
 import io.micronaut.data.mongodb.operations.MongoUtils;
 import io.micronaut.serde.Deserializer;
 import io.micronaut.serde.Encoder;
@@ -59,33 +60,38 @@ final class DataSerdeRegistry implements SerdeRegistry {
     private final RuntimeEntityRegistry runtimeEntityRegistry;
     private final AttributeConverterRegistry attributeConverterRegistry;
 
+    private final MongoDataConfiguration mongoDataConfiguration;
+
     /**
      * Default constructor.
      *
      * @param defaultSerdeRegistry       The DefaultSerdeRegistry
      * @param runtimeEntityRegistry      The runtimeEntityRegistry
      * @param attributeConverterRegistry The attributeConverterRegistry
+     * @param mongoDataConfiguration     The Mongo configuration
      */
     public DataSerdeRegistry(DefaultSerdeRegistry defaultSerdeRegistry,
                              RuntimeEntityRegistry runtimeEntityRegistry,
-                             AttributeConverterRegistry attributeConverterRegistry) {
+                             AttributeConverterRegistry attributeConverterRegistry,
+                             MongoDataConfiguration mongoDataConfiguration) {
         this.defaultSerdeRegistry = defaultSerdeRegistry;
         this.runtimeEntityRegistry = runtimeEntityRegistry;
         this.attributeConverterRegistry = attributeConverterRegistry;
+        this.mongoDataConfiguration = mongoDataConfiguration;
     }
 
     public Serializer.EncoderContext newEncoderContext(Class<?> view,
                                                        Argument argument,
                                                        RuntimePersistentEntity<?> runtimePersistentEntity,
                                                        CodecRegistry codecRegistry) {
-        return new DataEncoderContext(attributeConverterRegistry, argument, (RuntimePersistentEntity<Object>) runtimePersistentEntity, newEncoderContext(view), codecRegistry);
+        return new DataEncoderContext(mongoDataConfiguration, attributeConverterRegistry, argument, (RuntimePersistentEntity<Object>) runtimePersistentEntity, newEncoderContext(view), codecRegistry);
     }
 
     public Deserializer.DecoderContext newDecoderContext(Class<?> view,
                                                          Argument argument,
                                                          RuntimePersistentEntity<?> runtimePersistentEntity,
                                                          CodecRegistry codecRegistry) {
-        return new DataDecoderContext(attributeConverterRegistry, argument, (RuntimePersistentEntity<Object>) runtimePersistentEntity, newDecoderContext(view), codecRegistry);
+        return new DataDecoderContext(mongoDataConfiguration, attributeConverterRegistry, argument, (RuntimePersistentEntity<Object>) runtimePersistentEntity, newDecoderContext(view), codecRegistry);
     }
 
     @Override

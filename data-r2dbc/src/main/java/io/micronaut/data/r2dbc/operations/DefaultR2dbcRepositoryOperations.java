@@ -44,6 +44,7 @@ import io.micronaut.data.model.runtime.InsertBatchOperation;
 import io.micronaut.data.model.runtime.InsertOperation;
 import io.micronaut.data.model.runtime.PagedQuery;
 import io.micronaut.data.model.runtime.PreparedQuery;
+import io.micronaut.data.model.runtime.QueryParameterBinding;
 import io.micronaut.data.model.runtime.RuntimeAssociation;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
@@ -70,6 +71,7 @@ import io.micronaut.data.runtime.operations.internal.AbstractReactiveEntitiesOpe
 import io.micronaut.data.runtime.operations.internal.AbstractReactiveEntityOperations;
 import io.micronaut.data.runtime.operations.internal.OperationContext;
 import io.micronaut.data.runtime.operations.internal.ReactiveCascadeOperations;
+import io.micronaut.data.runtime.operations.internal.query.BindableParametersStoredQuery;
 import io.micronaut.data.runtime.operations.internal.sql.AbstractSqlRepositoryOperations;
 import io.micronaut.data.runtime.operations.internal.sql.SqlPreparedQuery;
 import io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery;
@@ -102,6 +104,7 @@ import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
 import java.io.Serializable;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
@@ -1042,7 +1045,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
 
     }
 
-    private final class R2dbcParameterBinder implements SqlStoredQuery.Binder {
+    private final class R2dbcParameterBinder implements BindableParametersStoredQuery.Binder {
 
         private final Connection connection;
         private final Statement ps;
@@ -1098,9 +1101,17 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         }
 
         @Override
-        public void bind(DataType dataType, Object value) {
-            setStatementParameter(ps, index, dataType, value, dialect);
+        public void bindOne(QueryParameterBinding binding, Object value) {
+            setStatementParameter(ps, index, binding.getDataType(), value, dialect);
             index++;
+        }
+
+        @Override
+        public void bindMany(QueryParameterBinding binding, Collection<Object> values) {
+            for (Object value : values) {
+                bindOne(binding, value);
+            }
+
         }
 
         @Override

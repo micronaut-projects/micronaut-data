@@ -438,5 +438,25 @@
     "type": "io.micronaut.data.model.query.builder.sql.SqlQueryBuilder",
     "member": "Class io.micronaut.data.model.query.builder.sql.SqlQueryBuilder",
     "reason": "Internal"
+  },
+  {
+    "type": "io.micronaut.data.mongodb.operations.MongoPreparedQuery",
+    "member": "Class io.micronaut.data.mongodb.operations.MongoPreparedQuery",
+    "reason": "Experimental"
+  },
+  {
+    "type": "io.micronaut.data.mongodb.operations.MongoPreparedQuery",
+    "member": "Method io.micronaut.data.mongodb.operations.MongoPreparedQuery.getRuntimePersistentEntity()",
+    "reason": "Experimental"
+  },
+  {
+    "type": "io.micronaut.data.mongodb.operations.MongoStoredQuery",
+    "member": "Class io.micronaut.data.mongodb.operations.MongoStoredQuery",
+    "reason": "Experimental"
+  },
+  {
+    "type": "io.micronaut.data.mongodb.operations.MongoStoredQuery",
+    "member": "Method io.micronaut.data.mongodb.operations.MongoStoredQuery.getRuntimePersistentEntity()",
+    "reason": "Experimental"
   }
 ]

@@ -77,6 +77,7 @@ import io.micronaut.data.runtime.operations.internal.AbstractSyncEntitiesOperati
 import io.micronaut.data.runtime.operations.internal.AbstractSyncEntityOperations;
 import io.micronaut.data.runtime.operations.internal.OperationContext;
 import io.micronaut.data.runtime.operations.internal.SyncCascadeOperations;
+import io.micronaut.data.runtime.operations.internal.query.BindableParametersStoredQuery;
 import io.micronaut.data.runtime.operations.internal.sql.AbstractSqlRepositoryOperations;
 import io.micronaut.data.runtime.operations.internal.sql.SqlPreparedQuery;
 import io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery;
@@ -99,6 +100,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -885,7 +887,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         return isSupportsBatchInsert(persistentEntity, jdbcOperationContext.dialect);
     }
 
-    private final class JdbcParameterBinder implements SqlStoredQuery.Binder {
+    private final class JdbcParameterBinder implements BindableParametersStoredQuery.Binder {
 
         private final Connection connection;
         private final PreparedStatement ps;
@@ -935,9 +937,16 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         }
 
         @Override
-        public void bind(DataType dataType, Object value) {
-            setStatementParameter(ps, index, dataType, value, dialect);
+        public void bindOne(QueryParameterBinding binding, Object value) {
+            setStatementParameter(ps, index, binding.getDataType(), value, dialect);
             index++;
+        }
+
+        @Override
+        public void bindMany(QueryParameterBinding binding, Collection<Object> values) {
+            for (Object value : values) {
+                bindOne(binding, value);
+            }
         }
 
         @Override
