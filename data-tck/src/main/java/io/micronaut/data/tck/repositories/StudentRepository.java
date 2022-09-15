@@ -17,9 +17,12 @@ package io.micronaut.data.tck.repositories;
 
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.Join;
 import io.micronaut.data.annotation.Version;
 import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.data.tck.entities.Student;
+
+import java.util.Optional;
 
 public interface StudentRepository extends CrudRepository<Student, Long> {
 
@@ -31,4 +34,6 @@ public interface StudentRepository extends CrudRepository<Student, Long> {
 
     void deleteByIdAndVersion(@Id Long id, @Version Long version);
 
+    @Join(value = "books", type = Join.Type.FETCH)
+    Optional<Student> findByName(String name);
 }

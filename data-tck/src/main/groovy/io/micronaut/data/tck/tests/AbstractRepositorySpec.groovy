@@ -2274,6 +2274,30 @@ abstract class AbstractRepositorySpec extends Specification {
         cleanupBooks()
     }
 
+    void "test ManyToMany join table with mappedBy"() {
+        given:
+        def student = new Student("Peter")
+        studentRepository.save(student)
+        def book1 = new Book()
+        book1.title = "Book1"
+        book1.getStudents().add(student)
+        def book2 = new Book()
+        book2.title = "Book2"
+        book2.getStudents().add(student)
+        bookRepository.save(book1)
+        bookRepository.save(book2)
+        when:
+        def loadedStudent = studentRepository.findByName(student.name)
+        then:
+        loadedStudent.present
+        loadedStudent.get().id == student.id
+        loadedStudent.get().getBooks().size() == 2
+        cleanup:
+        studentRepository.delete(student)
+        bookRepository.delete(book1)
+        bookRepository.delete(book2)
+    }
+
     private GregorianCalendar getYearMonthDay(Date dateCreated) {
         def cal = dateCreated.toCalendar()
         def localDate = LocalDate.of(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH) + 1, cal.get(Calendar.DAY_OF_MONTH))
