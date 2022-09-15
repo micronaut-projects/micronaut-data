@@ -282,7 +282,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
             String columns = Stream.concat(leftJoinColumns.stream(), rightJoinColumns.stream())
                     .map(columnName -> escape ? quote(columnName) : columnName)
                     .collect(Collectors.joining(","));
-            String placeholders = IntStream.range(0, leftJoinColumns.size() + rightJoinColumns.size()).mapToObj(i -> "?").collect(Collectors.joining(","));
+            String placeholders = IntStream.range(0, leftJoinColumns.size() + rightJoinColumns.size()).mapToObj(i -> formatParameter(i + 1).toString()).collect(Collectors.joining(","));
             return INSERT_INTO + quote(joinTableName) + " (" + columns + ") VALUES (" + placeholders + ")";
         }
     }

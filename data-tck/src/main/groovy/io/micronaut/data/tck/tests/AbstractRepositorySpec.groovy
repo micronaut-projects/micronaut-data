@@ -2277,7 +2277,6 @@ abstract class AbstractRepositorySpec extends Specification {
     void "test ManyToMany join table with mappedBy"() {
         given:
         def student = new Student("Peter")
-        studentRepository.save(student)
         def book1 = new Book()
         book1.title = "Book1"
         book1.getStudents().add(student)
@@ -2287,11 +2286,20 @@ abstract class AbstractRepositorySpec extends Specification {
         bookRepository.save(book1)
         bookRepository.save(book2)
         when:
-        def loadedStudent = studentRepository.findByName(student.name)
+        def loadedStudent = studentRepository.findByName(student.name).get()
+        def loadedBook1 = bookRepository.findById(book1.id).get()
+        def loadedBook2 = bookRepository.findById(book2.id).get()
         then:
-        loadedStudent.present
-        loadedStudent.get().id == student.id
-        loadedStudent.get().getBooks().size() == 2
+        loadedStudent
+        loadedStudent.id == student.id
+        loadedStudent.books.size() == 2
+        loadedStudent.name == student.name
+        loadedBook1
+        loadedBook1.title == book1.title
+        loadedBook1.id == book1.id
+        loadedBook2
+        loadedBook2.title == book2.title
+        loadedBook2.id == book2.id
         cleanup:
         studentRepository.delete(student)
         bookRepository.delete(book1)
