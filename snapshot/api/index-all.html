@@ -8138,6 +8138,8 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 </dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/transaction/jdbc/JdbcTransactionObjectSupport.html#hasConnectionHolder()">hasConnectionHolder()</a></span> - Method in class io.micronaut.transaction.jdbc.<a href="io/micronaut/transaction/jdbc/JdbcTransactionObjectSupport.html" title="class in io.micronaut.transaction.jdbc">JdbcTransactionObjectSupport</a></dt>
 <dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/Association.html#hasDeclaredAliasName()">hasDeclaredAliasName()</a></span> - Method in interface io.micronaut.data.model.<a href="io/micronaut/data/model/Association.html" title="interface in io.micronaut.data.model">Association</a></dt>
+<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/processor/visitors/AnnotationMetadataHierarchy.html#hasDeclaredAnnotation(java.lang.String)">hasDeclaredAnnotation(String)</a></span> - Method in class io.micronaut.data.processor.visitors.<a href="io/micronaut/data/processor/visitors/AnnotationMetadataHierarchy.html" title="class in io.micronaut.data.processor.visitors">AnnotationMetadataHierarchy</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/processor/visitors/AnnotationMetadataHierarchy.html#hasDeclaredStereotype(java.lang.String)">hasDeclaredStereotype(String)</a></span> - Method in class io.micronaut.data.processor.visitors.<a href="io/micronaut/data/processor/visitors/AnnotationMetadataHierarchy.html" title="class in io.micronaut.data.processor.visitors">AnnotationMetadataHierarchy</a></dt>
@@ -14274,6 +14276,14 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <dd>
 <div class="block">Read a string value for the given name.</div>
 </dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/jdbc/mapper/ColumnIndexResultSetReader.html#readTime(java.sql.ResultSet,java.lang.Integer)">readTime(ResultSet, Integer)</a></span> - Method in class io.micronaut.data.jdbc.mapper.<a href="io/micronaut/data/jdbc/mapper/ColumnIndexResultSetReader.html" title="class in io.micronaut.data.jdbc.mapper">ColumnIndexResultSetReader</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/jdbc/mapper/ColumnNameResultSetReader.html#readTime(java.sql.ResultSet,java.lang.String)">readTime(ResultSet, String)</a></span> - Method in class io.micronaut.data.jdbc.mapper.<a href="io/micronaut/data/jdbc/mapper/ColumnNameResultSetReader.html" title="class in io.micronaut.data.jdbc.mapper">ColumnNameResultSetReader</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/mapper/ResultReader.html#readTime(RS,IDX)">readTime(RS, IDX)</a></span> - Method in interface io.micronaut.data.runtime.mapper.<a href="io/micronaut/data/runtime/mapper/ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a></dt>
+<dd>
+<div class="block">Read a time value for the given index.</div>
+</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/r2dbc/mapper/ColumnIndexR2dbcResultReader.html#readTimestamp(io.r2dbc.spi.Row,java.lang.Integer)">readTimestamp(Row, Integer)</a></span> - Method in class io.micronaut.data.r2dbc.mapper.<a href="io/micronaut/data/r2dbc/mapper/ColumnIndexR2dbcResultReader.html" title="class in io.micronaut.data.r2dbc.mapper">ColumnIndexR2dbcResultReader</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/r2dbc/mapper/ColumnNameR2dbcResultReader.html#readTimestamp(io.r2dbc.spi.Row,java.lang.String)">readTimestamp(Row, String)</a></span> - Method in class io.micronaut.data.r2dbc.mapper.<a href="io/micronaut/data/r2dbc/mapper/ColumnNameR2dbcResultReader.html" title="class in io.micronaut.data.r2dbc.mapper">ColumnNameR2dbcResultReader</a></dt>
@@ -15615,6 +15625,14 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <dd>
 <div class="block">Mark the resource as synchronized with a transaction.</div>
 </dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/r2dbc/mapper/R2dbcQueryStatement.html#setTime(io.r2dbc.spi.Statement,java.lang.Integer,java.sql.Time)">setTime(Statement, Integer, Time)</a></span> - Method in class io.micronaut.data.r2dbc.mapper.<a href="io/micronaut/data/r2dbc/mapper/R2dbcQueryStatement.html" title="class in io.micronaut.data.r2dbc.mapper">R2dbcQueryStatement</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/jdbc/mapper/JdbcQueryStatement.html#setTime(java.sql.PreparedStatement,java.lang.Integer,java.sql.Time)">setTime(PreparedStatement, Integer, Time)</a></span> - Method in class io.micronaut.data.jdbc.mapper.<a href="io/micronaut/data/jdbc/mapper/JdbcQueryStatement.html" title="class in io.micronaut.data.jdbc.mapper">JdbcQueryStatement</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/mapper/QueryStatement.html#setTime(PS,IDX,java.sql.Time)">setTime(PS, IDX, Time)</a></span> - Method in interface io.micronaut.data.runtime.mapper.<a href="io/micronaut/data/runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a></dt>
+<dd>
+<div class="block">Write an instant value for the given name.</div>
+</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/transaction/support/DefaultTransactionDefinition.html#setTimeout(java.time.Duration)">setTimeout(Duration)</a></span> - Method in class io.micronaut.transaction.support.<a href="io/micronaut/transaction/support/DefaultTransactionDefinition.html" title="class in io.micronaut.transaction.support">DefaultTransactionDefinition</a></dt>
 <dd>
 <div class="block">Set the timeout to apply, as number of seconds.</div>
@@ -16450,6 +16468,10 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/processor/mappers/jpa/jx/TableAnnotationMapper.html#%3Cinit%3E()">TableAnnotationMapper()</a></span> - Constructor for class io.micronaut.data.processor.mappers.jpa.jx.<a href="io/micronaut/data/processor/mappers/jpa/jx/TableAnnotationMapper.html" title="class in io.micronaut.data.processor.mappers.jpa.jx">TableAnnotationMapper</a></dt>
 <dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/DataType.html#TIME">TIME</a></span> - io.micronaut.data.model.<a href="io/micronaut/data/model/DataType.html" title="enum in io.micronaut.data.model">DataType</a></dt>
+<dd>
+<div class="block">A <code>Time</code> value.</div>
+</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/transaction/annotation/ReadOnly.html#timeout()">timeout()</a></span> - Method in annotation type io.micronaut.transaction.annotation.<a href="io/micronaut/transaction/annotation/ReadOnly.html" title="annotation in io.micronaut.transaction.annotation">ReadOnly</a></dt>
 <dd>
 <div class="block">The timeout for this transaction.</div>
