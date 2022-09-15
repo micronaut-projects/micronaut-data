@@ -25,6 +25,7 @@ import java.math.BigInteger;
 import java.net.URI;
 import java.net.URL;
 import java.nio.charset.Charset;
+import java.sql.Time;
 import java.sql.Timestamp;
 import java.time.*;
 import java.util.*;
@@ -66,6 +67,10 @@ public enum DataType {
      * A timestamp such as {@link java.sql.Timestamp} or {@link java.time.Instant}.
      */
     TIMESTAMP(Timestamp.class, Instant.class, OffsetDateTime.class, ZonedDateTime.class),
+    /**
+     * A {@link Time} value.
+     */
+    TIME(Time.class),
     /**
      * A {@link Double} value.
      */

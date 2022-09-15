@@ -17,6 +17,7 @@ package io.micronaut.data.tck.entities;
 
 import io.micronaut.core.annotation.Introspected;
 
+import java.sql.Time;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -39,6 +40,8 @@ public class TimezoneBasicTypesProjection {
     private Instant instantWithTimezone;
     private Timestamp timestamp;
     private Timestamp timestampWithTimezone;
+
+    private Time time;
 
     public TimezoneBasicTypesProjection() {
     }
@@ -137,5 +140,13 @@ public class TimezoneBasicTypesProjection {
 
     public void setTimestampWithTimezone(Timestamp timestampWithTimezone) {
         this.timestampWithTimezone = timestampWithTimezone;
+    }
+
+    public Time getTime() {
+        return time;
+    }
+
+    public void setTime(Time time) {
+        this.time = time;
     }
 }

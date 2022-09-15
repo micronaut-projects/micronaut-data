@@ -310,6 +310,7 @@ abstract class AbstractRepositorySpec extends Specification {
         retrievedBook.zonedDateTimeWithTimezone == book.zonedDateTimeWithTimezone
         retrievedBook.offsetDateTime == book.offsetDateTime
         retrievedBook.offsetDateTimeWithTimezone == book.offsetDateTimeWithTimezone
+        retrievedBook.time == book.time
 
         when:
         def retrievedBookProj = timezoneBasicTypeRepository.queryById(book.myId)
@@ -327,6 +328,7 @@ abstract class AbstractRepositorySpec extends Specification {
         retrievedBookProj.localDateTime == book.localDateTime
         retrievedBookProj.zonedDateTime == book.zonedDateTime
         retrievedBookProj.offsetDateTime == book.offsetDateTime
+        retrievedBookProj.time == book.time
 
         when:
         retrievedBookProj = timezoneBasicTypeRepository.findAllById(book.myId).iterator().next()
@@ -344,6 +346,7 @@ abstract class AbstractRepositorySpec extends Specification {
         retrievedBookProj.localDateTime == book.localDateTime
         retrievedBookProj.zonedDateTime == book.zonedDateTime
         retrievedBookProj.offsetDateTime == book.offsetDateTime
+        retrievedBookProj.time == book.time
     }
 
     @IgnoreIf({ !jvm.isJava11Compatible() })

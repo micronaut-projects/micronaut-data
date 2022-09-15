@@ -25,10 +25,8 @@ import io.micronaut.data.runtime.mapper.QueryStatement;
 import io.r2dbc.spi.Statement;
 
 import java.math.BigDecimal;
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
+import java.sql.Time;
+import java.time.*;
 import java.util.Date;
 import java.util.UUID;
 
@@ -188,6 +186,22 @@ public class R2dbcQueryStatement implements QueryStatement<Statement, Integer> {
             statement.bindNull(name, LocalDateTime.class);
         } else {
             statement.bind(name, instant.atZone(ZoneId.systemDefault()).toLocalDateTime());
+        }
+        return this;
+    }
+
+    @Override
+    public QueryStatement<Statement, Integer> setTime(Statement statement, Integer name, Time instant) {
+        // OracleDB stores TIME as DATE. LocalDateTime corresponds to DATE (https://github.com/oracle/oracle-r2dbc/blob/main/README.md#type-mappings)
+        if (statement.getClass().getName().equals("oracle.r2dbc.impl.OracleStatementImpl")) {
+            setTimestamp(statement, name, Instant.ofEpochMilli(instant.getTime()));
+            return this;
+        }
+
+        if (instant == null) {
+            statement.bindNull(name, LocalTime.class);
+        } else {
+            statement.bind(name, instant.toLocalTime());
         }
         return this;
     }
