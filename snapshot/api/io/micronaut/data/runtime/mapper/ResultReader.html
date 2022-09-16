@@ -26,7 +26,7 @@
     catch(err) {
     }
 //-->
-var data = {"i0":18,"i1":18,"i2":18,"i3":6,"i4":6,"i5":18,"i6":18,"i7":18,"i8":18,"i9":18,"i10":18,"i11":18,"i12":18,"i13":18,"i14":18,"i15":18,"i16":18,"i17":18,"i18":18,"i19":18,"i20":18};
+var data = {"i0":18,"i1":18,"i2":18,"i3":6,"i4":6,"i5":18,"i6":18,"i7":18,"i8":18,"i9":18,"i10":18,"i11":18,"i12":18,"i13":18,"i14":18,"i15":18,"i16":18,"i17":18,"i18":18,"i19":18};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],4:["t3","Abstract Methods"],16:["t5","Default Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -298,14 +298,6 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 </td>
 </tr>
 <tr id="i18" class="altColor">
-<td class="colFirst"><code>default java.sql.Time</code></td>
-<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#readTime(RS,IDX)">readTime</a></span>&#8203;(<a href="ResultReader.html" title="type parameter in ResultReader">RS</a>&nbsp;resultSet,
-        <a href="ResultReader.html" title="type parameter in ResultReader">IDX</a>&nbsp;index)</code></th>
-<td class="colLast">
-<div class="block">Read a time value for the given index.</div>
-</td>
-</tr>
-<tr id="i19" class="rowColor">
 <td class="colFirst"><code>default java.util.Date</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#readTimestamp(RS,IDX)">readTimestamp</a></span>&#8203;(<a href="ResultReader.html" title="type parameter in ResultReader">RS</a>&nbsp;resultSet,
              <a href="ResultReader.html" title="type parameter in ResultReader">IDX</a>&nbsp;index)</code></th>
@@ -313,7 +305,7 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <div class="block">Read a timestamp value for the given index.</div>
 </td>
 </tr>
-<tr id="i20" class="altColor">
+<tr id="i19" class="rowColor">
 <td class="colFirst"><code>default java.util.UUID</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#readUUID(RS,IDX)">readUUID</a></span>&#8203;(<a href="ResultReader.html" title="type parameter in ResultReader">RS</a>&nbsp;resultSet,
         <a href="ResultReader.html" title="type parameter in ResultReader">IDX</a>&nbsp;name)</code></th>
@@ -529,26 +521,6 @@ default&nbsp;java.lang.Object&nbsp;readDynamic&#8203;(@NonNull
 <pre class="methodSignature">default&nbsp;java.util.Date&nbsp;readTimestamp&#8203;(<a href="ResultReader.html" title="type parameter in ResultReader">RS</a>&nbsp;resultSet,
                                      <a href="ResultReader.html" title="type parameter in ResultReader">IDX</a>&nbsp;index)</pre>
 <div class="block">Read a timestamp value for the given index.</div>
-<dl>
-<dt><span class="paramLabel">Parameters:</span></dt>
-<dd><code>resultSet</code> - The result set</dd>
-<dd><code>index</code> - The index (such as the column name)</dd>
-<dt><span class="returnLabel">Returns:</span></dt>
-<dd>The char value</dd>
-</dl>
-</li>
-</ul>
-<a id="readTime(java.lang.Object,java.lang.Object)">
-<!--   -->
-</a><a id="readTime(RS,IDX)">
-<!--   -->
-</a>
-<ul class="blockList">
-<li class="blockList">
-<h4>readTime</h4>
-<pre class="methodSignature">default&nbsp;java.sql.Time&nbsp;readTime&#8203;(<a href="ResultReader.html" title="type parameter in ResultReader">RS</a>&nbsp;resultSet,
-                               <a href="ResultReader.html" title="type parameter in ResultReader">IDX</a>&nbsp;index)</pre>
-<div class="block">Read a time value for the given index.</div>
 <dl>
 <dt><span class="paramLabel">Parameters:</span></dt>
 <dd><code>resultSet</code> - The result set</dd>

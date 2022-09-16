@@ -26,7 +26,7 @@
     catch(err) {
     }
 //-->
-var data = {"i0":6,"i1":6,"i2":6,"i3":6,"i4":6,"i5":6,"i6":6,"i7":6};
+var data = {"i0":6,"i1":6,"i2":6,"i3":6,"i4":6,"i5":6,"i6":6,"i7":6,"i8":6};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],4:["t3","Abstract Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -129,11 +129,11 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 </dl>
 <dl>
 <dt>All Superinterfaces:</dt>
-<dd><code>io.micronaut.core.annotation.AnnotationMetadataProvider</code>, <code>io.micronaut.core.annotation.AnnotationSource</code>, <code>io.micronaut.core.naming.Named</code>, <code><a href="../../runtime/operations/internal/query/PersistentEntityAwareQuery.html" title="interface in io.micronaut.data.runtime.operations.internal.query">PersistentEntityAwareQuery</a>&lt;E&gt;</code>, <code><a href="../../model/runtime/StoredDataOperation.html" title="interface in io.micronaut.data.model.runtime">StoredDataOperation</a>&lt;R&gt;</code>, <code><a href="../../model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;E,&#8203;R&gt;</code></dd>
+<dd><code>io.micronaut.core.annotation.AnnotationMetadataProvider</code>, <code>io.micronaut.core.annotation.AnnotationSource</code>, <code>io.micronaut.core.naming.Named</code>, <code><a href="../../model/runtime/StoredDataOperation.html" title="interface in io.micronaut.data.model.runtime">StoredDataOperation</a>&lt;R&gt;</code>, <code><a href="../../model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;E,&#8203;R&gt;</code></dd>
 </dl>
 <hr>
 <pre>public interface <span class="typeNameLabel">MongoStoredQuery&lt;E,&#8203;R,&#8203;Dtb&gt;</span>
-extends <a href="../../model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;E,&#8203;R&gt;, <a href="../../runtime/operations/internal/query/PersistentEntityAwareQuery.html" title="interface in io.micronaut.data.runtime.operations.internal.query">PersistentEntityAwareQuery</a>&lt;E&gt;</pre>
+extends <a href="../../model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;E,&#8203;R&gt;</pre>
 <div class="block">MongoDB's <a href="../../model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime"><code>StoredQuery</code></a>.</div>
 <dl>
 <dt><span class="simpleTagLabel">Since:</span></dt>
@@ -204,16 +204,21 @@ extends <a href="../../model/runtime/StoredQuery.html" title="interface in io.mi
 <td class="colLast">&nbsp;</td>
 </tr>
 <tr id="i5" class="rowColor">
-<td class="colFirst"><code><a href="MongoUpdate.html" title="class in io.micronaut.data.mongodb.operations">MongoUpdate</a></code></td>
-<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getUpdateMany(io.micronaut.aop.InvocationContext)">getUpdateMany</a></span>&#8203;(io.micronaut.aop.InvocationContext&lt;?,&#8203;?&gt;&nbsp;invocationContext)</code></th>
+<td class="colFirst"><code><a href="../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;<a href="MongoStoredQuery.html" title="type parameter in MongoStoredQuery">E</a>&gt;</code></td>
+<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getRuntimePersistentEntity()">getRuntimePersistentEntity</a></span>()</code></th>
 <td class="colLast">&nbsp;</td>
 </tr>
 <tr id="i6" class="altColor">
 <td class="colFirst"><code><a href="MongoUpdate.html" title="class in io.micronaut.data.mongodb.operations">MongoUpdate</a></code></td>
-<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getUpdateOne(E)">getUpdateOne</a></span>&#8203;(<a href="MongoStoredQuery.html" title="type parameter in MongoStoredQuery">E</a>&nbsp;entity)</code></th>
+<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getUpdateMany(io.micronaut.aop.InvocationContext)">getUpdateMany</a></span>&#8203;(io.micronaut.aop.InvocationContext&lt;?,&#8203;?&gt;&nbsp;invocationContext)</code></th>
 <td class="colLast">&nbsp;</td>
 </tr>
 <tr id="i7" class="rowColor">
+<td class="colFirst"><code><a href="MongoUpdate.html" title="class in io.micronaut.data.mongodb.operations">MongoUpdate</a></code></td>
+<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getUpdateOne(E)">getUpdateOne</a></span>&#8203;(<a href="MongoStoredQuery.html" title="type parameter in MongoStoredQuery">E</a>&nbsp;entity)</code></th>
+<td class="colLast">&nbsp;</td>
+</tr>
+<tr id="i8" class="altColor">
 <td class="colFirst"><code>boolean</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#isAggregate()">isAggregate</a></span>()</code></th>
 <td class="colLast">&nbsp;</td>
@@ -239,13 +244,6 @@ extends <a href="../../model/runtime/StoredQuery.html" title="interface in io.mi
 </a>
 <h3>Methods inherited from interface&nbsp;io.micronaut.core.naming.Named</h3>
 <code>getName</code></li>
-</ul>
-<ul class="blockList">
-<li class="blockList"><a id="methods.inherited.from.class.io.micronaut.data.runtime.operations.internal.query.PersistentEntityAwareQuery">
-<!--   -->
-</a>
-<h3>Methods inherited from interface&nbsp;io.micronaut.data.runtime.operations.internal.query.<a href="../../runtime/operations/internal/query/PersistentEntityAwareQuery.html" title="interface in io.micronaut.data.runtime.operations.internal.query">PersistentEntityAwareQuery</a></h3>
-<code><a href="../../runtime/operations/internal/query/PersistentEntityAwareQuery.html#getPersistentEntity()">getPersistentEntity</a></code></li>
 </ul>
 <ul class="blockList">
 <li class="blockList"><a id="methods.inherited.from.class.io.micronaut.data.model.runtime.StoredDataOperation">
@@ -277,6 +275,19 @@ extends <a href="../../model/runtime/StoredQuery.html" title="interface in io.mi
 <!--   -->
 </a>
 <h3>Method Detail</h3>
+<a id="getRuntimePersistentEntity()">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>getRuntimePersistentEntity</h4>
+<pre class="methodSignature"><a href="../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;<a href="MongoStoredQuery.html" title="type parameter in MongoStoredQuery">E</a>&gt;&nbsp;getRuntimePersistentEntity()</pre>
+<dl>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>The persistent entity</dd>
+</dl>
+</li>
+</ul>
 <a id="getDatabase()">
 <!--   -->
 </a>

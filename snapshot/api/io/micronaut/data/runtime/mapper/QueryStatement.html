@@ -26,7 +26,7 @@
     catch(err) {
     }
 //-->
-var data = {"i0":18,"i1":18,"i2":18,"i3":18,"i4":18,"i5":18,"i6":18,"i7":18,"i8":18,"i9":18,"i10":18,"i11":18,"i12":18,"i13":18,"i14":18,"i15":18,"i16":18,"i17":18,"i18":50,"i19":6};
+var data = {"i0":18,"i1":18,"i2":18,"i3":18,"i4":18,"i5":18,"i6":18,"i7":18,"i8":18,"i9":18,"i10":18,"i11":18,"i12":18,"i13":18,"i14":18,"i15":18,"i16":18,"i17":50,"i18":6};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],4:["t3","Abstract Methods"],16:["t5","Default Methods"],32:["t6","Deprecated Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -297,15 +297,6 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 </tr>
 <tr id="i16" class="altColor">
 <td class="colFirst"><code>default <a href="QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a>&lt;<a href="QueryStatement.html" title="type parameter in QueryStatement">PS</a>,&#8203;<a href="QueryStatement.html" title="type parameter in QueryStatement">IDX</a>&gt;</code></td>
-<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#setTime(PS,IDX,java.sql.Time)">setTime</a></span>&#8203;(<a href="QueryStatement.html" title="type parameter in QueryStatement">PS</a>&nbsp;statement,
-       <a href="QueryStatement.html" title="type parameter in QueryStatement">IDX</a>&nbsp;name,
-       java.sql.Time&nbsp;instant)</code></th>
-<td class="colLast">
-<div class="block">Write an instant value for the given name.</div>
-</td>
-</tr>
-<tr id="i17" class="rowColor">
-<td class="colFirst"><code>default <a href="QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a>&lt;<a href="QueryStatement.html" title="type parameter in QueryStatement">PS</a>,&#8203;<a href="QueryStatement.html" title="type parameter in QueryStatement">IDX</a>&gt;</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#setTimestamp(PS,IDX,java.time.Instant)">setTimestamp</a></span>&#8203;(<a href="QueryStatement.html" title="type parameter in QueryStatement">PS</a>&nbsp;statement,
             <a href="QueryStatement.html" title="type parameter in QueryStatement">IDX</a>&nbsp;name,
             java.time.Instant&nbsp;instant)</code></th>
@@ -313,7 +304,7 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <div class="block">Write an instant value for the given name.</div>
 </td>
 </tr>
-<tr id="i18" class="altColor">
+<tr id="i17" class="rowColor">
 <td class="colFirst"><code>default <a href="QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a>&lt;<a href="QueryStatement.html" title="type parameter in QueryStatement">PS</a>,&#8203;<a href="QueryStatement.html" title="type parameter in QueryStatement">IDX</a>&gt;</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#setTimestamp(PS,IDX,java.util.Date)">setTimestamp</a></span>&#8203;(<a href="QueryStatement.html" title="type parameter in QueryStatement">PS</a>&nbsp;statement,
             <a href="QueryStatement.html" title="type parameter in QueryStatement">IDX</a>&nbsp;name,
@@ -324,7 +315,7 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 </div>
 </td>
 </tr>
-<tr id="i19" class="rowColor">
+<tr id="i18" class="altColor">
 <td class="colFirst"><code><a href="QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a>&lt;<a href="QueryStatement.html" title="type parameter in QueryStatement">PS</a>,&#8203;<a href="QueryStatement.html" title="type parameter in QueryStatement">IDX</a>&gt;</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#setValue(PS,IDX,java.lang.Object)">setValue</a></span>&#8203;(<a href="QueryStatement.html" title="type parameter in QueryStatement">PS</a>&nbsp;statement,
         <a href="QueryStatement.html" title="type parameter in QueryStatement">IDX</a>&nbsp;index,
@@ -546,30 +537,6 @@ default&nbsp;<a href="QueryStatement.html" title="interface in io.micronaut.data
 <dd>This writer</dd>
 <dt><span class="simpleTagLabel">Since:</span></dt>
 <dd>3.4.2</dd>
-</dl>
-</li>
-</ul>
-<a id="setTime(java.lang.Object,java.lang.Object,java.sql.Time)">
-<!--   -->
-</a><a id="setTime(PS,IDX,java.sql.Time)">
-<!--   -->
-</a>
-<ul class="blockList">
-<li class="blockList">
-<h4>setTime</h4>
-<pre class="methodSignature">default&nbsp;<a href="QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a>&lt;<a href="QueryStatement.html" title="type parameter in QueryStatement">PS</a>,&#8203;<a href="QueryStatement.html" title="type parameter in QueryStatement">IDX</a>&gt;&nbsp;setTime&#8203;(<a href="QueryStatement.html" title="type parameter in QueryStatement">PS</a>&nbsp;statement,
-                                             <a href="QueryStatement.html" title="type parameter in QueryStatement">IDX</a>&nbsp;name,
-                                             java.sql.Time&nbsp;instant)</pre>
-<div class="block">Write an instant value for the given name.</div>
-<dl>
-<dt><span class="paramLabel">Parameters:</span></dt>
-<dd><code>statement</code> - The statement</dd>
-<dd><code>name</code> - The name (such as the column name)</dd>
-<dd><code>instant</code> - The time</dd>
-<dt><span class="returnLabel">Returns:</span></dt>
-<dd>This writer</dd>
-<dt><span class="simpleTagLabel">Since:</span></dt>
-<dd>3.8</dd>
 </dl>
 </li>
 </ul>
