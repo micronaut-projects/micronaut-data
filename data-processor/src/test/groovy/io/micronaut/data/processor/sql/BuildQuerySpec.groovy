@@ -462,7 +462,7 @@ interface MealRepository extends CrudRepository<Meal, Long> {
 
     }
 
-    void "test join query in repo via maped entity"() {
+    void "test join query in repo via mapped entity"() {
         given:
         def repository = buildRepository('test.PageRepository', """
 import io.micronaut.context.annotation.Executable;
@@ -503,6 +503,62 @@ interface PageRepository extends GenericRepository<Page, Long> {
         chaptersBookJoinQuery == "SELECT page_book_chapters_.`id`,page_book_chapters_.`pages`,page_book_chapters_.`book_id`,page_book_chapters_.`title`,page_book_chapters_book_.`author_id` AS book_author_id,page_book_chapters_book_.`genre_id` AS book_genre_id,page_book_chapters_book_.`title` AS book_title,page_book_chapters_book_.`total_pages` AS book_total_pages,page_book_chapters_book_.`publisher_id` AS book_publisher_id,page_book_chapters_book_.`last_updated` AS book_last_updated FROM `page` page_ INNER JOIN `book` page_book_ ON page_.`book_id`=page_book_.`id` INNER JOIN `chapter` page_book_chapters_ ON page_book_.`id`=page_book_chapters_.`book_id` INNER JOIN `book` page_book_chapters_book_ ON page_book_chapters_.`book_id`=page_book_chapters_book_.`id` WHERE (page_.`id` = ? AND page_.`num` = ?)"
         chaptersBookJoinJoins.size() == 1
         chaptersBookJoinJoins.keySet() == ["book"] as Set
+
+    }
+
+    void "test many-to-many using mappedBy"() {
+        given:
+        def repository = buildRepository('test.StudentRepository', """
+import io.micronaut.context.annotation.Executable;
+import io.micronaut.data.annotation.Join;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;import io.micronaut.data.repository.PageableRepository;
+import io.micronaut.data.tck.entities.Student;
+import java.util.Optional;
+
+@JdbcRepository(dialect = Dialect.H2)
+interface StudentRepository extends GenericRepository<Student, Long> {
+
+    @Join(value = "books", type = Join.Type.FETCH)
+    Optional<Student> findByName(String name);
+}
+
+""")
+
+        def method = repository.getRequiredMethod("findByName", String)
+        def query = getQuery(method)
+
+        expect:
+        query.contains("FROM `student` student_ INNER JOIN `book_student`")
+
+    }
+
+    void "test many-to-many from inverse association"() {
+        given:
+        def repository = buildRepository('test.BookRepository', """
+import io.micronaut.context.annotation.Executable;
+import io.micronaut.data.annotation.Join;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Book;
+import java.util.Optional;
+
+@JdbcRepository(dialect = Dialect.H2)
+interface BookRepository extends GenericRepository<Book, Long> {
+
+    @Join(value = "students", type = Join.Type.FETCH)
+    Optional<Book> findByTitle(String title);
+}
+
+""")
+
+        def method = repository.getRequiredMethod("findByTitle", String)
+        def query = getQuery(method)
+
+        expect:
+        query.contains("FROM `book` book_ INNER JOIN `book_student`")
 
     }
 }

@@ -169,8 +169,14 @@ public final class ReactiveCascadeOperations<Ctx extends OperationContext> exten
                             }
                             RuntimePersistentProperty<Object> identity = childPersistentEntity.getIdentity();
                             Predicate<Object> veto = val -> ctx.persisted.contains(val) || identity.getProperty().get(val) != null && !(identity instanceof Association);
-                            Flux<Object> inserted = helper.persistBatch(ctx, cascadeManyOp.children, childPersistentEntity, veto);
-                            return inserted.collectList();
+                            Flux<Object> childrenFlux = helper.persistBatch(ctx, cascadeManyOp.children, childPersistentEntity, veto);
+                            // Concat children inserted now with children that were persisted before
+                            for (Object child : cascadeManyOp.children) {
+                                if (veto.test(child)) {
+                                    childrenFlux = childrenFlux.concatWith(Flux.just(child));
+                                }
+                            }
+                            return childrenFlux.collectList();
                         });
                     } else {
                         monoEntity = updateChildren(ctx, monoEntity, cascadeOp, cascadeManyOp, childPersistentEntity, e -> {
