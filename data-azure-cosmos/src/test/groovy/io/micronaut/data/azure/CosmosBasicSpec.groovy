@@ -15,7 +15,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.ObjectNode
 import io.micronaut.context.ApplicationContext
 import io.micronaut.core.type.Argument
-import io.micronaut.data.document.mongodb.repositories.CosmosBookRepository
+import io.micronaut.data.azure.repositories.CosmosBookRepository
 import io.micronaut.data.document.tck.entities.Book
 import io.micronaut.serde.Decoder
 import io.micronaut.serde.SerdeRegistry

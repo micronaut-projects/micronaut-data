@@ -1,4 +1,4 @@
-package io.micronaut.data.document.mongodb.entities;
+package io.micronaut.data.azure.entities;
 
 import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Id;

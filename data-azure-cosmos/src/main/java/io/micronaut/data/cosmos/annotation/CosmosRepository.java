@@ -20,8 +20,8 @@ import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.annotation.RepositoryConfiguration;
 import io.micronaut.data.cosmos.operations.CosmosRepositoryOperations;
 import io.micronaut.data.document.annotation.DocumentProcessorRequired;
+import io.micronaut.data.document.model.query.builder.CosmosSqlQueryBuilder;
 import io.micronaut.data.model.query.builder.sql.Dialect;
-import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.query.builder.sql.SqlQueryConfiguration;
 
 import java.lang.annotation.Documented;
@@ -37,7 +37,7 @@ import java.lang.annotation.Target;
  * @since 3.8.0
  */
 @RepositoryConfiguration(
-        queryBuilder = SqlQueryBuilder.class,
+        queryBuilder = CosmosSqlQueryBuilder.class,
         operations = CosmosRepositoryOperations.class,
         implicitQueries = true,
         namedParameters = true
