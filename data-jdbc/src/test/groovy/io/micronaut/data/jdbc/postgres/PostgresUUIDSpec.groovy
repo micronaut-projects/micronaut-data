@@ -16,14 +16,25 @@
 package io.micronaut.data.jdbc.postgres
 
 import groovy.transform.Memoized
-import io.micronaut.data.tck.repositories.UuidRepository
+import io.micronaut.data.tck.entities.UuidEntity
 import io.micronaut.data.tck.tests.AbstractUUIDSpec
 
 class PostgresUUIDSpec extends AbstractUUIDSpec implements PostgresTestPropertyProvider {
 
     @Memoized
     @Override
-    UuidRepository getUuidRepository() {
+    PostgresUuidRepository getUuidRepository() {
         return applicationContext.getBean(PostgresUuidRepository)
+    }
+
+    void 'test multiple assignment'() {
+        when:
+        uuidRepository.save(new UuidEntity("Fred", null))
+        def result = uuidRepository.findByNullableValueNative(null)
+        then:
+        result.size() == 1
+
+        cleanup:
+        uuidRepository.deleteAll()
     }
 }
