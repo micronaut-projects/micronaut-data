@@ -100,4 +100,15 @@ abstract class AbstractUUIDSpec extends Specification {
         cleanup:
             uuidRepository.deleteAll()
     }
+
+    void 'test criteria with null value'() {
+        when:
+            uuidRepository.save(new UuidEntity("Fred", null))
+            def result = uuidRepository.findByNullableValue(null)
+        then:
+            result.isEmpty()
+
+        cleanup:
+            uuidRepository.deleteAll()
+    }
 }
