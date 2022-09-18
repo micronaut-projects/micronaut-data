@@ -16,6 +16,7 @@
 package io.micronaut.data.r2dbc.oraclexe
 
 import groovy.transform.Memoized
+import io.micronaut.data.tck.repositories.UuidNullRepository
 import io.micronaut.data.tck.repositories.UuidRepository
 import io.micronaut.data.tck.tests.AbstractUUIDSpec
 import spock.lang.IgnoreIf
@@ -27,5 +28,10 @@ class OracleXEUUIDSpec extends AbstractUUIDSpec implements OracleXETestPropertyP
     @Override
     UuidRepository getUuidRepository() {
         return applicationContext.getBean(OracleXEUuidRepository)
+    }
+    @Memoized
+    @Override
+    UuidNullRepository getUuidNullRepository() {
+        return applicationContext.getBean(OracleXEUuidNullRepository)
     }
 }

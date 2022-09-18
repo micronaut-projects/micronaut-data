@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.r2dbc.h2
 
+import io.micronaut.data.tck.repositories.UuidNullRepository
 import io.micronaut.data.tck.repositories.UuidRepository
 import io.micronaut.data.tck.tests.AbstractUUIDSpec
 
@@ -23,5 +24,10 @@ class H2UUIDSpec extends AbstractUUIDSpec implements H2TestPropertyProvider {
     @Override
     UuidRepository getUuidRepository() {
         return applicationContext.getBean(H2UuidRepository)
+    }
+
+    @Override
+    UuidNullRepository getUuidNullRepository() {
+        return applicationContext.getBean(H2UuidNullRepository)
     }
 }

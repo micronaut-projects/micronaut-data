@@ -17,6 +17,8 @@ package io.micronaut.data.tck.tests
 
 import io.micronaut.context.ApplicationContext
 import io.micronaut.data.tck.entities.UuidEntity
+import io.micronaut.data.tck.entities.UuidNullEntity
+import io.micronaut.data.tck.repositories.UuidNullRepository
 import io.micronaut.data.tck.repositories.UuidRepository
 import spock.lang.AutoCleanup
 import spock.lang.Shared
@@ -29,6 +31,8 @@ abstract class AbstractUUIDSpec extends Specification {
     ApplicationContext applicationContext = ApplicationContext.run(properties)
 
     abstract UuidRepository getUuidRepository()
+
+    abstract UuidNullRepository getUuidNullRepository()
 
     void 'test insert and update with UUID'() {
         when:
@@ -78,5 +82,17 @@ abstract class AbstractUUIDSpec extends Specification {
 
         cleanup:
             uuidRepository.deleteAll()
+    }
+
+    void 'test null uuid parameter'() {
+        when:
+            def uuid = UUID.randomUUID()
+            uuidNullRepository.saveAll([
+                new UuidNullEntity(uuid),
+                new UuidNullEntity(null),
+            ])
+        then:
+            uuidNullRepository.findByUuid(uuid).size() == 1
+            uuidNullRepository.findByUuid(null).size() == 1
     }
 }

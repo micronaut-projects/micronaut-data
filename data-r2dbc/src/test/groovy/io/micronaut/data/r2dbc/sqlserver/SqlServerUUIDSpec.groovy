@@ -16,6 +16,7 @@
 package io.micronaut.data.r2dbc.sqlserver
 
 import groovy.transform.Memoized
+import io.micronaut.data.tck.repositories.UuidNullRepository
 import io.micronaut.data.tck.repositories.UuidRepository
 import io.micronaut.data.tck.tests.AbstractUUIDSpec
 
@@ -25,5 +26,10 @@ class SqlServerUUIDSpec extends AbstractUUIDSpec implements SqlServerTestPropert
     @Override
     UuidRepository getUuidRepository() {
         return applicationContext.getBean(MSUuidRepository)
+    }
+    @Memoized
+    @Override
+    UuidNullRepository getUuidNullRepository() {
+        return applicationContext.getBean(MSUuidNullRepository)
     }
 }

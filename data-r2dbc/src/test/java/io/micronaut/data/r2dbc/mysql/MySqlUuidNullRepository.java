@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 original authors
+ * Copyright 2017-2022 original authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,16 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.jdbc.h2
+package io.micronaut.data.r2dbc.mysql;
 
-import io.micronaut.data.tck.repositories.UuidNullRepository
-import io.micronaut.data.tck.tests.AbstractUUIDSpec
-import io.micronaut.test.extensions.spock.annotation.MicronautTest
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.r2dbc.annotation.R2dbcRepository;
+import io.micronaut.data.tck.repositories.UuidNullRepository;
 
-@MicronautTest
-class H2UUIDSpec extends AbstractUUIDSpec implements H2TestPropertyProvider {
-
-    H2UuidRepository uuidRepository = applicationContext.getBean(H2UuidRepository)
-
-    UuidNullRepository uuidNullRepository = applicationContext.getBean(H2UuidNullRepository)
+@R2dbcRepository(dialect = Dialect.MYSQL)
+public interface MySqlUuidNullRepository extends UuidNullRepository {
 }
