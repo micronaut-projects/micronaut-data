@@ -15,7 +15,6 @@
  */
 package io.micronaut.data.jdbc.mysql
 
-import io.micronaut.data.tck.repositories.UuidNullRepository
 import io.micronaut.data.tck.tests.AbstractUUIDSpec
 import spock.lang.Shared
 
@@ -25,7 +24,6 @@ class MySqlUUIDSpec extends AbstractUUIDSpec implements MySQLTestPropertyProvide
     MySqlUuidEntityRepository repository = applicationContext.getBean(MySqlUuidEntityRepository)
 
     MySqlUuidRepository uuidRepository = applicationContext.getBean(MySqlUuidRepository)
-    UuidNullRepository uuidNullRepository = applicationContext.getBean(MySqlUuidNullRepository)
 
     void 'test insert with UUID'() {
         given:

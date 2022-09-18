@@ -17,8 +17,6 @@ package io.micronaut.data.jdbc.mariadb
 
 import groovy.transform.Memoized
 import io.micronaut.data.jdbc.mysql.MySqlUuidRepository
-import io.micronaut.data.jdbc.mysql.MySqlUuidNullRepository
-import io.micronaut.data.tck.repositories.UuidNullRepository
 import io.micronaut.data.tck.repositories.UuidRepository
 import io.micronaut.data.tck.tests.AbstractUUIDSpec
 
@@ -28,11 +26,5 @@ class MariaUUIDSpec extends AbstractUUIDSpec implements MariaTestPropertyProvide
     @Override
     UuidRepository getUuidRepository() {
         return applicationContext.getBean(MySqlUuidRepository)
-    }
-
-    @Memoized
-    @Override
-    UuidNullRepository getUuidNullRepository() {
-        return applicationContext.getBean(MySqlUuidNullRepository)
     }
 }
