@@ -128,6 +128,17 @@ final class SqlQueryBuilderUtils {
                     column += " NOT NULL";
                 }
                 break;
+            case TIME:
+                if (dialect == Dialect.ORACLE) {
+                    // OracleDB doesn't have a TIME type, so DATE is used
+                    column += " DATE ";
+                } else {
+                    column += " TIME(6) ";
+                }
+                if (required) {
+                    column += " NOT NULL ";
+                }
+                break;
             case LONG:
                 if (dialect == Dialect.ORACLE) {
                     column += " NUMBER(19)";

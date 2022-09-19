@@ -160,7 +160,9 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
         } else if (type == Type.UPDATE_ALL) {
             storedQuery = buildUpdateAll(context, sqlQueryBuilder);
         } else if (type == Type.EXISTS) {
-          storedQuery = buildExists(context, sqlQueryBuilder);
+            Set<JoinPath> joinPaths = methodsJoinPaths.computeIfAbsent(methodKey, repositoryMethodKey ->
+                AssociationUtils.getJoinFetchPaths(context));
+          storedQuery = buildExists(context, sqlQueryBuilder, joinPaths);
         } else {
             throw new IllegalStateException("Unknown criteria type: " + type);
         }
@@ -169,9 +171,9 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
         return preparedQueryDecorator.decorate(preparedQuery);
     }
 
-    private <E> StoredQuery<E, ?> buildExists(MethodInvocationContext<T, R> context, QueryBuilder sqlQueryBuilder) {
+    private <E> StoredQuery<E, ?> buildExists(MethodInvocationContext<T, R> context, QueryBuilder sqlQueryBuilder, Set<JoinPath> annotationJoinPaths) {
         Class<E> rootEntity = getRequiredRootEntity(context);
-        CriteriaQueryBuilder<E> builder = getCriteriaQueryBuilder(context);
+        CriteriaQueryBuilder<E> builder = getCriteriaQueryBuilder(context, annotationJoinPaths);
         CriteriaQuery<E> criteriaQuery = builder.build(criteriaBuilder);
         QueryResult queryResult = ((QueryResultPersistentEntityCriteriaQuery) criteriaQuery).buildQuery(sqlQueryBuilder);
 
