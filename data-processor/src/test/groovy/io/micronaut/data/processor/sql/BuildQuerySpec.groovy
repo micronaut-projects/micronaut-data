@@ -18,12 +18,15 @@ package io.micronaut.data.processor.sql
 import io.micronaut.data.intercept.annotation.DataMethod
 import io.micronaut.data.model.DataType
 import io.micronaut.data.model.Pageable
+import io.micronaut.data.model.entities.Invoice
 import io.micronaut.data.processor.visitors.AbstractDataSpec
+import io.micronaut.data.tck.entities.Author
 import spock.lang.Issue
 import spock.lang.Unroll
 
 import static io.micronaut.data.processor.visitors.TestUtils.anyParameterExpandable
 import static io.micronaut.data.processor.visitors.TestUtils.getDataTypes
+import static io.micronaut.data.processor.visitors.TestUtils.getJoins
 import static io.micronaut.data.processor.visitors.TestUtils.getParameterBindingIndexes
 import static io.micronaut.data.processor.visitors.TestUtils.getParameterBindingPaths
 import static io.micronaut.data.processor.visitors.TestUtils.getParameterPropertyPaths
@@ -101,7 +104,54 @@ interface MyInterface2 extends CrudRepository<CustomBook, Long> {
             rawQuery == 'SELECT * FROM arrays_entity WHERE stringArray::varchar[] && ARRAY[?]'
     }
 
-    void "test to-one join on repository type that inherits from CrudRepository"() {
+    void "test join on repository type that inherits from CrudRepository"() {
+        given:
+        def repository = buildRepository('test.MyInterface', """
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.Join;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.processor.sql.AliasAuthor;
+import io.micronaut.data.processor.sql.AliasBook;
+
+@JdbcRepository(dialect= Dialect.MYSQL)
+@Join("author")
+@io.micronaut.context.annotation.Executable
+interface MyInterface extends CrudRepository<AliasBook, Long> {
+
+    AliasAuthor findAuthorById(@Id Long id);
+
+    @Join("author")
+    AliasBook findAliasBookById(@Id Long id);
+
+    @Join("coAuthor")
+    AliasBook findOneById(@Id Long id);
+
+    @Join("coAuthor")
+    @Join("coAuthor.otherBooks")
+    AliasBook findOne(Long id);
+
+    @Join("author.otherBooks")
+    AliasBook findAliasBook(Long id);
+}
+"""
+        )
+
+        String query = getQuery(repository.getRequiredMethod(method, Long))
+
+        expect:
+        query == sql
+
+        where:
+        method                  | sql
+        'findAuthorById'        | 'SELECT au.`id`,au.`name`,au.`nick_name` FROM `alias_book` alias_book_ INNER JOIN `alias_author` au ON alias_book_.`author_id`=au.`id` WHERE (alias_book_.`id` = ?)'
+        'findAliasBookById'     | 'SELECT alias_book_.`id`,alias_book_.`title`,alias_book_.`total_pages`,alias_book_.`last_updated`,alias_book_.`author_id`,alias_book_.`co_author_id`,au.`name` AS auname,au.`nick_name` AS aunick_name FROM `alias_book` alias_book_ INNER JOIN `alias_author` au ON alias_book_.`author_id`=au.`id` WHERE (alias_book_.`id` = ?)'
+        'findOneById'           | 'SELECT alias_book_.`id`,alias_book_.`title`,alias_book_.`total_pages`,alias_book_.`last_updated`,alias_book_.`author_id`,alias_book_.`co_author_id`,alias_book_co_author_.`name` AS co_author_name,alias_book_co_author_.`nick_name` AS co_author_nick_name,au.`name` AS auname,au.`nick_name` AS aunick_name FROM `alias_book` alias_book_ INNER JOIN `alias_author` au ON alias_book_.`author_id`=au.`id` INNER JOIN `alias_author` alias_book_co_author_ ON alias_book_.`co_author_id`=alias_book_co_author_.`id` WHERE (alias_book_.`id` = ?)'
+        'findOne'               | 'SELECT alias_book_.`id`,alias_book_.`title`,alias_book_.`total_pages`,alias_book_.`last_updated`,alias_book_.`author_id`,alias_book_.`co_author_id`,alias_book_co_author_.`name` AS co_author_name,alias_book_co_author_.`nick_name` AS co_author_nick_name,au.`name` AS auname,au.`nick_name` AS aunick_name,alias_book_co_author_ob.`id` AS co_author_obid,alias_book_co_author_ob.`title` AS co_author_obtitle,alias_book_co_author_ob.`total_pages` AS co_author_obtotal_pages,alias_book_co_author_ob.`last_updated` AS co_author_oblast_updated,alias_book_co_author_ob.`author_id` AS co_author_obauthor_id,alias_book_co_author_ob.`co_author_id` AS co_author_obco_author_id FROM `alias_book` alias_book_ INNER JOIN `alias_author` au ON alias_book_.`author_id`=au.`id` INNER JOIN `alias_author` alias_book_co_author_ ON alias_book_.`co_author_id`=alias_book_co_author_.`id` INNER JOIN `alias_book` alias_book_co_author_ob ON alias_book_co_author_.`id`=alias_book_co_author_ob.`author_id` WHERE (alias_book_.`id` = ?)'
+        'findAliasBook'         | 'SELECT alias_book_.`id`,alias_book_.`title`,alias_book_.`total_pages`,alias_book_.`last_updated`,alias_book_.`author_id`,alias_book_.`co_author_id`,au_ob.`id` AS au_obid,au_ob.`title` AS au_obtitle,au_ob.`total_pages` AS au_obtotal_pages,au_ob.`last_updated` AS au_oblast_updated,au_ob.`author_id` AS au_obauthor_id,au_ob.`co_author_id` AS au_obco_author_id,au.`name` AS auname,au.`nick_name` AS aunick_name FROM `alias_book` alias_book_ INNER JOIN `alias_author` au ON alias_book_.`author_id`=au.`id` INNER JOIN `alias_book` au_ob ON au.`id`=au_ob.`author_id` WHERE (alias_book_.`id` = ?)'
+    }
+
+      void "test to-one join on repository type that inherits from CrudRepository"() {
         given:
         def repository = buildRepository('test.MyInterface', """
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
@@ -115,16 +165,19 @@ import io.micronaut.data.tck.entities.Author;
 interface MyInterface extends CrudRepository<Book, Long> {
 
     Author findAuthorById(@Id Long id);
+
+    Book findByTitleOrAuthorAndId(String title, Author author, Long id);
 }
 """
         )
 
         when:
-        String query = getQuery(repository.getRequiredMethod("findAuthorById", Long))
+        String query1 = getQuery(repository.getRequiredMethod("findAuthorById", Long))
+        String query2 = getQuery(repository.getRequiredMethod("findByTitleOrAuthorAndId", String, Author, Long))
 
         then:
-        query == 'SELECT book_author_.`id`,book_author_.`name`,book_author_.`nick_name` FROM `book` book_ INNER JOIN `author` book_author_ ON book_.`author_id`=book_author_.`id` WHERE (book_.`id` = ?)'
-
+        query1 == 'SELECT book_author_.`id`,book_author_.`name`,book_author_.`nick_name` FROM `book` book_ INNER JOIN `author` book_author_ ON book_.`author_id`=book_author_.`id` WHERE (book_.`id` = ?)'
+        query2.endsWith('WHERE ((book_.`title` = ? OR book_.`author_id` = ?) AND book_.`id` = ?)')
     }
 
     void "test join query on collection with custom ID name"() {
@@ -348,9 +401,10 @@ interface UserRoleRepository extends GenericRepository<UserRole, UserRoleId> {
 """)
 
             def method = repository.findPossibleMethods("findRoleByUser").findAny().get()
+            def query = getQuery(method)
 
         expect:
-            getQuery(method) == 'SELECT user_role_id_role_.`id`,user_role_id_role_.`name` FROM `user_role_composite` user_role_ INNER JOIN `role_composite` user_role_id_role_ ON user_role_.`id_role_id`=user_role_id_role_.`id` WHERE (user_role_.`id_user_id` = ?)'
+            query == 'SELECT user_role_id_role_.`id`,user_role_id_role_.`name` FROM `user_role_composite` user_role_ INNER JOIN `role_composite` user_role_id_role_ ON user_role_.`id_role_id`=user_role_id_role_.`id` WHERE (user_role_.`id_user_id` = ?)'
             getParameterBindingIndexes(method) == ["0"] as String[]
             getParameterBindingPaths(method) == ["id"] as String[]
             getParameterPropertyPaths(method) == ["id.user.id"] as String[]
@@ -410,6 +464,7 @@ interface FacesRepository extends CrudRepository<Face, Long> {
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.entities.Purchase;
+import io.micronaut.data.model.entities.Invoice;
 import io.micronaut.data.tck.entities.Face;
 import java.util.UUID;
 
@@ -421,14 +476,18 @@ interface PurchaseRepository extends CrudRepository<Purchase, Long> {
     Purchase findByNameAndInvoiceId(String n, Long id);
 
     Purchase findByCustomerIdAndShouldReceiveCopyOfInvoiceTrue(Long id, Boolean should);
+
+    Purchase findByCustomerIdOrInvoiceAndShouldReceiveCopyOfInvoiceTrue(Long id, Invoice invoice);
 }
 """)
         def query1 = getQuery(repository.getRequiredMethod("findByNameAndInvoiceId", String, Long))
         def query2 = getQuery(repository.getRequiredMethod("findByCustomerIdAndShouldReceiveCopyOfInvoiceTrue", Long, Boolean))
+        def query3 = getQuery(repository.getRequiredMethod("findByCustomerIdOrInvoiceAndShouldReceiveCopyOfInvoiceTrue", Long, Invoice))
 
         expect:
         query1 == 'SELECT purchase_.`id`,purchase_.`version`,purchase_.`name`,purchase_.`invoice_id`,purchase_.`customer_id`,purchase_.`should_receive_copy_of_invoice`,purchase_invoice_.`version` AS invoice_version,purchase_invoice_.`name` AS invoice_name FROM `purchase` purchase_ INNER JOIN `invoice` purchase_invoice_ ON purchase_.`invoice_id`=purchase_invoice_.`id` WHERE (purchase_.`name` = ? AND purchase_.`invoice_id` = ?)'
         query2 == 'SELECT purchase_.`id`,purchase_.`version`,purchase_.`name`,purchase_.`invoice_id`,purchase_.`customer_id`,purchase_.`should_receive_copy_of_invoice` FROM `purchase` purchase_ WHERE (purchase_.`customer_id` = ? AND purchase_.`should_receive_copy_of_invoice` = TRUE)'
+        query3.endsWith('WHERE ((purchase_.`customer_id` = ? OR purchase_.`invoice_id` = ?) AND purchase_.`should_receive_copy_of_invoice` = TRUE)')
 
     }
 
@@ -477,6 +536,106 @@ interface ProductDtoRepository extends GenericRepository<Product, Long> {
         expect:
         method.isTrue(DataMethod, DataMethod.META_MEMBER_DTO)
         query == 'SELECT product_.`name`,product_.`price`,product_.`loooooooooooooooooooooooooooooooooooooooooooooooooooooooong_name` AS long_name,product_.`date_created`,product_.`last_updated` FROM `product` product_ WHERE (product_.`name` LIKE ?)'
+
+    }
+
+    void "test join query in repo via mapped entity"() {
+        given:
+        def repository = buildRepository('test.PageRepository', """
+import io.micronaut.context.annotation.Executable;
+import io.micronaut.data.annotation.Join;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Page;
+import io.micronaut.data.tck.entities.Book;
+import io.micronaut.data.tck.entities.Chapter;
+import java.util.Optional;
+@JdbcRepository(dialect = Dialect.H2)
+interface PageRepository extends GenericRepository<Page, Long> {
+
+    @Join(value = "book.chapters", type = Join.Type.LEFT_FETCH)
+    Optional<Book> findBookById(Long id);
+
+    List<Chapter> findBookChaptersById(Long id);
+
+    @Join(value = "book.chapters.book", type = Join.Type.FETCH)
+    List<Chapter> findBookChaptersByIdAndNum(Long id, long num);
+}
+""")
+
+        def method = repository.getRequiredMethod("findBookById", Long)
+        def query = getQuery(method)
+        def joins = getJoins(method)
+        def chaptersQuery = getQuery(repository.getRequiredMethod("findBookChaptersById", Long))
+        def chaptersBookJoinMethod = repository.getRequiredMethod("findBookChaptersByIdAndNum", Long, long)
+        def chaptersBookJoinQuery = getQuery(chaptersBookJoinMethod)
+        def chaptersBookJoinJoins = getJoins(chaptersBookJoinMethod)
+
+        expect:
+        query == "SELECT page_book_.`id`,page_book_.`author_id`,page_book_.`genre_id`,page_book_.`title`,page_book_.`total_pages`,page_book_.`publisher_id`,page_book_.`last_updated`,page_book_chapters_.`id` AS chapters_id,page_book_chapters_.`pages` AS chapters_pages,page_book_chapters_.`book_id` AS chapters_book_id,page_book_chapters_.`title` AS chapters_title FROM `page` page_ LEFT JOIN `book` page_book_ ON page_.`book_id`=page_book_.`id` LEFT JOIN `chapter` page_book_chapters_ ON page_book_.`id`=page_book_chapters_.`book_id` WHERE (page_.`id` = ?)"
+        joins.size() == 1
+        joins.keySet() == ["chapters"] as Set
+        chaptersQuery == "SELECT page_book_chapters_.`id`,page_book_chapters_.`pages`,page_book_chapters_.`book_id`,page_book_chapters_.`title` FROM `page` page_ INNER JOIN `book` page_book_ ON page_.`book_id`=page_book_.`id` INNER JOIN `chapter` page_book_chapters_ ON page_book_.`id`=page_book_chapters_.`book_id` WHERE (page_.`id` = ?)"
+        chaptersBookJoinQuery == "SELECT page_book_chapters_.`id`,page_book_chapters_.`pages`,page_book_chapters_.`book_id`,page_book_chapters_.`title`,page_book_chapters_book_.`author_id` AS book_author_id,page_book_chapters_book_.`genre_id` AS book_genre_id,page_book_chapters_book_.`title` AS book_title,page_book_chapters_book_.`total_pages` AS book_total_pages,page_book_chapters_book_.`publisher_id` AS book_publisher_id,page_book_chapters_book_.`last_updated` AS book_last_updated FROM `page` page_ INNER JOIN `book` page_book_ ON page_.`book_id`=page_book_.`id` INNER JOIN `chapter` page_book_chapters_ ON page_book_.`id`=page_book_chapters_.`book_id` INNER JOIN `book` page_book_chapters_book_ ON page_book_chapters_.`book_id`=page_book_chapters_book_.`id` WHERE (page_.`id` = ? AND page_.`num` = ?)"
+        chaptersBookJoinJoins.size() == 1
+        chaptersBookJoinJoins.keySet() == ["book"] as Set
+
+    }
+
+    void "test many-to-many using mappedBy"() {
+        given:
+        def repository = buildRepository('test.StudentRepository', """
+import io.micronaut.context.annotation.Executable;
+import io.micronaut.data.annotation.Join;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;import io.micronaut.data.repository.PageableRepository;
+import io.micronaut.data.tck.entities.Student;
+import java.util.Optional;
+
+@JdbcRepository(dialect = Dialect.H2)
+interface StudentRepository extends GenericRepository<Student, Long> {
+
+    @Join(value = "books", type = Join.Type.FETCH)
+    Optional<Student> findByName(String name);
+}
+
+""")
+
+        def method = repository.getRequiredMethod("findByName", String)
+        def query = getQuery(method)
+
+        expect:
+        query.contains("FROM `student` student_ INNER JOIN `book_student`")
+
+    }
+
+    void "test many-to-many from inverse association"() {
+        given:
+        def repository = buildRepository('test.BookRepository', """
+import io.micronaut.context.annotation.Executable;
+import io.micronaut.data.annotation.Join;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Book;
+import java.util.Optional;
+
+@JdbcRepository(dialect = Dialect.H2)
+interface BookRepository extends GenericRepository<Book, Long> {
+
+    @Join(value = "students", type = Join.Type.FETCH)
+    Optional<Book> findByTitle(String title);
+}
+
+""")
+
+        def method = repository.getRequiredMethod("findByTitle", String)
+        def query = getQuery(method)
+
+        expect:
+        query.contains("FROM `book` book_ INNER JOIN `book_student`")
 
     }
 }

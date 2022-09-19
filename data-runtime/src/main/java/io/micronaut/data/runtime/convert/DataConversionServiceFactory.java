@@ -27,6 +27,7 @@ import io.micronaut.core.type.Argument;
 import jakarta.inject.Singleton;
 
 import java.math.BigDecimal;
+import java.sql.Time;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -362,6 +363,7 @@ final class DataConversionServiceFactory {
         // LocalTime
         conversionService.addConverter(LocalTime.class, Timestamp.class, localTime -> Timestamp.valueOf(localTime.atDate(LocalDate.now())));
         conversionService.addConverter(LocalTime.class, Instant.class, localTime -> localTime.atDate(LocalDate.now()).atZone(ZoneId.systemDefault()).toInstant());
+        conversionService.addConverter(LocalTime.class, Time.class, Time::valueOf);
 
         // LocalDateTime
         conversionService.addConverter(LocalDateTime.class, Date.class, localDateTime -> Date.from(localDateTime.atZone(ZoneId.systemDefault()).toInstant()));
@@ -370,6 +372,7 @@ final class DataConversionServiceFactory {
         conversionService.addConverter(LocalDateTime.class, LocalDate.class, LocalDateTime::toLocalDate);
         conversionService.addConverter(LocalDateTime.class, LocalTime.class, LocalDateTime::toLocalTime);
         conversionService.addConverter(LocalDateTime.class, ZonedDateTime.class, localDateTime -> localDateTime.atZone(ZoneId.systemDefault()));
+        conversionService.addConverter(LocalDateTime.class, Time.class, localDateTime -> Time.valueOf(localDateTime.toLocalTime()));
 
         // OffsetDateTime
         conversionService.addConverter(OffsetDateTime.class, Date.class, offsetDateTime -> Date.from(offsetDateTime.toInstant()));

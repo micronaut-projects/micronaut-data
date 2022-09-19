@@ -15,7 +15,6 @@
  */
 package io.micronaut.data.runtime.operations.internal.sql;
 
-import io.micronaut.aop.InvocationContext;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.exceptions.DataAccessException;
@@ -28,7 +27,8 @@ import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.model.runtime.QueryParameterBinding;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
-import io.micronaut.data.runtime.query.internal.DefaultPreparedQuery;
+import io.micronaut.data.runtime.operations.internal.query.DefaultBindableParametersPreparedQuery;
+import io.micronaut.data.runtime.operations.internal.query.DummyPreparedQuery;
 import io.micronaut.data.runtime.query.internal.DelegatePreparedQuery;
 import io.micronaut.data.runtime.query.internal.DelegateStoredQuery;
 
@@ -46,10 +46,8 @@ import java.util.Map;
  * @since 3.5.0
  */
 @Internal
-public final class DefaultSqlPreparedQuery<E, R> implements SqlPreparedQuery<E, R>, DelegatePreparedQuery<E, R> {
+public final class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPreparedQuery<E, R> implements SqlPreparedQuery<E, R>, DelegatePreparedQuery<E, R> {
 
-    private final PreparedQuery<E, R> preparedQuery;
-    private final InvocationContext<?, ?> invocationContext;
     private final SqlStoredQuery<E, R> sqlStoredQuery;
     private String query;
 
@@ -58,16 +56,14 @@ public final class DefaultSqlPreparedQuery<E, R> implements SqlPreparedQuery<E, 
     }
 
     public DefaultSqlPreparedQuery(PreparedQuery<E, R> preparedQuery, SqlStoredQuery<E, R> sqlStoredQuery) {
-        this.preparedQuery = preparedQuery;
-        this.invocationContext = ((DefaultPreparedQuery) preparedQuery).getContext();
-        this.sqlStoredQuery = (SqlStoredQuery<E, R>) ((DelegateStoredQuery<Object, Object>) preparedQuery).getStoredQueryDelegate();
+        super(preparedQuery);
+        this.sqlStoredQuery = sqlStoredQuery;
         this.query = sqlStoredQuery.getQuery();
     }
 
     public DefaultSqlPreparedQuery(SqlStoredQuery<E, R> sqlStoredQuery) {
-        this.preparedQuery = new DummyPreparedQuery<>(sqlStoredQuery);
-        this.invocationContext = null;
-        this.sqlStoredQuery = (SqlStoredQuery<E, R>) ((DelegateStoredQuery<Object, Object>) preparedQuery).getStoredQueryDelegate();
+        super(new DummyPreparedQuery<>(sqlStoredQuery), null, sqlStoredQuery);
+        this.sqlStoredQuery = sqlStoredQuery;
         this.query = sqlStoredQuery.getQuery();
     }
 
@@ -134,16 +130,6 @@ public final class DefaultSqlPreparedQuery<E, R> implements SqlPreparedQuery<E, 
             }
             this.query = q.toString();
         }
-    }
-
-    @Override
-    public void bindParameters(Binder binder, E entity, Map<QueryParameterBinding, Object> previousValues) {
-        sqlStoredQuery.bindParameters(binder, this.invocationContext, entity, previousValues);
-    }
-
-    @Override
-    public void bindParameters(Binder binder, InvocationContext<?, ?> invocationContext, E entity, Map<QueryParameterBinding, Object> previousValues) {
-        sqlStoredQuery.bindParameters(binder, this.invocationContext, entity, previousValues);
     }
 
     private int getQueryParameterValueSize(QueryParameterBinding parameter) {

@@ -46,6 +46,7 @@ public class ManyToManyMapper implements NamedAnnotationMapper {
         annotation.enumValue("cascade", Relation.Cascade.class).ifPresent(c ->
                 relationBuilder.member("cascade", c)
         );
+        annotation.stringValue("mappedBy").ifPresent(s -> relationBuilder.member("mappedBy", s));
         AnnotationValue<Relation> ann = relationBuilder.value(Relation.Kind.MANY_TO_MANY).build();
 
         return Collections.singletonList(ann);

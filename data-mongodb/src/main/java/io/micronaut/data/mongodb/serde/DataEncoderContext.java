@@ -27,6 +27,7 @@ import io.micronaut.data.document.serde.IdSerializer;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.convert.AttributeConverter;
+import io.micronaut.data.mongodb.conf.MongoDataConfiguration;
 import io.micronaut.serde.Encoder;
 import io.micronaut.serde.Serializer;
 import io.micronaut.serde.bson.custom.CodecBsonDecoder;
@@ -52,6 +53,7 @@ final class DataEncoderContext implements Serializer.EncoderContext {
 
     private final Argument<ObjectId> OBJECT_ID = Argument.of(ObjectId.class);
 
+    private MongoDataConfiguration mongoDataConfiguration;
     private final AttributeConverterRegistry attributeConverterRegistry;
     private final Argument argument;
     private final RuntimePersistentEntity<Object> runtimePersistentEntity;
@@ -61,17 +63,20 @@ final class DataEncoderContext implements Serializer.EncoderContext {
     /**
      * Default constructor.
      *
+     * @param mongoDataConfiguration     The Mongo Data configuration
      * @param attributeConverterRegistry The AttributeConverterRegistry
      * @param argument                   The argument
      * @param runtimePersistentEntity    The runtime persistent entity
      * @param parent                     The parent context
      * @param codecRegistry              The codec registry
      */
-    DataEncoderContext(AttributeConverterRegistry attributeConverterRegistry,
+    DataEncoderContext(MongoDataConfiguration mongoDataConfiguration,
+                       AttributeConverterRegistry attributeConverterRegistry,
                        Argument argument,
                        RuntimePersistentEntity<Object> runtimePersistentEntity,
                        Serializer.EncoderContext parent,
                        CodecRegistry codecRegistry) {
+        this.mongoDataConfiguration = mongoDataConfiguration;
         this.attributeConverterRegistry = attributeConverterRegistry;
         this.argument = argument;
         this.runtimePersistentEntity = runtimePersistentEntity;
@@ -86,7 +91,7 @@ final class DataEncoderContext implements Serializer.EncoderContext {
 
     @Override
     public boolean hasView(Class<?>... views) {
-        return parent.hasView(views);
+        return this.mongoDataConfiguration.isIgnoreJsonViews() || parent.hasView(views);
     }
 
     @Override

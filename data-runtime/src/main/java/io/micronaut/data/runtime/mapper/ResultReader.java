@@ -23,6 +23,7 @@ import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.DataType;
 
 import java.math.BigDecimal;
+import java.sql.Time;
 import java.util.Date;
 import java.util.UUID;
 
@@ -115,6 +116,8 @@ public interface ResultReader<RS, IDX> {
                 return readByte(resultSet, index);
             case TIMESTAMP:
                 return readTimestamp(resultSet, index);
+            case TIME:
+                return readTime(resultSet, index);
             case DATE:
                 return readDate(resultSet, index);
             case CHARACTER:
@@ -176,6 +179,16 @@ public interface ResultReader<RS, IDX> {
     }
 
     /**
+     * Read a time value for the given index.
+     * @param resultSet The result set
+     * @param index The index (such as the column name)
+     * @return The char value
+     */
+    default Time readTime(RS resultSet, IDX index) {
+        return getRequiredValue(resultSet, index, Time.class);
+    }
+
+    /**
      * Read a string value for the given name.
      * @param resultSet The result set
      * @param name The name (such as the column name)
@@ -234,7 +247,7 @@ public interface ResultReader<RS, IDX> {
     default byte readByte(RS resultSet, IDX name) {
         return getRequiredValue(resultSet, name, byte.class);
     }
-    
+
     /**
      * Read a short value for the given name.
      * @param resultSet The result set

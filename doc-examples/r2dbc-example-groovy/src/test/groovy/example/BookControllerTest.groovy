@@ -10,9 +10,11 @@ import jakarta.inject.Inject
 import org.testcontainers.containers.PostgreSQLContainer
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
+import spock.lang.Retry
 import spock.lang.Shared
 import spock.lang.Specification
 
+@Retry
 @MicronautTest(transactional = false)
 class BookControllerTest extends Specification implements TestPropertyProvider {
 

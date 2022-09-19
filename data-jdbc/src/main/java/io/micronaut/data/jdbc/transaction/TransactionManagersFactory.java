@@ -20,7 +20,6 @@ import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.transaction.SynchronousTransactionManager;
-import io.micronaut.transaction.async.AsyncTransactionOperations;
 import io.micronaut.transaction.async.AsyncUsingSyncTransactionOperations;
 import io.micronaut.transaction.interceptor.CoroutineTxHelper;
 
@@ -37,7 +36,7 @@ import javax.sql.DataSource;
 final class TransactionManagersFactory {
 
     @EachBean(DataSource.class)
-    <T> AsyncTransactionOperations<T> buildAsyncTransactionOperations(@Parameter SynchronousTransactionManager<T> synchronousTransactionManager,
+    <T> AsyncUsingSyncTransactionOperations<T> buildAsyncTransactionOperations(@Parameter SynchronousTransactionManager<T> synchronousTransactionManager,
                                                                       @Nullable CoroutineTxHelper coroutineTxHelper) {
         return new AsyncUsingSyncTransactionOperations<>(synchronousTransactionManager, coroutineTxHelper);
     }

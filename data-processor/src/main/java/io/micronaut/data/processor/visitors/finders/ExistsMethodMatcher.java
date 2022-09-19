@@ -21,7 +21,6 @@ import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQuery;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
-import io.micronaut.data.processor.visitors.MatchContext;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.data.processor.visitors.finders.criteria.QueryCriteriaMethodMatch;
 import io.micronaut.inject.ast.ClassElement;
@@ -43,7 +42,7 @@ public final class ExistsMethodMatcher extends AbstractPatternMethodMatcher {
 
     @Override
     protected MethodMatch match(MethodMatchContext matchContext, java.util.regex.Matcher matcher) {
-        if (isValidExistsReturnType(matchContext)) {
+        if (TypeUtils.isValidExistsReturnType(matchContext)) {
             return new QueryCriteriaMethodMatch(matcher) {
 
                 @Override
@@ -65,12 +64,5 @@ public final class ExistsMethodMatcher extends AbstractPatternMethodMatcher {
             };
         }
         return null;
-    }
-
-    static boolean isValidExistsReturnType(MatchContext matchContext) {
-        return (TypeUtils.doesReturnBoolean(matchContext.getMethodElement()) ||
-                (TypeUtils.isReactiveOrFuture(matchContext.getReturnType()) && TypeUtils.isBoolean(
-                        matchContext.getReturnType().getFirstTypeArgument().orElse(null)
-                )));
     }
 }

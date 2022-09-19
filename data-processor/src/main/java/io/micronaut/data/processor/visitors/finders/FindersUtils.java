@@ -403,6 +403,21 @@ public interface FindersUtils {
         );
     }
 
+    static Map.Entry<ClassElement, ClassElement> pickExistsSpecInterceptor(MethodMatchContext matchContext, ClassElement returnType) {
+        if (isFutureType(matchContext, returnType)) {
+            return typeAndInterceptorEntry(getAsyncType(matchContext, returnType),
+                getInterceptorElement(matchContext, "io.micronaut.data.runtime.intercept.criteria.async.ExistsAsyncSpecificationInterceptor")
+            );
+        } else if (isReactiveType(returnType)) {
+            return typeAndInterceptorEntry(returnType.getFirstTypeArgument().orElse(null),
+                getInterceptorElement(matchContext, "io.micronaut.data.runtime.intercept.criteria.reactive.ExistsReactiveSpecificationInterceptor")
+            );
+        }
+        return typeAndInterceptorEntry(returnType.getType(),
+            getInterceptorElement(matchContext, "io.micronaut.data.runtime.intercept.criteria.ExistsSpecificationInterceptor")
+        );
+    }
+
     static ClassElement getAsyncType(@NonNull MethodMatchContext matchContext,
                                      @NonNull ClassElement returnType) {
         if (matchContext.getMethodElement().isSuspend()) {

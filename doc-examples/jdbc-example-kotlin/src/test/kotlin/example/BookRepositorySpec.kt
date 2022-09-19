@@ -8,6 +8,8 @@ import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import java.util.*
 import jakarta.inject.Inject
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.BeforeEach
 
 @MicronautTest
 class BookRepositorySpec {
@@ -23,6 +25,11 @@ class BookRepositorySpec {
     // tag::metadata[]
     @Inject
     lateinit var beanContext: BeanContext
+
+    @BeforeEach
+    fun cleanup() {
+        bookRepository.deleteAll()
+    }
 
     @Test
     fun testAnnotationMetadata() {

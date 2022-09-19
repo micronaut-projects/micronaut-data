@@ -35,6 +35,7 @@ import java.math.BigInteger;
 import java.net.URI;
 import java.net.URL;
 import java.nio.charset.Charset;
+import java.sql.Time;
 import java.sql.Timestamp;
 import java.time.Year;
 import java.time.YearMonth;
@@ -244,6 +245,13 @@ public class TypeUtils {
                 (type.isAssignable(Boolean.class) || (type.isPrimitive() && type.getName().equals("boolean")));
     }
 
+    public static boolean isValidExistsReturnType(MatchContext context) {
+        return (doesReturnBoolean(context.getMethodElement()) ||
+            (isReactiveOrFuture(context.getReturnType()) && isBoolean(
+                context.getReturnType().getFirstTypeArgument().orElse(null)
+            )));
+    }
+
     /**
      * Retruns true if no type argument is present, a void argument is present or a boolean argument is present.
      * @param type The type
@@ -433,6 +441,9 @@ public class TypeUtils {
                     return DataType.TIMESTAMP;
                 }
             } else if (type.isAssignable(Date.class)) {
+                if (type.isAssignable(Time.class)) {
+                    return DataType.TIME;
+                }
                 if (type.isAssignable(Timestamp.class)) {
                     return DataType.TIMESTAMP;
                 } else {

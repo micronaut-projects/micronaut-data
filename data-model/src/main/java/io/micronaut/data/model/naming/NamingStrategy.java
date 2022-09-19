@@ -29,6 +29,8 @@ import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.function.Function;
 
 
 /**
@@ -113,7 +115,9 @@ public interface NamingStrategy {
             return providedName;
         }
         if (association.isForeignKey()) {
-            return mappedName(association.getOwner().getDecapitalizedName() + association.getAssociatedEntity().getSimpleName());
+            Optional<Association> inverseSide = association.getInverseSide().map(Function.identity());
+            Association owningAssociation = inverseSide.orElse(association);
+            return mappedName(owningAssociation.getOwner().getDecapitalizedName() + owningAssociation.getAssociatedEntity().getSimpleName());
         } else {
             switch (association.getKind()) {
                 case ONE_TO_ONE:

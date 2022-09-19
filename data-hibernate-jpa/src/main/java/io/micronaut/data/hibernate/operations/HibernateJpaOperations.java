@@ -401,7 +401,7 @@ public class HibernateJpaOperations extends AbstractHibernateOperations<Session,
         return transactionOperations.executeWrite(status -> {
             String query = preparedQuery.getQuery();
             Query<?> q = getCurrentSession().createQuery(query);
-            bindParameters(q, preparedQuery, query);
+            bindParameters(q, preparedQuery);
             return Optional.of(q.executeUpdate());
         });
     }

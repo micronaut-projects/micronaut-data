@@ -20,8 +20,6 @@ import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.scheduling.TaskExecutors;
-import io.micronaut.transaction.SynchronousTransactionManager;
-import io.micronaut.transaction.async.AsyncTransactionOperations;
 import io.micronaut.transaction.async.AsyncUsingReactiveTransactionOperations;
 import io.micronaut.transaction.interceptor.CoroutineTxHelper;
 import io.micronaut.transaction.reactive.ReactorReactiveTransactionOperations;
@@ -41,14 +39,16 @@ import java.util.concurrent.ExecutorService;
 final class R2dbcTransactionManagerFactory {
 
     @EachBean(ConnectionFactory.class)
-    <T> SynchronousTransactionManager<T> buildSynchronousTransactionManager(@Parameter ReactorReactiveTransactionOperations<T> reactiveTransactionOperations,
-                                                                            @Named(TaskExecutors.IO) ExecutorService executorService) {
+    <T> SynchronousFromReactiveTransactionManager<T> buildSynchronousTransactionManager(@Parameter String dataSourceName,
+                                                                                        @Parameter ReactorReactiveTransactionOperations<T> reactiveTransactionOperations,
+                                                                                        @Named(TaskExecutors.IO) ExecutorService executorService) {
         return new SynchronousFromReactiveTransactionManager<>(reactiveTransactionOperations, executorService);
     }
 
     @EachBean(ConnectionFactory.class)
-    <T> AsyncTransactionOperations<T> buildAsyncTransactionOperations(@Parameter ReactorReactiveTransactionOperations<T> reactiveTransactionOperations,
-                                                                      @Nullable CoroutineTxHelper coroutineTxHelper) {
+    <T> AsyncUsingReactiveTransactionOperations<T> buildAsyncTransactionOperations(@Parameter String dataSourceName,
+                                                                                   @Parameter ReactorReactiveTransactionOperations<T> reactiveTransactionOperations,
+                                                                                   @Nullable CoroutineTxHelper coroutineTxHelper) {
         return new AsyncUsingReactiveTransactionOperations<>(reactiveTransactionOperations, coroutineTxHelper);
     }
 

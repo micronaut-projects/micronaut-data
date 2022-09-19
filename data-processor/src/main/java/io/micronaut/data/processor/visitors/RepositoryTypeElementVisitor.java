@@ -28,6 +28,7 @@ import io.micronaut.core.order.OrderUtil;
 import io.micronaut.core.reflect.ClassUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
+import io.micronaut.data.annotation.Join;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.annotation.RepositoryConfiguration;
@@ -43,6 +44,7 @@ import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.Slice;
 import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.query.BindingParameter;
+import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.QueryParameterBinding;
 import io.micronaut.data.model.query.builder.QueryResult;
@@ -64,6 +66,7 @@ import io.micronaut.inject.visitor.VisitorContext;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -238,7 +241,6 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
 
             try {
                 SourcePersistentEntity entity = resolvePersistentEntity(element, parametersInRole);
-
                 MethodMatchContext methodMatchContext = new MethodMatchContext(
                         queryEncoder,
                         currentRepository,
@@ -348,6 +350,20 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                                 }
                             }
                     );
+                }
+
+                Collection<JoinPath> joinPaths = queryResult.getJoinPaths();
+                if (CollectionUtils.isNotEmpty(joinPaths)) {
+                    // Only apply the changes if joins aren't empty.
+                    // Implementation might choose to return an empty array to skip the modification of existing annotations.
+                    element.removeAnnotation(Join.class);
+                    joinPaths.forEach(joinPath -> element.annotate(Join.class, builder -> {
+                        builder.member("value", joinPath.getPath())
+                            .member("type", joinPath.getJoinType());
+                        if (joinPath.getAlias().isPresent()) {
+                            builder.member("alias", joinPath.getAlias().get());
+                        }
+                    }));
                 }
             }
         }

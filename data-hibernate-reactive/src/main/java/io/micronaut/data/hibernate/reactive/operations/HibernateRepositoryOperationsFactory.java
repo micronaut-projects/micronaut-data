@@ -30,7 +30,6 @@ import io.micronaut.data.jpa.operations.JpaRepositoryOperations;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.transaction.SynchronousTransactionManager;
-import io.micronaut.transaction.async.AsyncTransactionOperations;
 import io.micronaut.transaction.async.AsyncUsingReactiveTransactionOperations;
 import io.micronaut.transaction.interceptor.CoroutineTxHelper;
 import io.micronaut.transaction.reactive.ReactorReactiveTransactionOperations;
@@ -88,7 +87,7 @@ final class HibernateRepositoryOperationsFactory {
     }
 
     @EachBean(SessionFactory.class)
-    <T> AsyncTransactionOperations<T> buildAsyncTransactionOperations(@Parameter ReactorReactiveTransactionOperations<T> operations,
+    <T> AsyncUsingReactiveTransactionOperations<T> buildAsyncTransactionOperations(@Parameter ReactorReactiveTransactionOperations<T> operations,
                                                                       @Nullable CoroutineTxHelper coroutineTxHelper) {
         return new AsyncUsingReactiveTransactionOperations<>(operations, coroutineTxHelper);
     }

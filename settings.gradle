@@ -1,6 +1,6 @@
 pluginManagement {
     plugins {
-        id 'io.micronaut.build.shared.settings' version getProperty("micronautSharedSettingVersion")
+        id 'io.micronaut.build.shared.settings' version '5.3.14'
     }
     repositories {
         gradlePluginPortal()
@@ -12,7 +12,6 @@ plugins {
     id 'io.micronaut.build.shared.settings'
 }
 
-enableFeaturePreview("VERSION_CATALOGS")
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 dependencyResolutionManagement {
@@ -74,6 +73,8 @@ include 'doc-examples:jdbc-example-kotlin'
 if (JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_15)) {
     include 'doc-examples:jdbc-example-records-java'
 }
+
+include 'doc-examples:jdbc-and-r2dbc-example-java'
 
 include 'doc-examples:r2dbc-example-java'
 include 'doc-examples:r2dbc-example-groovy'

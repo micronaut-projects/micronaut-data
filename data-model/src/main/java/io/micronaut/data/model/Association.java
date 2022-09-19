@@ -15,8 +15,10 @@
  */
 package io.micronaut.data.model;
 
+import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.util.ArrayUtils;
+import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.model.naming.NamingStrategy;
 
@@ -34,7 +36,23 @@ public interface Association extends PersistentProperty {
      * @return The alias name representation.
      */
     default String getAliasName() {
+        AnnotationValue<MappedProperty> mappedProperty = getAnnotation(MappedProperty.class);
+        if (mappedProperty != null) {
+            Optional<String> alias = mappedProperty.stringValue("alias");
+            if (alias.isPresent()) {
+                return alias.get();
+            }
+        }
         return NamingStrategy.DEFAULT.mappedName(getName()) + "_";
+    }
+
+    /**
+     * @since 3.8
+     * @return whether this Association has a declared alias name
+     */
+    default boolean hasDeclaredAliasName() {
+        AnnotationValue<MappedProperty> mappedProperty = getAnnotation(MappedProperty.class);
+        return mappedProperty != null && mappedProperty.stringValue("alias").isPresent();
     }
 
     /**

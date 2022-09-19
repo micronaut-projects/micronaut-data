@@ -342,7 +342,7 @@ final class DefaultHibernateReactiveRepositoryOperations extends AbstractHiberna
         return operation(session -> {
             String query = preparedQuery.getQuery();
             Stage.Query<Object> q = session.createQuery(query);
-            bindParameters(q, preparedQuery, query);
+            bindParameters(q, preparedQuery);
             Mono<Number> result = helper.executeUpdate(q).cast(Number.class);
             return flushIfNecessary(result, session, preparedQuery.getAnnotationMetadata());
         });
