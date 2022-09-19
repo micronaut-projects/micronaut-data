@@ -26,8 +26,8 @@
     catch(err) {
     }
 //-->
-var data = {"i0":6,"i1":18,"i2":6,"i3":6,"i4":6};
-var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],4:["t3","Abstract Methods"],16:["t5","Default Methods"]};
+var data = {"i0":6,"i1":6};
+var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],4:["t3","Abstract Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
 var tableTab = "tableTab";
@@ -128,13 +128,17 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 </dl>
 <dl>
 <dt>All Superinterfaces:</dt>
-<dd><code>io.micronaut.core.annotation.AnnotationMetadataProvider</code>, <code>io.micronaut.core.annotation.AnnotationSource</code>, <code>io.micronaut.core.attr.AttributeHolder</code>, <code>io.micronaut.core.naming.Named</code>, <code><a href="../../../../model/runtime/PagedQuery.html" title="interface in io.micronaut.data.model.runtime">PagedQuery</a>&lt;E&gt;</code>, <code><a href="../../../../model/runtime/PreparedDataOperation.html" title="interface in io.micronaut.data.model.runtime">PreparedDataOperation</a>&lt;R&gt;</code>, <code><a href="../../../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;E,&#8203;R&gt;</code>, <code><a href="SqlStoredQuery.html" title="interface in io.micronaut.data.runtime.operations.internal.sql">SqlStoredQuery</a>&lt;E,&#8203;R&gt;</code>, <code><a href="../../../../model/runtime/StoredDataOperation.html" title="interface in io.micronaut.data.model.runtime">StoredDataOperation</a>&lt;R&gt;</code>, <code><a href="../../../../model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;E,&#8203;R&gt;</code></dd>
+<dd><code>io.micronaut.core.annotation.AnnotationMetadataProvider</code>, <code>io.micronaut.core.annotation.AnnotationSource</code>, <code>io.micronaut.core.attr.AttributeHolder</code>, <code><a href="../query/BindableParametersPreparedQuery.html" title="interface in io.micronaut.data.runtime.operations.internal.query">BindableParametersPreparedQuery</a>&lt;E,&#8203;R&gt;</code>, <code><a href="../query/BindableParametersStoredQuery.html" title="interface in io.micronaut.data.runtime.operations.internal.query">BindableParametersStoredQuery</a>&lt;E,&#8203;R&gt;</code>, <code>io.micronaut.core.naming.Named</code>, <code><a href="../../../../model/runtime/PagedQuery.html" title="interface in io.micronaut.data.model.runtime">PagedQuery</a>&lt;E&gt;</code>, <code><a href="../query/PersistentEntityAwareQuery.html" title="interface in io.micronaut.data.runtime.operations.internal.query">PersistentEntityAwareQuery</a>&lt;E&gt;</code>, <code><a href="../../../../model/runtime/PreparedDataOperation.html" title="interface in io.micronaut.data.model.runtime">PreparedDataOperation</a>&lt;R&gt;</code>, <code><a href="../../../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;E,&#8203;R&gt;</code>, <code><a href="SqlStoredQuery.html" title="interface in io.micronaut.data.runtime.operations.internal.sql">SqlStoredQuery</a>&lt;E,&#8203;R&gt;</code>, <code><a href="../../../../model/runtime/StoredDataOperation.html" title="interface in io.micronaut.data.model.runtime">StoredDataOperation</a>&lt;R&gt;</code>, <code><a href="../../../../model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;E,&#8203;R&gt;</code></dd>
+</dl>
+<dl>
+<dt>All Known Implementing Classes:</dt>
+<dd><code><a href="DefaultSqlPreparedQuery.html" title="class in io.micronaut.data.runtime.operations.internal.sql">DefaultSqlPreparedQuery</a></code></dd>
 </dl>
 <hr>
 <pre>@Internal
 public interface <span class="typeNameLabel">SqlPreparedQuery&lt;E,&#8203;R&gt;</span>
-extends <a href="../../../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;E,&#8203;R&gt;, <a href="SqlStoredQuery.html" title="interface in io.micronaut.data.runtime.operations.internal.sql">SqlStoredQuery</a>&lt;E,&#8203;R&gt;</pre>
-<div class="block">SQL version of <a href="../../../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime"><code>PreparedQuery</code></a>.
+extends <a href="../query/BindableParametersPreparedQuery.html" title="interface in io.micronaut.data.runtime.operations.internal.query">BindableParametersPreparedQuery</a>&lt;E,&#8203;R&gt;, <a href="SqlStoredQuery.html" title="interface in io.micronaut.data.runtime.operations.internal.sql">SqlStoredQuery</a>&lt;E,&#8203;R&gt;</pre>
+<div class="block">SQL version of <a href="SqlStoredQuery.html" title="interface in io.micronaut.data.runtime.operations.internal.sql"><code>SqlStoredQuery</code></a>.
  The instance of a prepared query has mutable state compared to a stored query.</div>
 <dl>
 <dt><span class="simpleTagLabel">Since:</span></dt>
@@ -156,11 +160,11 @@ extends <a href="../../../../model/runtime/PreparedQuery.html" title="interface 
 </a>
 <h3>Nested Class Summary</h3>
 <ul class="blockList">
-<li class="blockList"><a id="nested.classes.inherited.from.class.io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery">
+<li class="blockList"><a id="nested.classes.inherited.from.class.io.micronaut.data.runtime.operations.internal.query.BindableParametersStoredQuery">
 <!--   -->
 </a>
-<h3>Nested classes/interfaces inherited from interface&nbsp;io.micronaut.data.runtime.operations.internal.sql.<a href="SqlStoredQuery.html" title="interface in io.micronaut.data.runtime.operations.internal.sql">SqlStoredQuery</a></h3>
-<code><a href="SqlStoredQuery.Binder.html" title="interface in io.micronaut.data.runtime.operations.internal.sql">SqlStoredQuery.Binder</a></code></li>
+<h3>Nested classes/interfaces inherited from interface&nbsp;io.micronaut.data.runtime.operations.internal.query.<a href="../query/BindableParametersStoredQuery.html" title="interface in io.micronaut.data.runtime.operations.internal.query">BindableParametersStoredQuery</a></h3>
+<code><a href="../query/BindableParametersStoredQuery.Binder.html" title="interface in io.micronaut.data.runtime.operations.internal.query">BindableParametersStoredQuery.Binder</a></code></li>
 </ul>
 </li>
 </ul>
@@ -190,7 +194,7 @@ extends <a href="../../../../model/runtime/PreparedQuery.html" title="interface 
 </a>
 <h3>Method Summary</h3>
 <table class="memberSummary">
-<caption><span id="t0" class="activeTableTab"><span>All Methods</span><span class="tabEnd">&nbsp;</span></span><span id="t2" class="tableTab"><span><a href="javascript:show(2);">Instance Methods</a></span><span class="tabEnd">&nbsp;</span></span><span id="t3" class="tableTab"><span><a href="javascript:show(4);">Abstract Methods</a></span><span class="tabEnd">&nbsp;</span></span><span id="t5" class="tableTab"><span><a href="javascript:show(16);">Default Methods</a></span><span class="tabEnd">&nbsp;</span></span></caption>
+<caption><span id="t0" class="activeTableTab"><span>All Methods</span><span class="tabEnd">&nbsp;</span></span><span id="t2" class="tableTab"><span><a href="javascript:show(2);">Instance Methods</a></span><span class="tabEnd">&nbsp;</span></span><span id="t3" class="tableTab"><span><a href="javascript:show(4);">Abstract Methods</a></span><span class="tabEnd">&nbsp;</span></span></caption>
 <tr>
 <th class="colFirst" scope="col">Modifier and Type</th>
 <th class="colSecond" scope="col">Method</th>
@@ -205,27 +209,6 @@ extends <a href="../../../../model/runtime/PreparedQuery.html" title="interface 
 </td>
 </tr>
 <tr id="i1" class="rowColor">
-<td class="colFirst"><code>default void</code></td>
-<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#bindParameters(io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery.Binder)">bindParameters</a></span>&#8203;(<a href="SqlStoredQuery.Binder.html" title="interface in io.micronaut.data.runtime.operations.internal.sql">SqlStoredQuery.Binder</a>&nbsp;binder)</code></th>
-<td class="colLast">
-<div class="block">Bind query parameters.</div>
-</td>
-</tr>
-<tr id="i2" class="altColor">
-<td class="colFirst"><code>void</code></td>
-<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#bindParameters(io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery.Binder,E,java.util.Map)">bindParameters</a></span>&#8203;(<a href="SqlStoredQuery.Binder.html" title="interface in io.micronaut.data.runtime.operations.internal.sql">SqlStoredQuery.Binder</a>&nbsp;binder,
-              <a href="SqlPreparedQuery.html" title="type parameter in SqlPreparedQuery">E</a>&nbsp;entity,
-              java.util.Map&lt;<a href="../../../../model/runtime/QueryParameterBinding.html" title="interface in io.micronaut.data.model.runtime">QueryParameterBinding</a>,&#8203;java.lang.Object&gt;&nbsp;previousValues)</code></th>
-<td class="colLast">
-<div class="block">Bind query parameters.</div>
-</td>
-</tr>
-<tr id="i3" class="rowColor">
-<td class="colFirst"><code><a href="../../../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;<a href="SqlPreparedQuery.html" title="type parameter in SqlPreparedQuery">E</a>&gt;</code></td>
-<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getPersistentEntity()">getPersistentEntity</a></span>()</code></th>
-<td class="colLast">&nbsp;</td>
-</tr>
-<tr id="i4" class="altColor">
 <td class="colFirst"><code>void</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#prepare(E)">prepare</a></span>&#8203;(<a href="SqlPreparedQuery.html" title="type parameter in SqlPreparedQuery">E</a>&nbsp;entity)</code></th>
 <td class="colLast">
@@ -255,6 +238,20 @@ extends <a href="../../../../model/runtime/PreparedQuery.html" title="interface 
 <code>getAttribute, getAttribute, getAttributes</code></li>
 </ul>
 <ul class="blockList">
+<li class="blockList"><a id="methods.inherited.from.class.io.micronaut.data.runtime.operations.internal.query.BindableParametersPreparedQuery">
+<!--   -->
+</a>
+<h3>Methods inherited from interface&nbsp;io.micronaut.data.runtime.operations.internal.query.<a href="../query/BindableParametersPreparedQuery.html" title="interface in io.micronaut.data.runtime.operations.internal.query">BindableParametersPreparedQuery</a></h3>
+<code><a href="../query/BindableParametersPreparedQuery.html#bindParameters(io.micronaut.data.runtime.operations.internal.query.BindableParametersStoredQuery.Binder)">bindParameters</a>, <a href="../query/BindableParametersPreparedQuery.html#bindParameters(io.micronaut.data.runtime.operations.internal.query.BindableParametersStoredQuery.Binder,E,java.util.Map)">bindParameters</a></code></li>
+</ul>
+<ul class="blockList">
+<li class="blockList"><a id="methods.inherited.from.class.io.micronaut.data.runtime.operations.internal.query.BindableParametersStoredQuery">
+<!--   -->
+</a>
+<h3>Methods inherited from interface&nbsp;io.micronaut.data.runtime.operations.internal.query.<a href="../query/BindableParametersStoredQuery.html" title="interface in io.micronaut.data.runtime.operations.internal.query">BindableParametersStoredQuery</a></h3>
+<code><a href="../query/BindableParametersStoredQuery.html#bindParameters(io.micronaut.data.runtime.operations.internal.query.BindableParametersStoredQuery.Binder,io.micronaut.aop.InvocationContext,E,java.util.Map)">bindParameters</a></code></li>
+</ul>
+<ul class="blockList">
 <li class="blockList"><a id="methods.inherited.from.class.io.micronaut.core.naming.Named">
 <!--   -->
 </a>
@@ -267,6 +264,13 @@ extends <a href="../../../../model/runtime/PreparedQuery.html" title="interface 
 </a>
 <h3>Methods inherited from interface&nbsp;io.micronaut.data.model.runtime.<a href="../../../../model/runtime/PagedQuery.html" title="interface in io.micronaut.data.model.runtime">PagedQuery</a></h3>
 <code><a href="../../../../model/runtime/PagedQuery.html#getPageable()">getPageable</a>, <a href="../../../../model/runtime/PagedQuery.html#getRootEntity()">getRootEntity</a></code></li>
+</ul>
+<ul class="blockList">
+<li class="blockList"><a id="methods.inherited.from.class.io.micronaut.data.runtime.operations.internal.query.PersistentEntityAwareQuery">
+<!--   -->
+</a>
+<h3>Methods inherited from interface&nbsp;io.micronaut.data.runtime.operations.internal.query.<a href="../query/PersistentEntityAwareQuery.html" title="interface in io.micronaut.data.runtime.operations.internal.query">PersistentEntityAwareQuery</a></h3>
+<code><a href="../query/PersistentEntityAwareQuery.html#getPersistentEntity()">getPersistentEntity</a></code></li>
 </ul>
 <ul class="blockList">
 <li class="blockList"><a id="methods.inherited.from.class.io.micronaut.data.model.runtime.PreparedDataOperation">
@@ -287,7 +291,7 @@ extends <a href="../../../../model/runtime/PreparedQuery.html" title="interface 
 <!--   -->
 </a>
 <h3>Methods inherited from interface&nbsp;io.micronaut.data.runtime.operations.internal.sql.<a href="SqlStoredQuery.html" title="interface in io.micronaut.data.runtime.operations.internal.sql">SqlStoredQuery</a></h3>
-<code><a href="SqlStoredQuery.html#bindParameters(io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery.Binder,io.micronaut.aop.InvocationContext,E,java.util.Map)">bindParameters</a>, <a href="SqlStoredQuery.html#collectAutoPopulatedPreviousValues(E)">collectAutoPopulatedPreviousValues</a>, <a href="SqlStoredQuery.html#getDialect()">getDialect</a>, <a href="SqlStoredQuery.html#getQueryBuilder()">getQueryBuilder</a>, <a href="SqlStoredQuery.html#isExpandableQuery()">isExpandableQuery</a></code></li>
+<code><a href="SqlStoredQuery.html#collectAutoPopulatedPreviousValues(E)">collectAutoPopulatedPreviousValues</a>, <a href="SqlStoredQuery.html#getDialect()">getDialect</a>, <a href="SqlStoredQuery.html#getQueryBuilder()">getQueryBuilder</a>, <a href="SqlStoredQuery.html#isExpandableQuery()">isExpandableQuery</a></code></li>
 </ul>
 <ul class="blockList">
 <li class="blockList"><a id="methods.inherited.from.class.io.micronaut.data.model.runtime.StoredDataOperation">
@@ -319,21 +323,6 @@ extends <a href="../../../../model/runtime/PreparedQuery.html" title="interface 
 <!--   -->
 </a>
 <h3>Method Detail</h3>
-<a id="getPersistentEntity()">
-<!--   -->
-</a>
-<ul class="blockList">
-<li class="blockList">
-<h4>getPersistentEntity</h4>
-<pre class="methodSignature"><a href="../../../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;<a href="SqlPreparedQuery.html" title="type parameter in SqlPreparedQuery">E</a>&gt;&nbsp;getPersistentEntity()</pre>
-<dl>
-<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
-<dd><code><a href="SqlStoredQuery.html#getPersistentEntity()">getPersistentEntity</a></code>&nbsp;in interface&nbsp;<code><a href="SqlStoredQuery.html" title="interface in io.micronaut.data.runtime.operations.internal.sql">SqlStoredQuery</a>&lt;<a href="SqlPreparedQuery.html" title="type parameter in SqlPreparedQuery">E</a>,&#8203;<a href="SqlPreparedQuery.html" title="type parameter in SqlPreparedQuery">R</a>&gt;</code></dd>
-<dt><span class="returnLabel">Returns:</span></dt>
-<dd>The persistent entity</dd>
-</dl>
-</li>
-</ul>
 <a id="prepare(java.lang.Object)">
 <!--   -->
 </a><a id="prepare(E)">
@@ -354,7 +343,7 @@ extends <a href="../../../../model/runtime/PreparedQuery.html" title="interface 
 <a id="attachPageable(io.micronaut.data.model.Pageable,boolean)">
 <!--   -->
 </a>
-<ul class="blockList">
+<ul class="blockListLast">
 <li class="blockList">
 <h4>attachPageable</h4>
 <pre class="methodSignature">void&nbsp;attachPageable&#8203;(<a href="../../../../model/Pageable.html" title="interface in io.micronaut.data.model">Pageable</a>&nbsp;pageable,
@@ -364,42 +353,6 @@ extends <a href="../../../../model/runtime/PreparedQuery.html" title="interface 
 <dt><span class="paramLabel">Parameters:</span></dt>
 <dd><code>pageable</code> - The pageable</dd>
 <dd><code>isSingleResult</code> - is single result</dd>
-</dl>
-</li>
-</ul>
-<a id="bindParameters(io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery.Binder,java.lang.Object,java.util.Map)">
-<!--   -->
-</a><a id="bindParameters(io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery.Binder,E,java.util.Map)">
-<!--   -->
-</a>
-<ul class="blockList">
-<li class="blockList">
-<h4>bindParameters</h4>
-<pre class="methodSignature">void&nbsp;bindParameters&#8203;(<a href="SqlStoredQuery.Binder.html" title="interface in io.micronaut.data.runtime.operations.internal.sql">SqlStoredQuery.Binder</a>&nbsp;binder,
-                    @Nullable
-                    <a href="SqlPreparedQuery.html" title="type parameter in SqlPreparedQuery">E</a>&nbsp;entity,
-                    @Nullable
-                    java.util.Map&lt;<a href="../../../../model/runtime/QueryParameterBinding.html" title="interface in io.micronaut.data.model.runtime">QueryParameterBinding</a>,&#8203;java.lang.Object&gt;&nbsp;previousValues)</pre>
-<div class="block">Bind query parameters.</div>
-<dl>
-<dt><span class="paramLabel">Parameters:</span></dt>
-<dd><code>binder</code> - The binder</dd>
-<dd><code>entity</code> - The entity</dd>
-<dd><code>previousValues</code> - The previous auto-populated collected values</dd>
-</dl>
-</li>
-</ul>
-<a id="bindParameters(io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery.Binder)">
-<!--   -->
-</a>
-<ul class="blockListLast">
-<li class="blockList">
-<h4>bindParameters</h4>
-<pre class="methodSignature">default&nbsp;void&nbsp;bindParameters&#8203;(<a href="SqlStoredQuery.Binder.html" title="interface in io.micronaut.data.runtime.operations.internal.sql">SqlStoredQuery.Binder</a>&nbsp;binder)</pre>
-<div class="block">Bind query parameters.</div>
-<dl>
-<dt><span class="paramLabel">Parameters:</span></dt>
-<dd><code>binder</code> - The binder</dd>
 </dl>
 </li>
 </ul>

@@ -26,7 +26,7 @@
     catch(err) {
     }
 //-->
-var data = {"i0":18,"i1":18,"i2":6,"i3":18,"i4":18,"i5":18,"i6":18,"i7":18};
+var data = {"i0":18,"i1":18,"i2":6,"i3":18,"i4":18,"i5":18,"i6":18,"i7":18,"i8":18};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],4:["t3","Abstract Methods"],16:["t5","Default Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -220,12 +220,17 @@ extends <a href="PersistentProperty.html" title="interface in io.micronaut.data.
 </tr>
 <tr id="i6" class="altColor">
 <td class="colFirst"><code>default boolean</code></td>
+<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#hasDeclaredAliasName()">hasDeclaredAliasName</a></span>()</code></th>
+<td class="colLast">&nbsp;</td>
+</tr>
+<tr id="i7" class="rowColor">
+<td class="colFirst"><code>default boolean</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#isBidirectional()">isBidirectional</a></span>()</code></th>
 <td class="colLast">
 <div class="block">Whether the relationship is bidirectional.</div>
 </td>
 </tr>
-<tr id="i7" class="rowColor">
+<tr id="i8" class="altColor">
 <td class="colFirst"><code>default boolean</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#isForeignKey()">isForeignKey</a></span>()</code></th>
 <td class="colLast">&nbsp;</td>
@@ -285,6 +290,21 @@ extends <a href="PersistentProperty.html" title="interface in io.micronaut.data.
 <dl>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>The alias name representation.</dd>
+</dl>
+</li>
+</ul>
+<a id="hasDeclaredAliasName()">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>hasDeclaredAliasName</h4>
+<pre class="methodSignature">default&nbsp;boolean&nbsp;hasDeclaredAliasName()</pre>
+<dl>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>whether this Association has a declared alias name</dd>
+<dt><span class="simpleTagLabel">Since:</span></dt>
+<dd>3.8</dd>
 </dl>
 </li>
 </ul>

@@ -103,6 +103,7 @@ io.micronaut.data.runtime.mapper
 io.micronaut.data.runtime.mapper.sql
 io.micronaut.data.runtime.operations
 io.micronaut.data.runtime.operations.internal
+io.micronaut.data.runtime.operations.internal.query
 io.micronaut.data.runtime.operations.internal.sql
 io.micronaut.data.runtime.query
 io.micronaut.data.runtime.query.internal
