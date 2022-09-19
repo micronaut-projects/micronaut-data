@@ -15,11 +15,13 @@
  */
 package io.micronaut.data.model.query.builder.sql;
 
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Creator;
 import io.micronaut.core.annotation.Experimental;
+import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
@@ -29,7 +31,6 @@ import io.micronaut.data.annotation.Index;
 import io.micronaut.data.annotation.Indexes;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.annotation.MappedEntity;
-import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.annotation.sql.SqlMembers;
@@ -50,8 +51,6 @@ import io.micronaut.data.model.query.builder.QueryParameterBinding;
 import io.micronaut.data.model.query.builder.QueryResult;
 
 import java.lang.annotation.Annotation;
-import java.sql.Blob;
-import java.sql.Clob;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -64,7 +63,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.OptionalInt;
 import java.util.StringJoiner;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
@@ -77,7 +75,7 @@ import static io.micronaut.data.annotation.GeneratedValue.Type.AUTO;
 import static io.micronaut.data.annotation.GeneratedValue.Type.IDENTITY;
 import static io.micronaut.data.annotation.GeneratedValue.Type.SEQUENCE;
 import static io.micronaut.data.annotation.GeneratedValue.Type.UUID;
-
+import static io.micronaut.data.model.query.builder.sql.SqlQueryBuilderUtils.addTypeToColumn;
 /**
  * Implementation of {@link QueryBuilder} that builds SQL queries.
  *
@@ -284,7 +282,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
             String columns = Stream.concat(leftJoinColumns.stream(), rightJoinColumns.stream())
                     .map(columnName -> escape ? quote(columnName) : columnName)
                     .collect(Collectors.joining(","));
-            String placeholders = IntStream.range(0, leftJoinColumns.size() + rightJoinColumns.size()).mapToObj(i -> "?").collect(Collectors.joining(","));
+            String placeholders = IntStream.range(0, leftJoinColumns.size() + rightJoinColumns.size()).mapToObj(i -> formatParameter(i + 1).toString()).collect(Collectors.joining(","));
             return INSERT_INTO + quote(joinTableName) + " (" + columns + ") VALUES (" + placeholders + ")";
         }
     }
@@ -367,7 +365,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                             columnName = quote(columnName);
                         }
                         joinTableBuilder
-                                .append(addTypeToColumn(pp.getProperty(), columnName, true))
+                                .append(addTypeToColumn(pp.getProperty(), columnName, dialect, true))
                                 .append(',');
                     }
                 } else {
@@ -377,7 +375,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                             columnName = quote(columnName);
                         }
                         joinTableBuilder
-                                .append(addTypeToColumn(pp.getProperty(), columnName, true))
+                                .append(addTypeToColumn(pp.getProperty(), columnName, dialect, true))
                                 .append(',');
                     }
                 }
@@ -389,7 +387,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                             columnName = quote(columnName);
                         }
                         joinTableBuilder
-                                .append(addTypeToColumn(pp.getProperty(), columnName, true))
+                                .append(addTypeToColumn(pp.getProperty(), columnName, dialect, true))
                                 .append(',');
                     }
                 } else {
@@ -399,7 +397,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                             columnName = quote(columnName);
                         }
                         joinTableBuilder
-                                .append(addTypeToColumn(pp.getProperty(), columnName, true))
+                                .append(addTypeToColumn(pp.getProperty(), columnName, dialect, true))
                                 .append(',');
                     }
                 }
@@ -435,7 +433,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                 }
                 primaryColumnsName.add(column);
 
-                column = addTypeToColumn(pp.getProperty(), column, isRequired(pp.getAssociations(), pp.getProperty()));
+                column = addTypeToColumn(pp.getProperty(), column, dialect, isRequired(pp.getAssociations(), pp.getProperty()));
                 if (isNotForeign(pp.getAssociations())) {
                     column = addGeneratedStatementToColumn(pp.getProperty(), column, !finalGeneratePkAfterColumns);
                 }
@@ -448,7 +446,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
             if (escape) {
                 column = quote(column);
             }
-            column = addTypeToColumn(version, column, true);
+            column = addTypeToColumn(version, column, dialect, true);
             columns.add(column);
         }
 
@@ -457,7 +455,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
             if (escape) {
                 column = quote(column);
             }
-            column = addTypeToColumn(property, column, isRequired(associations, property));
+            column = addTypeToColumn(property, column, dialect, isRequired(associations, property));
             if (isNotForeign(associations)) {
                 column = addGeneratedStatementToColumn(property, column, false);
             }
@@ -751,12 +749,19 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         QueryModel queryModel = queryState.getQueryModel();
 
         Collection<JoinPath> allPaths = queryModel.getJoinPaths();
+        selectAllColumnsFromJoinPaths(queryState, queryBuffer, allPaths, null);
+    }
+
+    @Internal
+    @Override
+    protected void selectAllColumnsFromJoinPaths(QueryState queryState,
+                                                 StringBuilder queryBuffer,
+                                                 Collection<JoinPath> allPaths,
+                                                 @Nullable
+                                                 Map<JoinPath, String> joinAliasOverride) {
         if (CollectionUtils.isNotEmpty(allPaths)) {
 
-            Collection<JoinPath> joinPaths = allPaths.stream().filter(jp -> {
-                Join.Type jt = jp.getJoinType();
-                return jt.name().contains("FETCH");
-            }).collect(Collectors.toList());
+            Collection<JoinPath> joinPaths = allPaths.stream().filter(jp -> jp.getJoinType().isFetch()).collect(Collectors.toList());
 
             if (CollectionUtils.isNotEmpty(joinPaths)) {
                 for (JoinPath joinPath : joinPaths) {
@@ -769,8 +774,9 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                     PersistentEntity associatedEntity = association.getAssociatedEntity();
                     NamingStrategy namingStrategy = associatedEntity.getNamingStrategy();
 
-                    String aliasName = getAliasName(joinPath);
-                    String joinPathAlias = getPathOnlyAliasName(joinPath);
+                    String joinAlias = joinAliasOverride == null ? getAliasName(joinPath) : joinAliasOverride.get(joinPath);
+                    Objects.requireNonNull(joinAlias);
+                    String columnPrefixName = getPathOnlyAliasName(joinPath);
 
                     queryBuffer.append(COMMA);
 
@@ -790,14 +796,14 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                         String columnAlias = getColumnAlias(prop);
 
                         queryBuffer
-                                .append(aliasName)
+                                .append(joinAlias)
                                 .append(DOT)
                                 .append(queryState.shouldEscape() ? quote(columnName) : columnName)
                                 .append(AS_CLAUSE);
                         if (StringUtils.isNotEmpty(columnAlias)) {
                             queryBuffer.append(columnAlias);
                         } else {
-                            queryBuffer.append(joinPathAlias).append(columnName);
+                            queryBuffer.append(joinPathAlias).append(columnPrefixName).append(columnName);
                         }
                         queryBuffer.append(COMMA);
                     });
@@ -2046,8 +2052,6 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
             this.index = index;
             this.tableName = tableName;
         }
-
-        ;
     }
 
 }

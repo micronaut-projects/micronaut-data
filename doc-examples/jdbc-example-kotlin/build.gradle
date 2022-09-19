@@ -37,4 +37,7 @@ dependencies {
 
     runtimeOnly "ch.qos.logback:logback-classic"
     runtimeOnly "com.h2database:h2"
+
+    testImplementation "io.micronaut.test:micronaut-test-kotest"
+
 }
