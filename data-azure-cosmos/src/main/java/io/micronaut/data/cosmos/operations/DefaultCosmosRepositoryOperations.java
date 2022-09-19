@@ -130,7 +130,6 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
         this.database = initDatabase(configuration);
     }
 
-
     private CosmosDatabase initDatabase(CosmosDatabaseConfiguration configuration) {
         CosmosDatabaseResponse databaseResponse;
         ThroughputProperties throughputProperties = createThroughputProperties(configuration);

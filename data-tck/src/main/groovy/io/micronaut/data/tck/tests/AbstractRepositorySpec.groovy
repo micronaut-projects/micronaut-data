@@ -31,6 +31,7 @@ import io.micronaut.data.tck.entities.BasicTypes
 import io.micronaut.data.tck.entities.Book
 import io.micronaut.data.tck.entities.BookDto
 import io.micronaut.data.tck.entities.Car
+import io.micronaut.data.tck.entities.Chapter
 import io.micronaut.data.tck.entities.City
 import io.micronaut.data.tck.entities.Company
 import io.micronaut.data.tck.entities.Country
@@ -69,10 +70,11 @@ import java.util.concurrent.TimeUnit
 import java.util.stream.Collectors
 
 import static io.micronaut.data.repository.jpa.criteria.QuerySpecification.where
+import static io.micronaut.data.tck.repositories.BookSpecifications.hasChapter
+import static io.micronaut.data.tck.repositories.BookSpecifications.titleEquals
+import static io.micronaut.data.tck.repositories.BookSpecifications.titleEqualsWithJoin
 import static io.micronaut.data.tck.repositories.PersonRepository.Specifications.idsIn
 import static io.micronaut.data.tck.repositories.PersonRepository.Specifications.nameEquals
-import static io.micronaut.data.tck.repositories.BookSpecifications.titleEquals
-import static io.micronaut.data.tck.repositories.BookSpecifications.justJoin
 
 abstract class AbstractRepositorySpec extends Specification {
 
@@ -97,6 +99,7 @@ abstract class AbstractRepositorySpec extends Specification {
     abstract CarRepository getCarRepository()
     abstract BasicTypesRepository getBasicTypeRepository()
     abstract TimezoneBasicTypesRepository getTimezoneBasicTypeRepository()
+    abstract PageRepository getPageRepository()
 
     abstract Map<String, String> getProperties()
 
@@ -310,6 +313,7 @@ abstract class AbstractRepositorySpec extends Specification {
         retrievedBook.zonedDateTimeWithTimezone == book.zonedDateTimeWithTimezone
         retrievedBook.offsetDateTime == book.offsetDateTime
         retrievedBook.offsetDateTimeWithTimezone == book.offsetDateTimeWithTimezone
+        retrievedBook.time == book.time
 
         when:
         def retrievedBookProj = timezoneBasicTypeRepository.queryById(book.myId)
@@ -327,6 +331,7 @@ abstract class AbstractRepositorySpec extends Specification {
         retrievedBookProj.localDateTime == book.localDateTime
         retrievedBookProj.zonedDateTime == book.zonedDateTime
         retrievedBookProj.offsetDateTime == book.offsetDateTime
+        retrievedBookProj.time == book.time
 
         when:
         retrievedBookProj = timezoneBasicTypeRepository.findAllById(book.myId).iterator().next()
@@ -344,6 +349,7 @@ abstract class AbstractRepositorySpec extends Specification {
         retrievedBookProj.localDateTime == book.localDateTime
         retrievedBookProj.zonedDateTime == book.zonedDateTime
         retrievedBookProj.offsetDateTime == book.offsetDateTime
+        retrievedBookProj.time == book.time
     }
 
     @IgnoreIf({ !jvm.isJava11Compatible() })
@@ -2135,6 +2141,18 @@ abstract class AbstractRepositorySpec extends Specification {
             def loadedFood = foodRepository.findOne(FoodRepository.Specifications.keyEquals(food.key)).get()
             loadedFood.key == food.key
             loadedFood.longName == food.longName
+        when:
+            savePersons(["Jeff"])
+            def existsPredicateSpec = personRepository.exists(nameEquals("Jeff"))
+            def existsNotPredicateSpec = personRepository.exists(nameEquals("NotJeff"))
+            def existsQuerySpec = personRepository.exists(where(nameEquals("Jeff")))
+        def existsNotQuerySpec = personRepository.exists(where(nameEquals("NotJeff")))
+        then:
+            existsPredicateSpec
+            !existsNotPredicateSpec
+            existsQuerySpec
+            !existsNotQuerySpec
+
     }
 
     void "test join/fetch"() {
@@ -2146,24 +2164,177 @@ abstract class AbstractRepositorySpec extends Specification {
         def book = new Book()
         book.setTitle("1984")
         book.setGenre(genre)
+        def ch1 = new Chapter()
+        ch1.setTitle("Ch1")
+        ch1.setPages(10)
+        book.getChapters().add(ch1)
+        def ch2 = new Chapter()
+        ch2.setTitle("Ch2")
+        ch2.setPages(5)
+        book.getChapters().add(ch2)
         bookRepository.save(book)
 
         when:
-        def bookLoadedUsingFindAll = bookRepository.findAllByGenre(genre).get(0)
+        def bookLoadedUsingFindAllByGenre = bookRepository.findAllByGenre(genre).get(0)
         def bookLoadedUsingFindOneWithCriteriaApi = bookRepository.findOne(titleEquals(book.title)).get()
         def bookNotFoundUsingFindOneWithCriteriaApi = bookRepository.findOne(titleEquals("non_existing_book_" + System.currentTimeMillis()))
         def bookLoadedUsingFindAllWithCriteriaApi = bookRepository.findAll(titleEquals(book.title)).get(0)
-        def bookLoadedUsingFindAllWithCriteriaApiJoinOnly = bookRepository.findAll(justJoin()).get(0)
+        def bookLoadedUsingFindAllByCriteriaWithoutAnnotationJoin = bookRepository.findAllByCriteria(titleEqualsWithJoin(book.title)).get(0)
+        def bookLoadedUsingFindAllWithCriteriaApiAndJoins = bookRepository.findAll(titleEqualsWithJoin(book.title)).get(0)
+        def bookLoadedUsingJoinCriteriaByChapterTitle = bookRepository.findOne(hasChapter("Ch1"))
+        def bookNotLoadedUsingJoinCriteriaByChapterTitle = bookRepository.findOne(hasChapter("Ch32"))
+        def booksLoadedByChapterTitleQuery = bookRepository.findAllByChaptersTitle("Ch1")
+        def booksLoadedByChapterTitleAndBookTitleQuery = bookRepository.findAllByChaptersTitleAndTitle("Ch1", book.title)
 
         then:
-        bookLoadedUsingFindAll.genre.genreName != null
+        bookLoadedUsingFindAllByGenre.genre.genreName != null
         bookLoadedUsingFindOneWithCriteriaApi != null
         bookLoadedUsingFindOneWithCriteriaApi.genre.genreName == genre.genreName
         bookNotFoundUsingFindOneWithCriteriaApi.present == false
         bookLoadedUsingFindAllWithCriteriaApi != null
         bookLoadedUsingFindAllWithCriteriaApi.genre.genreName == genre.genreName
-        bookLoadedUsingFindAllWithCriteriaApiJoinOnly != null
-        bookLoadedUsingFindAllWithCriteriaApiJoinOnly.genre.genreName != null
+        bookLoadedUsingFindAllByCriteriaWithoutAnnotationJoin != null
+        bookLoadedUsingFindAllByCriteriaWithoutAnnotationJoin.genre.genreName != null
+        bookLoadedUsingFindAllWithCriteriaApiAndJoins != null
+        bookLoadedUsingFindAllWithCriteriaApiAndJoins.genre.genreName != null
+        bookLoadedUsingJoinCriteriaByChapterTitle.present
+        bookLoadedUsingJoinCriteriaByChapterTitle.get().id == book.id
+        !bookNotLoadedUsingJoinCriteriaByChapterTitle.present
+        booksLoadedByChapterTitleQuery.size() > 0
+        booksLoadedByChapterTitleQuery[0].id == book.id
+        // Chapters not loaded
+        CollectionUtils.isEmpty(booksLoadedByChapterTitleQuery[0].chapters)
+        // Loaded book and also expected chapters to be loaded
+        booksLoadedByChapterTitleAndBookTitleQuery.size() > 0
+        booksLoadedByChapterTitleAndBookTitleQuery[0].id == book.id
+        // Chapters not loaded
+        !CollectionUtils.isEmpty(booksLoadedByChapterTitleAndBookTitleQuery[0].chapters)
+    }
+
+    void "test loading books vs page repository and joins"() {
+        given:
+
+        def book1 = new Book()
+        book1.title = "Book1"
+        def page1 = new Page()
+        page1.num = 1
+        def page2 = new Page()
+        page2.num = 21
+        book1.getPages().add(page1)
+        book1.getPages().add(page2)
+        def chapter1 = new Chapter()
+        chapter1.title = "Ch1"
+        chapter1.pages = 20
+        book1.getChapters().add(chapter1)
+        def chapter2 = new Chapter()
+        chapter2.title = "Ch2"
+        chapter2.pages = 10
+        book1.getChapters().add(chapter2)
+        bookRepository.save(book1)
+
+        def book2 = new Book()
+        book2.title = "Book2"
+        def page3 = new Page()
+        page3.num = 3
+        book2.getPages().add(page3)
+        def chapter3 = new Chapter()
+        chapter3.title = "ChBook2_1"
+        chapter3.pages = 15
+        book2.getChapters().add(chapter3)
+        bookRepository.save(book2)
+
+        when:
+        def loadedBookViaPage1 = pageRepository.findBookById(page1.id)
+        def loadedBookViaPage3 = pageRepository.findBookById(page3.id)
+        then:
+        loadedBookViaPage1.present == true
+        loadedBookViaPage3.present == true
+        // chapters are loaded
+        loadedBookViaPage1.get().chapters.size() == 2
+        loadedBookViaPage3.get().chapters.size() == 1
+
+        when: "Loaded chapters without book joined"
+        def loadedChaptersViaPage1 = pageRepository.findBookChaptersById(page1.id)
+        def loadedChaptersViaPage3 = pageRepository.findBookChaptersById(page3.id)
+        then:
+        loadedChaptersViaPage1.size() == 2
+        loadedChaptersViaPage1[0].book.id == page1.book.id
+        loadedChaptersViaPage1[1].book.id == page1.book.id
+        // book not joined, only book with id loaded
+        loadedChaptersViaPage1[0].book.title == null
+        loadedChaptersViaPage1[1].book.title == null
+        loadedChaptersViaPage3.size() == 1
+        loadedChaptersViaPage3[0].book.id == page3.book.id
+        loadedChaptersViaPage3[0].book.title == null
+
+        when: "Loaded chapters with book joined"
+        def loadedChaptersViaPage1BookJoined = pageRepository.findBookChaptersByIdAndNum(page1.id, page1.num)
+        def loadedChaptersViaPage3BookJoined = pageRepository.findBookChaptersByIdAndNum(page3.id, page3.num)
+        then:
+        loadedChaptersViaPage1BookJoined.size() == 2
+        loadedChaptersViaPage1BookJoined[0].book.id == page1.book.id
+        loadedChaptersViaPage1BookJoined[1].book.id == page1.book.id
+        // book IS joined and fully loaded including title
+        loadedChaptersViaPage1BookJoined[0].book.title == page1.book.title
+        loadedChaptersViaPage1BookJoined[1].book.title == page1.book.title
+        loadedChaptersViaPage3BookJoined.size() == 1
+        loadedChaptersViaPage3BookJoined[0].book.id == page3.book.id
+        loadedChaptersViaPage3BookJoined[0].book.title == page3.book.title
+
+        cleanup:
+        cleanupBooks()
+    }
+
+    void "test finding by And and Or combined"() {
+        given:
+        setupBooks()
+
+        when:
+        def book = bookRepository.findByTitle("Pet Cemetery")
+        def author = bookRepository.findAuthorById(book.id)
+        def verificationBook = bookRepository.findByTitleOrAuthorAndId(book.title, author, book.id)
+
+        then:
+        author.name == "Stephen King"
+        verificationBook != null
+        verificationBook.id == book.id
+        verificationBook.title == book.title
+        verificationBook.author.id == book.author.id
+
+        cleanup:
+        cleanupBooks()
+    }
+
+    void "test ManyToMany join table with mappedBy"() {
+        given:
+        def student = new Student("Peter")
+        def book1 = new Book()
+        book1.title = "Book1"
+        book1.getStudents().add(student)
+        def book2 = new Book()
+        book2.title = "Book2"
+        book2.getStudents().add(student)
+        bookRepository.save(book1)
+        bookRepository.save(book2)
+        when:
+        def loadedStudent = studentRepository.findByName(student.name).get()
+        def loadedBook1 = bookRepository.findById(book1.id).get()
+        def loadedBook2 = bookRepository.findById(book2.id).get()
+        then:
+        loadedStudent
+        loadedStudent.id == student.id
+        loadedStudent.books.size() == 2
+        loadedStudent.name == student.name
+        loadedBook1
+        loadedBook1.title == book1.title
+        loadedBook1.id == book1.id
+        loadedBook2
+        loadedBook2.title == book2.title
+        loadedBook2.id == book2.id
+        cleanup:
+        studentRepository.delete(student)
+        bookRepository.delete(book1)
+        bookRepository.delete(book2)
     }
 
     private GregorianCalendar getYearMonthDay(Date dateCreated) {

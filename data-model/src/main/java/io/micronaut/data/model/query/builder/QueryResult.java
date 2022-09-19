@@ -19,7 +19,10 @@ import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.data.model.DataType;
+import io.micronaut.data.model.query.JoinPath;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -102,6 +105,16 @@ public interface QueryResult {
     }
 
     /**
+     * Gets the join paths.
+     *
+     * @return the join paths or empty
+     */
+    @NonNull
+    default Collection<JoinPath> getJoinPaths() {
+        return Collections.emptyList();
+    }
+
+    /**
      * Creates a new encoded query.
      *
      * @param query                        The query
@@ -163,6 +176,31 @@ public interface QueryResult {
             @NonNull Map<String, String> additionalRequiredParameters,
             int max,
             long offset) {
+        return of(query, queryParts, parameterBindings, additionalRequiredParameters, max, offset, Collections.emptyList());
+    }
+
+    /**
+     * Creates a new encoded query.
+     *
+     * @param query                        The query
+     * @param queryParts                   The queryParts
+     * @param parameterBindings            The parameters binding
+     * @param additionalRequiredParameters Additional required parameters to execute the query
+     * @param max                          The query limit
+     * @param offset                       The query offset
+     * @param joinPaths                    The join paths
+     * @return The query
+     */
+    static @NonNull
+    QueryResult of(
+            @NonNull String query,
+            @NonNull List<String> queryParts,
+            @NonNull List<QueryParameterBinding> parameterBindings,
+            @NonNull Map<String, String> additionalRequiredParameters,
+            int max,
+            long offset,
+            @Nullable
+            Collection<JoinPath> joinPaths) {
         ArgumentUtils.requireNonNull("query", query);
         ArgumentUtils.requireNonNull("parameterBindings", parameterBindings);
         ArgumentUtils.requireNonNull("additionalRequiredParameters", additionalRequiredParameters);
@@ -198,6 +236,11 @@ public interface QueryResult {
             @Override
             public Map<String, String> getAdditionalRequiredParameters() {
                 return additionalRequiredParameters;
+            }
+
+            @Override
+            public Collection<JoinPath> getJoinPaths() {
+                return joinPaths;
             }
         };
     }

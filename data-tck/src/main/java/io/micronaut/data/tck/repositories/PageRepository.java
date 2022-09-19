@@ -15,9 +15,25 @@
  */
 package io.micronaut.data.tck.repositories;
 
+import io.micronaut.data.annotation.Join;
 import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Book;
+import io.micronaut.data.tck.entities.Chapter;
 import io.micronaut.data.tck.entities.Page;
+
+import java.util.List;
+import java.util.Optional;
 
 public interface PageRepository extends GenericRepository<Page, Long> {
     Page save(long num);
+
+    @Join(value = "book.chapters", type = Join.Type.LEFT_FETCH)
+    Optional<Book> findBookById(Long id);
+
+    // No explicit joins
+    List<Chapter> findBookChaptersById(Long id);
+
+    // Join on book so chapters.book will be populated
+    @Join(value = "book.chapters.book", type = Join.Type.FETCH)
+    List<Chapter> findBookChaptersByIdAndNum(Long id, long num);
 }

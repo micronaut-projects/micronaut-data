@@ -438,5 +438,40 @@
     "type": "io.micronaut.data.model.query.builder.sql.SqlQueryBuilder",
     "member": "Class io.micronaut.data.model.query.builder.sql.SqlQueryBuilder",
     "reason": "Internal"
+  },
+  {
+    "type": "io.micronaut.data.mongodb.operations.MongoPreparedQuery",
+    "member": "Class io.micronaut.data.mongodb.operations.MongoPreparedQuery",
+    "reason": "Experimental"
+  },
+  {
+    "type": "io.micronaut.data.mongodb.operations.MongoPreparedQuery",
+    "member": "Method io.micronaut.data.mongodb.operations.MongoPreparedQuery.getRuntimePersistentEntity()",
+    "reason": "Experimental"
+  },
+  {
+    "type": "io.micronaut.data.mongodb.operations.MongoStoredQuery",
+    "member": "Class io.micronaut.data.mongodb.operations.MongoStoredQuery",
+    "reason": "Experimental"
+  },
+  {
+    "type": "io.micronaut.data.mongodb.operations.MongoStoredQuery",
+    "member": "Method io.micronaut.data.mongodb.operations.MongoStoredQuery.getRuntimePersistentEntity()",
+    "reason": "Experimental"
+  },
+  {
+    "type": "io.micronaut.data.model.query.builder.QueryResult",
+    "member": "Class io.micronaut.data.model.query.builder.QueryResult",
+    "reason": "QueryResult needs to return joins so we can use it to override in the annotation if needed"
+  },
+  {
+    "type": "io.micronaut.data.model.query.builder.QueryResult",
+    "member": "Method io.micronaut.data.model.query.builder.QueryResult.getJoinPaths()",
+    "reason": "QueryResult needs to return joins so we can use it to override in the annotation if needed"
+  },
+  {
+    "type": "io.micronaut.data.model.query.builder.QueryResult",
+    "member": "Method io.micronaut.data.model.query.builder.QueryResult.of(java.lang.String,java.util.List,java.util.List,java.util.Map,int,long,java.util.Collection)",
+    "reason": "QueryResult needs to return joins so we can use it to override in the annotation if needed"
   }
 ]

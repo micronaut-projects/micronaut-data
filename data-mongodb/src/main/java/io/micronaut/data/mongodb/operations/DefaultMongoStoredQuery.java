@@ -22,18 +22,14 @@ import io.micronaut.aop.InvocationContext;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
-import io.micronaut.core.beans.BeanIntrospection;
-import io.micronaut.core.beans.BeanProperty;
-import io.micronaut.core.beans.exceptions.IntrospectionException;
 import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.type.Argument;
-import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.document.model.query.builder.MongoQueryBuilder;
+import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.intercept.annotation.DataMethod;
-import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
 import io.micronaut.data.model.runtime.QueryParameterBinding;
@@ -49,6 +45,7 @@ import io.micronaut.data.mongodb.annotation.MongoSort;
 import io.micronaut.data.mongodb.operations.options.MongoAggregationOptions;
 import io.micronaut.data.mongodb.operations.options.MongoFindOptions;
 import io.micronaut.data.mongodb.operations.options.MongoOptionsUtils;
+import io.micronaut.data.runtime.operations.internal.query.DefaultBindableParametersStoredQuery;
 import io.micronaut.data.runtime.query.internal.DefaultStoredQuery;
 import io.micronaut.data.runtime.query.internal.DelegateStoredQuery;
 import org.bson.BsonArray;
@@ -60,9 +57,10 @@ import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
 
-import java.lang.reflect.Array;
+import java.util.AbstractMap;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -77,7 +75,7 @@ import java.util.stream.Collectors;
  * @since 3.3.
  */
 @Internal
-final class DefaultMongoStoredQuery<E, R, Dtb> implements DelegateStoredQuery<E, R>, MongoStoredQuery<E, R, Dtb> {
+final class DefaultMongoStoredQuery<E, R, Dtb> extends DefaultBindableParametersStoredQuery<E, R> implements DelegateStoredQuery<E, R>, MongoStoredQuery<E, R, Dtb> {
 
     private static final BsonDocument EMPTY = new BsonDocument();
 
@@ -122,6 +120,7 @@ final class DefaultMongoStoredQuery<E, R, Dtb> implements DelegateStoredQuery<E,
                             Dtb database,
                             DataMethod.OperationType operationType,
                             String updateJson) {
+        super(storedQuery, persistentEntity);
         this.storedQuery = storedQuery;
         this.codecRegistry = codecRegistry;
         this.attributeConverterRegistry = attributeConverterRegistry;
@@ -219,11 +218,6 @@ final class DefaultMongoStoredQuery<E, R, Dtb> implements DelegateStoredQuery<E,
     private <X> X getParameterAtIndex(InvocationContext<?, ?> invocationContext, int index) {
         requireInvocationContext(invocationContext);
         return (X) invocationContext.getParameterValues()[index];
-    }
-
-    @Override
-    public RuntimePersistentEntity<E> getRuntimePersistentEntity() {
-        return persistentEntity;
     }
 
     @Override
@@ -339,7 +333,7 @@ final class DefaultMongoStoredQuery<E, R, Dtb> implements DelegateStoredQuery<E,
         throw new IllegalStateException("Unrecognized value: " + value);
     }
 
-    private <T> List<Bson> replaceQueryParametersInList(List<Bson> values, @Nullable InvocationContext<?, ?> invocationContext, @Nullable E entity) {
+    private List<Bson> replaceQueryParametersInList(List<Bson> values, @Nullable InvocationContext<?, ?> invocationContext, @Nullable E entity) {
         values = new ArrayList<>(values);
         for (int i = 0; i < values.size(); i++) {
             Bson value = values.get(i);
@@ -351,13 +345,70 @@ final class DefaultMongoStoredQuery<E, R, Dtb> implements DelegateStoredQuery<E,
         return values;
     }
 
+    private Map.Entry<QueryParameterBinding, Object> bind(QueryParameterBinding queryParameterBinding, @Nullable InvocationContext<?, ?> invocationContext, @Nullable E entity) {
+        Object[] holder = new Object[1];
+        bindParameter(new Binder() {
+
+            @Override
+            public Object autoPopulateRuntimeProperty(RuntimePersistentProperty<?> persistentProperty, Object previousValue) {
+                return runtimeEntityRegistry.autoPopulateRuntimeProperty(persistentProperty, previousValue);
+            }
+
+            @Override
+            public Object convert(Object value, RuntimePersistentProperty<?> property) {
+                AttributeConverter<Object, Object> converter = property.getConverter();
+                if (converter != null) {
+                    return converter.convertToPersistedValue(value, createTypeConversionContext(property, property.getArgument()));
+                }
+                return value;
+            }
+
+            @Override
+            public Object convert(Class<?> converterClass, Object value, Argument<?> argument) {
+                if (converterClass == null) {
+                    return value;
+                }
+                AttributeConverter<Object, Object> converter = attributeConverterRegistry.getConverter(converterClass);
+                ConversionContext conversionContext = createTypeConversionContext(null, argument);
+                return converter.convertToPersistedValue(value, conversionContext);
+            }
+
+            private ConversionContext createTypeConversionContext(RuntimePersistentProperty<?> property, Argument<?> argument) {
+                if (argument != null) {
+                    return ConversionContext.of(argument);
+                }
+                if (property != null) {
+                    return ConversionContext.of(property.getArgument());
+                }
+                return ConversionContext.DEFAULT;
+            }
+
+            @Override
+            public void bindOne(QueryParameterBinding binding, Object value) {
+                holder[0] = new AbstractMap.SimpleEntry<>(binding, value);
+            }
+
+            @Override
+            public void bindMany(QueryParameterBinding binding, Collection<Object> values) {
+                bindOne(binding, values);
+            }
+
+        }, invocationContext, entity, null, queryParameterBinding);
+        return (Map.Entry<QueryParameterBinding, Object>) holder[0];
+    }
+
     private BsonValue replaceQueryParametersInBsonValue(BsonValue value, @Nullable InvocationContext<?, ?> invocationContext, @Nullable E entity) {
         if (value instanceof BsonDocument) {
             BsonDocument bsonDocument = (BsonDocument) value;
             BsonInt32 queryParameterIndex = bsonDocument.getInt32(MongoQueryBuilder.QUERY_PARAMETER_PLACEHOLDER, null);
             if (queryParameterIndex != null) {
                 int index = queryParameterIndex.getValue();
-                return getValue(index, getQueryBindings().get(index), invocationContext, persistentEntity, codecRegistry, entity);
+                QueryParameterBinding queryParameterBinding = getQueryBindings().get(index);
+                Map.Entry<QueryParameterBinding, Object> e = bind(queryParameterBinding, invocationContext, entity);
+                if (e == null) {
+                    throw new DataAccessException("Cannot bind a value at index: " + index);
+                }
+                return getValue(e.getKey(), e.getValue());
             }
             for (Map.Entry<String, BsonValue> entry : bsonDocument.entrySet()) {
                 BsonValue bsonValue = entry.getValue();
@@ -390,174 +441,31 @@ final class DefaultMongoStoredQuery<E, R, Dtb> implements DelegateStoredQuery<E,
         return value;
     }
 
-    private <T> BsonValue getValue(int index,
-                                   QueryParameterBinding queryParameterBinding,
-                                   InvocationContext<?, ?> invocationContext,
-                                   RuntimePersistentEntity<T> persistentEntity,
-                                   CodecRegistry codecRegistry, E entity) {
-        Class<?> parameterConverter = queryParameterBinding.getParameterConverterClass();
-        Object value = queryParameterBinding.getValue();
-        if (value == null) {
-            if (queryParameterBinding.getParameterIndex() != -1) {
-                requireInvocationContext(invocationContext);
-                value = resolveParameterValue(queryParameterBinding, invocationContext.getParameterValues());
-            } else if (queryParameterBinding.isAutoPopulated()) {
-                PersistentPropertyPath pp = getRequiredPropertyPath(queryParameterBinding, persistentEntity);
-                RuntimePersistentProperty<?> persistentProperty = (RuntimePersistentProperty) pp.getProperty();
-                Object previousValue = null;
-                QueryParameterBinding previousPopulatedValueParameter = queryParameterBinding.getPreviousPopulatedValueParameter();
-                if (previousPopulatedValueParameter != null) {
-                    if (previousPopulatedValueParameter.getParameterIndex() == -1) {
-                        throw new IllegalStateException("Previous value parameter cannot be bind!");
-                    }
-                    previousValue = resolveParameterValue(previousPopulatedValueParameter, invocationContext.getParameterValues());
-                }
-                value = runtimeEntityRegistry.autoPopulateRuntimeProperty(persistentProperty, previousValue);
-                value = convert(value, persistentProperty);
-                parameterConverter = null;
-            } else if (entity != null) {
-                PersistentPropertyPath pp = getRequiredPropertyPath(queryParameterBinding, persistentEntity);
-                value = pp.getPropertyValue(entity);
-            } else {
-                throw new IllegalStateException("Invalid query [" + "]. Unable to establish parameter value for parameter at position: " + (index + 1));
-            }
-        }
-
-        DataType dataType = queryParameterBinding.getDataType();
-        List<Object> values = expandValue(value, dataType);
-        if (values != null && values.isEmpty()) {
-            // Empty collections / array should always set at least one value
-            value = null;
-            values = null;
-        }
-        if (values == null) {
-            if (parameterConverter != null) {
-                int parameterIndex = queryParameterBinding.getParameterIndex();
-                Argument<?> argument;
-                if (parameterIndex > -1) {
-                    requireInvocationContext(invocationContext);
-                    argument = invocationContext.getArguments()[parameterIndex];
-                } else {
-                    argument = null;
-                }
-                value = convert(parameterConverter, value, argument);
-            }
-            // Check if the parameter is not an id which might be represented as String but needs to mapped as ObjectId
-            if (value instanceof String && queryParameterBinding.getPropertyPath() != null) {
-                // TODO: improve id recognition
-                PersistentPropertyPath pp = getRequiredPropertyPath(queryParameterBinding, persistentEntity);
-                RuntimePersistentProperty<?> persistentProperty = (RuntimePersistentProperty) pp.getProperty();
-                if (persistentProperty instanceof RuntimeAssociation) {
-                    RuntimeAssociation runtimeAssociation = (RuntimeAssociation) persistentProperty;
-                    RuntimePersistentProperty identity = runtimeAssociation.getAssociatedEntity().getIdentity();
-                    if (identity != null && identity.getType() == String.class && identity.isGenerated()) {
-                        return new BsonObjectId(new ObjectId((String) value));
-                    }
-                }
-                if (persistentProperty.getOwner().getIdentity() == persistentProperty && persistentProperty.getType() == String.class && persistentProperty.isGenerated()) {
+    private BsonValue getValue(QueryParameterBinding queryParameterBinding, Object value) {
+        // Check if the parameter is not an id which might be represented as String but needs to mapped as ObjectId
+        if (value instanceof String && queryParameterBinding.getPropertyPath() != null) {
+            // TODO: improve id recognition
+            PersistentPropertyPath pp = getRequiredPropertyPath(queryParameterBinding, persistentEntity);
+            RuntimePersistentProperty<?> persistentProperty = (RuntimePersistentProperty) pp.getProperty();
+            if (persistentProperty instanceof RuntimeAssociation) {
+                RuntimeAssociation runtimeAssociation = (RuntimeAssociation) persistentProperty;
+                RuntimePersistentProperty identity = runtimeAssociation.getAssociatedEntity().getIdentity();
+                if (identity != null && identity.getType() == String.class && identity.isGenerated()) {
                     return new BsonObjectId(new ObjectId((String) value));
                 }
             }
-            return MongoUtils.toBsonValue(conversionService, value, codecRegistry);
-        } else {
-            Class<?> finalParameterConverter = parameterConverter;
-            return new BsonArray(values.stream().map(val -> {
-                if (finalParameterConverter != null) {
-                    int parameterIndex = queryParameterBinding.getParameterIndex();
-                    Argument<?> argument;
-                    if (parameterIndex > -1) {
-                        requireInvocationContext(invocationContext);
-                        argument = invocationContext.getArguments()[parameterIndex];
-                    } else {
-                        argument = null;
-                    }
-                    val = convert(finalParameterConverter, val, argument);
-                }
-                return MongoUtils.toBsonValue(conversionService, val, codecRegistry);
-            }).collect(Collectors.toList()));
-        }
-    }
-
-    private void requireInvocationContext(InvocationContext<?, ?> invocationContext) {
-        if (invocationContext == null) {
-            throw new IllegalStateException("Invocation context is required!");
-        }
-    }
-
-    private Object convert(Class<?> converterClass, Object value, @Nullable Argument<?> argument) {
-        if (converterClass == null) {
-            return value;
-        }
-        AttributeConverter<Object, Object> converter = attributeConverterRegistry.getConverter(converterClass);
-        ConversionContext conversionContext = createTypeConversionContext(null, argument);
-        return converter.convertToPersistedValue(value, conversionContext);
-    }
-
-    private Object convert(Object value, RuntimePersistentProperty<?> property) {
-        AttributeConverter<Object, Object> converter = property.getConverter();
-        if (converter != null) {
-            return converter.convertToPersistedValue(value, createTypeConversionContext(property, property.getArgument()));
-        }
-        return value;
-    }
-
-    private <T> PersistentPropertyPath getRequiredPropertyPath(QueryParameterBinding queryParameterBinding, RuntimePersistentEntity<T> persistentEntity) {
-        String[] propertyPath = queryParameterBinding.getRequiredPropertyPath();
-        PersistentPropertyPath pp = persistentEntity.getPropertyPath(propertyPath);
-        if (pp == null) {
-            throw new IllegalStateException("Cannot find auto populated property: " + String.join(".", propertyPath));
-        }
-        return pp;
-    }
-
-    private List<Object> expandValue(Object value, DataType dataType) {
-        // Special case for byte array, we want to support a list of byte[] convertible values
-        if (value == null || dataType != null && dataType.isArray() && dataType != DataType.BYTE_ARRAY || value instanceof byte[]) {
-            // not expanded
-            return null;
-        } else if (value instanceof Iterable) {
-            return (List<Object>) CollectionUtils.iterableToList((Iterable<?>) value);
-        } else if (value.getClass().isArray()) {
-            int len = Array.getLength(value);
-            if (len == 0) {
-                return Collections.emptyList();
-            } else {
-                List<Object> list = new ArrayList<>(len);
-                for (int j = 0; j < len; j++) {
-                    Object o = Array.get(value, j);
-                    list.add(o);
-                }
-                return list;
-            }
-        } else {
-            // not expanded
-            return null;
-        }
-    }
-
-    private Object resolveParameterValue(QueryParameterBinding queryParameterBinding, Object[] parameterArray) {
-        Object value;
-        value = parameterArray[queryParameterBinding.getParameterIndex()];
-        String[] parameterBindingPath = queryParameterBinding.getParameterBindingPath();
-        if (parameterBindingPath != null) {
-            for (String prop : parameterBindingPath) {
-                if (value == null) {
-                    return null;
-                }
-                Object finalValue = value;
-                BeanProperty beanProperty = BeanIntrospection.getIntrospection(value.getClass())
-                        .getProperty(prop).orElseThrow(() -> new IntrospectionException("Cannot find a property: '" + prop + "' on bean: " + finalValue));
-                value = beanProperty.get(value);
+            if (persistentProperty.getOwner().getIdentity() == persistentProperty && persistentProperty.getType() == String.class && persistentProperty.isGenerated()) {
+                return new BsonObjectId(new ObjectId((String) value));
             }
         }
-        return value;
-    }
-
-    private ConversionContext createTypeConversionContext(RuntimePersistentProperty<?> property, Argument<?> argument) {
-        if (argument != null) {
-            return ConversionContext.of(argument);
+        if (value instanceof Object[]) {
+            value = Arrays.asList((Object[]) value);
         }
-        return ConversionContext.DEFAULT;
+        if (value instanceof Collection) {
+            Collection<?> values = (Collection) value;
+            return new BsonArray(values.stream().map(val -> MongoUtils.toBsonValue(conversionService, val, codecRegistry)).collect(Collectors.toList()));
+        }
+        return MongoUtils.toBsonValue(conversionService, value, codecRegistry);
     }
 
     @Override
@@ -606,7 +514,10 @@ final class DefaultMongoStoredQuery<E, R, Dtb> implements DelegateStoredQuery<E,
             if (pipelineParameterIndex != -1) {
                 return getParameterAtIndex(invocationContext, pipelineParameterIndex);
             }
-            return pipelineNeedsProcessing ? replaceQueryParametersInList(this.pipeline, invocationContext, null) : this.pipeline;
+            if (pipelineNeedsProcessing) {
+                return replaceQueryParametersInList(pipeline, invocationContext, null);
+            }
+            return pipeline;
         }
 
         @Nullable

@@ -71,6 +71,7 @@ import io.micronaut.data.runtime.operations.internal.AbstractReactiveEntitiesOpe
 import io.micronaut.data.runtime.operations.internal.AbstractReactiveEntityOperations;
 import io.micronaut.data.runtime.operations.internal.OperationContext;
 import io.micronaut.data.runtime.operations.internal.ReactiveCascadeOperations;
+import io.micronaut.data.runtime.operations.internal.query.BindableParametersStoredQuery;
 import io.micronaut.data.runtime.operations.internal.sql.AbstractSqlRepositoryOperations;
 import io.micronaut.data.runtime.operations.internal.sql.SqlPreparedQuery;
 import io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery;
@@ -1044,7 +1045,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
 
     }
 
-    private final class R2dbcParameterBinder implements SqlStoredQuery.Binder {
+    private final class R2dbcParameterBinder implements BindableParametersStoredQuery.Binder {
 
         private final Connection connection;
         private final Statement ps;

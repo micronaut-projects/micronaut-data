@@ -28,6 +28,7 @@ import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.repository.PageableRepository;
 import io.micronaut.data.repository.jpa.JpaSpecificationExecutor;
+import io.micronaut.data.repository.jpa.criteria.PredicateSpecification;
 import io.micronaut.data.tck.entities.Author;
 import io.micronaut.data.tck.entities.AuthorBooksDto;
 import io.micronaut.data.tck.entities.Book;
@@ -37,6 +38,7 @@ import io.micronaut.data.tck.entities.Genre;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 public abstract class BookRepository implements PageableRepository<Book, Long>, JpaSpecificationExecutor<Book> {
@@ -146,4 +148,21 @@ public abstract class BookRepository implements PageableRepository<Book, Long>, 
 
     @Join(value = "genre", type = Join.Type.LEFT_FETCH)
     public abstract List<Book> findAllByGenre(Genre genre);
+
+    @Override
+    @Join(value = "genre", type = Join.Type.LEFT_FETCH)
+    public abstract Optional<Book> findOne(@Nullable PredicateSpecification<Book> spec);
+
+    @Override
+    @Join(value = "genre", type = Join.Type.LEFT_FETCH)
+    public abstract  List<Book> findAll(@Nullable PredicateSpecification<Book> spec);
+
+    public abstract List<Book> findAllByCriteria(PredicateSpecification<Book> spec);
+
+    public abstract Book findByTitleOrAuthorAndId(String title, Author author, Long id);
+
+    public abstract List<Book> findAllByChaptersTitle(String chapterTitle);
+
+    @Join(value = "chapters", type = Join.Type.LEFT_FETCH)
+    public abstract List<Book> findAllByChaptersTitleAndTitle(String chapterTitle, String title);
 }

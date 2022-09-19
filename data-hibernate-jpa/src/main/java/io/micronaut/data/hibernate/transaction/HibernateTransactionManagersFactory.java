@@ -19,6 +19,7 @@ import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.transaction.SynchronousTransactionManager;
 import io.micronaut.transaction.async.AsyncTransactionOperations;
 import io.micronaut.transaction.async.AsyncUsingSyncTransactionOperations;
@@ -38,7 +39,7 @@ final class HibernateTransactionManagersFactory {
 
     @EachBean(DataSource.class)
     <T> AsyncTransactionOperations<T> buildPrimaryAsyncTransactionOperations(@Parameter SynchronousTransactionManager<T> synchronousTransactionManager,
-                                                                             CoroutineTxHelper coroutineTxHelper) {
+                                                                             @Nullable CoroutineTxHelper coroutineTxHelper) {
         return new AsyncUsingSyncTransactionOperations<>(synchronousTransactionManager, coroutineTxHelper);
     }
 

@@ -18,14 +18,10 @@ package io.micronaut.data.runtime.operations.internal.sql;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.model.Pageable;
-import io.micronaut.data.model.runtime.PreparedQuery;
-import io.micronaut.data.model.runtime.QueryParameterBinding;
-import io.micronaut.data.model.runtime.RuntimePersistentEntity;
-
-import java.util.Map;
+import io.micronaut.data.runtime.operations.internal.query.BindableParametersPreparedQuery;
 
 /**
- * SQL version of {@link PreparedQuery}.
+ * SQL version of {@link SqlStoredQuery}.
  * The instance of a prepared query has mutable state compared to a stored query.
  *
  * @param <E> The entity type
@@ -34,12 +30,7 @@ import java.util.Map;
  * @since 3.5.0
  */
 @Internal
-public interface SqlPreparedQuery<E, R> extends PreparedQuery<E, R>, SqlStoredQuery<E, R> {
-
-    /**
-     * @return The persistent entity
-     */
-    RuntimePersistentEntity<E> getPersistentEntity();
+public interface SqlPreparedQuery<E, R> extends BindableParametersPreparedQuery<E, R>, SqlStoredQuery<E, R> {
 
     /**
      * Prepare query. The internal SQL query can be altered based on the requirements.
@@ -55,23 +46,5 @@ public interface SqlPreparedQuery<E, R> extends PreparedQuery<E, R>, SqlStoredQu
      * @param isSingleResult is single result
      */
     void attachPageable(Pageable pageable, boolean isSingleResult);
-
-    /**
-     * Bind query parameters.
-     *
-     * @param binder         The binder
-     * @param entity         The entity
-     * @param previousValues The previous auto-populated collected values
-     */
-    void bindParameters(Binder binder, @Nullable E entity, @Nullable Map<QueryParameterBinding, Object> previousValues);
-
-    /**
-     * Bind query parameters.
-     *
-     * @param binder The binder
-     */
-    default void bindParameters(Binder binder) {
-        bindParameters(binder, null, null);
-    }
 
 }

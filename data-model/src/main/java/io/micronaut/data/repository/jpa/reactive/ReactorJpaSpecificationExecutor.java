@@ -76,6 +76,14 @@ public interface ReactorJpaSpecificationExecutor<T> extends ReactiveStreamsJpaSp
 
     @Override
     @NonNull
+    Mono<Boolean> exists(QuerySpecification<T> spec);
+
+    @Override
+    @NonNull
+    Mono<Boolean> exists(PredicateSpecification<T> spec);
+
+    @Override
+    @NonNull
     Mono<Long> deleteAll(@Nullable DeleteSpecification<T> spec);
 
     @Override

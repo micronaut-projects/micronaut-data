@@ -16,8 +16,10 @@
 package io.micronaut.data.processor.visitors
 
 import groovy.transform.CompileStatic
+import io.micronaut.core.annotation.AnnotationMetadata
 import io.micronaut.core.annotation.AnnotationMetadataProvider
 import io.micronaut.core.annotation.AnnotationValue
+import io.micronaut.data.annotation.Join
 import io.micronaut.data.annotation.Query
 import io.micronaut.data.intercept.annotation.DataMethod
 import io.micronaut.data.intercept.annotation.DataMethodQueryParameter
@@ -26,6 +28,7 @@ import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.inject.ast.ClassElement;
 
 import java.util.function.Function
+import java.util.stream.Collectors
 import java.util.stream.Stream;
 
 @CompileStatic
@@ -168,5 +171,12 @@ class TestUtils {
                 .stream()
                 .map(p -> p.stringValue(DataMethodQueryParameter.META_MEMBER_PARAMETER_BINDING_PATH).orElse(""))
                 .toArray(String[]::new)
+    }
+
+    static Map<String, Join.Type> getJoins(AnnotationMetadata annotationMetadata) {
+        return annotationMetadata.getAnnotationValuesByType(Join.class)
+                .stream()
+                .collect(Collectors.<AnnotationValue, String, Join.Type>toMap((AnnotationValue av) -> av.stringValue().get(),
+                        (AnnotationValue av) -> av.enumValue("type", Join.Type).get()))
     }
 }

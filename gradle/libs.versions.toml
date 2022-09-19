@@ -4,8 +4,8 @@ micronaut-test = "3.4.0"
 micronaut-serde = "1.1.0"
 micronaut-sql = "4.6.3"
 micronaut-docs = "2.0.0"
-micronaut-gradle-plugin = "3.5.1"
-micronaut-mongo = "4.3.0"
+micronaut-gradle-plugin = "3.5.3"
+micronaut-mongo = "4.4.0"
 micronaut-azure = "3.5.0"
 
 groovy = "3.0.12"
@@ -23,14 +23,14 @@ spring = "5.3.22"
 
 mongodb = "4.7.1"
 
-vertx = "4.3.2"
+vertx = "4.3.3"
 
 # JDBC Drivers
 
-oracle-jdbc-driver = "21.6.0.0.1"
+oracle-jdbc-driver = "21.7.0.0"
 mariadb-jdbc-driver = "2.7.6"
 mysql-jdbc-driver = "8.0.30"
-postgres-jdbc-driver = "42.4.0"
+postgres-jdbc-driver = "42.5.0"
 mssql-jdbc-driver = "8.4.1.jre8"
 
 # R2DBC Drivers

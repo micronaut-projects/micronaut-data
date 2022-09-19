@@ -23,7 +23,7 @@ import io.micronaut.data.tck.entities.Restaurant
 import spock.lang.Requires
 import spock.lang.Unroll
 
-@Requires({ javaVersion <= 1.8 })
+//@Requires({ javaVersion <= 1.8 })
 class BuildTableSpec extends AbstractDataSpec {
 
 
@@ -55,19 +55,19 @@ class Test {
 
     @io.micronaut.data.annotation.TypeDef(type=io.micronaut.data.model.DataType.JSON)
     private Map json;
-    
+
     public Long getId() {
         return id;
     }
-    
+
     public void setId(Long id) {
         this.id = id;
     }
-    
+
     public Map getJson() {
         return json;
     }
-    
+
     public void setJson(Map json) {
         this.json = json;
     }
@@ -103,19 +103,19 @@ class Test {
     @Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
     @DateCreated
     private LocalDateTime dateCreated;
-    
+
     public Long getId() {
         return id;
     }
-    
+
     public void setId(Long id) {
         this.id = id;
     }
-    
+
     public LocalDateTime getDateCreated() {
         return dateCreated;
     }
-    
+
     public void setDateCreated(LocalDateTime ldt) {
         dateCreated = ldt;
     }
@@ -169,21 +169,21 @@ class Test {
     private String text2;
     @javax.validation.constraints.Size(min=5, max=7)
     private String text3;
-    
+
     private BigDecimal amount1;
     @Column(precision = 11, scale = 2)
     private BigDecimal amount2;
     @javax.validation.constraints.Size(min=5, max=7)
     private BigDecimal amount3;
-    
+
     private Float floatAmount1;
     @Column(precision = 11, scale = 2)
     private Float floatAmount2;
-    
+
     private Double doubleAmount1;
     @Column(precision = 11, scale = 2)
     private Double doubleAmount2;
-    
+
 
     public Long getId() {
         return id;
@@ -208,7 +208,7 @@ class Test {
     public void setText2(String text2) {
         this.text2 = text2;
     }
-    
+
     public String getText3() {
         return text3;
     }
@@ -232,7 +232,7 @@ class Test {
     public void setAmount2(BigDecimal amount2) {
         this.amount2 = amount2;
     }
-    
+
     public BigDecimal getAmount3() {
         return amount3;
     }
@@ -288,5 +288,39 @@ class Test {
         Dialect.POSTGRES | 'CREATE TABLE "test" ("id" BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,"text1" VARCHAR(255) NOT NULL,"text2" VARCHAR(10) NOT NULL,"text3" VARCHAR(7) NOT NULL,"amount1" DECIMAL NOT NULL,"amount2" NUMERIC(11,2) NOT NULL,"amount3" DECIMAL NOT NULL,"float_amount1" REAL NOT NULL,"float_amount2" NUMERIC(11,2) NOT NULL,"double_amount1" DOUBLE PRECISION NOT NULL,"double_amount2" NUMERIC(11,2) NOT NULL);'
         Dialect.ORACLE   | 'CREATE SEQUENCE "TEST_SEQ" MINVALUE 1 START WITH 1 NOCACHE NOCYCLE\n' +
                 'CREATE TABLE "TEST" ("ID" NUMBER(19) NOT NULL PRIMARY KEY,"TEXT1" VARCHAR(255) NOT NULL,"TEXT2" VARCHAR(10) NOT NULL,"TEXT3" VARCHAR(7) NOT NULL,"AMOUNT1" FLOAT(126) NOT NULL,"AMOUNT2" NUMBER(11,2) NOT NULL,"AMOUNT3" FLOAT(126) NOT NULL,"FLOAT_AMOUNT1" FLOAT(53) NOT NULL,"FLOAT_AMOUNT2" NUMBER(11,2) NOT NULL,"DOUBLE_AMOUNT1" FLOAT(23) NOT NULL,"DOUBLE_AMOUNT2" NUMBER(11,2) NOT NULL)'
+    }
+
+    @Unroll
+    void "test time datatype #dialect"() {
+        given:
+        def entity = buildJpaEntity('test.Test', '''
+import io.micronaut.data.annotation.MappedProperty;
+import java.sql.Time;
+
+@Entity
+class Test {
+    @MappedProperty("wakeup_time")
+    private Time wakeUpTime;
+
+    public void setWakeUpTime(Time wakeUpTime) {
+        this.wakeUpTime = wakeUpTime;
+    }
+
+    public Time getWakeUpTime() {
+        return wakeUpTime;
+    }}
+''')
+        SqlQueryBuilder builder = new SqlQueryBuilder(dialect)
+        def sql = builder.buildBatchCreateTableStatement(entity)
+
+        expect:
+        sql == statement
+
+        where:
+        dialect          | statement
+        Dialect.H2       | 'CREATE TABLE `test` (`wakeup_time` TIME(6)  NOT NULL );'
+        Dialect.MYSQL    | 'CREATE TABLE `test` (`wakeup_time` TIME(6)  NOT NULL );'
+        Dialect.POSTGRES | 'CREATE TABLE "test" ("wakeup_time" TIME(6)  NOT NULL );'
+        Dialect.ORACLE   | 'CREATE TABLE "TEST" ("WAKEUP_TIME" DATE  NOT NULL )'
     }
 }

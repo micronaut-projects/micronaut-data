@@ -77,6 +77,7 @@ import io.micronaut.data.runtime.operations.internal.AbstractSyncEntitiesOperati
 import io.micronaut.data.runtime.operations.internal.AbstractSyncEntityOperations;
 import io.micronaut.data.runtime.operations.internal.OperationContext;
 import io.micronaut.data.runtime.operations.internal.SyncCascadeOperations;
+import io.micronaut.data.runtime.operations.internal.query.BindableParametersStoredQuery;
 import io.micronaut.data.runtime.operations.internal.sql.AbstractSqlRepositoryOperations;
 import io.micronaut.data.runtime.operations.internal.sql.SqlPreparedQuery;
 import io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery;
@@ -886,7 +887,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         return isSupportsBatchInsert(persistentEntity, jdbcOperationContext.dialect);
     }
 
-    private final class JdbcParameterBinder implements SqlStoredQuery.Binder {
+    private final class JdbcParameterBinder implements BindableParametersStoredQuery.Binder {
 
         private final Connection connection;
         private final PreparedStatement ps;

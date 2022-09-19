@@ -17,7 +17,7 @@ package io.micronaut.data.mongodb.operations;
 
 import io.micronaut.core.annotation.Experimental;
 import io.micronaut.data.model.runtime.PreparedQuery;
-import io.micronaut.data.model.runtime.RuntimePersistentEntity;
+import io.micronaut.data.runtime.operations.internal.query.PersistentEntityAwareQuery;
 
 /**
  * MongoDB's {@link PreparedQuery}.
@@ -29,12 +29,7 @@ import io.micronaut.data.model.runtime.RuntimePersistentEntity;
  * @since 3.3.0
  */
 @Experimental
-public interface MongoPreparedQuery<E, R, Dtb> extends PreparedQuery<E, R> {
-
-    /**
-     * @return The persistent entity
-     */
-    RuntimePersistentEntity<E> getRuntimePersistentEntity();
+public interface MongoPreparedQuery<E, R, Dtb> extends PreparedQuery<E, R>, PersistentEntityAwareQuery<E> {
 
     /**
      * @return The associated databae

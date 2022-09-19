@@ -120,6 +120,24 @@ interface CoroutineJpaSpecificationExecutor<T> {
     suspend fun count(spec: PredicateSpecification<T>?): Long
 
     /**
+     * Returns whether an instance was found for the given [QuerySpecification].
+     *
+     * @param spec The query specification
+     * @return the number of instances.
+     * @since 3.8
+     */
+    suspend fun exists(spec: QuerySpecification<T>?): Boolean
+
+    /**
+     * Returns whether an instance was found for the given [PredicateSpecification].
+     *
+     * @param spec The query specification
+     * @return the number of instances.
+     * @since 3.8
+     */
+    suspend fun exists(spec: PredicateSpecification<T>?): Boolean
+
+    /**
      * Deletes all entities matching the given [DeleteSpecification].
      *
      * @param spec The delete specification

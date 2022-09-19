@@ -16,7 +16,6 @@
 package io.micronaut.data.tck.entities;
 
 import io.micronaut.data.annotation.DateUpdated;
-import io.micronaut.data.annotation.MappedProperty;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
@@ -24,6 +23,7 @@ import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
@@ -37,7 +37,9 @@ import javax.persistence.PreUpdate;
 import javax.persistence.Transient;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 public class Book {
@@ -48,8 +50,6 @@ public class Book {
     private int totalPages;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    // Should not affect query or column reads
-    @MappedProperty(alias = "au")
     private Author author;
 
     @OneToOne
@@ -60,6 +60,12 @@ public class Book {
 
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "book")
     private List<Page> pages = new ArrayList<>();
+
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "book")
+    private List<Chapter> chapters = new ArrayList<>();
+
+    @ManyToMany(cascade = CascadeType.PERSIST)
+    private Set<Student> students = new HashSet<>();
 
     @Transient
     public int prePersist, postPersist, preUpdate, postUpdate, preRemove, postRemove, postLoad;
@@ -180,5 +186,17 @@ public class Book {
 
     public void setLastUpdated(LocalDateTime lastUpdated) {
         this.lastUpdated = lastUpdated;
+    }
+
+    public List<Chapter> getChapters() { return chapters; }
+
+    public void setChapters(List<Chapter> chapters) { this.chapters = chapters; }
+
+    public Set<Student> getStudents() {
+        return students;
+    }
+
+    public void setStudents(Set<Student> students) {
+        this.students = students;
     }
 }

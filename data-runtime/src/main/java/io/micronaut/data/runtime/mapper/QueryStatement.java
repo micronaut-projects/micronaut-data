@@ -23,6 +23,7 @@ import io.micronaut.data.model.DataType;
 
 import java.math.BigDecimal;
 import java.sql.Array;
+import java.sql.Time;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.Date;
@@ -52,7 +53,7 @@ public interface QueryStatement<PS, IDX> {
      * @param statement The statement
      * @param index The index
      * @param dataType The data type
-     * @param value the value                 
+     * @param value the value
      * @throws DataAccessException if the value cannot be read
      * @return The writer
      */
@@ -113,6 +114,13 @@ public interface QueryStatement<PS, IDX> {
                     instant = convertRequired(value, Instant.class);
                 }
                 return setTimestamp(statement, index, instant);
+            case TIME:
+                if (value instanceof Time) {
+                    return setTime(statement, index, (Time) value);
+                } else {
+                    throw new DataAccessException("Invalid time: " + value);
+                }
+
             case UUID:
                 if (value instanceof CharSequence) {
                     return setValue(statement, index, UUID.fromString(value.toString()));
@@ -270,7 +278,7 @@ public interface QueryStatement<PS, IDX> {
      * Write a long value for the given name.
      * @param statement The statement
      * @param name The name (such as the column name)
-     * @param value The value             
+     * @param value The value
      * @return This writer
      */
     default @NonNull
@@ -328,6 +336,19 @@ public interface QueryStatement<PS, IDX> {
      */
     @NonNull
     default QueryStatement<PS, IDX> setTimestamp(PS statement, IDX name, Instant instant) {
+        return setValue(statement, name, instant);
+    }
+
+    /**
+     * Write an instant value for the given name.
+     *
+     * @param statement The statement
+     * @param name      The name (such as the column name)
+     * @param instant   The time
+     * @return This writer
+     * @since 3.8
+     */
+    default QueryStatement<PS, IDX> setTime(PS statement, IDX name, Time instant) {
         return setValue(statement, name, instant);
     }
 

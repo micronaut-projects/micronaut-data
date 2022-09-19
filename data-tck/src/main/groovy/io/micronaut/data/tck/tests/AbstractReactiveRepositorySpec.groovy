@@ -589,6 +589,17 @@ abstract class AbstractReactiveRepositorySpec extends Specification {
         then:
             deleted == 1
             personRepository.count(nameEquals("Xyz")).block() == 0
+        when:
+            savePersons(["Jeff"])
+            def existsPredicateSpec = personRepository.exists(nameEquals("Jeff")).block()
+            def existsNotPredicateSpec = personRepository.exists(nameEquals("NotJeff")).block()
+            def existsQuerySpec = personRepository.exists(where(nameEquals("Jeff"))).block()
+            def existsNotQuerySpec = personRepository.exists(where(nameEquals("NotJeff"))).block()
+        then:
+            existsPredicateSpec
+            !existsNotPredicateSpec
+            existsQuerySpec
+            !existsNotQuerySpec
     }
 
     def setupPersonsForPageableTest() {
