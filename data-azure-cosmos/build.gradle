@@ -21,7 +21,7 @@ dependencies {
     api projects.dataDocumentModel
     api libs.micronaut.serde.jackson
     api libs.micronaut.serde.support
-    api libs.azure.cosmos
+    api libs.micronaut.azure.cosmos
 
     compileOnly libs.micronaut.reactor
 

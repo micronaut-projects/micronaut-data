@@ -11,13 +11,13 @@ import com.azure.cosmos.models.CosmosQueryRequestOptions
 import com.azure.cosmos.models.PartitionKey
 import com.azure.cosmos.models.ThroughputProperties
 import com.azure.cosmos.util.CosmosPagedIterable
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.ObjectNode
 import io.micronaut.context.ApplicationContext
 import io.micronaut.core.type.Argument
 import io.micronaut.data.azure.repositories.CosmosBookRepository
 import io.micronaut.data.document.tck.entities.Book
 import io.micronaut.serde.Decoder
+import io.micronaut.serde.Deserializer
 import io.micronaut.serde.SerdeRegistry
 import io.micronaut.serde.jackson.JacksonDecoder
 import spock.lang.AutoCleanup
@@ -72,13 +72,12 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
     def "should get cosmos client"() {
         when:
             SerdeRegistry registry = context.getBean(SerdeRegistry)
-            ObjectMapper jacksonMapper = context.getBean(ObjectMapper)
             CosmosClient client = context.getBean(CosmosClient)
             CosmosDatabaseResponse databaseResponse = client.createDatabaseIfNotExists("mydb")
             CosmosDatabase database = client.getDatabase(databaseResponse.getProperties().getId())
 
             CosmosContainerProperties containerProperties =
-                    new CosmosContainerProperties("book", "/lastName");
+                    new CosmosContainerProperties("book", "/null");
 
             // Provision throughput
             ThroughputProperties throughputProperties = ThroughputProperties.createManualThroughput(400);
@@ -93,7 +92,7 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
             def encoderContext = registry.newEncoderContext(Object)
             def type = Argument.of(XBook)
 
-            def item = container.createItem(result, PartitionKey.NONE, new CosmosItemRequestOptions())
+            def item = container.createItem(book, PartitionKey.NONE, new CosmosItemRequestOptions())
             System.out.println("XXX " + item.getStatusCode())
 
             CosmosPagedIterable<ObjectNode> filteredFamilies = container.queryItems("SELECT * FROM c", new CosmosQueryRequestOptions(), ObjectNode.class);
@@ -106,6 +105,9 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
                     parser.nextToken()
                 }
                 final Decoder decoder = JacksonDecoder.create(parser, Object);
+                Deserializer.DecoderContext decoderContext = registry.newDecoderContext(null);
+                Deserializer<XBook> typeDeserializer = registry.findDeserializer(type);
+                Deserializer<XBook> deserializer = typeDeserializer.createSpecific(decoderContext, type);
 
                 XBook des = deserializer.deserialize(
                         decoder,

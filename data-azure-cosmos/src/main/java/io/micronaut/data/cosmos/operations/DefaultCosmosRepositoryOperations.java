@@ -38,6 +38,7 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.core.type.Argument;
+import io.micronaut.data.cosmos.config.CosmosDatabaseConfiguration;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.exceptions.NonUniqueResultException;
 import io.micronaut.data.model.Page;
@@ -86,6 +87,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
+/**
+ * The default Azure Cosmos DB operations implementation.
+ */
 @Singleton
 @Requires(bean = CosmosClient.class)
 @Internal
@@ -95,6 +99,7 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
     private final CosmosClient cosmosClient;
     private final SerdeRegistry serdeRegistry;
     private final ObjectMapper objectMapper;
+    private final CosmosDatabase database;
 
     /**
      * Default constructor.
@@ -104,9 +109,10 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
      * @param runtimeEntityRegistry      The entity registry
      * @param conversionService          The conversion service
      * @param attributeConverterRegistry The attribute converter registry
-     * @param cosmosClient
-     * @param serdeRegistry
-     * @param objectMapper
+     * @param cosmosClient               The Cosmos client
+     * @param serdeRegistry              The (de)serialization registry
+     * @param objectMapper               The object mapper used for the data (de)serialization
+     * @param configuration              The Cosmos database configuration
      */
     protected DefaultCosmosRepositoryOperations(List<MediaTypeCodec> codecs,
                                                 DateTimeProvider<Object> dateTimeProvider,
@@ -115,13 +121,38 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
                                                 AttributeConverterRegistry attributeConverterRegistry,
                                                 CosmosClient cosmosClient,
                                                 SerdeRegistry serdeRegistry,
-                                                ObjectMapper objectMapper) {
+                                                ObjectMapper objectMapper,
+                                                CosmosDatabaseConfiguration configuration) {
         super(codecs, dateTimeProvider, runtimeEntityRegistry, conversionService, attributeConverterRegistry);
         this.cosmosClient = cosmosClient;
         this.serdeRegistry = serdeRegistry;
         this.objectMapper = objectMapper;
+        this.database = initDatabase(configuration);
     }
 
+
+    private CosmosDatabase initDatabase(CosmosDatabaseConfiguration configuration) {
+        CosmosDatabaseResponse databaseResponse;
+        ThroughputProperties throughputProperties = createThroughputProperties(configuration);
+        if (throughputProperties == null) {
+            databaseResponse = cosmosClient.createDatabaseIfNotExists(configuration.getDatabaseName());
+        } else {
+            databaseResponse = cosmosClient.createDatabaseIfNotExists(configuration.getDatabaseName(), throughputProperties);
+        }
+        return cosmosClient.getDatabase(databaseResponse.getProperties().getId());
+    }
+
+    private ThroughputProperties createThroughputProperties(CosmosDatabaseConfiguration configuration) {
+        // Throughput properties for the database
+        if (configuration.getThroughputRequestUnits() != null) {
+            if (configuration.isThroughputAutoScale()) {
+                return ThroughputProperties.createAutoscaledThroughput(configuration.getThroughputRequestUnits());
+            } else {
+                return ThroughputProperties.createManualThroughput(configuration.getThroughputRequestUnits());
+            }
+        }
+        return null;
+    }
 
     @Override
     public <T> T findOne(Class<T> type, Serializable id) {
@@ -200,7 +231,6 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
 
     private <T> CosmosContainer getContainer(InsertOperation<T> operation) {
         RuntimePersistentEntity<T> persistentEntity = runtimeEntityRegistry.getEntity(operation.getRootEntity());
-        CosmosDatabase database = getDatabase();
         CosmosContainer container = getContainer(database, persistentEntity);
         return container;
     }
@@ -284,7 +314,6 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
     }
 
     private <T> CosmosContainer getContainer(RuntimePersistentEntity<T> persistentEntity) {
-        CosmosDatabase database = getDatabase();
         return getContainer(database, persistentEntity);
     }
 
@@ -298,14 +327,6 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
         SqlQueryBuilder queryBuilder = new SqlQueryBuilder();
         RuntimePersistentEntity<E> runtimePersistentEntity = runtimeEntityRegistry.getEntity(storedQuery.getRootEntity());
         return new DefaultSqlStoredQuery<>(storedQuery, runtimePersistentEntity, queryBuilder);
-    }
-
-    private CosmosDatabase getDatabase() {
-        // TODO We might want to call just create an run some init before it
-        // TODO support default from the configuration and from the repository annotation
-        CosmosDatabaseResponse databaseResponse = cosmosClient.createDatabaseIfNotExists("mydb");
-        return cosmosClient.getDatabase(databaseResponse.getProperties().getId());
-        // TODO Maybe cache?
     }
 
     private CosmosContainer getContainer(CosmosDatabase cosmosDatabase, RuntimePersistentEntity<?> persistentEntity) {

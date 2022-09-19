@@ -6,6 +6,7 @@ micronaut-sql = "4.6.3"
 micronaut-docs = "2.0.0"
 micronaut-gradle-plugin = "3.5.1"
 micronaut-mongo = "4.3.0"
+micronaut-azure = "3.5.0"
 
 groovy = "3.0.12"
 
@@ -23,8 +24,6 @@ spring = "5.3.22"
 mongodb = "4.7.1"
 
 vertx = "4.3.2"
-
-azure-cosmos = "LATEST"
 
 # JDBC Drivers
 
@@ -157,10 +156,6 @@ drivers-r2dbc-mysql = { module = "dev.miku:r2dbc-mysql", version.ref = "mysql-r2
 drivers-r2dbc-mssql = { module = "io.r2dbc:r2dbc-mssql", version.ref = "mssql-r2dbc-driver" }
 drivers-r2dbc-postgresql = { module = "org.postgresql:r2dbc-postgresql", version.ref = "postgresql-r2dbc-driver" }
 
-# Azure Cosmos
-
-azure-cosmos = { module = "com.azure:azure-cosmos", version.ref = "azure-cosmos" }
-
 # TESTCONTAINERS
 
 testcontainers-bom = { module = "org.testcontainers:testcontainers-bom", version.ref = "testcontainers" }
@@ -190,6 +185,10 @@ mongodb-driver-reactive = { module = "org.mongodb:mongodb-driver-reactivestreams
 
 micronaut-mongo-reactive = { module = "io.micronaut.mongodb:micronaut-mongo-reactive", version.ref = "micronaut-mongo" }
 micronaut-mongo-sync = { module = "io.micronaut.mongodb:micronaut-mongo-sync", version.ref = "micronaut-mongo" }
+
+# AZURE COSMOS
+
+micronaut-azure-cosmos = { module = "io.micronaut.azure:micronaut-azure-cosmos", version.ref = "micronaut-azure" }
 
 # PLUGINS
 
