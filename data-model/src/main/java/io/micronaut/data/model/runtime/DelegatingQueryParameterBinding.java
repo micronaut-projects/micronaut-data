@@ -31,60 +31,73 @@ public abstract class DelegatingQueryParameterBinding implements QueryParameterB
 
     private final QueryParameterBinding delegate;
 
-    public DelegatingQueryParameterBinding(QueryParameterBinding delegate) {
+    protected DelegatingQueryParameterBinding(QueryParameterBinding delegate) {
         this.delegate = delegate;
     }
 
+    @Override
     @Nullable
     public String getName() {
         return delegate.getName();
     }
 
+    @Override
     @NonNull
     public String getRequiredName() {
         return delegate.getRequiredName();
     }
 
+    @Override
     public DataType getDataType() {
         return delegate.getDataType();
     }
 
+    @Override
     public Class<?> getParameterConverterClass() {
         return delegate.getParameterConverterClass();
     }
 
+    @Override
     public int getParameterIndex() {
         return delegate.getParameterIndex();
     }
 
+    @Override
     public String[] getParameterBindingPath() {
         return delegate.getParameterBindingPath();
     }
 
+    @Override
     public String[] getPropertyPath() {
         return delegate.getPropertyPath();
     }
 
+    @Override
     public String[] getRequiredPropertyPath() {
         return delegate.getRequiredPropertyPath();
     }
 
+    @Override
     public boolean isAutoPopulated() {
         return delegate.isAutoPopulated();
     }
 
+    @Override
     public boolean isRequiresPreviousPopulatedValue() {
         return delegate.isRequiresPreviousPopulatedValue();
     }
 
+    @Override
     public QueryParameterBinding getPreviousPopulatedValueParameter() {
         return delegate.getPreviousPopulatedValueParameter();
     }
 
+    @Override
     public boolean isExpandable() {
         return delegate.isExpandable();
     }
 
+    @Override
     public Object getValue() {
         return delegate.getValue();
     }

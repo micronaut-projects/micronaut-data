@@ -122,7 +122,6 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
         this.objectMapper = objectMapper;
     }
 
-
     @Override
     public <T> T findOne(Class<T> type, Serializable id) {
         RuntimePersistentEntity<T> persistentEntity = runtimeEntityRegistry.getEntity(type);

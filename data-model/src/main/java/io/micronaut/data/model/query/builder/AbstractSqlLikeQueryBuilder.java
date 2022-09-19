@@ -728,10 +728,24 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         }
     }
 
+    /**
+     * Gets {@link NamingStrategy} for the property path. Subclasses might override and potentially
+     * provide different strategy in some cases.
+     *
+     * @param propertyPath the property path representation
+     * @return naming strategy for the property path
+     */
     protected NamingStrategy getNamingStrategy(PersistentPropertyPath propertyPath) {
         return propertyPath.getNamingStrategy();
     }
 
+    /**
+     * Gets {@link NamingStrategy} for the entity. Subclasses might override and potentially
+     * provide different strategy in some cases.
+     *
+     * @param entity the persistent entity
+     * @return naming strategy for the entity
+     */
     protected NamingStrategy getNamingStrategy(PersistentEntity entity) {
         return entity.getNamingStrategy();
     }
