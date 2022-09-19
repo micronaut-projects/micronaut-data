@@ -25,7 +25,6 @@ import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.mongodb.conf.RequiresSyncMongo;
 import io.micronaut.transaction.SynchronousTransactionManager;
-import io.micronaut.transaction.async.AsyncTransactionOperations;
 import io.micronaut.transaction.async.AsyncUsingSyncTransactionOperations;
 import io.micronaut.transaction.interceptor.CoroutineTxHelper;
 import jakarta.inject.Singleton;
@@ -43,14 +42,14 @@ final class SynchronousMongoTransactionManagerFactory {
     @Requires(missingProperty = MongoSettings.MONGODB_SERVERS)
     @Primary
     @Singleton
-    <T> AsyncTransactionOperations<T> buildPrimaryAsyncTransactionOperations(@Parameter SynchronousTransactionManager<T> synchronousTransactionManager,
-                                                                             @Nullable CoroutineTxHelper coroutineTxHelper) {
+    <T> AsyncUsingSyncTransactionOperations<T> buildPrimaryAsyncTransactionOperations(SynchronousTransactionManager<T> synchronousTransactionManager,
+                                                                                      @Nullable CoroutineTxHelper coroutineTxHelper) {
         return new AsyncUsingSyncTransactionOperations<>(synchronousTransactionManager, coroutineTxHelper);
     }
 
     @EachBean(NamedMongoConfiguration.class)
-    <T> AsyncTransactionOperations<T> buildAsyncTransactionOperations(@Parameter SynchronousTransactionManager<T> synchronousTransactionManager,
-                                                                      @Nullable CoroutineTxHelper coroutineTxHelper) {
+    <T> AsyncUsingSyncTransactionOperations<T> buildAsyncTransactionOperations(@Parameter SynchronousTransactionManager<T> synchronousTransactionManager,
+                                                                               @Nullable CoroutineTxHelper coroutineTxHelper) {
         return new AsyncUsingSyncTransactionOperations<>(synchronousTransactionManager, coroutineTxHelper);
     }
 

@@ -1,0 +1,16 @@
+datasources:
+  jdbc:
+    url: jdbc:h2:mem:devDb;LOCK_TIMEOUT=10000;DB_CLOSE_ON_EXIT=FALSE
+    driverClassName: org.h2.Driver
+    username: sa
+    password: ''
+    schema-generate: CREATE_DROP
+    dialect: H2
+r2dbc:
+  datasources:
+    r2dbc:
+      url: r2dbc:h2:mem:///testdb
+      schema-generate: CREATE_DROP
+      dialect: H2
+      options:
+        DB_CLOSE_DELAY: "10"

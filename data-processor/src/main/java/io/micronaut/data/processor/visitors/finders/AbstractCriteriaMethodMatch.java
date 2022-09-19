@@ -62,6 +62,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -81,15 +82,18 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
     private static final String OPERATOR_AND = "And";
     private static final String[] OPERATORS = {OPERATOR_AND, OPERATOR_OR};
     private static final String NOT = "Not";
+    private static final String IGNORE_CASE = "IgnoreCase";
 
-    private static final Pattern[] OPERATOR_PATTERNS;
+    private static final Map<String, Pattern> OPERATOR_PATTERNS;
+
     private static final List<String> PROPERTY_RESTRICTIONS;
     private static final Pattern RESTRICTIONS_PATTERN;
 
     static {
-        OPERATOR_PATTERNS = new Pattern[OPERATORS.length];
+        OPERATOR_PATTERNS = new TreeMap<>();
         for (int i = 0; i < OPERATORS.length; i++) {
-            OPERATOR_PATTERNS[i] = Pattern.compile("(\\w+)(" + OPERATORS[i] + ")(\\p{Upper})(\\w+)");
+            String operator = OPERATORS[i];
+            OPERATOR_PATTERNS.put(operator, Pattern.compile("(\\w+)(" + operator + ")(\\p{Upper})(\\w+)"));
         }
         PROPERTY_RESTRICTIONS = Restrictions.PROPERTY_RESTRICTIONS_MAP.keySet()
             .stream()
@@ -241,7 +245,7 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
                                        PersistentEntityRoot<T> root,
                                        PersistentEntityCriteriaQuery<T> query,
                                        SourcePersistentEntityCriteriaBuilder cb) {
-        Predicate predicate = extractPredicates(querySequence, parameters, root, cb);
+        Predicate predicate = extractPredicates(querySequence, Arrays.asList(parameters).iterator(), root, cb);
         if (predicate != null) {
             query.where(predicate);
         }
@@ -262,7 +266,7 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
                                        PersistentEntityRoot<T> root,
                                        PersistentEntityCriteriaDelete<T> query,
                                        SourcePersistentEntityCriteriaBuilder cb) {
-        Predicate predicate = extractPredicates(querySequence, parameters, root, cb);
+        Predicate predicate = extractPredicates(querySequence, Arrays.asList(parameters).iterator(), root, cb);
         if (predicate != null) {
             query.where(predicate);
         }
@@ -283,7 +287,7 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
                                        PersistentEntityRoot<T> root,
                                        PersistentEntityCriteriaUpdate<T> query,
                                        SourcePersistentEntityCriteriaBuilder cb) {
-        Predicate predicate = extractPredicates(querySequence, parameters, root, cb);
+        Predicate predicate = extractPredicates(querySequence, Arrays.asList(parameters).iterator(), root, cb);
         if (predicate != null) {
             query.where(predicate);
         }
@@ -347,28 +351,35 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
     }
 
     private <T> Predicate extractPredicates(String querySequence,
-                                            ParameterElement[] parameters,
+                                            Iterator<ParameterElement> parametersIt,
                                             PersistentEntityRoot<T> root,
                                             SourcePersistentEntityCriteriaBuilder cb) {
         Predicate predicate = null;
-        Iterator<ParameterElement> parametersIt = Arrays.asList(parameters).iterator();
 
         // if it contains operator and split
         boolean containsOperator = false;
         if (querySequence != null) {
             List<Predicate> predicates = new ArrayList<>();
-            for (int i = 0; i < OPERATORS.length; i++) {
-                Matcher currentMatcher = OPERATOR_PATTERNS[i].matcher(querySequence);
+            for (Map.Entry<String, Pattern> operatorPatternEntry : OPERATOR_PATTERNS.entrySet()) {
+                Matcher currentMatcher = operatorPatternEntry.getValue().matcher(querySequence);
                 if (currentMatcher.find()) {
                     containsOperator = true;
-                    String operatorInUse = OPERATORS[i];
+                    String operatorInUse = operatorPatternEntry.getKey();
 
                     String[] queryParameters = querySequence.split(operatorInUse);
                     List<Predicate> opPredicates = new ArrayList<>();
+                    Pattern orPattern = OPERATOR_PATTERNS.get(OPERATOR_OR);
                     for (String queryParameter : queryParameters) {
-                        opPredicates.add(
+                        // Since split was done first by And operator we may have queryParameters with Or predicate
+                        // If queryParameters is actual Or expression we need to further extract predicates
+                        // And not try to find actual method predicate from the property (queryParameter) containing Or expression
+                        if (!OPERATOR_OR.equals(operatorInUse) && orPattern.matcher(queryParameter).find()) {
+                            opPredicates.add(extractPredicates(queryParameter, parametersIt, root, cb));
+                        } else {
+                            opPredicates.add(
                                 findMethodPredicate(queryParameter, root, cb, parametersIt)
-                        );
+                            );
+                        }
                     }
                     if (!opPredicates.isEmpty()) {
                         if (OPERATOR_OR.equals(operatorInUse)) {
@@ -401,9 +412,9 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
             if (StringUtils.isEmpty(propertyName)) {
                 throw new MatchFailedException("Missing property name for restriction: " + restrictionName);
             }
-            if (propertyName.endsWith("IgnoreCase")) {
-                restrictionName += "IgnoreCase";
-                propertyName = propertyName.substring("IgnoreCase".length());
+            if (propertyName.endsWith(IGNORE_CASE)) {
+                restrictionName += IGNORE_CASE;
+                propertyName = propertyName.substring(IGNORE_CASE.length());
             }
             Restrictions.PropertyRestriction<?> restriction = Restrictions.findPropertyRestriction(restrictionName);
             if (restriction == null) {
@@ -424,9 +435,9 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
 
         String propertyName = expression;
         String restrictionName = "Equals";
-        if (propertyName.endsWith("IgnoreCase")) {
-            restrictionName += "IgnoreCase";
-            propertyName = extractPropertyName(propertyName, "IgnoreCase");
+        if (propertyName.endsWith(IGNORE_CASE)) {
+            restrictionName += IGNORE_CASE;
+            propertyName = extractPropertyName(propertyName, IGNORE_CASE);
         }
         Restrictions.PropertyRestriction<?> restriction = Restrictions.findPropertyRestriction(restrictionName);
         return getPropertyRestriction(propertyName, root, cb, parameters, restriction);

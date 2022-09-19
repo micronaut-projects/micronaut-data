@@ -149,6 +149,12 @@ class PostgresRepositorySpec extends AbstractRepositorySpec implements PostgresT
 
     @Memoized
     @Override
+    PageRepository getPageRepository() {
+        return context.getBean(PostgresPageRepository)
+    }
+
+    @Memoized
+    @Override
     boolean isSupportsArrays() {
         return true
     }

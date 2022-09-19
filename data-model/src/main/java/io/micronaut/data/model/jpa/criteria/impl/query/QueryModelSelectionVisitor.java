@@ -63,7 +63,7 @@ public final class QueryModelSelectionVisitor implements SelectionVisitor {
         if (distinct) {
             addProjection(Projections.distinct(persistentPropertyPath.getProperty().getName()));
         } else {
-            addProjection(Projections.property(persistentPropertyPath.getProperty().getName()));
+            addProjection(Projections.property(persistentPropertyPath.getPathAsString()));
         }
     }
 

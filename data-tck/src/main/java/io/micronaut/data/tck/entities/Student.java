@@ -19,7 +19,10 @@ import io.micronaut.data.annotation.DateCreated;
 import io.micronaut.data.annotation.DateUpdated;
 
 import javax.persistence.Entity;
+import javax.persistence.ManyToMany;
 import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 public class Student {
@@ -33,6 +36,8 @@ public class Student {
     private Date creationTime;
     @DateUpdated
     private Date lastUpdatedTime;
+    @ManyToMany(mappedBy = "students")
+    private Set<Book> books = new HashSet<>();
 
     public Student() {
     }
@@ -79,5 +84,13 @@ public class Student {
 
     public void setLastUpdatedTime(Date lastUpdatedTime) {
         this.lastUpdatedTime = lastUpdatedTime;
+    }
+
+    public Set<Book> getBooks() {
+        return books;
+    }
+
+    public void setBooks(Set<Book> books) {
+        this.books = books;
     }
 }
