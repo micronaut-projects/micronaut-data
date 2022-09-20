@@ -312,20 +312,6 @@ public interface QueryStatement<PS, IDX> {
     }
 
     /**
-     * Write a date value for the given name.
-     * @param statement The statement
-     * @param name The name (such as the column name)
-     * @param date The date
-     * @return This writer
-     * @deprecated Use {@link #setTimestamp(Object, Object, Instant)}.
-     */
-    @Deprecated
-    default @NonNull
-    QueryStatement<PS, IDX> setTimestamp(PS statement, IDX name, Date date) {
-        return setTimestamp(statement, name, date == null ? null : date.toInstant());
-    }
-
-    /**
      * Write an instant value for the given name.
      *
      * @param statement The statement

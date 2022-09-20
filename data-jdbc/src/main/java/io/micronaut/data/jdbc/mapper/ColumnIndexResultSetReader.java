@@ -43,11 +43,6 @@ public final class ColumnIndexResultSetReader implements ResultReader<ResultSet,
 
     private final ConversionService<?> conversionService;
 
-    @Deprecated
-    public ColumnIndexResultSetReader() {
-        this(null);
-    }
-
     /**
      * Constructs a new instance.
      *

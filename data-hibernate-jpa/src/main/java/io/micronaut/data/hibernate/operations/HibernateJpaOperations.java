@@ -19,7 +19,6 @@ import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.AnnotationMetadata;
-import io.micronaut.core.annotation.Creator;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.annotation.TypeHint;
@@ -101,26 +100,8 @@ public class HibernateJpaOperations extends AbstractHibernateOperations<Session,
      * @param transactionOperations The transaction operations
      * @param executorService       The executor service for I/O tasks to use
      * @param runtimeEntityRegistry The runtime entity registry
-     */
-    @Deprecated
-    protected HibernateJpaOperations(
-            @NonNull SessionFactory sessionFactory,
-            @NonNull @Parameter TransactionOperations<Connection> transactionOperations,
-            @Named("io") @Nullable ExecutorService executorService,
-            RuntimeEntityRegistry runtimeEntityRegistry) {
-        this(sessionFactory, transactionOperations, executorService, runtimeEntityRegistry, null);
-    }
-
-    /**
-     * Default constructor.
-     *
-     * @param sessionFactory        The session factory
-     * @param transactionOperations The transaction operations
-     * @param executorService       The executor service for I/O tasks to use
-     * @param runtimeEntityRegistry The runtime entity registry
      * @param dataConversionService The data conversion service
      */
-    @Creator
     public HibernateJpaOperations(
             @NonNull @Parameter SessionFactory sessionFactory,
             @NonNull @Parameter TransactionOperations<Connection> transactionOperations,

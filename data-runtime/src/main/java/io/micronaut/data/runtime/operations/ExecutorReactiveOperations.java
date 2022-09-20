@@ -60,33 +60,12 @@ public class ExecutorReactiveOperations implements ReactiveRepositoryOperations 
     /**
      * Default constructor.
      *
-     * @param datastore The target operations
-     * @param executor  The executor to use.
-     */
-    @Deprecated
-    public ExecutorReactiveOperations(@NonNull RepositoryOperations datastore, @NonNull Executor executor) {
-        this(datastore, executor, null);
-    }
-
-    /**
-     * Default constructor.
-     *
      * @param datastore             The target operations
      * @param executor              The executor to use.
      * @param dataConversionService The data conversion service
      */
     public ExecutorReactiveOperations(@NonNull RepositoryOperations datastore, @NonNull Executor executor, DataConversionService<?> dataConversionService) {
         this(new ExecutorAsyncOperations(datastore, executor), dataConversionService);
-    }
-
-    /**
-     * Default constructor.
-     *
-     * @param asyncOperations The instance operations instance
-     */
-    @Deprecated
-    public ExecutorReactiveOperations(@NonNull ExecutorAsyncOperations asyncOperations) {
-        this(asyncOperations, null);
     }
 
     /**

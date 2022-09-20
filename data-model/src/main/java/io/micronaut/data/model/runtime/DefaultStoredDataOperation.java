@@ -20,7 +20,6 @@ import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.type.Argument;
 import io.micronaut.inject.ExecutableMethod;
 import io.micronaut.transaction.TransactionDefinition;
-import io.micronaut.transaction.support.DefaultTransactionDefinition;
 import io.micronaut.transaction.support.TransactionUtil;
 
 import java.util.Optional;
@@ -33,11 +32,6 @@ import java.util.Optional;
  * @author graemerocher
  */
 public class DefaultStoredDataOperation<R> implements StoredDataOperation<R> {
-    /**
-     * @deprecated Not needed anymore
-     */
-    @Deprecated
-    public static final DefaultTransactionDefinition NO_TRANSACTION = new DefaultTransactionDefinition();
     private final ExecutableMethod<?, ?> method;
     private TransactionDefinition transactionDefinition;
 

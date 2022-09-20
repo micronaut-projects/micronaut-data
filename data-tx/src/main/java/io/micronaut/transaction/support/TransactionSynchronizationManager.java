@@ -18,13 +18,11 @@ package io.micronaut.transaction.support;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
-import io.micronaut.transaction.TransactionDefinition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
@@ -359,17 +357,6 @@ public abstract class TransactionSynchronizationManager {
         return getOrEmptyDefaultState().isSynchronizationActive();
     }
 
-    /**
-     * Activate transaction synchronization for the current thread.
-     * Called by a transaction manager on transaction begin.
-     *
-     * @throws IllegalStateException if synchronization is already active
-     * @deprecated use {@link #getSynchronousTransactionState(Object)}
-     */
-    @Deprecated
-    public static void initSynchronization() throws IllegalStateException {
-        getRequiredDefaultState().initSynchronization();
-    }
 
     /**
      * Register a new transaction synchronization for the current thread.
@@ -389,193 +376,11 @@ public abstract class TransactionSynchronizationManager {
         getRequiredDefaultState().registerSynchronization(synchronization);
     }
 
-    /**
-     * Return an unmodifiable snapshot list of all registered synchronizations
-     * for the current thread.
-     *
-     * @return unmodifiable List of TransactionSynchronization instances
-     * @throws IllegalStateException if synchronization is not active
-     * @see TransactionSynchronization
-     * @deprecated use {@link #getSynchronousTransactionState(Object)}
-     */
-    @Deprecated
-    public static List<TransactionSynchronization> getSynchronizations() throws IllegalStateException {
-        return getOrEmptyDefaultState().getSynchronizations();
-    }
 
-    /**
-     * Deactivate transaction synchronization for the current thread.
-     * Called by the transaction manager on transaction cleanup.
-     *
-     * @throws IllegalStateException if synchronization is not active
-     * @deprecated use {@link #getSynchronousTransactionState(Object)}
-     */
-    @Deprecated
-    public static void clearSynchronization() throws IllegalStateException {
-        getRequiredDefaultState().clearSynchronization();
-    }
 
     //-------------------------------------------------------------------------
     // Exposure of transaction characteristics
     //-------------------------------------------------------------------------
-
-    /**
-     * Expose the name of the current transaction, if any.
-     * Called by the transaction manager on transaction begin and on cleanup.
-     *
-     * @param name the name of the transaction, or {@code null} to reset it
-     * @see io.micronaut.transaction.TransactionDefinition#getName()
-     * @deprecated use {@link #getSynchronousTransactionState(Object)}
-     */
-    @Deprecated
-    public static void setCurrentTransactionName(@Nullable String name) {
-        getRequiredDefaultState().setTransactionName(name);
-    }
-
-    /**
-     * Return the name of the current transaction, or {@code null} if none set.
-     * To be called by resource management code for optimizations per use case,
-     * for example to optimize fetch strategies for specific named transactions.
-     *
-     * @return The current transaction name
-     * @see io.micronaut.transaction.TransactionDefinition#getName()
-     * @deprecated use {@link #getSynchronousTransactionState(Object)}
-     */
-    @Deprecated
-    @Nullable
-    public static String getCurrentTransactionName() {
-        return getOrEmptyDefaultState().getTransactionName();
-    }
-
-    /**
-     * Expose a read-only flag for the current transaction.
-     * Called by the transaction manager on transaction begin and on cleanup.
-     *
-     * @param readOnly {@code true} to mark the current transaction
-     *                 as read-only; {@code false} to reset such a read-only marker
-     * @see io.micronaut.transaction.TransactionDefinition#isReadOnly()
-     * @deprecated use {@link #getSynchronousTransactionState(Object)}
-     */
-    @Deprecated
-    public static void setCurrentTransactionReadOnly(boolean readOnly) {
-        getRequiredDefaultState().setTransactionReadOnly(readOnly);
-    }
-
-    /**
-     * Return whether the current transaction is marked as read-only.
-     * To be called by resource management code when preparing a newly
-     * created resource (for example, a Hibernate Session).
-     * <p>Note that transaction synchronizations receive the read-only flag
-     * as argument for the {@code beforeCommit} callback, to be able
-     * to suppress change detection on commit. The present method is meant
-     * to be used for earlier read-only checks, for example to set the
-     * flush mode of a Hibernate Session to "FlushMode.NEVER" upfront.
-     *
-     * @return Whether the transaction is read only
-     * @see io.micronaut.transaction.TransactionDefinition#isReadOnly()
-     * @see TransactionSynchronization#beforeCommit(boolean)
-     * @deprecated use {@link #getSynchronousTransactionState(Object)}
-     */
-    @Deprecated
-    public static boolean isCurrentTransactionReadOnly() {
-        return getOrEmptyDefaultState().isTransactionReadOnly();
-    }
-
-    /**
-     * Expose an isolation level for the current transaction.
-     * Called by the transaction manager on transaction begin and on cleanup.
-     *
-     * @param isolationLevel the isolation level to expose, according to the
-     *                       JDBC Connection constants (equivalent to the corresponding
-     *                       TransactionDefinition constants), or {@code null} to reset it
-     * @see java.sql.Connection#TRANSACTION_READ_UNCOMMITTED
-     * @see java.sql.Connection#TRANSACTION_READ_COMMITTED
-     * @see java.sql.Connection#TRANSACTION_REPEATABLE_READ
-     * @see java.sql.Connection#TRANSACTION_SERIALIZABLE
-     * @see io.micronaut.transaction.TransactionDefinition.Isolation#READ_UNCOMMITTED
-     * @see io.micronaut.transaction.TransactionDefinition.Isolation#READ_COMMITTED
-     * @see io.micronaut.transaction.TransactionDefinition.Isolation#REPEATABLE_READ
-     * @see io.micronaut.transaction.TransactionDefinition.Isolation#SERIALIZABLE
-     * @see io.micronaut.transaction.TransactionDefinition#getIsolationLevel()
-     * @deprecated use {@link #getSynchronousTransactionState(Object)}
-     */
-    @Deprecated
-    public static void setCurrentTransactionIsolationLevel(@Nullable TransactionDefinition.Isolation isolationLevel) {
-        getRequiredDefaultState().setTransactionIsolationLevel(isolationLevel);
-    }
-
-    /**
-     * Return the isolation level for the current transaction, if any.
-     * To be called by resource management code when preparing a newly
-     * created resource (for example, a JDBC Connection).
-     *
-     * @return the currently exposed isolation level, according to the
-     * JDBC Connection constants (equivalent to the corresponding
-     * TransactionDefinition constants), or {@code null} if none
-     * @see java.sql.Connection#TRANSACTION_READ_UNCOMMITTED
-     * @see java.sql.Connection#TRANSACTION_READ_COMMITTED
-     * @see java.sql.Connection#TRANSACTION_REPEATABLE_READ
-     * @see java.sql.Connection#TRANSACTION_SERIALIZABLE
-     * @see io.micronaut.transaction.TransactionDefinition.Isolation#READ_UNCOMMITTED
-     * @see io.micronaut.transaction.TransactionDefinition.Isolation#READ_COMMITTED
-     * @see io.micronaut.transaction.TransactionDefinition.Isolation#REPEATABLE_READ
-     * @see io.micronaut.transaction.TransactionDefinition.Isolation#SERIALIZABLE
-     * @see io.micronaut.transaction.TransactionDefinition#getIsolationLevel()
-     * @deprecated use {@link #getSynchronousTransactionState(Object)}
-     */
-    @Nullable
-    @Deprecated
-    public static TransactionDefinition.Isolation getCurrentTransactionIsolationLevel() {
-        return getOrEmptyDefaultState().getTransactionIsolationLevel();
-    }
-
-    /**
-     * Expose whether there currently is an actual transaction active.
-     * Called by the transaction manager on transaction begin and on cleanup.
-     *
-     * @param active {@code true} to mark the current thread as being associated
-     *               with an actual transaction; {@code false} to reset that marker
-     * @deprecated use {@link #getSynchronousTransactionState(Object)}
-     */
-    @Deprecated
-    public static void setActualTransactionActive(boolean active) {
-        getRequiredDefaultState().setActualTransactionActive(active);
-    }
-
-    /**
-     * Return whether there currently is an actual transaction active.
-     * This indicates whether the current thread is associated with an actual
-     * transaction rather than just with active transaction synchronization.
-     * <p>To be called by resource management code that wants to discriminate
-     * between active transaction synchronization (with or without backing
-     * resource transaction; also on PROPAGATION_SUPPORTS) and an actual
-     * transaction being active (with backing resource transaction;
-     * on PROPAGATION_REQUIRED, PROPAGATION_REQUIRES_NEW, etc).
-     *
-     * @return Whether a transaction is active
-     * @see #isSynchronizationActive()
-     * @deprecated use {@link #getSynchronousTransactionState(Object)}
-     */
-    @Deprecated
-    public static boolean isActualTransactionActive() {
-        return getOrEmptyDefaultState().isActualTransactionActive();
-    }
-
-    /**
-     * Clear the entire transaction synchronization state for the current thread:
-     * registered synchronizations as well as the various transaction characteristics.
-     *
-     * @see #clearSynchronization()
-     * @see #setCurrentTransactionName
-     * @see #setCurrentTransactionReadOnly
-     * @see #setCurrentTransactionIsolationLevel
-     * @see #setActualTransactionActive
-     * @deprecated use {@link #getSynchronousTransactionState(Object)}
-     */
-    @Deprecated
-    public static void clear() {
-        getRequiredDefaultState().clear();
-    }
 
     /**
      * Get the existing state.
