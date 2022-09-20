@@ -43,7 +43,7 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
             bookRepository.save(book)
             def loadedBook = bookRepository.queryById(book.id)
         then:
-        loadedBook
+            loadedBook
     }
 
     def "test find with query"() {
