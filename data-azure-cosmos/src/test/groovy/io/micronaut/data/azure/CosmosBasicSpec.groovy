@@ -14,6 +14,7 @@ import com.azure.cosmos.util.CosmosPagedIterable
 import com.fasterxml.jackson.databind.node.ObjectNode
 import io.micronaut.context.ApplicationContext
 import io.micronaut.core.type.Argument
+import io.micronaut.data.azure.entities.CosmosBook
 import io.micronaut.data.azure.repositories.CosmosBookRepository
 import io.micronaut.data.document.tck.entities.Book
 import io.micronaut.serde.Decoder
@@ -30,28 +31,28 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
     @Shared
     ApplicationContext context = ApplicationContext.run(properties)
 
+    CosmosBookRepository bookRepository = context.getBean(CosmosBookRepository)
+
     def "test find by id"() {
         given:
-            def bookRepository = context.getBean(CosmosBookRepository)
-            Book book = new Book()
+            def book = new CosmosBook()
             book.id = UUID.randomUUID().toString()
             book.title = "The Stand"
             book.totalPages = 1000
         when:
             bookRepository.save(book)
-            def optionalBook = bookRepository.queryById(book.id)
+            def loadedBook = bookRepository.queryById(book.id)
         then:
-            optionalBook
+        loadedBook
     }
 
     def "test find with query"() {
         given:
-            def bookRepository = context.getBean(CosmosBookRepository)
-            Book book1 = new Book()
+            def book1 = new CosmosBook()
             book1.id = UUID.randomUUID().toString()
             book1.title = "The Stand"
             book1.totalPages = 1000
-            Book book2 = new Book()
+            def book2 = new CosmosBook()
             book2.id = UUID.randomUUID().toString()
             book2.title = "Ice And Fire"
             book2.totalPages = 200
