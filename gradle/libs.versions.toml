@@ -1,6 +1,6 @@
 [versions]
-micronaut = "3.7.4"
-micronaut-test = "3.7.0"
+micronaut = "4.0.0-SNAPSHOT"
+micronaut-test = "3.6.2"
 micronaut-serde = "1.1.0"
 micronaut-sql = "4.7.2"
 micronaut-docs = "2.0.0"
@@ -49,7 +49,7 @@ mssql-r2dbc-driver = "1.0.0.RELEASE"
 
 benchmark-spring-data-mongodb = "4.1.1"
 benchmark-spring-data = "2021.1.4"
-spock = "2.0-groovy-3.0"
+spock = "2.1-groovy-3.0"
 cglib = "3.3.0"
 objenesis = "3.2"
 testcontainers = "1.17.6"

@@ -17,6 +17,7 @@ dependencies {
     api libs.micronaut.r2dbc
     api libs.r2dbc.spi
 
+    implementation mn.micronaut.context
     implementation mn.micronaut.http
     implementation libs.micronaut.reactor
 

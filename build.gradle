@@ -4,6 +4,11 @@ plugins {
     id "io.micronaut.build.internal.data-dependencies"
 }
 
+repositories {
+    mavenCentral()
+    maven { url "https://s01.oss.sonatype.org/content/repositories/snapshots/" }
+}
+
 micronautBuild {
     sourceCompatibility = "11"
 }
