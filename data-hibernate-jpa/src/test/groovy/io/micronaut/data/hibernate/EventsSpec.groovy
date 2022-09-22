@@ -65,7 +65,7 @@ class EventsSpec extends Specification {
         when:
         repo.save(eventTest)
         eventTest.value = 2
-        def eventTestDetachedUpdate =repo.update(eventTest)
+        def eventTestDetachedUpdate = repo.update(eventTest)
 
         then:
         eventTest.prePersist == 1
