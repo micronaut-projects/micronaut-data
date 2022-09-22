@@ -23,6 +23,15 @@ public class EventTest {
     @DateUpdated
     private LocalDateTime dateUpdated;
 
+    private int value;
+
+    public EventTest(int value) {
+        this.value = value;
+    }
+
+    public EventTest() {
+    }
+
     public UUID getUuid() {
         return uuid;
     }
@@ -55,6 +64,11 @@ public class EventTest {
         this.dateUpdated = dateUpdated;
     }
 
+    public void setValue(int value) { this.value = value; }
+
+    public int getValue() { return value; }
+
+    @Transient
     private int prePersist;
     @PrePersist
     public void prePersist() {
