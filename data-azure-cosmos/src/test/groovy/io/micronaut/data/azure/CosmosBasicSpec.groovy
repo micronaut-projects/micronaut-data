@@ -21,9 +21,11 @@ import io.micronaut.serde.Deserializer
 import io.micronaut.serde.SerdeRegistry
 import io.micronaut.serde.jackson.JacksonDecoder
 import spock.lang.AutoCleanup
+import spock.lang.IgnoreIf
 import spock.lang.Shared
 import spock.lang.Specification
 
+@IgnoreIf({ env["GITHUB_WORKFLOW"] })
 class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties {
 
     @AutoCleanup
