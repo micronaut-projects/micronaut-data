@@ -39,9 +39,10 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
             book.totalPages = 1000
         when:
             bookRepository.save(book)
-            def optionalBook = bookRepository.queryById(book.id)
+            def loadedBook = bookRepository.queryById(book.id)
         then:
-            optionalBook
+            loadedBook
+            loadedBook.totalPages == book.totalPages
     }
 
     def "test find with query"() {

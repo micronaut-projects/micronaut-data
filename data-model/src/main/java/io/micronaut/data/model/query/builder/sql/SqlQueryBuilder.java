@@ -246,7 +246,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         List<String> dropStatements = new ArrayList<>();
         for (Association association : foreignKeyAssociations) {
             AnnotationMetadata associationMetadata = association.getAnnotationMetadata();
-            NamingStrategy namingStrategy = entity.getNamingStrategy();
+            NamingStrategy namingStrategy = getNamingStrategy(entity);
             String joinTableName = associationMetadata
                     .stringValue(ANN_JOIN_TABLE, "name")
                     .orElseGet(() ->
@@ -274,7 +274,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
             Optional<Association> inverseSide = association.getInverseSide().map(Function.identity());
             Association owningAssociation = inverseSide.orElse(association);
             AnnotationMetadata annotationMetadata = owningAssociation.getAnnotationMetadata();
-            NamingStrategy namingStrategy = entity.getNamingStrategy();
+            NamingStrategy namingStrategy = getNamingStrategy(entity);
             String joinTableName = annotationMetadata
                     .stringValue(ANN_JOIN_TABLE, "name")
                     .orElseGet(() ->
@@ -331,7 +331,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
 
         Collection<Association> foreignKeyAssociations = getJoinTableAssociations(entity);
 
-        NamingStrategy namingStrategy = entity.getNamingStrategy();
+        NamingStrategy namingStrategy = getNamingStrategy(entity);
         if (CollectionUtils.isNotEmpty(foreignKeyAssociations)) {
             for (Association association : foreignKeyAssociations) {
                 StringBuilder joinTableBuilder = new StringBuilder("CREATE TABLE ");
@@ -776,7 +776,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                     }
 
                     PersistentEntity associatedEntity = association.getAssociatedEntity();
-                    NamingStrategy namingStrategy = associatedEntity.getNamingStrategy();
+                    NamingStrategy namingStrategy = getNamingStrategy(associatedEntity);
 
                     String joinAlias = joinAliasOverride == null ? getAliasName(joinPath) : joinAliasOverride.get(joinPath);
                     Objects.requireNonNull(joinAlias);
@@ -831,7 +831,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
             return;
         }
         boolean escape = shouldEscape(entity);
-        NamingStrategy namingStrategy = entity.getNamingStrategy();
+        NamingStrategy namingStrategy = getNamingStrategy(entity);
         int length = sb.length();
         traversePersistentProperties(entity, (associations, property) -> {
             String transformed = getDataTransformerReadValue(alias, property).orElse(null);
@@ -933,7 +933,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         boolean escape = shouldEscape(entity);
         final String unescapedTableName = getUnescapedTableName(entity);
 
-        NamingStrategy namingStrategy = entity.getNamingStrategy();
+        NamingStrategy namingStrategy = getNamingStrategy(entity);
 
         Collection<? extends PersistentProperty> persistentProperties = entity.getPersistentProperties();
         List<QueryParameterBinding> parameterBindings = new ArrayList<>();
@@ -1458,7 +1458,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         }
         if (onLeftColumns.isEmpty()) {
             traversePersistentProperties(leftProperty, (associations, p) -> {
-                String column = leftProperty.getOwner().getNamingStrategy().mappedName(merge(leftPropertyAssociations, associations), p);
+                String column = getNamingStrategy(leftProperty.getOwner()).mappedName(merge(leftPropertyAssociations, associations), p);
                 onLeftColumns.add(column);
             });
             if (onLeftColumns.isEmpty()) {
@@ -1467,7 +1467,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         }
         if (onRightColumns.isEmpty()) {
             traversePersistentProperties(rightProperty, (associations, p) -> {
-                String column = rightProperty.getOwner().getNamingStrategy().mappedName(merge(rightPropertyAssociations, associations), p);
+                String column = getNamingStrategy(rightProperty.getOwner()).mappedName(merge(rightPropertyAssociations, associations), p);
                 onRightColumns.add(column);
             });
         }
