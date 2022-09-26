@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.model.naming;
 
+import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.naming.NameUtils;
@@ -97,10 +98,12 @@ public interface NamingStrategy {
         if (property instanceof Association) {
             return mappedName((Association) property);
         } else {
-            return property.getAnnotationMetadata()
-                .stringValue(MappedProperty.class)
-                .filter(StringUtils::isNotEmpty)
-                .orElseGet(() -> mappedName(property.getName()));
+            AnnotationMetadata propertyAnnotationMetadata = property.getAnnotationMetadata();
+            boolean generated = propertyAnnotationMetadata.booleanValue(MappedProperty.class, "generated").orElse(false);
+            return propertyAnnotationMetadata
+                    .stringValue(MappedProperty.class)
+                    .filter(n -> !generated && StringUtils.isNotEmpty(n))
+                    .orElseGet(() -> mappedName(property.getName()));
         }
     }
 
@@ -110,7 +113,9 @@ public interface NamingStrategy {
      * @return The mapped name
      */
     default @NonNull String mappedName(Association association) {
-        String providedName = association.getAnnotationMetadata().stringValue(MappedProperty.class).orElse(null);
+        AnnotationMetadata assocationAnnotationMetadata = association.getAnnotationMetadata();
+        boolean generated = assocationAnnotationMetadata.booleanValue(MappedProperty.class, "generated").orElse(false);
+        String providedName = generated ? null : assocationAnnotationMetadata.stringValue(MappedProperty.class).orElse(null);
         if (providedName != null) {
             return providedName;
         }
@@ -149,8 +154,10 @@ public interface NamingStrategy {
         }
         if (foreignAssociation != null) {
             if (foreignAssociation.getAssociatedEntity() == property.getOwner()
-                && foreignAssociation.getAssociatedEntity().getIdentity() == property) {
-                String providedName = foreignAssociation.getAnnotationMetadata().stringValue(MappedProperty.class).orElse(null);
+                    && foreignAssociation.getAssociatedEntity().getIdentity() == property) {
+                AnnotationMetadata foreignAssociationAnnotationMetadata = foreignAssociation.getAnnotationMetadata();
+                boolean generated = foreignAssociationAnnotationMetadata.booleanValue(MappedProperty.class, "generated").orElse(false);
+                String providedName = generated ? null : foreignAssociationAnnotationMetadata.stringValue(MappedProperty.class).orElse(null);
                 if (providedName != null) {
                     return providedName;
                 }
@@ -160,7 +167,9 @@ public interface NamingStrategy {
                 throw new IllegalStateException("Foreign association cannot be mapped!");
             }
         } else {
-            String providedName = property.getAnnotationMetadata().stringValue(MappedProperty.class).orElse(null);
+            AnnotationMetadata propertyAnnotationMetadata = property.getAnnotationMetadata();
+            boolean generated = propertyAnnotationMetadata.booleanValue(MappedProperty.class, "generated").orElse(false);
+            String providedName = generated ? null : propertyAnnotationMetadata.stringValue(MappedProperty.class).orElse(null);
             if (providedName != null) {
                 return providedName;
             }
