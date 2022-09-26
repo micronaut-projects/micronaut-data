@@ -70,6 +70,7 @@ public @interface MappedEntity {
 
     /**
      * Only applies to supported databases.
+     * @since 3.9
      * @return the schema to use for this query
      */
     String schema() default "";
