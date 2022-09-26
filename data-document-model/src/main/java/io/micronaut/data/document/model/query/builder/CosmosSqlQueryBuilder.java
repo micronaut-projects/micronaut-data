@@ -17,11 +17,15 @@ package io.micronaut.data.document.model.query.builder;
 
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Creator;
+import io.micronaut.data.model.Association;
 import io.micronaut.data.model.PersistentEntity;
+import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.naming.NamingStrategies;
 import io.micronaut.data.model.naming.NamingStrategy;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
+
+import java.util.List;
 
 /**
  * The Azure Cosmos DB sql query builder.
@@ -64,5 +68,20 @@ public final class CosmosSqlQueryBuilder extends SqlQueryBuilder {
     @Override
     protected NamingStrategy getNamingStrategy(PersistentPropertyPath propertyPath) {
         return propertyPath.findNamingStrategy().orElseGet(NamingStrategies.Raw::new);
+    }
+
+    @Override
+    protected String getMappedName(NamingStrategy namingStrategy, PersistentProperty property) {
+        return namingStrategy.mappedName(property, false);
+    }
+
+    @Override
+    protected String getMappedName(NamingStrategy namingStrategy, Association association) {
+        return namingStrategy.mappedName(association, false);
+    }
+
+    @Override
+    protected String getMappedName(NamingStrategy namingStrategy, List<Association> associations, PersistentProperty property) {
+        return namingStrategy.mappedName(associations, property, false);
     }
 }
