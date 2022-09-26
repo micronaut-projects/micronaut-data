@@ -38,6 +38,7 @@ dependencies {
     testImplementation mn.micronaut.validation
     testImplementation libs.testcontainers.spock
     testImplementation libs.testcontainers.azure
+    testImplementation mn.micronaut.inject.java.test
 
     testCompileOnly mn.micronaut.inject.groovy
 }

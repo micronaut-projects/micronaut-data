@@ -16,7 +16,6 @@ dependencies {
 	testImplementation mn.micronaut.inject.java.test
 	testImplementation projects.dataDocumentTck
 	testImplementation projects.dataMongodb
-	testImplementation projects.dataAzureCosmos
 
 	if (!JavaVersion.current().isJava9Compatible()) {
 		testImplementation files(org.gradle.internal.jvm.Jvm.current().toolsJar)
