@@ -713,7 +713,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         }
         List<String> columns = new ArrayList<>();
         traversePersistentProperties(identity, (associations, property) -> {
-            String columnName = namingStrategy.mappedName(associations, property);
+            String columnName = getMappedName(namingStrategy, associations, property);
             columns.add(columnName);
         });
         return columns;
@@ -964,7 +964,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                         }
                     });
 
-                    String columnName = namingStrategy.mappedName(associations, property);
+                    String columnName = getMappedName(namingStrategy, associations, property);
                     if (escape) {
                         columnName = quote(columnName);
                     }
