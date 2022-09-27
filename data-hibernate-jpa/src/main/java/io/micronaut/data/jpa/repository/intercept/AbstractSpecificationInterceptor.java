@@ -69,7 +69,7 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
             for (String path : StringUtils.splitOmitEmptyStrings(order.getProperty(), '.')) {
                 propertyPath = propertyPath.get(path);
             }
-            Expression expression = order.isIgnoreCase() ? cb.lower(propertyPath.as(String.class)) : propertyPath;
+            Expression<?> expression = order.isIgnoreCase() ? cb.lower(propertyPath.as(String.class)) : propertyPath;
             orders.add(order.isAscending() ? cb.asc(expression) : cb.desc(expression));
         }
         return orders;
