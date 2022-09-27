@@ -200,16 +200,16 @@ class JpaSpecificationCrudRepositorySpec extends Specification {
         Page<Person> personsPaged = crudRepository.findAll(new io.micronaut.data.jpa.repository.criteria.Specification<Person>() {
             @Override
             Predicate toPredicate(Root<Person> root, CriteriaQuery<?> query, CriteriaBuilder criteriaBuilder) {
-                return null
+                return root.get("id").in(peopleIds)
             }
         }, Pageable.from(0, 10, Sort.of(new Sort.Order("name", Sort.Order.Direction.ASC, true))))
         personsPaged.totalSize >= 5
-        def personNames = personsPaged.content.stream().filter(p -> peopleIds.contains(p.id)).map(p -> p.name).collect(Collectors.toList())
+        def personNames = personsPaged.content.stream().map(p -> p.name).collect(Collectors.toList())
         personNames.size() == 5
-        personNames[0] == "A"
-        personNames[1] == "a"
-        personNames[2] == "B"
-        personNames[3] == "b"
+        personNames[0].toLowerCase() == "a"
+        personNames[1].toLowerCase() == "a"
+        personNames[2].toLowerCase() == "b"
+        personNames[3].toLowerCase() == "b"
         personNames[4] == "c"
     }
 
