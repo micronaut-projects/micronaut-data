@@ -203,7 +203,7 @@ class JpaSpecificationCrudRepositorySpec extends Specification {
                 return root.get("id").in(peopleIds)
             }
         }, Pageable.from(0, 10, Sort.of(new Sort.Order("name", Sort.Order.Direction.ASC, true))))
-        personsPaged.totalSize >= 5
+        personsPaged.totalSize == 5
         def personNames = personsPaged.content.stream().map(p -> p.name).collect(Collectors.toList())
         personNames.size() == 5
         personNames[0].toLowerCase() == "a"
