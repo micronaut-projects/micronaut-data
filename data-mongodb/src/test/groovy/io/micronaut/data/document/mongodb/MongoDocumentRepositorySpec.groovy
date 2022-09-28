@@ -30,6 +30,8 @@ import io.micronaut.data.mongodb.operations.options.MongoAggregationOptions
 import io.micronaut.data.mongodb.operations.options.MongoFindOptions
 import org.bson.BsonDocument
 
+import java.util.stream.Collectors
+
 class MongoDocumentRepositorySpec extends AbstractDocumentRepositorySpec implements MongoTestPropertyProvider {
 
     MongoClient mongoClient = context.getBean(MongoClient)
@@ -398,6 +400,26 @@ class MongoDocumentRepositorySpec extends AbstractDocumentRepositorySpec impleme
             people = mongoExecutorPersonRepository.findAll()
         then:
             people.count{ it.name == "UPDATED" } == 2
+    }
+
+    void "test find by ids in"() {
+        given:
+            savePersons(["Joe", "Jennifer"])
+        when:
+            def people = personRepository.findAll()
+            assert people.iterator().hasNext()
+            def person = people.iterator().next()
+            assert person != null
+            def optPerson = personRepository.findById(person.id)
+            def personsByIdIn = personRepository.findByIdIn(Arrays.asList(person.id))
+            def personsByIdNotInIds = personRepository.findByIdNotIn(Arrays.asList(person.id)).stream().map(p -> p.id).collect(Collectors.toList())
+        then:
+            optPerson.present
+            optPerson.get().id == person.id
+            personsByIdIn.size() == 1
+            personsByIdIn[0].id == person.id
+            personsByIdNotInIds.size() > 0
+            !personsByIdNotInIds.contains(person.id)
     }
 
     @Memoized
