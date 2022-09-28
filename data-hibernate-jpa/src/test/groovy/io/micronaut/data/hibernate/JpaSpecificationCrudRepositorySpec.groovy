@@ -16,6 +16,7 @@
 package io.micronaut.data.hibernate
 
 import io.micronaut.context.annotation.Property
+import io.micronaut.data.model.Page
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
 import io.micronaut.data.tck.entities.Person
@@ -29,6 +30,7 @@ import javax.persistence.criteria.CriteriaBuilder
 import javax.persistence.criteria.CriteriaQuery
 import javax.persistence.criteria.Predicate
 import javax.persistence.criteria.Root
+import java.util.stream.Collectors
 
 @MicronautTest(transactional = false, packages = "io.micronaut.data.tck.entities")
 @Property(name = "datasources.default.name", value = "mydb")
@@ -182,6 +184,33 @@ class JpaSpecificationCrudRepositorySpec extends Specification {
 
         then:"data is gone"
         crudRepository.count() == 0
+    }
+
+    void "test order case insensitive"() {
+        when:"items are saved"
+        def p1 = new Person(name: "A", age: 20)
+        def p2 = new Person(name: "c", age: 45)
+        def p3 = new Person(name: "B", age: 42)
+        def p4 = new Person(name: "b", age: 40)
+        def p5 = new Person(name: "a", age: 50)
+        def people = [p1, p2, p3, p4, p5]
+        crudRepository.saveAll(people)
+        then:"can be ordered case insensitively"
+        def peopleIds = people.stream().map(p -> p.getId()).collect(Collectors.toList())
+        Page<Person> personsPaged = crudRepository.findAll(new io.micronaut.data.jpa.repository.criteria.Specification<Person>() {
+            @Override
+            Predicate toPredicate(Root<Person> root, CriteriaQuery<?> query, CriteriaBuilder criteriaBuilder) {
+                return root.get("id").in(peopleIds)
+            }
+        }, Pageable.from(0, 10, Sort.of(new Sort.Order("name", Sort.Order.Direction.ASC, true))))
+        personsPaged.totalSize == 5
+        def personNames = personsPaged.content.stream().map(p -> p.name).collect(Collectors.toList())
+        personNames.size() == 5
+        personNames[0].toLowerCase() == "a"
+        personNames[1].toLowerCase() == "a"
+        personNames[2].toLowerCase() == "b"
+        personNames[3].toLowerCase() == "b"
+        personNames[4] == "c"
     }
 
 }
