@@ -361,4 +361,45 @@ interface MyInterface2 extends GenericRepository<Book, String> {
             collation == '{ locale: \'en_US\', numericOrdering: true}'
     }
 
+    void "test find by ids method"() {
+        given:
+        def repository = buildRepository('test.PersonRepository', """
+import io.micronaut.data.mongodb.annotation.*;
+import io.micronaut.data.document.tck.entities.Person;
+import java.util.Optional;
+
+@MongoRepository
+interface PersonRepository extends GenericRepository<Person, String> {
+
+    Optional<Person> findById(String ids);
+
+    List<Person> findByIdIn(List<String> ids);
+
+    List<Person> findByIdNotIn(List<String> ids);
+
+    Optional<Person> findByIdIsEmpty(String id);
+
+    Optional<Person> findByIdEquals(String id);
+}
+"""
+        )
+
+            def findByIdMethod = repository.getRequiredMethod("findById", String)
+            def findByIdInMethod = repository.getRequiredMethod("findByIdIn", List<String>)
+            def findByIdNotInMethod = repository.getRequiredMethod("findByIdNotIn", List<String>)
+            def findByIdIsEmptyMethod = repository.getRequiredMethod("findByIdIsEmpty", String)
+            def findByIdEqualMethod = repository.getRequiredMethod("findByIdEquals", String)
+        when:
+            def findByIdQuery = findByIdMethod.getAnnotation(Query).stringValue().get()
+            def findByIdInQuery = findByIdInMethod.getAnnotation(Query).stringValue().get()
+            def findByIdNotInQuery = findByIdNotInMethod.getAnnotation(Query).stringValue().get()
+            def findByIdIsEmptyQuery = findByIdIsEmptyMethod.getAnnotation(Query).stringValue().get()
+            def findByIdEqualQuery = findByIdEqualMethod.getAnnotation(Query).stringValue().get()
+        then:
+            findByIdQuery == '{_id:{$eq:{$mn_qp:0}}}'
+            findByIdInQuery == '{_id:{$in:[{$mn_qp:0}]}}'
+            findByIdNotInQuery == '{_id:{$nin:[{$mn_qp:0}]}}'
+            findByIdIsEmptyQuery == '{$or:[{_id:{$eq:\'\'}},{_id:{$exists:false}}]}'
+            findByIdEqualQuery == '{_id:{$eq:{$mn_qp:0}}}'
+    }
 }

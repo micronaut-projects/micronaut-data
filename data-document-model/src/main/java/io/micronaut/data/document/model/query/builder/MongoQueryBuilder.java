@@ -89,7 +89,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
      */
     public static final String QUERY_PARAMETER_PLACEHOLDER = "$mn_qp";
     public static final String MONGO_DATE_IDENTIFIER = "$date";
-    public static final String MONGO_OBJECT_ID_IDENTIFIER = "$oid";
+    public static final String MONGO_ID_FIELD = "_id";
 
     private final Map<Class, CriterionHandler> queryHandlers = new HashMap<>(30);
 
@@ -159,37 +159,58 @@ public final class MongoQueryBuilder implements QueryBuilder {
             return new RegexPattern(value.toString());
         }));
         addCriterionHandler(QueryModel.IsEmpty.class, (context, obj, criterion) -> {
+            String criterionPropertyName = getCriterionPropertyName(criterion.getProperty(), context);
             obj.put("$or", asList(
-                    singletonMap(criterion.getProperty(), singletonMap("$eq", "")),
-                    singletonMap(criterion.getProperty(), singletonMap("$exists", false))
+                    singletonMap(criterionPropertyName, singletonMap("$eq", "")),
+                    singletonMap(criterionPropertyName, singletonMap("$exists", false))
             ));
         });
         addCriterionHandler(QueryModel.IsNotEmpty.class, (context, obj, criterion) -> {
+            String criterionPropertyName = getCriterionPropertyName(criterion.getProperty(), context);
             obj.put("$and", asList(
-                    singletonMap(criterion.getProperty(), singletonMap("$ne", "")),
-                    singletonMap(criterion.getProperty(), singletonMap("$exists", true))
+                    singletonMap(criterionPropertyName, singletonMap("$ne", "")),
+                    singletonMap(criterionPropertyName, singletonMap("$exists", true))
             ));
         });
         addCriterionHandler(QueryModel.In.class, (context, obj, criterion) -> {
             PersistentPropertyPath propertyPath = context.getRequiredProperty(criterion);
             Object value = criterion.getValue();
+            String criterionPropertyName = getCriterionPropertyName(criterion.getProperty(), context);
             if (value instanceof Iterable) {
                 List<?> values = CollectionUtils.iterableToList((Iterable) value);
-                obj.put(criterion.getProperty(), singletonMap("$in", values.stream().map(val -> valueRepresentation(context, propertyPath, val)).collect(Collectors.toList())));
+                obj.put(criterionPropertyName, singletonMap("$in", values.stream().map(val -> valueRepresentation(context, propertyPath, val)).collect(Collectors.toList())));
             } else {
-                obj.put(criterion.getProperty(), singletonMap("$in", singletonList(valueRepresentation(context, propertyPath, value))));
+                obj.put(criterionPropertyName, singletonMap("$in", singletonList(valueRepresentation(context, propertyPath, value))));
             }
         });
         addCriterionHandler(QueryModel.NotIn.class, (context, obj, criterion) -> {
             PersistentPropertyPath propertyPath = context.getRequiredProperty(criterion);
             Object value = criterion.getValue();
+            String criterionPropertyName = getCriterionPropertyName(criterion.getProperty(), context);
             if (value instanceof Iterable) {
                 List<?> values = CollectionUtils.iterableToList((Iterable) value);
-                obj.put(criterion.getProperty(), singletonMap("$nin", values.stream().map(val -> valueRepresentation(context, propertyPath, val)).collect(Collectors.toList())));
+                obj.put(criterionPropertyName, singletonMap("$nin", values.stream().map(val -> valueRepresentation(context, propertyPath, val)).collect(Collectors.toList())));
             } else {
-                obj.put(criterion.getProperty(), singletonMap("$nin", singletonList(valueRepresentation(context, propertyPath, value))));
+                obj.put(criterionPropertyName, singletonMap("$nin", singletonList(valueRepresentation(context, propertyPath, value))));
             }
         });
+    }
+
+    /**
+     * Gets criterion property name. Used as sort of adapter if property in criteria should have different name that the persistent property.
+     * Used currently for id property name to be generated as _id when used in criteria.
+     *
+     * @param name    the criteria property name
+     * @param context the criteria context
+     * @return resulting name for the criteria, if identity field is used in criteria then returns _id else original criteria property name
+     */
+    private String getCriterionPropertyName(String name, CriteriaContext context) {
+        PersistentEntity persistentEntity = context.getPersistentEntity();
+        PersistentProperty identity = persistentEntity.getIdentity();
+        if (identity != null && identity.getName().equals(name)) {
+            return MONGO_ID_FIELD;
+        }
+        return name;
     }
 
     private <T extends QueryModel.PropertyCriterion> CriterionHandler<T> propertyOperatorExpression(String op) {
@@ -213,7 +234,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
 
     private String getPropertyPersistName(PersistentProperty property) {
         if (property.getOwner() != null && property.getOwner().getIdentity() == property) {
-            return "_id";
+            return MONGO_ID_FIELD;
         }
         return property.getAnnotationMetadata()
                 .stringValue(SerdeConfig.class, SerdeConfig.PROPERTY)
@@ -305,7 +326,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
             pipeline.add(singletonMap("$match", predicateObj));
         }
         if (!group.isEmpty()) {
-            group.put("_id", null);
+            group.put(MONGO_ID_FIELD, null);
             pipeline.add(singletonMap("$group", group));
         }
         if (!countObj.isEmpty()) {
@@ -447,12 +468,12 @@ public final class MongoQueryBuilder implements QueryBuilder {
 //                                .orElseGet(() -> namingStrategy.mappedName(association));
 
                     List<Map<String, Object>> joinCollectionLookupPipeline = new ArrayList<>();
-                    pipeline.add(lookup(joinCollectionName, "_id", ownerCollectionName, joinCollectionLookupPipeline, thisPath));
+                    pipeline.add(lookup(joinCollectionName, MONGO_ID_FIELD, ownerCollectionName, joinCollectionLookupPipeline, thisPath));
                     joinCollectionLookupPipeline.add(
                             lookup(
                                     joinedCollectionName,
                                     joinedCollectionName,
-                                    "_id",
+                                    MONGO_ID_FIELD,
                                     lookupStage.pipeline,
                                     joinedCollectionName)
                     );
@@ -687,7 +708,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
                 } else if (projection instanceof QueryModel.DistinctProjection) {
                     throw new UnsupportedOperationException("Not implemented yet");
                 } else if (projection instanceof QueryModel.IdProjection) {
-                    projectionObj.put("_id", 1);
+                    projectionObj.put(MONGO_ID_FIELD, 1);
                 } else if (projection instanceof QueryModel.PropertyProjection) {
                     QueryModel.PropertyProjection pp = (QueryModel.PropertyProjection) projection;
                     if (projection instanceof QueryModel.AvgProjection) {

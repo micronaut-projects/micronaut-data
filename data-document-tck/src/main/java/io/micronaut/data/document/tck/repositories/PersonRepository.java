@@ -101,6 +101,10 @@ public interface PersonRepository extends CrudRepository<Person, String>, Pageab
 
     List<Person> findByNameRegexOrderByAgeDesc(String name);
 
+    List<Person> findByIdIn(List<String> ids);
+
+    List<Person> findByIdNotIn(List<String> ids);
+
     class Specifications {
 
         public static PredicateSpecification<Person> nameEquals(String name) {
