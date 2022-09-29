@@ -1025,7 +1025,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     /**
      * Gets the generated id on record insert.
      *
-     * @param generatedKeysResultSet the generatedKeysResultSet keys result set
+     * @param generatedKeysResultSet the generated keys result set
      * @param identity the identity persistent field
      * @param dialect the SQL dialect
      * @return the generated id
