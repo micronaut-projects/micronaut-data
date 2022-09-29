@@ -1,5 +1,6 @@
 package io.micronaut.data.r2dbc.mysql;
 
+import io.micronaut.data.annotation.AutoPopulated;
 import io.micronaut.data.annotation.DataTransformer;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
@@ -12,8 +13,9 @@ import java.util.UUID;
 public class MySqlUuidEntity {
 
     @Id
+    @AutoPopulated
     @Column(columnDefinition = "binary(16)")
-    @DataTransformer(read = "BIN_TO_UUID(@.id)", write = "UUID_TO_BIN(?)")
+    @CustomBinaryMySqlUUIDType
     private UUID id;
 
 

@@ -32,7 +32,6 @@ class MySqlUUID2Spec extends Specification implements MySQLTestPropertyProvider 
     void 'test insert with UUID'() {
         given:
             def entity = new MySqlUuidEntity2()
-            entity.id = UUID.randomUUID()
             entity.name = "SPECIAL"
         when:
             MySqlUuidEntity2 test = repository.save(entity)
@@ -43,8 +42,14 @@ class MySqlUUID2Spec extends Specification implements MySQLTestPropertyProvider 
         then:
             test2.id == test.id
             test2.name == 'SPECIAL'
+        when: "update when converted is used and parameter is auto populated"
+            test2.name = "UPDATED"
+            repository.update(test2)
+            test2 = repository.findById(test.id).get()
+        then:
+            test2.name == "UPDATED"
+            test2.id == test.id
         when: "update query with transform is used"
-            def newUUID = UUID.randomUUID()
             repository.update(test.id, "xyz")
             test2 = repository.findById(test.id).get()
         then:

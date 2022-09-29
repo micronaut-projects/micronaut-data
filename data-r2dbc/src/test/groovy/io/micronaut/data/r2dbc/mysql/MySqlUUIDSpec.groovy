@@ -28,7 +28,6 @@ class MySqlUUIDSpec extends AbstractUUIDSpec implements MySqlTestPropertyProvide
     void 'test insert with UUID'() {
         given:
             def entity = new MySqlUuidEntity()
-            entity.id = UUID.randomUUID()
             entity.id2 = UUID.randomUUID()
             entity.name = "SPECIAL"
         when:
@@ -41,6 +40,14 @@ class MySqlUUIDSpec extends AbstractUUIDSpec implements MySqlTestPropertyProvide
             test2.id == test.id
             test2.id2 == test.id2
             test2.name == 'SPECIAL'
+        when: "update with auto populated id param"
+            test2.name = "UPDATED_NAME"
+            repository.update(test2)
+            test2 = repository.findById(test.id).get()
+        then:
+            test2.id == test.id
+            test2.id2 == test.id2
+            test2.name == 'UPDATED_NAME'
         when: "update query with transform is used"
             def newUUID = UUID.randomUUID()
             repository.update(test.id, newUUID)
@@ -48,7 +55,7 @@ class MySqlUUIDSpec extends AbstractUUIDSpec implements MySqlTestPropertyProvide
         then:
             test2.id == test.id
             test2.id2 == newUUID
-            test2.name == 'SPECIAL'
+            test2.name == 'UPDATED_NAME'
 
         cleanup:
             repository.deleteAll()
