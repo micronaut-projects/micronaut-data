@@ -1032,7 +1032,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
      * @return the identity field index in the result set. If not matched then will throw {@link DataAccessException}
      * @throws SQLException can be thrown when reading result set metadata or columns
      */
-    private <T> int getIdentityColumnIndex(@NonNull ResultSet resultSet, RuntimePersistentProperty<?> identity) throws SQLException {
+    private int getIdentityColumnIndex(@NonNull ResultSet resultSet, RuntimePersistentProperty<?> identity) throws SQLException {
         ResultSetMetaData resultSetMetaData = resultSet.getMetaData();
         int columnCount = resultSetMetaData.getColumnCount();
         if (columnCount == 1) {
