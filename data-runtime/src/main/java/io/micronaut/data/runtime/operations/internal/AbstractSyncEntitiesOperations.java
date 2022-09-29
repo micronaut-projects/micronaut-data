@@ -79,9 +79,6 @@ public abstract class AbstractSyncEntitiesOperations<Ctx extends OperationContex
         this.insert = insert;
         this.hasGeneratedId = insert && persistentEntity.getIdentity() != null && persistentEntity.getIdentity().isGenerated();
         Objects.requireNonNull(entities, "Entities cannot be null");
-        if (!entities.iterator().hasNext()) {
-            throw new IllegalStateException("Entities cannot be empty");
-        }
         Stream<T> stream;
         if (entities instanceof Collection) {
             stream = ((Collection) entities).stream();
