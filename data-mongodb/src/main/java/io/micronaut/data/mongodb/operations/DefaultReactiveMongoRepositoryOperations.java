@@ -1009,6 +1009,9 @@ public class DefaultReactiveMongoRepositoryOperations extends AbstractMongoRepos
             protected void execute() throws RuntimeException {
                 entities = entities.collectList().flatMapMany(data -> {
                     List<T> toInsert = data.stream().filter(d -> !d.vetoed).map(d -> d.entity).collect(Collectors.toList());
+                    if (toInsert.isEmpty()) {
+                        return Flux.fromIterable(data);
+                    }
 
                     MongoCollection<T> collection = getCollection(persistentEntity, ctx.repositoryType);
                     if (QUERY_LOG.isDebugEnabled()) {
