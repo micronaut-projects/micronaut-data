@@ -42,7 +42,7 @@ class MySqlUUID2Spec extends Specification implements MySQLTestPropertyProvider 
         then:
             test2.id == test.id
             test2.name == 'SPECIAL'
-        when: "update when converted is used and parameter is auto populated"
+        when: "update with auto populated id param"
             test2.name = "UPDATED"
             repository.update(test2)
             test2 = repository.findById(test.id).get()
