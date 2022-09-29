@@ -96,7 +96,6 @@ import java.io.Serializable;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
@@ -1008,8 +1007,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                     try (ResultSet generatedKeys = ps.getGeneratedKeys()) {
                         if (generatedKeys.next()) {
                             RuntimePersistentProperty<T> identity = persistentEntity.getIdentity();
-                            int index = getIdentityColumnIndex(generatedKeys, identity);
-                            Object id = columnIndexResultSetReader.readDynamic(generatedKeys, index, identity.getDataType());
+                            Object id = getGeneratedIdentity(generatedKeys, identity, storedQuery.getDialect());
                             BeanProperty<T, Object> property = (BeanProperty<T, Object>) identity.getProperty();
                             entity = updateEntityId(property, entity, id);
                         } else {
@@ -1025,27 +1023,19 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     }
 
     /**
-     * Gets the identity column index from the generated keys result set. In some JDBC implementations all columns are returned.
+     * Gets the generated id on record insert.
      *
-     * @param resultSet the generated keys result set
+     * @param generatedKeysResultSet the generatedKeysResultSet keys result set
      * @param identity the identity persistent field
-     * @return the identity field index in the result set. If not matched then will throw {@link DataAccessException}
-     * @throws SQLException can be thrown when reading result set metadata or columns
+     * @param dialect the SQL dialect
+     * @return the generated id
      */
-    private int getIdentityColumnIndex(@NonNull ResultSet resultSet, RuntimePersistentProperty<?> identity) throws SQLException {
-        ResultSetMetaData resultSetMetaData = resultSet.getMetaData();
-        int columnCount = resultSetMetaData.getColumnCount();
-        if (columnCount == 1) {
-            return 1;
+    private Object getGeneratedIdentity(@NonNull ResultSet generatedKeysResultSet, RuntimePersistentProperty<?> identity, Dialect dialect) {
+        if (dialect == Dialect.POSTGRES) {
+            // Postgres returns all fields, not just id so we need to access generated id by the name
+            return columnNameResultSetReader.readDynamic(generatedKeysResultSet, identity.getPersistedName(), identity.getDataType());
         }
-        String identityName = identity.getPersistedName();
-        for (int i = 1; i <= resultSetMetaData.getColumnCount(); i++) {
-            String columnName = resultSetMetaData.getColumnName(i);
-            if (identityName.equalsIgnoreCase(columnName)) {
-                return i;
-            }
-        }
-        throw new DataAccessException("Failed to retrieve ID column index for the entity");
+        return columnIndexResultSetReader.readDynamic(generatedKeysResultSet, 1, identity.getDataType());
     }
 
     private final class JdbcEntitiesOperations<T> extends AbstractSyncEntitiesOperations<JdbcOperationContext, T, SQLException> {
@@ -1110,9 +1100,9 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                     RuntimePersistentProperty<T> identity = persistentEntity.getIdentity();
                     List<Object> ids = new ArrayList<>();
                     try (ResultSet generatedKeys = ps.getGeneratedKeys()) {
-                        int index = getIdentityColumnIndex(generatedKeys, identity);
+                        Dialect dialect = storedQuery.getDialect();
                         while (generatedKeys.next()) {
-                            ids.add(columnIndexResultSetReader.readDynamic(generatedKeys, index, identity.getDataType()));
+                            ids.add(getGeneratedIdentity(generatedKeys, identity, dialect));
                         }
                     }
                     Iterator<Object> iterator = ids.iterator();
