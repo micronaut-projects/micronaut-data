@@ -1007,7 +1007,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                     try (ResultSet generatedKeys = ps.getGeneratedKeys()) {
                         if (generatedKeys.next()) {
                             RuntimePersistentProperty<T> identity = persistentEntity.getIdentity();
-                            Object id = columnIndexResultSetReader.readDynamic(generatedKeys, 1, identity.getDataType());
+                            Object id = getGeneratedIdentity(generatedKeys, identity, storedQuery.getDialect());
                             BeanProperty<T, Object> property = (BeanProperty<T, Object>) identity.getProperty();
                             entity = updateEntityId(property, entity, id);
                         } else {
@@ -1020,6 +1020,22 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                 }
             }
         }
+    }
+
+    /**
+     * Gets the generated id on record insert.
+     *
+     * @param generatedKeysResultSet the generated keys result set
+     * @param identity the identity persistent field
+     * @param dialect the SQL dialect
+     * @return the generated id
+     */
+    private Object getGeneratedIdentity(@NonNull ResultSet generatedKeysResultSet, RuntimePersistentProperty<?> identity, Dialect dialect) {
+        if (dialect == Dialect.POSTGRES) {
+            // Postgres returns all fields, not just id so we need to access generated id by the name
+            return columnNameResultSetReader.readDynamic(generatedKeysResultSet, identity.getPersistedName(), identity.getDataType());
+        }
+        return columnIndexResultSetReader.readDynamic(generatedKeysResultSet, 1, identity.getDataType());
     }
 
     private final class JdbcEntitiesOperations<T> extends AbstractSyncEntitiesOperations<JdbcOperationContext, T, SQLException> {
@@ -1084,8 +1100,9 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                     RuntimePersistentProperty<T> identity = persistentEntity.getIdentity();
                     List<Object> ids = new ArrayList<>();
                     try (ResultSet generatedKeys = ps.getGeneratedKeys()) {
+                        Dialect dialect = storedQuery.getDialect();
                         while (generatedKeys.next()) {
-                            ids.add(columnIndexResultSetReader.readDynamic(generatedKeys, 1, identity.getDataType()));
+                            ids.add(getGeneratedIdentity(generatedKeys, identity, dialect));
                         }
                     }
                     Iterator<Object> iterator = ids.iterator();

@@ -23,6 +23,7 @@ import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.runtime.intercept.AbstractQueryInterceptor;
 
 import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.Expression;
 import javax.persistence.criteria.Order;
 import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Root;
@@ -68,7 +69,8 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
             for (String path : StringUtils.splitOmitEmptyStrings(order.getProperty(), '.')) {
                 propertyPath = propertyPath.get(path);
             }
-            orders.add(order.isAscending() ? cb.asc(propertyPath) : cb.desc(propertyPath));
+            Expression<?> expression = order.isIgnoreCase() ? cb.lower(propertyPath.as(String.class)) : propertyPath;
+            orders.add(order.isAscending() ? cb.asc(expression) : cb.desc(expression));
         }
         return orders;
     }
