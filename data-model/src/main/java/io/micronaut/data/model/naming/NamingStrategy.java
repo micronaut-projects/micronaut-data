@@ -15,7 +15,6 @@
  */
 package io.micronaut.data.model.naming;
 
-import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.naming.NameUtils;
@@ -94,25 +93,13 @@ public interface NamingStrategy {
      * @return The mapped name
      */
     default @NonNull String mappedName(@NonNull PersistentProperty property) {
-        return mappedName(property, true);
-    }
-
-    /**
-     * Return the mapped name for the given property.
-     * @param property The property
-     * @param useGenerated an indicator telling whether generated name in the entity visitor should be used or else force mapped name calculation
-     * @return The mapped name
-     */
-    default @NonNull String mappedName(@NonNull PersistentProperty property, boolean useGenerated) {
         ArgumentUtils.requireNonNull("property", property);
         if (property instanceof Association) {
-            return mappedName((Association) property, useGenerated);
+            return mappedName((Association) property);
         } else {
-            AnnotationMetadata propertyAnnotationMetadata = property.getAnnotationMetadata();
-            boolean generated = propertyAnnotationMetadata.booleanValue(MappedProperty.class, "generated").orElse(false);
-            return propertyAnnotationMetadata
+            return property.getAnnotationMetadata()
                     .stringValue(MappedProperty.class)
-                    .filter(n -> StringUtils.isNotEmpty(n) && generated ? useGenerated : true)
+                    .filter(StringUtils::isNotEmpty)
                     .orElseGet(() -> mappedName(property.getName()));
         }
     }
@@ -123,20 +110,7 @@ public interface NamingStrategy {
      * @return The mapped name
      */
     default @NonNull String mappedName(Association association) {
-        return mappedName(association, true);
-    }
-
-    /**
-     * Return the mapped name for the given association.
-     * @param association The association
-     * @param useGenerated an indicator telling whether generated name in the entity visitor should be used or else force mapped name calculation
-     * @return The mapped name
-     */
-    default @NonNull String mappedName(Association association, boolean useGenerated) {
-        AnnotationMetadata assocationAnnotationMetadata = association.getAnnotationMetadata();
-        boolean generated = assocationAnnotationMetadata.booleanValue(MappedProperty.class, "generated").orElse(false);
-        boolean useExisting = generated ? useGenerated : true;
-        String providedName = useExisting ? assocationAnnotationMetadata.stringValue(MappedProperty.class).orElse(null) : null;
+        String providedName = association.getAnnotationMetadata().stringValue(MappedProperty.class).orElse(null);
         if (providedName != null) {
             return providedName;
         }
@@ -156,20 +130,8 @@ public interface NamingStrategy {
     }
 
     default @NonNull String mappedName(@NonNull List<Association> associations, @NonNull PersistentProperty property) {
-        return mappedName(associations, property, true);
-    }
-
-    /**
-     * Gets the mapped name from for the list of associations and property.
-     *
-     * @param associations the list of associations
-     * @param property the peristent property
-     * @param useGenerated an indicator telling whether generated name in the entity visitor should be used or else force mapped name calculation
-     * @return mapped name for the list of associations and property calculated using naming strategy
-     */
-    default @NonNull String mappedName(@NonNull List<Association> associations, @NonNull PersistentProperty property, boolean useGenerated) {
         if (associations.isEmpty()) {
-            return mappedName(property, useGenerated);
+            return mappedName(property);
         }
         StringBuilder sb = new StringBuilder();
         Association foreignAssociation = null;
@@ -188,10 +150,7 @@ public interface NamingStrategy {
         if (foreignAssociation != null) {
             if (foreignAssociation.getAssociatedEntity() == property.getOwner()
                     && foreignAssociation.getAssociatedEntity().getIdentity() == property) {
-                AnnotationMetadata foreignAssociationAnnotationMetadata = foreignAssociation.getAnnotationMetadata();
-                boolean generated = foreignAssociationAnnotationMetadata.booleanValue(MappedProperty.class, "generated").orElse(false);
-                boolean useExisting = generated ? useGenerated : true;
-                String providedName = useExisting ? foreignAssociationAnnotationMetadata.stringValue(MappedProperty.class).orElse(null) : null;
+                String providedName = foreignAssociation.getAnnotationMetadata().stringValue(MappedProperty.class).orElse(null);
                 if (providedName != null) {
                     return providedName;
                 }
@@ -201,10 +160,7 @@ public interface NamingStrategy {
                 throw new IllegalStateException("Foreign association cannot be mapped!");
             }
         } else {
-            AnnotationMetadata propertyAnnotationMetadata = property.getAnnotationMetadata();
-            boolean generated = propertyAnnotationMetadata.booleanValue(MappedProperty.class, "generated").orElse(false);
-            boolean useExisting = generated ? useGenerated : true;
-            String providedName = useExisting ? propertyAnnotationMetadata.stringValue(MappedProperty.class).orElse(null) : null;
+            String providedName = property.getAnnotationMetadata().stringValue(MappedProperty.class).orElse(null);
             if (providedName != null) {
                 return providedName;
             }

@@ -17,6 +17,11 @@ package io.micronaut.data.document.model.query.builder;
 
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Creator;
+import io.micronaut.core.naming.NameUtils;
+import io.micronaut.core.util.ArgumentUtils;
+import io.micronaut.core.util.StringUtils;
+import io.micronaut.data.annotation.MappedProperty;
+import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
@@ -26,6 +31,8 @@ import io.micronaut.data.model.naming.NamingStrategy;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.function.Function;
 
 /**
  * The Azure Cosmos DB sql query builder.
@@ -72,16 +79,88 @@ public final class CosmosSqlQueryBuilder extends SqlQueryBuilder {
 
     @Override
     protected String getMappedName(NamingStrategy namingStrategy, PersistentProperty property) {
-        return namingStrategy.mappedName(property, false);
+        ArgumentUtils.requireNonNull("property", property);
+        if (property instanceof Association) {
+            return getMappedName(namingStrategy, (Association) property);
+        } else {
+            AnnotationMetadata propertyAnnotationMetadata = property.getAnnotationMetadata();
+            boolean generated = propertyAnnotationMetadata.booleanValue(MappedProperty.class, "generated").orElse(false);
+            return propertyAnnotationMetadata
+                .stringValue(MappedProperty.class)
+                .filter(n -> !generated && StringUtils.isNotEmpty(n))
+                .orElseGet(() -> namingStrategy.mappedName(property.getName()));
+        }
     }
 
     @Override
     protected String getMappedName(NamingStrategy namingStrategy, Association association) {
-        return namingStrategy.mappedName(association, false);
+        AnnotationMetadata assocationAnnotationMetadata = association.getAnnotationMetadata();
+        boolean generated = assocationAnnotationMetadata.booleanValue(MappedProperty.class, "generated").orElse(false);
+        String providedName = generated ? null : assocationAnnotationMetadata.stringValue(MappedProperty.class).orElse(null);
+        if (providedName != null) {
+            return providedName;
+        }
+        if (association.isForeignKey()) {
+            Optional<Association> inverseSide = association.getInverseSide().map(Function.identity());
+            Association owningAssociation = inverseSide.orElse(association);
+            return namingStrategy.mappedName(owningAssociation.getOwner().getDecapitalizedName() + owningAssociation.getAssociatedEntity().getSimpleName());
+        } else {
+            switch (association.getKind()) {
+                case ONE_TO_ONE:
+                case MANY_TO_ONE:
+                    return namingStrategy.mappedName(association.getName() + namingStrategy.getForeignKeySuffix());
+                default:
+                    return namingStrategy.mappedName(association.getName());
+            }
+        }
     }
 
     @Override
     protected String getMappedName(NamingStrategy namingStrategy, List<Association> associations, PersistentProperty property) {
-        return namingStrategy.mappedName(associations, property, false);
+        if (associations.isEmpty()) {
+            return getMappedName(namingStrategy, property);
+        }
+        StringBuilder sb = new StringBuilder();
+        Association foreignAssociation = null;
+        for (Association association : associations) {
+            if (association.getKind() != Relation.Kind.EMBEDDED) {
+                if (foreignAssociation == null) {
+                    foreignAssociation = association;
+                }
+            }
+            if (sb.length() > 0) {
+                sb.append(NameUtils.capitalize(association.getName()));
+            } else {
+                sb.append(association.getName());
+            }
+        }
+        if (foreignAssociation != null) {
+            if (foreignAssociation.getAssociatedEntity() == property.getOwner()
+                && foreignAssociation.getAssociatedEntity().getIdentity() == property) {
+                AnnotationMetadata foreignAssociationAnnotationMetadata = foreignAssociation.getAnnotationMetadata();
+                boolean generated = foreignAssociationAnnotationMetadata.booleanValue(MappedProperty.class, "generated").orElse(false);
+                String providedName = generated ? null : foreignAssociationAnnotationMetadata.stringValue(MappedProperty.class).orElse(null);
+                if (providedName != null) {
+                    return providedName;
+                }
+                sb.append(namingStrategy.getForeignKeySuffix());
+                return namingStrategy.mappedName(sb.toString());
+            } else if (foreignAssociation.isForeignKey()) {
+                throw new IllegalStateException("Foreign association cannot be mapped!");
+            }
+        } else {
+            AnnotationMetadata propertyAnnotationMetadata = property.getAnnotationMetadata();
+            boolean generated = propertyAnnotationMetadata.booleanValue(MappedProperty.class, "generated").orElse(false);
+            String providedName = generated ? null : propertyAnnotationMetadata.stringValue(MappedProperty.class).orElse(null);
+            if (providedName != null) {
+                return providedName;
+            }
+        }
+        if (sb.length() > 0) {
+            sb.append(NameUtils.capitalize(property.getName()));
+        } else {
+            sb.append(property.getName());
+        }
+        return namingStrategy.mappedName(sb.toString());
     }
 }
