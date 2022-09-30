@@ -761,7 +761,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         NamingStrategy namingStrategy = propertyPath.getNamingStrategy();
         boolean[] needsTrimming = {false};
         traversePersistentProperties(propertyPath.getAssociations(), propertyPath.getProperty(), (associations, property) -> {
-            String columnName = namingStrategy.mappedName(associations, property);
+            String columnName = getMappedName(namingStrategy, associations, property);
             if (escape) {
                 columnName = quote(columnName);
             }
@@ -800,6 +800,40 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         return entity.getNamingStrategy();
     }
 
+    /**
+     * Gets the mapped name from the property using {@link NamingStrategy}.
+     *
+     * @param namingStrategy the naming strategy being used
+     * @param property the persistent property
+     * @return the mapped name for the property
+     */
+    protected @NonNull String getMappedName(@NonNull NamingStrategy namingStrategy, @NonNull PersistentProperty property) {
+        return namingStrategy.mappedName(property);
+    }
+
+    /**
+     * Gets the mapped name from the association using {@link NamingStrategy}.
+     *
+     * @param namingStrategy the naming strategy being used
+     * @param association the associatioon
+     * @return the mapped name for the association
+     */
+    protected @NonNull String getMappedName(@NonNull NamingStrategy namingStrategy, @NonNull Association association) {
+        return namingStrategy.mappedName(association);
+    }
+
+    /**
+     * Gets the mapped name from for the list of associations and property using {@link NamingStrategy}.
+     *
+     * @param namingStrategy the naming strategy
+     * @param associations the association list
+     * @param property the property
+     * @return the mappen name for the list of associations and property using given naming strategy
+     */
+    protected @NonNull String getMappedName(@NonNull NamingStrategy namingStrategy, @NonNull List<Association> associations, @NonNull PersistentProperty property) {
+        return namingStrategy.mappedName(associations, property);
+    }
+
     private void appendFunctionProjection(
         PersistentEntity entity,
         String functionName,
@@ -812,7 +846,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         }
         String columnName;
         if (computePropertyPaths()) {
-            columnName = getNamingStrategy(entity).mappedName(propertyPath.getAssociations(), propertyPath.getProperty());
+            columnName = getMappedName(getNamingStrategy(entity), propertyPath.getAssociations(), propertyPath.getProperty());
             if (shouldEscape(entity)) {
                 columnName = quote(columnName);
             }
@@ -1059,7 +1093,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                     if (currentAlias != null) {
                         whereClause.append(currentAlias).append(DOT);
                     }
-                    String columnName = namingStrategy.mappedName(associations, property);
+                    String columnName = getMappedName(namingStrategy, associations, property);
                     if (shouldEscape) {
                         columnName = quote(columnName);
                     }
@@ -1188,7 +1222,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                         if (tableAlias != null) {
                             queryString.append(tableAlias).append(DOT);
                         }
-                        String columnName = namingStrategy.mappedName(associations, property);
+                        String columnName = getMappedName(namingStrategy, associations, property);
                         if (queryState.escape) {
                             columnName = quote(columnName);
                         }
@@ -2045,7 +2079,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
          * @return already escaped column name
          */
         public String getColumnName() {
-            String columnName = getNamingStrategy().mappedName(propertyPath.getAssociations(), propertyPath.getProperty());
+            String columnName = getMappedName(getNamingStrategy(), propertyPath.getAssociations(), propertyPath.getProperty());
             if (shouldEscape()) {
                 return quote(columnName);
             }

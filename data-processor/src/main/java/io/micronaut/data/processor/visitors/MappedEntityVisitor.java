@@ -249,7 +249,7 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
 
         Optional<String> mapping = annotationMetadata.stringValue(MappedProperty.class);
         if (mappedEntity && !mapping.isPresent()) {
-            propertyElement.annotate(MappedProperty.class, builder -> builder.value(namingStrategy.mappedName(spp)));
+            propertyElement.annotate(MappedProperty.class, builder -> builder.value(namingStrategy.mappedName(spp)).member("generated", true));
         }
 
         if (dataType != DataType.OBJECT) {

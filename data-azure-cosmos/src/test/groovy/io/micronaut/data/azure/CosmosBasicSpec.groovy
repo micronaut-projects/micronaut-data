@@ -21,9 +21,11 @@ import io.micronaut.serde.Deserializer
 import io.micronaut.serde.SerdeRegistry
 import io.micronaut.serde.jackson.JacksonDecoder
 import spock.lang.AutoCleanup
+import spock.lang.IgnoreIf
 import spock.lang.Shared
 import spock.lang.Specification
 
+@IgnoreIf({ env["GITHUB_WORKFLOW"] })
 class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties {
 
     @AutoCleanup
@@ -39,9 +41,10 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
             book.totalPages = 1000
         when:
             bookRepository.save(book)
-            def optionalBook = bookRepository.queryById(book.id)
+            def loadedBook = bookRepository.queryById(book.id)
         then:
-            optionalBook
+            loadedBook
+            loadedBook.totalPages == book.totalPages
     }
 
     def "test find with query"() {
