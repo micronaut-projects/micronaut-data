@@ -18,11 +18,11 @@ package io.micronaut.data.cosmos.operations;
 import com.azure.cosmos.CosmosClient;
 import com.azure.cosmos.CosmosContainer;
 import com.azure.cosmos.CosmosDatabase;
+import com.azure.cosmos.CosmosException;
 import com.azure.cosmos.models.CosmosContainerProperties;
 import com.azure.cosmos.models.CosmosContainerResponse;
 import com.azure.cosmos.models.CosmosDatabaseResponse;
 import com.azure.cosmos.models.CosmosItemRequestOptions;
-import com.azure.cosmos.models.CosmosItemResponse;
 import com.azure.cosmos.models.CosmosQueryRequestOptions;
 import com.azure.cosmos.models.PartitionKey;
 import com.azure.cosmos.models.SqlParameter;
@@ -34,14 +34,27 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.context.annotation.Requires;
+import io.micronaut.core.annotation.AnnotationClassValue;
+import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
+import io.micronaut.core.beans.BeanIntrospection;
+import io.micronaut.core.beans.BeanIntrospector;
 import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.core.type.Argument;
+import io.micronaut.core.util.CollectionUtils;
+import io.micronaut.core.util.StringUtils;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.cosmos.annotation.CosmosContainerDef;
+import io.micronaut.data.cosmos.common.Constants;
+import io.micronaut.data.cosmos.common.CosmosContainerProps;
 import io.micronaut.data.cosmos.config.CosmosDatabaseConfiguration;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.exceptions.NonUniqueResultException;
 import io.micronaut.data.model.Page;
+import io.micronaut.data.model.PersistentEntity;
+import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
 import io.micronaut.data.model.runtime.DeleteBatchOperation;
@@ -75,16 +88,22 @@ import io.micronaut.serde.SerdeRegistry;
 import io.micronaut.serde.Serializer;
 import io.micronaut.serde.jackson.JacksonDecoder;
 import io.micronaut.serde.support.util.JsonNodeEncoder;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import jakarta.inject.Singleton;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -95,11 +114,19 @@ import java.util.stream.Stream;
 @Internal
 final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperations implements CosmosRepositoryOperations,
     PreparedQueryDecorator, MethodContextAwareStoredQueryDecorator {
+
+    // This should return exact collection item by the id in given container
+    private static final String FIND_ONE_DEFAULT_QUERY = "SELECT * FROM root WHERE root.id = @ROOT_ID";
+
     private static final Logger QUERY_LOG = DataSettings.QUERY_LOG;
+    private static final Logger LOG = LoggerFactory.getLogger(DefaultCosmosRepositoryOperations.class);
+
     private final CosmosClient cosmosClient;
     private final SerdeRegistry serdeRegistry;
     private final ObjectMapper objectMapper;
-    private final CosmosDatabase database;
+    private final CosmosDatabase cosmosDatabase;
+
+    private final Map<PersistentEntity, CosmosContainerProps> containersByEntityMap = new ConcurrentHashMap<>();
 
     /**
      * Default constructor.
@@ -127,38 +154,37 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
         this.cosmosClient = cosmosClient;
         this.serdeRegistry = serdeRegistry;
         this.objectMapper = objectMapper;
-        this.database = initDatabase(configuration);
-    }
-
-    private CosmosDatabase initDatabase(CosmosDatabaseConfiguration configuration) {
-        CosmosDatabaseResponse databaseResponse;
-        ThroughputProperties throughputProperties = createThroughputProperties(configuration);
-        if (throughputProperties == null) {
-            databaseResponse = cosmosClient.createDatabaseIfNotExists(configuration.getDatabaseName());
-        } else {
-            databaseResponse = cosmosClient.createDatabaseIfNotExists(configuration.getDatabaseName(), throughputProperties);
-        }
-        return cosmosClient.getDatabase(databaseResponse.getProperties().getId());
-    }
-
-    private ThroughputProperties createThroughputProperties(CosmosDatabaseConfiguration configuration) {
-        // Throughput properties for the database
-        if (configuration.getThroughputRequestUnits() != null) {
-            if (configuration.isThroughputAutoScale()) {
-                return ThroughputProperties.createAutoscaledThroughput(configuration.getThroughputRequestUnits());
-            } else {
-                return ThroughputProperties.createManualThroughput(configuration.getThroughputRequestUnits());
-            }
-        }
-        return null;
+        this.cosmosDatabase = initDatabase(configuration);
     }
 
     @Override
     public <T> T findOne(Class<T> type, Serializable id) {
         RuntimePersistentEntity<T> persistentEntity = runtimeEntityRegistry.getEntity(type);
         CosmosContainer container = getContainer(persistentEntity);
-        CosmosItemResponse<ObjectNode> response = container.readItem(id.toString(), PartitionKey.NONE, new CosmosItemRequestOptions(), ObjectNode.class);
-        return deserializeFromTree(response.getItem(), Argument.of(type));
+        try {
+            final SqlParameter param = new SqlParameter("@ROOT_ID", id.toString());
+            final SqlQuerySpec querySpec = new SqlQuerySpec(FIND_ONE_DEFAULT_QUERY, param);
+            logQuery(querySpec, Collections.singletonList(param));
+            final CosmosQueryRequestOptions options = new CosmosQueryRequestOptions();
+            if (isIdPartitionKey(persistentEntity)) {
+                options.setPartitionKey(new PartitionKey(id.toString()));
+            }
+            CosmosPagedIterable<ObjectNode> result = container.queryItems(querySpec, options, ObjectNode.class);
+            Iterator<ObjectNode> iterator = result.iterator();
+            if (iterator.hasNext()) {
+                ObjectNode beanTree = iterator.next();
+                if (iterator.hasNext()) {
+                    throw new NonUniqueResultException();
+                }
+                return deserializeFromTree(beanTree, Argument.of(type));
+            }
+        } catch (CosmosException e) {
+            if (e.getStatusCode() == HttpResponseStatus.NOT_FOUND.code()) {
+                return null;
+            }
+            throw e;
+        }
+        return null;
     }
 
     @Override
@@ -167,11 +193,10 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
         CosmosContainer container = getContainer(persistentEntity);
         List<SqlParameter> paramList = bindParameters(preparedQuery);
         SqlQuerySpec querySpec = new SqlQuerySpec(preparedQuery.getQuery(), paramList);
-        if (QUERY_LOG.isDebugEnabled()) {
-            QUERY_LOG.debug("Executing query: {}", querySpec.getQueryText());
-            // TODO: log params
-        }
-        CosmosPagedIterable<ObjectNode> result = container.queryItems(querySpec, new CosmosQueryRequestOptions(), ObjectNode.class);
+        logQuery(querySpec, paramList);
+        CosmosQueryRequestOptions requestOptions = new CosmosQueryRequestOptions();
+        preparedQuery.getParameterInRole(Constants.PARTITION_KEY_ROLE, PartitionKey.class).ifPresent(requestOptions::setPartitionKey);
+        CosmosPagedIterable<ObjectNode> result = container.queryItems(querySpec, requestOptions, ObjectNode.class);
         Iterator<ObjectNode> iterator = result.iterator();
         if (iterator.hasNext()) {
             ObjectNode beanTree = iterator.next();
@@ -224,14 +249,8 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
         CosmosContainer container = getContainer(operation);
         T entity = operation.getEntity();
         ObjectNode tree = serializeToTree(entity, Argument.of(operation.getRootEntity()));
-        container.createItem(tree, PartitionKey.NONE, new CosmosItemRequestOptions());
+        container.createItem(tree, new CosmosItemRequestOptions());
         return entity;
-    }
-
-    private <T> CosmosContainer getContainer(InsertOperation<T> operation) {
-        RuntimePersistentEntity<T> persistentEntity = runtimeEntityRegistry.getEntity(operation.getRootEntity());
-        CosmosContainer container = getContainer(database, persistentEntity);
-        return container;
     }
 
     @Override
@@ -312,10 +331,6 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
         }); return paramList;
     }
 
-    private <T> CosmosContainer getContainer(RuntimePersistentEntity<T> persistentEntity) {
-        return getContainer(database, persistentEntity);
-    }
-
     @Override
     public <E, R> PreparedQuery<E, R> decorate(PreparedQuery<E, R> preparedQuery) {
         return new DefaultSqlPreparedQuery<>(preparedQuery);
@@ -326,17 +341,6 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
         SqlQueryBuilder queryBuilder = new SqlQueryBuilder();
         RuntimePersistentEntity<E> runtimePersistentEntity = runtimeEntityRegistry.getEntity(storedQuery.getRootEntity());
         return new DefaultSqlStoredQuery<>(storedQuery, runtimePersistentEntity, queryBuilder);
-    }
-
-    private CosmosContainer getContainer(CosmosDatabase cosmosDatabase, RuntimePersistentEntity<?> persistentEntity) {
-        CosmosContainerProperties containerProperties =
-            new CosmosContainerProperties(persistentEntity.getPersistedName(), "/lastName");
-        // TODO partition key path and other configs
-        ThroughputProperties throughputProperties = ThroughputProperties.createManualThroughput(400);
-
-        // TODO We might want to call just create an run some init before it
-        CosmosContainerResponse containerResponse = cosmosDatabase.createContainerIfNotExists(containerProperties, throughputProperties);
-        return cosmosDatabase.getContainer(containerResponse.getProperties().getId());
     }
 
     private ObjectNode serializeToTree(Object bean, Argument<?> type) {
@@ -388,5 +392,173 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
             return sqlStoredQuery;
         }
         throw new IllegalStateException("Expected for prepared query to be of type: SqlStoredQuery got: " + storedQuery.getClass().getName());
+    }
+
+    private void logQuery(SqlQuerySpec querySpec, Iterable<SqlParameter> params) {
+        if (QUERY_LOG.isDebugEnabled()) {
+            QUERY_LOG.debug("Executing query: {}", querySpec.getQueryText());
+            for (SqlParameter param : params) {
+                QUERY_LOG.debug("Parameter: name={}, value={}", param.getName(), param.getValue(Object.class));
+            }
+        }
+    }
+
+    // Init database and containers
+
+    private CosmosDatabase initDatabase(CosmosDatabaseConfiguration configuration) {
+        CosmosDatabaseResponse databaseResponse;
+        ThroughputProperties throughputProperties = createThroughputProperties(configuration);
+        if (throughputProperties == null) {
+            databaseResponse = cosmosClient.createDatabaseIfNotExists(configuration.getDatabaseName());
+        } else {
+            databaseResponse = cosmosClient.createDatabaseIfNotExists(configuration.getDatabaseName(), throughputProperties);
+        }
+        CosmosDatabase cosmosDatabase = cosmosClient.getDatabase(databaseResponse.getProperties().getId());
+        initContainers(cosmosDatabase);
+        return cosmosDatabase;
+    }
+
+    private ThroughputProperties createThroughputProperties(CosmosDatabaseConfiguration configuration) {
+        // Throughput properties for the database
+        if (configuration.getThroughputRequestUnits() != null) {
+            if (configuration.isThroughputAutoScale()) {
+                return ThroughputProperties.createAutoscaledThroughput(configuration.getThroughputRequestUnits());
+            } else {
+                return ThroughputProperties.createManualThroughput(configuration.getThroughputRequestUnits());
+            }
+        }
+        return null;
+    }
+
+    private void initContainers(CosmosDatabase cosmosDatabase) {
+        // Find container definitions
+        List<BeanIntrospection<Object>> introspections = BeanIntrospector.SHARED.findIntrospections(CosmosContainerDef.class).stream()
+            // filter out inner / internal / abstract(MappedSuperClass) classes
+            .filter(i -> !i.getBeanType().getName().contains("$"))
+            .filter(i -> !java.lang.reflect.Modifier.isAbstract(i.getBeanType().getModifiers()))
+            .collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(introspections)) {
+            LOG.warn("Did not find any CosmosContainerDef definition");
+            return;
+        }
+        for (BeanIntrospection<Object> introspection : introspections) {
+            processCosmosContainerDef(introspection, cosmosDatabase);
+        }
+    }
+
+    private void processCosmosContainerDef(BeanIntrospection<Object> introspection, CosmosDatabase cosmosDatabase) {
+        AnnotationValue<CosmosContainerDef> cosmosContainerDefAnnotationValue = introspection.getAnnotation(CosmosContainerDef.class);
+        AnnotationClassValue<Object>[] mappedEntitiesClassValues = (AnnotationClassValue<Object>[]) cosmosContainerDefAnnotationValue.annotationClassValues("mappedEntities");
+        List<PersistentEntity> persistentEntities = new ArrayList<>(mappedEntitiesClassValues.length);
+        for (AnnotationClassValue<Object> mappedEntitiesClassValue : mappedEntitiesClassValues) {
+            if (!mappedEntitiesClassValue.getType().isPresent()) {
+                LOG.warn("Mapped entity class not found {}", mappedEntitiesClassValue.getName());
+                continue;
+            }
+            Optional<BeanIntrospection<Object>> optMappedEntity = BeanIntrospector.SHARED.findIntrospection(mappedEntitiesClassValue.getType().get());
+            if (!optMappedEntity.isPresent() || !optMappedEntity.get().hasAnnotation(MappedEntity.class)) {
+                LOG.warn("Class is not annotated with MappedEntity {}", mappedEntitiesClassValue.getName());
+            } else {
+                BeanIntrospection<Object> mappedEntity = optMappedEntity.get();
+                if (!mappedEntity.getBeanType().getName().contains("$") && !java.lang.reflect.Modifier.isAbstract(mappedEntity.getBeanType().getModifiers())) {
+                    persistentEntities.add(runtimeEntityRegistry.getEntity(mappedEntity.getBeanType()));
+                }
+            }
+
+        }
+        if (persistentEntities.isEmpty()) {
+            LOG.warn("Skipping container for {} because it does not have mapped entities defined or found on class path.", introspection.getBeanType());
+        } else {
+            // Initialize container and add to cache map with container by entities
+            CosmosContainerProps cosmosContainerProps = getCosmosContainerProps(cosmosContainerDefAnnotationValue);
+            for (PersistentEntity persistentEntity : persistentEntities) {
+                containersByEntityMap.put(persistentEntity, cosmosContainerProps);
+                initContainer(cosmosContainerProps, cosmosDatabase);
+            }
+        }
+    }
+
+    private void initContainer(CosmosContainerProps props, CosmosDatabase cosmosDatabase) {
+        String containerName = props.getContainerName();
+        String partitionKey = getPartitionKey(props);
+        CosmosContainerProperties containerProperties = new CosmosContainerProperties(containerName, partitionKey);
+        ThroughputProperties throughputProperties = props.getThroughputProperties();
+        if (throughputProperties == null) {
+            cosmosDatabase.createContainerIfNotExists(containerProperties);
+        } else {
+            cosmosDatabase.createContainerIfNotExists(containerProperties, throughputProperties);
+        }
+    }
+
+    /**
+     * Creates {@link CosmosContainerProps} from the {@link CosmosContainerDef} annotation values.
+     *
+     * @param cosmosContainerDefData the annotation value for {@link CosmosContainerDef}
+     * @return new {@link CosmosContainerProps}
+     */
+    private CosmosContainerProps getCosmosContainerProps(@NonNull AnnotationValue<CosmosContainerDef> cosmosContainerDefData) {
+        String containerName = cosmosContainerDefData.stringValue("name").orElse("");
+        if (StringUtils.isEmpty(containerName)) {
+            throw new IllegalArgumentException("Container name may not be empty");
+        }
+        String partitionKeyPath = cosmosContainerDefData.stringValue("partitionKeyPath").orElse("");
+        if (StringUtils.isNotEmpty(partitionKeyPath)) {
+            LOG.info("It is suggested to define partition key on the container");
+        }
+        int throughputRequestUnits = cosmosContainerDefData.intValue("throughputRequestUnits").orElse(0);
+        ThroughputProperties throughputProperties = null;
+        if (throughputRequestUnits > 0) {
+            boolean throughputAutoScale = cosmosContainerDefData.booleanValue("throughputAutoScale").orElse(false);
+            if (throughputAutoScale) {
+                throughputProperties = ThroughputProperties.createAutoscaledThroughput(throughputRequestUnits);
+            } else {
+                throughputProperties = ThroughputProperties.createManualThroughput(throughputRequestUnits);
+            }
+        }
+        return new CosmosContainerProps(containerName, partitionKeyPath, throughputProperties);
+    }
+
+    // Container related code
+
+    private String getPartitionKey(CosmosContainerProps props) {
+        if (props != null && StringUtils.isNotEmpty(props.getPartitionKeyPath())) {
+            String partitionKey = props.getPartitionKeyPath();
+            if (!partitionKey.startsWith("/")) {
+                partitionKey = "/" + partitionKey;
+            }
+            return partitionKey;
+        }
+        return "/null";
+    }
+
+    private <T> CosmosContainer getContainer(InsertOperation<T> operation) {
+        RuntimePersistentEntity<T> persistentEntity = runtimeEntityRegistry.getEntity(operation.getRootEntity());
+        return getContainer(persistentEntity);
+    }
+
+    /**
+     * Gets the container for given persistent entity. It is expected that at this point container is created.
+     *
+     * @param persistentEntity the persistent entity (to be persisted in container)
+     * @return the Cosmos container
+     */
+    private CosmosContainer getContainer(RuntimePersistentEntity<?> persistentEntity) {
+        CosmosContainerProps props = containersByEntityMap.get(persistentEntity);
+        if (props == null) {
+            throw new DataAccessException("Entity is not registered in any container " + persistentEntity.getName());
+        }
+        return cosmosDatabase.getContainer(props.getContainerName());
+    }
+
+    private boolean isIdPartitionKey(PersistentEntity persistentEntity) {
+        CosmosContainerProps props = containersByEntityMap.get(persistentEntity);
+        if (StringUtils.isEmpty(props.getPartitionKeyPath())) {
+            return false;
+        }
+        PersistentProperty identity = persistentEntity.getIdentity();
+        if (identity == null) {
+            return false;
+        }
+        return getPartitionKey(props).equals("/" + identity.getName());
     }
 }

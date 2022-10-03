@@ -15,9 +15,12 @@
  */
 package io.micronaut.data.cosmos.annotation;
 
+import com.azure.cosmos.models.PartitionKey;
 import io.micronaut.context.annotation.AliasFor;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.annotation.RepositoryConfiguration;
+import io.micronaut.data.annotation.TypeRole;
+import io.micronaut.data.cosmos.common.Constants;
 import io.micronaut.data.cosmos.operations.CosmosRepositoryOperations;
 import io.micronaut.data.document.annotation.DocumentProcessorRequired;
 import io.micronaut.data.document.model.query.builder.CosmosSqlQueryBuilder;
@@ -40,7 +43,11 @@ import java.lang.annotation.Target;
         queryBuilder = CosmosSqlQueryBuilder.class,
         operations = CosmosRepositoryOperations.class,
         implicitQueries = true,
-        namedParameters = true
+        namedParameters = true,
+        typeRoles = @TypeRole(
+            role = Constants.PARTITION_KEY_ROLE,
+            type = PartitionKey.class
+        )
 )
 @SqlQueryConfiguration(
     @SqlQueryConfiguration.DialectConfiguration(

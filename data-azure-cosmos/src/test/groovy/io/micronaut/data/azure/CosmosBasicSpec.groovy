@@ -1,8 +1,10 @@
 package io.micronaut.data.azure
 
+import com.azure.core.http.HttpResponse
 import com.azure.cosmos.CosmosClient
 import com.azure.cosmos.CosmosContainer
 import com.azure.cosmos.CosmosDatabase
+import com.azure.cosmos.CosmosException
 import com.azure.cosmos.models.CosmosContainerProperties
 import com.azure.cosmos.models.CosmosContainerResponse
 import com.azure.cosmos.models.CosmosDatabaseResponse
@@ -20,6 +22,7 @@ import io.micronaut.serde.Decoder
 import io.micronaut.serde.Deserializer
 import io.micronaut.serde.SerdeRegistry
 import io.micronaut.serde.jackson.JacksonDecoder
+import io.netty.handler.codec.http.HttpResponseStatus
 import spock.lang.AutoCleanup
 import spock.lang.IgnoreIf
 import spock.lang.Shared
@@ -35,16 +38,42 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
     def "test find by id"() {
         given:
             def bookRepository = context.getBean(CosmosBookRepository)
+            // these are to verify containers are created as needed
+            def client = context.getBean(CosmosClient)
+            def databaseResponse = client.createDatabaseIfNotExists("mydb")
+            def database = client.getDatabase(databaseResponse.getProperties().getId())
             Book book = new Book()
             book.id = UUID.randomUUID().toString()
             book.title = "The Stand"
             book.totalPages = 1000
-        when:
             bookRepository.save(book)
+        when:
+            def optBook = bookRepository.findById(book.id, new PartitionKey(book.id))
+        then:
+            optBook.present
+            optBook.get().id == book.id
+            optBook.get().totalPages == book.totalPages
+        when:
+            def nonExistingId = UUID.randomUUID().toString()
+            optBook = bookRepository.findById(nonExistingId, new PartitionKey(nonExistingId))
+        then:
+            !optBook.present
+        when:
             def loadedBook = bookRepository.queryById(book.id)
         then:
             loadedBook
             loadedBook.totalPages == book.totalPages
+        when:
+            def booksContainer = database.getContainer("books")
+            def booksContainerResponse = booksContainer.read()
+        then:
+            booksContainerResponse.getStatusCode() == HttpResponseStatus.OK.code()
+        when:
+            def productsContainer = database.getContainer("products")
+            productsContainer.read()
+        then:
+            def e = thrown(CosmosException)
+            e.statusCode == HttpResponseStatus.NOT_FOUND.code()
     }
 
     def "test find with query"() {

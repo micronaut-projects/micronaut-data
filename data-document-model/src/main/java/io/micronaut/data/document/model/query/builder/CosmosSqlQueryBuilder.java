@@ -52,7 +52,8 @@ public final class CosmosSqlQueryBuilder extends SqlQueryBuilder {
      * Default constructor.
      */
     public CosmosSqlQueryBuilder() {
-        super(); }
+        super();
+    }
 
     @Override
     protected String asLiteral(Object value) {
