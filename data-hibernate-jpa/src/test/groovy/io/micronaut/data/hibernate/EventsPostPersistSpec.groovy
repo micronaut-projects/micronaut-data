@@ -56,9 +56,11 @@ class EventsPostPersistTestListener {
 
     @Singleton
     PostPersistEventListener<EventIndividualTest> postPersistListener() {
-        return {
-            postPersist++
-            true
+        return new PostPersistEventListener<EventIndividualTest>() {
+            @Override
+            void postPersist(EventIndividualTest entity) {
+                postPersist++
+            }
         }
     }
 }

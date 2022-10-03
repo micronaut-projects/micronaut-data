@@ -3,6 +3,7 @@ package io.micronaut.data.hibernate
 import io.micronaut.context.annotation.Factory
 import io.micronaut.context.annotation.Property
 import io.micronaut.context.annotation.Requires
+import io.micronaut.data.event.listeners.PostRemoveEventListener
 import io.micronaut.data.event.listeners.PostUpdateEventListener
 import io.micronaut.data.event.listeners.PreUpdateEventListener
 import io.micronaut.data.hibernate.entities.EventIndividualTest
@@ -80,9 +81,11 @@ class EventsPostUpdateTestListener {
 
     @Singleton
     PostUpdateEventListener<EventIndividualTest> postUpdateEventListener() {
-        return {
-            postUpdate++
-            true
+        return new PostUpdateEventListener<EventIndividualTest>() {
+            @Override
+            void postUpdate(EventIndividualTest entity) {
+                postUpdate++
+            }
         }
     }
 }

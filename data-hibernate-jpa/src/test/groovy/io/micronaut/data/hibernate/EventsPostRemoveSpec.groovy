@@ -3,6 +3,7 @@ package io.micronaut.data.hibernate
 import io.micronaut.context.annotation.Factory
 import io.micronaut.context.annotation.Property
 import io.micronaut.context.annotation.Requires
+import io.micronaut.data.event.listeners.PostPersistEventListener
 import io.micronaut.data.event.listeners.PostRemoveEventListener
 import io.micronaut.data.event.listeners.PreRemoveEventListener
 import io.micronaut.data.hibernate.entities.EventIndividualTest
@@ -81,9 +82,11 @@ class EventsPostRemoveTestListener {
 
     @Singleton
     PostRemoveEventListener<EventIndividualTest> postRemoveEventListener() {
-        return {
-            postRemove++
-            true
+        return new PostRemoveEventListener<EventIndividualTest>() {
+            @Override
+            void postRemove(EventIndividualTest entity) {
+                postRemove++
+            }
         }
     }
 }

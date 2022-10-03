@@ -79,9 +79,12 @@ class EventsPreUpdateTestListener {
 
     @Singleton
     PreUpdateEventListener<EventIndividualTest> preUpdateEventListener() {
-        return {
-            preUpdate++
-            true
+        return new PreUpdateEventListener<EventIndividualTest>() {
+            @Override
+            boolean preUpdate(EventIndividualTest entity) {
+                preUpdate++
+                true
+            }
         }
     }
 }

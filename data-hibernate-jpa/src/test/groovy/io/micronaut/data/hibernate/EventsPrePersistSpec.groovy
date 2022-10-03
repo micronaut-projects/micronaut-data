@@ -56,9 +56,12 @@ class EventsPrePersistTestListener {
 
     @Singleton
     PrePersistEventListener<EventIndividualTest> prePersistListener() {
-        return {
-            prePersist++
-            true
+        return new PrePersistEventListener<EventIndividualTest>() {
+            @Override
+            boolean prePersist(EventIndividualTest entity) {
+                prePersist++
+                true
+            }
         }
     }
 }

@@ -80,9 +80,12 @@ class EventsPreRemoveTestListener {
 
     @Singleton
     PreRemoveEventListener<EventIndividualTest> preRemoveEventListener() {
-        return {
-            preRemove++
-            true
+        return new PreRemoveEventListener<EventIndividualTest>() {
+            @Override
+            boolean preRemove(EventIndividualTest entity) {
+                preRemove++
+                true
+            }
         }
     }
 }

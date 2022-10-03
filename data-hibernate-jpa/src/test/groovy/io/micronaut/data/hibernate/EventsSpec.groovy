@@ -9,6 +9,7 @@ import io.micronaut.data.event.listeners.PostUpdateEventListener
 import io.micronaut.data.event.listeners.PrePersistEventListener
 import io.micronaut.data.event.listeners.PreRemoveEventListener
 import io.micronaut.data.event.listeners.PreUpdateEventListener
+import io.micronaut.data.hibernate.entities.EventIndividualTest
 import io.micronaut.data.hibernate.entities.EventTest
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Singleton
@@ -163,50 +164,65 @@ class EventTestListeners {
     }
 
     @Singleton
-    PrePersistEventListener<EventTest> prePersistListener() {
-        return {
-            prePersist++
-            true
+    PrePersistEventListener<EventIndividualTest> prePersistListener() {
+        return new PrePersistEventListener<EventIndividualTest>() {
+            @Override
+            boolean prePersist(EventIndividualTest entity) {
+                prePersist++
+                true
+            }
         }
     }
 
     @Singleton
-    PostPersistEventListener<EventTest> postPersistListener() {
-        return {
-            postPersist++
-            true
+    PostPersistEventListener<EventIndividualTest> postPersistListener() {
+        return new PostPersistEventListener<EventIndividualTest>() {
+            @Override
+            void postPersist(EventIndividualTest entity) {
+                postPersist++
+            }
         }
     }
 
     @Singleton
-    PreUpdateEventListener<EventTest> preUpdateEventListener() {
-        return {
-            preUpdate++
-            true
+    PreUpdateEventListener<EventIndividualTest> preUpdateEventListener() {
+        return new PreUpdateEventListener<EventIndividualTest>() {
+            @Override
+            boolean preUpdate(EventIndividualTest entity) {
+                preUpdate++
+                true
+            }
         }
     }
 
     @Singleton
-    PostUpdateEventListener<EventTest> postUpdateEventListener() {
-        return {
-            postUpdate++
-            true
+    PostUpdateEventListener<EventIndividualTest> postUpdateEventListener() {
+        return new PostUpdateEventListener<EventIndividualTest>() {
+            @Override
+            void postUpdate(EventIndividualTest entity) {
+                postUpdate++
+            }
         }
     }
 
     @Singleton
-    PreRemoveEventListener<EventTest> preRemoveEventListener() {
-        return {
-            preRemove++
-            true
+    PreRemoveEventListener<EventIndividualTest> preRemoveEventListener() {
+        return new PreRemoveEventListener<EventIndividualTest>() {
+            @Override
+            boolean preRemove(EventIndividualTest entity) {
+                preRemove++
+                true
+            }
         }
     }
 
     @Singleton
-    PostRemoveEventListener<EventTest> postRemoveEventListener() {
-        return {
-            postRemove++
-            true
+    PostRemoveEventListener<EventIndividualTest> postRemoveEventListener() {
+        return new PostRemoveEventListener<EventIndividualTest>() {
+            @Override
+            void postRemove(EventIndividualTest entity) {
+                postRemove++
+            }
         }
     }
 }
