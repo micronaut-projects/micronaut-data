@@ -129,7 +129,7 @@ public class EventIntegrator implements Integrator {
                             return;
                         }
                         final RuntimePersistentEntity<Object> entity = entityRegistry.getEntity(mappedClass);
-                        if (entity.hasPostPersistEventListeners()) {
+                        if (entity.hasPostRemoveEventListeners()) {
                             final DefaultEntityEventContext<Object> context = new SimpleHibernateEventContext<>(entity, event.getEntity());
                             entityEventListener.postRemove(context);
                         }
@@ -165,7 +165,7 @@ public class EventIntegrator implements Integrator {
                             return;
                         }
                         final RuntimePersistentEntity<Object> entity = entityRegistry.getEntity(mappedClass);
-                        if (entity.hasPostPersistEventListeners()) {
+                        if (entity.hasPostUpdateEventListeners()) {
                             final DefaultEntityEventContext<Object> context = new SimpleHibernateEventContext<>(entity, event.getEntity());
                             entityEventListener.postUpdate(context);
                         }
@@ -179,7 +179,7 @@ public class EventIntegrator implements Integrator {
                         return;
                     }
                     final RuntimePersistentEntity<Object> entity = entityRegistry.getEntity(mappedClass);
-                    if (entity.hasPreUpdateEventListeners()) {
+                    if (entity.hasPostLoadEventListeners()) {
                         final DefaultEntityEventContext<Object> context = new SimpleHibernateEventContext<>(entity, event.getEntity());
                         entityEventListener.postLoad(context);
                     }
