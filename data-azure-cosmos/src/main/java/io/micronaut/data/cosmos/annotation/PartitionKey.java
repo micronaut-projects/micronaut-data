@@ -15,8 +15,6 @@
  */
 package io.micronaut.data.cosmos.annotation;
 
-import io.micronaut.core.annotation.Introspected;
-
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -24,41 +22,20 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Used to declare Cosmos Azure DB specific properties for the container.
+ * Field annotation indicating that entity field should be used as partition key.
  *
  * @author radovanradic
  * @since 3.8.0
  */
-@Introspected
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.TYPE, ElementType.ANNOTATION_TYPE})
+@Target({ElementType.FIELD, ElementType.METHOD})
 @Documented
-public @interface CosmosContainerDef {
+public @interface PartitionKey {
 
     /**
-     * @return the container name
-     */
-    String name() default "";
-
-    /**
-     * Used to set partition key path for the container.
+     * The name of the partition key if the serialized attribute name differs from the field name.
      *
-     * @return the partition key path
+     * @return partition key name
      */
-    String partitionKeyPath() default "";
-
-    /**
-     * @return throughput request units for the entity (container). If less or equal to 0 then not used
-     */
-    int throughputRequestUnits() default 0;
-
-    /**
-     * @return an indicator telling whether throughput is auto-scaled for the entity (container)
-     */
-    boolean throughputAutoScale() default false;
-
-    /**
-     * @return A list of classes annotated with {@link io.micronaut.data.annotation.MappedEntity} belonging to the container
-     */
-    Class[] mappedEntities() default {};
+    String value() default "";
 }

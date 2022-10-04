@@ -16,6 +16,7 @@ import com.azure.cosmos.util.CosmosPagedIterable
 import com.fasterxml.jackson.databind.node.ObjectNode
 import io.micronaut.context.ApplicationContext
 import io.micronaut.core.type.Argument
+import io.micronaut.data.azure.entities.CosmosBook
 import io.micronaut.data.azure.repositories.CosmosBookRepository
 import io.micronaut.data.document.tck.entities.Book
 import io.micronaut.serde.Decoder
@@ -35,27 +36,24 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
     @Shared
     ApplicationContext context = ApplicationContext.run(properties)
 
+    CosmosBookRepository bookRepository = context.getBean(CosmosBookRepository)
+
     def "test find by id"() {
         given:
-            def bookRepository = context.getBean(CosmosBookRepository)
-            // these are to verify containers are created as needed
-            def client = context.getBean(CosmosClient)
-            def databaseResponse = client.createDatabaseIfNotExists("mydb")
-            def database = client.getDatabase(databaseResponse.getProperties().getId())
-            Book book = new Book()
+            def book = new CosmosBook()
             book.id = UUID.randomUUID().toString()
             book.title = "The Stand"
             book.totalPages = 1000
             bookRepository.save(book)
         when:
-            def optBook = bookRepository.findById(book.id, new PartitionKey(book.id))
+            def optBook = bookRepository.queryById(book.id, new PartitionKey(book.id))
         then:
             optBook.present
             optBook.get().id == book.id
             optBook.get().totalPages == book.totalPages
         when:
             def nonExistingId = UUID.randomUUID().toString()
-            optBook = bookRepository.findById(nonExistingId, new PartitionKey(nonExistingId))
+            optBook = bookRepository.queryById(nonExistingId, new PartitionKey(nonExistingId))
         then:
             !optBook.present
         when:
@@ -63,37 +61,25 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
         then:
             loadedBook
             loadedBook.totalPages == book.totalPages
-        when:
-            def booksContainer = database.getContainer("books")
-            def booksContainerResponse = booksContainer.read()
-        then:
-            booksContainerResponse.getStatusCode() == HttpResponseStatus.OK.code()
-        when:
-            def productsContainer = database.getContainer("products")
-            productsContainer.read()
-        then:
-            def e = thrown(CosmosException)
-            e.statusCode == HttpResponseStatus.NOT_FOUND.code()
     }
 
     def "test find with query"() {
         given:
-            def bookRepository = context.getBean(CosmosBookRepository)
-            Book book1 = new Book()
+            def book1 = new CosmosBook()
             book1.id = UUID.randomUUID().toString()
             book1.title = "The Stand"
             book1.totalPages = 1000
-            Book book2 = new Book()
+            def book2 = new CosmosBook()
             book2.id = UUID.randomUUID().toString()
             book2.title = "Ice And Fire"
             book2.totalPages = 200
         when:
             bookRepository.save(book1)
             bookRepository.save(book2)
-            def optionalBook = bookRepository.findById(book1.id)
+            def optionalBook = bookRepository.queryById(book1.id)
         then:
-            optionalBook.isPresent()
-            optionalBook.get().title == "The Stand"
+            optionalBook
+            optionalBook.title == "The Stand"
         when:
             def foundBook = bookRepository.searchByTitle("Ice And Fire")
         then:

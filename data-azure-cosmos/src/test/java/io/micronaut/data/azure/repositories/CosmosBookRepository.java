@@ -1,22 +1,20 @@
 package io.micronaut.data.azure.repositories;
 
 import com.azure.cosmos.models.PartitionKey;
+import io.micronaut.core.annotation.Nullable;
+import io.micronaut.data.azure.entities.CosmosBook;
 import io.micronaut.data.cosmos.annotation.CosmosRepository;
-import io.micronaut.data.document.tck.entities.Book;
-import io.micronaut.data.document.tck.repositories.AuthorRepository;
-import io.micronaut.data.document.tck.repositories.BookRepository;
+import io.micronaut.data.repository.PageableRepository;
 
 import java.util.Optional;
 
 @CosmosRepository
-public abstract class CosmosBookRepository extends BookRepository {
+public abstract class CosmosBookRepository implements PageableRepository<CosmosBook, String> {
 
-    public CosmosBookRepository(AuthorRepository authorRepository) {
-        super(authorRepository);
-    }
+    @Nullable
+    public abstract CosmosBook queryById(String id);
 
-    public abstract Optional<Book> findById(String id, PartitionKey partitionKey);
+    public abstract Optional<CosmosBook> queryById(String id, PartitionKey partitionKey);
 
-//    @Join("author.books")
-//    public abstract Iterable<BsonDocument> queryAll();
+    public abstract CosmosBook searchByTitle(String title);
 }
