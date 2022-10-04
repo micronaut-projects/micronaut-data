@@ -16,8 +16,12 @@ import com.azure.cosmos.util.CosmosPagedIterable
 import com.fasterxml.jackson.databind.node.ObjectNode
 import io.micronaut.context.ApplicationContext
 import io.micronaut.core.type.Argument
+import io.micronaut.data.azure.entities.Address
+import io.micronaut.data.azure.entities.Child
 import io.micronaut.data.azure.entities.CosmosBook
+import io.micronaut.data.azure.entities.Family
 import io.micronaut.data.azure.repositories.CosmosBookRepository
+import io.micronaut.data.azure.repositories.FamilyRepository
 import io.micronaut.data.document.tck.entities.Book
 import io.micronaut.serde.Decoder
 import io.micronaut.serde.Deserializer
@@ -37,6 +41,8 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
     ApplicationContext context = ApplicationContext.run(properties)
 
     CosmosBookRepository bookRepository = context.getBean(CosmosBookRepository)
+
+    FamilyRepository familyRepository = context.getBean(FamilyRepository)
 
     def "test find by id"() {
         given:
@@ -85,6 +91,31 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
         then:
             foundBook
             foundBook.title == "Ice And Fire"
+    }
+
+    def "save and load family in cosmos repo"() {
+        given:
+            def family = new Family()
+            family.id = "AndersenFamily"
+            family.lastName = "Andersen"
+            def address = new Address()
+            address.city = "Seattle"
+            address.county = "King"
+            address.state = "WA"
+            family.address = address
+            def child1 = new Child()
+            child1.firstName = "Henriette Thaulow"
+            child1.gender = "female"
+            child1.grade = 5
+            family.children.add(child1)
+            familyRepository.save(family)
+        when:
+            def optFamily = familyRepository.findById(family.id)
+        then:
+            optFamily.present
+            optFamily.get().id == family.id
+            optFamily.get().children.size() > 0
+            optFamily.get().address
     }
 
     def "should get cosmos client"() {
