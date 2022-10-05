@@ -184,13 +184,18 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
 
             config.containers
             config.containers.size() == 2
-            config.containers[0].containerName == "family"
-            config.containers[0].partitionKeyPath == "/lastName"
-            !config.containers[0].throughput.autoScale
-            config.containers[0].throughput.requestUnits == 1000
-            config.containers[1].containerName == "cosmos_book"
-            config.containers[1].partitionKeyPath == "/id"
-            !config.containers[1].throughput.autoScale
-            config.containers[1].throughput.requestUnits == 1200
+            def familyContainer = config.containers.find {it -> it.containerName == "family"}
+            familyContainer.containerName == "family"
+            familyContainer.partitionKeyPath == "/lastName"
+            !familyContainer.throughput.autoScale
+            familyContainer.throughput.requestUnits == 1000
+
+            def cosmosBookContainer = config.containers.find {it -> it.containerName == "cosmos_book"}
+            cosmosBookContainer.containerName == "cosmos_book"
+            cosmosBookContainer.partitionKeyPath == "/id"
+            !cosmosBookContainer.throughput.autoScale
+            cosmosBookContainer.throughput.requestUnits == 1200
     }
+
+
 }

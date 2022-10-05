@@ -17,7 +17,10 @@ package io.micronaut.data.cosmos.config;
 
 import io.micronaut.context.annotation.ConfigurationProperties;
 import io.micronaut.context.annotation.EachProperty;
+import io.micronaut.context.annotation.Parameter;
+import io.micronaut.context.annotation.Primary;
 import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.annotation.Nullable;
 import jakarta.inject.Inject;
 
 import java.util.ArrayList;
@@ -48,12 +51,12 @@ public final class CosmosDatabaseConfiguration {
 
     private List<String> packages = new ArrayList<>();
 
-    public CosmosDatabaseConfiguration.ThroughputSettings getThroughput() {
+    public ThroughputSettings getThroughput() {
         return throughput;
     }
 
     @Inject
-    public void setThroughput(CosmosDatabaseConfiguration.ThroughputSettings throughput) {
+    public void setThroughput(ThroughputSettings throughput) {
         this.throughput = throughput;
     }
 
@@ -114,30 +117,11 @@ public final class CosmosDatabaseConfiguration {
     }
 
     /**
-     * Throughput settings for database and container.
+     * Throughput settings for database.
      */
     @ConfigurationProperties("throughput-settings")
-    public static final class ThroughputSettings {
-
-        private Integer requestUnits;
-
-        private boolean autoScale;
-
-        public Integer getRequestUnits() {
-            return requestUnits;
-        }
-
-        public void setRequestUnits(Integer requestUnits) {
-            this.requestUnits = requestUnits;
-        }
-
-        public boolean isAutoScale() {
-            return autoScale;
-        }
-
-        public void setAutoScale(boolean autoScale) {
-            this.autoScale = autoScale;
-        }
+    @Primary
+    public static final class DefaultThroughputSettings extends ThroughputSettings {
     }
 
     /**
@@ -150,7 +134,11 @@ public final class CosmosDatabaseConfiguration {
 
         private String partitionKeyPath;
 
-        private CosmosDatabaseConfiguration.ThroughputSettings throughput;
+        private ThroughputSettings throughput;
+
+        public CosmosContainerSettings(@Parameter @Nullable ContainerThroughputSettings throughput) {
+            this.throughput = throughput;
+        }
 
         /**
          * @return the container name
@@ -187,7 +175,7 @@ public final class CosmosDatabaseConfiguration {
         /**
          * @return container throughput settings
          */
-        public CosmosDatabaseConfiguration.ThroughputSettings getThroughput() {
+        public ThroughputSettings getThroughput() {
             return throughput;
         }
 
@@ -196,9 +184,16 @@ public final class CosmosDatabaseConfiguration {
          *
          * @param throughput the throughput settings
          */
-        @Inject
-        public void setThroughput(CosmosDatabaseConfiguration.ThroughputSettings throughput) {
+        public void setThroughput(ContainerThroughputSettings throughput) {
             this.throughput = throughput;
+        }
+
+
+        /**
+         * Throughput settings for container.
+         */
+        @ConfigurationProperties("throughput-settings")
+        public static final class ContainerThroughputSettings extends ThroughputSettings {
         }
     }
 }
