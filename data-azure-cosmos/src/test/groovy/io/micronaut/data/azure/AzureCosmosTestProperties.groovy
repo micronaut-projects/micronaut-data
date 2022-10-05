@@ -33,7 +33,15 @@ trait AzureCosmosTestProperties implements TestPropertyProvider {
                 'azure.cosmos.database.throughput-settings.auto-scale'     : 'true',
                 'azure.cosmos.database.database-name'             : 'mydb',
                 'azure.cosmos.database.packages'                  : 'io.micronaut.data.azure.entities',
-                'azure.cosmos.database.update-policy'             : 'CREATE_IF_NOT_EXISTS'
+                'azure.cosmos.database.update-policy'             : 'CREATE_IF_NOT_EXISTS',
+                'azure.cosmos.database.container-settings[0].container-name' : 'family',
+                'azure.cosmos.database.container-settings[0].partition-key-path' : '/lastName',
+                'azure.cosmos.database.container-settings[0].throughput-settings.request-units' : '1000',
+                'azure.cosmos.database.container-settings[0].throughput-settings.auto-scale' : 'false',
+                'azure.cosmos.database.container-settings[1].container-name' : 'cosmos_book',
+                'azure.cosmos.database.container-settings[1].partition-key-path' : '/id',
+                'azure.cosmos.database.container-settings[1].throughput-settings.request-units' : '1200',
+                'azure.cosmos.database.container-settings[1].throughput-settings.auto-scale' : 'false',
         ]
     }
 }

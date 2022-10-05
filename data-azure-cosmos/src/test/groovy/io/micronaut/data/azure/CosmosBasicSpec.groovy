@@ -181,5 +181,16 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
             config.databaseName == 'mydb'
             config.throughput.autoScale
             config.throughput.requestUnits == 1000
+
+            config.containers
+            config.containers.size() == 2
+            config.containers[0].containerName == "family"
+            config.containers[0].partitionKeyPath == "/lastName"
+            !config.containers[0].throughput.autoScale
+            config.containers[0].throughput.requestUnits == 1000
+            config.containers[1].containerName == "cosmos_book"
+            config.containers[1].partitionKeyPath == "/id"
+            !config.containers[1].throughput.autoScale
+            config.containers[1].throughput.requestUnits == 1200
     }
 }

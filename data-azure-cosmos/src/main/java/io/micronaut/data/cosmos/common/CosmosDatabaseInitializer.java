@@ -32,7 +32,6 @@ import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.cosmos.annotation.PartitionKey;
-import io.micronaut.data.cosmos.config.CosmosContainerSettings;
 import io.micronaut.data.cosmos.config.CosmosDatabaseConfiguration;
 import io.micronaut.data.cosmos.config.StorageUpdatePolicy;
 import io.micronaut.data.model.PersistentEntity;
@@ -44,8 +43,11 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * Initializes Cosmos Database and Containers.
@@ -114,18 +116,19 @@ public class CosmosDatabaseInitializer {
             LOG.warn("Did not find any mapped entity to process");
             return;
         }
-        Map<String, CosmosContainerSettings> cosmosContainerSettings = configuration.getCosmosContainerSettings();
+        Map<String, CosmosDatabaseConfiguration.CosmosContainerSettings> cosmosContainerSettings = CollectionUtils.isEmpty(configuration.getContainers()) ? Collections.emptyMap() :
+            configuration.getContainers().stream().collect(Collectors.toMap(CosmosDatabaseConfiguration.CosmosContainerSettings::getContainerName, Function.identity()));
         for (PersistentEntity persistentEntity : entities) {
             initContainer(cosmosContainerSettings, configuration.getUpdatePolicy(), persistentEntity, cosmosDatabase);
         }
     }
 
-    private void initContainer(Map<String, CosmosContainerSettings> cosmosContainerSettingsMap, StorageUpdatePolicy updatePolicy, PersistentEntity entity, CosmosDatabase cosmosDatabase) {
+    private void initContainer(Map<String, CosmosDatabaseConfiguration.CosmosContainerSettings> cosmosContainerSettingsMap, StorageUpdatePolicy updatePolicy, PersistentEntity entity, CosmosDatabase cosmosDatabase) {
         String containerName = entity.getPersistedName();
-        CosmosContainerSettings cosmosContainerSettings = cosmosContainerSettingsMap.get(containerName);
+        CosmosDatabaseConfiguration.CosmosContainerSettings cosmosContainerSettings = cosmosContainerSettingsMap.get(containerName);
         String partitionKey = getPartitionKey(cosmosContainerSettings, entity);
         CosmosContainerProperties containerProperties = new CosmosContainerProperties(containerName, partitionKey);
-        CosmosDatabaseConfiguration.ThroughputSettings throughputSettings = cosmosContainerSettings != null ? cosmosContainerSettings.getThroughputSettings() : null;
+        CosmosDatabaseConfiguration.ThroughputSettings throughputSettings = cosmosContainerSettings != null ? cosmosContainerSettings.getThroughput() : null;
         ThroughputProperties throughputProperties = createThroughputProperties(throughputSettings);
         if (StorageUpdatePolicy.CREATE_IF_NOT_EXISTS.equals(updatePolicy)) {
             if (throughputProperties == null) {
@@ -139,7 +142,7 @@ public class CosmosDatabaseInitializer {
         }
     }
 
-    private String getPartitionKey(CosmosContainerSettings cosmosContainerSettings, PersistentEntity entity) {
+    private String getPartitionKey(CosmosDatabaseConfiguration.CosmosContainerSettings cosmosContainerSettings, PersistentEntity entity) {
         String partitionKey;
         if (cosmosContainerSettings != null && StringUtils.isNotEmpty(cosmosContainerSettings.getPartitionKeyPath())) {
             partitionKey = cosmosContainerSettings.getPartitionKeyPath();

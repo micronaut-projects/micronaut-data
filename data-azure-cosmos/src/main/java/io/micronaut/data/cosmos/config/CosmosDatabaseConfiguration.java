@@ -16,13 +16,12 @@
 package io.micronaut.data.cosmos.config;
 
 import io.micronaut.context.annotation.ConfigurationProperties;
+import io.micronaut.context.annotation.EachProperty;
 import io.micronaut.core.annotation.NonNull;
 import jakarta.inject.Inject;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import static io.micronaut.data.cosmos.config.CosmosDatabaseConfiguration.PREFIX;
 
@@ -30,7 +29,7 @@ import static io.micronaut.data.cosmos.config.CosmosDatabaseConfiguration.PREFIX
  * The Azure Cosmos database configuration.
  *
  * @author radovanradic
- * @since 3.8.0
+ * @since 4.0.0
  */
 @ConfigurationProperties(PREFIX)
 public final class CosmosDatabaseConfiguration {
@@ -41,7 +40,7 @@ public final class CosmosDatabaseConfiguration {
 
     private ThroughputSettings throughput;
 
-    private Map<String, CosmosContainerSettings> cosmosContainerSettings = new HashMap<>();
+    private List<CosmosContainerSettings> containers;
 
     private String databaseName;
 
@@ -58,12 +57,13 @@ public final class CosmosDatabaseConfiguration {
         this.throughput = throughput;
     }
 
-    public Map<String, CosmosContainerSettings> getCosmosContainerSettings() {
-        return cosmosContainerSettings;
+    public List<CosmosContainerSettings> getContainers() {
+        return containers;
     }
 
-    public void setCosmosContainerSettings(Map<String, CosmosContainerSettings> cosmosContainerSettings) {
-        this.cosmosContainerSettings = cosmosContainerSettings;
+    @Inject
+    public void setContainers(List<CosmosContainerSettings> containers) {
+        this.containers = containers;
     }
 
     /**
@@ -137,6 +137,68 @@ public final class CosmosDatabaseConfiguration {
 
         public void setAutoScale(boolean autoScale) {
             this.autoScale = autoScale;
+        }
+    }
+
+    /**
+     * The settings for Cosmos container.
+     */
+    @EachProperty(value = "container-settings", list = true)
+    public static class CosmosContainerSettings {
+
+        private String containerName;
+
+        private String partitionKeyPath;
+
+        private CosmosDatabaseConfiguration.ThroughputSettings throughput;
+
+        /**
+         * @return the container name
+         */
+        public String getContainerName() {
+            return containerName;
+        }
+
+        /**
+         * Sets the container name.
+         *
+         * @param containerName the container name
+         */
+        public void setContainerName(String containerName) {
+            this.containerName = containerName;
+        }
+
+        /**
+         * @return the partition key path for the container
+         */
+        public String getPartitionKeyPath() {
+            return partitionKeyPath;
+        }
+
+        /**
+         * Sets the container partition key path.
+         *
+         * @param partitionKeyPath the partition key path
+         */
+        public void setPartitionKeyPath(String partitionKeyPath) {
+            this.partitionKeyPath = partitionKeyPath;
+        }
+
+        /**
+         * @return container throughput settings
+         */
+        public CosmosDatabaseConfiguration.ThroughputSettings getThroughput() {
+            return throughput;
+        }
+
+        /**
+         * Sets the container throughput settings.
+         *
+         * @param throughput the throughput settings
+         */
+        @Inject
+        public void setThroughput(CosmosDatabaseConfiguration.ThroughputSettings throughput) {
+            this.throughput = throughput;
         }
     }
 }
