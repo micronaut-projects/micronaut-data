@@ -2,14 +2,11 @@ package io.micronaut.data.azure.entities;
 
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
-import io.micronaut.data.annotation.Relation;
-import io.micronaut.data.cosmos.annotation.Container;
 import io.micronaut.data.cosmos.annotation.PartitionKey;
 
 import java.util.ArrayList;
 import java.util.List;
 
-@Container
 @MappedEntity
 public class Family {
 

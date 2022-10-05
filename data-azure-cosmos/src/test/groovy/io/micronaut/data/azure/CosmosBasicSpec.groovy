@@ -22,6 +22,7 @@ import io.micronaut.data.azure.entities.CosmosBook
 import io.micronaut.data.azure.entities.Family
 import io.micronaut.data.azure.repositories.CosmosBookRepository
 import io.micronaut.data.azure.repositories.FamilyRepository
+import io.micronaut.data.cosmos.config.CosmosDatabaseConfiguration
 import io.micronaut.data.document.tck.entities.Book
 import io.micronaut.serde.Decoder
 import io.micronaut.serde.Deserializer
@@ -172,4 +173,13 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
             true
     }
 
+    def "test configuration"() {
+        given:
+            def config = context.getBean(CosmosDatabaseConfiguration)
+
+        expect:
+            config.databaseName == 'mydb'
+            config.throughput.autoScale
+            config.throughput.requestUnits == 1000
+    }
 }

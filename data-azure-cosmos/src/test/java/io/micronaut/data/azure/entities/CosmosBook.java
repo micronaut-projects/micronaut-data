@@ -29,14 +29,12 @@ import io.micronaut.data.annotation.event.PostUpdate;
 import io.micronaut.data.annotation.event.PrePersist;
 import io.micronaut.data.annotation.event.PreRemove;
 import io.micronaut.data.annotation.event.PreUpdate;
-import io.micronaut.data.cosmos.annotation.Container;
 import io.micronaut.data.cosmos.annotation.PartitionKey;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-@Container(throughputRequestUnits = 1000, throughputAutoScale = true, partitionKeyPath = "title")
 @MappedEntity
 public class CosmosBook {
     @Id

@@ -15,9 +15,9 @@
  */
 package io.micronaut.data.cosmos.config;
 
-import io.micronaut.context.annotation.ConfigurationInject;
 import io.micronaut.context.annotation.ConfigurationProperties;
 import io.micronaut.core.annotation.NonNull;
+import jakarta.inject.Inject;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -49,11 +49,12 @@ public final class CosmosDatabaseConfiguration {
 
     private List<String> packages = new ArrayList<>();
 
-    public ThroughputSettings getThroughput() {
+    public CosmosDatabaseConfiguration.ThroughputSettings getThroughput() {
         return throughput;
     }
 
-    public void setThroughput(ThroughputSettings throughput) {
+    @Inject
+    public void setThroughput(CosmosDatabaseConfiguration.ThroughputSettings throughput) {
         this.throughput = throughput;
     }
 
@@ -110,5 +111,32 @@ public final class CosmosDatabaseConfiguration {
      */
     public void setPackages(List<String> packages) {
         this.packages = packages;
+    }
+
+    /**
+     * Throughput settings for database and container.
+     */
+    @ConfigurationProperties("throughput-settings")
+    public static final class ThroughputSettings {
+
+        private Integer requestUnits;
+
+        private boolean autoScale;
+
+        public Integer getRequestUnits() {
+            return requestUnits;
+        }
+
+        public void setRequestUnits(Integer requestUnits) {
+            this.requestUnits = requestUnits;
+        }
+
+        public boolean isAutoScale() {
+            return autoScale;
+        }
+
+        public void setAutoScale(boolean autoScale) {
+            this.autoScale = autoScale;
+        }
     }
 }

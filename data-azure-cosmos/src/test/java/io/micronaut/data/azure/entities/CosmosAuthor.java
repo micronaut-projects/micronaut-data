@@ -19,13 +19,11 @@ import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.Relation;
-import io.micronaut.data.cosmos.annotation.Container;
 
 import java.util.HashSet;
 import java.util.Set;
 
 @MappedEntity
-@Container(name = "author", throughputRequestUnits = 500)
 public class CosmosAuthor {
 
     @Id

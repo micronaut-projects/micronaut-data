@@ -1,3 +1,18 @@
+/*
+ * Copyright 2017-2022 original authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.micronaut.data.cosmos.common;
 
 import com.azure.cosmos.CosmosClient;
@@ -20,7 +35,6 @@ import io.micronaut.data.cosmos.annotation.PartitionKey;
 import io.micronaut.data.cosmos.config.CosmosContainerSettings;
 import io.micronaut.data.cosmos.config.CosmosDatabaseConfiguration;
 import io.micronaut.data.cosmos.config.StorageUpdatePolicy;
-import io.micronaut.data.cosmos.config.ThroughputSettings;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
@@ -38,7 +52,6 @@ import java.util.Map;
  *
  * @author radovanradic
  * @since 4.0.0
- *
  */
 @Context
 @Internal
@@ -49,7 +62,7 @@ public class CosmosDatabaseInitializer {
     private static final Logger LOG = LoggerFactory.getLogger(CosmosDatabaseInitializer.class);
 
     @PostConstruct
-    public void initialize(CosmosClient cosmosClient,
+    void initialize(CosmosClient cosmosClient,
                            RuntimeEntityRegistry runtimeEntityRegistry,
                            CosmosDatabaseConfiguration configuration) {
         LOG.debug("Cosmos Db Initialization Start");
@@ -74,7 +87,7 @@ public class CosmosDatabaseInitializer {
         LOG.debug("Cosmos Db Initialization Finish");
     }
 
-    private ThroughputProperties createThroughputProperties(ThroughputSettings throughputSettings) {
+    private ThroughputProperties createThroughputProperties(CosmosDatabaseConfiguration.ThroughputSettings throughputSettings) {
         if (throughputSettings != null && throughputSettings.getRequestUnits() != null) {
             if (throughputSettings.isAutoScale()) {
                 return ThroughputProperties.createAutoscaledThroughput(throughputSettings.getRequestUnits());
@@ -112,7 +125,7 @@ public class CosmosDatabaseInitializer {
         CosmosContainerSettings cosmosContainerSettings = cosmosContainerSettingsMap.get(containerName);
         String partitionKey = getPartitionKey(cosmosContainerSettings, entity);
         CosmosContainerProperties containerProperties = new CosmosContainerProperties(containerName, partitionKey);
-        ThroughputSettings throughputSettings = cosmosContainerSettings != null ? cosmosContainerSettings.getThroughputSettings() : null;
+        CosmosDatabaseConfiguration.ThroughputSettings throughputSettings = cosmosContainerSettings != null ? cosmosContainerSettings.getThroughputSettings() : null;
         ThroughputProperties throughputProperties = createThroughputProperties(throughputSettings);
         if (StorageUpdatePolicy.CREATE_IF_NOT_EXISTS.equals(updatePolicy)) {
             if (throughputProperties == null) {

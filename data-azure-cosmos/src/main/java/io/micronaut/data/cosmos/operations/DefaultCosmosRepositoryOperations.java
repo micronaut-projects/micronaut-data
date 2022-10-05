@@ -34,15 +34,11 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.core.type.Argument;
-import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.cosmos.common.Constants;
-import io.micronaut.data.cosmos.common.CosmosContainerProps;
 import io.micronaut.data.cosmos.config.CosmosDatabaseConfiguration;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.exceptions.NonUniqueResultException;
 import io.micronaut.data.model.Page;
-import io.micronaut.data.model.PersistentEntity;
-import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
 import io.micronaut.data.model.runtime.DeleteBatchOperation;
@@ -79,7 +75,6 @@ import io.micronaut.serde.support.util.JsonNodeEncoder;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import jakarta.inject.Singleton;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -104,9 +99,7 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
     private static final String FIND_ONE_DEFAULT_QUERY = "SELECT * FROM root WHERE root.id = @ROOT_ID";
 
     private static final Logger QUERY_LOG = DataSettings.QUERY_LOG;
-    private static final Logger LOG = LoggerFactory.getLogger(DefaultCosmosRepositoryOperations.class);
 
-    private final CosmosClient cosmosClient;
     private final SerdeRegistry serdeRegistry;
     private final ObjectMapper objectMapper;
     private final CosmosDatabase cosmosDatabase;
@@ -134,7 +127,6 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
                                                 ObjectMapper objectMapper,
                                                 CosmosDatabaseConfiguration configuration) {
         super(codecs, dateTimeProvider, runtimeEntityRegistry, conversionService, attributeConverterRegistry);
-        this.cosmosClient = cosmosClient;
         this.serdeRegistry = serdeRegistry;
         this.objectMapper = objectMapper;
         this.cosmosDatabase = cosmosClient.getDatabase(configuration.getDatabaseName());
@@ -149,9 +141,10 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
             final SqlQuerySpec querySpec = new SqlQuerySpec(FIND_ONE_DEFAULT_QUERY, param);
             logQuery(querySpec, Collections.singletonList(param));
             final CosmosQueryRequestOptions options = new CosmosQueryRequestOptions();
-            if (isIdPartitionKey(persistentEntity)) {
-                options.setPartitionKey(new PartitionKey(id.toString()));
-            }
+            // TODO: Try to figure out if partition key is id to improve performance of the operation
+            //if (isIdPartitionKey(persistentEntity)) {
+            //    options.setPartitionKey(new PartitionKey(id.toString()));
+            //}
             CosmosPagedIterable<ObjectNode> result = container.queryItems(querySpec, options, ObjectNode.class);
             Iterator<ObjectNode> iterator = result.iterator();
             if (iterator.hasNext()) {
@@ -400,33 +393,6 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
      * @return the Cosmos container
      */
     private CosmosContainer getContainer(RuntimePersistentEntity<?> persistentEntity) {
-        CosmosContainerProps props = CosmosContainerProps.getCosmosContainerProps(persistentEntity);
-        if (props == null) {
-            throw new DataAccessException("Entity is not registered in any container " + persistentEntity.getName());
-        }
-        return cosmosDatabase.getContainer(props.getContainerName());
-    }
-
-    private boolean isIdPartitionKey(PersistentEntity persistentEntity) {
-        CosmosContainerProps props = CosmosContainerProps.getCosmosContainerProps(persistentEntity);
-        if (StringUtils.isEmpty(props.getPartitionKeyPath())) {
-            return false;
-        }
-        PersistentProperty identity = persistentEntity.getIdentity();
-        if (identity == null) {
-            return false;
-        }
-        return getPartitionKey(props).equals("/" + identity.getName());
-    }
-
-    private String getPartitionKey(CosmosContainerProps props) {
-        if (props != null && StringUtils.isNotEmpty(props.getPartitionKeyPath())) {
-            String partitionKey = props.getPartitionKeyPath();
-            if (!partitionKey.startsWith("/")) {
-                partitionKey = "/" + partitionKey;
-            }
-            return partitionKey;
-        }
-        return "/null";
+        return cosmosDatabase.getContainer(persistentEntity.getPersistedName());
     }
 }
