@@ -4,7 +4,7 @@ public class CosmosContainerSettings {
 
     private String partitionKeyPath;
 
-    private ThroughputSettings throughputSettings;
+    private CosmosDatabaseConfiguration.ThroughputSettings throughputSettings;
 
     public String getPartitionKeyPath() {
         return partitionKeyPath;
@@ -14,11 +14,11 @@ public class CosmosContainerSettings {
         this.partitionKeyPath = partitionKeyPath;
     }
 
-    public ThroughputSettings getThroughputSettings() {
+    public CosmosDatabaseConfiguration.ThroughputSettings getThroughputSettings() {
         return throughputSettings;
     }
 
-    public void setThroughputSettings(ThroughputSettings throughputSettings) {
+    public void setThroughputSettings(CosmosDatabaseConfiguration.ThroughputSettings throughputSettings) {
         this.throughputSettings = throughputSettings;
     }
 }
