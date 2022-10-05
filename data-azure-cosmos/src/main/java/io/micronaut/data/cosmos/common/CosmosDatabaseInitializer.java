@@ -34,6 +34,7 @@ import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.cosmos.annotation.PartitionKey;
 import io.micronaut.data.cosmos.config.CosmosDatabaseConfiguration;
 import io.micronaut.data.cosmos.config.StorageUpdatePolicy;
+import io.micronaut.data.cosmos.config.ThroughputSettings;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
@@ -89,7 +90,7 @@ public class CosmosDatabaseInitializer {
         LOG.debug("Cosmos Db Initialization Finish");
     }
 
-    private ThroughputProperties createThroughputProperties(CosmosDatabaseConfiguration.ThroughputSettings throughputSettings) {
+    private ThroughputProperties createThroughputProperties(ThroughputSettings throughputSettings) {
         if (throughputSettings != null && throughputSettings.getRequestUnits() != null) {
             if (throughputSettings.isAutoScale()) {
                 return ThroughputProperties.createAutoscaledThroughput(throughputSettings.getRequestUnits());
@@ -128,7 +129,7 @@ public class CosmosDatabaseInitializer {
         CosmosDatabaseConfiguration.CosmosContainerSettings cosmosContainerSettings = cosmosContainerSettingsMap.get(containerName);
         String partitionKey = getPartitionKey(cosmosContainerSettings, entity);
         CosmosContainerProperties containerProperties = new CosmosContainerProperties(containerName, partitionKey);
-        CosmosDatabaseConfiguration.ThroughputSettings throughputSettings = cosmosContainerSettings != null ? cosmosContainerSettings.getThroughput() : null;
+        ThroughputSettings throughputSettings = cosmosContainerSettings != null ? cosmosContainerSettings.getThroughput() : null;
         ThroughputProperties throughputProperties = createThroughputProperties(throughputSettings);
         if (StorageUpdatePolicy.CREATE_IF_NOT_EXISTS.equals(updatePolicy)) {
             if (throughputProperties == null) {
