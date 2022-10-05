@@ -47,6 +47,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -63,6 +64,8 @@ import java.util.stream.Collectors;
 public class CosmosDatabaseInitializer {
 
     private static final Logger LOG = LoggerFactory.getLogger(CosmosDatabaseInitializer.class);
+
+    private static final Map<PersistentEntity, String> PARTITION_KEY_BY_ENTITY = new ConcurrentHashMap<>();
 
     @PostConstruct
     void initialize(CosmosClient cosmosClient,
@@ -88,6 +91,17 @@ public class CosmosDatabaseInitializer {
         }
         initContainers(configuration, cosmosDatabase, runtimeEntityRegistry);
         LOG.debug("Cosmos Db Initialization Finish");
+    }
+
+    /**
+     * Gets partition key for the container which corresponds with given mapped entity.
+     *
+     * @param entity the persistent entity which can have defined partition key on one of the fields
+     * @param cosmosContainerSettings container settings potentially providing partition key path
+     * @return partition key if defined either on entity or container settings
+     */
+    public static String getPartitionKey(PersistentEntity entity, CosmosDatabaseConfiguration.CosmosContainerSettings cosmosContainerSettings) {
+        return PARTITION_KEY_BY_ENTITY.computeIfAbsent(entity, e -> doGetPartitionKey(e, cosmosContainerSettings));
     }
 
     private ThroughputProperties createThroughputProperties(ThroughputSettings throughputSettings) {
@@ -127,7 +141,7 @@ public class CosmosDatabaseInitializer {
     private void initContainer(Map<String, CosmosDatabaseConfiguration.CosmosContainerSettings> cosmosContainerSettingsMap, StorageUpdatePolicy updatePolicy, PersistentEntity entity, CosmosDatabase cosmosDatabase) {
         String containerName = entity.getPersistedName();
         CosmosDatabaseConfiguration.CosmosContainerSettings cosmosContainerSettings = cosmosContainerSettingsMap.get(containerName);
-        String partitionKey = getPartitionKey(cosmosContainerSettings, entity);
+        String partitionKey = getPartitionKey(entity, cosmosContainerSettings);
         CosmosContainerProperties containerProperties = new CosmosContainerProperties(containerName, partitionKey);
         ThroughputSettings throughputSettings = cosmosContainerSettings != null ? cosmosContainerSettings.getThroughput() : null;
         ThroughputProperties throughputProperties = createThroughputProperties(throughputSettings);
@@ -143,7 +157,7 @@ public class CosmosDatabaseInitializer {
         }
     }
 
-    private String getPartitionKey(CosmosDatabaseConfiguration.CosmosContainerSettings cosmosContainerSettings, PersistentEntity entity) {
+    private static String doGetPartitionKey(PersistentEntity entity, CosmosDatabaseConfiguration.CosmosContainerSettings cosmosContainerSettings) {
         String partitionKey;
         if (cosmosContainerSettings != null && StringUtils.isNotEmpty(cosmosContainerSettings.getPartitionKeyPath())) {
             partitionKey = cosmosContainerSettings.getPartitionKeyPath();

@@ -34,11 +34,16 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.core.type.Argument;
+import io.micronaut.core.util.CollectionUtils;
+import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.cosmos.common.Constants;
+import io.micronaut.data.cosmos.common.CosmosDatabaseInitializer;
 import io.micronaut.data.cosmos.config.CosmosDatabaseConfiguration;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.exceptions.NonUniqueResultException;
 import io.micronaut.data.model.Page;
+import io.micronaut.data.model.PersistentEntity;
+import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
 import io.micronaut.data.model.runtime.DeleteBatchOperation;
@@ -83,7 +88,10 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -103,6 +111,8 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
     private final SerdeRegistry serdeRegistry;
     private final ObjectMapper objectMapper;
     private final CosmosDatabase cosmosDatabase;
+
+    private final Map<String, CosmosDatabaseConfiguration.CosmosContainerSettings> cosmosContainerSettingsMap;
 
     /**
      * Default constructor.
@@ -130,6 +140,8 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
         this.serdeRegistry = serdeRegistry;
         this.objectMapper = objectMapper;
         this.cosmosDatabase = cosmosClient.getDatabase(configuration.getDatabaseName());
+        cosmosContainerSettingsMap = CollectionUtils.isEmpty(configuration.getContainers()) ? Collections.emptyMap() :
+            configuration.getContainers().stream().collect(Collectors.toMap(CosmosDatabaseConfiguration.CosmosContainerSettings::getContainerName, Function.identity()));
     }
 
     @Override
@@ -142,9 +154,9 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
             logQuery(querySpec, Collections.singletonList(param));
             final CosmosQueryRequestOptions options = new CosmosQueryRequestOptions();
             // TODO: Try to figure out if partition key is id to improve performance of the operation
-            //if (isIdPartitionKey(persistentEntity)) {
-            //    options.setPartitionKey(new PartitionKey(id.toString()));
-            //}
+            if (isIdPartitionKey(persistentEntity)) {
+                options.setPartitionKey(new PartitionKey(id.toString()));
+            }
             CosmosPagedIterable<ObjectNode> result = container.queryItems(querySpec, options, ObjectNode.class);
             Iterator<ObjectNode> iterator = result.iterator();
             if (iterator.hasNext()) {
@@ -394,5 +406,21 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
      */
     private CosmosContainer getContainer(RuntimePersistentEntity<?> persistentEntity) {
         return cosmosDatabase.getContainer(persistentEntity.getPersistedName());
+    }
+
+    private boolean isIdPartitionKey(PersistentEntity persistentEntity) {
+        CosmosDatabaseConfiguration.CosmosContainerSettings cosmosContainerSettings = cosmosContainerSettingsMap.get(persistentEntity.getPersistedName());
+        if (cosmosContainerSettings == null) {
+            return false;
+        }
+        String partitionKey = CosmosDatabaseInitializer.getPartitionKey(persistentEntity, cosmosContainerSettings);
+        if (StringUtils.isEmpty(partitionKey)) {
+            return false;
+        }
+        PersistentProperty identity = persistentEntity.getIdentity();
+        if (identity == null) {
+            return false;
+        }
+        return partitionKey.equals("/" + identity.getName());
     }
 }
