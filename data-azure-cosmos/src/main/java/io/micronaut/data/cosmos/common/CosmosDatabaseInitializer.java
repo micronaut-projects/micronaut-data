@@ -108,7 +108,7 @@ public class CosmosDatabaseInitializer {
     }
 
     private void initContainer(Map<String, CosmosContainerSettings> cosmosContainerSettingsMap, StorageUpdatePolicy updatePolicy, PersistentEntity entity, CosmosDatabase cosmosDatabase) {
-        String containerName = entity.getName();
+        String containerName = entity.getPersistedName();
         CosmosContainerSettings cosmosContainerSettings = cosmosContainerSettingsMap.get(containerName);
         String partitionKey = getPartitionKey(cosmosContainerSettings, entity);
         CosmosContainerProperties containerProperties = new CosmosContainerProperties(containerName, partitionKey);
@@ -133,7 +133,7 @@ public class CosmosDatabaseInitializer {
         } else {
             partitionKey = findPartitionKey(entity);
         }
-        if (StringUtils.isEmpty(partitionKey)) {
+        if (StringUtils.isNotEmpty(partitionKey)) {
             if (!partitionKey.startsWith("/")) {
                 partitionKey = "/" + partitionKey;
             }

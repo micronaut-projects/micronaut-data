@@ -37,7 +37,6 @@ import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.cosmos.common.Constants;
 import io.micronaut.data.cosmos.common.CosmosContainerProps;
-import io.micronaut.data.cosmos.common.CosmosDatabaseInitializer;
 import io.micronaut.data.cosmos.config.CosmosDatabaseConfiguration;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.exceptions.NonUniqueResultException;
@@ -139,7 +138,6 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
         this.serdeRegistry = serdeRegistry;
         this.objectMapper = objectMapper;
         this.cosmosDatabase = cosmosClient.getDatabase(configuration.getDatabaseName());
-       // new CosmosDatabaseInitializer().initialize(cosmosClient, runtimeEntityRegistry, configuration);
     }
 
     @Override
