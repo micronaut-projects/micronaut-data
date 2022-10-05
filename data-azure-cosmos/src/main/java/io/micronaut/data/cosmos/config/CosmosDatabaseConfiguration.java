@@ -18,6 +18,11 @@ package io.micronaut.data.cosmos.config;
 import io.micronaut.context.annotation.ConfigurationProperties;
 import io.micronaut.core.annotation.NonNull;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import static io.micronaut.data.cosmos.config.CosmosDatabaseConfiguration.PREFIX;
 
 /**
@@ -31,42 +36,32 @@ public final class CosmosDatabaseConfiguration {
 
     public static final String PREFIX = "azure.cosmos.database";
 
-    private Integer throughputRequestUnits;
+    public static final String UPDATE_POLICY = PREFIX + ".update-policy";
 
-    private boolean throughputAutoScale;
+    private ThroughputSettings throughput;
+
+    private Map<String, CosmosContainerSettings> cosmosContainerSettings = new HashMap<>();
 
     private String databaseName;
 
-    /**
-     * @return throughput request units for the database
-     */
-    public Integer getThroughputRequestUnits() {
-        return throughputRequestUnits;
+    private StorageUpdatePolicy updatePolicy = StorageUpdatePolicy.NONE;
+
+    private List<String> packages = new ArrayList<>();
+
+    public ThroughputSettings getThroughput() {
+        return throughput;
     }
 
-    /**
-     * Sets the throughput request units for the database.
-     *
-     * @param throughputRequestUnits the throughput request units for the database.
-     */
-    public void setThroughputRequestUnits(Integer throughputRequestUnits) {
-        this.throughputRequestUnits = throughputRequestUnits;
+    public void setThroughput(ThroughputSettings throughput) {
+        this.throughput = throughput;
     }
 
-    /**
-     * @return an indicator telling whether throughput is auto-scaled
-     */
-    public boolean isThroughputAutoScale() {
-        return throughputAutoScale;
+    public Map<String, CosmosContainerSettings> getCosmosContainerSettings() {
+        return cosmosContainerSettings;
     }
 
-    /**
-     * Sets an indicator telling whether throughput is auto-scaled.
-     *
-     * @param throughputAutoScale an indicator telling whether throughput is auto-scaled
-     */
-    public void setThroughputAutoScale(boolean throughputAutoScale) {
-        this.throughputAutoScale = throughputAutoScale;
+    public void setCosmosContainerSettings(Map<String, CosmosContainerSettings> cosmosContainerSettings) {
+        this.cosmosContainerSettings = cosmosContainerSettings;
     }
 
     /**
@@ -84,5 +79,35 @@ public final class CosmosDatabaseConfiguration {
      */
     public void setDatabaseName(String databaseName) {
         this.databaseName = databaseName;
+    }
+
+    /**
+     * @return the update policy for the database to be used during startup.
+     */
+    public StorageUpdatePolicy getUpdatePolicy() {
+        return updatePolicy;
+    }
+
+    /**
+     * Sets the update policy for the database to be used during startup.
+     *
+     * @param updatePolicy the update policy for the database
+     */
+    public void setUpdatePolicy(StorageUpdatePolicy updatePolicy) {
+        this.updatePolicy = updatePolicy;
+    }
+
+    /**
+     * @return the list of package names to filter entities during init database and containers
+     */
+    public List<String> getPackages() {
+        return packages;
+    }
+
+    /**
+     * @param packages the package names to be considered during init
+     */
+    public void setPackages(List<String> packages) {
+        this.packages = packages;
     }
 }
