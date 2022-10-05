@@ -15,7 +15,6 @@
  */
 package io.micronaut.data.jdbc.h2
 
-
 import io.micronaut.data.tck.entities.Address
 import io.micronaut.data.tck.entities.Restaurant
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
@@ -32,7 +31,7 @@ class H2EmbeddedSpec extends Specification {
     @Shared
     H2RestaurantRepository restaurantRepository
 
-    void "test save and retreive entity with embedded"() {
+    void "test save and retrieve entity with embedded"() {
         when:"An entity is saved"
         restaurantRepository.save(new Restaurant("Fred's Cafe", new Address("High St.", "7896")))
         def restaurant = restaurantRepository.save(new Restaurant("Joe's Cafe", new Address("Smith St.", "1234")))

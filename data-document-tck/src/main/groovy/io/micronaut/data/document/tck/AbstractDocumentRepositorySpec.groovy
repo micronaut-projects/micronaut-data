@@ -807,6 +807,17 @@ abstract class AbstractDocumentRepositorySpec extends Specification {
             studentRepository.deleteAll()
     }
 
+    def "test save all with empty collection"() {
+        given:
+        personRepository.deleteAll()
+
+        when:
+        personRepository.saveAll([])
+
+        then:
+        personRepository.count() == 0
+    }
+
     def "test batch optimistic locking"() {
         given:
             def student1 = new Student("Denis")

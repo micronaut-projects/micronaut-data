@@ -45,7 +45,7 @@ class MongoEmbeddedSpec2 extends Specification implements MongoTestPropertyProvi
         restaurantRepository.deleteAll()
     }
 
-    void "test save and retreive entity with embedded"() {
+    void "test save and retrieve entity with embedded"() {
         when:"An entity is saved"
         restaurantRepository.saveAll([new Restaurant2("Fred's Cafe", new Address2("High St.", "7896"))])
         def restaurant = restaurantRepository.save(new Restaurant2("Joe's Cafe", new Address2("Smith St.", "1234")))
