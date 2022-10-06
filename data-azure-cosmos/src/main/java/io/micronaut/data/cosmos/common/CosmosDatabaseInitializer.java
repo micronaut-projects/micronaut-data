@@ -140,9 +140,12 @@ public class CosmosDatabaseInitializer {
             } else {
                 cosmosDatabase.createContainerIfNotExists(containerProperties, throughputProperties);
             }
-        } else if (StorageUpdatePolicy.UPDATE.equals(updatePolicy) && throughputProperties != null) {
+        } else if (StorageUpdatePolicy.UPDATE.equals(updatePolicy)) {
             CosmosContainer cosmosContainer = cosmosDatabase.getContainer(containerName);
-            cosmosContainer.replaceThroughput(throughputProperties);
+            if (throughputProperties != null) {
+                cosmosContainer.replaceThroughput(throughputProperties);
+            }
+            cosmosContainer.replace(containerProperties);
         }
     }
 
