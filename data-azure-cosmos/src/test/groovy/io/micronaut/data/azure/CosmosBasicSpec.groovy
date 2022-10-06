@@ -14,8 +14,14 @@ import com.azure.cosmos.util.CosmosPagedIterable
 import com.fasterxml.jackson.databind.node.ObjectNode
 import io.micronaut.context.ApplicationContext
 import io.micronaut.core.type.Argument
+import io.micronaut.data.azure.entities.Address
+import io.micronaut.data.azure.entities.Child
+import io.micronaut.data.azure.entities.CosmosBook
+import io.micronaut.data.azure.entities.Family
 import io.micronaut.data.azure.repositories.CosmosBookRepository
-import io.micronaut.data.document.tck.entities.Book
+import io.micronaut.data.azure.repositories.FamilyRepository
+import io.micronaut.data.cosmos.config.CosmosDatabaseConfiguration
+import io.micronaut.data.cosmos.config.StorageUpdatePolicy
 import io.micronaut.serde.Decoder
 import io.micronaut.serde.Deserializer
 import io.micronaut.serde.SerdeRegistry
@@ -32,15 +38,29 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
     @Shared
     ApplicationContext context = ApplicationContext.run(properties)
 
+    CosmosBookRepository bookRepository = context.getBean(CosmosBookRepository)
+
+    FamilyRepository familyRepository = context.getBean(FamilyRepository)
+
     def "test find by id"() {
         given:
-            def bookRepository = context.getBean(CosmosBookRepository)
-            Book book = new Book()
+            def book = new CosmosBook()
             book.id = UUID.randomUUID().toString()
             book.title = "The Stand"
             book.totalPages = 1000
-        when:
             bookRepository.save(book)
+        when:
+            def optBook = bookRepository.queryById(book.id, new PartitionKey(book.id))
+        then:
+            optBook.present
+            optBook.get().id == book.id
+            optBook.get().totalPages == book.totalPages
+        when:
+            def nonExistingId = UUID.randomUUID().toString()
+            optBook = bookRepository.queryById(nonExistingId, new PartitionKey(nonExistingId))
+        then:
+            !optBook.present
+        when:
             def loadedBook = bookRepository.queryById(book.id)
         then:
             loadedBook
@@ -49,27 +69,51 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
 
     def "test find with query"() {
         given:
-            def bookRepository = context.getBean(CosmosBookRepository)
-            Book book1 = new Book()
+            def book1 = new CosmosBook()
             book1.id = UUID.randomUUID().toString()
             book1.title = "The Stand"
             book1.totalPages = 1000
-            Book book2 = new Book()
+            def book2 = new CosmosBook()
             book2.id = UUID.randomUUID().toString()
             book2.title = "Ice And Fire"
             book2.totalPages = 200
         when:
             bookRepository.save(book1)
             bookRepository.save(book2)
-            def optionalBook = bookRepository.findById(book1.id)
+            def optionalBook = bookRepository.queryById(book1.id)
         then:
-            optionalBook.isPresent()
-            optionalBook.get().title == "The Stand"
+            optionalBook
+            optionalBook.title == "The Stand"
         when:
             def foundBook = bookRepository.searchByTitle("Ice And Fire")
         then:
             foundBook
             foundBook.title == "Ice And Fire"
+    }
+
+    def "save and load family in cosmos repo"() {
+        given:
+            def family = new Family()
+            family.id = "AndersenFamily"
+            family.lastName = "Andersen"
+            def address = new Address()
+            address.city = "Seattle"
+            address.county = "King"
+            address.state = "WA"
+            family.address = address
+            def child1 = new Child()
+            child1.firstName = "Henriette Thaulow"
+            child1.gender = "female"
+            child1.grade = 5
+            family.children.add(child1)
+            familyRepository.save(family)
+        when:
+            def optFamily = familyRepository.findById(family.id)
+        then:
+            optFamily.present
+            optFamily.get().id == family.id
+            optFamily.get().children.size() > 0
+            optFamily.get().address
     }
 
     def "should get cosmos client"() {
@@ -125,5 +169,31 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
         then:
             true
     }
+
+    def "test configuration"() {
+        given:
+            def config = context.getBean(CosmosDatabaseConfiguration)
+
+        expect:
+            config.databaseName == 'mydb'
+            config.throughput.autoScale
+            config.throughput.requestUnits == 1000
+            config.updatePolicy == StorageUpdatePolicy.CREATE_IF_NOT_EXISTS
+
+            config.containers
+            config.containers.size() == 2
+            def familyContainer = config.containers.find {it -> it.containerName == "family"}
+            familyContainer.containerName == "family"
+            familyContainer.partitionKeyPath == "/lastName"
+            !familyContainer.throughput.autoScale
+            familyContainer.throughput.requestUnits == 1000
+
+            def cosmosBookContainer = config.containers.find {it -> it.containerName == "cosmosbook"}
+            cosmosBookContainer.containerName == "cosmosbook"
+            cosmosBookContainer.partitionKeyPath == "/id"
+            !cosmosBookContainer.throughput.autoScale
+            cosmosBookContainer.throughput.requestUnits == 1200
+    }
+
 
 }

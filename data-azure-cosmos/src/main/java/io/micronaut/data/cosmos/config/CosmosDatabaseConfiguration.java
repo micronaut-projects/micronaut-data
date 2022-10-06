@@ -16,7 +16,15 @@
 package io.micronaut.data.cosmos.config;
 
 import io.micronaut.context.annotation.ConfigurationProperties;
+import io.micronaut.context.annotation.EachProperty;
+import io.micronaut.context.annotation.Parameter;
+import io.micronaut.context.annotation.Primary;
 import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.annotation.Nullable;
+import jakarta.inject.Inject;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import static io.micronaut.data.cosmos.config.CosmosDatabaseConfiguration.PREFIX;
 
@@ -24,49 +32,41 @@ import static io.micronaut.data.cosmos.config.CosmosDatabaseConfiguration.PREFIX
  * The Azure Cosmos database configuration.
  *
  * @author radovanradic
- * @since 3.8.0
+ * @since 4.0.0
  */
 @ConfigurationProperties(PREFIX)
 public final class CosmosDatabaseConfiguration {
 
     public static final String PREFIX = "azure.cosmos.database";
 
-    private Integer throughputRequestUnits;
+    public static final String UPDATE_POLICY = PREFIX + ".update-policy";
 
-    private boolean throughputAutoScale;
+    private ThroughputSettings throughput;
+
+    private List<CosmosContainerSettings> containers;
 
     private String databaseName;
 
-    /**
-     * @return throughput request units for the database
-     */
-    public Integer getThroughputRequestUnits() {
-        return throughputRequestUnits;
+    private StorageUpdatePolicy updatePolicy = StorageUpdatePolicy.NONE;
+
+    private List<String> packages = new ArrayList<>();
+
+    public ThroughputSettings getThroughput() {
+        return throughput;
     }
 
-    /**
-     * Sets the throughput request units for the database.
-     *
-     * @param throughputRequestUnits the throughput request units for the database.
-     */
-    public void setThroughputRequestUnits(Integer throughputRequestUnits) {
-        this.throughputRequestUnits = throughputRequestUnits;
+    @Inject
+    public void setThroughput(ThroughputSettings throughput) {
+        this.throughput = throughput;
     }
 
-    /**
-     * @return an indicator telling whether throughput is auto-scaled
-     */
-    public boolean isThroughputAutoScale() {
-        return throughputAutoScale;
+    public List<CosmosContainerSettings> getContainers() {
+        return containers;
     }
 
-    /**
-     * Sets an indicator telling whether throughput is auto-scaled.
-     *
-     * @param throughputAutoScale an indicator telling whether throughput is auto-scaled
-     */
-    public void setThroughputAutoScale(boolean throughputAutoScale) {
-        this.throughputAutoScale = throughputAutoScale;
+    @Inject
+    public void setContainers(List<CosmosContainerSettings> containers) {
+        this.containers = containers;
     }
 
     /**
@@ -84,5 +84,116 @@ public final class CosmosDatabaseConfiguration {
      */
     public void setDatabaseName(String databaseName) {
         this.databaseName = databaseName;
+    }
+
+    /**
+     * @return the update policy for the database to be used during startup.
+     */
+    public StorageUpdatePolicy getUpdatePolicy() {
+        return updatePolicy;
+    }
+
+    /**
+     * Sets the update policy for the database to be used during startup.
+     *
+     * @param updatePolicy the update policy for the database
+     */
+    public void setUpdatePolicy(StorageUpdatePolicy updatePolicy) {
+        this.updatePolicy = updatePolicy;
+    }
+
+    /**
+     * @return the list of package names to filter entities during init database and containers
+     */
+    public List<String> getPackages() {
+        return packages;
+    }
+
+    /**
+     * @param packages the package names to be considered during init
+     */
+    public void setPackages(List<String> packages) {
+        this.packages = packages;
+    }
+
+    /**
+     * Throughput settings for database.
+     */
+    @ConfigurationProperties("throughput-settings")
+    @Primary
+    public static final class DefaultThroughputSettings extends ThroughputSettings {
+    }
+
+    /**
+     * The settings for Cosmos container.
+     */
+    @EachProperty(value = "container-settings", list = true)
+    public static class CosmosContainerSettings {
+
+        private String containerName;
+
+        private String partitionKeyPath;
+
+        private ThroughputSettings throughput;
+
+        public CosmosContainerSettings(@Parameter @Nullable ContainerThroughputSettings throughput) {
+            this.throughput = throughput;
+        }
+
+        /**
+         * @return the container name
+         */
+        public String getContainerName() {
+            return containerName;
+        }
+
+        /**
+         * Sets the container name.
+         *
+         * @param containerName the container name
+         */
+        public void setContainerName(String containerName) {
+            this.containerName = containerName;
+        }
+
+        /**
+         * @return the partition key path for the container
+         */
+        public String getPartitionKeyPath() {
+            return partitionKeyPath;
+        }
+
+        /**
+         * Sets the container partition key path.
+         *
+         * @param partitionKeyPath the partition key path
+         */
+        public void setPartitionKeyPath(String partitionKeyPath) {
+            this.partitionKeyPath = partitionKeyPath;
+        }
+
+        /**
+         * @return container throughput settings
+         */
+        public ThroughputSettings getThroughput() {
+            return throughput;
+        }
+
+        /**
+         * Sets the container throughput settings.
+         *
+         * @param throughput the throughput settings
+         */
+        public void setThroughput(ContainerThroughputSettings throughput) {
+            this.throughput = throughput;
+        }
+
+
+        /**
+         * Throughput settings for container.
+         */
+        @ConfigurationProperties("throughput-settings")
+        public static final class ContainerThroughputSettings extends ThroughputSettings {
+        }
     }
 }
