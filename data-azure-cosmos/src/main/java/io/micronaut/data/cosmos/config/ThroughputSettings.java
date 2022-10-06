@@ -15,6 +15,8 @@
  */
 package io.micronaut.data.cosmos.config;
 
+import com.azure.cosmos.models.ThroughputProperties;
+
 /**
  * Throughput settings for database and container.
  */
@@ -54,5 +56,19 @@ public class ThroughputSettings {
      */
     public void setAutoScale(boolean autoScale) {
         this.autoScale = autoScale;
+    }
+
+    /**
+     * @return an instance of {@link ThroughputProperties} based on these settings and null if {@link #requestUnits} not greater than zero
+     */
+    public ThroughputProperties createThroughputProperties() {
+        if (requestUnits != null && requestUnits > 0) {
+            if (autoScale) {
+                return ThroughputProperties.createAutoscaledThroughput(requestUnits);
+            } else {
+                return ThroughputProperties.createManualThroughput(requestUnits);
+            }
+        }
+        return null;
     }
 }

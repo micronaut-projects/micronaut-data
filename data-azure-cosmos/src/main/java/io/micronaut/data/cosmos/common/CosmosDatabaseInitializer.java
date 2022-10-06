@@ -60,7 +60,7 @@ import java.util.stream.Collectors;
 @Context
 @Internal
 @Requires(classes = CosmosClient.class)
-@Requires(property = CosmosDatabaseConfiguration.UPDATE_POLICY, notEquals = "NONE")
+@Requires(condition = CosmosDatabaseInitializeCondition.class)
 public class CosmosDatabaseInitializer {
 
     private static final Logger LOG = LoggerFactory.getLogger(CosmosDatabaseInitializer.class);
@@ -72,7 +72,7 @@ public class CosmosDatabaseInitializer {
                            RuntimeEntityRegistry runtimeEntityRegistry,
                            CosmosDatabaseConfiguration configuration) {
         LOG.debug("Cosmos Db Initialization Start");
-        ThroughputProperties throughputProperties = createThroughputProperties(configuration.getThroughput());
+        ThroughputProperties throughputProperties = configuration.getThroughput() != null ? configuration.getThroughput().createThroughputProperties() : null;
         CosmosDatabase cosmosDatabase;
         if (configuration.getUpdatePolicy().equals(StorageUpdatePolicy.CREATE_IF_NOT_EXISTS)) {
             if (throughputProperties != null) {
@@ -104,17 +104,6 @@ public class CosmosDatabaseInitializer {
         return PARTITION_KEY_BY_ENTITY.computeIfAbsent(entity, e -> doGetPartitionKey(e, cosmosContainerSettings));
     }
 
-    private ThroughputProperties createThroughputProperties(ThroughputSettings throughputSettings) {
-        if (throughputSettings != null && throughputSettings.getRequestUnits() != null) {
-            if (throughputSettings.isAutoScale()) {
-                return ThroughputProperties.createAutoscaledThroughput(throughputSettings.getRequestUnits());
-            } else {
-                return ThroughputProperties.createManualThroughput(throughputSettings.getRequestUnits());
-            }
-        }
-        return null;
-    }
-
     private void initContainers(CosmosDatabaseConfiguration configuration, CosmosDatabase cosmosDatabase, RuntimeEntityRegistry runtimeEntityRegistry) {
         Collection<BeanIntrospection<Object>> introspections;
         if (CollectionUtils.isNotEmpty(configuration.getPackages())) {
@@ -144,7 +133,7 @@ public class CosmosDatabaseInitializer {
         String partitionKey = getPartitionKey(entity, cosmosContainerSettings);
         CosmosContainerProperties containerProperties = new CosmosContainerProperties(containerName, partitionKey);
         ThroughputSettings throughputSettings = cosmosContainerSettings != null ? cosmosContainerSettings.getThroughput() : null;
-        ThroughputProperties throughputProperties = createThroughputProperties(throughputSettings);
+        ThroughputProperties throughputProperties = throughputSettings != null ? throughputSettings.createThroughputProperties() : null;
         if (StorageUpdatePolicy.CREATE_IF_NOT_EXISTS.equals(updatePolicy)) {
             if (throughputProperties == null) {
                 cosmosDatabase.createContainerIfNotExists(containerProperties);

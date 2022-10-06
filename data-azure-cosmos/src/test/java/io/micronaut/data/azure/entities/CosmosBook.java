@@ -35,7 +35,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-@MappedEntity
+@MappedEntity("cosmosbook")
 public class CosmosBook {
     @Id
     @GeneratedValue

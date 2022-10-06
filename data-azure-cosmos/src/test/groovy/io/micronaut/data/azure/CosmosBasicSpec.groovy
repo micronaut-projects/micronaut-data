@@ -1,10 +1,8 @@
 package io.micronaut.data.azure
 
-import com.azure.core.http.HttpResponse
 import com.azure.cosmos.CosmosClient
 import com.azure.cosmos.CosmosContainer
 import com.azure.cosmos.CosmosDatabase
-import com.azure.cosmos.CosmosException
 import com.azure.cosmos.models.CosmosContainerProperties
 import com.azure.cosmos.models.CosmosContainerResponse
 import com.azure.cosmos.models.CosmosDatabaseResponse
@@ -23,12 +21,11 @@ import io.micronaut.data.azure.entities.Family
 import io.micronaut.data.azure.repositories.CosmosBookRepository
 import io.micronaut.data.azure.repositories.FamilyRepository
 import io.micronaut.data.cosmos.config.CosmosDatabaseConfiguration
-import io.micronaut.data.document.tck.entities.Book
+import io.micronaut.data.cosmos.config.StorageUpdatePolicy
 import io.micronaut.serde.Decoder
 import io.micronaut.serde.Deserializer
 import io.micronaut.serde.SerdeRegistry
 import io.micronaut.serde.jackson.JacksonDecoder
-import io.netty.handler.codec.http.HttpResponseStatus
 import spock.lang.AutoCleanup
 import spock.lang.IgnoreIf
 import spock.lang.Shared
@@ -181,6 +178,7 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
             config.databaseName == 'mydb'
             config.throughput.autoScale
             config.throughput.requestUnits == 1000
+            config.updatePolicy == StorageUpdatePolicy.CREATE_IF_NOT_EXISTS
 
             config.containers
             config.containers.size() == 2
@@ -190,8 +188,8 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
             !familyContainer.throughput.autoScale
             familyContainer.throughput.requestUnits == 1000
 
-            def cosmosBookContainer = config.containers.find {it -> it.containerName == "cosmos_book"}
-            cosmosBookContainer.containerName == "cosmos_book"
+            def cosmosBookContainer = config.containers.find {it -> it.containerName == "cosmosbook"}
+            cosmosBookContainer.containerName == "cosmosbook"
             cosmosBookContainer.partitionKeyPath == "/id"
             !cosmosBookContainer.throughput.autoScale
             cosmosBookContainer.throughput.requestUnits == 1200
