@@ -166,7 +166,7 @@ public class DefaultBindableParametersStoredQuery<E, R> implements BindableParam
         if (values == null) {
             if (parameterConverter != null) {
                 value = binder.convert(parameterConverter, value, argument);
-            } else if (persistentProperty != null) {
+            } else if (persistentProperty != null && !binding.isAutoPopulated()) {
                 value = binder.convert(value, persistentProperty);
             }
             binder.bindOne(binding, value);
@@ -176,7 +176,7 @@ public class DefaultBindableParametersStoredQuery<E, R> implements BindableParam
                 Object v = iterator.next();
                 if (parameterConverter != null) {
                     v = binder.convert(parameterConverter, v, argument);
-                } else if (persistentProperty != null) {
+                } else if (persistentProperty != null && !binding.isAutoPopulated()) {
                     v = binder.convert(v, persistentProperty);
                 }
                 iterator.set(v);

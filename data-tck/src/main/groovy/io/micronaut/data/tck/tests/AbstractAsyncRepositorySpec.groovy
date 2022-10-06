@@ -99,7 +99,7 @@ abstract class AbstractAsyncRepositorySpec extends Specification {
         def p2 = personRepository.save("Bob", 0).get()
         def people = [p1,p2]
 
-        then:"all are saved"
+        then: "all are saved"
         people.every { it.id != null }
         people.every { personRepository.findById(it.id).get() != null }
         personRepository.findAll().get().size() == 4
@@ -107,6 +107,17 @@ abstract class AbstractAsyncRepositorySpec extends Specification {
         personRepository.count("Jeff").get() == 1
         personRepository.list(Pageable.from(1)).get().isEmpty()
         personRepository.list(Pageable.from(0, 1)).get().size() == 1
+    }
+
+    def "test save all with empty collection"() {
+        given:
+        personRepository.deleteAll().get()
+
+        when:
+        personRepository.saveAll([]).get()
+
+        then:
+        personRepository.count().get() == 0
     }
 
     void "test update many"() {

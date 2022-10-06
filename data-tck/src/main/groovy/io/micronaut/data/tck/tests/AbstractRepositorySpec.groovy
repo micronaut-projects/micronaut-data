@@ -563,6 +563,17 @@ abstract class AbstractRepositorySpec extends Specification {
         personRepository.list(Pageable.from(0, 1)).size() == 1
     }
 
+    void "test save all with empty collection"() {
+        given:
+        personRepository.deleteAll()
+
+        when:
+        personRepository.saveAll([])
+
+        then:
+        personRepository.count() == 0
+    }
+
     void "save entity using repository method with different mapped entity argument"() {
         given:
             Author author = authorRepository.save(new Author().with(true, {it.name = "Kartarka Jolanda"}))

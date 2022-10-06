@@ -402,14 +402,25 @@ abstract class AbstractReactiveRepositorySpec extends Specification {
             def e = thrown(Exception)
             e.message.contains "Execute update returned unexpected row count. Expected: 2 got: 1"
         when:
-            student1 = studentRepository.findById(student1.getId()).blockingGet()
-            student2 = studentRepository.findById(student2.getId()).blockingGet()
-            student1.setVersion(5)
-            e = studentRepository.deleteAll([student1, student2]).blockingGet()
+        student1 = studentRepository.findById(student1.getId()).blockingGet()
+        student2 = studentRepository.findById(student2.getId()).blockingGet()
+        student1.setVersion(5)
+        e = studentRepository.deleteAll([student1, student2]).blockingGet()
         then:
-            e.message.contains "Execute update returned unexpected row count. Expected: 2 got: 1"
+        e.message.contains "Execute update returned unexpected row count. Expected: 2 got: 1"
         cleanup:
-            studentRepository.deleteAll().blockingGet()
+        studentRepository.deleteAll().blockingGet()
+    }
+
+    def "test save all with empty collection"() {
+        given:
+        personRepository.deleteAll().block()
+
+        when:
+        personRepository.saveAll([]).collectList().block()
+
+        then:
+        personRepository.count().block() == 0
     }
 
     void "test custom delete"() {
@@ -419,7 +430,7 @@ abstract class AbstractReactiveRepositorySpec extends Specification {
 
         when:
         def people = personRepository.findAll().collectList().block()
-        people.findAll {it.name == "Dennis"}.forEach{ it.name = "DoNotDelete"}
+        people.findAll { it.name == "Dennis" }.forEach { it.name = "DoNotDelete" }
         def deleted = personRepository.deleteCustom(people).block()
         people = personRepository.findAll().collectList().block()
 
