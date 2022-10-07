@@ -595,7 +595,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
      *
      * @param query      The query
      * @param allowJoins Whether joins are allowed
-     * @param useAlias   Whether alias shoudl be used
+     * @param useAlias   Whether alias should be used
      * @return The query state object
      */
     private QueryState newQueryState(@NonNull QueryModel query, boolean allowJoins, boolean useAlias) {

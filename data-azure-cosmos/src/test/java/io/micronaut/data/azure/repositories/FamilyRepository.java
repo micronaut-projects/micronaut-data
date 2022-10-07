@@ -2,6 +2,7 @@ package io.micronaut.data.azure.repositories;
 
 import com.azure.cosmos.models.PartitionKey;
 import io.micronaut.core.annotation.Nullable;
+import io.micronaut.data.annotation.Query;
 import io.micronaut.data.azure.entities.CosmosBook;
 import io.micronaut.data.azure.entities.Family;
 import io.micronaut.data.cosmos.annotation.CosmosRepository;
@@ -15,4 +16,5 @@ public abstract class FamilyRepository implements PageableRepository<Family, Str
     @Nullable
     public abstract Optional<Family> findById(String id);
 
+    public abstract void deleteByLastName(String lastName, PartitionKey partitionKey);
 }

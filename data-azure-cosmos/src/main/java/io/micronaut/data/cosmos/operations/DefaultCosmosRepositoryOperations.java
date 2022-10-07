@@ -20,6 +20,7 @@ import com.azure.cosmos.CosmosContainer;
 import com.azure.cosmos.CosmosDatabase;
 import com.azure.cosmos.CosmosException;
 import com.azure.cosmos.models.CosmosItemRequestOptions;
+import com.azure.cosmos.models.CosmosItemResponse;
 import com.azure.cosmos.models.CosmosQueryRequestOptions;
 import com.azure.cosmos.models.PartitionKey;
 import com.azure.cosmos.models.SqlParameter;
@@ -48,6 +49,7 @@ import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
 import io.micronaut.data.model.runtime.DeleteBatchOperation;
 import io.micronaut.data.model.runtime.DeleteOperation;
+import io.micronaut.data.model.runtime.EntityInstanceOperation;
 import io.micronaut.data.model.runtime.InsertOperation;
 import io.micronaut.data.model.runtime.PagedQuery;
 import io.micronaut.data.model.runtime.PreparedQuery;
@@ -153,7 +155,6 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
             final SqlQuerySpec querySpec = new SqlQuerySpec(FIND_ONE_DEFAULT_QUERY, param);
             logQuery(querySpec, Collections.singletonList(param));
             final CosmosQueryRequestOptions options = new CosmosQueryRequestOptions();
-            // TODO: Try to figure out if partition key is id to improve performance of the operation
             if (isIdPartitionKey(persistentEntity)) {
                 options.setPartitionKey(new PartitionKey(id.toString()));
             }
@@ -253,12 +254,58 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
 
     @Override
     public <T> int delete(DeleteOperation<T> operation) {
+        RuntimePersistentEntity<T> persistentEntity = runtimeEntityRegistry.getEntity(operation.getRootEntity());
+        T entity = operation.getEntity();
+        CosmosContainer container = getContainer(persistentEntity);
+        ObjectNode tree = serializeToTree(entity, Argument.of(operation.getRootEntity()));
+        CosmosItemRequestOptions options = new CosmosItemRequestOptions();
+        CosmosItemResponse cosmosItemResponse = container.deleteItem(tree, options);
+        if (cosmosItemResponse.getStatusCode() == HttpResponseStatus.NO_CONTENT.code()) {
+            return 1;
+        }
         return 0;
     }
 
     @Override
     public <T> Optional<Number> deleteAll(DeleteBatchOperation<T> operation) {
-        return Optional.empty();
+        RuntimePersistentEntity<T> persistentEntity = runtimeEntityRegistry.getEntity(operation.getRootEntity());
+        CosmosContainer container = getContainer(persistentEntity);
+        CosmosItemRequestOptions options = new CosmosItemRequestOptions();
+        Argument<T> arg = Argument.of(operation.getRootEntity());
+        Iterator<T> iterator = operation.iterator();
+        int deletedCount = 0;
+        while (iterator.hasNext()) {
+            T entity = iterator.next();
+            ObjectNode tree = serializeToTree(entity, arg);
+            CosmosItemResponse cosmosItemResponse = container.deleteItem(tree, options);
+            if (cosmosItemResponse.getStatusCode() == HttpResponseStatus.NO_CONTENT.code()) {
+                deletedCount++;
+            }
+        }
+        return Optional.of(deletedCount);
+    }
+
+    @Override
+    public Optional<Number> executeDelete(PreparedQuery<?, Number> preparedQuery) {
+        RuntimePersistentEntity persistentEntity = runtimeEntityRegistry.getEntity(preparedQuery.getRootEntity());
+        CosmosContainer container = getContainer(persistentEntity);
+        List<SqlParameter> paramList = bindParameters(preparedQuery);
+        SqlQuerySpec querySpec = new SqlQuerySpec("SELECT * " + preparedQuery.getQuery(), paramList);
+        CosmosQueryRequestOptions requestOptions = new CosmosQueryRequestOptions();
+        Optional<PartitionKey> optPartitionKey = preparedQuery.getParameterInRole(Constants.PARTITION_KEY_ROLE, PartitionKey.class);
+        optPartitionKey.ifPresent(requestOptions::setPartitionKey);
+        CosmosPagedIterable<ObjectNode> result = container.queryItems(querySpec, requestOptions, ObjectNode.class);
+        int deletedCount = 0;
+        Iterator<ObjectNode> iterator = result.iterator();
+        CosmosItemRequestOptions options = new CosmosItemRequestOptions();
+        while (iterator.hasNext()) {
+            ObjectNode item = iterator.next();
+            CosmosItemResponse cosmosItemResponse = container.deleteItem(item, options);
+            if (cosmosItemResponse.getStatusCode() == HttpResponseStatus.NO_CONTENT.code()) {
+                deletedCount++;
+            }
+        }
+        return Optional.of(deletedCount);
     }
 
     private <T, R> List<SqlParameter> bindParameters(PreparedQuery<T, R> preparedQuery) {
@@ -393,7 +440,7 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
 
     // Container related code
 
-    private <T> CosmosContainer getContainer(InsertOperation<T> operation) {
+    private <T> CosmosContainer getContainer(EntityInstanceOperation<T> operation) {
         RuntimePersistentEntity<T> persistentEntity = runtimeEntityRegistry.getEntity(operation.getRootEntity());
         return getContainer(persistentEntity);
     }
