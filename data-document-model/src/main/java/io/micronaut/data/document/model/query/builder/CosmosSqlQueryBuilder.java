@@ -28,6 +28,7 @@ import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.naming.NamingStrategies;
 import io.micronaut.data.model.naming.NamingStrategy;
+import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 
 import java.util.List;
@@ -174,5 +175,10 @@ public final class CosmosSqlQueryBuilder extends SqlQueryBuilder {
     @Override
     protected boolean isAliasForBatch() {
         return true;
+    }
+
+    @Override
+    public QueryResult buildInsert(AnnotationMetadata repositoryMetadata, PersistentEntity entity) {
+        return null;
     }
 }

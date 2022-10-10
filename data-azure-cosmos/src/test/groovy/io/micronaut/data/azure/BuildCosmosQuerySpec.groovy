@@ -99,4 +99,26 @@ $source
 
     }
 
+    void "test build update query"() {
+        given:
+        def repository = buildRepository('test.FamilyRepository', """
+import io.micronaut.data.cosmos.annotation.CosmosRepository;
+import io.micronaut.data.azure.entities.Family;
+import io.micronaut.context.annotation.Parameter;
+import io.micronaut.data.annotation.Id;
+import java.util.Optional;
+import java.util.List;
+@CosmosRepository
+interface FamilyRepository extends GenericRepository<Family, String> {
+    long updateRegistered(@Parameter("id") @Id String id, @Parameter("registered") boolean registered);
+}
+"""
+        )
+
+        when:
+        def updateRegisteredQuery = getQuery(repository.getRequiredMethod("updateRegistered", String, boolean))
+        then:
+        updateRegisteredQuery == "UPDATE family family_ SET family_.registered=@p1 WHERE (family_.id = @p2)"
+    }
+
 }
