@@ -89,6 +89,7 @@ import io.micronaut.serde.support.util.JsonNodeEncoder;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import jakarta.inject.Singleton;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -116,6 +117,7 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
     private static final String FIND_ONE_DEFAULT_QUERY = "SELECT * FROM root WHERE root.id = @ROOT_ID";
 
     private static final Logger QUERY_LOG = DataSettings.QUERY_LOG;
+    private static final Logger LOG = LoggerFactory.getLogger(DefaultCosmosRepositoryOperations.class);
 
     private final SerdeRegistry serdeRegistry;
     private final ObjectMapper objectMapper;
@@ -279,14 +281,12 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
         CosmosContainer container = getContainer(persistentEntity);
         CosmosItemRequestOptions options = new CosmosItemRequestOptions();
         Argument<T> arg = Argument.of(operation.getRootEntity());
-        Iterator<T> iterator = operation.iterator();
         String partitionKeyDefinition = getPartitionKey(persistentEntity);
         int deletedCount;
         if (StringUtils.isEmpty(partitionKeyDefinition)) {
             deletedCount = 0;
             // Bulk operations delete won't work without partition key so deleting one by one document
-            while (iterator.hasNext()) {
-                T entity = iterator.next();
+            for (T entity : operation) {
                 ObjectNode tree = serializeToTree(entity, arg);
                 CosmosItemResponse<?> cosmosItemResponse = container.deleteItem(tree, options);
                 if (cosmosItemResponse.getStatusCode() == HttpResponseStatus.NO_CONTENT.code()) {
@@ -295,8 +295,7 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
             }
         } else {
             List<ObjectNode> items = new ArrayList<>();
-            while (iterator.hasNext()) {
-                T entity = iterator.next();
+            for (T entity : operation) {
                 items.add(serializeToTree(entity, arg));
             }
             deletedCount = bulkDelete(container, items.iterator(), persistentEntity, Optional.empty());
@@ -313,7 +312,7 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
         RuntimePersistentEntity<?> persistentEntity = runtimeEntityRegistry.getEntity(preparedQuery.getRootEntity());
         CosmosContainer container = getContainer(persistentEntity);
         List<SqlParameter> paramList = bindParameters(preparedQuery);
-        SqlQuerySpec querySpec = new SqlQuerySpec("SELECT * " + preparedQuery.getQuery(), paramList);
+        SqlQuerySpec querySpec = new SqlQuerySpec(preparedQuery.getQuery(), paramList);
         CosmosQueryRequestOptions queryRequestOptions = new CosmosQueryRequestOptions();
         Optional<PartitionKey> optPartitionKey = preparedQuery.getParameterInRole(Constants.PARTITION_KEY_ROLE, PartitionKey.class);
         optPartitionKey.ifPresent(queryRequestOptions::setPartitionKey);
@@ -329,6 +328,7 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
             deletedCount = bulkDelete(container, iterator, persistentEntity, Optional.empty());
         } else {
             // If no partition key provided or defined on the entity (should not happen), delete one by one since partition key is needed for bulk delete
+            LOG.debug("deleteAll items one by one since partition key not provided or defined for entity {}", persistentEntity.getName());
             deletedCount = 0;
             CosmosItemRequestOptions options = new CosmosItemRequestOptions();
             while (iterator.hasNext()) {
@@ -355,7 +355,7 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
                 Object partitionKeyValue = getPartitionKeyValue(persistentEntity, item);
                 partitionKey = partitionKeyValue != null ? new PartitionKey(partitionKeyValue) : null;
                 if (partitionKey == null) {
-                    QUERY_LOG.debug("Partition key not found for persistent entity {} with id {}", persistentEntity.getName(), id);
+                    LOG.debug("Partition key not found for persistent entity {} with id {}", persistentEntity.getName(), id);
                 }
             }
             bulkOperations.add(new ItemBulkOperation(CosmosItemOperationType.DELETE, id, partitionKey, requestOptions, item, null));

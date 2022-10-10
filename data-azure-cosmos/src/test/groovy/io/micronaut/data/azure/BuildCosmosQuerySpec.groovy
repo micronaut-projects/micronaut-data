@@ -76,9 +76,9 @@ interface FamilyRepository extends GenericRepository<Family, String> {
         def deleteAllQuery = getQuery(repository.getRequiredMethod("deleteAll"))
         def deleteQueryMethod = repository.getRequiredMethod("delete", Family)
         then:
-        deleteByIdQuery == " FROM family  family_ WHERE (family_.id = @p1)"
-        deleteByIdsQuery == " FROM family  family_ WHERE (family_.id IN (@p1))"
-        deleteAllQuery == " FROM family  family_"
+        deleteByIdQuery == "SELECT *  FROM family  family_ WHERE (family_.id = @p1)"
+        deleteByIdsQuery == "SELECT *  FROM family  family_ WHERE (family_.id IN (@p1))"
+        deleteAllQuery == "SELECT *  FROM family  family_"
         !deleteQueryMethod.getAnnotation(Query)
     }
 

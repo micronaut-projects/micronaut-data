@@ -167,7 +167,7 @@ public final class CosmosSqlQueryBuilder extends SqlQueryBuilder {
 
     @Override
     protected StringBuilder appendDeleteClause(StringBuilder queryString) {
-        return queryString.append(FROM_CLAUSE);
+        return queryString.append("SELECT * ").append(FROM_CLAUSE);
     }
 
     @Override
