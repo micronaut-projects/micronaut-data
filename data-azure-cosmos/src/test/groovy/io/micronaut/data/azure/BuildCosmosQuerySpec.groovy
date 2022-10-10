@@ -118,7 +118,7 @@ interface FamilyRepository extends GenericRepository<Family, String> {
         when:
         def updateRegisteredQuery = getQuery(repository.getRequiredMethod("updateRegistered", String, boolean))
         then:
-        updateRegisteredQuery == "UPDATE family family_ SET family_.registered=@p1 WHERE (family_.id = @p2)"
+        updateRegisteredQuery == "SELECT * FROM family family_ WHERE (family_.id = @p2)"
     }
 
 }

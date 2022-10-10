@@ -42,7 +42,6 @@ import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
-import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.cosmos.common.Constants;
 import io.micronaut.data.cosmos.common.CosmosDatabaseInitializer;
@@ -97,12 +96,12 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
@@ -194,7 +193,7 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
     public <T, R> R findOne(PreparedQuery<T, R> preparedQuery) {
         RuntimePersistentEntity<T> persistentEntity = runtimeEntityRegistry.getEntity(preparedQuery.getRootEntity());
         CosmosContainer container = getContainer(persistentEntity);
-        List<SqlParameter> paramList = new ParameterBinder(false).bindParameters(preparedQuery);
+        List<SqlParameter> paramList = new ParameterBinder().bindParameters(preparedQuery);
         SqlQuerySpec querySpec = new SqlQuerySpec(preparedQuery.getQuery(), paramList);
         logQuery(querySpec, paramList);
         CosmosQueryRequestOptions requestOptions = new CosmosQueryRequestOptions();
@@ -297,22 +296,21 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
         }
         RuntimePersistentEntity<?> persistentEntity = runtimeEntityRegistry.getEntity(preparedQuery.getRootEntity());
         String query = preparedQuery.getQuery();
-        ParameterBinder parameterBinder = new ParameterBinder(true);
+        String update = preparedQuery.getAnnotationMetadata().stringValue(Query.class, "update").orElse(null);
+        if (update == null) {
+            throw new IllegalStateException("Could not resolve update properties for query");
+        }
+        List<String> updatePropertyList = Arrays.asList(update.split(","));
+        ParameterBinder parameterBinder= new ParameterBinder(true, updatePropertyList);
         List<SqlParameter> parameterList = parameterBinder.bindParameters(preparedQuery);
-        // Extract properties to be updated from the custom binder
         Map<String, Object> propertiesToUpdate = parameterBinder.getPropertiesToUpdate();
+
         if (propertiesToUpdate.isEmpty()) {
-            LOG.debug("No properties found to be updated for Cosmos Db entity {} and update query [{}]", persistentEntity.getName(), query);
+            LOG.debug("No properties found to be updated for Cosmos Db entity {} and query [{}]", persistentEntity.getName(), query);
             return Optional.of(0);
         }
-        String containerName = persistentEntity.getPersistedName();
         CosmosContainer container = getContainer(persistentEntity);
-        String aliasName = persistentEntity.getAnnotationMetadata().stringValue(MappedEntity.class, "alias")
-            .orElse(containerName + "_");
-        int whereIndex = query.toLowerCase(Locale.ROOT).indexOf("where");
-        // Use built query to generate select SQL to find entities to update
-        String selectQuery = String.format("SELECT * FROM %s %s %s", containerName, aliasName, query.substring(whereIndex));
-        SqlQuerySpec querySpec = new SqlQuerySpec(selectQuery, parameterList);
+        SqlQuerySpec querySpec = new SqlQuerySpec(query, parameterList);
         CosmosQueryRequestOptions requestOptions = new CosmosQueryRequestOptions();
         Optional<PartitionKey> optPartitionKey = preparedQuery.getParameterInRole(Constants.PARTITION_KEY_ROLE, PartitionKey.class);
         optPartitionKey.ifPresent(requestOptions::setPartitionKey);
@@ -321,8 +319,8 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
         if (!optPartitionKey.isPresent() && StringUtils.isEmpty(partitionKeyDefinition)) {
             LOG.debug("executeUpdate items one by one since partition key not provided or defined for entity {}", persistentEntity.getName());
             int updateCount = 0;
-            for (ObjectNode item : result) {
-                item = updateProperties(item, propertiesToUpdate);
+            for (ObjectNode objectNode : result) {
+                ObjectNode item = updateProperties(objectNode, propertiesToUpdate);
                 CosmosItemResponse<?> cosmosItemResponse = container.upsertItem(item);
                 if (cosmosItemResponse.getStatusCode() == HttpResponseStatus.OK.code()) {
                     updateCount++;
@@ -401,7 +399,7 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
         }
         RuntimePersistentEntity<?> persistentEntity = runtimeEntityRegistry.getEntity(preparedQuery.getRootEntity());
         CosmosContainer container = getContainer(persistentEntity);
-        List<SqlParameter> paramList = new ParameterBinder(false).bindParameters(preparedQuery);
+        List<SqlParameter> paramList = new ParameterBinder().bindParameters(preparedQuery);
         SqlQuerySpec querySpec = new SqlQuerySpec(preparedQuery.getQuery(), paramList);
         CosmosQueryRequestOptions queryRequestOptions = new CosmosQueryRequestOptions();
         Optional<PartitionKey> optPartitionKey = preparedQuery.getParameterInRole(Constants.PARTITION_KEY_ROLE, PartitionKey.class);
@@ -505,15 +503,21 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
     private class ParameterBinder {
 
         private final boolean updateQuery;
+        private final List<String> updatingProperties;
 
         private final Map<String, Object> propertiesToUpdate = new HashMap<>();
 
-        ParameterBinder(boolean updateQuery) {
+        ParameterBinder() {
+            this.updateQuery = false;
+            this.updatingProperties = Collections.emptyList();
+        }
+
+        ParameterBinder(boolean updateQuery, List<String> updateProperties) {
             this.updateQuery = updateQuery;
+            this.updatingProperties = updateProperties;
         }
 
         <T, R> List<SqlParameter> bindParameters(PreparedQuery<T, R> preparedQuery) {
-            String query = preparedQuery.getQuery().toLowerCase(Locale.ROOT);
             RuntimePersistentEntity<T> persistentEntity = runtimeEntityRegistry.getEntity(preparedQuery.getRootEntity());
             List<SqlParameter> parameterList = new ArrayList<>();
             SqlPreparedQuery<T, R> sqlPreparedQuery = getSqlPreparedQuery(preparedQuery);
@@ -556,22 +560,20 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
 
                 @Override
                 public void bindOne(QueryParameterBinding binding, Object value) {
-                    String parameterName = "@" + binding.getRequiredName();
                     boolean updateParameter = false;
                     if (updateQuery) {
-                        int whereClauseIndex = query.indexOf("where");
-                        int parameterNameIndex = query.indexOf(parameterName);
-                        if (parameterNameIndex < whereClauseIndex) {
-                            String[] propertyPath = binding.getRequiredPropertyPath();
-                            PersistentPropertyPath pp = persistentEntity.getPropertyPath(propertyPath);
-                            if (pp != null) {
+                        String[] propertyPath = binding.getRequiredPropertyPath();
+                        PersistentPropertyPath pp = persistentEntity.getPropertyPath(propertyPath);
+                        if (pp != null) {
+                            String propertyName = pp.getPath();
+                            if (CollectionUtils.isNotEmpty(updatingProperties) && updatingProperties.contains(propertyName)) {
                                 propertiesToUpdate.put(pp.getPath(), value);
                                 updateParameter = true;
                             }
                         }
                     }
                     if (!updateParameter) {
-                        parameterList.add(new SqlParameter(parameterName, value));
+                        parameterList.add(new SqlParameter("@" + binding.getRequiredName(), value));
                     }
                 }
 
