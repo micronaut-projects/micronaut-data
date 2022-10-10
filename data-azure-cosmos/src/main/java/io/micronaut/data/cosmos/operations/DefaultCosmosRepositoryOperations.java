@@ -284,6 +284,7 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
         String partitionKeyDefinition = getPartitionKey(persistentEntity);
         int deletedCount;
         if (StringUtils.isEmpty(partitionKeyDefinition)) {
+            LOG.debug("deleteAll items one by one since partition key not provided or defined for entity {}", persistentEntity.getName());
             deletedCount = 0;
             // Bulk operations delete won't work without partition key so deleting one by one document
             for (T entity : operation) {
@@ -328,7 +329,7 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
             deletedCount = bulkDelete(container, iterator, persistentEntity, Optional.empty());
         } else {
             // If no partition key provided or defined on the entity (should not happen), delete one by one since partition key is needed for bulk delete
-            LOG.debug("deleteAll items one by one since partition key not provided or defined for entity {}", persistentEntity.getName());
+            LOG.debug("executeDelete items one by one since partition key not provided or defined for entity {}", persistentEntity.getName());
             deletedCount = 0;
             CosmosItemRequestOptions options = new CosmosItemRequestOptions();
             while (iterator.hasNext()) {
