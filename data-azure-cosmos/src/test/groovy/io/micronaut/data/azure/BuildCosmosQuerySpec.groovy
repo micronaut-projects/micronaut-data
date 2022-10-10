@@ -4,6 +4,7 @@ import io.micronaut.annotation.processing.test.AbstractTypeElementSpec
 import io.micronaut.core.annotation.AnnotationMetadataProvider
 import io.micronaut.core.naming.NameUtils
 import io.micronaut.data.annotation.Query
+import io.micronaut.data.azure.entities.Family
 import io.micronaut.inject.BeanDefinition
 import io.micronaut.inject.writer.BeanDefinitionVisitor
 
@@ -45,7 +46,40 @@ interface FamilyRepository extends GenericRepository<Family, String> {
         when:
         def queryById = getQuery(repository.getRequiredMethod("findById", String))
         then:
-        queryById == "SELECT family_.id,family_.lastName,family_.address,family_.children FROM family family_ WHERE (family_.id = @p1)"
+        queryById == "SELECT family_.id,family_.lastName,family_.address,family_.children,family_.registered FROM family family_ WHERE (family_.id = @p1)"
+    }
+
+    void "test build delete query"() {
+        given:
+        def repository = buildRepository('test.FamilyRepository', """
+import io.micronaut.data.cosmos.annotation.CosmosRepository;
+import io.micronaut.data.azure.entities.Family;
+import java.util.Optional;
+import java.util.List;
+@CosmosRepository
+interface FamilyRepository extends GenericRepository<Family, String> {
+
+    void deleteById(String id);
+
+    void deleteByIds(List<String> ids);
+
+    void deleteAll();
+
+    void delete(Family family);
+}
+"""
+        )
+
+        when:
+        def deleteByIdQuery = getQuery(repository.getRequiredMethod("deleteById", String))
+        def deleteByIdsQuery = getQuery(repository.getRequiredMethod("deleteByIds", List<String>))
+        def deleteAllQuery = getQuery(repository.getRequiredMethod("deleteAll"))
+        def deleteQueryMethod = repository.getRequiredMethod("delete", Family)
+        then:
+        deleteByIdQuery == "SELECT *  FROM family  family_ WHERE (family_.id = @p1)"
+        deleteByIdsQuery == "SELECT *  FROM family  family_ WHERE (family_.id IN (@p1))"
+        deleteAllQuery == "SELECT *  FROM family  family_"
+        !deleteQueryMethod.getAnnotation(Query)
     }
 
     static String getQuery(AnnotationMetadataProvider metadata) {

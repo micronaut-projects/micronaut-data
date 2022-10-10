@@ -20,6 +20,8 @@ public class Family {
 
     private List<Child> children = new ArrayList<>();
 
+    private boolean registered;
+
     public String getId() {
         return id;
     }
@@ -50,5 +52,13 @@ public class Family {
 
     public void setChildren(List<Child> children) {
         this.children = children;
+    }
+
+    public boolean isRegistered() {
+        return registered;
+    }
+
+    public void setRegistered(boolean registered) {
+        this.registered = registered;
     }
 }

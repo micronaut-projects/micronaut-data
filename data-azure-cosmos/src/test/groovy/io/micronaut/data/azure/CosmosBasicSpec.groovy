@@ -34,6 +34,9 @@ import spock.lang.Specification
 @IgnoreIf({ env["GITHUB_WORKFLOW"] })
 class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties {
 
+    private static final String FAMILY1_ID = "AndersenFamily"
+    private static final String FAMILY2_ID = "WakefieldFamily"
+
     @AutoCleanup
     @Shared
     ApplicationContext context = ApplicationContext.run(properties)
@@ -41,6 +44,52 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
     CosmosBookRepository bookRepository = context.getBean(CosmosBookRepository)
 
     FamilyRepository familyRepository = context.getBean(FamilyRepository)
+
+    Family createSampleFamily1() {
+        def family = new Family()
+        family.id = FAMILY1_ID
+        family.lastName = "Andersen"
+        def address = new Address()
+        address.city = "Seattle"
+        address.county = "King"
+        address.state = "WA"
+        family.address = address
+        def child1 = new Child()
+        child1.firstName = "Henriette Thaulow"
+        child1.gender = "female"
+        child1.grade = 5
+        family.children.add(child1)
+        return family
+    }
+
+    Family createSampleFamily2() {
+        def family = new Family()
+        family.id = FAMILY2_ID
+        family.lastName = "Johnson"
+        def address = new Address()
+        address.city = "NY"
+        address.county = "Manhattan"
+        address.state = "NY"
+        family.address = address
+        def child1 = new Child()
+        child1.firstName = "Merriam"
+        child1.gender = "female"
+        child1.grade = 6
+        family.children.add(child1)
+        def child2 = new Child()
+        child2.firstName = "Luke"
+        child2.gender = "male"
+        child2.grade = 8
+        family.children.add(child2)
+        return family
+    }
+
+    void saveSampleFamilies() {
+        def family1 = createSampleFamily1()
+        familyRepository.save(family1)
+        def family2 = createSampleFamily2()
+        familyRepository.save(family2)
+    }
 
     def "test find by id"() {
         given:
@@ -91,29 +140,70 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
             foundBook.title == "Ice And Fire"
     }
 
-    def "save and load family in cosmos repo"() {
+    def "crud family in cosmos repo"() {
         given:
-            def family = new Family()
-            family.id = "AndersenFamily"
-            family.lastName = "Andersen"
-            def address = new Address()
-            address.city = "Seattle"
-            address.county = "King"
-            address.state = "WA"
-            family.address = address
-            def child1 = new Child()
-            child1.firstName = "Henriette Thaulow"
-            child1.gender = "female"
-            child1.grade = 5
-            family.children.add(child1)
-            familyRepository.save(family)
+            saveSampleFamilies()
         when:
-            def optFamily = familyRepository.findById(family.id)
+            def optFamily1 = familyRepository.findById(FAMILY1_ID)
+            def optFamily2 = familyRepository.findById(FAMILY2_ID)
         then:
-            optFamily.present
-            optFamily.get().id == family.id
-            optFamily.get().children.size() > 0
-            optFamily.get().address
+            optFamily1.present
+            optFamily1.get().id == FAMILY1_ID
+            optFamily1.get().children.size() == 1
+            optFamily1.get().address
+            optFamily2.present
+            optFamily2.get().id == FAMILY2_ID
+            optFamily2.get().children.size() == 2
+            optFamily2.get().address
+        when:
+            familyRepository.deleteByRegistered(false)
+        then:
+            thrown(IllegalStateException)
+        when:
+            familyRepository.deleteById(FAMILY2_ID, new PartitionKey(optFamily2.get().lastName))
+            optFamily2 = familyRepository.findById(FAMILY2_ID)
+        then:
+            !optFamily2.present
+        when:
+            familyRepository.delete(familyRepository.findById(FAMILY1_ID).get())
+            optFamily1 = familyRepository.findById(FAMILY1_ID)
+        then:
+            !optFamily1.present
+        when:
+            familyRepository.saveAll(Arrays.asList(createSampleFamily1(), createSampleFamily2()))
+            optFamily1 = familyRepository.findById(FAMILY1_ID)
+            optFamily2 = familyRepository.findById(FAMILY2_ID)
+        then:
+            optFamily1.present
+            optFamily2.present
+        when:
+            familyRepository.deleteAll()
+            optFamily1 = familyRepository.findById(FAMILY1_ID)
+            optFamily2 = familyRepository.findById(FAMILY2_ID)
+        then:
+            !optFamily1.present
+            !optFamily2.present
+        when:
+            saveSampleFamilies()
+            optFamily1 = familyRepository.findById(FAMILY1_ID)
+            optFamily2 = familyRepository.findById(FAMILY2_ID)
+        then:
+            optFamily1.present
+            optFamily2.present
+        when:
+            familyRepository.deleteAll(Arrays.asList(optFamily1.get(), optFamily2.get()))
+            optFamily1 = familyRepository.findById(FAMILY1_ID)
+            optFamily2 = familyRepository.findById(FAMILY2_ID)
+        then:
+            !optFamily1.present
+            !optFamily2.present
+        when:
+            familyRepository.save(createSampleFamily1())
+            def lastName = familyRepository.findById(FAMILY1_ID).get().lastName
+            familyRepository.deleteByLastName(lastName, new PartitionKey(lastName))
+            optFamily1 = familyRepository.findById(FAMILY1_ID)
+        then:
+            !optFamily1.present
     }
 
     def "should get cosmos client"() {

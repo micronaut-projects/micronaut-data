@@ -164,4 +164,15 @@ public final class CosmosSqlQueryBuilder extends SqlQueryBuilder {
         }
         return namingStrategy.mappedName(sb.toString());
     }
+
+    @Override
+    protected StringBuilder appendDeleteClause(StringBuilder queryString) {
+        // For delete we return SELECT * FROM ... WHERE to get documents and use API to delete them
+        return queryString.append("SELECT * ").append(FROM_CLAUSE);
+    }
+
+    @Override
+    protected boolean isAliasForBatch() {
+        return true;
+    }
 }
