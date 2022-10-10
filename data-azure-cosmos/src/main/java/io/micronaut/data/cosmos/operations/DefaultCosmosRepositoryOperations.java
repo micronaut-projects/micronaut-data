@@ -19,6 +19,11 @@ import com.azure.cosmos.CosmosClient;
 import com.azure.cosmos.CosmosContainer;
 import com.azure.cosmos.CosmosDatabase;
 import com.azure.cosmos.CosmosException;
+import com.azure.cosmos.implementation.RequestOptions;
+import com.azure.cosmos.implementation.batch.ItemBulkOperation;
+import com.azure.cosmos.models.CosmosBulkOperationResponse;
+import com.azure.cosmos.models.CosmosItemOperation;
+import com.azure.cosmos.models.CosmosItemOperationType;
 import com.azure.cosmos.models.CosmosItemRequestOptions;
 import com.azure.cosmos.models.CosmosItemResponse;
 import com.azure.cosmos.models.CosmosQueryRequestOptions;
@@ -37,11 +42,13 @@ import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
+import io.micronaut.data.annotation.Query;
 import io.micronaut.data.cosmos.common.Constants;
 import io.micronaut.data.cosmos.common.CosmosDatabaseInitializer;
 import io.micronaut.data.cosmos.config.CosmosDatabaseConfiguration;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.exceptions.NonUniqueResultException;
+import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
@@ -274,6 +281,7 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
         Argument<T> arg = Argument.of(operation.getRootEntity());
         Iterator<T> iterator = operation.iterator();
         int deletedCount = 0;
+        // Bulk operations delete won't work without partition key which is not available here so deleting one by one document
         while (iterator.hasNext()) {
             T entity = iterator.next();
             ObjectNode tree = serializeToTree(entity, arg);
@@ -287,25 +295,82 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
 
     @Override
     public Optional<Number> executeDelete(PreparedQuery<?, Number> preparedQuery) {
+        boolean isRawQuery = preparedQuery.getAnnotationMetadata().stringValue(Query.class, DataMethod.META_MEMBER_RAW_QUERY).isPresent();
+        if (isRawQuery) {
+            throw new IllegalStateException("Cosmos Db does not support raw delete queries.");
+        }
         RuntimePersistentEntity persistentEntity = runtimeEntityRegistry.getEntity(preparedQuery.getRootEntity());
+        RuntimePersistentProperty identity = persistentEntity.getIdentity();
         CosmosContainer container = getContainer(persistentEntity);
         List<SqlParameter> paramList = bindParameters(preparedQuery);
         SqlQuerySpec querySpec = new SqlQuerySpec("SELECT * " + preparedQuery.getQuery(), paramList);
-        CosmosQueryRequestOptions requestOptions = new CosmosQueryRequestOptions();
+        CosmosQueryRequestOptions queryRequestOptions = new CosmosQueryRequestOptions();
         Optional<PartitionKey> optPartitionKey = preparedQuery.getParameterInRole(Constants.PARTITION_KEY_ROLE, PartitionKey.class);
-        optPartitionKey.ifPresent(requestOptions::setPartitionKey);
-        CosmosPagedIterable<ObjectNode> result = container.queryItems(querySpec, requestOptions, ObjectNode.class);
-        int deletedCount = 0;
+        optPartitionKey.ifPresent(queryRequestOptions::setPartitionKey);
+        CosmosPagedIterable<ObjectNode> result = container.queryItems(querySpec, queryRequestOptions, ObjectNode.class);
         Iterator<ObjectNode> iterator = result.iterator();
-        CosmosItemRequestOptions options = new CosmosItemRequestOptions();
-        while (iterator.hasNext()) {
-            ObjectNode item = iterator.next();
-            CosmosItemResponse cosmosItemResponse = container.deleteItem(item, options);
-            if (cosmosItemResponse.getStatusCode() == HttpResponseStatus.NO_CONTENT.code()) {
-                deletedCount++;
+        PartitionKey partitionKey = optPartitionKey.orElse(null);
+        if (partitionKey != null) {
+            // Do bulk delete if there is partition key
+            List<CosmosItemOperation> bulkOperations = new ArrayList<>();
+            RequestOptions requestOptions = new RequestOptions();
+            while (iterator.hasNext()) {
+                ObjectNode item = iterator.next();
+                String id = getId(persistentEntity, item);
+                bulkOperations.add(new ItemBulkOperation(CosmosItemOperationType.DELETE, id, partitionKey, requestOptions, item, null));
+            }
+            return Optional.of(executeBulkOperations(container, bulkOperations, HttpResponseStatus.NO_CONTENT.code()));
+        } else {
+            // If no partition key, delete one by one since partition key is needed for bulk delete
+            int deletedCount = 0;
+            CosmosItemRequestOptions options = new CosmosItemRequestOptions();
+            while (iterator.hasNext()) {
+                ObjectNode item = iterator.next();
+                CosmosItemResponse cosmosItemResponse = container.deleteItem(item, options);
+                if (cosmosItemResponse.getStatusCode() == HttpResponseStatus.NO_CONTENT.code()) {
+                    deletedCount++;
+                }
+            }
+            return Optional.of(deletedCount);
+        }
+    }
+
+    /**
+     * Gets the id from {@link ObjectNode} document in Cosmos Db for given {@link RuntimePersistentEntity}.
+     *
+     * @param persistentEntity the persistent entity
+     * @param item the item/document in the db
+     * @return document id if exist and set, otherwise null
+     */
+    private String getId(RuntimePersistentEntity persistentEntity, ObjectNode item) {
+        RuntimePersistentProperty identity = persistentEntity.getIdentity();
+        if  (identity == null) {
+            return null;
+        }
+        com.fasterxml.jackson.databind.JsonNode idNode = item.get(identity.getPersistedName());
+        if (idNode != null) {
+            return idNode.textValue();
+        }
+        return null;
+    }
+
+    /**
+     * Executes delete or update bulk operations.
+     *
+     * @param container the container
+     * @param bulkOperations the list containing operations to execute
+     * @param expectedCode the expected status code for the single operation result
+     * @return number of affected items
+     */
+    private int executeBulkOperations(CosmosContainer container, List<CosmosItemOperation> bulkOperations, int expectedCode) {
+        int resultCount = 0;
+        Iterable<CosmosBulkOperationResponse<ObjectNode>> bulkOperationResponses = container.executeBulkOperations(bulkOperations);
+        for (CosmosBulkOperationResponse bulkOperationResponse : bulkOperationResponses) {
+            if (bulkOperationResponse.getResponse().getStatusCode() == expectedCode) {
+                resultCount++;
             }
         }
-        return Optional.of(deletedCount);
+        return resultCount;
     }
 
     private <T, R> List<SqlParameter> bindParameters(PreparedQuery<T, R> preparedQuery) {

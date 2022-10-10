@@ -17,4 +17,10 @@ public abstract class FamilyRepository implements PageableRepository<Family, Str
     public abstract Optional<Family> findById(String id);
 
     public abstract void deleteByLastName(String lastName, PartitionKey partitionKey);
+
+    public abstract void deleteById(String id, PartitionKey partitionKey);
+
+    // Raw query not supported for delete so this would throw an error
+    @Query("DELETE FROM family WHERE registered=@p1")
+    public abstract void deleteByRegistered(boolean registered);
 }

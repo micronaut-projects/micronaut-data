@@ -156,7 +156,11 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
             optFamily2.get().children.size() == 2
             optFamily2.get().address
         when:
-            familyRepository.deleteById(FAMILY2_ID)
+            familyRepository.deleteByRegistered(false)
+        then:
+            thrown(IllegalStateException)
+        when:
+            familyRepository.deleteById(FAMILY2_ID, new PartitionKey(optFamily2.get().lastName))
             optFamily2 = familyRepository.findById(FAMILY2_ID)
         then:
             !optFamily2.present
