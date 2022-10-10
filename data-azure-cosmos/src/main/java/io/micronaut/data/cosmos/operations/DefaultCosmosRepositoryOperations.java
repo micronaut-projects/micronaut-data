@@ -299,7 +299,7 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
             for (T entity : operation) {
                 items.add(serializeToTree(entity, arg));
             }
-            deletedCount = bulkDelete(container, items.iterator(), persistentEntity, Optional.empty());
+            deletedCount = bulkDelete(container, items, persistentEntity, Optional.empty());
         }
         return Optional.of(deletedCount);
     }
@@ -318,22 +318,20 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
         Optional<PartitionKey> optPartitionKey = preparedQuery.getParameterInRole(Constants.PARTITION_KEY_ROLE, PartitionKey.class);
         optPartitionKey.ifPresent(queryRequestOptions::setPartitionKey);
         CosmosPagedIterable<ObjectNode> result = container.queryItems(querySpec, queryRequestOptions, ObjectNode.class);
-        Iterator<ObjectNode> iterator = result.iterator();
         String partitionKeyDefinition = getPartitionKey(persistentEntity);
         int deletedCount;
         if (optPartitionKey.isPresent()) {
             // Do bulk delete if there is partition key provided
-            deletedCount = bulkDelete(container, iterator, persistentEntity, optPartitionKey);
+            deletedCount = bulkDelete(container, result, persistentEntity, optPartitionKey);
         } else if (StringUtils.isNotEmpty(partitionKeyDefinition)) {
             // Bulk delete if there is partition key defined on the entity, so we can get its value
-            deletedCount = bulkDelete(container, iterator, persistentEntity, Optional.empty());
+            deletedCount = bulkDelete(container, result, persistentEntity, Optional.empty());
         } else {
             // If no partition key provided or defined on the entity (should not happen), delete one by one since partition key is needed for bulk delete
             LOG.debug("executeDelete items one by one since partition key not provided or defined for entity {}", persistentEntity.getName());
             deletedCount = 0;
             CosmosItemRequestOptions options = new CosmosItemRequestOptions();
-            while (iterator.hasNext()) {
-                ObjectNode item = iterator.next();
+            for (ObjectNode item : result) {
                 CosmosItemResponse<?> cosmosItemResponse = container.deleteItem(item, options);
                 if (cosmosItemResponse.getStatusCode() == HttpResponseStatus.NO_CONTENT.code()) {
                     deletedCount++;
@@ -343,11 +341,19 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
         return Optional.of(deletedCount);
     }
 
-    private int bulkDelete(CosmosContainer container, Iterator<ObjectNode> iterator, RuntimePersistentEntity<?> persistentEntity, Optional<PartitionKey> optPartitionKey) {
+    /**
+     * Executes bulk delete for given iterable of {@link ObjectNode}.
+     *
+     * @param container the container where documents are being deleted
+     * @param items the items being deleted
+     * @param persistentEntity the persistent entity corresponding to the items
+     * @param optPartitionKey {@link Optional} with {@link PartitionKey} as value, if empty then will obtain partition key from each item
+     * @return number of deleted items
+     */
+    private int bulkDelete(CosmosContainer container, Iterable<ObjectNode> items, RuntimePersistentEntity<?> persistentEntity, Optional<PartitionKey> optPartitionKey) {
         List<CosmosItemOperation> bulkOperations = new ArrayList<>();
         RequestOptions requestOptions = new RequestOptions();
-        while (iterator.hasNext()) {
-            ObjectNode item = iterator.next();
+        for (ObjectNode item : items) {
             String id = getId(persistentEntity, item);
             PartitionKey partitionKey;
             if (optPartitionKey.isPresent()) {
