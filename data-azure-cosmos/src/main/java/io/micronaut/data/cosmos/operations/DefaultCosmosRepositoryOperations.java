@@ -564,7 +564,6 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
 
                 @Override
                 public void bindOne(QueryParameterBinding binding, Object value) {
-                    boolean updateParameter = false;
                     if (updateQuery) {
                         String[] propertyPath = binding.getRequiredPropertyPath();
                         PersistentPropertyPath pp = persistentEntity.getPropertyPath(propertyPath);
@@ -572,13 +571,10 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
                             String propertyName = pp.getPath();
                             if (CollectionUtils.isNotEmpty(updatingProperties) && updatingProperties.contains(propertyName)) {
                                 propertiesToUpdate.put(pp.getPath(), value);
-                                updateParameter = true;
                             }
                         }
                     }
-                    if (!updateParameter) {
-                        parameterList.add(new SqlParameter("@" + binding.getRequiredName(), value));
-                    }
+                    parameterList.add(new SqlParameter("@" + binding.getRequiredName(), value));
                 }
 
                 @Override
