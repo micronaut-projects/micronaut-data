@@ -25,5 +25,11 @@ public final class Constants {
      */
     public static final String PARTITION_KEY_ROLE = "partitionKey";
 
+    /**
+     * Each Cosmos document will have id property that will be identifier. Even if it does not match with our entity
+     * id this field will be present in the document and is needed for update/delete operations.
+     */
+    public static final String INTERNAL_ID = "id";
+
     private Constants() { }
 }

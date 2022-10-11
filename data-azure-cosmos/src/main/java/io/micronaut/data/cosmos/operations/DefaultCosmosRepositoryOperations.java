@@ -261,7 +261,13 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
         T entity = operation.getEntity();
         CosmosContainer container = getContainer(persistentEntity);
         ObjectNode item = serialize(entity, Argument.of(operation.getRootEntity()));
-        container.upsertItem(item);
+        Object partitionKeyFieldValue = getPartitionKeyValue(persistentEntity, item);
+        if (partitionKeyFieldValue != null) {
+            String id = getItemId(item);
+            container.replaceItem(item, id, new PartitionKey(partitionKeyFieldValue), new CosmosItemRequestOptions());
+        } else {
+            container.upsertItem(item);
+        }
         return entity;
     }
 
@@ -275,7 +281,13 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
             LOG.debug("updateAll items one by one since partition key not provided or defined for entity {}", persistentEntity.getName());
             for (T entity : operation) {
                 ObjectNode item = serialize(entity, arg);
-                container.upsertItem(item);
+                Object partitionKeyFieldValue = getPartitionKeyValue(persistentEntity, item);
+                if (partitionKeyFieldValue != null) {
+                    String id = getItemId(item);
+                    container.replaceItem(item, id, new PartitionKey(partitionKeyFieldValue), new CosmosItemRequestOptions());
+                } else {
+                    container.upsertItem(item);
+                }
             }
         } else {
             List<ObjectNode> items = new ArrayList<>();
@@ -442,7 +454,7 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
         List<CosmosItemOperation> bulkOperations = new ArrayList<>();
         RequestOptions requestOptions = new RequestOptions();
         for (ObjectNode item : items) {
-            String id = getId(persistentEntity, item);
+            String id = getItemId(item);
             PartitionKey partitionKey;
             if (optPartitionKey.isPresent()) {
                 partitionKey = optPartitionKey.get();
@@ -478,22 +490,14 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
     }
 
     /**
-     * Gets the id from {@link ObjectNode} document in Cosmos Db for given {@link RuntimePersistentEntity}.
+     * Gets the id from {@link ObjectNode} document in Cosmos Db.
      *
-     * @param persistentEntity the persistent entity
      * @param item the item/document in the db
-     * @return document id if exist and set, otherwise null
+     * @return document id
      */
-    private String getId(RuntimePersistentEntity<?> persistentEntity, ObjectNode item) {
-        RuntimePersistentProperty<?> identity = persistentEntity.getIdentity();
-        if  (identity == null) {
-            return null;
-        }
-        com.fasterxml.jackson.databind.JsonNode idNode = item.get(identity.getPersistedName());
-        if (idNode != null) {
-            return idNode.textValue();
-        }
-        return null;
+    private String getItemId(ObjectNode item) {
+        com.fasterxml.jackson.databind.JsonNode idNode = item.get(Constants.INTERNAL_ID);
+        return idNode.textValue();
     }
 
     /**
@@ -743,7 +747,7 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
     private enum BulkOperationType {
 
         DELETE(CosmosItemOperationType.DELETE, HttpResponseStatus.NO_CONTENT.code()),
-        UPDATE(CosmosItemOperationType.UPSERT, HttpResponseStatus.OK.code());
+        UPDATE(CosmosItemOperationType.REPLACE, HttpResponseStatus.OK.code());
 
         private final CosmosItemOperationType cosmosItemOperationType;
         private final int expectedOperationStatusCode;
