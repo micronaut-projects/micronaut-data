@@ -82,10 +82,6 @@ interface FamilyRepository extends GenericRepository<Family, String> {
         !deleteQueryMethod.getAnnotation(Query)
     }
 
-    static String getQuery(AnnotationMetadataProvider metadata) {
-        return metadata.getAnnotation(Query).stringValue().get()
-    }
-
     BeanDefinition<?> buildRepository(String name, String source) {
         def pkg = NameUtils.getPackageName(name)
         return buildBeanDefinition(name + BeanDefinitionVisitor.PROXY_SUFFIX, """
@@ -116,9 +112,15 @@ interface FamilyRepository extends GenericRepository<Family, String> {
         )
 
         when:
-        def updateRegisteredQuery = getQuery(repository.getRequiredMethod("updateRegistered", String, boolean))
+        def updateRegisteredMethod = repository.getRequiredMethod("updateRegistered", String, boolean)
+        def updateRegisteredQuery = getQuery(updateRegisteredMethod)
+        def updateQuery = updateRegisteredMethod.stringValue(Query.class, "update").orElse(null)
         then:
         updateRegisteredQuery == "SELECT * FROM family family_ WHERE (family_.id = @p2)"
+        updateQuery == "registered"
     }
 
+    static String getQuery(AnnotationMetadataProvider metadata) {
+        return metadata.getAnnotation(Query).stringValue().get()
+    }
 }
