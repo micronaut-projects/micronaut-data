@@ -18,6 +18,7 @@ import io.micronaut.data.azure.entities.Address
 import io.micronaut.data.azure.entities.Child
 import io.micronaut.data.azure.entities.CosmosBook
 import io.micronaut.data.azure.entities.Family
+import io.micronaut.data.azure.repositories.CosmosBookDtoRepository
 import io.micronaut.data.azure.repositories.CosmosBookRepository
 import io.micronaut.data.azure.repositories.FamilyRepository
 import io.micronaut.data.cosmos.config.CosmosDatabaseConfiguration
@@ -42,6 +43,8 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
     ApplicationContext context = ApplicationContext.run(properties)
 
     CosmosBookRepository bookRepository = context.getBean(CosmosBookRepository)
+
+    CosmosBookDtoRepository bookDtoRepository = context.getBean(CosmosBookDtoRepository)
 
     FamilyRepository familyRepository = context.getBean(FamilyRepository)
 
@@ -156,6 +159,30 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
             optFamily2.get().children.size() == 2
             optFamily2.get().address
         when:
+            def exists = familyRepository.existsById(FAMILY1_ID)
+        then:
+            exists
+        when:
+            exists = familyRepository.existsById(UUID.randomUUID().toString())
+        then:
+            !exists
+        when:
+            exists = familyRepository.existsByIdAndRegistered(FAMILY1_ID, true)
+        then:
+            !exists
+        when:
+            exists = familyRepository.existsByIdAndRegistered(FAMILY1_ID, false)
+        then:
+            exists
+        when:
+            def cnt = familyRepository.count()
+        then:
+            cnt >= 2
+        when:
+            cnt = familyRepository.countByRegistered(false)
+        then:
+            cnt >= 2
+        when:
             familyRepository.updateLastName(FAMILY1_ID, "New Last Name")
         then:
             thrown(IllegalStateException)
@@ -248,6 +275,25 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
             optFamily1 = familyRepository.findById(FAMILY1_ID)
         then:
             !optFamily1.present
+    }
+
+    def "test DTO entity retrieval"() {
+        given:
+            CosmosBook book = new CosmosBook()
+            book.id = UUID.randomUUID().toString()
+            book.title = "New Book"
+            book.totalPages = 500
+            bookRepository.save(book)
+        when:
+            def loadedBook = bookRepository.queryById(book.id)
+        then:
+            loadedBook
+        when:
+            def bookDto = bookDtoRepository.findById(book.id)
+        then:
+            bookDto.present
+            bookDto.get().title == book.title
+            bookDto.get().totalPages == 500
     }
 
     def "should get cosmos client"() {

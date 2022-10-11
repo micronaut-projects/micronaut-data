@@ -36,4 +36,8 @@ public abstract class FamilyRepository implements PageableRepository<Family, Str
     // Raw query not supported for delete so this would throw an error
     @Query("DELETE FROM family WHERE registered=@p1")
     public abstract void deleteByRegistered(boolean registered);
+
+    public abstract boolean existsByIdAndRegistered(String id, boolean registered);
+
+    public abstract long countByRegistered(boolean registered);
 }
