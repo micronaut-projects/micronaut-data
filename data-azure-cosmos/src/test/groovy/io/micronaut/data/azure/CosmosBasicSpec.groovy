@@ -156,6 +156,50 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
             optFamily2.get().children.size() == 2
             optFamily2.get().address
         when:
+            familyRepository.updateLastName(FAMILY1_ID, "New Last Name")
+        then:
+            thrown(IllegalStateException)
+        when:
+            def address = optFamily1.get().getAddress()
+            address.city = "LA"
+            address.state = "CA"
+            address.county = "Los Angeles"
+            familyRepository.updateAddress(FAMILY1_ID, address)
+            optFamily1 = familyRepository.findById(FAMILY1_ID)
+        then:
+            optFamily1.get().address.county == "Los Angeles"
+            optFamily1.get().address.city == "LA"
+            optFamily1.get().address.state == "CA"
+        when:
+            familyRepository.updateRegistered(FAMILY1_ID, true)
+            optFamily1 = familyRepository.findById(FAMILY1_ID)
+        then:
+            optFamily1.get().registered
+        when:
+            familyRepository.updateRegistered(FAMILY2_ID, true, new PartitionKey(optFamily2.get().getLastName()))
+            optFamily2 = familyRepository.findById(FAMILY2_ID)
+        then:
+            optFamily2.get().registered
+        when:
+            optFamily1.get().address.state = "FL"
+            familyRepository.update(optFamily1.get())
+            optFamily1 = familyRepository.findById(FAMILY1_ID)
+        then:
+            optFamily1.get().address.state == "FL"
+        when:
+            def newChild = new Child()
+            newChild.grade = 1
+            newChild.gender = "male"
+            newChild.firstName = "Isaac"
+            optFamily2.get().children.add(newChild)
+            optFamily1.get().address.state = "NY"
+            familyRepository.updateAll(Arrays.asList(optFamily1.get(), optFamily2.get()))
+            optFamily1 = familyRepository.findById(FAMILY1_ID)
+            optFamily2 = familyRepository.findById(FAMILY2_ID)
+        then:
+            optFamily2.get().children.size() == 3
+            optFamily1.get().address.state == "NY"
+        when:
             familyRepository.deleteByRegistered(false)
         then:
             thrown(IllegalStateException)

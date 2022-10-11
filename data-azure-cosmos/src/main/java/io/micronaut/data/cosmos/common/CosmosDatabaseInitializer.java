@@ -19,6 +19,7 @@ import com.azure.cosmos.CosmosClient;
 import com.azure.cosmos.CosmosContainer;
 import com.azure.cosmos.CosmosDatabase;
 import com.azure.cosmos.models.CosmosContainerProperties;
+import com.azure.cosmos.models.PartitionKeyDefinition;
 import com.azure.cosmos.models.ThroughputProperties;
 import io.micronaut.context.annotation.Context;
 import io.micronaut.context.annotation.Requires;
@@ -131,10 +132,11 @@ public class CosmosDatabaseInitializer {
         String containerName = entity.getPersistedName();
         CosmosDatabaseConfiguration.CosmosContainerSettings cosmosContainerSettings = cosmosContainerSettingsMap.get(containerName);
         String partitionKey = getPartitionKey(entity, cosmosContainerSettings);
-        CosmosContainerProperties containerProperties = new CosmosContainerProperties(containerName, partitionKey);
         ThroughputSettings throughputSettings = cosmosContainerSettings != null ? cosmosContainerSettings.getThroughput() : null;
         ThroughputProperties throughputProperties = throughputSettings != null ? throughputSettings.createThroughputProperties() : null;
+        // TODO: Later implement indexing policy, time to live, unique key etc.
         if (StorageUpdatePolicy.CREATE_IF_NOT_EXISTS.equals(updatePolicy)) {
+            CosmosContainerProperties containerProperties = new CosmosContainerProperties(containerName, partitionKey);
             if (throughputProperties == null) {
                 cosmosDatabase.createContainerIfNotExists(containerProperties);
             } else {
@@ -145,6 +147,12 @@ public class CosmosDatabaseInitializer {
             if (throughputProperties != null) {
                 cosmosContainer.replaceThroughput(throughputProperties);
             }
+            CosmosContainerProperties containerProperties = cosmosContainer.read().getProperties();
+            PartitionKeyDefinition partitionKeyDef = new PartitionKeyDefinition();
+            ArrayList<String> paths = new ArrayList<>();
+            paths.add(partitionKey);
+            partitionKeyDef.setPaths(paths);
+            containerProperties.setPartitionKeyDefinition(partitionKeyDef);
             cosmosContainer.replace(containerProperties);
         }
     }

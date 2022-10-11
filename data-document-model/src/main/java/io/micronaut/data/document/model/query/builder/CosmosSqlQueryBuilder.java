@@ -17,6 +17,7 @@ package io.micronaut.data.document.model.query.builder;
 
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Creator;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.naming.NameUtils;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.StringUtils;
@@ -28,10 +29,17 @@ import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.naming.NamingStrategies;
 import io.micronaut.data.model.naming.NamingStrategy;
+import io.micronaut.data.model.query.QueryModel;
+import io.micronaut.data.model.query.builder.QueryParameterBinding;
+import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
+import java.util.StringJoiner;
 import java.util.function.Function;
 
 /**
@@ -174,5 +182,56 @@ public final class CosmosSqlQueryBuilder extends SqlQueryBuilder {
     @Override
     protected boolean isAliasForBatch() {
         return true;
+    }
+
+    @Override
+    public QueryResult buildInsert(AnnotationMetadata repositoryMetadata, PersistentEntity entity) {
+        return null;
+    }
+
+    @Override
+    public QueryResult buildUpdate(AnnotationMetadata annotationMetadata, QueryModel query, Map<String, Object> propertiesToUpdate) {
+        QueryResult queryResult = super.buildUpdate(annotationMetadata, query, propertiesToUpdate);
+        String resultQuery = queryResult.getQuery();
+
+        PersistentEntity entity = query.getPersistentEntity();
+        String tableAlias = getAliasName(entity);
+        String tableName = getTableName(entity);
+
+        final String finalQuery = new StringBuilder("SELECT * FROM ").append(tableName).append(SPACE).append(tableAlias).append(SPACE)
+            .append(resultQuery.substring(resultQuery.toLowerCase(Locale.ROOT).indexOf("where"))).toString();
+        StringJoiner stringJoiner = new StringJoiner(",");
+        propertiesToUpdate.keySet().forEach(s -> stringJoiner.add(s));
+        final String update = stringJoiner.toString();
+
+        return new QueryResult() {
+
+            @NonNull
+            @Override
+            public String getQuery() {
+                return finalQuery;
+            }
+
+            @Override
+            public String getUpdate() {
+                return update;
+            }
+
+            @Override
+            public List<String> getQueryParts() {
+                return queryResult.getQueryParts();
+            }
+
+            @Override
+            public List<QueryParameterBinding> getParameterBindings() {
+                return queryResult.getParameterBindings();
+            }
+
+            @Override
+            public Map<String, String> getAdditionalRequiredParameters() {
+                return queryResult.getAdditionalRequiredParameters();
+            }
+
+        };
     }
 }
