@@ -28,7 +28,6 @@ import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.beans.BeanIntrospector;
-import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.MappedEntity;
@@ -105,22 +104,22 @@ public class CosmosDatabaseInitializer {
         return PARTITION_KEY_BY_ENTITY.computeIfAbsent(entity, e -> doGetPartitionKey(e, cosmosContainerSettings));
     }
 
-    private void initContainers(CosmosDatabaseConfiguration configuration, CosmosDatabase cosmosDatabase, RuntimeEntityRegistry runtimeEntityRegistry) {
+    private PersistentEntity[] getPersistentEntities(CosmosDatabaseConfiguration configuration, RuntimeEntityRegistry runtimeEntityRegistry) {
         Collection<BeanIntrospection<Object>> introspections;
         if (CollectionUtils.isNotEmpty(configuration.getPackages())) {
             introspections = BeanIntrospector.SHARED.findIntrospections(MappedEntity.class, configuration.getPackages().toArray(new String[0]));
         } else {
             introspections = BeanIntrospector.SHARED.findIntrospections(MappedEntity.class);
         }
-        PersistentEntity[] entities = introspections.stream()
+        return introspections.stream()
             // filter out inner / internal / abstract(MappedSuperClass) classes
             .filter(i -> !i.getBeanType().getName().contains("$"))
             .filter(i -> !java.lang.reflect.Modifier.isAbstract(i.getBeanType().getModifiers()))
             .map(e -> runtimeEntityRegistry.getEntity(e.getBeanType())).toArray(PersistentEntity[]::new);
-        if (ArrayUtils.isEmpty(entities)) {
-            LOG.warn("Did not find any mapped entity to process");
-            return;
-        }
+    }
+
+    private void initContainers(CosmosDatabaseConfiguration configuration, CosmosDatabase cosmosDatabase, RuntimeEntityRegistry runtimeEntityRegistry) {
+        PersistentEntity[] entities = getPersistentEntities(configuration, runtimeEntityRegistry);
         Map<String, CosmosDatabaseConfiguration.CosmosContainerSettings> cosmosContainerSettings = CollectionUtils.isEmpty(configuration.getContainers()) ? Collections.emptyMap() :
             configuration.getContainers().stream().collect(Collectors.toMap(CosmosDatabaseConfiguration.CosmosContainerSettings::getContainerName, Function.identity()));
         for (PersistentEntity persistentEntity : entities) {
@@ -170,7 +169,8 @@ public class CosmosDatabaseInitializer {
             }
             return partitionKey;
         }
-        return "/null";
+        LOG.info("Fallback to default partition key value since none is defined for entity {}", entity.getName());
+        return Constants.NO_PARTITION_KEY;
     }
 
     private static String findPartitionKey(PersistentEntity entity) {

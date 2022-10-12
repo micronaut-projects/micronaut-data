@@ -182,7 +182,7 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
             cnt = familyRepository.countByRegistered(false)
         then:
             cnt >= 2
-        when:
+        when:"Using raw query for update is not supported"
             familyRepository.updateLastName(FAMILY1_ID, "New Last Name")
         then:
             thrown(IllegalStateException)
@@ -226,7 +226,7 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
         then:
             optFamily2.get().children.size() == 3
             optFamily1.get().address.state == "NY"
-        when:
+        when:"Using raw query for delete is not supported"
             familyRepository.deleteByRegistered(false)
         then:
             thrown(IllegalStateException)
