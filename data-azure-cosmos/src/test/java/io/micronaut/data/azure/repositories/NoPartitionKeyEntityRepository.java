@@ -16,6 +16,9 @@ public interface NoPartitionKeyEntityRepository extends CrudRepository<NoPartiti
     @Query(value = "SELECT * FROM c WHERE c.name = :name")
     List<NoPartitionKeyEntity> findAllByName(@Parameter("name") String name);
 
+    @Query(value = "SELECT * FROM c WHERE c.name = :name AND c.grade = :grade")
+    List<NoPartitionKeyEntity> findAllByNameAndGrade(@Parameter("name") String name, int grade);
+
     void updateGrade(@Id String id, int grade);
 
     // This query should not update records because it is using partition key but

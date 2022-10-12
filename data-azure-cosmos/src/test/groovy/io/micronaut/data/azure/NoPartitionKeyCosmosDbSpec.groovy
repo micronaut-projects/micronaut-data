@@ -1,19 +1,12 @@
 package io.micronaut.data.azure
 
 
-import com.azure.cosmos.CosmosClient
-import com.azure.cosmos.CosmosException
-import com.azure.cosmos.models.CosmosContainerProperties
 import com.azure.cosmos.models.PartitionKey
-import com.azure.cosmos.models.ThroughputProperties
 import io.micronaut.context.ApplicationContext
-import io.micronaut.data.azure.entities.CosmosBook
 import io.micronaut.data.azure.entities.nopartitionkey.NoPartitionKeyEntity
-import io.micronaut.data.azure.repositories.CosmosBookRepository
 import io.micronaut.data.azure.repositories.NoPartitionKeyEntityRepository
 import io.micronaut.data.cosmos.config.CosmosDatabaseConfiguration
 import io.micronaut.data.cosmos.config.StorageUpdatePolicy
-import org.testcontainers.shaded.org.bouncycastle.crypto.engines.EthereumIESEngine
 import spock.lang.AutoCleanup
 import spock.lang.IgnoreIf
 import spock.lang.Shared
@@ -84,6 +77,14 @@ class NoPartitionKeyCosmosDbSpec extends Specification implements AzureCosmosTes
             def foundEntity2 = entities.stream().filter(i -> i.id == entity2.id).findFirst()
             foundEntity2.present
             foundEntity2.get().id == entity2.id
+        when:
+            entities = repository.findAllByNameAndGrade(optEntity2.get().name, optEntity2.get().grade)
+        then:
+            entities.size() > 0
+        when:
+            entities = repository.findAllByNameAndGrade(UUID.randomUUID().toString(), optEntity2.get().grade)
+        then:
+            entities.size() == 0
         cleanup:
             repository.deleteAll()
     }

@@ -58,6 +58,7 @@ import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
+import io.micronaut.data.model.runtime.BatchOperation;
 import io.micronaut.data.model.runtime.DeleteBatchOperation;
 import io.micronaut.data.model.runtime.DeleteOperation;
 import io.micronaut.data.model.runtime.EntityInstanceOperation;
@@ -337,23 +338,34 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
         return entity;
     }
 
-    @Override
-    public <T> Iterable<T> updateAll(UpdateBatchOperation<T> operation) {
-        RuntimePersistentEntity<T> persistentEntity = runtimeEntityRegistry.getEntity(operation.getRootEntity());
-        CosmosContainer container = getContainer(persistentEntity);
+    /**
+     * Serializes items from {@link BatchOperation} entities to list of {@link ObjectNode} for update/delete batch operations.
+     *
+     * @param operation the batch operation (update/delete)
+     * @param <T> the entity type
+     * @return list of {@link ObjectNode} serialized from entities
+     */
+    private <T> List<ObjectNode> serializeBatchItems(BatchOperation<T> operation) {
         Argument<T> arg = Argument.of(operation.getRootEntity());
         List<ObjectNode> items = new ArrayList<>();
         for (T entity : operation) {
             items.add(serialize(entity, arg));
         }
+        return items;
+    }
+
+    @Override
+    public <T> Iterable<T> updateAll(UpdateBatchOperation<T> operation) {
+        RuntimePersistentEntity<T> persistentEntity = runtimeEntityRegistry.getEntity(operation.getRootEntity());
+        CosmosContainer container = getContainer(persistentEntity);
+        List<ObjectNode> items = serializeBatchItems(operation);
         executeBulk(container, items, BulkOperationType.UPDATE, persistentEntity, Optional.empty());
         return operation;
     }
 
     @Override
     public Optional<Number> executeUpdate(PreparedQuery<?, Number> preparedQuery) {
-        boolean isRawQuery = preparedQuery.getAnnotationMetadata().stringValue(Query.class, DataMethod.META_MEMBER_RAW_QUERY).isPresent();
-        if (isRawQuery) {
+        if (isRawQuery(preparedQuery)) {
             throw new IllegalStateException("Cosmos Db does not support raw update queries.");
         }
         RuntimePersistentEntity<?> persistentEntity = runtimeEntityRegistry.getEntity(preparedQuery.getRootEntity());
@@ -412,19 +424,14 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
     public <T> Optional<Number> deleteAll(DeleteBatchOperation<T> operation) {
         RuntimePersistentEntity<T> persistentEntity = runtimeEntityRegistry.getEntity(operation.getRootEntity());
         CosmosContainer container = getContainer(persistentEntity);
-        Argument<T> arg = Argument.of(operation.getRootEntity());
-        List<ObjectNode> items = new ArrayList<>();
-        for (T entity : operation) {
-            items.add(serialize(entity, arg));
-        }
+        List<ObjectNode> items = serializeBatchItems(operation);
         int deletedCount = executeBulk(container, items, BulkOperationType.DELETE, persistentEntity, Optional.empty());
         return Optional.of(deletedCount);
     }
 
     @Override
     public Optional<Number> executeDelete(PreparedQuery<?, Number> preparedQuery) {
-        boolean isRawQuery = preparedQuery.getAnnotationMetadata().stringValue(Query.class, DataMethod.META_MEMBER_RAW_QUERY).isPresent();
-        if (isRawQuery) {
+        if (isRawQuery(preparedQuery)) {
             throw new IllegalStateException("Cosmos Db does not support raw delete queries.");
         }
         RuntimePersistentEntity<?> persistentEntity = runtimeEntityRegistry.getEntity(preparedQuery.getRootEntity());
@@ -451,12 +458,7 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
         RequestOptions requestOptions = new RequestOptions();
         for (ObjectNode item : items) {
             String id = getItemId(item);
-            PartitionKey partitionKey;
-            if (optPartitionKey.isPresent()) {
-                partitionKey = optPartitionKey.get();
-            } else {
-                partitionKey = getPartitionKey(persistentEntity, item);
-            }
+            PartitionKey partitionKey = optPartitionKey.orElseGet(() -> getPartitionKey(persistentEntity, item));
             bulkOperations.add(new ItemBulkOperation<>(bulkOperationType.cosmosItemOperationType, id, partitionKey, requestOptions, item, null));
         }
         return executeBulkOperations(container, bulkOperations, bulkOperationType.expectedOperationStatusCode);
@@ -514,6 +516,7 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
         }
 
         <T, R> List<SqlParameter> bindParameters(PreparedQuery<T, R> preparedQuery) {
+            boolean isRawQuery = isRawQuery(preparedQuery);
             RuntimePersistentEntity<T> persistentEntity = runtimeEntityRegistry.getEntity(preparedQuery.getRootEntity());
             List<SqlParameter> parameterList = new ArrayList<>();
             SqlPreparedQuery<T, R> sqlPreparedQuery = getSqlPreparedQuery(preparedQuery);
@@ -562,7 +565,12 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
                             propertiesToUpdate.put(property, value);
                         }
                     }
-                    parameterList.add(new SqlParameter("@" + binding.getRequiredName(), value));
+                    String bindingName = binding.getRequiredName();
+                    if (isRawQuery) {
+                        // raw query parameters get rewritten as @p1, @p2... and binding.getRequiredName remains as original, so we need to bind proper param name
+                        bindingName = "p" + (binding.getParameterIndex() + 1);
+                    }
+                    parameterList.add(new SqlParameter("@" + bindingName, value));
                 }
 
                 @Override
@@ -785,6 +793,16 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
             default:
                 return Object.class;
         }
+    }
+
+    /**
+     * Gets an indicator telling whether {@link PreparedQuery} is raw query.
+     *
+     * @param preparedQuery the prepared query
+     * @return true if prepared query is created from raw query
+     */
+    private boolean isRawQuery(@NonNull PreparedQuery<?, ?> preparedQuery) {
+        return preparedQuery.getAnnotationMetadata().stringValue(Query.class, DataMethod.META_MEMBER_RAW_QUERY).isPresent();
     }
 
     /**
