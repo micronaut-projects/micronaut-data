@@ -1,13 +1,20 @@
 package io.micronaut.data.azure.repositories;
 
 import com.azure.cosmos.models.PartitionKey;
+import io.micronaut.context.annotation.Parameter;
 import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.Query;
 import io.micronaut.data.azure.entities.nopartitionkey.NoPartitionKeyEntity;
 import io.micronaut.data.cosmos.annotation.CosmosRepository;
 import io.micronaut.data.repository.CrudRepository;
 
+import java.util.List;
+
 @CosmosRepository
 public interface NoPartitionKeyEntityRepository extends CrudRepository<NoPartitionKeyEntity, String> {
+
+    @Query(value = "SELECT * FROM c WHERE c.name = :name")
+    List<NoPartitionKeyEntity> findAllByName(@Parameter("name") String name);
 
     void updateGrade(@Id String id, int grade);
 

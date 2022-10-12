@@ -717,7 +717,14 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
         if (jsonNode == null) {
             return null;
         }
-        Object value = jsonNode.isNumber() ? jsonNode.numberValue() : jsonNode.textValue();
+        Object value;
+        if (jsonNode.isNumber()) {
+            value = jsonNode.numberValue();
+        } else if (jsonNode.isBoolean()) {
+            value = jsonNode.booleanValue();
+        } else {
+            value = jsonNode.textValue();
+        }
         return new PartitionKey(value);
     }
 

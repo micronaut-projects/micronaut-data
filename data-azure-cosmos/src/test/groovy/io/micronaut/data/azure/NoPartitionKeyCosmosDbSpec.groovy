@@ -13,6 +13,7 @@ import io.micronaut.data.azure.repositories.CosmosBookRepository
 import io.micronaut.data.azure.repositories.NoPartitionKeyEntityRepository
 import io.micronaut.data.cosmos.config.CosmosDatabaseConfiguration
 import io.micronaut.data.cosmos.config.StorageUpdatePolicy
+import org.testcontainers.shaded.org.bouncycastle.crypto.engines.EthereumIESEngine
 import spock.lang.AutoCleanup
 import spock.lang.IgnoreIf
 import spock.lang.Shared
@@ -76,6 +77,13 @@ class NoPartitionKeyCosmosDbSpec extends Specification implements AzureCosmosTes
             optEntity2 = repository.findById(entity2.id)
         then:
             optEntity2.present
+        when:
+            def entities = repository.findAllByName(optEntity2.get().name)
+        then:
+            entities.size() > 0
+            def foundEntity2 = entities.stream().filter(i -> i.id == entity2.id).findFirst()
+            foundEntity2.present
+            foundEntity2.get().id == entity2.id
         cleanup:
             repository.deleteAll()
     }
