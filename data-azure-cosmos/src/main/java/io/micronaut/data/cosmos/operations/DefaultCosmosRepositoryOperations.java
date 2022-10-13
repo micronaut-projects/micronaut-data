@@ -173,7 +173,7 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
     }
 
     @Override
-    public <T> T findOne(Class<T> type, Serializable id) {
+    public <T> T findOne(@NonNull Class<T> type, Serializable id) {
         RuntimePersistentEntity<T> persistentEntity = runtimeEntityRegistry.getEntity(type);
         CosmosContainer container = getContainer(persistentEntity);
         try {
@@ -224,7 +224,7 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
     }
 
     @Override
-    public <T, R> R findOne(PreparedQuery<T, R> preparedQuery) {
+    public <T, R> R findOne(@NonNull PreparedQuery<T, R> preparedQuery) {
         try {
             List<SqlParameter> paramList = new ParameterBinder().bindParameters(preparedQuery);
             CosmosPagedIterable<ObjectNode> result = getCosmosResults(preparedQuery, paramList, ObjectNode.class);
@@ -250,32 +250,35 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
     }
 
     @Override
-    public <T> boolean exists(PreparedQuery<T, Boolean> preparedQuery) {
+    public <T> boolean exists(@NonNull PreparedQuery<T, Boolean> preparedQuery) {
         List<SqlParameter> paramList = new ParameterBinder().bindParameters(preparedQuery);
         CosmosPagedIterable<ObjectNode> result = getCosmosResults(preparedQuery, paramList, ObjectNode.class);
         Iterator<ObjectNode> iterator = result.iterator();
         return iterator.hasNext();
     }
 
+    @NonNull
     @Override
-    public <T> Iterable<T> findAll(PagedQuery<T> query) {
-        return null;
+    public <T> Iterable<T> findAll(@NonNull PagedQuery<T> query) {
+        throw new UnsupportedOperationException("The findAll method without an explicit query is not supported. Use findAll(PreparedQuery) instead");
     }
 
     @Override
     public <T> long count(PagedQuery<T> pagedQuery) {
-        return 0;
+        throw new UnsupportedOperationException("The count method without an explicit query is not supported. Use findAll(PreparedQuery) instead");
     }
 
+    @NonNull
     @Override
-    public <T, R> Iterable<R> findAll(PreparedQuery<T, R> preparedQuery) {
+    public <T, R> Iterable<R> findAll(@NonNull PreparedQuery<T, R> preparedQuery) {
         try (Stream<R> stream = findStream(preparedQuery)) {
             return stream.collect(Collectors.toList());
         }
     }
 
+    @NonNull
     @Override
-    public <T, R> Stream<R> findStream(PreparedQuery<T, R> preparedQuery) {
+    public <T, R> Stream<R> findStream(@NonNull PreparedQuery<T, R> preparedQuery) {
         AtomicBoolean finished = new AtomicBoolean();
         try {
             Spliterator<R> spliterator;
@@ -307,18 +310,20 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
         }
     }
 
+    @NonNull
     @Override
-    public <T> Stream<T> findStream(PagedQuery<T> query) {
-        return null;
+    public <T> Stream<T> findStream(@NonNull PagedQuery<T> query) {
+        throw new UnsupportedOperationException("The findStream method without an explicit query is not supported. Use findStream(PreparedQuery) instead");
     }
 
     @Override
-    public <R> Page<R> findPage(PagedQuery<R> query) {
-        return null;
+    public <R> Page<R> findPage(@NonNull PagedQuery<R> query) {
+        throw new UnsupportedOperationException("The findPage method without an explicit query is not supported. Use findPage(PreparedQuery) instead");
     }
 
+    @NonNull
     @Override
-    public <T> T persist(InsertOperation<T> operation) {
+    public <T> T persist(@NonNull InsertOperation<T> operation) {
         CosmosContainer container = getContainer(operation);
         T entity = operation.getEntity();
         ObjectNode item = serialize(entity, Argument.of(operation.getRootEntity()));
@@ -326,8 +331,9 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
         return entity;
     }
 
+    @NonNull
     @Override
-    public <T> T update(UpdateOperation<T> operation) {
+    public <T> T update(@NonNull UpdateOperation<T> operation) {
         RuntimePersistentEntity<T> persistentEntity = runtimeEntityRegistry.getEntity(operation.getRootEntity());
         T entity = operation.getEntity();
         CosmosContainer container = getContainer(persistentEntity);
@@ -354,8 +360,9 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
         return items;
     }
 
+    @NonNull
     @Override
-    public <T> Iterable<T> updateAll(UpdateBatchOperation<T> operation) {
+    public <T> Iterable<T> updateAll(@NonNull UpdateBatchOperation<T> operation) {
         RuntimePersistentEntity<T> persistentEntity = runtimeEntityRegistry.getEntity(operation.getRootEntity());
         CosmosContainer container = getContainer(persistentEntity);
         List<ObjectNode> items = serializeBatchItems(operation);
@@ -363,8 +370,9 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
         return operation;
     }
 
+    @NonNull
     @Override
-    public Optional<Number> executeUpdate(PreparedQuery<?, Number> preparedQuery) {
+    public Optional<Number> executeUpdate(@NonNull PreparedQuery<?, Number> preparedQuery) {
         if (isRawQuery(preparedQuery)) {
             throw new IllegalStateException("Cosmos Db does not support raw update queries.");
         }
@@ -429,8 +437,9 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
         return Optional.of(deletedCount);
     }
 
+    @NonNull
     @Override
-    public Optional<Number> executeDelete(PreparedQuery<?, Number> preparedQuery) {
+    public Optional<Number> executeDelete(@NonNull PreparedQuery<?, Number> preparedQuery) {
         if (isRawQuery(preparedQuery)) {
             throw new IllegalStateException("Cosmos Db does not support raw delete queries.");
         }
@@ -522,8 +531,9 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
             SqlPreparedQuery<T, R> sqlPreparedQuery = getSqlPreparedQuery(preparedQuery);
             sqlPreparedQuery.bindParameters(new SqlStoredQuery.Binder() {
 
+                @NonNull
                 @Override
-                public Object autoPopulateRuntimeProperty(RuntimePersistentProperty<?> persistentProperty, Object previousValue) {
+                public Object autoPopulateRuntimeProperty(@NonNull RuntimePersistentProperty<?> persistentProperty, Object previousValue) {
                     return runtimeEntityRegistry.autoPopulateRuntimeProperty(persistentProperty, previousValue);
                 }
 
@@ -558,23 +568,19 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
                 }
 
                 @Override
-                public void bindOne(QueryParameterBinding binding, Object value) {
+                public void bindOne(@NonNull QueryParameterBinding binding, Object value) {
                     if (updateQuery) {
                         String property = getUpdateProperty(binding, persistentEntity);
                         if (property != null) {
                             propertiesToUpdate.put(property, value);
                         }
                     }
-                    String bindingName = binding.getRequiredName();
-                    if (isRawQuery) {
-                        // raw query parameters get rewritten as @p1, @p2... and binding.getRequiredName remains as original, so we need to bind proper param name
-                        bindingName = "p" + (binding.getParameterIndex() + 1);
-                    }
-                    parameterList.add(new SqlParameter("@" + bindingName, value));
+                    String parameterName = getParameterName(binding, isRawQuery);
+                    parameterList.add(new SqlParameter("@" + parameterName, value));
                 }
 
                 @Override
-                public void bindMany(QueryParameterBinding binding, Collection<Object> values) {
+                public void bindMany(@NonNull QueryParameterBinding binding, @NonNull Collection<Object> values) {
                     bindOne(binding, values);
                 }
 
@@ -585,6 +591,14 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
 
             });
             return parameterList;
+        }
+
+        private String getParameterName(QueryParameterBinding binding, boolean isRawQuery) {
+            if (isRawQuery) {
+                // raw query parameters get rewritten as p1, p2... and binding.getRequiredName remains as original, so we need to bind proper param name
+                return "p" + (binding.getParameterIndex() + 1);
+            }
+            return binding.getRequiredName();
         }
 
         private String getUpdateProperty(QueryParameterBinding binding, PersistentEntity persistentEntity) {
@@ -623,7 +637,7 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
         return new DefaultSqlStoredQuery<>(storedQuery, runtimePersistentEntity, queryBuilder);
     }
 
-    private <O> O serialize(Object bean, Argument<?> type) {
+    private <O extends com.fasterxml.jackson.databind.JsonNode> O serialize(Object bean, Argument<?> type) {
         try {
             Serializer.EncoderContext encoderContext = serdeRegistry.newEncoderContext(null);
             Serializer<? super Object> typeSerializer = serdeRegistry.findSerializer(type);
