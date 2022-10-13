@@ -19,14 +19,22 @@ import java.util.Optional;
 @CosmosRepository
 interface CosmosBookRepository extends GenericRepository<Book, String> {
     Optional<Book> findById(String id);
+
+    @Query("SELECT * FROM c WHERE c.title = :title")
+    List<Book> findByTitle(String title);
 }
 """
         )
 
         when:
-        String q = getQuery(repository.getRequiredMethod("findById", String))
+        String findByIdQuery = getQuery(repository.getRequiredMethod("findById", String))
+        def findByTitleMethod = repository.getRequiredMethod("findByTitle", String)
+        String findByTitleQuery = getQuery(findByTitleMethod)
+        def findByTitleRawQuery = findByTitleMethod.stringValue(Query.class, "rawQuery").orElse(null)
         then:
-        q == "SELECT book_.id,book_.authorId,book_.title,book_.totalPages,book_.publisherId,book_.lastUpdated,book_.created FROM book book_ WHERE (book_.id = @p1)"
+        findByIdQuery == "SELECT book_.id,book_.authorId,book_.title,book_.totalPages,book_.publisherId,book_.lastUpdated,book_.created FROM book book_ WHERE (book_.id = @p1)"
+        findByTitleQuery == "SELECT * FROM c WHERE c.title = :title"
+        findByTitleRawQuery == "SELECT * FROM c WHERE c.title = @p1"
     }
 
     void "test object properties and arrays"() {
@@ -46,7 +54,7 @@ interface FamilyRepository extends GenericRepository<Family, String> {
         when:
         def queryById = getQuery(repository.getRequiredMethod("findById", String))
         then:
-        queryById == "SELECT family_.id,family_.lastName,family_.address,family_.children,family_.registered FROM family family_ WHERE (family_.id = @p1)"
+        queryById == "SELECT family_.id,family_.lastName,family_.address,family_.children,family_.registered,family_.registeredDate FROM family family_ WHERE (family_.id = @p1)"
     }
 
     void "test build delete query"() {

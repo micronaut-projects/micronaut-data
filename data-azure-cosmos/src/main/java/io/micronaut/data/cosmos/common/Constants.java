@@ -31,5 +31,10 @@ public final class Constants {
      */
     public static final String INTERNAL_ID = "id";
 
+    /**
+     * This value will be used as partition key if none is defined on the entity.
+     */
+    public static final String NO_PARTITION_KEY = "/null";
+
     private Constants() { }
 }

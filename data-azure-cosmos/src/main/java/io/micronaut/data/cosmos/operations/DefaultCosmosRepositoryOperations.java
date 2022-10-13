@@ -37,11 +37,13 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.convert.ConversionContext;
+import io.micronaut.core.convert.ConversionService;
+import io.micronaut.core.reflect.ReflectionUtils;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.CollectionUtils;
-import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.cosmos.common.Constants;
 import io.micronaut.data.cosmos.common.CosmosDatabaseInitializer;
@@ -49,12 +51,14 @@ import io.micronaut.data.cosmos.config.CosmosDatabaseConfiguration;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.exceptions.NonUniqueResultException;
 import io.micronaut.data.intercept.annotation.DataMethod;
+import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
+import io.micronaut.data.model.runtime.BatchOperation;
 import io.micronaut.data.model.runtime.DeleteBatchOperation;
 import io.micronaut.data.model.runtime.DeleteOperation;
 import io.micronaut.data.model.runtime.EntityInstanceOperation;
@@ -95,18 +99,27 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.math.BigDecimal;
+import java.sql.Time;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Spliterator;
+import java.util.Spliterators;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 /**
  * The default Azure Cosmos DB operations implementation.
@@ -160,7 +173,7 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
     }
 
     @Override
-    public <T> T findOne(Class<T> type, Serializable id) {
+    public <T> T findOne(@NonNull Class<T> type, Serializable id) {
         RuntimePersistentEntity<T> persistentEntity = runtimeEntityRegistry.getEntity(type);
         CosmosContainer container = getContainer(persistentEntity);
         try {
@@ -174,11 +187,80 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
             CosmosPagedIterable<ObjectNode> result = container.queryItems(querySpec, options, ObjectNode.class);
             Iterator<ObjectNode> iterator = result.iterator();
             if (iterator.hasNext()) {
-                ObjectNode beanTree = iterator.next();
+                ObjectNode item = iterator.next();
                 if (iterator.hasNext()) {
                     throw new NonUniqueResultException();
                 }
-                return deserialize(beanTree, Argument.of(type));
+                return deserialize(item, Argument.of(type));
+            }
+        } catch (CosmosException e) {
+            if (e.getStatusCode() == HttpResponseStatus.NOT_FOUND.code()) {
+                return null;
+            }
+            throw e;
+        }
+        return null;
+    }
+
+    /**
+     * Gets cosmos results for given prepared query.
+     *
+     * @param preparedQuery the prepared query
+     * @param parameterList the Cosmos Sql parameter list
+     * @param itemsType the result iterator items type
+     * @param <T> The query entity type
+     * @param <R> The query result type
+     * @param <I> the Cosmos iterator items type
+     * @return CosmosPagedIterable with values of I type
+     */
+    private <T, R, I> CosmosPagedIterable<I> getCosmosResults(PreparedQuery<T, R> preparedQuery, List<SqlParameter> parameterList, Class<I> itemsType) {
+        RuntimePersistentEntity<T> persistentEntity = runtimeEntityRegistry.getEntity(preparedQuery.getRootEntity());
+        CosmosContainer container = getContainer(persistentEntity);
+        SqlQuerySpec querySpec = new SqlQuerySpec(preparedQuery.getQuery(), parameterList);
+        logQuery(querySpec, parameterList);
+        CosmosQueryRequestOptions requestOptions = new CosmosQueryRequestOptions();
+        preparedQuery.getParameterInRole(Constants.PARTITION_KEY_ROLE, PartitionKey.class).ifPresent(requestOptions::setPartitionKey);
+        return container.queryItems(querySpec, requestOptions, itemsType);
+    }
+
+    @Override
+    public <T, R> R findOne(@NonNull PreparedQuery<T, R> preparedQuery) {
+        try {
+            List<SqlParameter> paramList = new ParameterBinder().bindParameters(preparedQuery);
+            boolean dtoProjection = preparedQuery.isDtoProjection();
+            boolean isEntity = preparedQuery.getResultDataType() == DataType.ENTITY;
+            if (isEntity || dtoProjection) {
+                CosmosPagedIterable<ObjectNode> result = getCosmosResults(preparedQuery, paramList, ObjectNode.class);
+                Iterator<ObjectNode> iterator = result.iterator();
+                if (iterator.hasNext()) {
+                    ObjectNode item = iterator.next();
+                    if (iterator.hasNext()) {
+                        throw new NonUniqueResultException();
+                    }
+                    if (preparedQuery.isDtoProjection()) {
+                        Class<R> wrapperType = ReflectionUtils.getWrapperType(preparedQuery.getResultType());
+                        return deserialize(item, Argument.of(wrapperType));
+                    }
+                    return deserialize(item, Argument.of((Class<R>) preparedQuery.getRootEntity()));
+                }
+            } else {
+                DataType dataType = preparedQuery.getResultDataType();
+                CosmosPagedIterable<?> result = getCosmosResults(preparedQuery, paramList, getDataTypeClass(dataType));
+                Iterator<?> iterator = result.iterator();
+                if (iterator.hasNext()) {
+                    Object item = iterator.next();
+                    if (iterator.hasNext()) {
+                        throw new NonUniqueResultException();
+                    }
+                    Class<R> resultType = preparedQuery.getResultType();
+                    if (resultType.isInstance(item)) {
+                        return (R) item;
+                    } else if (item != null) {
+                        return ConversionService.SHARED.convertRequired(item, resultType);
+                    }
+                    return null;
+                }
+
             }
         } catch (CosmosException e) {
             if (e.getStatusCode() == HttpResponseStatus.NOT_FOUND.code()) {
@@ -190,157 +272,150 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
     }
 
     @Override
-    public <T, R> R findOne(PreparedQuery<T, R> preparedQuery) {
-        RuntimePersistentEntity<T> persistentEntity = runtimeEntityRegistry.getEntity(preparedQuery.getRootEntity());
-        CosmosContainer container = getContainer(persistentEntity);
+    public <T> boolean exists(@NonNull PreparedQuery<T, Boolean> preparedQuery) {
         List<SqlParameter> paramList = new ParameterBinder().bindParameters(preparedQuery);
-        SqlQuerySpec querySpec = new SqlQuerySpec(preparedQuery.getQuery(), paramList);
-        logQuery(querySpec, paramList);
-        CosmosQueryRequestOptions requestOptions = new CosmosQueryRequestOptions();
-        preparedQuery.getParameterInRole(Constants.PARTITION_KEY_ROLE, PartitionKey.class).ifPresent(requestOptions::setPartitionKey);
-        CosmosPagedIterable<ObjectNode> result = container.queryItems(querySpec, requestOptions, ObjectNode.class);
+        CosmosPagedIterable<ObjectNode> result = getCosmosResults(preparedQuery, paramList, ObjectNode.class);
         Iterator<ObjectNode> iterator = result.iterator();
-        if (iterator.hasNext()) {
-            ObjectNode beanTree = iterator.next();
-            if (iterator.hasNext()) {
-                throw new NonUniqueResultException();
-            }
-            // TODO: DTOs etc
-            return deserialize(beanTree, Argument.of((Class<R>) preparedQuery.getRootEntity()));
-        }
-        return null;
+        return iterator.hasNext();
     }
 
+    @NonNull
     @Override
-    public <T> boolean exists(PreparedQuery<T, Boolean> preparedQuery) {
-        return false;
-    }
-
-    @Override
-    public <T> Iterable<T> findAll(PagedQuery<T> query) {
-        return null;
+    public <T> Iterable<T> findAll(@NonNull PagedQuery<T> query) {
+        throw new UnsupportedOperationException("The findAll method without an explicit query is not supported. Use findAll(PreparedQuery) instead");
     }
 
     @Override
     public <T> long count(PagedQuery<T> pagedQuery) {
-        return 0;
+        throw new UnsupportedOperationException("The count method without an explicit query is not supported. Use findAll(PreparedQuery) instead");
+    }
+
+    @NonNull
+    @Override
+    public <T, R> Iterable<R> findAll(@NonNull PreparedQuery<T, R> preparedQuery) {
+        try (Stream<R> stream = findStream(preparedQuery)) {
+            return stream.collect(Collectors.toList());
+        }
+    }
+
+    @NonNull
+    @Override
+    public <T, R> Stream<R> findStream(@NonNull PreparedQuery<T, R> preparedQuery) {
+        AtomicBoolean finished = new AtomicBoolean();
+        try {
+            Spliterator<R> spliterator;
+            boolean dtoProjection = preparedQuery.isDtoProjection();
+            boolean isEntity = preparedQuery.getResultDataType() == DataType.ENTITY;
+            List<SqlParameter> paramList = new ParameterBinder().bindParameters(preparedQuery);
+            if (isEntity || dtoProjection) {
+                CosmosPagedIterable<ObjectNode> result = getCosmosResults(preparedQuery, paramList, ObjectNode.class);
+                Iterator<ObjectNode> iterator = result.iterator();
+                Argument<R> argument;
+                if (dtoProjection) {
+                    argument = Argument.of(ReflectionUtils.getWrapperType(preparedQuery.getResultType()));
+                } else {
+                    argument = Argument.of((Class<R>) preparedQuery.getRootEntity());
+                }
+                spliterator = new EntityOrDtoSpliterator<>(Long.MAX_VALUE,Spliterator.ORDERED | Spliterator.IMMUTABLE,
+                    finished, iterator, argument);
+            } else {
+                DataType dataType = preparedQuery.getResultDataType();
+                CosmosPagedIterable<?> result = getCosmosResults(preparedQuery, paramList, getDataTypeClass(dataType));
+                Iterator<?> iterator = result.iterator();
+                Class<R> resultType = preparedQuery.getResultType();
+                spliterator = new CustomResultTypeSpliterator<>(Long.MAX_VALUE,
+                    Spliterator.ORDERED | Spliterator.IMMUTABLE, finished, iterator, resultType);
+            }
+            return StreamSupport.stream(spliterator, false).onClose(() -> finished.set(true));
+        } catch (Exception e) {
+            throw new DataAccessException("Cosmos SQL Error executing Query: " + e.getMessage(), e);
+        }
+    }
+
+    @NonNull
+    @Override
+    public <T> Stream<T> findStream(@NonNull PagedQuery<T> query) {
+        throw new UnsupportedOperationException("The findStream method without an explicit query is not supported. Use findStream(PreparedQuery) instead");
     }
 
     @Override
-    public <T, R> Iterable<R> findAll(PreparedQuery<T, R> preparedQuery) {
-        return null;
+    public <R> Page<R> findPage(@NonNull PagedQuery<R> query) {
+        throw new UnsupportedOperationException("The findPage method without an explicit query is not supported. Use findPage(PreparedQuery) instead");
     }
 
+    @NonNull
     @Override
-    public <T, R> Stream<R> findStream(PreparedQuery<T, R> preparedQuery) {
-        return null;
-    }
-
-    @Override
-    public <T> Stream<T> findStream(PagedQuery<T> query) {
-        return null;
-    }
-
-    @Override
-    public <R> Page<R> findPage(PagedQuery<R> query) {
-        return null;
-    }
-
-    @Override
-    public <T> T persist(InsertOperation<T> operation) {
+    public <T> T persist(@NonNull InsertOperation<T> operation) {
         CosmosContainer container = getContainer(operation);
         T entity = operation.getEntity();
-        ObjectNode tree = serialize(entity, Argument.of(operation.getRootEntity()));
-        container.createItem(tree, new CosmosItemRequestOptions());
+        ObjectNode item = serialize(entity, Argument.of(operation.getRootEntity()));
+        container.createItem(item, new CosmosItemRequestOptions());
         return entity;
     }
 
+    @NonNull
     @Override
-    public <T> T update(UpdateOperation<T> operation) {
+    public <T> T update(@NonNull UpdateOperation<T> operation) {
         RuntimePersistentEntity<T> persistentEntity = runtimeEntityRegistry.getEntity(operation.getRootEntity());
         T entity = operation.getEntity();
         CosmosContainer container = getContainer(persistentEntity);
         ObjectNode item = serialize(entity, Argument.of(operation.getRootEntity()));
-        Object partitionKeyFieldValue = getPartitionKeyValue(persistentEntity, item);
-        if (partitionKeyFieldValue != null) {
-            String id = getItemId(item);
-            container.replaceItem(item, id, new PartitionKey(partitionKeyFieldValue), new CosmosItemRequestOptions());
-        } else {
-            container.upsertItem(item);
-        }
+        PartitionKey partitionKey = getPartitionKey(persistentEntity, item);
+        String id = getItemId(item);
+        container.replaceItem(item, id, partitionKey, new CosmosItemRequestOptions());
         return entity;
     }
 
+    /**
+     * Serializes items from {@link BatchOperation} entities to list of {@link ObjectNode} for update/delete batch operations.
+     *
+     * @param operation the batch operation (update/delete)
+     * @param <T> the entity type
+     * @return list of {@link ObjectNode} serialized from entities
+     */
+    private <T> List<ObjectNode> serializeBatchItems(BatchOperation<T> operation) {
+        Argument<T> arg = Argument.of(operation.getRootEntity());
+        List<ObjectNode> items = new ArrayList<>();
+        for (T entity : operation) {
+            items.add(serialize(entity, arg));
+        }
+        return items;
+    }
+
+    @NonNull
     @Override
-    public <T> Iterable<T> updateAll(UpdateBatchOperation<T> operation) {
+    public <T> Iterable<T> updateAll(@NonNull UpdateBatchOperation<T> operation) {
         RuntimePersistentEntity<T> persistentEntity = runtimeEntityRegistry.getEntity(operation.getRootEntity());
         CosmosContainer container = getContainer(persistentEntity);
-        Argument<T> arg = Argument.of(operation.getRootEntity());
-        String partitionKeyDefinition = getPartitionKey(persistentEntity);
-        if (StringUtils.isEmpty(partitionKeyDefinition)) {
-            LOG.debug("updateAll items one by one since partition key not provided or defined for entity {}", persistentEntity.getName());
-            for (T entity : operation) {
-                ObjectNode item = serialize(entity, arg);
-                Object partitionKeyFieldValue = getPartitionKeyValue(persistentEntity, item);
-                if (partitionKeyFieldValue != null) {
-                    String id = getItemId(item);
-                    container.replaceItem(item, id, new PartitionKey(partitionKeyFieldValue), new CosmosItemRequestOptions());
-                } else {
-                    container.upsertItem(item);
-                }
-            }
-        } else {
-            List<ObjectNode> items = new ArrayList<>();
-            for (T entity : operation) {
-                items.add(serialize(entity, arg));
-            }
-            executeBulk(container, items, BulkOperationType.UPDATE, persistentEntity, Optional.empty());
-        }
-
+        List<ObjectNode> items = serializeBatchItems(operation);
+        executeBulk(container, items, BulkOperationType.UPDATE, persistentEntity, Optional.empty());
         return operation;
     }
 
+    @NonNull
     @Override
-    public Optional<Number> executeUpdate(PreparedQuery<?, Number> preparedQuery) {
-        boolean isRawQuery = preparedQuery.getAnnotationMetadata().stringValue(Query.class, DataMethod.META_MEMBER_RAW_QUERY).isPresent();
-        if (isRawQuery) {
+    public Optional<Number> executeUpdate(@NonNull PreparedQuery<?, Number> preparedQuery) {
+        if (isRawQuery(preparedQuery)) {
             throw new IllegalStateException("Cosmos Db does not support raw update queries.");
         }
         RuntimePersistentEntity<?> persistentEntity = runtimeEntityRegistry.getEntity(preparedQuery.getRootEntity());
-        String query = preparedQuery.getQuery();
         String update = preparedQuery.getAnnotationMetadata().stringValue(Query.class, "update").orElse(null);
         if (update == null) {
-            throw new IllegalStateException("Could not resolve update properties for query");
+            LOG.warn("Could not resolve update properties for Cosmos Db entity {} and query [{}]", persistentEntity.getName(), preparedQuery.getQuery());
+            return Optional.of(0);
         }
         List<String> updatePropertyList = Arrays.asList(update.split(","));
-        ParameterBinder parameterBinder= new ParameterBinder(true, updatePropertyList);
+        ParameterBinder parameterBinder = new ParameterBinder(true, updatePropertyList);
         List<SqlParameter> parameterList = parameterBinder.bindParameters(preparedQuery);
         Map<String, Object> propertiesToUpdate = parameterBinder.getPropertiesToUpdate();
-
         if (propertiesToUpdate.isEmpty()) {
-            LOG.debug("No properties found to be updated for Cosmos Db entity {} and query [{}]", persistentEntity.getName(), query);
+            LOG.warn("No properties found to be updated for Cosmos Db entity {} and query [{}]", persistentEntity.getName(), preparedQuery.getQuery());
             return Optional.of(0);
         }
         CosmosContainer container = getContainer(persistentEntity);
-        SqlQuerySpec querySpec = new SqlQuerySpec(query, parameterList);
-        CosmosQueryRequestOptions requestOptions = new CosmosQueryRequestOptions();
         Optional<PartitionKey> optPartitionKey = preparedQuery.getParameterInRole(Constants.PARTITION_KEY_ROLE, PartitionKey.class);
-        optPartitionKey.ifPresent(requestOptions::setPartitionKey);
-        CosmosPagedIterable<ObjectNode> result = container.queryItems(querySpec, requestOptions, ObjectNode.class);
-        String partitionKeyDefinition = getPartitionKey(persistentEntity);
-        if (!optPartitionKey.isPresent() && StringUtils.isEmpty(partitionKeyDefinition)) {
-            LOG.debug("executeUpdate items one by one since partition key not provided or defined for entity {}", persistentEntity.getName());
-            int updateCount = 0;
-            for (ObjectNode objectNode : result) {
-                ObjectNode item = updateProperties(objectNode, propertiesToUpdate);
-                CosmosItemResponse<?> cosmosItemResponse = container.upsertItem(item);
-                if (cosmosItemResponse.getStatusCode() == HttpResponseStatus.OK.code()) {
-                    updateCount++;
-                }
-            }
-            return Optional.of(updateCount);
-        }
-        // Upsert using provided partition key or partition key calculated from each item
+        CosmosPagedIterable<ObjectNode> result = getCosmosResults(preparedQuery, parameterList, ObjectNode.class);
+        // Update/replace using provided partition key or partition key calculated from each item
         List<ObjectNode> items = new ArrayList<>();
         for (ObjectNode item : result) {
             items.add(updateProperties(item, propertiesToUpdate));
@@ -349,12 +424,11 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
     }
 
     private ObjectNode updateProperties(ObjectNode item, Map<String, Object> propertiesToUpdate) {
-        // iterate through properties, update and upsert item
+        // iterate through properties, update and replace item
         for (Map.Entry<String, Object> propertyToUpdate : propertiesToUpdate.entrySet()) {
             String property = propertyToUpdate.getKey();
             Object value = propertyToUpdate.getValue();
             com.fasterxml.jackson.databind.JsonNode objectNode = serialize(value, Argument.of(value.getClass()));
-            item.remove(property);
             item.set(property, objectNode);
         }
         return item;
@@ -367,7 +441,9 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
         CosmosContainer container = getContainer(persistentEntity);
         ObjectNode item = serialize(entity, Argument.of(operation.getRootEntity()));
         CosmosItemRequestOptions options = new CosmosItemRequestOptions();
-        CosmosItemResponse<?> cosmosItemResponse = container.deleteItem(item, options);
+        String id = getItemId(item);
+        PartitionKey partitionKey = getPartitionKey(persistentEntity, item);
+        CosmosItemResponse<?> cosmosItemResponse = container.deleteItem(id, partitionKey, options);
         if (cosmosItemResponse.getStatusCode() == HttpResponseStatus.NO_CONTENT.code()) {
             return 1;
         }
@@ -378,65 +454,23 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
     public <T> Optional<Number> deleteAll(DeleteBatchOperation<T> operation) {
         RuntimePersistentEntity<T> persistentEntity = runtimeEntityRegistry.getEntity(operation.getRootEntity());
         CosmosContainer container = getContainer(persistentEntity);
-        CosmosItemRequestOptions options = new CosmosItemRequestOptions();
-        Argument<T> arg = Argument.of(operation.getRootEntity());
-        String partitionKeyDefinition = getPartitionKey(persistentEntity);
-        int deletedCount;
-        if (StringUtils.isEmpty(partitionKeyDefinition)) {
-            LOG.debug("deleteAll items one by one since partition key not provided or defined for entity {}", persistentEntity.getName());
-            deletedCount = 0;
-            // Bulk operations delete won't work without partition key so deleting one by one document
-            for (T entity : operation) {
-                ObjectNode tree = serialize(entity, arg);
-                CosmosItemResponse<?> cosmosItemResponse = container.deleteItem(tree, options);
-                if (cosmosItemResponse.getStatusCode() == HttpResponseStatus.NO_CONTENT.code()) {
-                    deletedCount++;
-                }
-            }
-        } else {
-            List<ObjectNode> items = new ArrayList<>();
-            for (T entity : operation) {
-                items.add(serialize(entity, arg));
-            }
-            deletedCount = executeBulk(container, items, BulkOperationType.DELETE, persistentEntity, Optional.empty());
-        }
+        List<ObjectNode> items = serializeBatchItems(operation);
+        int deletedCount = executeBulk(container, items, BulkOperationType.DELETE, persistentEntity, Optional.empty());
         return Optional.of(deletedCount);
     }
 
+    @NonNull
     @Override
-    public Optional<Number> executeDelete(PreparedQuery<?, Number> preparedQuery) {
-        boolean isRawQuery = preparedQuery.getAnnotationMetadata().stringValue(Query.class, DataMethod.META_MEMBER_RAW_QUERY).isPresent();
-        if (isRawQuery) {
+    public Optional<Number> executeDelete(@NonNull PreparedQuery<?, Number> preparedQuery) {
+        if (isRawQuery(preparedQuery)) {
             throw new IllegalStateException("Cosmos Db does not support raw delete queries.");
         }
         RuntimePersistentEntity<?> persistentEntity = runtimeEntityRegistry.getEntity(preparedQuery.getRootEntity());
         CosmosContainer container = getContainer(persistentEntity);
-        List<SqlParameter> paramList = new ParameterBinder().bindParameters(preparedQuery);
-        SqlQuerySpec querySpec = new SqlQuerySpec(preparedQuery.getQuery(), paramList);
-        CosmosQueryRequestOptions queryRequestOptions = new CosmosQueryRequestOptions();
         Optional<PartitionKey> optPartitionKey = preparedQuery.getParameterInRole(Constants.PARTITION_KEY_ROLE, PartitionKey.class);
-        optPartitionKey.ifPresent(queryRequestOptions::setPartitionKey);
-        CosmosPagedIterable<ObjectNode> result = container.queryItems(querySpec, queryRequestOptions, ObjectNode.class);
-        String partitionKeyDefinition = getPartitionKey(persistentEntity);
-        int deletedCount;
-        if (optPartitionKey.isPresent()) {
-            // Do bulk delete if there is partition key provided
-            deletedCount = executeBulk(container, result, BulkOperationType.DELETE, persistentEntity, optPartitionKey);
-        } else if (StringUtils.isNotEmpty(partitionKeyDefinition)) {
-            // Bulk delete if there is partition key defined on the entity, so we can get its value
-            deletedCount = executeBulk(container, result, BulkOperationType.DELETE, persistentEntity, Optional.empty());
-        } else {
-            // If no partition key provided or defined on the entity (should not happen), delete one by one since partition key is needed for bulk delete
-            LOG.debug("executeDelete items one by one since partition key not provided or defined for entity {}", persistentEntity.getName());
-            deletedCount = 0;
-            CosmosItemRequestOptions options = new CosmosItemRequestOptions();
-            for (ObjectNode item : result) {
-                CosmosItemResponse<?> cosmosItemResponse = container.deleteItem(item, options);
-                if (cosmosItemResponse.getStatusCode() == HttpResponseStatus.NO_CONTENT.code()) {
-                    deletedCount++;
-                }
-            }
-        }
+        List<SqlParameter> parameterList = new ParameterBinder().bindParameters(preparedQuery);
+        CosmosPagedIterable<ObjectNode> result = getCosmosResults(preparedQuery, parameterList, ObjectNode.class);
+        int deletedCount = executeBulk(container, result, BulkOperationType.DELETE, persistentEntity, optPartitionKey);
         return Optional.of(deletedCount);
     }
 
@@ -455,16 +489,7 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
         RequestOptions requestOptions = new RequestOptions();
         for (ObjectNode item : items) {
             String id = getItemId(item);
-            PartitionKey partitionKey;
-            if (optPartitionKey.isPresent()) {
-                partitionKey = optPartitionKey.get();
-            } else {
-                Object partitionKeyValue = getPartitionKeyValue(persistentEntity, item);
-                partitionKey = partitionKeyValue != null ? new PartitionKey(partitionKeyValue) : null;
-                if (partitionKey == null) {
-                    LOG.debug("Partition key not found for persistent entity {} with id {}", persistentEntity.getName(), id);
-                }
-            }
+            PartitionKey partitionKey = optPartitionKey.orElseGet(() -> getPartitionKey(persistentEntity, item));
             bulkOperations.add(new ItemBulkOperation<>(bulkOperationType.cosmosItemOperationType, id, partitionKey, requestOptions, item, null));
         }
         return executeBulkOperations(container, bulkOperations, bulkOperationType.expectedOperationStatusCode);
@@ -502,7 +527,7 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
 
     /**
      * Custom class used for binding parameters for Cosmos sql queries.
-     * Needed to be able to extract update parameters for update actions so we can call upsert API.
+     * Needed to be able to extract update parameters for update actions, so we can call replace API.
      */
     private class ParameterBinder {
 
@@ -522,13 +547,15 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
         }
 
         <T, R> List<SqlParameter> bindParameters(PreparedQuery<T, R> preparedQuery) {
+            boolean isRawQuery = isRawQuery(preparedQuery);
             RuntimePersistentEntity<T> persistentEntity = runtimeEntityRegistry.getEntity(preparedQuery.getRootEntity());
             List<SqlParameter> parameterList = new ArrayList<>();
             SqlPreparedQuery<T, R> sqlPreparedQuery = getSqlPreparedQuery(preparedQuery);
             sqlPreparedQuery.bindParameters(new SqlStoredQuery.Binder() {
 
+                @NonNull
                 @Override
-                public Object autoPopulateRuntimeProperty(RuntimePersistentProperty<?> persistentProperty, Object previousValue) {
+                public Object autoPopulateRuntimeProperty(@NonNull RuntimePersistentProperty<?> persistentProperty, Object previousValue) {
                     return runtimeEntityRegistry.autoPopulateRuntimeProperty(persistentProperty, previousValue);
                 }
 
@@ -563,22 +590,19 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
                 }
 
                 @Override
-                public void bindOne(QueryParameterBinding binding, Object value) {
+                public void bindOne(@NonNull QueryParameterBinding binding, Object value) {
                     if (updateQuery) {
-                        String[] propertyPath = binding.getRequiredPropertyPath();
-                        PersistentPropertyPath pp = persistentEntity.getPropertyPath(propertyPath);
-                        if (pp != null) {
-                            String propertyName = pp.getPath();
-                            if (CollectionUtils.isNotEmpty(updatingProperties) && updatingProperties.contains(propertyName)) {
-                                propertiesToUpdate.put(pp.getPath(), value);
-                            }
+                        String property = getUpdateProperty(binding, persistentEntity);
+                        if (property != null) {
+                            propertiesToUpdate.put(property, value);
                         }
                     }
-                    parameterList.add(new SqlParameter("@" + binding.getRequiredName(), value));
+                    String parameterName = getParameterName(binding, isRawQuery);
+                    parameterList.add(new SqlParameter("@" + parameterName, value));
                 }
 
                 @Override
-                public void bindMany(QueryParameterBinding binding, Collection<Object> values) {
+                public void bindMany(@NonNull QueryParameterBinding binding, @NonNull Collection<Object> values) {
                     bindOne(binding, values);
                 }
 
@@ -589,6 +613,26 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
 
             });
             return parameterList;
+        }
+
+        private String getParameterName(QueryParameterBinding binding, boolean isRawQuery) {
+            if (isRawQuery) {
+                // raw query parameters get rewritten as p1, p2... and binding.getRequiredName remains as original, so we need to bind proper param name
+                return "p" + (binding.getParameterIndex() + 1);
+            }
+            return binding.getRequiredName();
+        }
+
+        private String getUpdateProperty(QueryParameterBinding binding, PersistentEntity persistentEntity) {
+            String[] propertyPath = binding.getRequiredPropertyPath();
+            PersistentPropertyPath pp = persistentEntity.getPropertyPath(propertyPath);
+            if (pp != null) {
+                String propertyName = pp.getPath();
+                if (CollectionUtils.isNotEmpty(updatingProperties) && updatingProperties.contains(propertyName)) {
+                    return propertyName;
+                }
+            }
+            return null;
         }
 
         Map<String, Object> getPropertiesToUpdate() {
@@ -615,7 +659,7 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
         return new DefaultSqlStoredQuery<>(storedQuery, runtimePersistentEntity, queryBuilder);
     }
 
-    private <O> O serialize(Object bean, Argument<?> type) {
+    private <O extends com.fasterxml.jackson.databind.JsonNode> O serialize(Object bean, Argument<?> type) {
         try {
             Serializer.EncoderContext encoderContext = serdeRegistry.newEncoderContext(null);
             Serializer<? super Object> typeSerializer = serdeRegistry.findSerializer(type);
@@ -648,17 +692,6 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
         }
     }
 
-    private <E, R> SqlStoredQuery<E, R> getSqlStoredQuery(StoredQuery<E, R> storedQuery) {
-        if (storedQuery instanceof SqlStoredQuery) {
-            SqlStoredQuery<E, R> sqlStoredQuery = (SqlStoredQuery<E, R>) storedQuery;
-            if (sqlStoredQuery.isExpandableQuery() && !(sqlStoredQuery instanceof SqlPreparedQuery)) {
-                return new DefaultSqlPreparedQuery<>(sqlStoredQuery);
-            }
-            return sqlStoredQuery;
-        }
-        throw new IllegalStateException("Expected for prepared query to be of type: SqlStoredQuery got: " + storedQuery.getClass().getName());
-    }
-
     private void logQuery(SqlQuerySpec querySpec, Iterable<SqlParameter> params) {
         if (QUERY_LOG.isDebugEnabled()) {
             QUERY_LOG.debug("Executing query: {}", querySpec.getQueryText());
@@ -686,10 +719,7 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
     }
 
     private boolean isIdPartitionKey(PersistentEntity persistentEntity) {
-        String partitionKey = getPartitionKey(persistentEntity);
-        if (StringUtils.isEmpty(partitionKey)) {
-            return false;
-        }
+        String partitionKey = getPartitionKeyDefinition(persistentEntity);
         PersistentProperty identity = persistentEntity.getIdentity();
         if (identity == null) {
             return false;
@@ -704,40 +734,98 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
      * @param persistentEntity the persistent entity
      * @return partition key definition it exists for persistent entity, otherwise empty/null string
      */
-    private String getPartitionKey(PersistentEntity persistentEntity) {
+    @NonNull
+    private String getPartitionKeyDefinition(PersistentEntity persistentEntity) {
         CosmosDatabaseConfiguration.CosmosContainerSettings cosmosContainerSettings = cosmosContainerSettingsMap.get(persistentEntity.getPersistedName());
         if (cosmosContainerSettings == null) {
-            return null;
+            return Constants.NO_PARTITION_KEY;
         }
         return CosmosDatabaseInitializer.getPartitionKey(persistentEntity, cosmosContainerSettings);
     }
 
     /**
-     * Gets partition key value for a document. Partition keys can be only string or number values.
+     * Gets partition key for a document. Partition keys can be only string or number values.
      * TODO: Later deal with nested paths when we support it.
      *
      * @param persistentEntity the persistent entity
      * @param item item from the Cosmos Db
-     * @return partition key value, if partition key defined and value set
+     * @return partition key, if partition key defined and value set otherwise null
      */
-    private Object getPartitionKeyValue(RuntimePersistentEntity<?> persistentEntity, ObjectNode item) {
-        String partitionKey = getPartitionKey(persistentEntity);
-        if (StringUtils.isEmpty(partitionKey)) {
+    @Nullable
+    private PartitionKey getPartitionKey(RuntimePersistentEntity<?> persistentEntity, ObjectNode item) {
+        String partitionKeyDefinition = getPartitionKeyDefinition(persistentEntity);
+        if (partitionKeyDefinition.startsWith("/")) {
+            partitionKeyDefinition = partitionKeyDefinition.substring(1);
+        }
+        com.fasterxml.jackson.databind.JsonNode jsonNode = item.get(partitionKeyDefinition);
+        if (jsonNode == null) {
             return null;
         }
-        if (partitionKey.startsWith("/")) {
-            partitionKey = partitionKey.substring(1);
+        Object value;
+        if (jsonNode.isNumber()) {
+            value = jsonNode.numberValue();
+        } else if (jsonNode.isBoolean()) {
+            value = jsonNode.booleanValue();
+        } else {
+            value = jsonNode.textValue();
         }
-        com.fasterxml.jackson.databind.JsonNode jsonNode = item.get(partitionKey);
-        if (jsonNode == null) {
-            return  null;
+        return new PartitionKey(value);
+    }
+
+    /**
+     * Gets underlying java class for the {@link DataType}.
+     *
+     * @param dataType the data type
+     * @return java class for the data type
+     */
+    Class<?> getDataTypeClass(DataType dataType) {
+        switch (dataType) {
+            case STRING:
+            case JSON:
+                return String.class;
+            case UUID:
+                return UUID.class;
+            case LONG:
+                return Long.class;
+            case INTEGER:
+                return Integer.class;
+            case BOOLEAN:
+                return Boolean.class;
+            case BYTE:
+                return Byte.class;
+            case TIMESTAMP:
+            case DATE:
+                return Date.class;
+            case CHARACTER:
+                return Character.class;
+            case FLOAT:
+                return Float.class;
+            case SHORT:
+                return Short.class;
+            case DOUBLE:
+                return Double.class;
+            case BIGDECIMAL:
+                return BigDecimal.class;
+            case TIME:
+                return Time.class;
+            default:
+                return Object.class;
         }
-        return jsonNode.isNumber() ? jsonNode.numberValue() : jsonNode.textValue();
+    }
+
+    /**
+     * Gets an indicator telling whether {@link PreparedQuery} is raw query.
+     *
+     * @param preparedQuery the prepared query
+     * @return true if prepared query is created from raw query
+     */
+    private boolean isRawQuery(@NonNull PreparedQuery<?, ?> preparedQuery) {
+        return preparedQuery.getAnnotationMetadata().stringValue(Query.class, DataMethod.META_MEMBER_RAW_QUERY).isPresent();
     }
 
     /**
      * The bulk operation type used when creating bulk operations against Cosmos Db.
-     * Need to know what type (supported DELETE and UPSERT) and what expected status code
+     * Need to know what type (supported DELETE and REPLACE) and what expected status code
      * for each item is to be treated as successful.
      */
     private enum BulkOperationType {
@@ -751,6 +839,92 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
         BulkOperationType(CosmosItemOperationType cosmosItemOperationType, int expectedOperationStatusCode) {
             this.cosmosItemOperationType = cosmosItemOperationType;
             this.expectedOperationStatusCode = expectedOperationStatusCode;
+        }
+    }
+
+    /**
+     * The {@link Spliterator} used when reading an entity or dto projection from the result stream.
+     *
+     * @param <R> the result type returned by spliterator
+     */
+    private class EntityOrDtoSpliterator<R> extends Spliterators.AbstractSpliterator<R> {
+
+        private final AtomicBoolean finished;
+        private final Iterator<ObjectNode> iterator;
+        private final Argument<R> argument;
+
+        EntityOrDtoSpliterator(long est, int additionalCharacteristics,  AtomicBoolean finished,
+                               Iterator<ObjectNode> iterator, Argument<R> argument) {
+            super(est, additionalCharacteristics);
+            this.finished = finished;
+            this.iterator = iterator;
+            this.argument = argument;
+        }
+
+        @Override
+        public boolean tryAdvance(Consumer<? super R> action) {
+            if (finished.get()) {
+                return false;
+            }
+            try {
+                boolean hasNext = iterator.hasNext();
+                if (hasNext) {
+                    ObjectNode beanTree = iterator.next();
+                    R o = deserialize(beanTree, argument);
+                    action.accept(o);
+                } else {
+                    finished.set(true);
+                }
+                return hasNext;
+            } catch (Exception e) {
+                throw new DataAccessException("Error retrieving next Cosmos result: " + e.getMessage(), e);
+            }
+        }
+    }
+
+    /**
+     * The {@link Spliterator} used when reading custom type (not an entity or dto projection) from the result stream.
+     *
+     * @param <R> the result type returned by spliterator
+     */
+    private static class CustomResultTypeSpliterator<R> extends Spliterators.AbstractSpliterator<R> {
+
+        private final AtomicBoolean finished;
+        private final Iterator<?> iterator;
+        private final Class<R> resultType;
+
+        CustomResultTypeSpliterator(long est, int additionalCharacteristics,  AtomicBoolean finished,
+                                    Iterator<?> iterator, Class<R> resultType) {
+            super(est, additionalCharacteristics);
+            this.finished = finished;
+            this.iterator = iterator;
+            this.resultType = resultType;
+        }
+
+        @Override
+        public boolean tryAdvance(Consumer<? super R> action) {
+            if (finished.get()) {
+                return false;
+            }
+            try {
+                boolean hasNext = iterator.hasNext();
+                if (hasNext) {
+                    Object v = iterator.next();
+                    if (resultType.isInstance(v)) {
+                        action.accept((R) v);
+                    } else if (v != null) {
+                        R r = ConversionService.SHARED.convertRequired(v, resultType);
+                        if (r != null) {
+                            action.accept(r);
+                        }
+                    }
+                } else {
+                    finished.set(true);
+                }
+                return hasNext;
+            } catch (Exception e) {
+                throw new DataAccessException("Error retrieving next Cosmos result: " + e.getMessage(), e);
+            }
         }
     }
 }
