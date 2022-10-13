@@ -306,6 +306,10 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
             bookDto.present
             bookDto.get().title == book.title
             bookDto.get().totalPages == 500
+        when:
+            def bookDtos = bookDtoRepository.findByTitleAndTotalPages(book.title, book.totalPages)
+        then:
+            bookDtos.size() > 0
     }
 
     def "should get cosmos client"() {

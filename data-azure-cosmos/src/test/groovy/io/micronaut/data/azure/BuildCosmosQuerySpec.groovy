@@ -54,7 +54,7 @@ interface FamilyRepository extends GenericRepository<Family, String> {
         when:
         def queryById = getQuery(repository.getRequiredMethod("findById", String))
         then:
-        queryById == "SELECT family_.id,family_.lastName,family_.address,family_.children,family_.registered FROM family family_ WHERE (family_.id = @p1)"
+        queryById == "SELECT family_.id,family_.lastName,family_.address,family_.children,family_.registered,family_.registeredDate FROM family family_ WHERE (family_.id = @p1)"
     }
 
     void "test build delete query"() {

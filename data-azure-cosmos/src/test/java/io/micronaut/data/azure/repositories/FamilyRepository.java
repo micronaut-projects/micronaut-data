@@ -1,7 +1,6 @@
 package io.micronaut.data.azure.repositories;
 
 import com.azure.cosmos.models.PartitionKey;
-import com.fasterxml.jackson.databind.DatabindException;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
@@ -48,4 +47,5 @@ public abstract class FamilyRepository implements PageableRepository<Family, Str
 
     @Query("SELECT VALUE f.registeredDate FROM family f WHERE NOT IS_NULL(f.registeredDate) ORDER BY f.registeredDate DESC OFFSET 0 LIMIT 1")
     public abstract Date lastOrderedRegisteredDate();
+
 }

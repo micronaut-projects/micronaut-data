@@ -256,10 +256,7 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
                     if (resultType.isInstance(item)) {
                         return (R) item;
                     } else if (item != null) {
-                        R r = ConversionService.SHARED.convertRequired(item, resultType);
-                        if (r != null) {
-                            return r;
-                        }
+                        return ConversionService.SHARED.convertRequired(item, resultType);
                     }
                     return null;
                 }
@@ -807,26 +804,8 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
                 return Short.class;
             case DOUBLE:
                 return Double.class;
-            case BYTE_ARRAY:
-                return Byte[].class;
             case BIGDECIMAL:
                 return BigDecimal.class;
-            case BOOLEAN_ARRAY:
-                return Boolean[].class;
-            case LONG_ARRAY:
-                return Long[].class;
-            case FLOAT_ARRAY:
-                return Float[].class;
-            case SHORT_ARRAY:
-                return Short[].class;
-            case DOUBLE_ARRAY:
-                return Double[].class;
-            case CHARACTER_ARRAY:
-                return Character[].class;
-            case INTEGER_ARRAY:
-                return Integer[].class;
-            case STRING_ARRAY:
-                return String[].class;
             case TIME:
                 return Time.class;
             default:
