@@ -14,6 +14,7 @@ import com.azure.cosmos.util.CosmosPagedIterable
 import com.fasterxml.jackson.databind.node.ObjectNode
 import io.micronaut.context.ApplicationContext
 import io.micronaut.core.type.Argument
+import io.micronaut.core.util.StringUtils
 import io.micronaut.data.azure.entities.Address
 import io.micronaut.data.azure.entities.Child
 import io.micronaut.data.azure.entities.CosmosBook
@@ -158,6 +159,17 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
             optFamily2.get().id == FAMILY2_ID
             optFamily2.get().children.size() == 2
             optFamily2.get().address
+        when:
+            def lastOrderedLastName = familyRepository.lastOrderedLastName()
+        then:
+            StringUtils.isNotEmpty(lastOrderedLastName)
+        when:
+            optFamily2.get().registeredDate = new Date()
+            familyRepository.update(optFamily2.get())
+            def lastOrderedRegisteredDate = familyRepository.lastOrderedRegisteredDate()
+        then:
+            lastOrderedRegisteredDate
+            lastOrderedRegisteredDate == optFamily2.get().registeredDate
         when:
             def exists = familyRepository.existsById(FAMILY1_ID)
         then:

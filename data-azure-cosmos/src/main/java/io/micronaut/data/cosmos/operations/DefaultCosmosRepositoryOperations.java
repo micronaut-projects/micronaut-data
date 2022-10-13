@@ -227,18 +227,43 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
     public <T, R> R findOne(@NonNull PreparedQuery<T, R> preparedQuery) {
         try {
             List<SqlParameter> paramList = new ParameterBinder().bindParameters(preparedQuery);
-            CosmosPagedIterable<ObjectNode> result = getCosmosResults(preparedQuery, paramList, ObjectNode.class);
-            Iterator<ObjectNode> iterator = result.iterator();
-            if (iterator.hasNext()) {
-                ObjectNode item = iterator.next();
+            boolean dtoProjection = preparedQuery.isDtoProjection();
+            boolean isEntity = preparedQuery.getResultDataType() == DataType.ENTITY;
+            if (isEntity || dtoProjection) {
+                CosmosPagedIterable<ObjectNode> result = getCosmosResults(preparedQuery, paramList, ObjectNode.class);
+                Iterator<ObjectNode> iterator = result.iterator();
                 if (iterator.hasNext()) {
-                    throw new NonUniqueResultException();
+                    ObjectNode item = iterator.next();
+                    if (iterator.hasNext()) {
+                        throw new NonUniqueResultException();
+                    }
+                    if (preparedQuery.isDtoProjection()) {
+                        Class<R> wrapperType = ReflectionUtils.getWrapperType(preparedQuery.getResultType());
+                        return deserialize(item, Argument.of(wrapperType));
+                    }
+                    return deserialize(item, Argument.of((Class<R>) preparedQuery.getRootEntity()));
                 }
-                if (preparedQuery.isDtoProjection()) {
-                    Class<R> wrapperType = ReflectionUtils.getWrapperType(preparedQuery.getResultType());
-                    return deserialize(item, Argument.of(wrapperType));
+            } else {
+                DataType dataType = preparedQuery.getResultDataType();
+                CosmosPagedIterable<?> result = getCosmosResults(preparedQuery, paramList, getDataTypeClass(dataType));
+                Iterator<?> iterator = result.iterator();
+                if (iterator.hasNext()) {
+                    Object item = iterator.next();
+                    if (iterator.hasNext()) {
+                        throw new NonUniqueResultException();
+                    }
+                    Class<R> resultType = preparedQuery.getResultType();
+                    if (resultType.isInstance(item)) {
+                        return (R) item;
+                    } else if (item != null) {
+                        R r = ConversionService.SHARED.convertRequired(item, resultType);
+                        if (r != null) {
+                            return r;
+                        }
+                    }
+                    return null;
                 }
-                return deserialize(item, Argument.of((Class<R>) preparedQuery.getRootEntity()));
+
             }
         } catch (CosmosException e) {
             if (e.getStatusCode() == HttpResponseStatus.NOT_FOUND.code()) {

@@ -5,6 +5,7 @@ import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.cosmos.annotation.PartitionKey;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 @MappedEntity
@@ -21,6 +22,8 @@ public class Family {
     private List<Child> children = new ArrayList<>();
 
     private boolean registered;
+
+    private Date registeredDate;
 
     public String getId() {
         return id;
@@ -60,5 +63,13 @@ public class Family {
 
     public void setRegistered(boolean registered) {
         this.registered = registered;
+    }
+
+    public Date getRegisteredDate() {
+        return registeredDate;
+    }
+
+    public void setRegisteredDate(Date registeredDate) {
+        this.registeredDate = registeredDate;
     }
 }
