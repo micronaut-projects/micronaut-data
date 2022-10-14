@@ -123,25 +123,40 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
     def "test find with query"() {
         given:
             def book1 = new CosmosBook()
-            book1.id = UUID.randomUUID().toString()
             book1.title = "The Stand"
             book1.totalPages = 1000
             def book2 = new CosmosBook()
-            book2.id = UUID.randomUUID().toString()
             book2.title = "Ice And Fire"
             book2.totalPages = 200
         when:
             bookRepository.save(book1)
             bookRepository.save(book2)
-            def optionalBook = bookRepository.queryById(book1.id)
+            def loadedBook1 = bookRepository.queryById(book1.id)
+            def loadedBook2 = bookRepository.queryById(book2.id)
         then:
-            optionalBook
-            optionalBook.title == "The Stand"
+            loadedBook1
+            loadedBook1.title == "The Stand"
+            loadedBook1.created
+            loadedBook1.lastUpdated
+            loadedBook2
+            loadedBook2.title == "Ice And Fire"
+            loadedBook2.created
+            loadedBook2.lastUpdated
         when:
             def foundBook = bookRepository.searchByTitle("Ice And Fire")
         then:
             foundBook
             foundBook.title == "Ice And Fire"
+        when:
+            def totalPages = loadedBook1.totalPages
+            loadedBook1.totalPages = totalPages + 1
+            bookRepository.update(loadedBook1)
+            foundBook = bookRepository.findById(loadedBook1.id).get()
+        then:
+            foundBook.id == loadedBook1.id
+            foundBook.totalPages == totalPages + 1
+            foundBook.created == loadedBook1.created
+            foundBook.lastUpdated != loadedBook1.lastUpdated
     }
 
     def "crud family in cosmos repo"() {
