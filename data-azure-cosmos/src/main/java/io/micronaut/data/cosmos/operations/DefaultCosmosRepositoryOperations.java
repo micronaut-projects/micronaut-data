@@ -374,14 +374,15 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
     /**
      * Serializes items from {@link BatchOperation} entities to list of {@link ObjectNode} for update/delete batch operations.
      *
-     * @param operation the batch operation (update/delete)
+     * @param entities the entities for batch operation (update/delete)
+     * @param rootEntity the root entity type
      * @param <T> the entity type
      * @return list of {@link ObjectNode} serialized from entities
      */
-    private <T> List<ObjectNode> serializeBatchItems(BatchOperation<T> operation) {
-        Argument<T> arg = Argument.of(operation.getRootEntity());
+    private <T> List<ObjectNode> serializeBatchItems(Iterable<T> entities, Class<T> rootEntity) {
+        Argument<T> arg = Argument.of(rootEntity);
         List<ObjectNode> items = new ArrayList<>();
-        for (T entity : operation) {
+        for (T entity : entities) {
             items.add(serialize(entity, arg));
         }
         return items;
@@ -390,11 +391,15 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
     @NonNull
     @Override
     public <T> Iterable<T> updateAll(@NonNull UpdateBatchOperation<T> operation) {
-        RuntimePersistentEntity<T> persistentEntity = runtimeEntityRegistry.getEntity(operation.getRootEntity());
+        Class<T> rootEntity = operation.getRootEntity();
+        RuntimePersistentEntity<T> persistentEntity = runtimeEntityRegistry.getEntity(rootEntity);
         CosmosContainer container = getContainer(persistentEntity);
-        List<ObjectNode> items = serializeBatchItems(operation);
-        executeBulk(container, items, BulkOperationType.UPDATE, persistentEntity, Optional.empty());
-        return operation;
+        CosmosEntityOperation.CosmosOperationContext<T> ctx = new CosmosEntityOperation.CosmosOperationContext<>(operation.getAnnotationMetadata(),
+            operation.getRepositoryType(), container, rootEntity);
+
+        CosmosEntitiesOperation<T> op = createCosmosBulkOperation(ctx, persistentEntity, operation, BulkOperationType.UPDATE);
+        op.update();
+        return op.getEntities();
     }
 
     @NonNull
@@ -458,11 +463,15 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
 
     @Override
     public <T> Optional<Number> deleteAll(DeleteBatchOperation<T> operation) {
-        RuntimePersistentEntity<T> persistentEntity = runtimeEntityRegistry.getEntity(operation.getRootEntity());
+        Class<T> rootEntity = operation.getRootEntity();
+        RuntimePersistentEntity<T> persistentEntity = runtimeEntityRegistry.getEntity(rootEntity);
         CosmosContainer container = getContainer(persistentEntity);
-        List<ObjectNode> items = serializeBatchItems(operation);
-        int deletedCount = executeBulk(container, items, BulkOperationType.DELETE, persistentEntity, Optional.empty());
-        return Optional.of(deletedCount);
+        CosmosEntityOperation.CosmosOperationContext<T> ctx = new CosmosEntityOperation.CosmosOperationContext<>(operation.getAnnotationMetadata(),
+            operation.getRepositoryType(), container, rootEntity);
+
+        CosmosEntitiesOperation<T> op = createCosmosBulkOperation(ctx, persistentEntity, operation, BulkOperationType.DELETE);
+        op.update();
+        return Optional.of(op.affectedCount);
     }
 
     @NonNull
@@ -756,6 +765,21 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
                 } else {
                     affectedCount = 0;
                 }
+            }
+        };
+    }
+
+    private <T> CosmosEntitiesOperation<T> createCosmosBulkOperation(CosmosEntityOperation.CosmosOperationContext<T> ctx,
+                                                                   RuntimePersistentEntity<T> persistentEntity,
+                                                                   BatchOperation<T> operation,
+                                                                   BulkOperationType operationType) {
+        return new CosmosEntitiesOperation<T>(entityEventRegistry, conversionService, ctx, persistentEntity, operation) {
+
+            @Override
+            protected void execute() throws RuntimeException {
+                Iterable<T> allowedEntities = entities.stream().filter(d -> !d.vetoed).map(d -> d.entity).collect(Collectors.toList());
+                List<ObjectNode> items = serializeBatchItems(allowedEntities, operation.getRootEntity());
+                this.affectedCount = executeBulk(ctx.getContainer(), items, operationType, persistentEntity, Optional.empty());
             }
         };
     }

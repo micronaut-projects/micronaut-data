@@ -31,18 +31,20 @@ import io.micronaut.data.runtime.operations.internal.AbstractSyncEntitiesOperati
  */
 public abstract class CosmosEntitiesOperation<T> extends AbstractSyncEntitiesOperations<CosmosEntityOperation.CosmosOperationContext<T>, T, RuntimeException> {
 
+    protected int affectedCount;
+
     /**
      * Default constructor.
      *
-     * @param ctx                 The context
-     * @param conversionService   The conversion service
      * @param entityEventListener The entity event listener
+     * @param conversionService   The conversion service
+     * @param ctx                 The context
      * @param persistentEntity    The persistent entity
      * @param entities            The entities
      */
-    protected CosmosEntitiesOperation(CosmosEntityOperation.CosmosOperationContext ctx,
+    protected CosmosEntitiesOperation(EntityEventListener<Object> entityEventListener,
                                       ConversionService<?> conversionService,
-                                      EntityEventListener<Object> entityEventListener,
+                                      CosmosEntityOperation.CosmosOperationContext ctx,
                                       RuntimePersistentEntity<T> persistentEntity,
                                       Iterable<T> entities) {
         super(ctx, null, conversionService, entityEventListener, persistentEntity, entities, false);
