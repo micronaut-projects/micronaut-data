@@ -4,6 +4,7 @@ import io.micronaut.annotation.processing.test.AbstractTypeElementSpec
 import io.micronaut.core.annotation.AnnotationMetadataProvider
 import io.micronaut.core.naming.NameUtils
 import io.micronaut.data.annotation.Query
+import io.micronaut.data.azure.entities.Address
 import io.micronaut.data.azure.entities.Family
 import io.micronaut.inject.BeanDefinition
 import io.micronaut.inject.writer.BeanDefinitionVisitor
@@ -47,14 +48,18 @@ import java.util.Optional;
 interface FamilyRepository extends GenericRepository<Family, String> {
 
     Optional<Family> findById(String id);
+
+    List<Family> findByAddressState(String state);
 }
 """
         )
 
         when:
-        def queryById = getQuery(repository.getRequiredMethod("findById", String))
+        def findByIdQuery = getQuery(repository.getRequiredMethod("findById", String))
+        def findByAddressStateQuery = getQuery(repository.getRequiredMethod("findByAddressState", String))
         then:
-        queryById == "SELECT family_.id,family_.lastName,family_.address,family_.children,family_.registered,family_.registeredDate FROM family family_ WHERE (family_.id = @p1)"
+        findByIdQuery == "SELECT family_.id,family_.lastName,family_.address,family_.children,family_.registered,family_.registeredDate FROM family family_ WHERE (family_.id = @p1)"
+        findByAddressStateQuery == "SELECT family_.id,family_.lastName,family_.address,family_.children,family_.registered,family_.registeredDate FROM family family_ WHERE (family_.address.state = @p1)"
     }
 
     void "test build delete query"() {
@@ -108,6 +113,7 @@ $source
         def repository = buildRepository('test.FamilyRepository', """
 import io.micronaut.data.cosmos.annotation.CosmosRepository;
 import io.micronaut.data.azure.entities.Family;
+import io.micronaut.data.azure.entities.Address;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.data.annotation.Id;
 import java.util.Optional;
@@ -115,6 +121,10 @@ import java.util.List;
 @CosmosRepository
 interface FamilyRepository extends GenericRepository<Family, String> {
     long updateRegistered(@Parameter("id") @Id String id, @Parameter("registered") boolean registered);
+
+    void updateAddress(@Parameter("id") @Id String id, @Parameter("address") Address address);
+
+    void updateByAddressState(String state, boolean registered, Date registeredDate);
 }
 """
         )
@@ -122,10 +132,23 @@ interface FamilyRepository extends GenericRepository<Family, String> {
         when:
         def updateRegisteredMethod = repository.getRequiredMethod("updateRegistered", String, boolean)
         def updateRegisteredQuery = getQuery(updateRegisteredMethod)
-        def updateQuery = updateRegisteredMethod.stringValue(Query.class, "update").orElse(null)
+        def updateRegisteredQueryUpdate = updateRegisteredMethod.stringValue(Query.class, "update").orElse(null)
+        def updateAddressMethod = repository.getRequiredMethod("updateAddress", String, Address)
+        def updateAddressQuery = getQuery(updateAddressMethod)
+        def updateAddressQueryUpdate = updateAddressMethod.stringValue(Query.class, "update").orElse(null)
+
+        def updateByAddressStateMethod = repository.getRequiredMethod("updateByAddressState", String, boolean, Date)
+        def updateByAddressStateQuery = getQuery(updateByAddressStateMethod)
+        def updateByAddressStateUpdate = updateByAddressStateMethod.stringValue(Query.class, "update").orElse(null)
         then:
         updateRegisteredQuery == "SELECT * FROM family family_ WHERE (family_.id = @p2)"
-        updateQuery == "registered"
+        updateRegisteredQueryUpdate == "registered"
+
+        updateAddressQueryUpdate == "address"
+        updateAddressQuery == "SELECT * FROM family family_ WHERE (family_.id = @p2)"
+
+        updateByAddressStateUpdate == "registered,registeredDate"
+        updateByAddressStateQuery == "SELECT * FROM family family_ WHERE (family_.address.state = @p3)"
     }
 
     static String getQuery(AnnotationMetadataProvider metadata) {

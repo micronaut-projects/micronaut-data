@@ -160,6 +160,11 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
             optFamily2.get().children.size() == 2
             optFamily2.get().address
         when:
+            def address1 = optFamily1.get().address
+            def families = familyRepository.findByAddressStateAndAddressCity(address1.state, address1.city)
+        then:
+            families.size() > 0
+        when:
             def lastOrderedLastName = familyRepository.lastOrderedLastName()
         then:
             StringUtils.isNotEmpty(lastOrderedLastName)
@@ -170,6 +175,13 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
         then:
             lastOrderedRegisteredDate
             lastOrderedRegisteredDate == optFamily2.get().registeredDate
+        when:
+            familyRepository.updateByAddressCounty(optFamily2.get().address.county, false, null)
+            optFamily2 = familyRepository.findById(FAMILY2_ID)
+        then:
+            optFamily2.present
+            !optFamily2.get().registeredDate
+            !optFamily2.get().registered
         when:
             def exists = familyRepository.existsById(FAMILY1_ID)
         then:

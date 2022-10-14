@@ -49,24 +49,6 @@ public final class PersistentEntityUtils {
      * Traverses properties that should be persisted.
      *
      * @param persistentEntity The persistent entity
-     * @param consumer         The function to invoke on every property
-     */
-    public static void traversePersistentProperties(PersistentEntity persistentEntity, BiConsumer<List<Association>, PersistentProperty> consumer) {
-        if (persistentEntity.getIdentity() != null) {
-            traversePersistentProperties(Collections.emptyList(), persistentEntity.getIdentity(), consumer);
-        }
-        if (persistentEntity.getVersion() != null) {
-            traversePersistentProperties(Collections.emptyList(), persistentEntity.getVersion(), consumer);
-        }
-        for (PersistentProperty property : persistentEntity.getPersistentProperties()) {
-            traversePersistentProperties(Collections.emptyList(), property, consumer);
-        }
-    }
-
-    /**
-     * Traverses properties that should be persisted.
-     *
-     * @param persistentEntity The persistent entity
      * @param includeIdentity  Should be identifier included
      * @param includeVersion   Should be version included
      * @param consumer         The function to invoke on every property

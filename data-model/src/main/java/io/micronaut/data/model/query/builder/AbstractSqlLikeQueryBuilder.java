@@ -1606,7 +1606,15 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
      * @param consumer         The function to invoke on every property
      */
     protected void traversePersistentProperties(PersistentEntity persistentEntity, BiConsumer<List<Association>, PersistentProperty> consumer) {
-        PersistentEntityUtils.traversePersistentProperties(persistentEntity, consumer);
+        if (persistentEntity.getIdentity() != null) {
+            traversePersistentProperties(Collections.emptyList(), persistentEntity.getIdentity(), consumer);
+        }
+        if (persistentEntity.getVersion() != null) {
+            traversePersistentProperties(Collections.emptyList(), persistentEntity.getVersion(), consumer);
+        }
+        for (PersistentProperty property : persistentEntity.getPersistentProperties()) {
+            traversePersistentProperties(Collections.emptyList(), property, consumer);
+        }
     }
 
     /**
@@ -1621,7 +1629,14 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         PersistentEntityUtils.traversePersistentProperties(persistentEntity, includeIdentity, includeVersion, consumer);
     }
 
-    private void traversePersistentProperties(List<Association> associations,
+    /**
+     * Traverses properties that should be persisted.
+     *
+     * @param associations      The association list being traversed with the property
+     * @param property          The peristent property
+     * @param consumerProperty  The function to invoke on every property
+     */
+    protected void traversePersistentProperties(List<Association> associations,
                                               PersistentProperty property,
                                               BiConsumer<List<Association>, PersistentProperty> consumerProperty) {
         PersistentEntityUtils.traversePersistentProperties(associations, property, consumerProperty);

@@ -33,6 +33,7 @@ import com.azure.cosmos.models.SqlQuerySpec;
 import com.azure.cosmos.util.CosmosPagedIterable;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.NullNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.context.annotation.Requires;
@@ -428,7 +429,12 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
         for (Map.Entry<String, Object> propertyToUpdate : propertiesToUpdate.entrySet()) {
             String property = propertyToUpdate.getKey();
             Object value = propertyToUpdate.getValue();
-            com.fasterxml.jackson.databind.JsonNode objectNode = serialize(value, Argument.of(value.getClass()));
+            com.fasterxml.jackson.databind.JsonNode objectNode;
+            if (value == null) {
+                objectNode = NullNode.getInstance();
+            } else {
+                objectNode = serialize(value, Argument.of(value.getClass()));
+            }
             item.set(property, objectNode);
         }
         return item;

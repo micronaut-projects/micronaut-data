@@ -12,6 +12,7 @@ import io.micronaut.data.cosmos.annotation.CosmosRepository;
 import io.micronaut.data.repository.PageableRepository;
 
 import java.util.Date;
+import java.util.List;
 import java.util.Optional;
 
 @CosmosRepository
@@ -47,5 +48,9 @@ public abstract class FamilyRepository implements PageableRepository<Family, Str
 
     @Query("SELECT VALUE f.registeredDate FROM family f WHERE NOT IS_NULL(f.registeredDate) ORDER BY f.registeredDate DESC OFFSET 0 LIMIT 1")
     public abstract Date lastOrderedRegisteredDate();
+
+    public abstract List<Family> findByAddressStateAndAddressCity(String state, String city);
+
+    public abstract void updateByAddressCounty(String county, boolean registered, @Nullable Date registeredDate);
 
 }

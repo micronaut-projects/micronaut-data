@@ -24,6 +24,7 @@ import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.model.Association;
+import io.micronaut.data.model.Embedded;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.PersistentPropertyPath;
@@ -34,12 +35,12 @@ import io.micronaut.data.model.query.builder.QueryParameterBinding;
 import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.StringJoiner;
+import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 /**
@@ -167,7 +168,7 @@ public final class CosmosSqlQueryBuilder extends SqlQueryBuilder {
             }
         }
         if (sb.length() > 0) {
-            sb.append(NameUtils.capitalize(property.getName()));
+            sb.append(DOT).append(property.getName());
         } else {
             sb.append(property.getName());
         }
@@ -183,6 +184,17 @@ public final class CosmosSqlQueryBuilder extends SqlQueryBuilder {
     @Override
     protected boolean isAliasForBatch() {
         return true;
+    }
+
+    @Override
+    protected void traversePersistentProperties(List<Association> associations,
+                                                PersistentProperty property,
+                                                BiConsumer<List<Association>, PersistentProperty> consumerProperty) {
+        if (property instanceof Embedded) {
+            consumerProperty.accept(associations, property);
+            return;
+        }
+        super.traversePersistentProperties(associations, property, consumerProperty);
     }
 
     @Override
