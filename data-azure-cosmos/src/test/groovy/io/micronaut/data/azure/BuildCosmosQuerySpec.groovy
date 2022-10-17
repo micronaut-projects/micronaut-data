@@ -72,11 +72,11 @@ interface FamilyRepository extends GenericRepository<Family, String> {
 
     @Join(value = "children")
     @Join(value = "children.pets")
-    List<Family> findByChildrenPetsGivenNameOrderByChildrenPetsType(String givenName);
+    List<Family> findByChildrenPetsGivenNameOrderByChildrenPetsType(String type);
 
     @Join(value = "children")
-    @Join(value = "children.pets")
-    public abstract List<Child> findChildrenByChildrenPetsGivenName(String name);
+    public abstract List<Child> findChildrenByChildrenPetsGivenName(String givenName);
+
 }
 """
         )
@@ -92,8 +92,7 @@ interface FamilyRepository extends GenericRepository<Family, String> {
         findByAddressStateQuery == "SELECT DISTINCT VALUE family_ FROM family family_ JOIN c IN family_.children WHERE (family_.address.state = @p1) ORDER BY c.firstName ASC"
         findByChildrenFirstNameQuery == "SELECT DISTINCT VALUE family_ FROM family family_ JOIN family_children_ IN family_.children WHERE (family_children_.firstName = @p1)"
         findByChildrenPetsGivenNameOrderByChildrenPetsTypeQuery == "SELECT DISTINCT VALUE family_ FROM family family_ JOIN family_children_ IN family_.children JOIN family_children_pets_ IN family_children_.pets WHERE (family_children_pets_.givenName = @p1) ORDER BY family_children_pets_.type ASC"
-        // TODO: Validate once it is fixed
-        findChildrenByChildrenPetsGivenNameQuery != ""
+        findChildrenByChildrenPetsGivenNameQuery == "SELECT family_children_.firstName,family_children_.gender,family_children_.grade FROM family family_ JOIN family_children_ IN family_.children JOIN family_children_pets_ IN family_children_.pets WHERE (family_children_pets_.givenName = @p1)"
     }
 
     void "test build delete query"() {

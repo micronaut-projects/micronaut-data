@@ -61,6 +61,5 @@ public abstract class FamilyRepository implements PageableRepository<Family, Str
     public abstract List<Family> findByChildrenPetsType(String type);
 
     @Join(value = "children")
-    @Join(value = "children.pets")
     public abstract List<Child> findChildrenByChildrenPetsGivenName(String name);
 }

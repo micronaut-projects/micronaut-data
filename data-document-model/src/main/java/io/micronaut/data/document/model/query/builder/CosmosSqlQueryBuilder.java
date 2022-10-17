@@ -220,9 +220,11 @@ public final class CosmosSqlQueryBuilder extends SqlQueryBuilder {
             entity
         );
 
-        if (select.indexOf(FROM_CLAUSE) == -1) {
-            select.append(FROM_CLAUSE).append(getTableName(entity)).append(SPACE).append(logicalName);
-        }
+        select.append(FROM_CLAUSE).append(getTableName(entity)).append(SPACE).append(logicalName);
+
+        QueryModel queryModel = queryState.getQueryModel();
+        Collection<JoinPath> allPaths = queryModel.getJoinPaths();
+        appendJoins(queryState, select, allPaths, null);
 
         queryState.getQuery().insert(0, select);
 
@@ -252,8 +254,22 @@ public final class CosmosSqlQueryBuilder extends SqlQueryBuilder {
                                                  StringBuilder queryBuffer,
                                                  Collection<JoinPath> allPaths,
                                                  @Nullable Map<JoinPath, String> joinAliasOverride) {
+        // Does nothing since we don't select columns in joins
+    }
+
+    /**
+     * We use this method instead of {@link #selectAllColumnsFromJoinPaths(QueryState, StringBuilder, Collection, Map)}
+     * and said method is empty because Cosmos Db has different join logic.
+     * @param queryState
+     * @param queryBuffer
+     * @param allPaths
+     * @param joinAliasOverride
+     */
+    private void appendJoins(QueryState queryState,
+                                                 StringBuilder queryBuffer,
+                                                 Collection<JoinPath> allPaths,
+                                                 @Nullable Map<JoinPath, String> joinAliasOverride) {
         String logicalName = queryState.getRootAlias();
-        queryBuffer.append(FROM_CLAUSE).append(getTableName(queryState.getEntity())).append(SPACE).append(logicalName);
         if (CollectionUtils.isNotEmpty(allPaths)) {
             Map<String, String> joinedPaths = new HashMap<>();
             for (JoinPath joinPath : allPaths) {
@@ -281,15 +297,20 @@ public final class CosmosSqlQueryBuilder extends SqlQueryBuilder {
     }
 
     @Override
-    protected void selectAllColumns(QueryState queryState, StringBuilder queryBuffer) {
-        PersistentEntity entity = queryState.getEntity();
-        String logicalName = queryState.getRootAlias();
-        String tableName = getTableName(entity);
-        queryBuffer.append("DISTINCT VALUE ").append(logicalName);
+    protected boolean appendAssociationProjection(QueryState queryState, StringBuilder queryString, PersistentProperty property, PersistentPropertyPath propertyPath) {
+        String joinedPath = propertyPath.getPath();
+        if (!queryState.isJoined(joinedPath)) {
+            queryString.setLength(queryString.length() - 1);
+            return false;
+        }
+        String joinAlias = queryState.computeAlias(propertyPath.getPath());
+        selectAllColumns(((Association) property).getAssociatedEntity(), joinAlias, queryString);
+        return true;
+    }
 
-        QueryModel queryModel = queryState.getQueryModel();
-        Collection<JoinPath> allPaths = queryModel.getJoinPaths();
-        selectAllColumnsFromJoinPaths(queryState, queryBuffer, allPaths, null);
+    @Override
+    protected void selectAllColumns(QueryState queryState, StringBuilder queryBuffer) {
+        queryBuffer.append("DISTINCT VALUE ").append(queryState.getRootAlias());
     }
 
     @Override

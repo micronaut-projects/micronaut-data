@@ -242,7 +242,7 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
                         Class<R> wrapperType = ReflectionUtils.getWrapperType(preparedQuery.getResultType());
                         return deserialize(item, Argument.of(wrapperType));
                     }
-                    return deserialize(item, Argument.of((Class<R>) preparedQuery.getRootEntity()));
+                    return deserialize(item, Argument.of(preparedQuery.getResultType()));
                 }
             } else {
                 DataType dataType = preparedQuery.getResultDataType();
@@ -315,7 +315,7 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
                 if (dtoProjection) {
                     argument = Argument.of(ReflectionUtils.getWrapperType(preparedQuery.getResultType()));
                 } else {
-                    argument = Argument.of((Class<R>) preparedQuery.getRootEntity());
+                    argument = Argument.of(preparedQuery.getResultType());
                 }
                 spliterator = new EntityOrDtoSpliterator<>(Long.MAX_VALUE, Spliterator.ORDERED | Spliterator.IMMUTABLE,
                     finished, iterator, argument);
