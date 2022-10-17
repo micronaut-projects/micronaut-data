@@ -5,8 +5,10 @@ import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.Join;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.azure.entities.Address;
+import io.micronaut.data.azure.entities.Child;
 import io.micronaut.data.azure.entities.Family;
 import io.micronaut.data.cosmos.annotation.CosmosRepository;
 import io.micronaut.data.repository.PageableRepository;
@@ -18,6 +20,7 @@ import java.util.Optional;
 @CosmosRepository
 public abstract class FamilyRepository implements PageableRepository<Family, String> {
 
+    @Join(value = "children", alias = "c")
     @Nullable
     public abstract Optional<Family> findById(String id);
 
@@ -49,8 +52,15 @@ public abstract class FamilyRepository implements PageableRepository<Family, Str
     @Query("SELECT VALUE f.registeredDate FROM family f WHERE NOT IS_NULL(f.registeredDate) ORDER BY f.registeredDate DESC OFFSET 0 LIMIT 1")
     public abstract Date lastOrderedRegisteredDate();
 
-    public abstract List<Family> findByAddressStateAndAddressCity(String state, String city);
+    public abstract List<Family> findByAddressStateAndAddressCityOrderByAddressCity(String state, String city);
 
     public abstract void updateByAddressCounty(String county, boolean registered, @Nullable Date registeredDate);
 
+    @Join(value = "children")
+    @Join(value = "children.pets", alias = "p")
+    public abstract List<Family> findByChildrenPetsType(String type);
+
+    @Join(value = "children")
+    @Join(value = "children.pets")
+    public abstract List<Child> findChildrenByChildrenPetsGivenName(String name);
 }

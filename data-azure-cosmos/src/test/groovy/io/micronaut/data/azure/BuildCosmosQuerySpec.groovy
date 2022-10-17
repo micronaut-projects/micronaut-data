@@ -24,19 +24,31 @@ interface CosmosBookRepository extends GenericRepository<Book, String> {
 
     @Query("SELECT * FROM c WHERE c.title = :title")
     List<Book> findByTitle(String title);
+
+    boolean existsById(String id);
+
+    long count();
+
+    long countById(String id);
 }
 """
         )
 
         when:
-        String findByIdQuery = getQuery(repository.getRequiredMethod("findById", String))
+        def findByIdQuery = getQuery(repository.getRequiredMethod("findById", String))
         def findByTitleMethod = repository.getRequiredMethod("findByTitle", String)
-        String findByTitleQuery = getQuery(findByTitleMethod)
+        def findByTitleQuery = getQuery(findByTitleMethod)
         def findByTitleRawQuery = findByTitleMethod.stringValue(Query.class, "rawQuery").orElse(null)
+        def existsByIdQuery = getQuery(repository.getRequiredMethod("existsById", String))
+        def countQuery = getQuery(repository.getRequiredMethod("count"))
+        def countByIdQuery = getQuery(repository.getRequiredMethod("countById", String))
         then:
-        findByIdQuery == "SELECT book_.id,book_.authorId,book_.title,book_.totalPages,book_.publisherId,book_.lastUpdated,book_.created FROM book book_ WHERE (book_.id = @p1)"
+        findByIdQuery == "SELECT DISTINCT VALUE book_ FROM book book_ WHERE (book_.id = @p1)"
         findByTitleQuery == "SELECT * FROM c WHERE c.title = :title"
         findByTitleRawQuery == "SELECT * FROM c WHERE c.title = @p1"
+        existsByIdQuery == "SELECT true FROM book book_ WHERE (book_.id = @p1)"
+        countQuery == "SELECT VALUE COUNT(1) FROM book book_"
+        countByIdQuery == "SELECT VALUE COUNT(1) FROM book book_ WHERE (book_.id = @p1)"
     }
 
     void "test object properties and arrays"() {
@@ -44,23 +56,44 @@ interface CosmosBookRepository extends GenericRepository<Book, String> {
         def repository = buildRepository('test.FamilyRepository', """
 import io.micronaut.data.cosmos.annotation.CosmosRepository;
 import io.micronaut.data.azure.entities.Family;
+import io.micronaut.data.azure.entities.Child;
 import java.util.Optional;
+
 @CosmosRepository
 interface FamilyRepository extends GenericRepository<Family, String> {
 
     Optional<Family> findById(String id);
 
-    List<Family> findByAddressState(String state);
+    @Join(value = "children", alias = "c")
+    List<Family> findByAddressStateOrderByChildrenFirstName(String state);
+
+    @Join(value = "children")
+    List<Family> findByChildrenFirstName(String firstName);
+
+    @Join(value = "children")
+    @Join(value = "children.pets")
+    List<Family> findByChildrenPetsGivenNameOrderByChildrenPetsType(String givenName);
+
+    @Join(value = "children")
+    @Join(value = "children.pets")
+    public abstract List<Child> findChildrenByChildrenPetsGivenName(String name);
 }
 """
         )
 
         when:
         def findByIdQuery = getQuery(repository.getRequiredMethod("findById", String))
-        def findByAddressStateQuery = getQuery(repository.getRequiredMethod("findByAddressState", String))
+        def findByAddressStateQuery = getQuery(repository.getRequiredMethod("findByAddressStateOrderByChildrenFirstName", String))
+        def findByChildrenFirstNameQuery = getQuery(repository.getRequiredMethod("findByChildrenFirstName", String))
+        def findByChildrenPetsGivenNameOrderByChildrenPetsTypeQuery = getQuery(repository.getRequiredMethod("findByChildrenPetsGivenNameOrderByChildrenPetsType", String))
+        def findChildrenByChildrenPetsGivenNameQuery = getQuery(repository.getRequiredMethod("findChildrenByChildrenPetsGivenName", String))
         then:
-        findByIdQuery == "SELECT family_.id,family_.lastName,family_.address,family_.children,family_.registered,family_.registeredDate FROM family family_ WHERE (family_.id = @p1)"
-        findByAddressStateQuery == "SELECT family_.id,family_.lastName,family_.address,family_.children,family_.registered,family_.registeredDate FROM family family_ WHERE (family_.address.state = @p1)"
+        findByIdQuery == "SELECT DISTINCT VALUE family_ FROM family family_ WHERE (family_.id = @p1)"
+        findByAddressStateQuery == "SELECT DISTINCT VALUE family_ FROM family family_ JOIN c IN family_.children WHERE (family_.address.state = @p1) ORDER BY c.firstName ASC"
+        findByChildrenFirstNameQuery == "SELECT DISTINCT VALUE family_ FROM family family_ JOIN family_children_ IN family_.children WHERE (family_children_.firstName = @p1)"
+        findByChildrenPetsGivenNameOrderByChildrenPetsTypeQuery == "SELECT DISTINCT VALUE family_ FROM family family_ JOIN family_children_ IN family_.children JOIN family_children_pets_ IN family_children_.pets WHERE (family_children_pets_.givenName = @p1) ORDER BY family_children_pets_.type ASC"
+        // TODO: Validate once it is fixed
+        findChildrenByChildrenPetsGivenNameQuery != ""
     }
 
     void "test build delete query"() {
@@ -156,7 +189,7 @@ interface CosmosSettlementRepository extends GenericRepository<Settlement, Settl
         when:
         String queryByIdQuery = getQuery(repository.getRequiredMethod("queryById", SettlementPk))
         then:
-        queryByIdQuery == "SELECT settlement_.id,settlement_.description,settlement_.settlementTypeId,settlement_.zoneId,settlement_.is_enabled FROM comp_settlement settlement_ WHERE (settlement_.code = @p1 AND settlement_.code_id = @p2 AND settlement_.id.county.id.id = @p3 AND settlement_.id.county.id.state.id = @p4)"
+        queryByIdQuery == "SELECT DISTINCT VALUE settlement_ FROM comp_settlement settlement_ WHERE (settlement_.code = @p1 AND settlement_.code_id = @p2 AND settlement_.id.county.id.id = @p3 AND settlement_.id.county.id.state.id = @p4)"
     }
 
     BeanDefinition<?> buildRepository(String name, String source) {

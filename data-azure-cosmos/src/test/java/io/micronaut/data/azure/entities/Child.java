@@ -1,6 +1,11 @@
 package io.micronaut.data.azure.entities;
 
+import io.micronaut.data.annotation.Join;
+import io.micronaut.data.annotation.Relation;
 import io.micronaut.serde.annotation.Serdeable;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Serdeable
 public class Child {
@@ -8,6 +13,11 @@ public class Child {
     private String firstName;
 
     private String gender;
+
+    private int grade;
+
+    @Relation(value = Relation.Kind.ONE_TO_MANY)
+    private List<Pet> pets = new ArrayList<>();
 
     public String getFirstName() {
         return firstName;
@@ -33,5 +43,11 @@ public class Child {
         this.grade = grade;
     }
 
-    private int grade;
+    public List<Pet> getPets() {
+        return pets;
+    }
+
+    public void setPets(List<Pet> pets) {
+        this.pets = pets;
+    }
 }

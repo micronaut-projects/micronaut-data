@@ -22,6 +22,7 @@ public class Family {
     @Relation(value = Relation.Kind.EMBEDDED)
     private Address address;
 
+    @Relation(value = Relation.Kind.ONE_TO_MANY)
     private List<Child> children = new ArrayList<>();
 
     private boolean registered;

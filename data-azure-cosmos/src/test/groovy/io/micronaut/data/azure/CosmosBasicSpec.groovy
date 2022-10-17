@@ -19,6 +19,7 @@ import io.micronaut.data.azure.entities.Address
 import io.micronaut.data.azure.entities.Child
 import io.micronaut.data.azure.entities.CosmosBook
 import io.micronaut.data.azure.entities.Family
+import io.micronaut.data.azure.entities.Pet
 import io.micronaut.data.azure.repositories.CosmosBookDtoRepository
 import io.micronaut.data.azure.repositories.CosmosBookRepository
 import io.micronaut.data.azure.repositories.FamilyRepository
@@ -62,6 +63,14 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
         child1.firstName = "Henriette Thaulow"
         child1.gender = "female"
         child1.grade = 5
+        def pet1 = new Pet()
+        pet1.givenName = "Sadik"
+        pet1.type = "cat"
+        child1.pets.add(pet1)
+        def pet2 = new Pet()
+        pet2.givenName = "Leo"
+        pet2.type = "dog"
+        child1.pets.add(pet2)
         family.children.add(child1)
         return family
     }
@@ -84,6 +93,10 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
         child2.firstName = "Luke"
         child2.gender = "male"
         child2.grade = 8
+        def pet1 = new Pet()
+        pet1.givenName = "Robbie"
+        pet1.type = "hamster"
+        child2.pets.add(pet1)
         family.children.add(child2)
         return family
     }
@@ -175,8 +188,20 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
             optFamily2.get().children.size() == 2
             optFamily2.get().address
         when:
+            def families = familyRepository.findByChildrenPetsType("cat")
+        then:
+            families.size() > 0
+            families[0].id == FAMILY1_ID
+        /*
+        when:
+            def children = familyRepository.findChildrenByChildrenPetsGivenName("Robbie")
+        then:
+            children.size() > 0
+            children[0].firstName == "Luke"
+        */
+        when:
             def address1 = optFamily1.get().address
-            def families = familyRepository.findByAddressStateAndAddressCity(address1.state, address1.city)
+            families = familyRepository.findByAddressStateAndAddressCityOrderByAddressCity(address1.state, address1.city)
         then:
             families.size() > 0
         when:

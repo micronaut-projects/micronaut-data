@@ -649,7 +649,15 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         return "\"" + persistedName + "\"";
     }
 
-    private void buildSelect(QueryState queryState, StringBuilder queryString, List<QueryModel.Projection> projectionList, String tableAlias, PersistentEntity entity) {
+    /**
+     * Build select statement.
+     * @param queryState the query state
+     * @param queryString the query string builder
+     * @param projectionList projection list (can be empty, then selects all columns)
+     * @param tableAlias the table alias
+     * @param entity the persistent entity
+     */
+    protected void buildSelect(QueryState queryState, StringBuilder queryString, List<QueryModel.Projection> projectionList, String tableAlias, PersistentEntity entity) {
         if (projectionList.isEmpty()) {
             selectAllColumns(queryState, queryString);
         } else {
@@ -908,7 +916,14 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         handleJunction(associatedContext, associationQuery.getCriteria());
     }
 
-    private void buildWhereClause(AnnotationMetadata annotationMetadata, QueryModel.Junction criteria, QueryState queryState) {
+    /**
+     * Builds where clause.
+     *
+     * @param annotationMetadata the annotation metadata for the method
+     * @param criteria the criteria
+     * @param queryState the query state
+     */
+    protected void buildWhereClause(AnnotationMetadata annotationMetadata, QueryModel.Junction criteria, QueryState queryState) {
         StringBuilder queryClause = queryState.getQuery();
         if (!criteria.isEmpty()) {
             queryClause.append(WHERE_CLAUSE);
@@ -998,7 +1013,13 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             .collect(Collectors.joining(LOGICAL_AND));
     }
 
-    private void appendOrder(QueryModel query, QueryState queryState) {
+    /**
+     * Appends order to the query.
+     *
+     * @param query the query model
+     * @param queryState the query state
+     */
+    protected void appendOrder(QueryModel query, QueryState queryState) {
         List<Sort.Order> orders = query.getSort().getOrderBy();
         if (!orders.isEmpty()) {
             StringBuilder buff = queryState.getQuery();
@@ -1799,7 +1820,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         private final PersistentEntity entity;
         private List<JoinPath> joinPaths = new ArrayList<>();
 
-        private QueryState(QueryModel query, boolean allowJoins, boolean useAlias) {
+        public QueryState(QueryModel query, boolean allowJoins, boolean useAlias) {
             this.allowJoins = allowJoins;
             this.queryObject = query;
             this.entity = query.getPersistentEntity();

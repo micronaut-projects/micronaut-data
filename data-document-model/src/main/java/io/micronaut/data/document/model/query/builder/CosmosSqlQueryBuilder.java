@@ -17,11 +17,15 @@ package io.micronaut.data.document.model.query.builder;
 
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Creator;
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.util.ArgumentUtils;
+import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.Relation;
+import io.micronaut.data.annotation.repeatable.WhereSpecifications;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.Embedded;
 import io.micronaut.data.model.PersistentEntity;
@@ -29,11 +33,16 @@ import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.naming.NamingStrategies;
 import io.micronaut.data.model.naming.NamingStrategy;
+import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.query.QueryModel;
 import io.micronaut.data.model.query.builder.QueryParameterBinding;
 import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -51,6 +60,8 @@ import java.util.function.Function;
 public final class CosmosSqlQueryBuilder extends SqlQueryBuilder {
 
     private static final String SELECT_COUNT = "VALUE COUNT(1)";
+    private static final String JOIN = " JOIN ";
+    private static final String IN = " IN ";
 
     @Creator
     public CosmosSqlQueryBuilder(AnnotationMetadata annotationMetadata) {
@@ -175,17 +186,6 @@ public final class CosmosSqlQueryBuilder extends SqlQueryBuilder {
     }
 
     @Override
-    protected StringBuilder appendDeleteClause(StringBuilder queryString) {
-        // For delete we return SELECT * FROM ... WHERE to get documents and use API to delete them
-        return queryString.append("SELECT * ").append(FROM_CLAUSE);
-    }
-
-    @Override
-    protected boolean isAliasForBatch() {
-        return true;
-    }
-
-    @Override
     protected void traversePersistentProperties(List<Association> associations,
                                                 PersistentProperty property,
                                                 boolean criteria,
@@ -195,6 +195,125 @@ public final class CosmosSqlQueryBuilder extends SqlQueryBuilder {
             return;
         }
         super.traversePersistentProperties(associations, property, criteria, consumerProperty);
+    }
+
+    @Override
+    public QueryResult buildQuery(@NonNull AnnotationMetadata annotationMetadata, @NonNull QueryModel query) {
+        ArgumentUtils.requireNonNull("annotationMetadata", annotationMetadata);
+        ArgumentUtils.requireNonNull("query", query);
+        QueryState queryState = new QueryState(query, true, true);
+
+        List<JoinPath> joinPaths = new ArrayList<>(query.getJoinPaths());
+        joinPaths.sort((o1, o2) -> Comparator.comparingInt(String::length).thenComparing(String::compareTo).compare(o1.getPath(), o2.getPath()));
+        for (JoinPath joinPath : joinPaths) {
+            queryState.applyJoin(joinPath);
+        }
+
+        StringBuilder select = new StringBuilder(SELECT_CLAUSE);
+        String logicalName = queryState.getRootAlias();
+        PersistentEntity entity = queryState.getEntity();
+        buildSelect(
+            queryState,
+            select,
+            query.getProjections(),
+            logicalName,
+            entity
+        );
+
+        if (select.indexOf(FROM_CLAUSE) == -1) {
+            select.append(FROM_CLAUSE).append(getTableName(entity)).append(SPACE).append(logicalName);
+        }
+
+        queryState.getQuery().insert(0, select);
+
+        QueryModel.Junction criteria = query.getCriteria();
+
+        if (!criteria.isEmpty() || annotationMetadata.hasStereotype(WhereSpecifications.class) || queryState.getEntity().getAnnotationMetadata().hasStereotype(WhereSpecifications.class)) {
+            buildWhereClause(annotationMetadata, criteria, queryState);
+        }
+
+        appendOrder(query, queryState);
+        appendForUpdate(QueryPosition.END_OF_QUERY, query, queryState.getQuery());
+
+        return QueryResult.of(
+            queryState.getFinalQuery(),
+            queryState.getQueryParts(),
+            queryState.getParameterBindings(),
+            queryState.getAdditionalRequiredParameters(),
+            query.getMax(),
+            query.getOffset(),
+            queryState.getJoinPaths()
+        );
+    }
+
+    @Internal
+    @Override
+    protected void selectAllColumnsFromJoinPaths(QueryState queryState,
+                                                 StringBuilder queryBuffer,
+                                                 Collection<JoinPath> allPaths,
+                                                 @Nullable Map<JoinPath, String> joinAliasOverride) {
+        String logicalName = queryState.getRootAlias();
+        queryBuffer.append(FROM_CLAUSE).append(getTableName(queryState.getEntity())).append(SPACE).append(logicalName);
+        if (CollectionUtils.isNotEmpty(allPaths)) {
+            Map<String, String> joinedPaths = new HashMap<>();
+            for (JoinPath joinPath : allPaths) {
+                Association association = joinPath.getAssociation();
+                if (association instanceof Embedded) {
+                    // joins on embedded don't make sense
+                    continue;
+                }
+                String joinAlias = joinAliasOverride == null ? getAliasName(joinPath) : joinAliasOverride.get(joinPath);
+                // cannot join family_.children c join family_children.pets p but instead must do
+                // join family_.children c join c.pets p (must go via children table)
+                String path = new StringBuilder(logicalName).append(DOT).append(joinPath.getPath()).toString();
+                for (Map.Entry<String, String> entry : joinedPaths.entrySet()) {
+                    String joinedPath = entry.getKey();
+                    String prefix = joinedPath + DOT;
+                    if (path.startsWith(prefix) && !joinedPath.equals(path)) {
+                        path = entry.getValue() + DOT + path.replace(prefix, "");
+                        break;
+                    }
+                }
+                queryBuffer.append(JOIN).append(joinAlias).append(IN).append(path);
+                joinedPaths.put(path, joinAlias);
+            }
+        }
+    }
+
+    @Override
+    protected void selectAllColumns(QueryState queryState, StringBuilder queryBuffer) {
+        PersistentEntity entity = queryState.getEntity();
+        String logicalName = queryState.getRootAlias();
+        String tableName = getTableName(entity);
+        queryBuffer.append("DISTINCT VALUE ").append(logicalName);
+
+        QueryModel queryModel = queryState.getQueryModel();
+        Collection<JoinPath> allPaths = queryModel.getJoinPaths();
+        selectAllColumnsFromJoinPaths(queryState, queryBuffer, allPaths, null);
+    }
+
+    @Override
+    protected void buildJoin(String joinType,
+                             StringBuilder sb,
+                             QueryState queryState,
+                             List<Association> joinAssociationsPath,
+                             String joinAlias,
+                             Association association,
+                             PersistentEntity associatedEntity,
+                             PersistentEntity associationOwner,
+                             String currentJoinAlias) {
+        // Does nothing since joins in Cosmos Db work different way
+    }
+
+    @Override
+    protected StringBuilder appendDeleteClause(StringBuilder queryString) {
+        // For delete we return SELECT * FROM ... WHERE to get documents and use API to delete them
+        return queryString.append("SELECT * ").append(FROM_CLAUSE);
+    }
+
+    @Override
+    protected boolean isAliasForBatch() {
+        return true;
     }
 
     @Override
