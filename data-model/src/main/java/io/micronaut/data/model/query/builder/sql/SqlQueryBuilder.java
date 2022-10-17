@@ -833,7 +833,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         boolean escape = shouldEscape(entity);
         NamingStrategy namingStrategy = getNamingStrategy(entity);
         int length = sb.length();
-        traversePersistentProperties(entity, (associations, property) -> {
+        traversePersistentProperties(entity, false, (associations, property) -> {
             String transformed = getDataTransformerReadValue(alias, property).orElse(null);
             String columnAlias = getColumnAlias(property);
             boolean useAlias = StringUtils.isNotEmpty(columnAlias);

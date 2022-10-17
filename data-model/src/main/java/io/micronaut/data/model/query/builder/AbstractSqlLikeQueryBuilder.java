@@ -760,7 +760,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         boolean escape = propertyPath.shouldEscape();
         NamingStrategy namingStrategy = propertyPath.getNamingStrategy();
         boolean[] needsTrimming = {false};
-        traversePersistentProperties(propertyPath.getAssociations(), propertyPath.getProperty(), (associations, property) -> {
+        traversePersistentProperties(propertyPath.getAssociations(), propertyPath.getProperty(), false, (associations, property) -> {
             String columnName = getMappedName(namingStrategy, associations, property);
             if (escape) {
                 columnName = quote(columnName);
@@ -1085,7 +1085,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             boolean shouldEscape = propertyPath.shouldEscape();
 
             boolean[] needsTrimming = {false};
-            traversePersistentProperties(propertyPath.getAssociations(), propertyPath.getProperty(), (associations, property) -> {
+            traversePersistentProperties(propertyPath.getAssociations(), propertyPath.getProperty(), true, (associations, property) -> {
                 String readTransformer = getDataTransformerReadValue(currentAlias, property).orElse(null);
                 if (readTransformer != null) {
                     whereClause.append(readTransformer);
@@ -1217,7 +1217,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             for (Map.Entry<QueryPropertyPath, Object> entry : update) {
                 QueryPropertyPath propertyPath = entry.getKey();
                 if (entry.getValue() instanceof BindingParameter) {
-                    traversePersistentProperties(propertyPath.getAssociations(), propertyPath.getProperty(), (associations, property) -> {
+                    traversePersistentProperties(propertyPath.getAssociations(), propertyPath.getProperty(), false, (associations, property) -> {
                         String tableAlias = propertyPath.getTableAlias();
                         if (tableAlias != null) {
                             queryString.append(tableAlias).append(DOT);
@@ -1596,24 +1596,36 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
      * @param consumer The function to invoke on every property
      */
     protected void traversePersistentProperties(PersistentProperty property, BiConsumer<List<Association>, PersistentProperty> consumer) {
-        traversePersistentProperties(Collections.emptyList(), property, consumer);
+        traversePersistentProperties(property, false, consumer);
+    }
+
+    /**
+     * Traverses properties that should be persisted.
+     *
+     * @param property The property to start traversing from
+     * @param criteria An indicator telling whether properties traversal is being does in criteria (where) context or projection (select)
+     * @param consumer The function to invoke on every property
+     */
+    protected void traversePersistentProperties(PersistentProperty property, boolean criteria, BiConsumer<List<Association>, PersistentProperty> consumer) {
+        traversePersistentProperties(Collections.emptyList(), property, criteria, consumer);
     }
 
     /**
      * Traverses properties that should be persisted.
      *
      * @param persistentEntity The persistent entity
+     * @param criteria         An indicator telling whether properties traversal is being does in criteria (where) context or projection (select)
      * @param consumer         The function to invoke on every property
      */
-    protected void traversePersistentProperties(PersistentEntity persistentEntity, BiConsumer<List<Association>, PersistentProperty> consumer) {
+    protected void traversePersistentProperties(PersistentEntity persistentEntity, boolean criteria, BiConsumer<List<Association>, PersistentProperty> consumer) {
         if (persistentEntity.getIdentity() != null) {
-            traversePersistentProperties(Collections.emptyList(), persistentEntity.getIdentity(), consumer);
+            traversePersistentProperties(Collections.emptyList(), persistentEntity.getIdentity(), criteria, consumer);
         }
         if (persistentEntity.getVersion() != null) {
-            traversePersistentProperties(Collections.emptyList(), persistentEntity.getVersion(), consumer);
+            traversePersistentProperties(Collections.emptyList(), persistentEntity.getVersion(), criteria, consumer);
         }
         for (PersistentProperty property : persistentEntity.getPersistentProperties()) {
-            traversePersistentProperties(Collections.emptyList(), property, consumer);
+            traversePersistentProperties(Collections.emptyList(), property, criteria, consumer);
         }
     }
 
@@ -1633,12 +1645,14 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
      * Traverses properties that should be persisted.
      *
      * @param associations      The association list being traversed with the property
-     * @param property          The peristent property
+     * @param property          The persistent property
+     * @param criteria          An indicator telling whether property traversal is being done for criteria or selection
      * @param consumerProperty  The function to invoke on every property
      */
     protected void traversePersistentProperties(List<Association> associations,
-                                              PersistentProperty property,
-                                              BiConsumer<List<Association>, PersistentProperty> consumerProperty) {
+                                                PersistentProperty property,
+                                                boolean criteria,
+                                                BiConsumer<List<Association>, PersistentProperty> consumerProperty) {
         PersistentEntityUtils.traversePersistentProperties(associations, property, consumerProperty);
     }
 

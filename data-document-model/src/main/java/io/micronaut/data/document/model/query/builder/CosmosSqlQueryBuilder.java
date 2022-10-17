@@ -18,7 +18,6 @@ package io.micronaut.data.document.model.query.builder;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Creator;
 import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.naming.NameUtils;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.MappedProperty;
@@ -140,7 +139,7 @@ public final class CosmosSqlQueryBuilder extends SqlQueryBuilder {
                 }
             }
             if (sb.length() > 0) {
-                sb.append(NameUtils.capitalize(association.getName()));
+                sb.append(DOT).append(association.getName());
             } else {
                 sb.append(association.getName());
             }
@@ -189,12 +188,13 @@ public final class CosmosSqlQueryBuilder extends SqlQueryBuilder {
     @Override
     protected void traversePersistentProperties(List<Association> associations,
                                                 PersistentProperty property,
+                                                boolean criteria,
                                                 BiConsumer<List<Association>, PersistentProperty> consumerProperty) {
-        if (property instanceof Embedded) {
+        if (property instanceof Embedded && !criteria) {
             consumerProperty.accept(associations, property);
             return;
         }
-        super.traversePersistentProperties(associations, property, consumerProperty);
+        super.traversePersistentProperties(associations, property, criteria, consumerProperty);
     }
 
     @Override

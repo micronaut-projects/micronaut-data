@@ -6,6 +6,7 @@ import io.micronaut.core.naming.NameUtils
 import io.micronaut.data.annotation.Query
 import io.micronaut.data.azure.entities.Address
 import io.micronaut.data.azure.entities.Family
+import io.micronaut.data.document.tck.entities.SettlementPk
 import io.micronaut.inject.BeanDefinition
 import io.micronaut.inject.writer.BeanDefinitionVisitor
 
@@ -95,19 +96,6 @@ interface FamilyRepository extends GenericRepository<Family, String> {
         !deleteQueryMethod.getAnnotation(Query)
     }
 
-    BeanDefinition<?> buildRepository(String name, String source) {
-        def pkg = NameUtils.getPackageName(name)
-        return buildBeanDefinition(name + BeanDefinitionVisitor.PROXY_SUFFIX, """
-package $pkg;
-import io.micronaut.data.model.*;
-import io.micronaut.data.repository.*;
-import io.micronaut.data.annotation.*;
-import java.util.*;
-$source
-""")
-
-    }
-
     void "test build update query"() {
         given:
         def repository = buildRepository('test.FamilyRepository', """
@@ -149,6 +137,39 @@ interface FamilyRepository extends GenericRepository<Family, String> {
 
         updateByAddressStateUpdate == "registered,registeredDate"
         updateByAddressStateQuery == "SELECT * FROM family family_ WHERE (family_.address.state = @p3)"
+    }
+
+    void "test cosmos settlement embedded pk repo"() {
+        given:
+        def repository = buildRepository('test.CosmosSettlementRepository', """
+import io.micronaut.data.cosmos.annotation.CosmosRepository;
+import io.micronaut.data.document.tck.entities.Settlement;
+import io.micronaut.data.document.tck.entities.SettlementPk;
+import io.micronaut.data.repository.GenericRepository;
+import java.util.Optional;
+@CosmosRepository
+interface CosmosSettlementRepository extends GenericRepository<Settlement, SettlementPk> {
+    Optional<Settlement> queryById(SettlementPk settlementPk);
+}
+"""
+        )
+        when:
+        String queryByIdQuery = getQuery(repository.getRequiredMethod("queryById", SettlementPk))
+        then:
+        queryByIdQuery == "SELECT settlement_.id,settlement_.description,settlement_.settlementTypeId,settlement_.zoneId,settlement_.is_enabled FROM comp_settlement settlement_ WHERE (settlement_.code = @p1 AND settlement_.code_id = @p2 AND settlement_.id.county.id.id = @p3 AND settlement_.id.county.id.state.id = @p4)"
+    }
+
+    BeanDefinition<?> buildRepository(String name, String source) {
+        def pkg = NameUtils.getPackageName(name)
+        return buildBeanDefinition(name + BeanDefinitionVisitor.PROXY_SUFFIX, """
+package $pkg;
+import io.micronaut.data.model.*;
+import io.micronaut.data.repository.*;
+import io.micronaut.data.annotation.*;
+import java.util.*;
+$source
+""")
+
     }
 
     static String getQuery(AnnotationMetadataProvider metadata) {
