@@ -123,7 +123,7 @@ interface FamilyRepository extends GenericRepository<Family, String> {
         def deleteQueryMethod = repository.getRequiredMethod("delete", Family)
         then:
         deleteByIdQuery == "SELECT *  FROM family  family_ WHERE (family_.id = @p1)"
-        deleteByIdsQuery == "SELECT *  FROM family  family_ WHERE (family_.id IN (@p1))"
+        deleteByIdsQuery == "SELECT *  FROM family  family_ WHERE ( ARRAY_CONTAINS(@p1,family_.id))"
         deleteAllQuery == "SELECT *  FROM family  family_"
         !deleteQueryMethod.getAnnotation(Query)
     }

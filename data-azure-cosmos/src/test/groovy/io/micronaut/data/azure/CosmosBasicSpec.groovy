@@ -34,6 +34,10 @@ import spock.lang.IgnoreIf
 import spock.lang.Shared
 import spock.lang.Specification
 
+import static io.micronaut.data.azure.repositories.FamilyRepository.Specifications.idsIn
+import static io.micronaut.data.azure.repositories.FamilyRepository.Specifications.lastNameEquals
+
+
 @IgnoreIf({ env["GITHUB_WORKFLOW"] })
 class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties {
 
@@ -337,6 +341,19 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
             optFamily1 = familyRepository.findById(FAMILY1_ID)
         then:
             !optFamily1.present
+        cleanup:
+            familyRepository.deleteAll()
+    }
+
+    void "test criteria" () {
+        when:
+            saveSampleFamilies()
+        then:
+            familyRepository.findOne(lastNameEquals("Andersen")).isPresent()
+            !familyRepository.findOne(lastNameEquals(UUID.randomUUID().toString())).isPresent()
+            familyRepository.findAll(idsIn(FAMILY1_ID, FAMILY2_ID)).size() == 2
+        cleanup:
+            familyRepository.deleteAll()
     }
 
     def "test DTO entity retrieval"() {

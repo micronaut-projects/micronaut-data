@@ -242,25 +242,27 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         addCriterionHandler(QueryModel.Contains.class, likeConcatComparison("'%'", "?", "'%'"));
         addCriterionHandler(QueryModel.EndsWith.class, likeConcatComparison("'%'", "?"));
 
-        addCriterionHandler(QueryModel.In.class, (ctx, inQuery) -> {
-            QueryPropertyPath propertyPath = ctx.getRequiredProperty(inQuery.getProperty(), QueryModel.In.class);
-            StringBuilder whereClause = ctx.query();
-            appendPropertyRef(whereClause, propertyPath);
-            whereClause.append(" IN (");
-            Object value = inQuery.getValue();
-            if (value instanceof BindingParameter) {
-                ctx.pushParameter((BindingParameter) value, newBindingContext(propertyPath.propertyPath).expandable());
-            } else {
-                asLiterals(ctx.query(), value);
-            }
-            whereClause.append(CLOSE_BRACKET);
-        });
+        addCriterionHandler(QueryModel.In.class, inCriterionHandler(false));
+        addCriterionHandler(QueryModel.NotIn.class, inCriterionHandler(true));
+    }
 
-        addCriterionHandler(QueryModel.NotIn.class, (ctx, inQuery) -> {
+    /**
+     * The criterion handler for IN and NOT IN.
+     *
+     * @param negative if true then it is NOT IN
+     * @param <T> the entity type
+     * @return criterion handler for IN or NOT IN
+     */
+    protected <T extends QueryModel.PropertyCriterion> CriterionHandler<T> inCriterionHandler(boolean negative) {
+        return (ctx, inQuery) -> {
             QueryPropertyPath propertyPath = ctx.getRequiredProperty(inQuery.getProperty(), QueryModel.In.class);
             StringBuilder whereClause = ctx.query();
             appendPropertyRef(whereClause, propertyPath);
-            whereClause.append(" NOT IN (");
+            whereClause.append(" ");
+            if (negative) {
+                whereClause.append("NOT ");
+            }
+            whereClause.append("IN (");
             Object value = inQuery.getValue();
             if (value instanceof BindingParameter) {
                 ctx.pushParameter((BindingParameter) value, newBindingContext(propertyPath.propertyPath).expandable());
@@ -268,7 +270,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                 asLiterals(ctx.query(), value);
             }
             whereClause.append(CLOSE_BRACKET);
-        });
+        };
     }
 
     /**
@@ -280,7 +282,13 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         return Dialect.ANSI;
     }
 
-    private void asLiterals(StringBuilder sb, @Nullable Object value) {
+    /**
+     * Appends values as literals to the sql query builder.
+     *
+     * @param sb the sql string builder
+     * @param value the value to be added
+     */
+    protected void asLiterals(StringBuilder sb, @Nullable Object value) {
         if (value instanceof Iterable) {
             for (Iterator iterator = ((Iterable) value).iterator(); iterator.hasNext(); ) {
                 Object o = iterator.next();
@@ -1156,7 +1164,12 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         }
     }
 
-    private void appendPropertyRef(StringBuilder sb, QueryPropertyPath propertyPath) {
+    /**
+     * Appends property to the sql string builder.
+     * @param sb the sql string builder
+     * @param propertyPath the query property path
+     */
+    protected void appendPropertyRef(StringBuilder sb, QueryPropertyPath propertyPath) {
         String tableAlias = propertyPath.getTableAlias();
         String readTransformer = getDataTransformerReadValue(tableAlias, propertyPath.getProperty()).orElse(null);
         if (readTransformer != null) {
@@ -1710,7 +1723,13 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             .outgoingQueryParameterProperty(persistentPropertyPath);
     }
 
-    private BindingParameter.BindingContext newBindingContext(@Nullable PersistentPropertyPath ref) {
+    /**
+     * Creates new binding parameter context.
+     *
+     * @param ref the persistent property reference
+     * @return new binding parameter context
+     */
+    protected BindingParameter.BindingContext newBindingContext(@Nullable PersistentPropertyPath ref) {
         return BindingParameter.BindingContext.create()
             .incomingMethodParameterProperty(ref)
             .outgoingQueryParameterProperty(ref);
@@ -2164,6 +2183,10 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
          */
         public boolean shouldEscape() {
             return AbstractSqlLikeQueryBuilder.this.shouldEscape(propertyPath.findPropertyOwner().orElse(propertyPath.getProperty().getOwner()));
+        }
+
+        public PersistentPropertyPath getPropertyPath() {
+            return propertyPath;
         }
     }
 

@@ -12,13 +12,16 @@ import io.micronaut.data.azure.entities.Child;
 import io.micronaut.data.azure.entities.Family;
 import io.micronaut.data.cosmos.annotation.CosmosRepository;
 import io.micronaut.data.repository.PageableRepository;
+import io.micronaut.data.repository.jpa.JpaSpecificationExecutor;
+import io.micronaut.data.repository.jpa.criteria.PredicateSpecification;
 
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
 @CosmosRepository
-public abstract class FamilyRepository implements PageableRepository<Family, String> {
+public abstract class FamilyRepository implements PageableRepository<Family, String>, JpaSpecificationExecutor<Family> {
 
     @Join(value = "children", alias = "c")
     @Nullable
@@ -62,4 +65,16 @@ public abstract class FamilyRepository implements PageableRepository<Family, Str
 
     @Join(value = "children")
     public abstract List<Child> findChildrenByChildrenPetsGivenName(String name);
+
+    static class Specifications {
+
+        public static PredicateSpecification<Family> lastNameEquals(String lastName) {
+            return (root, criteriaBuilder) -> criteriaBuilder.equal(root.get("lastName"), lastName);
+        }
+
+        public static PredicateSpecification<Family> idsIn(String... ids) {
+            return (root, criteriaBuilder) -> root.get("id").in(Arrays.asList(ids));
+        }
+
+    }
 }

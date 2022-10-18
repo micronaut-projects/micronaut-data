@@ -33,6 +33,7 @@ import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.naming.NamingStrategies;
 import io.micronaut.data.model.naming.NamingStrategy;
+import io.micronaut.data.model.query.BindingParameter;
 import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.query.QueryModel;
 import io.micronaut.data.model.query.builder.QueryParameterBinding;
@@ -195,6 +196,27 @@ public final class CosmosSqlQueryBuilder extends SqlQueryBuilder {
             return;
         }
         super.traversePersistentProperties(associations, property, criteria, consumerProperty);
+    }
+
+    @Override
+    protected <T extends QueryModel.PropertyCriterion> CriterionHandler<T> inCriterionHandler(boolean negative) {
+        return (ctx, inQuery) -> {
+            QueryPropertyPath propertyPath = ctx.getRequiredProperty(inQuery.getProperty(), QueryModel.In.class);
+            StringBuilder whereClause = ctx.query();
+            if (negative) {
+                whereClause.append(" NOT ");
+            }
+            whereClause.append(" ARRAY_CONTAINS(");
+            Object value = inQuery.getValue();
+            if (value instanceof BindingParameter) {
+                ctx.pushParameter((BindingParameter) value, newBindingContext(propertyPath.getPropertyPath()).expandable());
+            } else {
+                asLiterals(ctx.query(), value);
+            }
+            whereClause.append(COMMA);
+            appendPropertyRef(whereClause, propertyPath);
+            whereClause.append(CLOSE_BRACKET);
+        };
     }
 
     @Override
