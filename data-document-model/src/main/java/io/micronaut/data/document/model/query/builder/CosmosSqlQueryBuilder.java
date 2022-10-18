@@ -228,13 +228,12 @@ public final class CosmosSqlQueryBuilder extends SqlQueryBuilder {
     @Override
     protected void traversePersistentProperties(List<Association> associations,
                                                 PersistentProperty property,
-                                                boolean criteria,
                                                 BiConsumer<List<Association>, PersistentProperty> consumerProperty) {
-        if (property instanceof Embedded && !criteria) {
+        if (property instanceof Embedded) {
             consumerProperty.accept(associations, property);
             return;
         }
-        super.traversePersistentProperties(associations, property, criteria, consumerProperty);
+        super.traversePersistentProperties(associations, property, consumerProperty);
     }
 
     @Override
