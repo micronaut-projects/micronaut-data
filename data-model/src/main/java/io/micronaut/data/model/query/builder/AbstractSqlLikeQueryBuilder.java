@@ -1638,7 +1638,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
     }
 
     /**
-     * Traverses properties that should be persisted.
+     * Traverses persistent properties.
      *
      * @param property The property to start traversing from
      * @param consumer The function to invoke on every property
@@ -1648,7 +1648,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
     }
 
     /**
-     * Traverses properties that should be persisted.
+     * Traverses persistent properties.
      *
      * @param persistentEntity The persistent entity
      * @param consumer         The function to invoke on every property
@@ -1658,7 +1658,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
     }
 
     /**
-     * Traverses properties that should be persisted.
+     * Traverses persistent properties.
      *
      * @param persistentEntity The persistent entity
      * @param includeIdentity  Should be identifier included
@@ -1670,17 +1670,25 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
     }
 
     /**
+     * Traverses persistent properties used in criteria (where clause).
      *
-     * @param associations
-     * @param property
-     * @param consumerProperty
+     * @param associations      The association list being traversed with the property
+     * @param property          The persistent property
+     * @param consumerProperty  The function to invoke on every property
      */
-    protected void traversePersistentPropertiesForCriteria(List<Association> associations,
+    private void traversePersistentPropertiesForCriteria(List<Association> associations,
                                               PersistentProperty property,
                                               BiConsumer<List<Association>, PersistentProperty> consumerProperty) {
         PersistentEntityUtils.traversePersistentProperties(associations, property, consumerProperty);
     }
 
+    /**
+     * Traverses persistent properties.
+     *
+     * @param associations      The association list being traversed with the property
+     * @param property          The persistent property
+     * @param consumerProperty  The function to invoke on every property
+     */
     protected void traversePersistentProperties(List<Association> associations,
                                               PersistentProperty property,
                                               BiConsumer<List<Association>, PersistentProperty> consumerProperty) {
