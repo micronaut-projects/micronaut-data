@@ -78,7 +78,7 @@ public final class CosmosSqlQueryBuilder extends SqlQueryBuilder {
                 appendPropertyRef(whereClause, propertyPath);
             } else {
                 appendPropertyRef(whereClause, propertyPath);
-                whereClause.append(" IN (");
+                whereClause.append(IN).append(OPEN_BRACKET);
                 asLiterals(ctx.query(), value);
             }
             whereClause.append(CLOSE_BRACKET);
@@ -90,13 +90,13 @@ public final class CosmosSqlQueryBuilder extends SqlQueryBuilder {
             boolean isBindingParameter = value instanceof BindingParameter;
 
             if (isBindingParameter) {
-                whereClause.append(NOT).append(" ARRAY_CONTAINS(");
+                whereClause.append(NOT).append(" ARRAY_CONTAINS").append(OPEN_BRACKET);
                 ctx.pushParameter((BindingParameter) value, newBindingContext(propertyPath.getPropertyPath()).expandable());
                 whereClause.append(COMMA);
                 appendPropertyRef(whereClause, propertyPath);
             } else {
                 appendPropertyRef(whereClause, propertyPath);
-                whereClause.append(SPACE).append(NOT).append(" IN (");
+                whereClause.append(SPACE).append(NOT).append(IN).append(OPEN_BRACKET);
                 asLiterals(ctx.query(), value);
             }
             whereClause.append(CLOSE_BRACKET);
