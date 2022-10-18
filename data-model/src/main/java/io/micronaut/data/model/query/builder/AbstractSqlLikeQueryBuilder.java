@@ -242,27 +242,11 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         addCriterionHandler(QueryModel.Contains.class, likeConcatComparison("'%'", "?", "'%'"));
         addCriterionHandler(QueryModel.EndsWith.class, likeConcatComparison("'%'", "?"));
 
-        addCriterionHandler(QueryModel.In.class, inCriterionHandler(false));
-        addCriterionHandler(QueryModel.NotIn.class, inCriterionHandler(true));
-    }
-
-    /**
-     * The criterion handler for IN and NOT IN.
-     *
-     * @param negate if true then it is NOT IN
-     * @param <T> the entity type
-     * @return criterion handler for IN or NOT IN
-     */
-    protected <T extends QueryModel.PropertyCriterion> CriterionHandler<T> inCriterionHandler(boolean negate) {
-        return (ctx, inQuery) -> {
-            QueryPropertyPath propertyPath = ctx.getRequiredProperty(inQuery.getProperty(), negate ? QueryModel.NotIn.class : QueryModel.In.class);
+        addCriterionHandler(QueryModel.In.class, (ctx, inQuery) -> {
+            QueryPropertyPath propertyPath = ctx.getRequiredProperty(inQuery.getProperty(), QueryModel.In.class);
             StringBuilder whereClause = ctx.query();
             appendPropertyRef(whereClause, propertyPath);
-            whereClause.append(" ");
-            if (negate) {
-                whereClause.append("NOT ");
-            }
-            whereClause.append("IN (");
+            whereClause.append(" IN (");
             Object value = inQuery.getValue();
             if (value instanceof BindingParameter) {
                 ctx.pushParameter((BindingParameter) value, newBindingContext(propertyPath.propertyPath).expandable());
@@ -270,7 +254,21 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                 asLiterals(ctx.query(), value);
             }
             whereClause.append(CLOSE_BRACKET);
-        };
+        });
+
+        addCriterionHandler(QueryModel.NotIn.class, (ctx, inQuery) -> {
+            QueryPropertyPath propertyPath = ctx.getRequiredProperty(inQuery.getProperty(), QueryModel.In.class);
+            StringBuilder whereClause = ctx.query();
+            appendPropertyRef(whereClause, propertyPath);
+            whereClause.append(" NOT IN (");
+            Object value = inQuery.getValue();
+            if (value instanceof BindingParameter) {
+                ctx.pushParameter((BindingParameter) value, newBindingContext(propertyPath.propertyPath).expandable());
+            } else {
+                asLiterals(ctx.query(), value);
+            }
+            whereClause.append(CLOSE_BRACKET);
+        });
     }
 
     /**

@@ -64,6 +64,11 @@ public final class CosmosSqlQueryBuilder extends SqlQueryBuilder {
     private static final String JOIN = " JOIN ";
     private static final String IN = " IN ";
 
+    {
+        addCriterionHandler(QueryModel.In.class, inCriterionHandler(false));
+        addCriterionHandler(QueryModel.NotIn.class, inCriterionHandler(true));
+    }
+
     @Creator
     public CosmosSqlQueryBuilder(AnnotationMetadata annotationMetadata) {
         super(annotationMetadata);
@@ -198,8 +203,7 @@ public final class CosmosSqlQueryBuilder extends SqlQueryBuilder {
         super.traversePersistentProperties(associations, property, criteria, consumerProperty);
     }
 
-    @Override
-    protected <T extends QueryModel.PropertyCriterion> CriterionHandler<T> inCriterionHandler(boolean negate) {
+    private <T extends QueryModel.PropertyCriterion> CriterionHandler<T> inCriterionHandler(boolean negate) {
         return (ctx, inQuery) -> {
             QueryPropertyPath propertyPath = ctx.getRequiredProperty(inQuery.getProperty(), negate ? QueryModel.NotIn.class : QueryModel.In.class);
             StringBuilder whereClause = ctx.query();
