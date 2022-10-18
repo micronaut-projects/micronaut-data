@@ -65,8 +65,40 @@ public final class CosmosSqlQueryBuilder extends SqlQueryBuilder {
     private static final String IN = " IN ";
 
     {
-        addCriterionHandler(QueryModel.In.class, inCriterionHandler(false));
-        addCriterionHandler(QueryModel.NotIn.class, inCriterionHandler(true));
+        addCriterionHandler(QueryModel.In.class, (ctx, inQuery) -> {
+            QueryPropertyPath propertyPath = ctx.getRequiredProperty(inQuery.getProperty(), QueryModel.In.class);
+            StringBuilder whereClause = ctx.query();
+            Object value = inQuery.getValue();
+            boolean isBindingParameter = value instanceof BindingParameter;
+
+            if (isBindingParameter) {
+                whereClause.append(" ARRAY_CONTAINS(");
+                ctx.pushParameter((BindingParameter) value, newBindingContext(propertyPath.getPropertyPath()).expandable());
+                whereClause.append(COMMA);
+                appendPropertyRef(whereClause, propertyPath);
+            } else {
+                whereClause.append(" IN (");
+                asLiterals(ctx.query(), value);
+            }
+            whereClause.append(CLOSE_BRACKET);
+        });
+        addCriterionHandler(QueryModel.NotIn.class, (ctx, inQuery) -> {
+            QueryPropertyPath propertyPath = ctx.getRequiredProperty(inQuery.getProperty(), QueryModel.NotIn.class);
+            StringBuilder whereClause = ctx.query();
+            Object value = inQuery.getValue();
+            boolean isBindingParameter = value instanceof BindingParameter;
+
+            if (isBindingParameter) {
+                whereClause.append(NOT).append(" ARRAY_CONTAINS(");
+                ctx.pushParameter((BindingParameter) value, newBindingContext(propertyPath.getPropertyPath()).expandable());
+                whereClause.append(COMMA);
+                appendPropertyRef(whereClause, propertyPath);
+            } else {
+                whereClause.append(NOT).append(" IN (");
+                asLiterals(ctx.query(), value);
+            }
+            whereClause.append(CLOSE_BRACKET);
+        });
     }
 
     @Creator
@@ -201,26 +233,6 @@ public final class CosmosSqlQueryBuilder extends SqlQueryBuilder {
             return;
         }
         super.traversePersistentProperties(associations, property, criteria, consumerProperty);
-    }
-
-    private <T extends QueryModel.PropertyCriterion> CriterionHandler<T> inCriterionHandler(boolean negate) {
-        return (ctx, inQuery) -> {
-            QueryPropertyPath propertyPath = ctx.getRequiredProperty(inQuery.getProperty(), negate ? QueryModel.NotIn.class : QueryModel.In.class);
-            StringBuilder whereClause = ctx.query();
-            if (negate) {
-                whereClause.append(NOT);
-            }
-            whereClause.append(" ARRAY_CONTAINS(");
-            Object value = inQuery.getValue();
-            if (value instanceof BindingParameter) {
-                ctx.pushParameter((BindingParameter) value, newBindingContext(propertyPath.getPropertyPath()).expandable());
-            } else {
-                asLiterals(ctx.query(), value);
-            }
-            whereClause.append(COMMA);
-            appendPropertyRef(whereClause, propertyPath);
-            whereClause.append(CLOSE_BRACKET);
-        };
     }
 
     @Override
