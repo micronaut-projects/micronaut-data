@@ -77,6 +77,7 @@ public final class CosmosSqlQueryBuilder extends SqlQueryBuilder {
                 whereClause.append(COMMA);
                 appendPropertyRef(whereClause, propertyPath);
             } else {
+                appendPropertyRef(whereClause, propertyPath);
                 whereClause.append(" IN (");
                 asLiterals(ctx.query(), value);
             }
@@ -94,7 +95,8 @@ public final class CosmosSqlQueryBuilder extends SqlQueryBuilder {
                 whereClause.append(COMMA);
                 appendPropertyRef(whereClause, propertyPath);
             } else {
-                whereClause.append(NOT).append(" IN (");
+                appendPropertyRef(whereClause, propertyPath);
+                whereClause.append(SPACE).append(NOT).append(" IN (");
                 asLiterals(ctx.query(), value);
             }
             whereClause.append(CLOSE_BRACKET);
