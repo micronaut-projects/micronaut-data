@@ -352,6 +352,8 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
             familyRepository.findOne(lastNameEquals("Andersen")).isPresent()
             !familyRepository.findOne(lastNameEquals(UUID.randomUUID().toString())).isPresent()
             familyRepository.findAll(idsIn(FAMILY1_ID, FAMILY2_ID)).size() == 2
+            familyRepository.findByIdIn(Arrays.asList(FAMILY1_ID, FAMILY2_ID)).size() == 2
+            //familyRepository.findByIdNotIn(Arrays.asList(FAMILY1_ID)).size() == 1
         cleanup:
             familyRepository.deleteAll()
     }

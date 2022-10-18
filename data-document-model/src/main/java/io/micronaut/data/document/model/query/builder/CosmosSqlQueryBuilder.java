@@ -199,12 +199,12 @@ public final class CosmosSqlQueryBuilder extends SqlQueryBuilder {
     }
 
     @Override
-    protected <T extends QueryModel.PropertyCriterion> CriterionHandler<T> inCriterionHandler(boolean negative) {
+    protected <T extends QueryModel.PropertyCriterion> CriterionHandler<T> inCriterionHandler(boolean negate) {
         return (ctx, inQuery) -> {
-            QueryPropertyPath propertyPath = ctx.getRequiredProperty(inQuery.getProperty(), QueryModel.In.class);
+            QueryPropertyPath propertyPath = ctx.getRequiredProperty(inQuery.getProperty(), negate ? QueryModel.NotIn.class : QueryModel.In.class);
             StringBuilder whereClause = ctx.query();
-            if (negative) {
-                whereClause.append(" NOT ");
+            if (negate) {
+                whereClause.append(NOT);
             }
             whereClause.append(" ARRAY_CONTAINS(");
             Object value = inQuery.getValue();

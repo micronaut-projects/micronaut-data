@@ -66,6 +66,10 @@ public abstract class FamilyRepository implements PageableRepository<Family, Str
     @Join(value = "children")
     public abstract List<Child> findChildrenByChildrenPetsGivenName(String name);
 
+    public abstract List<Family> findByIdIn(List<String> ids);
+
+    public abstract List<Family> findByIdNotIn(List<String> ids);
+
     static class Specifications {
 
         public static PredicateSpecification<Family> lastNameEquals(String lastName) {

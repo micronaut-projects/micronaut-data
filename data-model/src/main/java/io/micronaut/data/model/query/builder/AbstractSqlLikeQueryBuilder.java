@@ -249,17 +249,17 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
     /**
      * The criterion handler for IN and NOT IN.
      *
-     * @param negative if true then it is NOT IN
+     * @param negate if true then it is NOT IN
      * @param <T> the entity type
      * @return criterion handler for IN or NOT IN
      */
-    protected <T extends QueryModel.PropertyCriterion> CriterionHandler<T> inCriterionHandler(boolean negative) {
+    protected <T extends QueryModel.PropertyCriterion> CriterionHandler<T> inCriterionHandler(boolean negate) {
         return (ctx, inQuery) -> {
-            QueryPropertyPath propertyPath = ctx.getRequiredProperty(inQuery.getProperty(), QueryModel.In.class);
+            QueryPropertyPath propertyPath = ctx.getRequiredProperty(inQuery.getProperty(), negate ? QueryModel.NotIn.class : QueryModel.In.class);
             StringBuilder whereClause = ctx.query();
             appendPropertyRef(whereClause, propertyPath);
             whereClause.append(" ");
-            if (negative) {
+            if (negate) {
                 whereClause.append("NOT ");
             }
             whereClause.append("IN (");

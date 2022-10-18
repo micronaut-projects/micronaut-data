@@ -75,8 +75,9 @@ interface FamilyRepository extends GenericRepository<Family, String> {
     List<Family> findByChildrenPetsGivenNameOrderByChildrenPetsType(String type);
 
     @Join(value = "children")
-    public abstract List<Child> findChildrenByChildrenPetsGivenName(String givenName);
+    List<Child> findChildrenByChildrenPetsGivenName(String givenName);
 
+    List<Family> findByIdNotIn(List<String> ids);
 }
 """
         )
@@ -87,12 +88,14 @@ interface FamilyRepository extends GenericRepository<Family, String> {
         def findByChildrenFirstNameQuery = getQuery(repository.getRequiredMethod("findByChildrenFirstName", String))
         def findByChildrenPetsGivenNameOrderByChildrenPetsTypeQuery = getQuery(repository.getRequiredMethod("findByChildrenPetsGivenNameOrderByChildrenPetsType", String))
         def findChildrenByChildrenPetsGivenNameQuery = getQuery(repository.getRequiredMethod("findChildrenByChildrenPetsGivenName", String))
+        def findByIdNotInQuery = getQuery(repository.getRequiredMethod("findByIdNotIn", List<String>))
         then:
         findByIdQuery == "SELECT DISTINCT VALUE family_ FROM family family_ WHERE (family_.id = @p1)"
         findByAddressStateQuery == "SELECT DISTINCT VALUE family_ FROM family family_ JOIN c IN family_.children WHERE (family_.address.state = @p1) ORDER BY c.firstName ASC"
         findByChildrenFirstNameQuery == "SELECT DISTINCT VALUE family_ FROM family family_ JOIN family_children_ IN family_.children WHERE (family_children_.firstName = @p1)"
         findByChildrenPetsGivenNameOrderByChildrenPetsTypeQuery == "SELECT DISTINCT VALUE family_ FROM family family_ JOIN family_children_ IN family_.children JOIN family_children_pets_ IN family_children_.pets WHERE (family_children_pets_.givenName = @p1) ORDER BY family_children_pets_.type ASC"
         findChildrenByChildrenPetsGivenNameQuery == "SELECT family_children_.firstName,family_children_.gender,family_children_.grade FROM family family_ JOIN family_children_ IN family_.children JOIN family_children_pets_ IN family_children_.pets WHERE (family_children_pets_.givenName = @p1)"
+        findByIdNotInQuery == "SELECT DISTINCT VALUE family_ FROM family family_ WHERE (NOT ARRAY_CONTAINS(@p1,family_.id))"
     }
 
     void "test build delete query"() {
@@ -109,6 +112,8 @@ interface FamilyRepository extends GenericRepository<Family, String> {
 
     void deleteByIds(List<String> ids);
 
+    void deleteByIdNotIn(List<String> ids);
+
     void deleteAll();
 
     void delete(Family family);
@@ -119,11 +124,13 @@ interface FamilyRepository extends GenericRepository<Family, String> {
         when:
         def deleteByIdQuery = getQuery(repository.getRequiredMethod("deleteById", String))
         def deleteByIdsQuery = getQuery(repository.getRequiredMethod("deleteByIds", List<String>))
+        def deleteByIdNotInQuery = getQuery(repository.getRequiredMethod("deleteByIdNotIn", List<String>))
         def deleteAllQuery = getQuery(repository.getRequiredMethod("deleteAll"))
         def deleteQueryMethod = repository.getRequiredMethod("delete", Family)
         then:
         deleteByIdQuery == "SELECT *  FROM family  family_ WHERE (family_.id = @p1)"
         deleteByIdsQuery == "SELECT *  FROM family  family_ WHERE ( ARRAY_CONTAINS(@p1,family_.id))"
+        deleteByIdNotInQuery == "SELECT *  FROM family  family_ WHERE (NOT ARRAY_CONTAINS(@p1,family_.id))"
         deleteAllQuery == "SELECT *  FROM family  family_"
         !deleteQueryMethod.getAnnotation(Query)
     }
