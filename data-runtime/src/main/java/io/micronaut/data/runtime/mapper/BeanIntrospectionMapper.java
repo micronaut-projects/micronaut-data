@@ -29,7 +29,9 @@ import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.exceptions.DataAccessException;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -92,14 +94,33 @@ public interface BeanIntrospectionMapper<D, R> extends TypeMapper<D, R> {
                         property.set(instance, v);
                     } else if (Iterable.class.isAssignableFrom(property.getType())) {
                         Object value = property.get(instance);
+                        Collection<?> collection;
+                        if (v instanceof Collection) {
+                            collection = (Collection<?>) v;
+                        } else if (v instanceof Iterable) {
+                            collection = new ArrayList(CollectionUtils.iterableToList((Iterable) v));
+                        } else if (v.getClass().isArray()) {
+                            Object[] arr = (Object[]) v;
+                            collection = Arrays.asList(arr);
+                        } else if (v instanceof java.sql.Array) {
+                            Object[] arr;
+                            try {
+                                arr = (Object[]) ((java.sql.Array) v).getArray();
+                            } catch (SQLException e) {
+                                throw new DataAccessException("Unable to read SQL array", e);
+                            }
+                            collection = Arrays.asList(arr);
+                        } else {
+                            collection = Collections.singleton(v);
+                        }
                         if (value instanceof Collection) {
-                            ((Collection) value).add(v);
+                            ((Collection) value).addAll(collection);
                         } else if (value instanceof Iterable) {
                             List list = new ArrayList(CollectionUtils.iterableToList((Iterable) value));
-                            list.add(v);
+                            list.addAll(collection);
                             property.set(instance, convert(list, property.asArgument()));
                         } else {
-                            property.set(instance, convert(Collections.singleton(v), property.asArgument()));
+                            property.set(instance, convert(collection, property.asArgument()));
                         }
                     } else {
                         property.set(instance, convert(v, property.asArgument()));
