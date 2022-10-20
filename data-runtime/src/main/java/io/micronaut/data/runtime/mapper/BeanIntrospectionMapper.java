@@ -98,17 +98,12 @@ public interface BeanIntrospectionMapper<D, R> extends TypeMapper<D, R> {
                         if (v instanceof Collection) {
                             collection = (Collection<?>) v;
                         } else if (v instanceof Iterable) {
-                            collection = new ArrayList(CollectionUtils.iterableToList((Iterable) v));
+                            collection = new ArrayList<>(CollectionUtils.iterableToList((Iterable) v));
                         } else if (v.getClass().isArray()) {
                             Object[] arr = (Object[]) v;
                             collection = Arrays.asList(arr);
                         } else if (v instanceof java.sql.Array) {
-                            Object[] arr;
-                            try {
-                                arr = (Object[]) ((java.sql.Array) v).getArray();
-                            } catch (SQLException e) {
-                                throw new DataAccessException("Unable to read SQL array", e);
-                            }
+                            Object[] arr = (Object[]) ((java.sql.Array) v).getArray();
                             collection = Arrays.asList(arr);
                         } else {
                             collection = Collections.singleton(v);
@@ -131,6 +126,8 @@ public interface BeanIntrospectionMapper<D, R> extends TypeMapper<D, R> {
             return instance;
         } catch (IntrospectionException | InstantiationException e) {
             throw new DataAccessException("Error instantiating type [" + type.getName() + "] from introspection: " + e.getMessage(), e);
+        } catch (SQLException e) {
+            throw new DataAccessException("Unable to read SQL array", e);
         }
     }
 

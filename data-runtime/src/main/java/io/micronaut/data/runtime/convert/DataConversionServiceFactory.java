@@ -57,6 +57,8 @@ import java.util.function.Function;
 @Factory
 final class DataConversionServiceFactory {
 
+    private static final String SQL_ARRAY_READ_ERROR = "Unable to read SQL array";
+
     @Singleton
     @Bean(typed = DataConversionService.class)
     DataConversionServiceImpl build(@Nullable BeanContext beanContext) {
@@ -360,7 +362,7 @@ final class DataConversionServiceFactory {
             try {
                 array = (Object[]) sqlArray.getArray();
             } catch (SQLException e) {
-                throw new DataAccessException("Unable to read SQL array", e);
+                throw new DataAccessException(SQL_ARRAY_READ_ERROR, e);
             }
             String[] strings = new String[array.length];
             int i = 0;
@@ -374,7 +376,7 @@ final class DataConversionServiceFactory {
             try {
                 array = (Object[]) sqlArray.getArray();
             } catch (SQLException e) {
-                throw new DataAccessException("Unable to read SQL array", e);
+                throw new DataAccessException(SQL_ARRAY_READ_ERROR, e);
             }
             Integer[] integers = new Integer[array.length];
             int i = 0;
@@ -388,7 +390,7 @@ final class DataConversionServiceFactory {
             try {
                 array = (Object[]) sqlArray.getArray();
             } catch (SQLException e) {
-                throw new DataAccessException("Unable to read SQL array", e);
+                throw new DataAccessException(SQL_ARRAY_READ_ERROR, e);
             }
             int[] ints = new int[array.length];
             int i = 0;
@@ -402,7 +404,7 @@ final class DataConversionServiceFactory {
             try {
                 array = (Object[]) sqlArray.getArray();
             } catch (SQLException e) {
-                throw new DataAccessException("Unable to read SQL array", e);
+                throw new DataAccessException(SQL_ARRAY_READ_ERROR, e);
             }
             Short[] shorts = new Short[array.length];
             int i = 0;
@@ -416,7 +418,7 @@ final class DataConversionServiceFactory {
             try {
                 array = (Object[]) sqlArray.getArray();
             } catch (SQLException e) {
-                throw new DataAccessException("Unable to read SQL array", e);
+                throw new DataAccessException(SQL_ARRAY_READ_ERROR, e);
             }
             short[] shorts = new short[array.length];
             int i = 0;
@@ -430,7 +432,7 @@ final class DataConversionServiceFactory {
             try {
                 array = (Object[]) sqlArray.getArray();
             } catch (SQLException e) {
-                throw new DataAccessException("Unable to read SQL array", e);
+                throw new DataAccessException(SQL_ARRAY_READ_ERROR, e);
             }
             Long[] longs = new Long[array.length];
             int i = 0;
@@ -444,7 +446,7 @@ final class DataConversionServiceFactory {
             try {
                 array = (Object[]) sqlArray.getArray();
             } catch (SQLException e) {
-                throw new DataAccessException("Unable to read SQL array", e);
+                throw new DataAccessException(SQL_ARRAY_READ_ERROR, e);
             }
             long[] longs = new long[array.length];
             int i = 0;
@@ -458,7 +460,7 @@ final class DataConversionServiceFactory {
             try {
                 array = (Object[]) sqlArray.getArray();
             } catch (SQLException e) {
-                throw new DataAccessException("Unable to read SQL array", e);
+                throw new DataAccessException(SQL_ARRAY_READ_ERROR, e);
             }
             Float[] floats = new Float[array.length];
             int i = 0;
@@ -472,7 +474,7 @@ final class DataConversionServiceFactory {
             try {
                 array = (Object[]) sqlArray.getArray();
             } catch (SQLException e) {
-                throw new DataAccessException("Unable to read SQL array", e);
+                throw new DataAccessException(SQL_ARRAY_READ_ERROR, e);
             }
             float[] floats = new float[array.length];
             int i = 0;
@@ -486,7 +488,7 @@ final class DataConversionServiceFactory {
             try {
                 array = (Object[]) sqlArray.getArray();
             } catch (SQLException e) {
-                throw new DataAccessException("Unable to read SQL array", e);
+                throw new DataAccessException(SQL_ARRAY_READ_ERROR, e);
             }
             Double[] doubles = new Double[array.length];
             int i = 0;
@@ -500,7 +502,7 @@ final class DataConversionServiceFactory {
             try {
                 array = (Object[]) sqlArray.getArray();
             } catch (SQLException e) {
-                throw new DataAccessException("Unable to read SQL array", e);
+                throw new DataAccessException(SQL_ARRAY_READ_ERROR, e);
             }
             double[] doubles = new double[array.length];
             int i = 0;
@@ -514,7 +516,7 @@ final class DataConversionServiceFactory {
             try {
                 array = (Object[]) sqlArray.getArray();
             } catch (SQLException e) {
-                throw new DataAccessException("Unable to read SQL array", e);
+                throw new DataAccessException(SQL_ARRAY_READ_ERROR, e);
             }
             Boolean[] booleans = new Boolean[array.length];
             int i = 0;
@@ -528,7 +530,7 @@ final class DataConversionServiceFactory {
             try {
                 array = (Object[]) sqlArray.getArray();
             } catch (SQLException e) {
-                throw new DataAccessException("Unable to read SQL array", e);
+                throw new DataAccessException(SQL_ARRAY_READ_ERROR, e);
             }
             boolean[] booleans = new boolean[array.length];
             int i = 0;
@@ -542,7 +544,7 @@ final class DataConversionServiceFactory {
             try {
                 array = (Object[]) sqlArray.getArray();
             } catch (SQLException e) {
-                throw new DataAccessException("Unable to read SQL array", e);
+                throw new DataAccessException(SQL_ARRAY_READ_ERROR, e);
             }
             Character[] characters = new Character[array.length];
             int i = 0;
@@ -556,7 +558,7 @@ final class DataConversionServiceFactory {
             try {
                 array = (Object[]) sqlArray.getArray();
             } catch (SQLException e) {
-                throw new DataAccessException("Unable to read SQL array", e);
+                throw new DataAccessException(SQL_ARRAY_READ_ERROR, e);
             }
             char[] chars = new char[array.length];
             int i = 0;
