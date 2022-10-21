@@ -3,7 +3,9 @@ package io.micronaut.data.jdbc.h2.many2one
 
 import io.micronaut.context.ApplicationContext
 import io.micronaut.data.annotation.*
+import io.micronaut.data.jdbc.DatabaseTestPropertyProvider
 import io.micronaut.data.jdbc.annotation.JdbcRepository
+import io.micronaut.data.jdbc.annotation.JoinColumn
 import io.micronaut.data.jdbc.h2.H2DBProperties
 import io.micronaut.data.jdbc.h2.H2TestPropertyProvider
 import io.micronaut.data.model.Page
@@ -27,6 +29,15 @@ class MultiManyToOneJoinSpec extends Specification implements H2TestPropertyProv
     @Shared
     @Inject
     RefARepository refARepository = applicationContext.getBean(RefARepository)
+
+    @Shared
+    @Inject
+    CustomBookRepository customBookRepository = applicationContext.getBean(CustomBookRepository)
+
+    @Override
+    List<String> getPackages() {
+        return Collections.singletonList(MultiManyToOneJoinSpec.class.getPackage().name)
+    }
 
     void 'test many-to-one hierarchy'() {
         given:
@@ -53,6 +64,25 @@ class MultiManyToOneJoinSpec extends Specification implements H2TestPropertyProv
         then:
             refA.id
             refA.refB.refC.name == "TestXyz"
+    }
+
+    void  "test join via non identity join column"() {
+        given:
+            def customAuthor = new CustomAuthor()
+            customAuthor.name = "author1"
+            customAuthor.id2 = 1
+            def customBook = new CustomBook()
+            customBook.title = "book1"
+            customBook.pages = 100
+            customBook.author = customAuthor
+            customBookRepository.save(customBook)
+        when:
+            def books = customBookRepository.findAll()
+        then:
+            books.size() == 1
+            books[0].author.id2 == 1
+        cleanup:
+            customBookRepository.deleteAll()
     }
 }
 
@@ -97,4 +127,46 @@ class RefC {
     @GeneratedValue
     Long id
     String name
+}
+
+@JdbcRepository(dialect = Dialect.H2)
+@Join("author")
+interface CustomBookRepository extends CrudRepository<CustomBook, Long> {
+}
+
+@MappedEntity(value = "custauthor1")
+class CustomAuthor {
+    @GeneratedValue
+    @Id
+    private Long id;
+    private Long id2;
+    private String name;
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public Long getId2() { return id2; }
+    public void setId2(Long id2) { this.id2 = id2; }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+}
+
+@MappedEntity(value = "custbook1")
+class CustomBook {
+    @GeneratedValue
+    @Id
+    private Long id;
+    private String title;
+    private int pages;
+    @Relation(value = Relation.Kind.MANY_TO_ONE, cascade = Relation.Cascade.ALL)
+    @JoinColumn(name = "author_id2", referencedColumnName = "id2")
+    private CustomAuthor author;
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public String getTitle() { return title; }
+    public void setTitle(String title) { this.title = title; }
+    public int getPages() { return pages; }
+    public void setPages(int pages) { this.pages = pages; }
+    public CustomAuthor getAuthor() { return author; }
+    public void setAuthor(CustomAuthor author) { this.author = author; }
 }

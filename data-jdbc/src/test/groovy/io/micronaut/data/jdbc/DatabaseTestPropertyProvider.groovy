@@ -66,8 +66,13 @@ trait DatabaseTestPropertyProvider implements TestPropertyProvider {
                 "datasources.default.username"       : container == null ? "" : container.getUsername(),
                 "datasources.default.password"       : container == null ? "" : container.getPassword(),
                 "datasources.default.schema-generate": schemaGenerate(),
-                "datasources.default.dialect"        : dialect
+                "datasources.default.dialect"        : dialect,
+                "datasources.default.packages"       : getPackages()
         ] as Map<String, String>
+    }
+
+    List<String> getPackages() {
+        return new ArrayList<>();
     }
 
     void startContainer(JdbcDatabaseContainer container) {

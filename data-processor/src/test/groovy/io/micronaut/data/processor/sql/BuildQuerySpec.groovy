@@ -638,4 +638,66 @@ interface BookRepository extends GenericRepository<Book, Long> {
         query.contains("FROM `book` book_ INNER JOIN `book_student`")
 
     }
+
+    void "test many-to-one with join column"() {
+        given:
+        def repository = buildRepository('test.CustomBookRepository', """
+import io.micronaut.data.annotation.*;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.jdbc.annotation.JoinColumn;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+
+@JdbcRepository(dialect = Dialect.H2)
+@Join("author")
+interface CustomBookRepository extends GenericRepository<CustomBook, Long> {
+    List<CustomBook> findAll();
+}
+
+@MappedEntity
+class CustomAuthor {
+    @GeneratedValue
+    @Id
+    private Long id;
+    private Long id2;
+    private String name;
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public Long getId2() { return id2; }
+    public void setId2(Long id2) { this.id2 = id2; }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+}
+
+@MappedEntity
+class CustomBook {
+    @GeneratedValue
+    @Id
+    private Long id;
+    private String title;
+    private int pages;
+    @Relation(Relation.Kind.MANY_TO_ONE)
+    @JoinColumn(name = "author_id2", referencedColumnName = "id2")
+    private CustomAuthor author;
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public String getTitle() { return title; }
+    public void setTitle(String title) { this.title = title; }
+    public int getPages() { return pages; }
+    public void setPages(int pages) { this.pages = pages; }
+    public CustomAuthor getAuthor() { return author; }
+    public void setAuthor(CustomAuthor author) { this.author = author; }
+}
+
+""")
+
+        def findAllMethod = repository.getRequiredMethod("findAll")
+        def findAllQuery = getQuery(findAllMethod)
+
+        expect:
+        findAllQuery == "SELECT custom_book_.`id`,custom_book_.`title`,custom_book_.`pages`,custom_book_author_.`id` AS author_id,custom_book_author_.`id2` AS author_id2,custom_book_author_.`name` AS author_name FROM `custom_book` custom_book_ INNER JOIN `custom_author` custom_book_author_ ON custom_book_.`author_id2`=custom_book_author_.`id2`"
+
+    }
 }

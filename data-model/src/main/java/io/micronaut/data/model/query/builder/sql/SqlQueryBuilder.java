@@ -786,6 +786,20 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                         // in the case of a foreign key association the ID is not in the table
                         // so we need to retrieve it
                         includeIdentity = true;
+                    } else {
+                        PersistentProperty identity = associatedEntity.getIdentity();
+                        if (identity != null) {
+                            AnnotationValue<Annotation> joinColumnsHolder = association.getAnnotationMetadata().getAnnotation(ANN_JOIN_COLUMNS);
+                            if (joinColumnsHolder != null) {
+                                // If association has join columns that are different than the id column then we need to include it here
+                                Optional<String> idName = joinColumnsHolder.getAnnotations("value")
+                                    .stream()
+                                    .map(ann -> ann.stringValue("name").orElse(null))
+                                    .filter(v -> Objects.nonNull(v) && !v.equals(identity.getPersistedName()))
+                                    .findAny();
+                                includeIdentity = idName.isPresent();
+                            }
+                        }
                     }
                     traversePersistentProperties(associatedEntity, includeIdentity, true, (propertyAssociations, prop) -> {
                         String columnName;

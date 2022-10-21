@@ -15,12 +15,16 @@
  */
 package io.micronaut.data.model;
 
+import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
 
+import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.function.BiConsumer;
 
 /**
@@ -31,6 +35,8 @@ import java.util.function.BiConsumer;
  */
 @Internal
 public final class PersistentEntityUtils {
+
+    private static final String ANN_JOIN_COLUMNS = "io.micronaut.data.jdbc.annotation.JoinColumns";
 
     private PersistentEntityUtils() {
     }
@@ -110,7 +116,29 @@ public final class PersistentEntityUtils {
             if (assocIdentity instanceof Association) {
                 traversePersistentProperties(newAssociations, assocIdentity, consumerProperty);
             } else {
-                consumerProperty.accept(newAssociations, assocIdentity);
+                List<PersistentProperty> identities = new ArrayList<>();
+                AnnotationValue<Annotation> joinColumnsHolder = property.getAnnotationMetadata().getAnnotation(ANN_JOIN_COLUMNS);
+                if (joinColumnsHolder != null) {
+                    Collection<? extends  PersistentProperty> persistentProperties = associatedEntity.getPersistentProperties();
+                    // If associated entity identity field is not used in this association we shouldn't add it since it's not needed
+                    for (AnnotationValue<Annotation> ann : joinColumnsHolder.getAnnotations("value")) {
+                        String referencedColumnName = ann.stringValue("referencedColumnName").orElse(null);
+                        if (referencedColumnName != null && !referencedColumnName.equals(assocIdentity.getPersistedName())) {
+                            for (PersistentProperty persistentProperty : persistentProperties) {
+                                if (persistentProperty.getPersistedName().equals(referencedColumnName)) {
+                                    identities.add(persistentProperty);
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+                if (identities.isEmpty()) {
+                    identities.add(assocIdentity);
+                }
+                for (PersistentProperty identity : identities) {
+                    consumerProperty.accept(newAssociations, identity);
+                }
             }
         } else {
             consumerProperty.accept(associations, property);
