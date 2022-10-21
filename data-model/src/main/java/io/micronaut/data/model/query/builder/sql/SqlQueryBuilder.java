@@ -801,7 +801,18 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                             }
                         }
                     }
+
+                    AnnotationValue<Annotation> joinColumnsHolder = association.getAnnotationMetadata().getAnnotation(ANN_JOIN_COLUMNS);
+                    // We want to skip adding column twice, if already added via join column
+                    List<String> referencedColumnNames = joinColumnsHolder != null ? joinColumnsHolder.getAnnotations("value")
+                        .stream()
+                        .map(ann -> ann.stringValue("referencedColumnName").orElse(null))
+                        .filter(v -> Objects.nonNull(v))
+                        .collect(Collectors.toList()) : Collections.emptyList();
                     traversePersistentProperties(associatedEntity, includeIdentity, true, (propertyAssociations, prop) -> {
+                        if (referencedColumnNames.contains(prop.getPersistedName())) {
+                            return;
+                        }
                         String columnName;
                         if (computePropertyPaths()) {
                             columnName = namingStrategy.mappedName(propertyAssociations, prop);

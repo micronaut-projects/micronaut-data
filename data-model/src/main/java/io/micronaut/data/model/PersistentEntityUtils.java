@@ -121,6 +121,7 @@ public final class PersistentEntityUtils {
                 if (joinColumnsHolder != null) {
                     Collection<? extends  PersistentProperty> persistentProperties = associatedEntity.getPersistentProperties();
                     // If associated entity identity field is not used in this association we shouldn't add it since it's not needed
+                    // but we might add other fields if configured in join column annotation
                     for (AnnotationValue<Annotation> ann : joinColumnsHolder.getAnnotations("value")) {
                         String referencedColumnName = ann.stringValue("referencedColumnName").orElse(null);
                         if (referencedColumnName != null && !referencedColumnName.equals(assocIdentity.getPersistedName())) {
