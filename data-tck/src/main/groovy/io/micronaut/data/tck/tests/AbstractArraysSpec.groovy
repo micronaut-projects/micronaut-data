@@ -64,6 +64,34 @@ abstract class AbstractArraysSpec extends Specification {
         then:
             entityStored == entity
         when:
+            def dto = arraysEntityRepository.queryBySomeId(entity.someId)
+        then:
+            dto
+            dto.someId == entity.someId
+            dto.stringArray == ["XYZ", "123", "ABC"] as String[]
+            dto.stringArrayCollection == ["XYZ", "123", "ABC"]
+            dto.shortArray == [1, 2, 3] as Short[]
+            dto.shortPrimitiveArray == [1, 2, 3] as short[]
+            dto.shortArrayCollection == [(short)1, (short)2, (short)3]
+            dto.integerArray == [1, 2, 3] as Integer[]
+            dto.integerPrimitiveArray == [1, 2, 3] as int[]
+            dto.integerArrayCollection == [1, 2, 3]
+            dto.longArray == [1, 2, 3] as Long[]
+            dto.longPrimitiveArray == [1, 2, 3] as long[]
+            dto.longArrayCollection == [1L, 2L, 3L]
+            dto.floatArray == [1, 2, 3] as Float[]
+            dto.floatPrimitiveArray == [1, 2, 3] as float[]
+            dto.floatArrayCollection == [1f, 2f, 3f]
+            dto.doubleArray == [1, 2, 3] as Double[]
+            dto.doublePrimitiveArray == [1, 2, 3] as double[]
+            dto.doubleArrayCollection == [1d, 2d, 3d]
+            dto.characterArray == ['a', 'b', 'c'] as Character[]
+            dto.characterPrimitiveArray == ['a', 'b', 'c'] as char[]
+            dto.characterArrayCollection.toArray() == ['a', 'b', 'c'] as Character[]
+            dto.booleanArray == [true, false, true, false] as Boolean[]
+            dto.booleanPrimitiveArray == [true, false, true, false] as boolean[]
+            dto.booleanArrayCollection == [true, false, true, false]
+        when:
             entity.stringArray = ["ABC", "123", "XYZ"]
             entity.stringArrayCollection = ["ABC", "123", "XYZ"]
             entity.shortArray = [3, 2, 1]
