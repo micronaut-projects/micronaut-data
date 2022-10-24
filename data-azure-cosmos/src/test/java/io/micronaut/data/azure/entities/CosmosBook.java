@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.azure.entities;
 
+import io.micronaut.data.annotation.DateCreated;
 import io.micronaut.data.annotation.DateUpdated;
 import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Id;
@@ -55,7 +56,7 @@ public class CosmosBook {
     @Transient
     public int prePersist, postPersist, preUpdate, postUpdate, preRemove, postRemove, postLoad;
 
-    @DateUpdated
+    @DateCreated
     private LocalDateTime created;
 
     @DateUpdated

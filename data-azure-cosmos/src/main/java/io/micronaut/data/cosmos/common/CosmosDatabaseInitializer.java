@@ -67,6 +67,13 @@ public class CosmosDatabaseInitializer {
 
     private static final Map<PersistentEntity, String> PARTITION_KEY_BY_ENTITY = new ConcurrentHashMap<>();
 
+    /**
+     * The initialize method will be called when dependencies are established so Cosmos Db can be initialized if needed.
+     *
+     * @param cosmosClient the Cosmos Db client
+     * @param runtimeEntityRegistry the runtime entity registry
+     * @param configuration the Cosmos Db configuration
+     */
     @PostConstruct
     void initialize(CosmosClient cosmosClient,
                            RuntimeEntityRegistry runtimeEntityRegistry,

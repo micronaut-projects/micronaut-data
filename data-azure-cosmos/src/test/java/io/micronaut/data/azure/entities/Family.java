@@ -1,7 +1,9 @@
 package io.micronaut.data.azure.entities;
 
+import io.micronaut.data.annotation.Embeddable;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.cosmos.annotation.PartitionKey;
 
 import java.util.ArrayList;
@@ -17,8 +19,10 @@ public class Family {
     @PartitionKey
     private String lastName;
 
+    @Relation(value = Relation.Kind.EMBEDDED)
     private Address address;
 
+    @Relation(value = Relation.Kind.ONE_TO_MANY)
     private List<Child> children = new ArrayList<>();
 
     private boolean registered;

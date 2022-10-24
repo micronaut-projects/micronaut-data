@@ -1,8 +1,10 @@
 package io.micronaut.data.azure.entities;
 
+import io.micronaut.data.annotation.Embeddable;
 import io.micronaut.serde.annotation.Serdeable;
 
 @Serdeable
+@Embeddable
 public class Address {
 
     private String state;

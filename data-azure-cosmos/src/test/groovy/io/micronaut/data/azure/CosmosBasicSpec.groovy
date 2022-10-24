@@ -19,6 +19,7 @@ import io.micronaut.data.azure.entities.Address
 import io.micronaut.data.azure.entities.Child
 import io.micronaut.data.azure.entities.CosmosBook
 import io.micronaut.data.azure.entities.Family
+import io.micronaut.data.azure.entities.Pet
 import io.micronaut.data.azure.repositories.CosmosBookDtoRepository
 import io.micronaut.data.azure.repositories.CosmosBookRepository
 import io.micronaut.data.azure.repositories.FamilyRepository
@@ -32,6 +33,10 @@ import spock.lang.AutoCleanup
 import spock.lang.IgnoreIf
 import spock.lang.Shared
 import spock.lang.Specification
+
+import static io.micronaut.data.azure.repositories.FamilyRepository.Specifications.idsIn
+import static io.micronaut.data.azure.repositories.FamilyRepository.Specifications.lastNameEquals
+
 
 @IgnoreIf({ env["GITHUB_WORKFLOW"] })
 class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties {
@@ -62,6 +67,14 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
         child1.firstName = "Henriette Thaulow"
         child1.gender = "female"
         child1.grade = 5
+        def pet1 = new Pet()
+        pet1.givenName = "Sadik"
+        pet1.type = "cat"
+        child1.pets.add(pet1)
+        def pet2 = new Pet()
+        pet2.givenName = "Leo"
+        pet2.type = "dog"
+        child1.pets.add(pet2)
         family.children.add(child1)
         return family
     }
@@ -84,6 +97,10 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
         child2.firstName = "Luke"
         child2.gender = "male"
         child2.grade = 8
+        def pet1 = new Pet()
+        pet1.givenName = "Robbie"
+        pet1.type = "hamster"
+        child2.pets.add(pet1)
         family.children.add(child2)
         return family
     }
@@ -123,25 +140,40 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
     def "test find with query"() {
         given:
             def book1 = new CosmosBook()
-            book1.id = UUID.randomUUID().toString()
             book1.title = "The Stand"
             book1.totalPages = 1000
             def book2 = new CosmosBook()
-            book2.id = UUID.randomUUID().toString()
             book2.title = "Ice And Fire"
             book2.totalPages = 200
         when:
             bookRepository.save(book1)
             bookRepository.save(book2)
-            def optionalBook = bookRepository.queryById(book1.id)
+            def loadedBook1 = bookRepository.queryById(book1.id)
+            def loadedBook2 = bookRepository.queryById(book2.id)
         then:
-            optionalBook
-            optionalBook.title == "The Stand"
+            loadedBook1
+            loadedBook1.title == "The Stand"
+            loadedBook1.created
+            loadedBook1.lastUpdated
+            loadedBook2
+            loadedBook2.title == "Ice And Fire"
+            loadedBook2.created
+            loadedBook2.lastUpdated
         when:
             def foundBook = bookRepository.searchByTitle("Ice And Fire")
         then:
             foundBook
             foundBook.title == "Ice And Fire"
+        when:
+            def totalPages = loadedBook1.totalPages
+            loadedBook1.totalPages = totalPages + 1
+            bookRepository.update(loadedBook1)
+            foundBook = bookRepository.findById(loadedBook1.id).get()
+        then:
+            foundBook.id == loadedBook1.id
+            foundBook.totalPages == totalPages + 1
+            foundBook.created == loadedBook1.created
+            foundBook.lastUpdated != loadedBook1.lastUpdated
     }
 
     def "crud family in cosmos repo"() {
@@ -160,6 +192,21 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
             optFamily2.get().children.size() == 2
             optFamily2.get().address
         when:
+            def families = familyRepository.findByChildrenPetsType("cat")
+        then:
+            families.size() > 0
+            families[0].id == FAMILY1_ID
+        when:
+            def children = familyRepository.findChildrenByChildrenPetsGivenName("Robbie")
+        then:
+            children.size() > 0
+            children[0].firstName == "Luke"
+        when:
+            def address1 = optFamily1.get().address
+            families = familyRepository.findByAddressStateAndAddressCityOrderByAddressCity(address1.state, address1.city)
+        then:
+            families.size() > 0
+        when:
             def lastOrderedLastName = familyRepository.lastOrderedLastName()
         then:
             StringUtils.isNotEmpty(lastOrderedLastName)
@@ -170,6 +217,13 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
         then:
             lastOrderedRegisteredDate
             lastOrderedRegisteredDate == optFamily2.get().registeredDate
+        when:
+            familyRepository.updateByAddressCounty(optFamily2.get().address.county, false, null)
+            optFamily2 = familyRepository.findById(FAMILY2_ID)
+        then:
+            optFamily2.present
+            !optFamily2.get().registeredDate
+            !optFamily2.get().registered
         when:
             def exists = familyRepository.existsById(FAMILY1_ID)
         then:
@@ -287,6 +341,21 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
             optFamily1 = familyRepository.findById(FAMILY1_ID)
         then:
             !optFamily1.present
+        cleanup:
+            familyRepository.deleteAll()
+    }
+
+    void "test criteria" () {
+        when:
+            saveSampleFamilies()
+        then:
+            familyRepository.findOne(lastNameEquals("Andersen")).isPresent()
+            !familyRepository.findOne(lastNameEquals(UUID.randomUUID().toString())).isPresent()
+            familyRepository.findAll(idsIn(FAMILY1_ID, FAMILY2_ID)).size() == 2
+            familyRepository.findByIdIn(Arrays.asList(FAMILY1_ID, FAMILY2_ID)).size() == 2
+            //familyRepository.findByIdNotIn(Arrays.asList(FAMILY1_ID)).size() == 1
+        cleanup:
+            familyRepository.deleteAll()
     }
 
     def "test DTO entity retrieval"() {

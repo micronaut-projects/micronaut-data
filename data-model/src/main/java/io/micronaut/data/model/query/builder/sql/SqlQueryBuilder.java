@@ -1308,7 +1308,20 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         return joinAliases;
     }
 
-    private void buildJoin(String joinType,
+    /**
+     * Builds join, adding fields and criteria.
+     *
+     * @param joinType the join type
+     * @param sb string builder that join will be added to
+     * @param queryState the query state
+     * @param joinAssociationsPath the list of associations
+     * @param joinAlias the join alias
+     * @param association the association
+     * @param associatedEntity the associated entity
+     * @param associationOwner the association owner
+     * @param currentJoinAlias the current join alias
+     */
+    protected void buildJoin(String joinType,
                            StringBuilder sb,
                            QueryState queryState,
                            List<Association> joinAssociationsPath,

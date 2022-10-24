@@ -18,6 +18,7 @@ package io.micronaut.data.cosmos.operations;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.document.serde.ManyRelationSerializer;
 import io.micronaut.serde.Encoder;
+import io.micronaut.serde.Serializer;
 import jakarta.inject.Singleton;
 
 import java.io.IOException;
@@ -29,6 +30,11 @@ import java.io.IOException;
 final class DefaultManyRelationSerializer implements ManyRelationSerializer {
     @Override
     public void serialize(Encoder encoder, EncoderContext context, Argument<?> type, Object value) throws IOException {
-        encoder.encodeNull();
+        if (value == null) {
+            encoder.encodeNull();
+        } else {
+            Serializer serializer = context.findSerializer(type);
+            serializer.createSpecific(context, type).serialize(encoder, context, type, value);
+        }
     }
 }

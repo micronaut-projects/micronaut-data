@@ -33,6 +33,7 @@ import com.azure.cosmos.models.SqlQuerySpec;
 import com.azure.cosmos.util.CosmosPagedIterable;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.NullNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.context.annotation.Requires;
@@ -241,7 +242,7 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
                         Class<R> wrapperType = ReflectionUtils.getWrapperType(preparedQuery.getResultType());
                         return deserialize(item, Argument.of(wrapperType));
                     }
-                    return deserialize(item, Argument.of((Class<R>) preparedQuery.getRootEntity()));
+                    return deserialize(item, Argument.of(preparedQuery.getResultType()));
                 }
             } else {
                 DataType dataType = preparedQuery.getResultDataType();
@@ -314,9 +315,9 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
                 if (dtoProjection) {
                     argument = Argument.of(ReflectionUtils.getWrapperType(preparedQuery.getResultType()));
                 } else {
-                    argument = Argument.of((Class<R>) preparedQuery.getRootEntity());
+                    argument = Argument.of(preparedQuery.getResultType());
                 }
-                spliterator = new EntityOrDtoSpliterator<>(Long.MAX_VALUE,Spliterator.ORDERED | Spliterator.IMMUTABLE,
+                spliterator = new EntityOrDtoSpliterator<>(Long.MAX_VALUE, Spliterator.ORDERED | Spliterator.IMMUTABLE,
                     finished, iterator, argument);
             } else {
                 DataType dataType = preparedQuery.getResultDataType();
@@ -347,36 +348,41 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
     @Override
     public <T> T persist(@NonNull InsertOperation<T> operation) {
         CosmosContainer container = getContainer(operation);
-        T entity = operation.getEntity();
-        ObjectNode item = serialize(entity, Argument.of(operation.getRootEntity()));
-        container.createItem(item, new CosmosItemRequestOptions());
-        return entity;
+        Class<T> rootEntity = operation.getRootEntity();
+        RuntimePersistentEntity<T> persistentEntity = runtimeEntityRegistry.getEntity(rootEntity);
+        CosmosEntityOperation.CosmosOperationContext<T> ctx = new CosmosEntityOperation.CosmosOperationContext<>(operation.getAnnotationMetadata(),
+            operation.getRepositoryType(), container, rootEntity);
+        CosmosEntityOperation<T> op = createCosmosInsertOneOperation(ctx, persistentEntity, operation.getEntity());
+        op.persist();
+        return op.getEntity();
     }
 
     @NonNull
     @Override
     public <T> T update(@NonNull UpdateOperation<T> operation) {
-        RuntimePersistentEntity<T> persistentEntity = runtimeEntityRegistry.getEntity(operation.getRootEntity());
-        T entity = operation.getEntity();
-        CosmosContainer container = getContainer(persistentEntity);
-        ObjectNode item = serialize(entity, Argument.of(operation.getRootEntity()));
-        PartitionKey partitionKey = getPartitionKey(persistentEntity, item);
-        String id = getItemId(item);
-        container.replaceItem(item, id, partitionKey, new CosmosItemRequestOptions());
-        return entity;
+        CosmosContainer container = getContainer(operation);
+        Class<T> rootEntity = operation.getRootEntity();
+        RuntimePersistentEntity<T> persistentEntity = runtimeEntityRegistry.getEntity(rootEntity);
+        CosmosEntityOperation.CosmosOperationContext<T> ctx = new CosmosEntityOperation.CosmosOperationContext<>(operation.getAnnotationMetadata(),
+            operation.getRepositoryType(), container, rootEntity);
+        CosmosEntityOperation<T> op = createCosmosReplaceItemOperation(ctx, persistentEntity, operation.getEntity());
+        op.update();
+        return op.getEntity();
+
     }
 
     /**
      * Serializes items from {@link BatchOperation} entities to list of {@link ObjectNode} for update/delete batch operations.
      *
-     * @param operation the batch operation (update/delete)
+     * @param entities the entities for batch operation (update/delete)
+     * @param rootEntity the root entity type
      * @param <T> the entity type
      * @return list of {@link ObjectNode} serialized from entities
      */
-    private <T> List<ObjectNode> serializeBatchItems(BatchOperation<T> operation) {
-        Argument<T> arg = Argument.of(operation.getRootEntity());
+    private <T> List<ObjectNode> serializeBatchItems(Iterable<T> entities, Class<T> rootEntity) {
+        Argument<T> arg = Argument.of(rootEntity);
         List<ObjectNode> items = new ArrayList<>();
-        for (T entity : operation) {
+        for (T entity : entities) {
             items.add(serialize(entity, arg));
         }
         return items;
@@ -385,11 +391,15 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
     @NonNull
     @Override
     public <T> Iterable<T> updateAll(@NonNull UpdateBatchOperation<T> operation) {
-        RuntimePersistentEntity<T> persistentEntity = runtimeEntityRegistry.getEntity(operation.getRootEntity());
+        Class<T> rootEntity = operation.getRootEntity();
+        RuntimePersistentEntity<T> persistentEntity = runtimeEntityRegistry.getEntity(rootEntity);
         CosmosContainer container = getContainer(persistentEntity);
-        List<ObjectNode> items = serializeBatchItems(operation);
-        executeBulk(container, items, BulkOperationType.UPDATE, persistentEntity, Optional.empty());
-        return operation;
+        CosmosEntityOperation.CosmosOperationContext<T> ctx = new CosmosEntityOperation.CosmosOperationContext<>(operation.getAnnotationMetadata(),
+            operation.getRepositoryType(), container, rootEntity);
+
+        CosmosEntitiesOperation<T> op = createCosmosBulkOperation(ctx, persistentEntity, operation, BulkOperationType.UPDATE);
+        op.update();
+        return op.getEntities();
     }
 
     @NonNull
@@ -428,7 +438,12 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
         for (Map.Entry<String, Object> propertyToUpdate : propertiesToUpdate.entrySet()) {
             String property = propertyToUpdate.getKey();
             Object value = propertyToUpdate.getValue();
-            com.fasterxml.jackson.databind.JsonNode objectNode = serialize(value, Argument.of(value.getClass()));
+            com.fasterxml.jackson.databind.JsonNode objectNode;
+            if (value == null) {
+                objectNode = NullNode.getInstance();
+            } else {
+                objectNode = serialize(value, Argument.of(value.getClass()));
+            }
             item.set(property, objectNode);
         }
         return item;
@@ -436,27 +451,27 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
 
     @Override
     public <T> int delete(DeleteOperation<T> operation) {
-        RuntimePersistentEntity<T> persistentEntity = runtimeEntityRegistry.getEntity(operation.getRootEntity());
-        T entity = operation.getEntity();
-        CosmosContainer container = getContainer(persistentEntity);
-        ObjectNode item = serialize(entity, Argument.of(operation.getRootEntity()));
-        CosmosItemRequestOptions options = new CosmosItemRequestOptions();
-        String id = getItemId(item);
-        PartitionKey partitionKey = getPartitionKey(persistentEntity, item);
-        CosmosItemResponse<?> cosmosItemResponse = container.deleteItem(id, partitionKey, options);
-        if (cosmosItemResponse.getStatusCode() == HttpResponseStatus.NO_CONTENT.code()) {
-            return 1;
-        }
-        return 0;
+        Class<T> rootEntity = operation.getRootEntity();
+        RuntimePersistentEntity<T> persistentEntity = runtimeEntityRegistry.getEntity(rootEntity);
+        CosmosContainer container = getContainer(operation);
+        CosmosEntityOperation.CosmosOperationContext<T> ctx = new CosmosEntityOperation.CosmosOperationContext<>(operation.getAnnotationMetadata(),
+            operation.getRepositoryType(), container, rootEntity);
+        CosmosEntityOperation<T> op = createCosmosDeleteOneOperation(ctx, persistentEntity, operation.getEntity());
+        op.delete();
+        return op.affectedCount;
     }
 
     @Override
     public <T> Optional<Number> deleteAll(DeleteBatchOperation<T> operation) {
-        RuntimePersistentEntity<T> persistentEntity = runtimeEntityRegistry.getEntity(operation.getRootEntity());
+        Class<T> rootEntity = operation.getRootEntity();
+        RuntimePersistentEntity<T> persistentEntity = runtimeEntityRegistry.getEntity(rootEntity);
         CosmosContainer container = getContainer(persistentEntity);
-        List<ObjectNode> items = serializeBatchItems(operation);
-        int deletedCount = executeBulk(container, items, BulkOperationType.DELETE, persistentEntity, Optional.empty());
-        return Optional.of(deletedCount);
+        CosmosEntityOperation.CosmosOperationContext<T> ctx = new CosmosEntityOperation.CosmosOperationContext<>(operation.getAnnotationMetadata(),
+            operation.getRepositoryType(), container, rootEntity);
+
+        CosmosEntitiesOperation<T> op = createCosmosBulkOperation(ctx, persistentEntity, operation, BulkOperationType.DELETE);
+        op.update();
+        return Optional.of(op.affectedCount);
     }
 
     @NonNull
@@ -523,128 +538,6 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
     private String getItemId(ObjectNode item) {
         com.fasterxml.jackson.databind.JsonNode idNode = item.get(Constants.INTERNAL_ID);
         return idNode.textValue();
-    }
-
-    /**
-     * Custom class used for binding parameters for Cosmos sql queries.
-     * Needed to be able to extract update parameters for update actions, so we can call replace API.
-     */
-    private class ParameterBinder {
-
-        private final boolean updateQuery;
-        private final List<String> updatingProperties;
-
-        private final Map<String, Object> propertiesToUpdate = new HashMap<>();
-
-        ParameterBinder() {
-            this.updateQuery = false;
-            this.updatingProperties = Collections.emptyList();
-        }
-
-        ParameterBinder(boolean updateQuery, List<String> updateProperties) {
-            this.updateQuery = updateQuery;
-            this.updatingProperties = updateProperties;
-        }
-
-        <T, R> List<SqlParameter> bindParameters(PreparedQuery<T, R> preparedQuery) {
-            boolean isRawQuery = isRawQuery(preparedQuery);
-            RuntimePersistentEntity<T> persistentEntity = runtimeEntityRegistry.getEntity(preparedQuery.getRootEntity());
-            List<SqlParameter> parameterList = new ArrayList<>();
-            SqlPreparedQuery<T, R> sqlPreparedQuery = getSqlPreparedQuery(preparedQuery);
-            sqlPreparedQuery.bindParameters(new SqlStoredQuery.Binder() {
-
-                @NonNull
-                @Override
-                public Object autoPopulateRuntimeProperty(@NonNull RuntimePersistentProperty<?> persistentProperty, Object previousValue) {
-                    return runtimeEntityRegistry.autoPopulateRuntimeProperty(persistentProperty, previousValue);
-                }
-
-                @Override
-                public Object convert(Object value, RuntimePersistentProperty<?> property) {
-                    AttributeConverter<Object, Object> converter = property.getConverter();
-                    if (converter != null) {
-                        return converter.convertToPersistedValue(value, createTypeConversionContext(property, property.getArgument()));
-                    }
-                    return value;
-                }
-
-                @Override
-                public Object convert(Class<?> converterClass, Object value, Argument<?> argument) {
-                    if (converterClass == null) {
-                        return value;
-                    }
-                    AttributeConverter<Object, Object> converter = attributeConverterRegistry.getConverter(converterClass);
-                    ConversionContext conversionContext = createTypeConversionContext(null, argument);
-                    return converter.convertToPersistedValue(value, conversionContext);
-                }
-
-                private ConversionContext createTypeConversionContext(@Nullable RuntimePersistentProperty<?> property,
-                                                                      @Nullable Argument<?> argument) {
-                    if (property != null) {
-                        return ConversionContext.of(property.getArgument());
-                    }
-                    if (argument != null) {
-                        return ConversionContext.of(argument);
-                    }
-                    return ConversionContext.DEFAULT;
-                }
-
-                @Override
-                public void bindOne(@NonNull QueryParameterBinding binding, Object value) {
-                    if (updateQuery) {
-                        String property = getUpdateProperty(binding, persistentEntity);
-                        if (property != null) {
-                            propertiesToUpdate.put(property, value);
-                        }
-                    }
-                    String parameterName = getParameterName(binding, isRawQuery);
-                    parameterList.add(new SqlParameter("@" + parameterName, value));
-                }
-
-                @Override
-                public void bindMany(@NonNull QueryParameterBinding binding, @NonNull Collection<Object> values) {
-                    bindOne(binding, values);
-                }
-
-                @Override
-                public int currentIndex() {
-                    return 0;
-                }
-
-            });
-            return parameterList;
-        }
-
-        private String getParameterName(QueryParameterBinding binding, boolean isRawQuery) {
-            if (isRawQuery) {
-                // raw query parameters get rewritten as p1, p2... and binding.getRequiredName remains as original, so we need to bind proper param name
-                return "p" + (binding.getParameterIndex() + 1);
-            }
-            return binding.getRequiredName();
-        }
-
-        private String getUpdateProperty(QueryParameterBinding binding, PersistentEntity persistentEntity) {
-            String[] propertyPath = binding.getRequiredPropertyPath();
-            PersistentPropertyPath pp = persistentEntity.getPropertyPath(propertyPath);
-            if (pp != null) {
-                String propertyName = pp.getPath();
-                if (CollectionUtils.isNotEmpty(updatingProperties) && updatingProperties.contains(propertyName)) {
-                    return propertyName;
-                }
-            }
-            return null;
-        }
-
-        Map<String, Object> getPropertiesToUpdate() {
-            return propertiesToUpdate;
-        }
-
-        private <E, R> SqlPreparedQuery<E, R> getSqlPreparedQuery(PreparedQuery<E, R> preparedQuery) {
-            if (preparedQuery instanceof SqlPreparedQuery) {
-                return (SqlPreparedQuery<E, R>) preparedQuery;
-            }
-            throw new IllegalStateException("Expected for prepared query to be of type: SqlPreparedQuery got: " + preparedQuery.getClass().getName());
-        }
     }
 
     @Override
@@ -821,6 +714,196 @@ final class DefaultCosmosRepositoryOperations extends AbstractRepositoryOperatio
      */
     private boolean isRawQuery(@NonNull PreparedQuery<?, ?> preparedQuery) {
         return preparedQuery.getAnnotationMetadata().stringValue(Query.class, DataMethod.META_MEMBER_RAW_QUERY).isPresent();
+    }
+
+    private <T> CosmosEntityOperation<T> createCosmosInsertOneOperation(CosmosEntityOperation.CosmosOperationContext<T> ctx, RuntimePersistentEntity<T> persistentEntity, T entity) {
+        return new CosmosEntityOperation<T>(entityEventRegistry, conversionService, ctx, persistentEntity, entity, true) {
+
+            @Override
+            protected void execute() throws RuntimeException {
+                CosmosContainer container = ctx.getContainer();
+                if (hasGeneratedId) {
+                    RuntimePersistentProperty<T> identity = persistentEntity.getIdentity();
+                    if (identity.getProperty().get(entity) == null && identity.getDataType().equals(DataType.STRING)) {
+                        identity.getProperty().convertAndSet(entity, UUID.randomUUID().toString());
+                    }
+                }
+                ObjectNode item = serialize(entity, Argument.of(ctx.getRootEntity()));
+                container.createItem(item, new CosmosItemRequestOptions());
+            }
+        };
+    }
+
+    private <T> CosmosEntityOperation<T> createCosmosReplaceItemOperation(CosmosEntityOperation.CosmosOperationContext<T> ctx, RuntimePersistentEntity<T> persistentEntity, T entity) {
+        return new CosmosEntityOperation<T>(entityEventRegistry, conversionService, ctx, persistentEntity, entity, false) {
+
+            @Override
+            protected void execute() throws RuntimeException {
+                CosmosContainer container = getContainer(persistentEntity);
+                ObjectNode item = serialize(entity, Argument.of(ctx.getRootEntity()));
+                PartitionKey partitionKey = getPartitionKey(persistentEntity, item);
+                String id = getItemId(item);
+                container.replaceItem(item, id, partitionKey, new CosmosItemRequestOptions());
+            }
+
+        };
+    }
+
+    private <T> CosmosEntityOperation<T> createCosmosDeleteOneOperation(CosmosEntityOperation.CosmosOperationContext<T> ctx, RuntimePersistentEntity<T> persistentEntity, T entity) {
+        return new CosmosEntityOperation<T>(entityEventRegistry, conversionService, ctx, persistentEntity, entity, false) {
+
+            @Override
+            protected void execute() throws RuntimeException {
+                CosmosContainer container = getContainer(persistentEntity);
+                ObjectNode item = serialize(entity, Argument.of(ctx.getRootEntity()));
+                CosmosItemRequestOptions options = new CosmosItemRequestOptions();
+                String id = getItemId(item);
+                PartitionKey partitionKey = getPartitionKey(persistentEntity, item);
+                CosmosItemResponse<?> cosmosItemResponse = container.deleteItem(id, partitionKey, options);
+                if (cosmosItemResponse.getStatusCode() == HttpResponseStatus.NO_CONTENT.code()) {
+                   affectedCount = 1;
+                } else {
+                    affectedCount = 0;
+                }
+            }
+        };
+    }
+
+    private <T> CosmosEntitiesOperation<T> createCosmosBulkOperation(CosmosEntityOperation.CosmosOperationContext<T> ctx,
+                                                                   RuntimePersistentEntity<T> persistentEntity,
+                                                                   BatchOperation<T> operation,
+                                                                   BulkOperationType operationType) {
+        return new CosmosEntitiesOperation<T>(entityEventRegistry, conversionService, ctx, persistentEntity, operation) {
+
+            @Override
+            protected void execute() throws RuntimeException {
+                Iterable<T> allowedEntities = entities.stream().filter(d -> !d.vetoed).map(d -> d.entity).collect(Collectors.toList());
+                List<ObjectNode> items = serializeBatchItems(allowedEntities, operation.getRootEntity());
+                this.affectedCount = executeBulk(ctx.getContainer(), items, operationType, persistentEntity, Optional.empty());
+            }
+        };
+    }
+
+    /**
+     * Custom class used for binding parameters for Cosmos sql queries.
+     * Needed to be able to extract update parameters for update actions, so we can call replace API.
+     */
+    private class ParameterBinder {
+
+        private final boolean updateQuery;
+        private final List<String> updatingProperties;
+
+        private final Map<String, Object> propertiesToUpdate = new HashMap<>();
+
+        ParameterBinder() {
+            this.updateQuery = false;
+            this.updatingProperties = Collections.emptyList();
+        }
+
+        ParameterBinder(boolean updateQuery, List<String> updateProperties) {
+            this.updateQuery = updateQuery;
+            this.updatingProperties = updateProperties;
+        }
+
+        <T, R> List<SqlParameter> bindParameters(PreparedQuery<T, R> preparedQuery) {
+            boolean isRawQuery = isRawQuery(preparedQuery);
+            RuntimePersistentEntity<T> persistentEntity = runtimeEntityRegistry.getEntity(preparedQuery.getRootEntity());
+            List<SqlParameter> parameterList = new ArrayList<>();
+            SqlPreparedQuery<T, R> sqlPreparedQuery = getSqlPreparedQuery(preparedQuery);
+            sqlPreparedQuery.bindParameters(new SqlStoredQuery.Binder() {
+
+                @NonNull
+                @Override
+                public Object autoPopulateRuntimeProperty(@NonNull RuntimePersistentProperty<?> persistentProperty, Object previousValue) {
+                    return runtimeEntityRegistry.autoPopulateRuntimeProperty(persistentProperty, previousValue);
+                }
+
+                @Override
+                public Object convert(Object value, RuntimePersistentProperty<?> property) {
+                    AttributeConverter<Object, Object> converter = property.getConverter();
+                    if (converter != null) {
+                        return converter.convertToPersistedValue(value, createTypeConversionContext(property, property.getArgument()));
+                    }
+                    return value;
+                }
+
+                @Override
+                public Object convert(Class<?> converterClass, Object value, Argument<?> argument) {
+                    if (converterClass == null) {
+                        return value;
+                    }
+                    AttributeConverter<Object, Object> converter = attributeConverterRegistry.getConverter(converterClass);
+                    ConversionContext conversionContext = createTypeConversionContext(null, argument);
+                    return converter.convertToPersistedValue(value, conversionContext);
+                }
+
+                private ConversionContext createTypeConversionContext(@Nullable RuntimePersistentProperty<?> property,
+                                                                      @Nullable Argument<?> argument) {
+                    if (property != null) {
+                        return ConversionContext.of(property.getArgument());
+                    }
+                    if (argument != null) {
+                        return ConversionContext.of(argument);
+                    }
+                    return ConversionContext.DEFAULT;
+                }
+
+                @Override
+                public void bindOne(@NonNull QueryParameterBinding binding, Object value) {
+                    if (updateQuery) {
+                        String property = getUpdateProperty(binding, persistentEntity);
+                        if (property != null) {
+                            propertiesToUpdate.put(property, value);
+                        }
+                    }
+                    String parameterName = getParameterName(binding, isRawQuery);
+                    parameterList.add(new SqlParameter("@" + parameterName, value));
+                }
+
+                @Override
+                public void bindMany(@NonNull QueryParameterBinding binding, @NonNull Collection<Object> values) {
+                    bindOne(binding, values);
+                }
+
+                @Override
+                public int currentIndex() {
+                    return 0;
+                }
+
+            });
+            return parameterList;
+        }
+
+        private String getParameterName(QueryParameterBinding binding, boolean isRawQuery) {
+            if (isRawQuery) {
+                // raw query parameters get rewritten as p1, p2... and binding.getRequiredName remains as original, so we need to bind proper param name
+                return "p" + (binding.getParameterIndex() + 1);
+            }
+            return binding.getRequiredName();
+        }
+
+        private String getUpdateProperty(QueryParameterBinding binding, PersistentEntity persistentEntity) {
+            String[] propertyPath = binding.getRequiredPropertyPath();
+            PersistentPropertyPath pp = persistentEntity.getPropertyPath(propertyPath);
+            if (pp != null) {
+                String propertyName = pp.getPath();
+                if (CollectionUtils.isNotEmpty(updatingProperties) && updatingProperties.contains(propertyName)) {
+                    return propertyName;
+                }
+            }
+            return null;
+        }
+
+        Map<String, Object> getPropertiesToUpdate() {
+            return propertiesToUpdate;
+        }
+
+        private <E, R> SqlPreparedQuery<E, R> getSqlPreparedQuery(PreparedQuery<E, R> preparedQuery) {
+            if (preparedQuery instanceof SqlPreparedQuery) {
+                return (SqlPreparedQuery<E, R>) preparedQuery;
+            }
+            throw new IllegalStateException("Expected for prepared query to be of type: SqlPreparedQuery got: " + preparedQuery.getClass().getName());
+        }
     }
 
     /**

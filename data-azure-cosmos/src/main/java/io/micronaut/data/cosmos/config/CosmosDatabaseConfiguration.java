@@ -39,8 +39,6 @@ public final class CosmosDatabaseConfiguration {
 
     public static final String PREFIX = "azure.cosmos.database";
 
-    public static final String UPDATE_POLICY = PREFIX + ".update-policy";
-
     private ThroughputSettings throughput;
 
     private List<CosmosContainerSettings> containers;
