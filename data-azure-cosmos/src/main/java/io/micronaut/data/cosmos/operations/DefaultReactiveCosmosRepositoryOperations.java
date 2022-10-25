@@ -569,7 +569,7 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractCos
                 Argument<T> arg = Argument.of(ctx.getRootEntity());
                 RequestOptions requestOptions = new RequestOptions();
 
-                // Update/replace using provided partition key or partition key calculated from each item
+                // Update/replace using partition key calculated from each item
                 Mono<Tuple2<List<Data>, Long>> entitiesWithRowsUpdated = entities.collectList()
                     .flatMap(e -> {
                         List<ItemBulkOperation<?, ?>> notVetoedEntities = e.stream().filter(this::notVetoed).map(x -> {
