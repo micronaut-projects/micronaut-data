@@ -290,8 +290,8 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
             optFamily1 = familyRepository.findById(FAMILY1_ID)
             optFamily2 = familyRepository.findById(FAMILY2_ID)
         then:
-            optFamily2.get().children.size() == 3
             optFamily1.get().address.state == "NY"
+            optFamily2.get().children.size() == 3
         when:"Using raw query for delete is not supported"
             familyRepository.deleteByRegistered(false)
         then:
