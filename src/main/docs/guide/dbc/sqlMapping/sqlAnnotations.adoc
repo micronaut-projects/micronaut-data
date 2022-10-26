@@ -13,7 +13,7 @@ The following table summarizes the different annotations and what they enable. I
 |Allows assigning a data created value (such as a `java.time.Instant`) prior to an insert
 
 |ann:data.annotation.DateUpdated[]
-|Allows assigning a last updated value (such as a `java.time.Instant`) prior to an insert
+|Allows assigning a last updated value (such as a `java.time.Instant`) prior to an insert or an update
 
 |ann:data.annotation.Embeddable[]
 |Specifies that the bean is embeddable
