@@ -1,6 +1,5 @@
 package example
 
-import io.micronaut.core.annotation.NonNull
 import io.micronaut.data.annotation.Join
 import io.micronaut.data.annotation.Repository
 import io.micronaut.data.repository.GenericRepository
@@ -11,13 +10,13 @@ import javax.transaction.Transactional
 interface ParentSuspendRepositoryForCustomDb : GenericRepository<Parent, Int> {
 
     @Join(value = "children", type = Join.Type.FETCH)
-    suspend fun findById(id: Int): Optional<Parent>
+    suspend fun findById(id: Int): Parent?
 
     @Transactional(Transactional.TxType.MANDATORY)
-    suspend fun queryById(id: Int): Optional<Parent>
+    suspend fun queryById(id: Int): Parent?
 
-    suspend fun save(@NonNull entity: Parent): Parent
+    suspend fun save(entity: Parent): Parent
 
-    suspend fun update(@NonNull entity: Parent): Parent
+    suspend fun update(entity: Parent): Parent
 
 }

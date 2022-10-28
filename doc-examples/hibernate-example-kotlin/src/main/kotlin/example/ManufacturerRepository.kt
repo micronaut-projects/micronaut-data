@@ -1,10 +1,10 @@
 package example
 
 import io.micronaut.data.annotation.Repository
-import io.micronaut.data.repository.CrudRepository
+import io.micronaut.data.repository.kotlin.KotlinCrudRepository
 
 @Repository
-interface ManufacturerRepository : CrudRepository<Manufacturer, Long> {
+interface ManufacturerRepository : KotlinCrudRepository<Manufacturer, Long> {
 
     fun save(name: String): Manufacturer
 }

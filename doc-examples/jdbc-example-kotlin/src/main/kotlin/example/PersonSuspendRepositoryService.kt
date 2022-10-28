@@ -43,7 +43,7 @@ open class PersonSuspendRepositoryService(private val parentSuspendRepository: P
     }
 
     @Transactional
-    open suspend fun customFind(id: Int): Optional<Parent> {
+    open suspend fun customFind(id: Int): Parent? {
         val threadName = currentThread().name
         delay(1000L)
         return withContext(IO) {

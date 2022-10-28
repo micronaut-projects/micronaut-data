@@ -47,7 +47,7 @@ internal class ProductRepositorySpec {
                 .thenCompose { product -> productRepository.countByManufacturerName(product.manufacturer?.name) }
                 .get(1000, TimeUnit.SECONDS)
 
-        Assertions.assertEquals(
+        assertEquals(
                 2,
                 total
         )
@@ -66,7 +66,7 @@ internal class ProductRepositorySpec {
                 .defaultIfEmpty(0L)
                 .blockingGet()
 
-        Assertions.assertEquals(
+        assertEquals(
                 2,
                 total
         )

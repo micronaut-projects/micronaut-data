@@ -13,10 +13,10 @@ import javax.transaction.Transactional
 interface ParentSuspendRepositoryForCustomDb : GenericRepository<Parent, Int> {
 
     @Join(value = "children", type = Join.Type.FETCH)
-    suspend fun findById(id: Int): Optional<Parent>
+    suspend fun findById(id: Int): Parent?
 
     @Transactional(Transactional.TxType.MANDATORY)
-    suspend fun queryById(id: Int): Optional<Parent>
+    suspend fun queryById(id: Int): Parent?
 
     suspend fun save(@NonNull entity: Parent): Parent
 

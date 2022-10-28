@@ -3,14 +3,11 @@ package example
 
 import io.micronaut.data.annotation.Repository
 import io.micronaut.data.jdbc.runtime.JdbcOperations
-import io.micronaut.data.repository.CrudRepository
-import java.util.stream.Collectors
-
+import io.micronaut.data.repository.kotlin.KotlinCrudRepository
 import javax.transaction.Transactional
-import kotlin.streams.toList
 
 @Repository
-abstract class AbstractBookRepository(private val jdbcOperations: JdbcOperations) : CrudRepository<Book, Long> {
+abstract class AbstractBookRepository(private val jdbcOperations: JdbcOperations) : KotlinCrudRepository<Book, Long> {
 
     @Transactional
     fun findByTitle(title: String): List<Book> {

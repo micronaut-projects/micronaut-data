@@ -2,11 +2,12 @@ package example
 
 import io.micronaut.data.annotation.*
 import io.micronaut.data.jpa.annotation.EntityGraph
-import io.micronaut.data.jpa.repository.JpaSpecificationExecutor
+import io.micronaut.data.jpa.repository.JpaKotlinSpecificationExecutor
 import io.micronaut.data.jpa.repository.criteria.Specification
-import io.micronaut.data.repository.CrudRepository
+import io.micronaut.data.repository.kotlin.KotlinCrudRepository
 import io.reactivex.Maybe
 import io.reactivex.Single
+import java.util.*
 import java.util.concurrent.CompletableFuture
 import javax.transaction.Transactional
 
@@ -14,7 +15,7 @@ import javax.transaction.Transactional
 // tag::async[]
 // tag::specifications[]
 @Repository
-interface ProductRepository : CrudRepository<Product, Long>, JpaSpecificationExecutor<Product> {
+interface ProductRepository : KotlinCrudRepository<Product, Long>, JpaKotlinSpecificationExecutor<Product> {
 // end::join[]
 // end::async[]
 // end::specifications[]
@@ -66,7 +67,7 @@ interface ProductRepository : CrudRepository<Product, Long>, JpaSpecificationExe
         }
 
         fun nameEqualsCaseInsensitive(name: String) = Specification<Product> { root, _, criteriaBuilder ->
-            criteriaBuilder.equal(criteriaBuilder.lower(root.get("name")), name.toLowerCase())
+            criteriaBuilder.equal(criteriaBuilder.lower(root.get("name")), name.lowercase(Locale.getDefault()))
         }
     }
     // end::spec[]

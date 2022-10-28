@@ -8,11 +8,11 @@ import io.micronaut.data.model.Page
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Slice
 import io.micronaut.data.mongodb.annotation.*
-import io.micronaut.data.repository.CrudRepository
+import io.micronaut.data.repository.kotlin.KotlinCrudRepository
 import org.bson.types.ObjectId
 
 @MongoRepository // <1>
-interface BookRepository : CrudRepository<Book, ObjectId> { // <2>
+interface BookRepository : KotlinCrudRepository<Book, ObjectId> { // <2>
 // end::repository[]
 
     // tag::simple[]
@@ -79,7 +79,7 @@ interface BookRepository : CrudRepository<Book, ObjectId> { // <2>
     // end::update2[]
 
     // tag::deleteall[]
-    override fun deleteAll()
+    override fun deleteAll(): Int
     // end::deleteall[]
 
     // tag::deleteone[]

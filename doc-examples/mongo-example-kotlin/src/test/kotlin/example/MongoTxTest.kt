@@ -1,7 +1,6 @@
 package example
 
 import io.micronaut.data.annotation.Repository
-import io.micronaut.data.mongodb.annotation.MongoRepository
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest
 import jakarta.inject.Inject
 import kotlinx.coroutines.Dispatchers
@@ -42,7 +41,7 @@ class MongoTxTest : AbstractMongoSpec() {
         val parent = Parent("xyz", Collections.emptyList())
         val saved = repositorySuspended.save(parent)
 
-        val found = service.customFind(saved.id!!).get()
+        val found = service.customFind(saved.id!!)!!
         assertTrue(found.name == "xyz")
     }
 

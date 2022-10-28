@@ -16,23 +16,24 @@ class CartRepositorySpec : AbstractMongoSpec() {
 
     @Test
     fun testCrud() {
-        var cart = Cart(
+        val cart = cartRepository.save(
+            Cart(
                 items = listOf(CartItem(name = "Food"), CartItem(name = "Drinks"))
+            )
         )
-        cart = cartRepository.save(cart)
         assertNotNull(cart.id)
         assertNotNull(cart.items)
         assertEquals(2, cart.items!!.size)
         assertNotNull(cart.items!![0].id)
         assertNotNull(cart.items!![1].id)
-        cart = cartRepository.findById(cart.id!!).orElse(null)
-        assertNotNull(cart)
-        assertNotNull(cart.id)
-        assertNotNull(cart.items)
-        assertEquals(2, cart.items!!.size)
-        assertNotNull(cart.items!![0].id)
-        assertNotNull(cart.items!![1].id)
-        assertEquals("Food", cart.items!![0].name)
-        assertEquals("Drinks", cart.items!![1].name)
+        val cart2 = cartRepository.findById(cart.id!!)!!
+        assertNotNull(cart2)
+        assertNotNull(cart2.id)
+        assertNotNull(cart2.items)
+        assertEquals(2, cart2.items!!.size)
+        assertNotNull(cart2.items!![0].id)
+        assertNotNull(cart2.items!![1].id)
+        assertEquals("Food", cart2.items!![0].name)
+        assertEquals("Drinks", cart2.items!![1].name)
     }
 }

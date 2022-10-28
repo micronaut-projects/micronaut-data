@@ -82,8 +82,8 @@ internal class ProductRepositorySpec : AbstractMongoSpec() {
                         samsung
                 )
         )
-        assertEquals(2, productRepository.findAll(manufacturerNameEquals("Apple")).size)
-        assertEquals(1, productRepository.findAll(manufacturerNameEquals("Samsung")).size)
+        assertEquals(2, productRepository.findAll(manufacturerNameEquals("Apple")).toList().size)
+        assertEquals(1, productRepository.findAll(manufacturerNameEquals("Samsung")).toList().size)
     }
 
 }

@@ -15,13 +15,11 @@
  */
 package io.micronaut.data.repository.jpa.kotlin
 
+import io.micronaut.core.annotation.Nullable
 import io.micronaut.data.model.Page
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
-import io.micronaut.data.repository.jpa.criteria.DeleteSpecification
-import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
-import io.micronaut.data.repository.jpa.criteria.QuerySpecification
-import io.micronaut.data.repository.jpa.criteria.UpdateSpecification
+import io.micronaut.data.repository.jpa.criteria.*
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -41,7 +39,7 @@ interface CoroutineJpaSpecificationExecutor<T> {
      * @param spec The query specification
      * @return optional found result
      */
-    fun findOne(spec: QuerySpecification<T>?): T?
+    suspend fun findOne(spec: QuerySpecification<T>?): T?
 
     /**
      * Returns a single entity matching the given [PredicateSpecification].
@@ -49,7 +47,7 @@ interface CoroutineJpaSpecificationExecutor<T> {
      * @param spec The query specification
      * @return optional found result
      */
-    fun findOne(spec: PredicateSpecification<T>?): T?
+    suspend fun findOne(spec: PredicateSpecification<T>?): T?
 
     /**
      * Returns all entities matching the given [QuerySpecification].
@@ -74,7 +72,7 @@ interface CoroutineJpaSpecificationExecutor<T> {
      * @param pageable The pageable object
      * @return a page
      */
-    fun findAll(spec: QuerySpecification<T>?, pageable: Pageable): Page<T>
+    suspend fun findAll(spec: QuerySpecification<T>?, pageable: Pageable): Page<T>
 
     /**
      * Returns a [Page] of entities matching the given [PredicateSpecification].
@@ -83,7 +81,7 @@ interface CoroutineJpaSpecificationExecutor<T> {
      * @param pageable The pageable object
      * @return a page
      */
-    fun findAll(spec: PredicateSpecification<T>?, pageable: Pageable): Page<T>
+    suspend fun findAll(spec: PredicateSpecification<T>?, pageable: Pageable): Page<T>
 
     /**
      * Returns all entities matching the given [QuerySpecification] and [Sort].
@@ -102,6 +100,28 @@ interface CoroutineJpaSpecificationExecutor<T> {
      * @return found results
      */
     fun findAll(spec: PredicateSpecification<T>?, sort: Sort): Flow<T>
+
+    /**
+     * Find all using build criteria query.
+     *
+     * @param builder The criteria query builder
+     * @param <R> the result type
+     *
+     * @return the number records updated.
+     * @since 3.5.0
+    </R> */
+    fun <R> findAll(builder: CriteriaQueryBuilder<R>?): Flow<R>
+
+    /**
+     * Find one using build criteria query.
+     *
+     * @param builder The criteria query builder
+     * @param <R> the result type
+     *
+     * @return the number records updated.
+     * @since 3.5.0
+    </R> */
+    suspend fun <R> findOne(builder: CriteriaQueryBuilder<R>?): R
 
     /**
      * Returns the number of instances that the given [QuerySpecification] will return.
@@ -160,4 +180,13 @@ interface CoroutineJpaSpecificationExecutor<T> {
      * @return the number records updated.
      */
     suspend fun updateAll(spec: UpdateSpecification<T>?): Long
+
+    /**
+     * Updates all entities using build criteria query.
+     *
+     * @param builder The update criteria query builder
+     * @return the number records updated.
+     * @since 3.5.0
+     */
+    suspend fun updateAll(builder: CriteriaUpdateBuilder<T>?): Long
 }

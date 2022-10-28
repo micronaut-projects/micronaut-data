@@ -5,10 +5,10 @@ package example
 import io.micronaut.context.annotation.Executable
 import io.micronaut.data.annotation.*
 import io.micronaut.data.model.*
-import io.micronaut.data.repository.CrudRepository
+import io.micronaut.data.repository.kotlin.KotlinCrudRepository
 
 @Repository // <1>
-interface BookRepository : CrudRepository<Book, Long> { // <2>
+interface BookRepository : KotlinCrudRepository<Book, Long> { // <2>
 // end::repository[]
 
     // tag::simple[]
@@ -105,7 +105,7 @@ interface BookRepository : CrudRepository<Book, Long> { // <2>
     // end::updateCustomQuery[]
 
     // tag::deleteall[]
-    override fun deleteAll()
+    override fun deleteAll(): Int
     // end::deleteall[]
 
     // tag::deleteCustomQuery[]
