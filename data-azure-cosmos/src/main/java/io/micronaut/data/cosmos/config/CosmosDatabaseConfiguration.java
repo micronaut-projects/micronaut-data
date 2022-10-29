@@ -49,8 +49,6 @@ public final class CosmosDatabaseConfiguration {
 
     private List<String> packages = new ArrayList<>();
 
-    private boolean reactive;
-
     public ThroughputSettings getThroughput() {
         return throughput;
     }
@@ -114,22 +112,6 @@ public final class CosmosDatabaseConfiguration {
      */
     public void setPackages(List<String> packages) {
         this.packages = packages;
-    }
-
-    /**
-     * @return an indicator telling whether operations against Cosmos Db will be reactive or sync
-     */
-    public boolean isReactive() {
-        return reactive;
-    }
-
-    /**
-     * Sets the reactive flag.
-     *
-     * @param reactive an indicator telling whether operations against Cosmos Db will be reactive or sync
-     */
-    public void setReactive(boolean reactive) {
-        this.reactive = reactive;
     }
 
     /**
