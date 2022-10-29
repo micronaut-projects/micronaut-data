@@ -100,6 +100,5 @@ class NoPartitionKeyCosmosDbSpec extends Specification implements AzureCosmosTes
             config.updatePolicy == StorageUpdatePolicy.CREATE_IF_NOT_EXISTS
             !config.containers || config.containers.size() == 0
     }
-
     
 }
