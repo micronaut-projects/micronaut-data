@@ -90,7 +90,7 @@ import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 
 /**
- * The base class with common code for Cosmos Db operations.
+ * The base class for Cosmos Db operations.
  *
  * @author radovanradic
  * @since 4.0.0

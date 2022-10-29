@@ -95,14 +95,9 @@ class NoPartitionKeyCosmosDbSpec extends Specification implements AzureCosmosTes
 
         expect:
             config.databaseName == 'mydb'
-            config.reactive == expectedReactiveConfigValue()
             config.throughput.autoScale
             config.throughput.requestUnits == 1000
             config.updatePolicy == StorageUpdatePolicy.CREATE_IF_NOT_EXISTS
             !config.containers || config.containers.size() == 0
-    }
-
-    boolean expectedReactiveConfigValue() {
-        false
     }
 }

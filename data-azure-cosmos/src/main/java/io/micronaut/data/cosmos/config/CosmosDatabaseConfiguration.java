@@ -19,8 +19,6 @@ import io.micronaut.context.annotation.ConfigurationProperties;
 import io.micronaut.context.annotation.EachProperty;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.context.annotation.Primary;
-import io.micronaut.context.condition.Condition;
-import io.micronaut.context.condition.ConditionContext;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import jakarta.inject.Inject;
@@ -212,28 +210,6 @@ public final class CosmosDatabaseConfiguration {
          */
         @ConfigurationProperties("throughput-settings")
         public static final class ContainerThroughputSettings extends ThroughputSettings {
-        }
-    }
-
-    /**
-     * Not reactive configuration condition.
-     */
-    public static final class NotReactiveConfiguredCondition implements Condition {
-
-        @Override
-        public boolean matches(ConditionContext context) {
-            return !context.getBean(CosmosDatabaseConfiguration.class).reactive;
-        }
-    }
-
-    /**
-     * Reactive configured condition.
-     */
-    public static final class ReactiveConfiguredCondition implements Condition {
-
-        @Override
-        public boolean matches(ConditionContext context) {
-            return context.getBean(CosmosDatabaseConfiguration.class).reactive;
         }
     }
 }

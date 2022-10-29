@@ -31,7 +31,6 @@ import com.azure.cosmos.models.SqlQuerySpec;
 import com.azure.cosmos.util.CosmosPagedFlux;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
@@ -42,7 +41,6 @@ import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.cosmos.common.Constants;
 import io.micronaut.data.cosmos.config.CosmosDatabaseConfiguration;
-import io.micronaut.data.cosmos.config.RequiresReactiveCosmos;
 import io.micronaut.data.event.EntityEventListener;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.exceptions.EmptyResultException;
@@ -70,6 +68,8 @@ import io.micronaut.data.runtime.date.DateTimeProvider;
 import io.micronaut.data.runtime.operations.internal.AbstractReactiveEntitiesOperations;
 import io.micronaut.data.runtime.operations.internal.AbstractReactiveEntityOperations;
 import io.micronaut.data.runtime.operations.internal.OperationContext;
+import io.micronaut.data.runtime.query.MethodContextAwareStoredQueryDecorator;
+import io.micronaut.data.runtime.query.PreparedQueryDecorator;
 import io.micronaut.http.codec.MediaTypeCodec;
 import io.micronaut.serde.SerdeRegistry;
 import io.netty.handler.codec.http.HttpResponseStatus;
@@ -100,11 +100,12 @@ import java.util.stream.Collectors;
  * @since 4.0.0
  */
 @Singleton
-@Requires(bean = CosmosAsyncClient.class)
 @Internal
-@RequiresReactiveCosmos
 public final class DefaultReactiveCosmosRepositoryOperations extends AbstractCosmosOperations implements
-    ReactorReactiveRepositoryOperations, ReactiveRepositoryOperations {
+    ReactorReactiveRepositoryOperations,
+    ReactiveRepositoryOperations,
+    MethodContextAwareStoredQueryDecorator,
+    PreparedQueryDecorator {
 
     private static final Logger LOG = LoggerFactory.getLogger(DefaultReactiveCosmosRepositoryOperations.class);
 
@@ -260,7 +261,7 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractCos
     @NonNull
     public <T, R> Mono<R> findOne(@NonNull PreparedQuery<T, R> preparedQuery) {
         try {
-            List<SqlParameter> paramList = new DefaultCosmosRepositoryOperations.ParameterBinder().bindParameters(preparedQuery);
+            List<SqlParameter> paramList = new ParameterBinder().bindParameters(preparedQuery);
             boolean dtoProjection = preparedQuery.isDtoProjection();
             boolean isEntity = preparedQuery.getResultDataType() == DataType.ENTITY;
             if (isEntity || dtoProjection) {
