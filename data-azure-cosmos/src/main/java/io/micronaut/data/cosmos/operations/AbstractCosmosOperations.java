@@ -218,12 +218,12 @@ abstract class AbstractCosmosOperations extends AbstractRepositoryOperations imp
      * @return true if persistent entity identity field matches with the container partition key for that entity
      */
     protected boolean isIdPartitionKey(PersistentEntity persistentEntity) {
-        String partitionKey = getPartitionKeyDefinition(persistentEntity);
         PersistentProperty identity = persistentEntity.getIdentity();
         if (identity == null) {
             return false;
         }
-        return partitionKey.equals("/" + identity.getName());
+        String partitionKey = getPartitionKeyDefinition(persistentEntity);
+        return partitionKey.equals(Constants.PARTITION_KEY_SEPARATOR + identity.getName());
     }
 
     /**
@@ -234,29 +234,41 @@ abstract class AbstractCosmosOperations extends AbstractRepositoryOperations imp
      * @return partition key definition it exists for persistent entity, otherwise empty/null string
      */
     @NonNull
-    private String getPartitionKeyDefinition(PersistentEntity persistentEntity) {
+    protected String getPartitionKeyDefinition(PersistentEntity persistentEntity) {
         CosmosDatabaseConfiguration.CosmosContainerSettings cosmosContainerSettings = cosmosContainerSettingsMap.get(persistentEntity.getPersistedName());
         if (cosmosContainerSettings == null) {
             return Constants.NO_PARTITION_KEY;
         }
-        return CosmosDatabaseInitializer.getPartitionKey(persistentEntity, cosmosContainerSettings);
+        return CosmosDatabaseInitializer.getPartitionKeyDefinition(persistentEntity, cosmosContainerSettings);
     }
 
     /**
      * Gets partition key for a document. Partition keys can be only string or number values.
-     * TODO: Later deal with nested paths when we support it.
      *
      * @param persistentEntity the persistent entity
      * @param item item from the Cosmos Db
      * @return partition key, if partition key defined and value set otherwise null
      */
     @Nullable
-    protected PartitionKey getPartitionKey(RuntimePersistentEntity<?> persistentEntity, ObjectNode item) {
+    PartitionKey getPartitionKey(RuntimePersistentEntity<?> persistentEntity, ObjectNode item) {
         String partitionKeyDefinition = getPartitionKeyDefinition(persistentEntity);
-        if (partitionKeyDefinition.startsWith("/")) {
+        if (partitionKeyDefinition.startsWith(Constants.PARTITION_KEY_SEPARATOR)) {
             partitionKeyDefinition = partitionKeyDefinition.substring(1);
         }
-        com.fasterxml.jackson.databind.JsonNode jsonNode = item.get(partitionKeyDefinition);
+        return getPartitionKey(partitionKeyDefinition, item);
+    }
+
+    /**
+     * Gets partition key for a document. Partition keys can be only string or number values.
+     * TODO: Later deal with nested paths when we support it.
+     *
+     * @param partitionKeyField the partition key field without "/" at the beginning
+     * @param item item from the Cosmos Db
+     * @return partition key, if partition key defined and value set otherwise null
+     */
+    @Nullable
+    PartitionKey getPartitionKey(String partitionKeyField, ObjectNode item) {
+        com.fasterxml.jackson.databind.JsonNode jsonNode = item.get(partitionKeyField);
         if (jsonNode == null) {
             return null;
         }
@@ -282,13 +294,16 @@ abstract class AbstractCosmosOperations extends AbstractRepositoryOperations imp
     }
 
     /**
-     * Gets the id from {@link ObjectNode} document in Cosmos Db.
+     * Gets the id from {@link ObjectNode} document in Cosmos Db. Can return null if document ({@link ObjectNode} not yet persisted.
      *
      * @param item the item/document in the db
      * @return document id
      */
     String getItemId(ObjectNode item) {
         com.fasterxml.jackson.databind.JsonNode idNode = item.get(Constants.INTERNAL_ID);
+        if (idNode == null) {
+            return null;
+        }
         return idNode.textValue();
     }
 
@@ -363,34 +378,25 @@ abstract class AbstractCosmosOperations extends AbstractRepositoryOperations imp
      * @param bulkOperationType the bulk operation type (delete or update)
      * @param persistentEntity the persistent entity
      * @param optPartitionKey the optional partition key, will be used if not empty
-     * @return list of {@link CosmosItemOperation}s
-     */
-    List<CosmosItemOperation> createBulkOperations(Iterable<ObjectNode> items, BulkOperationType bulkOperationType, RuntimePersistentEntity<?> persistentEntity,
-                                                   Optional<PartitionKey> optPartitionKey) {
-        return createBulkOperations(items, bulkOperationType, persistentEntity, optPartitionKey, null);
-    }
-
-    /**
-     * Creates list of {@link CosmosItemOperation} to be executed in bulk operation.
-     *
-     * @param items the items to be updated/deleted in a bulk operation
-     * @param bulkOperationType the bulk operation type (delete or update)
-     * @param persistentEntity the persistent entity
-     * @param optPartitionKey the optional partition key, will be used if not empty
      * @param handleItem function that will apply some changes before adding item to the list, if null then ignored
      * @return list of {@link CosmosItemOperation}s
      */
     List<CosmosItemOperation> createBulkOperations(Iterable<ObjectNode> items, BulkOperationType bulkOperationType, RuntimePersistentEntity<?> persistentEntity,
-                                                   Optional<PartitionKey> optPartitionKey , UnaryOperator<ObjectNode> handleItem) {
+                                                   Optional<PartitionKey> optPartitionKey, UnaryOperator<ObjectNode> handleItem) {
         List<CosmosItemOperation> bulkOperations = new ArrayList<>();
         RequestOptions requestOptions = new RequestOptions();
+        String partitionKeyDefinition = getPartitionKeyDefinition(persistentEntity);
+        if (partitionKeyDefinition.startsWith(Constants.PARTITION_KEY_SEPARATOR)) {
+            partitionKeyDefinition = partitionKeyDefinition.substring(1);
+        }
+        final String partitionKeyField = partitionKeyDefinition;
         for (ObjectNode item : items) {
             if (handleItem != null) {
                 item = handleItem.apply(item);
             }
             String id = getItemId(item);
             ObjectNode finalItem = item;
-            PartitionKey partitionKey = optPartitionKey.orElseGet(() -> getPartitionKey(persistentEntity, finalItem));
+            PartitionKey partitionKey = optPartitionKey.orElseGet(() -> getPartitionKey(partitionKeyField, finalItem));
             bulkOperations.add(new ItemBulkOperation<>(bulkOperationType.cosmosItemOperationType, id, partitionKey, requestOptions, item, null));
         }
         return bulkOperations;
@@ -520,11 +526,12 @@ abstract class AbstractCosmosOperations extends AbstractRepositoryOperations imp
 
     /**
      * The bulk operation type used when creating bulk operations against Cosmos Db.
-     * Need to know what type (supported DELETE and REPLACE) and what expected status code
+     * Need to know what type (supported CREATE, DELETE and REPLACE) and what expected status code
      * for each item is to be treated as successful.
      */
     enum BulkOperationType {
 
+        CREATE(CosmosItemOperationType.CREATE, HttpResponseStatus.CREATED.code()),
         DELETE(CosmosItemOperationType.DELETE, HttpResponseStatus.NO_CONTENT.code()),
         UPDATE(CosmosItemOperationType.REPLACE, HttpResponseStatus.OK.code());
 

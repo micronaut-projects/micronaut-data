@@ -18,7 +18,6 @@ package io.micronaut.data.cosmos.operations;
 import com.azure.cosmos.CosmosAsyncClient;
 import com.azure.cosmos.CosmosAsyncContainer;
 import com.azure.cosmos.CosmosAsyncDatabase;
-import com.azure.cosmos.CosmosException;
 import com.azure.cosmos.implementation.RequestOptions;
 import com.azure.cosmos.implementation.batch.ItemBulkOperation;
 import com.azure.cosmos.models.CosmosItemOperation;
@@ -42,7 +41,6 @@ import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.cosmos.common.Constants;
 import io.micronaut.data.cosmos.config.CosmosDatabaseConfiguration;
 import io.micronaut.data.event.EntityEventListener;
-import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.exceptions.EmptyResultException;
 import io.micronaut.data.exceptions.NonUniqueResultException;
 import io.micronaut.data.model.DataType;
@@ -139,34 +137,27 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractCos
     @Override
     @NonNull
     public <T> Mono<T> findOne(@NonNull Class<T> type, Serializable id) {
-        try {
-            RuntimePersistentEntity<T> persistentEntity = runtimeEntityRegistry.getEntity(type);
-            CosmosAsyncContainer container = getContainer(persistentEntity);
-            final SqlParameter param = new SqlParameter("@ROOT_ID", id.toString());
-            final SqlQuerySpec querySpec = new SqlQuerySpec(FIND_ONE_DEFAULT_QUERY, param);
-            logQuery(querySpec, Collections.singletonList(param));
-            final CosmosQueryRequestOptions options = new CosmosQueryRequestOptions();
-            if (isIdPartitionKey(persistentEntity)) {
-                options.setPartitionKey(new PartitionKey(id.toString()));
-            }
-            CosmosPagedFlux<ObjectNode> result = container.queryItems(querySpec, options, ObjectNode.class);
-            return result.byPage().flatMap(fluxResponse -> {
-                Iterator<ObjectNode> iterator = fluxResponse.getResults().iterator();
-                if (iterator.hasNext()) {
-                    ObjectNode item = iterator.next();
-                    if (iterator.hasNext()) {
-                        return Flux.error(new NonUniqueResultException());
-                    }
-                    return Mono.just(deserialize(item, Argument.of(type)));
-                }
-                return Flux.empty();
-            }).next();
-        } catch (CosmosException e) {
-            if (e.getStatusCode() == HttpResponseStatus.NOT_FOUND.code()) {
-                return Mono.empty();
-            }
-            return Mono.error(e);
+        RuntimePersistentEntity<T> persistentEntity = runtimeEntityRegistry.getEntity(type);
+        CosmosAsyncContainer container = getContainer(persistentEntity);
+        final SqlParameter param = new SqlParameter("@ROOT_ID", id.toString());
+        final SqlQuerySpec querySpec = new SqlQuerySpec(FIND_ONE_DEFAULT_QUERY, param);
+        logQuery(querySpec, Collections.singletonList(param));
+        final CosmosQueryRequestOptions options = new CosmosQueryRequestOptions();
+        if (isIdPartitionKey(persistentEntity)) {
+            options.setPartitionKey(new PartitionKey(id.toString()));
         }
+        CosmosPagedFlux<ObjectNode> result = container.queryItems(querySpec, options, ObjectNode.class);
+        return result.byPage().flatMap(fluxResponse -> {
+            Iterator<ObjectNode> iterator = fluxResponse.getResults().iterator();
+            if (iterator.hasNext()) {
+                ObjectNode item = iterator.next();
+                if (iterator.hasNext()) {
+                    return Flux.error(new NonUniqueResultException());
+                }
+                return Mono.just(deserialize(item, Argument.of(type)));
+            }
+            return Flux.empty();
+        }).next();
     }
 
     /**
@@ -258,20 +249,13 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractCos
     @Override
     @NonNull
     public <T, R> Mono<R> findOne(@NonNull PreparedQuery<T, R> preparedQuery) {
-        try {
-            List<SqlParameter> paramList = new ParameterBinder().bindParameters(preparedQuery);
-            boolean dtoProjection = preparedQuery.isDtoProjection();
-            boolean isEntity = preparedQuery.getResultDataType() == DataType.ENTITY;
-            if (isEntity || dtoProjection) {
-                return findOneEntityOrDto(preparedQuery, paramList);
-            } else {
-                return findOneCustomResult(preparedQuery, paramList);
-            }
-        } catch (CosmosException e) {
-            if (e.getStatusCode() == HttpResponseStatus.NOT_FOUND.code()) {
-                return Mono.empty();
-            }
-            return Mono.error(e);
+        List<SqlParameter> paramList = new ParameterBinder().bindParameters(preparedQuery);
+        boolean dtoProjection = preparedQuery.isDtoProjection();
+        boolean isEntity = preparedQuery.getResultDataType() == DataType.ENTITY;
+        if (isEntity || dtoProjection) {
+            return findOneEntityOrDto(preparedQuery, paramList);
+        } else {
+            return findOneCustomResult(preparedQuery, paramList);
         }
     }
 
@@ -302,35 +286,31 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractCos
     @Override
     @NonNull
     public <T, R> Flux<R> findAll(@NonNull PreparedQuery<T, R> preparedQuery) {
-        try {
-            boolean dtoProjection = preparedQuery.isDtoProjection();
-            boolean isEntity = preparedQuery.getResultDataType() == DataType.ENTITY;
-            List<SqlParameter> paramList = new ParameterBinder().bindParameters(preparedQuery);
-            if (isEntity || dtoProjection) {
-                Argument<R> argument;
-                if (dtoProjection) {
-                    argument = Argument.of(ReflectionUtils.getWrapperType(preparedQuery.getResultType()));
-                } else {
-                    argument = Argument.of(preparedQuery.getResultType());
-                }
-                CosmosPagedFlux<ObjectNode> result = getCosmosResults(preparedQuery, paramList, ObjectNode.class);
-                return result.map(item -> deserialize(item, argument));
+        boolean dtoProjection = preparedQuery.isDtoProjection();
+        boolean isEntity = preparedQuery.getResultDataType() == DataType.ENTITY;
+        List<SqlParameter> paramList = new ParameterBinder().bindParameters(preparedQuery);
+        if (isEntity || dtoProjection) {
+            Argument<R> argument;
+            if (dtoProjection) {
+                argument = Argument.of(ReflectionUtils.getWrapperType(preparedQuery.getResultType()));
+            } else {
+                argument = Argument.of(preparedQuery.getResultType());
             }
-            DataType dataType = preparedQuery.getResultDataType();
-            Class<R> resultType = preparedQuery.getResultType();
-            CosmosPagedFlux<?> result = getCosmosResults(preparedQuery, paramList, getDataTypeClass(dataType));
-            return result.mapNotNull(item -> {
-                if (resultType.isInstance(item)) {
-                    return (R) item;
-                }
-                if (item != null) {
-                    return conversionService.convertRequired(item, resultType);
-                }
-                return null;
-            });
-        } catch (Exception e) {
-            return Flux.error(new DataAccessException("Cosmos SQL Error executing Query: " + e.getMessage(), e));
+            CosmosPagedFlux<ObjectNode> result = getCosmosResults(preparedQuery, paramList, ObjectNode.class);
+            return result.map(item -> deserialize(item, argument));
         }
+        DataType dataType = preparedQuery.getResultDataType();
+        Class<R> resultType = preparedQuery.getResultType();
+        CosmosPagedFlux<?> result = getCosmosResults(preparedQuery, paramList, getDataTypeClass(dataType));
+        return result.mapNotNull(item -> {
+            if (resultType.isInstance(item)) {
+                return (R) item;
+            }
+            if (item != null) {
+                return conversionService.convertRequired(item, resultType);
+            }
+            return null;
+        });
     }
 
     @Override
@@ -375,11 +355,14 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractCos
     @Override
     @NonNull
     public <T> Flux<T> persistAll(InsertBatchOperation<T> operation) {
-        Flux<T> result = Flux.empty();
-        for (InsertOperation<T> insertOperation : operation.split()) {
-            result = result.concatWith(persist(insertOperation));
-        }
-        return result;
+        Class<T> rootEntity = operation.getRootEntity();
+        RuntimePersistentEntity<T> persistentEntity = runtimeEntityRegistry.getEntity(rootEntity);
+        CosmosAsyncContainer container = getContainer(persistentEntity);
+        CosmosReactiveOperationContext<T> ctx = new CosmosReactiveOperationContext<>(operation.getAnnotationMetadata(),
+            operation.getRepositoryType(), container, rootEntity);
+        CosmosReactiveEntitiesOperation<T> op = createCosmosReactiveBulkOperation(ctx, persistentEntity, operation, BulkOperationType.CREATE);
+        op.persist();
+        return op.getEntities();
     }
 
     @Override
@@ -568,13 +551,26 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractCos
                 Argument<T> arg = Argument.of(ctx.getRootEntity());
                 RequestOptions requestOptions = new RequestOptions();
 
+                String partitionKeyDefinition = getPartitionKeyDefinition(persistentEntity);
+                if (partitionKeyDefinition.startsWith(Constants.PARTITION_KEY_SEPARATOR)) {
+                    partitionKeyDefinition = partitionKeyDefinition.substring(1);
+                }
+                final String partitionKeyField = partitionKeyDefinition;
+                boolean generateId = hasGeneratedId && BulkOperationType.CREATE.equals(operationType);
+
                 // Update/replace using partition key calculated from each item
                 Mono<Tuple2<List<Data>, Long>> entitiesWithRowsUpdated = entities.collectList()
                     .flatMap(e -> {
                         List<ItemBulkOperation<?, ?>> notVetoedEntities = e.stream().filter(this::notVetoed).map(x -> {
+                            if (generateId) {
+                                RuntimePersistentProperty<T> identity = persistentEntity.getIdentity();
+                                if (identity.getProperty().get(x.entity) == null && identity.getDataType().equals(DataType.STRING)) {
+                                    identity.getProperty().convertAndSet(x.entity, UUID.randomUUID().toString());
+                                }
+                            }
                             ObjectNode item = serialize(x.entity, arg);
                             String id = getItemId(item);
-                            PartitionKey partitionKey = getPartitionKey(persistentEntity, item);
+                            PartitionKey partitionKey = getPartitionKey(partitionKeyField, item);
                             return new ItemBulkOperation<>(operationType.cosmosItemOperationType, id, partitionKey, requestOptions, item, null);
                         }).collect(Collectors.toList());
                         if (notVetoedEntities.isEmpty()) {
