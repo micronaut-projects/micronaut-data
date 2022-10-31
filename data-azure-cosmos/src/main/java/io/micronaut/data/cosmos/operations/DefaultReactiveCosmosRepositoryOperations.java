@@ -78,7 +78,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Schedulers;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
@@ -151,7 +150,7 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractCos
                 options.setPartitionKey(new PartitionKey(id.toString()));
             }
             CosmosPagedFlux<ObjectNode> result = container.queryItems(querySpec, options, ObjectNode.class);
-            return result.byPage().publishOn(Schedulers.parallel()).flatMap(fluxResponse -> {
+            return result.byPage().flatMap(fluxResponse -> {
                 Iterator<ObjectNode> iterator = fluxResponse.getResults().iterator();
                 if (iterator.hasNext()) {
                     ObjectNode item = iterator.next();
@@ -195,8 +194,7 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractCos
     public <T> Mono<Boolean> exists(@NonNull PreparedQuery<T, Boolean> preparedQuery) {
         List<SqlParameter> paramList = new ParameterBinder().bindParameters(preparedQuery);
         CosmosPagedFlux<ObjectNode> result = getCosmosResults(preparedQuery, paramList, ObjectNode.class);
-        return result.byPage().publishOn(Schedulers.parallel())
-            .flatMap(cosmosResponse -> Mono.just(cosmosResponse.getResults().iterator().hasNext())).next();
+        return result.byPage().flatMap(cosmosResponse -> Mono.just(cosmosResponse.getResults().iterator().hasNext())).next();
     }
 
     /**
@@ -210,7 +208,7 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractCos
      */
     private <T, R> Mono<R> findOneEntityOrDto(PreparedQuery<T, R> preparedQuery, List<SqlParameter> paramList) {
         CosmosPagedFlux<ObjectNode> result = getCosmosResults(preparedQuery, paramList, ObjectNode.class);
-        return result.byPage().publishOn(Schedulers.parallel()).flatMap(fluxResponse -> {
+        return result.byPage().flatMap(fluxResponse -> {
             Iterator<ObjectNode> iterator = fluxResponse.getResults().iterator();
             if (iterator.hasNext()) {
                 ObjectNode item = iterator.next();
@@ -239,7 +237,7 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractCos
     private <T, R> Mono<R> findOneCustomResult(PreparedQuery<T, R> preparedQuery, List<SqlParameter> paramList) {
         DataType dataType = preparedQuery.getResultDataType();
         CosmosPagedFlux<?> result = getCosmosResults(preparedQuery, paramList, getDataTypeClass(dataType));
-        return result.byPage().publishOn(Schedulers.parallel()).flatMap(fluxResponse -> {
+        return result.byPage().flatMap(fluxResponse -> {
             Iterator<?> iterator = fluxResponse.getResults().iterator();
             if (iterator.hasNext()) {
                 Object item = iterator.next();
@@ -250,7 +248,7 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractCos
                 if (resultType.isInstance(item)) {
                     return Mono.just((R) item);
                 } else if (item != null) {
-                    return Mono.just(ConversionService.SHARED.convertRequired(item, resultType));
+                    return Mono.just(conversionService.convertRequired(item, resultType));
                 }
             }
             return Flux.empty();
@@ -317,19 +315,19 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractCos
                 }
                 CosmosPagedFlux<ObjectNode> result = getCosmosResults(preparedQuery, paramList, ObjectNode.class);
                 return result.map(item -> deserialize(item, argument));
-            } else {
-                DataType dataType = preparedQuery.getResultDataType();
-                Class<R> resultType = preparedQuery.getResultType();
-                CosmosPagedFlux<?> result = getCosmosResults(preparedQuery, paramList, getDataTypeClass(dataType));
-                return result.mapNotNull(item -> {
-                    if (resultType.isInstance(item)) {
-                        return (R) item;
-                    } else if (item != null) {
-                        return ConversionService.SHARED.convertRequired(item, resultType);
-                    }
-                    return null;
-                });
             }
+            DataType dataType = preparedQuery.getResultDataType();
+            Class<R> resultType = preparedQuery.getResultType();
+            CosmosPagedFlux<?> result = getCosmosResults(preparedQuery, paramList, getDataTypeClass(dataType));
+            return result.mapNotNull(item -> {
+                if (resultType.isInstance(item)) {
+                    return (R) item;
+                }
+                if (item != null) {
+                    return conversionService.convertRequired(item, resultType);
+                }
+                return null;
+            });
         } catch (Exception e) {
             return Flux.error(new DataAccessException("Cosmos SQL Error executing Query: " + e.getMessage(), e));
         }
@@ -489,7 +487,7 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractCos
                                      UnaryOperator<ObjectNode> handleItem) {
 
         // Update/replace using provided partition key or partition key calculated from each item
-        Flux<CosmosItemOperation> updateItems = items.byPage().publishOn(Schedulers.parallel()).flatMap(itemsMap -> {
+        Flux<CosmosItemOperation> updateItems = items.byPage().flatMap(itemsMap -> {
             List<CosmosItemOperation> bulkOperations = createBulkOperations(itemsMap.getResults(), bulkOperationType, persistentEntity, optPartitionKey, handleItem);
             return Flux.fromIterable(bulkOperations);
         });
