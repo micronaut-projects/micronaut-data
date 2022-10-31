@@ -39,9 +39,9 @@ import io.micronaut.core.type.Argument;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.cosmos.common.Constants;
+import io.micronaut.data.cosmos.common.CosmosAccessException;
 import io.micronaut.data.cosmos.config.CosmosDatabaseConfiguration;
 import io.micronaut.data.event.EntityEventListener;
-import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.exceptions.EmptyResultException;
 import io.micronaut.data.exceptions.NonUniqueResultException;
 import io.micronaut.data.model.DataType;
@@ -158,7 +158,7 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractCos
                 return Mono.just(deserialize(item, Argument.of(type)));
             }
             return Flux.empty();
-        }).onErrorResume(e ->  Flux.error(new DataAccessException("Failed to execute findOne: " + e.getMessage(), e))).next();
+        }).onErrorResume(e ->  Flux.error(new CosmosAccessException("Failed to query item by id: " + e.getMessage(), e))).next();
     }
 
     /**
@@ -186,7 +186,8 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractCos
     public <T> Mono<Boolean> exists(@NonNull PreparedQuery<T, Boolean> preparedQuery) {
         List<SqlParameter> paramList = new ParameterBinder().bindParameters(preparedQuery);
         CosmosPagedFlux<ObjectNode> result = getCosmosResults(preparedQuery, paramList, ObjectNode.class);
-        return result.byPage().flatMap(cosmosResponse -> Mono.just(cosmosResponse.getResults().iterator().hasNext())).next();
+        return result.byPage().flatMap(cosmosResponse -> Mono.just(cosmosResponse.getResults().iterator().hasNext()))
+            .onErrorResume(e ->  Flux.error(new CosmosAccessException("Failed to execute exists query: " + e.getMessage(), e))).next();
     }
 
     /**
@@ -214,7 +215,7 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractCos
                 return Mono.just(deserialize(item, Argument.of(preparedQuery.getResultType())));
             }
             return Flux.empty();
-        }).onErrorResume(e ->  Flux.error(new DataAccessException("Failed to query item: " + e.getMessage(), e))).next();
+        }).onErrorResume(e ->  Flux.error(new CosmosAccessException("Failed to query item: " + e.getMessage(), e))).next();
     }
 
     /**
@@ -244,7 +245,7 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractCos
                 }
             }
             return Flux.empty();
-        }).onErrorResume(e ->  Flux.error(new DataAccessException("Failed to query item: " + e.getMessage(), e))).next();
+        }).onErrorResume(e ->  Flux.error(new CosmosAccessException("Failed to query item: " + e.getMessage(), e))).next();
     }
 
     @Override
@@ -298,7 +299,7 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractCos
                 argument = Argument.of(preparedQuery.getResultType());
             }
             CosmosPagedFlux<ObjectNode> result = getCosmosResults(preparedQuery, paramList, ObjectNode.class);
-            return result.map(item -> deserialize(item, argument)).onErrorResume(e ->  Flux.error(new DataAccessException("Cosmos SQL Error executing Query: " + e.getMessage(), e)));
+            return result.map(item -> deserialize(item, argument)).onErrorResume(e ->  Flux.error(new CosmosAccessException("Failed to query items: " + e.getMessage(), e)));
         }
         DataType dataType = preparedQuery.getResultDataType();
         Class<R> resultType = preparedQuery.getResultType();
@@ -311,7 +312,7 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractCos
                 return conversionService.convertRequired(item, resultType);
             }
             return null;
-        }).onErrorResume(e ->  Flux.error(new DataAccessException("Cosmos SQL Error executing Query: " + e.getMessage(), e)));
+        }).onErrorResume(e ->  Flux.error(new CosmosAccessException("Failed to query items: " + e.getMessage(), e)));
     }
 
     @Override
