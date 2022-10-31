@@ -30,14 +30,3 @@ dependencies {
     runtimeOnly "ch.qos.logback:logback-classic"
     runtimeOnly "com.h2database:h2"
 }
-
-tasks.withType(JavaCompile){
-    if (JavaVersion.current() == JavaVersion.VERSION_15) {
-        targetCompatibility("15")
-        sourceCompatibility("15")
-        options.compilerArgs.add("--enable-preview")
-    } else {
-        targetCompatibility("16")
-        sourceCompatibility("16")
-    }
-}

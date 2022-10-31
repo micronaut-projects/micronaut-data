@@ -1,8 +1,3 @@
 plugins {
     id "io.micronaut.build.internal.data-example"
 }
-
-micronaut {
-    sourceCompatibility = "11"
-    targetCompatibility = "11"
-}

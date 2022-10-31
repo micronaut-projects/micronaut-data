@@ -137,7 +137,7 @@ public final class AnnotationMetadataHierarchy implements AnnotationMetadata {
     }
 
     @Override
-    public <E extends Enum> Optional<E> enumValue(@NonNull Class<? extends Annotation> annotation, @NonNull String member, Class<E> enumType) {
+    public <E extends Enum<E>> Optional<E> enumValue(@NonNull Class<? extends Annotation> annotation, @NonNull String member, Class<E> enumType) {
         for (AnnotationMetadata annotationMetadata : hierarchy) {
             final Optional<E> o = annotationMetadata.enumValue(annotation, member, enumType);
             if (o.isPresent()) {

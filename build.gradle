@@ -9,10 +9,6 @@ repositories {
     maven { url "https://s01.oss.sonatype.org/content/repositories/snapshots/" }
 }
 
-micronautBuild {
-    sourceCompatibility = "11"
-}
-
 if (System.getenv("SONAR_TOKEN") != null) {
     sonarqube {
         properties {

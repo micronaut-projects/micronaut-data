@@ -38,9 +38,7 @@ dependencies {
     testImplementation mn.micronaut.http.server.netty
     testImplementation mn.micronaut.http.client
 
-    if (JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_11)) {
-        testImplementation libs.drivers.r2dbc.oracle
-    }
+    testImplementation libs.drivers.r2dbc.oracle
 
     // mariadb
     testImplementation libs.drivers.r2dbc.mariadb

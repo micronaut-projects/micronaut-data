@@ -16,9 +16,6 @@ dependencies {
 	testImplementation libs.javax.persistence.api
 	testImplementation libs.javax.transaction.api
 	testImplementation libs.jakarta.transaction.api
-	if (!JavaVersion.current().isJava9Compatible()) {
-		testImplementation files(org.gradle.internal.jvm.Jvm.current().toolsJar)
-	}
 	testImplementation libs.spring.data.jpa
 	testImplementation projects.dataTck
 }

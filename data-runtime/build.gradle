@@ -29,11 +29,8 @@ dependencies {
 	testImplementation mn.micronaut.http
 	testImplementation mn.micronaut.test.junit5
 	testImplementation projects.dataTck
-}
 
-dependencies {
     testRuntimeOnly libs.jupiter.engine
-
     kaptTest mn.micronaut.inject.java
     kaptTest projects.dataProcessor
     testAnnotationProcessor mn.micronaut.inject.java

@@ -11,11 +11,6 @@ plugins {
 group "io.micronaut.data"
 version projectVersion
 
-java {
-    targetCompatibility = JavaVersion.VERSION_1_8
-    sourceCompatibility = JavaVersion.VERSION_1_8
-}
-
 tasks.withType(JavaCompile).configureEach {
     options.fork = true
     options.encoding = "UTF-8"

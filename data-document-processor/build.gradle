@@ -17,7 +17,4 @@ dependencies {
 	testImplementation projects.dataDocumentTck
 	testImplementation projects.dataMongodb
 
-	if (!JavaVersion.current().isJava9Compatible()) {
-		testImplementation files(org.gradle.internal.jvm.Jvm.current().toolsJar)
-	}
 }
