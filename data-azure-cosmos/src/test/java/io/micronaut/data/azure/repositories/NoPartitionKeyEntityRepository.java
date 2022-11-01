@@ -19,6 +19,19 @@ public interface NoPartitionKeyEntityRepository extends CrudRepository<NoPartiti
     @Query(value = "SELECT * FROM c WHERE c.name = :name AND c.grade = :grade")
     List<NoPartitionKeyEntity> findAllByNameAndGrade(@Parameter("name") String name, int grade);
 
+    @Query(value = "SELECT * FROM c WHERE c.grade IN (:grades)")
+    List<NoPartitionKeyEntity> findByGradeIn(List<Integer> grades);
+
+    int findMaxGradeByIdIn(List<String> ids);
+
+    int findSumGrade();
+
+    int findAvgGradeByNameIn(List<String> names);
+
+    int findMinGrade();
+
+    List<NoPartitionKeyEntity> findByTagsArrayContains(String tag);
+
     void updateGrade(@Id String id, int grade);
 
     // This query should not update records because it is using partition key but
@@ -30,4 +43,16 @@ public interface NoPartitionKeyEntityRepository extends CrudRepository<NoPartiti
     // This query should not delete records because it is using partition key but
     // partition key is not defined on container/entity
     void deleteByGrade(int grade, PartitionKey partitionKey);
+
+    String findNameById(String id);
+
+    // This has to be custom query since we cannot make String[] as a result in Micronaut generated queries.
+    @Query("SELECT DISTINCT VALUE f.tags FROM f WHERE f.id = :id")
+    String[] getTagsById(String id);
+
+    List<NoPartitionKeyEntity> findByTagsIsNotNull();
+
+    List<NoPartitionKeyEntity> findByNameIsNotEmpty();
+
+    List<NoPartitionKeyEntity> findByCustomNameIsEmpty();
 }

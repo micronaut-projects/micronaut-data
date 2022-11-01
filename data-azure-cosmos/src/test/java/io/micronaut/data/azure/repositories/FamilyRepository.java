@@ -70,6 +70,8 @@ public abstract class FamilyRepository implements PageableRepository<Family, Str
 
     public abstract List<Family> findByIdNotIn(List<String> ids);
 
+    public abstract List<Family> findByLastNameLike(String lastName);
+
     static class Specifications {
 
         public static PredicateSpecification<Family> lastNameEquals(String lastName) {
@@ -78,6 +80,10 @@ public abstract class FamilyRepository implements PageableRepository<Family, Str
 
         public static PredicateSpecification<Family> idsIn(String... ids) {
             return (root, criteriaBuilder) -> root.get("id").in(Arrays.asList(ids));
+        }
+
+        public static PredicateSpecification<Family> idsNotIn(String... ids) {
+            return (root, criteriaBuilder) -> root.get("id").in(Arrays.asList(ids)).not();
         }
 
     }

@@ -60,46 +60,51 @@ import java.util.function.Function;
  */
 public final class CosmosSqlQueryBuilder extends SqlQueryBuilder {
 
-    private static final String SELECT_COUNT = "VALUE COUNT(1)";
+    private static final String VALUE = "VALUE ";
+    private static final String SELECT_COUNT = "COUNT(1)";
     private static final String JOIN = " JOIN ";
     private static final String IN = " IN ";
+    private static final String IS_NULL = "IS_NULL";
+    private static final String IS_DEFINED = "IS_DEFINED";
 
     {
-        addCriterionHandler(QueryModel.In.class, (ctx, inQuery) -> {
-            QueryPropertyPath propertyPath = ctx.getRequiredProperty(inQuery.getProperty(), QueryModel.In.class);
-            StringBuilder whereClause = ctx.query();
-            Object value = inQuery.getValue();
-            boolean isBindingParameter = value instanceof BindingParameter;
-
-            if (isBindingParameter) {
-                whereClause.append(" ARRAY_CONTAINS(");
-                ctx.pushParameter((BindingParameter) value, newBindingContext(propertyPath.getPropertyPath()).expandable());
-                whereClause.append(COMMA);
-                appendPropertyRef(whereClause, propertyPath);
-            } else {
-                appendPropertyRef(whereClause, propertyPath);
-                whereClause.append(IN).append(OPEN_BRACKET);
-                asLiterals(ctx.query(), value);
-            }
-            whereClause.append(CLOSE_BRACKET);
+        addCriterionHandler(QueryModel.IsNull.class, expression(IS_NULL));
+        addCriterionHandler(QueryModel.IsNotNull.class, (ctx, criterion) -> {
+            ctx.query().append(IS_NULL).append(OPEN_BRACKET);
+            appendPropertyRef(ctx.query(), ctx.getRequiredProperty(criterion));
+            ctx.query().append(CLOSE_BRACKET).append(" = false");
         });
-        addCriterionHandler(QueryModel.NotIn.class, (ctx, inQuery) -> {
-            QueryPropertyPath propertyPath = ctx.getRequiredProperty(inQuery.getProperty(), QueryModel.NotIn.class);
+        addCriterionHandler(QueryModel.IsEmpty.class, (ctx, criterion) -> {
+            ctx.query().append(IS_NULL).append(OPEN_BRACKET);
+            appendPropertyRef(ctx.query(), ctx.getRequiredProperty(criterion));
+            ctx.query().append(CLOSE_BRACKET).append(" OR ").append(IS_DEFINED).append(OPEN_BRACKET);
+            appendPropertyRef(ctx.query(), ctx.getRequiredProperty(criterion));
+            ctx.query().append(CLOSE_BRACKET).append(" = false OR ");
+            appendPropertyRef(ctx.query(), ctx.getRequiredProperty(criterion));
+            ctx.query().append(" = ''");
+        });
+        addCriterionHandler(QueryModel.IsNotEmpty.class, (ctx, criterion) -> {
+            ctx.query().append(IS_NULL).append(OPEN_BRACKET);
+            appendPropertyRef(ctx.query(), ctx.getRequiredProperty(criterion));
+            ctx.query().append(CLOSE_BRACKET).append(" = false AND ").append(IS_DEFINED).append(OPEN_BRACKET);
+            appendPropertyRef(ctx.query(), ctx.getRequiredProperty(criterion));
+            ctx.query().append(CLOSE_BRACKET).append(" AND ");
+            appendPropertyRef(ctx.query(), ctx.getRequiredProperty(criterion));
+            ctx.query().append(" <> ''");
+        });
+        addCriterionHandler(QueryModel.ArrayContains.class, (ctx, criterion) -> {
+            QueryPropertyPath propertyPath = ctx.getRequiredProperty(criterion.getProperty(), QueryModel.ArrayContains.class);
             StringBuilder whereClause = ctx.query();
-            Object value = inQuery.getValue();
-            boolean isBindingParameter = value instanceof BindingParameter;
-
-            if (isBindingParameter) {
-                whereClause.append(NOT).append(" ARRAY_CONTAINS").append(OPEN_BRACKET);
+            whereClause.append("ARRAY_CONTAINS(");
+            appendPropertyRef(whereClause, propertyPath);
+            whereClause.append(COMMA);
+            Object value = criterion.getValue();
+            if (value instanceof BindingParameter) {
                 ctx.pushParameter((BindingParameter) value, newBindingContext(propertyPath.getPropertyPath()).expandable());
-                whereClause.append(COMMA);
-                appendPropertyRef(whereClause, propertyPath);
             } else {
-                appendPropertyRef(whereClause, propertyPath);
-                whereClause.append(SPACE).append(NOT).append(IN).append(OPEN_BRACKET);
                 asLiterals(ctx.query(), value);
             }
-            whereClause.append(CLOSE_BRACKET);
+            whereClause.append(COMMA).append("true").append(CLOSE_BRACKET);
         });
     }
 
@@ -113,6 +118,14 @@ public final class CosmosSqlQueryBuilder extends SqlQueryBuilder {
      */
     public CosmosSqlQueryBuilder() {
         super();
+    }
+
+    private <T extends QueryModel.PropertyNameCriterion> CriterionHandler<T> expression(String expression) {
+        return (ctx, expressionCriterion) -> {
+            ctx.query().append(expression).append(OPEN_BRACKET);
+            appendPropertyRef(ctx.query(), ctx.getRequiredProperty(expressionCriterion));
+            ctx.query().append(CLOSE_BRACKET);
+        };
     }
 
     @Override
@@ -251,13 +264,21 @@ public final class CosmosSqlQueryBuilder extends SqlQueryBuilder {
         StringBuilder select = new StringBuilder(SELECT_CLAUSE);
         String logicalName = queryState.getRootAlias();
         PersistentEntity entity = queryState.getEntity();
+        List<QueryModel.Projection> projections = query.getProjections();
         buildSelect(
             queryState,
             select,
-            query.getProjections(),
+            projections,
             logicalName,
             entity
         );
+
+        // For projections, we need to have VALUE in order to be able to read value
+        // but for DTO when there can be more fields retrieved (meaning there is comma in the query) then VALUE cannot work
+        // also literal projection does not need VALUE
+        if (projections.size() == 1 && !(projections.get(0) instanceof QueryModel.LiteralProjection) && select.indexOf(",") == -1) {
+            select.insert(SELECT_CLAUSE.length(), VALUE);
+        }
 
         select.append(FROM_CLAUSE).append(getTableName(entity)).append(SPACE).append(logicalName);
 
@@ -305,9 +326,9 @@ public final class CosmosSqlQueryBuilder extends SqlQueryBuilder {
      * @param joinAliasOverride
      */
     private void appendJoins(QueryState queryState,
-                                                 StringBuilder queryBuffer,
-                                                 Collection<JoinPath> allPaths,
-                                                 @Nullable Map<JoinPath, String> joinAliasOverride) {
+                             StringBuilder queryBuffer,
+                             Collection<JoinPath> allPaths,
+                             @Nullable Map<JoinPath, String> joinAliasOverride) {
         String logicalName = queryState.getRootAlias();
         if (CollectionUtils.isNotEmpty(allPaths)) {
             Map<String, String> joinedPaths = new HashMap<>();
@@ -349,7 +370,7 @@ public final class CosmosSqlQueryBuilder extends SqlQueryBuilder {
 
     @Override
     protected void selectAllColumns(QueryState queryState, StringBuilder queryBuffer) {
-        queryBuffer.append("DISTINCT VALUE ").append(queryState.getRootAlias());
+        queryBuffer.append(DISTINCT).append(SPACE).append(VALUE).append(queryState.getRootAlias());
     }
 
     @Override

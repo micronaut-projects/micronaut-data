@@ -1591,4 +1591,8 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
         throw notSupportedOperation();
     }
 
+    @Override
+    public Predicate arrayContains(Expression<?> x, Expression<?> y) {
+        return predicate(x, y, PredicateBinaryOp.ARRAY_CONTAINS);
+    }
 }

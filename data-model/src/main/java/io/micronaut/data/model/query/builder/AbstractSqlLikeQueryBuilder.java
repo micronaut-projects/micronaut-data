@@ -2174,6 +2174,9 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             return AbstractSqlLikeQueryBuilder.this.shouldEscape(propertyPath.findPropertyOwner().orElse(propertyPath.getProperty().getOwner()));
         }
 
+        /**
+         * @return the persistent property path
+         */
         public PersistentPropertyPath getPropertyPath() {
             return propertyPath;
         }

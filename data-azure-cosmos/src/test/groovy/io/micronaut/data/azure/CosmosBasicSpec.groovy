@@ -35,6 +35,7 @@ import spock.lang.Shared
 import spock.lang.Specification
 
 import static io.micronaut.data.azure.repositories.FamilyRepository.Specifications.idsIn
+import static io.micronaut.data.azure.repositories.FamilyRepository.Specifications.idsNotIn
 import static io.micronaut.data.azure.repositories.FamilyRepository.Specifications.lastNameEquals
 
 
@@ -194,7 +195,12 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
             optFamily2.get().children.size() == 2
             optFamily2.get().address
         when:
-            def families = familyRepository.findByChildrenPetsType("cat")
+            def families = familyRepository.findByLastNameLike("Ander%")
+        then:
+            families.size() > 0
+            families[0].id == FAMILY1_ID
+        when:
+            families = familyRepository.findByChildrenPetsType("cat")
         then:
             families.size() > 0
             families[0].id == FAMILY1_ID
@@ -354,8 +360,11 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
             familyRepository.findOne(lastNameEquals("Andersen")).isPresent()
             !familyRepository.findOne(lastNameEquals(UUID.randomUUID().toString())).isPresent()
             familyRepository.findAll(idsIn(FAMILY1_ID, FAMILY2_ID)).size() == 2
+            familyRepository.findAll(idsIn(FAMILY2_ID)).size() == 1
             familyRepository.findByIdIn(Arrays.asList(FAMILY1_ID, FAMILY2_ID)).size() == 2
-            //familyRepository.findByIdNotIn(Arrays.asList(FAMILY1_ID)).size() == 1
+            familyRepository.findByIdIn(Arrays.asList(FAMILY1_ID)).size() == 1
+            familyRepository.findAll(idsNotIn(FAMILY1_ID)).size() == 1
+            familyRepository.findByIdNotIn(Arrays.asList(FAMILY1_ID)).size() == 1
         cleanup:
             familyRepository.deleteAll()
     }

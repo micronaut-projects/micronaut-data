@@ -1538,4 +1538,44 @@ public interface QueryModel extends Criteria {
         }
     }
 
+    /**
+     * Criterion used to restrict the results based on belonging to an array.
+     */
+    class ArrayContains extends PropertyCriterion {
+        private QueryModel subquery;
+
+        /**
+         * Constructor for an individual parameter.
+         * @param name The name
+         * @param parameter The parameter
+         */
+        public ArrayContains(String name, Object parameter) {
+            super(name, parameter);
+        }
+
+        /**
+         * Constructor for a subquery.
+         * @param name The name
+         * @param subquery The subquery
+         */
+        public ArrayContains(String name, QueryModel subquery) {
+            super(name, subquery);
+            this.subquery = subquery;
+        }
+
+        /**
+         * @return The name
+         */
+        public String getName() {
+            return getProperty();
+        }
+
+        /**
+         * @return The subquery
+         */
+        public @Nullable
+        QueryModel getSubquery() {
+            return subquery;
+        }
+    }
 }

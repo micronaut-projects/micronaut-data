@@ -809,4 +809,20 @@ public final class Restrictions {
 
     }
 
+    /**
+     * Array contains restriction.
+     *
+     * @param <T> The property type
+     */
+    public static class PropertyArrayContains<T> extends SinglePropertyExpressionRestriction<T> {
+
+        public PropertyArrayContains() {
+            super(PersistentEntityCriteriaBuilder::arrayContains);
+        }
+
+        @Override
+        public String getName() {
+            return "ArrayContains";
+        }
+    }
 }

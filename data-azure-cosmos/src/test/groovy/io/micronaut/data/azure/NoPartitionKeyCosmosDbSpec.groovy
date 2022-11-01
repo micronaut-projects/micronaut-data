@@ -38,12 +38,49 @@ class NoPartitionKeyCosmosDbSpec extends Specification implements AzureCosmosTes
             entity1.id = "1"
             entity1.name = "Entity1"
             entity1.grade = 2
+            entity1.customName = "CustomEnt2"
             repository.save(entity1)
             def entity2 = new NoPartitionKeyEntity()
             entity2.id = "2"
             entity2.name = "Entity2"
             entity2.grade = 4
+            entity2.tags = Arrays.asList("entity2", "grade4", "id2", "custom2").toArray()
             repository.save(entity2)
+        when:
+            def maxGrade = repository.findMaxGradeByIdIn(Arrays.asList(entity1.id, entity2.id))
+            def sumGrade = repository.findSumGrade()
+            def avgGrade = repository.findAvgGradeByNameIn(Arrays.asList(entity1.name, entity2.name))
+            def minGrade = repository.findMinGrade()
+        then:
+            maxGrade == 4
+            sumGrade == 6
+            avgGrade == 3
+            minGrade == 2
+        when:
+            def name = repository.findNameById(entity1.id)
+            def tags1 = repository.getTagsById(entity1.id)
+            def tags2 = repository.getTagsById(entity2.id)
+            def notNullTagsEntities = repository.findByTagsIsNotNull()
+            def notEmptyNameEntities = repository.findByNameIsNotEmpty();
+            def emptyCustomNameEntities = repository.findByCustomNameIsEmpty();
+        then:
+            name == entity1.name
+            !tags1 || tags1.length == 0
+            tags2.length == 4
+            notEmptyNameEntities.size() == 2
+            notNullTagsEntities.size() > 0
+            emptyCustomNameEntities.size() == 1
+            emptyCustomNameEntities[0].id == entity2.id
+        when:
+            def entities = repository.findByTagsArrayContains("custom2")
+        then:
+            entities.size() == 1
+            entities[0].id == entity2.id
+        when:
+            entities = repository.findByGradeIn(Arrays.asList(entity2.grade))
+        then:
+            entities.size() == 1
+            entities[0].id == entity2.id
         when:
             def optEntity1 = repository.findById(entity1.id)
             def optEntity2 = repository.findById(entity2.id)
@@ -71,7 +108,7 @@ class NoPartitionKeyCosmosDbSpec extends Specification implements AzureCosmosTes
         then:
             optEntity2.present
         when:
-            def entities = repository.findAllByName(optEntity2.get().name)
+            entities = repository.findAllByName(optEntity2.get().name)
         then:
             entities.size() > 0
             def foundEntity2 = entities.stream().filter(i -> i.id == entity2.id).findFirst()
