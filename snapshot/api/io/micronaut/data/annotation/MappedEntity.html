@@ -164,6 +164,13 @@ public @interface <span class="memberNameLabel">MappedEntity</span></pre>
 </tr>
 <tr class="rowColor">
 <td class="colFirst"><code>java.lang.String</code></td>
+<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#schema()">schema</a></span></code></th>
+<td class="colLast">
+<div class="block">Only applies to supported databases.</div>
+</td>
+</tr>
+<tr class="altColor">
+<td class="colFirst"><code>java.lang.String</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#value()">value</a></span></code></th>
 <td class="colLast">
 <div class="block">The destination the type is persisted to.</div>
@@ -259,13 +266,38 @@ java.lang.Class&lt;? extends <a href="../model/naming/NamingStrategy.html" title
 <li class="blockList"><a id="alias()">
 <!--   -->
 </a>
-<ul class="blockListLast">
+<ul class="blockList">
 <li class="blockList">
 <h4>alias</h4>
 <pre>java.lang.String&nbsp;alias</pre>
 <dl>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>The alias to use for the query</dd>
+</dl>
+<dl>
+<dt>Default:</dt>
+<dd>""</dd>
+</dl>
+</li>
+</ul>
+</li>
+</ul>
+</section>
+<section role="region">
+<ul class="blockList">
+<li class="blockList"><a id="schema()">
+<!--   -->
+</a>
+<ul class="blockListLast">
+<li class="blockList">
+<h4>schema</h4>
+<pre>java.lang.String&nbsp;schema</pre>
+<div class="block">Only applies to supported databases.</div>
+<dl>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>the schema to use for this query</dd>
+<dt><span class="simpleTagLabel">Since:</span></dt>
+<dd>3.9</dd>
 </dl>
 <dl>
 <dt>Default:</dt>
