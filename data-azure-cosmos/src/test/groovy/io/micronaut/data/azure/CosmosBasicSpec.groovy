@@ -148,9 +148,11 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
         when:
             bookRepository.save(book1)
             bookRepository.save(book2)
+            def notLoadedBook = bookRepository.queryById(UUID.randomUUID().toString())
             def loadedBook1 = bookRepository.queryById(book1.id)
             def loadedBook2 = bookRepository.queryById(book2.id)
         then:
+            !notLoadedBook
             loadedBook1
             loadedBook1.title == "The Stand"
             loadedBook1.created

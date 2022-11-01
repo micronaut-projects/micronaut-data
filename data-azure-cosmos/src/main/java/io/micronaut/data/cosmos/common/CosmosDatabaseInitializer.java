@@ -102,12 +102,13 @@ public class CosmosDatabaseInitializer {
 
     /**
      * Gets partition key for the container which corresponds with given mapped entity.
+     * Partition key separator "/" will be prepended to the result, so it will be something like "/id", "/lastName", etc.
      *
      * @param entity the persistent entity which can have defined partition key on one of the fields
      * @param cosmosContainerSettings container settings potentially providing partition key path
      * @return partition key if defined either on entity or container settings
      */
-    public static String getPartitionKey(PersistentEntity entity, CosmosDatabaseConfiguration.CosmosContainerSettings cosmosContainerSettings) {
+    public static String getPartitionKeyDefinition(PersistentEntity entity, CosmosDatabaseConfiguration.CosmosContainerSettings cosmosContainerSettings) {
         return PARTITION_KEY_BY_ENTITY.computeIfAbsent(entity, e -> doGetPartitionKey(e, cosmosContainerSettings));
     }
 
@@ -137,7 +138,7 @@ public class CosmosDatabaseInitializer {
     private void initContainer(Map<String, CosmosDatabaseConfiguration.CosmosContainerSettings> cosmosContainerSettingsMap, StorageUpdatePolicy updatePolicy, PersistentEntity entity, CosmosDatabase cosmosDatabase) {
         String containerName = entity.getPersistedName();
         CosmosDatabaseConfiguration.CosmosContainerSettings cosmosContainerSettings = cosmosContainerSettingsMap.get(containerName);
-        String partitionKey = getPartitionKey(entity, cosmosContainerSettings);
+        String partitionKey = getPartitionKeyDefinition(entity, cosmosContainerSettings);
         ThroughputSettings throughputSettings = cosmosContainerSettings != null ? cosmosContainerSettings.getThroughput() : null;
         ThroughputProperties throughputProperties = throughputSettings != null ? throughputSettings.createThroughputProperties() : null;
         // TODO: Later implement indexing policy, time to live, unique key etc.
@@ -171,8 +172,8 @@ public class CosmosDatabaseInitializer {
             partitionKey = findPartitionKey(entity);
         }
         if (StringUtils.isNotEmpty(partitionKey)) {
-            if (!partitionKey.startsWith("/")) {
-                partitionKey = "/" + partitionKey;
+            if (!partitionKey.startsWith(Constants.PARTITION_KEY_SEPARATOR)) {
+                partitionKey = Constants.PARTITION_KEY_SEPARATOR + partitionKey;
             }
             return partitionKey;
         }

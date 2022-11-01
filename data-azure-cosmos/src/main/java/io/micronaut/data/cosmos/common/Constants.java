@@ -32,9 +32,14 @@ public final class Constants {
     public static final String INTERNAL_ID = "id";
 
     /**
+     * The partition key separator (or prefix).
+     */
+    public static final String PARTITION_KEY_SEPARATOR = "/";
+
+    /**
      * This value will be used as partition key if none is defined on the entity.
      */
-    public static final String NO_PARTITION_KEY = "/null";
+    public static final String NO_PARTITION_KEY = PARTITION_KEY_SEPARATOR + "null";
 
     private Constants() { }
 }
