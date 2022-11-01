@@ -22,6 +22,7 @@ import io.micronaut.data.model.Association
 import io.micronaut.data.model.PersistentEntity
 import io.micronaut.data.model.Sort
 import io.micronaut.data.model.entities.Bike
+import io.micronaut.data.model.entities.MappedEntityCar
 import io.micronaut.data.model.entities.Person
 import io.micronaut.data.model.entities.PersonAssignedId
 import io.micronaut.data.model.naming.NamingStrategies
@@ -115,13 +116,18 @@ interface MyRepository {
 
     void "test build queries with schema"() {
         when:"A select is encoded"
-        PersistentEntity entity = PersistentEntity.of(Car)
+        PersistentEntity entity = PersistentEntity.of(type)
         QueryModel q = QueryModel.from(entity)
         QueryBuilder encoder = new SqlQueryBuilder(Dialect.H2)
         def encoded = encoder.buildQuery(q)
 
         then:"The select includes the schema in the table name reference"
-        encoded.query == 'SELECT car_.`id`,car_.`name` FROM `ford`.`cars` car_'
+        encoded.query == query
+
+        where:
+        type            | query
+        Car             | 'SELECT car_.`id`,car_.`name` FROM `ford`.`cars` car_'
+        MappedEntityCar | 'SELECT mapped_entity_car_.`id`,mapped_entity_car_.`name` FROM `ford`.`cars` mapped_entity_car_'
     }
 
     void "test select embedded"() {
