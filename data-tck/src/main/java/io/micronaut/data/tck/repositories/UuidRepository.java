@@ -15,13 +15,30 @@
  */
 package io.micronaut.data.tck.repositories;
 
+import io.micronaut.context.annotation.Parameter;
+import io.micronaut.core.annotation.Nullable;
+import io.micronaut.data.annotation.Query;
 import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.data.tck.entities.UuidEntity;
 
+import java.util.Collection;
 import java.util.UUID;
 
 public interface UuidRepository extends CrudRepository<UuidEntity, UUID> {
 
     UUID findUuidByName(String name);
 
+    /**
+     * This method semantically makes no sense because it'll always produce NULL
+     * without correctly wrapping nullable value like this:
+     * WHERE :nullableValue IS NULL AND nullable_value IS NULL
+     *       OR
+     *       :nullableValue IS NOT NULL AND nullable_value = :nullableValue
+     */
+    @Query(
+        // value = "select * from uuid_entity where (:param)\\:\\:uuid is null",
+        value = "select * from uuid_entity where :param is null",
+        nativeQuery = true
+    )
+    Collection<UuidEntity> findByNullableValue(@Parameter("param") @Nullable UUID param);
 }
