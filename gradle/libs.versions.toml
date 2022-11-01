@@ -20,7 +20,7 @@ hibernate = "5.6.12.Final"
 spring-data = "2.6.4"
 spring = "5.3.23"
 
-mongodb = "4.7.1"
+mongodb = "4.7.2"
 
 vertx = "4.3.3"
 
