@@ -66,48 +66,49 @@ public final class CosmosSqlQueryBuilder extends SqlQueryBuilder {
     private static final String IN = " IN ";
     private static final String IS_NULL = "IS_NULL";
     private static final String IS_DEFINED = "IS_DEFINED";
+    private static final String ARRAY_CONTAINS = "ARRAY_CONTAINS";
 
     {
         addCriterionHandler(QueryModel.IsNull.class, (ctx, criterion) -> {
-            ctx.query().append(IS_NULL).append(OPEN_BRACKET);
+            ctx.query().append(NOT).append(SPACE).append(IS_DEFINED).append(OPEN_BRACKET);
             appendPropertyRef(ctx.query(), ctx.getRequiredProperty(criterion));
             ctx.query().append(CLOSE_BRACKET).append(SPACE).append(OR).append(SPACE);
-            ctx.query().append(NOT).append(SPACE).append(IS_DEFINED).append(OPEN_BRACKET);
+            ctx.query().append(IS_NULL).append(OPEN_BRACKET);
             appendPropertyRef(ctx.query(), ctx.getRequiredProperty(criterion));
             ctx.query().append(CLOSE_BRACKET);
         });
         addCriterionHandler(QueryModel.IsNotNull.class, (ctx, criterion) -> {
-            ctx.query().append(NOT).append(SPACE).append(IS_NULL).append(OPEN_BRACKET);
-            appendPropertyRef(ctx.query(), ctx.getRequiredProperty(criterion));
-            ctx.query().append(CLOSE_BRACKET).append(SPACE).append(OR).append(SPACE);
             ctx.query().append(IS_DEFINED).append(OPEN_BRACKET);
+            appendPropertyRef(ctx.query(), ctx.getRequiredProperty(criterion));
+            ctx.query().append(CLOSE_BRACKET).append(SPACE).append(AND).append(SPACE);
+            ctx.query().append(NOT).append(SPACE).append(IS_NULL).append(OPEN_BRACKET);
             appendPropertyRef(ctx.query(), ctx.getRequiredProperty(criterion));
             ctx.query().append(CLOSE_BRACKET);
         });
         addCriterionHandler(QueryModel.IsEmpty.class, (ctx, criterion) -> {
-            ctx.query().append(IS_NULL).append(OPEN_BRACKET);
-            appendPropertyRef(ctx.query(), ctx.getRequiredProperty(criterion));
-            ctx.query().append(CLOSE_BRACKET).append(SPACE).append(OR).append(SPACE);
             ctx.query().append(NOT).append(SPACE).append(IS_DEFINED).append(OPEN_BRACKET);
             appendPropertyRef(ctx.query(), ctx.getRequiredProperty(criterion));
             ctx.query().append(CLOSE_BRACKET).append(SPACE).append(OR).append(SPACE);
+            ctx.query().append(IS_NULL).append(OPEN_BRACKET);
             appendPropertyRef(ctx.query(), ctx.getRequiredProperty(criterion));
-            ctx.query().append(" = ''");
+            ctx.query().append(CLOSE_BRACKET).append(SPACE).append(OR).append(SPACE);
+            appendPropertyRef(ctx.query(), ctx.getRequiredProperty(criterion));
+            ctx.query().append(EQUALS).append("''");
         });
         addCriterionHandler(QueryModel.IsNotEmpty.class, (ctx, criterion) -> {
-            ctx.query().append(NOT).append(SPACE).append(IS_NULL).append(OPEN_BRACKET);
-            appendPropertyRef(ctx.query(), ctx.getRequiredProperty(criterion));
-            ctx.query().append(CLOSE_BRACKET).append(SPACE).append(AND).append(SPACE);
             ctx.query().append(IS_DEFINED).append(OPEN_BRACKET);
             appendPropertyRef(ctx.query(), ctx.getRequiredProperty(criterion));
             ctx.query().append(CLOSE_BRACKET).append(SPACE).append(AND).append(SPACE);
+            ctx.query().append(NOT).append(SPACE).append(IS_NULL).append(OPEN_BRACKET);
             appendPropertyRef(ctx.query(), ctx.getRequiredProperty(criterion));
-            ctx.query().append(" <> ''");
+            ctx.query().append(CLOSE_BRACKET).append(SPACE).append(AND).append(SPACE);
+            appendPropertyRef(ctx.query(), ctx.getRequiredProperty(criterion));
+            ctx.query().append(NOT_EQUALS).append("''");
         });
         addCriterionHandler(QueryModel.ArrayContains.class, (ctx, criterion) -> {
             QueryPropertyPath propertyPath = ctx.getRequiredProperty(criterion.getProperty(), QueryModel.ArrayContains.class);
             StringBuilder whereClause = ctx.query();
-            whereClause.append("ARRAY_CONTAINS(");
+            whereClause.append(ARRAY_CONTAINS).append(OPEN_BRACKET);
             appendPropertyRef(whereClause, propertyPath);
             whereClause.append(COMMA);
             Object value = criterion.getValue();

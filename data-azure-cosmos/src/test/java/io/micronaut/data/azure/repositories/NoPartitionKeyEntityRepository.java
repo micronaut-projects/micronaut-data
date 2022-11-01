@@ -56,5 +56,9 @@ public interface NoPartitionKeyEntityRepository extends CrudRepository<NoPartiti
 
     List<NoPartitionKeyEntity> findByRatingIsNull();
 
+    List<NoPartitionKeyEntity> findByRatingIsNotNull();
+
     List<NoPartitionKeyEntity> findByCustomNameIsNull();
+
+    List<NoPartitionKeyEntity> findByCustomNameIsNotNull();
 }
