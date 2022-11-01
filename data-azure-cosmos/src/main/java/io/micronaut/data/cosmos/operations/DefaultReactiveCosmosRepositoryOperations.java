@@ -227,7 +227,8 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
 
     @Override
     public <T> Mono<Boolean> exists(@NonNull PreparedQuery<T, Boolean> preparedQuery) {
-        SqlQuerySpec querySpec = new ParameterBinder().bindParameters(preparedQuery);
+        SqlQuerySpec querySpec = new ParameterBinder().bindParametersAndBuildCosmosQuery(preparedQuery);
+        logQuery(querySpec);
         CosmosPagedFlux<ObjectNode> result = getCosmosResults(preparedQuery, querySpec, ObjectNode.class);
         return result.byPage().flatMap(cosmosResponse -> Mono.just(cosmosResponse.getResults().iterator().hasNext()))
             .onErrorResume(e ->  Flux.error(new CosmosAccessException("Failed to execute exists query: " + e.getMessage(), e))).next();
@@ -236,7 +237,8 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
     @Override
     @NonNull
     public <T, R> Mono<R> findOne(@NonNull PreparedQuery<T, R> preparedQuery) {
-        SqlQuerySpec querySpec = new ParameterBinder().bindParameters(preparedQuery);
+        SqlQuerySpec querySpec = new ParameterBinder().bindParametersAndBuildCosmosQuery(preparedQuery);
+        logQuery(querySpec);
         boolean dtoProjection = preparedQuery.isDtoProjection();
         boolean isEntity = preparedQuery.getResultDataType() == DataType.ENTITY;
         if (isEntity || dtoProjection) {
@@ -275,7 +277,8 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
     public <T, R> Flux<R> findAll(@NonNull PreparedQuery<T, R> preparedQuery) {
         boolean dtoProjection = preparedQuery.isDtoProjection();
         boolean isEntity = preparedQuery.getResultDataType() == DataType.ENTITY;
-        SqlQuerySpec querySpec = new ParameterBinder().bindParameters(preparedQuery);
+        SqlQuerySpec querySpec = new ParameterBinder().bindParametersAndBuildCosmosQuery(preparedQuery);
+        logQuery(querySpec);
         if (isEntity || dtoProjection) {
             Argument<R> argument;
             if (dtoProjection) {
@@ -366,7 +369,7 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
         }
         List<String> updatePropertyList = Arrays.asList(update.split(","));
         ParameterBinder parameterBinder = new ParameterBinder(true, updatePropertyList);
-        SqlQuerySpec querySpec = parameterBinder.bindParameters(preparedQuery);
+        SqlQuerySpec querySpec = parameterBinder.bindParametersAndBuildCosmosQuery(preparedQuery);
         Map<String, Object> propertiesToUpdate = parameterBinder.getPropertiesToUpdate();
         if (propertiesToUpdate.isEmpty()) {
             LOG.warn("No properties found to be updated for Cosmos Db entity {} and query [{}]", persistentEntity.getName(), preparedQuery.getQuery());
@@ -387,7 +390,7 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
         RuntimePersistentEntity<?> persistentEntity = runtimeEntityRegistry.getEntity(preparedQuery.getRootEntity());
         CosmosAsyncContainer container = getContainer(persistentEntity);
         Optional<PartitionKey> optPartitionKey = preparedQuery.getParameterInRole(Constants.PARTITION_KEY_ROLE, PartitionKey.class);
-        SqlQuerySpec querySpec = new ParameterBinder().bindParameters(preparedQuery);
+        SqlQuerySpec querySpec = new ParameterBinder().bindParametersAndBuildCosmosQuery(preparedQuery);
         CosmosPagedFlux<ObjectNode> items = getCosmosResults(preparedQuery, querySpec, ObjectNode.class);
         return executeBulk(container, items, BulkOperationType.DELETE, persistentEntity, optPartitionKey, null);
     }
@@ -440,7 +443,6 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
     private <T, R, I> CosmosPagedFlux<I> getCosmosResults(PreparedQuery<T, R> preparedQuery, SqlQuerySpec querySpec, Class<I> itemsType) {
         RuntimePersistentEntity<T> persistentEntity = runtimeEntityRegistry.getEntity(preparedQuery.getRootEntity());
         CosmosAsyncContainer container = getContainer(persistentEntity);
-        logQuery(querySpec);
         CosmosQueryRequestOptions requestOptions = new CosmosQueryRequestOptions();
         preparedQuery.getParameterInRole(Constants.PARTITION_KEY_ROLE, PartitionKey.class).ifPresent(requestOptions::setPartitionKey);
         return container.queryItems(querySpec, requestOptions, itemsType);
@@ -970,7 +972,7 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
          * @param <R> The result type of prepared query
          * @return SqlQuerySpec with bound parameters
          */
-        <T, R> SqlQuerySpec bindParameters(PreparedQuery<T, R> preparedQuery) {
+        <T, R> SqlQuerySpec bindParametersAndBuildCosmosQuery(PreparedQuery<T, R> preparedQuery) {
             boolean isRawQuery = isRawQuery(preparedQuery);
             RuntimePersistentEntity<T> persistentEntity = runtimeEntityRegistry.getEntity(preparedQuery.getRootEntity());
             List<SqlParameter> parameterList = new ArrayList<>();
