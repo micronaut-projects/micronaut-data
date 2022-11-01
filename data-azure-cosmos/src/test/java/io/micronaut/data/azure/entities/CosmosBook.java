@@ -47,6 +47,13 @@ public class CosmosBook {
     @MappedProperty(value = "_etag")
     private String version;
 
+    public CosmosBook() { }
+
+    public CosmosBook(String title, int totalPages) {
+        this.title = title;
+        this.totalPages = totalPages;
+    }
+
     @Relation(Relation.Kind.MANY_TO_ONE)
     private CosmosAuthor author;
 

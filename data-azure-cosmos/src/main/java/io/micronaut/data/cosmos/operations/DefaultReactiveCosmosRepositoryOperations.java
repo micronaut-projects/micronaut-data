@@ -49,6 +49,7 @@ import io.micronaut.data.cosmos.common.Constants;
 import io.micronaut.data.cosmos.common.CosmosAccessException;
 import io.micronaut.data.cosmos.common.CosmosDatabaseInitializer;
 import io.micronaut.data.cosmos.config.CosmosDatabaseConfiguration;
+import io.micronaut.data.document.model.query.builder.CosmosSqlQueryBuilder;
 import io.micronaut.data.event.EntityEventListener;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.exceptions.EmptyResultException;
@@ -59,7 +60,6 @@ import io.micronaut.data.model.Page;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.PersistentPropertyPath;
-import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
 import io.micronaut.data.model.runtime.BatchOperation;
 import io.micronaut.data.model.runtime.DelegatingQueryParameterBinding;
@@ -127,6 +127,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.StringJoiner;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.function.UnaryOperator;
 import java.util.regex.Pattern;
@@ -156,6 +157,7 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
     private final ObjectMapper objectMapper;
     private final CosmosAsyncDatabase cosmosAsyncDatabase;
     private final Map<String, CosmosDatabaseConfiguration.CosmosContainerSettings> cosmosContainerSettingsMap;
+    private final Map<PersistentEntity, String> partitionKeyByPersistentEntity = new ConcurrentHashMap<>();
 
     /**
      * Default constructor.
@@ -194,7 +196,7 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
 
     @Override
     public <E, R> StoredQuery<E, R> decorate(MethodInvocationContext<?, ?> context, StoredQuery<E, R> storedQuery) {
-        SqlQueryBuilder queryBuilder = new SqlQueryBuilder();
+        CosmosSqlQueryBuilder queryBuilder = new CosmosSqlQueryBuilder();
         RuntimePersistentEntity<E> runtimePersistentEntity = runtimeEntityRegistry.getEntity(storedQuery.getRootEntity());
         return new DefaultSqlStoredQuery<>(storedQuery, runtimePersistentEntity, queryBuilder);
     }
@@ -226,7 +228,9 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
     }
 
     @Override
-    public <T> Mono<Boolean> exists(@NonNull PreparedQuery<T, Boolean> preparedQuery) {
+    public <T> Mono<Boolean> exists(@NonNull PreparedQuery<T, Boolean> pq) {
+        SqlPreparedQuery<T, Boolean> preparedQuery = getSqlPreparedQuery(pq);
+        preparedQuery.attachPageable(preparedQuery.getPageable(), true);
         SqlQuerySpec querySpec = new ParameterBinder().bindParametersAndBuildCosmosQuery(preparedQuery);
         logQuery(querySpec);
         CosmosPagedFlux<ObjectNode> result = getCosmosResults(preparedQuery, querySpec, ObjectNode.class);
@@ -236,7 +240,9 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
 
     @Override
     @NonNull
-    public <T, R> Mono<R> findOne(@NonNull PreparedQuery<T, R> preparedQuery) {
+    public <T, R> Mono<R> findOne(@NonNull PreparedQuery<T, R> pq) {
+        SqlPreparedQuery<T, R> preparedQuery = getSqlPreparedQuery(pq);
+        preparedQuery.attachPageable(preparedQuery.getPageable(), true);
         SqlQuerySpec querySpec = new ParameterBinder().bindParametersAndBuildCosmosQuery(preparedQuery);
         logQuery(querySpec);
         boolean dtoProjection = preparedQuery.isDtoProjection();
@@ -274,7 +280,9 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
 
     @Override
     @NonNull
-    public <T, R> Flux<R> findAll(@NonNull PreparedQuery<T, R> preparedQuery) {
+    public <T, R> Flux<R> findAll(@NonNull PreparedQuery<T, R> pq) {
+        SqlPreparedQuery<T, R> preparedQuery = getSqlPreparedQuery(pq);
+        preparedQuery.attachPageable(preparedQuery.getPageable(), false);
         boolean dtoProjection = preparedQuery.isDtoProjection();
         boolean isEntity = preparedQuery.getResultDataType() == DataType.ENTITY;
         SqlQuerySpec querySpec = new ParameterBinder().bindParametersAndBuildCosmosQuery(preparedQuery);
@@ -538,6 +546,13 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
         return preparedQuery.getAnnotationMetadata().stringValue(Query.class, DataMethod.META_MEMBER_RAW_QUERY).isPresent();
     }
 
+    private <E, R> SqlPreparedQuery<E, R> getSqlPreparedQuery(PreparedQuery<E, R> preparedQuery) {
+        if (preparedQuery instanceof SqlPreparedQuery) {
+            return (SqlPreparedQuery<E, R>) preparedQuery;
+        }
+        throw new IllegalStateException("Expected for prepared query to be of type: SqlPreparedQuery got: " + preparedQuery.getClass().getName());
+    }
+
     // Serialization
 
     /**
@@ -639,10 +654,11 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
      */
     @NonNull
     private String getPartitionKeyDefinition(PersistentEntity persistentEntity) {
+        return partitionKeyByPersistentEntity.computeIfAbsent(persistentEntity, e -> doGetPartitionKeyDefinition(e));
+    }
+
+    private String doGetPartitionKeyDefinition(PersistentEntity persistentEntity) {
         CosmosDatabaseConfiguration.CosmosContainerSettings cosmosContainerSettings = cosmosContainerSettingsMap.get(persistentEntity.getPersistedName());
-        if (cosmosContainerSettings == null) {
-            return Constants.NO_PARTITION_KEY;
-        }
         return CosmosDatabaseInitializer.getPartitionKeyDefinition(persistentEntity, cosmosContainerSettings);
     }
 
@@ -887,7 +903,8 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
                                                                                      RuntimePersistentEntity<T> persistentEntity,
                                                                                      BatchOperation<T> operation,
                                                                                      BulkOperationType operationType) {
-        return new CosmosReactiveEntitiesOperation<T>(entityEventRegistry, conversionService, ctx, persistentEntity, operation) {
+        return new CosmosReactiveEntitiesOperation<T>(entityEventRegistry, conversionService, ctx, persistentEntity, operation,
+            BulkOperationType.CREATE.equals(operationType)) {
 
             @Override
             protected void execute() throws RuntimeException {
@@ -1089,13 +1106,6 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
         Map<String, Object> getPropertiesToUpdate() {
             return propertiesToUpdate;
         }
-
-        private <E, R> SqlPreparedQuery<E, R> getSqlPreparedQuery(PreparedQuery<E, R> preparedQuery) {
-            if (preparedQuery instanceof SqlPreparedQuery) {
-                return (SqlPreparedQuery<E, R>) preparedQuery;
-            }
-            throw new IllegalStateException("Expected for prepared query to be of type: SqlPreparedQuery got: " + preparedQuery.getClass().getName());
-        }
     }
 
     /**
@@ -1205,13 +1215,15 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
          * @param ctx                 The context
          * @param persistentEntity    The persistent entity
          * @param entities            The entities
+         * @param insert              Whether the operation is insert
          */
         protected CosmosReactiveEntitiesOperation(EntityEventListener<Object> entityEventListener,
                                                   ConversionService<?> conversionService,
                                                   CosmosReactiveOperationContext<T> ctx,
                                                   RuntimePersistentEntity<T> persistentEntity,
-                                                  Iterable<T> entities) {
-            super(ctx, null, conversionService, entityEventListener, persistentEntity, entities, false);
+                                                  Iterable<T> entities,
+                                                  boolean insert) {
+            super(ctx, null, conversionService, entityEventListener, persistentEntity, entities, insert);
         }
 
         @Override

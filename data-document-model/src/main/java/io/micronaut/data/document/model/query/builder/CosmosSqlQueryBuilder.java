@@ -28,6 +28,7 @@ import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.annotation.repeatable.WhereSpecifications;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.Embedded;
+import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.PersistentPropertyPath;
@@ -42,6 +43,7 @@ import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -451,5 +453,29 @@ public final class CosmosSqlQueryBuilder extends SqlQueryBuilder {
             }
 
         };
+    }
+
+    @NonNull
+    @Override
+    public QueryResult buildPagination(@NonNull Pageable pageable) {
+        int size = pageable.getSize();
+        if (size > 0) {
+            StringBuilder builder = new StringBuilder(" ");
+            long from = pageable.getOffset();
+            builder.append("OFFSET ").append(from).append(" LIMIT ").append(size).append(" ");
+            return QueryResult.of(
+                builder.toString(),
+                Collections.emptyList(),
+                Collections.emptyList(),
+                Collections.emptyMap()
+            );
+        } else {
+            return QueryResult.of(
+                "",
+                Collections.emptyList(),
+                Collections.emptyList(),
+                Collections.emptyMap()
+            );
+        }
     }
 }

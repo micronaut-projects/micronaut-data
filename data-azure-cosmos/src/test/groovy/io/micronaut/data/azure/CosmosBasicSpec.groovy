@@ -25,6 +25,7 @@ import io.micronaut.data.azure.repositories.CosmosBookRepository
 import io.micronaut.data.azure.repositories.FamilyRepository
 import io.micronaut.data.cosmos.config.CosmosDatabaseConfiguration
 import io.micronaut.data.cosmos.config.StorageUpdatePolicy
+import io.micronaut.data.model.Pageable
 import io.micronaut.serde.Decoder
 import io.micronaut.serde.Deserializer
 import io.micronaut.serde.SerdeRegistry
@@ -136,6 +137,8 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
         then:
             loadedBook
             loadedBook.totalPages == book.totalPages
+        cleanup:
+            bookRepository.deleteAll()
     }
 
     def "test find with query"() {
@@ -177,6 +180,8 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
             foundBook.totalPages == totalPages + 1
             foundBook.created == loadedBook1.created
             foundBook.lastUpdated != loadedBook1.lastUpdated
+        cleanup:
+            bookRepository.deleteAll()
     }
 
     def "crud family in cosmos repo"() {
@@ -369,7 +374,7 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
             familyRepository.deleteAll()
     }
 
-    def "test DTO entity retrieval"() {
+    void "test DTO entity retrieval"() {
         given:
             CosmosBook book = new CosmosBook()
             book.id = UUID.randomUUID().toString()
@@ -390,6 +395,30 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
             def bookDtos = bookDtoRepository.findByTitleAndTotalPages(book.title, book.totalPages)
         then:
             bookDtos.size() > 0
+        cleanup:
+            bookRepository.deleteAll()
+    }
+
+    void "test pageable"() {
+        given:
+            bookRepository.saveAll(Arrays.asList(
+                    new CosmosBook("The Stand", 1000),
+                    new CosmosBook("The Shining", 600),
+                    new CosmosBook("The Power of the Dog", 500),
+                    new CosmosBook("The Border", 700),
+                    new CosmosBook("Along Came a Spider", 300),
+                    new CosmosBook("Pet Cemetery", 400),
+                    new CosmosBook("A Game of Thrones", 900),
+                    new CosmosBook("A Clash of Kings", 1100)
+            ));
+        when:
+            def slice = bookRepository.list(Pageable.from(0, 3));
+            def resultList = bookRepository.findByTotalPagesGreaterThan(500, Pageable.from(0, 3));
+        then:
+            slice.numberOfElements == 3
+            resultList.size() == 3
+        cleanup:
+            bookRepository.deleteAll()
     }
 
     def "should get cosmos client"() {
