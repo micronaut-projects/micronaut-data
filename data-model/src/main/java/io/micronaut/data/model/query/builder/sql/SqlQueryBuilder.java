@@ -321,7 +321,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         PersistentProperty identity = entity.getIdentity();
 
         List<String> createStatements = new ArrayList<>();
-        String schema = entity.getAnnotationMetadata().stringValue(MappedEntity.class, SqlMembers.SCHEMA).orElse(null);
+        String schema = getSchemaName(entity);
         if (StringUtils.isNotEmpty(schema)) {
             if (escape) {
                 schema = quote(schema);
@@ -1162,11 +1162,17 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         return entity.getAliasName();
     }
 
+    private String getSchemaName(PersistentEntity entity) {
+        return entity.getAnnotationMetadata().stringValue(MappedEntity.class, SqlMembers.SCHEMA).orElseGet(() ->
+            entity.getAnnotationMetadata().stringValue(MappedEntity.class, "schema").orElse(null)
+        );
+    }
+
     @Override
     public String getTableName(PersistentEntity entity) {
         boolean escape = shouldEscape(entity);
         String tableName = entity.getPersistedName();
-        String schema = entity.getAnnotationMetadata().stringValue(MappedEntity.class, SqlMembers.SCHEMA).orElse(null);
+        String schema = getSchemaName(entity);
         if (StringUtils.isNotEmpty(schema)) {
             if (escape) {
                 return quote(schema) + '.' + quote(tableName);

@@ -20,7 +20,9 @@ import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.MappedProperty;
+import io.micronaut.data.model.DataType;
 
+import javax.persistence.Column;
 import javax.persistence.Embedded;
 import javax.persistence.ManyToOne;
 import java.util.UUID;
@@ -40,8 +42,17 @@ public class UuidEntity {
 
     private String name;
 
+    @Column(nullable = true)
+    @MappedProperty(type = DataType.UUID)
+    private UUID nullableValue;
+
     public UuidEntity(String name) {
         this.name = name;
+    }
+
+    public UuidEntity(String name, UUID nullableValue) {
+        this.name = name;
+        this.nullableValue = nullableValue;
     }
 
     public String getName() {
@@ -70,5 +81,13 @@ public class UuidEntity {
 
     public void setEmbeddedChild(UuidEmbeddedChildEntity embeddedChild) {
         this.embeddedChild = embeddedChild;
+    }
+
+    public UUID getNullableValue() {
+        return nullableValue;
+    }
+
+    public void setNullableValue(UUID nullableValue) {
+        this.nullableValue = nullableValue;
     }
 }

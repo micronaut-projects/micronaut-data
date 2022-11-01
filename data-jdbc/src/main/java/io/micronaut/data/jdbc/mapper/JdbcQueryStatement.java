@@ -110,6 +110,9 @@ public class JdbcQueryStatement implements QueryStatement<PreparedStatement, Int
                     case SHORT:
                         statement.setNull(index, Types.TINYINT);
                         return this;
+                    case UUID:
+                        statement.setNull(index, Types.OTHER, "uuid");
+                        return this;
 
                     default:
                         if (dataType.isArray()) {

@@ -79,4 +79,36 @@ abstract class AbstractUUIDSpec extends Specification {
         cleanup:
             uuidRepository.deleteAll()
     }
+
+    void 'test insert and update null uuid'() {
+        when:
+            def test = uuidRepository.save(
+                    new UuidEntity("Fred", UUID.randomUUID()))
+
+            def uuid = test.uuid
+        then:
+            uuid != null
+            test.uuid != null
+
+        when:
+            test.setNullableValue(null)
+            def updatedTest = uuidRepository.update(test)
+        then:
+            updatedTest != null
+            updatedTest.nullableValue == null
+
+        cleanup:
+            uuidRepository.deleteAll()
+    }
+
+    void 'test criteria with null value'() {
+        when:
+            uuidRepository.save(new UuidEntity("Fred", null))
+            def result = uuidRepository.findByNullableValue(null)
+        then:
+            result.size() == 1
+
+        cleanup:
+            uuidRepository.deleteAll()
+    }
 }

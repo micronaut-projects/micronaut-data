@@ -52,7 +52,7 @@ public class TableAnnotationMapper implements NamedAnnotationMapper {
         final AnnotationValueBuilder<MappedEntity> builder = AnnotationValue.builder(MappedEntity.class);
         annotation.stringValue("name").ifPresent(builder::value);
         annotation.stringValue(SqlMembers.CATALOG).ifPresent(catalog -> builder.member(SqlMembers.CATALOG, catalog));
-        annotation.stringValue(SqlMembers.SCHEMA).ifPresent(catalog -> builder.member(SqlMembers.SCHEMA, catalog));
+        annotation.stringValue("schema").ifPresent(schema -> builder.member("schema", schema));
         final AnnotationValueBuilder<Indexes> idxBuilder = AnnotationValue.builder(Indexes.class);
         Optional.ofNullable((AnnotationValue<Annotation>[]) annotation.getValues().get("indexes"))
                 .ifPresent(indexes -> {

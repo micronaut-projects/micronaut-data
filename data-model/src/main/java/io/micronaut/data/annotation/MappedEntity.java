@@ -67,4 +67,11 @@ public @interface MappedEntity {
      * @return The alias to use for the query
      */
     String alias() default "";
+
+    /**
+     * Only applies to supported databases.
+     * @since 3.9
+     * @return the schema to use for this query
+     */
+    String schema() default "";
 }
