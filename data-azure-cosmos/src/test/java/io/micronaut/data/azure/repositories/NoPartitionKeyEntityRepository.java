@@ -50,9 +50,11 @@ public interface NoPartitionKeyEntityRepository extends CrudRepository<NoPartiti
     @Query("SELECT DISTINCT VALUE f.tags FROM f WHERE f.id = :id")
     String[] getTagsById(String id);
 
-    List<NoPartitionKeyEntity> findByTagsIsNotNull();
-
     List<NoPartitionKeyEntity> findByNameIsNotEmpty();
 
     List<NoPartitionKeyEntity> findByCustomNameIsEmpty();
+
+    List<NoPartitionKeyEntity> findByRatingIsNull();
+
+    List<NoPartitionKeyEntity> findByCustomNameIsNull();
 }

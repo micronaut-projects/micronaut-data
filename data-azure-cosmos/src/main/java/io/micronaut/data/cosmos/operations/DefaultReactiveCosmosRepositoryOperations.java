@@ -496,22 +496,22 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
                     return Mono.just((R) collection.toArray());
                 }
                 return Mono.just(conversionService.convertRequired(collection, resultType));
-            } else {
-                Iterator<?> iterator = fluxResponse.getResults().iterator();
-                if (iterator.hasNext()) {
-                    Object item = iterator.next();
-                    if (iterator.hasNext()) {
-                        return Flux.error(new NonUniqueResultException());
-                    }
-                    if (resultType.isInstance(item)) {
-                        return Mono.just((R) item);
-                    } else if (item != null) {
-                        return Mono.just(conversionService.convertRequired(item, resultType));
-                    }
-                }
-                return Flux.empty();
             }
-        }).onErrorResume(e ->  Flux.error(new CosmosAccessException("Failed to query item: " + e.getMessage(), e))).next();
+            Iterator<?> iterator = fluxResponse.getResults().iterator();
+            if (iterator.hasNext()) {
+                Object item = iterator.next();
+                if (iterator.hasNext()) {
+                    return Flux.error(new NonUniqueResultException());
+                }
+                if (resultType.isInstance(item)) {
+                    return Mono.just((R) item);
+                }
+                if (item != null) {
+                    return Mono.just(conversionService.convertRequired(item, resultType));
+                }
+            }
+            return Flux.empty();
+        }).onErrorResume(e -> Flux.error(new CosmosAccessException("Failed to query item: " + e.getMessage(), e))).next();
     }
 
     /**
@@ -1043,12 +1043,13 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
                     int index = 0;
                     for (Object value : values) {
                         index++;
-                        String finalParameterName = parameterName + "_expanded_" + index;
-                        stringJoiner.add("@" + finalParameterName);
+                        final String expandedParameterName = parameterName + "_exp_" + index;
+                        stringJoiner.add("@" + expandedParameterName);
                         QueryParameterBinding newBinding = new DelegatingQueryParameterBinding(binding) {
                             @Override
+                            @NonNull
                             public String getRequiredName() {
-                                return finalParameterName;
+                                return expandedParameterName;
                             }
                         };
                         bindOne(newBinding, value);

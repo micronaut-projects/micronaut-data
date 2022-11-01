@@ -45,6 +45,7 @@ class NoPartitionKeyCosmosDbSpec extends Specification implements AzureCosmosTes
             entity2.name = "Entity2"
             entity2.grade = 4
             entity2.tags = Arrays.asList("entity2", "grade4", "id2", "custom2").toArray()
+            entity2.rating = 3.5
             repository.save(entity2)
         when:
             def maxGrade = repository.findMaxGradeByIdIn(Arrays.asList(entity1.id, entity2.id))
@@ -60,17 +61,21 @@ class NoPartitionKeyCosmosDbSpec extends Specification implements AzureCosmosTes
             def name = repository.findNameById(entity1.id)
             def tags1 = repository.getTagsById(entity1.id)
             def tags2 = repository.getTagsById(entity2.id)
-            def notNullTagsEntities = repository.findByTagsIsNotNull()
             def notEmptyNameEntities = repository.findByNameIsNotEmpty();
             def emptyCustomNameEntities = repository.findByCustomNameIsEmpty();
+            def nullRatingEntities = repository.findByRatingIsNull();
+            def nullCustomNameEntities = repository.findByCustomNameIsNull();
         then:
             name == entity1.name
             !tags1 || tags1.length == 0
             tags2.length == 4
             notEmptyNameEntities.size() == 2
-            notNullTagsEntities.size() > 0
             emptyCustomNameEntities.size() == 1
             emptyCustomNameEntities[0].id == entity2.id
+            nullRatingEntities.size() == 1
+            nullRatingEntities[0].id == entity1.id
+            nullCustomNameEntities.size() == 1
+            nullCustomNameEntities[0].id == entity2.id
         when:
             def entities = repository.findByTagsArrayContains("custom2")
         then:

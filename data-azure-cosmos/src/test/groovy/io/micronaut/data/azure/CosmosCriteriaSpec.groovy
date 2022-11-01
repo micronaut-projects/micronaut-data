@@ -240,11 +240,11 @@ interface MyRepository {
             property      | predicate          | expectedWhereQuery
             "registered"  | "isTrue"           | 'SELECT DISTINCT VALUE family_ FROM family family_ WHERE (family_.registered = TRUE)'
             "registered"  | "isFalse"          | 'SELECT DISTINCT VALUE family_ FROM family family_ WHERE (family_.registered = FALSE)'
-            "registered"  | "isNull"           | 'SELECT DISTINCT VALUE family_ FROM family family_ WHERE (IS_NULL(family_.registered))'
-            "registered"  | "isNotNull"        | 'SELECT DISTINCT VALUE family_ FROM family family_ WHERE (IS_NULL(family_.registered) = false)'
-            "lastName"    | "isNotNull"        | 'SELECT DISTINCT VALUE family_ FROM family family_ WHERE (IS_NULL(family_.lastName) = false)'
-            "lastName"    | "isEmptyString"    | 'SELECT DISTINCT VALUE family_ FROM family family_ WHERE (IS_NULL(family_.lastName) OR IS_DEFINED(family_.lastName) = false OR family_.lastName = \'\')'
-            "lastName"    | "isNotEmptyString" | 'SELECT DISTINCT VALUE family_ FROM family family_ WHERE (IS_NULL(family_.lastName) = false AND IS_DEFINED(family_.lastName) AND family_.lastName <> \'\')'
+            "registered"  | "isNull"           | 'SELECT DISTINCT VALUE family_ FROM family family_ WHERE (IS_NULL(family_.registered) OR NOT IS_DEFINED(family_.registered))'
+            "registered"  | "isNotNull"        | 'SELECT DISTINCT VALUE family_ FROM family family_ WHERE (NOT IS_NULL(family_.registered) OR IS_DEFINED(family_.registered))'
+            "lastName"    | "isNotNull"        | 'SELECT DISTINCT VALUE family_ FROM family family_ WHERE (NOT IS_NULL(family_.lastName) OR IS_DEFINED(family_.lastName))'
+            "lastName"    | "isEmptyString"    | 'SELECT DISTINCT VALUE family_ FROM family family_ WHERE (IS_NULL(family_.lastName) OR NOT IS_DEFINED(family_.lastName) OR family_.lastName = \'\')'
+            "lastName"    | "isNotEmptyString" | 'SELECT DISTINCT VALUE family_ FROM family family_ WHERE (NOT IS_NULL(family_.lastName) AND IS_DEFINED(family_.lastName) AND family_.lastName <> \'\')'
     }
 
     @Unroll

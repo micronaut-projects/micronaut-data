@@ -20,6 +20,8 @@ public class NoPartitionKeyEntity {
 
     private String[] tags;
 
+    private Double rating;
+
     public String getId() {
         return id;
     }
@@ -58,5 +60,13 @@ public class NoPartitionKeyEntity {
 
     public void setTags(String[] tags) {
         this.tags = tags;
+    }
+
+    public Double getRating() {
+        return rating;
+    }
+
+    public void setRating(Double rating) {
+        this.rating = rating;
     }
 }
