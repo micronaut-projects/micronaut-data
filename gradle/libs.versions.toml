@@ -7,7 +7,7 @@ micronaut-docs = "2.0.0"
 micronaut-gradle-plugin = "3.6.3"
 micronaut-mongo = "4.6.0"
 
-groovy = "3.0.12"
+groovy = "3.0.13"
 
 javax-persistence = "2.2"
 jakarta-persistence = "3.0.0"
