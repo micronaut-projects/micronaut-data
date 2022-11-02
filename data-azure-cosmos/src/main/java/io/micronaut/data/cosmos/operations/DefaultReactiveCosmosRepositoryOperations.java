@@ -696,6 +696,25 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
     // Create, update, delete
 
     /**
+     * If entity has auto generated id, we can generate only String and UUID.
+     *
+     * @param persistentEntity the persistent entity
+     * @param entity the entity
+     * @param <T> the entity type
+     */
+    private <T> void generateId(RuntimePersistentEntity<T> persistentEntity, T entity) {
+        RuntimePersistentProperty<T> identity = persistentEntity.getIdentity();
+        if (identity.getProperty().get(entity) == null) {
+            if (identity.getDataType().equals(DataType.STRING)) {
+                identity.getProperty().convertAndSet(entity, UUID.randomUUID().toString());
+            }
+            if (identity.getDataType().equals(DataType.UUID)) {
+                identity.getProperty().convertAndSet(entity, UUID.randomUUID());
+            }
+        }
+    }
+
+    /**
      * Updates existing {@link ObjectNode} item with given property values.
      *
      * @param item the {@link ObjectNode} item to be updated
@@ -784,13 +803,11 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
                 CosmosAsyncContainer container = ctx.getContainer();
                 data = data.flatMap(d -> {
                     if (hasGeneratedId) {
-                        RuntimePersistentProperty<T> identity = persistentEntity.getIdentity();
-                        if (identity.getProperty().get(d.entity) == null && (identity.getDataType().equals(DataType.STRING) || identity.getDataType().equals(DataType.UUID))) {
-                            identity.getProperty().convertAndSet(d.entity, UUID.randomUUID().toString());
-                        }
+                        generateId(persistentEntity, d.entity);
                     }
                     ObjectNode item = cosmosSerde.serialize(persistentEntity, d.entity, Argument.of(ctx.getRootEntity()));
-                    return Mono.from(container.createItem(item, new CosmosItemRequestOptions())).map(insertOneResult -> d);
+                    PartitionKey partitionKey = getPartitionKey(persistentEntity, item);
+                    return Mono.from(container.createItem(item, partitionKey, new CosmosItemRequestOptions())).map(insertOneResult -> d);
                 });
             }
         };
@@ -858,10 +875,7 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
                     .flatMap(e -> {
                         List<ItemBulkOperation<?, ?>> notVetoedEntities = e.stream().filter(this::notVetoed).map(x -> {
                             if (generateId) {
-                                RuntimePersistentProperty<T> identity = persistentEntity.getIdentity();
-                                if (identity.getProperty().get(x.entity) == null && (identity.getDataType().equals(DataType.STRING) || identity.getDataType().equals(DataType.UUID))) {
-                                    identity.getProperty().convertAndSet(x.entity, UUID.randomUUID().toString());
-                                }
+                                generateId(persistentEntity, x.entity);
                             }
                             ObjectNode item = cosmosSerde.serialize(persistentEntity, x.entity, arg);
                             String id = getItemId(item);

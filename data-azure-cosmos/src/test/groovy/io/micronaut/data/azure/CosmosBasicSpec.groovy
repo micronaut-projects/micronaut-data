@@ -20,9 +20,13 @@ import io.micronaut.data.azure.entities.Child
 import io.micronaut.data.azure.entities.CosmosBook
 import io.micronaut.data.azure.entities.Family
 import io.micronaut.data.azure.entities.Pet
+import io.micronaut.data.azure.entities.UUIDEntity
+import io.micronaut.data.azure.entities.User
 import io.micronaut.data.azure.repositories.CosmosBookDtoRepository
 import io.micronaut.data.azure.repositories.CosmosBookRepository
 import io.micronaut.data.azure.repositories.FamilyRepository
+import io.micronaut.data.azure.repositories.UUIDEntityRepository
+import io.micronaut.data.azure.repositories.UserRepository
 import io.micronaut.data.cosmos.config.CosmosDatabaseConfiguration
 import io.micronaut.data.cosmos.config.StorageUpdatePolicy
 import io.micronaut.data.model.Pageable
@@ -55,6 +59,10 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
     CosmosBookDtoRepository bookDtoRepository = context.getBean(CosmosBookDtoRepository)
 
     FamilyRepository familyRepository = context.getBean(FamilyRepository)
+
+    UUIDEntityRepository uuidEntityRepository = context.getBean(UUIDEntityRepository)
+
+    UserRepository userRepository = context.getBean(UserRepository)
 
     Family createSampleFamily1() {
         def family = new Family()
@@ -419,6 +427,55 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
             resultList.size() == 3
         cleanup:
             bookRepository.deleteAll()
+    }
+
+    def "entity with custom id field name and type"() {
+        given:
+            def entity1 = new UUIDEntity()
+            entity1.name = "entity1"
+            def entity2 = new UUIDEntity()
+            entity2.name = "entity2"
+            entity2.number = UUID.randomUUID()
+            uuidEntityRepository.saveAll(Arrays.asList(entity1, entity2))
+            def user1 = new User()
+            user1.userId = 1L
+            user1.userName = "user1"
+            userRepository.save(user1)
+            def user2 = new User()
+            user2.userId = 2L
+            user2.userName = "user2"
+            userRepository.save(user2)
+        when:
+            def entities = uuidEntityRepository.findAll()
+            def users = userRepository.findAll()
+        then:
+            entities.size() == 2
+            users.size() == 2
+        when:
+            def optEntity1 = uuidEntityRepository.findById(entity1.number)
+            def optEntity2 = uuidEntityRepository.findById(entity2.number)
+            def optEntity3 = uuidEntityRepository.findById(UUID.randomUUID())
+            def optUser1 = userRepository.findById(user1.userId)
+            def optUser2 = userRepository.findById(user2.userId)
+            def optUser3 = userRepository.findById(Long.MAX_VALUE)
+            def foundEntity1 = uuidEntityRepository.queryByNumber(entity1.number)
+            def foundEntityWithPartitionKey1 = uuidEntityRepository.queryByNumber(entity1.number, new PartitionKey(entity1.name))
+            def foundUser1 = userRepository.queryByUserId(user1.userId)
+            def foundUserWithPartitionKey1 = userRepository.queryByUserId(user1.userId, new PartitionKey(user1.userName))
+        then:
+            optEntity1.present
+            optEntity2.present
+            !optEntity3.present
+            optUser1.present
+            optUser2.present
+            !optUser3.present
+            foundEntity1.present
+            foundEntityWithPartitionKey1.present
+            foundUser1.present
+            // foundUserWithPartitionKey1.present
+        cleanup:
+            uuidEntityRepository.deleteAll()
+            userRepository.deleteAll()
     }
 
     def "should get cosmos client"() {
