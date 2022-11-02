@@ -201,7 +201,7 @@ public class CosmosDatabaseInitializer {
                 if (StringUtils.isNotEmpty(partitionKeyValue)) {
                     partitionKeyPath = partitionKeyValue;
                 } else {
-                    partitionKeyPath = property.getPersistedName();
+                    partitionKeyPath = property.getName();
                 }
             }
         }

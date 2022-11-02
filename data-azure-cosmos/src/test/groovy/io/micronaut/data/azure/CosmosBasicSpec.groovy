@@ -472,7 +472,7 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
             foundEntity1.present
             foundEntityWithPartitionKey1.present
             foundUser1.present
-            // foundUserWithPartitionKey1.present
+            foundUserWithPartitionKey1.present
         cleanup:
             uuidEntityRepository.deleteAll()
             userRepository.deleteAll()
