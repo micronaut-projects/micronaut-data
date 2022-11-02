@@ -29,8 +29,6 @@ import com.azure.cosmos.models.PartitionKey;
 import com.azure.cosmos.models.SqlParameter;
 import com.azure.cosmos.models.SqlQuerySpec;
 import com.azure.cosmos.util.CosmosPagedFlux;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.NullNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.micronaut.aop.MethodInvocationContext;
@@ -51,7 +49,6 @@ import io.micronaut.data.cosmos.common.CosmosDatabaseInitializer;
 import io.micronaut.data.cosmos.config.CosmosDatabaseConfiguration;
 import io.micronaut.data.document.model.query.builder.CosmosSqlQueryBuilder;
 import io.micronaut.data.event.EntityEventListener;
-import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.exceptions.EmptyResultException;
 import io.micronaut.data.exceptions.NonUniqueResultException;
 import io.micronaut.data.intercept.annotation.DataMethod;
@@ -94,14 +91,6 @@ import io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery;
 import io.micronaut.data.runtime.query.MethodContextAwareStoredQueryDecorator;
 import io.micronaut.data.runtime.query.PreparedQueryDecorator;
 import io.micronaut.http.codec.MediaTypeCodec;
-import io.micronaut.jackson.core.tree.JsonNodeTreeCodec;
-import io.micronaut.json.tree.JsonNode;
-import io.micronaut.serde.Decoder;
-import io.micronaut.serde.Deserializer;
-import io.micronaut.serde.SerdeRegistry;
-import io.micronaut.serde.Serializer;
-import io.micronaut.serde.jackson.JacksonDecoder;
-import io.micronaut.serde.support.util.JsonNodeEncoder;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import jakarta.inject.Singleton;
 import org.slf4j.Logger;
@@ -111,7 +100,6 @@ import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
-import java.io.IOException;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.sql.Time;
@@ -153,8 +141,7 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
     private static final Logger QUERY_LOG = DataSettings.QUERY_LOG;
     private static final Logger LOG = LoggerFactory.getLogger(DefaultReactiveCosmosRepositoryOperations.class);
 
-    private final SerdeRegistry serdeRegistry;
-    private final ObjectMapper objectMapper;
+    private final CosmosSerde cosmosSerde;
     private final CosmosAsyncDatabase cosmosAsyncDatabase;
     private final Map<String, CosmosDatabaseConfiguration.CosmosContainerSettings> cosmosContainerSettingsMap;
     private final Map<PersistentEntity, String> partitionKeyByPersistentEntity = new ConcurrentHashMap<>();
@@ -168,8 +155,7 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
      * @param conversionService          The conversion service
      * @param attributeConverterRegistry The attribute converter registry
      * @param cosmosAsyncClient          The Cosmos async client
-     * @param serdeRegistry              The (de)serialization registry
-     * @param objectMapper               The object mapper used for the data (de)serialization
+     * @param cosmosSerde                The Cosmos de/serialization helper
      * @param configuration              The Cosmos database configuration
      */
     public DefaultReactiveCosmosRepositoryOperations(List<MediaTypeCodec> codecs,
@@ -178,12 +164,10 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
                                                      DataConversionService<?> conversionService,
                                                      AttributeConverterRegistry attributeConverterRegistry,
                                                      CosmosAsyncClient cosmosAsyncClient,
-                                                     SerdeRegistry serdeRegistry,
-                                                     ObjectMapper objectMapper,
+                                                     CosmosSerde cosmosSerde,
                                                      CosmosDatabaseConfiguration configuration) {
         super(codecs, dateTimeProvider, runtimeEntityRegistry, conversionService, attributeConverterRegistry);
-        this.serdeRegistry = serdeRegistry;
-        this.objectMapper = objectMapper;
+        this.cosmosSerde = cosmosSerde;
         this.cosmosAsyncDatabase = cosmosAsyncClient.getDatabase(configuration.getDatabaseName());
         this.cosmosContainerSettingsMap = CollectionUtils.isEmpty(configuration.getContainers()) ? Collections.emptyMap() :
             configuration.getContainers().stream().collect(Collectors.toMap(CosmosDatabaseConfiguration.CosmosContainerSettings::getContainerName, Function.identity()));
@@ -221,7 +205,7 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
                 if (iterator.hasNext()) {
                     return Flux.error(new NonUniqueResultException());
                 }
-                return Mono.just(deserialize(item, Argument.of(type)));
+                return Mono.just(cosmosSerde.deserialize(persistentEntity, item, Argument.of(type)));
             }
             return Flux.empty();
         }).onErrorResume(e ->  Flux.error(new CosmosAccessException("Failed to query item by id: " + e.getMessage(), e))).next();
@@ -288,14 +272,15 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
         SqlQuerySpec querySpec = new ParameterBinder().bindParametersAndBuildCosmosQuery(preparedQuery);
         logQuery(querySpec);
         if (isEntity || dtoProjection) {
+            CosmosPagedFlux<ObjectNode> result = getCosmosResults(preparedQuery, querySpec, ObjectNode.class);
             Argument<R> argument;
             if (dtoProjection) {
                 argument = Argument.of(ReflectionUtils.getWrapperType(preparedQuery.getResultType()));
+                return result.map(item -> cosmosSerde.deserialize(item, argument)).onErrorResume(e ->  Flux.error(new CosmosAccessException("Failed to query items: " + e.getMessage(), e)));
             } else {
                 argument = Argument.of(preparedQuery.getResultType());
+                return result.map(item -> cosmosSerde.deserialize(preparedQuery.getPersistentEntity(), item, argument)).onErrorResume(e ->  Flux.error(new CosmosAccessException("Failed to query items: " + e.getMessage(), e)));
             }
-            CosmosPagedFlux<ObjectNode> result = getCosmosResults(preparedQuery, querySpec, ObjectNode.class);
-            return result.map(item -> deserialize(item, argument)).onErrorResume(e ->  Flux.error(new CosmosAccessException("Failed to query items: " + e.getMessage(), e)));
         }
         DataType dataType = preparedQuery.getResultDataType();
         Class<R> resultType = preparedQuery.getResultType();
@@ -476,9 +461,10 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
                 }
                 if (preparedQuery.isDtoProjection()) {
                     Class<R> wrapperType = ReflectionUtils.getWrapperType(preparedQuery.getResultType());
-                    return Mono.just(deserialize(item, Argument.of(wrapperType)));
+                    return Mono.just(cosmosSerde.deserialize(item, Argument.of(wrapperType)));
                 }
-                return Mono.just(deserialize(item, Argument.of(preparedQuery.getResultType())));
+                RuntimePersistentEntity<T> persistentEntity = runtimeEntityRegistry.getEntity(preparedQuery.getRootEntity());
+                return Mono.just(cosmosSerde.deserialize(persistentEntity, item, Argument.of(preparedQuery.getResultType())));
             }
             return Flux.empty();
         }).onErrorResume(e ->  Flux.error(new CosmosAccessException("Failed to query item: " + e.getMessage(), e))).next();
@@ -551,57 +537,6 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
             return (SqlPreparedQuery<E, R>) preparedQuery;
         }
         throw new IllegalStateException("Expected for prepared query to be of type: SqlPreparedQuery got: " + preparedQuery.getClass().getName());
-    }
-
-    // Serialization
-
-    /**
-     * Serializes given bean to the given type which will be {@link com.fasterxml.jackson.databind.node.ObjectNode} or {@link com.fasterxml.jackson.databind.JsonNode}.
-     *
-     * @param bean the bean being serialized to JSON
-     * @param type the argument type
-     * @param <O> the type to be returned
-     * @return the serialized bean to JSON (JsonNode or ObjectNode)
-     */
-    private <O extends com.fasterxml.jackson.databind.JsonNode> O serialize(Object bean, Argument<?> type) {
-        try {
-            Serializer.EncoderContext encoderContext = serdeRegistry.newEncoderContext(null);
-            Serializer<? super Object> typeSerializer = serdeRegistry.findSerializer(type);
-            Serializer<Object> serializer = typeSerializer.createSpecific(encoderContext, type);
-            JsonNodeEncoder encoder = JsonNodeEncoder.create();
-            serializer.serialize(encoder, encoderContext, type, bean);
-            // First serialize to Micronaut Serde tree model and then convert it to Jackson's tree model
-            JsonNode jsonNode = encoder.getCompletedValue();
-            try (JsonParser jsonParser = JsonNodeTreeCodec.getInstance().treeAsTokens(jsonNode)) {
-                return objectMapper.readTree(jsonParser);
-            }
-        } catch (IOException e) {
-            throw new DataAccessException("Failed to serialize: " + e.getMessage(), e);
-        }
-    }
-
-    /**
-     * Deserializes from {@link ObjectNode} to the given bean type.
-     *
-     * @param objectNode the object node (JSON representation)
-     * @param type the argument type
-     * @param <T> the type to be returned
-     * @return the deserialized object of T type
-     */
-    private <T> T deserialize(ObjectNode objectNode, Argument<T> type) {
-        try {
-            Deserializer.DecoderContext decoderContext = serdeRegistry.newDecoderContext(null);
-            Deserializer<? extends T> typeDeserializer = serdeRegistry.findDeserializer(type);
-            Deserializer<? extends T> deserializer = typeDeserializer.createSpecific(decoderContext, type);
-            JsonParser parser = objectNode.traverse();
-            if (!parser.hasCurrentToken()) {
-                parser.nextToken();
-            }
-            final Decoder decoder = JacksonDecoder.create(parser, Object.class);
-            return deserializer.deserialize(decoder, decoderContext, type);
-        } catch (IOException e) {
-            throw new DataAccessException("Failed to deserialize: " + e.getMessage(), e);
-        }
     }
 
     // Container util methods
@@ -776,7 +711,7 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
             if (value == null) {
                 objectNode = NullNode.getInstance();
             } else {
-                objectNode = serialize(value, Argument.of(value.getClass()));
+                objectNode = cosmosSerde.serialize(value, Argument.of(value.getClass()));
             }
             item.set(property, objectNode);
         }
@@ -850,11 +785,11 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
                 data = data.flatMap(d -> {
                     if (hasGeneratedId) {
                         RuntimePersistentProperty<T> identity = persistentEntity.getIdentity();
-                        if (identity.getProperty().get(d.entity) == null && identity.getDataType().equals(DataType.STRING)) {
+                        if (identity.getProperty().get(d.entity) == null && (identity.getDataType().equals(DataType.STRING) || identity.getDataType().equals(DataType.UUID))) {
                             identity.getProperty().convertAndSet(d.entity, UUID.randomUUID().toString());
                         }
                     }
-                    ObjectNode item = serialize(d.entity, Argument.of(ctx.getRootEntity()));
+                    ObjectNode item = cosmosSerde.serialize(persistentEntity, d.entity, Argument.of(ctx.getRootEntity()));
                     return Mono.from(container.createItem(item, new CosmosItemRequestOptions())).map(insertOneResult -> d);
                 });
             }
@@ -867,7 +802,7 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
             @Override
             protected void execute() throws RuntimeException {
                 CosmosAsyncContainer container = ctx.getContainer();
-                ObjectNode item = serialize(entity, Argument.of(ctx.getRootEntity()));
+                ObjectNode item = cosmosSerde.serialize(persistentEntity, entity, Argument.of(ctx.getRootEntity()));
                 PartitionKey partitionKey = getPartitionKey(persistentEntity, item);
                 String id = getItemId(item);
                 CosmosItemResponse<?> response = container.replaceItem(item, id, partitionKey, new CosmosItemRequestOptions()).block();
@@ -885,7 +820,7 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
             @Override
             protected void execute() throws RuntimeException {
                 CosmosAsyncContainer container = ctx.getContainer();
-                ObjectNode item = serialize(entity, Argument.of(ctx.getRootEntity()));
+                ObjectNode item = cosmosSerde.serialize(persistentEntity, entity, Argument.of(ctx.getRootEntity()));
                 CosmosItemRequestOptions options = new CosmosItemRequestOptions();
                 String id = getItemId(item);
                 PartitionKey partitionKey = getPartitionKey(persistentEntity, item);
@@ -924,11 +859,11 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
                         List<ItemBulkOperation<?, ?>> notVetoedEntities = e.stream().filter(this::notVetoed).map(x -> {
                             if (generateId) {
                                 RuntimePersistentProperty<T> identity = persistentEntity.getIdentity();
-                                if (identity.getProperty().get(x.entity) == null && identity.getDataType().equals(DataType.STRING)) {
+                                if (identity.getProperty().get(x.entity) == null && (identity.getDataType().equals(DataType.STRING) || identity.getDataType().equals(DataType.UUID))) {
                                     identity.getProperty().convertAndSet(x.entity, UUID.randomUUID().toString());
                                 }
                             }
-                            ObjectNode item = serialize(x.entity, arg);
+                            ObjectNode item = cosmosSerde.serialize(persistentEntity, x.entity, arg);
                             String id = getItemId(item);
                             PartitionKey partitionKey = getPartitionKey(partitionKeyField, item);
                             return new ItemBulkOperation<>(operationType.cosmosItemOperationType, id, partitionKey, requestOptions, item, null);
