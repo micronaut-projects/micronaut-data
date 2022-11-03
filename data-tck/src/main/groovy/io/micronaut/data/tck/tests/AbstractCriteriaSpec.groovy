@@ -201,6 +201,27 @@ abstract class AbstractCriteriaSpec extends Specification {
             "age"    | "countDistinct" | 'COUNT(DISTINCT(test_."age"))'
     }
 
+    /**
+     * Currently ArrayContains criteria is supported only by Azure Cosmos Db.
+     * If we introduce more criteria not supported by default then we can test it here.
+     */
+    void "test unsupported criteria"() {
+        given:
+        PersistentEntityRoot entityRoot = createRoot(criteriaQuery)
+        Specification arrayContainsSpecification = {
+            root, query, cb ->
+                def parameter = cb.parameter(String)
+                ((PersistentEntityCriteriaBuilder)cb).arrayContains(root.get("name"), parameter)
+        } as Specification
+        def arrayContainsPredicate = arrayContainsSpecification.toPredicate(entityRoot, criteriaQuery, criteriaBuilder)
+        when:
+        criteriaQuery.where(arrayContainsPredicate)
+        getSqlQuery(criteriaQuery)
+        then:
+        Throwable ex = thrown()
+        ex.message.contains('ArrayContains is supported only by Azure Cosmos Db')
+    }
+
     protected Selection project(String projection, PersistentEntityRoot root,  String property) {
         criteriaBuilder."$projection"(root.get(property))
     }

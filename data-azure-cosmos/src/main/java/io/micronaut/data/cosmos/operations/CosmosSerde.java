@@ -45,7 +45,7 @@ import java.io.IOException;
  */
 @Singleton
 @Internal
-public final class CosmosSerde {
+final class CosmosSerde {
 
     private final SerdeRegistry serdeRegistry;
     private final ObjectMapper objectMapper;
