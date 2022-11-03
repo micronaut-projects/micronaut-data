@@ -70,6 +70,8 @@ public final class CosmosSqlQueryBuilder extends SqlQueryBuilder {
     private static final String IS_DEFINED = "IS_DEFINED";
     private static final String ARRAY_CONTAINS = "ARRAY_CONTAINS";
 
+    private static final NamingStrategy RAW_NAMING_STRATEGY = new NamingStrategies.Raw();
+
     {
         addCriterionHandler(QueryModel.IsNull.class, (ctx, criterion) -> {
             ctx.query().append(NOT).append(SPACE).append(IS_DEFINED).append(OPEN_BRACKET);
@@ -150,12 +152,12 @@ public final class CosmosSqlQueryBuilder extends SqlQueryBuilder {
 
     @Override
     protected NamingStrategy getNamingStrategy(PersistentEntity entity) {
-        return entity.findNamingStrategy().orElseGet(NamingStrategies.Raw::new); // Make a constant?
+        return entity.findNamingStrategy().orElse(RAW_NAMING_STRATEGY);
     }
 
     @Override
     protected NamingStrategy getNamingStrategy(PersistentPropertyPath propertyPath) {
-        return propertyPath.findNamingStrategy().orElseGet(NamingStrategies.Raw::new);
+        return propertyPath.findNamingStrategy().orElse(RAW_NAMING_STRATEGY);
     }
 
     @Override
