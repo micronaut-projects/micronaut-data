@@ -17,6 +17,7 @@ import io.micronaut.data.repository.jpa.criteria.PredicateSpecification;
 
 import java.util.Arrays;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 
@@ -84,6 +85,10 @@ public abstract class FamilyRepository implements PageableRepository<Family, Str
 
         public static PredicateSpecification<Family> idsNotIn(String... ids) {
             return (root, criteriaBuilder) -> root.get("id").in(Arrays.asList(ids)).not();
+        }
+
+        public static PredicateSpecification<Family> idsInAndNotIn(List<String> idsIn, List<String> idsNotIn) {
+            return (root, criteriaBuilder) -> criteriaBuilder.and(root.get("id").in(idsIn), root.get("id").in(idsNotIn).not());
         }
 
     }

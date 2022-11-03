@@ -40,6 +40,7 @@ import spock.lang.Shared
 import spock.lang.Specification
 
 import static io.micronaut.data.azure.repositories.FamilyRepository.Specifications.idsIn
+import static io.micronaut.data.azure.repositories.FamilyRepository.Specifications.idsInAndNotIn
 import static io.micronaut.data.azure.repositories.FamilyRepository.Specifications.idsNotIn
 import static io.micronaut.data.azure.repositories.FamilyRepository.Specifications.lastNameEquals
 
@@ -378,6 +379,8 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
             familyRepository.findByIdIn(Arrays.asList(FAMILY1_ID)).size() == 1
             familyRepository.findAll(idsNotIn(FAMILY1_ID)).size() == 1
             familyRepository.findByIdNotIn(Arrays.asList(FAMILY1_ID)).size() == 1
+            familyRepository.findAll(idsInAndNotIn(Arrays.asList(FAMILY1_ID, FAMILY2_ID), Arrays.asList(UUID.randomUUID().toString()))).size() == 2
+            familyRepository.findAll(idsInAndNotIn(Arrays.asList(UUID.randomUUID().toString(), UUID.randomUUID().toString()), Arrays.asList(FAMILY1_ID, FAMILY2_ID))).size() == 0
         cleanup:
             familyRepository.deleteAll()
     }

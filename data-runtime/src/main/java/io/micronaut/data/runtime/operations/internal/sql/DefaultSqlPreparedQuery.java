@@ -46,10 +46,10 @@ import java.util.Map;
  * @since 3.5.0
  */
 @Internal
-public final class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPreparedQuery<E, R> implements SqlPreparedQuery<E, R>, DelegatePreparedQuery<E, R> {
+public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPreparedQuery<E, R> implements SqlPreparedQuery<E, R>, DelegatePreparedQuery<E, R> {
 
-    private final SqlStoredQuery<E, R> sqlStoredQuery;
-    private String query;
+    protected final SqlStoredQuery<E, R> sqlStoredQuery;
+    protected String query;
 
     public DefaultSqlPreparedQuery(PreparedQuery<E, R> preparedQuery) {
         this(preparedQuery, (SqlStoredQuery<E, R>) ((DelegateStoredQuery<Object, Object>) preparedQuery).getStoredQueryDelegate());
@@ -132,7 +132,13 @@ public final class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParamete
         }
     }
 
-    private int getQueryParameterValueSize(QueryParameterBinding parameter) {
+    /**
+     * Gets number of parameter values for the query parameter binding (used for IN for example).
+     *
+     * @param parameter the query binding parameter
+     * @return number of parameter values in query parameter binding
+     */
+    protected int getQueryParameterValueSize(QueryParameterBinding parameter) {
         int parameterIndex = parameter.getParameterIndex();
         Object value;
         if (parameterIndex == -1) {
@@ -207,7 +213,7 @@ public final class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParamete
      * @param value The value
      * @return The size
      */
-    private int sizeOf(Object value) {
+    protected int sizeOf(Object value) {
         if (value == null) {
             return 1;
         }
