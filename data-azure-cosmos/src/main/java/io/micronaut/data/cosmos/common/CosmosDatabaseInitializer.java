@@ -35,6 +35,7 @@ import io.micronaut.data.cosmos.annotation.PartitionKey;
 import io.micronaut.data.cosmos.config.CosmosDatabaseConfiguration;
 import io.micronaut.data.cosmos.config.StorageUpdatePolicy;
 import io.micronaut.data.cosmos.config.ThroughputSettings;
+import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
@@ -43,6 +44,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.PostConstruct;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -65,7 +67,13 @@ public class CosmosDatabaseInitializer {
 
     private static final Logger LOG = LoggerFactory.getLogger(CosmosDatabaseInitializer.class);
 
+    private static final Collection<DataType> IDENTITY_DATA_TYPES;
+
     private static final Map<PersistentEntity, String> PARTITION_KEY_BY_ENTITY = new ConcurrentHashMap<>();
+
+    static {
+        IDENTITY_DATA_TYPES = Collections.unmodifiableList(Arrays.asList(DataType.SHORT, DataType.INTEGER, DataType.LONG, DataType.STRING, DataType.UUID));
+    }
 
     /**
      * The initialize method will be called when dependencies are established so Cosmos Db can be initialized if needed.
@@ -177,8 +185,16 @@ public class CosmosDatabaseInitializer {
             }
             return partitionKey;
         }
-        LOG.info("Fallback to default partition key value since none is defined for entity {}", entity.getName());
+        LOG.info("Fallback to default partition key value since none is defined for entity {}", entity.getPersistedName());
         return Constants.NO_PARTITION_KEY;
+    }
+
+    private static void validateIdentity(PersistentEntity entity, PersistentProperty identity) {
+        DataType dataType = identity.getDataType();
+        if (!IDENTITY_DATA_TYPES.contains(dataType)) {
+            throw new IllegalStateException("Entity " + entity.getPersistedName() + " has got unsupported identity type. Only supported types are: "
+                + "Short, Integer, Long, String and UUID.");
+        }
     }
 
     private static String findPartitionKey(PersistentEntity entity) {
@@ -186,6 +202,9 @@ public class CosmosDatabaseInitializer {
         List<PersistentProperty> properties = new ArrayList<>(entity.getPersistentProperties());
         PersistentProperty identity = entity.getIdentity();
         if (identity != null) {
+            // check identity, we support only Short, Integer, Long, String and UUID
+            // because we convert it to String when persisting and back when reading
+            validateIdentity(entity, identity);
             properties.add(0, identity);
         }
         // Find partition key path
@@ -194,7 +213,7 @@ public class CosmosDatabaseInitializer {
                 property.getAnnotation(io.micronaut.data.cosmos.annotation.PartitionKey.class);
             if (partitionKeyAnnotationValue != null) {
                 if (StringUtils.isNotEmpty(partitionKeyPath)) {
-                    throw new IllegalStateException("Multiple @PartitionKey annotations declared on " + entity.getName()
+                    throw new IllegalStateException("Multiple @PartitionKey annotations declared on " + entity.getPersistedName()
                         + ". Azure Cosmos DB supports only one partition key.");
                 }
                 String partitionKeyValue = partitionKeyAnnotationValue.stringValue("value").orElse("");

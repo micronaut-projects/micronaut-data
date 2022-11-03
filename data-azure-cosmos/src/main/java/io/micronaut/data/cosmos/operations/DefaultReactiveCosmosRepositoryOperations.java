@@ -362,7 +362,7 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
         RuntimePersistentEntity<?> persistentEntity = runtimeEntityRegistry.getEntity(preparedQuery.getRootEntity());
         String update = preparedQuery.getAnnotationMetadata().stringValue(Query.class, "update").orElse(null);
         if (update == null) {
-            LOG.warn("Could not resolve update properties for Cosmos Db entity {} and query [{}]", persistentEntity.getName(), preparedQuery.getQuery());
+            LOG.warn("Could not resolve update properties for Cosmos Db entity {} and query [{}]", persistentEntity.getPersistedName(), preparedQuery.getQuery());
             return Mono.just(0);
         }
         List<String> updatePropertyList = Arrays.asList(update.split(","));
@@ -370,7 +370,7 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
         SqlQuerySpec querySpec = new SqlQuerySpec(preparedQuery.getQuery(), parameterBinder.bindParameters(preparedQuery));
         Map<String, Object> propertiesToUpdate = parameterBinder.getPropertiesToUpdate();
         if (propertiesToUpdate.isEmpty()) {
-            LOG.warn("No properties found to be updated for Cosmos Db entity {} and query [{}]", persistentEntity.getName(), preparedQuery.getQuery());
+            LOG.warn("No properties found to be updated for Cosmos Db entity {} and query [{}]", persistentEntity.getPersistedName(), preparedQuery.getQuery());
             return Mono.just(0);
         }
         CosmosAsyncContainer container = getContainer(persistentEntity);
