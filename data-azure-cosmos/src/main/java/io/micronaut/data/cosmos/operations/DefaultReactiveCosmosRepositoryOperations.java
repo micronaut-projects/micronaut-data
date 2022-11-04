@@ -134,6 +134,7 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
 
     // This should return exact collection item by the id in given container
     private static final String FIND_ONE_DEFAULT_QUERY = "SELECT * FROM root WHERE root.id = @ROOT_ID";
+    private static final String FAILED_TO_QUERY_ITEMS = "Failed to query items: ";
 
     private static final Logger QUERY_LOG = DataSettings.QUERY_LOG;
     private static final Logger LOG = LoggerFactory.getLogger(DefaultReactiveCosmosRepositoryOperations.class);
@@ -279,10 +280,10 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
             Argument<R> argument;
             if (dtoProjection) {
                 argument = Argument.of(ReflectionUtils.getWrapperType(preparedQuery.getResultType()));
-                return result.map(item -> cosmosSerde.deserialize(item, argument)).onErrorResume(e ->  Flux.error(new CosmosAccessException("Failed to query items: " + e.getMessage(), e)));
+                return result.map(item -> cosmosSerde.deserialize(item, argument)).onErrorResume(e ->  Flux.error(new CosmosAccessException(FAILED_TO_QUERY_ITEMS + e.getMessage(), e)));
             } else {
                 argument = Argument.of(preparedQuery.getResultType());
-                return result.map(item -> cosmosSerde.deserialize(preparedQuery.getPersistentEntity(), item, argument)).onErrorResume(e ->  Flux.error(new CosmosAccessException("Failed to query items: " + e.getMessage(), e)));
+                return result.map(item -> cosmosSerde.deserialize(preparedQuery.getPersistentEntity(), item, argument)).onErrorResume(e ->  Flux.error(new CosmosAccessException(FAILED_TO_QUERY_ITEMS + e.getMessage(), e)));
             }
         }
         DataType dataType = preparedQuery.getResultDataType();
@@ -296,7 +297,7 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
                 return conversionService.convertRequired(item, resultType);
             }
             return null;
-        }).onErrorResume(e ->  Flux.error(new CosmosAccessException("Failed to query items: " + e.getMessage(), e)));
+        }).onErrorResume(e ->  Flux.error(new CosmosAccessException(FAILED_TO_QUERY_ITEMS + e.getMessage(), e)));
     }
 
     @Override
@@ -596,7 +597,7 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
      */
     @NonNull
     private String getPartitionKeyDefinition(PersistentEntity persistentEntity) {
-        return partitionKeyByPersistentEntity.computeIfAbsent(persistentEntity, e -> doGetPartitionKeyDefinition(e));
+        return partitionKeyByPersistentEntity.computeIfAbsent(persistentEntity, this::doGetPartitionKeyDefinition);
     }
 
     private String doGetPartitionKeyDefinition(PersistentEntity persistentEntity) {
@@ -1009,7 +1010,7 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
 
                 @Override
                 public void bindMany(@NonNull QueryParameterBinding binding, @NonNull Collection<Object> values) {
-                    // Query params were expanded so we must expand parameters and bind query with newly created parameters
+                    // Query params were expanded, so we must expand parameters and bind query with newly created parameters
                     String parameterName = getParameterName(binding, isRawQuery);
                     int index = 1;
                     for (Object value : values) {
@@ -1164,7 +1165,7 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
          * @param ctx                 The context
          * @param persistentEntity    The persistent entity
          * @param entities            The entities
-         * @param insert              Whether the operation is insert
+         * @param insert              Whether the operation is inserting
          */
         protected CosmosReactiveEntitiesOperation(EntityEventListener<Object> entityEventListener,
                                                   ConversionService<?> conversionService,

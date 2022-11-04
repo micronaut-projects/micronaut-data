@@ -62,6 +62,7 @@ import java.util.function.Function;
  */
 public final class CosmosSqlQueryBuilder extends SqlQueryBuilder {
 
+    private static final String GENERATED = "generated";
     private static final String VALUE = "VALUE ";
     private static final String SELECT_COUNT = "COUNT(1)";
     private static final String JOIN = " JOIN ";
@@ -72,62 +73,10 @@ public final class CosmosSqlQueryBuilder extends SqlQueryBuilder {
 
     private static final NamingStrategy RAW_NAMING_STRATEGY = new NamingStrategies.Raw();
 
-    {
-        addCriterionHandler(QueryModel.IsNull.class, (ctx, criterion) -> {
-            ctx.query().append(NOT).append(SPACE).append(IS_DEFINED).append(OPEN_BRACKET);
-            appendPropertyRef(ctx.query(), ctx.getRequiredProperty(criterion));
-            ctx.query().append(CLOSE_BRACKET).append(SPACE).append(OR).append(SPACE);
-            ctx.query().append(IS_NULL).append(OPEN_BRACKET);
-            appendPropertyRef(ctx.query(), ctx.getRequiredProperty(criterion));
-            ctx.query().append(CLOSE_BRACKET);
-        });
-        addCriterionHandler(QueryModel.IsNotNull.class, (ctx, criterion) -> {
-            ctx.query().append(IS_DEFINED).append(OPEN_BRACKET);
-            appendPropertyRef(ctx.query(), ctx.getRequiredProperty(criterion));
-            ctx.query().append(CLOSE_BRACKET).append(SPACE).append(AND).append(SPACE);
-            ctx.query().append(NOT).append(SPACE).append(IS_NULL).append(OPEN_BRACKET);
-            appendPropertyRef(ctx.query(), ctx.getRequiredProperty(criterion));
-            ctx.query().append(CLOSE_BRACKET);
-        });
-        addCriterionHandler(QueryModel.IsEmpty.class, (ctx, criterion) -> {
-            ctx.query().append(NOT).append(SPACE).append(IS_DEFINED).append(OPEN_BRACKET);
-            appendPropertyRef(ctx.query(), ctx.getRequiredProperty(criterion));
-            ctx.query().append(CLOSE_BRACKET).append(SPACE).append(OR).append(SPACE);
-            ctx.query().append(IS_NULL).append(OPEN_BRACKET);
-            appendPropertyRef(ctx.query(), ctx.getRequiredProperty(criterion));
-            ctx.query().append(CLOSE_BRACKET).append(SPACE).append(OR).append(SPACE);
-            appendPropertyRef(ctx.query(), ctx.getRequiredProperty(criterion));
-            ctx.query().append(EQUALS).append("''");
-        });
-        addCriterionHandler(QueryModel.IsNotEmpty.class, (ctx, criterion) -> {
-            ctx.query().append(IS_DEFINED).append(OPEN_BRACKET);
-            appendPropertyRef(ctx.query(), ctx.getRequiredProperty(criterion));
-            ctx.query().append(CLOSE_BRACKET).append(SPACE).append(AND).append(SPACE);
-            ctx.query().append(NOT).append(SPACE).append(IS_NULL).append(OPEN_BRACKET);
-            appendPropertyRef(ctx.query(), ctx.getRequiredProperty(criterion));
-            ctx.query().append(CLOSE_BRACKET).append(SPACE).append(AND).append(SPACE);
-            appendPropertyRef(ctx.query(), ctx.getRequiredProperty(criterion));
-            ctx.query().append(NOT_EQUALS).append("''");
-        });
-        addCriterionHandler(QueryModel.ArrayContains.class, (ctx, criterion) -> {
-            QueryPropertyPath propertyPath = ctx.getRequiredProperty(criterion.getProperty(), QueryModel.ArrayContains.class);
-            StringBuilder whereClause = ctx.query();
-            whereClause.append(ARRAY_CONTAINS).append(OPEN_BRACKET);
-            appendPropertyRef(whereClause, propertyPath);
-            whereClause.append(COMMA);
-            Object value = criterion.getValue();
-            if (value instanceof BindingParameter) {
-                ctx.pushParameter((BindingParameter) value, newBindingContext(propertyPath.getPropertyPath()));
-            } else {
-                asLiterals(ctx.query(), value);
-            }
-            whereClause.append(COMMA).append("true").append(CLOSE_BRACKET);
-        });
-    }
-
     @Creator
     public CosmosSqlQueryBuilder(AnnotationMetadata annotationMetadata) {
         super(annotationMetadata);
+        initializeCriteriaHandlers();
     }
 
     /**
@@ -135,6 +84,7 @@ public final class CosmosSqlQueryBuilder extends SqlQueryBuilder {
      */
     public CosmosSqlQueryBuilder() {
         super();
+        initializeCriteriaHandlers();
     }
 
     @Override
@@ -167,7 +117,7 @@ public final class CosmosSqlQueryBuilder extends SqlQueryBuilder {
             return getMappedName(namingStrategy, (Association) property);
         } else {
             AnnotationMetadata propertyAnnotationMetadata = property.getAnnotationMetadata();
-            boolean generated = propertyAnnotationMetadata.booleanValue(MappedProperty.class, "generated").orElse(false);
+            boolean generated = propertyAnnotationMetadata.booleanValue(MappedProperty.class, GENERATED).orElse(false);
             return propertyAnnotationMetadata
                 .stringValue(MappedProperty.class)
                 .filter(n -> !generated && StringUtils.isNotEmpty(n))
@@ -178,7 +128,7 @@ public final class CosmosSqlQueryBuilder extends SqlQueryBuilder {
     @Override
     protected String getMappedName(NamingStrategy namingStrategy, Association association) {
         AnnotationMetadata assocationAnnotationMetadata = association.getAnnotationMetadata();
-        boolean generated = assocationAnnotationMetadata.booleanValue(MappedProperty.class, "generated").orElse(false);
+        boolean generated = assocationAnnotationMetadata.booleanValue(MappedProperty.class, GENERATED).orElse(false);
         String providedName = generated ? null : assocationAnnotationMetadata.stringValue(MappedProperty.class).orElse(null);
         if (providedName != null) {
             return providedName;
@@ -206,10 +156,8 @@ public final class CosmosSqlQueryBuilder extends SqlQueryBuilder {
         StringBuilder sb = new StringBuilder();
         Association foreignAssociation = null;
         for (Association association : associations) {
-            if (association.getKind() != Relation.Kind.EMBEDDED) {
-                if (foreignAssociation == null) {
-                    foreignAssociation = association;
-                }
+            if (association.getKind() != Relation.Kind.EMBEDDED && foreignAssociation == null) {
+                foreignAssociation = association;
             }
             if (sb.length() > 0) {
                 sb.append(DOT).append(association.getName());
@@ -221,7 +169,7 @@ public final class CosmosSqlQueryBuilder extends SqlQueryBuilder {
             if (foreignAssociation.getAssociatedEntity() == property.getOwner()
                 && foreignAssociation.getAssociatedEntity().getIdentity() == property) {
                 AnnotationMetadata foreignAssociationAnnotationMetadata = foreignAssociation.getAnnotationMetadata();
-                boolean generated = foreignAssociationAnnotationMetadata.booleanValue(MappedProperty.class, "generated").orElse(false);
+                boolean generated = foreignAssociationAnnotationMetadata.booleanValue(MappedProperty.class, GENERATED).orElse(false);
                 String providedName = generated ? null : foreignAssociationAnnotationMetadata.stringValue(MappedProperty.class).orElse(null);
                 if (providedName != null) {
                     return providedName;
@@ -233,7 +181,7 @@ public final class CosmosSqlQueryBuilder extends SqlQueryBuilder {
             }
         } else {
             AnnotationMetadata propertyAnnotationMetadata = property.getAnnotationMetadata();
-            boolean generated = propertyAnnotationMetadata.booleanValue(MappedProperty.class, "generated").orElse(false);
+            boolean generated = propertyAnnotationMetadata.booleanValue(MappedProperty.class, GENERATED).orElse(false);
             String providedName = generated ? null : propertyAnnotationMetadata.stringValue(MappedProperty.class).orElse(null);
             if (providedName != null) {
                 return providedName;
@@ -423,7 +371,7 @@ public final class CosmosSqlQueryBuilder extends SqlQueryBuilder {
         final String finalQuery = new StringBuilder("SELECT * FROM ").append(tableName).append(SPACE).append(tableAlias).append(SPACE)
             .append(resultQuery.substring(resultQuery.toLowerCase(Locale.ROOT).indexOf("where"))).toString();
         StringJoiner stringJoiner = new StringJoiner(",");
-        propertiesToUpdate.keySet().forEach(s -> stringJoiner.add(s));
+        propertiesToUpdate.keySet().forEach(stringJoiner::add);
         final String update = stringJoiner.toString();
 
         return new QueryResult() {
@@ -478,5 +426,61 @@ public final class CosmosSqlQueryBuilder extends SqlQueryBuilder {
             Collections.emptyList(),
             Collections.emptyMap()
         );
+    }
+
+    /**
+     * Initializes criteria handlers specific for Cosmos Db.
+     */
+    private void initializeCriteriaHandlers() {
+        addCriterionHandler(QueryModel.IsNull.class, (ctx, criterion) -> {
+            ctx.query().append(NOT).append(SPACE).append(IS_DEFINED).append(OPEN_BRACKET);
+            appendPropertyRef(ctx.query(), ctx.getRequiredProperty(criterion));
+            ctx.query().append(CLOSE_BRACKET).append(SPACE).append(OR).append(SPACE);
+            ctx.query().append(IS_NULL).append(OPEN_BRACKET);
+            appendPropertyRef(ctx.query(), ctx.getRequiredProperty(criterion));
+            ctx.query().append(CLOSE_BRACKET);
+        });
+        addCriterionHandler(QueryModel.IsNotNull.class, (ctx, criterion) -> {
+            ctx.query().append(IS_DEFINED).append(OPEN_BRACKET);
+            appendPropertyRef(ctx.query(), ctx.getRequiredProperty(criterion));
+            ctx.query().append(CLOSE_BRACKET).append(SPACE).append(AND).append(SPACE);
+            ctx.query().append(NOT).append(SPACE).append(IS_NULL).append(OPEN_BRACKET);
+            appendPropertyRef(ctx.query(), ctx.getRequiredProperty(criterion));
+            ctx.query().append(CLOSE_BRACKET);
+        });
+        addCriterionHandler(QueryModel.IsEmpty.class, (ctx, criterion) -> {
+            ctx.query().append(NOT).append(SPACE).append(IS_DEFINED).append(OPEN_BRACKET);
+            appendPropertyRef(ctx.query(), ctx.getRequiredProperty(criterion));
+            ctx.query().append(CLOSE_BRACKET).append(SPACE).append(OR).append(SPACE);
+            ctx.query().append(IS_NULL).append(OPEN_BRACKET);
+            appendPropertyRef(ctx.query(), ctx.getRequiredProperty(criterion));
+            ctx.query().append(CLOSE_BRACKET).append(SPACE).append(OR).append(SPACE);
+            appendPropertyRef(ctx.query(), ctx.getRequiredProperty(criterion));
+            ctx.query().append(EQUALS).append("''");
+        });
+        addCriterionHandler(QueryModel.IsNotEmpty.class, (ctx, criterion) -> {
+            ctx.query().append(IS_DEFINED).append(OPEN_BRACKET);
+            appendPropertyRef(ctx.query(), ctx.getRequiredProperty(criterion));
+            ctx.query().append(CLOSE_BRACKET).append(SPACE).append(AND).append(SPACE);
+            ctx.query().append(NOT).append(SPACE).append(IS_NULL).append(OPEN_BRACKET);
+            appendPropertyRef(ctx.query(), ctx.getRequiredProperty(criterion));
+            ctx.query().append(CLOSE_BRACKET).append(SPACE).append(AND).append(SPACE);
+            appendPropertyRef(ctx.query(), ctx.getRequiredProperty(criterion));
+            ctx.query().append(NOT_EQUALS).append("''");
+        });
+        addCriterionHandler(QueryModel.ArrayContains.class, (ctx, criterion) -> {
+            QueryPropertyPath propertyPath = ctx.getRequiredProperty(criterion.getProperty(), QueryModel.ArrayContains.class);
+            StringBuilder whereClause = ctx.query();
+            whereClause.append(ARRAY_CONTAINS).append(OPEN_BRACKET);
+            appendPropertyRef(whereClause, propertyPath);
+            whereClause.append(COMMA);
+            Object value = criterion.getValue();
+            if (value instanceof BindingParameter) {
+                ctx.pushParameter((BindingParameter) value, newBindingContext(propertyPath.getPropertyPath()));
+            } else {
+                asLiterals(ctx.query(), value);
+            }
+            whereClause.append(COMMA).append("true").append(CLOSE_BRACKET);
+        });
     }
 }
