@@ -1,0 +1,11 @@
+azure:
+  cosmos:
+    default-gateway-mode: true
+    endpoint-discovery-enabled: false
+    endpoint: https://localhost:8081
+    key: C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw==
+    database:
+      throughput-settings:
+        request-units: 1000
+        auto-scale: false
+      database-name: testDb

@@ -95,11 +95,7 @@ class BookRepositorySpec extends AbstractAzureCosmosSpec {
 		assertEquals(0, bookRepository.count());
 	}
 
-    /**
-     * Pageable not yet implemented.
-     */
 	@Test
-    @Ignore
 	void testPageable() {
 		// tag::saveall[]
 		bookRepository.saveAll(Arrays.asList(
