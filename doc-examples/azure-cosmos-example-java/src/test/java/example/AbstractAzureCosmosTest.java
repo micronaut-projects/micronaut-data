@@ -14,7 +14,7 @@ import java.security.KeyStore;
 import java.util.HashMap;
 import java.util.Map;
 
-public abstract class AbstractAzureCosmosSpec implements TestPropertyProvider {
+public abstract class AbstractAzureCosmosTest implements TestPropertyProvider {
 
     @Rule
     CosmosDBEmulatorContainer emulator = new CosmosDBEmulatorContainer(DockerImageName.parse("mcr.microsoft.com/cosmosdb/linux/azure-cosmos-emulator:latest"));

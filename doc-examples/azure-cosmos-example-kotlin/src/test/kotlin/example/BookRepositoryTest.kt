@@ -12,7 +12,7 @@ import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable
 @MicronautTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @DisabledIfEnvironmentVariable(named = "GITHUB_WORKFLOW", matches = ".*")
-class BookRepositorySpec : AbstractAzureCosmosSpec() {
+class BookRepositoryTest : AbstractAzureCosmosTest() {
 
     @AfterEach
     fun cleanup() {
@@ -63,6 +63,8 @@ class BookRepositorySpec : AbstractAzureCosmosSpec() {
 
         val id = book.id.orEmpty()
         assertNotNull(id)
+        assertNotNull(book.createdDate)
+        assertNotNull(book.updatedDate)
 
         // Read: Read a book from the database
         // tag::read[]

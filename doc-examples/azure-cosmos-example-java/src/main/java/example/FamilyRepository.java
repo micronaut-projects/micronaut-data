@@ -1,4 +1,4 @@
-package io.micronaut.data.azure.repositories;
+package example;
 
 import com.azure.cosmos.models.PartitionKey;
 import io.micronaut.context.annotation.Parameter;
@@ -7,9 +7,6 @@ import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.annotation.Query;
-import io.micronaut.data.azure.entities.Address;
-import io.micronaut.data.azure.entities.Child;
-import io.micronaut.data.azure.entities.Family;
 import io.micronaut.data.cosmos.annotation.CosmosRepository;
 import io.micronaut.data.repository.PageableRepository;
 import io.micronaut.data.repository.jpa.JpaSpecificationExecutor;
@@ -17,7 +14,6 @@ import io.micronaut.data.repository.jpa.criteria.PredicateSpecification;
 
 import java.util.Arrays;
 import java.util.Date;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 

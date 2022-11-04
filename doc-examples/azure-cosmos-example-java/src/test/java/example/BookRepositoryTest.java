@@ -21,7 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @MicronautTest
 @DisabledIfEnvironmentVariable(named = "GITHUB_WORKFLOW", matches = ".*")
-class BookRepositorySpec extends AbstractAzureCosmosSpec {
+class BookRepositoryTest extends AbstractAzureCosmosTest {
 
     @AfterEach
     public void cleanup() {
@@ -61,6 +61,8 @@ class BookRepositorySpec extends AbstractAzureCosmosSpec {
         // end::save[]
 		String id = book.getId();
 		assertNotNull(id);
+        assertNotNull(book.getCreatedDate());
+        assertNotNull(book.getUpdatedDate());
 
 		// Read: Read a book from the database
         // tag::read[]

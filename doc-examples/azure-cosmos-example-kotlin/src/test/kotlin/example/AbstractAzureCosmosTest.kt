@@ -10,7 +10,7 @@ import java.io.FileOutputStream
 import java.nio.file.Files
 import java.nio.file.Path
 
-abstract class AbstractAzureCosmosSpec : TestPropertyProvider {
+abstract class AbstractAzureCosmosTest : TestPropertyProvider {
 
     @Rule
     var emulator = CosmosDBEmulatorContainer(DockerImageName.parse("mcr.microsoft.com/cosmosdb/linux/azure-cosmos-emulator:latest"))
