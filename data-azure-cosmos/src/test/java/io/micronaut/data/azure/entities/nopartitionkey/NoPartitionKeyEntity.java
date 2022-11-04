@@ -3,6 +3,8 @@ package io.micronaut.data.azure.entities.nopartitionkey;
 import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.Transient;
+import io.micronaut.data.annotation.Version;
 
 import java.util.List;
 
@@ -21,6 +23,12 @@ public class NoPartitionKeyEntity {
     private String[] tags;
 
     private Double rating;
+
+    @Version
+    private Long version;
+
+    @Transient
+    private String comment;
 
     public String getId() {
         return id;
@@ -68,5 +76,21 @@ public class NoPartitionKeyEntity {
 
     public void setRating(Double rating) {
         this.rating = rating;
+    }
+
+    public String getComment() {
+        return comment;
+    }
+
+    public void setComment(String comment) {
+        this.comment = comment;
+    }
+
+    public Long getVersion() {
+        return version;
+    }
+
+    public void setVersion(Long version) {
+        this.version = version;
     }
 }

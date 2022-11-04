@@ -405,7 +405,7 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
             operation.getRepositoryType(), container, rootEntity);
         CosmosReactiveEntityOperation<T> op = createCosmosReactiveDeleteOneOperation(ctx, persistentEntity, operation.getEntity());
         op.delete();
-        return op.affectedCount;
+        return op.getRowsUpdated();
     }
 
     @Override
@@ -826,13 +826,18 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
             @Override
             protected void execute() throws RuntimeException {
                 CosmosAsyncContainer container = ctx.getContainer();
-                ObjectNode item = cosmosSerde.serialize(persistentEntity, entity, Argument.of(ctx.getRootEntity()));
-                PartitionKey partitionKey = getPartitionKey(persistentEntity, item);
-                String id = getItemId(item);
-                CosmosItemResponse<?> response = container.replaceItem(item, id, partitionKey, new CosmosItemRequestOptions()).block();
-                if (response != null && response.getStatusCode() != HttpResponseStatus.OK.code()) {
-                    LOG.debug("Failed to update entity with id {} in container {}", id, container.getId());
-                }
+                data = data.flatMap(d -> {
+                    ObjectNode item = cosmosSerde.serialize(persistentEntity, d.entity, Argument.of(ctx.getRootEntity()));
+                    PartitionKey partitionKey = getPartitionKey(persistentEntity, item);
+                    String id = getItemId(item);
+                    Mono<CosmosItemResponse<ObjectNode>> response = container.replaceItem(item, id, partitionKey, new CosmosItemRequestOptions());
+                    return Mono.from(response).map(updateOneResult -> {
+                        if (updateOneResult.getStatusCode() != HttpResponseStatus.OK.code()) {
+                            LOG.debug("Failed to update entity with id {} in container {}", id, container.getId());
+                        }
+                        return d;
+                    });
+                });
             }
 
         };
@@ -844,16 +849,21 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
             @Override
             protected void execute() throws RuntimeException {
                 CosmosAsyncContainer container = ctx.getContainer();
-                ObjectNode item = cosmosSerde.serialize(persistentEntity, entity, Argument.of(ctx.getRootEntity()));
-                CosmosItemRequestOptions options = new CosmosItemRequestOptions();
-                String id = getItemId(item);
-                PartitionKey partitionKey = getPartitionKey(persistentEntity, item);
-                CosmosItemResponse<Object> cosmosItemResponse = container.deleteItem(id, partitionKey, options).block();
-                if (cosmosItemResponse != null && cosmosItemResponse.getStatusCode() == HttpResponseStatus.NO_CONTENT.code()) {
-                    affectedCount = Mono.just(1);
-                } else {
-                    affectedCount = Mono.just(0);
-                }
+                data = data.flatMap(d -> {
+                    ObjectNode item = cosmosSerde.serialize(persistentEntity, d.entity, Argument.of(ctx.getRootEntity()));
+                    CosmosItemRequestOptions options = new CosmosItemRequestOptions();
+                    String id = getItemId(item);
+                    PartitionKey partitionKey = getPartitionKey(persistentEntity, item);
+                    Mono<CosmosItemResponse<Object>> response = container.deleteItem(id, partitionKey, options);
+                    return Mono.from(response).map(deleteOneResult -> {
+                        if (deleteOneResult.getStatusCode() == HttpResponseStatus.NO_CONTENT.code()) {
+                            d.rowsUpdated = 1;
+                        } else {
+                            d.rowsUpdated = 0;
+                        }
+                        return d;
+                    });
+                });
             }
         };
     }
@@ -1106,8 +1116,6 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
      * @param <T> the entity type
      */
     private abstract static class CosmosReactiveEntityOperation<T> extends AbstractReactiveEntityOperations<CosmosReactiveOperationContext<T>, T, RuntimeException> {
-
-        protected Mono<Number> affectedCount;
 
         /**
          * Default constructor.

@@ -46,6 +46,8 @@ class NoPartitionKeyCosmosDbSpec extends Specification implements AzureCosmosTes
             entity2.grade = 4
             entity2.tags = Arrays.asList("entity2", "grade4", "id2", "custom2").toArray()
             entity2.rating = 3.5
+            // should not be persisted
+            entity2.comment = "Entity2 comment"
             repository.save(entity2)
         when:
             def maxGrade = repository.findMaxGradeByIdIn(Arrays.asList(entity1.id, entity2.id))
@@ -98,11 +100,22 @@ class NoPartitionKeyCosmosDbSpec extends Specification implements AzureCosmosTes
         then:
             optEntity1.present
             optEntity2.present
+            def version1 = optEntity1.get().version
+            version1 != null
+            def version2 = optEntity2.get().version
+            version2 != null
+            !optEntity1.get().comment
+            !optEntity2.get().comment
         when:
             repository.updateGrade(entity1.id, 10)
             optEntity1 = repository.findById(entity1.id)
+            optEntity2.get().grade = 8
+            repository.update(optEntity2.get())
+            optEntity2 = repository.findById(entity2.id)
         then:
             optEntity1.get().grade == 10
+            optEntity2.get().grade == 8
+            optEntity2.get().version != version2
         when:"Using non matching partition key won't update"
             repository.updateGrade(entity1.id, 20, new PartitionKey(1))
             optEntity1 = repository.findById(entity1.id)
