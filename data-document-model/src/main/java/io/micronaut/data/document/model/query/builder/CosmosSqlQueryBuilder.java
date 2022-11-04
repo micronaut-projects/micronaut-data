@@ -471,13 +471,12 @@ public final class CosmosSqlQueryBuilder extends SqlQueryBuilder {
                 Collections.emptyList(),
                 Collections.emptyMap()
             );
-        } else {
-            return QueryResult.of(
-                "",
-                Collections.emptyList(),
-                Collections.emptyList(),
-                Collections.emptyMap()
-            );
         }
+        return QueryResult.of(
+            "",
+            Collections.emptyList(),
+            Collections.emptyList(),
+            Collections.emptyMap()
+        );
     }
 }

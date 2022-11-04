@@ -219,7 +219,7 @@ abstract class AbstractCriteriaSpec extends Specification {
         getSqlQuery(criteriaQuery)
         then:
         Throwable ex = thrown()
-        ex.message.contains('ArrayContains is supported only by Azure Cosmos Db')
+        ex.message.contains('ArrayContains is not supported by this implementation')
     }
 
     protected Selection project(String projection, PersistentEntityRoot root,  String property) {

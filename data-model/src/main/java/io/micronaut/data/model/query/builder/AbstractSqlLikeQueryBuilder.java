@@ -271,7 +271,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         });
 
         addCriterionHandler(QueryModel.ArrayContains.class, (ctx, criterion) -> {
-           throw new UnsupportedOperationException("ArrayContains is supported only by Azure Cosmos Db.");
+           throw new UnsupportedOperationException("ArrayContains is not supported by this implementation.");
         });
     }
 

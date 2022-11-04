@@ -657,6 +657,6 @@ interface BookRepository extends GenericRepository<Book, Long> {
 """)
         then:
         Throwable ex = thrown()
-        ex.message.contains('ArrayContains is supported only by Azure Cosmos Db')
+        ex.message.contains('ArrayContains is not supported by this implementation')
     }
 }
