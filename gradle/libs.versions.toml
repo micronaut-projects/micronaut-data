@@ -8,7 +8,7 @@ micronaut-gradle-plugin = "3.6.3"
 micronaut-mongo = "4.6.0"
 micronaut-azure = "3.5.0"
 
-groovy = "3.0.12"
+groovy = "3.0.13"
 
 javax-persistence = "2.2"
 jakarta-persistence = "3.0.0"
@@ -23,7 +23,7 @@ spring = "5.3.23"
 
 mongodb = "4.7.2"
 
-vertx = "4.3.3"
+vertx = "4.3.4"
 
 # JDBC Drivers
 
