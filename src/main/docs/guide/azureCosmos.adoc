@@ -1,0 +1,1 @@
+Micronaut Data Azure Cosmos supports some of the things that are possible to do with JPA and JDBC/R2DBC implementations, including:

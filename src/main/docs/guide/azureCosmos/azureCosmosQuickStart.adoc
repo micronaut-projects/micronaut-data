@@ -1,0 +1,2 @@
+At this point there is still no ability to create Micronaut project with Azure Cosmos support via Micronaut Launch. Our team will be working on it in the near future.
+A guide will be also available soon.
