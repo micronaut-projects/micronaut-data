@@ -29,6 +29,8 @@ public class Family {
 
     private Date registeredDate;
 
+    private String[] tags;
+
     public String getId() {
         return id;
     }
@@ -75,5 +77,13 @@ public class Family {
 
     public void setRegisteredDate(Date registeredDate) {
         this.registeredDate = registeredDate;
+    }
+
+    public String[] getTags() {
+        return tags;
+    }
+
+    public void setTags(String[] tags) {
+        this.tags = tags;
     }
 }

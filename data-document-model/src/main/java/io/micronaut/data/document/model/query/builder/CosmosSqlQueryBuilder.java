@@ -28,6 +28,7 @@ import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.annotation.repeatable.WhereSpecifications;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.Embedded;
+import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.PersistentPropertyPath;
@@ -42,6 +43,7 @@ import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -60,46 +62,66 @@ import java.util.function.Function;
  */
 public final class CosmosSqlQueryBuilder extends SqlQueryBuilder {
 
-    private static final String SELECT_COUNT = "VALUE COUNT(1)";
+    private static final String VALUE = "VALUE ";
+    private static final String SELECT_COUNT = "COUNT(1)";
     private static final String JOIN = " JOIN ";
     private static final String IN = " IN ";
+    private static final String IS_NULL = "IS_NULL";
+    private static final String IS_DEFINED = "IS_DEFINED";
+    private static final String ARRAY_CONTAINS = "ARRAY_CONTAINS";
+
+    private static final NamingStrategy RAW_NAMING_STRATEGY = new NamingStrategies.Raw();
 
     {
-        addCriterionHandler(QueryModel.In.class, (ctx, inQuery) -> {
-            QueryPropertyPath propertyPath = ctx.getRequiredProperty(inQuery.getProperty(), QueryModel.In.class);
-            StringBuilder whereClause = ctx.query();
-            Object value = inQuery.getValue();
-            boolean isBindingParameter = value instanceof BindingParameter;
-
-            if (isBindingParameter) {
-                whereClause.append(" ARRAY_CONTAINS(");
-                ctx.pushParameter((BindingParameter) value, newBindingContext(propertyPath.getPropertyPath()).expandable());
-                whereClause.append(COMMA);
-                appendPropertyRef(whereClause, propertyPath);
-            } else {
-                appendPropertyRef(whereClause, propertyPath);
-                whereClause.append(IN).append(OPEN_BRACKET);
-                asLiterals(ctx.query(), value);
-            }
-            whereClause.append(CLOSE_BRACKET);
+        addCriterionHandler(QueryModel.IsNull.class, (ctx, criterion) -> {
+            ctx.query().append(NOT).append(SPACE).append(IS_DEFINED).append(OPEN_BRACKET);
+            appendPropertyRef(ctx.query(), ctx.getRequiredProperty(criterion));
+            ctx.query().append(CLOSE_BRACKET).append(SPACE).append(OR).append(SPACE);
+            ctx.query().append(IS_NULL).append(OPEN_BRACKET);
+            appendPropertyRef(ctx.query(), ctx.getRequiredProperty(criterion));
+            ctx.query().append(CLOSE_BRACKET);
         });
-        addCriterionHandler(QueryModel.NotIn.class, (ctx, inQuery) -> {
-            QueryPropertyPath propertyPath = ctx.getRequiredProperty(inQuery.getProperty(), QueryModel.NotIn.class);
+        addCriterionHandler(QueryModel.IsNotNull.class, (ctx, criterion) -> {
+            ctx.query().append(IS_DEFINED).append(OPEN_BRACKET);
+            appendPropertyRef(ctx.query(), ctx.getRequiredProperty(criterion));
+            ctx.query().append(CLOSE_BRACKET).append(SPACE).append(AND).append(SPACE);
+            ctx.query().append(NOT).append(SPACE).append(IS_NULL).append(OPEN_BRACKET);
+            appendPropertyRef(ctx.query(), ctx.getRequiredProperty(criterion));
+            ctx.query().append(CLOSE_BRACKET);
+        });
+        addCriterionHandler(QueryModel.IsEmpty.class, (ctx, criterion) -> {
+            ctx.query().append(NOT).append(SPACE).append(IS_DEFINED).append(OPEN_BRACKET);
+            appendPropertyRef(ctx.query(), ctx.getRequiredProperty(criterion));
+            ctx.query().append(CLOSE_BRACKET).append(SPACE).append(OR).append(SPACE);
+            ctx.query().append(IS_NULL).append(OPEN_BRACKET);
+            appendPropertyRef(ctx.query(), ctx.getRequiredProperty(criterion));
+            ctx.query().append(CLOSE_BRACKET).append(SPACE).append(OR).append(SPACE);
+            appendPropertyRef(ctx.query(), ctx.getRequiredProperty(criterion));
+            ctx.query().append(EQUALS).append("''");
+        });
+        addCriterionHandler(QueryModel.IsNotEmpty.class, (ctx, criterion) -> {
+            ctx.query().append(IS_DEFINED).append(OPEN_BRACKET);
+            appendPropertyRef(ctx.query(), ctx.getRequiredProperty(criterion));
+            ctx.query().append(CLOSE_BRACKET).append(SPACE).append(AND).append(SPACE);
+            ctx.query().append(NOT).append(SPACE).append(IS_NULL).append(OPEN_BRACKET);
+            appendPropertyRef(ctx.query(), ctx.getRequiredProperty(criterion));
+            ctx.query().append(CLOSE_BRACKET).append(SPACE).append(AND).append(SPACE);
+            appendPropertyRef(ctx.query(), ctx.getRequiredProperty(criterion));
+            ctx.query().append(NOT_EQUALS).append("''");
+        });
+        addCriterionHandler(QueryModel.ArrayContains.class, (ctx, criterion) -> {
+            QueryPropertyPath propertyPath = ctx.getRequiredProperty(criterion.getProperty(), QueryModel.ArrayContains.class);
             StringBuilder whereClause = ctx.query();
-            Object value = inQuery.getValue();
-            boolean isBindingParameter = value instanceof BindingParameter;
-
-            if (isBindingParameter) {
-                whereClause.append(NOT).append(" ARRAY_CONTAINS").append(OPEN_BRACKET);
-                ctx.pushParameter((BindingParameter) value, newBindingContext(propertyPath.getPropertyPath()).expandable());
-                whereClause.append(COMMA);
-                appendPropertyRef(whereClause, propertyPath);
+            whereClause.append(ARRAY_CONTAINS).append(OPEN_BRACKET);
+            appendPropertyRef(whereClause, propertyPath);
+            whereClause.append(COMMA);
+            Object value = criterion.getValue();
+            if (value instanceof BindingParameter) {
+                ctx.pushParameter((BindingParameter) value, newBindingContext(propertyPath.getPropertyPath()));
             } else {
-                appendPropertyRef(whereClause, propertyPath);
-                whereClause.append(SPACE).append(NOT).append(IN).append(OPEN_BRACKET);
                 asLiterals(ctx.query(), value);
             }
-            whereClause.append(CLOSE_BRACKET);
+            whereClause.append(COMMA).append("true").append(CLOSE_BRACKET);
         });
     }
 
@@ -130,12 +152,12 @@ public final class CosmosSqlQueryBuilder extends SqlQueryBuilder {
 
     @Override
     protected NamingStrategy getNamingStrategy(PersistentEntity entity) {
-        return entity.findNamingStrategy().orElseGet(NamingStrategies.Raw::new); // Make a constant?
+        return entity.findNamingStrategy().orElse(RAW_NAMING_STRATEGY);
     }
 
     @Override
     protected NamingStrategy getNamingStrategy(PersistentPropertyPath propertyPath) {
-        return propertyPath.findNamingStrategy().orElseGet(NamingStrategies.Raw::new);
+        return propertyPath.findNamingStrategy().orElse(RAW_NAMING_STRATEGY);
     }
 
     @Override
@@ -251,13 +273,21 @@ public final class CosmosSqlQueryBuilder extends SqlQueryBuilder {
         StringBuilder select = new StringBuilder(SELECT_CLAUSE);
         String logicalName = queryState.getRootAlias();
         PersistentEntity entity = queryState.getEntity();
+        List<QueryModel.Projection> projections = query.getProjections();
         buildSelect(
             queryState,
             select,
-            query.getProjections(),
+            projections,
             logicalName,
             entity
         );
+
+        // For projections, we need to have VALUE in order to be able to read value
+        // but for DTO when there can be more fields retrieved (meaning there is comma in the query) then VALUE cannot work
+        // also literal projection does not need VALUE
+        if (projections.size() == 1 && !(projections.get(0) instanceof QueryModel.LiteralProjection) && select.indexOf(",") == -1) {
+            select.insert(SELECT_CLAUSE.length(), VALUE);
+        }
 
         select.append(FROM_CLAUSE).append(getTableName(entity)).append(SPACE).append(logicalName);
 
@@ -305,9 +335,9 @@ public final class CosmosSqlQueryBuilder extends SqlQueryBuilder {
      * @param joinAliasOverride
      */
     private void appendJoins(QueryState queryState,
-                                                 StringBuilder queryBuffer,
-                                                 Collection<JoinPath> allPaths,
-                                                 @Nullable Map<JoinPath, String> joinAliasOverride) {
+                             StringBuilder queryBuffer,
+                             Collection<JoinPath> allPaths,
+                             @Nullable Map<JoinPath, String> joinAliasOverride) {
         String logicalName = queryState.getRootAlias();
         if (CollectionUtils.isNotEmpty(allPaths)) {
             Map<String, String> joinedPaths = new HashMap<>();
@@ -349,7 +379,7 @@ public final class CosmosSqlQueryBuilder extends SqlQueryBuilder {
 
     @Override
     protected void selectAllColumns(QueryState queryState, StringBuilder queryBuffer) {
-        queryBuffer.append("DISTINCT VALUE ").append(queryState.getRootAlias());
+        queryBuffer.append(DISTINCT).append(SPACE).append(VALUE).append(queryState.getRootAlias());
     }
 
     @Override
@@ -425,5 +455,28 @@ public final class CosmosSqlQueryBuilder extends SqlQueryBuilder {
             }
 
         };
+    }
+
+    @NonNull
+    @Override
+    public QueryResult buildPagination(@NonNull Pageable pageable) {
+        int size = pageable.getSize();
+        if (size > 0) {
+            StringBuilder builder = new StringBuilder(" ");
+            long from = pageable.getOffset();
+            builder.append("OFFSET ").append(from).append(" LIMIT ").append(size).append(" ");
+            return QueryResult.of(
+                builder.toString(),
+                Collections.emptyList(),
+                Collections.emptyList(),
+                Collections.emptyMap()
+            );
+        }
+        return QueryResult.of(
+            "",
+            Collections.emptyList(),
+            Collections.emptyList(),
+            Collections.emptyMap()
+        );
     }
 }

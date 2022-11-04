@@ -638,4 +638,25 @@ interface BookRepository extends GenericRepository<Book, Long> {
         query.contains("FROM `book` book_ INNER JOIN `book_student`")
 
     }
+
+    void "test unsupported ArrayContains operation"() {
+        when:
+        buildRepository('test.BookRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Book;
+import java.util.Optional;
+
+@JdbcRepository(dialect = Dialect.MYSQL)
+interface BookRepository extends GenericRepository<Book, Long> {
+
+    Optional<Book> findByTitleArrayContains(String title);
+}
+
+""")
+        then:
+        Throwable ex = thrown()
+        ex.message.contains('ArrayContains is not supported by this implementation')
+    }
 }

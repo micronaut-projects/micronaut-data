@@ -192,4 +192,14 @@ public interface PersistentEntityCriteriaBuilder extends CriteriaBuilder {
      * @return like predicate
      */
     Predicate regex(Expression<String> x, Expression<String> pattern);
+
+    /**
+     * Checks if array contains given expression. Supported only by Cosmos Db.
+     *
+     * @param x The expression (property)
+     * @param y The expression (value to be contained in the array represented by x property in the db)
+     * @return a new predicate
+     * @since 4.0.0
+     */
+    Predicate arrayContains(Expression<?> x, Expression<?> y);
 }

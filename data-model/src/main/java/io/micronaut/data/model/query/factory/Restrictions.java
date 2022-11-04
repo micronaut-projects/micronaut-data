@@ -446,4 +446,13 @@ public class Restrictions {
         return new QueryModel.LessThanEqualsProperty(propertyName, otherPropertyName);
     }
 
+    /**
+     * Restricts the property to be contained in the array.
+     * @param property The property
+     * @param parameter The parameter that provides the value
+     * @return An instance of Query.ArrayContains
+     */
+    public static QueryModel.ArrayContains arrayContains(String property, Object parameter) {
+        return new QueryModel.ArrayContains(property, parameter);
+    }
 }

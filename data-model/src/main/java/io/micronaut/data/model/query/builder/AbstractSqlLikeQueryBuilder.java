@@ -269,6 +269,10 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             }
             whereClause.append(CLOSE_BRACKET);
         });
+
+        addCriterionHandler(QueryModel.ArrayContains.class, (ctx, criterion) -> {
+           throw new UnsupportedOperationException("ArrayContains is not supported by this implementation.");
+        });
     }
 
     /**
@@ -2174,6 +2178,9 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             return AbstractSqlLikeQueryBuilder.this.shouldEscape(propertyPath.findPropertyOwner().orElse(propertyPath.getProperty().getOwner()));
         }
 
+        /**
+         * @return the persistent property path
+         */
         public PersistentPropertyPath getPropertyPath() {
             return propertyPath;
         }
