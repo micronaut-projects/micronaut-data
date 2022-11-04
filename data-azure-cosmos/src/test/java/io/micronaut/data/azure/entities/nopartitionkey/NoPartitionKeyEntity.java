@@ -6,8 +6,6 @@ import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.Transient;
 import io.micronaut.data.annotation.Version;
 
-import java.util.List;
-
 @MappedEntity("no_partition_key")
 public class NoPartitionKeyEntity {
 

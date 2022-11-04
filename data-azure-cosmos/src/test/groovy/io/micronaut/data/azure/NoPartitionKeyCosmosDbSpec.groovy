@@ -63,12 +63,12 @@ class NoPartitionKeyCosmosDbSpec extends Specification implements AzureCosmosTes
             def name = repository.findNameById(entity1.id)
             def tags1 = repository.getTagsById(entity1.id)
             def tags2 = repository.getTagsById(entity2.id)
-            def notEmptyNameEntities = repository.findByNameIsNotEmpty();
-            def emptyCustomNameEntities = repository.findByCustomNameIsEmpty();
-            def nullRatingEntities = repository.findByRatingIsNull();
-            def nullCustomNameEntities = repository.findByCustomNameIsNull();
-            def notNullRatingEntities = repository.findByRatingIsNotNull();
-            def notNullCustomNameEntities = repository.findByCustomNameIsNotNull();
+            def notEmptyNameEntities = repository.findByNameIsNotEmpty()
+            def emptyCustomNameEntities = repository.findByCustomNameIsEmpty()
+            def nullRatingEntities = repository.findByRatingIsNull()
+            def nullCustomNameEntities = repository.findByCustomNameIsNull()
+            def notNullRatingEntities = repository.findByRatingIsNotNull()
+            def notNullCustomNameEntities = repository.findByCustomNameIsNotNull()
         then:
             name == entity1.name
             !tags1 || tags1.length == 0

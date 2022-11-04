@@ -422,10 +422,10 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
                     new CosmosBook("Pet Cemetery", 400),
                     new CosmosBook("A Game of Thrones", 900),
                     new CosmosBook("A Clash of Kings", 1100)
-            ));
+            ))
         when:
-            def slice = bookRepository.list(Pageable.from(0, 3));
-            def resultList = bookRepository.findByTotalPagesGreaterThan(500, Pageable.from(0, 3));
+            def slice = bookRepository.list(Pageable.from(0, 3))
+            def resultList = bookRepository.findByTotalPagesGreaterThan(500, Pageable.from(0, 3))
         then:
             slice.numberOfElements == 3
             resultList.size() == 3
@@ -490,43 +490,42 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
             CosmosDatabase database = client.getDatabase(databaseResponse.getProperties().getId())
 
             CosmosContainerProperties containerProperties =
-                    new CosmosContainerProperties("book", "/null");
+                    new CosmosContainerProperties("book", "/null")
 
             // Provision throughput
-            ThroughputProperties throughputProperties = ThroughputProperties.createManualThroughput(400);
+            ThroughputProperties throughputProperties = ThroughputProperties.createManualThroughput(400)
 
-            CosmosContainerResponse containerResponse = database.createContainerIfNotExists(containerProperties, throughputProperties);
-            CosmosContainer container = database.getContainer(containerResponse.getProperties().getId());
+            CosmosContainerResponse containerResponse = database.createContainerIfNotExists(containerProperties, throughputProperties)
+            CosmosContainer container = database.getContainer(containerResponse.getProperties().getId())
 
             XBook book = new XBook()
             book.id = UUID.randomUUID()
             book.name = "Ice & Fire"
 
-            def encoderContext = registry.newEncoderContext(Object)
             def type = Argument.of(XBook)
 
             def item = container.createItem(book, PartitionKey.NONE, new CosmosItemRequestOptions())
             System.out.println("XXX " + item.getStatusCode())
 
-            CosmosPagedIterable<ObjectNode> filteredFamilies = container.queryItems("SELECT * FROM c", new CosmosQueryRequestOptions(), ObjectNode.class);
+            CosmosPagedIterable<ObjectNode> filteredFamilies = container.queryItems("SELECT * FROM c", new CosmosQueryRequestOptions(), ObjectNode.class)
 
             if (filteredFamilies.iterator().hasNext()) {
-                ObjectNode b = filteredFamilies.iterator().next();
+                ObjectNode b = filteredFamilies.iterator().next()
 
                 def parser = b.traverse()
                 if (!parser.hasCurrentToken()) {
                     parser.nextToken()
                 }
-                final Decoder decoder = JacksonDecoder.create(parser, Object);
-                Deserializer.DecoderContext decoderContext = registry.newDecoderContext(null);
-                Deserializer<XBook> typeDeserializer = registry.findDeserializer(type);
-                Deserializer<XBook> deserializer = typeDeserializer.createSpecific(decoderContext, type);
+                final Decoder decoder = JacksonDecoder.create(parser, Object)
+                Deserializer.DecoderContext decoderContext = registry.newDecoderContext(null)
+                Deserializer<XBook> typeDeserializer = registry.findDeserializer(type)
+                Deserializer<XBook> deserializer = typeDeserializer.createSpecific(decoderContext, type)
 
                 XBook des = deserializer.deserialize(
                         decoder,
                         decoderContext,
                         type
-                );
+                )
 
                 System.out.println("BOOK: " + b)
                 System.out.println("VVV " + des)

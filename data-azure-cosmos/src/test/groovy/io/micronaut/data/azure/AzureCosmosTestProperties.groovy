@@ -38,7 +38,7 @@ trait AzureCosmosTestProperties implements TestPropertyProvider {
         if (dbInitProps) {
             defaultProps.putAll(dbInitProps)
         }
-        return defaultProps;
+        return defaultProps
     }
 
     Map<String, String> getDbInitProperties() {
@@ -53,7 +53,7 @@ trait AzureCosmosTestProperties implements TestPropertyProvider {
                 'azure.cosmos.database.container-settings[1].partition-key-path'                : '/id',
                 'azure.cosmos.database.container-settings[1].throughput-settings.request-units' : '1200',
                 'azure.cosmos.database.container-settings[1].throughput-settings.auto-scale'    : 'false'
-        ]
+        ] as Map<String, String>
     }
 
     StorageUpdatePolicy storageUpdatePolicy() {

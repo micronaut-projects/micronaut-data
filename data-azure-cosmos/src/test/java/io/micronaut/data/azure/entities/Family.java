@@ -1,6 +1,5 @@
 package io.micronaut.data.azure.entities;
 
-import io.micronaut.data.annotation.Embeddable;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.Relation;
