@@ -2,7 +2,7 @@
 micronaut = "3.5.0"
 micronaut-test = "3.4.0"
 micronaut-serde = "1.1.0"
-micronaut-sql = "4.6.3"
+micronaut-sql = "4.7.2"
 micronaut-docs = "2.0.0"
 micronaut-gradle-plugin = "3.6.3"
 micronaut-mongo = "4.6.0"
@@ -29,7 +29,7 @@ vertx = "4.3.3"
 
 oracle-jdbc-driver = "21.7.0.0"
 mariadb-jdbc-driver = "2.7.6"
-mysql-jdbc-driver = "8.0.30"
+mysql-jdbc-driver = "8.0.31"
 postgres-jdbc-driver = "42.5.0"
 mssql-jdbc-driver = "8.4.1.jre8"
 
@@ -52,16 +52,16 @@ benchmark-spring-data = "2021.1.4"
 spock = "2.0-groovy-3.0"
 cglib = "3.3.0"
 objenesis = "3.2"
-testcontainers = "1.17.3"
+testcontainers = "1.17.5"
 jmh = "1.35"
 jetbrains-annotations = "23.0.0"
 
 # Gradle plugins
 
-kotlin-gradle-plugin = "1.7.10"
+kotlin-gradle-plugin = "1.7.20"
 jmh-gradle-plugin = "0.6.8"
 spring-boot-gradle-plugin = "2.6.7"
-spring-dependency-management-gradle-plugin = "1.0.13.RELEASE"
+spring-dependency-management-gradle-plugin = "1.1.0"
 shadow-gradle-plugin = "7.1.2"
 
 [libraries]

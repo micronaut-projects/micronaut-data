@@ -29,6 +29,7 @@ class EntityEventRegistrySpec extends Specification {
     @Inject MyPostUpdate myPostUpdate
     @Inject TestEventListenerFactory testEventListenerFactory
     @Inject TestEventBean testEventAdapter
+    @Inject OtherTestEventBean otherTestEventAdapter
 
     @Unroll
     void "test supports method for event type #eventType"() {
@@ -60,6 +61,7 @@ class EntityEventRegistrySpec extends Specification {
         entity.prePersist == 1
         testEventListenerFactory.prePersist == 1
         testEventAdapter.prePersist == 1
+        otherTestEventAdapter.prePersist == 1
         entity.preRemove == 0
         testEventListenerFactory.preRemove == 0
         entity.preUpdate == 0
@@ -337,6 +339,15 @@ class EntityEventRegistrySpec extends Specification {
         }
     }
 
+    @Singleton
+    static class OtherTestEventBean {
+        int prePersist
+
+        @PrePersist
+        void prePersist(DomainEvents entity) {
+            prePersist++
+        }
+    }
 
 }
 
