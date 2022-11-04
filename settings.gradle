@@ -87,6 +87,7 @@ include 'doc-examples:mongo-reactive-example-kotlin'
 if (JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_15)) {
     include 'doc-examples:mongo-example-records-java'
 }
+include 'doc-examples:azure-cosmos-example-java'
 
 // benchmarks
 include 'benchmarks:benchmark-micronaut-data-jpa'
