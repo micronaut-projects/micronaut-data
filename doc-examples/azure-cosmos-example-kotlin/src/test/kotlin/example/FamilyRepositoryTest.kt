@@ -1,24 +1,23 @@
 package example
 
-import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable
-import io.micronaut.data.cosmos.config.CosmosDatabaseConfiguration
 import com.azure.cosmos.CosmosClient
 import com.azure.cosmos.models.*
+import example.FamilyRepository.Specifications.idsIn
+import example.FamilyRepository.Specifications.idsInAndNotIn
+import example.FamilyRepository.Specifications.idsNotIn
+import example.FamilyRepository.Specifications.lastNameEquals
 import io.micronaut.context.BeanContext
 import io.micronaut.core.annotation.NonNull
+import io.micronaut.core.util.CollectionUtils
 import io.micronaut.core.util.StringUtils
+import io.micronaut.data.cosmos.config.CosmosDatabaseConfiguration
 import io.micronaut.data.cosmos.config.StorageUpdatePolicy
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest
 import jakarta.inject.Inject
 import org.junit.jupiter.api.*
-import java.lang.IllegalStateException
+import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable
 import java.util.*
-
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertNotNull
-import org.junit.jupiter.api.Assertions.assertNull
-import org.junit.jupiter.api.Assertions.assertTrue
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @MicronautTest
@@ -238,6 +237,42 @@ class FamilyRepositoryTest : AbstractAzureCosmosTest() {
         familyRepository.deleteByLastName(lastName!!, PartitionKey(lastName))
         optFamily1 = familyRepository.findById(ANDERSEN_FAMILY.id!!)
         assertFalse(optFamily1.isPresent)
+    }
+
+    @Test
+    fun testCriteria() {
+        saveSampleFamilies()
+        assertTrue(familyRepository.findOne(lastNameEquals("Andersen")).isPresent)
+        assertFalse(familyRepository.findOne(lastNameEquals(UUID.randomUUID().toString())).isPresent)
+        assertEquals(2, familyRepository.findAll(idsIn(ANDERSEN_FAMILY.id!!, WAKEFIELD_FAMILY.id!!)).size)
+        assertEquals(1, familyRepository.findAll(idsIn(ANDERSEN_FAMILY.id!!)).size)
+        assertEquals(
+            2,
+            familyRepository.findByIdIn(listOf(ANDERSEN_FAMILY.id!!, WAKEFIELD_FAMILY.id!!)).size
+        )
+        assertEquals(1, familyRepository.findByIdIn(listOf(ANDERSEN_FAMILY.id!!)).size)
+        assertEquals(1, familyRepository.findAll(idsNotIn(ANDERSEN_FAMILY.id!!)).size)
+        assertEquals(1, familyRepository.findByIdNotIn(listOf(ANDERSEN_FAMILY.id!!)).size)
+        assertEquals(
+            2, familyRepository.findAll(
+                idsInAndNotIn(
+                    listOf(ANDERSEN_FAMILY.id!!, WAKEFIELD_FAMILY.id!!), listOf(
+                        UUID.randomUUID().toString()
+                    )
+                )
+            ).size
+        )
+        assertTrue(
+            CollectionUtils.isEmpty(
+                familyRepository.findAll(
+                    idsInAndNotIn(
+                        listOf(UUID.randomUUID().toString(), UUID.randomUUID().toString()), listOf(
+                            ANDERSEN_FAMILY.id!!, WAKEFIELD_FAMILY.id!!
+                        )
+                    )
+                ) as Collection<*>?
+            )
+        )
     }
 
     private fun saveSampleFamilies() {

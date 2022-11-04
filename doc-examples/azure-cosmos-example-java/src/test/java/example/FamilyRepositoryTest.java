@@ -12,6 +12,7 @@ import com.azure.cosmos.models.UniqueKey;
 import com.azure.cosmos.models.UniqueKeyPolicy;
 import io.micronaut.context.BeanContext;
 import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.cosmos.config.CosmosDatabaseConfiguration;
 import io.micronaut.data.cosmos.config.StorageUpdatePolicy;
@@ -37,6 +38,11 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import static example.FamilyRepository.Specifications.idsIn;
+import static example.FamilyRepository.Specifications.idsInAndNotIn;
+import static example.FamilyRepository.Specifications.idsNotIn;
+import static example.FamilyRepository.Specifications.lastNameEquals;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @MicronautTest
@@ -135,6 +141,7 @@ public class FamilyRepositoryTest extends AbstractAzureCosmosTest {
         assertTrue(StringUtils.isNotEmpty(lastOrderedLastName));
 
         optFamily2.get().setRegisteredDate(new Date());
+        optFamily2.get().setComment("some comment");
         familyRepository.update(optFamily2.get());
         Date lastOrderedRegisteredDate = familyRepository.lastOrderedRegisteredDate();
         assertNotNull(lastOrderedRegisteredDate);
@@ -145,6 +152,7 @@ public class FamilyRepositoryTest extends AbstractAzureCosmosTest {
         assertTrue(optFamily2.isPresent());
         assertNull(optFamily2.get().getRegisteredDate());
         assertFalse(optFamily2.get().isRegistered());
+        assertNull(optFamily2.get().getComment());
 
         boolean exists = familyRepository.existsById(ANDERSEN_FAMILY.getId());
         assertTrue(exists);
@@ -260,6 +268,21 @@ public class FamilyRepositoryTest extends AbstractAzureCosmosTest {
         familyRepository.deleteByLastName(lastName, new PartitionKey(lastName));
         optFamily1 = familyRepository.findById(ANDERSEN_FAMILY.getId());
         assertFalse(optFamily1.isPresent());
+    }
+
+    @Test
+    public void testCriteria() {
+        saveSampleFamilies();
+        assertTrue(familyRepository.findOne(lastNameEquals("Andersen")).isPresent());
+        assertFalse(familyRepository.findOne(lastNameEquals(UUID.randomUUID().toString())).isPresent());
+        assertEquals(2, familyRepository.findAll(idsIn(ANDERSEN_FAMILY.getId(), WAKEFIELD_FAMILY.getId())).size());
+        assertEquals(1, familyRepository.findAll(idsIn(ANDERSEN_FAMILY.getId())).size());
+        assertEquals(2, familyRepository.findByIdIn(Arrays.asList(ANDERSEN_FAMILY.getId(), WAKEFIELD_FAMILY.getId())).size());
+        assertEquals(1, familyRepository.findByIdIn(Arrays.asList(ANDERSEN_FAMILY.getId())).size());
+        assertEquals(1, familyRepository.findAll(idsNotIn(ANDERSEN_FAMILY.getId())).size());
+        assertEquals(1, familyRepository.findByIdNotIn(Arrays.asList(ANDERSEN_FAMILY.getId())).size());
+        assertEquals(2, familyRepository.findAll(idsInAndNotIn(Arrays.asList(ANDERSEN_FAMILY.getId(), WAKEFIELD_FAMILY.getId()), Arrays.asList(UUID.randomUUID().toString()))).size());
+        assertTrue(CollectionUtils.isEmpty(familyRepository.findAll(idsInAndNotIn(Arrays.asList(UUID.randomUUID().toString(), UUID.randomUUID().toString()), Arrays.asList(ANDERSEN_FAMILY.getId(), WAKEFIELD_FAMILY.getId())))));
     }
 
     void saveSampleFamilies() {
