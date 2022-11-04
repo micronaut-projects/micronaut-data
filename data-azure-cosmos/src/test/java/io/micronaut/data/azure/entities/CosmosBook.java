@@ -54,12 +54,6 @@ public class CosmosBook {
         this.totalPages = totalPages;
     }
 
-    @Relation(Relation.Kind.MANY_TO_ONE)
-    private CosmosAuthor author;
-
-    @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = "book", cascade = Relation.Cascade.ALL)
-    private List<CosmosPage> pages = new ArrayList<>();
-
     @Transient
     public int prePersist, postPersist, preUpdate, postUpdate, preRemove, postRemove, postLoad;
 
@@ -113,22 +107,6 @@ public class CosmosBook {
         preRemove = 0;
         postRemove = 0;
         postLoad = 0;
-    }
-
-    public List<CosmosPage> getPages() {
-        return pages;
-    }
-
-    public void setPages(List<CosmosPage> pages) {
-        this.pages = pages;
-    }
-
-    public CosmosAuthor getAuthor() {
-        return author;
-    }
-
-    public void setAuthor(CosmosAuthor author) {
-        this.author = author;
     }
 
     public String getId() {

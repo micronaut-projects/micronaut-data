@@ -22,6 +22,7 @@ import io.micronaut.data.azure.entities.Family
 import io.micronaut.data.azure.entities.Pet
 import io.micronaut.data.azure.entities.UUIDEntity
 import io.micronaut.data.azure.entities.User
+import io.micronaut.data.azure.entities.XBook
 import io.micronaut.data.azure.repositories.CosmosBookDtoRepository
 import io.micronaut.data.azure.repositories.CosmosBookRepository
 import io.micronaut.data.azure.repositories.FamilyRepository

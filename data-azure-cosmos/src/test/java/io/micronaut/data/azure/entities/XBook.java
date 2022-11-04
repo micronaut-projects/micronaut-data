@@ -1,4 +1,4 @@
-package io.micronaut.data.azure;
+package io.micronaut.data.azure.entities;
 
 import io.micronaut.serde.annotation.Serdeable;
 
