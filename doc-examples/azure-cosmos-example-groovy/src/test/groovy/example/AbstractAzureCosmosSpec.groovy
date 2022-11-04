@@ -15,7 +15,7 @@ import java.security.KeyStore
 abstract class AbstractAzureCosmosSpec extends Specification implements TestPropertyProvider {
 
     @Shared
-    @AutoCleanup
+    @AutoCleanup("stop")
     CosmosDBEmulatorContainer emulator = new CosmosDBEmulatorContainer(DockerImageName.parse("mcr.microsoft.com/cosmosdb/linux/azure-cosmos-emulator:latest"))
 
     @Override

@@ -1,3 +1,6 @@
+micronaut:
+  application:
+    name: example
 azure:
   cosmos:
     default-gateway-mode: true

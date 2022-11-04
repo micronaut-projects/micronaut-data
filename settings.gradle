@@ -89,6 +89,7 @@ if (JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_15)) {
 }
 include 'doc-examples:azure-cosmos-example-java'
 include 'doc-examples:azure-cosmos-example-groovy'
+include 'doc-examples:azure-cosmos-example-kotlin'
 
 // benchmarks
 include 'benchmarks:benchmark-micronaut-data-jpa'

@@ -3,6 +3,7 @@ package example;
 import io.micronaut.data.cosmos.config.StorageUpdatePolicy;
 import io.micronaut.test.support.TestPropertyProvider;
 import org.junit.Rule;
+import org.junit.jupiter.api.AfterAll;
 import org.testcontainers.containers.CosmosDBEmulatorContainer;
 import org.testcontainers.utility.DockerImageName;
 
@@ -17,6 +18,13 @@ public abstract class AbstractAzureCosmosSpec implements TestPropertyProvider {
 
     @Rule
     CosmosDBEmulatorContainer emulator = new CosmosDBEmulatorContainer(DockerImageName.parse("mcr.microsoft.com/cosmosdb/linux/azure-cosmos-emulator:latest"));
+
+    @AfterAll
+    public void tearDown() {
+        if (emulator.isRunning()) {
+            emulator.stop();
+        }
+    }
 
     @Override
     public Map<String, String> getProperties() {

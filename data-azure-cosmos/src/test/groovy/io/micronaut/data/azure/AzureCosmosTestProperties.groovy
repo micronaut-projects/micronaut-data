@@ -4,6 +4,8 @@ import io.micronaut.data.cosmos.config.StorageUpdatePolicy
 import io.micronaut.test.support.TestPropertyProvider
 import org.testcontainers.containers.CosmosDBEmulatorContainer
 import org.testcontainers.utility.DockerImageName
+import spock.lang.AutoCleanup
+import spock.lang.Shared
 
 import java.nio.file.Files
 import java.nio.file.Path
@@ -11,11 +13,12 @@ import java.security.KeyStore
 
 trait AzureCosmosTestProperties implements TestPropertyProvider {
 
+    @Shared
+    @AutoCleanup("stop")
+    CosmosDBEmulatorContainer emulator = new CosmosDBEmulatorContainer(DockerImageName.parse("mcr.microsoft.com/cosmosdb/linux/azure-cosmos-emulator:latest"))
+
     @Override
     Map<String, String> getProperties() {
-        CosmosDBEmulatorContainer emulator = new CosmosDBEmulatorContainer(
-                DockerImageName.parse("mcr.microsoft.com/cosmosdb/linux/azure-cosmos-emulator:latest")
-        )
         emulator.start()
         Path keyStoreFile = Files.createTempFile("azure-cosmos-emulator", ".keystore")
         KeyStore keyStore = emulator.buildNewKeyStore()

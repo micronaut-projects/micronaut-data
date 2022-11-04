@@ -1,19 +1,15 @@
 package example;
 
 import io.micronaut.context.BeanContext;
-import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.Query;
-import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Slice;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
-import org.junit.Assume;
-import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
 
 import java.util.Arrays;
 import java.util.List;
@@ -24,20 +20,21 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @MicronautTest
+@DisabledIfEnvironmentVariable(named = "GITHUB_WORKFLOW", matches = ".*")
 class BookRepositorySpec extends AbstractAzureCosmosSpec {
 
+    @AfterEach
+    public void cleanup() {
+        bookRepository.deleteAll();
+    }
+
     // tag::inject[]
-	@Inject BookRepository bookRepository;
+    @Inject BookRepository bookRepository;
     // end::inject[]
 
 	// tag::metadata[]
 	@Inject
 	BeanContext beanContext;
-
-    @Before
-    public void before() {
-        Assume.assumeTrue(StringUtils.isEmpty(System.getProperty("GITHUB_WORKFLOW")));
-    }
 
 	@Test
 	void testAnnotationMetadata() {
@@ -52,11 +49,6 @@ class BookRepositorySpec extends AbstractAzureCosmosSpec {
 
 	}
 	// end::metadata[]
-
-	@AfterEach
-	public void cleanup() {
-		bookRepository.deleteAll();
-	}
 
 	@Test
 	void testCrud() {
@@ -86,6 +78,7 @@ class BookRepositorySpec extends AbstractAzureCosmosSpec {
 		bookRepository.update(book.getId(), "Changed");
         // end::update[]
 		book = bookRepository.findById(id).orElse(null);
+        assertNotNull(book);
 		assertEquals("Changed", book.getTitle());
 
 		// Delete: Delete the book
