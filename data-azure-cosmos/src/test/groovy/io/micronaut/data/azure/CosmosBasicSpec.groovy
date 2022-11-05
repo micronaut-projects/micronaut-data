@@ -30,6 +30,7 @@ import io.micronaut.data.azure.repositories.UUIDEntityRepository
 import io.micronaut.data.azure.repositories.UserRepository
 import io.micronaut.data.cosmos.config.CosmosDatabaseConfiguration
 import io.micronaut.data.cosmos.config.StorageUpdatePolicy
+import io.micronaut.data.exceptions.OptimisticLockException
 import io.micronaut.data.model.Pageable
 import io.micronaut.serde.Decoder
 import io.micronaut.serde.Deserializer
@@ -165,6 +166,8 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
             def notLoadedBook = bookRepository.queryById(UUID.randomUUID().toString())
             def loadedBook1 = bookRepository.queryById(book1.id)
             def loadedBook2 = bookRepository.queryById(book2.id)
+            def version1 = loadedBook1.version
+            def version2 = loadedBook2.version
         then:
             !notLoadedBook
             loadedBook1
@@ -175,11 +178,14 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
             loadedBook2.title == "Ice And Fire"
             loadedBook2.created
             loadedBook2.lastUpdated
+            version1
+            version2
         when:
             def foundBook = bookRepository.searchByTitle("Ice And Fire")
         then:
             foundBook
             foundBook.title == "Ice And Fire"
+            foundBook.version == version2
         when:
             def totalPages = loadedBook1.totalPages
             loadedBook1.totalPages = totalPages + 1
@@ -190,6 +196,24 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
             foundBook.totalPages == totalPages + 1
             foundBook.created == loadedBook1.created
             foundBook.lastUpdated != loadedBook1.lastUpdated
+            foundBook.version != version1
+        when:
+            def latestVersion = foundBook.version
+            foundBook.version = UUID.randomUUID().toString()
+            bookRepository.update(foundBook)
+        then:
+            thrown(OptimisticLockException)
+        when:
+            bookRepository.delete(foundBook)
+        then:
+            thrown(OptimisticLockException)
+        when:
+            foundBook.version = latestVersion
+            bookRepository.update(foundBook)
+            foundBook = bookRepository.findById(foundBook.id).get()
+            bookRepository.delete(foundBook)
+        then:
+            noExceptionThrown()
         cleanup:
             bookRepository.deleteAll()
     }

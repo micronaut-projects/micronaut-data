@@ -32,7 +32,8 @@ trait AzureCosmosTestProperties implements TestPropertyProvider {
                 'azure.cosmos.key'                                         : emulator.getEmulatorKey(),
                 'azure.cosmos.database.throughput-settings.request-units'  : '1000',
                 'azure.cosmos.database.throughput-settings.auto-scale'     : 'true',
-                'azure.cosmos.database.database-name'                      : 'mydb'
+                'azure.cosmos.database.database-name'                      : 'mydb',
+                'azure.cosmos.database.packages'                           : 'io.micronaut.data.azure.entities'
         ]
         def dbInitProps = getDbInitProperties()
         if (dbInitProps) {

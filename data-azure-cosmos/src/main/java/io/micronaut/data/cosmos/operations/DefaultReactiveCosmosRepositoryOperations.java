@@ -18,6 +18,7 @@ package io.micronaut.data.cosmos.operations;
 import com.azure.cosmos.CosmosAsyncClient;
 import com.azure.cosmos.CosmosAsyncContainer;
 import com.azure.cosmos.CosmosAsyncDatabase;
+import com.azure.cosmos.CosmosException;
 import com.azure.cosmos.implementation.RequestOptions;
 import com.azure.cosmos.implementation.batch.ItemBulkOperation;
 import com.azure.cosmos.models.CosmosItemOperation;
@@ -45,12 +46,13 @@ import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.cosmos.common.Constants;
 import io.micronaut.data.cosmos.common.CosmosAccessException;
-import io.micronaut.data.cosmos.common.CosmosDatabaseInitializer;
+import io.micronaut.data.cosmos.common.CosmosEntity;
 import io.micronaut.data.cosmos.config.CosmosDatabaseConfiguration;
 import io.micronaut.data.document.model.query.builder.CosmosSqlQueryBuilder;
 import io.micronaut.data.event.EntityEventListener;
 import io.micronaut.data.exceptions.EmptyResultException;
 import io.micronaut.data.exceptions.NonUniqueResultException;
+import io.micronaut.data.exceptions.OptimisticLockException;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.Page;
@@ -113,8 +115,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Function;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 
@@ -141,8 +141,6 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
 
     private final CosmosSerde cosmosSerde;
     private final CosmosAsyncDatabase cosmosAsyncDatabase;
-    private final Map<String, CosmosDatabaseConfiguration.CosmosContainerSettings> cosmosContainerSettingsMap;
-    private final Map<PersistentEntity, String> partitionKeyByPersistentEntity = new ConcurrentHashMap<>();
     private CosmosSqlQueryBuilder defaultCosmosSqlQueryBuilder;
 
     /**
@@ -168,8 +166,6 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
         super(codecs, dateTimeProvider, runtimeEntityRegistry, conversionService, attributeConverterRegistry);
         this.cosmosSerde = cosmosSerde;
         this.cosmosAsyncDatabase = cosmosAsyncClient.getDatabase(configuration.getDatabaseName());
-        this.cosmosContainerSettingsMap = CollectionUtils.isEmpty(configuration.getContainers()) ? Collections.emptyMap() :
-            configuration.getContainers().stream().collect(Collectors.toMap(CosmosDatabaseConfiguration.CosmosContainerSettings::getContainerName, Function.identity()));
     }
 
     @Override
@@ -556,7 +552,7 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
      * @return the Cosmos async container
      */
     private CosmosAsyncContainer getContainer(RuntimePersistentEntity<?> persistentEntity) {
-        return cosmosAsyncDatabase.getContainer(persistentEntity.getPersistedName());
+        return cosmosAsyncDatabase.getContainer(CosmosEntity.get(persistentEntity).getContainerName());
     }
 
     /**
@@ -576,15 +572,15 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
     /**
      * Gets an indicator telling whether persistent entity identity field matches with the container partition key for that entity.
      *
-     * @param persistentEntity persistent entity
+     * @param runtimePersistentEntity persistent entity
      * @return true if persistent entity identity field matches with the container partition key for that entity
      */
-    private boolean isIdPartitionKey(PersistentEntity persistentEntity) {
-        PersistentProperty identity = persistentEntity.getIdentity();
+    private boolean isIdPartitionKey(RuntimePersistentEntity<?> runtimePersistentEntity) {
+        PersistentProperty identity = runtimePersistentEntity.getIdentity();
         if (identity == null) {
             return false;
         }
-        String partitionKey = getPartitionKeyDefinition(persistentEntity);
+        String partitionKey = getPartitionKeyDefinition(runtimePersistentEntity);
         return partitionKey.equals(Constants.PARTITION_KEY_SEPARATOR + identity.getName());
     }
 
@@ -592,17 +588,13 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
      * Gets partition key definition for given persistent entity.
      * It may happen that persistent entity does not have defined partition key and in that case we return empty string (or null).
      *
-     * @param persistentEntity the persistent entity
+     * @param runtimePersistentEntity the persistent entity
      * @return partition key definition it exists for persistent entity, otherwise empty/null string
      */
     @NonNull
-    private String getPartitionKeyDefinition(PersistentEntity persistentEntity) {
-        return partitionKeyByPersistentEntity.computeIfAbsent(persistentEntity, this::doGetPartitionKeyDefinition);
-    }
-
-    private String doGetPartitionKeyDefinition(PersistentEntity persistentEntity) {
-        CosmosDatabaseConfiguration.CosmosContainerSettings cosmosContainerSettings = cosmosContainerSettingsMap.get(persistentEntity.getPersistedName());
-        return CosmosDatabaseInitializer.getPartitionKeyDefinition(persistentEntity, cosmosContainerSettings);
+    private String getPartitionKeyDefinition(RuntimePersistentEntity<?> runtimePersistentEntity) {
+        CosmosEntity cosmosEntity = CosmosEntity.get(runtimePersistentEntity);
+        return cosmosEntity.getPartitionKey();
     }
 
     /**
@@ -821,6 +813,26 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
         };
     }
 
+    private void setIfMatchETag(CosmosItemRequestOptions requestOptions, ObjectNode item) {
+        final com.fasterxml.jackson.databind.JsonNode versionValue = item.get(Constants.ETAG_FIELD_NAME);
+        if (versionValue != null) {
+            requestOptions.setIfMatchETag(versionValue.textValue());
+        }
+    }
+
+    private Throwable handleCosmosOperationException(Throwable e, RuntimePersistentEntity<?> persistentEntity) {
+        if (e instanceof CosmosException) {
+            CosmosException cosmosException = (CosmosException) e;
+            if (cosmosException.getStatusCode() == HttpResponseStatus.PRECONDITION_FAILED.code()) {
+                CosmosEntity cosmosEntity = CosmosEntity.get(persistentEntity);
+                if (cosmosEntity.getVersionField() != null) {
+                    return new OptimisticLockException("Operation failed due to optimistic locking conflict.");
+                }
+            }
+        }
+        return e;
+    }
+
     private <T> CosmosReactiveEntityOperation<T> createCosmosReactiveReplaceItemOperation(CosmosReactiveOperationContext<T> ctx, RuntimePersistentEntity<T> persistentEntity, T entity) {
         return new CosmosReactiveEntityOperation<T>(entityEventRegistry, conversionService, ctx, persistentEntity, entity, false) {
 
@@ -831,13 +843,18 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
                     ObjectNode item = cosmosSerde.serialize(persistentEntity, d.entity, Argument.of(ctx.getRootEntity()));
                     PartitionKey partitionKey = getPartitionKey(persistentEntity, item);
                     String id = getItemId(item);
-                    Mono<CosmosItemResponse<ObjectNode>> response = container.replaceItem(item, id, partitionKey, new CosmosItemRequestOptions());
+                    CosmosItemRequestOptions requestOptions = new CosmosItemRequestOptions();
+                    setIfMatchETag(requestOptions, item);
+                    Mono<CosmosItemResponse<ObjectNode>> response = container.replaceItem(item, id, partitionKey, requestOptions);
                     return Mono.from(response).map(updateOneResult -> {
                         if (updateOneResult.getStatusCode() != HttpResponseStatus.OK.code()) {
                             LOG.debug("Failed to update entity with id {} in container {}", id, container.getId());
+                            d.rowsUpdated = 0;
+                        } else {
+                            d.rowsUpdated = 1;
                         }
                         return d;
-                    });
+                    }).onErrorMap(e -> handleCosmosOperationException(e, persistentEntity));
                 });
             }
 
@@ -853,6 +870,7 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
                 data = data.flatMap(d -> {
                     ObjectNode item = cosmosSerde.serialize(persistentEntity, d.entity, Argument.of(ctx.getRootEntity()));
                     CosmosItemRequestOptions options = new CosmosItemRequestOptions();
+                    setIfMatchETag(options, item);
                     String id = getItemId(item);
                     PartitionKey partitionKey = getPartitionKey(persistentEntity, item);
                     Mono<CosmosItemResponse<Object>> response = container.deleteItem(id, partitionKey, options);
@@ -863,18 +881,32 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
                             d.rowsUpdated = 0;
                         }
                         return d;
-                    });
+                    }).onErrorMap(e -> handleCosmosOperationException(e, persistentEntity));
                 });
             }
         };
+    }
+
+    private ItemBulkOperation<?, ?> createItemBulkOperation(ObjectNode item, String partitionKeyField, CosmosItemOperationType cosmosItemOperationType, boolean insert,
+                                                            RequestOptions requestOptions) {
+        String id = getItemId(item);
+        PartitionKey partitionKey = getPartitionKey(partitionKeyField, item);
+
+        if (!insert) {
+            final com.fasterxml.jackson.databind.JsonNode versionValue = item.get(Constants.ETAG_FIELD_NAME);
+            if (versionValue != null) {
+                requestOptions.setIfMatchETag(versionValue.textValue());
+            }
+        }
+        return new ItemBulkOperation<>(cosmosItemOperationType, id, partitionKey, requestOptions, item, null);
     }
 
     private <T> CosmosReactiveEntitiesOperation<T> createCosmosReactiveBulkOperation(CosmosReactiveOperationContext<T> ctx,
                                                                                      RuntimePersistentEntity<T> persistentEntity,
                                                                                      BatchOperation<T> operation,
                                                                                      BulkOperationType operationType) {
-        return new CosmosReactiveEntitiesOperation<T>(entityEventRegistry, conversionService, ctx, persistentEntity, operation,
-            BulkOperationType.CREATE.equals(operationType)) {
+        boolean insert = BulkOperationType.CREATE.equals(operationType);
+        return new CosmosReactiveEntitiesOperation<T>(entityEventRegistry, conversionService, ctx, persistentEntity, operation, insert) {
 
             @Override
             protected void execute() throws RuntimeException {
@@ -896,17 +928,17 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
                                 generateId(persistentEntity, x.entity);
                             }
                             ObjectNode item = cosmosSerde.serialize(persistentEntity, x.entity, arg);
-                            String id = getItemId(item);
-                            PartitionKey partitionKey = getPartitionKey(partitionKeyField, item);
-                            return new ItemBulkOperation<>(operationType.cosmosItemOperationType, id, partitionKey, requestOptions, item, null);
+                            return createItemBulkOperation(item, partitionKeyField, operationType.cosmosItemOperationType, insert, requestOptions);
                         }).collect(Collectors.toList());
                         if (notVetoedEntities.isEmpty()) {
                             return Mono.just(Tuples.of(e, 0L));
                         }
                         return executeAndGetRowsUpdated(notVetoedEntities)
                             .map(Number::longValue)
-                            .map(rowsUpdated -> Tuples.of(e, rowsUpdated));
-                    }).cache();
+                            .map(rowsUpdated ->  Tuples.of(e, rowsUpdated));
+                    })
+                    .onErrorMap(e -> handleCosmosOperationException(e, persistentEntity))
+                    .cache();
                 entities = entitiesWithRowsUpdated.flatMapMany(t -> Flux.fromIterable(t.getT1()));
                 rowsUpdated = entitiesWithRowsUpdated.map(Tuple2::getT2);
             }
@@ -1151,7 +1183,7 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
     }
 
     /**
-     * Base class for Cosmos reactive multiple entities operation.
+     * Base class for Cosmos reactive multiple entity operation.
      *
      * @param <T> the entity type
      */

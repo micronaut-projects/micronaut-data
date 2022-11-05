@@ -41,5 +41,10 @@ public final class Constants {
      */
     public static final String NO_PARTITION_KEY = PARTITION_KEY_SEPARATOR + "null";
 
+    /**
+     * Internal Azure Cosmos ETag or version field name.
+     */
+    public static final String ETAG_FIELD_NAME = "_etag";
+
     private Constants() { }
 }

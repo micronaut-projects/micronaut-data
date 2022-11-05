@@ -22,6 +22,7 @@ import com.fasterxml.jackson.databind.node.TextNode;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.cosmos.common.Constants;
+import io.micronaut.data.cosmos.common.CosmosEntity;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
@@ -72,6 +73,17 @@ final class CosmosSerde {
             String id = value == null ? null : value.toString();
             result.set(Constants.INTERNAL_ID, new TextNode(id));
         }
+        CosmosEntity cosmosEntity = CosmosEntity.get(persistentEntity);
+        String versionField = cosmosEntity.getVersionField();
+        if (versionField != null) {
+            RuntimePersistentProperty<E> versionProperty = persistentEntity.getPropertyByName(versionField);
+            if (versionProperty != null && !versionProperty.getName().equals(Constants.ETAG_FIELD_NAME)) {
+                Object value = versionProperty.getProperty().get(bean);
+                if (value != null) {
+                    result.set(Constants.ETAG_FIELD_NAME, new TextNode(value.toString()));
+                }
+            }
+        }
         return result;
     }
 
@@ -113,10 +125,18 @@ final class CosmosSerde {
     public  <E, R> R deserialize(RuntimePersistentEntity<E> persistentEntity, ObjectNode objectNode, Argument<R> type) {
         RuntimePersistentProperty<?> identity = persistentEntity.getIdentity();
         if (identity != null && !identity.getName().equals(Constants.INTERNAL_ID)) {
-            final com.fasterxml.jackson.databind.JsonNode idValue = objectNode.get(Constants.INTERNAL_ID);
-            // Replace the key id to the actual id field name in domain
+            // Remove the internal id field if there is no such field in the entity
             objectNode.remove(Constants.INTERNAL_ID);
-            objectNode.set(identity.getName(), idValue);
+        }
+        CosmosEntity cosmosEntity = CosmosEntity.get(persistentEntity);
+        String versionField = cosmosEntity.getVersionField();
+        if (versionField != null) {
+            RuntimePersistentProperty<E> versionProperty = persistentEntity.getPropertyByName(versionField);
+            if (versionProperty != null && !versionProperty.getName().equals(Constants.ETAG_FIELD_NAME)) {
+                final com.fasterxml.jackson.databind.JsonNode versionValue = objectNode.get(Constants.ETAG_FIELD_NAME);
+                objectNode.remove(Constants.ETAG_FIELD_NAME);
+                objectNode.set(versionProperty.getName(), versionValue);
+            }
         }
         return deserialize(objectNode, type);
     }

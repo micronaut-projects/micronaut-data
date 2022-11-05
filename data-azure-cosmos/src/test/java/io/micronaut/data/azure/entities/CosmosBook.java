@@ -30,6 +30,7 @@ import io.micronaut.data.annotation.event.PostUpdate;
 import io.micronaut.data.annotation.event.PrePersist;
 import io.micronaut.data.annotation.event.PreRemove;
 import io.micronaut.data.annotation.event.PreUpdate;
+import io.micronaut.data.cosmos.annotation.ETag;
 import io.micronaut.data.cosmos.annotation.PartitionKey;
 
 import java.time.LocalDateTime;
@@ -44,7 +45,7 @@ public class CosmosBook {
     private String id;
     private String title;
     private int totalPages;
-    @MappedProperty(value = "_etag")
+    @ETag
     private String version;
 
     public CosmosBook() { }

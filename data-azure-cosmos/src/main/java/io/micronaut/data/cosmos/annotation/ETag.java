@@ -13,19 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.cosmos.common;
+package io.micronaut.data.cosmos.annotation;
 
-import io.micronaut.data.exceptions.DataAccessException;
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
- * Cosmos Db data access exception.
+ * Field annotation indicating that entity field should be used as a document version or _etag in Azure Cosmos Db.
  *
  * @author radovanradic
  * @since 4.0.0
  */
-public class CosmosAccessException extends DataAccessException {
-
-    public CosmosAccessException(String message, Throwable cause) {
-        super(message, cause);
-    }
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ElementType.FIELD, ElementType.METHOD})
+@Documented
+public @interface ETag {
 }
