@@ -887,11 +887,10 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
         };
     }
 
-    private ItemBulkOperation<?, ?> createItemBulkOperation(ObjectNode item, String partitionKeyField, CosmosItemOperationType cosmosItemOperationType, boolean insert,
-                                                            RequestOptions requestOptions) {
+    private ItemBulkOperation<?, ?> createItemBulkOperation(ObjectNode item, String partitionKeyField, CosmosItemOperationType cosmosItemOperationType, boolean insert) {
         String id = getItemId(item);
         PartitionKey partitionKey = getPartitionKey(partitionKeyField, item);
-
+        RequestOptions requestOptions = new RequestOptions();
         if (!insert) {
             final com.fasterxml.jackson.databind.JsonNode versionValue = item.get(Constants.ETAG_FIELD_NAME);
             if (versionValue != null) {
@@ -911,7 +910,6 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
             @Override
             protected void execute() throws RuntimeException {
                 Argument<T> arg = Argument.of(ctx.getRootEntity());
-                RequestOptions requestOptions = new RequestOptions();
 
                 String partitionKeyDefinition = getPartitionKeyDefinition(persistentEntity);
                 if (partitionKeyDefinition.startsWith(Constants.PARTITION_KEY_SEPARATOR)) {
@@ -928,7 +926,7 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
                                 generateId(persistentEntity, x.entity);
                             }
                             ObjectNode item = cosmosSerde.serialize(persistentEntity, x.entity, arg);
-                            return createItemBulkOperation(item, partitionKeyField, operationType.cosmosItemOperationType, insert, requestOptions);
+                            return createItemBulkOperation(item, partitionKeyField, operationType.cosmosItemOperationType, insert);
                         }).collect(Collectors.toList());
                         if (notVetoedEntities.isEmpty()) {
                             return Mono.just(Tuples.of(e, 0L));
