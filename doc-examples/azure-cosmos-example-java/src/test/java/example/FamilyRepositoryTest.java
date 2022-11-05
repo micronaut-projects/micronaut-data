@@ -112,13 +112,11 @@ public class FamilyRepositoryTest extends AbstractAzureCosmosTest {
         assertEquals(optFamily1.get().getId(), ANDERSEN_FAMILY.getId());
         assertEquals(optFamily1.get().getChildren().size(), ANDERSEN_FAMILY.getChildren().size());
         assertNotNull(optFamily1.get().getAddress());
-        assertNotNull(optFamily1.get().getRecordVersion());
         assertNotNull(optFamily1.get().getDocumentVersion());
         assertTrue(optFamily2.isPresent());
         assertEquals(optFamily2.get().getId(), WAKEFIELD_FAMILY.getId());
         assertEquals(optFamily2.get().getChildren().size(), WAKEFIELD_FAMILY.getChildren().size());
         assertNotNull(optFamily2.get().getAddress());
-        assertNotNull(optFamily2.get().getRecordVersion());
         assertNotNull(optFamily2.get().getDocumentVersion());
 
         List<Family> families = familyRepository.findByLastNameLike("Ander%");

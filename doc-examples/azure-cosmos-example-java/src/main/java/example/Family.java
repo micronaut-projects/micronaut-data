@@ -6,6 +6,7 @@ import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.annotation.Transient;
 import io.micronaut.data.annotation.Version;
+import io.micronaut.data.cosmos.annotation.ETag;
 import io.micronaut.data.cosmos.annotation.PartitionKey;
 
 import java.util.ArrayList;
@@ -33,10 +34,7 @@ public class Family {
 
     private String[] tags;
 
-    @Version
-    private Long recordVersion;
-
-    @MappedProperty("_etag")
+    @ETag
     private String documentVersion;
 
     @Transient
@@ -96,14 +94,6 @@ public class Family {
 
     public void setTags(String[] tags) {
         this.tags = tags;
-    }
-
-    public Long getRecordVersion() {
-        return recordVersion;
-    }
-
-    public void setRecordVersion(Long recordVersion) {
-        this.recordVersion = recordVersion;
     }
 
     public String getDocumentVersion() {

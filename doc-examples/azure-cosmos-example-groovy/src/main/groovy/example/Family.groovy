@@ -6,6 +6,7 @@ import io.micronaut.data.annotation.MappedProperty
 import io.micronaut.data.annotation.Relation
 import io.micronaut.data.annotation.Transient
 import io.micronaut.data.annotation.Version
+import io.micronaut.data.cosmos.annotation.ETag
 import io.micronaut.data.cosmos.annotation.PartitionKey
 
 @MappedEntity
@@ -22,9 +23,7 @@ class Family {
     private boolean registered;
     private Date registeredDate;
     private String[] tags;
-    @Version
-    private Long recordVersion;
-    @MappedProperty("_etag")
+    @ETag
     private String documentVersion;
     @Transient
     private String comment;
@@ -83,14 +82,6 @@ class Family {
 
     void setTags(String[] tags) {
         this.tags = tags
-    }
-
-    Long getRecordVersion() {
-        return recordVersion
-    }
-
-    void setRecordVersion(Long recordVersion) {
-        this.recordVersion = recordVersion
     }
 
     String getDocumentVersion() {

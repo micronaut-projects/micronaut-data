@@ -85,13 +85,11 @@ class FamilyRepositoryTest : AbstractAzureCosmosTest() {
         assertEquals(optFamily1.get().id, ANDERSEN_FAMILY.id)
         assertEquals(optFamily1.get().children.size, ANDERSEN_FAMILY.children.size)
         assertNotNull(optFamily1.get().address)
-        assertNotNull(optFamily1.get().recordVersion)
         assertNotNull(optFamily1.get().documentVersion)
         assertTrue(optFamily2.isPresent)
         assertEquals(optFamily2.get().id, WAKEFIELD_FAMILY.id)
         assertEquals(optFamily2.get().children.size, WAKEFIELD_FAMILY.children.size)
         assertNotNull(optFamily2.get().address)
-        assertNotNull(optFamily2.get().recordVersion)
         assertNotNull(optFamily2.get().documentVersion)
 
         var families = familyRepository.findByLastNameLike("Ander%")

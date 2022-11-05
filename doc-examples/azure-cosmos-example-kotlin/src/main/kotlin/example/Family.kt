@@ -2,6 +2,7 @@ package example
 
 import io.micronaut.data.annotation.*
 import io.micronaut.data.annotation.Transient
+import io.micronaut.data.cosmos.annotation.ETag
 import io.micronaut.data.cosmos.annotation.PartitionKey
 import java.util.*
 
@@ -22,10 +23,7 @@ class Family {
     var registeredDate: Date? = null
     var tags: Array<String>? = null
 
-    @Version
-    var recordVersion: Long? = null
-
-    @MappedProperty("_etag")
+    @ETag
     var documentVersion: String? = null
 
     @Transient

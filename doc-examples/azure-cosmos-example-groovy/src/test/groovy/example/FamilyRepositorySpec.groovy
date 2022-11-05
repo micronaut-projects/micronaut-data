@@ -43,13 +43,11 @@ class FamilyRepositorySpec extends AbstractAzureCosmosSpec {
             optFamily1.get().id == ANDERSEN_FAMILY.id
             optFamily1.get().children.size() == ANDERSEN_FAMILY.children.size()
             optFamily1.get().address
-            optFamily1.get().recordVersion != null
             optFamily1.get().documentVersion
             optFamily2.present
             optFamily2.get().id == WAKEFIELD_FAMILY.id
             optFamily2.get().children.size() == WAKEFIELD_FAMILY.children.size()
             optFamily2.get().address
-            optFamily2.get().recordVersion != null
             optFamily2.get().documentVersion
         when:
             def families = familyRepository.findByLastNameLike("Ander%")
