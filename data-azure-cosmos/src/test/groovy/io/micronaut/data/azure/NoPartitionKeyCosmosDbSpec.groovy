@@ -3,10 +3,14 @@ package io.micronaut.data.azure
 
 import com.azure.cosmos.models.PartitionKey
 import io.micronaut.context.ApplicationContext
+import io.micronaut.core.beans.BeanIntrospector
 import io.micronaut.data.azure.entities.nopartitionkey.NoPartitionKeyEntity
+import io.micronaut.data.azure.invalid.InvalidIdEntity
 import io.micronaut.data.azure.repositories.NoPartitionKeyEntityRepository
+import io.micronaut.data.cosmos.common.CosmosEntity
 import io.micronaut.data.cosmos.config.CosmosDatabaseConfiguration
 import io.micronaut.data.cosmos.config.StorageUpdatePolicy
+import io.micronaut.data.model.runtime.RuntimeEntityRegistry
 import spock.lang.AutoCleanup
 import spock.lang.IgnoreIf
 import spock.lang.Shared
@@ -23,6 +27,8 @@ class NoPartitionKeyCosmosDbSpec extends Specification implements AzureCosmosTes
     ApplicationContext context = ApplicationContext.run(properties)
 
     NoPartitionKeyEntityRepository repository = context.getBean(NoPartitionKeyEntityRepository)
+
+    RuntimeEntityRegistry runtimeEntityRegistry = context.getBean(RuntimeEntityRegistry)
 
     @Override
     Map<String, String> getDbInitProperties() {
@@ -162,5 +168,14 @@ class NoPartitionKeyCosmosDbSpec extends Specification implements AzureCosmosTes
             !config.containers || config.containers.size() == 0
     }
 
-
+    def "test invalid id type"() {
+        given:
+            def introspection = BeanIntrospector.SHARED.getIntrospection(InvalidIdEntity.class)
+            def persistentEntity = runtimeEntityRegistry.getEntity(introspection.getBeanType())
+        when:
+            CosmosEntity.create(persistentEntity, null)
+        then:
+            def ex = thrown(IllegalStateException)
+            ex.message.contains("unsupported identity type")
+    }
 }
