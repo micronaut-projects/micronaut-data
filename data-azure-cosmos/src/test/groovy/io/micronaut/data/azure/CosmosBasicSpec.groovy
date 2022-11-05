@@ -14,6 +14,7 @@ import com.azure.cosmos.util.CosmosPagedIterable
 import com.fasterxml.jackson.databind.node.ObjectNode
 import io.micronaut.context.ApplicationContext
 import io.micronaut.core.type.Argument
+import io.micronaut.core.util.CollectionUtils
 import io.micronaut.core.util.StringUtils
 import io.micronaut.data.azure.entities.Address
 import io.micronaut.data.azure.entities.Child
@@ -135,9 +136,11 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
         when:
             def optBook = bookRepository.queryById(book.id, new PartitionKey(book.id))
         then:
+            book.version
             optBook.present
             optBook.get().id == book.id
             optBook.get().totalPages == book.totalPages
+            book.version == optBook.get().version
         when:
             def nonExistingId = UUID.randomUUID().toString()
             optBook = bookRepository.queryById(nonExistingId, new PartitionKey(nonExistingId))
@@ -169,6 +172,8 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
             def version1 = loadedBook1.version
             def version2 = loadedBook2.version
         then:
+            book1.version
+            book2.version
             !notLoadedBook
             loadedBook1
             loadedBook1.title == "The Stand"
@@ -191,6 +196,7 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
             loadedBook1.totalPages = totalPages + 1
             bookRepository.update(loadedBook1)
             foundBook = bookRepository.findById(loadedBook1.id).get()
+            loadedBook1.version != version1
         then:
             foundBook.id == loadedBook1.id
             foundBook.totalPages == totalPages + 1
@@ -214,6 +220,24 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
             bookRepository.delete(foundBook)
         then:
             noExceptionThrown()
+        when:
+            def newBook1 = new CosmosBook("A Game of Thrones", 900)
+            def newBook2 = new CosmosBook("A Clash of Kings", 1100)
+            def savedNewBooks = CollectionUtils.iterableToList(bookRepository.saveAll(Arrays.asList(newBook1, newBook2)))
+        then:"Make sure id and versions are assigned in multi save"
+            savedNewBooks.size() == 2
+            savedNewBooks[0].id == newBook1.id
+            savedNewBooks[1].id == newBook2.id
+            newBook1.id
+            newBook1.version
+            newBook2.id
+            newBook2.version
+        when:
+            def loadedNewBook1 = bookRepository.findById(newBook1.id).get()
+            def loadedNewBook2 = bookRepository.findById(newBook2.id).get()
+        then:
+            loadedNewBook1.version == newBook1.version
+            loadedNewBook2.version == newBook2.version
         cleanup:
             bookRepository.deleteAll()
     }

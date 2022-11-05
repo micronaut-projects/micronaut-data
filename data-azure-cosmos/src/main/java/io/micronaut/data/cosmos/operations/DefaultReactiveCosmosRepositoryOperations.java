@@ -715,6 +715,42 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
     }
 
     /**
+     * Sets version value from etag when entity is saved.
+     *
+     * @param persistentEntity the persistent entity
+     * @param entity the entity
+     * @param versionField the version field
+     * @param eTagVersion the etag version value
+     * @param <T> the entity type
+     */
+    private <T> void setETagVersion(RuntimePersistentEntity<T> persistentEntity, T entity, String versionField, String eTagVersion) {
+        RuntimePersistentProperty<T> versionProperty = persistentEntity.getPropertyByName(versionField);
+        if (versionProperty == null) {
+            return;
+        }
+        versionProperty.getProperty().convertAndSet(entity, eTagVersion);
+    }
+
+    /**
+     * Sets version value from etag when entity is saved from the {@link CosmosItemResponse} if persistent entity has version field
+     * marked with {@link io.micronaut.data.cosmos.annotation.ETag} annotation.
+     *
+     * @param cosmosItemResponse the cosmos item response
+     * @param persistentEntity the persistent entity
+     * @param entity the entity
+     * @param <T> the entity type
+     * @param <U> the cosmos response item type
+     */
+    private <T, U> void setETagVersionIfApplicable(CosmosItemResponse<U> cosmosItemResponse, RuntimePersistentEntity<T> persistentEntity, T entity) {
+        CosmosEntity cosmosEntity = CosmosEntity.get(persistentEntity);
+        String versionField = cosmosEntity.getVersionField();
+        if (versionField == null) {
+            return;
+        }
+        setETagVersion(persistentEntity, entity, versionField, cosmosItemResponse.getETag());
+    }
+
+    /**
      * Updates existing {@link ObjectNode} item with given property values.
      *
      * @param item the {@link ObjectNode} item to be updated
@@ -807,7 +843,10 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
                     }
                     ObjectNode item = cosmosSerde.serialize(persistentEntity, d.entity, Argument.of(ctx.getRootEntity()));
                     PartitionKey partitionKey = getPartitionKey(persistentEntity, item);
-                    return Mono.from(container.createItem(item, partitionKey, new CosmosItemRequestOptions())).map(insertOneResult -> d);
+                    return Mono.from(container.createItem(item, partitionKey, new CosmosItemRequestOptions())).map(insertOneResult -> {
+                        setETagVersionIfApplicable(insertOneResult, persistentEntity, d.entity);
+                        return d;
+                    });
                 });
             }
         };
@@ -852,6 +891,7 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
                             d.rowsUpdated = 0;
                         } else {
                             d.rowsUpdated = 1;
+                            setETagVersionIfApplicable(updateOneResult, persistentEntity, d.entity);
                         }
                         return d;
                     }).onErrorMap(e -> handleCosmosOperationException(e, persistentEntity));
@@ -905,6 +945,11 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
                                                                                      BatchOperation<T> operation,
                                                                                      BulkOperationType operationType) {
         boolean insert = BulkOperationType.CREATE.equals(operationType);
+        boolean delete = BulkOperationType.DELETE.equals(operationType);
+        CosmosEntity cosmosEntity = CosmosEntity.get(persistentEntity);
+        String versionField = cosmosEntity.getVersionField();
+        boolean setETagVersion = versionField != null && !delete;
+
         return new CosmosReactiveEntitiesOperation<T>(entityEventRegistry, conversionService, ctx, persistentEntity, operation, insert) {
 
             @Override
@@ -916,22 +961,25 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
                     partitionKeyDefinition = partitionKeyDefinition.substring(1);
                 }
                 final String partitionKeyField = partitionKeyDefinition;
-                boolean generateId = hasGeneratedId && BulkOperationType.CREATE.equals(operationType);
+                boolean generateId = hasGeneratedId && insert;
 
                 // Update/replace using partition key calculated from each item
                 Mono<Tuple2<List<Data>, Long>> entitiesWithRowsUpdated = entities.collectList()
                     .flatMap(e -> {
+                        Map<String, T> entitiesById = new HashMap<>(e.size());
                         List<ItemBulkOperation<?, ?>> notVetoedEntities = e.stream().filter(this::notVetoed).map(x -> {
                             if (generateId) {
                                 generateId(persistentEntity, x.entity);
                             }
                             ObjectNode item = cosmosSerde.serialize(persistentEntity, x.entity, arg);
-                            return createItemBulkOperation(item, partitionKeyField, operationType.cosmosItemOperationType, insert);
+                            ItemBulkOperation<?, ?> itemBulkOperation = createItemBulkOperation(item, partitionKeyField, operationType.cosmosItemOperationType, insert);
+                            entitiesById.put(itemBulkOperation.getId(), x.entity);
+                            return itemBulkOperation;
                         }).collect(Collectors.toList());
                         if (notVetoedEntities.isEmpty()) {
                             return Mono.just(Tuples.of(e, 0L));
                         }
-                        return executeAndGetRowsUpdated(notVetoedEntities)
+                        return executeAndGetRowsUpdated(notVetoedEntities, entitiesById)
                             .map(Number::longValue)
                             .map(rowsUpdated ->  Tuples.of(e, rowsUpdated));
                     })
@@ -941,10 +989,17 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
                 rowsUpdated = entitiesWithRowsUpdated.map(Tuple2::getT2);
             }
 
-            private Mono<Number> executeAndGetRowsUpdated(List<ItemBulkOperation<?, ?>> bulkOperations) {
+            private Mono<Number> executeAndGetRowsUpdated(List<ItemBulkOperation<?, ?>> bulkOperations, Map<String, T> entitiesById) {
                 return ctx.getContainer().executeBulkOperations(Flux.fromIterable(bulkOperations)).reduce(0, (count, response) -> {
                     if (response.getResponse().getStatusCode() == operationType.expectedOperationStatusCode) {
                         count = (int) count + 1;
+                        if (setETagVersion) {
+                            String id = response.getOperation().getId();
+                            T entity = entitiesById.get(id);
+                            if (entity != null) {
+                                setETagVersion(persistentEntity, entity, versionField, response.getResponse().getETag());
+                            }
+                        }
                     }
                     return count;
                 });
