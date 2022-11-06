@@ -13,23 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.cosmos.operations;
+package io.micronaut.data.cosmos.serde;
 
-import io.micronaut.core.type.Argument;
-import io.micronaut.data.document.serde.OneRelationDeserializer;
-import io.micronaut.serde.Decoder;
+import io.micronaut.core.annotation.AnnotatedElement;
+import io.micronaut.data.document.serde.IdPropertyNamingStrategy;
 import jakarta.inject.Singleton;
 
-import java.io.IOException;
-
 /**
- * Default {@link io.micronaut.data.document.serde.OneRelationDeserializer} implementation.
+ * Default implementation for {@link IdPropertyNamingStrategy}.
  */
 @Singleton
-final class DefaultOneRelationDeserializer implements OneRelationDeserializer {
-
+final class DefaultIdPropertyNamingStrategy implements IdPropertyNamingStrategy {
     @Override
-    public Object deserialize(Decoder decoder, DecoderContext context, Argument<? super Object> type) throws IOException {
-        return null;
+    public String translate(AnnotatedElement element) {
+        return element.getName();
     }
 }

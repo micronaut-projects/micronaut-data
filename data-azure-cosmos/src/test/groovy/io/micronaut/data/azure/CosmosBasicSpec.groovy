@@ -17,6 +17,7 @@ import io.micronaut.core.type.Argument
 import io.micronaut.core.util.CollectionUtils
 import io.micronaut.core.util.StringUtils
 import io.micronaut.data.azure.entities.Address
+import io.micronaut.data.azure.entities.ItemPrice
 import io.micronaut.data.azure.entities.Child
 import io.micronaut.data.azure.entities.CosmosBook
 import io.micronaut.data.azure.entities.Family
@@ -155,11 +156,12 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
             bookRepository.deleteAll()
     }
 
-    def "test find with query"() {
+    def "test find with query and other entity fields and annotations"() {
         given:
             def book1 = new CosmosBook()
             book1.title = "The Stand"
             book1.totalPages = 1000
+            book1.itemPrice = new ItemPrice(199.99)
             def book2 = new CosmosBook()
             book2.title = "Ice And Fire"
             book2.totalPages = 200
@@ -179,10 +181,13 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
             loadedBook1.title == "The Stand"
             loadedBook1.created
             loadedBook1.lastUpdated
+            loadedBook1.itemPrice
+            loadedBook1.itemPrice.price == 199.99
             loadedBook2
             loadedBook2.title == "Ice And Fire"
             loadedBook2.created
             loadedBook2.lastUpdated
+            !loadedBook2.itemPrice
             version1
             version2
         when:

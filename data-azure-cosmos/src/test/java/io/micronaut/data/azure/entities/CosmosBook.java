@@ -21,7 +21,6 @@ import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.MappedProperty;
-import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.annotation.Transient;
 import io.micronaut.data.annotation.event.PostLoad;
 import io.micronaut.data.annotation.event.PostPersist;
@@ -34,8 +33,6 @@ import io.micronaut.data.cosmos.annotation.ETag;
 import io.micronaut.data.cosmos.annotation.PartitionKey;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
 @MappedEntity("cosmosbook")
 public class CosmosBook {
@@ -47,6 +44,8 @@ public class CosmosBook {
     private int totalPages;
     @ETag
     private String version;
+    @MappedProperty(converter = BookPriceAttributeConverter.class)
+    private ItemPrice itemPrice;
 
     public CosmosBook() { }
 
@@ -156,5 +155,13 @@ public class CosmosBook {
 
     public void setVersion(String version) {
         this.version = version;
+    }
+
+    public ItemPrice getItemPrice() {
+        return itemPrice;
+    }
+
+    public void setItemPrice(ItemPrice itemPrice) {
+        this.itemPrice = itemPrice;
     }
 }

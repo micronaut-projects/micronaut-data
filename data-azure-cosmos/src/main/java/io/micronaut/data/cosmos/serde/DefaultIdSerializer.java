@@ -13,24 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.cosmos.operations;
+package io.micronaut.data.cosmos.serde;
 
 import io.micronaut.core.type.Argument;
-import io.micronaut.data.document.serde.IdDeserializer;
-import io.micronaut.serde.Deserializer;
+import io.micronaut.data.document.serde.IdSerializer;
+import io.micronaut.serde.Serializer;
 import io.micronaut.serde.exceptions.SerdeException;
-import io.micronaut.serde.util.CustomizableDeserializer;
+import io.micronaut.serde.util.CustomizableSerializer;
 import jakarta.inject.Singleton;
 
 /**
- * Default {@link io.micronaut.data.document.serde.IdDeserializer} implementation.
+ * Default {@link IdSerializer} implementation.
  */
 @Singleton
-final class DefaultIdDeserializer implements IdDeserializer, CustomizableDeserializer<Object> {
+final class DefaultIdSerializer implements IdSerializer, CustomizableSerializer<Object> {
 
     @Override
-    public Deserializer<Object> createSpecific(DecoderContext context, Argument<? super Object> type) throws SerdeException {
-        Deserializer<? extends Object> deserializer = context.findDeserializer(type);
-        return (Deserializer<Object>) deserializer.createSpecific(context, type);
+    public Serializer<Object> createSpecific(EncoderContext context, Argument<?> type) throws SerdeException {
+        Serializer<? super Object> serializer = context.findSerializer(type);
+        return serializer.createSpecific(context, type);
     }
 }

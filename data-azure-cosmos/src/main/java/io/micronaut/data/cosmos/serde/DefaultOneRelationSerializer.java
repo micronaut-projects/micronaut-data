@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.cosmos.operations;
+package io.micronaut.data.cosmos.serde;
 
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.document.serde.OneRelationSerializer;
