@@ -1,3 +1,6 @@
+=== Micronaut Data 4.0
+-Support for <<azureCosmos, Azure Cosmos Database>>
+
 === Micronaut Data 3.5
 - Hibernate Reactive
 - Type-safe Java Criteria

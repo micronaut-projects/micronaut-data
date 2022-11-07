@@ -111,7 +111,7 @@ mongo:
     mongoOtherRepositoryVariations: Other repository variations
   mongoOptimisticLocking: Optimistic locking
 azureCosmos:
-  title: Micronaut Data Azure Cosmos Database
+  title: Micronaut Data Azure Cosmos
   azureCosmosQuickStart: Quick Start
 howItWorks:
   title: How Micronaut Data Works
