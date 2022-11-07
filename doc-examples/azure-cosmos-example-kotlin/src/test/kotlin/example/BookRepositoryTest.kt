@@ -57,7 +57,7 @@ class BookRepositoryTest : AbstractAzureCosmosTest() {
 
         // Create: Save a new book
         // tag::save[]
-        var book = Book(null,"The Stand", 1000)
+        var book = Book(null,"The Stand", 1000, ItemPrice(199.99))
         bookRepository.save(book)
         // end::save[]
 
@@ -65,6 +65,8 @@ class BookRepositoryTest : AbstractAzureCosmosTest() {
         assertNotNull(id)
         assertNotNull(book.createdDate)
         assertNotNull(book.updatedDate)
+        assertNotNull(book.itemPrice)
+        assertEquals(199.99, book.itemPrice!!.price)
 
         // Read: Read a book from the database
         // tag::read[]

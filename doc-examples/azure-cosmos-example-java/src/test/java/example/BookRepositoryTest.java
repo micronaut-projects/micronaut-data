@@ -57,12 +57,14 @@ class BookRepositoryTest extends AbstractAzureCosmosTest {
 		// Create: Save a new book
         // tag::save[]
 		Book book = new Book("The Stand", 1000);
+        book.setItemPrice(new ItemPrice(200));
 		bookRepository.save(book);
         // end::save[]
 		String id = book.getId();
 		assertNotNull(id);
         assertNotNull(book.getCreatedDate());
         assertNotNull(book.getUpdatedDate());
+        assertEquals(200, book.getItemPrice().getPrice());
 
 		// Read: Read a book from the database
         // tag::read[]

@@ -40,6 +40,7 @@ class BookRepositorySpec extends AbstractAzureCosmosSpec {
             // Create: Save a new book
             // tag::save[]
             def book = new Book("The Stand", 1000)
+            book.itemPrice = new ItemPrice(99.5)
             bookRepository.save(book)
             def id = book.id
             // end::save[]
@@ -53,6 +54,8 @@ class BookRepositorySpec extends AbstractAzureCosmosSpec {
         then:
             book
             book.title == "The Stand"
+            book.itemPrice
+            book.itemPrice.price == 99.5
         when:
             def count = bookRepository.count()
         then:

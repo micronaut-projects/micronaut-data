@@ -1,11 +1,13 @@
 
 package example;
 
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.annotation.DateCreated;
 import io.micronaut.data.annotation.DateUpdated;
 import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.cosmos.annotation.PartitionKey;
 
 import java.util.Date;
@@ -19,6 +21,9 @@ public class Book {
     private String id;
     private String title;
     private int pages;
+    @MappedProperty(converter = ItemPriceAttributeConverter.class)
+    @Nullable
+    private ItemPrice itemPrice;
     @DateCreated
     private Date createdDate;
     @DateUpdated
@@ -44,6 +49,14 @@ public class Book {
 
     public int getPages() {
         return pages;
+    }
+
+    public ItemPrice getItemPrice() {
+        return itemPrice;
+    }
+
+    public void setItemPrice(ItemPrice itemPrice) {
+        this.itemPrice = itemPrice;
     }
 
     public Date getCreatedDate() {

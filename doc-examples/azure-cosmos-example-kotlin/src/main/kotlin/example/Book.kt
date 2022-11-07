@@ -1,11 +1,7 @@
 
 package example
 
-import io.micronaut.data.annotation.DateCreated
-import io.micronaut.data.annotation.DateUpdated
-import io.micronaut.data.annotation.GeneratedValue
-import io.micronaut.data.annotation.Id
-import io.micronaut.data.annotation.MappedEntity
+import io.micronaut.data.annotation.*
 import java.util.*
 
 // tag::book[]
@@ -15,6 +11,8 @@ data class Book(@field:Id
                 var id: String?,
                 var title: String,
                 var pages: Int = 0,
+                @MappedProperty(converter = ItemPriceAttributeConverter::class)
+                var itemPrice: ItemPrice? = null,
                 @DateCreated
                 var createdDate: Date? = null,
                 @DateUpdated
