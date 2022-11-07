@@ -44,7 +44,7 @@ public class CosmosBook {
     private int totalPages;
     @ETag
     private String version;
-    @MappedProperty(converter = BookPriceAttributeConverter.class)
+    @MappedProperty(converter = ItemPriceAttributeConverter.class)
     private ItemPrice itemPrice;
 
     public CosmosBook() { }

@@ -20,7 +20,7 @@ import io.micronaut.data.model.runtime.convert.AttributeConverter;
 import jakarta.inject.Singleton;
 
 @Singleton
-public class BookPriceAttributeConverter implements AttributeConverter<ItemPrice, Double> {
+public class ItemPriceAttributeConverter implements AttributeConverter<ItemPrice, Double> {
 
     @Override
     public Double convertToPersistedValue(ItemPrice bookPrice, ConversionContext context) {
