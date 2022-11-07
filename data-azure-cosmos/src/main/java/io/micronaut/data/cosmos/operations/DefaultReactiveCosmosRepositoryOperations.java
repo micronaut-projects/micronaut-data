@@ -362,7 +362,11 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
 
         preparedQuery.prepare(null);
         RuntimePersistentEntity<?> persistentEntity = runtimeEntityRegistry.getEntity(preparedQuery.getRootEntity());
-        String update = getUpdate(preparedQuery);
+        String update = preparedQuery.getAnnotationMetadata().stringValue(Query.class, "update").orElse(null);
+        if (update == null) {
+            // This is case when query is created via predicate spec
+            update = getUpdate(preparedQuery);
+        }
         if (update == null) {
             LOG.warn("Could not resolve update properties for Cosmos Db entity {} and query [{}]", persistentEntity.getPersistedName(), preparedQuery.getQuery());
             return Mono.just(0);
@@ -788,10 +792,6 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
      * @return update statement (list of props to update in Azure Cosmos)
      */
     private <E, R> String getUpdate(PreparedQuery<E, R> preparedQuery) {
-        String update = preparedQuery.getAnnotationMetadata().stringValue(Query.class, "update").orElse(null);
-        if (update != null) {
-            return update;
-        }
         if (preparedQuery instanceof CosmosSqlPreparedQuery) {
             CosmosSqlPreparedQuery<E, R> cosmosSqlPreparedQuery = (CosmosSqlPreparedQuery<E, R>) preparedQuery;
             return cosmosSqlPreparedQuery.getUpdate();
