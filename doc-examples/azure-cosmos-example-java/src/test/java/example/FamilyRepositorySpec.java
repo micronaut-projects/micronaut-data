@@ -43,6 +43,7 @@ import static example.FamilyRepository.Specifications.idsIn;
 import static example.FamilyRepository.Specifications.idsInAndNotIn;
 import static example.FamilyRepository.Specifications.idsNotIn;
 import static example.FamilyRepository.Specifications.lastNameEquals;
+import static example.FamilyRepository.Specifications.tagsContain;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @MicronautTest
@@ -125,6 +126,10 @@ public class FamilyRepositorySpec extends AbstractAzureCosmosTest {
 
         families = familyRepository.findByChildrenPetsType("cat");
         assertTrue(families.size() > 0);
+        assertEquals(families.get(0).getId(), ANDERSEN_FAMILY.getId());
+
+        families = familyRepository.findByTagsArrayContains("customtag");
+        assertTrue(families.size() == 1);
         assertEquals(families.get(0).getId(), ANDERSEN_FAMILY.getId());
 
         List<Child> children = familyRepository.findChildrenByChildrenPetsGivenName("Robbie");
@@ -281,6 +286,7 @@ public class FamilyRepositorySpec extends AbstractAzureCosmosTest {
         assertEquals(1, familyRepository.findByIdNotIn(Arrays.asList(ANDERSEN_FAMILY.getId())).size());
         assertEquals(2, familyRepository.findAll(idsInAndNotIn(Arrays.asList(ANDERSEN_FAMILY.getId(), WAKEFIELD_FAMILY.getId()), Arrays.asList(UUID.randomUUID().toString()))).size());
         assertTrue(CollectionUtils.isEmpty(familyRepository.findAll(idsInAndNotIn(Arrays.asList(UUID.randomUUID().toString(), UUID.randomUUID().toString()), Arrays.asList(ANDERSEN_FAMILY.getId(), WAKEFIELD_FAMILY.getId())))));
+        assertTrue(familyRepository.findAll(tagsContain("customtag")).stream().filter(f -> f.getId().equals(ANDERSEN_FAMILY.getId())).findFirst().isPresent());
     }
 
     void saveSampleFamilies() {
@@ -297,6 +303,7 @@ public class FamilyRepositorySpec extends AbstractAzureCosmosTest {
         address.setCounty("King");
         address.setState("WA");
         family.setAddress(address);
+        family.setTags(new String[]{"tag1", "customtag"});
         Child child1 = new Child();
         child1.setFirstName("Henriette Thaulow");
         child1.setGender("female");

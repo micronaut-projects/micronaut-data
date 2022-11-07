@@ -8,6 +8,7 @@ import io.micronaut.data.annotation.Id
 import io.micronaut.data.annotation.Join
 import io.micronaut.data.annotation.Query
 import io.micronaut.data.cosmos.annotation.CosmosRepository
+import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder
 import io.micronaut.data.repository.PageableRepository
 import io.micronaut.data.repository.jpa.JpaSpecificationExecutor
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
@@ -21,14 +22,18 @@ abstract class FamilyRepository : PageableRepository<Family, String>, JpaSpecifi
     @NonNull
     abstract override fun findById(id: String): Optional<Family>
     abstract fun updateRegistered(@Id id: String, registered: Boolean)
-    abstract fun updateRegistered(@Id id: String, registered: Boolean, partitionKey: PartitionKey)
     abstract fun updateAddress(@Parameter("id") @Id id: String, @NonNull @Parameter("address") address: Address)
 
     // Raw query for Cosmos update is not supported and calling this method will throw an error.
     @Query("UPDATE family f SET f.lastName=@p1 WHERE f.id=@p2")
     abstract fun updateLastName(id: String, lastName: String)
+
+    // tag::partitionkey[]
+    abstract fun queryById(id: String?, partitionKey: PartitionKey?): Optional<Family?>?
     abstract fun deleteByLastName(lastName: String, partitionKey: PartitionKey)
     abstract fun deleteById(id: String, partitionKey: PartitionKey)
+    abstract fun updateRegistered(@Id id: String, registered: Boolean, partitionKey: PartitionKey)
+    // end::partitionkey[]
 
     // Raw query not supported for delete so this would throw an error
     @Query("DELETE FROM family f WHERE f.registered=@p1")
@@ -51,6 +56,10 @@ abstract class FamilyRepository : PageableRepository<Family, String>, JpaSpecifi
     abstract fun findByIdIn(ids: List<String>): List<Family>
     abstract fun findByIdNotIn(ids: List<String>): List<Family>
     abstract fun findByLastNameLike(lastName: String): List<Family>
+
+    // tag::method_array_contains[]
+    abstract fun findByTagsArrayContains(tag: String): List<Family>
+    // end::method_array_contains[]
 
     internal object Specifications {
         fun lastNameEquals(lastName: String): PredicateSpecification<Family> {
@@ -86,5 +95,16 @@ abstract class FamilyRepository : PageableRepository<Family, String>, JpaSpecifi
                 )
             }
         }
+
+        // tag::predicate_array_contains[]
+        fun tagsContain(tag: String): PredicateSpecification<Family?>? {
+            return PredicateSpecification { root: Root<Family?>, criteriaBuilder: CriteriaBuilder ->
+                (criteriaBuilder as PersistentEntityCriteriaBuilder).arrayContains(
+                    root.get<Any>("tags"),
+                    criteriaBuilder.literal(tag)
+                )
+            }
+        }
+        // end::predicate_array_contains[]
     }
 }

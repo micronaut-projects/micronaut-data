@@ -8,13 +8,10 @@ import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.cosmos.annotation.CosmosRepository;
-import io.micronaut.data.model.Page;
-import io.micronaut.data.model.Pageable;
-import io.micronaut.data.model.Sort;
+import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder;
 import io.micronaut.data.repository.PageableRepository;
 import io.micronaut.data.repository.jpa.JpaSpecificationExecutor;
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification;
-import io.micronaut.data.repository.jpa.criteria.QuerySpecification;
 
 import java.util.Arrays;
 import java.util.Date;
@@ -30,17 +27,21 @@ public abstract class FamilyRepository implements PageableRepository<Family, Str
 
     public abstract void updateRegistered(@Id String id, boolean registered);
 
-    public abstract void updateRegistered(@Id String id, boolean registered, PartitionKey partitionKey);
-
     public abstract void updateAddress(@Parameter("id") @Id String id, @NonNull @Parameter("address") Address address);
 
     // Raw query for Cosmos update is not supported and calling this method will throw an error.
     @Query("UPDATE family f SET f.lastName=@p1 WHERE f.id=@p2")
     public abstract void updateLastName(String id, String lastName);
 
+    // tag::partitionkey[]
+    public abstract Optional<Family> queryById(String id, PartitionKey partitionKey);
+
+    public abstract void updateRegistered(@Id String id, boolean registered, PartitionKey partitionKey);
+
     public abstract void deleteByLastName(String lastName, PartitionKey partitionKey);
 
     public abstract void deleteById(String id, PartitionKey partitionKey);
+    // end::partitionkey[]
 
     // Raw query not supported for delete so this would throw an error
     @Query("DELETE FROM family f WHERE f.registered=@p1")
@@ -75,6 +76,10 @@ public abstract class FamilyRepository implements PageableRepository<Family, Str
 
     public abstract List<Family> findByLastNameLike(String lastName);
 
+    // tag::method_array_contains[]
+    public abstract List<Family> findByTagsArrayContains(String tag);
+    // end::method_array_contains[]
+
     static class Specifications {
 
         public static PredicateSpecification<Family> lastNameEquals(String lastName) {
@@ -93,5 +98,10 @@ public abstract class FamilyRepository implements PageableRepository<Family, Str
             return (root, criteriaBuilder) -> criteriaBuilder.and(root.get("id").in(idsIn), root.get("id").in(idsNotIn).not());
         }
 
+        // tag::predicate_array_contains[]
+        public static PredicateSpecification<Family> tagsContain(String tag) {
+            return (root, criteriaBuilder) -> ((PersistentEntityCriteriaBuilder) criteriaBuilder).arrayContains(root.get("tags"), criteriaBuilder.literal(tag));
+        }
+        // end::predicate_array_contains[]
     }
 }

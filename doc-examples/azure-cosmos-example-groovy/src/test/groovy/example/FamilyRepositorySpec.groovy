@@ -12,6 +12,7 @@ import static example.FamilyRepository.Specifications.idsIn
 import static example.FamilyRepository.Specifications.idsInAndNotIn
 import static example.FamilyRepository.Specifications.idsNotIn
 import static example.FamilyRepository.Specifications.lastNameEquals
+import static example.FamilyRepository.Specifications.tagsContain
 
 
 @MicronautTest
@@ -58,6 +59,11 @@ class FamilyRepositorySpec extends AbstractAzureCosmosSpec {
             families = familyRepository.findByChildrenPetsType("cat")
         then:
             families.size() > 0
+            families[0].id == ANDERSEN_FAMILY.id
+        when:
+            families = familyRepository.findByTagsArrayContains("customtag")
+        then:
+            families.size() == 1
             families[0].id == ANDERSEN_FAMILY.id
         when:
             def children = familyRepository.findChildrenByChildrenPetsGivenName("Robbie")
@@ -220,6 +226,8 @@ class FamilyRepositorySpec extends AbstractAzureCosmosSpec {
             familyRepository.findByIdNotIn(Arrays.asList(ANDERSEN_FAMILY.id)).size() == 1
             familyRepository.findAll(idsInAndNotIn(Arrays.asList(ANDERSEN_FAMILY.id, WAKEFIELD_FAMILY.id), Arrays.asList(UUID.randomUUID().toString()))).size() == 2
             familyRepository.findAll(idsInAndNotIn(Arrays.asList(UUID.randomUUID().toString(), UUID.randomUUID().toString()), Arrays.asList(ANDERSEN_FAMILY.id, WAKEFIELD_FAMILY.id))).size() == 0
+            familyRepository.findAll(tagsContain("customtag")).stream().filter { f -> f.id == ANDERSEN_FAMILY.id }
+                .findFirst().present
     }
 
     static Family createAndersenFamily() {
@@ -231,6 +239,7 @@ class FamilyRepositorySpec extends AbstractAzureCosmosSpec {
         address.county = "King"
         address.state = "WA"
         family.address = address
+        family.tags = ["tag1", "customtag"]
         def child1 = new Child()
         child1.firstName = "Henriette Thaulow"
         child1.gender = "female"

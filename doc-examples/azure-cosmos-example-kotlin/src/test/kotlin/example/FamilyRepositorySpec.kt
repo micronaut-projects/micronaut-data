@@ -99,6 +99,10 @@ class FamilyRepositorySpec : AbstractAzureCosmosTest() {
         assertTrue(families.isNotEmpty())
         assertEquals(families[0].id, ANDERSEN_FAMILY.id)
 
+        families = familyRepository.findByTagsArrayContains("customtag")
+        assertTrue(families.size == 1)
+        assertEquals(families[0].id, ANDERSEN_FAMILY.id)
+
         val children = familyRepository.findChildrenByChildrenPetsGivenName("Robbie")
         assertTrue(children.isNotEmpty())
         assertEquals("Luke", children[0].firstName)
@@ -271,6 +275,8 @@ class FamilyRepositorySpec : AbstractAzureCosmosTest() {
                 ) as Collection<*>?
             )
         )
+        assertTrue(familyRepository.findAll(FamilyRepository.Specifications.tagsContain("customtag")).stream().filter { f: Family -> f.id == ANDERSEN_FAMILY.id }
+            .findFirst().isPresent)
     }
 
     private fun saveSampleFamilies() {
@@ -291,6 +297,7 @@ class FamilyRepositorySpec : AbstractAzureCosmosTest() {
             address.county = "King"
             address.state = "WA"
             family.address = address
+            family.tags = arrayOf("tag1", "customtag")
             val child1 = Child()
             child1.firstName = "Henriette Thaulow"
             child1.gender = "female"
