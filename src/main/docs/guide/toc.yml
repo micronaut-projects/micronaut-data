@@ -113,6 +113,11 @@ mongo:
 azureCosmos:
   title: Micronaut Data Azure Cosmos
   azureCosmosQuickStart: Quick Start
+  azureCosmosConfiguration: Configuration
+  azureCosmosRepositories:
+    title: Repositories
+  azureCosmosAttributeConverter: Using Attribute Converter
+  azureCosmosOptimisticLocking: Optimistic locking
 howItWorks:
   title: How Micronaut Data Works
 graal:

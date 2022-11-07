@@ -34,10 +34,15 @@ import io.micronaut.data.cosmos.config.CosmosDatabaseConfiguration
 import io.micronaut.data.cosmos.config.StorageUpdatePolicy
 import io.micronaut.data.exceptions.OptimisticLockException
 import io.micronaut.data.model.Pageable
+import io.micronaut.data.repository.jpa.criteria.UpdateSpecification
 import io.micronaut.serde.Decoder
 import io.micronaut.serde.Deserializer
 import io.micronaut.serde.SerdeRegistry
 import io.micronaut.serde.jackson.JacksonDecoder
+import jakarta.persistence.criteria.CriteriaBuilder
+import jakarta.persistence.criteria.CriteriaUpdate
+import jakarta.persistence.criteria.Predicate
+import jakarta.persistence.criteria.Root
 import spock.lang.AutoCleanup
 import spock.lang.IgnoreIf
 import spock.lang.Shared
@@ -47,7 +52,7 @@ import static io.micronaut.data.azure.repositories.FamilyRepository.Specificatio
 import static io.micronaut.data.azure.repositories.FamilyRepository.Specifications.idsInAndNotIn
 import static io.micronaut.data.azure.repositories.FamilyRepository.Specifications.idsNotIn
 import static io.micronaut.data.azure.repositories.FamilyRepository.Specifications.lastNameEquals
-
+import static io.micronaut.data.azure.repositories.FamilyRepository.Specifications.registeredEquals
 
 @IgnoreIf({ env["GITHUB_WORKFLOW"] })
 class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties {
@@ -180,7 +185,7 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
             loadedBook1.created
             loadedBook1.lastUpdated
             loadedBook1.itemPrice
-            loadedBook1.itemPrice.price == 199.99
+            loadedBook1.itemPrice.price == Double.valueOf(199.99)
             loadedBook2
             loadedBook2.title == "Ice And Fire"
             loadedBook2.created
@@ -315,11 +320,23 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
         then:
             exists
         when:
+            def updated = familyRepository.updateAll(new UpdateSpecification<Family>() {
+                @Override
+                Predicate toPredicate(Root<Family> root, CriteriaUpdate<?> query, CriteriaBuilder criteriaBuilder) {
+                    query.set("registered", true)
+                    return criteriaBuilder.equal(root.get("registered"), false)
+                }
+            })
+        then:
+            updated == 2
+            familyRepository.count(registeredEquals(true)) == 2
+            familyRepository.count(registeredEquals(false)) == 0
+        when:
             def cnt = familyRepository.count()
         then:
             cnt >= 2
         when:
-            cnt = familyRepository.countByRegistered(false)
+            cnt = familyRepository.countByRegistered(true)
         then:
             cnt >= 2
         when:"Using raw query for update is not supported"

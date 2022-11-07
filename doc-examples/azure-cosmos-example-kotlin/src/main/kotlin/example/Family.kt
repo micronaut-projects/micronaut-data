@@ -23,8 +23,10 @@ class Family {
     var registeredDate: Date? = null
     var tags: Array<String>? = null
 
+    // tag::locking[]
     @ETag
     var documentVersion: String? = null
+    // end::locking[]
 
     @Transient
     var comment: String? = null

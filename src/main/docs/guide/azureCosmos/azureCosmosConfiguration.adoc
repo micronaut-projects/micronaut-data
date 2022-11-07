@@ -1,0 +1,11 @@
+If users are going to use already created Azure Cosmos database and containers then no special configuration is needed, except endpoint, key and db name. However, for test purposes or when database containers need to be created during application startup there are options to configure containers.
+
+As mentioned in <<azureCosmosQuickStart, Quick Start>> every `MappedEntity` will correspond to one container in Azure Cosmos. If property `azure.cosmos.database.update-policy` is set to `NONE` then no attempt to create container will be made. If that value is set to `CREATE_IF_NOT_EXISTS` then application will attemp to create container if not exists. Similar, if value is `UPDATE` application will try to replace existing containers and its properties. Currently, we provide only small subset of properties that can be configured for the database and containers. For the database we can supply throughput properties while for containers we also can provide throughput properties and partition key path. Additional way to configure partition key value is adding annotation ann:io.micronaut.data.cosmos.annotation.PartitionKey[]
+
+Here is an example yaml configuration with container and db properties used when creating new containers if not exist:
+
+Example YAML configuration
+[source,yaml]
+----
+include::doc-examples/azure-cosmos-example-java/src/main/resources/application-example.yml[]
+----

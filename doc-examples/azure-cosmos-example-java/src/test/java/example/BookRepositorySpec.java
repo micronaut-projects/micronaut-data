@@ -21,7 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @MicronautTest
 @DisabledIfEnvironmentVariable(named = "GITHUB_WORKFLOW", matches = ".*")
-class BookRepositoryTest extends AbstractAzureCosmosTest {
+class BookRepositorySpec extends AbstractAzureCosmosTest {
 
     @AfterEach
     public void cleanup() {

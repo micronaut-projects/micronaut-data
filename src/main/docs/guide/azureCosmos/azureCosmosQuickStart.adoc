@@ -1,1 +1,66 @@
 At this point there is still no ability to create Micronaut project with Azure Cosmos support via Micronaut Launch. Our team will be working on it in the near future.
+
+To get started with Micronaut Data Azure Cosmos add the following dependency to your annotation processor path:
+
+dependency:io.micronaut.data:micronaut-data-document-processor[scope="annotationProcessor""]
+
+NOTE: For Kotlin the dependency should be in the `kapt` scope and for Groovy it should be in `compileOnly` scope.
+
+You should then configure a compile-scoped dependency on the `micronaut-data-azure-cosmos` module:
+
+dependency:io.micronaut.data:micronaut-data-azure-cosmos[]
+
+Next up you need to configure at least one data source. The following snippet from `application.yml` is an example of configuring the default Azure Cosmos Db data source:
+
+Example YAML configuration
+[source,yaml]
+----
+include::doc-examples/azure-cosmos-example-java/src/main/resources/application.yml[]
+----
+
+To retrieve objects from the database you need to define a class annotated with ann:data.annotation.MappedEntity[]:
+
+snippet::example.Book[project-base="doc-examples/azure-cosmos-example", source="main", tags="book"]
+
+In Azure Cosmos world, every `MappedEntity` will correspond to the container. One container can hold only one entity or document type.
+
+Followed by an interface that extends from api:data.repository.CrudRepository[]
+
+snippet::example.BookRepository[project-base="doc-examples/azure-cosmos-example", source="main", tags="repository"]
+
+<1> The interface is annotated with ann:io.micronaut.data.cosmos.annotation.CosmosRepository[]
+<2> The `CrudRepository` interface take 2 generic arguments, the entity type (in this case `Book`) and the ID type (in this case `String`)
+
+You can now perform CRUD (Create, Read, Update, Delete) operations on the entity. The implementation of `example.BookRepository` is created at compilation time. To obtain a reference to it simply inject the bean:
+
+snippet::example.BookRepositorySpec[project-base="doc-examples/azure-cosmos-example", tags="inject", indent="0"]
+
+=== Saving an Instance (Create)
+
+To save an instance use the `save` method of the `CrudRepository` interface:
+
+snippet::example.BookRepositorySpec[project-base="doc-examples/azure-cosmos-example", tags="save", indent="0"]
+
+=== Retrieving an Instance (Read)
+
+To read a book back use `findById`:
+
+snippet::example.BookRepositorySpec[project-base="doc-examples/azure-cosmos-example", tags="read", indent="0"]
+
+=== Updating an Instance (Update)
+
+With Micronaut Data Azure Cosmos, you can use `save` method of the `CrudRepository` or manually implement an `update` method. You can define explicit update methods for updates in your repository. For example:
+
+snippet::example.BookRepository[project-base="doc-examples/azure-cosmos-example", source="main" tags="update", indent="0"]
+
+Which can then be called like so:
+
+snippet::example.BookRepositorySpec[project-base="doc-examples/azure-cosmos-example", tags="update", indent="0"]
+
+=== Deleting an Instance (Delete)
+
+To delete an instance use `deleteById`:
+
+snippet::example.BookRepositorySpec[project-base="doc-examples/azure-cosmos-example", tags="delete", indent="0"]
+
+Congratulations you have implemented your first Micronaut Data Azure Cosmos repository! Read on to find out more.

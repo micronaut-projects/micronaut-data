@@ -22,7 +22,7 @@ import java.util.*
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @MicronautTest
 @DisabledIfEnvironmentVariable(named = "GITHUB_WORKFLOW", matches = ".*")
-class FamilyRepositoryTest : AbstractAzureCosmosTest() {
+class FamilyRepositorySpec : AbstractAzureCosmosTest() {
 
     @Inject
     lateinit var familyRepository: FamilyRepository

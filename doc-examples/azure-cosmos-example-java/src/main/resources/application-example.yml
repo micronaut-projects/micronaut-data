@@ -1,0 +1,27 @@
+micronaut:
+  application:
+    name: example
+azure:
+  cosmos:
+    default-gateway-mode: true
+    endpoint-discovery-enabled: false
+    endpoint: https://localhost:8081
+    key: ''
+    database:
+      throughput-settings:
+        request-units: 1000
+        auto-scale: false
+      database-name: testDb
+      packages: io.micronaut.data.azure.entities
+      update-policy: CREATE_IF_NOT_EXISTS
+      container-settings:
+        - container-name: family
+          partition-key-path: /lastname
+          throughput-settings:
+            request-units: 1000
+            auto-scale: false
+        - container-name: book
+          partition-key-path: /id
+          throughput-settings:
+            request-units: 1200
+            auto-scale: false

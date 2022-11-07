@@ -63,6 +63,16 @@ final class CosmosSqlPreparedQuery<E, R> extends DefaultSqlPreparedQuery<E, R> {
         }
     }
 
+    /**
+     * @return the update statement for update operation
+     */
+    public String getUpdate() {
+        if (sqlStoredQuery instanceof CosmosSqlStoredQuery) {
+            return ((CosmosSqlStoredQuery) sqlStoredQuery).getUpdate();
+        }
+        return null;
+    }
+
     private void appendExpandedParameter(StringBuilder q, QueryParameterBinding parameter, String parameterName) {
         int size = Math.max(1, getQueryParameterValueSize(parameter));
         for (int k = 0; k < size; k++) {

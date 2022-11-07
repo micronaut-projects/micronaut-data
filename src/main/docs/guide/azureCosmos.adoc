@@ -1,1 +1,7 @@
 Micronaut Data Azure Cosmos supports some of the things that are possible to do with JPA and JDBC/R2DBC implementations, including:
+
+- <<azureCosmosRepositories, Repositories compile-time generated>> and <<projections, projection>> queries
+- <<azureCosmosAttributeConverter, Attribute converters>>
+- <<azureCosmosOptimisticLocking, Optimistic locking>>
+
+The interaction between the object layer and Azure Cosmos Db serialization/deserialization is implemented using https://micronaut-projects.github.io/micronaut-serialization/1.0.x/guide[Micronaut Serialization].

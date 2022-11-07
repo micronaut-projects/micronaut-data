@@ -2,10 +2,8 @@ package example
 
 import io.micronaut.data.annotation.Id
 import io.micronaut.data.annotation.MappedEntity
-import io.micronaut.data.annotation.MappedProperty
 import io.micronaut.data.annotation.Relation
 import io.micronaut.data.annotation.Transient
-import io.micronaut.data.annotation.Version
 import io.micronaut.data.cosmos.annotation.ETag
 import io.micronaut.data.cosmos.annotation.PartitionKey
 
@@ -13,20 +11,22 @@ import io.micronaut.data.cosmos.annotation.PartitionKey
 class Family {
 
     @Id
-    private String id;
+    private String id
     @PartitionKey
-    private String lastName;
+    private String lastName
     @Relation(value = Relation.Kind.EMBEDDED)
-    private Address address;
+    private Address address
     @Relation(value = Relation.Kind.ONE_TO_MANY)
-    private List<Child> children = new ArrayList<>();
-    private boolean registered;
-    private Date registeredDate;
-    private String[] tags;
+    private List<Child> children = new ArrayList<>()
+    private boolean registered
+    private Date registeredDate
+    private String[] tags
+    // tag::locking[]
     @ETag
-    private String documentVersion;
+    private String documentVersion
+    // end::locking[]
     @Transient
-    private String comment;
+    private String comment
 
     String getId() {
         return id

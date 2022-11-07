@@ -34,8 +34,10 @@ public class Family {
 
     private String[] tags;
 
+    // tag::locking[]
     @ETag
     private String documentVersion;
+    // end::locking[]
 
     @Transient
     private String comment;

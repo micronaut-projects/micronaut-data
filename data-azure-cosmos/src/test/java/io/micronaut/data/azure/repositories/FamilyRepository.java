@@ -91,5 +91,8 @@ public abstract class FamilyRepository implements PageableRepository<Family, Str
             return (root, criteriaBuilder) -> criteriaBuilder.and(root.get("id").in(idsIn), root.get("id").in(idsNotIn).not());
         }
 
+        public static PredicateSpecification<Family> registeredEquals(boolean registered) {
+            return (root, criteriaBuilder) -> criteriaBuilder.equal(root.get("registered"), registered);
+        }
     }
 }

@@ -86,11 +86,11 @@ import io.micronaut.data.runtime.operations.internal.AbstractReactiveEntitiesOpe
 import io.micronaut.data.runtime.operations.internal.AbstractReactiveEntityOperations;
 import io.micronaut.data.runtime.operations.internal.AbstractRepositoryOperations;
 import io.micronaut.data.runtime.operations.internal.OperationContext;
-import io.micronaut.data.runtime.operations.internal.sql.DefaultSqlStoredQuery;
 import io.micronaut.data.runtime.operations.internal.sql.SqlPreparedQuery;
 import io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery;
 import io.micronaut.data.runtime.query.MethodContextAwareStoredQueryDecorator;
 import io.micronaut.data.runtime.query.PreparedQueryDecorator;
+import io.micronaut.data.runtime.query.internal.QueryResultStoredQuery;
 import io.micronaut.http.codec.MediaTypeCodec;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import jakarta.inject.Singleton;
@@ -178,8 +178,12 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
         if (defaultCosmosSqlQueryBuilder == null) {
             defaultCosmosSqlQueryBuilder = new CosmosSqlQueryBuilder(context.getAnnotationMetadata());
         }
+        String update = null;
+        if (storedQuery instanceof QueryResultStoredQuery) {
+            update = ((QueryResultStoredQuery) storedQuery).getQueryResult().getUpdate();
+        }
         RuntimePersistentEntity<E> runtimePersistentEntity = runtimeEntityRegistry.getEntity(storedQuery.getRootEntity());
-        return new DefaultSqlStoredQuery<>(storedQuery, runtimePersistentEntity, defaultCosmosSqlQueryBuilder);
+        return new CosmosSqlStoredQuery<>(storedQuery, runtimePersistentEntity, defaultCosmosSqlQueryBuilder, update);
     }
 
     @Override
@@ -355,9 +359,10 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
             return Mono.error(new IllegalStateException("Cosmos Db does not support raw update queries."));
         }
         SqlPreparedQuery<?, Number> preparedQuery = getSqlPreparedQuery(pq);
+
         preparedQuery.prepare(null);
         RuntimePersistentEntity<?> persistentEntity = runtimeEntityRegistry.getEntity(preparedQuery.getRootEntity());
-        String update = preparedQuery.getAnnotationMetadata().stringValue(Query.class, "update").orElse(null);
+        String update = getUpdate(preparedQuery);
         if (update == null) {
             LOG.warn("Could not resolve update properties for Cosmos Db entity {} and query [{}]", persistentEntity.getPersistedName(), preparedQuery.getQuery());
             return Mono.just(0);
@@ -774,6 +779,27 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
     }
 
     /**
+     * Gets update statement from the prepared query for {@link #executeUpdate(PreparedQuery)}.
+     * In this case, it is list of properties to be updated.
+     *
+     * @param preparedQuery the prepared query
+     * @param <E> the entity type
+     * @param <R> the result type
+     * @return update statement (list of props to update in Azure Cosmos)
+     */
+    private <E, R> String getUpdate(PreparedQuery<E, R> preparedQuery) {
+        String update = preparedQuery.getAnnotationMetadata().stringValue(Query.class, "update").orElse(null);
+        if (update != null) {
+            return update;
+        }
+        if (preparedQuery instanceof CosmosSqlPreparedQuery) {
+            CosmosSqlPreparedQuery<E, R> cosmosSqlPreparedQuery = (CosmosSqlPreparedQuery<E, R>) preparedQuery;
+            return cosmosSqlPreparedQuery.getUpdate();
+        }
+        return null;
+    }
+
+    /**
      * Creates list of {@link CosmosItemOperation} to be executed in bulk operation.
      *
      * @param items the items to be updated/deleted in a bulk operation
@@ -1085,7 +1111,7 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
                 public void bindOne(@NonNull QueryParameterBinding binding, Object value) {
                     if (updateQuery) {
                         String property = getUpdateProperty(binding, persistentEntity);
-                        if (property != null) {
+                        if (property != null && !propertiesToUpdate.containsKey(property)) {
                             propertiesToUpdate.put(property, value);
                         }
                     }

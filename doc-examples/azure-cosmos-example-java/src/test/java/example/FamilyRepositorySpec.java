@@ -47,7 +47,7 @@ import static example.FamilyRepository.Specifications.lastNameEquals;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @MicronautTest
 @DisabledIfEnvironmentVariable(named = "GITHUB_WORKFLOW", matches = ".*")
-public class FamilyRepositoryTest extends AbstractAzureCosmosTest {
+public class FamilyRepositorySpec extends AbstractAzureCosmosTest {
 
     private static final Family ANDERSEN_FAMILY = createAndersenFamily();
     private static final Family WAKEFIELD_FAMILY = createWakefieldFamily();

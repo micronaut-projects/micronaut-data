@@ -12,7 +12,7 @@ import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable
 @MicronautTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @DisabledIfEnvironmentVariable(named = "GITHUB_WORKFLOW", matches = ".*")
-class BookRepositoryTest : AbstractAzureCosmosTest() {
+class BookRepositorySpec : AbstractAzureCosmosTest() {
 
     @AfterEach
     fun cleanup() {
