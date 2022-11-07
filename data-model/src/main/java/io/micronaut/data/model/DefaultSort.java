@@ -21,6 +21,7 @@ import io.micronaut.core.util.ArgumentUtils;
 
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.util.CollectionUtils;
+import io.micronaut.serde.annotation.Serdeable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -33,7 +34,7 @@ import java.util.Objects;
  * @author graemerocher
  * @since 1.0
  */
-@Introspected
+@Serdeable
 final class DefaultSort implements Sort {
     private final List<Order> orderBy;
 
