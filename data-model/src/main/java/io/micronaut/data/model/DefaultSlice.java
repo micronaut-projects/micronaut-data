@@ -23,6 +23,7 @@ import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.CollectionUtils;
+import io.micronaut.serde.annotation.Serdeable;
 
 import java.util.Collections;
 import java.util.List;
@@ -35,7 +36,7 @@ import java.util.Objects;
  * @since 1.0.0
  * @param <T> The generic type
  */
-@Introspected
+@Serdeable
 class DefaultSlice<T> implements Slice<T> {
 
     private final List<T> content;

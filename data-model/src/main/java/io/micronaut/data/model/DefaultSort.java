@@ -15,6 +15,8 @@
  */
 package io.micronaut.data.model;
 
+import io.micronaut.core.annotation.Creator;
+import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.util.ArgumentUtils;
 
 import io.micronaut.core.annotation.NonNull;
@@ -31,6 +33,7 @@ import java.util.Objects;
  * @author graemerocher
  * @since 1.0
  */
+@Introspected
 final class DefaultSort implements Sort {
     private final List<Order> orderBy;
 
@@ -38,6 +41,7 @@ final class DefaultSort implements Sort {
      * Constructor that takes an order.
      * @param orderBy The order by
      */
+    @Creator
     DefaultSort(List<Order> orderBy) {
         this.orderBy = orderBy;
     }
