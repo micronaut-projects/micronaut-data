@@ -1,0 +1,19 @@
+Since Azure Cosmos database is not relational like most of the database Micronaut Data supports, it does have different implementations in some specifics.
+
+=== Relation Mapping ===
+
+Since this database is not relational and cross container and cross document joins are not supported, relations between entities/containers are not mappable. The only type of relations supported is `@Relation(value = Relation.Kind.EMBEDDED)` and `@Relation(value = Relation.Kind.ONE_TO_MANY)` which are actually relations between document and its embedded objects or arrays. Here is an example of such mapping:
+
+snippet::example.Family[project-base="doc-examples/azure-cosmos-example", source="main", tags="relations", indent="0"]
+
+where `Relation` mapping in this case is needed for our query builder to generate projections, ordering and filtering by the fields in the embedded objects or arrays which can be seen in methods declared in `FamilyRepository`
+
+snippet::example.FamilyRepository[project-base="doc-examples/azure-cosmos-example", source="main", tags="relations"]
+
+Due to the nature of the database and implementation of relations, cascading does not have much sense either. Embedded objects and arrays in the documents and are being automatically saved when document is saved.
+
+=== Identity ===
+
+In the Azure Cosmos, every document has got internal `id` property of String type. Our implementation expects `@Id` to be of types: `Short`, `Integer`, `Long`, `String` or `UUID`. When saving and reading it is being serialized to String and deserialized from String `id` property. Declaring `@Id` annotation of not supported type will throw an exception.
+Generating of ids will work only for `String` and `UUID` where `UUID` can be generated either by using `@Generated` or `@Autopopulated` annotations. String id can be generated only using `@Generated` annotation. Number ids cannot be auto generated, and it is up to user to set the id value before saving.
+Composite identities are not supported.

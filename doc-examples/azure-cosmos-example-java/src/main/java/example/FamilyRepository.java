@@ -8,9 +8,13 @@ import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.cosmos.annotation.CosmosRepository;
+import io.micronaut.data.model.Page;
+import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.Sort;
 import io.micronaut.data.repository.PageableRepository;
 import io.micronaut.data.repository.jpa.JpaSpecificationExecutor;
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification;
+import io.micronaut.data.repository.jpa.criteria.QuerySpecification;
 
 import java.util.Arrays;
 import java.util.Date;
@@ -52,6 +56,7 @@ public abstract class FamilyRepository implements PageableRepository<Family, Str
     @Query("SELECT VALUE f.registeredDate FROM family f WHERE NOT IS_NULL(f.registeredDate) ORDER BY f.registeredDate DESC OFFSET 0 LIMIT 1")
     public abstract Date lastOrderedRegisteredDate();
 
+    // tag::relations[]
     public abstract List<Family> findByAddressStateAndAddressCityOrderByAddressCity(String state, String city);
 
     public abstract void updateByAddressCounty(String county, boolean registered, @Nullable Date registeredDate);
@@ -62,6 +67,7 @@ public abstract class FamilyRepository implements PageableRepository<Family, Str
 
     @Join(value = "children")
     public abstract List<Child> findChildrenByChildrenPetsGivenName(String name);
+    // end::relations[]
 
     public abstract List<Family> findByIdIn(List<String> ids);
 

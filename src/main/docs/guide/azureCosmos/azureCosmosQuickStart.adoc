@@ -22,8 +22,6 @@ To retrieve objects from the database you need to define a class annotated with 
 
 snippet::example.Book[project-base="doc-examples/azure-cosmos-example", source="main", tags="book"]
 
-In Azure Cosmos world, every `MappedEntity` will correspond to the container. One container can hold only one entity or document type.
-
 Followed by an interface that extends from api:data.repository.CrudRepository[]
 
 snippet::example.BookRepository[project-base="doc-examples/azure-cosmos-example", source="main", tags="repository"]
@@ -34,6 +32,9 @@ snippet::example.BookRepository[project-base="doc-examples/azure-cosmos-example"
 You can now perform CRUD (Create, Read, Update, Delete) operations on the entity. The implementation of `example.BookRepository` is created at compilation time. To obtain a reference to it simply inject the bean:
 
 snippet::example.BookRepositorySpec[project-base="doc-examples/azure-cosmos-example", tags="inject", indent="0"]
+
+In Azure Cosmos world, every `MappedEntity` will correspond to the container. One container can hold only one entity or document type.
+`MappedEntity` name will be used to obtain container name. If entity class is `CosmosBook` then expected container name will be `cosmos_book` unless not overriden in `MappedEntity` annotation value. Default naming strategy for entity fields is `Raw` strategy and users should not usually need to override it.
 
 === Saving an Instance (Create)
 

@@ -39,6 +39,7 @@ abstract class FamilyRepository : PageableRepository<Family, String>, JpaSpecifi
     abstract fun lastOrderedLastName(): String?
     @Query("SELECT VALUE f.registeredDate FROM family f WHERE NOT IS_NULL(f.registeredDate) ORDER BY f.registeredDate DESC OFFSET 0 LIMIT 1")
     abstract fun lastOrderedRegisteredDate(): Date?
+    // tag::relations[]
     abstract fun findByAddressStateAndAddressCityOrderByAddressCity(state: String, city: String): List<Family>
     abstract fun updateByAddressCounty(county: String, registered: Boolean, @Nullable registeredDate: Date?)
     @Join(value = "children")
@@ -46,6 +47,7 @@ abstract class FamilyRepository : PageableRepository<Family, String>, JpaSpecifi
     abstract fun findByChildrenPetsType(type: String): List<Family>
     @Join(value = "children")
     abstract fun findChildrenByChildrenPetsGivenName(name: String): List<Child>
+    // end::relations[]
     abstract fun findByIdIn(ids: List<String>): List<Family>
     abstract fun findByIdNotIn(ids: List<String>): List<Family>
     abstract fun findByLastNameLike(lastName: String): List<Family>

@@ -6,6 +6,7 @@ import io.micronaut.data.cosmos.annotation.ETag
 import io.micronaut.data.cosmos.annotation.PartitionKey
 import java.util.*
 
+// tag::relations[]
 @MappedEntity
 class Family {
     @Id
@@ -19,6 +20,9 @@ class Family {
 
     @Relation(value = Relation.Kind.ONE_TO_MANY)
     var children: List<Child> = ArrayList()
+    // end::relations[]
+    //...
+
     var registered = false
     var registeredDate: Date? = null
     var tags: Array<String>? = null

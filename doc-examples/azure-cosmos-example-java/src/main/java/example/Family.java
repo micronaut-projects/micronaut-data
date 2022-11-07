@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+// tag::relations[]
 @MappedEntity
 public class Family {
 
@@ -27,6 +28,8 @@ public class Family {
 
     @Relation(value = Relation.Kind.ONE_TO_MANY)
     private List<Child> children = new ArrayList<>();
+    // end::relations[]
+    //...
 
     private boolean registered;
 

@@ -47,6 +47,7 @@ abstract class FamilyRepository implements PageableRepository<Family, String>, J
     @Query("SELECT VALUE f.registeredDate FROM family f WHERE NOT IS_NULL(f.registeredDate) ORDER BY f.registeredDate DESC OFFSET 0 LIMIT 1")
     abstract Date lastOrderedRegisteredDate()
 
+    // tag::relations[]
     abstract List<Family> findByAddressStateAndAddressCityOrderByAddressCity(String state, String city)
 
     abstract void updateByAddressCounty(String county, boolean registered, @Nullable Date registeredDate)
@@ -57,6 +58,7 @@ abstract class FamilyRepository implements PageableRepository<Family, String>, J
 
     @Join(value = "children")
     abstract List<Child> findChildrenByChildrenPetsGivenName(String name)
+    // end::relations[]
 
     abstract List<Family> findByIdIn(List<String> ids)
 

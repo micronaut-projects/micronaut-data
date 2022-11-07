@@ -116,6 +116,12 @@ azureCosmos:
   azureCosmosConfiguration: Configuration
   azureCosmosRepositories:
     title: Repositories
+  azureCosmosCriteriaSpecifications:
+    title: Repositories with Criteria API
+    azureCosmosCriteriaExecuteQuery: Querying
+    azureCosmosCriteriaExecuteUpdate: Updating
+    azureCosmosCriteriaExecuteDelete: Deleting
+  azureCosmosSpecifics: Azure Cosmos Specifics
   azureCosmosAttributeConverter: Using Attribute Converter
   azureCosmosOptimisticLocking: Optimistic locking
 howItWorks:

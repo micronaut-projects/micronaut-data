@@ -71,14 +71,12 @@ interface FamilyRepository extends GenericRepository<Family, String> {
     @Join(value = "children", alias = "c")
     List<Family> findByAddressStateOrderByChildrenFirstName(String state);
 
-    @Join(value = "children")
     List<Family> findByChildrenFirstName(String firstName);
 
     @Join(value = "children")
     @Join(value = "children.pets")
     List<Family> findByChildrenPetsGivenNameOrderByChildrenPetsType(String type);
 
-    @Join(value = "children")
     List<Child> findChildrenByChildrenPetsGivenName(String givenName);
 
     List<Family> findByIdNotIn(List<String> ids);

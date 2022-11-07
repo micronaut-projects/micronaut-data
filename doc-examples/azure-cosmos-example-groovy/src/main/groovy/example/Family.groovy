@@ -7,6 +7,7 @@ import io.micronaut.data.annotation.Transient
 import io.micronaut.data.cosmos.annotation.ETag
 import io.micronaut.data.cosmos.annotation.PartitionKey
 
+// tag::relations[]
 @MappedEntity
 class Family {
 
@@ -18,6 +19,8 @@ class Family {
     private Address address
     @Relation(value = Relation.Kind.ONE_TO_MANY)
     private List<Child> children = new ArrayList<>()
+    // end::relations[]
+    //...
     private boolean registered
     private Date registeredDate
     private String[] tags
