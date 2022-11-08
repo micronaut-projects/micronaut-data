@@ -552,6 +552,13 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
         throw new IllegalStateException("Expected for prepared query to be of type: SqlPreparedQuery got: " + preparedQuery.getClass().getName());
     }
 
+    private <E, R> CosmosSqlPreparedQuery<E, R> getCosmosSqlPreparedQuery(PreparedQuery<E, R> preparedQuery) {
+        if (preparedQuery instanceof CosmosSqlPreparedQuery) {
+            return (CosmosSqlPreparedQuery<E, R>) preparedQuery;
+        }
+        throw new IllegalStateException("Expected for prepared query to be of type: CosmosSqlPreparedQuery got: " + preparedQuery.getClass().getName());
+    }
+
     // Container util methods
 
     /**
@@ -792,11 +799,8 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
      * @return update statement (list of props to update in Azure Cosmos)
      */
     private <E, R> String getUpdate(PreparedQuery<E, R> preparedQuery) {
-        if (preparedQuery instanceof CosmosSqlPreparedQuery) {
-            CosmosSqlPreparedQuery<E, R> cosmosSqlPreparedQuery = (CosmosSqlPreparedQuery<E, R>) preparedQuery;
-            return cosmosSqlPreparedQuery.getUpdate();
-        }
-        return null;
+        CosmosSqlPreparedQuery cosmosSqlPreparedQuery = getCosmosSqlPreparedQuery(preparedQuery);
+        return cosmosSqlPreparedQuery.getUpdate();
     }
 
     /**
