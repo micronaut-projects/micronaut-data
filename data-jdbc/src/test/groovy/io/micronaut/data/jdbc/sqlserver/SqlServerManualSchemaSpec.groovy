@@ -18,6 +18,6 @@ class SqlServerManualSchemaSpec extends AbstractManualSchemaSpec {
 
     @Override
     List<String> createStatements() {
-        return Arrays.asList("CREATE TABLE [patient] ([name] VARCHAR(255), [id] BIGINT PRIMARY KEY IDENTITY(1,1) NOT NULL, [history] VARCHAR(1000));")
+        return Arrays.asList("CREATE TABLE [patient] ([name] VARCHAR(255), [id] BIGINT PRIMARY KEY IDENTITY(1,1) NOT NULL, [history] VARCHAR(1000), [doctor_notes] VARCHAR(255));")
     }
 }
