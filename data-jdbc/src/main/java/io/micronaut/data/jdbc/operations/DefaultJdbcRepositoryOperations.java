@@ -324,11 +324,14 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                         return result;
                     } else if (rs.next()) {
                         if (preparedQuery.isDtoProjection()) {
-                            TypeMapper<ResultSet, R> introspectedDataMapper = new DTOMapper<>(
-                                    persistentEntity,
-                                    columnNameResultSetReader,
-                                    jsonCodec,
-                                    conversionService);
+                            boolean isRawQuery = preparedQuery.getAnnotationMetadata().stringValue(Query.class, DataMethod.META_MEMBER_RAW_QUERY).isPresent();
+                            TypeMapper<ResultSet, R> introspectedDataMapper = new SqlDTOMapper<>(
+                                persistentEntity,
+                                isRawQuery ? getEntity(preparedQuery.getResultType()) : persistentEntity,
+                                columnNameResultSetReader,
+                                jsonCodec,
+                                conversionService
+                            );
                             return introspectedDataMapper.map(rs, resultType);
                         } else {
                             Object v = columnIndexResultSetReader.readDynamic(rs, 1, preparedQuery.getResultDataType());

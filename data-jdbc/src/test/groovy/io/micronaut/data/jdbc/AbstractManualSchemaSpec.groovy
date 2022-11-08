@@ -103,6 +103,13 @@ abstract class AbstractManualSchemaSpec extends Specification implements Databas
             def doctorNotes = "mild"
             insertRecord(name, history, doctorNotes)
         when:
+            def patientDtos = patientRepository.findAllByNameWithQuery(name)
+        then:
+            patientDtos.size() == 1
+            patientDtos[0].name == name
+            patientDtos[0].history == history
+            patientDtos[0].doctorNotes == doctorNotes
+        when:
             def optPatientDto = patientRepository.findByNameWithQuery(name)
         then:
             optPatientDto.present
