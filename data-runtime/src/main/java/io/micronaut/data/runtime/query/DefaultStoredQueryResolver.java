@@ -155,6 +155,11 @@ public abstract class DefaultStoredQueryResolver implements StoredQueryResolver 
             }
 
             @Override
+            public boolean isRawQuery() {
+                return checkRawQuery(annotationMetadata);
+            }
+
+            @Override
             public String getName() {
                 return name;
             }
@@ -242,9 +247,23 @@ public abstract class DefaultStoredQueryResolver implements StoredQueryResolver 
             public String getName() {
                 return name;
             }
+
+            @Override
+            public boolean isRawQuery() {
+                return checkRawQuery(annotationMetadata);
+            }
         };
     }
 
     protected abstract HintsCapableRepository getHintsCapableRepository();
 
+    /**
+     * Checks whether query is raw by examining {@link DataMethod#META_MEMBER_RAW_QUERY} existence.
+     *
+     * @param annotationMetadata the annotation metadata
+     * @return true if raw query is present in annotation metadata
+     */
+    private static boolean checkRawQuery(AnnotationMetadata annotationMetadata) {
+        return annotationMetadata.stringValue(Query.class, DataMethod.META_MEMBER_RAW_QUERY).isPresent();
+    }
 }

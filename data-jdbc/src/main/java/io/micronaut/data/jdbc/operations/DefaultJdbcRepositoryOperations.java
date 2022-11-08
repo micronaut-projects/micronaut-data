@@ -27,9 +27,7 @@ import io.micronaut.core.convert.ArgumentConversionContext;
 import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArgumentUtils;
-import io.micronaut.data.annotation.Query;
 import io.micronaut.data.exceptions.DataAccessException;
-import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.jdbc.config.DataJdbcConfiguration;
 import io.micronaut.data.jdbc.convert.JdbcConversionContext;
 import io.micronaut.data.jdbc.mapper.ColumnIndexResultSetReader;
@@ -324,7 +322,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                         return result;
                     } else if (rs.next()) {
                         if (preparedQuery.isDtoProjection()) {
-                            boolean isRawQuery = preparedQuery.getAnnotationMetadata().stringValue(Query.class, DataMethod.META_MEMBER_RAW_QUERY).isPresent();
+                            boolean isRawQuery = preparedQuery.isRawQuery();
                             TypeMapper<ResultSet, R> introspectedDataMapper = new SqlDTOMapper<>(
                                 persistentEntity,
                                 isRawQuery ? getEntity(preparedQuery.getResultType()) : persistentEntity,
@@ -403,7 +401,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                 SqlTypeMapper<ResultSet, R> mapper;
                 RuntimePersistentEntity<T> persistentEntity = preparedQuery.getPersistentEntity();
                 if (dtoProjection) {
-                    boolean isRawQuery = preparedQuery.getAnnotationMetadata().stringValue(Query.class, DataMethod.META_MEMBER_RAW_QUERY).isPresent();
+                    boolean isRawQuery = preparedQuery.isRawQuery();
                     mapper = new SqlDTOMapper<>(
                             persistentEntity,
                             isRawQuery ? getEntity(preparedQuery.getResultType()) : persistentEntity,
