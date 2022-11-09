@@ -34,6 +34,7 @@ shared:
 
 hibernate:
   title: Micronaut Data JPA Hibernate
+  hibernateLogging: Logging SQL with Micronaut Data JPA Hibernate
   hibernateQuickStart:
     title: Quick Start
   hibernateJoinQueries: Join queries

@@ -1,0 +1,1 @@
+You can log your queries by setting `jpa.default.properties.hibernate.show_sql` and `jpa.default.properties.hibernate.format_sql` to `true` in your application's configuration.
