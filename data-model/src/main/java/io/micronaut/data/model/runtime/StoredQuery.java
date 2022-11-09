@@ -283,7 +283,7 @@ public interface StoredQuery<E, R> extends Named, StoredDataOperation<R> {
     }
 
     /**
-     * Gets an indicator telling whether underlying query is raw query.
+     * Gets an indicator telling whether underlying query is raw query. Does not check count query.
      *
      * @return true if it is raw query
      */

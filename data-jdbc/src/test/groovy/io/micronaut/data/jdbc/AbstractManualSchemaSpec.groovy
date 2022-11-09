@@ -1,7 +1,6 @@
 package io.micronaut.data.jdbc
 
 import io.micronaut.context.ApplicationContext
-import io.micronaut.data.runtime.config.SchemaGenerate
 import io.micronaut.data.tck.entities.Patient
 import io.micronaut.data.tck.repositories.PatientRepository
 import io.micronaut.inject.qualifiers.Qualifiers
@@ -14,17 +13,12 @@ import spock.lang.Specification
 import javax.sql.DataSource
 
 /**
- * This is base test when need to create schema manually and test some features. This was created to test getting auto generated ids when id is not first column,
+ * This is the base test when need to create schema manually and test some features for jdbc. This was created to test getting auto generated ids when id is not first column,
  * but can be used for other purposes.
  */
-abstract class AbstractManualSchemaSpec extends Specification implements DatabaseTestPropertyProvider {
+abstract class AbstractManualSchemaSpec extends Specification {
 
-    def logger = LoggerFactory.getLogger(this.class)
-
-    @Override
-    SchemaGenerate schemaGenerate() {
-        SchemaGenerate.NONE
-    }
+    def LOG = LoggerFactory.getLogger(this.class)
 
     @AutoCleanup
     @Shared
@@ -36,7 +30,7 @@ abstract class AbstractManualSchemaSpec extends Specification implements Databas
 
     List<String> createStatements() {
         // We want id on the second column to test scenario getting auto generated id not on the first position
-        return Arrays.asList("CREATE TABLE patient(name VARCHAR(255), id SERIAL NOT NULL PRIMARY KEY, history VARCHAR(1000), doctor_notes VARCHAR(255))")
+        return Arrays.asList("CREATE TABLE patient(name VARCHAR(255), id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY, history VARCHAR(1000), doctor_notes VARCHAR(255))")
     }
 
     List<String> dropStatements() {
@@ -52,7 +46,7 @@ abstract class AbstractManualSchemaSpec extends Specification implements Databas
             def conn = dataSource.getConnection()
             createStatements().forEach(st -> conn.prepareStatement(st).executeUpdate())
         } catch (Exception e) {
-            logger.warn("Error creating schema manually: " + e.getMessage())
+            LOG.warn("Error creating schema manually: " + e.getMessage())
         }
     }
 
@@ -61,7 +55,7 @@ abstract class AbstractManualSchemaSpec extends Specification implements Databas
             def conn = dataSource.getConnection()
             dropStatements().forEach(st -> conn.prepareStatement(st).executeUpdate())
         } catch (Exception e) {
-            logger.warn("Error dropping schema manually: " + e.getMessage())
+            LOG.warn("Error dropping schema manually: " + e.getMessage())
         }
     }
 
@@ -75,7 +69,7 @@ abstract class AbstractManualSchemaSpec extends Specification implements Databas
             def inserted = insertStmt.executeUpdate()
             assert inserted == 1
         } catch (Exception e) {
-            logger.warn("Error inserting record manually: " + e.getMessage())
+            LOG.warn("Error inserting record manually: " + e.getMessage())
         }
     }
 

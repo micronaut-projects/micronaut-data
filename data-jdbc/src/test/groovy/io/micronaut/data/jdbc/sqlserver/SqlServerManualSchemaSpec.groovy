@@ -1,16 +1,18 @@
 package io.micronaut.data.jdbc.sqlserver
 
+import groovy.transform.Memoized
 import io.micronaut.data.jdbc.AbstractManualSchemaSpec
-import io.micronaut.data.model.query.builder.sql.Dialect
+import io.micronaut.data.runtime.config.SchemaGenerate
 import io.micronaut.data.tck.repositories.PatientRepository
 
-class SqlServerManualSchemaSpec extends AbstractManualSchemaSpec {
+class SqlServerManualSchemaSpec extends AbstractManualSchemaSpec implements MSSQLTestPropertyProvider {
 
     @Override
-    Dialect dialect() {
-        Dialect.SQL_SERVER
+    SchemaGenerate schemaGenerate() {
+        SchemaGenerate.NONE
     }
 
+    @Memoized
     @Override
     PatientRepository getPatientRepository() {
         return context.getBean(MSPatientRepository)

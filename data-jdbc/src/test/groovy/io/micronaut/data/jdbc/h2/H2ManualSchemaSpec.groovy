@@ -1,23 +1,19 @@
 package io.micronaut.data.jdbc.h2
 
+import groovy.transform.Memoized
 import io.micronaut.data.jdbc.AbstractManualSchemaSpec
-import io.micronaut.data.model.query.builder.sql.Dialect
+import io.micronaut.data.runtime.config.SchemaGenerate
 import io.micronaut.data.tck.repositories.PatientRepository
-import org.testcontainers.containers.JdbcDatabaseContainer
 
 
-class H2ManualSchemaSpec extends AbstractManualSchemaSpec {
-
-    @Override
-    Dialect dialect() {
-        Dialect.H2
-    }
+class H2ManualSchemaSpec extends AbstractManualSchemaSpec implements H2TestPropertyProvider {
 
     @Override
-    String jdbcUrl(JdbcDatabaseContainer container) {
-        "jdbc:h2:mem:mydb;LOCK_TIMEOUT=10000;DB_CLOSE_ON_EXIT=FALSE"
+    SchemaGenerate schemaGenerate() {
+        SchemaGenerate.NONE
     }
 
+    @Memoized
     @Override
     PatientRepository getPatientRepository() {
         return context.getBean(H2PatientRepository)

@@ -1,16 +1,18 @@
 package io.micronaut.data.jdbc.oraclexe
 
+import groovy.transform.Memoized
 import io.micronaut.data.jdbc.AbstractManualSchemaSpec
-import io.micronaut.data.model.query.builder.sql.Dialect
+import io.micronaut.data.runtime.config.SchemaGenerate
 import io.micronaut.data.tck.repositories.PatientRepository
 
-class OracleManualSchemaSpec extends AbstractManualSchemaSpec {
+class OracleXEManualSchemaSpec extends AbstractManualSchemaSpec implements OracleTestPropertyProvider {
 
     @Override
-    Dialect dialect() {
-        Dialect.ORACLE
+    SchemaGenerate schemaGenerate() {
+        SchemaGenerate.NONE
     }
 
+    @Memoized
     @Override
     PatientRepository getPatientRepository() {
         return context.getBean(OracleXEPatientRepository)

@@ -665,12 +665,16 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                 }
                 Class<R> resultType = preparedQuery.getResultType();
                 if (preparedQuery.isDtoProjection()) {
+                    RuntimePersistentEntity<T> persistentEntity = preparedQuery.getPersistentEntity();
+                    boolean isRawQuery = preparedQuery.isRawQuery();
                     return executeAndMapEachRow(statement, row -> {
-                        TypeMapper<Row, R> introspectedDataMapper = new DTOMapper<>(
-                            preparedQuery.getPersistentEntity(),
+                        TypeMapper<Row, R> introspectedDataMapper =  new SqlDTOMapper<>(
+                            persistentEntity,
+                            isRawQuery ? getEntity(preparedQuery.getResultType()) : persistentEntity,
                             columnNameResultSetReader,
                             jsonCodec,
-                            conversionService);
+                            conversionService
+                        );
                         return introspectedDataMapper.map(row, resultType);
                     });
                 }
@@ -702,7 +706,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                     TypeMapper<Row, R> mapper;
                     RuntimePersistentEntity<T> persistentEntity = preparedQuery.getPersistentEntity();
                     if (dtoProjection) {
-                        boolean isRawQuery = preparedQuery.getAnnotationMetadata().stringValue(Query.class, DataMethod.META_MEMBER_RAW_QUERY).isPresent();
+                        boolean isRawQuery = preparedQuery.isRawQuery();
                         mapper = new SqlDTOMapper<>(
                             persistentEntity,
                             isRawQuery ? getEntity(preparedQuery.getResultType()) : persistentEntity,
