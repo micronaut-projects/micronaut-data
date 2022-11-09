@@ -62,6 +62,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -443,27 +444,45 @@ final class DefaultMongoStoredQuery<E, R, Dtb> extends DefaultBindableParameters
 
     private BsonValue getValue(QueryParameterBinding queryParameterBinding, Object value) {
         // Check if the parameter is not an id which might be represented as String but needs to mapped as ObjectId
-        if (value instanceof String && queryParameterBinding.getPropertyPath() != null) {
-            // TODO: improve id recognition
+        boolean isIdentity = false;
+        // TODO: improve id recognition
+        if (queryParameterBinding.getPropertyPath() != null) {
             PersistentPropertyPath pp = getRequiredPropertyPath(queryParameterBinding, persistentEntity);
             RuntimePersistentProperty<?> persistentProperty = (RuntimePersistentProperty) pp.getProperty();
             if (persistentProperty instanceof RuntimeAssociation) {
                 RuntimeAssociation runtimeAssociation = (RuntimeAssociation) persistentProperty;
                 RuntimePersistentProperty identity = runtimeAssociation.getAssociatedEntity().getIdentity();
-                if (identity != null && identity.getType() == String.class && identity.isGenerated()) {
-                    return new BsonObjectId(new ObjectId((String) value));
-                }
+                isIdentity = identity != null && identity.getType() == String.class && identity.isGenerated();
+            } else {
+                isIdentity = persistentProperty.getOwner().getIdentity() == persistentProperty && persistentProperty.getType() == String.class && persistentProperty.isGenerated();
             }
-            if (persistentProperty.getOwner().getIdentity() == persistentProperty && persistentProperty.getType() == String.class && persistentProperty.isGenerated()) {
-                return new BsonObjectId(new ObjectId((String) value));
-            }
+        }
+
+        if (isIdentity && value instanceof String) {
+            return new BsonObjectId(new ObjectId((String) value));
         }
         if (value instanceof Object[]) {
-            value = Arrays.asList((Object[]) value);
+            List<Object> valueList = Arrays.asList((Object[]) value);
+            if (isIdentity) {
+                for (ListIterator<Object> iterator = valueList.listIterator(); iterator.hasNext(); ) {
+                    Object item = iterator.next();
+                    if (item instanceof String) {
+                        item = new BsonObjectId(new ObjectId((String) item));
+                    }
+                    iterator.set(item);
+                }
+            }
+            value = valueList;
         }
         if (value instanceof Collection) {
+            final boolean isIdentityField = isIdentity;
             Collection<?> values = (Collection) value;
-            return new BsonArray(values.stream().map(val -> MongoUtils.toBsonValue(conversionService, val, codecRegistry)).collect(Collectors.toList()));
+            return new BsonArray(values.stream().map(val -> {
+                if (isIdentityField && val instanceof String) {
+                    return new BsonObjectId(new ObjectId((String) val));
+                }
+                return MongoUtils.toBsonValue(conversionService, val, codecRegistry);
+            }).collect(Collectors.toList()));
         }
         return MongoUtils.toBsonValue(conversionService, value, codecRegistry);
     }
