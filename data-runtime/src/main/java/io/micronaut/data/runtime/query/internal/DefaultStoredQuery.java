@@ -111,8 +111,9 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
                 method.intValue(DATA_METHOD_ANN_NAME, META_MEMBER_PAGE_SIZE).orElse(-1) > -1;
 
         if (isCount) {
-            this.rawQuery = false;
-            this.query = method.stringValue(Query.class, DataMethod.META_MEMBER_RAW_COUNT_QUERY).orElse(query);
+            Optional<String> rawCountQueryString = method.stringValue(Query.class, DataMethod.META_MEMBER_RAW_COUNT_QUERY);
+            this.rawQuery = rawCountQueryString.isPresent();
+            this.query = rawCountQueryString.orElse(query);
             this.queryParts = method.stringValues(DataMethod.class, DataMethod.META_MEMBER_EXPANDABLE_COUNT_QUERY);
         } else {
             Optional<String> rawQueryString = method.stringValue(Query.class, DataMethod.META_MEMBER_RAW_QUERY);

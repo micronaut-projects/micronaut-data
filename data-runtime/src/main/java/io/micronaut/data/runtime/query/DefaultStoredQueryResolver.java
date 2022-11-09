@@ -92,6 +92,7 @@ public abstract class DefaultStoredQueryResolver implements StoredQueryResolver 
             queryParts = new String[0];
         }
         String[] finalQueryParts = queryParts;
+        boolean rawQuery = annotationMetadata.stringValue(Query.class, DataMethod.META_MEMBER_RAW_QUERY).isPresent();
         return new StoredQuery<E, QR>() {
             @Override
             public Class<E> getRootEntity() {
@@ -156,7 +157,7 @@ public abstract class DefaultStoredQueryResolver implements StoredQueryResolver 
 
             @Override
             public boolean isRawQuery() {
-                return checkRawQuery(annotationMetadata);
+                return rawQuery;
             }
 
             @Override
@@ -179,6 +180,7 @@ public abstract class DefaultStoredQueryResolver implements StoredQueryResolver 
             queryParts = new String[0];
         }
         String[] finalQueryParts = queryParts;
+        boolean rawCountQuery = annotationMetadata.stringValue(Query.class, DataMethod.META_MEMBER_RAW_COUNT_QUERY).isPresent();
         return new StoredQuery<Object, Long>() {
 
             @Override
@@ -250,20 +252,10 @@ public abstract class DefaultStoredQueryResolver implements StoredQueryResolver 
 
             @Override
             public boolean isRawQuery() {
-                return checkRawQuery(annotationMetadata);
+                return rawCountQuery;
             }
         };
     }
 
     protected abstract HintsCapableRepository getHintsCapableRepository();
-
-    /**
-     * Checks whether query is raw by examining {@link DataMethod#META_MEMBER_RAW_QUERY} existence.
-     *
-     * @param annotationMetadata the annotation metadata
-     * @return true if raw query is present in annotation metadata
-     */
-    private static boolean checkRawQuery(AnnotationMetadata annotationMetadata) {
-        return annotationMetadata.stringValue(Query.class, DataMethod.META_MEMBER_RAW_QUERY).isPresent();
-    }
 }
