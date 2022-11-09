@@ -2,7 +2,6 @@
 // tag::repository[]
 package example;
 
-import io.micronaut.context.annotation.Executable;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
@@ -40,7 +39,6 @@ interface BookRepository extends CrudRepository<Book, ObjectId> { // <2>
 
     // tag::simple-alt[]
     // tag::repository[]
-    @Executable
     Book find(String title);
     // end::simple-alt[]
     // end::repository[]
