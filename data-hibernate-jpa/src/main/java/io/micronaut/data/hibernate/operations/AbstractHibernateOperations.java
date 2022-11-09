@@ -400,15 +400,29 @@ public abstract class AbstractHibernateOperations<S, Q> implements HintsCapableR
                     Argument<?> argument = preparedQuery.getArguments()[parameterIndex];
                     Class<?> argumentType = argument.getType();
                     if (Collection.class.isAssignableFrom(argumentType)) {
-                        setParameterList(q, parameterName, value == null ? Collections.emptyList() : (Collection<Object>) value, argument.getFirstTypeVariable().orElse(Argument.OBJECT_ARGUMENT));
+                        Collection<Object> paramCollection;
+                        if (value == null) {
+                            paramCollection = Collections.emptyList();
+                        } else if (value instanceof Collection) {
+                            paramCollection = (Collection<Object>) value;
+                        } else {
+                            // This is the case where collection with one element was passed and during binding collection moved to single value element
+                            // but argumentType still remained collection
+                            paramCollection = Collections.singletonList(value);
+                        }
+                        setParameterList(q, parameterName, paramCollection, argument.getFirstTypeVariable().orElse(Argument.OBJECT_ARGUMENT));
                     } else if (Object[].class.isAssignableFrom(argumentType)) {
                         Collection<Object> coll;
                         if (value == null) {
                             coll = Collections.emptyList();
                         } else if (value instanceof Collection) {
                             coll = (Collection<Object>) value;
-                        } else {
+                        } else if (value.getClass().isArray()) {
                             coll = Arrays.asList((Object[]) value);
+                        } else {
+                            // This is the case where array with one element was passed and during binding array values moved to single value element
+                            // but argumentType still remained array
+                            coll = Collections.singletonList(value);
                         }
                         setParameterList(q, parameterName, coll);
                     } else {
