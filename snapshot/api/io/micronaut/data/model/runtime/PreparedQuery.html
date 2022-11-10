@@ -27,7 +27,7 @@
     catch(err) {
     }
 //-->
-var data = {"i0":6,"i1":50,"i2":6,"i3":38,"i4":18,"i5":6};
+var data = {"i0":6,"i1":50,"i2":6,"i3":38,"i4":18,"i5":6,"i6":6};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],4:["t3","Abstract Methods"],16:["t5","Default Methods"],32:["t6","Deprecated Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -222,6 +222,13 @@ extends <a href="PagedQuery.html" title="interface in io.micronaut.data.model.ru
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getRepositoryType()">getRepositoryType</a></span>()</code></th>
 <td class="colLast">&nbsp;</td>
 </tr>
+<tr id="i6" class="altColor">
+<td class="colFirst"><code>boolean</code></td>
+<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#isRawQuery()">isRawQuery</a></span>()</code></th>
+<td class="colLast">
+<div class="block">Gets an indicator telling whether underlying query is raw query.</div>
+</td>
+</tr>
 </table>
 <ul class="blockList">
 <li class="blockList"><a id="methods.inherited.from.class.io.micronaut.core.annotation.AnnotationMetadataProvider">
@@ -368,7 +375,7 @@ default&nbsp;java.lang.Class&lt;?&gt;&nbsp;getLastUpdatedType()</pre>
 <a id="getQueryHints()">
 <!--   -->
 </a>
-<ul class="blockListLast">
+<ul class="blockList">
 <li class="blockList">
 <h4>getQueryHints</h4>
 <pre class="methodSignature">@NonNull
@@ -382,6 +389,22 @@ default&nbsp;java.util.Map&lt;java.lang.String,&#8203;java.lang.Object&gt;&nbsp;
 <dd><code><a href="StoredQuery.html#getQueryHints()">getQueryHints</a></code>&nbsp;in interface&nbsp;<code><a href="StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;<a href="PreparedQuery.html" title="type parameter in PreparedQuery">E</a>,&#8203;<a href="PreparedQuery.html" title="type parameter in PreparedQuery">R</a>&gt;</code></dd>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>The parameter binding.</dd>
+</dl>
+</li>
+</ul>
+<a id="isRawQuery()">
+<!--   -->
+</a>
+<ul class="blockListLast">
+<li class="blockList">
+<h4>isRawQuery</h4>
+<pre class="methodSignature">boolean&nbsp;isRawQuery()</pre>
+<div class="block">Gets an indicator telling whether underlying query is raw query.</div>
+<dl>
+<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
+<dd><code><a href="StoredQuery.html#isRawQuery()">isRawQuery</a></code>&nbsp;in interface&nbsp;<code><a href="StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;<a href="PreparedQuery.html" title="type parameter in PreparedQuery">E</a>,&#8203;<a href="PreparedQuery.html" title="type parameter in PreparedQuery">R</a>&gt;</code></dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>true if it is raw query</dd>
 </dl>
 </li>
 </ul>

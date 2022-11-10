@@ -27,7 +27,7 @@
     catch(err) {
     }
 //-->
-var data = {"i0":18,"i1":18,"i2":18,"i3":18,"i4":18,"i5":18,"i6":18,"i7":18,"i8":18,"i9":18,"i10":18,"i11":18,"i12":18,"i13":18,"i14":18,"i15":18,"i16":6,"i17":18,"i18":50,"i19":18,"i20":18,"i21":18,"i22":18,"i23":18,"i24":18,"i25":18,"i26":18};
+var data = {"i0":18,"i1":18,"i2":18,"i3":18,"i4":18,"i5":18,"i6":18,"i7":18,"i8":18,"i9":18,"i10":18,"i11":18,"i12":18,"i13":18,"i14":18,"i15":18,"i16":6,"i17":18,"i18":50,"i19":18,"i20":18,"i21":18,"i22":18,"i23":18,"i24":18,"i25":18,"i26":18,"i27":18};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],4:["t3","Abstract Methods"],16:["t5","Default Methods"],32:["t6","Deprecated Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -347,12 +347,19 @@ extends <a href="../../../model/runtime/StoredQuery.html" title="interface in io
 </tr>
 <tr id="i25" class="rowColor">
 <td class="colFirst"><code>default boolean</code></td>
+<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#isRawQuery()">isRawQuery</a></span>()</code></th>
+<td class="colLast">
+<div class="block">Gets an indicator telling whether underlying query is raw query.</div>
+</td>
+</tr>
+<tr id="i26" class="altColor">
+<td class="colFirst"><code>default boolean</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#isSingleResult()">isSingleResult</a></span>()</code></th>
 <td class="colLast">
 <div class="block">Whether the query can be treated as a single result.</div>
 </td>
 </tr>
-<tr id="i26" class="altColor">
+<tr id="i27" class="rowColor">
 <td class="colFirst"><code>default boolean</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#useNumericPlaceholders()">useNumericPlaceholders</a></span>()</code></th>
 <td class="colLast">
@@ -823,7 +830,7 @@ default&nbsp;java.lang.String[]&nbsp;getIndexedParameterAutoPopulatedPropertyPat
 <a id="hasInExpression()">
 <!--   -->
 </a>
-<ul class="blockListLast">
+<ul class="blockList">
 <li class="blockList">
 <h4>hasInExpression</h4>
 <pre class="methodSignature">@Deprecated
@@ -836,6 +843,23 @@ default&nbsp;boolean&nbsp;hasInExpression()</pre>
 <dd><code><a href="../../../model/runtime/StoredQuery.html#hasInExpression()">hasInExpression</a></code>&nbsp;in interface&nbsp;<code><a href="../../../model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;<a href="DelegateStoredQuery.html" title="type parameter in DelegateStoredQuery">E</a>,&#8203;<a href="DelegateStoredQuery.html" title="type parameter in DelegateStoredQuery">R</a>&gt;</code></dd>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>True if it does</dd>
+</dl>
+</li>
+</ul>
+<a id="isRawQuery()">
+<!--   -->
+</a>
+<ul class="blockListLast">
+<li class="blockList">
+<h4>isRawQuery</h4>
+<pre class="methodSignature">default&nbsp;boolean&nbsp;isRawQuery()</pre>
+<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../model/runtime/StoredQuery.html#isRawQuery()">StoredQuery</a></code></span></div>
+<div class="block">Gets an indicator telling whether underlying query is raw query.</div>
+<dl>
+<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
+<dd><code><a href="../../../model/runtime/StoredQuery.html#isRawQuery()">isRawQuery</a></code>&nbsp;in interface&nbsp;<code><a href="../../../model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;<a href="DelegateStoredQuery.html" title="type parameter in DelegateStoredQuery">E</a>,&#8203;<a href="DelegateStoredQuery.html" title="type parameter in DelegateStoredQuery">R</a>&gt;</code></dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>true if it is raw query</dd>
 </dl>
 </li>
 </ul>

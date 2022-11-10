@@ -27,7 +27,7 @@
     catch(err) {
     }
 //-->
-var data = {"i0":18,"i1":18,"i2":6,"i3":50,"i4":50,"i5":50,"i6":50,"i7":50,"i8":50,"i9":18,"i10":50,"i11":50,"i12":50,"i13":6,"i14":6,"i15":18,"i16":6,"i17":6,"i18":6,"i19":6,"i20":50,"i21":6,"i22":6,"i23":6,"i24":18,"i25":18,"i26":18,"i27":6,"i28":6};
+var data = {"i0":18,"i1":18,"i2":6,"i3":50,"i4":50,"i5":50,"i6":50,"i7":50,"i8":50,"i9":18,"i10":50,"i11":50,"i12":50,"i13":6,"i14":6,"i15":18,"i16":6,"i17":6,"i18":6,"i19":6,"i20":50,"i21":6,"i22":6,"i23":6,"i24":18,"i25":18,"i26":18,"i27":6,"i28":6,"i29":6};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],4:["t3","Abstract Methods"],16:["t5","Default Methods"],32:["t6","Deprecated Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -369,12 +369,19 @@ extends io.micronaut.core.naming.Named, <a href="StoredDataOperation.html" title
 </tr>
 <tr id="i27" class="rowColor">
 <td class="colFirst"><code>boolean</code></td>
+<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#isRawQuery()">isRawQuery</a></span>()</code></th>
+<td class="colLast">
+<div class="block">Gets an indicator telling whether underlying query is raw query.</div>
+</td>
+</tr>
+<tr id="i28" class="altColor">
+<td class="colFirst"><code>boolean</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#isSingleResult()">isSingleResult</a></span>()</code></th>
 <td class="colLast">
 <div class="block">Whether the query can be treated as a single result.</div>
 </td>
 </tr>
-<tr id="i28" class="altColor">
+<tr id="i29" class="rowColor">
 <td class="colFirst"><code>boolean</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#useNumericPlaceholders()">useNumericPlaceholders</a></span>()</code></th>
 <td class="colLast">
@@ -854,7 +861,7 @@ default&nbsp;java.util.Set&lt;<a href="../query/JoinPath.html" title="class in i
 <a id="isOptimisticLock()">
 <!--   -->
 </a>
-<ul class="blockListLast">
+<ul class="blockList">
 <li class="blockList">
 <h4>isOptimisticLock</h4>
 <pre class="methodSignature">default&nbsp;boolean&nbsp;isOptimisticLock()</pre>
@@ -862,6 +869,20 @@ default&nbsp;java.util.Set&lt;<a href="../query/JoinPath.html" title="class in i
 <dl>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>the result</dd>
+</dl>
+</li>
+</ul>
+<a id="isRawQuery()">
+<!--   -->
+</a>
+<ul class="blockListLast">
+<li class="blockList">
+<h4>isRawQuery</h4>
+<pre class="methodSignature">boolean&nbsp;isRawQuery()</pre>
+<div class="block">Gets an indicator telling whether underlying query is raw query.</div>
+<dl>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>true if it is raw query</dd>
 </dl>
 </li>
 </ul>

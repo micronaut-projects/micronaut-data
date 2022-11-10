@@ -27,7 +27,7 @@
     catch(err) {
     }
 //-->
-var data = {"i0":10,"i1":10,"i2":10,"i3":10,"i4":10,"i5":10,"i6":10,"i7":10,"i8":10,"i9":10,"i10":10,"i11":10,"i12":10,"i13":10};
+var data = {"i0":10,"i1":10,"i2":10,"i3":10,"i4":10,"i5":10,"i6":10,"i7":10,"i8":10,"i9":10,"i10":10,"i11":10,"i12":10,"i13":10,"i14":10};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],8:["t4","Concrete Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -306,12 +306,19 @@ implements <a href="../../../model/runtime/StoredQuery.html" title="interface in
 </tr>
 <tr id="i12" class="altColor">
 <td class="colFirst"><code>boolean</code></td>
+<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#isRawQuery()">isRawQuery</a></span>()</code></th>
+<td class="colLast">
+<div class="block">Gets an indicator telling whether underlying query is raw query.</div>
+</td>
+</tr>
+<tr id="i13" class="rowColor">
+<td class="colFirst"><code>boolean</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#isSingleResult()">isSingleResult</a></span>()</code></th>
 <td class="colLast">
 <div class="block">Whether the query can be treated as a single result.</div>
 </td>
 </tr>
-<tr id="i13" class="rowColor">
+<tr id="i14" class="altColor">
 <td class="colFirst"><code>boolean</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#useNumericPlaceholders()">useNumericPlaceholders</a></span>()</code></th>
 <td class="colLast">
@@ -625,7 +632,7 @@ implements <a href="../../../model/runtime/StoredQuery.html" title="interface in
 <a id="hasResultConsumer()">
 <!--   -->
 </a>
-<ul class="blockListLast">
+<ul class="blockList">
 <li class="blockList">
 <h4>hasResultConsumer</h4>
 <pre class="methodSignature">public&nbsp;boolean&nbsp;hasResultConsumer()</pre>
@@ -634,6 +641,23 @@ implements <a href="../../../model/runtime/StoredQuery.html" title="interface in
 <dd><code><a href="../../../model/runtime/StoredQuery.html#hasResultConsumer()">hasResultConsumer</a></code>&nbsp;in interface&nbsp;<code><a href="../../../model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;<a href="BasicStoredQuery.html" title="type parameter in BasicStoredQuery">E</a>,&#8203;<a href="BasicStoredQuery.html" title="type parameter in BasicStoredQuery">R</a>&gt;</code></dd>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>Whether a result consumer is present</dd>
+</dl>
+</li>
+</ul>
+<a id="isRawQuery()">
+<!--   -->
+</a>
+<ul class="blockListLast">
+<li class="blockList">
+<h4>isRawQuery</h4>
+<pre class="methodSignature">public&nbsp;boolean&nbsp;isRawQuery()</pre>
+<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../model/runtime/StoredQuery.html#isRawQuery()">StoredQuery</a></code></span></div>
+<div class="block">Gets an indicator telling whether underlying query is raw query.</div>
+<dl>
+<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
+<dd><code><a href="../../../model/runtime/StoredQuery.html#isRawQuery()">isRawQuery</a></code>&nbsp;in interface&nbsp;<code><a href="../../../model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;<a href="BasicStoredQuery.html" title="type parameter in BasicStoredQuery">E</a>,&#8203;<a href="BasicStoredQuery.html" title="type parameter in BasicStoredQuery">R</a>&gt;</code></dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>true if it is raw query</dd>
 </dl>
 </li>
 </ul>
