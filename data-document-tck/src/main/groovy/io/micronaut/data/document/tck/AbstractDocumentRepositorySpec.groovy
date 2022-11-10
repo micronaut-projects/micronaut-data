@@ -109,9 +109,9 @@ abstract class AbstractDocumentRepositorySpec extends Specification {
                 ))])
     }
 
-    protected void savePersons(List<String> names) {
+    protected List<Person> savePersons(List<String> names) {
         int i = 0
-        personRepository.saveAll(names.collect { new Person(name: it, dateOfBirth: LocalDate.of(1986, 6, 1 + i++)) })
+        return personRepository.saveAll(names.collect { new Person(name: it, dateOfBirth: LocalDate.of(1986, 6, 1 + i++)) })
     }
 
     protected void setup() {

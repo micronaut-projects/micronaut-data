@@ -443,6 +443,16 @@ abstract class AbstractHibernateQuerySpec extends AbstractQuerySpec {
             def books6 = bookRepository.listNativeBooksWithTitleInArray(new String[0])
         then:
             books6.size() == 0
+        when:
+            def books7 = bookRepository.listNativeBooksWithTitleInCollection(Collections.singletonList("The Stand"))
+            def books7a = bookRepository.listNativeBooksWithTitleInArray(new String[] {"The Stand"})
+            def books8 = bookRepository.listNativeBooksWithTitleInCollection(Collections.singletonList("FFF"))
+            def books8a = bookRepository.listNativeBooksWithTitleInArray(new String[] {"FFF"})
+        then:
+            books7.size() == 1
+            books7a.size() == 1
+            books8.size() == 0
+            books8a.size() == 0
     }
 
     @Issue('https://github.com/micronaut-projects/micronaut-data/issues/1131')

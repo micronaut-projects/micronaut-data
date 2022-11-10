@@ -158,10 +158,6 @@ public class DefaultBindableParametersStoredQuery<E, R> implements BindableParam
             // Empty collections / array should always set at least one value
             value = null;
             values = null;
-        } else if (values != null && values.size() == 1) {
-            // Bind as one if the expanded collections is just one item
-            value = values.iterator().next();
-            values = null;
         }
         if (values == null) {
             if (parameterConverter != null) {
