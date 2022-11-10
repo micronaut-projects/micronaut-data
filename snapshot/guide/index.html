@@ -146,15 +146,17 @@
         
         <div class="toc-item" style="margin-left:0px" id="toc-item-hibernate"><a href="#hibernate"><strong>4</strong><span>Micronaut Data JPA Hibernate</span></a></div>
         
-        <div class="toc-item" style="margin-left:10px" id="toc-item-hibernateQuickStart"><a href="#hibernateQuickStart"><strong>4.1</strong><span>Quick Start</span></a></div>
+        <div class="toc-item" style="margin-left:10px" id="toc-item-hibernateJpaAnnotations"><a href="#hibernateJpaAnnotations"><strong>4.1</strong><span>JPA Annotations</span></a></div>
         
-        <div class="toc-item" style="margin-left:10px" id="toc-item-hibernateJoinQueries"><a href="#hibernateJoinQueries"><strong>4.2</strong><span>Join queries</span></a></div>
+        <div class="toc-item" style="margin-left:10px" id="toc-item-hibernateQuickStart"><a href="#hibernateQuickStart"><strong>4.2</strong><span>Quick Start</span></a></div>
         
-        <div class="toc-item" style="margin-left:10px" id="toc-item-hibernateExplicitQueries"><a href="#hibernateExplicitQueries"><strong>4.3</strong><span>Explicit queries</span></a></div>
+        <div class="toc-item" style="margin-left:10px" id="toc-item-hibernateJoinQueries"><a href="#hibernateJoinQueries"><strong>4.3</strong><span>Join queries</span></a></div>
         
-        <div class="toc-item" style="margin-left:10px" id="toc-item-hibernateNativeQueries"><a href="#hibernateNativeQueries"><strong>4.4</strong><span>Native queries</span></a></div>
+        <div class="toc-item" style="margin-left:10px" id="toc-item-hibernateExplicitQueries"><a href="#hibernateExplicitQueries"><strong>4.4</strong><span>Explicit queries</span></a></div>
         
-        <div class="toc-item" style="margin-left:10px" id="toc-item-hibernateSpecifications"><a href="#hibernateSpecifications"><strong>4.5</strong><span>JPA specifications</span></a></div>
+        <div class="toc-item" style="margin-left:10px" id="toc-item-hibernateNativeQueries"><a href="#hibernateNativeQueries"><strong>4.5</strong><span>Native queries</span></a></div>
+        
+        <div class="toc-item" style="margin-left:10px" id="toc-item-hibernateSpecifications"><a href="#hibernateSpecifications"><strong>4.6</strong><span>JPA specifications</span></a></div>
         
         <div class="toc-item" style="margin-left:0px" id="toc-item-hibernateReactive"><a href="#hibernateReactive"><strong>5</strong><span>Micronaut Data Hibernate Reactive</span></a></div>
         
@@ -353,7 +355,6 @@
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">package example;
 
-import io.micronaut.context.annotation.Executable;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.Repository;
@@ -366,7 +367,6 @@ import java.util.List;
 
 @Repository // <b class="conum">(1)</b>
 interface BookRepository extends CrudRepository&lt;Book, Long&gt; { // <b class="conum">(2)</b>
-    @Executable
     Book find(String title);
 }</code></pre>
 </div>
@@ -1184,8 +1184,7 @@ More details about the batch update variants of these methods is covered in the 
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@Executable
-Book find(String title);</code></pre>
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">Book find(String title);</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -3676,7 +3675,32 @@ personRepository.updateAll(updateQuery)</code></pre>
 <p>Micronaut Data JPA adds a support to have repositories with compile-time generated queries, JPA Criteria and a transaction management.</p>
 </div>
 
-<h2 id="hibernateQuickStart"><a class="anchor" href="#hibernateQuickStart"></a>4.1 Quick Start</h2>
+<h2 id="hibernateJpaAnnotations"><a class="anchor" href="#hibernateJpaAnnotations"></a>4.1 JPA Annotations</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/hibernate/hibernateJpaAnnotations.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>Micronaut Data JPA supports Hibernate 5. You can only use <code>javax.persistence</code> annotations such as <code>javax.persistence.Entity</code> to map your entities.</p>
+</div>
+<div class="admonitionblock warning">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-warning" title="Warning"></i>
+</td>
+<td class="content">
+Micronaut Data JPA does not support <code>jakarta.persistence</code> annotations.
+</td>
+</tr>
+</table>
+</div>
+
+<h2 id="hibernateQuickStart"><a class="anchor" href="#hibernateQuickStart"></a>4.2 Quick Start</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/hibernate/hibernateQuickStart.adoc"'>
@@ -3897,7 +3921,6 @@ data class Book(@Id
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">package example;
 
-import io.micronaut.context.annotation.Executable;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.Repository;
@@ -3910,7 +3933,6 @@ import java.util.List;
 
 @Repository // <b class="conum">(1)</b>
 interface BookRepository extends CrudRepository&lt;Book, Long&gt; { // <b class="conum">(2)</b>
-    @Executable
     Book find(String title);
 }</code></pre>
 </div>
@@ -4072,7 +4094,7 @@ bookRepository.save(book)</code></pre>
 </div>
 </div>
 
-<h2 id="hibernateJoinQueries"><a class="anchor" href="#hibernateJoinQueries"></a>4.2 Join queries</h2>
+<h2 id="hibernateJoinQueries"><a class="anchor" href="#hibernateJoinQueries"></a>4.3 Join queries</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/hibernate/hibernateJoinQueries.adoc"'>
@@ -4337,7 +4359,7 @@ override fun findAll(): List&lt;Product&gt;</code></pre>
 </div>
 </div>
 
-<h2 id="hibernateExplicitQueries"><a class="anchor" href="#hibernateExplicitQueries"></a>4.3 Explicit queries</h2>
+<h2 id="hibernateExplicitQueries"><a class="anchor" href="#hibernateExplicitQueries"></a>4.4 Explicit queries</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/hibernate/hibernateExplicitQueries.adoc"'>
@@ -4374,7 +4396,7 @@ fun listBooks(t: String): List&lt;Book&gt;</code></pre>
 <p>Note that if the method returns a <a href="../api/io/micronaut/data/model/Page.html">Page</a> for pagination then you must additionally specify a query that performs the equivalent count using the <code>countQuery</code> member of the <a href="../api/io/micronaut/data/annotation/Query.html">@Query</a> annotation.</p>
 </div>
 
-<h2 id="hibernateNativeQueries"><a class="anchor" href="#hibernateNativeQueries"></a>4.4 Native queries</h2>
+<h2 id="hibernateNativeQueries"><a class="anchor" href="#hibernateNativeQueries"></a>4.5 Native queries</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/hibernate/hibernateNativeQueries.adoc"'>
@@ -4422,7 +4444,7 @@ For <a href="#pagination">Pagination</a> queries that return a <a href="../api/i
 </table>
 </div>
 
-<h2 id="hibernateSpecifications"><a class="anchor" href="#hibernateSpecifications"></a>4.5 JPA specifications</h2>
+<h2 id="hibernateSpecifications"><a class="anchor" href="#hibernateSpecifications"></a>4.6 JPA specifications</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/hibernate/hibernateSpecifications.adoc"'>
@@ -5388,7 +5410,6 @@ data class Book(@Id
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">package example;
 
-import io.micronaut.context.annotation.Executable;
 import io.micronaut.data.annotation.*;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.*;
@@ -5399,7 +5420,6 @@ import java.util.List;
 
 @JdbcRepository(dialect = Dialect.H2)        // <b class="conum">(1)</b>
 interface BookRepository extends CrudRepository&lt;Book, Long&gt; { // <b class="conum">(2)</b>
-    @Executable
     Book find(String title);
 }</code></pre>
 </div>
@@ -9984,7 +10004,6 @@ data class Book(@field:Id
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">package example;
 
-import io.micronaut.context.annotation.Executable;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
@@ -10002,7 +10021,6 @@ import java.util.List;
 
 @MongoRepository // <b class="conum">(1)</b>
 interface BookRepository extends CrudRepository&lt;Book, ObjectId&gt; { // <b class="conum">(2)</b>
-    @Executable
     Book find(String title);
 }</code></pre>
 </div>
