@@ -150,13 +150,15 @@
         
         <div class="toc-item" style="margin-left:10px" id="toc-item-hibernateQuickStart"><a href="#hibernateQuickStart"><strong>4.2</strong><span>Quick Start</span></a></div>
         
-        <div class="toc-item" style="margin-left:10px" id="toc-item-hibernateJoinQueries"><a href="#hibernateJoinQueries"><strong>4.3</strong><span>Join queries</span></a></div>
+        <div class="toc-item" style="margin-left:10px" id="toc-item-hibernateLogging"><a href="#hibernateLogging"><strong>4.3</strong><span>Logging SQL with Micronaut Data JPA Hibernate</span></a></div>
         
-        <div class="toc-item" style="margin-left:10px" id="toc-item-hibernateExplicitQueries"><a href="#hibernateExplicitQueries"><strong>4.4</strong><span>Explicit queries</span></a></div>
+        <div class="toc-item" style="margin-left:10px" id="toc-item-hibernateJoinQueries"><a href="#hibernateJoinQueries"><strong>4.4</strong><span>Join queries</span></a></div>
         
-        <div class="toc-item" style="margin-left:10px" id="toc-item-hibernateNativeQueries"><a href="#hibernateNativeQueries"><strong>4.5</strong><span>Native queries</span></a></div>
+        <div class="toc-item" style="margin-left:10px" id="toc-item-hibernateExplicitQueries"><a href="#hibernateExplicitQueries"><strong>4.5</strong><span>Explicit queries</span></a></div>
         
-        <div class="toc-item" style="margin-left:10px" id="toc-item-hibernateSpecifications"><a href="#hibernateSpecifications"><strong>4.6</strong><span>JPA specifications</span></a></div>
+        <div class="toc-item" style="margin-left:10px" id="toc-item-hibernateNativeQueries"><a href="#hibernateNativeQueries"><strong>4.6</strong><span>Native queries</span></a></div>
+        
+        <div class="toc-item" style="margin-left:10px" id="toc-item-hibernateSpecifications"><a href="#hibernateSpecifications"><strong>4.7</strong><span>JPA specifications</span></a></div>
         
         <div class="toc-item" style="margin-left:0px" id="toc-item-hibernateReactive"><a href="#hibernateReactive"><strong>5</strong><span>Micronaut Data Hibernate Reactive</span></a></div>
         
@@ -4094,7 +4096,20 @@ bookRepository.save(book)</code></pre>
 </div>
 </div>
 
-<h2 id="hibernateJoinQueries"><a class="anchor" href="#hibernateJoinQueries"></a>4.3 Join queries</h2>
+<h2 id="hibernateLogging"><a class="anchor" href="#hibernateLogging"></a>4.3 Logging SQL with Micronaut Data JPA Hibernate</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/hibernate/hibernateLogging.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>You can log your queries by setting <code>jpa.default.properties.hibernate.show_sql</code> and <code>jpa.default.properties.hibernate.format_sql</code> to <code>true</code> in your application&#8217;s configuration.</p>
+</div>
+
+<h2 id="hibernateJoinQueries"><a class="anchor" href="#hibernateJoinQueries"></a>4.4 Join queries</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/hibernate/hibernateJoinQueries.adoc"'>
@@ -4359,7 +4374,7 @@ override fun findAll(): List&lt;Product&gt;</code></pre>
 </div>
 </div>
 
-<h2 id="hibernateExplicitQueries"><a class="anchor" href="#hibernateExplicitQueries"></a>4.4 Explicit queries</h2>
+<h2 id="hibernateExplicitQueries"><a class="anchor" href="#hibernateExplicitQueries"></a>4.5 Explicit queries</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/hibernate/hibernateExplicitQueries.adoc"'>
@@ -4396,7 +4411,7 @@ fun listBooks(t: String): List&lt;Book&gt;</code></pre>
 <p>Note that if the method returns a <a href="../api/io/micronaut/data/model/Page.html">Page</a> for pagination then you must additionally specify a query that performs the equivalent count using the <code>countQuery</code> member of the <a href="../api/io/micronaut/data/annotation/Query.html">@Query</a> annotation.</p>
 </div>
 
-<h2 id="hibernateNativeQueries"><a class="anchor" href="#hibernateNativeQueries"></a>4.5 Native queries</h2>
+<h2 id="hibernateNativeQueries"><a class="anchor" href="#hibernateNativeQueries"></a>4.6 Native queries</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/hibernate/hibernateNativeQueries.adoc"'>
@@ -4444,7 +4459,7 @@ For <a href="#pagination">Pagination</a> queries that return a <a href="../api/i
 </table>
 </div>
 
-<h2 id="hibernateSpecifications"><a class="anchor" href="#hibernateSpecifications"></a>4.6 JPA specifications</h2>
+<h2 id="hibernateSpecifications"><a class="anchor" href="#hibernateSpecifications"></a>4.7 JPA specifications</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/hibernate/hibernateSpecifications.adoc"'>
