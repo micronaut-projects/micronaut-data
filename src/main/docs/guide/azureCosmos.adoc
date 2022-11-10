@@ -4,4 +4,6 @@ Micronaut Data Azure Cosmos supports some of the things that are possible to do 
 - <<azureCosmosAttributeConverter, Attribute converters>>
 - <<azureCosmosOptimisticLocking, Optimistic locking>>
 
+Cascading and joins are not supported like in the rest of data modules. More about <<azureCosmosSpecifics, specifics>> can be seen here.
+
 The interaction between the object layer and Azure Cosmos Db serialization/deserialization is implemented using https://micronaut-projects.github.io/micronaut-serialization/1.0.x/guide[Micronaut Serialization].
