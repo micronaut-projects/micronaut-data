@@ -92,6 +92,11 @@ public final class DefaultPreparedQuery<E, RT> extends DefaultStoredDataOperatio
     }
 
     @Override
+    public boolean isRawQuery() {
+        return storedQuery.isRawQuery();
+    }
+
+    @Override
     public StoredQuery<E, RT> getStoredQueryDelegate() {
         return storedQuery;
     }

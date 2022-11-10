@@ -28,10 +28,8 @@ import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.convert.ArgumentConversionContext;
 import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.core.type.Argument;
-import io.micronaut.data.annotation.Query;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.exceptions.NonUniqueResultException;
-import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.query.JoinPath;
@@ -62,7 +60,6 @@ import io.micronaut.data.r2dbc.mapper.R2dbcQueryStatement;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.convert.RuntimePersistentPropertyConversionContext;
 import io.micronaut.data.runtime.date.DateTimeProvider;
-import io.micronaut.data.runtime.mapper.DTOMapper;
 import io.micronaut.data.runtime.mapper.TypeMapper;
 import io.micronaut.data.runtime.mapper.sql.SqlDTOMapper;
 import io.micronaut.data.runtime.mapper.sql.SqlResultEntityTypeMapper;
@@ -665,12 +662,16 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                 }
                 Class<R> resultType = preparedQuery.getResultType();
                 if (preparedQuery.isDtoProjection()) {
+                    RuntimePersistentEntity<T> persistentEntity = preparedQuery.getPersistentEntity();
+                    boolean isRawQuery = preparedQuery.isRawQuery();
                     return executeAndMapEachRow(statement, row -> {
-                        TypeMapper<Row, R> introspectedDataMapper = new DTOMapper<>(
-                            preparedQuery.getPersistentEntity(),
+                        TypeMapper<Row, R> introspectedDataMapper =  new SqlDTOMapper<>(
+                            persistentEntity,
+                            isRawQuery ? getEntity(preparedQuery.getResultType()) : persistentEntity,
                             columnNameResultSetReader,
                             jsonCodec,
-                            conversionService);
+                            conversionService
+                        );
                         return introspectedDataMapper.map(row, resultType);
                     });
                 }
@@ -702,7 +703,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                     TypeMapper<Row, R> mapper;
                     RuntimePersistentEntity<T> persistentEntity = preparedQuery.getPersistentEntity();
                     if (dtoProjection) {
-                        boolean isRawQuery = preparedQuery.getAnnotationMetadata().stringValue(Query.class, DataMethod.META_MEMBER_RAW_QUERY).isPresent();
+                        boolean isRawQuery = preparedQuery.isRawQuery();
                         mapper = new SqlDTOMapper<>(
                             persistentEntity,
                             isRawQuery ? getEntity(preparedQuery.getResultType()) : persistentEntity,
