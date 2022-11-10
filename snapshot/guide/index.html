@@ -5331,6 +5331,39 @@ The <code>schema-generate</code> setting is only useful for demos and testing tr
 </div></p>
 </div>
 <div class="paragraph">
+<p>To use JPA annotations in the <code>javax.persistence</code> package use:</p>
+</div>
+<div class="paragraph">
+<p>        <div class="listingblock multi-language-sample">
+<div class="title"></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">compileOnly(<span class="hljs-string">"jakarta.persistence:jakarta.persistence-api:2.2.3")</span></code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="maven">&lt;dependency&gt;
+    &lt;groupId&gt;jakarta.persistence&lt;/groupId&gt;
+    &lt;artifactId&gt;jakarta.persistence-api&lt;/artifactId&gt;
+    &lt;version&gt;2.2.3&lt;/version&gt;
+    &lt;scope&gt;provided&lt;/scope&gt;
+&lt;/dependency&gt;</code></pre>
+</div>
+</div></p>
+</div>
+<div class="admonitionblock warning">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-warning" title="Warning"></i>
+</td>
+<td class="content">
+If you want to use JPA annotations in your entities with Micronaut Data JDBC, we strongly recommend you use <code>jakarta.persistence</code> annotations.  Micronaut Data will remove support for <code>javax.persistence</code> annotations in the future.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
 <p>As above since only the annotations are used the dependency can be included only for compilation and not at runtime so you don&#8217;t drag along the rest of the API, reducing your JAR file size.</p>
 </div>
 <div class="paragraph">
