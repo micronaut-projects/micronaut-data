@@ -18,7 +18,10 @@ package io.micronaut.data.model
 import com.fasterxml.jackson.databind.ObjectMapper
 import groovy.transform.EqualsAndHashCode
 import groovy.transform.ToString
+import io.micronaut.core.type.Argument
+import io.micronaut.serde.annotation.Serdeable
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
+import spock.lang.PendingFeature
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -27,6 +30,8 @@ import jakarta.inject.Inject
 @MicronautTest
 class PageSpec extends Specification {
     @Inject ObjectMapper mapper
+
+    @Inject io.micronaut.serde.ObjectMapper serdeMapper
 
     @Unroll
     void "test page for page number #number and size #size"() {
@@ -86,8 +91,46 @@ class PageSpec extends Specification {
         deserializedPage == page
     }
 
+    @PendingFeature(reason = "Need to prioritize introspections over iterables")
+    void "test serialization and deserialization of a page - serde"() {
+        def page = Page.of([new Dummy(
+                propertyOne: "value one",
+                propertyTwo: 1L,
+                propertyThree: new BigDecimal("1.00")
+        ), new Dummy(
+                propertyOne: "value two",
+                propertyTwo: 2L,
+                propertyThree: new BigDecimal("2.00")
+        ), new Dummy(
+                propertyOne: "value three",
+                propertyTwo: 3L,
+                propertyThree: new BigDecimal("3.00")
+        )], Pageable.from(0, 3), 14)
+
+        when:
+        def json = serdeMapper.writeValueAsString(page)
+
+        then:
+        def deserializedPage = serdeMapper.readValue(json, Argument.of(Page, Dummy))
+        deserializedPage.content.every { it instanceof Dummy }
+        deserializedPage == page
+    }
+
+    void "test serialization and deserialization of a pageable - serde"() {
+        def pageable = Pageable.from(0, 3)
+
+        when:
+        def json = serdeMapper.writeValueAsString(pageable)
+
+        then:
+        json == '{"size":3,"number":0,"sort":{}}'
+        def deserializedPageable = serdeMapper.readValue(json, Pageable)
+        deserializedPageable == pageable
+    }
+
     @EqualsAndHashCode
     @ToString
+    @Serdeable
     static class Dummy {
         String propertyOne
         Long propertyTwo
