@@ -12,7 +12,7 @@ class Person {
     var name: String? = null
     var age = 0
 
-    constructor(name: String?, age: Int) : this(null, name, age) {}
+    constructor(name: String?, age: Int) : this(null, name, age)
     constructor(id: String?, name: String?, age: Int) {
         this.id = id
         this.name = name

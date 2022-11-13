@@ -8,30 +8,44 @@ import java.util.*
 
 // tag::relations[]
 @MappedEntity
-class Family {
-    @Id
-    var id: String? = null
-
+data class Family(
+    @field:Id
+    val id: String,
     @PartitionKey
-    var lastName: String? = null
-
+    var lastName: String,
     @Relation(value = Relation.Kind.EMBEDDED)
-    var address: Address? = null
-
+    var address: Address,
     @Relation(value = Relation.Kind.ONE_TO_MANY)
-    var children: List<Child> = ArrayList()
+    var children: List<Child> = ArrayList(),
     // end::relations[]
     //...
-
-    var registered = false
-    var registeredDate: Date? = null
-    var tags: Array<String>? = null
-
+    var tags: Array<String>? = null,
+    var registered: Boolean,
+    var registeredDate: Date? = null,
     // tag::locking[]
     @ETag
     var documentVersion: String? = null
     // end::locking[]
-
+) {
     @Transient
     var comment: String? = null
+
+    override fun toString(): String {
+        return "Family(id='$id', lastName='$lastName', address=$address, children=$children, tags=${tags?.contentToString()}, registered=$registered, registeredDate=$registeredDate, documentVersion=$documentVersion), comment=$comment"
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as Family
+
+        if (id != other.id) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        return id.hashCode()
+    }
 }

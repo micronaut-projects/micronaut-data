@@ -10,17 +10,17 @@ where `Relation` mapping in this case is needed for our query builder to generat
 
 snippet::example.FamilyRepository[project-base="doc-examples/azure-cosmos-example", source="main", tags="relations"]
 
-Due to the nature of the database and implementation of relations, cascading does not have much sense either. Embedded objects and arrays in the documents are being automatically saved when document is saved.
+Due to the nature of the database and implementation of relations, cascading does not have much sense either. Embedded objects and arrays in the documents are being automatically saved when the document is saved.
 
 === Identity ===
 
-In the Azure Cosmos, every document has got internal `id` property of String type. Our implementation expects `@Id` to be of types: `Short`, `Integer`, `Long`, `String` or `UUID`. When saving and reading it is being serialized to String and deserialized from String `id` property. Declaring `@Id` annotation of not supported type will throw an exception.
-Generating of ids will work only for `String` and `UUID` where `UUID` can be generated either by using `@Generated` or `@Autopopulated` annotations. String id can be generated only using `@Generated` annotation. Number ids cannot be auto generated, and it is up to user to set the id value before saving.
+With Azure Cosmos Db, every document has got internal id property of String type. Micronaut Data Cosmos expects @Id to be of types: Short, Integer, Long, String or UUID. When saving and reading the type is serialized to String and deserialized from a String stored in the id property. Declaring a property annotated with @Id with an unsupported type will result in an exception.
+Generation of ids will work only for String and UUID where UUID can be generated either by using the @GeneratedValue or @AutoPopulated annotations. String id can be generated only by using @GeneratedValue annotation. Numerical ids cannot be auto generated, and it is up to user to set the id value before saving.
 Composite identities are not supported.
 
 === Partition Key ===
 
 In Azure Cosmos Db partition keys are the core element to distributing data efficiently into different logical and physical sets so that the queries performed against the database are completed as quickly as possible. Every mapped entity should have partition key defined. Like explained above, it can be defined using ann:io.micronaut.data.cosmos.annotation.PartitionKey[] annotation on appropriate entity field or via configuration as explained in <<azureCosmosConfiguration, configuration>> section. Efficiently using well defined partition key will improve operations performance and reduce request unit costs.
-Our implementation tries to use partition key whenever possible. Here are some repository method examples that make use of partition key in read, update or delete operations
+Micronaut Data Cosmos tries to use a partition key whenever possible. Here are some repository method examples that make use of a partition key in read, update or delete operations
 
 snippet::example.FamilyRepository[project-base="doc-examples/azure-cosmos-example", source="main", tags="partitionkey"]

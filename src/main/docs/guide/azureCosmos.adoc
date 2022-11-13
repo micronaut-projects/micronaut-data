@@ -1,4 +1,4 @@
-Micronaut Data Azure Cosmos supports some of the things that are possible to do with JPA and JDBC/R2DBC implementations, including:
+Micronaut Data Azure Cosmos supports some of the features of JPA implementations, including:
 
 - <<azureCosmosRepositories, Repositories compile-time generated>> and <<projections, projection>> queries
 - <<azureCosmosAttributeConverter, Attribute converters>>

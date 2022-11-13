@@ -1,7 +1,7 @@
 Optimistic locking is a strategy where you note the actual record state's version and modify the record only when the version is the same.
 
-Unlike some other Db implementations in Micronaut, for Azure Cosmos we rely on existence of _etag field in every document. We don't use ann:data.annotation.Version[] because _etag field is of type `String` and for that purpose we introduce ann:io.micronaut.data.cosmos.annotation.ETag[] annotation.
+Unlike some other Db implementations in Micronaut, for Azure Cosmos Db we rely on existence of _etag field in every document. We don't use ann:data.annotation.Version[] because _etag field is of type `String` and for that purpose we introduce ann:io.micronaut.data.cosmos.annotation.ETag[] annotation.
 
-The field is updated each time document gets updated in Azure Cosmos and before updating it next time, it checks whether current value in the document being updated matches current value in the database. If value doesn't match Micronaut will throw  api:data.exceptions.OptimisticLockException[].
+The field is updated each time document gets updated in Azure Cosmos Db and before updating it next time, it checks whether current value in the document being updated matches current value in the database. If value doesn't match Micronaut will throw  api:data.exceptions.OptimisticLockException[].
 
 snippet::example.Family[project-base="doc-examples/azure-cosmos-example", source="main", tags="locking", indent="0"]

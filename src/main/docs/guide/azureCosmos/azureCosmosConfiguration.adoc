@@ -1,8 +1,12 @@
-If users are going to use already created Azure Cosmos database and containers then no special configuration is needed, except endpoint, key and db name. However, for test purposes or when database containers need to be created during application startup there are options to configure containers.
+When using an existing Azure Cosmos database with existing containers no special configuration is needed, except the endpoint, key and database name. However, for test purposes or when database containers need to be created during application startup there are additional options to configure containers.
 
-As mentioned in <<azureCosmosQuickStart, Quick Start>> every `MappedEntity` will correspond to one container in Azure Cosmos. If property `azure.cosmos.database.update-policy` is set to `NONE` then no attempt to create container will be made. If that value is set to `CREATE_IF_NOT_EXISTS` then application will attemp to create container if not exists. Similar, if value is `UPDATE` application will try to replace existing containers and its properties. Currently, we provide only small subset of properties that can be configured for the database and containers. For the database we can supply throughput properties while for containers we also can provide throughput properties and partition key path. Additional way to configure partition key value is adding annotation ann:io.micronaut.data.cosmos.annotation.PartitionKey[]
+As mentioned in the <<azureCosmosQuickStart, Quick Start>> every class annotated with @MappedEntity will correspond to one container in Azure Cosmos Db. If the property azure.cosmos.database.update-policy is set to NONE then no attempt to create the container will be made. If that value is set to CREATE_IF_NOT_EXISTS then the application will attempt to create container if the container does not already exist. Whilst, if the value is UPDATE the application will try to replace existing any containers and its properties.
 
-Here is an example yaml configuration with container and db properties used when creating new containers if not exist:
+Currently, it is only possible to configure a small subset of properties for the database and containers. For the database throughput properties can be configured whilst for containers the throughput properties and partition key path are configurable.
+
+NOTE: An additional way to configure the partition key value is adding the annotation ann:io.micronaut.data.cosmos.annotation.PartitionKey[]
+
+The below is an example YAML configuration showing container and db properties used when creating new containers if the containers don't already exist:
 
 Example YAML configuration
 [source,yaml]

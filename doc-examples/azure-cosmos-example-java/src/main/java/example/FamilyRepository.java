@@ -21,7 +21,6 @@ import java.util.Optional;
 @CosmosRepository
 public abstract class FamilyRepository implements PageableRepository<Family, String>, JpaSpecificationExecutor<Family> {
 
-    @Join(value = "children", alias = "c")
     @NonNull
     public abstract Optional<Family> findById(String id);
 
@@ -62,11 +61,9 @@ public abstract class FamilyRepository implements PageableRepository<Family, Str
 
     public abstract void updateByAddressCounty(String county, boolean registered, @Nullable Date registeredDate);
 
-    @Join(value = "children")
-    @Join(value = "children.pets", alias = "p")
-    public abstract List<Family> findByChildrenPetsType(String type);
+    @Join(value = "children.pets", alias = "pets")
+    public abstract List<Family> findByChildrenPetsType(PetType type);
 
-    @Join(value = "children")
     public abstract List<Child> findChildrenByChildrenPetsGivenName(String name);
     // end::relations[]
 

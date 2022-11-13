@@ -56,7 +56,7 @@ class FamilyRepositorySpec extends AbstractAzureCosmosSpec {
             families.size() > 0
             families[0].id == ANDERSEN_FAMILY.id
         when:
-            families = familyRepository.findByChildrenPetsType("cat")
+            families = familyRepository.findByChildrenPetsType(PetType.CAT)
         then:
             families.size() > 0
             families[0].id == ANDERSEN_FAMILY.id
@@ -246,11 +246,11 @@ class FamilyRepositorySpec extends AbstractAzureCosmosSpec {
         child1.grade = 5
         def pet1 = new Pet()
         pet1.givenName = "Sadik"
-        pet1.type = "cat"
+        pet1.type = PetType.CAT
         child1.pets.add(pet1)
         def pet2 = new Pet()
         pet2.givenName = "Leo"
-        pet2.type = "dog"
+        pet2.type = PetType.DOG
         child1.pets.add(pet2)
         family.children.add(child1)
         return family
@@ -276,7 +276,7 @@ class FamilyRepositorySpec extends AbstractAzureCosmosSpec {
         child2.grade = 8
         def pet1 = new Pet()
         pet1.givenName = "Robbie"
-        pet1.type = "hamster"
+        pet1.type = PetType.HAMSTER
         child2.pets.add(pet1)
         family.children.add(child2)
         return family

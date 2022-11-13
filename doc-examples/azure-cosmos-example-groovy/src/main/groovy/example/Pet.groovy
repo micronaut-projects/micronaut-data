@@ -5,22 +5,11 @@ import io.micronaut.serde.annotation.Serdeable
 @Serdeable
 class Pet {
 
-    private String givenName;
-    private String type;
+    String givenName;
+    PetType type;
 
-    String getGivenName() {
-        return givenName
-    }
+}
 
-    void setGivenName(String givenName) {
-        this.givenName = givenName
-    }
-
-    String getType() {
-        return type
-    }
-
-    void setType(String type) {
-        this.type = type
-    }
+enum PetType {
+    DOG, CAT, HAMSTER
 }

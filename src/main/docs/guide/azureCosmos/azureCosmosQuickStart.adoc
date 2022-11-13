@@ -1,4 +1,4 @@
-At this point there is still no ability to create Micronaut project with Azure Cosmos support via Micronaut Launch. Our team will be working on it in the near future.
+At this point there is still no ability to create Micronaut project with Azure Cosmos Db support via Micronaut Launch. Our team will be working on it in the near future.
 
 To get started with Micronaut Data Azure Cosmos add the following dependency to your annotation processor path:
 
@@ -18,6 +18,8 @@ Example YAML configuration
 include::doc-examples/azure-cosmos-example-java/src/main/resources/application.yml[]
 ----
 
+You can find more details about configuration <<azureCosmosConfiguration, here>>.
+
 To retrieve objects from the database you need to define a class annotated with ann:data.annotation.MappedEntity[]:
 
 snippet::example.Book[project-base="doc-examples/azure-cosmos-example", source="main", tags="book"]
@@ -33,8 +35,8 @@ You can now perform CRUD (Create, Read, Update, Delete) operations on the entity
 
 snippet::example.BookRepositorySpec[project-base="doc-examples/azure-cosmos-example", tags="inject", indent="0"]
 
-In Azure Cosmos world, every `MappedEntity` will correspond to the container. One container can hold only one entity or document type.
-`MappedEntity` name will be used to obtain container name. If entity class is `CosmosBook` then expected container name will be `cosmos_book` unless not overriden in `MappedEntity` annotation value. Default naming strategy for entity fields is `Raw` strategy and users should not usually need to override it.
+When using Micronaut Data Azure Cosmos, every `MappedEntity` will correspond to the container. One container can hold only one entity or document type.
+The simple name of the class annotated with @MappedEntity will be used as the container name by default. If entity class is `CosmosBook` then expected container name will be `cosmos_book` unless not overriden in `MappedEntity` annotation value. Default naming strategy for entity fields is `Raw` strategy and users should not usually need to override it.
 
 === Saving an Instance (Create)
 

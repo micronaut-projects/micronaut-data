@@ -5,8 +5,8 @@ import io.micronaut.serde.annotation.Serdeable
 
 @Serdeable
 @Embeddable
-class Address {
-    var state: String? = null
-    var county: String? = null
-    var city: String? = null
-}
+data class Address(
+    var state: String,
+    var county: String,
+    var city: String
+)

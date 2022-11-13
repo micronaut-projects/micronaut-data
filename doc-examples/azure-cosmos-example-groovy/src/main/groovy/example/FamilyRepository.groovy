@@ -18,7 +18,6 @@ import javax.persistence.criteria.CriteriaBuilder
 @CosmosRepository
 abstract class FamilyRepository implements PageableRepository<Family, String>, JpaSpecificationExecutor<Family> {
 
-    @Join(value = "children", alias = "c")
     @NonNull
     abstract Optional<Family> findById(String id)
 
@@ -59,11 +58,9 @@ abstract class FamilyRepository implements PageableRepository<Family, String>, J
 
     abstract void updateByAddressCounty(String county, boolean registered, @Nullable Date registeredDate)
 
-    @Join(value = "children")
-    @Join(value = "children.pets", alias = "p")
-    abstract List<Family> findByChildrenPetsType(String type)
+    @Join(value = "children.pets", alias = "pets")
+    abstract List<Family> findByChildrenPetsType(PetType type)
 
-    @Join(value = "children")
     abstract List<Child> findChildrenByChildrenPetsGivenName(String name)
     // end::relations[]
 

@@ -18,7 +18,6 @@ import java.util.*
 
 @CosmosRepository
 abstract class FamilyRepository : PageableRepository<Family, String>, JpaSpecificationExecutor<Family> {
-    @Join(value = "children", alias = "c")
     @NonNull
     abstract override fun findById(id: String): Optional<Family>
     abstract fun updateRegistered(@Id id: String, registered: Boolean)
@@ -47,10 +46,8 @@ abstract class FamilyRepository : PageableRepository<Family, String>, JpaSpecifi
     // tag::relations[]
     abstract fun findByAddressStateAndAddressCityOrderByAddressCity(state: String, city: String): List<Family>
     abstract fun updateByAddressCounty(county: String, registered: Boolean, @Nullable registeredDate: Date?)
-    @Join(value = "children")
-    @Join(value = "children.pets", alias = "p")
-    abstract fun findByChildrenPetsType(type: String): List<Family>
-    @Join(value = "children")
+    @Join(value = "children.pets", alias = "pets")
+    abstract fun findByChildrenPetsType(type: PetType): List<Family>
     abstract fun findChildrenByChildrenPetsGivenName(name: String): List<Child>
     // end::relations[]
     abstract fun findByIdIn(ids: List<String>): List<Family>
@@ -72,17 +69,17 @@ abstract class FamilyRepository : PageableRepository<Family, String>, JpaSpecifi
         }
 
         fun idsIn(vararg ids: String): PredicateSpecification<Family> {
-            return PredicateSpecification { root: Root<Family>, criteriaBuilder: CriteriaBuilder ->
+            return PredicateSpecification { root: Root<Family>, _: CriteriaBuilder ->
                 root.get<Any>("id").`in`(
-                    Arrays.asList(*ids)
+                    listOf(*ids)
                 )
             }
         }
 
         fun idsNotIn(vararg ids: String): PredicateSpecification<Family> {
-            return PredicateSpecification { root: Root<Family>, criteriaBuilder: CriteriaBuilder ->
+            return PredicateSpecification { root: Root<Family>, _: CriteriaBuilder ->
                 root.get<Any>("id").`in`(
-                    Arrays.asList(*ids)
+                    listOf(*ids)
                 ).not()
             }
         }

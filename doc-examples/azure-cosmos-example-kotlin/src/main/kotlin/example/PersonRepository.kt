@@ -121,7 +121,7 @@ interface PersonRepository : CrudRepository<Person, String>, JpaSpecificationExe
             criteriaBuilder.lessThan(root[Person::age], age)
         }
 
-        fun setNewName2(newName: String) = UpdateSpecification { root, query, criteriaBuilder ->
+        fun setNewName2(newName: String) = UpdateSpecification { root, query, _ ->
             // tag::setUpdate[]
             query.set(root[Person::name], newName)
             // end::setUpdate[]

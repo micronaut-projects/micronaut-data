@@ -3,7 +3,11 @@ package example
 import io.micronaut.serde.annotation.Serdeable
 
 @Serdeable
-class Pet {
-    var givenName: String? = null
-    var type: String? = null
+data class Pet(
+    var givenName: String,
+    var type: PetType
+)
+
+enum class PetType {
+    DOG, CAT, HAMSTER
 }

@@ -48,7 +48,7 @@ import static example.FamilyRepository.Specifications.tagsContain;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @MicronautTest
 @DisabledIfEnvironmentVariable(named = "GITHUB_WORKFLOW", matches = ".*")
-public class FamilyRepositorySpec extends AbstractAzureCosmosTest {
+class FamilyRepositorySpec extends AbstractAzureCosmosTest {
 
     private static final Family ANDERSEN_FAMILY = createAndersenFamily();
     private static final Family WAKEFIELD_FAMILY = createWakefieldFamily();
@@ -103,7 +103,7 @@ public class FamilyRepositorySpec extends AbstractAzureCosmosTest {
     }
 
     @Test
-    public void testCrud() {
+    void testCrud() {
         familyRepository.save(createAndersenFamily());
         familyRepository.save(createWakefieldFamily());
 
@@ -124,12 +124,12 @@ public class FamilyRepositorySpec extends AbstractAzureCosmosTest {
         assertTrue(families.size() > 0);
         assertEquals(families.get(0).getId(), ANDERSEN_FAMILY.getId());
 
-        families = familyRepository.findByChildrenPetsType("cat");
+        families = familyRepository.findByChildrenPetsType(PetType.CAT);
         assertTrue(families.size() > 0);
         assertEquals(families.get(0).getId(), ANDERSEN_FAMILY.getId());
 
         families = familyRepository.findByTagsArrayContains("customtag");
-        assertTrue(families.size() == 1);
+        assertEquals(1, families.size());
         assertEquals(families.get(0).getId(), ANDERSEN_FAMILY.getId());
 
         List<Child> children = familyRepository.findChildrenByChildrenPetsGivenName("Robbie");
@@ -274,19 +274,19 @@ public class FamilyRepositorySpec extends AbstractAzureCosmosTest {
     }
 
     @Test
-    public void testCriteria() {
+    void testCriteria() {
         saveSampleFamilies();
         assertTrue(familyRepository.findOne(lastNameEquals("Andersen")).isPresent());
         assertFalse(familyRepository.findOne(lastNameEquals(UUID.randomUUID().toString())).isPresent());
         assertEquals(2, familyRepository.findAll(idsIn(ANDERSEN_FAMILY.getId(), WAKEFIELD_FAMILY.getId())).size());
         assertEquals(1, familyRepository.findAll(idsIn(ANDERSEN_FAMILY.getId())).size());
         assertEquals(2, familyRepository.findByIdIn(Arrays.asList(ANDERSEN_FAMILY.getId(), WAKEFIELD_FAMILY.getId())).size());
-        assertEquals(1, familyRepository.findByIdIn(Arrays.asList(ANDERSEN_FAMILY.getId())).size());
+        assertEquals(1, familyRepository.findByIdIn(Collections.singletonList(ANDERSEN_FAMILY.getId())).size());
         assertEquals(1, familyRepository.findAll(idsNotIn(ANDERSEN_FAMILY.getId())).size());
-        assertEquals(1, familyRepository.findByIdNotIn(Arrays.asList(ANDERSEN_FAMILY.getId())).size());
-        assertEquals(2, familyRepository.findAll(idsInAndNotIn(Arrays.asList(ANDERSEN_FAMILY.getId(), WAKEFIELD_FAMILY.getId()), Arrays.asList(UUID.randomUUID().toString()))).size());
+        assertEquals(1, familyRepository.findByIdNotIn(Collections.singletonList(ANDERSEN_FAMILY.getId())).size());
+        assertEquals(2, familyRepository.findAll(idsInAndNotIn(Arrays.asList(ANDERSEN_FAMILY.getId(), WAKEFIELD_FAMILY.getId()), Collections.singletonList(UUID.randomUUID().toString()))).size());
         assertTrue(CollectionUtils.isEmpty(familyRepository.findAll(idsInAndNotIn(Arrays.asList(UUID.randomUUID().toString(), UUID.randomUUID().toString()), Arrays.asList(ANDERSEN_FAMILY.getId(), WAKEFIELD_FAMILY.getId())))));
-        assertTrue(familyRepository.findAll(tagsContain("customtag")).stream().filter(f -> f.getId().equals(ANDERSEN_FAMILY.getId())).findFirst().isPresent());
+        assertTrue(familyRepository.findAll(tagsContain("customtag")).stream().anyMatch(f -> f.getId().equals(ANDERSEN_FAMILY.getId())));
     }
 
     void saveSampleFamilies() {
@@ -310,11 +310,11 @@ public class FamilyRepositorySpec extends AbstractAzureCosmosTest {
         child1.setGrade(5);
         Pet pet1 = new Pet();
         pet1.setGivenName("Sadik");
-        pet1.setType("cat");
+        pet1.setType(PetType.CAT);
         child1.getPets().add(pet1);
         Pet pet2 = new Pet();
         pet2.setGivenName("Leo");
-        pet2.setType("dog");
+        pet2.setType(PetType.DOG);
         child1.getPets().add(pet2);
         family.getChildren().add(child1);
         return family;
@@ -340,7 +340,7 @@ public class FamilyRepositorySpec extends AbstractAzureCosmosTest {
         child2.setGrade(8);
         Pet pet1 = new Pet();
         pet1.setGivenName("Robbie");
-        pet1.setType("hamster");
+        pet1.setType(PetType.HAMSTER);
         child2.getPets().add(pet1);
         family.getChildren().add(child2);
         return family;
