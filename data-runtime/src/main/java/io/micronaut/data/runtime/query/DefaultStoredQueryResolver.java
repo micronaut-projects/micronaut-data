@@ -92,6 +92,7 @@ public abstract class DefaultStoredQueryResolver implements StoredQueryResolver 
             queryParts = new String[0];
         }
         String[] finalQueryParts = queryParts;
+        boolean rawQuery = annotationMetadata.stringValue(Query.class, DataMethod.META_MEMBER_RAW_QUERY).isPresent();
         return new StoredQuery<E, QR>() {
             @Override
             public Class<E> getRootEntity() {
@@ -155,6 +156,11 @@ public abstract class DefaultStoredQueryResolver implements StoredQueryResolver 
             }
 
             @Override
+            public boolean isRawQuery() {
+                return rawQuery;
+            }
+
+            @Override
             public String getName() {
                 return name;
             }
@@ -174,6 +180,7 @@ public abstract class DefaultStoredQueryResolver implements StoredQueryResolver 
             queryParts = new String[0];
         }
         String[] finalQueryParts = queryParts;
+        boolean rawCountQuery = annotationMetadata.stringValue(Query.class, DataMethod.META_MEMBER_RAW_COUNT_QUERY).isPresent();
         return new StoredQuery<Object, Long>() {
 
             @Override
@@ -242,9 +249,13 @@ public abstract class DefaultStoredQueryResolver implements StoredQueryResolver 
             public String getName() {
                 return name;
             }
+
+            @Override
+            public boolean isRawQuery() {
+                return rawCountQuery;
+            }
         };
     }
 
     protected abstract HintsCapableRepository getHintsCapableRepository();
-
 }

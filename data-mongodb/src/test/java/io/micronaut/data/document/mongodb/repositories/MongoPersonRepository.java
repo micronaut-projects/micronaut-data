@@ -48,4 +48,6 @@ public interface MongoPersonRepository extends PersonRepository {
     @MongoDeleteQuery("{name:{$eq: :xyz}}")
     int deleteCustomSingleNoEntity(String xyz);
 
+    @MongoFindQuery(filter = "{'name': {'$in': :names}}")
+    List<Person> findByNameInList(String[] names);
 }
