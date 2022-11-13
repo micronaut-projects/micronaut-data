@@ -1,0 +1,3 @@
+Micronaut Data JPA supports Hibernate 5. You can only use `javax.persistence` annotations such as `javax.persistence.Entity` to map your entities.
+
+WARNING: Micronaut Data JPA does not support `jakarta.persistence` annotations.   

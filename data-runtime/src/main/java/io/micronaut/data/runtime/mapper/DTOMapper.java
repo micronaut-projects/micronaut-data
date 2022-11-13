@@ -109,7 +109,7 @@ public class DTOMapper<T, S, R> implements BeanIntrospectionMapper<S, R> {
         }
         pp = dtoEntity.getPropertyByName(name);
         if (pp == null) {
-            throw new DataAccessException("DTO projection doesn't defines a property [" + name + "] on DTO entity: " + dtoEntity.getName());
+            throw new DataAccessException("DTO projection doesn't define a property [" + name + "] on DTO entity: " + dtoEntity.getName());
         }
         return read(object, pp);
     }
@@ -117,12 +117,19 @@ public class DTOMapper<T, S, R> implements BeanIntrospectionMapper<S, R> {
     @Nullable
     @Override
     public Object read(@NonNull S object, @NonNull Argument<?> argument) {
-        RuntimePersistentProperty<T> pp = persistentEntity.getPropertyByName(argument.getName());
+        String name = argument.getName();
+        RuntimePersistentProperty<T> pp = persistentEntity.getPropertyByName(name);
         if (pp == null) {
+            if (persistentEntity != dtoEntity) {
+                RuntimePersistentProperty<?> rp = dtoEntity.getPropertyByName(name);
+                if (rp != null) {
+                    return read(object, rp);
+                }
+            }
             DataType type = argument.getAnnotationMetadata()
                     .enumValue(TypeDef.class, "type", DataType.class)
                     .orElseGet(() -> DataType.forType(argument.getType()));
-            return read(object, argument.getName(), type);
+            return read(object, name, type);
         } else {
             return read(object, pp);
         }

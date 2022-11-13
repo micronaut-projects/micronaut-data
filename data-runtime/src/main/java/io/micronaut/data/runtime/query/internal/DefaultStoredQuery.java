@@ -78,7 +78,8 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
     private Map<String, Object> queryHints;
     private Set<JoinPath> joinFetchPaths = null;
     private final List<StoredQueryParameter> queryParameters;
-
+    private final boolean rawQuery;
+    
     /**
      * The default constructor.
      *
@@ -110,10 +111,14 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
                 method.intValue(DATA_METHOD_ANN_NAME, META_MEMBER_PAGE_SIZE).orElse(-1) > -1;
 
         if (isCount) {
-            this.query = method.stringValue(Query.class, DataMethod.META_MEMBER_RAW_COUNT_QUERY).orElse(query);
+            Optional<String> rawCountQueryString = method.stringValue(Query.class, DataMethod.META_MEMBER_RAW_COUNT_QUERY);
+            this.rawQuery = rawCountQueryString.isPresent();
+            this.query = rawCountQueryString.orElse(query);
             this.queryParts = method.stringValues(DataMethod.class, DataMethod.META_MEMBER_EXPANDABLE_COUNT_QUERY);
         } else {
-            this.query = method.stringValue(Query.class, DataMethod.META_MEMBER_RAW_QUERY).orElse(query);
+            Optional<String> rawQueryString = method.stringValue(Query.class, DataMethod.META_MEMBER_RAW_QUERY);
+            this.rawQuery = rawQueryString.isPresent();
+            this.query = rawQueryString.orElse(query);
             this.queryParts = method.stringValues(DataMethod.class, DataMethod.META_MEMBER_EXPANDABLE_QUERY);
         }
         this.method = method;
@@ -337,6 +342,11 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
     @Override
     public boolean isOptimisticLock() {
         return isOptimisticLock;
+    }
+
+    @Override
+    public boolean isRawQuery() {
+        return this.rawQuery;
     }
 
     @Override

@@ -422,6 +422,27 @@ class MongoDocumentRepositorySpec extends AbstractDocumentRepositorySpec impleme
             !personsByIdNotInIds.contains(person.id)
     }
 
+    void "test find by multiple in params"() {
+        given:
+            def persons = savePersons(["Joe", "Jennifer"])
+        when:
+            // Make sure 2 records are created and ids assigned
+            persons.size() == 2
+            persons[0].id
+            persons[1].id
+            def personsByIdIn = personRepository.findByIdIn(Arrays.asList(persons[0].id))
+            def multiplePersonsByNamesIn = personRepository.findByNameIn(Arrays.asList(persons[0].name, persons[1].name))
+            def multiplePersonsByIdIn = personRepository.findByIdIn(Arrays.asList(persons[0].id, persons[1].id))
+            def multiplePersonsByNamesInList = personRepository.findByNameInList([persons[0].name, persons[1].name] as String[])
+            def personsByNamesInList = personRepository.findByNameInList([persons[0].name] as String[])
+        then:
+            personsByIdIn.size() == 1
+            multiplePersonsByNamesIn.size() == 2
+            multiplePersonsByIdIn.size() == 2
+            multiplePersonsByNamesInList.size() == 2
+            personsByNamesInList.size() == 1
+    }
+
     @Memoized
     MongoExecutorPersonRepository getMongoExecutorPersonRepository() {
         return context.getBean(MongoExecutorPersonRepository)

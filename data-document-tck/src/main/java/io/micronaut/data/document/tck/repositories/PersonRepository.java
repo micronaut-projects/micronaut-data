@@ -105,6 +105,8 @@ public interface PersonRepository extends CrudRepository<Person, String>, Pageab
 
     List<Person> findByIdNotIn(List<String> ids);
 
+    List<Person> findByNameIn(List<String> names);
+
     class Specifications {
 
         public static PredicateSpecification<Person> nameEquals(String name) {

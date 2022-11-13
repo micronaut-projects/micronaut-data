@@ -281,4 +281,11 @@ public interface StoredQuery<E, R> extends Named, StoredDataOperation<R> {
     default boolean isOptimisticLock() {
         return false;
     }
+
+    /**
+     * Gets an indicator telling whether underlying query is raw query.
+     *
+     * @return true if it is raw query
+     */
+    boolean isRawQuery();
 }
