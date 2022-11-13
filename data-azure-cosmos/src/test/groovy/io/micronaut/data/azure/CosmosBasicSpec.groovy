@@ -22,6 +22,7 @@ import io.micronaut.data.azure.entities.Child
 import io.micronaut.data.azure.entities.CosmosBook
 import io.micronaut.data.azure.entities.Family
 import io.micronaut.data.azure.entities.Pet
+import io.micronaut.data.azure.entities.PetType
 import io.micronaut.data.azure.entities.UUIDEntity
 import io.micronaut.data.azure.entities.User
 import io.micronaut.data.azure.entities.XBook
@@ -89,11 +90,11 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
         child1.grade = 5
         def pet1 = new Pet()
         pet1.givenName = "Sadik"
-        pet1.type = "cat"
+        pet1.type = PetType.CAT
         child1.pets.add(pet1)
         def pet2 = new Pet()
         pet2.givenName = "Leo"
-        pet2.type = "dog"
+        pet2.type = PetType.DOG
         child1.pets.add(pet2)
         family.children.add(child1)
         return family
@@ -119,7 +120,7 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
         child2.grade = 8
         def pet1 = new Pet()
         pet1.givenName = "Robbie"
-        pet1.type = "hamster"
+        pet1.type = PetType.HAMSTER
         child2.pets.add(pet1)
         family.children.add(child2)
         return family
@@ -271,10 +272,14 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
             families.size() > 0
             families[0].id == ANDERSEN_FAMILY.id
         when:
-            families = familyRepository.findByChildrenPetsType("cat")
+            families = familyRepository.findByChildrenPetsType(PetType.CAT)
         then:
             families.size() > 0
             families[0].id == ANDERSEN_FAMILY.id
+        when:
+            families = familyRepository.findByChildrenFirstNameIn(Arrays.asList(ANDERSEN_FAMILY.children[0].firstName, WAKEFIELD_FAMILY.children[0].firstName))
+        then:
+            families.size() == 2
         when:
             def children = familyRepository.findChildrenByChildrenPetsGivenName("Robbie")
         then:

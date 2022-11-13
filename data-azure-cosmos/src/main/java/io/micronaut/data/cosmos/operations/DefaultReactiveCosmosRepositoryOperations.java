@@ -529,8 +529,10 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
     private void logQuery(SqlQuerySpec querySpec) {
         if (QUERY_LOG.isDebugEnabled()) {
             QUERY_LOG.debug("Executing query: {}", querySpec.getQueryText());
-            for (SqlParameter param : querySpec.getParameters()) {
-                QUERY_LOG.debug("Parameter: name={}, value={}", param.getName(), param.getValue(Object.class));
+            if (QUERY_LOG.isTraceEnabled()) {
+                for (SqlParameter param : querySpec.getParameters()) {
+                    QUERY_LOG.trace("Parameter: name={}, value={}", param.getName(), param.getValue(Object.class));
+                }
             }
         }
     }
@@ -1113,14 +1115,8 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
 
                 @Override
                 public void bindOne(@NonNull QueryParameterBinding binding, Object value) {
-                    if (updateQuery) {
-                        String property = getUpdateProperty(binding, persistentEntity);
-                        if (property != null && !propertiesToUpdate.containsKey(property)) {
-                            propertiesToUpdate.put(property, value);
-                        }
-                    }
                     String parameterName = getParameterName(binding, isRawQuery);
-                    parameterList.add(new SqlParameter("@" + parameterName, value));
+                    doBind(binding, value, parameterName);
                 }
 
                 @Override
@@ -1130,20 +1126,23 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
                     int index = 1;
                     for (Object value : values) {
                         final String expandedParameterName = String.format("%s_%d", parameterName, index++);
-                        QueryParameterBinding newBinding = new DelegatingQueryParameterBinding(binding) {
-                            @Override
-                            @NonNull
-                            public String getRequiredName() {
-                                return expandedParameterName;
-                            }
-                        };
-                        bindOne(newBinding, value);
+                        doBind(binding, value, expandedParameterName);
                     }
                 }
 
                 @Override
                 public int currentIndex() {
                     return 0;
+                }
+
+                private void doBind(@NonNull QueryParameterBinding binding, Object value, String parameterName) {
+                    if (updateQuery) {
+                        String property = getUpdateProperty(binding, persistentEntity);
+                        if (property != null && !propertiesToUpdate.containsKey(property)) {
+                            propertiesToUpdate.put(property, value);
+                        }
+                    }
+                    parameterList.add(new SqlParameter("@" + parameterName, value));
                 }
 
             });
