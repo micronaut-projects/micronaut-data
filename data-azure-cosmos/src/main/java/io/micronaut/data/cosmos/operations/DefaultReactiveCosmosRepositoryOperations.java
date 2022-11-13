@@ -1123,6 +1123,11 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
                 public void bindMany(@NonNull QueryParameterBinding binding, @NonNull Collection<Object> values) {
                     // Query params were expanded, so we must expand parameters and bind query with newly created parameters
                     String parameterName = getParameterName(binding, isRawQuery);
+                    // No actual expanding if there is only one value to bind
+                    if (values.size() == 1) {
+                        doBind(binding, values.iterator().next(), parameterName);
+                        return;
+                    }
                     int index = 1;
                     for (Object value : values) {
                         final String expandedParameterName = String.format("%s_%d", parameterName, index++);
