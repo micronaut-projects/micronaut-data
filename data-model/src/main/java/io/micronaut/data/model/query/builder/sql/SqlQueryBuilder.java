@@ -511,14 +511,14 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     }
 
     private void addIndexes(PersistentEntity entity, String tableName, List<String> createStatements) {
-        final String indexes = createIndexes(entity, tableName);
-        if (indexes.length() > 0) {
-            createStatements.add(indexes);
+        final List<String> indexes = createIndexes(entity, tableName);
+        if (CollectionUtils.isNotEmpty(indexes)) {
+            createStatements.addAll(indexes);
         }
     }
 
-    private String createIndexes(PersistentEntity entity, String tableName) {
-        StringBuilder indexBuilder = new StringBuilder();
+    private List<String> createIndexes(PersistentEntity entity, String tableName) {
+        List<String> indexStatements = new ArrayList<>();
 
         final Optional<List<AnnotationValue<Index>>> indexes = entity
                 .findAnnotation(Indexes.class)
@@ -527,13 +527,13 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         Stream.of(indexes)
                 .flatMap(o -> o.map(Stream::of).orElseGet(Stream::empty))
                 .flatMap(Collection::stream)
-                .forEach(index -> addIndex(entity, indexBuilder, new IndexConfiguration(index, tableName, entity.getPersistedName())));
+                .forEach(index -> indexStatements.add(addIndex(entity, new IndexConfiguration(index, tableName, entity.getPersistedName()))));
 
-        return indexBuilder.toString();
+        return indexStatements;
 
     }
 
-    private void addIndex(PersistentEntity entity, StringBuilder indexBuilder, IndexConfiguration config) {
+    private String addIndex(PersistentEntity entity, IndexConfiguration config) {
         // Create index name without escaped table name and then escape if needed
         StringBuilder sbIndexName = new StringBuilder();
         sbIndexName.append(config.index.stringValue("name")
@@ -545,6 +545,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
             indexName = quote(indexName);
         }
 
+        StringBuilder indexBuilder = new StringBuilder();
         indexBuilder.append("CREATE ").append(config.index.booleanValue("unique")
                         .map(isUnique -> isUnique ? "UNIQUE " : "")
                         .orElse(""))
@@ -560,6 +561,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         } else {
             indexBuilder.append(");");
         }
+        return indexBuilder.toString();
     }
 
     private String provideColumnList(IndexConfiguration config) {
