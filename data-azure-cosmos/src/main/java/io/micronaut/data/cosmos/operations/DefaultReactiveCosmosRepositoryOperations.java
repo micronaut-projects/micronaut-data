@@ -122,7 +122,7 @@ import java.util.stream.Collectors;
  * The reactive Cosmos DB repository operations implementation.
  *
  * @author radovanradic
- * @since 4.0.0
+ * @since 3.8.2
  */
 @Singleton
 @Internal

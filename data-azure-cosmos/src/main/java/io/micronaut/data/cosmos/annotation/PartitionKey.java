@@ -25,7 +25,7 @@ import java.lang.annotation.Target;
  * Field annotation indicating that entity field should be used as partition key.
  *
  * @author radovanradic
- * @since 4.0.0
+ * @since 3.8.2
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.FIELD, ElementType.METHOD})

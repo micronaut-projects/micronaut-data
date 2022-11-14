@@ -58,7 +58,7 @@ import java.util.function.Function;
  * The Azure Cosmos DB sql query builder.
  *
  * @author radovanradic
- * @since 4.0.0
+ * @since 3.8.2
  */
 public final class CosmosSqlQueryBuilder extends SqlQueryBuilder {
 

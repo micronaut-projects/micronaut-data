@@ -27,7 +27,7 @@ import io.micronaut.data.runtime.operations.internal.sql.DefaultSqlPreparedQuery
  * Azure Cosmos DB implementation of {@link io.micronaut.data.runtime.operations.internal.sql.SqlPreparedQuery}.
  *
  * @author radovanradic
- * @since 4.0.0
+ * @since 3.8.2
  *
  * @param <E> The entity type
  * @param <R> The result type

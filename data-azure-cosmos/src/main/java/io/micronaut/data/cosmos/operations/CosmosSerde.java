@@ -42,7 +42,7 @@ import java.io.IOException;
  * Serialize and deserialize Cosmos documents.
  *
  * @author radovanradic
- * @since 4.0.0
+ * @since 3.8.2
  */
 @Singleton
 @Internal

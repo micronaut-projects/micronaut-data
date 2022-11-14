@@ -21,7 +21,7 @@ import io.micronaut.data.operations.RepositoryOperations;
  * Azure Cosmos repository operations.
  *
  * @author Denis Stepanov
- * @since 4.0.0
+ * @since 3.8.2
  */
 public interface CosmosRepositoryOperations extends RepositoryOperations {
 }

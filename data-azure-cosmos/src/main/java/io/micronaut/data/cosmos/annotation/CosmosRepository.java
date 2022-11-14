@@ -37,7 +37,7 @@ import java.lang.annotation.Target;
  * Stereotype repository that configures a {@link Repository} as a {@link CosmosRepository}.
  *
  * @author Denis Stepanov
- * @since 4.0.0
+ * @since 3.8.2
  */
 @RepositoryConfiguration(
         queryBuilder = CosmosSqlQueryBuilder.class,

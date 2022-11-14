@@ -31,7 +31,7 @@ import jakarta.inject.Singleton;
  * Default deserializer for custom converters.
  *
  * @author radovanradic
- * @since 4.0.0
+ * @since 3.8.2
  */
 @Singleton
 final class DefaultCustomConverterDeserializer implements CustomConverterDeserializer {
