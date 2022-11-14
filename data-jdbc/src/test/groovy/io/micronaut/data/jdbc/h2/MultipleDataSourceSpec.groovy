@@ -23,6 +23,7 @@ import java.sql.Connection
 @Property(name = "datasources.other.name", value = "otherdb")
 @Property(name = "datasources.other.schema-generate", value = "CREATE_DROP")
 @Property(name = "datasources.other.dialect", value = "H2")
+@Property(name = "datasources.other.packages", value = "io.micronaut.data.tck.entities,io.micronaut.data.tck.jdbc.entities,io.micronaut.data.jdbc.h2")
 class MultipleDataSourceSpec extends Specification {
 
     @Inject

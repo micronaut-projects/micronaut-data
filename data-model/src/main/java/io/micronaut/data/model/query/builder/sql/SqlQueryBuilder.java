@@ -527,23 +527,29 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         Stream.of(indexes)
                 .flatMap(o -> o.map(Stream::of).orElseGet(Stream::empty))
                 .flatMap(Collection::stream)
-                .forEach(index -> addIndex(indexBuilder, new IndexConfiguration(index, tableName)));
+                .forEach(index -> addIndex(entity, indexBuilder, new IndexConfiguration(index, tableName, entity.getPersistedName())));
 
         return indexBuilder.toString();
 
     }
 
-    private void addIndex(StringBuilder indexBuilder, IndexConfiguration config) {
-        indexBuilder.append("CREATE ")
-                .append(config.index.booleanValue("unique")
+    private void addIndex(PersistentEntity entity, StringBuilder indexBuilder, IndexConfiguration config) {
+        // Create index name without escaped table name and then escape if needed
+        StringBuilder sbIndexName = new StringBuilder();
+        sbIndexName.append(config.index.stringValue("name")
+            .orElse(String.format(
+                "idx_%s%s", prepareNames(config.unquotedTableName),
+                makeTransformedColumnList(provideColumnList(config)))));
+        String indexName = sbIndexName.toString();
+        if (shouldEscape(entity)) {
+            indexName = quote(indexName);
+        }
+
+        indexBuilder.append("CREATE ").append(config.index.booleanValue("unique")
                         .map(isUnique -> isUnique ? "UNIQUE " : "")
                         .orElse(""))
-                .append("INDEX ")
-                .append(config.index.stringValue("name")
-                        .orElse(String.format(
-                                "idx_%s%s", prepareNames(config.tableName),
-                                makeTransformedColumnList(provideColumnList(config)))))
-                .append(" ON " +
+               .append("INDEX ");
+        indexBuilder.append(indexName).append(" ON " +
                         Optional.ofNullable(config.tableName)
                                 .orElseThrow(() -> new NullPointerException("Table name cannot be null")) +
                         " (" +
@@ -1596,6 +1602,18 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         }
     }
 
+    private String unQuote(String tableName) {
+        switch (dialect) {
+            case MYSQL:
+            case H2:
+                return tableName.replace("`", "");
+            case SQL_SERVER:
+                return tableName.replace("[", "").replace("]", "");
+            default:
+                return tableName.replace("\"", "");
+        }
+    }
+
     @Override
     public String getColumnName(PersistentProperty persistentProperty) {
         return persistentProperty.getPersistedName();
@@ -1718,10 +1736,12 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     private static class IndexConfiguration {
         AnnotationValue<?> index;
         String tableName;
+        String unquotedTableName;
 
-        public IndexConfiguration(AnnotationValue<?> index, String tableName) {
+        public IndexConfiguration(AnnotationValue<?> index, String tableName, String unquotedTableName) {
             this.index = index;
             this.tableName = tableName;
+            this.unquotedTableName = unquotedTableName;
         }
     }
 
