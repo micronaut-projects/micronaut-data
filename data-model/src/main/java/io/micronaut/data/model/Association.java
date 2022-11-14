@@ -22,6 +22,8 @@ import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.model.naming.NamingStrategy;
 
+import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.Optional;
 
 /**
@@ -127,20 +129,37 @@ public interface Association extends PersistentProperty {
      * @return True if it does, false otherwise.
      */
     default boolean doesCascade(Relation.Cascade... types) {
-        if (ArrayUtils.isNotEmpty(types)) {
-            final String[] cascades = getAnnotationMetadata().stringValues(Relation.class, "cascade");
-            for (String cascade : cascades) {
-                if (cascade.equals("ALL")) {
-                    return true;
-                }
-                for (Relation.Cascade type : types) {
-                    final String n = type.name();
-                    if (n.equals(cascade)) {
-                        return true;
-                    }
-                }
+        if (ArrayUtils.isEmpty(types)) {
+            return false;
+        }
+        EnumSet<Relation.Cascade> cascadeTypes = getCascadeTypes();
+        if (cascadeTypes.contains(Relation.Cascade.ALL)) {
+            return true;
+        }
+        if (cascadeTypes.contains(Relation.Cascade.NONE)) {
+            return false;
+        }
+        for (Relation.Cascade cascade : types) {
+            if (cascadeTypes.contains(cascade)) {
+                return true;
             }
         }
         return false;
+    }
+
+    default EnumSet<Relation.Cascade> getCascadeTypes() {
+        final Relation.Cascade[] cascades = getAnnotationMetadata().enumValues(Relation.class, "cascade", Relation.Cascade.class);
+        if (cascades.length == 0) {
+            return EnumSet.noneOf(Relation.Cascade.class);
+        }
+        for (Relation.Cascade cascade : cascades) {
+            if (cascade == Relation.Cascade.ALL) {
+                return EnumSet.allOf(Relation.Cascade.class);
+            }
+            if (cascade == Relation.Cascade.NONE) {
+                return EnumSet.noneOf(Relation.Cascade.class);
+            }
+        }
+        return EnumSet.copyOf(Arrays.asList(cascades));
     }
 }

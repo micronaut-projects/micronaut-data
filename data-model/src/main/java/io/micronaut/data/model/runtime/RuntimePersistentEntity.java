@@ -56,6 +56,8 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity impleme
     private List<String> allPersistentPropertiesNames;
     private List<RuntimePersistentProperty<T>> persistentPropertiesValues;
 
+    private EnumSet<Relation.Cascade> cascadedTypes;
+
     /**
      * Default constructor.
      * @param type The type
@@ -125,6 +127,29 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity impleme
             this.constructorArguments[i] = prop;
         }
         this.aliasName = super.getAliasName();
+        this.cascadedTypes = cascades(this);
+    }
+
+    private static EnumSet<Relation.Cascade> cascades(RuntimePersistentEntity<?> persistentEntity) {
+        EnumSet<Relation.Cascade> cascades = EnumSet.noneOf(Relation.Cascade.class);
+        for (RuntimeAssociation<?> association : persistentEntity.getAssociations()) {
+            cascades.addAll(cascades(association));
+        }
+        cascades.remove(Relation.Cascade.NONE);
+        if (cascades.remove(Relation.Cascade.ALL)) {
+            EnumSet<Relation.Cascade> all = EnumSet.allOf(Relation.Cascade.class);
+            all.remove(Relation.Cascade.ALL);
+            all.remove(Relation.Cascade.NONE);
+            return all;
+        }
+        return cascades;
+    }
+
+    private static EnumSet<Relation.Cascade> cascades(RuntimeAssociation<?> association) {
+        if (association.getKind() == Relation.Kind.EMBEDDED) {
+            return cascades(association.getAssociatedEntity());
+        }
+        return association.getCascadeTypes();
     }
 
     /**
@@ -135,6 +160,24 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity impleme
     @NonNull
     protected AttributeConverter<Object, Object> resolveConverter(@NonNull Class<?> converterClass) {
         throw new MappingException("Converters not supported");
+    }
+
+    /**
+     * Does cascade the persist to any of the associations.
+     *
+     * @return True if it does
+     */
+    public boolean cascadesPersist() {
+        return cascadedTypes.contains(Relation.Cascade.PERSIST);
+    }
+
+    /**
+     * Does cascade the update to any of the associations.
+     *
+     * @return True if it does
+     */
+    public boolean cascadesUpdate() {
+        return cascadedTypes.contains(Relation.Cascade.UPDATE);
     }
 
     /**
