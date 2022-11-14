@@ -42,8 +42,6 @@ public abstract class BookRepository implements PageableRepository<Book, String>
         this.authorRepository = authorRepository;
     }
 
-    public abstract Book queryById(String id);
-
     @Join("author")
     public abstract Page<Book> findByTotalPagesGreaterThan(int totalPages, Pageable pageable);
 
@@ -53,8 +51,6 @@ public abstract class BookRepository implements PageableRepository<Book, String>
 
     @Join("author")
     public abstract Book findByTitle(String title);
-
-    public abstract Book searchByTitle(String title);
 
     public abstract long updateAuthor(@Parameter("id") @Id String id, @Parameter("author") Author author);
 

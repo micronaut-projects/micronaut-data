@@ -1112,6 +1112,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             for (Object value : values) {
                 bindOne(binding, value);
             }
+
         }
 
         @Override

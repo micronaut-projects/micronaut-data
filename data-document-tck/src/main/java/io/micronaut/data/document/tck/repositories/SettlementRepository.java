@@ -30,4 +30,14 @@ public interface SettlementRepository extends CrudRepository<Settlement, Settlem
     @Join(value = "zone")
     @Override
     Optional<Settlement> findById(@NonNull SettlementPk settlementPk);
+
+    @Join(value = "settlementType")
+    @Join(value = "zone")
+    @Join(value = "id.county")
+    Optional<Settlement> queryById(@NonNull SettlementPk settlementPk);
+
+    @Join(value = "settlementType")
+    @Join(value = "zone")
+    @Join(value = "id.county")
+    List<Settlement> findAll(Pageable pageable);
 }
