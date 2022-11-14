@@ -8,9 +8,7 @@ import io.micronaut.data.azure.entities.Address
 import io.micronaut.data.azure.entities.Family
 import io.micronaut.inject.BeanDefinition
 import io.micronaut.inject.writer.BeanDefinitionVisitor
-import spock.lang.IgnoreIf
 
-@IgnoreIf({ jvm.isJava8() })
 class BuildCosmosQuerySpec extends AbstractTypeElementSpec {
 
     void "test cosmos repo"() {
