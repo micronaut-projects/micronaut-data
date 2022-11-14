@@ -21,7 +21,7 @@ import io.micronaut.data.exceptions.DataAccessException;
  * Cosmos Db data access exception.
  *
  * @author radovanradic
- * @since 3.8.2
+ * @since 3.9.0
  */
 public class CosmosAccessException extends DataAccessException {
 

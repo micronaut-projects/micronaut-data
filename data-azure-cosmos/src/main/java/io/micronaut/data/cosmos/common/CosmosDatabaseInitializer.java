@@ -49,7 +49,7 @@ import java.util.stream.Collectors;
  * Initializes Cosmos Database and containers if needed and reads mapped entities into {@link CosmosEntity} instances.
  *
  * @author radovanradic
- * @since 3.8.2
+ * @since 3.9.0
  */
 @Context
 @Internal

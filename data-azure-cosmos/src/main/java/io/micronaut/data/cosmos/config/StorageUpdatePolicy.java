@@ -19,7 +19,7 @@ package io.micronaut.data.cosmos.config;
  * This enum is used to tell how we should handle database and containers during startup.
  *
  * @author radovanradic
- * @since 3.8.2
+ * @since 3.9.0
  */
 public enum StorageUpdatePolicy {
 

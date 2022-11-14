@@ -44,7 +44,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * Model holding cosmos entity fields like container name, partition key, version field.
  *
  * @author radovanradic
- * @since 3.8.2
+ * @since 3.9.0
  */
 @Internal
 public final class CosmosEntity {

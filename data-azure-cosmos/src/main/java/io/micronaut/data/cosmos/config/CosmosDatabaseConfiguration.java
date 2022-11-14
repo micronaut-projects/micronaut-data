@@ -32,7 +32,7 @@ import static io.micronaut.data.cosmos.config.CosmosDatabaseConfiguration.PREFIX
  * The Azure Cosmos database configuration.
  *
  * @author radovanradic
- * @since 3.8.2
+ * @since 3.9.0
  */
 @ConfigurationProperties(PREFIX)
 public final class CosmosDatabaseConfiguration {
