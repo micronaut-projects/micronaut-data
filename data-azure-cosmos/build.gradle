@@ -4,13 +4,17 @@ plugins {
 }
 
 micronaut {
-    version = '3.6.0'
+    version = '3.7.3'
     testResources {
         enabled = true
         inferClasspath = false
     }
 }
-
+micronautBuild {
+    binaryCompatibility {
+        enabled = false
+    }
+}
 dependencies {
     annotationProcessor projects.dataDocumentProcessor
     annotationProcessor mn.micronaut.inject.java
