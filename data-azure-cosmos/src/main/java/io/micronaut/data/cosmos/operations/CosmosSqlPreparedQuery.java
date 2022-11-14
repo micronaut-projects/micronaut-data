@@ -68,13 +68,13 @@ final class CosmosSqlPreparedQuery<E, R> extends DefaultSqlPreparedQuery<E, R> {
      * @return the update statement for update operation
      */
     public String getUpdate() {
-        CosmosSqlStoredQuery cosmosSqlStoredQuery = getCosmosSqlStoredQuery(sqlStoredQuery);
+        CosmosSqlStoredQuery<E, R> cosmosSqlStoredQuery = getCosmosSqlStoredQuery(sqlStoredQuery);
         return cosmosSqlStoredQuery.getUpdate();
     }
 
-    private <E, R> CosmosSqlStoredQuery<E, R> getCosmosSqlStoredQuery(StoredQuery<E, R> storedQuery) {
-        if (sqlStoredQuery instanceof CosmosSqlStoredQuery) {
-            return (CosmosSqlStoredQuery<E, R>) sqlStoredQuery;
+    private <T, K> CosmosSqlStoredQuery<T, K> getCosmosSqlStoredQuery(StoredQuery<T, K> storedQuery) {
+        if (storedQuery instanceof CosmosSqlStoredQuery) {
+            return (CosmosSqlStoredQuery<T, K>) storedQuery;
         }
         throw new IllegalStateException("Expected for stored query query to be of type: CosmosSqlStoredQuery got: " + sqlStoredQuery.getClass().getName());
     }

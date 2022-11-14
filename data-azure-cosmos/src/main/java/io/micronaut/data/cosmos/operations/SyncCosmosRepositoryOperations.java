@@ -67,16 +67,16 @@ final class SyncCosmosRepositoryOperations implements
     @NonNull
     @Override
     public ExecutorAsyncOperations async() {
-        ExecutorAsyncOperations asyncOperations = this.asyncOperations;
-        if (asyncOperations == null) {
+        ExecutorAsyncOperations executorAsyncOperations = this.asyncOperations;
+        if (executorAsyncOperations == null) {
             synchronized (this) { // double check
-                asyncOperations = this.asyncOperations;
-                if (asyncOperations == null) {
-                    asyncOperations = new ExecutorAsyncOperations(
+                executorAsyncOperations = this.asyncOperations;
+                if (executorAsyncOperations == null) {
+                    executorAsyncOperations = new ExecutorAsyncOperations(
                         this,
                         executorService != null ? executorService : newLocalThreadPool()
                     );
-                    this.asyncOperations = asyncOperations;
+                    this.asyncOperations = executorAsyncOperations;
                 }
             }
         }

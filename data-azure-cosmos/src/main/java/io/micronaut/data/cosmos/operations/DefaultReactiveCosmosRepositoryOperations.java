@@ -804,7 +804,7 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
      * @return update statement (list of props to update in Azure Cosmos)
      */
     private <E, R> String getUpdate(PreparedQuery<E, R> preparedQuery) {
-        CosmosSqlPreparedQuery cosmosSqlPreparedQuery = getCosmosSqlPreparedQuery(preparedQuery);
+        CosmosSqlPreparedQuery<E, R> cosmosSqlPreparedQuery = getCosmosSqlPreparedQuery(preparedQuery);
         return cosmosSqlPreparedQuery.getUpdate();
     }
 

@@ -149,6 +149,7 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
         return sizeOf(value);
     }
 
+    @Override
     public void attachPageable(Pageable pageable, boolean isSingleResult) {
         if (pageable != Pageable.UNPAGED) {
             RuntimePersistentEntity<E> persistentEntity = getPersistentEntity();
