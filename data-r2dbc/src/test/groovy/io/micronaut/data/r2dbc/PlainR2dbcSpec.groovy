@@ -29,7 +29,7 @@ import spock.lang.Shared
 import spock.lang.Specification
 
 import java.util.stream.Collectors
-import java.util.stream.IntStream
+import java.util.stream.LongStream
 
 abstract class PlainR2dbcSpec extends Specification {
 
@@ -75,8 +75,10 @@ abstract class PlainR2dbcSpec extends Specification {
     }
 
     def "save many"() {
+        given:
+            long recordsCount = 100_000
         when:
-            def authors = IntStream.range(0, 100000)
+            def authors = LongStream.range(0, recordsCount)
                     .mapToObj(id -> new Author(name: "Name " + id))
                     .collect(Collectors.toList())
             def result = Flux.usingWhen(connectionFactory.create(), connection -> {
@@ -90,12 +92,12 @@ abstract class PlainR2dbcSpec extends Specification {
                                     isFirst = false
                                 } else {
                                     // https://github.com/r2dbc/r2dbc-spi/issues/259
-                                    stmt.add()
+                                    stmt = stmt.add()
                                 }
                                 def author = it.next()
                                 stmt = stmt.bind(0, author.getName())
                             }
-                            return Flux.from(stmt.execute()).flatMap { Result r -> Mono.from(r.getRowsUpdated()) }
+                            return Flux.from(stmt.execute()).flatMap { Result r -> r.getRowsUpdated() }
                         },
                         (b) -> connection.commitTransaction(),
                         (b, throwable) -> connection.rollbackTransaction(),
@@ -105,9 +107,9 @@ abstract class PlainR2dbcSpec extends Specification {
                     .collectList()
                     .block()
         then:
-            result.size() == 1
-            result[0] == 100000
-            authorRepository.count() == 100000
+            result.size() == recordsCount
+//            result[0] == recordsCount
+            authorRepository.count() == recordsCount
     }
 
     def "save one - convert flux to mono"() {
