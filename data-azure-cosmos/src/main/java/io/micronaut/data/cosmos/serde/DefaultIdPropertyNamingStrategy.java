@@ -21,6 +21,9 @@ import jakarta.inject.Singleton;
 
 /**
  * Default implementation for {@link IdPropertyNamingStrategy}.
+ *
+ * @author radovanradic
+ * @since 3.9.0
  */
 @Singleton
 final class DefaultIdPropertyNamingStrategy implements IdPropertyNamingStrategy {

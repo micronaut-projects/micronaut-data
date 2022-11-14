@@ -24,6 +24,9 @@ import io.micronaut.data.runtime.operations.internal.sql.DefaultSqlStoredQuery;
 /**
  * Cosmos Azure implementation fo {@link StoredQuery}.
  *
+ * @author radovanradic
+ * @since 3.9.0
+ *
  * @param <E> the entity type
  * @param <R> the result type
  */

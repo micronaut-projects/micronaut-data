@@ -37,6 +37,9 @@ import java.util.concurrent.Executors;
 
 /**
  * The sync Azure Cosmos DB operations implementation.
+ *
+ * @author radovanradic
+ * @since 3.9.0
  */
 @Singleton
 @Internal

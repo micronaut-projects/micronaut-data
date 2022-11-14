@@ -25,6 +25,9 @@ import java.io.IOException;
 
 /**
  * Default {@link ManyRelationSerializer} implementation.
+ *
+ * @author radovanradic
+ * @since 3.9.0
  */
 @Singleton
 final class DefaultManyRelationSerializer implements ManyRelationSerializer {

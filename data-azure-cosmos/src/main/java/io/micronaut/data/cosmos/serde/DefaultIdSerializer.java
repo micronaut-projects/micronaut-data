@@ -24,6 +24,9 @@ import jakarta.inject.Singleton;
 
 /**
  * Default {@link IdSerializer} implementation.
+ *
+ * @author radovanradic
+ * @since 3.9.0
  */
 @Singleton
 final class DefaultIdSerializer implements IdSerializer, CustomizableSerializer<Object> {

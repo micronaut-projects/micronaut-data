@@ -17,6 +17,9 @@ package io.micronaut.data.cosmos.common;
 
 /**
  * The constants needed for Cosmos DB implementation.
+ *
+ * @author radovanradic
+ * @since 3.9.0
  */
 public final class Constants {
 

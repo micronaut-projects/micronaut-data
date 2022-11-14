@@ -24,6 +24,9 @@ import java.io.IOException;
 
 /**
  * Default {@link io.micronaut.data.document.serde.OneRelationDeserializer} implementation.
+ *
+ * @author radovanradic
+ * @since 3.9.0
  */
 @Singleton
 final class DefaultOneRelationDeserializer implements OneRelationDeserializer {

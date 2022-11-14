@@ -25,7 +25,7 @@ import java.lang.annotation.Target;
  * Field annotation indicating that entity field should be used as a document version or _etag in Azure Cosmos Db.
  *
  * @author radovanradic
- * @since 3.9.9
+ * @since 3.9.0
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.FIELD, ElementType.METHOD})

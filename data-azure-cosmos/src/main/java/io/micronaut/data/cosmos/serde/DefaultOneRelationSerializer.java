@@ -24,6 +24,9 @@ import java.io.IOException;
 
 /**
  * Default {@link OneRelationSerializer} implementation.
+ *
+ * @author radovanradic
+ * @since 3.9.0
  */
 @Singleton
 final class DefaultOneRelationSerializer implements OneRelationSerializer {

@@ -24,6 +24,9 @@ import jakarta.inject.Singleton;
 
 /**
  * Default {@link io.micronaut.data.document.serde.IdDeserializer} implementation.
+ *
+ * @author radovanradic
+ * @since 3.9.0
  */
 @Singleton
 final class DefaultIdDeserializer implements IdDeserializer, CustomizableDeserializer<Object> {

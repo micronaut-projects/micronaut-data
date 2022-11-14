@@ -19,6 +19,9 @@ import com.azure.cosmos.models.ThroughputProperties;
 
 /**
  * Throughput settings for database and container.
+ *
+ * @author radovanradic
+ * @since 3.9.0
  */
 public class ThroughputSettings {
 
