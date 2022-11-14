@@ -4,7 +4,7 @@ micronaut-test = "3.4.0"
 micronaut-serde = "1.1.0"
 micronaut-sql = "4.7.2"
 micronaut-docs = "2.0.0"
-micronaut-gradle-plugin = "3.6.3"
+micronaut-gradle-plugin = "3.6.4"
 micronaut-mongo = "4.6.0"
 
 groovy = "3.0.13"
@@ -35,14 +35,14 @@ mssql-jdbc-driver = "8.4.1.jre8"
 # R2DBC Drivers
 
 r2dbc = "1.0.0.RELEASE"
-r2dbc-pool = "0.9.2.RELEASE"
+r2dbc-pool = "1.0.0.RELEASE"
 
 oracle-r2dbc-driver = "1.0.0"
 mysql-r2dbc-driver = "0.8.2.RELEASE"
 h2-r2dbc-driver = "0.8.5.RELEASE"
 mariadb-r2dbc-driver = "1.1.2"
-postgresql-r2dbc-driver = "0.9.2.RELEASE"
-mssql-r2dbc-driver = "0.9.0.RELEASE"
+postgresql-r2dbc-driver = "1.0.0.RELEASE"
+mssql-r2dbc-driver = "1.0.0.RELEASE"
 
 # Testing and benchmarking
 
@@ -57,7 +57,7 @@ jetbrains-annotations = "23.0.0"
 
 # Gradle plugins
 
-kotlin-gradle-plugin = "1.7.20"
+kotlin-gradle-plugin = "1.7.21"
 jmh-gradle-plugin = "0.6.8"
 spring-boot-gradle-plugin = "2.6.7"
 spring-dependency-management-gradle-plugin = "1.1.0"
