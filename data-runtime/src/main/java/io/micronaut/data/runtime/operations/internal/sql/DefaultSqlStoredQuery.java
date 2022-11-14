@@ -41,7 +41,7 @@ import java.util.stream.Collectors;
  * @since 3.5.0
  */
 @Internal
-public final class DefaultSqlStoredQuery<E, R> extends DefaultBindableParametersStoredQuery<E, R> implements SqlStoredQuery<E, R> {
+public class DefaultSqlStoredQuery<E, R> extends DefaultBindableParametersStoredQuery<E, R> implements SqlStoredQuery<E, R> {
 
     private final boolean expandableQuery;
     private final SqlQueryBuilder queryBuilder;

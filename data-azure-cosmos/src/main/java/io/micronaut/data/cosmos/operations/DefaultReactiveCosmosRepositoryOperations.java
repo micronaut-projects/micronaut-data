@@ -86,11 +86,11 @@ import io.micronaut.data.runtime.operations.internal.AbstractReactiveEntitiesOpe
 import io.micronaut.data.runtime.operations.internal.AbstractReactiveEntityOperations;
 import io.micronaut.data.runtime.operations.internal.AbstractRepositoryOperations;
 import io.micronaut.data.runtime.operations.internal.OperationContext;
-import io.micronaut.data.runtime.operations.internal.sql.DefaultSqlStoredQuery;
 import io.micronaut.data.runtime.operations.internal.sql.SqlPreparedQuery;
 import io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery;
 import io.micronaut.data.runtime.query.MethodContextAwareStoredQueryDecorator;
 import io.micronaut.data.runtime.query.PreparedQueryDecorator;
+import io.micronaut.data.runtime.query.internal.QueryResultStoredQuery;
 import io.micronaut.http.codec.MediaTypeCodec;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import jakarta.inject.Singleton;
@@ -178,8 +178,12 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
         if (defaultCosmosSqlQueryBuilder == null) {
             defaultCosmosSqlQueryBuilder = new CosmosSqlQueryBuilder(context.getAnnotationMetadata());
         }
+        String update = null;
+        if (storedQuery instanceof QueryResultStoredQuery) {
+            update = ((QueryResultStoredQuery) storedQuery).getQueryResult().getUpdate();
+        }
         RuntimePersistentEntity<E> runtimePersistentEntity = runtimeEntityRegistry.getEntity(storedQuery.getRootEntity());
-        return new DefaultSqlStoredQuery<>(storedQuery, runtimePersistentEntity, defaultCosmosSqlQueryBuilder);
+        return new CosmosSqlStoredQuery<>(storedQuery, runtimePersistentEntity, defaultCosmosSqlQueryBuilder, update);
     }
 
     @Override
@@ -355,11 +359,18 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
             return Mono.error(new IllegalStateException("Cosmos Db does not support raw update queries."));
         }
         SqlPreparedQuery<?, Number> preparedQuery = getSqlPreparedQuery(pq);
+
         preparedQuery.prepare(null);
         RuntimePersistentEntity<?> persistentEntity = runtimeEntityRegistry.getEntity(preparedQuery.getRootEntity());
         String update = preparedQuery.getAnnotationMetadata().stringValue(Query.class, "update").orElse(null);
         if (update == null) {
-            LOG.warn("Could not resolve update properties for Cosmos Db entity {} and query [{}]", persistentEntity.getPersistedName(), preparedQuery.getQuery());
+            // This is case when query is created via predicate spec
+            update = getUpdate(preparedQuery);
+        }
+        if (update == null) {
+            if (LOG.isWarnEnabled()) {
+                LOG.warn("Could not resolve update properties for Cosmos Db entity {} and query [{}]", persistentEntity.getPersistedName(), preparedQuery.getQuery());
+            }
             return Mono.just(0);
         }
         List<String> updatePropertyList = Arrays.asList(update.split(","));
@@ -367,7 +378,9 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
         SqlQuerySpec querySpec = new SqlQuerySpec(preparedQuery.getQuery(), parameterBinder.bindParameters(preparedQuery));
         Map<String, Object> propertiesToUpdate = parameterBinder.getPropertiesToUpdate();
         if (propertiesToUpdate.isEmpty()) {
-            LOG.warn("No properties found to be updated for Cosmos Db entity {} and query [{}]", persistentEntity.getPersistedName(), preparedQuery.getQuery());
+            if (LOG.isWarnEnabled()) {
+                LOG.warn("No properties found to be updated for Cosmos Db entity {} and query [{}]", persistentEntity.getPersistedName(), preparedQuery.getQuery());
+            }
             return Mono.just(0);
         }
         CosmosAsyncContainer container = getContainer(persistentEntity);
@@ -520,8 +533,10 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
     private void logQuery(SqlQuerySpec querySpec) {
         if (QUERY_LOG.isDebugEnabled()) {
             QUERY_LOG.debug("Executing query: {}", querySpec.getQueryText());
-            for (SqlParameter param : querySpec.getParameters()) {
-                QUERY_LOG.debug("Parameter: name={}, value={}", param.getName(), param.getValue(Object.class));
+            if (QUERY_LOG.isTraceEnabled()) {
+                for (SqlParameter param : querySpec.getParameters()) {
+                    QUERY_LOG.trace("Parameter: name={}, value={}", param.getName(), param.getValue(Object.class));
+                }
             }
         }
     }
@@ -541,6 +556,13 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
             return (SqlPreparedQuery<E, R>) preparedQuery;
         }
         throw new IllegalStateException("Expected for prepared query to be of type: SqlPreparedQuery got: " + preparedQuery.getClass().getName());
+    }
+
+    private <E, R> CosmosSqlPreparedQuery<E, R> getCosmosSqlPreparedQuery(PreparedQuery<E, R> preparedQuery) {
+        if (preparedQuery instanceof CosmosSqlPreparedQuery) {
+            return (CosmosSqlPreparedQuery<E, R>) preparedQuery;
+        }
+        throw new IllegalStateException("Expected for prepared query to be of type: CosmosSqlPreparedQuery got: " + preparedQuery.getClass().getName());
     }
 
     // Container util methods
@@ -774,6 +796,20 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
     }
 
     /**
+     * Gets update statement from the prepared query for {@link #executeUpdate(PreparedQuery)}.
+     * In this case, it is list of properties to be updated.
+     *
+     * @param preparedQuery the prepared query
+     * @param <E> the entity type
+     * @param <R> the result type
+     * @return update statement (list of props to update in Azure Cosmos)
+     */
+    private <E, R> String getUpdate(PreparedQuery<E, R> preparedQuery) {
+        CosmosSqlPreparedQuery cosmosSqlPreparedQuery = getCosmosSqlPreparedQuery(preparedQuery);
+        return cosmosSqlPreparedQuery.getUpdate();
+    }
+
+    /**
      * Creates list of {@link CosmosItemOperation} to be executed in bulk operation.
      *
      * @param items the items to be updated/deleted in a bulk operation
@@ -887,7 +923,9 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
                     Mono<CosmosItemResponse<ObjectNode>> response = container.replaceItem(item, id, partitionKey, requestOptions);
                     return Mono.from(response).map(updateOneResult -> {
                         if (updateOneResult.getStatusCode() != HttpResponseStatus.OK.code()) {
-                            LOG.debug("Failed to update entity with id {} in container {}", id, container.getId());
+                            if (LOG.isWarnEnabled()) {
+                                LOG.warn("Failed to update entity with id {} in container {}", id, container.getId());
+                            }
                             d.rowsUpdated = 0;
                         } else {
                             d.rowsUpdated = 1;
@@ -1083,37 +1121,39 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
 
                 @Override
                 public void bindOne(@NonNull QueryParameterBinding binding, Object value) {
-                    if (updateQuery) {
-                        String property = getUpdateProperty(binding, persistentEntity);
-                        if (property != null) {
-                            propertiesToUpdate.put(property, value);
-                        }
-                    }
                     String parameterName = getParameterName(binding, isRawQuery);
-                    parameterList.add(new SqlParameter("@" + parameterName, value));
+                    doBind(binding, value, parameterName);
                 }
 
                 @Override
                 public void bindMany(@NonNull QueryParameterBinding binding, @NonNull Collection<Object> values) {
                     // Query params were expanded, so we must expand parameters and bind query with newly created parameters
                     String parameterName = getParameterName(binding, isRawQuery);
+                    // No actual expanding if there is only one value to bind
+                    if (values.size() == 1) {
+                        doBind(binding, values.iterator().next(), parameterName);
+                        return;
+                    }
                     int index = 1;
                     for (Object value : values) {
                         final String expandedParameterName = String.format("%s_%d", parameterName, index++);
-                        QueryParameterBinding newBinding = new DelegatingQueryParameterBinding(binding) {
-                            @Override
-                            @NonNull
-                            public String getRequiredName() {
-                                return expandedParameterName;
-                            }
-                        };
-                        bindOne(newBinding, value);
+                        doBind(binding, value, expandedParameterName);
                     }
                 }
 
                 @Override
                 public int currentIndex() {
                     return 0;
+                }
+
+                private void doBind(@NonNull QueryParameterBinding binding, Object value, String parameterName) {
+                    if (updateQuery) {
+                        String property = getUpdateProperty(binding, persistentEntity);
+                        if (property != null && !propertiesToUpdate.containsKey(property)) {
+                            propertiesToUpdate.put(property, value);
+                        }
+                    }
+                    parameterList.add(new SqlParameter("@" + parameterName, value));
                 }
 
             });

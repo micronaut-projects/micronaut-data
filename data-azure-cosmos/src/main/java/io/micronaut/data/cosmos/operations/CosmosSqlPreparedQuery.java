@@ -20,6 +20,7 @@ import io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.model.runtime.QueryParameterBinding;
+import io.micronaut.data.model.runtime.StoredQuery;
 import io.micronaut.data.runtime.operations.internal.sql.DefaultSqlPreparedQuery;
 
 /**
@@ -61,6 +62,21 @@ final class CosmosSqlPreparedQuery<E, R> extends DefaultSqlPreparedQuery<E, R> {
             }
             this.query = q.toString();
         }
+    }
+
+    /**
+     * @return the update statement for update operation
+     */
+    public String getUpdate() {
+        CosmosSqlStoredQuery cosmosSqlStoredQuery = getCosmosSqlStoredQuery(sqlStoredQuery);
+        return cosmosSqlStoredQuery.getUpdate();
+    }
+
+    private <E, R> CosmosSqlStoredQuery<E, R> getCosmosSqlStoredQuery(StoredQuery<E, R> storedQuery) {
+        if (sqlStoredQuery instanceof CosmosSqlStoredQuery) {
+            return (CosmosSqlStoredQuery<E, R>) sqlStoredQuery;
+        }
+        throw new IllegalStateException("Expected for stored query query to be of type: CosmosSqlStoredQuery got: " + sqlStoredQuery.getClass().getName());
     }
 
     private void appendExpandedParameter(StringBuilder q, QueryParameterBinding parameter, String parameterName) {

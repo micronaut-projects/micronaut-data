@@ -69,7 +69,9 @@ final class CosmosDatabaseInitializer {
     void initialize(CosmosClient cosmosClient,
                            RuntimeEntityRegistry runtimeEntityRegistry,
                            CosmosDatabaseConfiguration configuration) {
-        LOG.debug("Cosmos Db Initialization Start");
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Cosmos Db Initialization Start");
+        }
         StorageUpdatePolicy storageUpdatePolicy = configuration.getUpdatePolicy();
         CosmosDatabase cosmosDatabase;
         if (StorageUpdatePolicy.NONE.equals(storageUpdatePolicy)) {
@@ -93,7 +95,9 @@ final class CosmosDatabaseInitializer {
             }
         }
         initContainers(configuration, cosmosDatabase, runtimeEntityRegistry);
-        LOG.debug("Cosmos Db Initialization Finish");
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Cosmos Db Initialization Finish");
+        }
     }
 
     private RuntimePersistentEntity<?>[] getPersistentEntities(CosmosDatabaseConfiguration configuration, RuntimeEntityRegistry runtimeEntityRegistry) {

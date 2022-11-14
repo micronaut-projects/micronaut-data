@@ -22,6 +22,7 @@ import io.micronaut.data.azure.entities.Child
 import io.micronaut.data.azure.entities.CosmosBook
 import io.micronaut.data.azure.entities.Family
 import io.micronaut.data.azure.entities.Pet
+import io.micronaut.data.azure.entities.PetType
 import io.micronaut.data.azure.entities.UUIDEntity
 import io.micronaut.data.azure.entities.User
 import io.micronaut.data.azure.entities.XBook
@@ -34,10 +35,15 @@ import io.micronaut.data.cosmos.config.CosmosDatabaseConfiguration
 import io.micronaut.data.cosmos.config.StorageUpdatePolicy
 import io.micronaut.data.exceptions.OptimisticLockException
 import io.micronaut.data.model.Pageable
+import io.micronaut.data.repository.jpa.criteria.UpdateSpecification
 import io.micronaut.serde.Decoder
 import io.micronaut.serde.Deserializer
 import io.micronaut.serde.SerdeRegistry
 import io.micronaut.serde.jackson.JacksonDecoder
+import jakarta.persistence.criteria.CriteriaBuilder
+import jakarta.persistence.criteria.CriteriaUpdate
+import jakarta.persistence.criteria.Predicate
+import jakarta.persistence.criteria.Root
 import spock.lang.AutoCleanup
 import spock.lang.IgnoreIf
 import spock.lang.Shared
@@ -47,13 +53,13 @@ import static io.micronaut.data.azure.repositories.FamilyRepository.Specificatio
 import static io.micronaut.data.azure.repositories.FamilyRepository.Specifications.idsInAndNotIn
 import static io.micronaut.data.azure.repositories.FamilyRepository.Specifications.idsNotIn
 import static io.micronaut.data.azure.repositories.FamilyRepository.Specifications.lastNameEquals
-
+import static io.micronaut.data.azure.repositories.FamilyRepository.Specifications.registeredEquals
 
 @IgnoreIf({ env["GITHUB_WORKFLOW"] })
 class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties {
 
-    private static final String FAMILY1_ID = "AndersenFamily"
-    private static final String FAMILY2_ID = "WakefieldFamily"
+    private static final Family ANDERSEN_FAMILY = createAndersenFamily()
+    private static final Family WAKEFIELD_FAMILY = createWakefieldFamily()
 
     @AutoCleanup
     @Shared
@@ -69,9 +75,9 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
 
     UserRepository userRepository = context.getBean(UserRepository)
 
-    Family createSampleFamily1() {
+    static Family createAndersenFamily() {
         def family = new Family()
-        family.id = FAMILY1_ID
+        family.id = "AndersenFamily"
         family.lastName = "Andersen"
         def address = new Address()
         address.city = "Seattle"
@@ -84,20 +90,20 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
         child1.grade = 5
         def pet1 = new Pet()
         pet1.givenName = "Sadik"
-        pet1.type = "cat"
+        pet1.type = PetType.CAT
         child1.pets.add(pet1)
         def pet2 = new Pet()
         pet2.givenName = "Leo"
-        pet2.type = "dog"
+        pet2.type = PetType.DOG
         child1.pets.add(pet2)
         family.children.add(child1)
         return family
     }
 
-    Family createSampleFamily2() {
+    static Family createWakefieldFamily() {
         def family = new Family()
-        family.id = FAMILY2_ID
-        family.lastName = "Johnson"
+        family.id = "WakefieldFamily"
+        family.lastName = "Wakefield"
         def address = new Address()
         address.city = "NY"
         address.county = "Manhattan"
@@ -114,17 +120,15 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
         child2.grade = 8
         def pet1 = new Pet()
         pet1.givenName = "Robbie"
-        pet1.type = "hamster"
+        pet1.type = PetType.HAMSTER
         child2.pets.add(pet1)
         family.children.add(child2)
         return family
     }
 
     void saveSampleFamilies() {
-        def family1 = createSampleFamily1()
-        familyRepository.save(family1)
-        def family2 = createSampleFamily2()
-        familyRepository.save(family2)
+        familyRepository.save(createAndersenFamily())
+        familyRepository.save(createWakefieldFamily())
     }
 
     def "test find by id"() {
@@ -182,7 +186,7 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
             loadedBook1.created
             loadedBook1.lastUpdated
             loadedBook1.itemPrice
-            loadedBook1.itemPrice.price == 199.99
+            loadedBook1.itemPrice.price == Double.valueOf(199.99)
             loadedBook2
             loadedBook2.title == "Ice And Fire"
             loadedBook2.created
@@ -251,27 +255,31 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
         given:
             saveSampleFamilies()
         when:
-            def optFamily1 = familyRepository.findById(FAMILY1_ID)
-            def optFamily2 = familyRepository.findById(FAMILY2_ID)
+            def optFamily1 = familyRepository.findById(ANDERSEN_FAMILY.id)
+            def optFamily2 = familyRepository.findById(WAKEFIELD_FAMILY.id)
         then:
             optFamily1.present
-            optFamily1.get().id == FAMILY1_ID
-            optFamily1.get().children.size() == 1
+            optFamily1.get().id == ANDERSEN_FAMILY.id
+            optFamily1.get().children.size() == ANDERSEN_FAMILY.children.size()
             optFamily1.get().address
             optFamily2.present
-            optFamily2.get().id == FAMILY2_ID
-            optFamily2.get().children.size() == 2
+            optFamily2.get().id == WAKEFIELD_FAMILY.id
+            optFamily2.get().children.size() == WAKEFIELD_FAMILY.children.size()
             optFamily2.get().address
         when:
             def families = familyRepository.findByLastNameLike("Ander%")
         then:
             families.size() > 0
-            families[0].id == FAMILY1_ID
+            families[0].id == ANDERSEN_FAMILY.id
         when:
-            families = familyRepository.findByChildrenPetsType("cat")
+            families = familyRepository.findByChildrenPetsType(PetType.CAT)
         then:
             families.size() > 0
-            families[0].id == FAMILY1_ID
+            families[0].id == ANDERSEN_FAMILY.id
+        when:
+            families = familyRepository.findByChildrenFirstNameIn(Arrays.asList(ANDERSEN_FAMILY.children[0].firstName, WAKEFIELD_FAMILY.children[0].firstName))
+        then:
+            families.size() == 2
         when:
             def children = familyRepository.findChildrenByChildrenPetsGivenName("Robbie")
         then:
@@ -295,13 +303,13 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
             lastOrderedRegisteredDate == optFamily2.get().registeredDate
         when:
             familyRepository.updateByAddressCounty(optFamily2.get().address.county, false, null)
-            optFamily2 = familyRepository.findById(FAMILY2_ID)
+            optFamily2 = familyRepository.findById(WAKEFIELD_FAMILY.id)
         then:
             optFamily2.present
             !optFamily2.get().registeredDate
             !optFamily2.get().registered
         when:
-            def exists = familyRepository.existsById(FAMILY1_ID)
+            def exists = familyRepository.existsById(ANDERSEN_FAMILY.id)
         then:
             exists
         when:
@@ -309,23 +317,35 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
         then:
             !exists
         when:
-            exists = familyRepository.existsByIdAndRegistered(FAMILY1_ID, true)
+            exists = familyRepository.existsByIdAndRegistered(ANDERSEN_FAMILY.id, true)
         then:
             !exists
         when:
-            exists = familyRepository.existsByIdAndRegistered(FAMILY1_ID, false)
+            exists = familyRepository.existsByIdAndRegistered(ANDERSEN_FAMILY.id, false)
         then:
             exists
+        when:
+            def updated = familyRepository.updateAll(new UpdateSpecification<Family>() {
+                @Override
+                Predicate toPredicate(Root<Family> root, CriteriaUpdate<?> query, CriteriaBuilder criteriaBuilder) {
+                    query.set("registered", true)
+                    return criteriaBuilder.equal(root.get("registered"), false)
+                }
+            })
+        then:
+            updated == 2
+            familyRepository.count(registeredEquals(true)) == 2
+            familyRepository.count(registeredEquals(false)) == 0
         when:
             def cnt = familyRepository.count()
         then:
             cnt >= 2
         when:
-            cnt = familyRepository.countByRegistered(false)
+            cnt = familyRepository.countByRegistered(true)
         then:
             cnt >= 2
         when:"Using raw query for update is not supported"
-            familyRepository.updateLastName(FAMILY1_ID, "New Last Name")
+            familyRepository.updateLastName(ANDERSEN_FAMILY.id, "New Last Name")
         then:
             thrown(IllegalStateException)
         when:
@@ -333,26 +353,26 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
             address.city = "LA"
             address.state = "CA"
             address.county = "Los Angeles"
-            familyRepository.updateAddress(FAMILY1_ID, address)
-            optFamily1 = familyRepository.findById(FAMILY1_ID)
+            familyRepository.updateAddress(ANDERSEN_FAMILY.id, address)
+            optFamily1 = familyRepository.findById(ANDERSEN_FAMILY.id)
         then:
             optFamily1.get().address.county == "Los Angeles"
             optFamily1.get().address.city == "LA"
             optFamily1.get().address.state == "CA"
         when:
-            familyRepository.updateRegistered(FAMILY1_ID, true)
-            optFamily1 = familyRepository.findById(FAMILY1_ID)
+            familyRepository.updateRegistered(ANDERSEN_FAMILY.id, true)
+            optFamily1 = familyRepository.findById(ANDERSEN_FAMILY.id)
         then:
             optFamily1.get().registered
         when:
-            familyRepository.updateRegistered(FAMILY2_ID, true, new PartitionKey(optFamily2.get().getLastName()))
-            optFamily2 = familyRepository.findById(FAMILY2_ID)
+            familyRepository.updateRegistered(WAKEFIELD_FAMILY.id, true, new PartitionKey(optFamily2.get().getLastName()))
+            optFamily2 = familyRepository.findById(WAKEFIELD_FAMILY.id)
         then:
             optFamily2.get().registered
         when:
             optFamily1.get().address.state = "FL"
             familyRepository.update(optFamily1.get())
-            optFamily1 = familyRepository.findById(FAMILY1_ID)
+            optFamily1 = familyRepository.findById(ANDERSEN_FAMILY.id)
         then:
             optFamily1.get().address.state == "FL"
         when:
@@ -363,58 +383,58 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
             optFamily2.get().children.add(newChild)
             optFamily1.get().address.state = "NY"
             familyRepository.updateAll(Arrays.asList(optFamily1.get(), optFamily2.get()))
-            optFamily1 = familyRepository.findById(FAMILY1_ID)
-            optFamily2 = familyRepository.findById(FAMILY2_ID)
+            optFamily1 = familyRepository.findById(ANDERSEN_FAMILY.id)
+            optFamily2 = familyRepository.findById(WAKEFIELD_FAMILY.id)
         then:
-            optFamily2.get().children.size() == 3
+            optFamily2.get().children.size() == WAKEFIELD_FAMILY.children.size() + 1
             optFamily1.get().address.state == "NY"
         when:"Using raw query for delete is not supported"
             familyRepository.deleteByRegistered(false)
         then:
             thrown(IllegalStateException)
         when:
-            familyRepository.deleteById(FAMILY2_ID, new PartitionKey(optFamily2.get().lastName))
-            optFamily2 = familyRepository.findById(FAMILY2_ID)
+            familyRepository.deleteById(WAKEFIELD_FAMILY.id, new PartitionKey(optFamily2.get().lastName))
+            optFamily2 = familyRepository.findById(WAKEFIELD_FAMILY.id)
         then:
             !optFamily2.present
         when:
-            familyRepository.delete(familyRepository.findById(FAMILY1_ID).get())
-            optFamily1 = familyRepository.findById(FAMILY1_ID)
+            familyRepository.delete(familyRepository.findById(ANDERSEN_FAMILY.id).get())
+            optFamily1 = familyRepository.findById(ANDERSEN_FAMILY.id)
         then:
             !optFamily1.present
         when:
-            familyRepository.saveAll(Arrays.asList(createSampleFamily1(), createSampleFamily2()))
-            optFamily1 = familyRepository.findById(FAMILY1_ID)
-            optFamily2 = familyRepository.findById(FAMILY2_ID)
+            familyRepository.saveAll(Arrays.asList(createAndersenFamily(), createWakefieldFamily()))
+            optFamily1 = familyRepository.findById(ANDERSEN_FAMILY.id)
+            optFamily2 = familyRepository.findById(WAKEFIELD_FAMILY.id)
         then:
             optFamily1.present
             optFamily2.present
         when:
             familyRepository.deleteAll()
-            optFamily1 = familyRepository.findById(FAMILY1_ID)
-            optFamily2 = familyRepository.findById(FAMILY2_ID)
+            optFamily1 = familyRepository.findById(ANDERSEN_FAMILY.id)
+            optFamily2 = familyRepository.findById(WAKEFIELD_FAMILY.id)
         then:
             !optFamily1.present
             !optFamily2.present
         when:
             saveSampleFamilies()
-            optFamily1 = familyRepository.findById(FAMILY1_ID)
-            optFamily2 = familyRepository.findById(FAMILY2_ID)
+            optFamily1 = familyRepository.findById(ANDERSEN_FAMILY.id)
+            optFamily2 = familyRepository.findById(WAKEFIELD_FAMILY.id)
         then:
             optFamily1.present
             optFamily2.present
         when:
             familyRepository.deleteAll(Arrays.asList(optFamily1.get(), optFamily2.get()))
-            optFamily1 = familyRepository.findById(FAMILY1_ID)
-            optFamily2 = familyRepository.findById(FAMILY2_ID)
+            optFamily1 = familyRepository.findById(ANDERSEN_FAMILY.id)
+            optFamily2 = familyRepository.findById(WAKEFIELD_FAMILY.id)
         then:
             !optFamily1.present
             !optFamily2.present
         when:
-            familyRepository.save(createSampleFamily1())
-            def lastName = familyRepository.findById(FAMILY1_ID).get().lastName
+            familyRepository.save(createAndersenFamily())
+            def lastName = familyRepository.findById(ANDERSEN_FAMILY.id).get().lastName
             familyRepository.deleteByLastName(lastName, new PartitionKey(lastName))
-            optFamily1 = familyRepository.findById(FAMILY1_ID)
+            optFamily1 = familyRepository.findById(ANDERSEN_FAMILY.id)
         then:
             !optFamily1.present
         cleanup:
@@ -427,14 +447,14 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
         then:
             familyRepository.findOne(lastNameEquals("Andersen")).isPresent()
             !familyRepository.findOne(lastNameEquals(UUID.randomUUID().toString())).isPresent()
-            familyRepository.findAll(idsIn(FAMILY1_ID, FAMILY2_ID)).size() == 2
-            familyRepository.findAll(idsIn(FAMILY2_ID)).size() == 1
-            familyRepository.findByIdIn(Arrays.asList(FAMILY1_ID, FAMILY2_ID)).size() == 2
-            familyRepository.findByIdIn(Arrays.asList(FAMILY1_ID)).size() == 1
-            familyRepository.findAll(idsNotIn(FAMILY1_ID)).size() == 1
-            familyRepository.findByIdNotIn(Arrays.asList(FAMILY1_ID)).size() == 1
-            familyRepository.findAll(idsInAndNotIn(Arrays.asList(FAMILY1_ID, FAMILY2_ID), Arrays.asList(UUID.randomUUID().toString()))).size() == 2
-            familyRepository.findAll(idsInAndNotIn(Arrays.asList(UUID.randomUUID().toString(), UUID.randomUUID().toString()), Arrays.asList(FAMILY1_ID, FAMILY2_ID))).size() == 0
+            familyRepository.findAll(idsIn(ANDERSEN_FAMILY.id, WAKEFIELD_FAMILY.id)).size() == 2
+            familyRepository.findAll(idsIn(ANDERSEN_FAMILY.id)).size() == 1
+            familyRepository.findByIdIn(Arrays.asList(ANDERSEN_FAMILY.id, WAKEFIELD_FAMILY.id)).size() == 2
+            familyRepository.findByIdIn(Arrays.asList(ANDERSEN_FAMILY.id)).size() == 1
+            familyRepository.findAll(idsNotIn(ANDERSEN_FAMILY.id)).size() == 1
+            familyRepository.findByIdNotIn(Arrays.asList(ANDERSEN_FAMILY.id)).size() == 1
+            familyRepository.findAll(idsInAndNotIn(Arrays.asList(ANDERSEN_FAMILY.id, WAKEFIELD_FAMILY.id), Arrays.asList(UUID.randomUUID().toString()))).size() == 2
+            familyRepository.findAll(idsInAndNotIn(Arrays.asList(UUID.randomUUID().toString(), UUID.randomUUID().toString()), Arrays.asList(ANDERSEN_FAMILY.id, WAKEFIELD_FAMILY.id))).size() == 0
         cleanup:
             familyRepository.deleteAll()
     }

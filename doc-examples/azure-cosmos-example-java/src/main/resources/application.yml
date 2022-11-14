@@ -1,0 +1,14 @@
+micronaut:
+  application:
+    name: example
+azure:
+  cosmos:
+    default-gateway-mode: true
+    endpoint-discovery-enabled: false
+    endpoint: https://localhost:8081
+    key: ''
+    database:
+      throughput-settings:
+        request-units: 1000
+        auto-scale: false
+      database-name: testDb

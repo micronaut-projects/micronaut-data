@@ -61,6 +61,7 @@ interface CosmosBookRepository extends GenericRepository<Book, String> {
 import io.micronaut.data.cosmos.annotation.CosmosRepository;
 import io.micronaut.data.azure.entities.Family;
 import io.micronaut.data.azure.entities.Child;
+import io.micronaut.data.azure.entities.PetType;
 import java.util.Optional;
 
 @CosmosRepository
@@ -71,14 +72,10 @@ interface FamilyRepository extends GenericRepository<Family, String> {
     @Join(value = "children", alias = "c")
     List<Family> findByAddressStateOrderByChildrenFirstName(String state);
 
-    @Join(value = "children")
     List<Family> findByChildrenFirstName(String firstName);
 
-    @Join(value = "children")
-    @Join(value = "children.pets")
-    List<Family> findByChildrenPetsGivenNameOrderByChildrenPetsType(String type);
+    List<Family> findByChildrenPetsGivenNameOrderByChildrenFirstName(String givenName);
 
-    @Join(value = "children")
     List<Child> findChildrenByChildrenPetsGivenName(String givenName);
 
     List<Family> findByIdNotIn(List<String> ids);
@@ -96,7 +93,7 @@ interface FamilyRepository extends GenericRepository<Family, String> {
         def findByIdQuery = getQuery(repository.getRequiredMethod("findById", String))
         def findByAddressStateQuery = getQuery(repository.getRequiredMethod("findByAddressStateOrderByChildrenFirstName", String))
         def findByChildrenFirstNameQuery = getQuery(repository.getRequiredMethod("findByChildrenFirstName", String))
-        def findByChildrenPetsGivenNameOrderByChildrenPetsTypeQuery = getQuery(repository.getRequiredMethod("findByChildrenPetsGivenNameOrderByChildrenPetsType", String))
+        def findByChildrenPetsGivenNameOrderByChildrenFirstNameQuery = getQuery(repository.getRequiredMethod("findByChildrenPetsGivenNameOrderByChildrenFirstName", String))
         def findChildrenByChildrenPetsGivenNameQuery = getQuery(repository.getRequiredMethod("findChildrenByChildrenPetsGivenName", String))
         def findByIdNotInQuery = getQuery(repository.getRequiredMethod("findByIdNotIn", List<String>))
         def findByTagsArrayContainsQuery = getQuery(repository.getRequiredMethod("findByTagsArrayContains", String))
@@ -106,7 +103,7 @@ interface FamilyRepository extends GenericRepository<Family, String> {
         findByIdQuery == "SELECT DISTINCT VALUE family_ FROM family family_ WHERE (family_.id = @p1)"
         findByAddressStateQuery == "SELECT DISTINCT VALUE family_ FROM family family_ JOIN c IN family_.children WHERE (family_.address.state = @p1) ORDER BY c.firstName ASC"
         findByChildrenFirstNameQuery == "SELECT DISTINCT VALUE family_ FROM family family_ JOIN family_children_ IN family_.children WHERE (family_children_.firstName = @p1)"
-        findByChildrenPetsGivenNameOrderByChildrenPetsTypeQuery == "SELECT DISTINCT VALUE family_ FROM family family_ JOIN family_children_ IN family_.children JOIN family_children_pets_ IN family_children_.pets WHERE (family_children_pets_.givenName = @p1) ORDER BY family_children_pets_.type ASC"
+        findByChildrenPetsGivenNameOrderByChildrenFirstNameQuery == "SELECT DISTINCT VALUE family_ FROM family family_ JOIN family_children_ IN family_.children JOIN family_children_pets_ IN family_children_.pets WHERE (family_children_pets_.givenName = @p1) ORDER BY family_children_.firstName ASC"
         findChildrenByChildrenPetsGivenNameQuery == "SELECT family_children_.firstName,family_children_.gender,family_children_.grade FROM family family_ JOIN family_children_ IN family_.children JOIN family_children_pets_ IN family_children_.pets WHERE (family_children_pets_.givenName = @p1)"
         findByIdNotInQuery == "SELECT DISTINCT VALUE family_ FROM family family_ WHERE (family_.id NOT IN (@p1))"
         findByTagsArrayContainsQuery == "SELECT DISTINCT VALUE family_ FROM family family_ WHERE (ARRAY_CONTAINS(family_.tags,@p1,true))"

@@ -7,7 +7,7 @@ public class Pet {
 
     private String givenName;
 
-    private String type;
+    private PetType type;
 
     public String getGivenName() {
         return givenName;
@@ -17,11 +17,12 @@ public class Pet {
         this.givenName = givenName;
     }
 
-    public String getType() {
+    public PetType getType() {
         return type;
     }
 
-    public void setType(String type) {
+    public void setType(PetType type) {
         this.type = type;
     }
 }
+

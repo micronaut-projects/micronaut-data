@@ -10,6 +10,7 @@ import io.micronaut.data.annotation.Query;
 import io.micronaut.data.azure.entities.Address;
 import io.micronaut.data.azure.entities.Child;
 import io.micronaut.data.azure.entities.Family;
+import io.micronaut.data.azure.entities.PetType;
 import io.micronaut.data.cosmos.annotation.CosmosRepository;
 import io.micronaut.data.repository.PageableRepository;
 import io.micronaut.data.repository.jpa.JpaSpecificationExecutor;
@@ -17,16 +18,14 @@ import io.micronaut.data.repository.jpa.criteria.PredicateSpecification;
 
 import java.util.Arrays;
 import java.util.Date;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 
 @CosmosRepository
 public abstract class FamilyRepository implements PageableRepository<Family, String>, JpaSpecificationExecutor<Family> {
 
-    @Join(value = "children", alias = "c")
-    @Nullable
-    public abstract Optional<Family> findById(String id);
+    @NonNull
+    public abstract Optional<Family> findById(@NonNull String id);
 
     public abstract void updateRegistered(@Id String id, boolean registered);
 
@@ -60,11 +59,9 @@ public abstract class FamilyRepository implements PageableRepository<Family, Str
 
     public abstract void updateByAddressCounty(String county, boolean registered, @Nullable Date registeredDate);
 
-    @Join(value = "children")
-    @Join(value = "children.pets", alias = "p")
-    public abstract List<Family> findByChildrenPetsType(String type);
+    @Join("children.pets")
+    public abstract List<Family> findByChildrenPetsType(PetType type);
 
-    @Join(value = "children")
     public abstract List<Child> findChildrenByChildrenPetsGivenName(String name);
 
     public abstract List<Family> findByIdIn(List<String> ids);
@@ -72,6 +69,9 @@ public abstract class FamilyRepository implements PageableRepository<Family, Str
     public abstract List<Family> findByIdNotIn(List<String> ids);
 
     public abstract List<Family> findByLastNameLike(String lastName);
+
+    @Query("SELECT DISTINCT VALUE f FROM family f JOIN c IN f.children WHERE c.firstName IN (:firstNames)")
+    public abstract List<Family> findByChildrenFirstNameIn(List<String> firstNames);
 
     static class Specifications {
 
@@ -91,5 +91,8 @@ public abstract class FamilyRepository implements PageableRepository<Family, Str
             return (root, criteriaBuilder) -> criteriaBuilder.and(root.get("id").in(idsIn), root.get("id").in(idsNotIn).not());
         }
 
+        public static PredicateSpecification<Family> registeredEquals(boolean registered) {
+            return (root, criteriaBuilder) -> criteriaBuilder.equal(root.get("registered"), registered);
+        }
     }
 }

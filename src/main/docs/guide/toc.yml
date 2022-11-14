@@ -112,6 +112,20 @@ mongo:
     mongoCriteriaExecuteDelete: Deleting
     mongoOtherRepositoryVariations: Other repository variations
   mongoOptimisticLocking: Optimistic locking
+azureCosmos:
+  title: Micronaut Data Azure Cosmos
+  azureCosmosQuickStart: Quick Start
+  azureCosmosConfiguration: Configuration
+  azureCosmosRepositories:
+    title: Repositories
+  azureCosmosCriteriaSpecifications:
+    title: Repositories with Criteria API
+    azureCosmosCriteriaExecuteQuery: Querying
+    azureCosmosCriteriaExecuteUpdate: Updating
+    azureCosmosCriteriaExecuteDelete: Deleting
+  azureCosmosSpecifics: Azure Cosmos Specifics
+  azureCosmosAttributeConverter: Using Attribute Converter
+  azureCosmosOptimisticLocking: Optimistic locking
 howItWorks:
   title: How Micronaut Data Works
 graal:
