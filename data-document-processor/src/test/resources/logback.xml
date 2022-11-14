@@ -8,9 +8,8 @@
         </encoder>
     </appender>
 
-    <root level="error">
+    <root level="warn">
         <appender-ref ref="STDOUT" />
     </root>
     <logger name="io.micronaut" level="info" />
-    <logger name="org.hibernate" level="info"/>
 </configuration>
