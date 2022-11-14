@@ -145,7 +145,9 @@ public final class CosmosEntity {
             }
             return partitionKey;
         }
-        LOG.info("Fallback to default partition key value since none is defined for entity {}", runtimePersistentEntity.getPersistedName());
+        if (LOG.isInfoEnabled()) {
+            LOG.info("Fallback to default partition key value since none is defined for entity {}", runtimePersistentEntity.getPersistedName());
+        }
         return Constants.NO_PARTITION_KEY;
     }
 

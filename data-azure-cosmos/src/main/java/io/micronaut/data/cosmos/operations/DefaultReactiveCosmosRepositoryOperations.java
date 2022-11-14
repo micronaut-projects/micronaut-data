@@ -368,7 +368,9 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
             update = getUpdate(preparedQuery);
         }
         if (update == null) {
-            LOG.warn("Could not resolve update properties for Cosmos Db entity {} and query [{}]", persistentEntity.getPersistedName(), preparedQuery.getQuery());
+            if (LOG.isWarnEnabled()) {
+                LOG.warn("Could not resolve update properties for Cosmos Db entity {} and query [{}]", persistentEntity.getPersistedName(), preparedQuery.getQuery());
+            }
             return Mono.just(0);
         }
         List<String> updatePropertyList = Arrays.asList(update.split(","));
@@ -376,7 +378,9 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
         SqlQuerySpec querySpec = new SqlQuerySpec(preparedQuery.getQuery(), parameterBinder.bindParameters(preparedQuery));
         Map<String, Object> propertiesToUpdate = parameterBinder.getPropertiesToUpdate();
         if (propertiesToUpdate.isEmpty()) {
-            LOG.warn("No properties found to be updated for Cosmos Db entity {} and query [{}]", persistentEntity.getPersistedName(), preparedQuery.getQuery());
+            if (LOG.isWarnEnabled()) {
+                LOG.warn("No properties found to be updated for Cosmos Db entity {} and query [{}]", persistentEntity.getPersistedName(), preparedQuery.getQuery());
+            }
             return Mono.just(0);
         }
         CosmosAsyncContainer container = getContainer(persistentEntity);
@@ -919,7 +923,9 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
                     Mono<CosmosItemResponse<ObjectNode>> response = container.replaceItem(item, id, partitionKey, requestOptions);
                     return Mono.from(response).map(updateOneResult -> {
                         if (updateOneResult.getStatusCode() != HttpResponseStatus.OK.code()) {
-                            LOG.debug("Failed to update entity with id {} in container {}", id, container.getId());
+                            if (LOG.isWarnEnabled()) {
+                                LOG.warn("Failed to update entity with id {} in container {}", id, container.getId());
+                            }
                             d.rowsUpdated = 0;
                         } else {
                             d.rowsUpdated = 1;
