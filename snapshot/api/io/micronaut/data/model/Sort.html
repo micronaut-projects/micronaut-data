@@ -127,7 +127,8 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <dd><code><a href="Pageable.html" title="interface in io.micronaut.data.model">Pageable</a></code></dd>
 </dl>
 <hr>
-<pre>public interface <span class="typeNameLabel">Sort</span></pre>
+<pre>@DefaultImplementation(io.micronaut.data.model.DefaultSort.class)
+public interface <span class="typeNameLabel">Sort</span></pre>
 <div class="block">An interface for objects that can be sorted. Sorted instances are immutable and all mutating operations on this interface return a new instance.</div>
 <dl>
 <dt><span class="simpleTagLabel">Since:</span></dt>

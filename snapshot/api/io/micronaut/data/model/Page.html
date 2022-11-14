@@ -131,7 +131,8 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <dd><code>java.lang.Iterable&lt;T&gt;</code>, <code><a href="Slice.html" title="interface in io.micronaut.data.model">Slice</a>&lt;T&gt;</code></dd>
 </dl>
 <hr>
-<pre>public interface <span class="typeNameLabel">Page&lt;T&gt;</span>
+<pre>@DefaultImplementation(io.micronaut.data.model.DefaultPage.class)
+public interface <span class="typeNameLabel">Page&lt;T&gt;</span>
 extends <a href="Slice.html" title="interface in io.micronaut.data.model">Slice</a>&lt;T&gt;</pre>
 <div class="block">Inspired by the Spring Data's <code>Page</code> and GORM's <code>PagedResultList</code>, this models a type that supports
  pagination operations.
