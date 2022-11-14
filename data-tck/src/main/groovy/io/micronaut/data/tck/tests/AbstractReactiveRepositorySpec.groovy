@@ -37,6 +37,9 @@ import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Stepwise
 
+import java.util.stream.Collectors
+import java.util.stream.IntStream
+
 import static io.micronaut.data.repository.jpa.criteria.QuerySpecification.where
 import static io.micronaut.data.tck.repositories.PersonRepository.Specifications.nameEquals
 
@@ -75,6 +78,14 @@ abstract class AbstractReactiveRepositorySpec extends Specification {
     def cleanup() {
         personRepository.deleteAll().block()
         studentRepository.deleteAll().blockingGet()
+    }
+
+    void "test big save all"() {
+        when:
+            cleanup()
+            personRepository.saveAll(IntStream.range(0, 10000).mapToObj(i -> new Person(name: "Jeff" + i)).collect(Collectors.toList())).collectList().block()
+        then:
+            personRepository.count().block() == 10000
     }
 
     void "test no value"() {
