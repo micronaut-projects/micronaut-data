@@ -127,7 +127,6 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity impleme
             this.constructorArguments[i] = prop;
         }
         this.aliasName = super.getAliasName();
-        this.cascadedTypes = cascades(this);
     }
 
     private static EnumSet<Relation.Cascade> cascades(RuntimePersistentEntity<?> persistentEntity) {
@@ -168,7 +167,7 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity impleme
      * @return True if it does
      */
     public boolean cascadesPersist() {
-        return cascadedTypes.contains(Relation.Cascade.PERSIST);
+        return getCascadedTypes().contains(Relation.Cascade.PERSIST);
     }
 
     /**
@@ -177,7 +176,14 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity impleme
      * @return True if it does
      */
     public boolean cascadesUpdate() {
-        return cascadedTypes.contains(Relation.Cascade.UPDATE);
+        return getCascadedTypes().contains(Relation.Cascade.UPDATE);
+    }
+
+    private EnumSet<Relation.Cascade> getCascadedTypes() {
+        if (cascadedTypes == null) {
+            cascadedTypes = cascades(this);
+        }
+        return cascadedTypes;
     }
 
     /**
