@@ -173,6 +173,13 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
  of position parameters.</div>
 </td>
 </tr>
+<tr class="altColor">
+<td class="colFirst"><code>java.lang.String</code></td>
+<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#positionalParameterName()">positionalParameterName</a></span></code></th>
+<td class="colLast">
+<div class="block">A String format (see <code>String.format(String, Object...)</code> to format the parameter name.</div>
+</td>
+</tr>
 </table>
 </li>
 </ul>
@@ -217,10 +224,38 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <h4>positionalParameterFormat</h4>
 <pre>java.lang.String&nbsp;positionalParameterFormat</pre>
 <div class="block">A String format (see <code>String.format(String, Object...)</code> to format the appearance
- of position parameters. It receives exactly one parameter which is the parameter index (starting from 1).</div>
+ of position parameters. It receives exactly one parameter which is the parameter index (starting from 1).
+ <p>
+ NOTE: If <a href="#positionalParameterName()"><code>positionalParameterName()</code></a> is specified, the formatter will receive the custom name.</div>
 <dl>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>The position parameter format.</dd>
+</dl>
+<dl>
+<dt>Default:</dt>
+<dd>"?"</dd>
+</dl>
+</li>
+</ul>
+</li>
+</ul>
+</section>
+<section>
+<ul class="blockList">
+<li class="blockList"><a id="positionalParameterName()">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>positionalParameterName</h4>
+<pre>java.lang.String&nbsp;positionalParameterName</pre>
+<div class="block">A String format (see <code>String.format(String, Object...)</code> to format the parameter name.
+ It receives exactly one parameter which is the parameter index (starting from 1).</div>
+<dl>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>The position parameter name.</dd>
+<dt><span class="simpleTagLabel">Since:</span></dt>
+<dd>3.8.0</dd>
 </dl>
 <dl>
 <dt>Default:</dt>

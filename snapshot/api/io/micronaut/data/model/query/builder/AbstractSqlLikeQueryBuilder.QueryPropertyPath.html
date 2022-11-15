@@ -27,7 +27,7 @@
     catch(err) {
     }
 //-->
-var data = {"i0":10,"i1":10,"i2":10,"i3":10,"i4":10,"i5":10,"i6":10};
+var data = {"i0":10,"i1":10,"i2":10,"i3":10,"i4":10,"i5":10,"i6":10,"i7":10};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],8:["t4","Concrete Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -208,11 +208,16 @@ extends java.lang.Object</pre>
 <td class="colLast">&nbsp;</td>
 </tr>
 <tr id="i5" class="rowColor">
+<td class="colFirst"><code><a href="../../PersistentPropertyPath.html" title="class in io.micronaut.data.model">PersistentPropertyPath</a></code></td>
+<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getPropertyPath()">getPropertyPath</a></span>()</code></th>
+<td class="colLast">&nbsp;</td>
+</tr>
+<tr id="i6" class="altColor">
 <td class="colFirst"><code>java.lang.String</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getTableAlias()">getTableAlias</a></span>()</code></th>
 <td class="colLast">&nbsp;</td>
 </tr>
-<tr id="i6" class="altColor">
+<tr id="i7" class="rowColor">
 <td class="colFirst"><code>boolean</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#shouldEscape()">shouldEscape</a></span>()</code></th>
 <td class="colLast">&nbsp;</td>
@@ -354,13 +359,26 @@ public&nbsp;java.lang.String&nbsp;getTableAlias()</pre>
 <a id="shouldEscape()">
 <!--   -->
 </a>
-<ul class="blockListLast">
+<ul class="blockList">
 <li class="blockList">
 <h4>shouldEscape</h4>
 <pre class="methodSignature">public&nbsp;boolean&nbsp;shouldEscape()</pre>
 <dl>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>should escape</dd>
+</dl>
+</li>
+</ul>
+<a id="getPropertyPath()">
+<!--   -->
+</a>
+<ul class="blockListLast">
+<li class="blockList">
+<h4>getPropertyPath</h4>
+<pre class="methodSignature">public&nbsp;<a href="../../PersistentPropertyPath.html" title="class in io.micronaut.data.model">PersistentPropertyPath</a>&nbsp;getPropertyPath()</pre>
+<dl>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>the persistent property path</dd>
 </dl>
 </li>
 </ul>

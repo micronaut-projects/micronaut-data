@@ -27,7 +27,7 @@
     catch(err) {
     }
 //-->
-var data = {"i0":9,"i1":9,"i2":9,"i3":9,"i4":9,"i5":9,"i6":9,"i7":9,"i8":9,"i9":9,"i10":9,"i11":9,"i12":9,"i13":9,"i14":9,"i15":9,"i16":9,"i17":9,"i18":9,"i19":9,"i20":9,"i21":9,"i22":9,"i23":9,"i24":9,"i25":9,"i26":9,"i27":9,"i28":9,"i29":9,"i30":9,"i31":9,"i32":9,"i33":9,"i34":9,"i35":9,"i36":9,"i37":9,"i38":9,"i39":9};
+var data = {"i0":9,"i1":9,"i2":9,"i3":9,"i4":9,"i5":9,"i6":9,"i7":9,"i8":9,"i9":9,"i10":9,"i11":9,"i12":9,"i13":9,"i14":9,"i15":9,"i16":9,"i17":9,"i18":9,"i19":9,"i20":9,"i21":9,"i22":9,"i23":9,"i24":9,"i25":9,"i26":9,"i27":9,"i28":9,"i29":9,"i30":9,"i31":9,"i32":9,"i33":9,"i34":9,"i35":9,"i36":9,"i37":9,"i38":9,"i39":9,"i40":9};
 var tabs = {65535:["t0","All Methods"],1:["t1","Static Methods"],8:["t4","Concrete Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -190,6 +190,14 @@ extends java.lang.Object</pre>
 </td>
 </tr>
 <tr id="i1" class="rowColor">
+<td class="colFirst"><code>static <a href="../QueryModel.ArrayContains.html" title="class in io.micronaut.data.model.query">QueryModel.ArrayContains</a></code></td>
+<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#arrayContains(java.lang.String,java.lang.Object)">arrayContains</a></span>&#8203;(java.lang.String&nbsp;property,
+             java.lang.Object&nbsp;parameter)</code></th>
+<td class="colLast">
+<div class="block">Restricts the property to be contained in the array.</div>
+</td>
+</tr>
+<tr id="i2" class="altColor">
 <td class="colFirst"><code>static <a href="../QueryModel.Between.html" title="class in io.micronaut.data.model.query">QueryModel.Between</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#between(java.lang.String,java.lang.Object,java.lang.Object)">between</a></span>&#8203;(java.lang.String&nbsp;property,
        java.lang.Object&nbsp;start,
@@ -198,7 +206,7 @@ extends java.lang.Object</pre>
 <div class="block">Restricts the results by the given property value range.</div>
 </td>
 </tr>
-<tr id="i2" class="altColor">
+<tr id="i3" class="rowColor">
 <td class="colFirst"><code>static <a href="../QueryModel.Contains.html" title="class in io.micronaut.data.model.query">QueryModel.Contains</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#contains(java.lang.String,java.lang.Object)">contains</a></span>&#8203;(java.lang.String&nbsp;property,
         java.lang.Object&nbsp;expression)</code></th>
@@ -206,7 +214,7 @@ extends java.lang.Object</pre>
 <div class="block">Restricts the property match to strings containing the given value.</div>
 </td>
 </tr>
-<tr id="i3" class="rowColor">
+<tr id="i4" class="altColor">
 <td class="colFirst"><code>static <a href="../QueryModel.EndsWith.html" title="class in io.micronaut.data.model.query">QueryModel.EndsWith</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#endsWith(java.lang.String,java.lang.Object)">endsWith</a></span>&#8203;(java.lang.String&nbsp;property,
         java.lang.Object&nbsp;expression)</code></th>
@@ -214,7 +222,7 @@ extends java.lang.Object</pre>
 <div class="block">Restricts the property match to strings ending with the given value.</div>
 </td>
 </tr>
-<tr id="i4" class="altColor">
+<tr id="i5" class="rowColor">
 <td class="colFirst"><code>static <a href="../QueryModel.Equals.html" title="class in io.micronaut.data.model.query">QueryModel.Equals</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#eq(java.lang.String,java.lang.Object)">eq</a></span>&#8203;(java.lang.String&nbsp;property,
   java.lang.Object&nbsp;parameter)</code></th>
@@ -222,7 +230,7 @@ extends java.lang.Object</pre>
 <div class="block">Restricts the property to be equal to the given value.</div>
 </td>
 </tr>
-<tr id="i5" class="rowColor">
+<tr id="i6" class="altColor">
 <td class="colFirst"><code>static <a href="../QueryModel.EqualsProperty.html" title="class in io.micronaut.data.model.query">QueryModel.EqualsProperty</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#eqProperty(java.lang.String,java.lang.String)">eqProperty</a></span>&#8203;(java.lang.String&nbsp;propertyName,
           java.lang.String&nbsp;otherPropertyName)</code></th>
@@ -230,7 +238,7 @@ extends java.lang.Object</pre>
 <div class="block">Constraints a property to be equal to a specified other property.</div>
 </td>
 </tr>
-<tr id="i6" class="altColor">
+<tr id="i7" class="rowColor">
 <td class="colFirst"><code>static <a href="../QueryModel.GreaterThanEqualsProperty.html" title="class in io.micronaut.data.model.query">QueryModel.GreaterThanEqualsProperty</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#geProperty(java.lang.String,java.lang.String)">geProperty</a></span>&#8203;(java.lang.String&nbsp;propertyName,
           java.lang.String&nbsp;otherPropertyName)</code></th>
@@ -238,7 +246,7 @@ extends java.lang.Object</pre>
 <div class="block">Constraints a property to be greater than or equal to a specified other property.</div>
 </td>
 </tr>
-<tr id="i7" class="rowColor">
+<tr id="i8" class="altColor">
 <td class="colFirst"><code>static <a href="../QueryModel.GreaterThan.html" title="class in io.micronaut.data.model.query">QueryModel.GreaterThan</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#gt(java.lang.String,java.lang.Object)">gt</a></span>&#8203;(java.lang.String&nbsp;property,
   java.lang.Object&nbsp;parameter)</code></th>
@@ -246,7 +254,7 @@ extends java.lang.Object</pre>
 <div class="block">Used to restrict a value to be greater than the given value.</div>
 </td>
 </tr>
-<tr id="i8" class="altColor">
+<tr id="i9" class="rowColor">
 <td class="colFirst"><code>static <a href="../QueryModel.GreaterThanEquals.html" title="class in io.micronaut.data.model.query">QueryModel.GreaterThanEquals</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#gte(java.lang.String,java.lang.Object)">gte</a></span>&#8203;(java.lang.String&nbsp;property,
    java.lang.Object&nbsp;parameter)</code></th>
@@ -254,7 +262,7 @@ extends java.lang.Object</pre>
 <div class="block">Used to restrict a value to be greater than or equal to the given value.</div>
 </td>
 </tr>
-<tr id="i9" class="rowColor">
+<tr id="i10" class="altColor">
 <td class="colFirst"><code>static <a href="../QueryModel.GreaterThanProperty.html" title="class in io.micronaut.data.model.query">QueryModel.GreaterThanProperty</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#gtProperty(java.lang.String,java.lang.String)">gtProperty</a></span>&#8203;(java.lang.String&nbsp;propertyName,
           java.lang.String&nbsp;otherPropertyName)</code></th>
@@ -262,14 +270,14 @@ extends java.lang.Object</pre>
 <div class="block">Constraints a property to be greater than a specified other property.</div>
 </td>
 </tr>
-<tr id="i10" class="altColor">
+<tr id="i11" class="rowColor">
 <td class="colFirst"><code>static <a href="../QueryModel.IdEquals.html" title="class in io.micronaut.data.model.query">QueryModel.IdEquals</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#idEq(java.lang.Object)">idEq</a></span>&#8203;(java.lang.Object&nbsp;parameter)</code></th>
 <td class="colLast">
 <div class="block">Restricts the property to be equal to the given value.</div>
 </td>
 </tr>
-<tr id="i11" class="rowColor">
+<tr id="i12" class="altColor">
 <td class="colFirst"><code>static <a href="../QueryModel.ILike.html" title="class in io.micronaut.data.model.query">QueryModel.ILike</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#ilike(java.lang.String,java.lang.Object)">ilike</a></span>&#8203;(java.lang.String&nbsp;property,
      java.lang.Object&nbsp;expression)</code></th>
@@ -277,7 +285,7 @@ extends java.lang.Object</pre>
 <div class="block">Case insensitive like.</div>
 </td>
 </tr>
-<tr id="i12" class="altColor">
+<tr id="i13" class="rowColor">
 <td class="colFirst"><code>static <a href="../QueryModel.In.html" title="class in io.micronaut.data.model.query">QueryModel.In</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#in(java.lang.String,io.micronaut.data.model.query.QueryModel)">in</a></span>&#8203;(java.lang.String&nbsp;property,
   <a href="../QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;subquery)</code></th>
@@ -285,7 +293,7 @@ extends java.lang.Object</pre>
 <div class="block">Restricts the property to be in the list of given values.</div>
 </td>
 </tr>
-<tr id="i13" class="rowColor">
+<tr id="i14" class="altColor">
 <td class="colFirst"><code>static <a href="../QueryModel.In.html" title="class in io.micronaut.data.model.query">QueryModel.In</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#in(java.lang.String,java.lang.Object)">in</a></span>&#8203;(java.lang.String&nbsp;property,
   java.lang.Object&nbsp;parameter)</code></th>
@@ -293,49 +301,49 @@ extends java.lang.Object</pre>
 <div class="block">Restricts the property to be in the list of given values.</div>
 </td>
 </tr>
-<tr id="i14" class="altColor">
+<tr id="i15" class="rowColor">
 <td class="colFirst"><code>static <a href="../QueryModel.IsEmpty.html" title="class in io.micronaut.data.model.query">QueryModel.IsEmpty</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#isEmpty(java.lang.String)">isEmpty</a></span>&#8203;(java.lang.String&nbsp;property)</code></th>
 <td class="colLast">
 <div class="block">Used to restrict a value to be empty (such as a blank string or an empty collection).</div>
 </td>
 </tr>
-<tr id="i15" class="rowColor">
+<tr id="i16" class="altColor">
 <td class="colFirst"><code>static <a href="../QueryModel.IsFalse.html" title="class in io.micronaut.data.model.query">QueryModel.IsFalse</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#isFalse(java.lang.String)">isFalse</a></span>&#8203;(java.lang.String&nbsp;property)</code></th>
 <td class="colLast">
 <div class="block">Used to restrict a value to be false.</div>
 </td>
 </tr>
-<tr id="i16" class="altColor">
+<tr id="i17" class="rowColor">
 <td class="colFirst"><code>static <a href="../QueryModel.IsNotEmpty.html" title="class in io.micronaut.data.model.query">QueryModel.IsNotEmpty</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#isNotEmpty(java.lang.String)">isNotEmpty</a></span>&#8203;(java.lang.String&nbsp;property)</code></th>
 <td class="colLast">
 <div class="block">Used to restrict a value to be not empty (such as a non-blank string).</div>
 </td>
 </tr>
-<tr id="i17" class="rowColor">
+<tr id="i18" class="altColor">
 <td class="colFirst"><code>static <a href="../QueryModel.IsNotNull.html" title="class in io.micronaut.data.model.query">QueryModel.IsNotNull</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#isNotNull(java.lang.String)">isNotNull</a></span>&#8203;(java.lang.String&nbsp;property)</code></th>
 <td class="colLast">
 <div class="block">Used to restrict a value to be null.</div>
 </td>
 </tr>
-<tr id="i18" class="altColor">
+<tr id="i19" class="rowColor">
 <td class="colFirst"><code>static <a href="../QueryModel.IsNull.html" title="class in io.micronaut.data.model.query">QueryModel.IsNull</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#isNull(java.lang.String)">isNull</a></span>&#8203;(java.lang.String&nbsp;property)</code></th>
 <td class="colLast">
 <div class="block">Used to restrict a value to be null.</div>
 </td>
 </tr>
-<tr id="i19" class="rowColor">
+<tr id="i20" class="altColor">
 <td class="colFirst"><code>static <a href="../QueryModel.IsTrue.html" title="class in io.micronaut.data.model.query">QueryModel.IsTrue</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#isTrue(java.lang.String)">isTrue</a></span>&#8203;(java.lang.String&nbsp;property)</code></th>
 <td class="colLast">
 <div class="block">Used to restrict a value to be true.</div>
 </td>
 </tr>
-<tr id="i20" class="altColor">
+<tr id="i21" class="rowColor">
 <td class="colFirst"><code>static <a href="../QueryModel.LessThanEqualsProperty.html" title="class in io.micronaut.data.model.query">QueryModel.LessThanEqualsProperty</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#leProperty(java.lang.String,java.lang.String)">leProperty</a></span>&#8203;(java.lang.String&nbsp;propertyName,
           java.lang.String&nbsp;otherPropertyName)</code></th>
@@ -343,7 +351,7 @@ extends java.lang.Object</pre>
 <div class="block">Constraints a property to be less than or equal to a specified other property.</div>
 </td>
 </tr>
-<tr id="i21" class="rowColor">
+<tr id="i22" class="altColor">
 <td class="colFirst"><code>static <a href="../QueryModel.Like.html" title="class in io.micronaut.data.model.query">QueryModel.Like</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#like(java.lang.String,java.lang.Object)">like</a></span>&#8203;(java.lang.String&nbsp;property,
     java.lang.Object&nbsp;expression)</code></th>
@@ -351,7 +359,7 @@ extends java.lang.Object</pre>
 <div class="block">Restricts the property match the given String expressions.</div>
 </td>
 </tr>
-<tr id="i22" class="altColor">
+<tr id="i23" class="rowColor">
 <td class="colFirst"><code>static <a href="../QueryModel.LessThan.html" title="class in io.micronaut.data.model.query">QueryModel.LessThan</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#lt(java.lang.String,java.lang.Object)">lt</a></span>&#8203;(java.lang.String&nbsp;property,
   java.lang.Object&nbsp;parameter)</code></th>
@@ -359,7 +367,7 @@ extends java.lang.Object</pre>
 <div class="block">Used to restrict a value to be less than the given value.</div>
 </td>
 </tr>
-<tr id="i23" class="rowColor">
+<tr id="i24" class="altColor">
 <td class="colFirst"><code>static <a href="../QueryModel.LessThanEquals.html" title="class in io.micronaut.data.model.query">QueryModel.LessThanEquals</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#lte(java.lang.String,java.lang.Object)">lte</a></span>&#8203;(java.lang.String&nbsp;property,
    java.lang.Object&nbsp;parameter)</code></th>
@@ -367,7 +375,7 @@ extends java.lang.Object</pre>
 <div class="block">Used to restrict a value to be less than or equal to the given value.</div>
 </td>
 </tr>
-<tr id="i24" class="altColor">
+<tr id="i25" class="rowColor">
 <td class="colFirst"><code>static <a href="../QueryModel.LessThanProperty.html" title="class in io.micronaut.data.model.query">QueryModel.LessThanProperty</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#ltProperty(java.lang.String,java.lang.String)">ltProperty</a></span>&#8203;(java.lang.String&nbsp;propertyName,
           java.lang.String&nbsp;otherPropertyName)</code></th>
@@ -375,7 +383,7 @@ extends java.lang.Object</pre>
 <div class="block">Constraints a property to be less than a specified other property.</div>
 </td>
 </tr>
-<tr id="i25" class="rowColor">
+<tr id="i26" class="altColor">
 <td class="colFirst"><code>static <a href="../QueryModel.NotEquals.html" title="class in io.micronaut.data.model.query">QueryModel.NotEquals</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#ne(java.lang.String,java.lang.Object)">ne</a></span>&#8203;(java.lang.String&nbsp;property,
   java.lang.Object&nbsp;parameter)</code></th>
@@ -383,7 +391,7 @@ extends java.lang.Object</pre>
 <div class="block">Restricts the property to be not equal to the given value.</div>
 </td>
 </tr>
-<tr id="i26" class="altColor">
+<tr id="i27" class="rowColor">
 <td class="colFirst"><code>static <a href="../QueryModel.NotEqualsProperty.html" title="class in io.micronaut.data.model.query">QueryModel.NotEqualsProperty</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#neProperty(java.lang.String,java.lang.String)">neProperty</a></span>&#8203;(java.lang.String&nbsp;propertyName,
           java.lang.String&nbsp;otherPropertyName)</code></th>
@@ -391,7 +399,7 @@ extends java.lang.Object</pre>
 <div class="block">Constraints a property to be not equal to a specified other property.</div>
 </td>
 </tr>
-<tr id="i27" class="rowColor">
+<tr id="i28" class="altColor">
 <td class="colFirst"><code>static <a href="../QueryModel.NotIn.html" title="class in io.micronaut.data.model.query">QueryModel.NotIn</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#notIn(java.lang.String,io.micronaut.data.model.query.QueryModel)">notIn</a></span>&#8203;(java.lang.String&nbsp;property,
      <a href="../QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;subquery)</code></th>
@@ -399,7 +407,7 @@ extends java.lang.Object</pre>
 <div class="block">Restricts the property to be in the list of given values.</div>
 </td>
 </tr>
-<tr id="i28" class="altColor">
+<tr id="i29" class="rowColor">
 <td class="colFirst"><code>static <a href="../QueryModel.NotIn.html" title="class in io.micronaut.data.model.query">QueryModel.NotIn</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#notIn(java.lang.String,java.lang.Object)">notIn</a></span>&#8203;(java.lang.String&nbsp;property,
      java.lang.Object&nbsp;parameter)</code></th>
@@ -407,7 +415,7 @@ extends java.lang.Object</pre>
 <div class="block">Restricts the property to not be in the list of given values.</div>
 </td>
 </tr>
-<tr id="i29" class="rowColor">
+<tr id="i30" class="altColor">
 <td class="colFirst"><code>static <a href="../QueryModel.Criterion.html" title="interface in io.micronaut.data.model.query">QueryModel.Criterion</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#or(io.micronaut.data.model.query.QueryModel.Criterion,io.micronaut.data.model.query.QueryModel.Criterion)">or</a></span>&#8203;(<a href="../QueryModel.Criterion.html" title="interface in io.micronaut.data.model.query">QueryModel.Criterion</a>&nbsp;a,
   <a href="../QueryModel.Criterion.html" title="interface in io.micronaut.data.model.query">QueryModel.Criterion</a>&nbsp;b)</code></th>
@@ -415,7 +423,7 @@ extends java.lang.Object</pre>
 <div class="block">Logical OR.</div>
 </td>
 </tr>
-<tr id="i30" class="altColor">
+<tr id="i31" class="rowColor">
 <td class="colFirst"><code>static <a href="../QueryModel.Regex.html" title="class in io.micronaut.data.model.query">QueryModel.Regex</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#regex(java.lang.String,java.lang.Object)">regex</a></span>&#8203;(java.lang.String&nbsp;property,
      java.lang.Object&nbsp;expression)</code></th>
@@ -423,7 +431,7 @@ extends java.lang.Object</pre>
 <div class="block">Restricts the property match the given regex expressions.</div>
 </td>
 </tr>
-<tr id="i31" class="rowColor">
+<tr id="i32" class="altColor">
 <td class="colFirst"><code>static <a href="../QueryModel.RLike.html" title="class in io.micronaut.data.model.query">QueryModel.RLike</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#rlike(java.lang.String,java.lang.Object)">rlike</a></span>&#8203;(java.lang.String&nbsp;property,
      java.lang.Object&nbsp;expression)</code></th>
@@ -431,7 +439,7 @@ extends java.lang.Object</pre>
 <div class="block">Restricts the property match the given regular expressions.</div>
 </td>
 </tr>
-<tr id="i32" class="altColor">
+<tr id="i33" class="rowColor">
 <td class="colFirst"><code>static <a href="../QueryModel.SizeEquals.html" title="class in io.micronaut.data.model.query">QueryModel.SizeEquals</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#sizeEq(java.lang.String,java.lang.Object)">sizeEq</a></span>&#8203;(java.lang.String&nbsp;property,
       java.lang.Object&nbsp;size)</code></th>
@@ -439,7 +447,7 @@ extends java.lang.Object</pre>
 <div class="block">Used to restrict the size of a collection property.</div>
 </td>
 </tr>
-<tr id="i33" class="rowColor">
+<tr id="i34" class="altColor">
 <td class="colFirst"><code>static <a href="../QueryModel.SizeGreaterThanEquals.html" title="class in io.micronaut.data.model.query">QueryModel.SizeGreaterThanEquals</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#sizeGe(java.lang.String,java.lang.Object)">sizeGe</a></span>&#8203;(java.lang.String&nbsp;property,
       java.lang.Object&nbsp;size)</code></th>
@@ -447,7 +455,7 @@ extends java.lang.Object</pre>
 <div class="block">Used to restrict the size of a collection property to be greater than or equal to the given value.</div>
 </td>
 </tr>
-<tr id="i34" class="altColor">
+<tr id="i35" class="rowColor">
 <td class="colFirst"><code>static <a href="../QueryModel.SizeGreaterThan.html" title="class in io.micronaut.data.model.query">QueryModel.SizeGreaterThan</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#sizeGt(java.lang.String,java.lang.Object)">sizeGt</a></span>&#8203;(java.lang.String&nbsp;property,
       java.lang.Object&nbsp;size)</code></th>
@@ -455,7 +463,7 @@ extends java.lang.Object</pre>
 <div class="block">Used to restrict the size of a collection property to be greater than the given value.</div>
 </td>
 </tr>
-<tr id="i35" class="rowColor">
+<tr id="i36" class="altColor">
 <td class="colFirst"><code>static <a href="../QueryModel.SizeLessThanEquals.html" title="class in io.micronaut.data.model.query">QueryModel.SizeLessThanEquals</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#sizeLe(java.lang.String,java.lang.Object)">sizeLe</a></span>&#8203;(java.lang.String&nbsp;property,
       java.lang.Object&nbsp;size)</code></th>
@@ -463,7 +471,7 @@ extends java.lang.Object</pre>
 <div class="block">Creates a Criterion that contrains a collection property to be less than or equal to the given size.</div>
 </td>
 </tr>
-<tr id="i36" class="altColor">
+<tr id="i37" class="rowColor">
 <td class="colFirst"><code>static <a href="../QueryModel.SizeLessThan.html" title="class in io.micronaut.data.model.query">QueryModel.SizeLessThan</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#sizeLt(java.lang.String,java.lang.Object)">sizeLt</a></span>&#8203;(java.lang.String&nbsp;property,
       java.lang.Object&nbsp;size)</code></th>
@@ -471,7 +479,7 @@ extends java.lang.Object</pre>
 <div class="block">Creates a Criterion that contrains a collection property to be less than to the given size.</div>
 </td>
 </tr>
-<tr id="i37" class="rowColor">
+<tr id="i38" class="altColor">
 <td class="colFirst"><code>static <a href="../QueryModel.SizeNotEquals.html" title="class in io.micronaut.data.model.query">QueryModel.SizeNotEquals</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#sizeNe(java.lang.String,java.lang.Object)">sizeNe</a></span>&#8203;(java.lang.String&nbsp;property,
       java.lang.Object&nbsp;size)</code></th>
@@ -479,7 +487,7 @@ extends java.lang.Object</pre>
 <div class="block">Creates a Criterion that contrains a collection property to be not equal to the given size.</div>
 </td>
 </tr>
-<tr id="i38" class="altColor">
+<tr id="i39" class="rowColor">
 <td class="colFirst"><code>static <a href="../QueryModel.StartsWith.html" title="class in io.micronaut.data.model.query">QueryModel.StartsWith</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#startsWith(java.lang.String,java.lang.Object)">startsWith</a></span>&#8203;(java.lang.String&nbsp;property,
           java.lang.Object&nbsp;expression)</code></th>
@@ -487,7 +495,7 @@ extends java.lang.Object</pre>
 <div class="block">Restricts the property match to strings starting with the given value.</div>
 </td>
 </tr>
-<tr id="i39" class="rowColor">
+<tr id="i40" class="altColor">
 <td class="colFirst"><code>static <a href="../QueryModel.VersionEquals.html" title="class in io.micronaut.data.model.query">QueryModel.VersionEquals</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#versionEq(java.lang.Object)">versionEq</a></span>&#8203;(java.lang.Object&nbsp;parameter)</code></th>
 <td class="colLast">
@@ -1228,7 +1236,7 @@ extends java.lang.Object</pre>
 <a id="leProperty(java.lang.String,java.lang.String)">
 <!--   -->
 </a>
-<ul class="blockListLast">
+<ul class="blockList">
 <li class="blockList">
 <h4>leProperty</h4>
 <pre class="methodSignature">public static&nbsp;<a href="../QueryModel.LessThanEqualsProperty.html" title="class in io.micronaut.data.model.query">QueryModel.LessThanEqualsProperty</a>&nbsp;leProperty&#8203;(java.lang.String&nbsp;propertyName,
@@ -1240,6 +1248,24 @@ extends java.lang.Object</pre>
 <dd><code>otherPropertyName</code> - The other property</dd>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>The criterion</dd>
+</dl>
+</li>
+</ul>
+<a id="arrayContains(java.lang.String,java.lang.Object)">
+<!--   -->
+</a>
+<ul class="blockListLast">
+<li class="blockList">
+<h4>arrayContains</h4>
+<pre class="methodSignature">public static&nbsp;<a href="../QueryModel.ArrayContains.html" title="class in io.micronaut.data.model.query">QueryModel.ArrayContains</a>&nbsp;arrayContains&#8203;(java.lang.String&nbsp;property,
+                                                     java.lang.Object&nbsp;parameter)</pre>
+<div class="block">Restricts the property to be contained in the array.</div>
+<dl>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>property</code> - The property</dd>
+<dd><code>parameter</code> - The parameter that provides the value</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>An instance of Query.ArrayContains</dd>
 </dl>
 </li>
 </ul>

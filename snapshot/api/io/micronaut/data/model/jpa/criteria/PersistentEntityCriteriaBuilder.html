@@ -27,7 +27,7 @@
     catch(err) {
     }
 //-->
-var data = {"i0":6,"i1":6,"i2":6,"i3":6,"i4":6,"i5":6,"i6":6,"i7":6,"i8":6,"i9":6,"i10":6,"i11":6,"i12":6,"i13":6,"i14":6,"i15":6,"i16":6,"i17":6,"i18":6,"i19":6,"i20":6,"i21":6};
+var data = {"i0":6,"i1":6,"i2":6,"i3":6,"i4":6,"i5":6,"i6":6,"i7":6,"i8":6,"i9":6,"i10":6,"i11":6,"i12":6,"i13":6,"i14":6,"i15":6,"i16":6,"i17":6,"i18":6,"i19":6,"i20":6,"i21":6,"i22":6};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],4:["t3","Abstract Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -190,13 +190,21 @@ extends jakarta.persistence.criteria.CriteriaBuilder</pre>
 </tr>
 <tr id="i1" class="rowColor">
 <td class="colFirst"><code>jakarta.persistence.criteria.Predicate</code></td>
+<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#arrayContains(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)">arrayContains</a></span>&#8203;(jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;x,
+             jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;y)</code></th>
+<td class="colLast">
+<div class="block">Checks if array contains given expression.</div>
+</td>
+</tr>
+<tr id="i2" class="altColor">
+<td class="colFirst"><code>jakarta.persistence.criteria.Predicate</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#containsString(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)">containsString</a></span>&#8203;(jakarta.persistence.criteria.Expression&lt;java.lang.String&gt;&nbsp;x,
               jakarta.persistence.criteria.Expression&lt;java.lang.String&gt;&nbsp;y)</code></th>
 <td class="colLast">
 <div class="block">Checks if the expression x contains the expression y.</div>
 </td>
 </tr>
-<tr id="i2" class="altColor">
+<tr id="i3" class="rowColor">
 <td class="colFirst"><code>jakarta.persistence.criteria.Predicate</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#containsStringIgnoreCase(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)">containsStringIgnoreCase</a></span>&#8203;(jakarta.persistence.criteria.Expression&lt;java.lang.String&gt;&nbsp;x,
                         jakarta.persistence.criteria.Expression&lt;java.lang.String&gt;&nbsp;y)</code></th>
@@ -204,32 +212,32 @@ extends jakarta.persistence.criteria.CriteriaBuilder</pre>
 <div class="block">Checks if the expression x contains the expression y ignoring case.</div>
 </td>
 </tr>
-<tr id="i3" class="rowColor">
+<tr id="i4" class="altColor">
 <td class="colFirst"><code>&lt;T&gt;&nbsp;<a href="PersistentEntityCriteriaDelete.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaDelete</a>&lt;T&gt;</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#createCriteriaDelete(java.lang.Class)">createCriteriaDelete</a></span>&#8203;(java.lang.Class&lt;T&gt;&nbsp;targetEntity)</code></th>
 <td class="colLast">&nbsp;</td>
 </tr>
-<tr id="i4" class="altColor">
+<tr id="i5" class="rowColor">
 <td class="colFirst"><code>&lt;T&gt;&nbsp;<a href="PersistentEntityCriteriaUpdate.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaUpdate</a>&lt;T&gt;</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#createCriteriaUpdate(java.lang.Class)">createCriteriaUpdate</a></span>&#8203;(java.lang.Class&lt;T&gt;&nbsp;targetEntity)</code></th>
 <td class="colLast">&nbsp;</td>
 </tr>
-<tr id="i5" class="rowColor">
+<tr id="i6" class="altColor">
 <td class="colFirst"><code><a href="PersistentEntityCriteriaQuery.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaQuery</a>&lt;java.lang.Object&gt;</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#createQuery()">createQuery</a></span>()</code></th>
 <td class="colLast">&nbsp;</td>
 </tr>
-<tr id="i6" class="altColor">
+<tr id="i7" class="rowColor">
 <td class="colFirst"><code>&lt;T&gt;&nbsp;<a href="PersistentEntityCriteriaQuery.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaQuery</a>&lt;T&gt;</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#createQuery(java.lang.Class)">createQuery</a></span>&#8203;(java.lang.Class&lt;T&gt;&nbsp;resultClass)</code></th>
 <td class="colLast">&nbsp;</td>
 </tr>
-<tr id="i7" class="rowColor">
+<tr id="i8" class="altColor">
 <td class="colFirst"><code><a href="PersistentEntityCriteriaQuery.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaQuery</a>&lt;jakarta.persistence.Tuple&gt;</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#createTupleQuery()">createTupleQuery</a></span>()</code></th>
 <td class="colLast">&nbsp;</td>
 </tr>
-<tr id="i8" class="altColor">
+<tr id="i9" class="rowColor">
 <td class="colFirst"><code>jakarta.persistence.criteria.Predicate</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#endingWithString(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)">endingWithString</a></span>&#8203;(jakarta.persistence.criteria.Expression&lt;java.lang.String&gt;&nbsp;x,
                 jakarta.persistence.criteria.Expression&lt;java.lang.String&gt;&nbsp;y)</code></th>
@@ -237,7 +245,7 @@ extends jakarta.persistence.criteria.CriteriaBuilder</pre>
 <div class="block">Checks if the expression x ending with the expression y.</div>
 </td>
 </tr>
-<tr id="i9" class="rowColor">
+<tr id="i10" class="altColor">
 <td class="colFirst"><code>jakarta.persistence.criteria.Predicate</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#endingWithStringIgnoreCase(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)">endingWithStringIgnoreCase</a></span>&#8203;(jakarta.persistence.criteria.Expression&lt;java.lang.String&gt;&nbsp;x,
                           jakarta.persistence.criteria.Expression&lt;java.lang.String&gt;&nbsp;y)</code></th>
@@ -245,7 +253,7 @@ extends jakarta.persistence.criteria.CriteriaBuilder</pre>
 <div class="block">Checks if the expression x ending with the expression y ignoring case.</div>
 </td>
 </tr>
-<tr id="i10" class="altColor">
+<tr id="i11" class="rowColor">
 <td class="colFirst"><code>jakarta.persistence.criteria.Predicate</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#equalStringIgnoreCase(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)">equalStringIgnoreCase</a></span>&#8203;(jakarta.persistence.criteria.Expression&lt;java.lang.String&gt;&nbsp;x,
                      jakarta.persistence.criteria.Expression&lt;java.lang.String&gt;&nbsp;y)</code></th>
@@ -253,7 +261,7 @@ extends jakarta.persistence.criteria.CriteriaBuilder</pre>
 <div class="block">Checks if the expression x equals the expression y ignoring case.</div>
 </td>
 </tr>
-<tr id="i11" class="rowColor">
+<tr id="i12" class="altColor">
 <td class="colFirst"><code>jakarta.persistence.criteria.Predicate</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#equalStringIgnoreCase(jakarta.persistence.criteria.Expression,java.lang.String)">equalStringIgnoreCase</a></span>&#8203;(jakarta.persistence.criteria.Expression&lt;java.lang.String&gt;&nbsp;x,
                      java.lang.String&nbsp;y)</code></th>
@@ -261,7 +269,7 @@ extends jakarta.persistence.criteria.CriteriaBuilder</pre>
 <div class="block">Checks if the expression x equals a string y ignoring case.</div>
 </td>
 </tr>
-<tr id="i12" class="altColor">
+<tr id="i13" class="rowColor">
 <td class="colFirst"><code>jakarta.persistence.criteria.Predicate</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#ilikeString(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)">ilikeString</a></span>&#8203;(jakarta.persistence.criteria.Expression&lt;java.lang.String&gt;&nbsp;x,
            jakarta.persistence.criteria.Expression&lt;java.lang.String&gt;&nbsp;y)</code></th>
@@ -269,21 +277,21 @@ extends jakarta.persistence.criteria.CriteriaBuilder</pre>
 <div class="block">Creates an ilike predicate between an expression x and y.</div>
 </td>
 </tr>
-<tr id="i13" class="rowColor">
+<tr id="i14" class="altColor">
 <td class="colFirst"><code>jakarta.persistence.criteria.Predicate</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#isEmptyString(jakarta.persistence.criteria.Expression)">isEmptyString</a></span>&#8203;(jakarta.persistence.criteria.Expression&lt;java.lang.String&gt;&nbsp;expression)</code></th>
 <td class="colLast">
 <div class="block">Checks if the expression is empty.</div>
 </td>
 </tr>
-<tr id="i14" class="altColor">
+<tr id="i15" class="rowColor">
 <td class="colFirst"><code>jakarta.persistence.criteria.Predicate</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#isNotEmptyString(jakarta.persistence.criteria.Expression)">isNotEmptyString</a></span>&#8203;(jakarta.persistence.criteria.Expression&lt;java.lang.String&gt;&nbsp;expression)</code></th>
 <td class="colLast">
 <div class="block">Checks if the expression is not empty.</div>
 </td>
 </tr>
-<tr id="i15" class="rowColor">
+<tr id="i16" class="altColor">
 <td class="colFirst"><code>jakarta.persistence.criteria.Predicate</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#notEqualStringIgnoreCase(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)">notEqualStringIgnoreCase</a></span>&#8203;(jakarta.persistence.criteria.Expression&lt;java.lang.String&gt;&nbsp;x,
                         jakarta.persistence.criteria.Expression&lt;java.lang.String&gt;&nbsp;y)</code></th>
@@ -291,7 +299,7 @@ extends jakarta.persistence.criteria.CriteriaBuilder</pre>
 <div class="block">Checks if the expression x not equals the expression y ignoring case.</div>
 </td>
 </tr>
-<tr id="i16" class="altColor">
+<tr id="i17" class="rowColor">
 <td class="colFirst"><code>jakarta.persistence.criteria.Predicate</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#notEqualStringIgnoreCase(jakarta.persistence.criteria.Expression,java.lang.String)">notEqualStringIgnoreCase</a></span>&#8203;(jakarta.persistence.criteria.Expression&lt;java.lang.String&gt;&nbsp;x,
                         java.lang.String&nbsp;y)</code></th>
@@ -299,14 +307,14 @@ extends jakarta.persistence.criteria.CriteriaBuilder</pre>
 <div class="block">Checks if the expression x not equals a string y ignoring case.</div>
 </td>
 </tr>
-<tr id="i17" class="rowColor">
+<tr id="i18" class="altColor">
 <td class="colFirst"><code>jakarta.persistence.criteria.Predicate</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#or(java.lang.Iterable)">or</a></span>&#8203;(java.lang.Iterable&lt;jakarta.persistence.criteria.Predicate&gt;&nbsp;restrictions)</code></th>
 <td class="colLast">
 <div class="block">OR restriction predicate.</div>
 </td>
 </tr>
-<tr id="i18" class="altColor">
+<tr id="i19" class="rowColor">
 <td class="colFirst"><code>jakarta.persistence.criteria.Predicate</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#regex(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)">regex</a></span>&#8203;(jakarta.persistence.criteria.Expression&lt;java.lang.String&gt;&nbsp;x,
      jakarta.persistence.criteria.Expression&lt;java.lang.String&gt;&nbsp;pattern)</code></th>
@@ -314,7 +322,7 @@ extends jakarta.persistence.criteria.CriteriaBuilder</pre>
 <div class="block">Create a predicate for testing whether the expression satisfies the given pattern.</div>
 </td>
 </tr>
-<tr id="i19" class="rowColor">
+<tr id="i20" class="altColor">
 <td class="colFirst"><code>jakarta.persistence.criteria.Predicate</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#rlikeString(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)">rlikeString</a></span>&#8203;(jakarta.persistence.criteria.Expression&lt;java.lang.String&gt;&nbsp;x,
            jakarta.persistence.criteria.Expression&lt;java.lang.String&gt;&nbsp;y)</code></th>
@@ -322,7 +330,7 @@ extends jakarta.persistence.criteria.CriteriaBuilder</pre>
 <div class="block">Creates a rlike predicate between an expression x and y.</div>
 </td>
 </tr>
-<tr id="i20" class="altColor">
+<tr id="i21" class="rowColor">
 <td class="colFirst"><code>jakarta.persistence.criteria.Predicate</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#startsWithString(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)">startsWithString</a></span>&#8203;(jakarta.persistence.criteria.Expression&lt;java.lang.String&gt;&nbsp;x,
                 jakarta.persistence.criteria.Expression&lt;java.lang.String&gt;&nbsp;y)</code></th>
@@ -330,7 +338,7 @@ extends jakarta.persistence.criteria.CriteriaBuilder</pre>
 <div class="block">Checks if the expression x starts with the expression y.</div>
 </td>
 </tr>
-<tr id="i21" class="rowColor">
+<tr id="i22" class="altColor">
 <td class="colFirst"><code>jakarta.persistence.criteria.Predicate</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#startsWithStringIgnoreCase(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)">startsWithStringIgnoreCase</a></span>&#8203;(jakarta.persistence.criteria.Expression&lt;java.lang.String&gt;&nbsp;x,
                           jakarta.persistence.criteria.Expression&lt;java.lang.String&gt;&nbsp;y)</code></th>
@@ -710,7 +718,7 @@ extends jakarta.persistence.criteria.CriteriaBuilder</pre>
 <a id="regex(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)">
 <!--   -->
 </a>
-<ul class="blockListLast">
+<ul class="blockList">
 <li class="blockList">
 <h4>regex</h4>
 <pre class="methodSignature">jakarta.persistence.criteria.Predicate&nbsp;regex&#8203;(jakarta.persistence.criteria.Expression&lt;java.lang.String&gt;&nbsp;x,
@@ -722,6 +730,26 @@ extends jakarta.persistence.criteria.CriteriaBuilder</pre>
 <dd><code>pattern</code> - string expression</dd>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>like predicate</dd>
+</dl>
+</li>
+</ul>
+<a id="arrayContains(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)">
+<!--   -->
+</a>
+<ul class="blockListLast">
+<li class="blockList">
+<h4>arrayContains</h4>
+<pre class="methodSignature">jakarta.persistence.criteria.Predicate&nbsp;arrayContains&#8203;(jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;x,
+                                                     jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;y)</pre>
+<div class="block">Checks if array contains given expression. Supported only by Cosmos Db.</div>
+<dl>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>x</code> - The expression (property)</dd>
+<dd><code>y</code> - The expression (value to be contained in the array represented by x property in the db)</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>a new predicate</dd>
+<dt><span class="simpleTagLabel">Since:</span></dt>
+<dd>3.9.0</dd>
 </dl>
 </li>
 </ul>

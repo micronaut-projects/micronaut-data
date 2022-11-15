@@ -57,11 +57,13 @@
                                 
                                 <div class="toc-item" style="margin-left:0"><a href="#mongo"><strong>7</strong><span>Micronaut Data MongoDB</span></a></div>
                                 
-                                <div class="toc-item" style="margin-left:0"><a href="#howItWorks"><strong>8</strong><span>How Micronaut Data Works</span></a></div>
+                                <div class="toc-item" style="margin-left:0"><a href="#azureCosmos"><strong>8</strong><span>Micronaut Data Azure Cosmos</span></a></div>
                                 
-                                <div class="toc-item" style="margin-left:0"><a href="#graal"><strong>9</strong><span>Going Native with GraalVM</span></a></div>
+                                <div class="toc-item" style="margin-left:0"><a href="#howItWorks"><strong>9</strong><span>How Micronaut Data Works</span></a></div>
                                 
-                                <div class="toc-item" style="margin-left:0"><a href="#spring"><strong>10</strong><span>Spring Data Support</span></a></div>
+                                <div class="toc-item" style="margin-left:0"><a href="#graal"><strong>10</strong><span>Going Native with GraalVM</span></a></div>
+                                
+                                <div class="toc-item" style="margin-left:0"><a href="#spring"><strong>11</strong><span>Spring Data Support</span></a></div>
                                 
                             </div>
                         </div>
@@ -280,11 +282,33 @@
         
         <div class="toc-item" style="margin-left:10px" id="toc-item-mongoOptimisticLocking"><a href="#mongoOptimisticLocking"><strong>7.7</strong><span>Optimistic locking</span></a></div>
         
-        <div class="toc-item" style="margin-left:0px" id="toc-item-howItWorks"><a href="#howItWorks"><strong>8</strong><span>How Micronaut Data Works</span></a></div>
+        <div class="toc-item" style="margin-left:0px" id="toc-item-azureCosmos"><a href="#azureCosmos"><strong>8</strong><span>Micronaut Data Azure Cosmos</span></a></div>
         
-        <div class="toc-item" style="margin-left:0px" id="toc-item-graal"><a href="#graal"><strong>9</strong><span>Going Native with GraalVM</span></a></div>
+        <div class="toc-item" style="margin-left:10px" id="toc-item-azureCosmosQuickStart"><a href="#azureCosmosQuickStart"><strong>8.1</strong><span>Quick Start</span></a></div>
         
-        <div class="toc-item" style="margin-left:0px" id="toc-item-spring"><a href="#spring"><strong>10</strong><span>Spring Data Support</span></a></div>
+        <div class="toc-item" style="margin-left:10px" id="toc-item-azureCosmosConfiguration"><a href="#azureCosmosConfiguration"><strong>8.2</strong><span>Configuration</span></a></div>
+        
+        <div class="toc-item" style="margin-left:10px" id="toc-item-azureCosmosRepositories"><a href="#azureCosmosRepositories"><strong>8.3</strong><span>Repositories</span></a></div>
+        
+        <div class="toc-item" style="margin-left:10px" id="toc-item-azureCosmosCriteriaSpecifications"><a href="#azureCosmosCriteriaSpecifications"><strong>8.4</strong><span>Repositories with Criteria API</span></a></div>
+        
+        <div class="toc-item" style="margin-left:20px" id="toc-item-azureCosmosCriteriaExecuteQuery"><a href="#azureCosmosCriteriaExecuteQuery"><strong>8.4.1</strong><span>Querying</span></a></div>
+        
+        <div class="toc-item" style="margin-left:20px" id="toc-item-azureCosmosCriteriaExecuteUpdate"><a href="#azureCosmosCriteriaExecuteUpdate"><strong>8.4.2</strong><span>Updating</span></a></div>
+        
+        <div class="toc-item" style="margin-left:20px" id="toc-item-azureCosmosCriteriaExecuteDelete"><a href="#azureCosmosCriteriaExecuteDelete"><strong>8.4.3</strong><span>Deleting</span></a></div>
+        
+        <div class="toc-item" style="margin-left:10px" id="toc-item-azureCosmosSpecifics"><a href="#azureCosmosSpecifics"><strong>8.5</strong><span>Azure Cosmos Specifics</span></a></div>
+        
+        <div class="toc-item" style="margin-left:10px" id="toc-item-azureCosmosAttributeConverter"><a href="#azureCosmosAttributeConverter"><strong>8.6</strong><span>Using Attribute Converter</span></a></div>
+        
+        <div class="toc-item" style="margin-left:10px" id="toc-item-azureCosmosOptimisticLocking"><a href="#azureCosmosOptimisticLocking"><strong>8.7</strong><span>Optimistic locking</span></a></div>
+        
+        <div class="toc-item" style="margin-left:0px" id="toc-item-howItWorks"><a href="#howItWorks"><strong>9</strong><span>How Micronaut Data Works</span></a></div>
+        
+        <div class="toc-item" style="margin-left:0px" id="toc-item-graal"><a href="#graal"><strong>10</strong><span>Going Native with GraalVM</span></a></div>
+        
+        <div class="toc-item" style="margin-left:0px" id="toc-item-spring"><a href="#spring"><strong>11</strong><span>Spring Data Support</span></a></div>
         
         </div>
     </div>
@@ -341,6 +365,9 @@
 </li>
 <li>
 <p><a href="#mongo">MongoDB</a></p>
+</li>
+<li>
+<p><a href="#azureCosmos">Azure Cosmos</a></p>
 </li>
 </ul>
 </div>
@@ -698,7 +725,7 @@ fun testAnnotationMetadata() {
 </div></p>
 </div>
 <div class="paragraph">
-<p>For document databases like <a href="#mongo">MongoDB</a> instead of dependency above you need to use:</p>
+<p>For document databases like <a href="#mongo">MongoDB</a> or <a href="#azureCosmos">Azure Cosmos Data</a> instead of dependency above you need to use:</p>
 </div>
 <div class="paragraph">
 <p>        <div class="listingblock multi-language-sample">
@@ -12616,7 +12643,1722 @@ interface StudentRepository : CrudRepository&lt;Student, ObjectId&gt; {
 </div>
 </div>
 
-<h1 id="howItWorks"><a class="anchor" href="#howItWorks"></a>8 How Micronaut Data Works</h1>
+<h1 id="azureCosmos"><a class="anchor" href="#azureCosmos"></a>8 Micronaut Data Azure Cosmos</h1>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/azureCosmos.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>Micronaut Data Azure Cosmos supports some of the features of JPA implementations, including:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="#azureCosmosRepositories">Repositories compile-time generated</a> and <a href="#projections">projection</a> queries</p>
+</li>
+<li>
+<p><a href="#azureCosmosAttributeConverter">Attribute converters</a></p>
+</li>
+<li>
+<p><a href="#azureCosmosOptimisticLocking">Optimistic locking</a></p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Cascading and joins are not supported like in the rest of data modules. More about <a href="#azureCosmosSpecifics">specifics</a> can be seen here.</p>
+</div>
+<div class="paragraph">
+<p>The interaction between the object layer and Azure Cosmos Db serialization/deserialization is implemented using <a href="https://micronaut-projects.github.io/micronaut-serialization/1.0.x/guide">Micronaut Serialization</a>.</p>
+</div>
+
+<h2 id="azureCosmosQuickStart"><a class="anchor" href="#azureCosmosQuickStart"></a>8.1 Quick Start</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/azureCosmos/azureCosmosQuickStart.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>At this point there is still no ability to create Micronaut project with Azure Cosmos Db support via Micronaut Launch. Our team will be working on it in the near future.</p>
+</div>
+<div class="paragraph">
+<p>To get started with Micronaut Data Azure Cosmos add the following dependency to your annotation processor path:</p>
+</div>
+<div class="paragraph">
+<p>        <div class="listingblock multi-language-sample">
+<div class="title"></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">annotationProcessor(<span class="hljs-string">"io.micronaut.data:micronaut-data-document-processor")</span></code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="title"></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="maven">&lt;annotationProcessorPaths&gt;
+    &lt;path&gt;
+        &lt;groupId&gt;io.micronaut.data&lt;/groupId&gt;
+        &lt;artifactId&gt;micronaut-data-document-processor&lt;/artifactId&gt;
+    &lt;/path&gt;
+&lt;/annotationProcessorPaths&gt;</code></pre>
+</div>
+</div></p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+For Kotlin the dependency should be in the <code>kapt</code> scope and for Groovy it should be in <code>compileOnly</code> scope.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>You should then configure a compile-scoped dependency on the <code>micronaut-data-azure-cosmos</code> module:</p>
+</div>
+<div class="paragraph">
+<p>        <div class="listingblock multi-language-sample">
+<div class="title"></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">implementation(<span class="hljs-string">"io.micronaut.data:micronaut-data-azure-cosmos")</span></code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="maven">&lt;dependency&gt;
+    &lt;groupId&gt;io.micronaut.data&lt;/groupId&gt;
+    &lt;artifactId&gt;micronaut-data-azure-cosmos&lt;/artifactId&gt;
+&lt;/dependency&gt;</code></pre>
+</div>
+</div></p>
+</div>
+<div class="paragraph">
+<p>Next up you need to configure at least one data source. The following snippet from <code>application.yml</code> is an example of configuring the default Azure Cosmos Db data source:</p>
+</div>
+<div class="paragraph">
+<p>Example YAML configuration</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">micronaut:
+  application:
+    name: example
+azure:
+  cosmos:
+    default-gateway-mode: true
+    endpoint-discovery-enabled: false
+    endpoint: https://localhost:8081
+    key: ''
+    database:
+      throughput-settings:
+        request-units: 1000
+        auto-scale: false
+      database-name: testDb</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>You can find more details about configuration <a href="#azureCosmosConfiguration">here</a>.</p>
+</div>
+<div class="paragraph">
+<p>To retrieve objects from the database you need to define a class annotated with <a href="../api/io/micronaut/data/annotation/MappedEntity.html">@MappedEntity</a>:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@MappedEntity
+public class Book {
+    @Id
+    @GeneratedValue
+    @PartitionKey
+    private String id;
+    private String title;
+    private int pages;
+    @MappedProperty(converter = ItemPriceAttributeConverter.class)
+    @Nullable
+    private ItemPrice itemPrice;
+    @DateCreated
+    private Date createdDate;
+    @DateUpdated
+    private Date updatedDate;
+
+    public Book(String title, int pages) {
+        this.title = title;
+        this.pages = pages;
+    }
+    // ...
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">@MappedEntity
+class Book {
+    @Id
+    @GeneratedValue
+    private String id
+    private String title
+    private int pages
+    @MappedProperty(converter = ItemPriceAttributeConverter)
+    @Nullable
+    private ItemPrice itemPrice
+    Book(String title, int pages) {
+        this.title = title
+        this.pages = pages
+    }
+    //...
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">@MappedEntity
+data class Book(@field:Id
+                @GeneratedValue
+                var id: String?,
+                var title: String,
+                var pages: Int = 0,
+                @MappedProperty(converter = ItemPriceAttributeConverter::class)
+                var itemPrice: ItemPrice? = null,
+                @DateCreated
+                var createdDate: Date? = null,
+                @DateUpdated
+                var updatedDate: Date? = null)</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Followed by an interface that extends from <a href="../api/io/micronaut/data/repository/CrudRepository.html">CrudRepository</a></p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">package example;
+
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.cosmos.annotation.CosmosRepository;
+import io.micronaut.data.model.Page;
+import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.Slice;
+import io.micronaut.data.repository.CrudRepository;
+
+import java.util.List;
+
+
+@CosmosRepository // <b class="conum">(1)</b>
+interface BookRepository extends CrudRepository&lt;Book, String&gt; { // <b class="conum">(2)</b>
+    Book find(String title);
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">package example
+
+import io.micronaut.data.annotation.Id
+import io.micronaut.data.cosmos.annotation.CosmosRepository
+import io.micronaut.data.model.Pageable
+import io.micronaut.data.model.Slice
+import io.micronaut.data.repository.CrudRepository
+
+@CosmosRepository // <b class="conum">(1)</b>
+interface BookRepository extends CrudRepository&lt;Book, String&gt; { // <b class="conum">(2)</b>
+    Book find(String title)
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">package example
+
+import io.micronaut.data.annotation.Id
+import io.micronaut.data.cosmos.annotation.CosmosRepository
+import io.micronaut.data.model.Pageable
+import io.micronaut.data.model.Slice
+import io.micronaut.data.repository.CrudRepository
+
+@CosmosRepository // <b class="conum">(1)</b>
+interface BookRepository : CrudRepository&lt;Book, String&gt; { // <b class="conum">(2)</b>
+    fun find(title: String): Book
+}</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>The interface is annotated with <a href="../api/io/micronaut/data/cosmos/annotation/CosmosRepository.html">@CosmosRepository</a></td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>The <code>CrudRepository</code> interface take 2 generic arguments, the entity type (in this case <code>Book</code>) and the ID type (in this case <code>String</code>)</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>You can now perform CRUD (Create, Read, Update, Delete) operations on the entity. The implementation of <code>example.BookRepository</code> is created at compilation time. To obtain a reference to it simply inject the bean:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@Inject
+BookRepository bookRepository;</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">@Inject @Shared BookRepository bookRepository</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">@Inject
+lateinit var bookRepository: BookRepository</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>When using Micronaut Data Azure Cosmos, every <code>MappedEntity</code> will correspond to the container. One container can hold only one entity or document type.
+The simple name of the class annotated with @MappedEntity will be used as the container name by default. If entity class is <code>CosmosBook</code> then expected container name will be <code>cosmos_book</code> unless not overriden in <code>MappedEntity</code> annotation value. Default naming strategy for entity fields is <code>Raw</code> strategy and users should not usually need to override it.</p>
+</div>
+<div class="sect2">
+<h3 id="_saving_an_instance_create">Saving an Instance (Create)</h3>
+<div class="paragraph">
+<p>To save an instance use the <code>save</code> method of the <code>CrudRepository</code> interface:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">Book book = new Book("The Stand", 1000);
+book.setItemPrice(new ItemPrice(200));
+bookRepository.save(book);</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">def book = new Book("The Stand", 1000)
+book.itemPrice = new ItemPrice(99.5)
+bookRepository.save(book)
+def id = book.id</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">var book = Book(null,"The Stand", 1000, ItemPrice(199.99))
+bookRepository.save(book)</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_retrieving_an_instance_read">Retrieving an Instance (Read)</h3>
+<div class="paragraph">
+<p>To read a book back use <code>findById</code>:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">book = bookRepository.findById(id).orElse(null);</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">book = bookRepository.findById(id).orElse(null)</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">book = bookRepository.findById(id).orElse(null)</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_updating_an_instance_update">Updating an Instance (Update)</h3>
+<div class="paragraph">
+<p>With Micronaut Data Azure Cosmos, you can use <code>save</code> method of the <code>CrudRepository</code> or manually implement an <code>update</code> method. You can define explicit update methods for updates in your repository. For example:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">void update(@Id String id, int pages);
+
+void update(@Id String id, String title);</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">void update(@Id String id, int pages)
+
+void update(@Id String id, String title)</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">fun update(@Id id: String, pages: Int)
+
+fun update(@Id id: String, title: String)</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Which can then be called like so:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">bookRepository.update(book.getId(), "Changed");</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">bookRepository.update(book.getId(), "Changed")</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">bookRepository.update(book.id.orEmpty(), "Changed")</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_deleting_an_instance_delete">Deleting an Instance (Delete)</h3>
+<div class="paragraph">
+<p>To delete an instance use <code>deleteById</code>:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">bookRepository.deleteById(id);</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">bookRepository.deleteById(id)</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">bookRepository.deleteById(id)</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Congratulations you have implemented your first Micronaut Data Azure Cosmos repository! Read on to find out more.</p>
+</div>
+</div>
+
+<h2 id="azureCosmosConfiguration"><a class="anchor" href="#azureCosmosConfiguration"></a>8.2 Configuration</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/azureCosmos/azureCosmosConfiguration.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>When using an existing Azure Cosmos database with existing containers no special configuration is needed, except the endpoint, key and database name. However, for test purposes or when database containers need to be created during application startup there are additional options to configure containers.</p>
+</div>
+<div class="paragraph">
+<p>As mentioned in the <a href="#azureCosmosQuickStart">Quick Start</a> every class annotated with @MappedEntity will correspond to one container in Azure Cosmos Db. If the property azure.cosmos.database.update-policy is set to NONE then no attempt to create the container will be made. If that value is set to CREATE_IF_NOT_EXISTS then the application will attempt to create container if the container does not already exist. Whilst, if the value is UPDATE the application will try to replace existing any containers and its properties.</p>
+</div>
+<div class="paragraph">
+<p>Currently, it is only possible to configure a small subset of properties for the database and containers. For the database throughput properties can be configured whilst for containers the throughput properties and partition key path are configurable.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+An additional way to configure the partition key value is adding the annotation <a href="../api/io/micronaut/data/cosmos/annotation/PartitionKey.html">@PartitionKey</a>
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>The below is an example YAML configuration showing container and db properties used when creating new containers if the containers don&#8217;t already exist:</p>
+</div>
+<div class="paragraph">
+<p>Example YAML configuration</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">micronaut:
+  application:
+    name: example
+azure:
+  cosmos:
+    default-gateway-mode: true
+    endpoint-discovery-enabled: false
+    endpoint: https://localhost:8081
+    key: ''
+    database:
+      throughput-settings:
+        request-units: 1000
+        auto-scale: false
+      database-name: testDb
+      packages: io.micronaut.data.azure.entities
+      update-policy: CREATE_IF_NOT_EXISTS
+      container-settings:
+        - container-name: family
+          partition-key-path: /lastname
+          throughput-settings:
+            request-units: 1000
+            auto-scale: false
+        - container-name: book
+          partition-key-path: /id
+          throughput-settings:
+            request-units: 1200
+            auto-scale: false</code></pre>
+</div>
+</div>
+
+<h2 id="azureCosmosRepositories"><a class="anchor" href="#azureCosmosRepositories"></a>8.3 Repositories</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/azureCosmos/azureCosmosRepositories.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>As seen in the <a href="#azureCosmosQuickStart">Quick Start</a> Azure Cosmos Data repositories in Micronaut Data are defined as interfaces that are annotated with the <a href="../api/io/micronaut/data/cosmos/annotation/CosmosRepository.html">@CosmosRepository</a>.</p>
+</div>
+<div class="paragraph">
+<p>For example:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@CosmosRepository <i class="conum" data-value="1"></i><b>(1)</b>
+public interface BookRepository extends CrudRepository&lt;Book, String&gt; {
+    Optional&lt;Book&gt; findByAuthorId(@NotNull String authorId);
+}</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>@CosmosRepository marking the interface to access Azure Cosmos Db</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>The entity to treat as the root entity for the purposes of querying is established either from the method signature or from the generic type parameter specified to the <a href="../api/io/micronaut/data/repository/GenericRepository.html">GenericRepository</a> interface.</p>
+</div>
+<div class="paragraph">
+<p>If no root entity can be established then a compilation error will occur.</p>
+</div>
+<div class="paragraph">
+<p>The same interfaces supported by the JPA implementation are supported by Azure Cosmos Data.</p>
+</div>
+<div class="paragraph">
+<p>Note that in addition to interfaces you can also define repositories as abstract classes:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">package example;
+
+import io.micronaut.data.cosmos.annotation.CosmosRepository;
+import io.micronaut.data.repository.CrudRepository;
+
+import java.util.List;
+
+@CosmosRepository
+public abstract class AbstractBookRepository implements CrudRepository&lt;Book, String&gt; {
+
+    public abstract List&lt;Book&gt; findByTitle(String title);
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">package example
+
+import io.micronaut.data.cosmos.annotation.CosmosRepository
+import io.micronaut.data.repository.CrudRepository
+
+@CosmosRepository
+abstract class AbstractBookRepository implements CrudRepository&lt;Book, String&gt; {
+
+    abstract List&lt;Book&gt; findByTitle(String title)
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">package example
+
+import io.micronaut.data.cosmos.annotation.CosmosRepository
+import io.micronaut.data.repository.CrudRepository
+
+@CosmosRepository
+abstract class AbstractBookRepository : CrudRepository&lt;Book, String&gt; {
+
+    abstract fun findByTitle(title: String): List&lt;Book&gt;
+}</code></pre>
+</div>
+</div>
+
+<h2 id="azureCosmosCriteriaSpecifications"><a class="anchor" href="#azureCosmosCriteriaSpecifications"></a>8.4 Repositories with Criteria API</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/azureCosmos/azureCosmosCriteriaSpecifications.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>In some cases, you need to build a query programmatically and at the runtime; for that, Micronaut Data implements a subset of Jakarta Persistence Criteria API 3.0, which can be used for Micronaut Data Azure Cosmos features.</p>
+</div>
+<div class="paragraph">
+<p>To implement queries that cannot be defined at the compile-time Micronaut Data introduces <a href="../api/io/micronaut/data/repository/JpaSpecificationExecutor.html">JpaSpecificationExecutor</a> repository interface that can be used to extend your repository interface:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@MongoRepository
+public interface PersonRepository extends CrudRepository&lt;Person, ObjectId&gt;, JpaSpecificationExecutor&lt;Person&gt; {
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">@MongoRepository
+interface PersonRepository extends CrudRepository&lt;Person, ObjectId&gt;, JpaSpecificationExecutor&lt;Person&gt; {
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">@MongoRepository
+interface PersonRepository : CrudRepository&lt;Person, ObjectId&gt;, JpaSpecificationExecutor&lt;Person&gt; {
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Each method expects a "specification" which is a functional interface with a set of Criteria API objects intended to build a query programmatically.</p>
+</div>
+<div class="paragraph">
+<p>Micronaut Criteria API currently implements only a subset of the API. Most of it is internally used to create queries with predicates and projections.</p>
+</div>
+<div class="paragraph">
+<p>Currently, not supported JPA Criteria API features:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Joins with custom <code>ON</code> expressions and typed join methods like <code>joinSet</code> etc</p>
+</li>
+<li>
+<p>Sub-queries</p>
+</li>
+<li>
+<p>Collection operations: <code>isMember</code> etc</p>
+</li>
+<li>
+<p>Custom or tuple result type</p>
+</li>
+<li>
+<p>Transformation expressions like concat, substring etc.</p>
+</li>
+<li>
+<p>Cases and functions</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>More information about Jakarta Persistence Criteria API 3.0 you can find at the <a href="https://jakarta.ee/specifications/persistence/3.0/jakarta-persistence-spec-3.0.html#a6925">official API specification</a></p>
+</div>
+
+<h2 id="azureCosmosCriteriaExecuteQuery"><a class="anchor" href="#azureCosmosCriteriaExecuteQuery"></a>8.4.1 Querying</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/azureCosmos/azureCosmosCriteriaSpecifications/azureCosmosCriteriaExecuteQuery.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>To find an entity or multiple entities you can use one of the following methods from <a href="../api/io/micronaut/data/repository/JpaSpecificationExecutor.html">JpaSpecificationExecutor</a> interface:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">Optional&lt;Person&gt; findOne(PredicateSpecification&lt;Person&gt; spec);
+
+Optional&lt;Person&gt; findOne(QuerySpecification&lt;Person&gt; spec);
+
+List&lt;Person&gt; findAll(PredicateSpecification&lt;Person&gt; spec);
+
+List&lt;Person&gt; findAll(QuerySpecification&lt;Person&gt; spec);
+
+List&lt;Person&gt; findAll(PredicateSpecification&lt;Person&gt; spec, Sort sort);
+
+List&lt;Person&gt; findAll(QuerySpecification&lt;Person&gt; spec, Sort sort);
+
+Page&lt;Person&gt; findAll(PredicateSpecification&lt;Person&gt; spec, Pageable pageable);
+
+Page&lt;Person&gt; findAll(QuerySpecification&lt;Person&gt; spec, Pageable pageable);</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">Optional&lt;Person&gt; findOne(PredicateSpecification&lt;Person&gt; spec)
+
+Optional&lt;Person&gt; findOne(QuerySpecification&lt;Person&gt; spec)
+
+List&lt;Person&gt; findAll(PredicateSpecification&lt;Person&gt; spec)
+
+List&lt;Person&gt; findAll(QuerySpecification&lt;Person&gt; spec)
+
+List&lt;Person&gt; findAll(PredicateSpecification&lt;Person&gt; spec, Sort sort)
+
+List&lt;Person&gt; findAll(QuerySpecification&lt;Person&gt; spec, Sort sort)
+
+Page&lt;Person&gt; findAll(PredicateSpecification&lt;Person&gt; spec, Pageable pageable)
+
+Page&lt;Person&gt; findAll(QuerySpecification&lt;Person&gt; spec, Pageable pageable)</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">fun findOne(spec: PredicateSpecification&lt;Person&gt;?): Optional&lt;Person&gt;
+
+fun findOne(spec: QuerySpecification&lt;Person&gt;?): Optional&lt;Person&gt;
+
+fun findAll(spec: PredicateSpecification&lt;Person&gt;?): List&lt;Person&gt;
+
+fun findAll(spec: QuerySpecification&lt;Person&gt;?): List&lt;Person&gt;
+
+fun findAll(spec: PredicateSpecification&lt;Person&gt;?, sort: Sort): List&lt;Person&gt;
+
+fun findAll(spec: QuerySpecification&lt;Person&gt;?, sort: Sort): List&lt;Person&gt;
+
+fun findAll(spec: PredicateSpecification&lt;Person&gt;?, pageable: Pageable): Page&lt;Person&gt;
+
+fun findAll(spec: QuerySpecification&lt;Person&gt;?, pageable: Pageable): Page&lt;Person&gt;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>As you can see, there are two variations of <code>findOne</code>/<code>findAll</code> methods.</p>
+</div>
+<div class="paragraph">
+<p>First method is expecting <a href="../api/io/micronaut/data/repository/criteria/PredicateSpecification.html">PredicateSpecification</a> which is a simple specification interface that can be implemented to return a predicate:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">import static jakarta.persistence.criteria.*;
+
+public interface PredicateSpecification&lt;T&gt; {
+
+    <i class="conum" data-value="1"></i><b>(1)</b>
+    @Nullable
+    Predicate toPredicate(@NonNull Root&lt;T&gt; root, <i class="conum" data-value="2"></i><b>(2)</b>
+                          @NonNull CriteriaBuilder criteriaBuilder <i class="conum" data-value="3"></i><b>(3)</b>
+    );
+
+}</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>The specification is producing a query limiting predicate</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>The entity root</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td>The criteria builder</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>This interface can also be used for update and delete methods, and it provides <code>or</code> and <code>and</code> methods for combining multiple predicates.</p>
+</div>
+<div class="paragraph">
+<p>The second interface is intended only for query criteria because it includes <code>jakarta.persistence.criteria.CriteriaQuery</code> as a parameter.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">import static jakarta.persistence.criteria.*;
+
+public interface QuerySpecification&lt;T&gt; {
+
+    <i class="conum" data-value="1"></i><b>(1)</b>
+    @Nullable
+    Predicate toPredicate(@NonNull Root&lt;T&gt; root, <i class="conum" data-value="2"></i><b>(2)</b>
+                          @NonNull CriteriaQuery&lt;?&gt; query, <i class="conum" data-value="3"></i><b>(3)</b>
+                          @NonNull CriteriaBuilder criteriaBuilder <i class="conum" data-value="4"></i><b>(4)</b>
+    );
+
+}</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>The specification is producing a query limiting predicate</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>The entity root</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td>The criteria query instance</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="4"></i><b>4</b></td>
+<td>The criteria builder</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>For implementing counting queries following methods can be used:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">long count(PredicateSpecification&lt;Person&gt; spec);
+
+long count(QuerySpecification&lt;Person&gt; spec);</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">long count(PredicateSpecification&lt;Person&gt; spec)
+
+long count(QuerySpecification&lt;Person&gt; spec)</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">fun count(spec: PredicateSpecification&lt;Person&gt;?): Long
+
+fun count(spec: QuerySpecification&lt;Person&gt;?): Long</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>You can define criteria specification methods that will help you to create a query:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">class Specifications {
+
+    static PredicateSpecification&lt;Person&gt; nameEquals(String name) {
+        return (root, criteriaBuilder) -&gt; criteriaBuilder.equal(root.get("name"), name);
+    }
+
+    static PredicateSpecification&lt;Person&gt; ageIsLessThan(int age) {
+        return (root, criteriaBuilder) -&gt; criteriaBuilder.lessThan(root.get("age"), age);
+    }
+
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">class Specifications {
+
+    static PredicateSpecification&lt;Person&gt; nameEquals(String name) {
+        return (root, criteriaBuilder) -&gt; criteriaBuilder.equal(root.get("name"), name)
+    }
+
+    static PredicateSpecification&lt;Person&gt; ageIsLessThan(int age) {
+        return (root, criteriaBuilder) -&gt; criteriaBuilder.lessThan(root.get("age"), age)
+    }
+
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">object Specifications {
+    fun nameEquals(name: String?) = where&lt;Person&gt; { root[Person::name] eq name }
+
+    fun ageIsLessThan(age: Int) = where&lt;Person&gt; { root[Person::age] lt age }
+
+    fun nameOrAgeMatches(age: Int, name: String?) = where&lt;Person&gt; {
+        or {
+            root[Person::name] eq name
+            root[Person::age] lt age
+        }
+    }
+
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Then you can combine them for <code>find</code> or <code>count</code> queries:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">Person denis = personRepository.findOne(nameEquals("Denis")).orElse(null);
+
+long countAgeLess30 = personRepository.count(ageIsLessThan(30));
+
+long countAgeLess20 = personRepository.count(ageIsLessThan(20));
+
+long countAgeLess30NotDenis = personRepository.count(ageIsLessThan(30).and(not(nameEquals("Denis"))));
+
+List&lt;Person&gt; people = personRepository.findAll(where(nameEquals("Denis").or(nameEquals("Josh"))));</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">Person denis = personRepository.findOne(nameEquals("Denis")).orElse(null)
+
+long countAgeLess30 = personRepository.count(ageIsLessThan(30))
+
+long countAgeLess20 = personRepository.count(ageIsLessThan(20))
+
+long countAgeLess30NotDenis = personRepository.count(ageIsLessThan(30) &amp; not(nameEquals("Denis")))
+
+List&lt;Person&gt; people = personRepository.findAll(where(nameEquals("Denis") | nameEquals("Josh")))</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">val denis: Person? = personRepository.findOne(nameEquals("Denis")).orElse(null)
+
+val countAgeLess30: Long = personRepository.count(ageIsLessThan(30))
+
+val countAgeLess20: Long = personRepository.count(ageIsLessThan(20))
+
+val countAgeLess30NotDenis: Long = personRepository.count(ageIsLessThan(30).and(not(nameEquals("Denis"))))
+
+val people = personRepository.findAll(PredicateSpecification.where(nameEquals("Denis").or(nameEquals("Josh"))))</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Specific criteria supported only by Micronaut Azure Cosmos Data is <code>ARRAY_CONTAINS</code> and for a class having an array of strings named <code>tags</code> it can be used either via custom repository method like this:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">public abstract List&lt;Family&gt; findByTagsArrayContains(String tag);</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">abstract List&lt;Family&gt; findByTagsArrayContains(String tag);</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">abstract fun findByTagsArrayContains(tag: String): List&lt;Family&gt;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>or predicate specification:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">public static PredicateSpecification&lt;Family&gt; tagsContain(String tag) {
+    return (root, criteriaBuilder) -&gt; ((PersistentEntityCriteriaBuilder) criteriaBuilder).arrayContains(root.get("tags"), criteriaBuilder.literal(tag));
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">static PredicateSpecification&lt;Family&gt; tagsContain(String tag) {
+    return (root, criteriaBuilder) -&gt; ((PersistentEntityCriteriaBuilder)criteriaBuilder).arrayContains(root.get("tags"), criteriaBuilder.literal(tag))
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">fun tagsContain(tag: String): PredicateSpecification&lt;Family?&gt;? {
+    return PredicateSpecification { root: Root&lt;Family?&gt;, criteriaBuilder: CriteriaBuilder -&gt;
+        (criteriaBuilder as PersistentEntityCriteriaBuilder).arrayContains(
+            root.get&lt;Any&gt;("tags"),
+            criteriaBuilder.literal(tag)
+        )
+    }
+}</code></pre>
+</div>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+The examples use compile-known values, and in this case, it would be better to create custom repository methods which would come with compile-time generates queries and eliminate runtime overhead.
+It&#8217;s recommended to use criteria only for dynamic queries where the query structure is not known at the build-time.
+</td>
+</tr>
+</table>
+</div>
+
+<h2 id="azureCosmosCriteriaExecuteUpdate"><a class="anchor" href="#azureCosmosCriteriaExecuteUpdate"></a>8.4.2 Updating</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/azureCosmos/azureCosmosCriteriaSpecifications/azureCosmosCriteriaExecuteUpdate.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>To implement the update you can use following method from <a href="../api/io/micronaut/data/repository/JpaSpecificationExecutor.html">JpaSpecificationExecutor</a> interface:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">long updateAll(UpdateSpecification&lt;Person&gt; spec);</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">long updateAll(UpdateSpecification&lt;Person&gt; spec)</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">fun updateAll(spec: UpdateSpecification&lt;Person&gt;?): Long</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This method is expecting <a href="../api/io/micronaut/data/repository/criteria/UpdateSpecification.html">UpdateSpecification</a> which is a variation of specification interface that includes access to <code>jakarta.persistence.criteria.CriteriaUpdate</code>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">import static jakarta.persistence.criteria.*;
+
+public interface UpdateSpecification&lt;T&gt; {
+
+    <i class="conum" data-value="1"></i><b>(1)</b>
+    @Nullable
+    Predicate toPredicate(@NonNull Root&lt;T&gt; root, <i class="conum" data-value="2"></i><b>(2)</b>
+                          @NonNull CriteriaUpdate&lt;?&gt; query, <i class="conum" data-value="3"></i><b>(3)</b>
+                          @NonNull CriteriaBuilder criteriaBuilder <i class="conum" data-value="4"></i><b>(4)</b>
+    );
+
+}</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>The specification is producing a query limiting predicate</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>The entity root</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td>The criteria update instance</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="4"></i><b>4</b></td>
+<td>The criteria builder</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Updating specific properties can be done using <code>jakarta.persistence.criteria.CriteriaUpdate</code> interface:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">query.set(root.get("name"), newName);</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">query.set(root.get("name"), newName)</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">fun updateName(newName: String, existingName: String) = update&lt;Person&gt; {
+    set(Person::name, newName)
+    where {
+        root[Person::name] eq existingName
+    }
+}
+    query.set(root[Person::name], newName)</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>You can define criteria specification methods including update specification that will help you to create an update query:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">class Specifications {
+
+    static PredicateSpecification&lt;Person&gt; nameEquals(String name) {
+        return (root, criteriaBuilder) -&gt; criteriaBuilder.equal(root.get("name"), name);
+    }
+
+    static PredicateSpecification&lt;Person&gt; ageIsLessThan(int age) {
+        return (root, criteriaBuilder) -&gt; criteriaBuilder.lessThan(root.get("age"), age);
+    }
+
+    static UpdateSpecification&lt;Person&gt; setNewName(String newName) {
+        return (root, query, criteriaBuilder) -&gt; {
+            query.set(root.get("name"), newName);
+            return null;
+        };
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">class Specifications {
+
+    static PredicateSpecification&lt;Person&gt; nameEquals(String name) {
+        return (root, criteriaBuilder) -&gt; criteriaBuilder.equal(root.get("name"), name)
+    }
+
+    static PredicateSpecification&lt;Person&gt; ageIsLessThan(int age) {
+        return (root, criteriaBuilder) -&gt; criteriaBuilder.lessThan(root.get("age"), age)
+    }
+
+    static UpdateSpecification&lt;Person&gt; setNewName(String newName) {
+        return (root, query, criteriaBuilder) -&gt; {
+            query.set(root.get("name"), newName)
+            null
+        }
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">object Specifications {
+    fun nameEquals(name: String?) = where&lt;Person&gt; { root[Person::name] eq name }
+
+    fun ageIsLessThan(age: Int) = where&lt;Person&gt; { root[Person::age] lt age }
+
+    fun nameOrAgeMatches(age: Int, name: String?) = where&lt;Person&gt; {
+        or {
+            root[Person::name] eq name
+            root[Person::age] lt age
+        }
+    }
+
+    fun updateName(newName: String, existingName: String) = update&lt;Person&gt; {
+        set(Person::name, newName)
+        where {
+            root[Person::name] eq existingName
+        }
+    }
+
+    // Different style using the criteria builder
+    fun nameEquals2(name: String?) = PredicateSpecification { root, criteriaBuilder -&gt;
+        criteriaBuilder.equal(root[Person::name], name)
+    }
+
+    fun ageIsLessThan2(age: Int) = PredicateSpecification { root, criteriaBuilder -&gt;
+        criteriaBuilder.lessThan(root[Person::age], age)
+    }
+
+    fun setNewName2(newName: String) = UpdateSpecification { root, query, _ -&gt;
+        query.set(root[Person::name], newName)
+        null
+    }
+
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Then you can use the update specification combined with predicate specifications:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">long recordsUpdated = personRepository.updateAll(setNewName("Steven").where(nameEquals("Denis")));</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">long recordsUpdated = personRepository.updateAll(setNewName("Steven").where(nameEquals("Denis")))</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">val recordsUpdated = personRepository.updateAll(updateName("Steven", "Denis"))</code></pre>
+</div>
+</div>
+
+<h2 id="azureCosmosCriteriaExecuteDelete"><a class="anchor" href="#azureCosmosCriteriaExecuteDelete"></a>8.4.3 Deleting</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/azureCosmos/azureCosmosCriteriaSpecifications/azureCosmosCriteriaExecuteDelete.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>To delete an entity or multiple entities you can use one of the following methods from <a href="../api/io/micronaut/data/repository/JpaSpecificationExecutor.html">JpaSpecificationExecutor</a> interface:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">long deleteAll(PredicateSpecification&lt;Person&gt; spec);
+
+long deleteAll(DeleteSpecification&lt;Person&gt; spec);</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">long deleteAll(PredicateSpecification&lt;Person&gt; spec)
+
+long deleteAll(DeleteSpecification&lt;Person&gt; spec)</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">fun deleteAll(spec: PredicateSpecification&lt;Person&gt;?): Long
+
+fun deleteAll(spec: DeleteSpecification&lt;Person&gt;?): Long</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>As it is for querying, <code>deleteAll</code> methods also come in two variations.</p>
+</div>
+<div class="paragraph">
+<p>First method is expecting <a href="../api/io/micronaut/data/repository/criteria/PredicateSpecification.html">PredicateSpecification</a> which is a the same interface described in <a href="#criteriaExecuteQuery">Querying</a> section</p>
+</div>
+<div class="paragraph">
+<p>The second method comes with <a href="../api/io/micronaut/data/repository/DeleteSpecification.html">DeleteSpecification</a> and is intended only for delete criteria because it includes access to <code>jakarta.persistence.criteria.CriteriaDelete</code>.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">import static jakarta.persistence.criteria.*;
+
+public interface DeleteSpecification&lt;T&gt; {
+
+    <i class="conum" data-value="1"></i><b>(1)</b>
+    @Nullable
+    Predicate toPredicate(@NonNull Root&lt;T&gt; root, <i class="conum" data-value="2"></i><b>(2)</b>
+                          @NonNull CriteriaDelete&lt;?&gt; query, <i class="conum" data-value="3"></i><b>(3)</b>
+                          @NonNull CriteriaBuilder criteriaBuilder <i class="conum" data-value="4"></i><b>(4)</b>
+    );
+
+}</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>The specification is producing a query limiting predicate</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>The entity root</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td>The criteria delete instance</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="4"></i><b>4</b></td>
+<td>The criteria builder</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>For deleting you can reuse the same predicates as for querying and updating:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">class Specifications {
+
+    static PredicateSpecification&lt;Person&gt; nameEquals(String name) {
+        return (root, criteriaBuilder) -&gt; criteriaBuilder.equal(root.get("name"), name);
+    }
+
+    static PredicateSpecification&lt;Person&gt; ageIsLessThan(int age) {
+        return (root, criteriaBuilder) -&gt; criteriaBuilder.lessThan(root.get("age"), age);
+    }
+
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">class Specifications {
+
+    static PredicateSpecification&lt;Person&gt; nameEquals(String name) {
+        return (root, criteriaBuilder) -&gt; criteriaBuilder.equal(root.get("name"), name)
+    }
+
+    static PredicateSpecification&lt;Person&gt; ageIsLessThan(int age) {
+        return (root, criteriaBuilder) -&gt; criteriaBuilder.lessThan(root.get("age"), age)
+    }
+
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">object Specifications {
+    fun nameEquals(name: String?) = where&lt;Person&gt; { root[Person::name] eq name }
+
+    fun ageIsLessThan(age: Int) = where&lt;Person&gt; { root[Person::age] lt age }
+
+    fun nameOrAgeMatches(age: Int, name: String?) = where&lt;Person&gt; {
+        or {
+            root[Person::name] eq name
+            root[Person::age] lt age
+        }
+    }
+
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Simply pass the predicate specification to the <code>deleteAll</code> method:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">long recordsDeleted = personRepository.deleteAll(where(nameEquals("Denis")));</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">long recordsDeleted = personRepository.deleteAll(where(nameEquals("Denis")))</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">val recordsDeleted = personRepository.deleteAll(PredicateSpecification.where(nameEquals("Denis")))
+val recordsDeleted = personRepository.deleteAll(where {
+    root[Person::name] eq "Denis"
+})
+val recordsDeleted = personRepository.deleteAll(where {
+    root[Person::name] eq "Denis"
+})</code></pre>
+</div>
+</div>
+
+<h2 id="azureCosmosSpecifics"><a class="anchor" href="#azureCosmosSpecifics"></a>8.5 Azure Cosmos Specifics</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/azureCosmos/azureCosmosSpecifics.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>Since Azure Cosmos database is not relational like most of the database Micronaut Data supports, it does have different implementations in some specifics.</p>
+</div>
+<div class="sect2">
+<h3 id="_relation_mapping">Relation Mapping</h3>
+<div class="paragraph">
+<p>Since this database is not relational and cross container and cross document joins are not supported, relations between entities/containers are not mappable. The only type of relations supported is <code>@Relation(value = Relation.Kind.EMBEDDED)</code> and <code>@Relation(value = Relation.Kind.ONE_TO_MANY)</code> which are actually relations between document and its embedded objects or arrays. Here is an example of such mapping:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@MappedEntity
+public class Family {
+
+    @Id
+    private String id;
+
+    @PartitionKey
+    private String lastName;
+
+    @Relation(value = Relation.Kind.EMBEDDED)
+    private Address address;
+
+    @Relation(value = Relation.Kind.ONE_TO_MANY)
+    private List&lt;Child&gt; children = new ArrayList&lt;&gt;();</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">@MappedEntity
+class Family {
+
+    @Id
+    private String id
+    @PartitionKey
+    private String lastName
+    @Relation(value = Relation.Kind.EMBEDDED)
+    private Address address
+    @Relation(value = Relation.Kind.ONE_TO_MANY)
+    private List&lt;Child&gt; children = new ArrayList&lt;&gt;()</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">@MappedEntity
+data class Family(
+    @field:Id
+    val id: String,
+    @PartitionKey
+    var lastName: String,
+    @Relation(value = Relation.Kind.EMBEDDED)
+    var address: Address,
+    @Relation(value = Relation.Kind.ONE_TO_MANY)
+    var children: List&lt;Child&gt; = ArrayList(),</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>where <code>Relation</code> mapping in this case is needed for our query builder to generate projections, ordering and filtering by the fields in the embedded objects or arrays which can be seen in methods declared in <code>FamilyRepository</code></p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">    public abstract List&lt;Family&gt; findByAddressStateAndAddressCityOrderByAddressCity(String state, String city);
+
+    public abstract void updateByAddressCounty(String county, boolean registered, @Nullable Date registeredDate);
+
+    @Join(value = "children.pets", alias = "pets")
+    public abstract List&lt;Family&gt; findByChildrenPetsType(PetType type);
+
+    public abstract List&lt;Child&gt; findChildrenByChildrenPetsGivenName(String name);</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">    abstract List&lt;Family&gt; findByAddressStateAndAddressCityOrderByAddressCity(String state, String city)
+
+    abstract void updateByAddressCounty(String county, boolean registered, @Nullable Date registeredDate)
+
+    @Join(value = "children.pets", alias = "pets")
+    abstract List&lt;Family&gt; findByChildrenPetsType(PetType type)
+
+    abstract List&lt;Child&gt; findChildrenByChildrenPetsGivenName(String name)</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">    abstract fun findByAddressStateAndAddressCityOrderByAddressCity(state: String, city: String): List&lt;Family&gt;
+    abstract fun updateByAddressCounty(county: String, registered: Boolean, @Nullable registeredDate: Date?)
+    @Join(value = "children.pets", alias = "pets")
+    abstract fun findByChildrenPetsType(type: PetType): List&lt;Family&gt;
+    abstract fun findChildrenByChildrenPetsGivenName(name: String): List&lt;Child&gt;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Due to the nature of the database and implementation of relations, cascading does not have much sense either. Embedded objects and arrays in the documents are being automatically saved when the document is saved.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_identity">Identity</h3>
+<div class="paragraph">
+<p>With Azure Cosmos Db, every document has got internal id property of String type. Micronaut Data Cosmos expects @Id to be of types: Short, Integer, Long, String or UUID. When saving and reading the type is serialized to String and deserialized from a String stored in the id property. Declaring a property annotated with @Id with an unsupported type will result in an exception.
+Generation of ids will work only for String and UUID where UUID can be generated either by using the @GeneratedValue or @AutoPopulated annotations. String id can be generated only by using @GeneratedValue annotation. Numerical ids cannot be auto generated, and it is up to user to set the id value before saving.
+Composite identities are not supported.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_partition_key">Partition Key</h3>
+<div class="paragraph">
+<p>In Azure Cosmos Db partition keys are the core element to distributing data efficiently into different logical and physical sets so that the queries performed against the database are completed as quickly as possible. Every mapped entity should have partition key defined. Like explained above, it can be defined using <a href="../api/io/micronaut/data/cosmos/annotation/PartitionKey.html">@PartitionKey</a> annotation on appropriate entity field or via configuration as explained in <a href="#azureCosmosConfiguration">configuration</a> section. Efficiently using well defined partition key will improve operations performance and reduce request unit costs.
+Micronaut Data Cosmos tries to use a partition key whenever possible. Here are some repository method examples that make use of a partition key in read, update or delete operations</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">    public abstract Optional&lt;Family&gt; queryById(String id, PartitionKey partitionKey);
+
+    public abstract void updateRegistered(@Id String id, boolean registered, PartitionKey partitionKey);
+
+    public abstract void deleteByLastName(String lastName, PartitionKey partitionKey);
+
+    public abstract void deleteById(String id, PartitionKey partitionKey);</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">    abstract Optional&lt;Family&gt; queryById(String id, PartitionKey partitionKey)
+
+    abstract void updateRegistered(@Id String id, boolean registered, PartitionKey partitionKey)
+
+    abstract void deleteByLastName(String lastName, PartitionKey partitionKey)
+
+    abstract void deleteById(String id, PartitionKey partitionKey)</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">    abstract fun queryById(id: String?, partitionKey: PartitionKey?): Optional&lt;Family?&gt;?
+    abstract fun deleteByLastName(lastName: String, partitionKey: PartitionKey)
+    abstract fun deleteById(id: String, partitionKey: PartitionKey)
+    abstract fun updateRegistered(@Id id: String, registered: Boolean, partitionKey: PartitionKey)</code></pre>
+</div>
+</div>
+</div>
+
+<h2 id="azureCosmosAttributeConverter"><a class="anchor" href="#azureCosmosAttributeConverter"></a>8.6 Using Attribute Converter</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/azureCosmos/azureCosmosAttributeConverter.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>There are cases where you would like to represent the attribute differently in the database than in the entity.</p>
+</div>
+<div class="paragraph">
+<p>Consider the following example entity:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@MappedEntity
+public class Book {
+    @Id
+    @GeneratedValue
+    @PartitionKey
+    private String id;
+    private String title;
+    private int pages;
+    @MappedProperty(converter = ItemPriceAttributeConverter.class)
+    @Nullable
+    private ItemPrice itemPrice;
+    @DateCreated
+    private Date createdDate;
+    @DateUpdated
+    private Date updatedDate;
+
+    public Book(String title, int pages) {
+        this.title = title;
+        this.pages = pages;
+    }
+    // ...
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">@MappedEntity
+class Book {
+    @Id
+    @GeneratedValue
+    private String id
+    private String title
+    private int pages
+    @MappedProperty(converter = ItemPriceAttributeConverter)
+    @Nullable
+    private ItemPrice itemPrice
+    Book(String title, int pages) {
+        this.title = title
+        this.pages = pages
+    }
+    //...
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">@MappedEntity
+data class Book(@field:Id
+                @GeneratedValue
+                var id: String?,
+                var title: String,
+                var pages: Int = 0,
+                @MappedProperty(converter = ItemPriceAttributeConverter::class)
+                var itemPrice: ItemPrice? = null,
+                @DateCreated
+                var createdDate: Date? = null,
+                @DateUpdated
+                var updatedDate: Date? = null)</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The <code>Book</code> class has a reference to a type <code>ItemPrice</code>. The <code>ItemPrice</code> type is defined as:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">package example;
+
+import io.micronaut.core.annotation.Introspected;
+
+@Introspected
+public class ItemPrice {
+
+    private double price;
+
+    public ItemPrice(double price) {
+        this.price = price;
+    }
+
+    public double getPrice() {
+        return price;
+    }
+
+    public static ItemPrice valueOf(double price) {
+        return new ItemPrice(price);
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">package example
+
+import groovy.transform.Immutable
+
+@Immutable
+class ItemPrice {
+    double price
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">package example
+
+data class ItemPrice(val price: Double)</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>As you can see <code>@MappedProperty(converter = ItemPriceAttributeConverter.class)</code> is used to define the <code>ItemPrce</code> converter.</p>
+</div>
+<div class="paragraph">
+<p>The last step is to add custom attribute conversion so that Micronaut Data knows how to read and write the type from an <code>Double</code>:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">package example;
+
+import io.micronaut.core.convert.ConversionContext;
+import io.micronaut.data.model.runtime.convert.AttributeConverter;
+import jakarta.inject.Singleton;
+
+@Singleton
+public class ItemPriceAttributeConverter implements AttributeConverter&lt;ItemPrice, Double&gt; {
+
+    @Override
+    public Double convertToPersistedValue(ItemPrice bookPrice, ConversionContext context) {
+        return bookPrice == null ? null : bookPrice.getPrice();
+    }
+
+    @Override
+    public ItemPrice convertToEntityValue(Double value, ConversionContext context) {
+        return value == null ? null : ItemPrice.valueOf(value);
+    }
+
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">package example
+
+import groovy.transform.CompileStatic
+import io.micronaut.core.convert.ConversionContext
+import io.micronaut.data.model.runtime.convert.AttributeConverter
+import jakarta.inject.Singleton
+
+@Singleton // <b class="conum">(1)</b>
+@CompileStatic
+class ItemPriceAttributeConverter implements AttributeConverter&lt;ItemPrice, Double&gt; {
+
+    @Override // <b class="conum">(2)</b>
+    Double convertToPersistedValue(ItemPrice itemPrice, ConversionContext context) {
+        return itemPrice == null ? null : itemPrice.getPrice()
+    }
+
+    @Override // <b class="conum">(3)</b>
+    ItemPrice convertToEntityValue(Double value, ConversionContext context) {
+        return value == null ? null : new ItemPrice(value)
+    }
+
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">package example
+
+import io.micronaut.core.convert.ConversionContext
+import io.micronaut.data.model.runtime.convert.AttributeConverter
+import jakarta.inject.Singleton
+
+@Singleton // <b class="conum">(1)</b>
+class ItemPriceAttributeConverter : AttributeConverter&lt;ItemPrice?, Double?&gt; {
+
+    // <b class="conum">(2)</b>
+    override fun convertToPersistedValue(itemPrice: ItemPrice?, context: ConversionContext): Double? {
+        return itemPrice?.price
+    }
+
+    // <b class="conum">(3)</b>
+    override fun convertToEntityValue(value: Double?, context: ConversionContext): ItemPrice? {
+        return if (value == null) null else ItemPrice(value)
+    }
+
+}</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>The attribute converter implements <a href="../api/io/micronaut/data/model/runtime/convert/AttributeConverter.html">@AttributeConverter</a> and must be a bean</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>A converter from <code>ItemPrice</code> to <code>Double</code></td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td>A converter from <code>Double</code> to <code>ItemPrice</code></td>
+</tr>
+</table>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+It&#8217;s possible to define the converter result type using <a href="../api/io/micronaut/data/annotation/MappedProperty.html">@MappedProperty</a>: <code>@MappedProperty(converterPersistedType = Double.class)</code>, in this case the data type will be detected automatically.
+</td>
+</tr>
+</table>
+</div>
+
+<h2 id="azureCosmosOptimisticLocking"><a class="anchor" href="#azureCosmosOptimisticLocking"></a>8.7 Optimistic locking</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/azureCosmos/azureCosmosOptimisticLocking.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>Optimistic locking is a strategy where you note the actual record state&#8217;s version and modify the record only when the version is the same.</p>
+</div>
+<div class="paragraph">
+<p>Unlike some other Db implementations in Micronaut, for Azure Cosmos Db we rely on existence of _etag field in every document. We don&#8217;t use <a href="../api/io/micronaut/data/annotation/Version.html">@Version</a> because _etag field is of type <code>String</code> and for that purpose we introduce <a href="../api/io/micronaut/data/cosmos/annotation/ETag.html">@ETag</a> annotation.</p>
+</div>
+<div class="paragraph">
+<p>The field is updated each time document gets updated in Azure Cosmos Db and before updating it next time, it checks whether current value in the document being updated matches current value in the database. If value doesn&#8217;t match Micronaut will throw  <a href="../api/io/micronaut/data/exceptions/OptimisticLockException.html">OptimisticLockException</a>.</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@ETag
+private String documentVersion;</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">@ETag
+private String documentVersion</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">@ETag
+var documentVersion: String? = null</code></pre>
+</div>
+</div>
+
+<h1 id="howItWorks"><a class="anchor" href="#howItWorks"></a>9 How Micronaut Data Works</h1>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/howItWorks.adoc"'>
@@ -12678,7 +14420,7 @@ You can add additional method candidates by creating a library that depends on <
 <p>At runtime all the <a href="../api/io/micronaut/data/intercept/DataInterceptor.html">DataInterceptor</a> has to do is retrieve the query, read the method parameter values using the parameter binding and execute the query.</p>
 </div>
 
-<h1 id="graal"><a class="anchor" href="#graal"></a>9 Going Native with GraalVM</h1>
+<h1 id="graal"><a class="anchor" href="#graal"></a>10 Going Native with GraalVM</h1>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/graal.adoc"'>
@@ -12719,7 +14461,7 @@ You can add additional method candidates by creating a library that depends on <
 <p>Micronaut Data will automatically detect the driver and configure the driver correctly for each database as appropriate.</p>
 </div>
 
-<h1 id="spring"><a class="anchor" href="#spring"></a>10 Spring Data Support</h1>
+<h1 id="spring"><a class="anchor" href="#spring"></a>11 Spring Data Support</h1>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/spring.adoc"'>

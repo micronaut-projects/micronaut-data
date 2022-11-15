@@ -27,7 +27,7 @@
     catch(err) {
     }
 //-->
-var data = {"i0":10,"i1":10,"i2":10,"i3":10,"i4":10,"i5":10,"i6":10,"i7":10,"i8":10};
+var data = {"i0":10,"i1":10,"i2":10,"i3":10,"i4":10,"i5":10,"i6":10,"i7":10,"i8":10,"i9":10,"i10":10};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],8:["t4","Concrete Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -95,7 +95,7 @@ loadScripts(document, 'script');</script>
 </ul>
 <ul class="subNavList">
 <li>Detail:&nbsp;</li>
-<li>Field&nbsp;|&nbsp;</li>
+<li><a href="#field.detail">Field</a>&nbsp;|&nbsp;</li>
 <li><a href="#constructor.detail">Constr</a>&nbsp;|&nbsp;</li>
 <li><a href="#method.detail">Method</a></li>
 </ul>
@@ -146,7 +146,7 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 </dl>
 <hr>
 <pre>@Internal
-public final class <span class="typeNameLabel">DefaultSqlPreparedQuery&lt;E,&#8203;R&gt;</span>
+public class <span class="typeNameLabel">DefaultSqlPreparedQuery&lt;E,&#8203;R&gt;</span>
 extends <a href="../query/DefaultBindableParametersPreparedQuery.html" title="class in io.micronaut.data.runtime.operations.internal.query">DefaultBindableParametersPreparedQuery</a>&lt;E,&#8203;R&gt;
 implements <a href="SqlPreparedQuery.html" title="interface in io.micronaut.data.runtime.operations.internal.sql">SqlPreparedQuery</a>&lt;E,&#8203;R&gt;, <a href="../../../query/internal/DelegatePreparedQuery.html" title="interface in io.micronaut.data.runtime.query.internal">DelegatePreparedQuery</a>&lt;E,&#8203;R&gt;</pre>
 <div class="block">Implementation of <a href="SqlPreparedQuery.html" title="interface in io.micronaut.data.runtime.operations.internal.sql"><code>SqlPreparedQuery</code></a>.</div>
@@ -186,6 +186,24 @@ implements <a href="SqlPreparedQuery.html" title="interface in io.micronaut.data
 <!--   -->
 </a>
 <h3>Field Summary</h3>
+<table class="memberSummary">
+<caption><span>Fields</span><span class="tabEnd">&nbsp;</span></caption>
+<tr>
+<th class="colFirst" scope="col">Modifier and Type</th>
+<th class="colSecond" scope="col">Field</th>
+<th class="colLast" scope="col">Description</th>
+</tr>
+<tr class="altColor">
+<td class="colFirst"><code>protected java.lang.String</code></td>
+<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#query">query</a></span></code></th>
+<td class="colLast">&nbsp;</td>
+</tr>
+<tr class="rowColor">
+<td class="colFirst"><code>protected <a href="SqlStoredQuery.html" title="interface in io.micronaut.data.runtime.operations.internal.sql">SqlStoredQuery</a>&lt;<a href="DefaultSqlPreparedQuery.html" title="type parameter in DefaultSqlPreparedQuery">E</a>,&#8203;<a href="DefaultSqlPreparedQuery.html" title="type parameter in DefaultSqlPreparedQuery">R</a>&gt;</code></td>
+<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#sqlStoredQuery">sqlStoredQuery</a></span></code></th>
+<td class="colLast">&nbsp;</td>
+</tr>
+</table>
 <ul class="blockList">
 <li class="blockList"><a id="fields.inherited.from.class.io.micronaut.data.runtime.operations.internal.query.DefaultBindableParametersPreparedQuery">
 <!--   -->
@@ -292,15 +310,29 @@ implements <a href="SqlPreparedQuery.html" title="interface in io.micronaut.data
 <td class="colLast">&nbsp;</td>
 </tr>
 <tr id="i7" class="rowColor">
+<td class="colFirst"><code>protected int</code></td>
+<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getQueryParameterValueSize(io.micronaut.data.model.runtime.QueryParameterBinding)">getQueryParameterValueSize</a></span>&#8203;(<a href="../../../../model/runtime/QueryParameterBinding.html" title="interface in io.micronaut.data.model.runtime">QueryParameterBinding</a>&nbsp;parameter)</code></th>
+<td class="colLast">
+<div class="block">Gets number of parameter values for the query parameter binding (used for IN for example).</div>
+</td>
+</tr>
+<tr id="i8" class="altColor">
 <td class="colFirst"><code>boolean</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#isExpandableQuery()">isExpandableQuery</a></span>()</code></th>
 <td class="colLast">&nbsp;</td>
 </tr>
-<tr id="i8" class="altColor">
+<tr id="i9" class="rowColor">
 <td class="colFirst"><code>void</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#prepare(E)">prepare</a></span>&#8203;(<a href="DefaultSqlPreparedQuery.html" title="type parameter in DefaultSqlPreparedQuery">E</a>&nbsp;entity)</code></th>
 <td class="colLast">
 <div class="block">Check if query need to be modified to expand parameters.</div>
+</td>
+</tr>
+<tr id="i10" class="altColor">
+<td class="colFirst"><code>protected int</code></td>
+<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#sizeOf(java.lang.Object)">sizeOf</a></span>&#8203;(java.lang.Object&nbsp;value)</code></th>
+<td class="colLast">
+<div class="block">Compute the size of the given object.</div>
 </td>
 </tr>
 </table>
@@ -383,6 +415,34 @@ implements <a href="SqlPreparedQuery.html" title="interface in io.micronaut.data
 <div class="details">
 <ul class="blockList">
 <li class="blockList">
+<!-- ============ FIELD DETAIL =========== -->
+<section>
+<ul class="blockList">
+<li class="blockList"><a id="field.detail">
+<!--   -->
+</a>
+<h3>Field Detail</h3>
+<a id="sqlStoredQuery">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>sqlStoredQuery</h4>
+<pre>protected final&nbsp;<a href="SqlStoredQuery.html" title="interface in io.micronaut.data.runtime.operations.internal.sql">SqlStoredQuery</a>&lt;<a href="DefaultSqlPreparedQuery.html" title="type parameter in DefaultSqlPreparedQuery">E</a>,&#8203;<a href="DefaultSqlPreparedQuery.html" title="type parameter in DefaultSqlPreparedQuery">R</a>&gt; sqlStoredQuery</pre>
+</li>
+</ul>
+<a id="query">
+<!--   -->
+</a>
+<ul class="blockListLast">
+<li class="blockList">
+<h4>query</h4>
+<pre>protected&nbsp;java.lang.String query</pre>
+</li>
+</ul>
+</li>
+</ul>
+</section>
 <!-- ========= CONSTRUCTOR DETAIL ======== -->
 <section>
 <ul class="blockList">
@@ -569,10 +629,26 @@ implements <a href="SqlPreparedQuery.html" title="interface in io.micronaut.data
 </dl>
 </li>
 </ul>
+<a id="getQueryParameterValueSize(io.micronaut.data.model.runtime.QueryParameterBinding)">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>getQueryParameterValueSize</h4>
+<pre class="methodSignature">protected&nbsp;int&nbsp;getQueryParameterValueSize&#8203;(<a href="../../../../model/runtime/QueryParameterBinding.html" title="interface in io.micronaut.data.model.runtime">QueryParameterBinding</a>&nbsp;parameter)</pre>
+<div class="block">Gets number of parameter values for the query parameter binding (used for IN for example).</div>
+<dl>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>parameter</code> - the query binding parameter</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>number of parameter values in query parameter binding</dd>
+</dl>
+</li>
+</ul>
 <a id="attachPageable(io.micronaut.data.model.Pageable,boolean)">
 <!--   -->
 </a>
-<ul class="blockListLast">
+<ul class="blockList">
 <li class="blockList">
 <h4>attachPageable</h4>
 <pre class="methodSignature">public&nbsp;void&nbsp;attachPageable&#8203;(<a href="../../../../model/Pageable.html" title="interface in io.micronaut.data.model">Pageable</a>&nbsp;pageable,
@@ -585,6 +661,22 @@ implements <a href="SqlPreparedQuery.html" title="interface in io.micronaut.data
 <dt><span class="paramLabel">Parameters:</span></dt>
 <dd><code>pageable</code> - The pageable</dd>
 <dd><code>isSingleResult</code> - is single result</dd>
+</dl>
+</li>
+</ul>
+<a id="sizeOf(java.lang.Object)">
+<!--   -->
+</a>
+<ul class="blockListLast">
+<li class="blockList">
+<h4>sizeOf</h4>
+<pre class="methodSignature">protected&nbsp;int&nbsp;sizeOf&#8203;(java.lang.Object&nbsp;value)</pre>
+<div class="block">Compute the size of the given object.</div>
+<dl>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>value</code> - The value</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>The size</dd>
 </dl>
 </li>
 </ul>
@@ -646,7 +738,7 @@ implements <a href="SqlPreparedQuery.html" title="interface in io.micronaut.data
 </ul>
 <ul class="subNavList">
 <li>Detail:&nbsp;</li>
-<li>Field&nbsp;|&nbsp;</li>
+<li><a href="#field.detail">Field</a>&nbsp;|&nbsp;</li>
 <li><a href="#constructor.detail">Constr</a>&nbsp;|&nbsp;</li>
 <li><a href="#method.detail">Method</a></li>
 </ul>
