@@ -25,6 +25,7 @@ import io.micronaut.context.annotation.Context;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.exceptions.ConfigurationException;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.beans.BeanIntrospector;
 import io.micronaut.core.util.CollectionUtils;
@@ -78,26 +79,42 @@ final class CosmosDatabaseInitializer {
             cosmosDatabase = cosmosClient.getDatabase(configuration.getDatabaseName());
         } else {
             ThroughputProperties throughputProperties = configuration.getThroughput() != null ? configuration.getThroughput().createThroughputProperties() : null;
-            if (StorageUpdatePolicy.CREATE_IF_NOT_EXISTS.equals(storageUpdatePolicy)) {
-                if (throughputProperties != null) {
-                    cosmosClient.createDatabaseIfNotExists(configuration.getDatabaseName(), throughputProperties);
-                } else {
-                    cosmosClient.createDatabaseIfNotExists(configuration.getDatabaseName());
-                }
-                cosmosDatabase = cosmosClient.getDatabase(configuration.getDatabaseName());
-            } else if (StorageUpdatePolicy.UPDATE.equals(storageUpdatePolicy)) {
-                cosmosDatabase = cosmosClient.getDatabase(configuration.getDatabaseName());
-                if (throughputProperties != null) {
-                    cosmosDatabase.replaceThroughput(throughputProperties);
-                }
-            } else {
-                throw new ConfigurationException("Unexpected StorageUpdatePolicy value " + storageUpdatePolicy);
-            }
+            cosmosDatabase = createOrUpdateDatabase(cosmosClient, configuration.getDatabaseName(), storageUpdatePolicy, throughputProperties);
         }
         initContainers(configuration, cosmosDatabase, runtimeEntityRegistry);
         if (LOG.isDebugEnabled()) {
             LOG.debug("Cosmos Db Initialization Finish");
         }
+    }
+
+    /**
+     * Based on {@link StorageUpdatePolicy} from the configuration, this method will create new database or update properties.
+     * Currently, we only support configuring database throughput.
+     *
+     * @param cosmosClient the cosmos client
+     * @param databaseName the database name
+     * @param storageUpdatePolicy the storage update policy, expected {@link StorageUpdatePolicy#CREATE_IF_NOT_EXISTS} or {@link StorageUpdatePolicy#UPDATE}
+     * @param throughputProperties throughput properties from the configuration, can be null
+     * @return CosmosDatabase instance for given database name
+     */
+    private CosmosDatabase createOrUpdateDatabase(CosmosClient cosmosClient, String databaseName, StorageUpdatePolicy storageUpdatePolicy, @Nullable ThroughputProperties throughputProperties) {
+        CosmosDatabase cosmosDatabase;
+        if (StorageUpdatePolicy.CREATE_IF_NOT_EXISTS.equals(storageUpdatePolicy)) {
+            if (throughputProperties != null) {
+                cosmosClient.createDatabaseIfNotExists(databaseName, throughputProperties);
+            } else {
+                cosmosClient.createDatabaseIfNotExists(databaseName);
+            }
+            cosmosDatabase = cosmosClient.getDatabase(databaseName);
+        } else if (StorageUpdatePolicy.UPDATE.equals(storageUpdatePolicy)) {
+            cosmosDatabase = cosmosClient.getDatabase(databaseName);
+            if (throughputProperties != null) {
+                cosmosDatabase.replaceThroughput(throughputProperties);
+            }
+        } else {
+            throw new ConfigurationException("Unexpected StorageUpdatePolicy value " + storageUpdatePolicy);
+        }
+        return cosmosDatabase;
     }
 
     private RuntimePersistentEntity<?>[] getPersistentEntities(CosmosDatabaseConfiguration configuration, RuntimeEntityRegistry runtimeEntityRegistry) {

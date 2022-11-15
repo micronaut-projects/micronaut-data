@@ -32,6 +32,7 @@ import java.io.IOException;
 @Singleton
 final class DefaultManyRelationSerializer implements ManyRelationSerializer {
     @Override
+    @SuppressWarnings("java:S3740") // Disabled SonarLint rule for: Raw types should not be used
     public void serialize(Encoder encoder, EncoderContext context, Argument<?> type, Object value) throws IOException {
         if (value == null) {
             encoder.encodeNull();
