@@ -6,6 +6,7 @@ micronaut-sql = "4.7.2"
 micronaut-docs = "2.0.0"
 micronaut-gradle-plugin = "3.6.4"
 micronaut-mongo = "4.6.0"
+micronaut-azure = "3.5.0"
 
 groovy = "3.0.13"
 
@@ -166,11 +167,13 @@ testcontainers-mssqlserver = { module = "org.testcontainers:mssqlserver" }
 testcontainers-oracle = { module = "org.testcontainers:oracle-xe" }
 testcontainers-r2dbc = { module = "org.testcontainers:r2dbc" }
 testcontainers-mongodb = { module = "org.testcontainers:mongodb" }
+testcontainers-azure = { module = "org.testcontainers:azure" }
 
 # SERDE
 
 micronaut-serde-processor = { module = "io.micronaut.serde:micronaut-serde-processor", version.ref = "micronaut-serde" }
 micronaut-serde-bson = { module = "io.micronaut.serde:micronaut-serde-bson", version.ref = "micronaut-serde" }
+micronaut-serde-jackson = { module = "io.micronaut.serde:micronaut-serde-jackson", version.ref = "micronaut-serde" }
 micronaut-serde-api = { module = "io.micronaut.serde:micronaut-serde-api", version.ref = "micronaut-serde" }
 micronaut-serde-support = { module = "io.micronaut.serde:micronaut-serde-support", version.ref = "micronaut-serde" }
 
@@ -182,6 +185,10 @@ mongodb-driver-reactive = { module = "org.mongodb:mongodb-driver-reactivestreams
 
 micronaut-mongo-reactive = { module = "io.micronaut.mongodb:micronaut-mongo-reactive", version.ref = "micronaut-mongo" }
 micronaut-mongo-sync = { module = "io.micronaut.mongodb:micronaut-mongo-sync", version.ref = "micronaut-mongo" }
+
+# AZURE COSMOS
+
+micronaut-azure-cosmos = { module = "io.micronaut.azure:micronaut-azure-cosmos", version.ref = "micronaut-azure" }
 
 # PLUGINS
 

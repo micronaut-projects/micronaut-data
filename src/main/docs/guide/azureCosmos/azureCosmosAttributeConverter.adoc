@@ -1,0 +1,24 @@
+There are cases where you would like to represent the attribute differently in the database than in the entity.
+
+Consider the following example entity:
+
+snippet::example.Book[project-base="doc-examples/azure-cosmos-example", source="main", tags="book", indent="0"]
+
+The `Book` class has a reference to a type `ItemPrice`. The `ItemPrice` type is defined as:
+
+snippet::example.ItemPrice[project-base="doc-examples/azure-cosmos-example", source="main"]
+
+As you can see `@MappedProperty(converter = ItemPriceAttributeConverter.class)` is used to define the `ItemPrce` converter.
+
+The last step is to add custom attribute conversion so that Micronaut Data knows how to read and write the type from an `Double`:
+
+snippet::example.ItemPriceAttributeConverter[project-base="doc-examples/azure-cosmos-example", source="main"]
+
+<1> The attribute converter implements ann:io.micronaut.data.model.runtime.convert.AttributeConverter[] and must be a bean
+<2> A converter from `ItemPrice` to `Double`
+<3> A converter from `Double` to `ItemPrice`
+
+NOTE: It's possible to define the converter result type using ann:data.annotation.MappedProperty[]: `@MappedProperty(converterPersistedType = Double.class)`, in this case the data type will be detected automatically.
+
+
+

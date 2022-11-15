@@ -47,6 +47,7 @@ include 'data-tx-hibernate'
 include 'data-jdbc'
 include 'data-r2dbc'
 include 'data-mongodb'
+include 'data-azure-cosmos'
 
 // Spring compatibility
 include 'data-spring'
@@ -86,6 +87,9 @@ include 'doc-examples:mongo-reactive-example-kotlin'
 if (JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_15)) {
     include 'doc-examples:mongo-example-records-java'
 }
+include 'doc-examples:azure-cosmos-example-java'
+include 'doc-examples:azure-cosmos-example-groovy'
+include 'doc-examples:azure-cosmos-example-kotlin'
 
 // benchmarks
 include 'benchmarks:benchmark-micronaut-data-jpa'

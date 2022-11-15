@@ -135,6 +135,9 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                         dialectConfig.stringValue("positionalParameterFormat").ifPresent(format ->
                                 dc.positionalFormatter = format
                         );
+                        dialectConfig.stringValue("positionalParameterName").ifPresent(format ->
+                                dc.positionalNameFormatter = format
+                        );
                         dialectConfig.booleanValue("escapeQueries").ifPresent(escape ->
                                 dc.escapeQueries = escape
                         );
@@ -243,11 +246,11 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         List<String> dropStatements = new ArrayList<>();
         for (Association association : foreignKeyAssociations) {
             AnnotationMetadata associationMetadata = association.getAnnotationMetadata();
-            NamingStrategy namingStrategy = entity.getNamingStrategy();
+            NamingStrategy namingStrategy = getNamingStrategy(entity);
             String joinTableName = associationMetadata
                     .stringValue(ANN_JOIN_TABLE, "name")
                     .orElseGet(() ->
-                            namingStrategy.mappedName(association)
+                            getMappedName(namingStrategy, association)
                     );
             dropStatements.add("DROP TABLE " + (escape ? quote(joinTableName) : joinTableName) + ";");
         }
@@ -271,11 +274,11 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
             Optional<Association> inverseSide = association.getInverseSide().map(Function.identity());
             Association owningAssociation = inverseSide.orElse(association);
             AnnotationMetadata annotationMetadata = owningAssociation.getAnnotationMetadata();
-            NamingStrategy namingStrategy = entity.getNamingStrategy();
+            NamingStrategy namingStrategy = getNamingStrategy(entity);
             String joinTableName = annotationMetadata
                     .stringValue(ANN_JOIN_TABLE, "name")
                     .orElseGet(() ->
-                            namingStrategy.mappedName(association)
+                            getMappedName(namingStrategy, association)
                     );
             List<String> leftJoinColumns = resolveJoinTableJoinColumns(annotationMetadata, true, entity, namingStrategy);
             List<String> rightJoinColumns = resolveJoinTableJoinColumns(annotationMetadata, false, association.getAssociatedEntity(), namingStrategy);
@@ -328,7 +331,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
 
         Collection<Association> foreignKeyAssociations = getJoinTableAssociations(entity);
 
-        NamingStrategy namingStrategy = entity.getNamingStrategy();
+        NamingStrategy namingStrategy = getNamingStrategy(entity);
         if (CollectionUtils.isNotEmpty(foreignKeyAssociations)) {
             for (Association association : foreignKeyAssociations) {
                 StringBuilder joinTableBuilder = new StringBuilder("CREATE TABLE ");
@@ -341,7 +344,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                 String joinTableName = annotationMetadata
                         .stringValue(ANN_JOIN_TABLE, "name")
                         .orElseGet(() ->
-                                namingStrategy.mappedName(association)
+                                getMappedName(namingStrategy, association)
                         );
                 if (escape) {
                     joinTableName = quote(joinTableName);
@@ -428,7 +431,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
             }
             boolean finalGeneratePkAfterColumns = generatePkAfterColumns;
             for (PersistentPropertyPath pp : ids) {
-                String column = namingStrategy.mappedName(pp.getAssociations(), pp.getProperty());
+                String column = getMappedName(namingStrategy, pp.getAssociations(), pp.getProperty());
                 if (escape) {
                     column = quote(column);
                 }
@@ -443,7 +446,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         }
         PersistentProperty version = entity.getVersion();
         if (version != null) {
-            String column = namingStrategy.mappedName(Collections.emptyList(), version);
+            String column = getMappedName(namingStrategy, Collections.emptyList(), version);
             if (escape) {
                 column = quote(column);
             }
@@ -452,7 +455,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         }
 
         BiConsumer<List<Association>, PersistentProperty> addColumn = (associations, property) -> {
-            String column = namingStrategy.mappedName(associations, property);
+            String column = getMappedName(namingStrategy, associations, property);
             if (escape) {
                 column = quote(column);
             }
@@ -710,7 +713,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         }
         List<String> columns = new ArrayList<>();
         traversePersistentProperties(identity, (associations, property) -> {
-            String columnName = namingStrategy.mappedName(associations, property);
+            String columnName = getMappedName(namingStrategy, associations, property);
             columns.add(columnName);
         });
         return columns;
@@ -773,7 +776,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                     }
 
                     PersistentEntity associatedEntity = association.getAssociatedEntity();
-                    NamingStrategy namingStrategy = associatedEntity.getNamingStrategy();
+                    NamingStrategy namingStrategy = getNamingStrategy(associatedEntity);
 
                     String joinAlias = joinAliasOverride == null ? getAliasName(joinPath) : joinAliasOverride.get(joinPath);
                     Objects.requireNonNull(joinAlias);
@@ -790,7 +793,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                     traversePersistentProperties(associatedEntity, includeIdentity, true, (propertyAssociations, prop) -> {
                         String columnName;
                         if (computePropertyPaths()) {
-                            columnName = namingStrategy.mappedName(propertyAssociations, prop);
+                            columnName = getMappedName(namingStrategy, propertyAssociations, prop);
                         } else {
                             columnName = asPath(propertyAssociations, prop);
                         }
@@ -828,7 +831,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
             return;
         }
         boolean escape = shouldEscape(entity);
-        NamingStrategy namingStrategy = entity.getNamingStrategy();
+        NamingStrategy namingStrategy = getNamingStrategy(entity);
         int length = sb.length();
         traversePersistentProperties(entity, (associations, property) -> {
             String transformed = getDataTransformerReadValue(alias, property).orElse(null);
@@ -837,7 +840,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
             if (transformed != null) {
                 sb.append(transformed).append(AS_CLAUSE).append(useAlias ? columnAlias : property.getPersistedName());
             } else {
-                String column = namingStrategy.mappedName(associations, property);
+                String column = getMappedName(namingStrategy, associations, property);
                 column = escapeColumnIfNeeded(column, escape);
                 sb.append(alias).append(DOT).append(column);
                 if (useAlias) {
@@ -930,7 +933,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         boolean escape = shouldEscape(entity);
         final String unescapedTableName = getUnescapedTableName(entity);
 
-        NamingStrategy namingStrategy = entity.getNamingStrategy();
+        NamingStrategy namingStrategy = getNamingStrategy(entity);
 
         Collection<? extends PersistentProperty> persistentProperties = entity.getPersistentProperties();
         List<QueryParameterBinding> parameterBindings = new ArrayList<>();
@@ -961,7 +964,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                         }
                     });
 
-                    String columnName = namingStrategy.mappedName(associations, property);
+                    String columnName = getMappedName(namingStrategy, associations, property);
                     if (escape) {
                         columnName = quote(columnName);
                     }
@@ -991,7 +994,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                 }
             });
 
-            String columnName = namingStrategy.mappedName(Collections.emptyList(), version);
+            String columnName = getMappedName(namingStrategy, Collections.emptyList(), version);
             if (escape) {
                 columnName = quote(columnName);
             }
@@ -1043,7 +1046,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
 
                 }
 
-                String columnName = namingStrategy.mappedName(associations, property);
+                String columnName = getMappedName(namingStrategy, associations, property);
                 if (escape) {
                     columnName = quote(columnName);
                 }
@@ -1311,7 +1314,20 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         return joinAliases;
     }
 
-    private void buildJoin(String joinType,
+    /**
+     * Builds join, adding fields and criteria.
+     *
+     * @param joinType the join type
+     * @param sb string builder that join will be added to
+     * @param queryState the query state
+     * @param joinAssociationsPath the list of associations
+     * @param joinAlias the join alias
+     * @param association the association
+     * @param associatedEntity the associated entity
+     * @param associationOwner the association owner
+     * @param currentJoinAlias the current join alias
+     */
+    protected void buildJoin(String joinType,
                            StringBuilder sb,
                            QueryState queryState,
                            List<Association> joinAssociationsPath,
@@ -1351,7 +1367,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
 
             String joinTableName = annotationMetadata
                     .stringValue(ANN_JOIN_TABLE, "name")
-                    .orElseGet(() -> namingStrategy.mappedName(association));
+                    .orElseGet(() -> getMappedName(namingStrategy, association));
             String joinTableAlias = annotationMetadata
                     .stringValue(ANN_JOIN_TABLE, "alias")
                     .orElseGet(() -> currentJoinAlias + joinTableName + "_");
@@ -1461,7 +1477,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         }
         if (onLeftColumns.isEmpty()) {
             traversePersistentProperties(leftProperty, (associations, p) -> {
-                String column = leftProperty.getOwner().getNamingStrategy().mappedName(merge(leftPropertyAssociations, associations), p);
+                String column = getMappedName(getNamingStrategy(leftProperty.getOwner()), merge(leftPropertyAssociations, associations), p);
                 onLeftColumns.add(column);
             });
             if (onLeftColumns.isEmpty()) {
@@ -1470,7 +1486,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         }
         if (onRightColumns.isEmpty()) {
             traversePersistentProperties(rightProperty, (associations, p) -> {
-                String column = rightProperty.getOwner().getNamingStrategy().mappedName(merge(rightPropertyAssociations, associations), p);
+                String column = getMappedName(getNamingStrategy(rightProperty.getOwner()), merge(rightPropertyAssociations, associations), p);
                 onRightColumns.add(column);
             });
         }
@@ -1633,13 +1649,16 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     @Override
     public Placeholder formatParameter(int index) {
         DialectConfig dialectConfig = perDialectConfig.get(dialect);
-        if (dialectConfig != null && dialectConfig.positionalFormatter != null) {
-            return new Placeholder(
-                    String.format(dialectConfig.positionalFormatter, index),
-                    String.valueOf(index)
-            );
+        String name;
+        if (dialectConfig != null && dialectConfig.positionalNameFormatter != null) {
+            name = String.format(dialectConfig.positionalNameFormatter, index);
         } else {
-            return new Placeholder("?", String.valueOf(index));
+            name = String.valueOf(index);
+        }
+        if (dialectConfig != null && dialectConfig.positionalFormatter != null) {
+            return new Placeholder(String.format(dialectConfig.positionalFormatter, name), name);
+        } else {
+            return new Placeholder("?", name);
         }
     }
 
@@ -1678,6 +1697,15 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         return DEFAULT_POSITIONAL_PARAMETER_MARKER;
     }
 
+    @Override
+    public String positionalParameterName() {
+        DialectConfig dialectConfig = perDialectConfig.get(dialect);
+        if (dialectConfig != null && dialectConfig.positionalNameFormatter != null) {
+            return dialectConfig.positionalNameFormatter;
+        }
+        return "";
+    }
+
     /**
      * @return The regex pattern for positional parameters.
      */
@@ -1713,6 +1741,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     private static class DialectConfig {
         Boolean escapeQueries;
         String positionalFormatter;
+        String positionalNameFormatter;
     }
 
     private static class IndexConfiguration {
