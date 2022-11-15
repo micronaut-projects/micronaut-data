@@ -11,5 +11,4 @@
     <root level="error">
         <appender-ref ref="STDOUT" />
     </root>
-    <logger name="io.micronaut" level="info" />
 </configuration>

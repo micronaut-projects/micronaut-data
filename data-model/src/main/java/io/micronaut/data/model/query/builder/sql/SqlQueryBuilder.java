@@ -1604,18 +1604,6 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         }
     }
 
-    private String unQuote(String tableName) {
-        switch (dialect) {
-            case MYSQL:
-            case H2:
-                return tableName.replace("`", "");
-            case SQL_SERVER:
-                return tableName.replace("[", "").replace("]", "");
-            default:
-                return tableName.replace("\"", "");
-        }
-    }
-
     @Override
     public String getColumnName(PersistentProperty persistentProperty) {
         return persistentProperty.getPersistedName();
