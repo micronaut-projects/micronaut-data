@@ -26,6 +26,7 @@ import io.micronaut.data.runtime.event.DefaultEntityEventContext;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Consumer;
@@ -48,7 +49,7 @@ public abstract class AbstractReactiveEntitiesOperations<Ctx extends OperationCo
     protected final ReactiveCascadeOperations<Ctx> cascadeOperations;
     protected final boolean insert;
     protected final boolean hasGeneratedId;
-    protected Flux<Data> entities;
+    protected Mono<List<Data>> entities;
     protected Mono<Long> rowsUpdated;
 
     /**
@@ -79,7 +80,7 @@ public abstract class AbstractReactiveEntitiesOperations<Ctx extends OperationCo
             Data data = new Data();
             data.entity = entity;
             return data;
-        });
+        }).collectList();
     }
 
     @Override
@@ -93,7 +94,7 @@ public abstract class AbstractReactiveEntitiesOperations<Ctx extends OperationCo
     }
 
     private void doCascade(boolean isPost, Relation.Cascade cascadeType) {
-        this.entities = entities.concatMap(d -> {
+        this.entities = entities.flatMapIterable(list -> list).concatMap(d -> {
             if (d.vetoed) {
                 return Mono.just(d);
             }
@@ -102,44 +103,50 @@ public abstract class AbstractReactiveEntitiesOperations<Ctx extends OperationCo
                 d.entity = e;
                 return d;
             });
-        });
+        }).collectList();
     }
 
     @Override
     public void veto(Predicate<T> predicate) {
-        entities = entities.map(d -> {
-            if (d.vetoed) {
-                return d;
+        entities = entities.map(list -> {
+            for (Data d : list) {
+                if (d.vetoed) {
+                    continue;
+                }
+                d.vetoed = predicate.test(d.entity);
             }
-            d.vetoed = predicate.test(d.entity);
-            return d;
+            return list;
         });
     }
 
     @Override
     protected boolean triggerPre(Function<EntityEventContext<Object>, Boolean> fn) {
-        entities = entities.map(d -> {
-            if (d.vetoed) {
-                return d;
+        entities = entities.map(list -> {
+            for (Data d : list) {
+                if (d.vetoed) {
+                    continue;
+                }
+                final DefaultEntityEventContext<T> event = new DefaultEntityEventContext<>(persistentEntity, d.entity);
+                d.vetoed = !fn.apply((EntityEventContext<Object>) event);
+                d.entity = event.getEntity();
             }
-            final DefaultEntityEventContext<T> event = new DefaultEntityEventContext<>(persistentEntity, d.entity);
-            d.vetoed = !fn.apply((EntityEventContext<Object>) event);
-            d.entity = event.getEntity();
-            return d;
+            return list;
         });
         return false;
     }
 
     @Override
     protected void triggerPost(Consumer<EntityEventContext<Object>> fn) {
-        entities = entities.map(d -> {
-            if (d.vetoed) {
-                return d;
+        entities = entities.map(list -> {
+            for (Data d : list) {
+                if (d.vetoed) {
+                    continue;
+                }
+                final DefaultEntityEventContext<T> event = new DefaultEntityEventContext<>(persistentEntity, d.entity);
+                fn.accept((EntityEventContext<Object>) event);
+                d.entity = event.getEntity();
             }
-            final DefaultEntityEventContext<T> event = new DefaultEntityEventContext<>(persistentEntity, d.entity);
-            fn.accept((EntityEventContext<Object>) event);
-            d.entity = event.getEntity();
-            return d;
+            return list;
         });
     }
 
@@ -155,7 +162,7 @@ public abstract class AbstractReactiveEntitiesOperations<Ctx extends OperationCo
 
     @Override
     public Flux<T> getEntities() {
-        return entities.map(d -> d.entity);
+        return entities.flatMapIterable(list -> list).filter(this::notVetoed).map(d -> d.entity);
     }
 
     /**
