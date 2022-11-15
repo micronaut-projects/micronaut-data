@@ -26,6 +26,7 @@ import com.azure.cosmos.models.CosmosItemOperationType;
 import com.azure.cosmos.models.CosmosItemRequestOptions;
 import com.azure.cosmos.models.CosmosItemResponse;
 import com.azure.cosmos.models.CosmosQueryRequestOptions;
+import com.azure.cosmos.models.FeedResponse;
 import com.azure.cosmos.models.PartitionKey;
 import com.azure.cosmos.models.SqlParameter;
 import com.azure.cosmos.models.SqlQuerySpec;
@@ -37,7 +38,6 @@ import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
-import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.reflect.ReflectionUtils;
 import io.micronaut.core.type.Argument;
@@ -56,9 +56,7 @@ import io.micronaut.data.exceptions.OptimisticLockException;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.Page;
-import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
-import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
 import io.micronaut.data.model.runtime.BatchOperation;
 import io.micronaut.data.model.runtime.DeleteBatchOperation;
@@ -68,14 +66,12 @@ import io.micronaut.data.model.runtime.InsertBatchOperation;
 import io.micronaut.data.model.runtime.InsertOperation;
 import io.micronaut.data.model.runtime.PagedQuery;
 import io.micronaut.data.model.runtime.PreparedQuery;
-import io.micronaut.data.model.runtime.QueryParameterBinding;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.model.runtime.StoredQuery;
 import io.micronaut.data.model.runtime.UpdateBatchOperation;
 import io.micronaut.data.model.runtime.UpdateOperation;
-import io.micronaut.data.model.runtime.convert.AttributeConverter;
 import io.micronaut.data.operations.reactive.ReactiveRepositoryOperations;
 import io.micronaut.data.operations.reactive.ReactorReactiveRepositoryOperations;
 import io.micronaut.data.runtime.config.DataSettings;
@@ -86,7 +82,6 @@ import io.micronaut.data.runtime.operations.internal.AbstractReactiveEntityOpera
 import io.micronaut.data.runtime.operations.internal.AbstractRepositoryOperations;
 import io.micronaut.data.runtime.operations.internal.OperationContext;
 import io.micronaut.data.runtime.operations.internal.sql.SqlPreparedQuery;
-import io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery;
 import io.micronaut.data.runtime.query.MethodContextAwareStoredQueryDecorator;
 import io.micronaut.data.runtime.query.PreparedQueryDecorator;
 import io.micronaut.data.runtime.query.internal.QueryResultStoredQuery;
@@ -125,6 +120,7 @@ import java.util.stream.Collectors;
  */
 @Singleton
 @Internal
+@SuppressWarnings({"java:S110", "java:S107"}) // Disabled SonarLint rules: Inheritance tree of classes should not be too deep, Methods should not have too many parameters
 public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRepositoryOperations implements
     ReactorReactiveRepositoryOperations,
     ReactiveRepositoryOperations,
@@ -507,21 +503,29 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
                 }
                 return Mono.just(conversionService.convertRequired(collection, resultType));
             }
-            Iterator<?> iterator = fluxResponse.getResults().iterator();
-            if (iterator.hasNext()) {
-                Object item = iterator.next();
-                if (iterator.hasNext()) {
-                    return Flux.error(new NonUniqueResultException());
-                }
-                if (resultType.isInstance(item)) {
-                    return Mono.just((R) item);
-                }
-                if (item != null) {
-                    return Mono.just(conversionService.convertRequired(item, resultType));
-                }
+            Mono<R> singleResult = fetchSingleResult(fluxResponse, resultType);
+            if (singleResult != null) {
+                return singleResult;
             }
             return Flux.empty();
         }).onErrorResume(e -> Flux.error(new CosmosAccessException("Failed to query item: " + e.getMessage(), e))).next();
+    }
+
+    private <R> Mono<R> fetchSingleResult(FeedResponse<?> fluxResponse, Class<R> resultType) {
+        Iterator<?> iterator = fluxResponse.getResults().iterator();
+        if (iterator.hasNext()) {
+            Object item = iterator.next();
+            if (iterator.hasNext()) {
+                return Mono.error(new NonUniqueResultException());
+            }
+            if (resultType.isInstance(item)) {
+                return Mono.just((R) item);
+            }
+            if (item != null) {
+                return Mono.just(conversionService.convertRequired(item, resultType));
+            }
+        }
+        return null;
     }
 
     /**
@@ -964,19 +968,6 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
         };
     }
 
-    private ItemBulkOperation<?, ?> createItemBulkOperation(ObjectNode item, String partitionKeyField, CosmosItemOperationType cosmosItemOperationType, boolean insert) {
-        String id = getItemId(item);
-        PartitionKey partitionKey = getPartitionKey(partitionKeyField, item);
-        RequestOptions requestOptions = new RequestOptions();
-        if (!insert) {
-            final com.fasterxml.jackson.databind.JsonNode versionValue = item.get(Constants.ETAG_FIELD_NAME);
-            if (versionValue != null) {
-                requestOptions.setIfMatchETag(versionValue.textValue());
-            }
-        }
-        return new ItemBulkOperation<>(cosmosItemOperationType, id, partitionKey, requestOptions, item, null);
-    }
-
     private <T> CosmosReactiveEntitiesOperation<T> createCosmosReactiveBulkOperation(CosmosReactiveOperationContext<T> ctx,
                                                                                      RuntimePersistentEntity<T> persistentEntity,
                                                                                      BatchOperation<T> operation,
@@ -987,61 +978,8 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
         String versionField = cosmosEntity.getVersionField();
         boolean setETagVersion = versionField != null && !delete;
 
-        return new CosmosReactiveEntitiesOperation<T>(entityEventRegistry, conversionService, ctx, persistentEntity, operation, insert) {
-
-            @Override
-            protected void execute() throws RuntimeException {
-                Argument<T> arg = Argument.of(ctx.getRootEntity());
-
-                String partitionKeyDefinition = getPartitionKeyDefinition(persistentEntity);
-                if (partitionKeyDefinition.startsWith(Constants.PARTITION_KEY_SEPARATOR)) {
-                    partitionKeyDefinition = partitionKeyDefinition.substring(1);
-                }
-                final String partitionKeyField = partitionKeyDefinition;
-                boolean generateId = hasGeneratedId && insert;
-
-                // Update/replace using partition key calculated from each item
-                Mono<Tuple2<List<Data>, Long>> entitiesWithRowsUpdated = entities
-                    .flatMap(e -> {
-                        Map<String, T> entitiesById = new HashMap<>(e.size());
-                        List<ItemBulkOperation<?, ?>> notVetoedEntities = e.stream().filter(this::notVetoed).map(x -> {
-                            if (generateId) {
-                                generateId(persistentEntity, x.entity);
-                            }
-                            ObjectNode item = cosmosSerde.serialize(persistentEntity, x.entity, arg);
-                            ItemBulkOperation<?, ?> itemBulkOperation = createItemBulkOperation(item, partitionKeyField, operationType.cosmosItemOperationType, insert);
-                            entitiesById.put(itemBulkOperation.getId(), x.entity);
-                            return itemBulkOperation;
-                        }).collect(Collectors.toList());
-                        if (notVetoedEntities.isEmpty()) {
-                            return Mono.just(Tuples.of(e, 0L));
-                        }
-                        return executeAndGetRowsUpdated(notVetoedEntities, entitiesById)
-                            .map(Number::longValue)
-                            .map(rowsUpdated ->  Tuples.of(e, rowsUpdated));
-                    })
-                    .onErrorMap(e -> handleCosmosOperationException(e, persistentEntity))
-                    .cache();
-                entities = entitiesWithRowsUpdated.flatMap(t -> Mono.just(t.getT1()));
-                rowsUpdated = entitiesWithRowsUpdated.map(Tuple2::getT2);
-            }
-
-            private Mono<Number> executeAndGetRowsUpdated(List<ItemBulkOperation<?, ?>> bulkOperations, Map<String, T> entitiesById) {
-                return ctx.getContainer().executeBulkOperations(Flux.fromIterable(bulkOperations)).reduce(0, (count, response) -> {
-                    if (response.getResponse().getStatusCode() == operationType.expectedOperationStatusCode) {
-                        count = (int) count + 1;
-                        if (setETagVersion) {
-                            String id = response.getOperation().getId();
-                            T entity = entitiesById.get(id);
-                            if (entity != null) {
-                                setETagVersion(persistentEntity, entity, versionField, response.getResponse().getETag());
-                            }
-                        }
-                    }
-                    return count;
-                });
-            }
-        };
+        return new CosmosReactiveBulkEntitiesOperation<>(entityEventRegistry, conversionService, ctx, persistentEntity, operation, insert,
+            setETagVersion, operationType, versionField);
     }
 
     // Helper classes, enums
@@ -1080,103 +1018,11 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
             RuntimePersistentEntity<T> persistentEntity = runtimeEntityRegistry.getEntity(preparedQuery.getRootEntity());
             List<SqlParameter> parameterList = new ArrayList<>();
             SqlPreparedQuery<T, R> sqlPreparedQuery = getSqlPreparedQuery(preparedQuery);
-            sqlPreparedQuery.bindParameters(new SqlStoredQuery.Binder() {
-
-                @NonNull
-                @Override
-                public Object autoPopulateRuntimeProperty(@NonNull RuntimePersistentProperty<?> persistentProperty, Object previousValue) {
-                    return runtimeEntityRegistry.autoPopulateRuntimeProperty(persistentProperty, previousValue);
-                }
-
-                @Override
-                public Object convert(Object value, RuntimePersistentProperty<?> property) {
-                    AttributeConverter<Object, Object> converter = property.getConverter();
-                    if (converter != null) {
-                        return converter.convertToPersistedValue(value, createTypeConversionContext(property, property.getArgument()));
-                    }
-                    return value;
-                }
-
-                @Override
-                public Object convert(Class<?> converterClass, Object value, Argument<?> argument) {
-                    if (converterClass == null) {
-                        return value;
-                    }
-                    AttributeConverter<Object, Object> converter = attributeConverterRegistry.getConverter(converterClass);
-                    ConversionContext conversionContext = createTypeConversionContext(null, argument);
-                    return converter.convertToPersistedValue(value, conversionContext);
-                }
-
-                private ConversionContext createTypeConversionContext(@Nullable RuntimePersistentProperty<?> property,
-                                                                      @Nullable Argument<?> argument) {
-                    if (property != null) {
-                        return ConversionContext.of(property.getArgument());
-                    }
-                    if (argument != null) {
-                        return ConversionContext.of(argument);
-                    }
-                    return ConversionContext.DEFAULT;
-                }
-
-                @Override
-                public void bindOne(@NonNull QueryParameterBinding binding, Object value) {
-                    String parameterName = getParameterName(binding, isRawQuery);
-                    doBind(binding, value, parameterName);
-                }
-
-                @Override
-                public void bindMany(@NonNull QueryParameterBinding binding, @NonNull Collection<Object> values) {
-                    // Query params were expanded, so we must expand parameters and bind query with newly created parameters
-                    String parameterName = getParameterName(binding, isRawQuery);
-                    // No actual expanding if there is only one value to bind
-                    if (values.size() == 1) {
-                        doBind(binding, values.iterator().next(), parameterName);
-                        return;
-                    }
-                    int index = 1;
-                    for (Object value : values) {
-                        final String expandedParameterName = String.format("%s_%d", parameterName, index++);
-                        doBind(binding, value, expandedParameterName);
-                    }
-                }
-
-                @Override
-                public int currentIndex() {
-                    return 0;
-                }
-
-                private void doBind(@NonNull QueryParameterBinding binding, Object value, String parameterName) {
-                    if (updateQuery) {
-                        String property = getUpdateProperty(binding, persistentEntity);
-                        if (property != null && !propertiesToUpdate.containsKey(property)) {
-                            propertiesToUpdate.put(property, value);
-                        }
-                    }
-                    parameterList.add(new SqlParameter("@" + parameterName, value));
-                }
-
-            });
+            CosmosBinder cosmosBinder = new CosmosBinder(runtimeEntityRegistry, attributeConverterRegistry, parameterList, isRawQuery,
+                updateQuery, persistentEntity, updatingProperties);
+            sqlPreparedQuery.bindParameters(cosmosBinder);
+            propertiesToUpdate.putAll(cosmosBinder.getPropertiesToUpdate());
             return parameterList;
-        }
-
-        private String getParameterName(QueryParameterBinding binding, boolean isRawQuery) {
-            if (isRawQuery) {
-                // raw query parameters get rewritten as p1, p2... and binding.getRequiredName remains as original, so we need to bind proper param name
-                return "p" + (binding.getParameterIndex() + 1);
-            }
-            return binding.getRequiredName();
-        }
-
-        private String getUpdateProperty(QueryParameterBinding binding, PersistentEntity persistentEntity) {
-            String[] propertyPath = binding.getRequiredPropertyPath();
-            PersistentPropertyPath pp = persistentEntity.getPropertyPath(propertyPath);
-            if (pp != null) {
-                String propertyName = pp.getPath();
-                if (CollectionUtils.isNotEmpty(updatingProperties) && updatingProperties.contains(propertyName)) {
-                    return propertyName;
-                }
-            }
-            return null;
         }
 
         Map<String, Object> getPropertiesToUpdate() {
@@ -1310,6 +1156,94 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
 
         @Override
         protected void collectAutoPopulatedPreviousValues() {
+        }
+    }
+
+    private class CosmosReactiveBulkEntitiesOperation<T> extends CosmosReactiveEntitiesOperation<T> {
+
+        private final boolean setETagVersion;
+        private final BulkOperationType operationType;
+        private final String versionField;
+
+        protected CosmosReactiveBulkEntitiesOperation(EntityEventListener<Object> entityEventListener,
+                                                      ConversionService<?> conversionService,
+                                                      CosmosReactiveOperationContext<T> ctx,
+                                                      RuntimePersistentEntity<T> persistentEntity,
+                                                      Iterable<T> entities,
+                                                      boolean insert,
+                                                      boolean setETagVersion,
+                                                      BulkOperationType operationType,
+                                                      String versionField) {
+            super(entityEventListener, conversionService, ctx, persistentEntity, entities, insert);
+            this.setETagVersion = setETagVersion;
+            this.operationType = operationType;
+            this.versionField = versionField;
+        }
+
+        @Override
+        protected void execute() throws RuntimeException {
+            Argument<T> arg = Argument.of(ctx.getRootEntity());
+
+            String partitionKeyDefinition = getPartitionKeyDefinition(persistentEntity);
+            if (partitionKeyDefinition.startsWith(Constants.PARTITION_KEY_SEPARATOR)) {
+                partitionKeyDefinition = partitionKeyDefinition.substring(1);
+            }
+            final String partitionKeyField = partitionKeyDefinition;
+            boolean generateId = hasGeneratedId && insert;
+
+            // Update/replace using partition key calculated from each item
+            Mono<Tuple2<List<Data>, Long>> entitiesWithRowsUpdated = entities
+                .flatMap(e -> {
+                    Map<String, T> entitiesById = new HashMap<>(e.size());
+                    List<ItemBulkOperation<?, ?>> notVetoedEntities = e.stream().filter(this::notVetoed).map(x -> {
+                        if (generateId) {
+                            generateId(persistentEntity, x.entity);
+                        }
+                        ObjectNode item = cosmosSerde.serialize(persistentEntity, x.entity, arg);
+                        ItemBulkOperation<?, ?> itemBulkOperation = createItemBulkOperation(item, partitionKeyField, operationType.cosmosItemOperationType, insert);
+                        entitiesById.put(itemBulkOperation.getId(), x.entity);
+                        return itemBulkOperation;
+                    }).collect(Collectors.toList());
+                    if (notVetoedEntities.isEmpty()) {
+                        return Mono.just(Tuples.of(e, 0L));
+                    }
+                    return executeAndGetRowsUpdated(notVetoedEntities, entitiesById)
+                        .map(Number::longValue)
+                        .map(rowsUpdated ->  Tuples.of(e, rowsUpdated));
+                })
+                .onErrorMap(e -> handleCosmosOperationException(e, persistentEntity))
+                .cache();
+            entities = entitiesWithRowsUpdated.flatMap(t -> Mono.just(t.getT1()));
+            rowsUpdated = entitiesWithRowsUpdated.map(Tuple2::getT2);
+        }
+
+        private Mono<Number> executeAndGetRowsUpdated(List<ItemBulkOperation<?, ?>> bulkOperations, Map<String, T> entitiesById) {
+            return ctx.getContainer().executeBulkOperations(Flux.fromIterable(bulkOperations)).reduce(0, (count, response) -> {
+                if (response.getResponse().getStatusCode() == operationType.expectedOperationStatusCode) {
+                    count = (int) count + 1;
+                    if (setETagVersion) {
+                        String id = response.getOperation().getId();
+                        T entity = entitiesById.get(id);
+                        if (entity != null) {
+                            setETagVersion(persistentEntity, entity, versionField, response.getResponse().getETag());
+                        }
+                    }
+                }
+                return count;
+            });
+        }
+
+        private ItemBulkOperation<?, ?> createItemBulkOperation(ObjectNode item, String partitionKeyField, CosmosItemOperationType cosmosItemOperationType, boolean insert) {
+            String id = getItemId(item);
+            PartitionKey partitionKey = getPartitionKey(partitionKeyField, item);
+            RequestOptions requestOptions = new RequestOptions();
+            if (!insert) {
+                final com.fasterxml.jackson.databind.JsonNode versionValue = item.get(Constants.ETAG_FIELD_NAME);
+                if (versionValue != null) {
+                    requestOptions.setIfMatchETag(versionValue.textValue());
+                }
+            }
+            return new ItemBulkOperation<>(cosmosItemOperationType, id, partitionKey, requestOptions, item, null);
         }
     }
 }
