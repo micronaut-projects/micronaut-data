@@ -60,7 +60,6 @@ import java.util.function.Function;
  * @author radovanradic
  * @since 3.9.0
  */
-@SuppressWarnings("java:S37761")
 public final class CosmosSqlQueryBuilder extends SqlQueryBuilder {
 
     private static final String GENERATED = "generated";
