@@ -1001,7 +1001,7 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
                 boolean generateId = hasGeneratedId && insert;
 
                 // Update/replace using partition key calculated from each item
-                Mono<Tuple2<List<Data>, Long>> entitiesWithRowsUpdated = entities.collectList()
+                Mono<Tuple2<List<Data>, Long>> entitiesWithRowsUpdated = entities
                     .flatMap(e -> {
                         Map<String, T> entitiesById = new HashMap<>(e.size());
                         List<ItemBulkOperation<?, ?>> notVetoedEntities = e.stream().filter(this::notVetoed).map(x -> {
@@ -1022,7 +1022,7 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
                     })
                     .onErrorMap(e -> handleCosmosOperationException(e, persistentEntity))
                     .cache();
-                entities = entitiesWithRowsUpdated.flatMapMany(t -> Flux.fromIterable(t.getT1()));
+                entities = entitiesWithRowsUpdated.flatMap(t -> Mono.just(t.getT1()));
                 rowsUpdated = entitiesWithRowsUpdated.map(Tuple2::getT2);
             }
 
