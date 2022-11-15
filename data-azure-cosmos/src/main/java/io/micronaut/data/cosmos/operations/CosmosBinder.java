@@ -138,10 +138,13 @@ final class CosmosBinder implements BindableParametersStoredQuery.Binder {
         return ConversionContext.DEFAULT;
     }
 
+    @SuppressWarnings("java:S3824") // Disabled Sonar Rule: "Map.get" and value test should be replaced with single method call
     private void doBind(@NonNull QueryParameterBinding binding, Object value, String parameterName) {
         if (updateQuery) {
             String property = getUpdateProperty(binding, persistentEntity);
-            propertiesToUpdate.computeIfAbsent(property, key -> key != null ? value : null);
+            if (property != null && !propertiesToUpdate.containsKey(property)) {
+                propertiesToUpdate.put(property, value);
+            }
         }
         parameterList.add(new SqlParameter("@" + parameterName, value));
     }
