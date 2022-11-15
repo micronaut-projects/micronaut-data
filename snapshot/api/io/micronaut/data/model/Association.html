@@ -27,7 +27,7 @@
     catch(err) {
     }
 //-->
-var data = {"i0":18,"i1":18,"i2":6,"i3":18,"i4":18,"i5":18,"i6":18,"i7":18,"i8":18};
+var data = {"i0":18,"i1":18,"i2":6,"i3":18,"i4":18,"i5":18,"i6":18,"i7":18,"i8":18,"i9":18};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],4:["t3","Abstract Methods"],16:["t5","Default Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -201,37 +201,42 @@ extends <a href="PersistentProperty.html" title="interface in io.micronaut.data.
 </td>
 </tr>
 <tr id="i3" class="rowColor">
+<td class="colFirst"><code>default java.util.EnumSet&lt;<a href="../annotation/Relation.Cascade.html" title="enum in io.micronaut.data.annotation">Relation.Cascade</a>&gt;</code></td>
+<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getCascadeTypes()">getCascadeTypes</a></span>()</code></th>
+<td class="colLast">&nbsp;</td>
+</tr>
+<tr id="i4" class="altColor">
 <td class="colFirst"><code>default java.util.Optional&lt;<a href="PersistentAssociationPath.html" title="class in io.micronaut.data.model">PersistentAssociationPath</a>&gt;</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getInversePathSide()">getInversePathSide</a></span>()</code></th>
 <td class="colLast">
 <div class="block">Retrieves the inverse side path of the association.</div>
 </td>
 </tr>
-<tr id="i4" class="altColor">
+<tr id="i5" class="rowColor">
 <td class="colFirst"><code>default java.util.Optional&lt;? extends <a href="Association.html" title="interface in io.micronaut.data.model">Association</a>&gt;</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getInverseSide()">getInverseSide</a></span>()</code></th>
 <td class="colLast">
 <div class="block">Retrieves the inverse side of the association.</div>
 </td>
 </tr>
-<tr id="i5" class="rowColor">
+<tr id="i6" class="altColor">
 <td class="colFirst"><code>default <a href="../annotation/Relation.Kind.html" title="enum in io.micronaut.data.annotation">Relation.Kind</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getKind()">getKind</a></span>()</code></th>
 <td class="colLast">&nbsp;</td>
 </tr>
-<tr id="i6" class="altColor">
+<tr id="i7" class="rowColor">
 <td class="colFirst"><code>default boolean</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#hasDeclaredAliasName()">hasDeclaredAliasName</a></span>()</code></th>
 <td class="colLast">&nbsp;</td>
 </tr>
-<tr id="i7" class="rowColor">
+<tr id="i8" class="altColor">
 <td class="colFirst"><code>default boolean</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#isBidirectional()">isBidirectional</a></span>()</code></th>
 <td class="colLast">
 <div class="block">Whether the relationship is bidirectional.</div>
 </td>
 </tr>
-<tr id="i8" class="altColor">
+<tr id="i9" class="rowColor">
 <td class="colFirst"><code>default boolean</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#isForeignKey()">isForeignKey</a></span>()</code></th>
 <td class="colLast">&nbsp;</td>
@@ -396,7 +401,7 @@ default&nbsp;<a href="../annotation/Relation.Kind.html" title="enum in io.micron
 <a id="doesCascade(io.micronaut.data.annotation.Relation.Cascade...)">
 <!--   -->
 </a>
-<ul class="blockListLast">
+<ul class="blockList">
 <li class="blockList">
 <h4>doesCascade</h4>
 <pre class="methodSignature">default&nbsp;boolean&nbsp;doesCascade&#8203;(<a href="../annotation/Relation.Cascade.html" title="enum in io.micronaut.data.annotation">Relation.Cascade</a>...&nbsp;types)</pre>
@@ -407,6 +412,15 @@ default&nbsp;<a href="../annotation/Relation.Kind.html" title="enum in io.micron
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>True if it does, false otherwise.</dd>
 </dl>
+</li>
+</ul>
+<a id="getCascadeTypes()">
+<!--   -->
+</a>
+<ul class="blockListLast">
+<li class="blockList">
+<h4>getCascadeTypes</h4>
+<pre class="methodSignature">default&nbsp;java.util.EnumSet&lt;<a href="../annotation/Relation.Cascade.html" title="enum in io.micronaut.data.annotation">Relation.Cascade</a>&gt;&nbsp;getCascadeTypes()</pre>
 </li>
 </ul>
 </li>

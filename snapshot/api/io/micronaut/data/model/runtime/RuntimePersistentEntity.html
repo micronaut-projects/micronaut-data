@@ -27,7 +27,7 @@
     catch(err) {
     }
 //-->
-var data = {"i0":10,"i1":10,"i2":10,"i3":10,"i4":10,"i5":10,"i6":10,"i7":10,"i8":10,"i9":10,"i10":10,"i11":10,"i12":10,"i13":10,"i14":10,"i15":10,"i16":10,"i17":10,"i18":10,"i19":10,"i20":10,"i21":10,"i22":10,"i23":10,"i24":10,"i25":10,"i26":10};
+var data = {"i0":10,"i1":10,"i2":10,"i3":10,"i4":10,"i5":10,"i6":10,"i7":10,"i8":10,"i9":10,"i10":10,"i11":10,"i12":10,"i13":10,"i14":10,"i15":10,"i16":10,"i17":10,"i18":10,"i19":10,"i20":10,"i21":10,"i22":10,"i23":10,"i24":10,"i25":10,"i26":10,"i27":10,"i28":10};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],8:["t4","Concrete Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -221,166 +221,180 @@ implements <a href="../PersistentEntity.html" title="interface in io.micronaut.d
 <th class="colLast" scope="col">Description</th>
 </tr>
 <tr id="i0" class="altColor">
+<td class="colFirst"><code>boolean</code></td>
+<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#cascadesPersist()">cascadesPersist</a></span>()</code></th>
+<td class="colLast">
+<div class="block">Does cascade the persist to any of the associations.</div>
+</td>
+</tr>
+<tr id="i1" class="rowColor">
+<td class="colFirst"><code>boolean</code></td>
+<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#cascadesUpdate()">cascadesUpdate</a></span>()</code></th>
+<td class="colLast">
+<div class="block">Does cascade the update to any of the associations.</div>
+</td>
+</tr>
+<tr id="i2" class="altColor">
 <td class="colFirst"><code>java.lang.String</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getAliasName()">getAliasName</a></span>()</code></th>
 <td class="colLast">&nbsp;</td>
 </tr>
-<tr id="i1" class="rowColor">
+<tr id="i3" class="rowColor">
 <td class="colFirst"><code>java.util.Collection&lt;<a href="RuntimeAssociation.html" title="class in io.micronaut.data.model.runtime">RuntimeAssociation</a>&lt;<a href="RuntimePersistentEntity.html" title="type parameter in RuntimePersistentEntity">T</a>&gt;&gt;</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getAssociations()">getAssociations</a></span>()</code></th>
 <td class="colLast">
 <div class="block">A list of the associations for this entity.</div>
 </td>
 </tr>
-<tr id="i2" class="altColor">
+<tr id="i4" class="altColor">
 <td class="colFirst"><code><a href="RuntimePersistentProperty.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentProperty</a>&lt;<a href="RuntimePersistentEntity.html" title="type parameter in RuntimePersistentEntity">T</a>&gt;[]</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getCompositeIdentity()">getCompositeIdentity</a></span>()</code></th>
 <td class="colLast">
 <div class="block">The composite id.</div>
 </td>
 </tr>
-<tr id="i3" class="rowColor">
+<tr id="i5" class="rowColor">
 <td class="colFirst"><code><a href="RuntimePersistentProperty.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentProperty</a>&lt;<a href="RuntimePersistentEntity.html" title="type parameter in RuntimePersistentEntity">T</a>&gt;[]</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getConstructorArguments()">getConstructorArguments</a></span>()</code></th>
 <td class="colLast">&nbsp;</td>
 </tr>
-<tr id="i4" class="altColor">
+<tr id="i6" class="altColor">
 <td class="colFirst"><code>protected <a href="RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;<a href="RuntimePersistentEntity.html" title="type parameter in RuntimePersistentEntity">T</a>&gt;</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getEntity(java.lang.Class)">getEntity</a></span>&#8203;(java.lang.Class&lt;<a href="RuntimePersistentEntity.html" title="type parameter in RuntimePersistentEntity">T</a>&gt;&nbsp;type)</code></th>
 <td class="colLast">
 <div class="block">Obtain an entity for the given type.</div>
 </td>
 </tr>
-<tr id="i5" class="rowColor">
+<tr id="i7" class="rowColor">
 <td class="colFirst"><code><a href="RuntimePersistentProperty.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentProperty</a>&lt;<a href="RuntimePersistentEntity.html" title="type parameter in RuntimePersistentEntity">T</a>&gt;</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getIdentity()">getIdentity</a></span>()</code></th>
 <td class="colLast">
 <div class="block">Returns the identity of the instance.</div>
 </td>
 </tr>
-<tr id="i6" class="altColor">
+<tr id="i8" class="altColor">
 <td class="colFirst"><code><a href="RuntimePersistentProperty.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentProperty</a>&lt;<a href="RuntimePersistentEntity.html" title="type parameter in RuntimePersistentEntity">T</a>&gt;</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getIdentityByName(java.lang.String)">getIdentityByName</a></span>&#8203;(java.lang.String&nbsp;name)</code></th>
 <td class="colLast">
 <div class="block">Obtains an identity PersistentProperty instance by name.</div>
 </td>
 </tr>
-<tr id="i7" class="rowColor">
+<tr id="i9" class="rowColor">
 <td class="colFirst"><code>io.micronaut.core.beans.BeanIntrospection&lt;<a href="RuntimePersistentEntity.html" title="type parameter in RuntimePersistentEntity">T</a>&gt;</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getIntrospection()">getIntrospection</a></span>()</code></th>
 <td class="colLast">&nbsp;</td>
 </tr>
-<tr id="i8" class="altColor">
+<tr id="i10" class="altColor">
 <td class="colFirst"><code>java.lang.String</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getName()">getName</a></span>()</code></th>
 <td class="colLast">
 <div class="block">The entity name including any package prefix.</div>
 </td>
 </tr>
-<tr id="i9" class="rowColor">
+<tr id="i11" class="rowColor">
 <td class="colFirst"><code><a href="../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getParentEntity()">getParentEntity</a></span>()</code></th>
 <td class="colLast">
 <div class="block">Returns the parent entity of this entity.</div>
 </td>
 </tr>
-<tr id="i10" class="altColor">
+<tr id="i12" class="altColor">
 <td class="colFirst"><code>java.util.Collection&lt;<a href="RuntimePersistentProperty.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentProperty</a>&lt;<a href="RuntimePersistentEntity.html" title="type parameter in RuntimePersistentEntity">T</a>&gt;&gt;</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getPersistentProperties()">getPersistentProperties</a></span>()</code></th>
 <td class="colLast">
 <div class="block">A list of properties to be persisted.</div>
 </td>
 </tr>
-<tr id="i11" class="rowColor">
+<tr id="i13" class="rowColor">
 <td class="colFirst"><code>java.util.List&lt;java.lang.String&gt;</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getPersistentPropertyNames()">getPersistentPropertyNames</a></span>()</code></th>
 <td class="colLast">
 <div class="block">A list of property names that a persistent.</div>
 </td>
 </tr>
-<tr id="i12" class="altColor">
+<tr id="i14" class="altColor">
 <td class="colFirst"><code><a href="RuntimePersistentProperty.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentProperty</a>&lt;<a href="RuntimePersistentEntity.html" title="type parameter in RuntimePersistentEntity">T</a>&gt;</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getPropertyByName(java.lang.String)">getPropertyByName</a></span>&#8203;(java.lang.String&nbsp;name)</code></th>
 <td class="colLast">
 <div class="block">Obtains a PersistentProperty instance by name.</div>
 </td>
 </tr>
-<tr id="i13" class="rowColor">
+<tr id="i15" class="rowColor">
 <td class="colFirst"><code><a href="RuntimePersistentProperty.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentProperty</a>&lt;<a href="RuntimePersistentEntity.html" title="type parameter in RuntimePersistentEntity">T</a>&gt;</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getVersion()">getVersion</a></span>()</code></th>
 <td class="colLast">
 <div class="block">Returns the version property.</div>
 </td>
 </tr>
-<tr id="i14" class="altColor">
+<tr id="i16" class="altColor">
 <td class="colFirst"><code>boolean</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#hasAutoPopulatedProperties()">hasAutoPopulatedProperties</a></span>()</code></th>
 <td class="colLast">&nbsp;</td>
 </tr>
-<tr id="i15" class="rowColor">
+<tr id="i17" class="rowColor">
 <td class="colFirst"><code>boolean</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#hasCompositeIdentity()">hasCompositeIdentity</a></span>()</code></th>
 <td class="colLast">
 <div class="block">Has composite identity.</div>
 </td>
 </tr>
-<tr id="i16" class="altColor">
+<tr id="i18" class="altColor">
 <td class="colFirst"><code>boolean</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#hasIdentity()">hasIdentity</a></span>()</code></th>
 <td class="colLast">
 <div class="block">Has identity.</div>
 </td>
 </tr>
-<tr id="i17" class="rowColor">
+<tr id="i19" class="rowColor">
 <td class="colFirst"><code>boolean</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#hasPostLoadEventListeners()">hasPostLoadEventListeners</a></span>()</code></th>
 <td class="colLast">
 <div class="block">Does the entity have post-load event listeners.</div>
 </td>
 </tr>
-<tr id="i18" class="altColor">
+<tr id="i20" class="altColor">
 <td class="colFirst"><code>boolean</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#hasPostPersistEventListeners()">hasPostPersistEventListeners</a></span>()</code></th>
 <td class="colLast">
 <div class="block">Does the entity have post-persist event listeners.</div>
 </td>
 </tr>
-<tr id="i19" class="rowColor">
+<tr id="i21" class="rowColor">
 <td class="colFirst"><code>boolean</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#hasPostRemoveEventListeners()">hasPostRemoveEventListeners</a></span>()</code></th>
 <td class="colLast">
 <div class="block">Does the entity have post-remove event listeners.</div>
 </td>
 </tr>
-<tr id="i20" class="altColor">
+<tr id="i22" class="altColor">
 <td class="colFirst"><code>boolean</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#hasPostUpdateEventListeners()">hasPostUpdateEventListeners</a></span>()</code></th>
 <td class="colLast">
 <div class="block">Does the entity have post-update event listeners.</div>
 </td>
 </tr>
-<tr id="i21" class="rowColor">
+<tr id="i23" class="rowColor">
 <td class="colFirst"><code>boolean</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#hasPrePersistEventListeners()">hasPrePersistEventListeners</a></span>()</code></th>
 <td class="colLast">
 <div class="block">Does the entity have pre-persist event listeners.</div>
 </td>
 </tr>
-<tr id="i22" class="altColor">
+<tr id="i24" class="altColor">
 <td class="colFirst"><code>boolean</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#hasPreRemoveEventListeners()">hasPreRemoveEventListeners</a></span>()</code></th>
 <td class="colLast">
 <div class="block">Does the entity have pre-remove event listeners.</div>
 </td>
 </tr>
-<tr id="i23" class="rowColor">
+<tr id="i25" class="rowColor">
 <td class="colFirst"><code>boolean</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#hasPreUpdateEventListeners()">hasPreUpdateEventListeners</a></span>()</code></th>
 <td class="colLast">
 <div class="block">Does the entity have pre-update event listeners.</div>
 </td>
 </tr>
-<tr id="i24" class="altColor">
+<tr id="i26" class="altColor">
 <td class="colFirst"><code>boolean</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#isOwningEntity(io.micronaut.data.model.PersistentEntity)">isOwningEntity</a></span>&#8203;(<a href="../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;owner)</code></th>
 <td class="colLast">
@@ -388,14 +402,14 @@ implements <a href="../PersistentEntity.html" title="interface in io.micronaut.d
  entity.</div>
 </td>
 </tr>
-<tr id="i25" class="rowColor">
+<tr id="i27" class="rowColor">
 <td class="colFirst"><code>protected <a href="convert/AttributeConverter.html" title="interface in io.micronaut.data.model.runtime.convert">AttributeConverter</a>&lt;java.lang.Object,&#8203;java.lang.Object&gt;</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#resolveConverter(java.lang.Class)">resolveConverter</a></span>&#8203;(java.lang.Class&lt;?&gt;&nbsp;converterClass)</code></th>
 <td class="colLast">
 <div class="block">Resolves a converter instance.</div>
 </td>
 </tr>
-<tr id="i26" class="altColor">
+<tr id="i28" class="altColor">
 <td class="colFirst"><code>java.lang.String</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#toString()">toString</a></span>()</code></th>
 <td class="colLast">&nbsp;</td>
@@ -514,6 +528,34 @@ protected&nbsp;<a href="convert/AttributeConverter.html" title="interface in io.
 <dd><code>converterClass</code> - The converter class</dd>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>converter instance</dd>
+</dl>
+</li>
+</ul>
+<a id="cascadesPersist()">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>cascadesPersist</h4>
+<pre class="methodSignature">public&nbsp;boolean&nbsp;cascadesPersist()</pre>
+<div class="block">Does cascade the persist to any of the associations.</div>
+<dl>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>True if it does</dd>
+</dl>
+</li>
+</ul>
+<a id="cascadesUpdate()">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>cascadesUpdate</h4>
+<pre class="methodSignature">public&nbsp;boolean&nbsp;cascadesUpdate()</pre>
+<div class="block">Does cascade the update to any of the associations.</div>
+<dl>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>True if it does</dd>
 </dl>
 </li>
 </ul>
