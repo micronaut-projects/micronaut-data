@@ -1233,29 +1233,33 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
 
         @Override
         protected void collectAutoPopulatedPreviousValues() {
-            entities = entities.map(d -> {
-                if (d.vetoed) {
-                    return d;
+            entities = entities.map(list -> {
+                for (Data d : list) {
+                    if (d.vetoed) {
+                        continue;
+                    }
+                    d.previousValues = storedQuery.collectAutoPopulatedPreviousValues(d.entity);
                 }
-                d.previousValues = storedQuery.collectAutoPopulatedPreviousValues(d.entity);
-                return d;
+                return list;
             });
         }
 
         private void setParameters(Statement stmt, SqlStoredQuery<T, ?> storedQuery) {
             AtomicBoolean isFirst = new AtomicBoolean(true);
-            entities = entities.map(d -> {
-                if (d.vetoed) {
-                    return d;
+            entities = entities.map(list -> {
+                for (Data d : list) {
+                    if (d.vetoed) {
+                        continue;
+                    }
+                    if (isFirst.get()) {
+                        isFirst.set(false);
+                    } else {
+                        // https://github.com/r2dbc/r2dbc-spi/issues/259
+                        stmt.add();
+                    }
+                    storedQuery.bindParameters(new R2dbcParameterBinder(ctx, stmt), null, d.entity, d.previousValues);
                 }
-                if (isFirst.get()) {
-                    isFirst.set(false);
-                } else {
-                    // https://github.com/r2dbc/r2dbc-spi/issues/259
-                    stmt.add();
-                }
-                storedQuery.bindParameters(new R2dbcParameterBinder(ctx, stmt), null, d.entity, d.previousValues);
-                return d;
+                return list;
             });
         }
 
@@ -1270,17 +1274,17 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             }
             setParameters(statement, storedQuery);
             if (hasGeneratedId) {
-                entities = entities.collectList()
-                    .flatMapMany(e -> {
-                        List<Data> notVetoedEntities = e.stream().filter(this::notVetoed).collect(Collectors.toList());
+                entities = entities
+                    .flatMap(list -> {
+                        List<Data> notVetoedEntities = list.stream().filter(this::notVetoed).collect(Collectors.toList());
                         if (notVetoedEntities.isEmpty()) {
-                            return Flux.fromIterable(notVetoedEntities);
+                            return Mono.just(notVetoedEntities);
                         }
                         Mono<List<Object>> ids = executeAndMapEachRow(statement, row
                             -> columnIndexResultSetReader.readDynamic(row, 0, persistentEntity.getIdentity().getDataType())
                         ).collectList();
 
-                        return ids.flatMapMany(idList -> {
+                        return ids.flatMap(idList -> {
                             Iterator<Object> iterator = idList.iterator();
                             ListIterator<Data> resultIterator = notVetoedEntities.listIterator();
                             RuntimePersistentProperty<T> identity = persistentEntity.getIdentity();
@@ -1293,15 +1297,15 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                                     d.entity = updateEntityId((BeanProperty<T, Object>) identity.getProperty(), d.entity, id);
                                 }
                             }
-                            return Flux.fromIterable(e);
+                            return Mono.just(list);
                         });
                     });
             } else {
-                Mono<Tuple2<List<Data>, Long>> entitiesWithRowsUpdated = entities.collectList()
-                    .flatMap(e -> {
-                        List<Data> notVetoedEntities = e.stream().filter(this::notVetoed).collect(Collectors.toList());
+                Mono<Tuple2<List<Data>, Long>> entitiesWithRowsUpdated = entities
+                    .flatMap(list -> {
+                        List<Data> notVetoedEntities = list.stream().filter(this::notVetoed).collect(Collectors.toList());
                         if (notVetoedEntities.isEmpty()) {
-                            return Mono.just(Tuples.of(e, 0L));
+                            return Mono.just(Tuples.of(list, 0L));
                         }
                         return executeAndGetRowsUpdated(statement)
                             .map(Number::longValue)
@@ -1310,10 +1314,10 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                                 if (storedQuery.isOptimisticLock()) {
                                     checkOptimisticLocking(notVetoedEntities.size(), rowsUpdated);
                                 }
-                                return Tuples.of(e, rowsUpdated);
+                                return Tuples.of(list, rowsUpdated);
                             });
                     }).cache();
-                entities = entitiesWithRowsUpdated.flatMapMany(t -> Flux.fromIterable(t.getT1()));
+                entities = entitiesWithRowsUpdated.flatMap(t -> Mono.just(t.getT1()));
                 rowsUpdated = entitiesWithRowsUpdated.map(Tuple2::getT2);
             }
         }

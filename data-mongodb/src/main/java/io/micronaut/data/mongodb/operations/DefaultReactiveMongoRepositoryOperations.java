@@ -820,20 +820,22 @@ public class DefaultReactiveMongoRepositoryOperations extends AbstractMongoRepos
 
             @Override
             protected void collectAutoPopulatedPreviousValues() {
-                entities = entities.map(d -> {
-                    if (d.vetoed) {
-                        return d;
+                entities = entities.map(list -> {
+                    for (Data d : list) {
+                        if (d.vetoed) {
+                            continue;
+                        }
+                        d.filter = createFilterIdAndVersion(persistentEntity, d.entity, collection.getCodecRegistry());
                     }
-                    d.filter = createFilterIdAndVersion(persistentEntity, d.entity, collection.getCodecRegistry());
-                    return d;
+                    return list;
                 });
             }
 
             @Override
             protected void execute() throws RuntimeException {
-                Mono<Tuple2<List<Data>, Long>> entitiesWithRowsUpdated = entities.collectList().flatMap(data -> {
-                    List<ReplaceOneModel<BsonDocument>> replaces = new ArrayList<>(data.size());
-                    for (Data d : data) {
+                Mono<Tuple2<List<Data>, Long>> entitiesWithRowsUpdated = entities.flatMap(list -> {
+                    List<ReplaceOneModel<BsonDocument>> replaces = new ArrayList<>(list.size());
+                    for (Data d : list) {
                         if (d.vetoed) {
                             continue;
                         }
@@ -849,10 +851,10 @@ public class DefaultReactiveMongoRepositoryOperations extends AbstractMongoRepos
                         if (persistentEntity.getVersion() != null) {
                             checkOptimisticLocking(replaces.size(), bulkWriteResult.getModifiedCount());
                         }
-                        return Tuples.of(data, (long) bulkWriteResult.getModifiedCount());
+                        return Tuples.of(list, (long) bulkWriteResult.getModifiedCount());
                     });
                 }).cache();
-                entities = entitiesWithRowsUpdated.flatMapMany(t -> Flux.fromIterable(t.getT1()));
+                entities = entitiesWithRowsUpdated.flatMap(t -> Mono.just(t.getT1()));
                 rowsUpdated = entitiesWithRowsUpdated.map(Tuple2::getT2);
             }
         };
@@ -866,9 +868,9 @@ public class DefaultReactiveMongoRepositoryOperations extends AbstractMongoRepos
 
             @Override
             protected void execute() throws RuntimeException {
-                Mono<Tuple2<List<Data>, Long>> entitiesWithRowsUpdated = entities.collectList().flatMap(data -> {
-                    List<UpdateOneModel<T>> updates = new ArrayList<>(data.size());
-                    for (Data d : data) {
+                Mono<Tuple2<List<Data>, Long>> entitiesWithRowsUpdated = entities.flatMap(list -> {
+                    List<UpdateOneModel<T>> updates = new ArrayList<>(list.size());
+                    for (Data d : list) {
                         if (d.vetoed) {
                             continue;
                         }
@@ -881,9 +883,9 @@ public class DefaultReactiveMongoRepositoryOperations extends AbstractMongoRepos
                         }
                         return (long) result.getModifiedCount();
                     });
-                    return modifiedCount.map(count -> Tuples.of(data, count));
+                    return modifiedCount.map(count -> Tuples.of(list, count));
                 }).cache();
-                entities = entitiesWithRowsUpdated.flatMapMany(t -> Flux.fromIterable(t.getT1()));
+                entities = entitiesWithRowsUpdated.flatMap(t -> Mono.just(t.getT1()));
                 rowsUpdated = entitiesWithRowsUpdated.map(Tuple2::getT2);
             }
         };
@@ -935,19 +937,21 @@ public class DefaultReactiveMongoRepositoryOperations extends AbstractMongoRepos
 
             @Override
             protected void collectAutoPopulatedPreviousValues() {
-                entities = entities.map(d -> {
-                    if (d.vetoed) {
-                        return d;
+                entities = entities.map(list -> {
+                    for (Data d : list) {
+                        if (d.vetoed) {
+                            continue;
+                        }
+                        d.filter = createFilterIdAndVersion(persistentEntity, d.entity, collection.getCodecRegistry());
                     }
-                    d.filter = createFilterIdAndVersion(persistentEntity, d.entity, collection.getCodecRegistry());
-                    return d;
+                    return list;
                 });
             }
 
             @Override
             protected void execute() throws RuntimeException {
-                Mono<Tuple2<List<Data>, Long>> entitiesWithRowsUpdated = entities.collectList().flatMap(data -> {
-                    List<Bson> filters = data.stream().filter(d -> !d.vetoed).map(d -> ((Bson) d.filter)).collect(Collectors.toList());
+                Mono<Tuple2<List<Data>, Long>> entitiesWithRowsUpdated = entities.flatMap(list -> {
+                    List<Bson> filters = list.stream().filter(d -> !d.vetoed).map(d -> ((Bson) d.filter)).collect(Collectors.toList());
                     Mono<Long> modifiedCount;
                     if (!filters.isEmpty()) {
                         Bson filter = Filters.or(filters);
@@ -964,9 +968,9 @@ public class DefaultReactiveMongoRepositoryOperations extends AbstractMongoRepos
                             return count;
                         });
                     }
-                    return modifiedCount.map(count -> Tuples.of(data, count));
+                    return modifiedCount.map(count -> Tuples.of(list, count));
                 }).cache();
-                entities = entitiesWithRowsUpdated.flatMapMany(t -> Flux.fromIterable(t.getT1()));
+                entities = entitiesWithRowsUpdated.flatMap(t -> Mono.just(t.getT1()));
                 rowsUpdated = entitiesWithRowsUpdated.map(Tuple2::getT2);
             }
         };
@@ -980,9 +984,9 @@ public class DefaultReactiveMongoRepositoryOperations extends AbstractMongoRepos
 
             @Override
             protected void execute() throws RuntimeException {
-                Mono<Tuple2<List<Data>, Long>> entitiesWithRowsUpdated = entities.collectList().flatMap(data -> {
-                    List<DeleteOneModel<T>> deletes = new ArrayList<>(data.size());
-                    for (Data d : data) {
+                Mono<Tuple2<List<Data>, Long>> entitiesWithRowsUpdated = entities.flatMap(list -> {
+                    List<DeleteOneModel<T>> deletes = new ArrayList<>(list.size());
+                    for (Data d : list) {
                         if (d.vetoed) {
                             continue;
                         }
@@ -993,10 +997,10 @@ public class DefaultReactiveMongoRepositoryOperations extends AbstractMongoRepos
                         if (storedQuery.isOptimisticLock()) {
                             checkOptimisticLocking(deletes.size(), bulkWriteResult.getDeletedCount());
                         }
-                        return Tuples.of(data, (long) bulkWriteResult.getDeletedCount());
+                        return Tuples.of(list, (long) bulkWriteResult.getDeletedCount());
                     });
                 }).cache();
-                entities = entitiesWithRowsUpdated.flatMapMany(t -> Flux.fromIterable(t.getT1()));
+                entities = entitiesWithRowsUpdated.flatMap(t -> Mono.just(t.getT1()));
                 rowsUpdated = entitiesWithRowsUpdated.map(Tuple2::getT2);
             }
         };
@@ -1007,23 +1011,23 @@ public class DefaultReactiveMongoRepositoryOperations extends AbstractMongoRepos
 
             @Override
             protected void execute() throws RuntimeException {
-                entities = entities.collectList().flatMapMany(data -> {
-                    List<T> toInsert = data.stream().filter(d -> !d.vetoed).map(d -> d.entity).collect(Collectors.toList());
+                entities = entities.flatMap(list -> {
+                    List<T> toInsert = list.stream().filter(d -> !d.vetoed).map(d -> d.entity).collect(Collectors.toList());
                     if (toInsert.isEmpty()) {
-                        return Flux.fromIterable(data);
+                        return Mono.just(list);
                     }
 
                     MongoCollection<T> collection = getCollection(persistentEntity, ctx.repositoryType);
                     if (QUERY_LOG.isDebugEnabled()) {
                         QUERY_LOG.debug("Executing Mongo 'insertMany' for collection: {} with documents: {}", collection.getNamespace().getFullName(), toInsert);
                     }
-                    return Mono.from(collection.insertMany(ctx.clientSession, toInsert, getInsertManyOptions(ctx.annotationMetadata))).flatMapMany(insertManyResult -> {
+                    return Mono.from(collection.insertMany(ctx.clientSession, toInsert, getInsertManyOptions(ctx.annotationMetadata))).flatMap(insertManyResult -> {
                         if (hasGeneratedId) {
                             Map<Integer, BsonValue> insertedIds = insertManyResult.getInsertedIds();
                             RuntimePersistentProperty<T> identity = persistentEntity.getIdentity();
                             BeanProperty<T, Object> idProperty = (BeanProperty<T, Object>) identity.getProperty();
                             int index = 0;
-                            for (Data d : data) {
+                            for (Data d : list) {
                                 if (!d.vetoed) {
                                     BsonValue id = insertedIds.get(index);
                                     if (id == null) {
@@ -1034,7 +1038,7 @@ public class DefaultReactiveMongoRepositoryOperations extends AbstractMongoRepos
                                 index++;
                             }
                         }
-                        return Flux.fromIterable(data);
+                        return Mono.just(list);
                     });
 
                 });
