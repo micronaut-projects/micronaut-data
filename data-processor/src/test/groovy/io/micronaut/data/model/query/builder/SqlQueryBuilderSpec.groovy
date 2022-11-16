@@ -464,7 +464,7 @@ interface MyRepository {
 
         then:
         statements[0] == 'CREATE TABLE "shipment_with_index" ("shipment_id" BIGINT PRIMARY KEY AUTO_INCREMENT,"field" VARCHAR(255) NOT NULL,"taxCode" VARCHAR(255) NOT NULL);'
-        statements[1] == 'CREATE UNIQUE INDEX idx_shipment_with_index_field_taxcode ON "shipment_with_index" (field, taxCode);'
+        statements[1] == 'CREATE UNIQUE INDEX "idx_shipment_with_index_field_taxcode" ON "shipment_with_index" (field, taxCode);'
 
         when:
         def productStatements = encoder.buildCreateTableStatements(getRuntimePersistentEntity(Product))
@@ -481,7 +481,8 @@ interface MyRepository {
 
         then:
         statements[0] == 'CREATE TABLE "shipment_with_index_on_fields" ("shipment_id" BIGINT PRIMARY KEY AUTO_INCREMENT,"field" VARCHAR(255) NOT NULL,"taxCode" VARCHAR(255) NOT NULL);'
-        statements[1] == 'CREATE UNIQUE INDEX idx_shipment_with_index_on_fields_field ON "shipment_with_index_on_fields" (field);CREATE INDEX idx_shipment_with_index_on_fields_taxcode ON "shipment_with_index_on_fields" (taxCode);'
+        statements[1] == 'CREATE UNIQUE INDEX "idx_shipment_with_index_on_fields_field" ON "shipment_with_index_on_fields" (field);'
+        statements[2] == 'CREATE INDEX "idx_shipment_with_index_on_fields_taxcode" ON "shipment_with_index_on_fields" (taxCode);'
     }
 
     void "test build create index from field annotation with composite indexes"() {
@@ -491,7 +492,7 @@ interface MyRepository {
 
         then:
         statements[0] == 'CREATE TABLE "shipment_with_index_on_fields_composite_indexes" ("shipment_id" BIGINT PRIMARY KEY AUTO_INCREMENT,"field" VARCHAR(255) NOT NULL,"taxCode" VARCHAR(255) NOT NULL);'
-        statements[1] == 'CREATE UNIQUE INDEX idx_shipment_with_index_on_fields_composite_indexes_field_taxcode ON "shipment_with_index_on_fields_composite_indexes" (field, taxCode);'
+        statements[1] == 'CREATE UNIQUE INDEX "idx_shipment_with_index_on_fields_composite_indexes_field_taxcode" ON "shipment_with_index_on_fields_composite_indexes" (field, taxCode);'
     }
 
     void "test build create index from index class annotation"() {
@@ -501,7 +502,8 @@ interface MyRepository {
 
         then:
         statements[0] == 'CREATE TABLE "shipment_with_index_on_class" ("shipment_id" BIGINT PRIMARY KEY AUTO_INCREMENT,"field" VARCHAR(255) NOT NULL,"taxCode" VARCHAR(255) NOT NULL);'
-        statements[1] == 'CREATE UNIQUE INDEX idx_shipment_with_index_on_class_field ON "shipment_with_index_on_class" (field);CREATE INDEX idx_shipment_with_index_on_class_taxcode ON "shipment_with_index_on_class" (taxCode);'
+        statements[1] == 'CREATE UNIQUE INDEX "idx_shipment_with_index_on_class_field" ON "shipment_with_index_on_class" (field);'
+        statements[2] == 'CREATE INDEX "idx_shipment_with_index_on_class_taxcode" ON "shipment_with_index_on_class" (taxCode);'
     }
 
     void "test build create index from index class annotation and field annotation"() {
@@ -511,7 +513,9 @@ interface MyRepository {
 
         then:
         statements[0] == 'CREATE TABLE "shipment_with_index_on_class_and_fields" ("shipment_id" BIGINT PRIMARY KEY AUTO_INCREMENT,"field2" VARCHAR(255) NOT NULL,"taxCode2" VARCHAR(255) NOT NULL,"field" VARCHAR(255) NOT NULL,"taxCode" VARCHAR(255) NOT NULL);'
-        statements[1] == 'CREATE UNIQUE INDEX idx_shipment_with_index_on_class_and_fields_field ON "shipment_with_index_on_class_and_fields" (field);CREATE INDEX idx_shipment_with_index_on_class_and_fields_taxcode ON "shipment_with_index_on_class_and_fields" (taxCode);CREATE UNIQUE INDEX idx_shipment_with_index_on_class_and_fields_field2_taxcode2 ON "shipment_with_index_on_class_and_fields" (field2, taxCode2);'
+        statements[1] == 'CREATE UNIQUE INDEX "idx_shipment_with_index_on_class_and_fields_field" ON "shipment_with_index_on_class_and_fields" (field);'
+        statements[2] == 'CREATE INDEX "idx_shipment_with_index_on_class_and_fields_taxcode" ON "shipment_with_index_on_class_and_fields" (taxCode);'
+        statements[3] == 'CREATE UNIQUE INDEX "idx_shipment_with_index_on_class_and_fields_field2_taxcode2" ON "shipment_with_index_on_class_and_fields" (field2, taxCode2);'
     }
 
     void "test build composite id query"() {

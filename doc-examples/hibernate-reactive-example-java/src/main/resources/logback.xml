@@ -12,10 +12,4 @@
     <root level="info">
         <appender-ref ref="STDOUT" />
     </root>
-<!--    <logger name="example" level="trace" />-->
-    <logger name="org.hibernate.SQL" level="trace" />
-<!--    <logger name="org.hibernate.type" level="trace" />-->
-<!--    <logger name="io.micronaut.http.client" level="trace" />-->
-<!--    <logger name="io.micronaut.context.condition" level="trace" />-->
-
 </configuration>

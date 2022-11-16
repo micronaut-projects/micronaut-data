@@ -16,6 +16,11 @@ trait DatabaseTestPropertyProvider implements TestPropertyProvider {
         return SchemaGenerate.CREATE
     }
 
+    List<String> packages() {
+        def currentClassPackage = getClass().package.name
+        return Arrays.asList(currentClassPackage, "io.micronaut.data.tck.entities", "io.micronaut.data.tck.jdbc.entities")
+    }
+
     boolean usePool() {
         return false
     }
@@ -92,6 +97,7 @@ trait DatabaseTestPropertyProvider implements TestPropertyProvider {
                 "r2dbc.datasources.default.password"                 : container == null ? "" : container.getPassword(),
                 "r2dbc.datasources.default.url"                      : "r2dbc:${driverName}://${getR2dbUrlSuffix(driverName, container)}",
                 "r2dbc.datasources.default.schema-generate"          : schemaGenerate(),
+                "r2dbc.datasources.default.packages"                 : packages(),
                 "r2dbc.datasources.default.dialect"                  : dialect,
                 "r2dbc.datasources.default.options.connectTimeout"   : Duration.ofMinutes(1).toString(),
                 "r2dbc.datasources.default.options.statementTimeout"   : Duration.ofMinutes(1).toString(),

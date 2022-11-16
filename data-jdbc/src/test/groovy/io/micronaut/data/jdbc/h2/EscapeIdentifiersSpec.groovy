@@ -16,7 +16,6 @@
 package io.micronaut.data.jdbc.h2
 
 
-import io.micronaut.data.jdbc.TableRatings
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import spock.lang.Shared
 import spock.lang.Specification

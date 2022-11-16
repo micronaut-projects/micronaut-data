@@ -1,4 +1,4 @@
-package io.micronaut.data.r2dbc;
+package io.micronaut.data.r2dbc.h2;
 
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.annotation.Introspected;

@@ -14,6 +14,11 @@ trait DatabaseTestPropertyProvider implements TestPropertyProvider {
         return SchemaGenerate.CREATE
     }
 
+    List<String> packages() {
+        def currentClassPackage = getClass().package.name
+        return Arrays.asList(currentClassPackage, "io.micronaut.data.tck.entities", "io.micronaut.data.tck.jdbc.entities")
+    }
+
     String driverName() {
         switch (dialect()) {
             case Dialect.POSTGRES:
@@ -66,7 +71,8 @@ trait DatabaseTestPropertyProvider implements TestPropertyProvider {
                 "datasources.default.username"       : container == null ? "" : container.getUsername(),
                 "datasources.default.password"       : container == null ? "" : container.getPassword(),
                 "datasources.default.schema-generate": schemaGenerate(),
-                "datasources.default.dialect"        : dialect
+                "datasources.default.dialect"        : dialect,
+                "datasources.default.packages"       : packages()
         ] as Map<String, String>
     }
 
