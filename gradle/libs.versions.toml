@@ -40,7 +40,7 @@ r2dbc-pool = "1.0.0.RELEASE"
 
 oracle-r2dbc-driver = "1.0.0"
 mysql-r2dbc-driver = "0.8.2.RELEASE"
-h2-r2dbc-driver = "0.8.5.RELEASE"
+h2-r2dbc-driver = "0.9.1.RELEASE"
 mariadb-r2dbc-driver = "1.1.2"
 postgresql-r2dbc-driver = "1.0.0.RELEASE"
 mssql-r2dbc-driver = "1.0.0.RELEASE"
