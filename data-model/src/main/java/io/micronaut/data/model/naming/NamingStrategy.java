@@ -136,15 +136,11 @@ public interface NamingStrategy {
         StringBuilder sb = new StringBuilder();
         Association foreignAssociation = null;
         for (Association association : associations) {
-            if (association.getKind() != Relation.Kind.EMBEDDED) {
-                if (foreignAssociation == null) {
-                    foreignAssociation = association;
-                }
+            if (association.getKind() != Relation.Kind.EMBEDDED && foreignAssociation == null) {
+                foreignAssociation = association;
             }
-            String assocName = association.getKind() == Relation.Kind.EMBEDDED ? association.getAnnotationMetadata().stringValue(MappedProperty.class).orElse(null) : null;
-            if (assocName == null) {
-                assocName = association.getName();
-            }
+            final String originalAssocName = association.getName();
+            String assocName = association.getKind() == Relation.Kind.EMBEDDED ? association.getAnnotationMetadata().stringValue(MappedProperty.class).orElse(originalAssocName) : originalAssocName;
             if (sb.length() > 0) {
                 sb.append(NameUtils.capitalize(assocName));
             } else {
