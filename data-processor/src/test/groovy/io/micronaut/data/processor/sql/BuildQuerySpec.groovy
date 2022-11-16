@@ -21,6 +21,7 @@ import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.entities.Invoice
 import io.micronaut.data.processor.visitors.AbstractDataSpec
 import io.micronaut.data.tck.entities.Author
+import io.micronaut.data.tck.entities.Restaurant
 import spock.lang.Issue
 import spock.lang.Unroll
 
@@ -658,5 +659,31 @@ interface BookRepository extends GenericRepository<Book, Long> {
         then:
         Throwable ex = thrown()
         ex.message.contains('ArrayContains is not supported by this implementation')
+    }
+
+    void "test repo for MappedProperty with Embedded"() {
+        given:
+        def repository = buildRepository('test.RestaurantRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Restaurant;
+import java.util.Optional;
+
+@JdbcRepository(dialect = Dialect.H2)
+interface RestaurantRepository extends GenericRepository<Restaurant, Long> {
+
+    Optional<Restaurant> findByName(String name);
+
+     Restaurant save(Restaurant entity);
+}
+
+""")
+
+        def findByNameQuery = getQuery(repository.getRequiredMethod("findByName", String))
+        def saveQuery = getQuery(repository.getRequiredMethod("save", Restaurant))
+        expect:
+        findByNameQuery == 'SELECT restaurant_.`id`,restaurant_.`name`,restaurant_.`address_street`,restaurant_.`address_zip_code`,restaurant_.`hqaddress_street`,restaurant_.`hqaddress_zip_code` FROM `restaurant` restaurant_ WHERE (restaurant_.`name` = ?)'
+        saveQuery == 'INSERT INTO `restaurant` (`name`,`address_street`,`address_zip_code`,`hqaddress_street`,`hqaddress_zip_code`) VALUES (?,?,?,?,?)'
     }
 }
