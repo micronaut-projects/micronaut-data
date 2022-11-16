@@ -141,10 +141,14 @@ public interface NamingStrategy {
                     foreignAssociation = association;
                 }
             }
+            String assocName = association.getKind() == Relation.Kind.EMBEDDED ? association.getAnnotationMetadata().stringValue(MappedProperty.class).orElse(null) : null;
+            if (assocName == null) {
+                assocName = association.getName();
+            }
             if (sb.length() > 0) {
-                sb.append(NameUtils.capitalize(association.getName()));
+                sb.append(NameUtils.capitalize(assocName));
             } else {
-                sb.append(association.getName());
+                sb.append(assocName);
             }
         }
         if (foreignAssociation != null) {

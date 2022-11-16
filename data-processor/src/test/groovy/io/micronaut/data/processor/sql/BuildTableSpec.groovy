@@ -20,7 +20,6 @@ import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
 import io.micronaut.data.processor.visitors.AbstractDataSpec
 import io.micronaut.data.tck.entities.Restaurant
-import spock.lang.Requires
 import spock.lang.Unroll
 
 //@Requires({ javaVersion <= 1.8 })
@@ -34,7 +33,7 @@ class BuildTableSpec extends AbstractDataSpec {
         def sql = builder.buildBatchCreateTableStatement(entity)
 
         expect:"@Nullable @Embedded doesn't include NOT NULL declaration"
-        sql.contains("\"hq_address_street\" VARCHAR(255),")
+        sql.contains("\"hqaddress_street\" VARCHAR(255),")
 
         and:"regular @Embedded does include NOT NULL declaration"
         sql.contains("\"address_street\" VARCHAR(255) NOT NULL,")
@@ -322,5 +321,78 @@ class Test {
         Dialect.MYSQL    | 'CREATE TABLE `test` (`wakeup_time` TIME(6)  NOT NULL );'
         Dialect.POSTGRES | 'CREATE TABLE "test" ("wakeup_time" TIME(6)  NOT NULL );'
         Dialect.ORACLE   | 'CREATE TABLE "TEST" ("WAKEUP_TIME" DATE  NOT NULL )'
+    }
+
+    void "test create table MappedProperty with Embedded"() {
+        given:
+        def entity = buildJpaEntity('test.EmbeddedEntity', '''
+import io.micronaut.data.annotation.Embeddable;import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.MappedProperty;
+import io.micronaut.data.annotation.Relation;
+
+@MappedEntity
+class EmbeddedEntity {
+    @Id
+    private Long id;
+
+    @MappedProperty("emb_a_")
+    @Relation(Relation.Kind.EMBEDDED)
+    private Emb embA;
+
+    @MappedProperty("emb_b_")
+    @Relation(Relation.Kind.EMBEDDED)
+    private Emb embB;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Emb getEmbA() {
+        return this.embA;
+    }
+
+    public void setEmbA(Emb embA) {
+        this.embA = embA;
+    }
+
+    public Emb getEmbB() {
+        return this.embB;
+    }
+
+    public void setEmbB(Emb embB) {
+        this.embB = embB;
+    }
+}
+@Embeddable
+class Emb {
+    private String a;
+    private String b;
+
+    public String getA() {
+        return  a;
+    }
+    public void setA(String a) {
+        this.a = a;
+    }
+    public String getB() {
+        return  b;
+    }
+    public void setB(String b) {
+        this.b = b;
+    }
+}
+''')
+
+        when:
+        SqlQueryBuilder builder = new SqlQueryBuilder()
+        def sql = builder.buildBatchCreateTableStatement(entity)
+
+        then:
+        sql == 'CREATE TABLE "embedded_entity" ("id" BIGINT NOT NULL,"emb_a_a" VARCHAR(255) NOT NULL,"emb_a_b" VARCHAR(255) NOT NULL,"emb_b_a" VARCHAR(255) NOT NULL,"emb_b_b" VARCHAR(255) NOT NULL);'
     }
 }
