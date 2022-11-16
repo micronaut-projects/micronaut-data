@@ -273,18 +273,14 @@ final class SqlQueryBuilderUtils {
                 break;
             case STRING_ARRAY:
             case CHARACTER_ARRAY:
-                if (dialect == Dialect.H2) {
-                    column += " ARRAY";
-                } else {
-                    column += " VARCHAR(255) ARRAY";
-                }
+                column += " VARCHAR(255) ARRAY";
                 if (required) {
                     column += " NOT NULL";
                 }
                 break;
             case SHORT_ARRAY:
                 if (dialect == Dialect.H2) {
-                    column += " ARRAY";
+                    column += " TINYINT ARRAY";
                 } else if (dialect == Dialect.POSTGRES) {
                     column += " SMALLINT ARRAY";
                 } else {
@@ -296,7 +292,7 @@ final class SqlQueryBuilderUtils {
                 break;
             case INTEGER_ARRAY:
                 if (dialect == Dialect.H2) {
-                    column += " ARRAY";
+                    column += " INTEGER ARRAY";
                 } else if (dialect == Dialect.POSTGRES) {
                     column += " INTEGER ARRAY";
                 } else {
@@ -308,7 +304,7 @@ final class SqlQueryBuilderUtils {
                 break;
             case LONG_ARRAY:
                 if (dialect == Dialect.H2) {
-                    column += " ARRAY";
+                    column += " BIGINT ARRAY";
                 } else {
                     column += " BIGINT ARRAY";
                 }
@@ -318,7 +314,7 @@ final class SqlQueryBuilderUtils {
                 break;
             case FLOAT_ARRAY:
                 if (dialect == Dialect.H2) {
-                    column += " ARRAY";
+                    column += " REAL ARRAY";
                 } else if (dialect == Dialect.POSTGRES) {
                     column += " REAL ARRAY";
                 } else {
@@ -330,7 +326,7 @@ final class SqlQueryBuilderUtils {
                 break;
             case DOUBLE_ARRAY:
                 if (dialect == Dialect.H2) {
-                    column += " ARRAY";
+                    column += " DOUBLE PRECISION ARRAY";
                 } else if (dialect == Dialect.POSTGRES) {
                     column += " DOUBLE PRECISION ARRAY";
                 } else {
@@ -342,7 +338,7 @@ final class SqlQueryBuilderUtils {
                 break;
             case BOOLEAN_ARRAY:
                 if (dialect == Dialect.H2) {
-                    column += " ARRAY";
+                    column += " BOOLEAN ARRAY";
                 } else {
                     column += " BOOLEAN ARRAY";
                 }
