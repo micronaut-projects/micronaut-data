@@ -54,6 +54,8 @@ class BookControllerTest extends Specification implements TestPropertyProvider {
     }
 
     def cleanupSpec() {
+        authorRepository.deleteAll()
+        bookRepository.deleteAll()
         container.stop()
     }
 

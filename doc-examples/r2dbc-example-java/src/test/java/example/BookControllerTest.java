@@ -68,7 +68,9 @@ public class BookControllerTest implements TestPropertyProvider {
     }
 
     @AfterAll
-    static void cleanup() {
+    static void cleanup(AuthorRepository authorRepository, BookRepository bookRepository) {
+        authorRepository.deleteAll();
+        bookRepository.deleteAll();
         if (container != null) {
             container.stop();
         }
