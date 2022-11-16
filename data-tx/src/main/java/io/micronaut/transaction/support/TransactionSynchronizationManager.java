@@ -732,8 +732,9 @@ public abstract class TransactionSynchronizationManager {
         if (state == null) {
             return supplier;
         }
+        TransactionSynchronizationState stateCopy = state.copy();
         return () -> {
-            try (TransactionSynchronizationStateOp ignore = withState(state)) {
+            try (TransactionSynchronizationStateOp ignore = withState(stateCopy)) {
                 return supplier.get();
             }
         };
