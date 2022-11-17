@@ -14,6 +14,7 @@ import spock.util.concurrent.AsyncConditions
 
 import javax.transaction.Transactional
 import java.sql.Connection
+import java.util.concurrent.atomic.AtomicInteger
 
 @MicronautTest(transactional = false)
 @Property(name = "datasources.default.name", value = "mydb")
@@ -35,6 +36,7 @@ class TransactionAnnotationSpec extends Specification {
         then:"The insert worked"
             testService.lastEvent?.title == "The Stand"
             testService.readTransactionally() == 1
+            testService.commitCount.get() + testService.rollbackCount.get() == testService.completionCount.get()
 
         when:"A transaction is rolled back"
             testService.lastEvent = null
@@ -45,7 +47,7 @@ class TransactionAnnotationSpec extends Specification {
             e.message == 'Bad things happened'
             testService.lastEvent == null
             testService.readTransactionally() == 1
-
+            testService.commitCount.get() + testService.rollbackCount.get() == testService.completionCount.get()
 
         when:"A transaction is rolled back"
             testService.insertAndRollbackChecked()
@@ -55,6 +57,7 @@ class TransactionAnnotationSpec extends Specification {
             e2.message == 'Bad things happened'
             testService.lastEvent == null
             testService.readTransactionally() == 1
+            testService.commitCount.get() + testService.rollbackCount.get() == testService.completionCount.get()
 
         when:"A transaction is rolled back but the exception ignored"
             testService.insertAndRollbackDontRollbackOn()
@@ -63,7 +66,7 @@ class TransactionAnnotationSpec extends Specification {
             thrown(IOException)
             testService.readTransactionally() == 2
             testService.lastEvent
-
+            testService.commitCount.get() + testService.rollbackCount.get() == testService.completionCount.get()
 
         when:"Test that connections are never exhausted"
             int i = 0
@@ -83,6 +86,7 @@ class TransactionAnnotationSpec extends Specification {
         then:
             asyncConditions.evaluate {
                 testService.readTransactionally() == 4
+                testService.commitCount.get() + testService.rollbackCount.get() == testService.completionCount.get()
             }
     }
 
@@ -96,6 +100,7 @@ class TransactionAnnotationSpec extends Specification {
         then:
             asyncConditions.evaluate {
                 testService.readTransactionally() == 4
+                testService.commitCount.get() + testService.rollbackCount.get() == testService.completionCount.get()
             }
 
         where:
@@ -108,6 +113,10 @@ class TransactionAnnotationSpec extends Specification {
         @Inject ApplicationEventPublisher eventPublisher
         NewBookEvent lastEvent
 
+        AtomicInteger commitCount
+        AtomicInteger rollbackCount
+        AtomicInteger completionCount
+
         @Transactional
         void init() {
             connection.prepareStatement("drop table book if exists").execute()
@@ -115,6 +124,10 @@ class TransactionAnnotationSpec extends Specification {
 
             connection.prepareStatement("drop table book if exists").execute()
             connection.prepareStatement("create table book (id bigint not null auto_increment, pages integer not null, title varchar(255), primary key (id))").execute()
+
+            commitCount = new AtomicInteger(0)
+            rollbackCount = new AtomicInteger(0)
+            completionCount = new AtomicInteger(0)
         }
 
         @Transactional
@@ -160,9 +173,20 @@ class TransactionAnnotationSpec extends Specification {
 
         }
 
-        @TransactionalEventListener
+        @TransactionalEventListener(TransactionalEventListener.TransactionPhase.AFTER_COMMIT)
         void afterCommit(NewBookEvent event) {
             lastEvent = event
+            commitCount.incrementAndGet()
+        }
+
+        @TransactionalEventListener(TransactionalEventListener.TransactionPhase.AFTER_ROLLBACK)
+        void afterRollback(NewBookEvent event) {
+            rollbackCount.incrementAndGet()
+        }
+
+        @TransactionalEventListener(TransactionalEventListener.TransactionPhase.AFTER_COMPLETION)
+        void afterCompletion(NewBookEvent event) {
+            completionCount.incrementAndGet()
         }
 
         @Transactional
