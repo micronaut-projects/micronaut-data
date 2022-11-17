@@ -45,6 +45,8 @@ mariadb-r2dbc-driver = "1.1.2"
 postgresql-r2dbc-driver = "1.0.0.RELEASE"
 mssql-r2dbc-driver = "1.0.0.RELEASE"
 
+h2 = "2.1.214"
+
 # Testing and benchmarking
 
 benchmark-spring-data-mongodb = "4.1.1"
@@ -134,7 +136,7 @@ drivers-vertx-pg = { module = "io.vertx:vertx-pg-client", version.ref = "vertx" 
 micronaut-sql-jdbc-tomcat = { module = "io.micronaut.sql:micronaut-jdbc-tomcat", version.ref = "micronaut-sql" }
 micronaut-sql-jdbc = { module = "io.micronaut.sql:micronaut-jdbc", version.ref = "micronaut-sql" }
 
-h2 = { module = "com.h2database:h2" }
+h2 = { module = "com.h2database:h2", version.ref = "h2" }
 
 drivers-jdbc-oracle = { module = "com.oracle.database.jdbc:ojdbc8", version.ref = "oracle-jdbc-driver" }
 drivers-jdbc-mariadb = { module = "org.mariadb.jdbc:mariadb-java-client", version.ref = "mariadb-jdbc-driver" }
