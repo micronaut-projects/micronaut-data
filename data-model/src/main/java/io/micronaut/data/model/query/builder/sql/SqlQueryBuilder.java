@@ -669,7 +669,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                         column += " NOT NULL DEFAULT SYS_GUID()";
                     } else if (type == IDENTITY) {
                         if (isPk) {
-                            column += " GENERATED ALWAYS AS IDENTITY";
+                            column += " GENERATED ALWAYS AS IDENTITY (MINVALUE 1 START WITH 1 CACHE 100 NOCYCLE)";
                         } else {
                             column += " NOT NULL";
                         }
