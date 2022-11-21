@@ -499,7 +499,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
 
                 createSequenceStmt += " MINVALUE 1 START WITH 1";
                 if (dialect == Dialect.ORACLE) {
-                    createSequenceStmt += " NOCACHE NOCYCLE";
+                    createSequenceStmt += " CACHE 100 NOCYCLE";
                 } else {
                     if (isSqlServer) {
                         createSequenceStmt += " INCREMENT BY 1";
