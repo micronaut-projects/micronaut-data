@@ -36,7 +36,7 @@ interface CoroutinePageableCrudRepository<E, ID> : CoroutineCrudRepository<E, ID
      * @param sort The sort
      * @return The results publisher
      */
-    suspend fun findAll(sort: Sort): Flow<E>
+    fun findAll(sort: Sort): Flow<E>
 
     /**
      * Finds all records for the given pageable.
