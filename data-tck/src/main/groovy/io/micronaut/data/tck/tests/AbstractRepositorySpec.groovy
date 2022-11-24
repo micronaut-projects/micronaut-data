@@ -862,6 +862,14 @@ abstract class AbstractRepositorySpec extends Specification {
         then:
         personRepository.findByName("Jack") == null
         personRepository.findByName("Jeffrey").age == 30
+
+        when: "The person is updated by name and age"
+        def optPerson = personRepository.findById(fred.id)
+        optPerson.present
+        def person = optPerson.get()
+        def count = personRepository.updateByNameAndAge(person.name, person.age, person)
+        then: "the person is updated and update returns count"
+        count == 1
     }
 
     void "test delete all"() {
