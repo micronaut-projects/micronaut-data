@@ -191,11 +191,25 @@ extends <a href="../../runtime/operations/internal/OperationContext.html" title=
 <th class="colLast" scope="col">Description</th>
 </tr>
 <tr class="altColor">
+<th class="colConstructorName" scope="row"><code><span class="memberNameLink"><a href="#%3Cinit%3E(io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.aop.InvocationContext,java.lang.Class,io.micronaut.data.model.query.builder.sql.Dialect,java.sql.Connection)">JdbcOperationContext</a></span>&#8203;(io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
+                    io.micronaut.aop.InvocationContext&lt;?,&#8203;?&gt;&nbsp;invocationContext,
+                    java.lang.Class&lt;?&gt;&nbsp;repositoryType,
+                    <a href="../../model/query/builder/sql/Dialect.html" title="enum in io.micronaut.data.model.query.builder.sql">Dialect</a>&nbsp;dialect,
+                    java.sql.Connection&nbsp;connection)</code></th>
+<td class="colLast">
+<div class="block">The default constructor.</div>
+</td>
+</tr>
+<tr class="rowColor">
 <th class="colConstructorName" scope="row"><code><span class="memberNameLink"><a href="#%3Cinit%3E(io.micronaut.core.annotation.AnnotationMetadata,java.lang.Class,io.micronaut.data.model.query.builder.sql.Dialect,java.sql.Connection)">JdbcOperationContext</a></span>&#8203;(io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
                     java.lang.Class&lt;?&gt;&nbsp;repositoryType,
                     <a href="../../model/query/builder/sql/Dialect.html" title="enum in io.micronaut.data.model.query.builder.sql">Dialect</a>&nbsp;dialect,
                     java.sql.Connection&nbsp;connection)</code></th>
-<td class="colLast">&nbsp;</td>
+<td class="colLast">
+<div class="block"><span class="deprecatedLabel">Deprecated.</span>
+<div class="deprecationComment">Use constructor with <code>InvocationContext</code>.</div>
+</div>
+</td>
 </tr>
 </table>
 </li>
@@ -262,13 +276,47 @@ extends <a href="../../runtime/operations/internal/OperationContext.html" title=
 <a id="&lt;init&gt;(io.micronaut.core.annotation.AnnotationMetadata,java.lang.Class,io.micronaut.data.model.query.builder.sql.Dialect,java.sql.Connection)">
 <!--   -->
 </a>
+<ul class="blockList">
+<li class="blockList">
+<h4>JdbcOperationContext</h4>
+<pre>@Deprecated
+public&nbsp;JdbcOperationContext&#8203;(io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
+                            java.lang.Class&lt;?&gt;&nbsp;repositoryType,
+                            <a href="../../model/query/builder/sql/Dialect.html" title="enum in io.micronaut.data.model.query.builder.sql">Dialect</a>&nbsp;dialect,
+                            java.sql.Connection&nbsp;connection)</pre>
+<div class="deprecationBlock"><span class="deprecatedLabel">Deprecated.</span>
+<div class="deprecationComment">Use constructor with <code>InvocationContext</code>.</div>
+</div>
+<div class="block">The old deprecated constructor.</div>
+<dl>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>annotationMetadata</code> - the annotation metadata</dd>
+<dd><code>repositoryType</code> - the repository type</dd>
+<dd><code>dialect</code> - the dialect</dd>
+<dd><code>connection</code> - the connection</dd>
+</dl>
+</li>
+</ul>
+<a id="&lt;init&gt;(io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.aop.InvocationContext,java.lang.Class,io.micronaut.data.model.query.builder.sql.Dialect,java.sql.Connection)">
+<!--   -->
+</a>
 <ul class="blockListLast">
 <li class="blockList">
 <h4>JdbcOperationContext</h4>
 <pre>public&nbsp;JdbcOperationContext&#8203;(io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
+                            io.micronaut.aop.InvocationContext&lt;?,&#8203;?&gt;&nbsp;invocationContext,
                             java.lang.Class&lt;?&gt;&nbsp;repositoryType,
                             <a href="../../model/query/builder/sql/Dialect.html" title="enum in io.micronaut.data.model.query.builder.sql">Dialect</a>&nbsp;dialect,
                             java.sql.Connection&nbsp;connection)</pre>
+<div class="block">The default constructor.</div>
+<dl>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>annotationMetadata</code> - the annotation metadata</dd>
+<dd><code>invocationContext</code> - the invocation context</dd>
+<dd><code>repositoryType</code> - the repository type</dd>
+<dd><code>dialect</code> - the dialect</dd>
+<dd><code>connection</code> - the connection</dd>
+</dl>
 </li>
 </ul>
 </li>

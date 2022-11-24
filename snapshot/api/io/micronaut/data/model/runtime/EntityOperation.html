@@ -27,7 +27,7 @@
     catch(err) {
     }
 //-->
-var data = {"i0":6,"i1":6,"i2":6};
+var data = {"i0":6,"i1":6,"i2":6,"i3":6};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],4:["t3","Abstract Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -176,18 +176,23 @@ extends io.micronaut.core.naming.Named, <a href="PreparedDataOperation.html" tit
 <th class="colLast" scope="col">Description</th>
 </tr>
 <tr id="i0" class="altColor">
+<td class="colFirst"><code>io.micronaut.aop.InvocationContext&lt;?,&#8203;?&gt;</code></td>
+<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getInvocationContext()">getInvocationContext</a></span>()</code></th>
+<td class="colLast">&nbsp;</td>
+</tr>
+<tr id="i1" class="rowColor">
 <td class="colFirst"><code>java.lang.Class&lt;?&gt;</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getRepositoryType()">getRepositoryType</a></span>()</code></th>
 <td class="colLast">&nbsp;</td>
 </tr>
-<tr id="i1" class="rowColor">
+<tr id="i2" class="altColor">
 <td class="colFirst"><code>java.lang.Class&lt;<a href="EntityOperation.html" title="type parameter in EntityOperation">E</a>&gt;</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getRootEntity()">getRootEntity</a></span>()</code></th>
 <td class="colLast">
 <div class="block">The root entity type.</div>
 </td>
 </tr>
-<tr id="i2" class="altColor">
+<tr id="i3" class="rowColor">
 <td class="colFirst"><code><a href="StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;<a href="EntityOperation.html" title="type parameter in EntityOperation">E</a>,&#8203;?&gt;</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getStoredQuery()">getStoredQuery</a></span>()</code></th>
 <td class="colLast">
@@ -285,7 +290,7 @@ java.lang.Class&lt;?&gt;&nbsp;getRepositoryType()</pre>
 <a id="getStoredQuery()">
 <!--   -->
 </a>
-<ul class="blockListLast">
+<ul class="blockList">
 <li class="blockList">
 <h4>getStoredQuery</h4>
 <pre class="methodSignature">@Nullable
@@ -294,6 +299,20 @@ java.lang.Class&lt;?&gt;&nbsp;getRepositoryType()</pre>
 <dl>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>The stored query</dd>
+</dl>
+</li>
+</ul>
+<a id="getInvocationContext()">
+<!--   -->
+</a>
+<ul class="blockListLast">
+<li class="blockList">
+<h4>getInvocationContext</h4>
+<pre class="methodSignature">@Nullable
+io.micronaut.aop.InvocationContext&lt;?,&#8203;?&gt;&nbsp;getInvocationContext()</pre>
+<dl>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>The invocation context</dd>
 </dl>
 </li>
 </ul>
