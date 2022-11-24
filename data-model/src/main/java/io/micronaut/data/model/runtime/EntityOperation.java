@@ -49,6 +49,6 @@ public interface EntityOperation<E> extends Named, PreparedDataOperation<E> {
     /**
      * @return The invocation context
      */
-    @NonNull
+    @Nullable
     InvocationContext<?, ?> getInvocationContext();
 }
