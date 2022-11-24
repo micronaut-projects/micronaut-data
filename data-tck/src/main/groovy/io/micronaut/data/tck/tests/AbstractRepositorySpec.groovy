@@ -862,14 +862,21 @@ abstract class AbstractRepositorySpec extends Specification {
         then:
         personRepository.findByName("Jack") == null
         personRepository.findByName("Jeffrey").age == 30
+    }
+
+    void "test update by multiple fields"() {
+        given:
+        savePersons(["Jeff", "James"])
+        def jeff = personRepository.findByName("Jeff")
 
         when: "The person is updated by name and age"
-        def optPerson = personRepository.findById(fred.id)
+        def optPerson = personRepository.findById(jeff.id)
         optPerson.present
         def person = optPerson.get()
-        def count = personRepository.updateByNameAndAge(person.name, person.age, person)
-        then: "the person is updated and update returns count"
-        count == 1
+        person.enabled = false
+        def updatedPerson = personRepository.updateByNameAndAge(person.name, person.age, person)
+        then: "the person is updated and update returns updated entity"
+        updatedPerson && !updatedPerson.enabled
     }
 
     void "test delete all"() {

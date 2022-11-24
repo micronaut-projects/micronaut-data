@@ -149,7 +149,7 @@ public interface PersonRepository extends CrudRepository<Person, Long>, Pageable
 
     List<Person> findAllByAgeInRange(int from, int to);
 
-    long updateByNameAndAge(String name, int age, Person person);
+    Person updateByNameAndAge(String name, int age, Person person);
 
     class Specifications {
 

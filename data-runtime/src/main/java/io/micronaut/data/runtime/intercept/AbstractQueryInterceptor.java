@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.runtime.intercept;
 
+import io.micronaut.aop.InvocationContext;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.AnnotationMetadata;
@@ -888,6 +889,11 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
         @Override
         public String getName() {
             return method.getDeclaringType().getSimpleName() + "." + method.getMethodName();
+        }
+
+        @Override
+        public InvocationContext<?, ?> getInvocationContext() {
+            return method;
         }
     }
 
