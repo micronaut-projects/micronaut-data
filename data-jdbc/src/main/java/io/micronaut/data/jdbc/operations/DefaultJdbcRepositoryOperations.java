@@ -1136,6 +1136,11 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         public final Dialect dialect;
         private final InvocationContext<?, ?> invocationContext;
 
+        @Deprecated
+        public JdbcOperationContext(AnnotationMetadata annotationMetadata, Class<?> repositoryType, Dialect dialect, Connection connection) {
+            this(annotationMetadata, null , repositoryType, dialect, connection);
+        }
+
         public JdbcOperationContext(AnnotationMetadata annotationMetadata, InvocationContext<?, ?> invocationContext, Class<?> repositoryType, Dialect dialect, Connection connection) {
             super(annotationMetadata, repositoryType);
             this.dialect = dialect;

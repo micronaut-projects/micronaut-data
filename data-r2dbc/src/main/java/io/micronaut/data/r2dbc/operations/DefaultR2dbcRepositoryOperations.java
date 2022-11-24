@@ -1330,6 +1330,11 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         private final Dialect dialect;
         private final InvocationContext<?, ?> invocationContext;
 
+        @Deprecated
+        public R2dbcOperationContext(AnnotationMetadata annotationMetadata, Class<?> repositoryType, Dialect dialect, Connection connection) {
+            this(annotationMetadata, null, repositoryType, dialect, connection);
+        }
+
         public R2dbcOperationContext(AnnotationMetadata annotationMetadata, InvocationContext<?, ?> invocationContext, Class<?> repositoryType, Dialect dialect, Connection connection) {
             super(annotationMetadata, repositoryType);
             this.dialect = dialect;
