@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.r2dbc.operations;
 
+import io.micronaut.aop.InvocationContext;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Parameter;
@@ -1011,7 +1012,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         }
 
         private <T> R2dbcOperationContext createContext(EntityOperation<T> operation, ReactiveTransactionStatus<Connection> status, SqlStoredQuery<T, ?> storedQuery) {
-            return new R2dbcOperationContext(operation.getAnnotationMetadata(), operation.getRepositoryType(), storedQuery.getDialect(), status.getConnection());
+            return new R2dbcOperationContext(operation.getAnnotationMetadata(), operation.getInvocationContext(), operation.getRepositoryType(), storedQuery.getDialect(), status.getConnection());
         }
 
         @NonNull
@@ -1172,7 +1173,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                 if (d.vetoed) {
                     return d;
                 }
-                storedQuery.bindParameters(new R2dbcParameterBinder(ctx, stmt), null, d.entity, d.previousValues);
+                storedQuery.bindParameters(new R2dbcParameterBinder(ctx, stmt), ctx.invocationContext, d.entity, d.previousValues);
                 return d;
             });
         }
@@ -1257,7 +1258,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                         // https://github.com/r2dbc/r2dbc-spi/issues/259
                         stmt.add();
                     }
-                    storedQuery.bindParameters(new R2dbcParameterBinder(ctx, stmt), null, d.entity, d.previousValues);
+                    storedQuery.bindParameters(new R2dbcParameterBinder(ctx, stmt), ctx.invocationContext, d.entity, d.previousValues);
                 }
                 return list;
             });
@@ -1327,11 +1328,36 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
 
         private final Connection connection;
         private final Dialect dialect;
+        private final InvocationContext<?, ?> invocationContext;
 
+        /**
+         * The old deprecated constructor.
+         *
+         * @param annotationMetadata the annotation metadata
+         * @param repositoryType the repository type
+         * @param dialect the dialect
+         * @param connection the connection
+         * @deprecated Use constructor with {@link InvocationContext}.
+         */
+        @Deprecated
         public R2dbcOperationContext(AnnotationMetadata annotationMetadata, Class<?> repositoryType, Dialect dialect, Connection connection) {
+            this(annotationMetadata, null, repositoryType, dialect, connection);
+        }
+
+        /**
+         * The default constructor.
+         *
+         * @param annotationMetadata the annotation metadata
+         * @param invocationContext the invocation context
+         * @param repositoryType the repository type
+         * @param dialect the dialect
+         * @param connection the connection
+         */
+        public R2dbcOperationContext(AnnotationMetadata annotationMetadata, InvocationContext<?, ?> invocationContext, Class<?> repositoryType, Dialect dialect, Connection connection) {
             super(annotationMetadata, repositoryType);
             this.dialect = dialect;
             this.connection = connection;
+            this.invocationContext = invocationContext;
         }
     }
 

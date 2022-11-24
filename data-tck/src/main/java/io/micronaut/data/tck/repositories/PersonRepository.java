@@ -149,6 +149,8 @@ public interface PersonRepository extends CrudRepository<Person, Long>, Pageable
 
     List<Person> findAllByAgeInRange(int from, int to);
 
+    Person updateByNameAndAge(String name, int age, Person person);
+
     class Specifications {
 
         public static PredicateSpecification<Person> nameEquals(String name) {

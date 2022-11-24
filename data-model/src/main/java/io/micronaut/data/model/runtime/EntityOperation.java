@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.model.runtime;
 
+import io.micronaut.aop.InvocationContext;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.naming.Named;
@@ -44,4 +45,10 @@ public interface EntityOperation<E> extends Named, PreparedDataOperation<E> {
      */
     @Nullable
     StoredQuery<E, ?> getStoredQuery();
+
+    /**
+     * @return The invocation context
+     */
+    @Nullable
+    InvocationContext<?, ?> getInvocationContext();
 }

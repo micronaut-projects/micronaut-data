@@ -1,6 +1,7 @@
 package io.micronaut.data.document.mongodb
 
 import groovy.transform.CompileStatic
+import io.micronaut.aop.InvocationContext
 import io.micronaut.context.annotation.Property
 import io.micronaut.context.annotation.Requires
 import io.micronaut.core.convert.value.ConvertibleValues
@@ -129,6 +130,11 @@ class MongoMultipleDataSourceSpec extends Specification implements TestPropertyP
 
                 @Override
                 StoredQuery<T, ?> getStoredQuery() {
+                    return null
+                }
+
+                @Override
+                InvocationContext<?, ?> getInvocationContext() {
                     return null
                 }
 
