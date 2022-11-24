@@ -1137,6 +1137,12 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         private final InvocationContext<?, ?> invocationContext;
 
         /**
+         * The old deprecated constructor.
+         *
+         * @param annotationMetadata the annotation metadata
+         * @param repositoryType the repository type
+         * @param dialect the dialect
+         * @param connection the connection
          * @deprecated Use constructor with {@link InvocationContext}.
          */
         @Deprecated
@@ -1144,6 +1150,15 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             this(annotationMetadata, null , repositoryType, dialect, connection);
         }
 
+        /**
+         * The default constructor.
+         *
+         * @param annotationMetadata the annotation metadata
+         * @param invocationContext the invocation context
+         * @param repositoryType the repository type
+         * @param dialect the dialect
+         * @param connection the connection
+         */
         public JdbcOperationContext(AnnotationMetadata annotationMetadata, InvocationContext<?, ?> invocationContext, Class<?> repositoryType, Dialect dialect, Connection connection) {
             super(annotationMetadata, repositoryType);
             this.dialect = dialect;
