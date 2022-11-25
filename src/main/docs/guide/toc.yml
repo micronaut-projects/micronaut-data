@@ -37,7 +37,7 @@ hibernate:
   hibernateJpaAnnotations: JPA Annotations
   hibernateQuickStart:
     title: Quick Start
-  hibernateLogging: Logging SQL with Micronaut Data JPA Hibernate    
+  hibernateLogging: Logging SQL with Micronaut Data JPA Hibernate
   hibernateJoinQueries: Join queries
   hibernateExplicitQueries: Explicit queries
   hibernateNativeQueries: Native queries
@@ -132,5 +132,7 @@ graal:
   title: Going Native with GraalVM
 spring:
   title: Spring Data Support
+multitenancy:
+  title: Multitenancy
 
 
