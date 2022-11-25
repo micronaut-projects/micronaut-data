@@ -20,6 +20,7 @@ import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.reflect.ReflectionUtils;
+import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.QueryHint;
@@ -79,7 +80,7 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
     private Set<JoinPath> joinFetchPaths = null;
     private final List<StoredQueryParameter> queryParameters;
     private final boolean rawQuery;
-    
+
     /**
      * The default constructor.
      *
@@ -158,7 +159,17 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
         if (annotation == null) {
             queryParameters = Collections.emptyList();
         } else {
-            List<AnnotationValue<DataMethodQueryParameter>> params = annotation.getAnnotations(DataMethod.META_MEMBER_PARAMETERS, DataMethodQueryParameter.class);
+            List<AnnotationValue<DataMethodQueryParameter>> params = null;
+            if (isCount) {
+                // Count query might have different parameters from the main query, so we use them here if present
+                List<AnnotationValue<DataMethodQueryParameter>> countParams = annotation.getAnnotations(DataMethod.META_MEMBER_RAW_COUNT_PARAMETERS, DataMethodQueryParameter.class);
+                if (CollectionUtils.isNotEmpty(countParams)) {
+                    params = countParams;
+                }
+            }
+            if (params == null) {
+                params = annotation.getAnnotations(DataMethod.META_MEMBER_PARAMETERS, DataMethodQueryParameter.class);
+            }
             List<StoredQueryParameter> queryParameters = new ArrayList<>(params.size());
             for (AnnotationValue<DataMethodQueryParameter> av : params) {
                 String[] propertyPath = av.stringValues(DataMethodQueryParameter.META_MEMBER_PROPERTY_PATH);

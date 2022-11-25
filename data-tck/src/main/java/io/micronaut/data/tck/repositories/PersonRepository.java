@@ -106,6 +106,10 @@ public interface PersonRepository extends CrudRepository<Person, Long>, Pageable
 
     Page<Person> findByNameLike(String name, Pageable pageable);
 
+    @Query(value = "select * from person person_ where person_.name like :name AND enabled = :enabled",
+        countQuery = "select count(*) from person person_ where person_.name like :name")
+    Page<Person> findByNameLikeAndEnabled(String name, boolean enabled, Pageable pageable);
+
     List<Person> listTop10(Sort sort);
 
     Slice<Person> find(Pageable pageable);
