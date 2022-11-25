@@ -329,7 +329,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                         final List<QueryParameterBinding> finalCountParameterBindings = countQueryResult.getParameterBindings();
                         if (CollectionUtils.isNotEmpty(finalCountParameterBindings)) {
                             final boolean finalEncodeEntityParameters = encodeEntityParameters;
-                            element.annotate(DataMethod.class, (builder) -> bindParameters(supportsImplicitQueries, finalCountParameterBindings, finalEncodeEntityParameters,
+                            element.annotate(DataMethod.class, builder -> bindParameters(supportsImplicitQueries, finalCountParameterBindings, finalEncodeEntityParameters,
                                 builder, DataMethod.META_MEMBER_RAW_COUNT_PARAMETERS));
                         }
                     }
