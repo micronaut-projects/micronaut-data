@@ -80,7 +80,7 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
     private Set<JoinPath> joinFetchPaths = null;
     private final List<StoredQueryParameter> queryParameters;
     private final boolean rawQuery;
-
+    
     /**
      * The default constructor.
      *
