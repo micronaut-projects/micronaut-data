@@ -52,6 +52,8 @@ import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.date.DateTimeProvider;
 import io.micronaut.data.runtime.mapper.QueryStatement;
 import io.micronaut.data.runtime.mapper.ResultReader;
+import io.micronaut.data.runtime.multitenancy.MultiTenancyMode;
+import io.micronaut.data.runtime.multitenancy.conf.MultiTenancyConfiguration;
 import io.micronaut.data.runtime.operations.internal.AbstractRepositoryOperations;
 import io.micronaut.data.runtime.query.MethodContextAwareStoredQueryDecorator;
 import io.micronaut.data.runtime.query.PreparedQueryDecorator;
@@ -134,9 +136,11 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
         this.preparedStatementWriter = preparedStatementWriter;
         Collection<BeanDefinition<GenericRepository>> beanDefinitions = beanContext
                 .getBeanDefinitions(GenericRepository.class, Qualifiers.byStereotype(Repository.class));
+        MultiTenancyConfiguration multiTenancyConfiguration = beanContext
+            .getBean(MultiTenancyConfiguration.class);
         for (BeanDefinition<GenericRepository> beanDefinition : beanDefinitions) {
             String targetDs = beanDefinition.stringValue(Repository.class).orElse("default");
-            if (targetDs.equalsIgnoreCase(dataSourceName)) {
+            if (targetDs.equalsIgnoreCase(dataSourceName) || MultiTenancyMode.DATASOURCE.equals(multiTenancyConfiguration.getMode())) {
                 Class<GenericRepository> beanType = beanDefinition.getBeanType();
                 SqlQueryBuilder queryBuilder = new SqlQueryBuilder(beanDefinition.getAnnotationMetadata());
                 queryBuilders.put(beanType, queryBuilder);
