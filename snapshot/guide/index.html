@@ -6607,7 +6607,7 @@ open class AuthorService(
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">Mono.fromDirect(operations.withTransaction {
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">Flux.from(operations.withTransaction {
     Flux.from(authorRepository.save(Author("Stephen King")))
             .flatMap { author: Author -&gt;
                 bookRepository.saveAll(listOf(
@@ -6617,7 +6617,7 @@ open class AuthorService(
             }
             .thenMany(Flux.from(authorRepository.save(Author("James Patterson"))))
             .flatMap { author: Author -&gt; bookRepository.save(Book("Along Came a Spider", 300, author)) }.then()
-}).block()</code></pre>
+}).collectList().block()</code></pre>
 </div>
 </div>
 <div class="paragraph">
