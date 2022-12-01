@@ -112,19 +112,18 @@ open class PersonSuspendRepositoryService(
     @Transactional
     open fun normalStore() {
         saveOne()
-        throw RuntimeException("exception")
     }
 
     @Transactional
     open suspend fun coroutinesStore() {
         saveOneSuspended()
-        throw RuntimeException("exception")
+        throw RuntimeException("myexception")
     }
 
     @Transactional
     open suspend fun coroutinesGenericStore() {
         saveOne()
-        throw RuntimeException("exception")
+        throw RuntimeException("myexception")
     }
 
     @Transactional
@@ -133,29 +132,10 @@ open class PersonSuspendRepositoryService(
     }
 
     @Transactional
-    open fun normalWithCustomDSNotTransactional() {
-        saveOne()
-        saveOneForCustomDb()
-        throw RuntimeException("exception")
-    }
-
-    @Transactional
-    open fun normalWithCustomDSTransactional() {
-        normalWithCustomDSTransactional2()
-    }
-
-    @TransactionalAdvice("custom") // Create a new method because @Transactional is not repeatable
-    open fun normalWithCustomDSTransactional2() {
-        saveOne()
-        saveOneForCustomDb()
-        throw RuntimeException("exception")
-    }
-
-    @Transactional
     open suspend fun coroutinesStoreWithCustomDBNotTransactional() {
         saveOneSuspended()
         saveOneSuspendedForCustomDb()
-        throw RuntimeException("exception")
+        throw RuntimeException("myexception")
     }
 
     @Transactional
@@ -167,19 +147,7 @@ open class PersonSuspendRepositoryService(
     open suspend fun coroutinesStoreWithCustomDBTransactional2() {
         saveOneSuspended()
         saveOneSuspendedForCustomDb()
-        throw RuntimeException("exception")
-    }
-
-    @Transactional
-    open suspend fun coroutinesGenericStoreWithCustomDb() {
-        coroutinesGenericStoreWithCustomDb2()
-    }
-
-    @TransactionalAdvice("custom") // Create a new method because @Transactional is not repeatable
-    open fun coroutinesGenericStoreWithCustomDb2() {
-        saveOne()
-        saveOneForCustomDb()
-        throw RuntimeException("exception")
+        throw RuntimeException("myexception")
     }
 
     open fun count(): Long {
@@ -204,10 +172,6 @@ open class PersonSuspendRepositoryService(
         val count = parentSuspendRepositoryForCustomDb.count()
         LoggerFactory.getLogger(this::class.java).info("Stored $count records")
         return count
-    }
-
-    open fun justError() {
-        throw RuntimeException("exception")
     }
 
     private fun getTxStatus() =

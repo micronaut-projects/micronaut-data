@@ -44,28 +44,49 @@ final class DefaultTransactionOperationsRegistry implements TransactionOperation
 
     @Override
     public <T extends TransactionOperations<?>> T provideSynchronous(Class<T> transactionOperationsType, String dataSourceName) {
+        if (dataSourceName == null) {
+            try {
+                return beanLocator.getBean(transactionOperationsType, null);
+            } catch (NoSuchBeanException e) {
+                throw new ConfigurationException("No backing TransactionOperations configured. Check your configuration and try again", e);
+            }
+        }
         try {
-            return beanLocator.getBean(transactionOperationsType, dataSourceName != null ? Qualifiers.byName(dataSourceName) : null);
+            return beanLocator.getBean(transactionOperationsType, Qualifiers.byName(dataSourceName));
         } catch (NoSuchBeanException e) {
-            throw new ConfigurationException("No backing TransactionOperations configured. Check your configuration and try again", e);
+            throw new ConfigurationException("No backing TransactionOperations configured for datasource: [" + dataSourceName + "]. Check your configuration and try again", e);
         }
     }
 
     @Override
     public <T extends ReactiveTransactionOperations<?>> T provideReactive(Class<T> transactionOperationsType, String dataSourceName) {
+        if (dataSourceName == null) {
+            try {
+                return beanLocator.getBean(transactionOperationsType, null);
+            } catch (NoSuchBeanException e) {
+                throw new ConfigurationException("No reactive transaction management has been configured. Ensure you have correctly configured a reactive capable transaction manager");
+            }
+        }
         try {
-            return beanLocator.getBean(transactionOperationsType, dataSourceName != null ? Qualifiers.byName(dataSourceName) : null);
+            return beanLocator.getBean(transactionOperationsType, Qualifiers.byName(dataSourceName));
         } catch (NoSuchBeanException e) {
-            throw new ConfigurationException("No reactive transaction management has been configured. Ensure you have correctly configured a reactive capable transaction manager");
+            throw new ConfigurationException("No reactive transaction management has been configured for datasource: [" + dataSourceName + "]. Ensure you have correctly configured a reactive capable transaction manager");
         }
     }
 
     @Override
     public <T extends AsyncTransactionOperations<?>> T provideAsync(Class<T> transactionOperationsType, String dataSourceName) {
+        if (dataSourceName == null) {
+            try {
+                return beanLocator.getBean(transactionOperationsType, null);
+            } catch (NoSuchBeanException e) {
+                throw new ConfigurationException("No reactive transaction management has been configured. Ensure you have correctly configured a async capable transaction manager");
+            }
+        }
         try {
-            return beanLocator.getBean(transactionOperationsType, dataSourceName != null ? Qualifiers.byName(dataSourceName) : null);
+            return beanLocator.getBean(transactionOperationsType, Qualifiers.byName(dataSourceName));
         } catch (NoSuchBeanException e) {
-            throw new ConfigurationException("No reactive transaction management has been configured. Ensure you have correctly configured a async capable transaction manager");
+            throw new ConfigurationException("No reactive transaction management has been configured for datasource: [" + dataSourceName + "]. Ensure you have correctly configured a async capable transaction manager");
         }
     }
 }
