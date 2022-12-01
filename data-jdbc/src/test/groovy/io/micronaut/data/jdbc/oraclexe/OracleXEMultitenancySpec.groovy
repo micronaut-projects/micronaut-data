@@ -4,7 +4,6 @@ import io.micronaut.data.jdbc.AbstractJdbcMultitenancySpec
 import io.micronaut.data.jdbc.CleanupTestResourcesDatabaseTestPropertyProvider
 import spock.lang.Ignore
 
-@Ignore // TODO fix the conversion
 class OracleXEMultitenancySpec extends AbstractJdbcMultitenancySpec implements CleanupTestResourcesDatabaseTestPropertyProvider {
 
     @Override
