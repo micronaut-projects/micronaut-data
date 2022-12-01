@@ -3,13 +3,6 @@ package io.micronaut.data.r2dbc
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.runtime.config.SchemaGenerate
 import io.micronaut.test.support.TestPropertyProvider
-import org.testcontainers.containers.JdbcDatabaseContainer
-import org.testcontainers.containers.MSSQLServerContainer
-import org.testcontainers.containers.MariaDBContainer
-import org.testcontainers.containers.MySQLContainer
-import org.testcontainers.containers.OracleContainer
-import org.testcontainers.containers.PostgreSQLContainer
-import org.testcontainers.utility.DockerImageName
 
 import java.time.Duration
 

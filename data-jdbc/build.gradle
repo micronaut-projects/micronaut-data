@@ -32,13 +32,6 @@ dependencies {
     testImplementation libs.groovy.sql
     testImplementation mn.micronaut.validation
 
-    testImplementation libs.testcontainers.spock
-    testImplementation libs.testcontainers.mysql
-    testImplementation libs.testcontainers.mariadb
-    testImplementation libs.testcontainers.postgresql
-    testImplementation libs.testcontainers.mssqlserver
-    testImplementation libs.testcontainers.oracle
-
     testCompileOnly mn.micronaut.inject.groovy
 
     testImplementation mn.micronaut.multitenancy

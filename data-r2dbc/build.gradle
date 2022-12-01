@@ -37,20 +37,15 @@ dependencies {
     testImplementation mn.micronaut.http.server.netty
     testImplementation mn.micronaut.http.client
 
-    testImplementation libs.testcontainers.r2dbc
-
     if (JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_11)) {
         testImplementation libs.drivers.r2dbc.oracle
     }
-    testImplementation libs.testcontainers.oracle
 
     // mariadb
-    testImplementation libs.testcontainers.mariadb
     testImplementation libs.drivers.r2dbc.mariadb
     testImplementation libs.drivers.jdbc.mariadb
 
     // mysql
-    testImplementation libs.testcontainers.mysql
     testImplementation libs.drivers.r2dbc.mysql
     testImplementation libs.drivers.jdbc.mysql
 
@@ -59,12 +54,10 @@ dependencies {
     testRuntimeOnly libs.h2
 
     // sqlserver
-    testImplementation libs.testcontainers.mssqlserver
     testImplementation libs.drivers.r2dbc.mssql
     testImplementation libs.drivers.jdbc.mssql
 
     // postgres
-    testImplementation libs.testcontainers.postgresql
     testImplementation libs.drivers.r2dbc.postgresql
     testImplementation libs.drivers.jdbc.postgresql
 
