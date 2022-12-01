@@ -10,8 +10,10 @@ import io.micronaut.data.annotation.Query;
 import io.micronaut.data.azure.entities.Address;
 import io.micronaut.data.azure.entities.Child;
 import io.micronaut.data.azure.entities.Family;
+import io.micronaut.data.azure.entities.GenderAware;
 import io.micronaut.data.azure.entities.PetType;
 import io.micronaut.data.cosmos.annotation.CosmosRepository;
+import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder;
 import io.micronaut.data.repository.PageableRepository;
 import io.micronaut.data.repository.jpa.JpaSpecificationExecutor;
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification;
@@ -19,6 +21,7 @@ import io.micronaut.data.repository.jpa.criteria.PredicateSpecification;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @CosmosRepository
@@ -73,6 +76,9 @@ public abstract class FamilyRepository implements PageableRepository<Family, Str
     @Query("SELECT DISTINCT VALUE f FROM family f JOIN c IN f.children WHERE c.firstName IN (:firstNames)")
     public abstract List<Family> findByChildrenFirstNameIn(List<String> firstNames);
 
+    @Query("SELECT DISTINCT VALUE f FROM family f WHERE ARRAY_CONTAINS(f.children, :gender, true)")
+    public abstract List<Family> childrenArrayContainsGender(Map.Entry<String, Object> gender);
+
     static class Specifications {
 
         public static PredicateSpecification<Family> lastNameEquals(String lastName) {
@@ -93,6 +99,10 @@ public abstract class FamilyRepository implements PageableRepository<Family, Str
 
         public static PredicateSpecification<Family> registeredEquals(boolean registered) {
             return (root, criteriaBuilder) -> criteriaBuilder.equal(root.get("registered"), registered);
+        }
+
+        public static PredicateSpecification<Family> childrenArrayContainsGender(GenderAware gender) {
+            return (root, criteriaBuilder) -> ((PersistentEntityCriteriaBuilder) criteriaBuilder).arrayContains(root.join("children"), criteriaBuilder.literal(gender));
         }
     }
 }

@@ -17,6 +17,7 @@ import io.micronaut.core.type.Argument
 import io.micronaut.core.util.CollectionUtils
 import io.micronaut.core.util.StringUtils
 import io.micronaut.data.azure.entities.Address
+import io.micronaut.data.azure.entities.GenderAware
 import io.micronaut.data.azure.entities.ItemPrice
 import io.micronaut.data.azure.entities.Child
 import io.micronaut.data.azure.entities.CosmosBook
@@ -54,6 +55,7 @@ import static io.micronaut.data.azure.repositories.FamilyRepository.Specificatio
 import static io.micronaut.data.azure.repositories.FamilyRepository.Specifications.idsNotIn
 import static io.micronaut.data.azure.repositories.FamilyRepository.Specifications.lastNameEquals
 import static io.micronaut.data.azure.repositories.FamilyRepository.Specifications.registeredEquals
+import static io.micronaut.data.azure.repositories.FamilyRepository.Specifications.childrenArrayContainsGender
 
 @IgnoreIf({ env["GITHUB_WORKFLOW"] })
 class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties {
@@ -255,6 +257,12 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
         given:
             saveSampleFamilies()
         when:
+            def families = familyRepository.childrenArrayContainsGender(new AbstractMap.SimpleImmutableEntry<String, Object>("gender", "male"))
+            def families1 = familyRepository.findAll(childrenArrayContainsGender(new GenderAware("male")))
+        then:
+            families.size() == 1
+            families1.size() == 1
+        when:
             def optFamily1 = familyRepository.findById(ANDERSEN_FAMILY.id)
             def optFamily2 = familyRepository.findById(WAKEFIELD_FAMILY.id)
         then:
@@ -267,7 +275,7 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
             optFamily2.get().children.size() == WAKEFIELD_FAMILY.children.size()
             optFamily2.get().address
         when:
-            def families = familyRepository.findByLastNameLike("Ander%")
+            families = familyRepository.findByLastNameLike("Ander%")
         then:
             families.size() > 0
             families[0].id == ANDERSEN_FAMILY.id
@@ -445,6 +453,7 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
         when:
             saveSampleFamilies()
         then:
+            familyRepository.findAll(childrenArrayContainsGender(new GenderAware("female"))).size() == 2
             familyRepository.findOne(lastNameEquals("Andersen")).isPresent()
             !familyRepository.findOne(lastNameEquals(UUID.randomUUID().toString())).isPresent()
             familyRepository.findAll(idsIn(ANDERSEN_FAMILY.id, WAKEFIELD_FAMILY.id)).size() == 2

@@ -1645,7 +1645,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     }
 
     @Override
-    protected final boolean computePropertyPaths() {
+    protected boolean computePropertyPaths() {
         return true;
     }
 

@@ -383,6 +383,11 @@ public final class CosmosSqlQueryBuilder extends SqlQueryBuilder {
     }
 
     @Override
+    protected boolean computePropertyPaths() {
+        return false;
+    }
+
+    @Override
     public QueryResult buildInsert(AnnotationMetadata repositoryMetadata, PersistentEntity entity) {
         return null;
     }
