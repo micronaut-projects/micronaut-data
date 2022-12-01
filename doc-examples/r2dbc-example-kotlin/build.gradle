@@ -3,6 +3,7 @@ plugins {
     id "org.jetbrains.kotlin.kapt"
     id "org.jetbrains.kotlin.plugin.allopen"
     id "io.micronaut.application"
+    id "io.micronaut.test-resources"
     id "io.micronaut.build.internal.data-kotlin-example"
 }
 
@@ -23,7 +24,7 @@ micronaut {
 
 dependencies {
     kapt project(":data-processor")
-    implementation project(":data-r2dbc")
+    implementation("io.micronaut.data:micronaut-data-r2dbc")
     implementation("io.micronaut.flyway:micronaut-flyway")
     implementation "io.micronaut.sql:micronaut-jdbc-hikari"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core"
@@ -34,9 +35,4 @@ dependencies {
     runtimeOnly libs.drivers.jdbc.postgresql
 
     testImplementation "io.micronaut:micronaut-http-client"
-    testImplementation "org.testcontainers:postgresql"
-
-    // h2
-    testImplementation 'io.r2dbc:r2dbc-h2'
-    testRuntimeOnly "com.h2database:h2"
 }

@@ -3,11 +3,8 @@ plugins {
     id "org.jetbrains.kotlin.kapt"
     id "org.jetbrains.kotlin.plugin.allopen"
     id "io.micronaut.application"
+//    id "io.micronaut.test-resources" Integrate after https://github.com/micronaut-projects/micronaut-test-resources/issues/142
     id "io.micronaut.build.internal.data-kotlin-example"
-}
-
-repositories {
-    mavenCentral()
 }
 
 application {
@@ -27,7 +24,7 @@ dependencies {
     implementation 'io.micronaut.reactor:micronaut-reactor'
 
     implementation "io.micronaut:micronaut-http-client"
-    implementation projects.dataMongodb
+    implementation 'io.micronaut.data:micronaut-data-mongodb'
     implementation libs.mongodb.driver.sync
 
     compileOnly libs.javax.persistence.api

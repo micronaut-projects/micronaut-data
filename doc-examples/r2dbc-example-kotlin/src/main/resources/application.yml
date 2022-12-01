@@ -1,7 +1,13 @@
 micronaut:
   application:
     name: example
-flyway:
+
+r2dbc:
   datasources:
-    flyway:
-      enabled: true
+    default:
+      db-type: postgresql
+      dialect: POSTGRES
+datasources:
+  default:
+    db-type: postgresql
+    dialect: POSTGRES

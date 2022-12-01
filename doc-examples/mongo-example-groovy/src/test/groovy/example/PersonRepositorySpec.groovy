@@ -3,6 +3,7 @@ package example
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
+import spock.lang.Specification
 
 import static example.PersonRepository.Specifications.ageIsLessThan
 import static example.PersonRepository.Specifications.nameEquals
@@ -11,7 +12,7 @@ import static io.micronaut.data.repository.jpa.criteria.PredicateSpecification.n
 import static io.micronaut.data.repository.jpa.criteria.PredicateSpecification.where
 
 @MicronautTest
-class PersonRepositorySpec extends AbstractMongoSpec {
+class PersonRepositorySpec extends Specification {
 
     @Inject
     PersonRepository personRepository
