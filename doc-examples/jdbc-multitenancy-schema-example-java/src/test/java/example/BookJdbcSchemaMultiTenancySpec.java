@@ -1,5 +1,7 @@
 package example;
 
+import io.micronaut.data.jdbc.operations.JdbcSchemaHandler;
+import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.http.annotation.Header;
 import io.micronaut.http.client.annotation.Client;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
@@ -31,6 +33,9 @@ class BookJdbcSchemaMultiTenancySpec {
 
     @Inject
     DataSource dataSource;
+
+    @Inject
+    JdbcSchemaHandler jdbcSchemaHandler;
 
     @AfterEach
     public void cleanup() {
@@ -72,7 +77,7 @@ class BookJdbcSchemaMultiTenancySpec {
             dataSource = ((DelegatingDataSource) dataSource).getTargetDataSource();
         }
         try (Connection connection = dataSource.getConnection()) {
-            connection.setSchema(schemaName);
+            jdbcSchemaHandler.useSchema(connection, Dialect.H2, schemaName);
             try (PreparedStatement ps = connection.prepareStatement("select count(*) from book")) {
                 try (ResultSet resultSet = ps.executeQuery()) {
                     resultSet.next();
@@ -83,6 +88,8 @@ class BookJdbcSchemaMultiTenancySpec {
     }
 }
 
+// tag::clients[]
+
 @Header(name = "tenantId", value = "foo")
 @Client("/books")
 interface FooBookClient extends BookClient {
@@ -92,3 +99,6 @@ interface FooBookClient extends BookClient {
 @Client("/books")
 interface BarBookClient extends BookClient {
 }
+
+// end::clients[]
+

@@ -31,10 +31,9 @@ dependencies {
     implementation libs.jakarta.transaction.api
 
     runtimeOnly "io.micronaut.sql:micronaut-jdbc-tomcat"
-    runtimeOnly libs.drivers.jdbc.postgresql
+    runtimeOnly "com.h2database:h2"
 
     testImplementation "io.micronaut:micronaut-http-client"
-    testImplementation "org.testcontainers:postgresql"
 
     runtimeOnly "ch.qos.logback:logback-classic"
 }

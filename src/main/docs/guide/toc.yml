@@ -31,6 +31,7 @@ shared:
     programmaticTransactions: Programmatic Transactions
     transactionalEvents: Transactional Events
   kotlinCriteria: Kotlin Criteria API extensions
+  multitenancy: Multitenancy
 
 hibernate:
   title: Micronaut Data JPA Hibernate
@@ -132,7 +133,5 @@ graal:
   title: Going Native with GraalVM
 spring:
   title: Spring Data Support
-multitenancy:
-  title: Multitenancy
 
 

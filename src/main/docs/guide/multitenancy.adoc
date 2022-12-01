@@ -1,49 +1,24 @@
 Micronaut Data supports multi-tenancy to allow the use of multiple databases or schemas by a single micronaut application.
 
 .Supported Multitenancy Modes
-[cols=2*]
-|===
-|*Mode*
-|*Description*
+- DATASOURCE - A separate database with a separate connection pool is used to store each tenants data. Internally different repository operations  / transaction manager instance will be used for each tenant.
 
-|DATASOURCE
-|Use different repositories and datasources. Transaction Manager is used based on the tenant defined.
-
-|SCHEMA
-|Only supported by JDBC/R2DBC/MongoDB (collections)
-
-|===
+- SCHEMA - The same database, but different schemas are used to store each tenants data. Only supported by JDBC/R2DBC/MongoDB (collections)
 
 === Datasource Mode
 The DATASOURCE mode is used in combination with the micronaut-multitenancy library in order to resolve the tenant name.
-In the below example, the tenant resolver is set to use an http header. See https://micronaut-projects.github.io/micronaut-multitenancy/latest/guide/[Micronaut Multitenancy] for more information.
+In the below example, the tenant resolver is set to use a http header. See https://micronaut-projects.github.io/micronaut-multitenancy/latest/guide/[Micronaut Multitenancy] for more information.
 
 [source,yaml]
 ----
-micronaut:
-  data:
-    multi-tenancy:
-      mode: DATASOURCE
-  multitenancy:
-    tenantresolver:
-      httpheader:
-        enabled: true
+include::doc-examples/jdbc-multitenancy-datasource-example-java/src/main/resources/application.yml[]
+----
 
-datasources:
-  tenantA:
-    url: jdbc:h2:mem:dbTenantA
-    driverClassName: org.h2.Driver
-    username: sa
-    password: ''
-    schema-generate: CREATE_DROP
-    dialect: H2
-  tenantB:
-    url: jdbc:h2:mem:dbTenantB
-    driverClassName: org.h2.Driver
-    username: sa
-    password: ''
-    schema-generate: CREATE_DROP
-    dialect: H2
+The following HTTP clients will access a different tenant datasource:
+
+[source,java]
+----
+include::doc-examples/jdbc-multitenancy-schema-example-java/src/test/java/example/BookJdbcSchemaMultiTenancySpec.java[tags="clients"]
 ----
 
 === Schema Mode
@@ -51,20 +26,7 @@ The SCHEMA mode uses a single datasource and set the active schema based on the 
 
 [source,yaml]
 ----
-micronaut:
-  data:
-    multi-tenancy:
-      mode: SCHEMA
-  multitenancy:
-    tenantresolver:
-      httpheader:
-        enabled: true
-
-datasources:
-  default:
-    url: jdbc:h2:mem:db
-    driverClassName: org.h2.Driver
-    username: sa
-    password: ''
-    dialect: H2
+include::doc-examples/jdbc-multitenancy-schema-example-java/src/main/resources/application.yml[]
 ----
+
+NOTE: You can use property `schema-generate-names` to specify multiple schemas to be created and initialized for testing.

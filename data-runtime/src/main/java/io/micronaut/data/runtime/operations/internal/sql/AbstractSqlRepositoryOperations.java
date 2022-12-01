@@ -134,15 +134,15 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
         this.columnNameResultSetReader = columnNameResultSetReader;
         this.columnIndexResultSetReader = columnIndexResultSetReader;
         this.preparedStatementWriter = preparedStatementWriter;
-        Collection<BeanDefinition<GenericRepository>> beanDefinitions = beanContext
-                .getBeanDefinitions(GenericRepository.class, Qualifiers.byStereotype(Repository.class));
-        for (BeanDefinition<GenericRepository> beanDefinition : beanDefinitions) {
+        Collection<BeanDefinition<Object>> beanDefinitions = beanContext
+                .getBeanDefinitions(Object.class, Qualifiers.byStereotype(Repository.class));
+        for (BeanDefinition<Object> beanDefinition : beanDefinitions) {
             String targetDs = beanDefinition.stringValue(Repository.class).orElse(null);
-            Class<GenericRepository> beanType = beanDefinition.getBeanType();
+            Class<Object> beanType = beanDefinition.getBeanType();
             if (targetDs == null || targetDs.equalsIgnoreCase(dataSourceName)) {
                 SqlQueryBuilder queryBuilder = new SqlQueryBuilder(beanDefinition.getAnnotationMetadata());
                 queryBuilders.put(beanType, queryBuilder);
-            } else if (targetDs != null) {
+            } else {
                 repositoriesWithHardcodedDataSource.put(beanType, targetDs);
             }
         }

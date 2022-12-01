@@ -9,10 +9,17 @@ micronaut:
 
 datasources:
   foo:
-    db-type: postgresql
+    url: jdbc:h2:mem:dbTenantFoo
+    driverClassName: org.h2.Driver
+    username: sa
+    password: ''
     schema-generate: CREATE_DROP
-    dialect: POSTGRES
+    dialect: H2
   bar:
-    db-type: postgresql
+    url: jdbc:h2:mem:dbTenantBar
+    driverClassName: org.h2.Driver
+    username: sa
+    password: ''
     schema-generate: CREATE_DROP
-    dialect: POSTGRES
+    dialect: H2
+
