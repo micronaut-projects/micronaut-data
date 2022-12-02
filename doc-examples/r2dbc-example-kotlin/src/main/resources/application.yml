@@ -5,9 +5,9 @@ micronaut:
 r2dbc:
   datasources:
     default:
-      db-type: postgresql
-      dialect: POSTGRES
+      db-type: mariadb
+      dialect: mysql
 datasources:
   default:
-    db-type: postgresql
-    dialect: POSTGRES
+    db-type: mariadb
+    dialect: mysql
