@@ -159,7 +159,7 @@ public interface PersonRepository extends CrudRepository<Person, Long>, Pageable
         }
 
         public static PredicateSpecification<Person> nameEqualsCaseInsensitive(String name) {
-            return (root, criteriaBuilder) -> criteriaBuilder.equal(criteriaBuilder.lower(root.join("name", JoinType.LEFT)), name.toLowerCase());
+            return (root, criteriaBuilder) -> criteriaBuilder.equal(criteriaBuilder.lower(root.get("name")), name.toLowerCase());
         }
 
         public static PredicateSpecification<Person> idsIn(Long... ids) {
