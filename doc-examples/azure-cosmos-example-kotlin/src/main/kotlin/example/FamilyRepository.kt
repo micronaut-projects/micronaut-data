@@ -58,6 +58,11 @@ abstract class FamilyRepository : PageableRepository<Family, String>, JpaSpecifi
     abstract fun findByTagsArrayContains(tag: String): List<Family>
     // end::method_array_contains[]
 
+    // tag::array_contains_partial[]
+    @Query("SELECT DISTINCT VALUE f FROM family f WHERE ARRAY_CONTAINS(f.children, :gender, true)")
+    abstract fun childrenArrayContainsGender(gender: Map.Entry<String, Any>): List<Family>
+    // end::array_contains_partial[]
+
     internal object Specifications {
         fun lastNameEquals(lastName: String): PredicateSpecification<Family> {
             return PredicateSpecification { root: Root<Family>, criteriaBuilder: CriteriaBuilder ->
@@ -103,5 +108,16 @@ abstract class FamilyRepository : PageableRepository<Family, String>, JpaSpecifi
             }
         }
         // end::predicate_array_contains[]
+
+        // tag::predicate_array_contains_partial[]
+        fun childrenArrayContainsGender(gender: IGenderAware): PredicateSpecification<Family?>? {
+            return PredicateSpecification { root: Root<Family?>, criteriaBuilder: CriteriaBuilder ->
+                (criteriaBuilder as PersistentEntityCriteriaBuilder).arrayContains(
+                    root.join<Any, Any>("children"),
+                    criteriaBuilder.literal(gender)
+                )
+            }
+        }
+        // end::predicate_array_contains_partial[]
     }
 }

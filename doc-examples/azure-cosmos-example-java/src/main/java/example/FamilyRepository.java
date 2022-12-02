@@ -16,6 +16,7 @@ import io.micronaut.data.repository.jpa.criteria.PredicateSpecification;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @CosmosRepository
@@ -77,6 +78,11 @@ public abstract class FamilyRepository implements PageableRepository<Family, Str
     public abstract List<Family> findByTagsArrayContains(String tag);
     // end::method_array_contains[]
 
+    // tag::array_contains_partial[]
+    @Query("SELECT DISTINCT VALUE f FROM family f WHERE ARRAY_CONTAINS(f.children, :gender, true)")
+    public abstract List<Family> childrenArrayContainsGender(Map.Entry<String, Object> gender);
+    // end::array_contains_partial[]
+
     static class Specifications {
 
         public static PredicateSpecification<Family> lastNameEquals(String lastName) {
@@ -100,5 +106,11 @@ public abstract class FamilyRepository implements PageableRepository<Family, Str
             return (root, criteriaBuilder) -> ((PersistentEntityCriteriaBuilder) criteriaBuilder).arrayContains(root.get("tags"), criteriaBuilder.literal(tag));
         }
         // end::predicate_array_contains[]
+
+        // tag::predicate_array_contains_partial[]
+        public static PredicateSpecification<Family> childrenArrayContainsGender(GenderAware gender) {
+            return (root, criteriaBuilder) -> ((PersistentEntityCriteriaBuilder) criteriaBuilder).arrayContains(root.join("children"), criteriaBuilder.literal(gender));
+        }
+        // end::predicate_array_contains_partial[]
     }
 }

@@ -89,27 +89,6 @@ interface MyRepository {
         criteriaQuery = criteriaBuilder.createQuery()
     }
 
-    void "test embedded predicate"(Specification specification) {
-        given:
-            def entityRoot = criteriaQuery.from(Settlement)
-            def predicate = specification.toPredicate(entityRoot, criteriaQuery, criteriaBuilder)
-            if (predicate) {
-                criteriaQuery.where(predicate)
-            }
-            String predicateQuery = getQuery(criteriaQuery)
-        expect:
-            predicateQuery == expectedWhereQuery
-        where:
-            specification << [
-                    { root, query, cb ->
-                        cb.equal(root.get("id"), cb.parameter(SettlementPk))
-                    } as Specification
-            ]
-            expectedWhereQuery << [
-                    'SELECT DISTINCT VALUE settlement_ FROM comp_settlement settlement_ WHERE (settlement_.code = @p1 AND settlement_.code_id = @p2 AND settlement_.id.county.id.id = @p3 AND settlement_.id.county.id.state.id = @p4)',
-            ]
-    }
-
     @Unroll
     void "test criteria predicate"(Specification specification) {
         given:
@@ -123,6 +102,13 @@ interface MyRepository {
             predicateQuery == expectedWhereQuery
         where:
             specification << [
+                {
+                 root, query, cb ->
+                     def gender = new AbstractMap.SimpleImmutableEntry("gender", "male")
+                     def childrenJoin = root.join("children")
+                     def parameter = cb.literal(gender)
+                     ((PersistentEntityCriteriaBuilder)cb).arrayContains(childrenJoin, parameter)
+                } as Specification,
                 { root, query, cb ->
                     cb.between(root.get("registeredDate"), new Date() , Date.from(Instant.now().plus(1, ChronoUnit.DAYS)))
                 } as Specification,
@@ -158,6 +144,7 @@ interface MyRepository {
                 } as Specification
             ]
             expectedWhereQuery << [
+                'SELECT DISTINCT VALUE family_ FROM family family_ WHERE (ARRAY_CONTAINS(family_.children,@p1,true))',
                 'SELECT DISTINCT VALUE family_ FROM family family_ WHERE ((family_.registeredDate >= @p1 AND family_.registeredDate <= @p2))',
                 'SELECT DISTINCT VALUE family_ FROM family family_ WHERE ((family_.lastName >= @p1 AND family_.lastName <= @p2))',
                 'SELECT DISTINCT VALUE family_ FROM family family_ WHERE (family_.registered = TRUE)',
