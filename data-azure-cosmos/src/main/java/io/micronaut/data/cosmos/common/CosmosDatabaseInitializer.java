@@ -164,6 +164,21 @@ final class CosmosDatabaseInitializer {
         }
     }
 
+    private CosmosContainerResponse createContainer(CosmosDatabase cosmosDatabase, String containerName, String partitionKey, ThroughputProperties throughputProperties,
+                                                    CosmosDiagnosticsProcessor cosmosDiagnosticsProcessor) {
+        CosmosContainerProperties containerProperties = new CosmosContainerProperties(containerName, partitionKey);
+        try {
+            if (throughputProperties == null) {
+                return cosmosDatabase.createContainerIfNotExists(containerProperties);
+            } else {
+                return cosmosDatabase.createContainerIfNotExists(containerProperties, throughputProperties);
+            }
+        } catch (Exception e) {
+            throw CosmosUtils.cosmosAccessException(cosmosDiagnosticsProcessor, CosmosDiagnosticsProcessor.CREATE_CONTAINER_IF_NOT_EXISTS,
+                "Failed to create container", e);
+        }
+    }
+
     private void initContainer(Map<String, CosmosDatabaseConfiguration.CosmosContainerSettings> cosmosContainerSettingsMap, StorageUpdatePolicy updatePolicy, RuntimePersistentEntity<?> entity, CosmosDatabase cosmosDatabase,
                                CosmosDiagnosticsProcessor cosmosDiagnosticsProcessor) {
         String containerName = entity.getPersistedName();
@@ -178,18 +193,7 @@ final class CosmosDatabaseInitializer {
         ThroughputProperties throughputProperties = throughputSettings != null ? throughputSettings.createThroughputProperties() : null;
         // TODO: Later implement indexing policy, time to live, unique key etc.
         if (StorageUpdatePolicy.CREATE_IF_NOT_EXISTS.equals(updatePolicy)) {
-            CosmosContainerProperties containerProperties = new CosmosContainerProperties(containerName, partitionKey);
-            CosmosContainerResponse containerResponse;
-            try {
-                if (throughputProperties == null) {
-                    containerResponse = cosmosDatabase.createContainerIfNotExists(containerProperties);
-                } else {
-                    containerResponse = cosmosDatabase.createContainerIfNotExists(containerProperties, throughputProperties);
-                }
-            } catch (Exception e) {
-                throw CosmosUtils.cosmosAccessException(cosmosDiagnosticsProcessor, CosmosDiagnosticsProcessor.CREATE_CONTAINER_IF_NOT_EXISTS,
-                    "Failed to create container", e);
-            }
+            CosmosContainerResponse containerResponse = createContainer(cosmosDatabase, containerName, partitionKey, throughputProperties, cosmosDiagnosticsProcessor);
             processDiagnostics(CosmosDiagnosticsProcessor.CREATE_CONTAINER_IF_NOT_EXISTS, cosmosDiagnosticsProcessor, containerResponse);
             return;
         }
