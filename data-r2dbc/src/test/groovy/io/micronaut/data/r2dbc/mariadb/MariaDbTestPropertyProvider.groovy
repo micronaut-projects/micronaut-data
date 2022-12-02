@@ -20,4 +20,9 @@ trait MariaDbTestPropertyProvider implements SharedTestResourcesDatabaseTestProp
     int sharedSpecsCount() {
         return 10
     }
+
+    Map<String, String> getDataSourceProperties(String dataSourceName) {
+        return super.getDataSourceProperties(dataSourceName) + ["test-resources.containers.mysql.image-name": "mariadb:10.6"]
+    }
+
 }

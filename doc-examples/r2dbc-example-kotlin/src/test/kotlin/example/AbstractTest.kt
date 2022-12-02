@@ -16,8 +16,8 @@ abstract class AbstractTest(private var useFlyway: Boolean) : TestPropertyProvid
     fun getPropertiesForCustomDB(): Map<String, String> {
         return mapOf(
                 "r2dbc.datasources.custom.schema-generate" to "CREATE_DROP",
-                "r2dbc.datasources.custom.dialect" to "POSTGRES",
-                "r2dbc.datasources.custom.db-type" to "postgresql"
+                "r2dbc.datasources.custom.dialect" to "mysql",
+                "r2dbc.datasources.custom.db-type" to "mariadb"
         )
     }
 
