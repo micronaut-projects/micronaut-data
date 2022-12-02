@@ -13542,7 +13542,7 @@ val people = personRepository.findAll(PredicateSpecification.where(nameEquals("D
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">abstract List&lt;Family&gt; findByTagsArrayContains(String tag);</code></pre>
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">abstract List&lt;Family&gt; findByTagsArrayContains(String tag)</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -13574,6 +13574,58 @@ val people = personRepository.findAll(PredicateSpecification.where(nameEquals("D
         (criteriaBuilder as PersistentEntityCriteriaBuilder).arrayContains(
             root.get&lt;Any&gt;("tags"),
             criteriaBuilder.literal(tag)
+        )
+    }
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>For partial search using <code>ARRAY_CONTAINS</code> generic repository methods cannot be used but custom methods with raw query like this:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@Query("SELECT DISTINCT VALUE f FROM family f WHERE ARRAY_CONTAINS(f.children, :gender, true)")
+public abstract List&lt;Family&gt; childrenArrayContainsGender(Map.Entry&lt;String, Object&gt; gender);</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">@Query("SELECT DISTINCT VALUE f FROM family f WHERE ARRAY_CONTAINS(f.children, :gender, true)")
+abstract List&lt;Family&gt; childrenArrayContainsGender(Map.Entry&lt;String, Object&gt; gender)</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">@Query("SELECT DISTINCT VALUE f FROM family f WHERE ARRAY_CONTAINS(f.children, :gender, true)")
+abstract fun childrenArrayContainsGender(gender: Map.Entry&lt;String, Any&gt;): List&lt;Family&gt;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>and then pass map entry with "gender" as key and gender as value, basically any object that will serialize to <code>{"gender": "&lt;gender_value&gt;"}</code> for this example.
+This will perform search against <code>children</code> array in the <code>Family</code> class using just <code>gender</code> field.
+It can be also achieved by using predicate specification:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">public static PredicateSpecification&lt;Family&gt; childrenArrayContainsGender(GenderAware gender) {
+    return (root, criteriaBuilder) -&gt; ((PersistentEntityCriteriaBuilder) criteriaBuilder).arrayContains(root.join("children"), criteriaBuilder.literal(gender));
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">static PredicateSpecification&lt;Family&gt; childrenArrayContainsGender(GenderAware gender) {
+    return (root, criteriaBuilder) -&gt; ((PersistentEntityCriteriaBuilder) criteriaBuilder).arrayContains(root.join("children"), criteriaBuilder.literal(gender))
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">fun childrenArrayContainsGender(gender: IGenderAware): PredicateSpecification&lt;Family?&gt;? {
+    return PredicateSpecification { root: Root&lt;Family?&gt;, criteriaBuilder: CriteriaBuilder -&gt;
+        (criteriaBuilder as PersistentEntityCriteriaBuilder).arrayContains(
+            root.join&lt;Any, Any&gt;("children"),
+            criteriaBuilder.literal(gender)
         )
     }
 }</code></pre>
