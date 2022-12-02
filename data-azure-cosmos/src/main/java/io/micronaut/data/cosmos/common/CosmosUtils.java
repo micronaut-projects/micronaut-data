@@ -35,7 +35,7 @@ public final class CosmosUtils {
     private CosmosUtils() { }
 
     /**
-     * Throws {@link CosmosAccessException} and processes diagnostics if wrapped exception is {@link CosmosException}.
+     * Returns {@link CosmosAccessException} and processes diagnostics if wrapped exception is {@link CosmosException}.
      *
      * @param cosmosDiagnosticsProcessor the Cosmos response diagnostics processor
      * @param operationName the operation name
@@ -54,7 +54,7 @@ public final class CosmosUtils {
             processDiagnostics(cosmosDiagnosticsProcessor, operationName, cosmosException.getDiagnostics(), cosmosException.getActivityId(),
                 cosmosException.getRequestCharge());
         }
-        throw new CosmosAccessException(message, unwrappedThrowable);
+        return new CosmosAccessException(message, unwrappedThrowable);
     }
 
     /**

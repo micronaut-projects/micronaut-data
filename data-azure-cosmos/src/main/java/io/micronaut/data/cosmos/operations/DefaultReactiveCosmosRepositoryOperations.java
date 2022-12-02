@@ -212,8 +212,8 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
                 return Mono.just(cosmosSerde.deserialize(persistentEntity, item, Argument.of(type)));
             }
             return Flux.empty();
-        }).onErrorResume(e ->  Flux.error(CosmosUtils.cosmosAccessException(cosmosDiagnosticsProcessor, CosmosDiagnosticsProcessor.QUERY_ITEMS,
-            "Failed to query item by id", e))).next();
+        }).onErrorMap(e ->  CosmosUtils.cosmosAccessException(cosmosDiagnosticsProcessor, CosmosDiagnosticsProcessor.QUERY_ITEMS,
+            "Failed to query item by id", e)).next();
     }
 
     @Override
@@ -228,8 +228,8 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
             CosmosUtils.processDiagnostics(cosmosDiagnosticsProcessor, CosmosDiagnosticsProcessor.QUERY_ITEMS, response.getCosmosDiagnostics(),
                 response.getActivityId(), response.getRequestCharge());
             return Mono.just(response.getResults().iterator().hasNext());
-        }).onErrorResume(e ->  Flux.error(CosmosUtils.cosmosAccessException(cosmosDiagnosticsProcessor, CosmosDiagnosticsProcessor.QUERY_ITEMS,
-            "Failed to execute exists query", e))).next();
+        }).onErrorMap(e ->  CosmosUtils.cosmosAccessException(cosmosDiagnosticsProcessor, CosmosDiagnosticsProcessor.QUERY_ITEMS,
+            "Failed to execute exists query", e)).next();
     }
 
     @Override
@@ -295,8 +295,8 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
                 CosmosUtils.processDiagnostics(cosmosDiagnosticsProcessor, CosmosDiagnosticsProcessor.QUERY_ITEMS, response.getCosmosDiagnostics(),
                     response.getActivityId(), response.getRequestCharge());
                 return Flux.fromIterable(response.getResults().stream().map(item -> cosmosSerde.deserialize(item, argument)).collect(Collectors.toList()));
-            }).onErrorResume(e ->  Flux.error(CosmosUtils.cosmosAccessException(cosmosDiagnosticsProcessor, CosmosDiagnosticsProcessor.QUERY_ITEMS,
-                FAILED_TO_QUERY_ITEMS, e)));
+            }).onErrorMap(e ->  CosmosUtils.cosmosAccessException(cosmosDiagnosticsProcessor, CosmosDiagnosticsProcessor.QUERY_ITEMS,
+                FAILED_TO_QUERY_ITEMS, e));
         }
         DataType dataType = preparedQuery.getResultDataType();
         Class<R> resultType = preparedQuery.getResultType();
@@ -313,8 +313,8 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
                 }
                 return null;
             }).collect(Collectors.toList()));
-        }).onErrorResume(e ->  Flux.error(CosmosUtils.cosmosAccessException(cosmosDiagnosticsProcessor, CosmosDiagnosticsProcessor.QUERY_ITEMS,
-            FAILED_TO_QUERY_ITEMS, e)));
+        }).onErrorMap(e ->  CosmosUtils.cosmosAccessException(cosmosDiagnosticsProcessor, CosmosDiagnosticsProcessor.QUERY_ITEMS,
+            FAILED_TO_QUERY_ITEMS, e));
     }
 
     @Override
@@ -388,7 +388,7 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
         Optional<PartitionKey> optPartitionKey = preparedQuery.getParameterInRole(Constants.PARTITION_KEY_ROLE, PartitionKey.class);
         CosmosPagedFlux<ObjectNode> items = getCosmosResults(preparedQuery, querySpec, ObjectNode.class);
         return executeBulk(container, items, BulkOperationType.UPDATE, persistentEntity, optPartitionKey, item -> updateProperties(item, propertiesToUpdate))
-            .onErrorMap(e -> handleCosmosOperationException("Failed to update item(s)", e, CosmosDiagnosticsProcessor.EXECUTE_BULK, persistentEntity)).cache();
+            .onErrorMap(e -> handleCosmosOperationException("Failed to update item(s)", e, CosmosDiagnosticsProcessor.EXECUTE_BULK, persistentEntity));
     }
 
     @Override
@@ -404,7 +404,8 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
         Optional<PartitionKey> optPartitionKey = preparedQuery.getParameterInRole(Constants.PARTITION_KEY_ROLE, PartitionKey.class);
         SqlQuerySpec querySpec = new SqlQuerySpec(preparedQuery.getQuery(), new ParameterBinder().bindParameters(preparedQuery));
         CosmosPagedFlux<ObjectNode> items = getCosmosResults(preparedQuery, querySpec, ObjectNode.class);
-        return executeBulk(container, items, BulkOperationType.DELETE, persistentEntity, optPartitionKey, null);
+        return executeBulk(container, items, BulkOperationType.DELETE, persistentEntity, optPartitionKey, null)
+            .onErrorMap(e -> handleCosmosOperationException("Failed to delete item(s)", e, CosmosDiagnosticsProcessor.EXECUTE_BULK, persistentEntity));
     }
 
     @Override
@@ -480,8 +481,8 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
                 return Mono.just(cosmosSerde.deserialize(persistentEntity, item, Argument.of(preparedQuery.getResultType())));
             }
             return Flux.empty();
-        }).onErrorResume(e ->  Flux.error(CosmosUtils.cosmosAccessException(cosmosDiagnosticsProcessor, CosmosDiagnosticsProcessor.QUERY_ITEMS,
-            "Failed to query item", e))).next();
+        }).onErrorMap(e ->  CosmosUtils.cosmosAccessException(cosmosDiagnosticsProcessor, CosmosDiagnosticsProcessor.QUERY_ITEMS,
+            "Failed to query item", e)).next();
     }
 
     /**
@@ -512,8 +513,8 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
                 return singleResult;
             }
             return Flux.empty();
-        }).onErrorResume(e -> Flux.error(CosmosUtils.cosmosAccessException(cosmosDiagnosticsProcessor, CosmosDiagnosticsProcessor.QUERY_ITEMS,
-            "Failed to query item", e))).next();
+        }).onErrorMap(e -> CosmosUtils.cosmosAccessException(cosmosDiagnosticsProcessor, CosmosDiagnosticsProcessor.QUERY_ITEMS,
+            "Failed to query item", e)).next();
     }
 
     private <R> Mono<R> fetchSingleResult(FeedResponse<?> response, Class<R> resultType) {
@@ -858,8 +859,7 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
         return container.executeBulkOperations(updateItems).reduce(-1, (affectedCount, bulkOperationResponse) -> {
             CosmosBulkItemResponse response = bulkOperationResponse.getResponse();
             if (affectedCount.intValue() == -1) {
-                // The response diagnostic is the same for each iteration
-                // so we don't want to log it for each item
+                // The response diagnostic is the same for each iteration, so we don't want to log it for each item
                 affectedCount = 0;
                 CosmosUtils.processDiagnostics(cosmosDiagnosticsProcessor, CosmosDiagnosticsProcessor.EXECUTE_BULK, response.getCosmosDiagnostics(), response.getActivityId(),
                     response.getRequestCharge());
@@ -888,7 +888,7 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
                             response.getRequestCharge());
                         setETagVersionIfApplicable(response, persistentEntity, d.entity);
                         return d;
-                    }).onErrorResume(e -> Mono.error(CosmosUtils.cosmosAccessException(cosmosDiagnosticsProcessor, CosmosDiagnosticsProcessor.CREATE_ITEM, "Failed to insert item", e)));
+                    }).onErrorMap(e -> CosmosUtils.cosmosAccessException(cosmosDiagnosticsProcessor, CosmosDiagnosticsProcessor.CREATE_ITEM, "Failed to insert item", e));
                 });
             }
         };
@@ -907,7 +907,7 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
             if (cosmosException.getStatusCode() == HttpResponseStatus.PRECONDITION_FAILED.code()) {
                 CosmosEntity cosmosEntity = CosmosEntity.get(persistentEntity);
                 if (cosmosEntity.getVersionField() != null) {
-                    throw new OptimisticLockException("Operation failed due to optimistic locking conflict.");
+                    return new OptimisticLockException("Operation failed due to optimistic locking conflict.");
                 }
             }
         }
@@ -1253,8 +1253,7 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
                 CosmosBulkItemResponse response = bulkOperationResponse.getResponse();
                 if (count.intValue() == -1) {
                     count = 0;
-                    // The response diagnostic is the same for each iteration
-                    // so we don't want to log it for each item
+                    // The response diagnostic is the same for each iteration, so we don't want to log it for each item
                     CosmosUtils.processDiagnostics(cosmosDiagnosticsProcessor, CosmosDiagnosticsProcessor.EXECUTE_BULK, response.getCosmosDiagnostics(), response.getActivityId(),
                         response.getRequestCharge());
                 }
