@@ -1,8 +1,10 @@
 package io.micronaut.data.azure
 
-
+import com.azure.cosmos.CosmosDiagnostics
 import com.azure.cosmos.models.PartitionKey
 import io.micronaut.context.ApplicationContext
+import io.micronaut.context.annotation.Requires
+import io.micronaut.core.annotation.Nullable
 import io.micronaut.core.beans.BeanIntrospector
 import io.micronaut.data.azure.entities.nopartitionkey.NoPartitionKeyEntity
 import io.micronaut.data.azure.invalid.InvalidIdEntity
@@ -10,7 +12,9 @@ import io.micronaut.data.azure.repositories.NoPartitionKeyEntityRepository
 import io.micronaut.data.cosmos.common.CosmosEntity
 import io.micronaut.data.cosmos.config.CosmosDatabaseConfiguration
 import io.micronaut.data.cosmos.config.StorageUpdatePolicy
+import io.micronaut.data.cosmos.operations.CosmosDiagnosticsProcessor
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry
+import jakarta.inject.Singleton
 import spock.lang.AutoCleanup
 import spock.lang.IgnoreIf
 import spock.lang.Shared
@@ -30,12 +34,19 @@ class NoPartitionKeyCosmosDbSpec extends Specification implements AzureCosmosTes
 
     RuntimeEntityRegistry runtimeEntityRegistry = context.getBean(RuntimeEntityRegistry)
 
+    RequestChargeCosmosDiagnosticsProcessor requestChargeCosmosDiagnosticsProcessor = context.getBean(RequestChargeCosmosDiagnosticsProcessor)
+
     @Override
     Map<String, String> getDbInitProperties() {
         return [
                 'azure.cosmos.database.packages'      : 'io.micronaut.data.azure.entities.nopartitionkey',
                 'azure.cosmos.database.update-policy' : 'CREATE_IF_NOT_EXISTS'
         ]
+    }
+
+    def cleanup() {
+        requestChargeCosmosDiagnosticsProcessor.clear()
+        repository.deleteAll()
     }
 
     def "test CRUD against container with no partition key"() {
@@ -152,8 +163,7 @@ class NoPartitionKeyCosmosDbSpec extends Specification implements AzureCosmosTes
             entities = repository.findAllByNameAndGrade(UUID.randomUUID().toString(), optEntity2.get().grade)
         then:
             entities.size() == 0
-        cleanup:
-            repository.deleteAll()
+            requestChargeCosmosDiagnosticsProcessor.getRequestChargeSum() > 0
     }
 
     def "test configuration"() {
@@ -177,5 +187,29 @@ class NoPartitionKeyCosmosDbSpec extends Specification implements AzureCosmosTes
         then:
             def ex = thrown(IllegalStateException)
             ex.message.contains("unsupported identity type")
+    }
+
+    @Requires(property = "spec.name", value = "NoPartitionKeyCosmosDbSpec")
+    @Singleton
+    static class RequestChargeCosmosDiagnosticsProcessor implements CosmosDiagnosticsProcessor {
+
+        private double requestChargeSum
+
+        @Override
+        void processDiagnostics(String operationName, @Nullable CosmosDiagnostics cosmosDiagnostics, String activityId, double requestCharge) {
+            synchronized (this) {
+                requestChargeSum += requestCharge
+            }
+        }
+
+        void clear() {
+            synchronized (this) {
+                requestChargeSum = 0
+            }
+        }
+
+        double getRequestChargeSum() {
+            return requestChargeSum
+        }
     }
 }
