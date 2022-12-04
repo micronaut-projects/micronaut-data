@@ -139,6 +139,7 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
     private final CosmosAsyncDatabase cosmosAsyncDatabase;
     private CosmosSqlQueryBuilder defaultCosmosSqlQueryBuilder;
     private final CosmosDiagnosticsProcessor cosmosDiagnosticsProcessor;
+    private final boolean queryMetricsEnabled;
 
     /**
      * Default constructor.
@@ -167,6 +168,7 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
         this.cosmosSerde = cosmosSerde;
         this.cosmosAsyncDatabase = cosmosAsyncClient.getDatabase(configuration.getDatabaseName());
         this.cosmosDiagnosticsProcessor = cosmosDiagnosticsProcessor;
+        this.queryMetricsEnabled = configuration.isQueryMetricsEnabled();
     }
 
     @Override
@@ -195,7 +197,7 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
         final SqlParameter param = new SqlParameter("@ROOT_ID", id.toString());
         final SqlQuerySpec querySpec = new SqlQuerySpec(FIND_ONE_DEFAULT_QUERY, param);
         logQuery(querySpec);
-        final CosmosQueryRequestOptions options = new CosmosQueryRequestOptions();
+        final CosmosQueryRequestOptions options = createCosmosQueryRequestOptions();
         if (isIdPartitionKey(persistentEntity)) {
             options.setPartitionKey(new PartitionKey(id.toString()));
         }
@@ -448,7 +450,7 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
     private <T, R, I> CosmosPagedFlux<I> getCosmosResults(PreparedQuery<T, R> preparedQuery, SqlQuerySpec querySpec, Class<I> itemsType) {
         RuntimePersistentEntity<T> persistentEntity = runtimeEntityRegistry.getEntity(preparedQuery.getRootEntity());
         CosmosAsyncContainer container = getContainer(persistentEntity);
-        CosmosQueryRequestOptions requestOptions = new CosmosQueryRequestOptions();
+        CosmosQueryRequestOptions requestOptions = createCosmosQueryRequestOptions();
         preparedQuery.getParameterInRole(Constants.PARTITION_KEY_ROLE, PartitionKey.class).ifPresent(requestOptions::setPartitionKey);
         return container.queryItems(querySpec, requestOptions, itemsType);
     }
@@ -572,6 +574,16 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
             return (CosmosSqlPreparedQuery<E, R>) preparedQuery;
         }
         throw new IllegalStateException("Expected for prepared query to be of type: CosmosSqlPreparedQuery got: " + preparedQuery.getClass().getName());
+    }
+
+    /**
+     * Creates new {@link CosmosQueryRequestOptions} and inits default settings.
+     * @return the {@link CosmosQueryRequestOptions} instance
+     */
+    private CosmosQueryRequestOptions createCosmosQueryRequestOptions() {
+        CosmosQueryRequestOptions options = new CosmosQueryRequestOptions();
+        options.setQueryMetricsEnabled(this.queryMetricsEnabled);
+        return options;
     }
 
     // Container util methods
