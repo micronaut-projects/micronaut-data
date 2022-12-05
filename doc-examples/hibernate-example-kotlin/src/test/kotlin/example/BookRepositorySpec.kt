@@ -47,7 +47,7 @@ class BookRepositorySpec {
 
         // Create: Save a new book
         // tag::save[]
-        var book = Book(0,"The Stand", 1000)
+        val book = Book(0,"The Stand", 1000)
         bookRepository.save(book)
         // end::save[]
 
@@ -56,10 +56,10 @@ class BookRepositorySpec {
 
         // Read: Read a book from the database
         // tag::read[]
-        book = bookRepository.findById(id).orElse(null)
+        val book2 = bookRepository.findById(id)
         // end::read[]
-        assertNotNull(book)
-        assertEquals("The Stand", book.title)
+        assertNotNull(book2)
+        assertEquals("The Stand", book2!!.title)
 
         // Check the count
         assertEquals(1, bookRepository.count())
@@ -67,11 +67,11 @@ class BookRepositorySpec {
 
         // Update: Update the book and save it again
         // tag::update[]
-        book.title = "Changed"
-        bookRepository.save(book)
+        book2.title = "Changed"
+        bookRepository.save(book2)
         // end::update[]
-        book = bookRepository.findById(id).orElse(null)
-        assertEquals("Changed", book.title)
+        val book3 = bookRepository.findById(id)
+        assertEquals("Changed", book3!!.title)
 
         // Delete: Delete the book
         // tag::delete[]
@@ -83,7 +83,8 @@ class BookRepositorySpec {
     @Test
     fun testPageable() {
         // tag::saveall[]
-        bookRepository.saveAll(Arrays.asList(
+        bookRepository.saveAll(
+            listOf(
                 Book(0,"The Stand", 1000),
                 Book(0,"The Shining", 600),
                 Book(0,"The Power of the Dog", 500),
@@ -92,7 +93,8 @@ class BookRepositorySpec {
                 Book(0,"Pet Cemetery", 400),
                 Book(0,"A Game of Thrones", 900),
                 Book(0,"A Clash of Kings", 1100)
-        ))
+            )
+        )
         // end::saveall[]
 
         // tag::pageable[]

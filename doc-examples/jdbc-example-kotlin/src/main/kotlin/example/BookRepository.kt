@@ -7,11 +7,11 @@ import io.micronaut.data.annotation.*
 import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.model.*
 import io.micronaut.data.model.query.builder.sql.Dialect
-import io.micronaut.data.repository.CrudRepository
+import io.micronaut.data.repository.kotlin.KotlinCrudRepository
 import javax.transaction.Transactional
 
 @JdbcRepository(dialect = Dialect.H2) // <1>
-interface BookRepository : CrudRepository<Book, Long> { // <2>
+interface BookRepository : KotlinCrudRepository<Book, Long> { // <2>
 // end::repository[]
 
     // tag::simple[]
@@ -83,7 +83,7 @@ interface BookRepository : CrudRepository<Book, Long> { // <2>
     // end::update2[]
 
     // tag::deleteall[]
-    override fun deleteAll()
+    override fun deleteAll(): Int
     // end::deleteall[]
 
     @Transactional(Transactional.TxType.MANDATORY)

@@ -15,7 +15,6 @@
  */
 package io.micronaut.data.repository.jpa.kotlin
 
-import io.micronaut.core.annotation.Nullable
 import io.micronaut.data.model.Page
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
@@ -31,7 +30,7 @@ import kotlinx.coroutines.flow.Flow
  * @author Denis Stepanov
  * @since 3.2
  */
-interface CoroutineJpaSpecificationExecutor<T> {
+interface KotlinJpaSpecificationExecutor<T> {
 
     /**
      * Returns a single entity matching the given [QuerySpecification].
@@ -39,7 +38,7 @@ interface CoroutineJpaSpecificationExecutor<T> {
      * @param spec The query specification
      * @return optional found result
      */
-    suspend fun findOne(spec: QuerySpecification<T>?): T?
+    fun findOne(spec: QuerySpecification<T>?): T?
 
     /**
      * Returns a single entity matching the given [PredicateSpecification].
@@ -47,7 +46,7 @@ interface CoroutineJpaSpecificationExecutor<T> {
      * @param spec The query specification
      * @return optional found result
      */
-    suspend fun findOne(spec: PredicateSpecification<T>?): T?
+    fun findOne(spec: PredicateSpecification<T>?): T?
 
     /**
      * Returns all entities matching the given [QuerySpecification].
@@ -55,7 +54,7 @@ interface CoroutineJpaSpecificationExecutor<T> {
      * @param spec The query specification
      * @return found results
      */
-    fun findAll(spec: QuerySpecification<T>?): Flow<T>
+    fun findAll(spec: QuerySpecification<T>?): Iterable<T>
 
     /**
      * Returns all entities matching the given [PredicateSpecification].
@@ -63,7 +62,7 @@ interface CoroutineJpaSpecificationExecutor<T> {
      * @param spec The query specification
      * @return found results
      */
-    fun findAll(spec: PredicateSpecification<T>?): Flow<T>
+    fun findAll(spec: PredicateSpecification<T>?): Iterable<T>
 
     /**
      * Returns a [Page] of entities matching the given [QuerySpecification].
@@ -72,7 +71,7 @@ interface CoroutineJpaSpecificationExecutor<T> {
      * @param pageable The pageable object
      * @return a page
      */
-    suspend fun findAll(spec: QuerySpecification<T>?, pageable: Pageable): Page<T>
+    fun findAll(spec: QuerySpecification<T>?, pageable: Pageable): Page<T>
 
     /**
      * Returns a [Page] of entities matching the given [PredicateSpecification].
@@ -81,7 +80,7 @@ interface CoroutineJpaSpecificationExecutor<T> {
      * @param pageable The pageable object
      * @return a page
      */
-    suspend fun findAll(spec: PredicateSpecification<T>?, pageable: Pageable): Page<T>
+    fun findAll(spec: PredicateSpecification<T>?, pageable: Pageable): Page<T>
 
     /**
      * Returns all entities matching the given [QuerySpecification] and [Sort].
@@ -90,7 +89,7 @@ interface CoroutineJpaSpecificationExecutor<T> {
      * @param sort The sort object
      * @return found results
      */
-    fun findAll(spec: QuerySpecification<T>?, sort: Sort): Flow<T>
+    fun findAll(spec: QuerySpecification<T>?, sort: Sort): Iterable<T>
 
     /**
      * Returns all entities matching the given [QuerySpecification] and [Sort].
@@ -99,7 +98,7 @@ interface CoroutineJpaSpecificationExecutor<T> {
      * @param sort The sort object
      * @return found results
      */
-    fun findAll(spec: PredicateSpecification<T>?, sort: Sort): Flow<T>
+    fun findAll(spec: PredicateSpecification<T>?, sort: Sort): Iterable<T>
 
     /**
      * Find all using build criteria query.
@@ -110,7 +109,7 @@ interface CoroutineJpaSpecificationExecutor<T> {
      * @return the number records updated.
      * @since 3.5.0
     </R> */
-    fun <R> findAll(builder: CriteriaQueryBuilder<R>?): Flow<R>
+    fun <R> findAll(builder: CriteriaQueryBuilder<R>?): List<R>
 
     /**
      * Find one using build criteria query.
@@ -121,7 +120,7 @@ interface CoroutineJpaSpecificationExecutor<T> {
      * @return the number records updated.
      * @since 3.5.0
     </R> */
-    suspend fun <R> findOne(builder: CriteriaQueryBuilder<R>?): R
+    fun <R> findOne(builder: CriteriaQueryBuilder<R>?): R
 
     /**
      * Returns the number of instances that the given [QuerySpecification] will return.
@@ -129,7 +128,7 @@ interface CoroutineJpaSpecificationExecutor<T> {
      * @param spec The query specification
      * @return the number of instances.
      */
-    suspend fun count(spec: QuerySpecification<T>?): Long
+    fun count(spec: QuerySpecification<T>?): Long
 
     /**
      * Returns the number of instances that the given [QuerySpecification] will return.
@@ -137,7 +136,7 @@ interface CoroutineJpaSpecificationExecutor<T> {
      * @param spec The query specification
      * @return the number of instances.
      */
-    suspend fun count(spec: PredicateSpecification<T>?): Long
+    fun count(spec: PredicateSpecification<T>?): Long
 
     /**
      * Returns whether an instance was found for the given [QuerySpecification].
@@ -146,7 +145,7 @@ interface CoroutineJpaSpecificationExecutor<T> {
      * @return the number of instances.
      * @since 3.8
      */
-    suspend fun exists(spec: QuerySpecification<T>?): Boolean
+    fun exists(spec: QuerySpecification<T>?): Boolean
 
     /**
      * Returns whether an instance was found for the given [PredicateSpecification].
@@ -155,7 +154,7 @@ interface CoroutineJpaSpecificationExecutor<T> {
      * @return the number of instances.
      * @since 3.8
      */
-    suspend fun exists(spec: PredicateSpecification<T>?): Boolean
+    fun exists(spec: PredicateSpecification<T>?): Boolean
 
     /**
      * Deletes all entities matching the given [DeleteSpecification].
@@ -163,7 +162,7 @@ interface CoroutineJpaSpecificationExecutor<T> {
      * @param spec The delete specification
      * @return the number records deleted.
      */
-    suspend fun deleteAll(spec: DeleteSpecification<T>?): Long
+    fun deleteAll(spec: DeleteSpecification<T>?): Long
 
     /**
      * Deletes all entities matching the given [PredicateSpecification].
@@ -171,7 +170,7 @@ interface CoroutineJpaSpecificationExecutor<T> {
      * @param spec The delete specification
      * @return the number records deleted.
      */
-    suspend fun deleteAll(spec: PredicateSpecification<T>?): Long
+    fun deleteAll(spec: PredicateSpecification<T>?): Long
 
     /**
      * Updates all entities matching the given [UpdateSpecification].
@@ -179,7 +178,7 @@ interface CoroutineJpaSpecificationExecutor<T> {
      * @param spec The update specification
      * @return the number records updated.
      */
-    suspend fun updateAll(spec: UpdateSpecification<T>?): Long
+    fun updateAll(spec: UpdateSpecification<T>?): Long
 
     /**
      * Updates all entities using build criteria query.
@@ -188,5 +187,5 @@ interface CoroutineJpaSpecificationExecutor<T> {
      * @return the number records updated.
      * @since 3.5.0
      */
-    suspend fun updateAll(builder: CriteriaUpdateBuilder<T>?): Long
+    fun updateAll(builder: CriteriaUpdateBuilder<T>?): Long
 }

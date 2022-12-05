@@ -3,8 +3,8 @@ package example
 
 import io.micronaut.data.annotation.Join
 import io.micronaut.data.mongodb.annotation.MongoRepository
-import io.micronaut.data.repository.CrudRepository
-import io.micronaut.data.repository.jpa.JpaSpecificationExecutor
+import io.micronaut.data.repository.jpa.kotlin.KotlinJpaSpecificationExecutor
+import io.micronaut.data.repository.kotlin.KotlinCrudRepository
 import io.micronaut.data.runtime.criteria.get
 import io.micronaut.data.runtime.criteria.joinOne
 import io.micronaut.data.runtime.criteria.where
@@ -16,7 +16,7 @@ import java.util.concurrent.CompletableFuture
 // tag::join[]
 // tag::async[]
 @MongoRepository
-interface ProductRepository : CrudRepository<Product, ObjectId>, JpaSpecificationExecutor<Product> {
+interface ProductRepository : KotlinCrudRepository<Product, ObjectId>, KotlinJpaSpecificationExecutor<Product> {
 // end::join[]
 // end::async[]
 

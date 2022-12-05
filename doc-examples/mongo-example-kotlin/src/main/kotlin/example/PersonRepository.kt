@@ -4,30 +4,29 @@ import io.micronaut.data.model.Page
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
 import io.micronaut.data.mongodb.annotation.MongoRepository
-import io.micronaut.data.repository.CrudRepository
-import io.micronaut.data.repository.jpa.JpaSpecificationExecutor
 import io.micronaut.data.repository.jpa.criteria.DeleteSpecification
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
 import io.micronaut.data.repository.jpa.criteria.QuerySpecification
 import io.micronaut.data.repository.jpa.criteria.UpdateSpecification
+import io.micronaut.data.repository.jpa.kotlin.KotlinJpaSpecificationExecutor
+import io.micronaut.data.repository.kotlin.KotlinCrudRepository
 import io.micronaut.data.runtime.criteria.get
 import io.micronaut.data.runtime.criteria.update
 import io.micronaut.data.runtime.criteria.where
 import org.bson.types.ObjectId
-import java.util.*
 
 // tag::repository[]
 @MongoRepository
-interface PersonRepository : CrudRepository<Person, ObjectId>, JpaSpecificationExecutor<Person> {
+interface PersonRepository : KotlinCrudRepository<Person, ObjectId>, KotlinJpaSpecificationExecutor<Person> {
     // end::repository[]
     override
     // tag::find[]
-    fun findOne(spec: PredicateSpecification<Person>?): Optional<Person>
+    fun findOne(spec: PredicateSpecification<Person>?): Person?
 
     // end::find[]
     override
     // tag::find[]
-    fun findOne(spec: QuerySpecification<Person>?): Optional<Person>
+    fun findOne(spec: QuerySpecification<Person>?): Person?
 
     // end::find[]
     override
@@ -122,7 +121,7 @@ interface PersonRepository : CrudRepository<Person, ObjectId>, JpaSpecificationE
             criteriaBuilder.lessThan(root[Person::age], age)
         }
 
-        fun setNewName2(newName: String) = UpdateSpecification { root, query, criteriaBuilder ->
+        fun setNewName2(newName: String) = UpdateSpecification { root, query, _ ->
             // tag::setUpdate[]
             query.set(root[Person::name], newName)
             // end::setUpdate[]

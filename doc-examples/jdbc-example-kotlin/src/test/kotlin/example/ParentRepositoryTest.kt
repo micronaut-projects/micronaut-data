@@ -28,13 +28,13 @@ class ParentRepositoryTest {
         assertNotNull(saved.id)
         saved.children.forEach { assertNotNull(it.id) }
 
-        val found = repository.findById(saved.id!!).get()
+        val found = repository.findById(saved.id!!)!!
         println(found)
         found.children.forEach { assertNotNull(it.parent) }
 
         val modifiedParent = found.copy(name = found.name + " mod!")
         repository.update(modifiedParent)
-        val found2 = repository.findById(saved.id!!).get()
+        val found2 = repository.findById(saved.id!!)!!
         assertTrue(found2.name.endsWith(" mod!"))
         assertTrue(found2.children.size == 3)
     }

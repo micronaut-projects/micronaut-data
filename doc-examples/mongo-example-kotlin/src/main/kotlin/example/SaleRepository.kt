@@ -7,7 +7,7 @@ import io.micronaut.data.mongodb.annotation.MongoAggregateOptions
 import io.micronaut.data.mongodb.annotation.MongoCollation
 import io.micronaut.data.mongodb.annotation.MongoFindOptions
 import io.micronaut.data.mongodb.annotation.MongoRepository
-import io.micronaut.data.repository.CrudRepository
+import io.micronaut.data.repository.kotlin.KotlinCrudRepository
 import org.bson.types.ObjectId
 import java.util.*
 
@@ -16,9 +16,9 @@ import java.util.*
 @MongoAggregateOptions(allowDiskUse = true, maxTimeMS = 100)
 @MongoCollation("{ locale: 'en_US', numericOrdering: true}")
 @MongoRepository
-interface SaleRepository : CrudRepository<Sale, ObjectId> {
+interface SaleRepository : KotlinCrudRepository<Sale, ObjectId> {
 // end::options[]
 
     @JoinSpecifications(value = [Join("product"), Join("product.manufacturer")])
-    override fun findById(id: ObjectId): Optional<Sale>
+    override fun findById(id: ObjectId): Sale?
 }

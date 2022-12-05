@@ -34,7 +34,7 @@ class SaleRepositorySpec : AbstractMongoSpec() {
         )
         assertEquals(1, sale.quantity.amount)
 
-        sale = saleRepository.findById(sale.id!!).orElse(sale)
+        sale = saleRepository.findById(sale.id!!) ?: sale
         assertNotNull(sale)
         assertEquals(1, sale.quantity.amount)
     }

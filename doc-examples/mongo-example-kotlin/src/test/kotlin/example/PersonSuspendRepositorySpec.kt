@@ -34,7 +34,7 @@ internal class PersonSuspendRepositorySpec : AbstractMongoSpec() {
     }
 
     @AfterEach
-    fun afterEach() {
+    fun afterEach(): Unit = runBlocking {
         personRepository.deleteAll()
     }
 

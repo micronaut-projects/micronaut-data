@@ -32,7 +32,7 @@ class HibernateTxTest {
         val parent = Parent("xyz", Collections.emptyList())
         val saved = repositorySuspended.save(parent)
 
-        val found = service.customFind(saved.id!!).get()
+        val found = service.customFind(saved.id!!)!!
         assertTrue(found.name == "xyz")
     }
 

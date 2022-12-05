@@ -3,11 +3,11 @@ package example
 import io.micronaut.data.annotation.Id
 import io.micronaut.data.annotation.Repository
 import io.micronaut.data.annotation.Version
-import io.micronaut.data.repository.CrudRepository
+import io.micronaut.data.repository.kotlin.KotlinCrudRepository
 
 // tag::studentRepository[]
 @Repository
-interface StudentRepository : CrudRepository<Student, Long> {
+interface StudentRepository : KotlinCrudRepository<Student, Long> {
 
     fun update(@Id id: Long, @Version version: Long, name: String)
 

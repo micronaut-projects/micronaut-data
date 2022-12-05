@@ -39,7 +39,7 @@ internal class PersonRepositorySpec {
     @Test
     fun testFind() {
         // tag::find[]
-        val denis: Person? = personRepository.findOne(nameEquals("Denis")).orElse(null)
+        val denis: Person? = personRepository.findOne(nameEquals("Denis"))
 
         val countAgeLess30: Long = personRepository.count(ageIsLessThan(30))
 

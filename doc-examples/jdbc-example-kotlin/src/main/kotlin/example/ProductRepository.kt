@@ -4,14 +4,15 @@ package example
 import io.micronaut.data.annotation.*
 import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.model.query.builder.sql.Dialect
-import io.micronaut.data.repository.CrudRepository
+import io.micronaut.data.repository.kotlin.KotlinCrudRepository
 import io.reactivex.Maybe
 import io.reactivex.Single
 import java.util.concurrent.CompletableFuture
+
 // tag::join[]
 // tag::async[]
 @JdbcRepository(dialect = Dialect.H2)
-interface ProductRepository : CrudRepository<Product, Long> {
+interface ProductRepository : KotlinCrudRepository<Product, Long> {
 // end::join[]
 // end::async[]
 
@@ -35,9 +36,9 @@ interface ProductRepository : CrudRepository<Product, Long> {
     // end::reactive[]
 
     // tag::native[]
-    @Query("""SELECT *, m_.name as m_name, m_.id as m_id 
-                    FROM product p 
-                    INNER JOIN manufacturer m_ ON p.manufacturer_id = m_.id 
+    @Query("""SELECT *, m_.name as m_name, m_.id as m_id
+                    FROM product p
+                    INNER JOIN manufacturer m_ ON p.manufacturer_id = m_.id
                     WHERE p.name like :name limit 5""")
     @Join(value = "manufacturer", alias = "m_")
     fun searchProducts(name: String): List<Product>

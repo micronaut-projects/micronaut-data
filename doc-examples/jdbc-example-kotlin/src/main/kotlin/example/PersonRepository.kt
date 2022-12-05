@@ -5,26 +5,25 @@ import io.micronaut.data.model.Page
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
 import io.micronaut.data.model.query.builder.sql.Dialect
-import io.micronaut.data.repository.CrudRepository
-import io.micronaut.data.repository.jpa.JpaSpecificationExecutor
 import io.micronaut.data.repository.jpa.criteria.DeleteSpecification
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
 import io.micronaut.data.repository.jpa.criteria.QuerySpecification
 import io.micronaut.data.repository.jpa.criteria.UpdateSpecification
-import java.util.*
+import io.micronaut.data.repository.jpa.kotlin.KotlinJpaSpecificationExecutor
+import io.micronaut.data.repository.kotlin.KotlinCrudRepository
 
 // tag::repository[]
 @JdbcRepository(dialect = Dialect.H2)
-interface PersonRepository : CrudRepository<Person, Long>, JpaSpecificationExecutor<Person> {
+interface PersonRepository : KotlinCrudRepository<Person, Long>, KotlinJpaSpecificationExecutor<Person> {
     // end::repository[]
     override
     // tag::find[]
-    fun findOne(spec: PredicateSpecification<Person>?): Optional<Person>
+    fun findOne(spec: PredicateSpecification<Person>?): Person?
 
     // end::find[]
     override
     // tag::find[]
-    fun findOne(spec: QuerySpecification<Person>?): Optional<Person>
+    fun findOne(spec: QuerySpecification<Person>?): Person?
 
     // end::find[]
     override
@@ -95,7 +94,7 @@ interface PersonRepository : CrudRepository<Person, Long>, JpaSpecificationExecu
         }
 
         // end::specifications[]
-        fun setNewName(newName: String) = UpdateSpecification<Person> { root, query, criteriaBuilder ->
+        fun setNewName(newName: String) = UpdateSpecification<Person> { root, query, _ ->
             // tag::setUpdate[]
             query.set(root.get("name"), newName)
             // end::setUpdate[]
