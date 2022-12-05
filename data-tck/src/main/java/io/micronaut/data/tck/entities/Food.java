@@ -26,6 +26,7 @@ import java.util.Date;
 import java.util.UUID;
 
 @MappedEntity
+@Where("@.fresh = 'Y'")
 public class Food {
 
     @Id
@@ -63,6 +64,8 @@ public class Food {
     @MappedProperty(value = "loooooooooooooooooooooooooooooooooooooooooooooooooooooooong_name", alias = "ln")
     private String longName;
 
+    private char fresh = 'Y';
+
     public Food(
             @Size(max = 36) @NotNull String key,
             @Size(max = 9999) @NotNull int carbohydrates,
@@ -72,6 +75,7 @@ public class Food {
         this.carbohydrates = carbohydrates;
         this.portionGrams = portionGrams;
         this.meal = meal;
+        this.fresh = 'Y';
     }
 
     @Creator
@@ -90,6 +94,7 @@ public class Food {
         this.createdOn = createdOn;
         this.updatedOn = updatedOn;
         this.meal = meal;
+        this.fresh = 'Y';
     }
 
     public UUID getFid() {
@@ -164,5 +169,13 @@ public class Food {
 
     public void setLongName(@Nullable String value) {
         this.longName = value;
+    }
+
+    public char isFresh() {
+        return fresh;
+    }
+
+    public void setFresh(char fresh) {
+        this.fresh = fresh;
     }
 }

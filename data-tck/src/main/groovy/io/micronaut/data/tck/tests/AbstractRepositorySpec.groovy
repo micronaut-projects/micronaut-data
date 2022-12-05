@@ -2363,6 +2363,47 @@ abstract class AbstractRepositorySpec extends Specification {
         bookRepository.delete(book2)
     }
 
+    void "test @Where and joins"() {
+        given:
+        def meal = mealRepository.save(new Meal(10))
+        def food = foodRepository.save(new Food("food", 80, 200, meal))
+        def food1 = foodRepository.save(new Food("food1", 50, 150, meal))
+        when:
+        def loadedMeal = mealRepository.searchById(meal.mid)
+        def optFood = foodRepository.findById(food.fid)
+        def optFood1 = foodRepository.findById(food1.fid)
+        then:
+        loadedMeal
+        loadedMeal.foods.size() == 2
+        optFood.present
+        optFood.get().meal.mid == loadedMeal.mid
+        optFood1.present
+        optFood1.get().meal.mid == loadedMeal.mid
+        when:
+        food.fresh = 'N'
+        foodRepository.update(food)
+        loadedMeal = mealRepository.searchById(meal.mid)
+        optFood = foodRepository.findById(food.fid)
+        optFood1 = foodRepository.findById(food1.fid)
+        then:
+        loadedMeal
+        loadedMeal.foods.size() == 1
+        !optFood.present
+        optFood1.present
+        when:
+        meal.actual = 'N'
+        mealRepository.update(meal)
+        loadedMeal = mealRepository.searchById(meal.mid)
+        optFood1 = foodRepository.findById(food1.fid)
+        then:
+        !loadedMeal
+        !optFood1.present
+        cleanup:
+        foodRepository.deleteById(food.fid)
+        foodRepository.deleteById(food1.fid)
+        mealRepository.deleteById(meal.mid)
+    }
+
     private GregorianCalendar getYearMonthDay(Date dateCreated) {
         def cal = dateCreated.toCalendar()
         def localDate = LocalDate.of(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH) + 1, cal.get(Calendar.DAY_OF_MONTH))

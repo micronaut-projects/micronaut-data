@@ -54,12 +54,14 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.StringJoiner;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
@@ -984,37 +986,65 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             queryClause.append(OPEN_BRACKET);
             handleJunction(ctx, criteria);
 
-            String queryStr = queryClause.toString();
-            String additionalWhere = buildAdditionalWhereString(queryState.getRootAlias(), queryState.getEntity(), annotationMetadata);
-            if (StringUtils.isNotEmpty(additionalWhere)) {
-                StringBuffer additionalWhereBuilder = new StringBuffer();
-                Matcher matcher = QueryBuilder.VARIABLE_PATTERN.matcher(additionalWhere);
-                while (matcher.find()) {
-                    String name = matcher.group(3);
-                    String placeholder = queryState.addAdditionalRequiredParameter(name);
-                    matcher.appendReplacement(additionalWhereBuilder, placeholder);
-                }
-                matcher.appendTail(additionalWhereBuilder);
-                additionalWhere = additionalWhereBuilder.toString();
-            }
-            if (queryStr.endsWith(WHERE_CLAUSE + OPEN_BRACKET)) {
-                if (StringUtils.isNotEmpty(additionalWhere)) {
-                    queryClause.append(additionalWhere).append(CLOSE_BRACKET);
-                }
-            } else {
-                if (StringUtils.isNotEmpty(additionalWhere)) {
-                    queryClause.append(LOGICAL_AND).append(OPEN_BRACKET).append(additionalWhere).append(CLOSE_BRACKET);
-                }
-                queryClause.append(CLOSE_BRACKET);
-            }
+            StringBuilder additionalWhereBuff = buildAdditionalWhereClause(queryState, annotationMetadata);
+            appendAdditionalWhere(queryClause, queryState, additionalWhereBuff.toString());
+
         } else {
-            final String additionalWhereString = buildAdditionalWhereString(queryState.getRootAlias(), queryState.getEntity(), annotationMetadata);
-            if (StringUtils.isNotEmpty(additionalWhereString)) {
+            StringBuilder additionalWhereBuff = buildAdditionalWhereClause(queryState, annotationMetadata);
+            if (additionalWhereBuff.length() > 0) {
                 queryClause.append(WHERE_CLAUSE)
                     .append(OPEN_BRACKET)
-                    .append(additionalWhereString)
+                    .append(additionalWhereBuff.toString())
                     .append(CLOSE_BRACKET);
             }
+        }
+    }
+
+    private StringBuilder buildAdditionalWhereClause(QueryState queryState, AnnotationMetadata annotationMetadata) {
+        StringBuilder additionalWhereBuff = new StringBuilder(buildAdditionalWhereString(queryState.getRootAlias(), queryState.getEntity(), annotationMetadata));
+        List<JoinPath> joinPaths = queryState.getJoinPaths();
+        if (CollectionUtils.isNotEmpty(joinPaths)) {
+            Set<String> addedJoinPaths = new HashSet<>();
+            for (JoinPath joinPath : joinPaths) {
+                String path = joinPath.getPath();
+                if (addedJoinPaths.contains(path)) {
+                    continue;
+                }
+                addedJoinPaths.add(path);
+                String joinAdditionalWhere = buildAdditionalWhereString(joinPath, annotationMetadata);
+                if (StringUtils.isNotEmpty(joinAdditionalWhere)) {
+                    if (additionalWhereBuff.length() > 0) {
+                        additionalWhereBuff.append(SPACE).append(AND).append(SPACE);
+                    }
+                    additionalWhereBuff.append(joinAdditionalWhere);
+                }
+            }
+        }
+        return additionalWhereBuff;
+    }
+
+    private void appendAdditionalWhere(StringBuilder queryClause, QueryState queryState, String additionalWhere) {
+        String queryStr = queryClause.toString();
+        if (StringUtils.isNotEmpty(additionalWhere)) {
+            StringBuffer additionalWhereBuilder = new StringBuffer();
+            Matcher matcher = QueryBuilder.VARIABLE_PATTERN.matcher(additionalWhere);
+            while (matcher.find()) {
+                String name = matcher.group(3);
+                String placeholder = queryState.addAdditionalRequiredParameter(name);
+                matcher.appendReplacement(additionalWhereBuilder, placeholder);
+            }
+            matcher.appendTail(additionalWhereBuilder);
+            additionalWhere = additionalWhereBuilder.toString();
+        }
+        if (queryStr.endsWith(WHERE_CLAUSE + OPEN_BRACKET)) {
+            if (StringUtils.isNotEmpty(additionalWhere)) {
+                queryClause.append(additionalWhere).append(CLOSE_BRACKET);
+            }
+        } else {
+            if (StringUtils.isNotEmpty(additionalWhere)) {
+                queryClause.append(LOGICAL_AND).append(OPEN_BRACKET).append(additionalWhere).append(CLOSE_BRACKET);
+            }
+            queryClause.append(CLOSE_BRACKET);
         }
     }
 
@@ -1028,6 +1058,18 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         } else {
             return resolveWhereForAnnotationMetadata(alias, entity.getAnnotationMetadata());
         }
+    }
+
+    private String buildAdditionalWhereString(JoinPath joinPath, AnnotationMetadata annotationMetadata) {
+        if (annotationMetadata.hasAnnotation(IgnoreWhere.class)) {
+            return "";
+        }
+        Association association = joinPath.getAssociation();
+        if (association == null) {
+            return "";
+        }
+        String alias = getAliasName(joinPath);
+        return resolveWhereForAnnotationMetadata(alias, association.getAssociatedEntity().getAnnotationMetadata());
     }
 
     private String resolveWhereForAnnotationMetadata(String alias, AnnotationMetadata annotationMetadata) {
