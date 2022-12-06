@@ -27,7 +27,7 @@ dependencies {
 	testImplementation projects.dataProcessor
 	testImplementation mn.micronaut.inject.groovy
 	testImplementation mn.micronaut.http
-	testImplementation mn.micronaut.test.junit5
+	testImplementation mnTest.micronaut.test.junit5
 	testImplementation projects.dataTck
 
     testRuntimeOnly libs.jupiter.engine

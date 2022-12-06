@@ -22,6 +22,12 @@ rootProject.name = 'data-parent'
 
 micronautBuild {
     importMicronautCatalog()
+    importMicronautCatalog("micronaut-reactor")
+    importMicronautCatalog("micronaut-rxjava2")
+    importMicronautCatalog("micronaut-r2dbc")
+    importMicronautCatalog("micronaut-spring")
+    importMicronautCatalog("micronaut-serde")
+    importMicronautCatalog("micronaut-sql")
 }
 
 include 'data-bom'

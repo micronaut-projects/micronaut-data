@@ -11,20 +11,20 @@ dependencies {
     annotationProcessor libs.micronaut.docs
 
     api mn.micronaut.runtime
-    api libs.micronaut.reactor
+    api mnReactor.micronaut.reactor
     api projects.dataModel
     api projects.dataRuntime
-    api libs.micronaut.r2dbc
+    api mnR2dbc.micronaut.r2dbc.core
     api libs.r2dbc.spi
 
     implementation mn.micronaut.context
     implementation mn.micronaut.http
-    implementation libs.micronaut.reactor
+    implementation mnReactor.micronaut.reactor
 
     testImplementation projects.dataTck
-    testImplementation mn.micronaut.test.spock
+    testImplementation mnTest.micronaut.test.spock
     testImplementation libs.r2dbc.pool
-    testImplementation libs.micronaut.rxjava2
+    testImplementation mnRxjava2.micronaut.rxjava2
 
     testAnnotationProcessor mn.micronaut.inject.java
     testAnnotationProcessor projects.dataProcessor
@@ -38,7 +38,12 @@ dependencies {
     testImplementation mn.micronaut.http.server.netty
     testImplementation mn.micronaut.http.client
 
+    testImplementation platform(libs.testcontainers.bom)
+
+    testImplementation libs.testcontainers.r2dbc
+
     testImplementation libs.drivers.r2dbc.oracle
+    testImplementation libs.testcontainers.oracle
 
     // mariadb
     testImplementation libs.drivers.r2dbc.mariadb
@@ -50,7 +55,7 @@ dependencies {
 
     // h2
     testImplementation libs.drivers.r2dbc.h2
-    testRuntimeOnly libs.h2
+    testRuntimeOnly mnSql.h2
 
     // sqlserver
     testImplementation libs.drivers.r2dbc.mssql

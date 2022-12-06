@@ -174,7 +174,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         RuntimeEntityRegistry runtimeEntityRegistry,
         ApplicationContext applicationContext,
         @Nullable @Named("io") ExecutorService executorService,
-        DataConversionService<?> conversionService,
+        DataConversionService conversionService,
         AttributeConverterRegistry attributeConverterRegistry,
         @Nullable SchemaTenantResolver schemaTenantResolver,
         R2dbcSchemaHandler schemaHandler,

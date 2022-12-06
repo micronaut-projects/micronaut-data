@@ -461,7 +461,7 @@ public interface QueryStatement<PS, IDX> {
      * Get conversion service.
      * @return the instance of {@link ConversionService}
      */
-    default ConversionService<?> getConversionService() {
+    default ConversionService getConversionService() {
         return ConversionService.SHARED;
     }
 }

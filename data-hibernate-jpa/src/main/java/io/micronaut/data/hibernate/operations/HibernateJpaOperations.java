@@ -107,7 +107,7 @@ public class HibernateJpaOperations extends AbstractHibernateOperations<Session,
             @NonNull @Parameter TransactionOperations<Connection> transactionOperations,
             @Named("io") @Nullable ExecutorService executorService,
             RuntimeEntityRegistry runtimeEntityRegistry,
-            DataConversionService<?> dataConversionService) {
+            DataConversionService dataConversionService) {
         super(runtimeEntityRegistry, dataConversionService);
         ArgumentUtils.requireNonNull("sessionFactory", sessionFactory);
         this.sessionFactory = sessionFactory;
@@ -126,7 +126,7 @@ public class HibernateJpaOperations extends AbstractHibernateOperations<Session,
     }
 
     @Override
-    public ConversionService<?> getConversionService() {
+    public ConversionService getConversionService() {
         return super.getConversionService();
     }
 

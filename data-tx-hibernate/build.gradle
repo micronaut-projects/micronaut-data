@@ -15,7 +15,7 @@ dependencies {
 
     implementation mn.micronaut.inject
 
-    compileOnly libs.spring.orm
+    compileOnly mnSpring.spring.orm
 
     testAnnotationProcessor mn.micronaut.inject.java
     testAnnotationProcessor projects.dataProcessor
@@ -23,7 +23,7 @@ dependencies {
     testImplementation projects.dataProcessor
     testImplementation projects.dataTck
 
-    testRuntimeOnly libs.h2
+    testRuntimeOnly mnSql.h2
     testRuntimeOnly projects.dataHibernateJpa
-    testRuntimeOnly libs.micronaut.sql.jdbc.tomcat
+    testRuntimeOnly mnSql.micronaut.jdbc.tomcat
 }

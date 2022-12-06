@@ -9,5 +9,5 @@ dependencies {
     api mn.micronaut.validation
     api mn.micronaut.aop
     api projects.dataModel
-    api libs.micronaut.serde.api
+    api mnSerde.micronaut.serde.api
 }

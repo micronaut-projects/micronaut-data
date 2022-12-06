@@ -4,8 +4,8 @@ plugins {
 
 dependencies {
 	api projects.dataProcessor
-	api libs.micronaut.serde.processor
-	api libs.micronaut.serde.api
+	api mnSerde.micronaut.serde.processor
+	api mnSerde.micronaut.serde.api
 	api projects.dataDocumentModel
 
 	compileOnly mn.micronaut.inject.java

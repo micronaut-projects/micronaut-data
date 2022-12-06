@@ -31,7 +31,7 @@ class DataConversionServiceSpec extends Specification {
     @Unroll
     def "test date conversion #obj to #targetType"() {
         given:
-            DataConversionService<?> conversionService = new DataConversionServiceFactory().build()
+            DataConversionService conversionService = new DataConversionServiceFactory().build()
 
         when:
             def expectedValue = conversionService.convert(obj, targetType)

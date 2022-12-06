@@ -31,7 +31,7 @@ import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 @Internal
 public abstract class SyncEntityOperations<T, Exc extends Exception> extends EntityOperations<T, Exc> {
 
-    public SyncEntityOperations(EntityEventListener<Object> entityEventListener, RuntimePersistentEntity<T> persistentEntity, ConversionService<?> conversionService) {
+    public SyncEntityOperations(EntityEventListener<Object> entityEventListener, RuntimePersistentEntity<T> persistentEntity, ConversionService conversionService) {
         super(entityEventListener, persistentEntity, conversionService);
     }
 

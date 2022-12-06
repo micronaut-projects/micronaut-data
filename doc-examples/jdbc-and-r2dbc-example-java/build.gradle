@@ -30,7 +30,7 @@ dependencies {
     implementation libs.jakarta.persistence.api
     implementation libs.javax.transaction.api
     runtimeOnly "ch.qos.logback:logback-classic"
-    runtimeOnly libs.h2
+    runtimeOnly mnSql.h2
     runtimeOnly libs.drivers.r2dbc.h2
 
 }

@@ -24,5 +24,6 @@ dependencies {
     runtimeOnly "io.micronaut.sql:micronaut-jdbc-tomcat"
     runtimeOnly libs.drivers.jdbc.postgresql
 
+    testImplementation platform(libs.testcontainers.bom)
     testImplementation libs.testcontainers.postgresql
 }

@@ -142,7 +142,7 @@ public final class DefaultMongoRepositoryOperations extends AbstractMongoReposit
                                      List<MediaTypeCodec> codecs,
                                      DateTimeProvider<Object> dateTimeProvider,
                                      RuntimeEntityRegistry runtimeEntityRegistry,
-                                     DataConversionService<?> conversionService,
+                                     DataConversionService conversionService,
                                      AttributeConverterRegistry attributeConverterRegistry,
                                      MongoClient mongoClient,
                                      MongoCollectionNameProvider collectionNameProvider,

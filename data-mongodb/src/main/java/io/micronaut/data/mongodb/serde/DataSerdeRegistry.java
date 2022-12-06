@@ -19,6 +19,7 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Order;
 import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.beans.BeanProperty;
+import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.order.Ordered;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.document.serde.IdPropertyNamingStrategy;
@@ -204,5 +205,10 @@ final class DataSerdeRegistry implements SerdeRegistry {
     @Override
     public <D extends PropertyNamingStrategy> D findNamingStrategy(Class<? extends D> namingStrategyClass) throws SerdeException {
         return defaultSerdeRegistry.findNamingStrategy(namingStrategyClass);
+    }
+
+    @Override
+    public ConversionService getConversionService() {
+        return defaultSerdeRegistry.getConversionService();
     }
 }

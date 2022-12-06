@@ -31,7 +31,7 @@ dependencies {
     implementation "io.micronaut.sql:micronaut-jdbc-hikari"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-reactive"
-    implementation libs.micronaut.serde.support
+    implementation mnSerde.micronaut.serde.support
     implementation "org.flywaydb:flyway-mysql"
 
     runtimeOnly libs.drivers.r2dbc.mariadb
@@ -39,3 +39,4 @@ dependencies {
 
     testImplementation "io.micronaut:micronaut-http-client"
 }
+

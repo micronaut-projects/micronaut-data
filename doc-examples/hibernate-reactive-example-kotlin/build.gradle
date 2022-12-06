@@ -30,5 +30,6 @@ dependencies {
     runtimeOnly "ch.qos.logback:logback-classic"
     runtimeOnly libs.drivers.vertx.pg
 
+    testImplementation platform(libs.testcontainers.bom)
     testImplementation libs.testcontainers.postgresql
 }

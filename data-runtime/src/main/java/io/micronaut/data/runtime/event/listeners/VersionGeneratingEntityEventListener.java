@@ -49,9 +49,9 @@ public class VersionGeneratingEntityEventListener implements EntityEventListener
     private static final List<Class<? extends Annotation>> SUPPORTED_EVENTS = Arrays.asList(PrePersist.class, PreUpdate.class, PreRemove.class);
 
     private final DateTimeProvider dateTimeProvider;
-    private final DataConversionService<?> conversionService;
+    private final DataConversionService conversionService;
 
-    public VersionGeneratingEntityEventListener(DateTimeProvider dateTimeProvider, DataConversionService<?> conversionService) {
+    public VersionGeneratingEntityEventListener(DateTimeProvider dateTimeProvider, DataConversionService conversionService) {
         this.dateTimeProvider = dateTimeProvider;
         this.conversionService = conversionService;
     }

@@ -79,7 +79,7 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
     private Set<JoinPath> joinFetchPaths = null;
     private final List<StoredQueryParameter> queryParameters;
     private final boolean rawQuery;
-    
+
     /**
      * The default constructor.
      *
@@ -98,7 +98,8 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
             boolean isCount,
             HintsCapableRepository repositoryOperations) {
         super(method);
-        this.resultType = ReflectionUtils.getWrapperType(resultType);
+        //noinspection unchecked
+        this.resultType = (Class<RT>) ReflectionUtils.getWrapperType(resultType);
         this.rootEntity = rootEntity;
         this.annotationMetadata = method.getAnnotationMetadata();
         this.isNative = method.isTrue(Query.class, "nativeQuery");

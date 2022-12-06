@@ -687,7 +687,7 @@ final class DataConversionServiceFactory {
         return conversionService;
     }
 
-    private <T> void addZonedConvertorsConvertors(DataConversionService<?> conversionService, Class<T> dateType, Function<T, ZonedDateTime> dateToZonedDateTime) {
+    private <T> void addZonedConvertorsConvertors(DataConversionService conversionService, Class<T> dateType, Function<T, ZonedDateTime> dateToZonedDateTime) {
         conversionService.addConverter(dateType, ZonedDateTime.class, dateToZonedDateTime);
         conversionService.addConverter(dateType, OffsetDateTime.class, dateToZonedDateTime.andThen(ZonedDateTime::toOffsetDateTime));
         conversionService.addConverter(dateType, LocalDateTime.class, dateToZonedDateTime.andThen(ZonedDateTime::toLocalDateTime));
@@ -698,7 +698,7 @@ final class DataConversionServiceFactory {
         conversionService.addConverter(dateType, Timestamp.class, dateToZonedDateTime.andThen(zonedDateTime -> Timestamp.from(zonedDateTime.toInstant())));
     }
 
-    private Integer asInteger(Object value, DataConversionService<?> dataConversionService) {
+    private Integer asInteger(Object value, DataConversionService dataConversionService) {
         if (value instanceof Integer) {
             return (Integer) value;
         }
@@ -708,7 +708,7 @@ final class DataConversionServiceFactory {
         return dataConversionService.convertRequired(value, Integer.class);
     }
 
-    private Long asLong(Object value, DataConversionService<?> dataConversionService) {
+    private Long asLong(Object value, DataConversionService dataConversionService) {
         if (value instanceof Long) {
             return (Long) value;
         }
@@ -718,7 +718,7 @@ final class DataConversionServiceFactory {
         return dataConversionService.convertRequired(value, Long.class);
     }
 
-    private Double asDouble(Object value, DataConversionService<?> dataConversionService) {
+    private Double asDouble(Object value, DataConversionService dataConversionService) {
         if (value instanceof Double) {
             return (Double) value;
         }
@@ -728,14 +728,14 @@ final class DataConversionServiceFactory {
         return dataConversionService.convertRequired(value, Double.class);
     }
 
-    private Boolean asBoolean(Object value, DataConversionService<?> dataConversionService) {
+    private Boolean asBoolean(Object value, DataConversionService dataConversionService) {
         if (value instanceof Boolean) {
             return (Boolean) value;
         }
         return dataConversionService.convertRequired(value, Boolean.class);
     }
 
-    private Float asFloat(Object value, DataConversionService<?> dataConversionService) {
+    private Float asFloat(Object value, DataConversionService dataConversionService) {
         if (value instanceof Float) {
             return (Float) value;
         }
@@ -745,7 +745,7 @@ final class DataConversionServiceFactory {
         return dataConversionService.convertRequired(value, Float.class);
     }
 
-    private Short asShort(Object value, DataConversionService<?> dataConversionService) {
+    private Short asShort(Object value, DataConversionService dataConversionService) {
         if (value instanceof Short) {
             return (Short) value;
         }
@@ -755,7 +755,7 @@ final class DataConversionServiceFactory {
         return dataConversionService.convertRequired(value, Short.class);
     }
 
-    private Character asCharacter(Object value, DataConversionService<?> dataConversionService) {
+    private Character asCharacter(Object value, DataConversionService dataConversionService) {
         if (value instanceof Character) {
             return (Character) value;
         }

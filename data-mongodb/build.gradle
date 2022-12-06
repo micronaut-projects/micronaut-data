@@ -21,8 +21,8 @@ dependencies {
 
     api projects.dataRuntime
     api projects.dataDocumentModel
-    api libs.micronaut.serde.bson
-    api libs.micronaut.serde.support
+    api mnSerde.micronaut.serde.bson
+    api mnSerde.micronaut.serde.support
     api (libs.micronaut.mongo.reactive) {
         exclude group: "org.mongodb"
         exclude group: "io.micronaut"
@@ -34,7 +34,7 @@ dependencies {
 
     compileOnly libs.mongodb.driver.sync
     compileOnly libs.mongodb.driver.reactive
-    compileOnly libs.micronaut.reactor
+    compileOnly mnReactor.micronaut.reactor
 
     testAnnotationProcessor projects.dataDocumentProcessor
     testAnnotationProcessor mn.micronaut.inject.java
@@ -45,10 +45,11 @@ dependencies {
     testImplementation projects.dataDocumentProcessor
     testImplementation projects.dataDocumentTck
     testImplementation libs.jakarta.persistence.api
-    testImplementation libs.micronaut.rxjava2
-    testImplementation libs.micronaut.reactor
+    testImplementation mnRxjava2.micronaut.rxjava2
+    testImplementation mnReactor.micronaut.reactor
     testImplementation libs.jakarta.persistence.api
     testImplementation mn.micronaut.validation
+    testImplementation platform(libs.testcontainers.bom)
 
     // Remove after https://github.com/micronaut-projects/micronaut-test-resources/issues/142
     testImplementation libs.testcontainers.spock

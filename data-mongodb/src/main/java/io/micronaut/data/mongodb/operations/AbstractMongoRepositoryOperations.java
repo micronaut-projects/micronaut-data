@@ -91,7 +91,7 @@ abstract class AbstractMongoRepositoryOperations<Dtb> extends AbstractRepository
     protected AbstractMongoRepositoryOperations(List<MediaTypeCodec> codecs,
                                                 DateTimeProvider<Object> dateTimeProvider,
                                                 RuntimeEntityRegistry runtimeEntityRegistry,
-                                                DataConversionService<?> conversionService,
+                                                DataConversionService conversionService,
                                                 AttributeConverterRegistry attributeConverterRegistry,
                                                 MongoCollectionNameProvider collectionNameProvider,
                                                 MongoDatabaseNameProvider databaseNameProvider) {
@@ -177,7 +177,7 @@ abstract class AbstractMongoRepositoryOperations<Dtb> extends AbstractRepository
                 }
 
                 @Override
-                public ConversionService<?> getConversionService() {
+                public ConversionService getConversionService() {
                     return conversionService;
                 }
 

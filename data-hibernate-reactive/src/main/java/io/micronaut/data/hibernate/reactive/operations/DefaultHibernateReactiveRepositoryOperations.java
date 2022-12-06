@@ -88,7 +88,7 @@ final class DefaultHibernateReactiveRepositoryOperations extends AbstractHiberna
 
     DefaultHibernateReactiveRepositoryOperations(SessionFactory sessionFactory,
                                                  RuntimeEntityRegistry runtimeEntityRegistry,
-                                                 DataConversionService<?> dataConversionService,
+                                                 DataConversionService dataConversionService,
                                                  @Parameter String name) {
         super(runtimeEntityRegistry, dataConversionService);
         this.sessionFactory = sessionFactory;

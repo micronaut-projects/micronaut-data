@@ -64,7 +64,7 @@ final class DefaultHibernateReactiveSynchronousRepositoryOperations implements B
                                                                    SessionFactory sessionFactory,
                                                                    @Parameter String name,
                                                                    RuntimeEntityRegistry runtimeEntityRegistry,
-                                                                   DataConversionService<?> dataConversionService) {
+                                                                   DataConversionService dataConversionService) {
         this.applicationContext = applicationContext;
         this.reactiveRepositoryOperations = new DefaultHibernateReactiveRepositoryOperations(sessionFactory, runtimeEntityRegistry, dataConversionService, name);
     }

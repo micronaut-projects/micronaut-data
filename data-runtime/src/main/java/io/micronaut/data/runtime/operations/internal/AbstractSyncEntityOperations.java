@@ -61,7 +61,7 @@ public abstract class AbstractSyncEntityOperations<Ctx extends OperationContext,
                                            SyncCascadeOperations<Ctx> cascadeOperations,
                                            EntityEventListener<Object> entityEventListener,
                                            RuntimePersistentEntity<T> persistentEntity,
-                                           ConversionService<?> conversionService,
+                                           ConversionService conversionService,
                                            T entity,
                                            boolean insert) {
         super(entityEventListener, persistentEntity, conversionService);
