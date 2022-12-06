@@ -2363,6 +2363,27 @@ abstract class AbstractRepositorySpec extends Specification {
         bookRepository.delete(book2)
     }
 
+    void "test author page total size"() {
+        given:
+        def author = new Author()
+        author.name = "author"
+        authorRepository.save(author)
+        def book = new Book()
+        book.title = "book"
+        book.author = author
+        def book2 = new Book()
+        book2.title = "book2"
+        book2.author = author
+        bookRepository.save(book)
+        bookRepository.save(book2)
+        when:
+        def authorPage = authorRepository.findAll(Pageable.UNPAGED)
+        def bookPage = bookRepository.findAll(Pageable.from(0, 10, Sort.of(Sort.Order.asc("title"))))
+        then:
+        authorPage.totalSize == 1
+        bookPage.totalSize == 2
+    }
+
     private GregorianCalendar getYearMonthDay(Date dateCreated) {
         def cal = dateCreated.toCalendar()
         def localDate = LocalDate.of(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH) + 1, cal.get(Calendar.DAY_OF_MONTH))
