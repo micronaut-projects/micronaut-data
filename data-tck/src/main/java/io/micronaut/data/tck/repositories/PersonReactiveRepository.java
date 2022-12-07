@@ -80,5 +80,5 @@ public interface PersonReactiveRepository extends ReactorPageableRepository<Pers
     @Query("DELETE FROM person WHERE name = :xyz")
     Mono<Long> deleteCustomSingleNoEntity(String xyz);
 
-    Mono<Long> updatePerson(@Id Long id, @Parameter("name") int age);
+    Mono<Long> updatePerson(@Id Long id, @Parameter("age") int age);
 }
