@@ -151,6 +151,8 @@ public interface PersonRepository extends CrudRepository<Person, Long>, Pageable
 
     Person updateByNameAndAge(String name, int age, Person person);
 
+    Long updatePerson(@Id Long id, int age);
+
     class Specifications {
 
         public static PredicateSpecification<Person> nameEquals(String name) {

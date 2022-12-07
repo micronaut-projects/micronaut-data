@@ -114,6 +114,12 @@ To update an instance use `save` again:
 
 snippet::example.BookRepositorySpec[project-base="doc-examples/hibernate-example", tags="update", indent="0"]
 
+For partial entity updates, custom update method like this can be used:
+
+snippet::example.BookRepository[project-base="doc-examples/hibernate-example", source="main" tags="update3", indent="0"]
+
+In this example, in order for update to be propagated in the current session you can add `QueryHint` annotation to force session flush.
+
 === Deleting an Instance (Delete)
 
 To delete an instance use `deleteById`:

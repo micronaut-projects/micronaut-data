@@ -24,7 +24,7 @@ import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Stepwise
 
-@MicronautTest(transactional = false, packages = "io.micronaut.data.tck.entities")
+@MicronautTest(transactional = true, packages = "io.micronaut.data.tck.entities")
 @Stepwise
 class CrudRepositorySpec extends Specification implements PostgresHibernateReactiveProperties {
 
@@ -130,17 +130,28 @@ class CrudRepositorySpec extends Specification implements PostgresHibernateReact
     void "test update one"() {
         when:"A person is retrieved"
         def fred = crudRepository.findByName("Fred").block()
+        def id = fred.id
+        def jack = crudRepository.findByName("Jack").block()
 
         then:"The person is present"
         fred != null
+        jack == null
 
-        when:"The person is updated"
-        crudRepository.updatePerson(fred.id, "Jack").block()
+        when:"The person name is updated"
+        crudRepository.updatePerson(id, "Jack").block()
+        fred = crudRepository.findByName("Fred").block()
+        jack = crudRepository.findByName("Jack").block()
 
-        then:"the person is updated"
-        crudRepository.findByName("Fred").block() == null
-        crudRepository.findByName("Jack").block() != null
+        then:"the person name is updated"
+        fred == null
+        jack != null
+        jack.name == "Jack"
 
+        when:"The person age is updated"
+        def numUpdated = crudRepository.updatePerson(id, 35).block()
+        then:
+        numUpdated == 1
+        crudRepository.findById(id).block().age == 35
     }
 
     void "test delete all"() {

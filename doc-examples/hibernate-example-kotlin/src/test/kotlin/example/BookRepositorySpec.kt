@@ -73,6 +73,11 @@ class BookRepositorySpec {
         book = bookRepository.findById(id).orElse(null)
         assertEquals("Changed", book.title)
 
+        // Partially update book via executeUpdate
+        bookRepository.updatePages(id, 1200)
+        book = bookRepository.findById(id).orElse(null)
+        assertEquals(1200, book.pages)
+
         // Delete: Delete the book
         // tag::delete[]
         bookRepository.deleteById(id)
