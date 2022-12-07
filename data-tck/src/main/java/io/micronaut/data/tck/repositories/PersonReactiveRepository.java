@@ -54,7 +54,7 @@ public interface PersonReactiveRepository extends ReactorPageableRepository<Pers
     Mono<Page<Person>> findByNameLike(String name, Pageable pageable);
 
     @Query(value = "select * from person person_ where person_.name like :n",
-            countQuery = "select count(*) from person person_ where person_.name like :n")
+        countQuery = "select count(*) from person person_ where person_.name like :n")
     Mono<Page<Person>> findPeople(String n, Pageable pageable);
 
     @Query("SELECT MAX(id) FROM person WHERE id = -1")
@@ -80,5 +80,4 @@ public interface PersonReactiveRepository extends ReactorPageableRepository<Pers
     @Query("DELETE FROM person WHERE name = :xyz")
     Mono<Long> deleteCustomSingleNoEntity(String xyz);
 
-    Mono<Long> updatePerson(@Id Long id, @Parameter("age") int age);
 }

@@ -146,12 +146,6 @@ class CrudRepositorySpec extends Specification implements PostgresHibernateReact
         fred == null
         jack != null
         jack.name == "Jack"
-
-        when:"The person age is updated"
-        def numUpdated = crudRepository.updatePerson(id, 35).block()
-        then:
-        numUpdated == 1
-        crudRepository.findById(id).block().age == 35
     }
 
     void "test delete all"() {
