@@ -2381,6 +2381,8 @@ abstract class AbstractRepositorySpec extends Specification {
         def bookPage = bookRepository.findAll(Pageable.from(0, 10, Sort.of(Sort.Order.asc("title"))))
         then:
         authorPage.totalSize == 1
+        authorPage.content.size() == 1
+        authorPage.content[0].books.size() == 2
         bookPage.totalSize == 2
     }
 
