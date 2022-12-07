@@ -3,6 +3,7 @@
 package example
 
 import io.micronaut.context.annotation.Executable
+import io.micronaut.context.annotation.Parameter
 import io.micronaut.data.annotation.*
 import io.micronaut.data.model.*
 import io.micronaut.data.repository.CrudRepository
@@ -94,7 +95,7 @@ interface BookRepository : CrudRepository<Book, Long> { // <2>
 
     // tag::update3[]
     @QueryHint(name = "javax.persistence.FlushModeType", value = "AUTO")
-    fun updatePages(@Id id: Long?, pages: Int)
+    fun updatePages(@Id id: Long?, @Parameter("pages") pages: Int)
     // end::update3[]
 
     // tag::updateCustomQuery[]

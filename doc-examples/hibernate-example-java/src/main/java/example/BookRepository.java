@@ -2,6 +2,7 @@
 // tag::repository[]
 package example;
 
+import io.micronaut.context.annotation.Parameter;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.QueryHint;
@@ -99,7 +100,7 @@ interface BookRepository extends CrudRepository<Book, Long> { // <2>
 
     // tag::update3[]
     @QueryHint(name = "javax.persistence.FlushModeType", value = "AUTO")
-    void updatePages(@Id Long id, int pages);
+    void updatePages(@Id Long id, @Parameter("pages") int pages);
     // end::update3[]
 
     // tag::updateCustomQuery[]
