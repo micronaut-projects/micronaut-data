@@ -146,7 +146,6 @@ public final class Projections {
             if (value.startsWith(prefix)) {
                 String remaining = value.substring(prefix.length());
                 String propertyName = NameUtils.decapitalize(remaining);
-                //Optional<String> path = entityRoot.getPersistentEntity().getPath(propertyName);
                 PersistentPropertyPath<?> propertyPath = findFunction.apply(entityRoot, propertyName);
                 if (propertyPath == null) {
                     throw new IllegalStateException("Cannot project on non-existent property " + propertyName);

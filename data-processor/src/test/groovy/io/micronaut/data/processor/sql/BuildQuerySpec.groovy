@@ -57,7 +57,7 @@ interface MyInterface extends CrudRepository<Author, Long> {
 
     void "test POSTGRES quoted syntax"() {
         given:
-        def repository = buildRepository('test.MyInterface2', """
+            def repository = buildRepository('test.MyInterface2', """
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.tck.entities.CustomBook;
@@ -67,19 +67,19 @@ import io.micronaut.data.tck.entities.CustomBook;
 interface MyInterface2 extends CrudRepository<CustomBook, Long> {
 }
 """
-        )
+            )
 
         when:
-        String query = getQuery(repository.getRequiredMethod("findById", Long))
+            String query = getQuery(repository.getRequiredMethod("findById", Long))
 
         then:
-        query == 'SELECT custom_book_."id",custom_book_."title" FROM "CustomBooK" custom_book_ WHERE (custom_book_."id" = ?)'
+            query == 'SELECT custom_book_."id",custom_book_."title" FROM "CustomBooK" custom_book_ WHERE (custom_book_."id" = ?)'
     }
 
 
     void "test POSTGRES custom query"() {
         given:
-        def repository = buildRepository('test.MyInterface2', """
+            def repository = buildRepository('test.MyInterface2', """
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.tck.entities.CustomBook;
@@ -93,16 +93,16 @@ interface MyInterface2 extends CrudRepository<CustomBook, Long> {
 
 }
 """
-        )
+            )
 
-        def method = repository.getRequiredMethod("somethingWithCast", String[])
+            def method = repository.getRequiredMethod("somethingWithCast", String[])
         when:
-        String query = getQuery(method)
-        String rawQuery = getRawQuery(method)
+            String query = getQuery(method)
+            String rawQuery = getRawQuery(method)
 
         then:
-        query == 'SELECT * FROM arrays_entity WHERE stringArray::varchar[] && ARRAY[:nickNames]'
-        rawQuery == 'SELECT * FROM arrays_entity WHERE stringArray::varchar[] && ARRAY[?]'
+            query == 'SELECT * FROM arrays_entity WHERE stringArray::varchar[] && ARRAY[:nickNames]'
+            rawQuery == 'SELECT * FROM arrays_entity WHERE stringArray::varchar[] && ARRAY[?]'
     }
 
     void "test join on repository type that inherits from CrudRepository"() {
@@ -152,7 +152,7 @@ interface MyInterface extends CrudRepository<AliasBook, Long> {
         'findAliasBook'         | 'SELECT alias_book_.`id`,alias_book_.`title`,alias_book_.`total_pages`,alias_book_.`last_updated`,alias_book_.`author_id`,alias_book_.`co_author_id`,au_ob.`id` AS au_obid,au_ob.`title` AS au_obtitle,au_ob.`total_pages` AS au_obtotal_pages,au_ob.`last_updated` AS au_oblast_updated,au_ob.`author_id` AS au_obauthor_id,au_ob.`co_author_id` AS au_obco_author_id,au.`name` AS auname,au.`nick_name` AS aunick_name FROM `alias_book` alias_book_ INNER JOIN `alias_author` au ON alias_book_.`author_id`=au.`id` INNER JOIN `alias_book` au_ob ON au.`id`=au_ob.`author_id` WHERE (alias_book_.`id` = ?)'
     }
 
-    void "test to-one join on repository type that inherits from CrudRepository"() {
+      void "test to-one join on repository type that inherits from CrudRepository"() {
         given:
         def repository = buildRepository('test.MyInterface', """
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
@@ -346,7 +346,7 @@ ${entity('SomeEntity', [internetNumber: Long])}
 
     void "test multiple join query"() {
         given:
-        def repository = buildRepository('test.MealRepository', """
+            def repository = buildRepository('test.MealRepository', """
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.tck.entities.Meal;
@@ -360,29 +360,29 @@ interface MealRepository extends CrudRepository<Meal, Long> {
 """)
 
         when:
-        def countMethod = repository.getRequiredMethod("countDistinctByFoodsAlternativeMealCurrentBloodGlucoseInList", List)
+            def countMethod = repository.getRequiredMethod("countDistinctByFoodsAlternativeMealCurrentBloodGlucoseInList", List)
 
         then:
-        getQuery(countMethod) == 'SELECT COUNT(*) FROM `meal` meal_ INNER JOIN `food` meal_foods_ ON meal_.`mid`=meal_foods_.`fk_meal_id` INNER JOIN `meal` meal_foods_alternative_meal_ ON meal_foods_.`fk_alt_meal`=meal_foods_alternative_meal_.`mid` WHERE (meal_foods_alternative_meal_.`current_blood_glucose` IN (?))'
-        isExpandableQuery(countMethod)
-        anyParameterExpandable(countMethod)
-
-        when:
-        def saveMethod = repository.findPossibleMethods("save").findAny().get()
-        then:
-        !isExpandableQuery(saveMethod)
-        !anyParameterExpandable(saveMethod)
+            getQuery(countMethod) == 'SELECT COUNT(*) FROM `meal` meal_ INNER JOIN `food` meal_foods_ ON meal_.`mid`=meal_foods_.`fk_meal_id` INNER JOIN `meal` meal_foods_alternative_meal_ ON meal_foods_.`fk_alt_meal`=meal_foods_alternative_meal_.`mid` WHERE (meal_foods_alternative_meal_.`current_blood_glucose` IN (?))'
+            isExpandableQuery(countMethod)
+            anyParameterExpandable(countMethod)
 
         when:
-        def updateMethod = repository.findPossibleMethods("update").findAny().get()
+            def saveMethod = repository.findPossibleMethods("save").findAny().get()
         then:
-        !isExpandableQuery(updateMethod)
-        !anyParameterExpandable(updateMethod)
+            !isExpandableQuery(saveMethod)
+            !anyParameterExpandable(saveMethod)
+
+        when:
+            def updateMethod = repository.findPossibleMethods("update").findAny().get()
+        then:
+            !isExpandableQuery(updateMethod)
+            !anyParameterExpandable(updateMethod)
     }
 
     void "test find by relation"() {
         given:
-        def repository = buildRepository('test.UserRoleRepository', """
+            def repository = buildRepository('test.UserRoleRepository', """
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.core.annotation.NonNull;
@@ -401,20 +401,20 @@ interface UserRoleRepository extends GenericRepository<UserRole, UserRoleId> {
 }
 """)
 
-        def method = repository.findPossibleMethods("findRoleByUser").findAny().get()
-        def query = getQuery(method)
+            def method = repository.findPossibleMethods("findRoleByUser").findAny().get()
+            def query = getQuery(method)
 
         expect:
-        query == 'SELECT user_role_id_role_.`id`,user_role_id_role_.`name` FROM `user_role_composite` user_role_ INNER JOIN `role_composite` user_role_id_role_ ON user_role_.`id_role_id`=user_role_id_role_.`id` WHERE (user_role_.`id_user_id` = ?)'
-        getParameterBindingIndexes(method) == ["0"] as String[]
-        getParameterBindingPaths(method) == ["id"] as String[]
-        getParameterPropertyPaths(method) == ["id.user.id"] as String[]
-        getDataTypes(method) == [DataType.LONG]
+            query == 'SELECT user_role_id_role_.`id`,user_role_id_role_.`name` FROM `user_role_composite` user_role_ INNER JOIN `role_composite` user_role_id_role_ ON user_role_.`id_role_id`=user_role_id_role_.`id` WHERE (user_role_.`id_user_id` = ?)'
+            getParameterBindingIndexes(method) == ["0"] as String[]
+            getParameterBindingPaths(method) == ["id"] as String[]
+            getParameterPropertyPaths(method) == ["id.user.id"] as String[]
+            getDataTypes(method) == [DataType.LONG]
     }
 
     void "test multiple join query by identity"() {
         given:
-        def repository = buildRepository('test.CitiesRepository', """
+            def repository = buildRepository('test.CitiesRepository', """
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.tck.entities.City;
