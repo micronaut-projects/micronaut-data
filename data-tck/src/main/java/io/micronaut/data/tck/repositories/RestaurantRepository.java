@@ -24,4 +24,6 @@ public interface RestaurantRepository extends CrudRepository<Restaurant, Long> {
     Restaurant findByAddress(Address address);
 
     String getMaxAddressStreetByName(String name);
+
+    String getMinAddressStreetByName(String name);
 }
