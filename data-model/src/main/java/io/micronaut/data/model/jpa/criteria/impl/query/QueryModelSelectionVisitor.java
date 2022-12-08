@@ -76,13 +76,13 @@ public final class QueryModelSelectionVisitor implements SelectionVisitor {
         Expression<?> expression = aggregateExpression.getExpression();
         switch (aggregateExpression.getType()) {
             case SUM:
-                return Projections.sum(CriteriaUtils.requireProperty(expression).getProperty().getName());
+                return Projections.sum(CriteriaUtils.requireProperty(expression).getPathAsString());
             case AVG:
-                return Projections.avg(CriteriaUtils.requireProperty(expression).getProperty().getName());
+                return Projections.avg(CriteriaUtils.requireProperty(expression).getPathAsString());
             case MAX:
-                return Projections.max(CriteriaUtils.requireProperty(expression).getProperty().getName());
+                return Projections.max(CriteriaUtils.requireProperty(expression).getPathAsString());
             case MIN:
-                return Projections.min(CriteriaUtils.requireProperty(expression).getProperty().getName());
+                return Projections.min(CriteriaUtils.requireProperty(expression).getPathAsString());
             case COUNT:
                 if (expression instanceof PersistentEntityRoot) {
                     return Projections.count();
@@ -95,9 +95,9 @@ public final class QueryModelSelectionVisitor implements SelectionVisitor {
             case COUNT_DISTINCT:
                 if (expression instanceof PersistentEntityRoot) {
                     // TODO
-                    return Projections.countDistinct(((PersistentPropertyPath<?>) expression).getProperty().getName());
+                    return Projections.countDistinct(((PersistentPropertyPath<?>) expression).getPathAsString());
                 } else if (expression instanceof PersistentPropertyPath) {
-                    return Projections.countDistinct(((PersistentPropertyPath<?>) expression).getProperty().getName());
+                    return Projections.countDistinct(((PersistentPropertyPath<?>) expression).getPathAsString());
                 } else {
                     throw new IllegalStateException("Illegal expression: " + expression + " for count distinct selection!");
                 }

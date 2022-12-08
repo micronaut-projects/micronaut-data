@@ -22,4 +22,6 @@ import io.micronaut.data.tck.entities.Restaurant;
 public interface RestaurantRepository extends CrudRepository<Restaurant, Long> {
 
     Restaurant findByAddress(Address address);
+
+    String getMaxAddressStreetByName(String name);
 }
