@@ -582,7 +582,7 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
 
     @NonNull
     protected final <T> Expression<?> getProperty(PersistentEntityRoot<T> root, String propertyName) {
-        io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> property = findProperty(root, propertyName);
+        io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<Object> property = findProperty(root, propertyName);
         if (property != null) {
             return property;
         }
@@ -593,7 +593,7 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
     }
 
     @Nullable
-    protected final <T> io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> findProperty(PersistentEntityRoot<T> root, String propertyName) {
+    protected final <T> io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<Object> findProperty(PersistentEntityRoot<T> root, String propertyName) {
         propertyName = NameUtils.decapitalize(propertyName);
         PersistentEntity entity = root.getPersistentEntity();
         PersistentProperty prop = entity.getPropertyByName(propertyName);
