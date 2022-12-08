@@ -8,3 +8,7 @@ micronautBuild {
         baselineVersion = "3.3.0"
     }
 }
+
+dependencies {
+    testRuntimeOnly mnSerde.micronaut.serde.jackson
+}

@@ -33,3 +33,7 @@ project.afterEvaluate {
     nativeCompile.enabled = false
     testNativeImage.enabled = false
 }
+
+dependencies {
+    runtimeOnly mn.snakeyaml
+}

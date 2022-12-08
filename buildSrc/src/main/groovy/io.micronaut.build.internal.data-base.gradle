@@ -50,3 +50,18 @@ tasks.withType(Test).configureEach {
 
 abstract class TestSemaphore implements BuildService<BuildServiceParameters.None> {
 }
+
+configurations.all {
+    resolutionStrategy.dependencySubstitution {
+        rootProject.subprojects.each { p ->
+            if (!p.name.startsWith('test-')) {
+                if (p.name.contains('bom')) {
+                    substitute platform(module("io.micronaut.data:micronaut-${p.name}")) using platform(project(p.path)) because "we want to test with what we're building"
+                } else {
+                    substitute module("io.micronaut.data:micronaut-${p.name}") using project(p.path) because "we want to test with what we're building"
+                    substitute module("io.micronaut.data:${p.name}") using project(p.path) because "we want to test with what we're building"
+                }
+            }
+        }
+    }
+}
