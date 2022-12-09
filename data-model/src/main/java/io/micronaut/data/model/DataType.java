@@ -166,7 +166,7 @@ public enum DataType {
      * Default constructor.
      * @param javaTypes Associated data types.
      */
-    DataType(Class<?>...javaTypes) {
+    DataType(Class<?>... javaTypes) {
         this(false, javaTypes);
     }
 
@@ -175,7 +175,7 @@ public enum DataType {
      * @param isArray Is an array type.
      * @param javaTypes Associated data types.
      */
-    DataType(boolean isArray, Class<?>...javaTypes) {
+    DataType(boolean isArray, Class<?>... javaTypes) {
         this.isArray = isArray;
         this.javaTypes = CollectionUtils.setOf(javaTypes);
     }

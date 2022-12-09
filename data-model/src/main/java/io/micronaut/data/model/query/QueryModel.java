@@ -1385,6 +1385,9 @@ public interface QueryModel extends Criteria {
             this.value = value;
         }
 
+        /**
+         * @return the literal value
+         */
         public Object getValue() {
             return value;
         }
@@ -1435,6 +1438,10 @@ public interface QueryModel extends Criteria {
             return this;
         }
 
+        /**
+         * Sets the alias.
+         * @param alias the alias
+         */
         public void setAlias(String alias) {
             this.alias = alias;
         }
