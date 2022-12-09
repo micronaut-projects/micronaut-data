@@ -26,6 +26,7 @@ import java.util.UUID;
 public class Rating {
     @Id
     @GeneratedValue
+    @Column(columnDefinition = "uuid")
     UUID id;
 
     @Column(nullable = false)

@@ -23,6 +23,7 @@ public class Pet {
 
     @Id
     @GeneratedValue
+    @Column(columnDefinition = "uuid")
     private UUID id;
     private String name;
     @Enumerated(EnumType.STRING)
