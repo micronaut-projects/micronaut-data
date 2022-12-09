@@ -104,7 +104,7 @@ interface FamilyRepository extends GenericRepository<Family, String> {
         findByAddressStateQuery == "SELECT DISTINCT VALUE family_ FROM family family_ JOIN c IN family_.children WHERE (family_.address.state = @p1) ORDER BY c.firstName ASC"
         findByChildrenFirstNameQuery == "SELECT DISTINCT VALUE family_ FROM family family_ JOIN family_children_ IN family_.children WHERE (family_children_.firstName = @p1)"
         findByChildrenPetsGivenNameOrderByChildrenFirstNameQuery == "SELECT DISTINCT VALUE family_ FROM family family_ JOIN family_children_ IN family_.children JOIN family_children_pets_ IN family_children_.pets WHERE (family_children_pets_.givenName = @p1) ORDER BY family_children_.firstName ASC"
-        findChildrenByChildrenPetsGivenNameQuery == "SELECT family_children_.firstName,family_children_.grade,family_children_.gender FROM family family_ JOIN family_children_ IN family_.children JOIN family_children_pets_ IN family_children_.pets WHERE (family_children_pets_.givenName = @p1)"
+        findChildrenByChildrenPetsGivenNameQuery == "SELECT family_children_.gender,family_children_.firstName,family_children_.grade FROM family family_ JOIN family_children_ IN family_.children JOIN family_children_pets_ IN family_children_.pets WHERE (family_children_pets_.givenName = @p1)"
         findByIdNotInQuery == "SELECT DISTINCT VALUE family_ FROM family family_ WHERE (family_.id NOT IN (@p1))"
         findByTagsArrayContainsQuery == "SELECT DISTINCT VALUE family_ FROM family family_ WHERE (ARRAY_CONTAINS(family_.tags,@p1,true))"
         findLastNameByIdQuery == "SELECT VALUE family_.lastName FROM family family_ WHERE (family_.id = @p1)"

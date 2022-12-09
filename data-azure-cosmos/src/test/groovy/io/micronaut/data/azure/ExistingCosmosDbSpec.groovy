@@ -95,7 +95,6 @@ class ExistingCosmosDbSpec extends Specification implements AzureCosmosTestPrope
             bookContainerProperties.defaultTimeToLiveInSeconds == BOOK_TIME_TO_LIVE
             bookContainerProperties.uniqueKeyPolicy.uniqueKeys.size() == 1
             bookContainerProperties.uniqueKeyPolicy.uniqueKeys[0].paths == Arrays.asList("/title", "/totalPages")
-            bookContainerProperties.indexingPolicy.automatic
             bookContainerProperties.indexingPolicy.indexingMode == IndexingMode.CONSISTENT
             bookContainerProperties.indexingPolicy.includedPaths == Arrays.asList(new IncludedPath("/*"), new IncludedPath("/title/*"))
             // by default _etag is excluded

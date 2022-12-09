@@ -211,6 +211,7 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
         when:
             def totalPages = loadedBook1.totalPages
             loadedBook1.totalPages = totalPages + 1
+            def lastUpdated = loadedBook1.lastUpdated
             bookRepository.update(loadedBook1)
             foundBook = bookRepository.findById(loadedBook1.id).get()
             loadedBook1.version != version1
@@ -218,7 +219,7 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
             foundBook.id == loadedBook1.id
             foundBook.totalPages == totalPages + 1
             foundBook.created == loadedBook1.created
-            foundBook.lastUpdated != loadedBook1.lastUpdated
+            foundBook.lastUpdated != lastUpdated
             foundBook.version != version1
         when:
             def latestVersion = foundBook.version
