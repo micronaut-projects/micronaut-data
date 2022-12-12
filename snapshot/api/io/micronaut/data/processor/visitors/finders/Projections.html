@@ -230,9 +230,10 @@ extends java.lang.Object</pre>
 </tr>
 <tr id="i0" class="altColor">
 <td class="colFirst"><code>static jakarta.persistence.criteria.Selection&lt;?&gt;</code></td>
-<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#find(io.micronaut.data.model.jpa.criteria.PersistentEntityRoot,io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder,java.lang.String)">find</a></span>&#8203;(<a href="../../../model/jpa/criteria/PersistentEntityRoot.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityRoot</a>&lt;?&gt;&nbsp;entityRoot,
+<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#find(io.micronaut.data.model.jpa.criteria.PersistentEntityRoot,io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder,java.lang.String,java.util.function.BiFunction)">find</a></span>&#8203;(<a href="../../../model/jpa/criteria/PersistentEntityRoot.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityRoot</a>&lt;?&gt;&nbsp;entityRoot,
     <a href="../../../model/jpa/criteria/PersistentEntityCriteriaBuilder.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaBuilder</a>&nbsp;cb,
-    java.lang.String&nbsp;value)</code></th>
+    java.lang.String&nbsp;value,
+    java.util.function.BiFunction&lt;<a href="../../../model/jpa/criteria/PersistentEntityRoot.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityRoot</a>&lt;?&gt;,&#8203;java.lang.String,&#8203;<a href="../../../model/jpa/criteria/PersistentPropertyPath.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentPropertyPath</a>&lt;?&gt;&gt;&nbsp;findFunction)</code></th>
 <td class="colLast">&nbsp;</td>
 </tr>
 </table>
@@ -278,7 +279,7 @@ extends java.lang.Object</pre>
 <!--   -->
 </a>
 <h3>Method Detail</h3>
-<a id="find(io.micronaut.data.model.jpa.criteria.PersistentEntityRoot,io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder,java.lang.String)">
+<a id="find(io.micronaut.data.model.jpa.criteria.PersistentEntityRoot,io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder,java.lang.String,java.util.function.BiFunction)">
 <!--   -->
 </a>
 <ul class="blockListLast">
@@ -289,7 +290,8 @@ public static&nbsp;jakarta.persistence.criteria.Selection&lt;?&gt;&nbsp;find&#82
                                                              <a href="../../../model/jpa/criteria/PersistentEntityRoot.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityRoot</a>&lt;?&gt;&nbsp;entityRoot,
                                                              @NonNull
                                                              <a href="../../../model/jpa/criteria/PersistentEntityCriteriaBuilder.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaBuilder</a>&nbsp;cb,
-                                                             java.lang.String&nbsp;value)</pre>
+                                                             java.lang.String&nbsp;value,
+                                                             java.util.function.BiFunction&lt;<a href="../../../model/jpa/criteria/PersistentEntityRoot.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityRoot</a>&lt;?&gt;,&#8203;java.lang.String,&#8203;<a href="../../../model/jpa/criteria/PersistentPropertyPath.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentPropertyPath</a>&lt;?&gt;&gt;&nbsp;findFunction)</pre>
 </li>
 </ul>
 </li>
