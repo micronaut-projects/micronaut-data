@@ -40,7 +40,7 @@ public final class MultiTenancyConfiguration {
     private MultiTenancyMode mode;
 
     /**
-     * Multi-tenancy mode specified
+     * Multi-tenancy mode specified.
      *
      * @return The multi tenancy mode set or a null if not set
      */
@@ -50,7 +50,7 @@ public final class MultiTenancyConfiguration {
     }
 
     /**
-     * Sets the multi-tenancy mode
+     * Sets the multi-tenancy mode.
      * @param mode The multi-tenancy mode
      */
     public void setMode(MultiTenancyMode mode) {
