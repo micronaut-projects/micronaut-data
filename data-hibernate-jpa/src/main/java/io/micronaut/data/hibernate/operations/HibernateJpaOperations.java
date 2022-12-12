@@ -337,7 +337,9 @@ public class HibernateJpaOperations extends AbstractHibernateOperations<Session,
             EntityManager session = sessionFactory.getCurrentSession();
             if (storedQuery != null) {
                 executeEntityUpdate(storedQuery, operation.getEntity());
-                flushIfNecessary(session, operation.getAnnotationMetadata(), true);
+                if (flushIfNecessary(session, operation.getAnnotationMetadata())) {
+                    session.remove(operation.getEntity());
+                }
                 return operation.getEntity();
             }
             T entity = operation.getEntity();
@@ -357,7 +359,11 @@ public class HibernateJpaOperations extends AbstractHibernateOperations<Session,
                 for (T entity : operation) {
                     executeEntityUpdate(storedQuery, entity);
                 }
-                flushIfNecessary(entityManager, operation.getAnnotationMetadata(), true);
+                if (flushIfNecessary(entityManager, operation.getAnnotationMetadata())) {
+                    for (T entity : operation) {
+                        entityManager.remove(entity);
+                    }
+                }
                 return operation;
             }
             List<T> results = new ArrayList<>();
@@ -380,7 +386,7 @@ public class HibernateJpaOperations extends AbstractHibernateOperations<Session,
                 for (T entity : operation) {
                     entityManager.persist(entity);
                 }
-                flushIfNecessary(entityManager, operation.getAnnotationMetadata(), true);
+                flushIfNecessary(entityManager, operation.getAnnotationMetadata());
                 return operation;
             } else {
                 return Collections.emptyList();
@@ -388,11 +394,11 @@ public class HibernateJpaOperations extends AbstractHibernateOperations<Session,
         });
     }
 
-    private void flushIfNecessary(EntityManager entityManager, AnnotationMetadata annotationMetadata) {
-        flushIfNecessary(entityManager, annotationMetadata, false);
+    private boolean flushIfNecessary(EntityManager entityManager, AnnotationMetadata annotationMetadata) {
+        return flushIfNecessary(entityManager, annotationMetadata, false);
     }
 
-    private void flushIfNecessary(EntityManager entityManager, AnnotationMetadata annotationMetadata, boolean clear) {
+    private boolean flushIfNecessary(EntityManager entityManager, AnnotationMetadata annotationMetadata, boolean clear) {
         if (annotationMetadata.hasAnnotation(QueryHint.class)) {
             FlushModeType flushModeType = getFlushModeType(annotationMetadata);
             if (flushModeType == FlushModeType.AUTO) {
@@ -400,8 +406,10 @@ public class HibernateJpaOperations extends AbstractHibernateOperations<Session,
                 if (clear) {
                     entityManager.clear();
                 }
+                return true;
             }
         }
+        return false;
     }
 
     @NonNull
@@ -424,7 +432,9 @@ public class HibernateJpaOperations extends AbstractHibernateOperations<Session,
             Session session = getCurrentSession();
             if (storedQuery != null) {
                 int numAffected = executeEntityUpdate(storedQuery, operation.getEntity());
-                flushIfNecessary(session, operation.getAnnotationMetadata(), true);
+                if (flushIfNecessary(session, operation.getAnnotationMetadata())) {
+                    session.remove(operation.getEntity());
+                }
                 return numAffected;
             }
             session.remove(operation.getEntity());
@@ -442,7 +452,11 @@ public class HibernateJpaOperations extends AbstractHibernateOperations<Session,
                 for (T entity : operation) {
                     i += executeEntityUpdate(storedQuery, entity);
                 }
-                flushIfNecessary(session, operation.getAnnotationMetadata(), true);
+                if (flushIfNecessary(session, operation.getAnnotationMetadata())) {
+                    for (T entity : operation) {
+                        session.remove(entity);
+                    }
+                }
                 return i;
             }
             int i = 0;
