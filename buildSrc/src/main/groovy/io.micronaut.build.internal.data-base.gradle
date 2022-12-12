@@ -37,7 +37,7 @@ def testSemaphore = gradle.sharedServices.registerIfAbsent("testSemaphore", Test
 
 tasks.withType(Test).configureEach {
     usesService(testSemaphore)
-    jvmArgs '-Xmx2048m'
+    jvmArgs '-Xmx1024m'
     systemProperty "micronaut.cloud.platform", "OTHER"
     if (JavaVersion.current() == JavaVersion.VERSION_15) {
         jvmArgs "--enable-preview"
