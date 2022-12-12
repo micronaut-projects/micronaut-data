@@ -20,6 +20,8 @@ import spock.lang.IgnoreIf
 import spock.lang.Shared
 import spock.lang.Specification
 
+import java.util.concurrent.atomic.AtomicInteger
+
 /**
  * This tests operations with an entity that does not have partition key defined.
  */
@@ -193,23 +195,19 @@ class NoPartitionKeyCosmosDbSpec extends Specification implements AzureCosmosTes
     @Singleton
     static class RequestChargeCosmosDiagnosticsProcessor implements CosmosDiagnosticsProcessor {
 
-        private double requestChargeSum
+        private AtomicInteger requestChargeSum = new AtomicInteger(0)
 
         @Override
         void processDiagnostics(String operationName, @Nullable CosmosDiagnostics cosmosDiagnostics, String activityId, double requestCharge) {
-            synchronized (this) {
-                requestChargeSum += requestCharge
-            }
+            requestChargeSum.addAndGet(Math.ceil(requestCharge).intValue())
         }
 
         void clear() {
-            synchronized (this) {
-                requestChargeSum = 0
-            }
+            requestChargeSum = new AtomicInteger(0)
         }
 
-        double getRequestChargeSum() {
-            return requestChargeSum
+        int getRequestChargeSum() {
+            return requestChargeSum.get()
         }
     }
 }
