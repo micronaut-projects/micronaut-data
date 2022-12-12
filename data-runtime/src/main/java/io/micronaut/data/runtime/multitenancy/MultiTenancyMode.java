@@ -22,7 +22,16 @@ package io.micronaut.data.runtime.multitenancy;
  * @since 3.9.0
  */
 public enum MultiTenancyMode {
+    /**
+     * A separate database with a separate connection pool is used to store each tenants data.
+     */
     DATASOURCE,
+    /**
+     * The same database, but different schemas are used to store each tenants data.
+     */
     SCHEMA,
+    /**
+     * The same database is used with a discriminator used to partition and isolate data.
+     */
     DISCRIMINATOR
 }

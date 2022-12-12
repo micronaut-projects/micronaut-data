@@ -56,6 +56,7 @@ final class DefaultJdbcSchemaHandler implements JdbcSchemaHandler {
                     executeQuery(connection, "ALTER SESSION SET CURRENT_SCHEMA=" + name);
                     break;
                 case SQL_SERVER:
+                case MYSQL:
                     executeQuery(connection, "USE " + name + ";");
                     break;
                 case POSTGRES:
@@ -63,9 +64,6 @@ final class DefaultJdbcSchemaHandler implements JdbcSchemaHandler {
                         DataSettings.QUERY_LOG.trace("Changing the connection schema to: {}", name);
                     }
                     connection.setSchema(name);
-                    break;
-                case MYSQL:
-                    executeQuery(connection, "USE " + name + ";");
                     break;
                 default:
                     executeQuery(connection, "SET SCHEMA " + name + ";");

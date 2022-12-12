@@ -41,7 +41,7 @@ final class DefaultDataSourceTenantResolver implements DataSourceTenantResolver 
 
     private final TenantResolver tenantResolver;
 
-    public DefaultDataSourceTenantResolver(TenantResolver tenantResolver) {
+    DefaultDataSourceTenantResolver(TenantResolver tenantResolver) {
         this.tenantResolver = tenantResolver;
     }
 

@@ -41,7 +41,7 @@ final class DefaultSchemaTenantResolver implements SchemaTenantResolver {
 
     private final TenantResolver tenantResolver;
 
-    public DefaultSchemaTenantResolver(TenantResolver tenantResolver) {
+    DefaultSchemaTenantResolver(TenantResolver tenantResolver) {
         this.tenantResolver = tenantResolver;
     }
 

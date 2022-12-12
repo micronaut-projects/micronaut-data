@@ -16,6 +16,7 @@
 package io.micronaut.data.runtime.multitenancy.conf;
 
 import io.micronaut.context.annotation.ConfigurationProperties;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.runtime.config.DataSettings;
 import io.micronaut.data.runtime.multitenancy.MultiTenancyMode;
 
@@ -38,10 +39,20 @@ public final class MultiTenancyConfiguration {
      */
     private MultiTenancyMode mode;
 
+    /**
+     * Multi-tenancy mode specified
+     *
+     * @return The multi tenancy mode set or a null if not set
+     */
+    @Nullable
     public MultiTenancyMode getMode() {
         return mode;
     }
 
+    /**
+     * Sets the multi-tenancy mode
+     * @param mode The multi-tenancy mode
+     */
     public void setMode(MultiTenancyMode mode) {
         this.mode = mode;
     }
