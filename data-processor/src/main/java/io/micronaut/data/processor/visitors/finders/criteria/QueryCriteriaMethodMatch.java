@@ -375,12 +375,12 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
         return querySequence;
     }
 
-    private <T> io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<Object> findOrderProperty(PersistentEntityRoot<T> root, String propertyName) {
+    private <T> io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> findOrderProperty(PersistentEntityRoot<T> root, String propertyName) {
         if (root.getPersistentEntity().getPropertyByName(propertyName) != null) {
             return root.get(propertyName);
         }
         // Look at association paths
-        io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<Object> property = findProperty(root, propertyName);
+        io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> property = findProperty(root, propertyName);
         if (property != null) {
             return property;
         }
@@ -412,7 +412,7 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
                 if (propertyPath != null) {
                     selectionList.add(propertyPath);
                 } else {
-                    Selection<?> selection = Projections.find(root, cb, projection);
+                    Selection<?> selection = Projections.find(root, cb, projection, this::findProperty);
                     if (selection != null) {
                         selectionList.add(selection);
                     }

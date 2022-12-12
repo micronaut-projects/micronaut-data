@@ -3,6 +3,7 @@ package io.micronaut.data.azure
 import com.azure.cosmos.CosmosClient
 import com.azure.cosmos.CosmosContainer
 import com.azure.cosmos.CosmosDatabase
+import com.azure.cosmos.CosmosDiagnostics
 import com.azure.cosmos.models.CosmosContainerProperties
 import com.azure.cosmos.models.CosmosContainerResponse
 import com.azure.cosmos.models.CosmosDatabaseResponse
@@ -13,6 +14,7 @@ import com.azure.cosmos.models.ThroughputProperties
 import com.azure.cosmos.util.CosmosPagedIterable
 import com.fasterxml.jackson.databind.node.ObjectNode
 import io.micronaut.context.ApplicationContext
+import io.micronaut.context.annotation.Requires
 import io.micronaut.core.type.Argument
 import io.micronaut.core.util.CollectionUtils
 import io.micronaut.core.util.StringUtils
@@ -34,6 +36,7 @@ import io.micronaut.data.azure.repositories.UUIDEntityRepository
 import io.micronaut.data.azure.repositories.UserRepository
 import io.micronaut.data.cosmos.config.CosmosDatabaseConfiguration
 import io.micronaut.data.cosmos.config.StorageUpdatePolicy
+import io.micronaut.data.cosmos.operations.CosmosDiagnosticsProcessor
 import io.micronaut.data.exceptions.OptimisticLockException
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.repository.jpa.criteria.UpdateSpecification
@@ -41,10 +44,13 @@ import io.micronaut.serde.Decoder
 import io.micronaut.serde.Deserializer
 import io.micronaut.serde.SerdeRegistry
 import io.micronaut.serde.jackson.JacksonDecoder
+import jakarta.inject.Singleton
 import jakarta.persistence.criteria.CriteriaBuilder
 import jakarta.persistence.criteria.CriteriaUpdate
 import jakarta.persistence.criteria.Predicate
 import jakarta.persistence.criteria.Root
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import spock.lang.AutoCleanup
 import spock.lang.IgnoreIf
 import spock.lang.Shared
@@ -642,5 +648,16 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
             cosmosBookContainer.throughput.requestUnits == 1200
     }
 
+    @Requires(property = "spec.name", value = "CosmosBasicSpec")
+    @Singleton
+    static class LoggingCosmosDiagnosticsProcessor implements CosmosDiagnosticsProcessor {
+        private static final Logger LOG = LoggerFactory.getLogger(CosmosBasicSpec)
 
+        @Override
+        void processDiagnostics(String operationName, CosmosDiagnostics cosmosDiagnostics, String activityId, double requestCharge) {
+            if (LOG.isInfoEnabled()) {
+                LOG.info("Operation Name: {};\nDiagnostics: {};\nactivityId: {};\nrequestCharge: {}", cosmosDiagnostics, activityId, requestCharge)
+            }
+        }
+    }
 }
