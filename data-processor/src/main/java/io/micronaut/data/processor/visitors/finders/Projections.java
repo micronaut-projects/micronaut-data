@@ -29,6 +29,7 @@ import java.lang.reflect.Modifier;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 /**
@@ -53,14 +54,15 @@ public final class Projections {
     @Nullable
     public static Selection<?> find(@NonNull PersistentEntityRoot<?> entityRoot,
                                     @NonNull PersistentEntityCriteriaBuilder cb,
-                                    String value) {
+                                    String value,
+                                    BiFunction<PersistentEntityRoot<?>, String, PersistentPropertyPath<?>> findFunction) {
         String decapitalized = NameUtils.decapitalize(value);
         Optional<String> path = entityRoot.getPersistentEntity().getPath(decapitalized);
         if (path.isPresent()) {
             return entityRoot.get(path.get());
         }
         for (Projection projection : PROJECTION_LIST) {
-            Selection<?> selection = projection.find(entityRoot, cb, value);
+            Selection<?> selection = projection.find(entityRoot, cb, value, findFunction);
             if (selection != null) {
                 return selection;
             }
@@ -74,9 +76,10 @@ public final class Projections {
     public static class Max extends PrefixedPropertyProjection {
 
         @Override
-        public Selection<?> createProjection(CriteriaBuilder cb, PersistentEntityRoot<?> entityRoot, String propertyName) {
-            PersistentPropertyPath prop = entityRoot.get(propertyName);
-            return prop.isNumeric() ? cb.max(prop) : cb.greatest(prop);
+        public Selection<?> createProjection(CriteriaBuilder cb, PersistentPropertyPath<?> propertyPath) {
+            return propertyPath.isNumeric()
+                ? cb.max((PersistentPropertyPath<? extends Number>) propertyPath)
+                : cb.greatest((PersistentPropertyPath<? extends Comparable>) propertyPath);
         }
 
         @Override
@@ -91,9 +94,10 @@ public final class Projections {
     public static class Min extends PrefixedPropertyProjection {
 
         @Override
-        public Selection<?> createProjection(CriteriaBuilder cb, PersistentEntityRoot<?> entityRoot, String propertyName) {
-            PersistentPropertyPath prop = entityRoot.get(propertyName);
-            return prop.isNumeric() ? cb.min(prop) : cb.least(prop);
+        public Selection<?> createProjection(CriteriaBuilder cb, PersistentPropertyPath<?> propertyPath) {
+            return propertyPath.isNumeric()
+                ? cb.min((PersistentPropertyPath<? extends Number>) propertyPath)
+                : cb.least((PersistentPropertyPath<? extends Comparable>) propertyPath);
         }
 
         @Override
@@ -108,8 +112,8 @@ public final class Projections {
     public static class Sum extends PrefixedPropertyProjection {
 
         @Override
-        public Selection<?> createProjection(CriteriaBuilder cb, PersistentEntityRoot<?> entityRoot, String propertyName) {
-            return cb.sum(entityRoot.get(propertyName));
+        public Selection<?> createProjection(CriteriaBuilder cb, PersistentPropertyPath<?> propertyPath) {
+            return cb.sum((PersistentPropertyPath<? extends Number>) propertyPath);
         }
 
         @Override
@@ -124,8 +128,8 @@ public final class Projections {
     public static class Avg extends PrefixedPropertyProjection {
 
         @Override
-        public Selection<?> createProjection(CriteriaBuilder cb, PersistentEntityRoot<?> entityRoot, String propertyName) {
-            return cb.avg(entityRoot.get(propertyName));
+        public Selection<?> createProjection(CriteriaBuilder cb, PersistentPropertyPath<?> propertyPath) {
+            return cb.avg((PersistentPropertyPath<? extends Number>) propertyPath);
         }
 
         @Override
@@ -137,21 +141,21 @@ public final class Projections {
     private abstract static class PrefixedPropertyProjection implements Projection {
 
         @Override
-        public final Selection<?> find(PersistentEntityRoot<?> entityRoot, PersistentEntityCriteriaBuilder cb, String value) {
+        public final Selection<?> find(PersistentEntityRoot<?> entityRoot, PersistentEntityCriteriaBuilder cb, String value, BiFunction<PersistentEntityRoot<?>, String, PersistentPropertyPath<?>> findFunction) {
             String prefix = getPrefix();
             if (value.startsWith(prefix)) {
                 String remaining = value.substring(prefix.length());
                 String propertyName = NameUtils.decapitalize(remaining);
-                Optional<String> path = entityRoot.getPersistentEntity().getPath(propertyName);
-                if (!path.isPresent()) {
+                PersistentPropertyPath<?> propertyPath = findFunction.apply(entityRoot, propertyName);
+                if (propertyPath == null) {
                     throw new IllegalStateException("Cannot project on non-existent property " + propertyName);
                 }
-                return createProjection(cb, entityRoot, propertyName);
+                return createProjection(cb, propertyPath);
             }
             return null;
         }
 
-        public abstract Selection<?> createProjection(CriteriaBuilder cb, PersistentEntityRoot<?> entityRoot, String propertyName);
+        public abstract Selection<?> createProjection(CriteriaBuilder cb, PersistentPropertyPath<?> propertyPath);
 
         protected abstract String getPrefix();
     }
@@ -161,7 +165,8 @@ public final class Projections {
         @Nullable
         Selection<?> find(@NonNull PersistentEntityRoot<?> entityRoot,
                           @NonNull PersistentEntityCriteriaBuilder cb,
-                          @NonNull String value);
+                          @NonNull String value,
+                          BiFunction<PersistentEntityRoot<?>, String, PersistentPropertyPath<?>> findFunction);
 
     }
 

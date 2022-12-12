@@ -676,15 +676,23 @@ interface RestaurantRepository extends GenericRepository<Restaurant, Long> {
 
     Optional<Restaurant> findByName(String name);
 
-     Restaurant save(Restaurant entity);
+    Restaurant save(Restaurant entity);
+
+    Restaurant findByAddressStreet(String street);
+
+    String getMaxAddressStreetByName(String name);
 }
 
 """)
 
         def findByNameQuery = getQuery(repository.getRequiredMethod("findByName", String))
         def saveQuery = getQuery(repository.getRequiredMethod("save", Restaurant))
+        def findByAddressStreetQuery = getQuery(repository.getRequiredMethod("findByAddressStreet", String))
+        def getMaxAddressStreetByNameQuery = getQuery(repository.getRequiredMethod("getMaxAddressStreetByName", String))
         expect:
         findByNameQuery == 'SELECT restaurant_.`id`,restaurant_.`name`,restaurant_.`address_street`,restaurant_.`address_zip_code`,restaurant_.`hqaddress_street`,restaurant_.`hqaddress_zip_code` FROM `restaurant` restaurant_ WHERE (restaurant_.`name` = ?)'
         saveQuery == 'INSERT INTO `restaurant` (`name`,`address_street`,`address_zip_code`,`hqaddress_street`,`hqaddress_zip_code`) VALUES (?,?,?,?,?)'
+        findByAddressStreetQuery == 'SELECT restaurant_.`id`,restaurant_.`name`,restaurant_.`address_street`,restaurant_.`address_zip_code`,restaurant_.`hqaddress_street`,restaurant_.`hqaddress_zip_code` FROM `restaurant` restaurant_ WHERE (restaurant_.`address_street` = ?)'
+        getMaxAddressStreetByNameQuery == 'SELECT MAX(restaurant_.`address_street`) FROM `restaurant` restaurant_ WHERE (restaurant_.`name` = ?)'
     }
 }
