@@ -2018,6 +2018,10 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 </dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/transaction/interceptor/CoroutineTxHelper.html#%3Cinit%3E()">CoroutineTxHelper()</a></span> - Constructor for class io.micronaut.transaction.interceptor.<a href="io/micronaut/transaction/interceptor/CoroutineTxHelper.html" title="class in io.micronaut.transaction.interceptor">CoroutineTxHelper</a></dt>
 <dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/cosmos/common/CosmosUtils.html#cosmosAccessException(io.micronaut.data.cosmos.operations.CosmosDiagnosticsProcessor,java.lang.String,java.lang.String,java.lang.Throwable)">cosmosAccessException(CosmosDiagnosticsProcessor, String, String, Throwable)</a></span> - Static method in class io.micronaut.data.cosmos.common.<a href="io/micronaut/data/cosmos/common/CosmosUtils.html" title="class in io.micronaut.data.cosmos.common">CosmosUtils</a></dt>
+<dd>
+<div class="block">Returns <a href="io/micronaut/data/cosmos/common/CosmosAccessException.html" title="class in io.micronaut.data.cosmos.common"><code>CosmosAccessException</code></a> and processes diagnostics if wrapped exception is <code>CosmosException</code>.</div>
+</dd>
 <dt><a href="io/micronaut/data/cosmos/common/CosmosAccessException.html" title="class in io.micronaut.data.cosmos.common"><span class="typeNameLink">CosmosAccessException</span></a> - Exception in <a href="io/micronaut/data/cosmos/common/package-summary.html">io.micronaut.data.cosmos.common</a></dt>
 <dd>
 <div class="block">Cosmos Db data access exception.</div>
@@ -2044,6 +2048,10 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <dd>
 <div class="block">Throughput settings for database.</div>
 </dd>
+<dt><a href="io/micronaut/data/cosmos/operations/CosmosDiagnosticsProcessor.html" title="interface in io.micronaut.data.cosmos.operations"><span class="typeNameLink">CosmosDiagnosticsProcessor</span></a> - Interface in <a href="io/micronaut/data/cosmos/operations/package-summary.html">io.micronaut.data.cosmos.operations</a></dt>
+<dd>
+<div class="block">The Cosmos diagnostics processor interface.</div>
+</dd>
 <dt><a href="io/micronaut/data/cosmos/common/CosmosEntity.html" title="class in io.micronaut.data.cosmos.common"><span class="typeNameLink">CosmosEntity</span></a> - Class in <a href="io/micronaut/data/cosmos/common/package-summary.html">io.micronaut.data.cosmos.common</a></dt>
 <dd>
 <div class="block">Model holding cosmos entity fields like container name, partition key, version field.</div>
@@ -2066,6 +2074,10 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 </dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/document/model/query/builder/CosmosSqlQueryBuilder.html#%3Cinit%3E(io.micronaut.core.annotation.AnnotationMetadata)">CosmosSqlQueryBuilder(AnnotationMetadata)</a></span> - Constructor for class io.micronaut.data.document.model.query.builder.<a href="io/micronaut/data/document/model/query/builder/CosmosSqlQueryBuilder.html" title="class in io.micronaut.data.document.model.query.builder">CosmosSqlQueryBuilder</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/cosmos/common/CosmosUtils.html" title="class in io.micronaut.data.cosmos.common"><span class="typeNameLink">CosmosUtils</span></a> - Class in <a href="io/micronaut/data/cosmos/common/package-summary.html">io.micronaut.data.cosmos.common</a></dt>
+<dd>
+<div class="block">The utility class for Cosmos operations, currently used for diagnostic processing and error handling.</div>
+</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/factory/Projections.html#count()">count()</a></span> - Static method in class io.micronaut.data.model.query.factory.<a href="io/micronaut/data/model/query/factory/Projections.html" title="class in io.micronaut.data.model.query.factory">Projections</a></dt>
 <dd>
 <div class="block">Projection that returns the number of records from the query.</div>
@@ -2299,6 +2311,10 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 </dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/mongodb/conf/MongoDataConfiguration.html#CREATE_COLLECTIONS_PROPERTY">CREATE_COLLECTIONS_PROPERTY</a></span> - Static variable in class io.micronaut.data.mongodb.conf.<a href="io/micronaut/data/mongodb/conf/MongoDataConfiguration.html" title="class in io.micronaut.data.mongodb.conf">MongoDataConfiguration</a></dt>
 <dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/cosmos/operations/CosmosDiagnosticsProcessor.html#CREATE_CONTAINER_IF_NOT_EXISTS">CREATE_CONTAINER_IF_NOT_EXISTS</a></span> - Static variable in interface io.micronaut.data.cosmos.operations.<a href="io/micronaut/data/cosmos/operations/CosmosDiagnosticsProcessor.html" title="interface in io.micronaut.data.cosmos.operations">CosmosDiagnosticsProcessor</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/cosmos/operations/CosmosDiagnosticsProcessor.html#CREATE_DATABASE_IF_NOT_EXISTS">CREATE_DATABASE_IF_NOT_EXISTS</a></span> - Static variable in interface io.micronaut.data.cosmos.operations.<a href="io/micronaut/data/cosmos/operations/CosmosDiagnosticsProcessor.html" title="interface in io.micronaut.data.cosmos.operations">CosmosDiagnosticsProcessor</a></dt>
+<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/config/SchemaGenerate.html#CREATE_DROP">CREATE_DROP</a></span> - io.micronaut.data.runtime.config.<a href="io/micronaut/data/runtime/config/SchemaGenerate.html" title="enum in io.micronaut.data.runtime.config">SchemaGenerate</a></dt>
 <dd>
 <div class="block">Drop and recreate the schema.</div>
@@ -2307,6 +2323,8 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <dd>
 <div class="block">Database (or container) will be created if not exists with given properties from the configuration.</div>
 </dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/cosmos/operations/CosmosDiagnosticsProcessor.html#CREATE_ITEM">CREATE_ITEM</a></span> - Static variable in interface io.micronaut.data.cosmos.operations.<a href="io/micronaut/data/cosmos/operations/CosmosDiagnosticsProcessor.html" title="interface in io.micronaut.data.cosmos.operations">CosmosDiagnosticsProcessor</a></dt>
+<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/transaction/support/AbstractTransactionStatus.html#createAndHoldSavepoint()">createAndHoldSavepoint()</a></span> - Method in class io.micronaut.transaction.support.<a href="io/micronaut/transaction/support/AbstractTransactionStatus.html" title="class in io.micronaut.transaction.support">AbstractTransactionStatus</a></dt>
 <dd>
 <div class="block">Create a savepoint and hold it for the transaction.</div>
@@ -3058,7 +3076,7 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <dd>
 <div class="block">The reactive Cosmos DB repository operations implementation.</div>
 </dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/cosmos/operations/DefaultReactiveCosmosRepositoryOperations.html#%3Cinit%3E(java.util.List,io.micronaut.data.runtime.date.DateTimeProvider,io.micronaut.data.model.runtime.RuntimeEntityRegistry,io.micronaut.data.runtime.convert.DataConversionService,io.micronaut.data.model.runtime.AttributeConverterRegistry,com.azure.cosmos.CosmosAsyncClient,io.micronaut.data.cosmos.operations.CosmosSerde,io.micronaut.data.cosmos.config.CosmosDatabaseConfiguration)">DefaultReactiveCosmosRepositoryOperations(List&lt;MediaTypeCodec&gt;, DateTimeProvider&lt;Object&gt;, RuntimeEntityRegistry, DataConversionService&lt;?&gt;, AttributeConverterRegistry, CosmosAsyncClient, CosmosSerde, CosmosDatabaseConfiguration)</a></span> - Constructor for class io.micronaut.data.cosmos.operations.<a href="io/micronaut/data/cosmos/operations/DefaultReactiveCosmosRepositoryOperations.html" title="class in io.micronaut.data.cosmos.operations">DefaultReactiveCosmosRepositoryOperations</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/cosmos/operations/DefaultReactiveCosmosRepositoryOperations.html#%3Cinit%3E(java.util.List,io.micronaut.data.runtime.date.DateTimeProvider,io.micronaut.data.model.runtime.RuntimeEntityRegistry,io.micronaut.data.runtime.convert.DataConversionService,io.micronaut.data.model.runtime.AttributeConverterRegistry,com.azure.cosmos.CosmosAsyncClient,io.micronaut.data.cosmos.operations.CosmosSerde,io.micronaut.data.cosmos.operations.CosmosDiagnosticsProcessor,io.micronaut.data.cosmos.config.CosmosDatabaseConfiguration)">DefaultReactiveCosmosRepositoryOperations(List&lt;MediaTypeCodec&gt;, DateTimeProvider&lt;Object&gt;, RuntimeEntityRegistry, DataConversionService&lt;?&gt;, AttributeConverterRegistry, CosmosAsyncClient, CosmosSerde, CosmosDiagnosticsProcessor, CosmosDatabaseConfiguration)</a></span> - Constructor for class io.micronaut.data.cosmos.operations.<a href="io/micronaut/data/cosmos/operations/DefaultReactiveCosmosRepositoryOperations.html" title="class in io.micronaut.data.cosmos.operations">DefaultReactiveCosmosRepositoryOperations</a></dt>
 <dd>
 <div class="block">Default constructor.</div>
 </dd>
@@ -3399,6 +3417,8 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/intercept/criteria/AbstractSpecificationInterceptor.Type.html#DELETE_ALL">DELETE_ALL</a></span> - io.micronaut.data.runtime.intercept.criteria.<a href="io/micronaut/data/runtime/intercept/criteria/AbstractSpecificationInterceptor.Type.html" title="enum in io.micronaut.data.runtime.intercept.criteria">AbstractSpecificationInterceptor.Type</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#DELETE_CLAUSE">DELETE_CLAUSE</a></span> - Static variable in class io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html" title="class in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/cosmos/operations/CosmosDiagnosticsProcessor.html#DELETE_ITEM">DELETE_ITEM</a></span> - Static variable in interface io.micronaut.data.cosmos.operations.<a href="io/micronaut/data/cosmos/operations/CosmosDiagnosticsProcessor.html" title="interface in io.micronaut.data.cosmos.operations">CosmosDiagnosticsProcessor</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/document/mongo/MongoAnnotations.html#DELETE_OPTIONS_BEAN">DELETE_OPTIONS_BEAN</a></span> - Static variable in interface io.micronaut.data.document.mongo.<a href="io/micronaut/data/document/mongo/MongoAnnotations.html" title="interface in io.micronaut.data.document.mongo">MongoAnnotations</a></dt>
 <dd>&nbsp;</dd>
@@ -4311,6 +4331,8 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <dd>
 <div class="block">Execute a read-only transaction within the context of the function.</div>
 </dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/cosmos/operations/CosmosDiagnosticsProcessor.html#EXECUTE_BULK">EXECUTE_BULK</a></span> - Static variable in interface io.micronaut.data.cosmos.operations.<a href="io/micronaut/data/cosmos/operations/CosmosDiagnosticsProcessor.html" title="interface in io.micronaut.data.cosmos.operations">CosmosDiagnosticsProcessor</a></dt>
+<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/cosmos/operations/DefaultReactiveCosmosRepositoryOperations.html#executeDelete(io.micronaut.data.model.runtime.PreparedQuery)">executeDelete(PreparedQuery&lt;?, Number&gt;)</a></span> - Method in class io.micronaut.data.cosmos.operations.<a href="io/micronaut/data/cosmos/operations/DefaultReactiveCosmosRepositoryOperations.html" title="class in io.micronaut.data.cosmos.operations">DefaultReactiveCosmosRepositoryOperations</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/mongodb/operations/DefaultMongoRepositoryOperations.html#executeDelete(io.micronaut.data.model.runtime.PreparedQuery)">executeDelete(PreparedQuery&lt;?, Number&gt;)</a></span> - Method in class io.micronaut.data.mongodb.operations.<a href="io/micronaut/data/mongodb/operations/DefaultMongoRepositoryOperations.html" title="class in io.micronaut.data.mongodb.operations">DefaultMongoRepositoryOperations</a></dt>
@@ -10191,6 +10213,10 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/processor/visitors/finders/FindersUtils.DynamicClassElement.html#isPublic()">isPublic()</a></span> - Method in class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/FindersUtils.DynamicClassElement.html" title="class in io.micronaut.data.processor.visitors.finders">FindersUtils.DynamicClassElement</a></dt>
 <dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/cosmos/config/CosmosDatabaseConfiguration.html#isQueryMetricsEnabled()">isQueryMetricsEnabled()</a></span> - Method in class io.micronaut.data.cosmos.config.<a href="io/micronaut/data/cosmos/config/CosmosDatabaseConfiguration.html" title="class in io.micronaut.data.cosmos.config">CosmosDatabaseConfiguration</a></dt>
+<dd>
+<div class="block">Gets the indicator telling whether query metrics will be enabled for Azure Cosmos Db query requests.</div>
+</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/runtime/PreparedQuery.html#isRawQuery()">isRawQuery()</a></span> - Method in interface io.micronaut.data.model.runtime.<a href="io/micronaut/data/model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a></dt>
 <dd>
 <div class="block">Gets an indicator telling whether underlying query is raw query.</div>
@@ -13502,6 +13528,14 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 </dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/event/EntityEventRegistry.html#process(io.micronaut.inject.BeanDefinition,io.micronaut.inject.ExecutableMethod)">process(BeanDefinition&lt;?&gt;, ExecutableMethod&lt;?, ?&gt;)</a></span> - Method in class io.micronaut.data.runtime.event.<a href="io/micronaut/data/runtime/event/EntityEventRegistry.html" title="class in io.micronaut.data.runtime.event">EntityEventRegistry</a></dt>
 <dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/cosmos/common/CosmosUtils.html#processDiagnostics(io.micronaut.data.cosmos.operations.CosmosDiagnosticsProcessor,java.lang.String,com.azure.cosmos.CosmosDiagnostics,java.lang.String,double)">processDiagnostics(CosmosDiagnosticsProcessor, String, CosmosDiagnostics, String, double)</a></span> - Static method in class io.micronaut.data.cosmos.common.<a href="io/micronaut/data/cosmos/common/CosmosUtils.html" title="class in io.micronaut.data.cosmos.common">CosmosUtils</a></dt>
+<dd>
+<div class="block">Processes diagnostics from the Cosmos response.</div>
+</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/cosmos/operations/CosmosDiagnosticsProcessor.html#processDiagnostics(java.lang.String,com.azure.cosmos.CosmosDiagnostics,java.lang.String,double)">processDiagnostics(String, CosmosDiagnostics, String, double)</a></span> - Method in interface io.micronaut.data.cosmos.operations.<a href="io/micronaut/data/cosmos/operations/CosmosDiagnosticsProcessor.html" title="interface in io.micronaut.data.cosmos.operations">CosmosDiagnosticsProcessor</a></dt>
+<dd>
+<div class="block">Process diagnostics from the Cosmos response.</div>
+</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.PushingMapper.html#processRow(RS)">processRow(RS)</a></span> - Method in interface io.micronaut.data.runtime.mapper.sql.<a href="io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.PushingMapper.html" title="interface in io.micronaut.data.runtime.mapper.sql">SqlResultEntityTypeMapper.PushingMapper</a></dt>
 <dd>
 <div class="block">Process row.</div>
@@ -13718,6 +13752,8 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <dd>
 <div class="block">A query operation.</div>
 </dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/cosmos/operations/CosmosDiagnosticsProcessor.html#QUERY_ITEMS">QUERY_ITEMS</a></span> - Static variable in interface io.micronaut.data.cosmos.operations.<a href="io/micronaut/data/cosmos/operations/CosmosDiagnosticsProcessor.html" title="interface in io.micronaut.data.cosmos.operations">CosmosDiagnosticsProcessor</a></dt>
+<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/config/DataSettings.html#QUERY_LOG">QUERY_LOG</a></span> - Static variable in interface io.micronaut.data.runtime.config.<a href="io/micronaut/data/runtime/config/DataSettings.html" title="interface in io.micronaut.data.runtime.config">DataSettings</a></dt>
 <dd>
 <div class="block">The logger that should be used to log queries.</div>
@@ -14777,6 +14813,14 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <div class="block">Indicates that dirty reads and non-repeatable reads are prevented;
  phantom reads can occur.</div>
 </dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/cosmos/operations/CosmosDiagnosticsProcessor.html#REPLACE_CONTAINER">REPLACE_CONTAINER</a></span> - Static variable in interface io.micronaut.data.cosmos.operations.<a href="io/micronaut/data/cosmos/operations/CosmosDiagnosticsProcessor.html" title="interface in io.micronaut.data.cosmos.operations">CosmosDiagnosticsProcessor</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/cosmos/operations/CosmosDiagnosticsProcessor.html#REPLACE_CONTAINER_THROUGHPUT">REPLACE_CONTAINER_THROUGHPUT</a></span> - Static variable in interface io.micronaut.data.cosmos.operations.<a href="io/micronaut/data/cosmos/operations/CosmosDiagnosticsProcessor.html" title="interface in io.micronaut.data.cosmos.operations">CosmosDiagnosticsProcessor</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/cosmos/operations/CosmosDiagnosticsProcessor.html#REPLACE_DATABASE_THROUGHPUT">REPLACE_DATABASE_THROUGHPUT</a></span> - Static variable in interface io.micronaut.data.cosmos.operations.<a href="io/micronaut/data/cosmos/operations/CosmosDiagnosticsProcessor.html" title="interface in io.micronaut.data.cosmos.operations">CosmosDiagnosticsProcessor</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/cosmos/operations/CosmosDiagnosticsProcessor.html#REPLACE_ITEM">REPLACE_ITEM</a></span> - Static variable in interface io.micronaut.data.cosmos.operations.<a href="io/micronaut/data/cosmos/operations/CosmosDiagnosticsProcessor.html" title="interface in io.micronaut.data.cosmos.operations">CosmosDiagnosticsProcessor</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/annotation/Repository.html" title="annotation in io.micronaut.data.annotation"><span class="typeNameLink">Repository</span></a> - Annotation Type in <a href="io/micronaut/data/annotation/package-summary.html">io.micronaut.data.annotation</a></dt>
 <dd>
 <div class="block">Designates a type of a data repository.</div>
@@ -15956,6 +16000,10 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <dd>
 <div class="deprecationBlock"><span class="deprecatedLabel">Deprecated.</span></div>
 <div class="block">Sets the qualifier to use for this attribute.</div>
+</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/cosmos/config/CosmosDatabaseConfiguration.html#setQueryMetricsEnabled(boolean)">setQueryMetricsEnabled(boolean)</a></span> - Method in class io.micronaut.data.cosmos.config.<a href="io/micronaut/data/cosmos/config/CosmosDatabaseConfiguration.html" title="class in io.micronaut.data.cosmos.config">CosmosDatabaseConfiguration</a></dt>
+<dd>
+<div class="block">Sets the indicator telling whether query metrics will be enabled for Azure Cosmos Db query requests.</div>
 </dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/transaction/support/DefaultTransactionDefinition.html#setReadOnly(boolean)">setReadOnly(boolean)</a></span> - Method in class io.micronaut.transaction.support.<a href="io/micronaut/transaction/support/DefaultTransactionDefinition.html" title="class in io.micronaut.transaction.support">DefaultTransactionDefinition</a></dt>
 <dd>

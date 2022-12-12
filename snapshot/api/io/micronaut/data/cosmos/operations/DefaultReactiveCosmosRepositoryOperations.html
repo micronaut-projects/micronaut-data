@@ -189,13 +189,14 @@ implements <a href="../../operations/reactive/ReactorReactiveRepositoryOperation
 <th class="colLast" scope="col">Description</th>
 </tr>
 <tr class="altColor">
-<th class="colConstructorName" scope="row"><code><span class="memberNameLink"><a href="#%3Cinit%3E(java.util.List,io.micronaut.data.runtime.date.DateTimeProvider,io.micronaut.data.model.runtime.RuntimeEntityRegistry,io.micronaut.data.runtime.convert.DataConversionService,io.micronaut.data.model.runtime.AttributeConverterRegistry,com.azure.cosmos.CosmosAsyncClient,io.micronaut.data.cosmos.operations.CosmosSerde,io.micronaut.data.cosmos.config.CosmosDatabaseConfiguration)">DefaultReactiveCosmosRepositoryOperations</a></span>&#8203;(java.util.List&lt;io.micronaut.http.codec.MediaTypeCodec&gt;&nbsp;codecs,
+<th class="colConstructorName" scope="row"><code><span class="memberNameLink"><a href="#%3Cinit%3E(java.util.List,io.micronaut.data.runtime.date.DateTimeProvider,io.micronaut.data.model.runtime.RuntimeEntityRegistry,io.micronaut.data.runtime.convert.DataConversionService,io.micronaut.data.model.runtime.AttributeConverterRegistry,com.azure.cosmos.CosmosAsyncClient,io.micronaut.data.cosmos.operations.CosmosSerde,io.micronaut.data.cosmos.operations.CosmosDiagnosticsProcessor,io.micronaut.data.cosmos.config.CosmosDatabaseConfiguration)">DefaultReactiveCosmosRepositoryOperations</a></span>&#8203;(java.util.List&lt;io.micronaut.http.codec.MediaTypeCodec&gt;&nbsp;codecs,
                                          <a href="../../runtime/date/DateTimeProvider.html" title="interface in io.micronaut.data.runtime.date">DateTimeProvider</a>&lt;java.lang.Object&gt;&nbsp;dateTimeProvider,
                                          <a href="../../model/runtime/RuntimeEntityRegistry.html" title="interface in io.micronaut.data.model.runtime">RuntimeEntityRegistry</a>&nbsp;runtimeEntityRegistry,
                                          <a href="../../runtime/convert/DataConversionService.html" title="interface in io.micronaut.data.runtime.convert">DataConversionService</a>&lt;?&gt;&nbsp;conversionService,
                                          <a href="../../model/runtime/AttributeConverterRegistry.html" title="interface in io.micronaut.data.model.runtime">AttributeConverterRegistry</a>&nbsp;attributeConverterRegistry,
                                          com.azure.cosmos.CosmosAsyncClient&nbsp;cosmosAsyncClient,
                                          io.micronaut.data.cosmos.operations.CosmosSerde&nbsp;cosmosSerde,
+                                         <a href="CosmosDiagnosticsProcessor.html" title="interface in io.micronaut.data.cosmos.operations">CosmosDiagnosticsProcessor</a>&nbsp;cosmosDiagnosticsProcessor,
                                          <a href="../config/CosmosDatabaseConfiguration.html" title="class in io.micronaut.data.cosmos.config">CosmosDatabaseConfiguration</a>&nbsp;configuration)</code></th>
 <td class="colLast">
 <div class="block">Default constructor.</div>
@@ -386,7 +387,7 @@ implements <a href="../../operations/reactive/ReactorReactiveRepositoryOperation
 <!--   -->
 </a>
 <h3>Constructor Detail</h3>
-<a id="&lt;init&gt;(java.util.List,io.micronaut.data.runtime.date.DateTimeProvider,io.micronaut.data.model.runtime.RuntimeEntityRegistry,io.micronaut.data.runtime.convert.DataConversionService,io.micronaut.data.model.runtime.AttributeConverterRegistry,com.azure.cosmos.CosmosAsyncClient,io.micronaut.data.cosmos.operations.CosmosSerde,io.micronaut.data.cosmos.config.CosmosDatabaseConfiguration)">
+<a id="&lt;init&gt;(java.util.List,io.micronaut.data.runtime.date.DateTimeProvider,io.micronaut.data.model.runtime.RuntimeEntityRegistry,io.micronaut.data.runtime.convert.DataConversionService,io.micronaut.data.model.runtime.AttributeConverterRegistry,com.azure.cosmos.CosmosAsyncClient,io.micronaut.data.cosmos.operations.CosmosSerde,io.micronaut.data.cosmos.operations.CosmosDiagnosticsProcessor,io.micronaut.data.cosmos.config.CosmosDatabaseConfiguration)">
 <!--   -->
 </a>
 <ul class="blockListLast">
@@ -399,6 +400,8 @@ implements <a href="../../operations/reactive/ReactorReactiveRepositoryOperation
                                                  <a href="../../model/runtime/AttributeConverterRegistry.html" title="interface in io.micronaut.data.model.runtime">AttributeConverterRegistry</a>&nbsp;attributeConverterRegistry,
                                                  com.azure.cosmos.CosmosAsyncClient&nbsp;cosmosAsyncClient,
                                                  io.micronaut.data.cosmos.operations.CosmosSerde&nbsp;cosmosSerde,
+                                                 @Nullable
+                                                 <a href="CosmosDiagnosticsProcessor.html" title="interface in io.micronaut.data.cosmos.operations">CosmosDiagnosticsProcessor</a>&nbsp;cosmosDiagnosticsProcessor,
                                                  <a href="../config/CosmosDatabaseConfiguration.html" title="class in io.micronaut.data.cosmos.config">CosmosDatabaseConfiguration</a>&nbsp;configuration)</pre>
 <div class="block">Default constructor.</div>
 <dl>
@@ -410,6 +413,7 @@ implements <a href="../../operations/reactive/ReactorReactiveRepositoryOperation
 <dd><code>attributeConverterRegistry</code> - The attribute converter registry</dd>
 <dd><code>cosmosAsyncClient</code> - The Cosmos async client</dd>
 <dd><code>cosmosSerde</code> - The Cosmos de/serialization helper</dd>
+<dd><code>cosmosDiagnosticsProcessor</code> - The Cosmos diagnostics processor, can be null</dd>
 <dd><code>configuration</code> - The Cosmos database configuration</dd>
 </dl>
 </li>
@@ -732,7 +736,8 @@ public&nbsp;&lt;T&gt;&nbsp;reactor.core.publisher.Mono&lt;T&gt;&nbsp;update&#820
 <li class="blockList">
 <h4>updateAll</h4>
 <pre class="methodSignature">@NonNull
-public&nbsp;&lt;T&gt;&nbsp;reactor.core.publisher.Flux&lt;T&gt;&nbsp;updateAll&#8203;(<a href="../../model/runtime/UpdateBatchOperation.html" title="interface in io.micronaut.data.model.runtime">UpdateBatchOperation</a>&lt;T&gt;&nbsp;operation)</pre>
+public&nbsp;&lt;T&gt;&nbsp;reactor.core.publisher.Flux&lt;T&gt;&nbsp;updateAll&#8203;(@NonNull
+                                                    <a href="../../model/runtime/UpdateBatchOperation.html" title="interface in io.micronaut.data.model.runtime">UpdateBatchOperation</a>&lt;T&gt;&nbsp;operation)</pre>
 <div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../operations/reactive/ReactiveRepositoryOperations.html#updateAll(io.micronaut.data.model.runtime.UpdateBatchOperation)">ReactiveRepositoryOperations</a></code></span></div>
 <div class="block">Updates the entities for the given operation.</div>
 <dl>
@@ -756,7 +761,8 @@ public&nbsp;&lt;T&gt;&nbsp;reactor.core.publisher.Flux&lt;T&gt;&nbsp;updateAll&#
 <li class="blockList">
 <h4>persistAll</h4>
 <pre class="methodSignature">@NonNull
-public&nbsp;&lt;T&gt;&nbsp;reactor.core.publisher.Flux&lt;T&gt;&nbsp;persistAll&#8203;(<a href="../../model/runtime/InsertBatchOperation.html" title="interface in io.micronaut.data.model.runtime">InsertBatchOperation</a>&lt;T&gt;&nbsp;operation)</pre>
+public&nbsp;&lt;T&gt;&nbsp;reactor.core.publisher.Flux&lt;T&gt;&nbsp;persistAll&#8203;(@NonNull
+                                                     <a href="../../model/runtime/InsertBatchOperation.html" title="interface in io.micronaut.data.model.runtime">InsertBatchOperation</a>&lt;T&gt;&nbsp;operation)</pre>
 <div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../operations/reactive/ReactiveRepositoryOperations.html#persistAll(io.micronaut.data.model.runtime.InsertBatchOperation)">ReactiveRepositoryOperations</a></code></span></div>
 <div class="block">Persist all the given entities.</div>
 <dl>
@@ -828,7 +834,8 @@ public&nbsp;reactor.core.publisher.Mono&lt;java.lang.Number&gt;&nbsp;executeDele
 <li class="blockList">
 <h4>delete</h4>
 <pre class="methodSignature">@NonNull
-public&nbsp;&lt;T&gt;&nbsp;reactor.core.publisher.Mono&lt;java.lang.Number&gt;&nbsp;delete&#8203;(<a href="../../model/runtime/DeleteOperation.html" title="interface in io.micronaut.data.model.runtime">DeleteOperation</a>&lt;T&gt;&nbsp;operation)</pre>
+public&nbsp;&lt;T&gt;&nbsp;reactor.core.publisher.Mono&lt;java.lang.Number&gt;&nbsp;delete&#8203;(@NonNull
+                                                                <a href="../../model/runtime/DeleteOperation.html" title="interface in io.micronaut.data.model.runtime">DeleteOperation</a>&lt;T&gt;&nbsp;operation)</pre>
 <div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../operations/reactive/ReactiveRepositoryOperations.html#delete(io.micronaut.data.model.runtime.DeleteOperation)">ReactiveRepositoryOperations</a></code></span></div>
 <div class="block">Deletes the entity.</div>
 <dl>
@@ -852,7 +859,8 @@ public&nbsp;&lt;T&gt;&nbsp;reactor.core.publisher.Mono&lt;java.lang.Number&gt;&n
 <li class="blockList">
 <h4>deleteAll</h4>
 <pre class="methodSignature">@NonNull
-public&nbsp;&lt;T&gt;&nbsp;reactor.core.publisher.Mono&lt;java.lang.Number&gt;&nbsp;deleteAll&#8203;(<a href="../../model/runtime/DeleteBatchOperation.html" title="interface in io.micronaut.data.model.runtime">DeleteBatchOperation</a>&lt;T&gt;&nbsp;operation)</pre>
+public&nbsp;&lt;T&gt;&nbsp;reactor.core.publisher.Mono&lt;java.lang.Number&gt;&nbsp;deleteAll&#8203;(@NonNull
+                                                                   <a href="../../model/runtime/DeleteBatchOperation.html" title="interface in io.micronaut.data.model.runtime">DeleteBatchOperation</a>&lt;T&gt;&nbsp;operation)</pre>
 <div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../operations/reactive/ReactiveRepositoryOperations.html#deleteAll(io.micronaut.data.model.runtime.DeleteBatchOperation)">ReactiveRepositoryOperations</a></code></span></div>
 <div class="block">Deletes all the entities of the given type.</div>
 <dl>

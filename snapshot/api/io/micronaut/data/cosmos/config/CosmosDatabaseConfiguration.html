@@ -27,7 +27,7 @@
     catch(err) {
     }
 //-->
-var data = {"i0":10,"i1":10,"i2":10,"i3":10,"i4":10,"i5":10,"i6":10,"i7":10,"i8":10,"i9":10};
+var data = {"i0":10,"i1":10,"i2":10,"i3":10,"i4":10,"i5":10,"i6":10,"i7":10,"i8":10,"i9":10,"i10":10,"i11":10};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],8:["t4","Concrete Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -263,28 +263,42 @@ extends java.lang.Object</pre>
 <td class="colLast">&nbsp;</td>
 </tr>
 <tr id="i5" class="rowColor">
+<td class="colFirst"><code>boolean</code></td>
+<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#isQueryMetricsEnabled()">isQueryMetricsEnabled</a></span>()</code></th>
+<td class="colLast">
+<div class="block">Gets the indicator telling whether query metrics will be enabled for Azure Cosmos Db query requests.</div>
+</td>
+</tr>
+<tr id="i6" class="altColor">
 <td class="colFirst"><code>void</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#setContainers(java.util.List)">setContainers</a></span>&#8203;(java.util.List&lt;<a href="CosmosDatabaseConfiguration.CosmosContainerSettings.html" title="class in io.micronaut.data.cosmos.config">CosmosDatabaseConfiguration.CosmosContainerSettings</a>&gt;&nbsp;containers)</code></th>
 <td class="colLast">&nbsp;</td>
 </tr>
-<tr id="i6" class="altColor">
+<tr id="i7" class="rowColor">
 <td class="colFirst"><code>void</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#setDatabaseName(java.lang.String)">setDatabaseName</a></span>&#8203;(java.lang.String&nbsp;databaseName)</code></th>
 <td class="colLast">
 <div class="block">Sets the database name.</div>
 </td>
 </tr>
-<tr id="i7" class="rowColor">
+<tr id="i8" class="altColor">
 <td class="colFirst"><code>void</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#setPackages(java.util.List)">setPackages</a></span>&#8203;(java.util.List&lt;java.lang.String&gt;&nbsp;packages)</code></th>
 <td class="colLast">&nbsp;</td>
 </tr>
-<tr id="i8" class="altColor">
+<tr id="i9" class="rowColor">
+<td class="colFirst"><code>void</code></td>
+<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#setQueryMetricsEnabled(boolean)">setQueryMetricsEnabled</a></span>&#8203;(boolean&nbsp;queryMetricsEnabled)</code></th>
+<td class="colLast">
+<div class="block">Sets the indicator telling whether query metrics will be enabled for Azure Cosmos Db query requests.</div>
+</td>
+</tr>
+<tr id="i10" class="altColor">
 <td class="colFirst"><code>void</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#setThroughput(io.micronaut.data.cosmos.config.ThroughputSettings)">setThroughput</a></span>&#8203;(<a href="ThroughputSettings.html" title="class in io.micronaut.data.cosmos.config">ThroughputSettings</a>&nbsp;throughput)</code></th>
 <td class="colLast">&nbsp;</td>
 </tr>
-<tr id="i9" class="rowColor">
+<tr id="i11" class="rowColor">
 <td class="colFirst"><code>void</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#setUpdatePolicy(io.micronaut.data.cosmos.config.StorageUpdatePolicy)">setUpdatePolicy</a></span>&#8203;(<a href="StorageUpdatePolicy.html" title="enum in io.micronaut.data.cosmos.config">StorageUpdatePolicy</a>&nbsp;updatePolicy)</code></th>
 <td class="colLast">
@@ -466,13 +480,43 @@ public&nbsp;java.lang.String&nbsp;getDatabaseName()</pre>
 <a id="setPackages(java.util.List)">
 <!--   -->
 </a>
-<ul class="blockListLast">
+<ul class="blockList">
 <li class="blockList">
 <h4>setPackages</h4>
 <pre class="methodSignature">public&nbsp;void&nbsp;setPackages&#8203;(java.util.List&lt;java.lang.String&gt;&nbsp;packages)</pre>
 <dl>
 <dt><span class="paramLabel">Parameters:</span></dt>
 <dd><code>packages</code> - the package names to be considered during init</dd>
+</dl>
+</li>
+</ul>
+<a id="isQueryMetricsEnabled()">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>isQueryMetricsEnabled</h4>
+<pre class="methodSignature">public&nbsp;boolean&nbsp;isQueryMetricsEnabled()</pre>
+<div class="block">Gets the indicator telling whether query metrics will be enabled for Azure Cosmos Db query requests.
+ If this is turned off then detailed query metrics information will not be retrieved in the Cosmos Diagnostics query response.
+ The default value is true.</div>
+<dl>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>the query metrics enabled indicator</dd>
+</dl>
+</li>
+</ul>
+<a id="setQueryMetricsEnabled(boolean)">
+<!--   -->
+</a>
+<ul class="blockListLast">
+<li class="blockList">
+<h4>setQueryMetricsEnabled</h4>
+<pre class="methodSignature">public&nbsp;void&nbsp;setQueryMetricsEnabled&#8203;(boolean&nbsp;queryMetricsEnabled)</pre>
+<div class="block">Sets the indicator telling whether query metrics will be enabled for Azure Cosmos Db query requests.</div>
+<dl>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>queryMetricsEnabled</code> - the query metrics enabled indicator</dd>
 </dl>
 </li>
 </ul>

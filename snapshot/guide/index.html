@@ -14139,6 +14139,37 @@ Micronaut Data Cosmos tries to use a partition key whenever possible. Here are s
 </div>
 </div>
 </div>
+<div class="sect2">
+<h3 id="_diagnostics">Diagnostics</h3>
+<div class="paragraph">
+<p>Azure Cosmos Db provides operations diagnostics so users can get that information and perhaps integrate  with their logging or metrics system. In Micronaut Data Azure we expose interface <a href="../api/io/micronaut/data/cosmos/operations/CosmosDiagnosticsProcessor.html">CosmosDiagnosticsProcessor</a>. Users need to implement this interface and add it to the context so it can be available to our operations classes. It has only one method</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">void processDiagnostics(String operationName, @Nullable CosmosDiagnostics cosmosDiagnostics, @Nullable String activityId, double requestCharge);</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>which is being called after each operation against Azure Cosmos Db. Parameter <code>operationName</code> is internal operation name in Micronaut Data Azure and it has got these known values:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">String CREATE_DATABASE_IF_NOT_EXISTS = "CreateDatabaseIfNotExists";
+String REPLACE_DATABASE_THROUGHPUT = "ReplaceDatabaseThroughput";
+String CREATE_CONTAINER_IF_NOT_EXISTS = "CreateContainerIfNotExists";
+String REPLACE_CONTAINER_THROUGHPUT = "ReplaceContainerThroughput";
+String REPLACE_CONTAINER = "ReplaceContainer";
+String QUERY_ITEMS = "QueryItems";
+String EXECUTE_BULK = "ExecuteBulk";
+String CREATE_ITEM = "CreateItem";
+String REPLACE_ITEM = "ReplaceItem";
+String DELETE_ITEM = "DeleteItem";</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>so user is aware for which operation diagnostics are being processed.</p>
+</div>
+</div>
 
 <h2 id="azureCosmosAttributeConverter"><a class="anchor" href="#azureCosmosAttributeConverter"></a>8.6 Using Attribute Converter</h2>
 
