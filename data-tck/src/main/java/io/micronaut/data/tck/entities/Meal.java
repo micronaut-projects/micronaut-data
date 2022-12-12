@@ -28,6 +28,7 @@ import java.util.Date;
 import java.util.Set;
 
 @MappedEntity
+@Where("@.actual = 'Y'")
 public class Meal {
 
     @Id
@@ -49,10 +50,13 @@ public class Meal {
             mappedBy = "meal")
     private Set<Food> foods = Collections.emptySet();
 
+    private char actual = 'Y';
+
     public Meal(@NotNull @Max(999) int currentBloodGlucose, Date createdOn, Date updatedOn) {
         this.currentBloodGlucose = currentBloodGlucose;
         this.createdOn = createdOn;
         this.updatedOn = updatedOn;
+        this.actual = 'Y';
     }
 
     @Creator
@@ -67,6 +71,7 @@ public class Meal {
         this.createdOn = createdOn;
         this.updatedOn = updatedOn;
         this.foods = foods;
+        this.actual = 'Y';
     }
 
     public Meal(@NotNull @Size(max = 999) int currentBloodGlucose) {
@@ -113,4 +118,11 @@ public class Meal {
         this.foods = foods;
     }
 
+    public char isActual() {
+        return actual;
+    }
+
+    public void setActual(char actual) {
+        this.actual = actual;
+    }
 }

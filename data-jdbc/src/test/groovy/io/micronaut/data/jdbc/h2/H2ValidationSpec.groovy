@@ -41,8 +41,11 @@ class H2ValidationSpec extends Specification {
         given:
         Meal meal = new Meal(100)
         mealRepository.save(meal)
+        Meal alternativeMeal = new Meal(50)
+        mealRepository.save(alternativeMeal)
 
         Food food = new Food("test", 100, 100, meal)
+        food.alternativeMeal = alternativeMeal
         food = foodRepository.save(food)
         def retrieved = foodRepository.findById(food.fid).orElse(null)
 

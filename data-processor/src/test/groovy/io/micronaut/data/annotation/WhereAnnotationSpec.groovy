@@ -107,11 +107,11 @@ class Category {
         repository.getRequiredMethod("countByIdGreaterThan", Long)
                 .stringValue(Query).get() == "SELECT COUNT(user_) FROM test.User AS user_ WHERE (user_.id > :p1 AND (user_.enabled = true))"
         repository.getRequiredMethod("list")
-                .stringValue(Query).get() == "SELECT user_ FROM test.User AS user_ JOIN FETCH user_.category user_category_ WHERE (user_.enabled = true)"
+                .stringValue(Query).get() == "SELECT user_ FROM test.User AS user_ JOIN FETCH user_.category user_category_ WHERE (user_.enabled = true AND user_category_.archived = true)"
         repository.getRequiredMethod("findAll")
                 .stringValue(Query).get() == "SELECT user_ FROM test.User AS user_ WHERE (user_.enabled = true)"
         repository.getRequiredMethod("findByIdIsNotNull")
-                .stringValue(Query).get() == "SELECT user_ FROM test.User AS user_ JOIN FETCH user_.category user_category_ WHERE (user_.id IS NOT NULL AND (user_.xyz = true AND user_.abc > 12))"
+                .stringValue(Query).get() == "SELECT user_ FROM test.User AS user_ JOIN FETCH user_.category user_category_ WHERE (user_.id IS NOT NULL AND (user_.xyz = true AND user_.abc > 12 AND user_category_.archived = true))"
         repository.getRequiredMethod("findByIdIsNull")
                 .stringValue(Query).get() == "SELECT user_ FROM test.User AS user_ JOIN FETCH user_.category user_category_ WHERE (user_.id IS NULL)"
     }
