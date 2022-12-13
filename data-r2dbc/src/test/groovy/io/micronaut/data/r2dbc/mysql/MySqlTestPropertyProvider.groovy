@@ -1,9 +1,9 @@
 package io.micronaut.data.r2dbc.mysql
 
 import io.micronaut.data.model.query.builder.sql.Dialect
-import io.micronaut.data.r2dbc.SharedDatabaseContainerTestPropertyProvider
+import io.micronaut.data.r2dbc.SharedTestResourcesDatabaseTestPropertyProvider
 
-trait MySqlTestPropertyProvider implements SharedDatabaseContainerTestPropertyProvider {
+trait MySqlTestPropertyProvider implements SharedTestResourcesDatabaseTestPropertyProvider {
 
     @Override
     Dialect dialect() {
@@ -11,12 +11,7 @@ trait MySqlTestPropertyProvider implements SharedDatabaseContainerTestPropertyPr
     }
 
     @Override
-    String driverName() {
-        return "mysql"
-    }
-
-    @Override
     int sharedSpecsCount() {
-        return 9
+        return 10
     }
 }

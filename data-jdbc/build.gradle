@@ -1,5 +1,8 @@
+import io.micronaut.testresources.buildtools.KnownModules
+
 plugins {
     id "io.micronaut.build.internal.data-module"
+    id 'io.micronaut.test-resources'
 }
 
 dependencies {
@@ -29,15 +32,10 @@ dependencies {
     testImplementation libs.groovy.sql
     testImplementation mn.micronaut.validation
 
-    testImplementation libs.testcontainers.spock
-    testImplementation libs.testcontainers.mysql
-    testImplementation libs.testcontainers.mariadb
-    testImplementation libs.testcontainers.postgresql
-    testImplementation libs.testcontainers.mssqlserver
-    testImplementation libs.testcontainers.oracle
-
     testCompileOnly mn.micronaut.inject.groovy
 
+    testImplementation mn.micronaut.multitenancy
+    testImplementation mn.micronaut.http.netty
     testRuntimeOnly libs.micronaut.sql.jdbc.tomcat
     testRuntimeOnly libs.h2
     testRuntimeOnly libs.drivers.jdbc.mariadb
@@ -45,6 +43,28 @@ dependencies {
     testRuntimeOnly libs.drivers.jdbc.mysql
     testRuntimeOnly libs.drivers.jdbc.postgresql
     testRuntimeOnly libs.drivers.jdbc.mssql
+
+    testResourcesService libs.drivers.jdbc.mariadb
+    testResourcesService libs.drivers.jdbc.oracle
+    testResourcesService libs.drivers.jdbc.mysql
+    testResourcesService libs.drivers.jdbc.postgresql
+    testResourcesService libs.drivers.jdbc.mssql
+
+    testImplementation("io.micronaut.testresources:micronaut-test-resources-client")
+}
+
+micronaut {
+    version = libs.versions.micronaut.asProvider().get()
+    testResources {
+        enabled = true
+        inferClasspath = false
+        additionalModules.add(KnownModules.JDBC_POSTGRESQL)
+        additionalModules.add(KnownModules.JDBC_MYSQL)
+        additionalModules.add(KnownModules.JDBC_MARIADB)
+        additionalModules.add(KnownModules.JDBC_ORACLE_XE)
+        additionalModules.add(KnownModules.JDBC_MSSQL)
+        clientTimeout = 300
+    }
 }
 
 tasks.named("test") {

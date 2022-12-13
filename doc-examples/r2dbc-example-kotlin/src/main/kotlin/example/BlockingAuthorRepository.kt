@@ -8,5 +8,5 @@ import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import javax.validation.constraints.NotNull
 
-@R2dbcRepository(dialect = Dialect.POSTGRES)
+@R2dbcRepository(dialect = Dialect.MYSQL)
 interface BlockingAuthorRepository : CrudRepository<Author, Long> {}

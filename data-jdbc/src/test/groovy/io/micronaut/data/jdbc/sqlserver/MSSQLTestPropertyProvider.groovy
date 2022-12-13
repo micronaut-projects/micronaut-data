@@ -15,11 +15,10 @@
  */
 package io.micronaut.data.jdbc.sqlserver
 
-
-import io.micronaut.data.jdbc.SharedDatabaseContainerTestPropertyProvider
+import io.micronaut.data.jdbc.SharedTestResourcesDatabaseTestPropertyProvider
 import io.micronaut.data.model.query.builder.sql.Dialect
 
-trait MSSQLTestPropertyProvider implements SharedDatabaseContainerTestPropertyProvider {
+trait MSSQLTestPropertyProvider implements SharedTestResourcesDatabaseTestPropertyProvider {
 
     @Override
     Dialect dialect() {
@@ -28,6 +27,6 @@ trait MSSQLTestPropertyProvider implements SharedDatabaseContainerTestPropertyPr
 
     @Override
     int sharedSpecsCount() {
-        return 8
+        return 9
     }
 }

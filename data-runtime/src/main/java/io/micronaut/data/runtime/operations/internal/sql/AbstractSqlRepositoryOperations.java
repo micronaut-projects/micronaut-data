@@ -46,7 +46,6 @@ import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.model.runtime.StoredQuery;
 import io.micronaut.data.operations.HintsCapableRepository;
-import io.micronaut.data.repository.GenericRepository;
 import io.micronaut.data.runtime.config.DataSettings;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.date.DateTimeProvider;
@@ -91,7 +90,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
         MethodContextAwareStoredQueryDecorator,
         HintsCapableRepository {
     protected static final Logger QUERY_LOG = DataSettings.QUERY_LOG;
-    protected static final SqlQueryBuilder DEFAULT_SQL_BUILDER = new SqlQueryBuilder();
+    protected final String dataSourceName;
     @SuppressWarnings("WeakerAccess")
     protected final ResultReader<RS, String> columnNameResultSetReader;
     @SuppressWarnings("WeakerAccess")
@@ -99,6 +98,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
     @SuppressWarnings("WeakerAccess")
     protected final QueryStatement<PS, Integer> preparedStatementWriter;
     protected final Map<Class, SqlQueryBuilder> queryBuilders = new HashMap<>(10);
+    protected final Map<Class, String> repositoriesWithHardcodedDataSource = new HashMap<>(10);
     private final Map<QueryKey, SqlStoredQuery> entityInserts = new ConcurrentHashMap<>(10);
     private final Map<QueryKey, SqlStoredQuery> entityUpdates = new ConcurrentHashMap<>(10);
     private final Map<Association, String> associationInserts = new ConcurrentHashMap<>(10);
@@ -129,17 +129,20 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
             DataConversionService<?> conversionService,
             AttributeConverterRegistry attributeConverterRegistry) {
         super(codecs, dateTimeProvider, runtimeEntityRegistry, conversionService, attributeConverterRegistry);
+        this.dataSourceName = dataSourceName;
         this.columnNameResultSetReader = columnNameResultSetReader;
         this.columnIndexResultSetReader = columnIndexResultSetReader;
         this.preparedStatementWriter = preparedStatementWriter;
-        Collection<BeanDefinition<GenericRepository>> beanDefinitions = beanContext
-                .getBeanDefinitions(GenericRepository.class, Qualifiers.byStereotype(Repository.class));
-        for (BeanDefinition<GenericRepository> beanDefinition : beanDefinitions) {
-            String targetDs = beanDefinition.stringValue(Repository.class).orElse("default");
-            if (targetDs.equalsIgnoreCase(dataSourceName)) {
-                Class<GenericRepository> beanType = beanDefinition.getBeanType();
+        Collection<BeanDefinition<Object>> beanDefinitions = beanContext
+                .getBeanDefinitions(Object.class, Qualifiers.byStereotype(Repository.class));
+        for (BeanDefinition<Object> beanDefinition : beanDefinitions) {
+            String targetDs = beanDefinition.stringValue(Repository.class).orElse(null);
+            Class<Object> beanType = beanDefinition.getBeanType();
+            if (targetDs == null || targetDs.equalsIgnoreCase(dataSourceName)) {
                 SqlQueryBuilder queryBuilder = new SqlQueryBuilder(beanDefinition.getAnnotationMetadata());
                 queryBuilders.put(beanType, queryBuilder);
+            } else {
+                repositoriesWithHardcodedDataSource.put(beanType, targetDs);
             }
         }
     }
@@ -152,7 +155,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
     @Override
     public <E, R> StoredQuery<E, R> decorate(MethodInvocationContext<?, ?> context, StoredQuery<E, R> storedQuery) {
         Class<?> repositoryType = context.getTarget().getClass();
-        SqlQueryBuilder queryBuilder = queryBuilders.getOrDefault(repositoryType, DEFAULT_SQL_BUILDER);
+        SqlQueryBuilder queryBuilder = findQueryBuilder(repositoryType);
         RuntimePersistentEntity<E> runtimePersistentEntity = runtimeEntityRegistry.getEntity(storedQuery.getRootEntity());
         return new DefaultSqlStoredQuery<>(storedQuery, runtimePersistentEntity, queryBuilder);
     }
@@ -253,7 +256,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
 
         //noinspection unchecked
         return entityInserts.computeIfAbsent(new QueryKey(repositoryType, rootEntity), (queryKey) -> {
-            final SqlQueryBuilder queryBuilder = queryBuilders.getOrDefault(repositoryType, DEFAULT_SQL_BUILDER);
+            final SqlQueryBuilder queryBuilder = findQueryBuilder(repositoryType);
             final QueryResult queryResult = queryBuilder.buildInsert(annotationMetadata, persistentEntity);
 
             return new DefaultSqlStoredQuery<>(QueryResultStoredQuery.single(DataMethod.OperationType.INSERT, "Custom insert", AnnotationMetadata.EMPTY_METADATA, queryResult, rootEntity), persistentEntity, queryBuilder);
@@ -273,7 +276,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
                                                   RuntimePersistentEntity<T> persistentEntity,
                                                   RuntimeAssociation<T> association) {
         return associationInserts.computeIfAbsent(association, association1 -> {
-            final SqlQueryBuilder queryBuilder = queryBuilders.getOrDefault(repositoryType, DEFAULT_SQL_BUILDER);
+            final SqlQueryBuilder queryBuilder = findQueryBuilder(repositoryType);
             return queryBuilder.buildJoinTableInsert(persistentEntity, association1);
         });
     }
@@ -297,7 +300,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
         final QueryKey key = new QueryKey(repositoryType, rootEntity);
         //noinspection unchecked
         return entityUpdates.computeIfAbsent(key, (queryKey) -> {
-            final SqlQueryBuilder queryBuilder = queryBuilders.getOrDefault(repositoryType, DEFAULT_SQL_BUILDER);
+            final SqlQueryBuilder queryBuilder = findQueryBuilder(repositoryType);
 
             final String idName;
             final PersistentProperty identity = persistentEntity.getIdentity();
@@ -333,7 +336,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
      */
     protected <T> SqlStoredQuery<T, ?> resolveSqlInsertAssociation(Class<?> repositoryType, RuntimeAssociation<T> association, RuntimePersistentEntity<T> persistentEntity, T entity) {
         String sqlInsert = resolveAssociationInsert(repositoryType, persistentEntity, association);
-        final SqlQueryBuilder queryBuilder = queryBuilders.getOrDefault(repositoryType, DEFAULT_SQL_BUILDER);
+        final SqlQueryBuilder queryBuilder = findQueryBuilder(repositoryType);
         List<QueryParameterBinding> parameters = new ArrayList<>();
         for (Map.Entry<PersistentProperty, Object> property : idPropertiesWithValues(persistentEntity.getIdentity(), entity).collect(Collectors.toList())) {
             parameters.add(new QueryParameterBinding() {
@@ -376,6 +379,18 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
 
         RuntimePersistentEntity associatedEntity = association.getAssociatedEntity();
         return new DefaultSqlStoredQuery<>(new BasicStoredQuery<>(sqlInsert, new String[0], parameters, persistentEntity.getIntrospection().getBeanType(), Object.class), associatedEntity, queryBuilder);
+    }
+
+    private SqlQueryBuilder findQueryBuilder(Class<?> repositoryType) {
+        SqlQueryBuilder queryBuilder = queryBuilders.get(repositoryType);
+        if (queryBuilder != null) {
+            return queryBuilder;
+        }
+        String hardcodedDatasource = repositoriesWithHardcodedDataSource.get(repositoryType);
+        if (hardcodedDatasource != null) {
+            throw new IllegalStateException("Repository [" + repositoryType + "] requires datasource: [" + hardcodedDatasource + "] but this repository operations uses: [" + dataSourceName + "]");
+        }
+        throw new IllegalStateException("Cannot find a query builder for repository: [" + repositoryType + "]");
     }
 
     private Stream<PersistentPropertyPath> idProperties(PersistentProperty property) {

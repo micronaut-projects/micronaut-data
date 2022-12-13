@@ -30,6 +30,7 @@ import io.micronaut.data.repository.jpa.criteria.PredicateSpecification;
 import io.micronaut.data.tck.entities.Person;
 import io.micronaut.data.tck.entities.TotalDto;
 import io.reactivex.Single;
+import jakarta.persistence.criteria.JoinType;
 
 import java.util.Arrays;
 import java.util.List;

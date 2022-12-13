@@ -13,7 +13,7 @@ import java.util.concurrent.TimeUnit;
 
 @MicronautTest(transactional = false, rollback = false)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class ProductRepositorySpec extends AbstractMongoSpec {
+class ProductRepositorySpec {
 
     @Inject ProductRepository productRepository;
     @Inject ProductManager productManager;

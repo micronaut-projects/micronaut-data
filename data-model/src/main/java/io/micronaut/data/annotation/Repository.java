@@ -18,8 +18,6 @@ package io.micronaut.data.annotation;
 import io.micronaut.aop.Introduction;
 import io.micronaut.context.annotation.DefaultScope;
 import io.micronaut.context.annotation.Prototype;
-import io.micronaut.context.annotation.Type;
-import io.micronaut.data.intercept.DataIntroductionAdvice;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
@@ -38,7 +36,6 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.PARAMETER, ElementType.ANNOTATION_TYPE, ElementType.TYPE, ElementType.FIELD})
 @Documented
-@Type(DataIntroductionAdvice.class)
 @DefaultScope(Prototype.class)
 public @interface Repository {
     /**

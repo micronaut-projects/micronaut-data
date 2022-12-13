@@ -1,5 +1,16 @@
+import io.micronaut.testresources.buildtools.KnownModules
+
 plugins {
     id "io.micronaut.build.internal.data-module"
+    id 'io.micronaut.test-resources'
+}
+
+micronaut {
+    version = libs.versions.micronaut.asProvider().get()
+    testResources {
+        enabled = true
+        clientTimeout = 300
+    }
 }
 
 dependencies {
@@ -38,6 +49,8 @@ dependencies {
     testImplementation libs.micronaut.reactor
     testImplementation libs.jakarta.persistence.api
     testImplementation mn.micronaut.validation
+
+    // Remove after https://github.com/micronaut-projects/micronaut-test-resources/issues/142
     testImplementation libs.testcontainers.spock
     testImplementation libs.testcontainers.mongodb
 

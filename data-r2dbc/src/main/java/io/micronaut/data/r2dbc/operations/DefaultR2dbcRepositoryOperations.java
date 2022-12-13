@@ -54,6 +54,7 @@ import io.micronaut.data.model.runtime.convert.AttributeConverter;
 import io.micronaut.data.operations.async.AsyncRepositoryOperations;
 import io.micronaut.data.operations.reactive.BlockingExecutorReactorRepositoryOperations;
 import io.micronaut.data.r2dbc.annotation.R2dbcRepository;
+import io.micronaut.data.r2dbc.config.DataR2dbcConfiguration;
 import io.micronaut.data.r2dbc.convert.R2dbcConversionContext;
 import io.micronaut.data.r2dbc.mapper.ColumnIndexR2dbcResultReader;
 import io.micronaut.data.r2dbc.mapper.ColumnNameR2dbcResultReader;
@@ -64,6 +65,7 @@ import io.micronaut.data.runtime.date.DateTimeProvider;
 import io.micronaut.data.runtime.mapper.TypeMapper;
 import io.micronaut.data.runtime.mapper.sql.SqlDTOMapper;
 import io.micronaut.data.runtime.mapper.sql.SqlResultEntityTypeMapper;
+import io.micronaut.data.runtime.multitenancy.SchemaTenantResolver;
 import io.micronaut.data.runtime.operations.ReactorToAsyncOperationsAdaptor;
 import io.micronaut.data.runtime.operations.internal.AbstractReactiveEntitiesOperations;
 import io.micronaut.data.runtime.operations.internal.AbstractReactiveEntityOperations;
@@ -142,6 +144,10 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
     private final String txStatusKey;
     private final String txDefinitionKey;
     private final String currentConnectionKey;
+    @Nullable
+    private final SchemaTenantResolver schemaTenantResolver;
+    private final R2dbcSchemaHandler schemaHandler;
+    private final DataR2dbcConfiguration configuration;
 
     /**
      * Default constructor.
@@ -155,6 +161,9 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
      * @param executorService            The executor
      * @param conversionService          The conversion service
      * @param attributeConverterRegistry The attribute converter registry
+     * @param schemaTenantResolver       The schema tenant resolver
+     * @param schemaHandler              The schema handler
+     * @param configuration              The configuration
      */
     @Internal
     protected DefaultR2dbcRepositoryOperations(
@@ -166,7 +175,10 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         ApplicationContext applicationContext,
         @Nullable @Named("io") ExecutorService executorService,
         DataConversionService<?> conversionService,
-        AttributeConverterRegistry attributeConverterRegistry) {
+        AttributeConverterRegistry attributeConverterRegistry,
+        @Nullable SchemaTenantResolver schemaTenantResolver,
+        R2dbcSchemaHandler schemaHandler,
+        @Parameter DataR2dbcConfiguration configuration) {
         super(
             dataSourceName,
             new ColumnNameR2dbcResultReader(conversionService),
@@ -179,6 +191,9 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             conversionService, attributeConverterRegistry);
         this.connectionFactory = connectionFactory;
         this.ioExecutorService = executorService;
+        this.schemaTenantResolver = schemaTenantResolver;
+        this.schemaHandler = schemaHandler;
+        this.configuration = configuration;
         this.reactiveOperations = new DefaultR2dbcReactiveRepositoryOperations();
         this.dataSourceName = dataSourceName;
         this.cascadeOperations = new ReactiveCascadeOperations<>(conversionService, this);
@@ -312,17 +327,35 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
 
     @NonNull
     @Override
-    public <T> Flux<T> withConnection(@NonNull Function<Connection, Publisher<T>> handler) {
+    public <T> Flux<T> withConnection(@NonNull Function<Connection, Publisher<? extends T>> handler) {
         Objects.requireNonNull(handler, "Handler cannot be null");
         if (LOG.isDebugEnabled()) {
             LOG.debug("Creating a new Connection for DataSource: " + dataSourceName);
         }
-        return Flux.usingWhen(connectionFactory.create(), handler, (connection -> {
+        return Flux.usingWhen(connectionFactory.create(), tenantAwareHandler(handler), (connection -> {
             if (LOG.isDebugEnabled()) {
                 LOG.debug("Closing Connection for DataSource: " + dataSourceName);
             }
             return connection.close();
         }));
+    }
+
+    private <K> Function<Connection, Publisher<? extends K>> tenantAwareHandler(Function<Connection, Publisher<? extends K>> handler) {
+        Function<Connection, Publisher<? extends K>> theHandler;
+        if (schemaTenantResolver == null) {
+            theHandler = handler;
+        } else {
+            theHandler = connection -> {
+                String schemaName = schemaTenantResolver.resolveTenantSchemaName();
+                if (schemaName != null) {
+                    return Mono.fromDirect(schemaHandler.useSchema(connection, configuration.getDialect(), schemaName))
+                        .thenReturn(connection)
+                        .flatMapMany(handler::apply);
+                }
+                return handler.apply(connection);
+            };
+        }
+        return theHandler;
     }
 
     private <T> Flux<T> withConnectionWithCancelCallback(@NonNull BiFunction<Connection, Supplier<Publisher<Void>>, Publisher<? extends T>> handler) {
@@ -337,7 +370,8 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                 }
                 return connection.close();
             };
-            return handler.apply(connection, cancelCallback);
+            Function<Connection, Publisher<? extends T>> theHandler = (c -> handler.apply(c, cancelCallback));
+            return tenantAwareHandler(theHandler).apply(connection);
         });
     }
 

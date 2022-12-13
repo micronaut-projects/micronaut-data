@@ -25,7 +25,7 @@ dependencies {
     implementation 'io.micronaut.reactor:micronaut-reactor'
 
     implementation "io.micronaut:micronaut-http-client"
-    implementation projects.dataMongodb
+    implementation 'io.micronaut.data:micronaut-data-mongodb'
     implementation libs.mongodb.driver.sync
 
     compileOnly libs.javax.persistence.api

@@ -8,7 +8,7 @@ import io.micronaut.data.repository.kotlin.CoroutineCrudRepository
 import kotlinx.coroutines.flow.Flow
 import javax.transaction.Transactional
 
-@R2dbcRepository(dialect = Dialect.POSTGRES) // <1>
+@R2dbcRepository(dialect = Dialect.MYSQL) // <1>
 interface BookRepository : CoroutineCrudRepository<Book, Long> {
     @Join("author")
     override suspend fun findById(id: Long): Book? // <2>

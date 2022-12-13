@@ -1,0 +1,18 @@
+micronaut:
+  data:
+    multi-tenancy:
+      mode: SCHEMA
+  multitenancy:
+    tenantresolver:
+      httpheader:
+        enabled: true
+
+r2dbc:
+  datasources:
+    default:
+      db-type: mariadb
+      schema-generate: CREATE_DROP
+      schema-generate-names:
+        - foo
+        - bar
+      dialect: MYSQL

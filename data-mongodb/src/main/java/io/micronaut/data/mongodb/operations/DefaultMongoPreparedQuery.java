@@ -20,6 +20,7 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.runtime.PreparedQuery;
+import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.mongodb.operations.options.MongoFindOptions;
 import io.micronaut.data.runtime.operations.internal.query.DefaultBindableParametersPreparedQuery;
 import io.micronaut.data.runtime.query.internal.DefaultPreparedQuery;
@@ -38,25 +39,24 @@ import java.util.stream.Collectors;
  *
  * @param <E>   The entity type
  * @param <R>   The result type
- * @param <Dtb> The database type
  * @author Denis Stepanov
  * @since 3.3.
  */
 @Internal
-final class DefaultMongoPreparedQuery<E, R, Dtb> extends DefaultBindableParametersPreparedQuery<E, R> implements DelegatePreparedQuery<E, R>, MongoPreparedQuery<E, R, Dtb> {
+final class DefaultMongoPreparedQuery<E, R> extends DefaultBindableParametersPreparedQuery<E, R> implements DelegatePreparedQuery<E, R>, MongoPreparedQuery<E, R> {
 
     private final DefaultPreparedQuery<E, R> defaultPreparedQuery;
-    private final MongoStoredQuery<E, R, Dtb> mongoStoredQuery;
+    private final MongoStoredQuery<E, R> mongoStoredQuery;
 
     public DefaultMongoPreparedQuery(PreparedQuery<E, R> preparedQuery) {
         super(preparedQuery);
         this.defaultPreparedQuery = (DefaultPreparedQuery<E, R>) preparedQuery;
-        this.mongoStoredQuery = (MongoStoredQuery<E, R, Dtb>) ((DelegateStoredQuery<Object, Object>) preparedQuery).getStoredQueryDelegate();
+        this.mongoStoredQuery = (MongoStoredQuery<E, R>) ((DelegateStoredQuery<Object, Object>) preparedQuery).getStoredQueryDelegate();
     }
 
     @Override
-    public Dtb getDatabase() {
-        return mongoStoredQuery.getDatabase();
+    public RuntimePersistentEntity<E> getPersistentEntity() {
+        return mongoStoredQuery.getRuntimePersistentEntity();
     }
 
     @Override

@@ -166,4 +166,9 @@ open class PersonSuspendRepositoryService(
         throw RuntimeException("exception")
     }
 
+    fun deleteAll() {
+        parentRepository.deleteAll()
+        parentRepositoryForCustomDb.deleteAll()
+    }
+
 }

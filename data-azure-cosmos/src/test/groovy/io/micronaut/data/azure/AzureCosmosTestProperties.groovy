@@ -46,6 +46,10 @@ trait AzureCosmosTestProperties implements TestPropertyProvider {
         return defaultProps
     }
 
+    def cleanupSpec() {
+        emulator?.close()
+    }
+
     Map<String, String> getDbInitProperties() {
         return [
                 'azure.cosmos.database.packages'                                                : 'io.micronaut.data.azure.entities',

@@ -8,6 +8,8 @@ dependencies {
     annotationProcessor mn.micronaut.inject.java
     annotationProcessor projects.dataProcessor
 
+    implementation mn.micronaut.http.client
+    implementation mn.micronaut.http.server.netty
     implementation projects.dataModel
     implementation projects.dataJdbc
     implementation libs.rxjava2

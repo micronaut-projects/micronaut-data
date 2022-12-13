@@ -30,11 +30,11 @@ import io.micronaut.transaction.exceptions.NoTransactionException;
  * @author Denis Stepanov
  * @since 3.3
  */
-@Requires(classes = ClientSession.class, beans = MongoSynchronousTransactionManager.class)
+@Requires(classes = ClientSession.class, beans = MongoSynchronousTransactionManagerImpl.class)
 @Prototype
 public final class TransactionalClientSessionInterceptor implements MethodInterceptor<ClientSession, Object> {
 
-    private final MongoSynchronousTransactionManager transactionManager;
+    private final MongoSynchronousTransactionManagerImpl transactionManager;
 
     /**
      * Default constructor.
@@ -42,7 +42,7 @@ public final class TransactionalClientSessionInterceptor implements MethodInterc
      * @param transactionManager The transactionManager
      */
     @Internal
-    TransactionalClientSessionInterceptor(MongoSynchronousTransactionManager transactionManager) {
+    TransactionalClientSessionInterceptor(MongoSynchronousTransactionManagerImpl transactionManager) {
         this.transactionManager = transactionManager;
     }
 
