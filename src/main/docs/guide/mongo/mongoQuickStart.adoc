@@ -95,7 +95,8 @@ Next up you need to configure at least one data source. The following snippet fr
 .Example YAML configuration
 [source,yaml]
 ----
-include::doc-examples/mongo-example-java/src/main/resources/application.yml[]
+mongodb:
+  uri: mongodb://username:password@localhost:27017/databaseName
 ----
 
 To retrieve objects from the database you need to define a class annotated with ann:data.annotation.MappedEntity[]:
