@@ -191,7 +191,8 @@ implements io.micronaut.aop.MethodInterceptor&lt;java.lang.Object,&#8203;java.la
 <th class="colLast" scope="col">Description</th>
 </tr>
 <tr class="altColor">
-<th class="colConstructorName" scope="row"><code><span class="memberNameLink"><a href="#%3Cinit%3E(io.micronaut.context.BeanLocator)">TransactionalInterceptor</a></span>&#8203;(io.micronaut.context.BeanLocator&nbsp;beanLocator)</code></th>
+<th class="colConstructorName" scope="row"><code><span class="memberNameLink"><a href="#%3Cinit%3E(io.micronaut.transaction.TransactionOperationsRegistry,io.micronaut.transaction.interceptor.TransactionDataSourceTenantResolver)">TransactionalInterceptor</a></span>&#8203;(<a href="../TransactionOperationsRegistry.html" title="interface in io.micronaut.transaction">TransactionOperationsRegistry</a>&nbsp;transactionOperationsRegistry,
+                        <a href="TransactionDataSourceTenantResolver.html" title="interface in io.micronaut.transaction.interceptor">TransactionDataSourceTenantResolver</a>&nbsp;tenantResolver)</code></th>
 <td class="colLast">
 <div class="block">Default constructor.</div>
 </td>
@@ -262,18 +263,21 @@ implements io.micronaut.aop.MethodInterceptor&lt;java.lang.Object,&#8203;java.la
 <!--   -->
 </a>
 <h3>Constructor Detail</h3>
-<a id="&lt;init&gt;(io.micronaut.context.BeanLocator)">
+<a id="&lt;init&gt;(io.micronaut.transaction.TransactionOperationsRegistry,io.micronaut.transaction.interceptor.TransactionDataSourceTenantResolver)">
 <!--   -->
 </a>
 <ul class="blockListLast">
 <li class="blockList">
 <h4>TransactionalInterceptor</h4>
 <pre>public&nbsp;TransactionalInterceptor&#8203;(@NonNull
-                                io.micronaut.context.BeanLocator&nbsp;beanLocator)</pre>
+                                <a href="../TransactionOperationsRegistry.html" title="interface in io.micronaut.transaction">TransactionOperationsRegistry</a>&nbsp;transactionOperationsRegistry,
+                                @Nullable
+                                <a href="TransactionDataSourceTenantResolver.html" title="interface in io.micronaut.transaction.interceptor">TransactionDataSourceTenantResolver</a>&nbsp;tenantResolver)</pre>
 <div class="block">Default constructor.</div>
 <dl>
 <dt><span class="paramLabel">Parameters:</span></dt>
-<dd><code>beanLocator</code> - The bean locator.</dd>
+<dd><code>transactionOperationsRegistry</code> - The <a href="../TransactionOperationsRegistry.html" title="interface in io.micronaut.transaction"><code>TransactionOperationsRegistry</code></a></dd>
+<dd><code>tenantResolver</code> - </dd>
 </dl>
 </li>
 </ul>

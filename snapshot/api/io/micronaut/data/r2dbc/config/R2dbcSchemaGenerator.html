@@ -162,7 +162,8 @@ extends java.lang.Object</pre>
 <th class="colLast" scope="col">Description</th>
 </tr>
 <tr class="altColor">
-<th class="colConstructorName" scope="row"><code><span class="memberNameLink"><a href="#%3Cinit%3E(java.util.List)">R2dbcSchemaGenerator</a></span>&#8203;(java.util.List&lt;<a href="DataR2dbcConfiguration.html" title="class in io.micronaut.data.r2dbc.config">DataR2dbcConfiguration</a>&gt;&nbsp;configurations)</code></th>
+<th class="colConstructorName" scope="row"><code><span class="memberNameLink"><a href="#%3Cinit%3E(java.util.List,io.micronaut.data.r2dbc.operations.R2dbcSchemaHandler)">R2dbcSchemaGenerator</a></span>&#8203;(java.util.List&lt;<a href="DataR2dbcConfiguration.html" title="class in io.micronaut.data.r2dbc.config">DataR2dbcConfiguration</a>&gt;&nbsp;configurations,
+                    <a href="../operations/R2dbcSchemaHandler.html" title="interface in io.micronaut.data.r2dbc.operations">R2dbcSchemaHandler</a>&nbsp;schemaHandler)</code></th>
 <td class="colLast">
 <div class="block">Default constructor.</div>
 </td>
@@ -216,17 +217,19 @@ extends java.lang.Object</pre>
 <!--   -->
 </a>
 <h3>Constructor Detail</h3>
-<a id="&lt;init&gt;(java.util.List)">
+<a id="&lt;init&gt;(java.util.List,io.micronaut.data.r2dbc.operations.R2dbcSchemaHandler)">
 <!--   -->
 </a>
 <ul class="blockListLast">
 <li class="blockList">
 <h4>R2dbcSchemaGenerator</h4>
-<pre>public&nbsp;R2dbcSchemaGenerator&#8203;(java.util.List&lt;<a href="DataR2dbcConfiguration.html" title="class in io.micronaut.data.r2dbc.config">DataR2dbcConfiguration</a>&gt;&nbsp;configurations)</pre>
+<pre>public&nbsp;R2dbcSchemaGenerator&#8203;(java.util.List&lt;<a href="DataR2dbcConfiguration.html" title="class in io.micronaut.data.r2dbc.config">DataR2dbcConfiguration</a>&gt;&nbsp;configurations,
+                            <a href="../operations/R2dbcSchemaHandler.html" title="interface in io.micronaut.data.r2dbc.operations">R2dbcSchemaHandler</a>&nbsp;schemaHandler)</pre>
 <div class="block">Default constructor.</div>
 <dl>
 <dt><span class="paramLabel">Parameters:</span></dt>
 <dd><code>configurations</code> - The configurations.</dd>
+<dd><code>schemaHandler</code> - </dd>
 </dl>
 </li>
 </ul>

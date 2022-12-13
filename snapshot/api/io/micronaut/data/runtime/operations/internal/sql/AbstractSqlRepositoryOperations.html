@@ -217,8 +217,8 @@ implements io.micronaut.context.ApplicationContextProvider, <a href="../../../qu
 <td class="colLast">&nbsp;</td>
 </tr>
 <tr class="altColor">
-<td class="colFirst"><code>protected static <a href="../../../../model/query/builder/sql/SqlQueryBuilder.html" title="class in io.micronaut.data.model.query.builder.sql">SqlQueryBuilder</a></code></td>
-<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#DEFAULT_SQL_BUILDER">DEFAULT_SQL_BUILDER</a></span></code></th>
+<td class="colFirst"><code>protected java.lang.String</code></td>
+<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#dataSourceName">dataSourceName</a></span></code></th>
 <td class="colLast">&nbsp;</td>
 </tr>
 <tr class="rowColor">
@@ -234,6 +234,11 @@ implements io.micronaut.context.ApplicationContextProvider, <a href="../../../qu
 <tr class="rowColor">
 <td class="colFirst"><code>protected java.util.Map&lt;java.lang.Class,&#8203;<a href="../../../../model/query/builder/sql/SqlQueryBuilder.html" title="class in io.micronaut.data.model.query.builder.sql">SqlQueryBuilder</a>&gt;</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#queryBuilders">queryBuilders</a></span></code></th>
+<td class="colLast">&nbsp;</td>
+</tr>
+<tr class="altColor">
+<td class="colFirst"><code>protected java.util.Map&lt;java.lang.Class,&#8203;java.lang.String&gt;</code></td>
+<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#repositoriesWithHardcodedDataSource">repositoriesWithHardcodedDataSource</a></span></code></th>
 <td class="colLast">&nbsp;</td>
 </tr>
 </table>
@@ -458,13 +463,13 @@ implements io.micronaut.context.ApplicationContextProvider, <a href="../../../qu
 <pre>protected static final&nbsp;org.slf4j.Logger QUERY_LOG</pre>
 </li>
 </ul>
-<a id="DEFAULT_SQL_BUILDER">
+<a id="dataSourceName">
 <!--   -->
 </a>
 <ul class="blockList">
 <li class="blockList">
-<h4>DEFAULT_SQL_BUILDER</h4>
-<pre>protected static final&nbsp;<a href="../../../../model/query/builder/sql/SqlQueryBuilder.html" title="class in io.micronaut.data.model.query.builder.sql">SqlQueryBuilder</a> DEFAULT_SQL_BUILDER</pre>
+<h4>dataSourceName</h4>
+<pre>protected final&nbsp;java.lang.String dataSourceName</pre>
 </li>
 </ul>
 <a id="columnNameResultSetReader">
@@ -497,10 +502,19 @@ implements io.micronaut.context.ApplicationContextProvider, <a href="../../../qu
 <a id="queryBuilders">
 <!--   -->
 </a>
-<ul class="blockListLast">
+<ul class="blockList">
 <li class="blockList">
 <h4>queryBuilders</h4>
 <pre>protected final&nbsp;java.util.Map&lt;java.lang.Class,&#8203;<a href="../../../../model/query/builder/sql/SqlQueryBuilder.html" title="class in io.micronaut.data.model.query.builder.sql">SqlQueryBuilder</a>&gt; queryBuilders</pre>
+</li>
+</ul>
+<a id="repositoriesWithHardcodedDataSource">
+<!--   -->
+</a>
+<ul class="blockListLast">
+<li class="blockList">
+<h4>repositoriesWithHardcodedDataSource</h4>
+<pre>protected final&nbsp;java.util.Map&lt;java.lang.Class,&#8203;java.lang.String&gt; repositoriesWithHardcodedDataSource</pre>
 </li>
 </ul>
 </li>

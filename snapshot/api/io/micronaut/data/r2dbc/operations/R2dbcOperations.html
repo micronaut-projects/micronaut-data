@@ -182,7 +182,7 @@ extends <a href="../../../transaction/reactive/ReactiveTransactionOperations.htm
 </tr>
 <tr id="i1" class="rowColor">
 <td class="colFirst"><code>&lt;T&gt;&nbsp;org.reactivestreams.Publisher&lt;T&gt;</code></td>
-<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#withConnection(java.util.function.Function)">withConnection</a></span>&#8203;(java.util.function.Function&lt;io.r2dbc.spi.Connection,&#8203;org.reactivestreams.Publisher&lt;T&gt;&gt;&nbsp;handler)</code></th>
+<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#withConnection(java.util.function.Function)">withConnection</a></span>&#8203;(java.util.function.Function&lt;io.r2dbc.spi.Connection,&#8203;org.reactivestreams.Publisher&lt;? extends T&gt;&gt;&nbsp;handler)</code></th>
 <td class="colLast">
 <div class="block">Execute the given handler with a new connection.</div>
 </td>
@@ -265,7 +265,7 @@ io.r2dbc.spi.ConnectionFactory&nbsp;connectionFactory()</pre>
 <h4>withConnection</h4>
 <pre class="methodSignature">@NonNull
 &lt;T&gt;&nbsp;org.reactivestreams.Publisher&lt;T&gt;&nbsp;withConnection&#8203;(@NonNull
-                                                    java.util.function.Function&lt;io.r2dbc.spi.Connection,&#8203;org.reactivestreams.Publisher&lt;T&gt;&gt;&nbsp;handler)</pre>
+                                                    java.util.function.Function&lt;io.r2dbc.spi.Connection,&#8203;org.reactivestreams.Publisher&lt;? extends T&gt;&gt;&nbsp;handler)</pre>
 <div class="block">Execute the given handler with a new connection.</div>
 <dl>
 <dt><span class="paramLabel">Type Parameters:</span></dt>

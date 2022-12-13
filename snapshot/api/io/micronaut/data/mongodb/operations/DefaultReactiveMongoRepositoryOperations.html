@@ -204,13 +204,18 @@ implements <a href="MongoReactorRepositoryOperations.html" title="interface in i
 <th class="colLast" scope="col">Description</th>
 </tr>
 <tr class="altColor">
-<td class="colFirst"><code>protected static org.bson.BsonDocument</code></td>
-<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#EMPTY">EMPTY</a></span></code></th>
+<td class="colFirst"><code>protected <a href="MongoCollectionNameProvider.html" title="interface in io.micronaut.data.mongodb.operations">MongoCollectionNameProvider</a></code></td>
+<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#collectionNameProvider">collectionNameProvider</a></span></code></th>
 <td class="colLast">&nbsp;</td>
 </tr>
 <tr class="rowColor">
-<td class="colFirst"><code>protected java.util.Map&lt;java.lang.Class,&#8203;java.lang.String&gt;</code></td>
-<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#repoDatabaseConfig">repoDatabaseConfig</a></span></code></th>
+<td class="colFirst"><code>protected <a href="MongoDatabaseNameProvider.html" title="interface in io.micronaut.data.mongodb.operations">MongoDatabaseNameProvider</a></code></td>
+<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#databaseNameProvider">databaseNameProvider</a></span></code></th>
+<td class="colLast">&nbsp;</td>
+</tr>
+<tr class="altColor">
+<td class="colFirst"><code>protected static org.bson.BsonDocument</code></td>
+<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#EMPTY">EMPTY</a></span></code></th>
 <td class="colLast">&nbsp;</td>
 </tr>
 </table>
@@ -384,8 +389,8 @@ implements <a href="MongoReactorRepositoryOperations.html" title="interface in i
 </tr>
 <tr id="i19" class="rowColor">
 <td class="colFirst"><code>protected com.mongodb.reactivestreams.client.MongoDatabase</code></td>
-<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getDatabase(io.micronaut.data.model.runtime.RuntimePersistentEntity,java.lang.Class)">getDatabase</a></span>&#8203;(<a href="../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;?&gt;&nbsp;persistentEntity,
-           java.lang.Class&lt;?&gt;&nbsp;repositoryClass)</code></th>
+<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getDatabase(io.micronaut.data.model.PersistentEntity,java.lang.Class)">getDatabase</a></span>&#8203;(<a href="../../model/PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;persistentEntity,
+           java.lang.Class&lt;?&gt;&nbsp;repository)</code></th>
 <td class="colLast">&nbsp;</td>
 </tr>
 <tr id="i20" class="altColor">
@@ -404,12 +409,12 @@ implements <a href="MongoReactorRepositoryOperations.html" title="interface in i
 <td class="colLast">&nbsp;</td>
 </tr>
 <tr id="i23" class="rowColor">
-<td class="colFirst"><code>protected &lt;E,&#8203;R&gt;<br><a href="MongoPreparedQuery.html" title="interface in io.micronaut.data.mongodb.operations">MongoPreparedQuery</a>&lt;E,&#8203;R,&#8203;Dtb&gt;</code></td>
+<td class="colFirst"><code>protected &lt;E,&#8203;R&gt;<br><a href="MongoPreparedQuery.html" title="interface in io.micronaut.data.mongodb.operations">MongoPreparedQuery</a>&lt;E,&#8203;R&gt;</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getMongoPreparedQuery(io.micronaut.data.model.runtime.PreparedQuery)">getMongoPreparedQuery</a></span>&#8203;(<a href="../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;E,&#8203;R&gt;&nbsp;preparedQuery)</code></th>
 <td class="colLast">&nbsp;</td>
 </tr>
 <tr id="i24" class="altColor">
-<td class="colFirst"><code>protected &lt;E,&#8203;R&gt;<br><a href="MongoStoredQuery.html" title="interface in io.micronaut.data.mongodb.operations">MongoStoredQuery</a>&lt;E,&#8203;R,&#8203;Dtb&gt;</code></td>
+<td class="colFirst"><code>protected &lt;E,&#8203;R&gt;<br><a href="MongoStoredQuery.html" title="interface in io.micronaut.data.mongodb.operations">MongoStoredQuery</a>&lt;E,&#8203;R&gt;</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getMongoStoredQuery(io.micronaut.data.model.runtime.StoredQuery)">getMongoStoredQuery</a></span>&#8203;(<a href="../../model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;E,&#8203;R&gt;&nbsp;storedQuery)</code></th>
 <td class="colLast">&nbsp;</td>
 </tr>
@@ -606,13 +611,22 @@ implements <a href="MongoReactorRepositoryOperations.html" title="interface in i
 <pre>protected static final&nbsp;org.bson.BsonDocument EMPTY</pre>
 </li>
 </ul>
-<a id="repoDatabaseConfig">
+<a id="collectionNameProvider">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>collectionNameProvider</h4>
+<pre>protected final&nbsp;<a href="MongoCollectionNameProvider.html" title="interface in io.micronaut.data.mongodb.operations">MongoCollectionNameProvider</a> collectionNameProvider</pre>
+</li>
+</ul>
+<a id="databaseNameProvider">
 <!--   -->
 </a>
 <ul class="blockListLast">
 <li class="blockList">
-<h4>repoDatabaseConfig</h4>
-<pre>protected final&nbsp;java.util.Map&lt;java.lang.Class,&#8203;java.lang.String&gt; repoDatabaseConfig</pre>
+<h4>databaseNameProvider</h4>
+<pre>protected final&nbsp;<a href="MongoDatabaseNameProvider.html" title="interface in io.micronaut.data.mongodb.operations">MongoDatabaseNameProvider</a> databaseNameProvider</pre>
 </li>
 </ul>
 </li>
@@ -1102,14 +1116,14 @@ implements <a href="MongoReactorRepositoryOperations.html" title="interface in i
 </dl>
 </li>
 </ul>
-<a id="getDatabase(io.micronaut.data.model.runtime.RuntimePersistentEntity,java.lang.Class)">
+<a id="getDatabase(io.micronaut.data.model.PersistentEntity,java.lang.Class)">
 <!--   -->
 </a>
 <ul class="blockList">
 <li class="blockList">
 <h4>getDatabase</h4>
-<pre class="methodSignature">protected&nbsp;com.mongodb.reactivestreams.client.MongoDatabase&nbsp;getDatabase&#8203;(<a href="../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;?&gt;&nbsp;persistentEntity,
-                                                                       java.lang.Class&lt;?&gt;&nbsp;repositoryClass)</pre>
+<pre class="methodSignature">protected&nbsp;com.mongodb.reactivestreams.client.MongoDatabase&nbsp;getDatabase&#8203;(<a href="../../model/PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;persistentEntity,
+                                                                       java.lang.Class&lt;?&gt;&nbsp;repository)</pre>
 </li>
 </ul>
 <a id="getCodecRegistry(com.mongodb.reactivestreams.client.MongoDatabase)">
@@ -1331,7 +1345,7 @@ public&nbsp;&lt;T&gt;&nbsp;reactor.core.publisher.Flux&lt;T&gt;&nbsp;withTransac
 <ul class="blockList">
 <li class="blockList">
 <h4>getMongoStoredQuery</h4>
-<pre class="methodSignature">protected&nbsp;&lt;E,&#8203;R&gt;&nbsp;<a href="MongoStoredQuery.html" title="interface in io.micronaut.data.mongodb.operations">MongoStoredQuery</a>&lt;E,&#8203;R,&#8203;Dtb&gt;&nbsp;getMongoStoredQuery&#8203;(<a href="../../model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;E,&#8203;R&gt;&nbsp;storedQuery)</pre>
+<pre class="methodSignature">protected&nbsp;&lt;E,&#8203;R&gt;&nbsp;<a href="MongoStoredQuery.html" title="interface in io.micronaut.data.mongodb.operations">MongoStoredQuery</a>&lt;E,&#8203;R&gt;&nbsp;getMongoStoredQuery&#8203;(<a href="../../model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;E,&#8203;R&gt;&nbsp;storedQuery)</pre>
 </li>
 </ul>
 <a id="getMongoPreparedQuery(io.micronaut.data.model.runtime.PreparedQuery)">
@@ -1340,7 +1354,7 @@ public&nbsp;&lt;T&gt;&nbsp;reactor.core.publisher.Flux&lt;T&gt;&nbsp;withTransac
 <ul class="blockList">
 <li class="blockList">
 <h4>getMongoPreparedQuery</h4>
-<pre class="methodSignature">protected&nbsp;&lt;E,&#8203;R&gt;&nbsp;<a href="MongoPreparedQuery.html" title="interface in io.micronaut.data.mongodb.operations">MongoPreparedQuery</a>&lt;E,&#8203;R,&#8203;Dtb&gt;&nbsp;getMongoPreparedQuery&#8203;(<a href="../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;E,&#8203;R&gt;&nbsp;preparedQuery)</pre>
+<pre class="methodSignature">protected&nbsp;&lt;E,&#8203;R&gt;&nbsp;<a href="MongoPreparedQuery.html" title="interface in io.micronaut.data.mongodb.operations">MongoPreparedQuery</a>&lt;E,&#8203;R&gt;&nbsp;getMongoPreparedQuery&#8203;(<a href="../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;E,&#8203;R&gt;&nbsp;preparedQuery)</pre>
 </li>
 </ul>
 <a id="decorate(io.micronaut.data.model.runtime.PreparedQuery)">

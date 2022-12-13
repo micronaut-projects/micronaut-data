@@ -205,7 +205,7 @@ implements <a href="JdbcRepositoryOperations.html" title="interface in io.micron
 <!--   -->
 </a>
 <h3>Fields inherited from class&nbsp;io.micronaut.data.runtime.operations.internal.sql.<a href="../../runtime/operations/internal/sql/AbstractSqlRepositoryOperations.html" title="class in io.micronaut.data.runtime.operations.internal.sql">AbstractSqlRepositoryOperations</a></h3>
-<code><a href="../../runtime/operations/internal/sql/AbstractSqlRepositoryOperations.html#columnIndexResultSetReader">columnIndexResultSetReader</a>, <a href="../../runtime/operations/internal/sql/AbstractSqlRepositoryOperations.html#columnNameResultSetReader">columnNameResultSetReader</a>, <a href="../../runtime/operations/internal/sql/AbstractSqlRepositoryOperations.html#DEFAULT_SQL_BUILDER">DEFAULT_SQL_BUILDER</a>, <a href="../../runtime/operations/internal/sql/AbstractSqlRepositoryOperations.html#preparedStatementWriter">preparedStatementWriter</a>, <a href="../../runtime/operations/internal/sql/AbstractSqlRepositoryOperations.html#QUERY_LOG">QUERY_LOG</a>, <a href="../../runtime/operations/internal/sql/AbstractSqlRepositoryOperations.html#queryBuilders">queryBuilders</a></code></li>
+<code><a href="../../runtime/operations/internal/sql/AbstractSqlRepositoryOperations.html#columnIndexResultSetReader">columnIndexResultSetReader</a>, <a href="../../runtime/operations/internal/sql/AbstractSqlRepositoryOperations.html#columnNameResultSetReader">columnNameResultSetReader</a>, <a href="../../runtime/operations/internal/sql/AbstractSqlRepositoryOperations.html#dataSourceName">dataSourceName</a>, <a href="../../runtime/operations/internal/sql/AbstractSqlRepositoryOperations.html#preparedStatementWriter">preparedStatementWriter</a>, <a href="../../runtime/operations/internal/sql/AbstractSqlRepositoryOperations.html#QUERY_LOG">QUERY_LOG</a>, <a href="../../runtime/operations/internal/sql/AbstractSqlRepositoryOperations.html#queryBuilders">queryBuilders</a>, <a href="../../runtime/operations/internal/sql/AbstractSqlRepositoryOperations.html#repositoriesWithHardcodedDataSource">repositoriesWithHardcodedDataSource</a></code></li>
 </ul>
 <ul class="blockList">
 <li class="blockList"><a id="fields.inherited.from.class.io.micronaut.data.runtime.operations.internal.AbstractRepositoryOperations">
@@ -233,7 +233,7 @@ implements <a href="JdbcRepositoryOperations.html" title="interface in io.micron
 </tr>
 <tr class="altColor">
 <td class="colFirst"><code>protected </code></td>
-<th class="colConstructorName" scope="row"><code><span class="memberNameLink"><a href="#%3Cinit%3E(java.lang.String,io.micronaut.data.jdbc.config.DataJdbcConfiguration,javax.sql.DataSource,io.micronaut.transaction.TransactionOperations,java.util.concurrent.ExecutorService,io.micronaut.context.BeanContext,java.util.List,io.micronaut.data.runtime.date.DateTimeProvider,io.micronaut.data.model.runtime.RuntimeEntityRegistry,io.micronaut.data.runtime.convert.DataConversionService,io.micronaut.data.model.runtime.AttributeConverterRegistry)">DefaultJdbcRepositoryOperations</a></span>&#8203;(java.lang.String&nbsp;dataSourceName,
+<th class="colConstructorName" scope="row"><code><span class="memberNameLink"><a href="#%3Cinit%3E(java.lang.String,io.micronaut.data.jdbc.config.DataJdbcConfiguration,javax.sql.DataSource,io.micronaut.transaction.TransactionOperations,java.util.concurrent.ExecutorService,io.micronaut.context.BeanContext,java.util.List,io.micronaut.data.runtime.date.DateTimeProvider,io.micronaut.data.model.runtime.RuntimeEntityRegistry,io.micronaut.data.runtime.convert.DataConversionService,io.micronaut.data.model.runtime.AttributeConverterRegistry,io.micronaut.data.runtime.multitenancy.SchemaTenantResolver,io.micronaut.data.jdbc.operations.JdbcSchemaHandler)">DefaultJdbcRepositoryOperations</a></span>&#8203;(java.lang.String&nbsp;dataSourceName,
                                <a href="../config/DataJdbcConfiguration.html" title="class in io.micronaut.data.jdbc.config">DataJdbcConfiguration</a>&nbsp;jdbcConfiguration,
                                javax.sql.DataSource&nbsp;dataSource,
                                <a href="../../../transaction/TransactionOperations.html" title="interface in io.micronaut.transaction">TransactionOperations</a>&lt;java.sql.Connection&gt;&nbsp;transactionOperations,
@@ -243,7 +243,9 @@ implements <a href="JdbcRepositoryOperations.html" title="interface in io.micron
                                <a href="../../runtime/date/DateTimeProvider.html" title="interface in io.micronaut.data.runtime.date">DateTimeProvider</a>&nbsp;dateTimeProvider,
                                <a href="../../model/runtime/RuntimeEntityRegistry.html" title="interface in io.micronaut.data.model.runtime">RuntimeEntityRegistry</a>&nbsp;entityRegistry,
                                <a href="../../runtime/convert/DataConversionService.html" title="interface in io.micronaut.data.runtime.convert">DataConversionService</a>&lt;?&gt;&nbsp;conversionService,
-                               <a href="../../model/runtime/AttributeConverterRegistry.html" title="interface in io.micronaut.data.model.runtime">AttributeConverterRegistry</a>&nbsp;attributeConverterRegistry)</code></th>
+                               <a href="../../model/runtime/AttributeConverterRegistry.html" title="interface in io.micronaut.data.model.runtime">AttributeConverterRegistry</a>&nbsp;attributeConverterRegistry,
+                               <a href="../../runtime/multitenancy/SchemaTenantResolver.html" title="interface in io.micronaut.data.runtime.multitenancy">SchemaTenantResolver</a>&nbsp;schemaTenantResolver,
+                               <a href="JdbcSchemaHandler.html" title="interface in io.micronaut.data.jdbc.operations">JdbcSchemaHandler</a>&nbsp;schemaHandler)</code></th>
 <td class="colLast">
 <div class="block">Default constructor.</div>
 </td>
@@ -591,7 +593,7 @@ implements <a href="JdbcRepositoryOperations.html" title="interface in io.micron
 <!--   -->
 </a>
 <h3>Constructor Detail</h3>
-<a id="&lt;init&gt;(java.lang.String,io.micronaut.data.jdbc.config.DataJdbcConfiguration,javax.sql.DataSource,io.micronaut.transaction.TransactionOperations,java.util.concurrent.ExecutorService,io.micronaut.context.BeanContext,java.util.List,io.micronaut.data.runtime.date.DateTimeProvider,io.micronaut.data.model.runtime.RuntimeEntityRegistry,io.micronaut.data.runtime.convert.DataConversionService,io.micronaut.data.model.runtime.AttributeConverterRegistry)">
+<a id="&lt;init&gt;(java.lang.String,io.micronaut.data.jdbc.config.DataJdbcConfiguration,javax.sql.DataSource,io.micronaut.transaction.TransactionOperations,java.util.concurrent.ExecutorService,io.micronaut.context.BeanContext,java.util.List,io.micronaut.data.runtime.date.DateTimeProvider,io.micronaut.data.model.runtime.RuntimeEntityRegistry,io.micronaut.data.runtime.convert.DataConversionService,io.micronaut.data.model.runtime.AttributeConverterRegistry,io.micronaut.data.runtime.multitenancy.SchemaTenantResolver,io.micronaut.data.jdbc.operations.JdbcSchemaHandler)">
 <!--   -->
 </a>
 <ul class="blockListLast">
@@ -613,7 +615,10 @@ protected&nbsp;DefaultJdbcRepositoryOperations&#8203;(@Parameter
                                           <a href="../../runtime/date/DateTimeProvider.html" title="interface in io.micronaut.data.runtime.date">DateTimeProvider</a>&nbsp;dateTimeProvider,
                                           <a href="../../model/runtime/RuntimeEntityRegistry.html" title="interface in io.micronaut.data.model.runtime">RuntimeEntityRegistry</a>&nbsp;entityRegistry,
                                           <a href="../../runtime/convert/DataConversionService.html" title="interface in io.micronaut.data.runtime.convert">DataConversionService</a>&lt;?&gt;&nbsp;conversionService,
-                                          <a href="../../model/runtime/AttributeConverterRegistry.html" title="interface in io.micronaut.data.model.runtime">AttributeConverterRegistry</a>&nbsp;attributeConverterRegistry)</pre>
+                                          <a href="../../model/runtime/AttributeConverterRegistry.html" title="interface in io.micronaut.data.model.runtime">AttributeConverterRegistry</a>&nbsp;attributeConverterRegistry,
+                                          @Nullable
+                                          <a href="../../runtime/multitenancy/SchemaTenantResolver.html" title="interface in io.micronaut.data.runtime.multitenancy">SchemaTenantResolver</a>&nbsp;schemaTenantResolver,
+                                          <a href="JdbcSchemaHandler.html" title="interface in io.micronaut.data.jdbc.operations">JdbcSchemaHandler</a>&nbsp;schemaHandler)</pre>
 <div class="block">Default constructor.</div>
 <dl>
 <dt><span class="paramLabel">Parameters:</span></dt>
@@ -628,6 +633,8 @@ protected&nbsp;DefaultJdbcRepositoryOperations&#8203;(@Parameter
 <dd><code>entityRegistry</code> - The entity registry</dd>
 <dd><code>conversionService</code> - The conversion service</dd>
 <dd><code>attributeConverterRegistry</code> - The attribute converter registry</dd>
+<dd><code>schemaTenantResolver</code> - The schema tenant resolver</dd>
+<dd><code>schemaHandler</code> - The schema handler</dd>
 </dl>
 </li>
 </ul>

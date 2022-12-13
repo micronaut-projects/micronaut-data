@@ -146,6 +146,8 @@
         
         <div class="toc-item" style="margin-left:10px" id="toc-item-kotlinCriteria"><a href="#kotlinCriteria"><strong>3.5</strong><span>Kotlin Criteria API extensions</span></a></div>
         
+        <div class="toc-item" style="margin-left:10px" id="toc-item-multitenancy"><a href="#multitenancy"><strong>3.6</strong><span>Multi-tenancy</span></a></div>
+        
         <div class="toc-item" style="margin-left:0px" id="toc-item-hibernate"><a href="#hibernate"><strong>4</strong><span>Micronaut Data JPA Hibernate</span></a></div>
         
         <div class="toc-item" style="margin-left:10px" id="toc-item-hibernateJpaAnnotations"><a href="#hibernateJpaAnnotations"><strong>4.1</strong><span>JPA Annotations</span></a></div>
@@ -384,8 +386,10 @@
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">package example;
 
+import io.micronaut.context.annotation.Parameter;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Query;
+import io.micronaut.data.annotation.QueryHint;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
@@ -405,6 +409,7 @@ interface BookRepository extends CrudRepository&lt;Book, Long&gt; { // <b class=
 <pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">package example
 
 import io.micronaut.context.annotation.Executable
+import io.micronaut.context.annotation.Parameter
 import io.micronaut.data.annotation.*
 import io.micronaut.data.model.*
 import io.micronaut.data.repository.CrudRepository
@@ -421,6 +426,7 @@ interface BookRepository extends CrudRepository&lt;Book, Long&gt; { // <b class=
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">package example
 
 import io.micronaut.context.annotation.Executable
+import io.micronaut.context.annotation.Parameter
 import io.micronaut.data.annotation.*
 import io.micronaut.data.model.*
 import io.micronaut.data.repository.CrudRepository
@@ -3691,6 +3697,123 @@ personRepository.updateAll(updateQuery)</code></pre>
 </div>
 </div>
 
+<h2 id="multitenancy"><a class="anchor" href="#multitenancy"></a>3.6 Multi-tenancy</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/multitenancy.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>Micronaut Data supports multi-tenancy to allow the use of multiple databases or schemas by a single micronaut application.</p>
+</div>
+<div class="ulist">
+<div class="title">Supported Multitenancy Modes</div>
+<ul>
+<li>
+<p>DATASOURCE - A separate database with a separate connection pool is used to store each tenants data. Internally different repository operations  / transaction manager instance will be used for each tenant.</p>
+</li>
+<li>
+<p>SCHEMA - The same database, but different schemas are used to store each tenants data. Only supported by JDBC/R2DBC/MongoDB (collections)</p>
+</li>
+</ul>
+</div>
+<div class="sect2">
+<h3 id="_datasource_mode">Datasource Mode</h3>
+<div class="paragraph">
+<p>The DATASOURCE mode is used in combination with the micronaut-multitenancy library in order to resolve the tenant name.
+In the below example, the tenant resolver is set to use a http header. See <a href="https://micronaut-projects.github.io/micronaut-multitenancy/latest/guide/">Micronaut Multitenancy</a> for more information.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">micronaut:
+  data:
+    multi-tenancy:
+      mode: DATASOURCE
+  multitenancy:
+    tenantresolver:
+      httpheader:
+        enabled: true
+
+datasources:
+  foo:
+    url: jdbc:h2:mem:dbTenantFoo
+    driverClassName: org.h2.Driver
+    username: sa
+    password: ''
+    schema-generate: CREATE_DROP
+    dialect: H2
+  bar:
+    url: jdbc:h2:mem:dbTenantBar
+    driverClassName: org.h2.Driver
+    username: sa
+    password: ''
+    schema-generate: CREATE_DROP
+    dialect: H2</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The following HTTP clients will access a different tenant datasource:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@Header(name = "tenantId", value = "foo")
+@Client("/books")
+interface FooBookClient extends BookClient {
+}
+
+@Header(name = "tenantId", value = "bar")
+@Client("/books")
+interface BarBookClient extends BookClient {
+}</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_schema_mode">Schema Mode</h3>
+<div class="paragraph">
+<p>The SCHEMA mode uses a single datasource and set the active schema based on the tenant resolved.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">micronaut:
+  data:
+    multi-tenancy:
+      mode: SCHEMA
+  multitenancy:
+    tenantresolver:
+      httpheader:
+        enabled: true
+
+datasources:
+  default:
+    url: jdbc:h2:mem:db
+    driverClassName: org.h2.Driver
+    username: sa
+    password: ''
+    dialect: H2
+    schema-generate: CREATE_DROP
+    schema-generate-names:
+      - foo
+      - bar</code></pre>
+</div>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+You can use property <code>schema-generate-names</code> to specify multiple schemas to be created and initialized for testing.
+</td>
+</tr>
+</table>
+</div>
+</div>
+
 <h1 id="hibernate"><a class="anchor" href="#hibernate"></a>4 Micronaut Data JPA Hibernate</h1>
 
 <div class='contribute-btn'>
@@ -3950,8 +4073,10 @@ data class Book(@Id
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">package example;
 
+import io.micronaut.context.annotation.Parameter;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Query;
+import io.micronaut.data.annotation.QueryHint;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
@@ -3971,6 +4096,7 @@ interface BookRepository extends CrudRepository&lt;Book, Long&gt; { // <b class=
 <pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">package example
 
 import io.micronaut.context.annotation.Executable
+import io.micronaut.context.annotation.Parameter
 import io.micronaut.data.annotation.*
 import io.micronaut.data.model.*
 import io.micronaut.data.repository.CrudRepository
@@ -3987,6 +4113,7 @@ interface BookRepository extends CrudRepository&lt;Book, Long&gt; { // <b class=
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">package example
 
 import io.micronaut.context.annotation.Executable
+import io.micronaut.context.annotation.Parameter
 import io.micronaut.data.annotation.*
 import io.micronaut.data.model.*
 import io.micronaut.data.repository.CrudRepository
@@ -4099,6 +4226,30 @@ bookRepository.save(book)</code></pre>
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">book.title = "Changed"
 bookRepository.save(book)</code></pre>
 </div>
+</div>
+<div class="paragraph">
+<p>For partial entity updates, custom update method like this can be used:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@QueryHint(name = "javax.persistence.FlushModeType", value = "AUTO")
+void updatePages(@Id Long id, @Parameter("pages") int pages);</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">@QueryHint(name = "javax.persistence.FlushModeType", value = "AUTO")
+void updatePages(@Id Long id, @Parameter("pages") int pages)</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">@QueryHint(name = "javax.persistence.FlushModeType", value = "AUTO")
+fun updatePages(@Id id: Long?, @Parameter("pages") pages: Int)</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>In this example, in order for update to be propagated in the current session you can add <code>QueryHint</code> annotation to force session flush.</p>
 </div>
 </div>
 <div class="sect2">
@@ -6136,7 +6287,7 @@ import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import javax.validation.constraints.NotNull
 
-@R2dbcRepository(dialect = Dialect.POSTGRES) // <b class="conum">(1)</b>
+@R2dbcRepository(dialect = Dialect.MYSQL) // <b class="conum">(1)</b>
 interface AuthorRepository : ReactiveStreamsCrudRepository&lt;Author, Long&gt; {
     override fun findById(id: @NotNull Long): Mono&lt;Author&gt; // <b class="conum">(2)</b>
     override fun findAll(): Flux&lt;Author&gt;
@@ -6291,7 +6442,7 @@ class AuthorController(private val repository: AuthorRepository) {
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Postgres</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>io.r2dbc:r2dbc-postgresql</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>org.postgresql:r2dbc-postgresql</code></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">SQL Server</p></td>
@@ -6348,7 +6499,19 @@ Most of the database migration tools use JDBC driver to make DB changes. Therefo
 flyway:
   datasources:
     default:
-      enabled: true</code></pre>
+      enabled: true
+
+r2dbc:
+  datasources:
+    default:
+      db-type: postgresql
+      schema-generate: CREATE_DROP
+      dialect: POSTGRES
+datasources:
+  default:
+    db-type: postgresql
+    schema-generate: CREATE_DROP
+    dialect: POSTGRES</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -6577,7 +6740,7 @@ open class AuthorService(
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">Mono.fromDirect(operations.withTransaction(status -&gt;
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">Flux.from(operations.withTransaction(status -&gt;
     Flux.from(authorRepository.save(new Author("Stephen King")))
             .flatMap((author -&gt; bookRepository.saveAll(Arrays.asList(
                     new Book("The Stand", 1000, author),
@@ -6587,12 +6750,12 @@ open class AuthorService(
         .flatMap((author -&gt;
                 bookRepository.save(new Book("Along Came a Spider", 300, author))
     )).then()
-)).block();</code></pre>
+)).collectList().block();</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">Mono.fromDirect(operations.withTransaction(status -&gt;
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">Flux.from(operations.withTransaction(status -&gt;
         Flux.from(authorRepository.save(new Author("Stephen King")))
                 .flatMap((author -&gt; bookRepository.saveAll([
                         new Book("The Stand", 1000, author),
@@ -6602,7 +6765,7 @@ open class AuthorService(
                 .flatMap((author -&gt;
                         bookRepository.save(new Book("Along Came a Spider", 300, author))
                 )).then()
-)).block()</code></pre>
+)).collectList().block()</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -8007,6 +8170,13 @@ static UpdateSpecification&lt;Person&gt; setNewName(String newName) {
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">static PredicateSpecification&lt;Product&gt; manufacturerNameEquals(String name) {
     return (root, cb) -&gt; cb.equal(root.join(Product_.manufacturer).get(Manufacturer_.name), name);
+}
+
+static PredicateSpecification&lt;Product&gt; joined() {
+    return (root, cb) -&gt; {
+        root.join("manufacturer");
+        return null;
+    };
 }</code></pre>
 </div>
 </div>
@@ -11334,7 +11504,11 @@ data class Product(@field:Id @GeneratedValue
                    var id: ObjectId?,
                    var name: String,
                    @Relation(Relation.Kind.MANY_TO_ONE)
-                   var manufacturer: Manufacturer?)</code></pre>
+                   var manufacturer: Manufacturer?) {
+
+    constructor(name: String, manufacturer: Manufacturer?) : this(null, name, manufacturer)
+
+}</code></pre>
 </div>
 </div>
 <div class="paragraph">
