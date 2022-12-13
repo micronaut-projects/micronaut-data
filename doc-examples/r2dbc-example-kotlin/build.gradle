@@ -9,10 +9,6 @@ plugins {
     id "io.micronaut.build.internal.data-kotlin-example"
 }
 
-repositories {
-    mavenCentral()
-}
-
 application {
     mainClass = "example.ApplicationKt"
 }

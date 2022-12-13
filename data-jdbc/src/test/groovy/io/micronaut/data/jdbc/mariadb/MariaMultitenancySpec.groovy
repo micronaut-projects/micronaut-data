@@ -7,12 +7,6 @@ import io.micronaut.data.jdbc.mysql.MySqlBookRepository
 class MariaMultitenancySpec extends AbstractJdbcMultitenancySpec implements CleanupTestResourcesDatabaseTestPropertyProvider {
 
     @Override
-    boolean supportsSchemaMultitenancy() {
-        // Requires additional role: GRANT ALL PRIVILEGES ON *.* TO 'test'@'%' WITH GRANT OPTION;
-        return false
-    }
-
-    @Override
     Map<String, String> getExtraProperties() {
         return [bookRepositoryClass: MySqlBookRepository.name]
     }

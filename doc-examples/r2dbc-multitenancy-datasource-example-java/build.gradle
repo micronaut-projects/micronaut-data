@@ -5,10 +5,6 @@ plugins {
     id 'io.micronaut.test-resources'
 }
 
-repositories {
-    mavenCentral()
-}
-
 application {
     mainClass = "example.Application"
 }
@@ -30,9 +26,11 @@ dependencies {
     implementation libs.jakarta.persistence.api
     implementation libs.jakarta.transaction.api
 
-    runtimeOnly libs.drivers.r2dbc.postgresql
+    runtimeOnly libs.drivers.r2dbc.mariadb
 
     testImplementation "io.micronaut:micronaut-http-client"
 
     runtimeOnly "ch.qos.logback:logback-classic"
+
+    testResourcesService libs.drivers.jdbc.mariadb
 }
