@@ -25,12 +25,16 @@ import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.PersistentEntity
 import io.micronaut.data.model.entities.Person
 import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder
+import io.micronaut.data.tck.entities.Author
 import io.micronaut.data.tck.entities.Book
 import io.micronaut.inject.BeanDefinition
 import io.micronaut.inject.beans.visitor.IntrospectedTypeElementVisitor
 import io.micronaut.inject.visitor.TypeElementVisitor
 
 import javax.annotation.processing.SupportedAnnotationTypes
+
+import static io.micronaut.data.processor.visitors.TestUtils.getCountQuery
+import static io.micronaut.data.processor.visitors.TestUtils.getQuery
 
 class PageSpec extends AbstractDataSpec {
 
@@ -81,9 +85,9 @@ import io.micronaut.data.model.entities.Person;
 interface MyInterface extends GenericRepository<Person, Long> {
 
     Page<Person> list(Pageable pageable);
-    
+
     Page<Person> findByName(String title, Pageable pageable);
-    
+
 }
 """)
 
@@ -105,7 +109,7 @@ interface MyInterface extends GenericRepository<Person, Long> {
 
     }
 
-    void "test count query with join"() {
+    void "test count query with join many to one"() {
         given:
         BeanDefinition beanDefinition = buildRepository('test.MyInterface' , """
 import io.micronaut.data.annotation.Join;
@@ -124,10 +128,12 @@ interface MyInterface extends GenericRepository<Book, Long> {
 
         when: "the list method is retrieved"
         def findMethod = beanDefinition.getRequiredMethod("findAll", Pageable)
+        def query = getQuery(findMethod)
+        def countQery = getCountQuery(findMethod)
 
         then:"it is configured correctly"
-        findMethod.getValue(Query.class, String).get().contains(expectedJoin)
-        findMethod.getValue(Query.class, "countQuery", String).get().contains("$alias $expectedJoin $alias")
+        query.contains(expectedJoin)
+        countQery.contains("$alias $expectedJoin $alias")
 
         where:
         joinType              | expectedJoin
@@ -140,7 +146,7 @@ interface MyInterface extends GenericRepository<Book, Long> {
         Join.Type.RIGHT_FETCH | "RIGHT JOIN"
     }
 
-    void "test count query with join jdbc"() {
+    void "test count query with join jdbc many to one"() {
         given:
         BeanDefinition beanDefinition = buildRepository('test.MyInterface' , """
 import io.micronaut.data.annotation.Join;
@@ -161,12 +167,56 @@ interface MyInterface extends GenericRepository<Book, Long> {
 
         when: "the list method is retrieved"
         def findMethod = beanDefinition.getRequiredMethod("findAll", Pageable)
+        def query = getQuery(findMethod)
+        def countQuery = getCountQuery(findMethod)
 
         then:"it is configured correctly"
-        findMethod.getValue(Query.class, String).get().contains(expectedJoin)
-        println(findMethod.getValue(Query.class, String).get())
-        findMethod.getValue(Query.class, "countQuery", String).get().contains("$alias $expectedJoin")
-        println(findMethod.getValue(Query.class, "countQuery", String).get())
+        query.contains(expectedJoin)
+        println(query)
+        countQuery.contains("$alias $expectedJoin")
+        println(countQuery)
+
+        where:
+        joinType              | expectedJoin
+        Join.Type.DEFAULT     | "INNER JOIN"
+        Join.Type.INNER       | "INNER JOIN"
+        Join.Type.FETCH       | "INNER JOIN"
+        Join.Type.LEFT        | "LEFT JOIN"
+        Join.Type.LEFT_FETCH  | "LEFT JOIN"
+        Join.Type.RIGHT       | "RIGHT JOIN"
+        Join.Type.RIGHT_FETCH | "RIGHT JOIN"
+    }
+
+    void "test count query with join jdbc one to many"() {
+        given:
+        BeanDefinition beanDefinition = buildRepository('test.MyInterface' , """
+import io.micronaut.data.annotation.Join;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.tck.entities.Author;
+
+@JdbcRepository(dialect = Dialect.POSTGRES)
+@io.micronaut.context.annotation.Executable
+interface MyInterface extends GenericRepository<Author, Long> {
+
+    @Join(value = "books", type = Join.Type.${joinType.name()})
+    Page<Author> findAll(Pageable pageable);
+}
+""")
+
+        def alias = new JpaQueryBuilder().getAliasName(PersistentEntity.of(Author))
+
+        when: "the list method is retrieved"
+        def findMethod = beanDefinition.getRequiredMethod("findAll", Pageable)
+        def query = getQuery(findMethod)
+        def countQuery = getCountQuery(findMethod)
+
+        then:"it is configured correctly"
+        query.contains(expectedJoin)
+        println(query)
+        countQuery.contains("$alias")
+        !countQuery.contains(expectedJoin)
+        println(countQuery)
 
         where:
         joinType              | expectedJoin

@@ -19,10 +19,13 @@ import io.micronaut.core.annotation.NonNull;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Join;
+import io.micronaut.data.model.Page;
+import io.micronaut.data.model.Pageable;
 import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.data.tck.entities.Author;
 
 import io.micronaut.core.annotation.Nullable;
+
 import javax.validation.constraints.NotNull;
 
 import java.util.List;
@@ -84,4 +87,7 @@ public interface AuthorRepository extends CrudRepository<Author, Long> {
     List<Author> findByNameIsNotNull();
 
     void updateNickname(@Id Long id, @Parameter("nickName") @Nullable String nickName);
+
+    @Join(value = "books", type = Join.Type.LEFT_FETCH)
+    Page<Author> findAll(Pageable pageable);
 }
