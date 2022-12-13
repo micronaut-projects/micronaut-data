@@ -499,7 +499,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
 
                 createSequenceStmt += " MINVALUE 1 START WITH 1";
                 if (dialect == Dialect.ORACLE) {
-                    createSequenceStmt += " NOCACHE NOCYCLE";
+                    createSequenceStmt += " CACHE 100 NOCYCLE";
                 } else {
                     if (isSqlServer) {
                         createSequenceStmt += " INCREMENT BY 1";
@@ -669,7 +669,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                         column += " NOT NULL DEFAULT SYS_GUID()";
                     } else if (type == IDENTITY) {
                         if (isPk) {
-                            column += " GENERATED ALWAYS AS IDENTITY";
+                            column += " GENERATED ALWAYS AS IDENTITY (MINVALUE 1 START WITH 1 CACHE 100 NOCYCLE)";
                         } else {
                             column += " NOT NULL";
                         }
@@ -1765,3 +1765,4 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     }
 
 }
+
