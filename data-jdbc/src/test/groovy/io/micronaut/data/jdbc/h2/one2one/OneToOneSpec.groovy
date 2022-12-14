@@ -55,7 +55,7 @@ DROP TABLE IF EXISTS `TestXyzCustomerDetails`;
 
 CREATE OR REPLACE TABLE `TestXyzCategory` (
   `id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-  `active` BOOLEAN DEFAULT NULL,
+  `active` boolean DEFAULT NULL,
   `createdAt` datetime(6) NOT NULL,
   `name` varchar(255) DEFAULT NULL,
   `priority` bigint DEFAULT NULL
@@ -65,7 +65,7 @@ CREATE OR REPLACE TABLE `TestXyzCustomer` (
   `id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
   `createdAt` datetime(6) NOT NULL,
   `name` varchar(255) DEFAULT NULL,
-  `showCustomer` BOOLEAN DEFAULT NULL
+  `showCustomer` boolean DEFAULT NULL
 );
 
 CREATE OR REPLACE TABLE `TestXyzCustomerDetails` (

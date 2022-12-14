@@ -15,6 +15,7 @@ import java.util.UUID;
 public class Favorites {
 
     @Id
+    @Column(columnDefinition = "uuid")
     private UUID id;
 
     @Version

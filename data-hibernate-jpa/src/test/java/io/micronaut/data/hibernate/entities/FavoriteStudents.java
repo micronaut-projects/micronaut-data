@@ -3,6 +3,7 @@ package io.micronaut.data.hibernate.entities;
 import io.micronaut.data.tck.entities.Student;
 
 import javax.persistence.CascadeType;
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.OneToMany;
@@ -14,6 +15,7 @@ import java.util.UUID;
 public class FavoriteStudents {
 
     @Id
+    @Column(columnDefinition = "uuid")
     private UUID id;
     @javax.persistence.Version
     private Integer version;
