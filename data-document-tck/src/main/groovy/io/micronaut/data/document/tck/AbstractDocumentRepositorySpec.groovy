@@ -1231,4 +1231,63 @@ abstract class AbstractDocumentRepositorySpec extends Specification {
             emptyAuthors.size() == 0
     }
 
+    void "test find (not)equal/partial case (in)sensitive"() {
+        given:
+        savePersons(["John", "Michael", "Hellen"])
+        when:
+        def people = personRepository.findAll()
+        then:
+        people.size() == 3
+        when:
+        def optPerson = personRepository.findByNameEqualIgnoreCase("michael")
+        def otherPeople = personRepository.findByNameNotEqualIgnoreCase("HELLEN")
+        then:
+        optPerson.present
+        optPerson.get().name == "Michael"
+        otherPeople.size() == 2
+        otherPeople.every{ it.name != 'Hellen'}
+        when:
+        people = personRepository.findByNameStartsWith("Mich")
+        otherPeople = personRepository.findByNameStartsWith("he")
+        then:
+        people.size() == 1
+        people[0].name == "Michael"
+        otherPeople.size() == 0
+        when:
+        people = personRepository.findByNameStartsWithIgnoreCase("jo")
+        otherPeople = personRepository.findByNameStartsWithIgnoreCase("Heel")
+        then:
+        people.size() == 1
+        people[0].name == "John"
+        otherPeople.size() == 0
+        when:
+        people = personRepository.findByNameEndsWith("hael")
+        otherPeople = personRepository.findByNameEndsWith("ELLEN")
+        then:
+        people.size() == 1
+        people[0].name == "Michael"
+        otherPeople.size() == 0
+        when:
+        people = personRepository.findByNameEndsWithIgnoreCase("ellen")
+        otherPeople = personRepository.findByNameEndsWithIgnoreCase("hael1")
+        then:
+        people.size() == 1
+        people[0].name == "Hellen"
+        otherPeople.size() == 0
+        when:
+        people = personRepository.findByNameContains("oh")
+        otherPeople = personRepository.findByNameContains("OH")
+        then:
+        people.size() == 1
+        people[0].name == "John"
+        otherPeople.size() == 0
+        when:
+        people = personRepository.findByNameContainsIgnoreCase("oh")
+        otherPeople = personRepository.findByNameContainsIgnoreCase("OH")
+        then:
+        people.size() == 1
+        people[0].name == "John"
+        otherPeople.size() == 1
+        otherPeople[0].name == "John"
+    }
 }
