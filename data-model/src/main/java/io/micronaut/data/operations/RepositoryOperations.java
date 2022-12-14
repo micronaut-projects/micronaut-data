@@ -222,7 +222,7 @@ public interface RepositoryOperations extends HintsCapableRepository, Applicatio
      * Get conversion service.
      * @return the instance of {@link ConversionService}
      */
-    default ConversionService<?> getConversionService() {
+    default ConversionService getConversionService() {
         return ConversionService.SHARED;
     }
 }

@@ -1,12 +1,11 @@
 [versions]
 micronaut = "4.0.0-SNAPSHOT"
-micronaut-test = "4.0.0-SNAPSHOT"
-micronaut-serde = "1.1.0"
-micronaut-sql = "4.7.2"
 micronaut-docs = "2.0.0"
 micronaut-gradle-plugin = "3.6.6"
 micronaut-mongo = "4.6.0"
 micronaut-azure = "3.6.0"
+micronaut-testresources = "1.2.1"
+
 micronaut-reactor = "3.0.0-SNAPSHOT"
 micronaut-rxjava2 = "2.0.0-SNAPSHOT"
 micronaut-r2dbc = "4.0.1-SNAPSHOT"
@@ -77,6 +76,8 @@ kotlin-coroutines = "1.6.4"
 
 
 [libraries]
+
+micronaut-testresources-client = { module = 'io.micronaut.testresources:micronaut-test-resources-client', version.ref = "micronaut-testresources" }
 
 reactor = { module = 'io.projectreactor:reactor-core' }
 

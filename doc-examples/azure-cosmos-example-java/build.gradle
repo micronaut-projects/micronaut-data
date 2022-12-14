@@ -4,10 +4,6 @@ plugins {
     id "io.micronaut.build.internal.data-example"
 }
 
-repositories {
-    mavenCentral()
-}
-
 application {
     mainClass = "example.Application"
 }

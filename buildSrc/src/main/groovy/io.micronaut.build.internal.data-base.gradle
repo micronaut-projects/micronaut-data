@@ -34,9 +34,6 @@ tasks.withType(Test).configureEach {
     usesService(testSemaphore)
     jvmArgs '-Xmx1024m'
     systemProperty "micronaut.cloud.platform", "OTHER"
-    if (JavaVersion.current() == JavaVersion.VERSION_15) {
-        jvmArgs "--enable-preview"
-    }
     timeout = Duration.ofHours(1)
     doFirst {
         testSemaphore.get()

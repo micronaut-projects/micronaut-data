@@ -3,6 +3,12 @@ plugins {
     id "io.micronaut.application"
 }
 
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
+
 configurations.all {
     resolutionStrategy.dependencySubstitution { DependencySubstitutions subs ->
         project.rootProject.subprojects {
@@ -35,5 +41,6 @@ project.afterEvaluate {
 }
 
 dependencies {
+    testRuntimeOnly mnSerde.micronaut.serde.jackson
     runtimeOnly mn.snakeyaml
 }

@@ -46,6 +46,7 @@ import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.cosmos.common.Constants;
+import io.micronaut.data.cosmos.common.CosmosAccessException;
 import io.micronaut.data.cosmos.common.CosmosEntity;
 import io.micronaut.data.cosmos.common.CosmosUtils;
 import io.micronaut.data.cosmos.config.CosmosDatabaseConfiguration;

@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Assertions.*
 
 @MicronautTest
-class UserRepositorySpec (val userRepository: UserRepository) {
+class UserRepositorySpec (private val userRepository: UserRepository) {
 
     @Test
     fun testSoftDelete() {

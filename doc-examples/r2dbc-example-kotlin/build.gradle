@@ -1,5 +1,3 @@
-import io.micronaut.testresources.buildtools.KnownModules
-
 plugins {
     id "org.jetbrains.kotlin.jvm"
     id "org.jetbrains.kotlin.kapt"
@@ -18,9 +16,9 @@ micronaut {
     version project.ext.micronautVersion
     runtime "netty"
     testRuntime "junit5"
-
     testResources {
         clientTimeout = 300
+        version = libs.versions.micronaut.testresources.get()
     }
 }
 

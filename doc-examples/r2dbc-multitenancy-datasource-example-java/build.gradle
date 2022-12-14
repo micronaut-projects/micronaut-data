@@ -13,6 +13,10 @@ micronaut {
     version micronautVersion
     runtime "netty"
     testRuntime "junit5"
+    testResources {
+        clientTimeout = 300
+        version = libs.versions.micronaut.testresources.get()
+    }
 }
 
 dependencies {

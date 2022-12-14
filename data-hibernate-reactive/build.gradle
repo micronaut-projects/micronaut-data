@@ -2,12 +2,6 @@ plugins {
     id "io.micronaut.build.internal.data-module"
 }
 
-micronautBuild {
-    binaryCompatibility {
-        enabled.set(false)
-    }
-}
-
 dependencies {
     annotationProcessor mn.micronaut.inject.java
     annotationProcessor mn.micronaut.graal

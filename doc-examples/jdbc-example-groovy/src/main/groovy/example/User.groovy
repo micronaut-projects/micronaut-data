@@ -4,7 +4,7 @@ package example
 import groovy.transform.EqualsAndHashCode
 import io.micronaut.data.annotation.*
 
-@MappedEntity
+@MappedEntity("users")
 @Where("@.enabled = true") // <1>
 @EqualsAndHashCode(includes = "name")
 class User {

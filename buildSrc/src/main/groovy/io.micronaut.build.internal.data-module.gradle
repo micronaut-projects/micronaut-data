@@ -5,7 +5,8 @@ plugins {
 
 micronautBuild {
     binaryCompatibility {
-        baselineVersion = "3.3.0"
+        // Enable before Micronaut 4 release
+        enabled.set(false)
     }
 }
 

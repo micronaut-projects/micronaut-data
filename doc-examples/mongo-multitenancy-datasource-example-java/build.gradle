@@ -5,10 +5,6 @@ plugins {
     id 'io.micronaut.test-resources'
 }
 
-repositories {
-    mavenCentral()
-}
-
 application {
     mainClass = "example.Application"
 }
@@ -17,6 +13,10 @@ micronaut {
     version micronautVersion
     runtime "netty"
     testRuntime "junit5"
+    testResources {
+        clientTimeout = 300
+        version = libs.versions.micronaut.testresources.get()
+    }
 }
 
 dependencies {

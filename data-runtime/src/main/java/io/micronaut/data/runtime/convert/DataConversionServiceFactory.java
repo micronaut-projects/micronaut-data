@@ -21,6 +21,7 @@ import io.micronaut.context.annotation.Bean;
 import io.micronaut.context.annotation.Factory;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Nullable;
+import io.micronaut.core.convert.MutableConversionService;
 import io.micronaut.core.convert.TypeConverter;
 import io.micronaut.core.convert.TypeConverterRegistrar;
 import io.micronaut.core.type.Argument;
@@ -679,15 +680,16 @@ final class DataConversionServiceFactory {
                 }
             }
             Collection<TypeConverterRegistrar> registrars = beanContext.getBeansOfType(TypeConverterRegistrar.class);
+            MutableConversionService mutableConversionService = conversionService.getMutableConversionService();
             for (TypeConverterRegistrar registrar : registrars) {
-                registrar.register(conversionService);
+                registrar.register(mutableConversionService);
             }
         }
 
         return conversionService;
     }
 
-    private <T> void addZonedConvertorsConvertors(DataConversionService conversionService, Class<T> dateType, Function<T, ZonedDateTime> dateToZonedDateTime) {
+    private <T> void addZonedConvertorsConvertors(DataConversionServiceImpl conversionService, Class<T> dateType, Function<T, ZonedDateTime> dateToZonedDateTime) {
         conversionService.addConverter(dateType, ZonedDateTime.class, dateToZonedDateTime);
         conversionService.addConverter(dateType, OffsetDateTime.class, dateToZonedDateTime.andThen(ZonedDateTime::toOffsetDateTime));
         conversionService.addConverter(dateType, LocalDateTime.class, dateToZonedDateTime.andThen(ZonedDateTime::toLocalDateTime));

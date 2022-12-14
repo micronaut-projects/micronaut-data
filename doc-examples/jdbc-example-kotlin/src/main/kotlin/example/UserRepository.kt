@@ -10,9 +10,9 @@ import javax.validation.constraints.NotNull
 @JdbcRepository(dialect = Dialect.H2)
 interface UserRepository : CrudRepository<User, Long> { // <1>
 
-    @Query("UPDATE user SET enabled = false WHERE id = :id") // <2>
+    @Query("UPDATE users SET enabled = false WHERE id = :id") // <2>
     override fun deleteById(@NotNull id: Long)
 
-    @Query("SELECT * FROM user WHERE enabled = false") // <3>
+    @Query("SELECT * FROM users WHERE enabled = false") // <3>
     fun findDisabled(): List<User>
 }

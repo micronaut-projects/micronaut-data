@@ -3,11 +3,14 @@ plugins {
     id 'io.micronaut.test-resources'
 }
 
+//println (libs.versions.micronaut.testresources.asProvider().get())
+
 micronaut {
     version = libs.versions.micronaut.asProvider().get()
     testResources {
         enabled = true
         inferClasspath = false
+        version = libs.versions.micronaut.testresources.get()
     }
 }
 
@@ -50,8 +53,4 @@ dependencies {
     testImplementation mn.micronaut.inject.java.test
 
     testCompileOnly mn.micronaut.inject.groovy
-
-    if (!JavaVersion.current().isJava9Compatible()) {
-        testImplementation files(org.gradle.internal.jvm.Jvm.current().toolsJar)
-    }
 }

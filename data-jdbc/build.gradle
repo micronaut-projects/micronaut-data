@@ -42,7 +42,8 @@ dependencies {
 
     testCompileOnly mn.micronaut.inject.groovy
 
-    testImplementation mn.micronaut.multitenancy
+    testImplementation("io.micronaut.multitenancy:micronaut-multitenancy:5.0.0-SNAPSHOT")
+
     testImplementation mn.micronaut.http.netty
     testRuntimeOnly mnSql.micronaut.jdbc.tomcat
     testRuntimeOnly mnSql.h2
@@ -58,7 +59,7 @@ dependencies {
     testResourcesService libs.drivers.jdbc.postgresql
     testResourcesService libs.drivers.jdbc.mssql
 
-    testImplementation("io.micronaut.testresources:micronaut-test-resources-client")
+    testImplementation libs.micronaut.testresources.client
 }
 
 micronaut {
@@ -72,6 +73,7 @@ micronaut {
         additionalModules.add(KnownModules.JDBC_ORACLE_XE)
         additionalModules.add(KnownModules.JDBC_MSSQL)
         clientTimeout = 300
+        version = libs.versions.micronaut.testresources.get()
     }
 }
 
