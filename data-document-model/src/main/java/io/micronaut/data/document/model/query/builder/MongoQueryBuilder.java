@@ -90,6 +90,9 @@ public final class MongoQueryBuilder implements QueryBuilder {
     public static final String QUERY_PARAMETER_PLACEHOLDER = "$mn_qp";
     public static final String MONGO_DATE_IDENTIFIER = "$date";
     public static final String MONGO_ID_FIELD = "_id";
+    private static final String REGEX = "$regex";
+    private static final String NOT = "$not";
+    private static final String OPTIONS = "$options";
 
     private final Map<Class, CriterionHandler> queryHandlers = new HashMap<>(30);
 
@@ -127,12 +130,10 @@ public final class MongoQueryBuilder implements QueryBuilder {
         addCriterionHandler(QueryModel.Disjunction.class, (ctx, sb, disjunction) -> handleJunction(ctx, sb, disjunction, "$or"));
         addCriterionHandler(QueryModel.IsTrue.class, (context, sb, criterion) -> handleCriterion(context, sb, new QueryModel.Equals(criterion.getProperty(), true)));
         addCriterionHandler(QueryModel.IsFalse.class, (context, sb, criterion) -> handleCriterion(context, sb, new QueryModel.Equals(criterion.getProperty(), false)));
-        addCriterionHandler(QueryModel.Equals.class, propertyOperatorExpression("$eq"));
         addCriterionHandler(QueryModel.IdEquals.class, (context, sb, criterion) -> handleCriterion(context, sb, new QueryModel.Equals("id", criterion.getValue())));
         addCriterionHandler(QueryModel.VersionEquals.class, (context, sb, criterion) -> {
             handleCriterion(context, sb, new QueryModel.Equals(context.getPersistentEntity().getVersion().getName(), criterion.getValue()));
         });
-        addCriterionHandler(QueryModel.NotEquals.class, propertyOperatorExpression("$ne"));
         addCriterionHandler(QueryModel.GreaterThan.class, propertyOperatorExpression("$gt"));
         addCriterionHandler(QueryModel.GreaterThanEquals.class, propertyOperatorExpression("$gte"));
         addCriterionHandler(QueryModel.LessThan.class, propertyOperatorExpression("$lt"));
@@ -159,14 +160,14 @@ public final class MongoQueryBuilder implements QueryBuilder {
             return new RegexPattern(value.toString());
         }));
         addCriterionHandler(QueryModel.IsEmpty.class, (context, obj, criterion) -> {
-            String criterionPropertyName = getCriterionPropertyName(criterion.getProperty(), context);
+            String criterionPropertyName = getPropertyPersistName(context.getRequiredProperty(criterion).getProperty());
             obj.put("$or", asList(
                     singletonMap(criterionPropertyName, singletonMap("$eq", "")),
                     singletonMap(criterionPropertyName, singletonMap("$exists", false))
             ));
         });
         addCriterionHandler(QueryModel.IsNotEmpty.class, (context, obj, criterion) -> {
-            String criterionPropertyName = getCriterionPropertyName(criterion.getProperty(), context);
+            String criterionPropertyName = getPropertyPersistName(context.getRequiredProperty(criterion).getProperty());
             obj.put("$and", asList(
                     singletonMap(criterionPropertyName, singletonMap("$ne", "")),
                     singletonMap(criterionPropertyName, singletonMap("$exists", true))
@@ -175,7 +176,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
         addCriterionHandler(QueryModel.In.class, (context, obj, criterion) -> {
             PersistentPropertyPath propertyPath = context.getRequiredProperty(criterion);
             Object value = criterion.getValue();
-            String criterionPropertyName = getCriterionPropertyName(criterion.getProperty(), context);
+            String criterionPropertyName = getPropertyPersistName(context.getRequiredProperty(criterion).getProperty());
             if (value instanceof Iterable) {
                 List<?> values = CollectionUtils.iterableToList((Iterable) value);
                 obj.put(criterionPropertyName, singletonMap("$in", values.stream().map(val -> valueRepresentation(context, propertyPath, val)).collect(Collectors.toList())));
@@ -186,7 +187,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
         addCriterionHandler(QueryModel.NotIn.class, (context, obj, criterion) -> {
             PersistentPropertyPath propertyPath = context.getRequiredProperty(criterion);
             Object value = criterion.getValue();
-            String criterionPropertyName = getCriterionPropertyName(criterion.getProperty(), context);
+            String criterionPropertyName = getPropertyPersistName(context.getRequiredProperty(criterion).getProperty());
             if (value instanceof Iterable) {
                 List<?> values = CollectionUtils.iterableToList((Iterable) value);
                 obj.put(criterionPropertyName, singletonMap("$nin", values.stream().map(val -> valueRepresentation(context, propertyPath, val)).collect(Collectors.toList())));
@@ -194,23 +195,29 @@ public final class MongoQueryBuilder implements QueryBuilder {
                 obj.put(criterionPropertyName, singletonMap("$nin", singletonList(valueRepresentation(context, propertyPath, value))));
             }
         });
-    }
-
-    /**
-     * Gets criterion property name. Used as sort of adapter if property in criteria should have different name that the persistent property.
-     * Used currently for id property name to be generated as _id when used in criteria.
-     *
-     * @param name    the criteria property name
-     * @param context the criteria context
-     * @return resulting name for the criteria, if identity field is used in criteria then returns _id else original criteria property name
-     */
-    private String getCriterionPropertyName(String name, CriteriaContext context) {
-        PersistentEntity persistentEntity = context.getPersistentEntity();
-        PersistentProperty identity = persistentEntity.getIdentity();
-        if (identity != null && identity.getName().equals(name)) {
-            return MONGO_ID_FIELD;
-        }
-        return name;
+        addCriterionHandler(QueryModel.Equals.class, (context, obj, criterion) -> {
+            if (criterion.isIgnoreCase()) {
+                handleRegexPropertyExpression(context, obj, criterion, true, false, true, true);
+                return;
+            }
+            handlePropertyOperatorExpression(context, obj, criterion, "$eq", null);
+        });
+        addCriterionHandler(QueryModel.NotEquals.class, (context, obj, criterion) -> {
+            if (criterion.isIgnoreCase()) {
+                handleRegexPropertyExpression(context, obj, criterion, true, true, true, true);
+                return;
+            }
+            handlePropertyOperatorExpression(context, obj, criterion, "$ne", null);
+        });
+        addCriterionHandler(QueryModel.StartsWith.class, (context, obj, criterion) -> {
+            handleRegexPropertyExpression(context, obj, criterion, criterion.isIgnoreCase(), false, true, false);
+        });
+        addCriterionHandler(QueryModel.EndsWith.class, (context, obj, criterion) -> {
+            handleRegexPropertyExpression(context, obj, criterion, criterion.isIgnoreCase(), false, false, true);
+        });
+        addCriterionHandler(QueryModel.Contains.class, (context, obj, criterion) -> {
+            handleRegexPropertyExpression(context, obj, criterion, criterion.isIgnoreCase(), false, false, false);
+        });
     }
 
     private <T extends QueryModel.PropertyCriterion> CriterionHandler<T> propertyOperatorExpression(String op) {
@@ -218,18 +225,68 @@ public final class MongoQueryBuilder implements QueryBuilder {
     }
 
     private <T extends QueryModel.PropertyCriterion> CriterionHandler<T> propertyOperatorExpression(String op, Function<Object, Object> mapper) {
-        return (context, obj, criterion) -> {
-            Object value = criterion.getValue();
-            if (mapper != null) {
-                value = mapper.apply(value);
-            }
-            PersistentPropertyPath propertyPath = context.getRequiredProperty(criterion);
-            Object finalValue = value;
-            traversePersistentProperties(propertyPath.getAssociations(), propertyPath.getProperty(), (associations, property) -> {
-                String path = asPath(associations, property);
-                obj.put(path, singletonMap(op, valueRepresentation(context, propertyPath, PersistentPropertyPath.of(associations, property), finalValue)));
-            });
-        };
+        return (context, obj, criterion) -> handlePropertyOperatorExpression(context, obj, criterion, op, mapper);
+    }
+
+    private <T extends QueryModel.PropertyCriterion> void handlePropertyOperatorExpression(CriteriaContext context, Map<String, Object> obj,
+                                                                                           T criterion, String op, Function<Object, Object> mapper) {
+        Object value = criterion.getValue();
+        if (mapper != null) {
+            value = mapper.apply(value);
+        }
+        PersistentPropertyPath propertyPath = context.getRequiredProperty(criterion);
+        Object finalValue = value;
+        traversePersistentProperties(propertyPath.getAssociations(), propertyPath.getProperty(), (associations, property) -> {
+            String path = asPath(associations, property);
+            obj.put(path, singletonMap(op, valueRepresentation(context, propertyPath, PersistentPropertyPath.of(associations, property), finalValue)));
+        });
+    }
+
+    /**
+     * Handles criteria by string value using $regex in MongoDB. It supports case ignore, negation, whole world matching, starts with, contains and ends with.
+     *
+     * @param context the criterion context
+     * @param obj the object to populate with criteria
+     * @param criterion the criterion
+     * @param ignoreCase whether to regex search using ignore case
+     * @param negate used with not equal, to negate regex search
+     * @param startsWith whether to search regex starting with
+     * @param endsWith whether to search regex ending with
+     * @param <T> the criterion type
+     */
+    private <T extends QueryModel.PropertyCriterion> void handleRegexPropertyExpression(CriteriaContext context, Map<String, Object> obj, T criterion,
+                                                                                        boolean ignoreCase, boolean negate, boolean startsWith, boolean endsWith) {
+        PersistentPropertyPath propertyPath = context.getRequiredProperty(criterion);
+        Object value = criterion.getValue();
+        Object filterValue;
+        Map<String, Object> regexCriteria = new HashMap<>(2);
+        regexCriteria.put(OPTIONS, ignoreCase ? "i" : "");
+        String regexValue;
+        if (value instanceof BindingParameter) {
+            int index = context.pushParameter(
+                (BindingParameter) value,
+                newBindingContext(propertyPath, propertyPath)
+            );
+            regexValue = QUERY_PARAMETER_PLACEHOLDER + ":" + index;
+        } else {
+            regexValue = value.toString();
+        }
+        StringBuilder regexValueBuff = new StringBuilder();
+        if (startsWith) {
+            regexValueBuff.append("^");
+        }
+        regexValueBuff.append(regexValue);
+        if (endsWith) {
+            regexValueBuff.append("$");
+        }
+        regexCriteria.put(REGEX, regexValueBuff.toString());
+        if (negate) {
+            filterValue = singletonMap(NOT, regexCriteria);
+        } else {
+            filterValue = regexCriteria;
+        }
+        String criterionPropertyName = getPropertyPersistName(propertyPath.getProperty());
+        obj.put(criterionPropertyName, filterValue);
     }
 
     private String getPropertyPersistName(PersistentProperty property) {
