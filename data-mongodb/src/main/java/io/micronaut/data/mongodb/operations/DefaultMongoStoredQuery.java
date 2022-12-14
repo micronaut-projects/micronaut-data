@@ -52,10 +52,13 @@ import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.BsonObjectId;
+import org.bson.BsonRegularExpression;
 import org.bson.BsonValue;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.AbstractMap;
 import java.util.ArrayList;
@@ -65,6 +68,8 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.function.Supplier;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -78,6 +83,8 @@ import java.util.stream.Collectors;
 @Internal
 final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStoredQuery<E, R> implements DelegateStoredQuery<E, R>, MongoStoredQuery<E, R> {
 
+    private static final Pattern MONGO_PARAM_PATTERN = Pattern.compile("\\W*(\\" + MongoQueryBuilder.QUERY_PARAMETER_PLACEHOLDER + ":(\\d)+)\\W*");
+    private static final Logger LOG = LoggerFactory.getLogger(DefaultMongoStoredQuery.class);
     private static final BsonDocument EMPTY = new BsonDocument();
 
     private final StoredQuery<E, R> storedQuery;
@@ -311,13 +318,19 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
                 }
             }
             return false;
-        } else if (value instanceof BsonArray) {
+        }
+        if (value instanceof BsonArray) {
             BsonArray bsonArray = (BsonArray) value;
             for (BsonValue bsonValue : bsonArray) {
                 if (needsProcessingValue(bsonValue)) {
                     return true;
                 }
             }
+        }
+        if (value instanceof BsonRegularExpression) {
+            BsonRegularExpression bsonRegularExpression = (BsonRegularExpression) value;
+            String pattern = bsonRegularExpression.getPattern();
+            return MONGO_PARAM_PATTERN.matcher(pattern).matches();
         }
         return false;
     }
@@ -431,6 +444,28 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
                     } else {
                         bsonArray.set(i, newValue);
                     }
+                }
+            }
+        } else if (value instanceof BsonRegularExpression) {
+            BsonRegularExpression bsonRegularExpression = (BsonRegularExpression) value;
+            String pattern = bsonRegularExpression.getPattern();
+            Matcher matcher = MONGO_PARAM_PATTERN.matcher(pattern);
+            if (matcher.matches()) {
+                Integer queryParamIndex = null;
+                try {
+                    String queryParamIndexStr = matcher.group(2);
+                    queryParamIndex = Integer.parseInt(queryParamIndexStr);
+                } catch (Exception e) {
+                    LOG.info("Failed to get mongo parameter for regex {}", e);
+                }
+                if (queryParamIndex != null) {
+                    QueryParameterBinding queryParameterBinding = getQueryBindings().get(queryParamIndex);
+                    Map.Entry<QueryParameterBinding, Object> e = bind(queryParameterBinding, invocationContext, entity);
+                    if (e == null) {
+                        throw new DataAccessException("Cannot bind a value at index: " + queryParamIndex);
+                    }
+                    pattern = pattern.replace(matcher.group(1), e.getValue().toString());
+                    return new BsonRegularExpression(pattern, bsonRegularExpression.getOptions());
                 }
             }
         }
