@@ -305,9 +305,7 @@ final class SqlQueryBuilderUtils {
                 }
                 break;
             case FLOAT_ARRAY:
-                if (dialect == Dialect.H2) {
-                    column += " DECFLOAT ARRAY";
-                } else if (dialect == Dialect.POSTGRES) {
+                if (dialect == Dialect.H2 || dialect == Dialect.POSTGRES) {
                     column += " REAL ARRAY";
                 } else {
                     column += " FLOAT ARRAY";
