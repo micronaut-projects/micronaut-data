@@ -15,6 +15,7 @@ public class EventTest {
     @GeneratedValue
     private Long id;
     @AutoPopulated
+    @Column(columnDefinition = "uuid")
     private UUID uuid;
 
     @DateCreated
@@ -23,6 +24,7 @@ public class EventTest {
     @DateUpdated
     private LocalDateTime dateUpdated;
 
+    @Column(name = "int_value")
     private int value;
 
     public EventTest(int value) {
