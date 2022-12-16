@@ -25,7 +25,6 @@ import java.util.concurrent.atomic.AtomicInteger
 /**
  * This tests operations with an entity that does not have partition key defined.
  */
-@IgnoreIf({ env["GITHUB_WORKFLOW"] })
 class NoPartitionKeyCosmosDbSpec extends Specification implements AzureCosmosTestProperties {
 
     @AutoCleanup
