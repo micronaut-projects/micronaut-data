@@ -2,7 +2,6 @@
 micronaut = "4.0.0-SNAPSHOT"
 micronaut-docs = "2.0.0"
 micronaut-gradle-plugin = "3.6.6"
-micronaut-mongo = "4.6.0"
 micronaut-azure = "3.6.0"
 micronaut-testresources = "1.2.1"
 
@@ -13,6 +12,7 @@ micronaut-serde = "2.0.0-SNAPSHOT"
 micronaut-sql = "5.0.0-SNAPSHOT"
 micronaut-spring = "5.0.0-SNAPSHOT"
 micronaut-test = "4.0.0-SNAPSHOT"
+micronaut-mongo = "5.0.0-SNAPSHOT"
 
 groovy = "4.0.6"
 
