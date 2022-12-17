@@ -19,7 +19,7 @@ jakarta-transaction = "2.0.1"
 hibernate = "5.6.14.Final"
 
 spring-data = "2.7.6"
-spring = "5.3.24"
+spring = "6.0.3"
 
 mongodb = "4.7.2"
 
