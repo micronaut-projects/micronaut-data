@@ -8,8 +8,7 @@ test-resources:
     mysql:
       startup-timeout: 300s
     oracle:
-      startup-timeout: 300s
-      image-name: gvenzl/oracle-xe:latest-faststart
+      startup-timeout: 600s
     postgres:
       startup-timeout: 300s
 
