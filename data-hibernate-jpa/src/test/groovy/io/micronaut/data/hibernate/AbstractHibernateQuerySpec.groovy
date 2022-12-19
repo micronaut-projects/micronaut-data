@@ -158,13 +158,16 @@ abstract class AbstractHibernateQuerySpec extends AbstractQuerySpec {
     void "order by joined collection"() {
         when:
             def books1 = bookRepository.listPageableCustomQuery(Pageable.from(0).order("author.name").order("title")).getContent()
-            def books2 = bookRepository.findAll(Pageable.from(0).order("author.name").order("title")).getContent()
+            def books2 = bookRepository.listPageableCustomQuery2(Pageable.from(0).order("author.name").order("title")).getContent()
+            def books3 = bookRepository.findAll(Pageable.from(0).order("author.name").order("title")).getContent()
 
         then:
             books1.size() == 6
             books2.size() == 6
+            books3.size() == 6
             books1[0].title == "The Border"
             books2[0].title == "The Border"
+            books3[0].title == "The Border"
     }
 
     void "author find by id with joins"() {
