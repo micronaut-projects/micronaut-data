@@ -46,9 +46,7 @@ jobs:
       - name: Build with Gradle
         id: gradle
         run: |
-          # Awful hack for kapt and JDK 16. See https://youtrack.jetbrains.com/issue/KT-45545
-          if [ ${{ matrix.java }} == 16 ]; then export GRADLE_OPTS="-Dorg.gradle.jvmargs=--illegal-access=permit"; fi
-          ./gradlew check --continue
+          ./gradlew check --no-daemon --parallel --continue
         env:
            TESTCONTAINERS_RYUK_DISABLED: true
            GRADLE_ENTERPRISE_ACCESS_KEY: ${{ secrets.GRADLE_ENTERPRISE_ACCESS_KEY }}
@@ -65,11 +63,11 @@ jobs:
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: '❌ ${{ github.workflow }} ${{ matrix.java }} failed: ${{ steps.gradle.outputs.build-scan-url }}'
+              body: '❌ ${{ github.workflow }} failed: ${{ steps.gradle.outputs.build-scan-url }}'
             })
       - name: Publish Test Report
         if: always()
-        uses: mikepenz/action-junit-report@v3.6.1
+        uses: mikepenz/action-junit-report@v3.6.2
         with:
           check_name: Java CI / Test Report (${{ matrix.java }})
           report_paths: '**/build/test-results/test/TEST-*.xml'
