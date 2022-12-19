@@ -55,7 +55,7 @@ spock = "2.0-groovy-3.0"
 cglib = "3.3.0"
 objenesis = "3.3"
 testcontainers = "1.17.6"
-jmh = "1.35"
+jmh = "1.36"
 jetbrains-annotations = "23.1.0"
 
 # Gradle plugins
