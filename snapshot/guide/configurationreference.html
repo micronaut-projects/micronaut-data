@@ -80,9 +80,9 @@
 </tbody>
 </table>
 <div style="page-break-after: always;"></div>
-<a id="io.micronaut.data.cosmos.config.CosmosDatabaseConfiguration.CosmosContainerSettings" href="#io.micronaut.data.cosmos.config.CosmosDatabaseConfiguration.CosmosContainerSettings">&#128279;</a>
+<a id="io.micronaut.data.cosmos.config.CosmosDatabaseConfiguration.CosmosContainerSettings.ContainerThroughputSettings" href="#io.micronaut.data.cosmos.config.CosmosDatabaseConfiguration.CosmosContainerSettings.ContainerThroughputSettings">&#128279;</a>
 <table class="tableblock frame-all grid-all stretch">
-<caption class="title">Table 2. Configuration Properties for <a href="../api/io/micronaut/data/cosmos/config/CosmosDatabaseConfiguration.CosmosContainerSettings.html">CosmosContainerSettings</a></caption>
+<caption class="title">Table 2. Configuration Properties for <a href="../api/io/micronaut/data/cosmos/config/CosmosDatabaseConfiguration.CosmosContainerSettings.ContainerThroughputSettings.html">ContainerThroughputSettings</a></caption>
 <colgroup>
 <col style="width: 33.3333%;">
 <col style="width: 33.3333%;">
@@ -97,19 +97,14 @@
 </thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>azure.cosmos.database.container-settings[*].container-name</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">java.lang.String</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Sets the container name.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>azure.cosmos.database.container-settings[*].throughput-settings.request-units</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">java.lang.Integer</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Sets the request units.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>azure.cosmos.database.container-settings[*].partition-key-path</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">java.lang.String</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Sets the container partition key path.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>azure.cosmos.database.container-settings[*].throughput</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/cosmos/config/ThroughputSettings.html">ThroughputSettings</a></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Sets the container throughput settings.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>azure.cosmos.database.container-settings[*].throughput-settings.auto-scale</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Sets the auto scaled indicator for throughput.</p></td>
 </tr>
 </tbody>
 </table>
@@ -153,9 +148,9 @@
 </tbody>
 </table>
 <div style="page-break-after: always;"></div>
-<a id="io.micronaut.data.cosmos.config.CosmosDatabaseConfiguration.CosmosContainerSettings.ContainerThroughputSettings" href="#io.micronaut.data.cosmos.config.CosmosDatabaseConfiguration.CosmosContainerSettings.ContainerThroughputSettings">&#128279;</a>
+<a id="io.micronaut.data.cosmos.config.CosmosDatabaseConfiguration.CosmosContainerSettings" href="#io.micronaut.data.cosmos.config.CosmosDatabaseConfiguration.CosmosContainerSettings">&#128279;</a>
 <table class="tableblock frame-all grid-all stretch">
-<caption class="title">Table 4. Configuration Properties for <a href="../api/io/micronaut/data/cosmos/config/CosmosDatabaseConfiguration.CosmosContainerSettings.ContainerThroughputSettings.html">ContainerThroughputSettings</a></caption>
+<caption class="title">Table 4. Configuration Properties for <a href="../api/io/micronaut/data/cosmos/config/CosmosDatabaseConfiguration.CosmosContainerSettings.html">CosmosContainerSettings</a></caption>
 <colgroup>
 <col style="width: 33.3333%;">
 <col style="width: 33.3333%;">
@@ -170,14 +165,19 @@
 </thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>azure.cosmos.database.container-settings[*].throughput-settings.request-units</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">java.lang.Integer</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Sets the request units.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>azure.cosmos.database.container-settings[*].container-name</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">java.lang.String</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Sets the container name.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>azure.cosmos.database.container-settings[*].throughput-settings.auto-scale</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Sets the auto scaled indicator for throughput.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>azure.cosmos.database.container-settings[*].partition-key-path</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">java.lang.String</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Sets the container partition key path.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>azure.cosmos.database.container-settings[*].throughput</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/cosmos/config/ThroughputSettings.html">ThroughputSettings</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Sets the container throughput settings.</p></td>
 </tr>
 </tbody>
 </table>
