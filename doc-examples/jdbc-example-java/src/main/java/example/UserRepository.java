@@ -13,9 +13,9 @@ import java.util.List;
 public interface UserRepository extends CrudRepository<User, Long> { // <1>
 
     @Override
-    @Query("UPDATE users SET enabled = false WHERE id = :id") // <2>
+    @Query("UPDATE user SET enabled = false WHERE id = :id") // <2>
     void deleteById(@NonNull @NotNull Long id);
 
-    @Query("SELECT * FROM users WHERE enabled = false") // <3>
+    @Query("SELECT * FROM user WHERE enabled = false") // <3>
     List<User> findDisabled();
 }

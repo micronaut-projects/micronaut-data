@@ -7,7 +7,7 @@ import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.Where
 
 
-@MappedEntity("users")
+@MappedEntity
 @Where("@.enabled = true") // <1>
 data class User(
     @GeneratedValue
