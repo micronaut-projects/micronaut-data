@@ -15,9 +15,11 @@ dependencies {
 	implementation libs.reactor
 
 	compileOnly mn.micronaut.http
+	compileOnly mn.micronaut.runtime
 	compileOnly libs.jakarta.persistence.api
 	compileOnly libs.javax.persistence.api
     compileOnly mn.micronaut.multitenancy
+    compileOnly libs.kotlin.coroutines.reactor
 
 	testAnnotationProcessor mn.micronaut.inject.java
 	testAnnotationProcessor projects.dataProcessor
