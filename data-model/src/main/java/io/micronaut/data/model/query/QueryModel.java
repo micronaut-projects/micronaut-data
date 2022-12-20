@@ -287,9 +287,7 @@ public interface QueryModel extends Criteria {
      * @return The query
      */
     @NonNull
-    default JoinPath join(String path, @NonNull Join.Type joinType, @Nullable String alias) {
-        return join(path, joinType, alias);
-    }
+    JoinPath join(String path, @NonNull Join.Type joinType, @Nullable String alias);
 
     /**
      * Join on the given association.
