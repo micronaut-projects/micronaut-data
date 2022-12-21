@@ -1,8 +1,11 @@
 
 package example;
 
+import io.micronaut.serde.annotation.Serdeable;
+
 import javax.persistence.*;
 
+@Serdeable
 @Entity
 public class Book {
     @Id
