@@ -9,6 +9,7 @@ import com.mongodb.client.model.UpdateOptions
 import com.mongodb.client.model.Updates
 import groovy.transform.Memoized
 import io.micronaut.data.document.mongodb.repositories.MongoAuthorRepository
+import io.micronaut.data.document.mongodb.repositories.MongoDocumentRepository
 import io.micronaut.data.document.mongodb.repositories.MongoExecutorPersonRepository
 import io.micronaut.data.document.mongodb.repositories.MongoBasicTypesRepository
 import io.micronaut.data.document.mongodb.repositories.MongoBookRepository
@@ -17,6 +18,7 @@ import io.micronaut.data.document.mongodb.repositories.MongoPersonRepository
 import io.micronaut.data.document.mongodb.repositories.MongoSaleRepository
 import io.micronaut.data.document.mongodb.repositories.MongoStudentRepository
 import io.micronaut.data.document.tck.AbstractDocumentRepositorySpec
+import io.micronaut.data.document.tck.entities.Document
 import io.micronaut.data.document.tck.entities.Quantity
 import io.micronaut.data.document.tck.entities.Sale
 import io.micronaut.data.document.tck.repositories.AuthorRepository
@@ -488,5 +490,38 @@ class MongoDocumentRepositorySpec extends AbstractDocumentRepositorySpec impleme
     @Override
     DomainEventsRepository getEventsRepository() {
         return context.getBean(MongoDomainEventsRepository)
+    }
+
+    @Memoized
+    @Override
+    MongoDocumentRepository getDocumentRepository() {
+        return context.getBean(MongoDocumentRepository)
+    }
+
+    void "test find by array contains"() {
+        given:
+        var doc1 = new Document()
+        doc1.title = "Doc1"
+        doc1.tags = ["red", "blue", "white"]
+        documentRepository.save(doc1)
+        var doc2 = new Document()
+        doc2.title = "Doc2"
+        doc2.tags = ["red", "blue"]
+        documentRepository.save(doc2)
+        var doc3 = new Document()
+        doc3.title = "Doc3"
+        documentRepository.save(doc3)
+        when:
+        def result1 = documentRepository.findByTagsContainingSingleTag("red")
+        def result2 = documentRepository.findByTagsContainingSingleTag("gray")
+        def result3 = documentRepository.findByTagsContainingMultipleTags(Arrays.asList("red", "blue"))
+        def result4 = documentRepository.findByTagsContainingMultipleTags(Arrays.asList("red", "blue", "white"))
+        def result5 = documentRepository.findByTagsContainingMultipleTags(Arrays.asList("red", "white"))
+        then:
+        result1.size() == 2
+        result2.size() == 0
+        result3.size() == 2
+        result4.size() == 1
+        result5.size() == 1
     }
 }
