@@ -36,7 +36,11 @@ import java.util.function.Function;
 final class DataConversionServiceImpl implements DataConversionService {
 
     private final DefaultMutableConversionService internalConversionService = new DefaultMutableConversionService();
-    private final ConversionService sharedConversionService = ConversionService.SHARED;
+    private final ConversionService sharedConversionService;
+
+    DataConversionServiceImpl(ConversionService sharedConversionService) {
+        this.sharedConversionService = sharedConversionService;
+    }
 
     <S, T> void addConverter(Class<S> sourceType, Class<T> targetType, Function<S, T> typeConverter) {
         internalConversionService.addConverter(sourceType, targetType, typeConverter);
