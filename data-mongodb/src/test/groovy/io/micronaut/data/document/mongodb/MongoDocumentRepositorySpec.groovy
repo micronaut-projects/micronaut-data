@@ -523,5 +523,17 @@ class MongoDocumentRepositorySpec extends AbstractDocumentRepositorySpec impleme
         result3.size() == 2
         result4.size() == 1
         result5.size() == 1
+        when:
+        result1 = documentRepository.findByTagsArrayContains("red")
+        result2 = documentRepository.findByTagsArrayContains("gray")
+        result3 = documentRepository.findByTagsArrayContains(Arrays.asList("red", "blue"))
+        result4 = documentRepository.findByTagsArrayContains(Arrays.asList("red", "blue", "white"))
+        result5 = documentRepository.findByTagsArrayContains(Arrays.asList("red", "white"))
+        then:
+        result1.size() == 2
+        result2.size() == 0
+        result3.size() == 2
+        result4.size() == 1
+        result5.size() == 1
     }
 }
