@@ -29,4 +29,5 @@ dependencies {
     runtimeOnly libs.drivers.jdbc.postgresql
 
     testImplementation "io.micronaut:micronaut-http-client"
+    compileOnly mnSerde.micronaut.serde.api
 }

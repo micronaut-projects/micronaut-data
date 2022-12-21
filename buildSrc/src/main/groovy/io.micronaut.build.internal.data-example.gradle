@@ -20,17 +20,6 @@ configurations.all {
     }
 }
 
-tasks.named("test") {
-    onlyIf {
-        def disabled = project.path.contains("groovy") && JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_16)
-        !disabled
-    }
-}
-
-tasks.register("testExamples") {
-    dependsOn "test"
-}
-
 tasks.withType(JavaCompile).configureEach {
     options.fork = true
 }
