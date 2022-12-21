@@ -60,6 +60,9 @@ dependencies {
     testResourcesService libs.drivers.jdbc.mssql
 
     testImplementation libs.micronaut.testresources.client
+
+    // Needed for H2EagerContextSpec
+    testImplementation("org.jetbrains.kotlin:kotlin-reflect:1.8.0-RC2")
 }
 
 micronaut {
