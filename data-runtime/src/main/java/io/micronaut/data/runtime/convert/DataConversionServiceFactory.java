@@ -63,7 +63,7 @@ final class DataConversionServiceFactory {
     @Singleton
     @Bean(typed = DataConversionService.class)
     DataConversionServiceImpl build(@Nullable BeanContext beanContext) {
-        DataConversionServiceImpl conversionService = new DataConversionServiceImpl(beanContext.getConversionService());
+        DataConversionServiceImpl conversionService = beanContext != null ? new DataConversionServiceImpl(beanContext.getConversionService()) : new DataConversionServiceImpl();
         conversionService.addConverter(Enum.class, Number.class, Enum::ordinal);
         conversionService.addConverter(Number.class, Enum.class, (index, targetType, context) -> {
             Enum[] enumConstants = targetType.getEnumConstants();

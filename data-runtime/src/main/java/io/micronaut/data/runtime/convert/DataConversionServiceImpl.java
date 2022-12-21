@@ -38,6 +38,10 @@ final class DataConversionServiceImpl implements DataConversionService {
     private final DefaultMutableConversionService internalConversionService = new DefaultMutableConversionService();
     private final ConversionService sharedConversionService;
 
+    DataConversionServiceImpl() {
+        this.sharedConversionService = ConversionService.SHARED;
+    }
+
     DataConversionServiceImpl(ConversionService sharedConversionService) {
         this.sharedConversionService = sharedConversionService;
     }
