@@ -36,5 +36,6 @@ dependencies {
     runtimeOnly libs.drivers.jdbc.mariadb
 
     testImplementation "io.micronaut:micronaut-http-client"
+    compileOnly mnSerde.micronaut.serde.api
 }
 
