@@ -20,10 +20,12 @@ import io.micronaut.data.tck.entities.Face
 import io.micronaut.data.tck.entities.Product
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
+import spock.lang.IgnoreIf
 import spock.lang.Shared
 import spock.lang.Specification
 
 @MicronautTest(transactional = false, packages = "io.micronaut.data.tck.entities")
+@IgnoreIf({ jvm.isJava15Compatible() })
 class AutoTimestampSpec extends Specification implements PostgresHibernateReactiveProperties {
 
     @Shared
