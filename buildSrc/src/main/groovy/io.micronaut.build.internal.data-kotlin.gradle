@@ -5,6 +5,7 @@ plugins {
 dependencies {
     compileOnly libs.kotlin.stdlib
     compileOnly libs.kotlin.coroutines
+    runtimeOnly "io.micronaut.kotlin:micronaut-kotlin-runtime:4.0.0-SNAPSHOT"
 }
 
 tasks.named("compileKotlin") {
