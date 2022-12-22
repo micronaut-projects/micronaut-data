@@ -148,7 +148,7 @@ class PersonRepositorySpec : AbstractMongoSpec() {
 
     @Test
     fun testArrayContains() {
-        var people = personRepository.findByInterestsArrayContains("sports", "music")
+        var people = personRepository.findByInterestsArrayContains("sports")
         Assertions.assertEquals(1, people.size)
         Assertions.assertEquals("Josh", people[0].name)
 
@@ -156,7 +156,7 @@ class PersonRepositorySpec : AbstractMongoSpec() {
         Assertions.assertTrue(people.isEmpty())
 
         // Using specification
-        people = personRepository.findAll(interestsArrayContains("sports", "hiking", "music"))
+        people = personRepository.findAll(interestsArrayContains( "hiking"))
         Assertions.assertEquals(1, people.size)
         Assertions.assertEquals("Josh", people[0].name)
     }

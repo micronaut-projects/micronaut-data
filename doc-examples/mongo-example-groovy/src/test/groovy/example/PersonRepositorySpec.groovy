@@ -101,7 +101,7 @@ class PersonRepositorySpec extends Specification {
 
     void "array contains"() {
         when:
-            List<Person> people = personRepository.findByInterestsArrayContains("sports", "music")
+            List<Person> people = personRepository.findByInterestsArrayContains("sports")
         then:
             people.size() == 1
             people[0].name == "Josh"
@@ -110,7 +110,7 @@ class PersonRepositorySpec extends Specification {
         then:
             people.size() == 0
         when:"Using specification"
-            people = personRepository.findAll(interestsArrayContains("sports", "hiking", "music"))
+            people = personRepository.findAll(interestsArrayContains("hiking"))
         then:
             people.size() == 1
             people[0].name == "Josh"

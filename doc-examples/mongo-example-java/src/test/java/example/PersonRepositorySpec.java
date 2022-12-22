@@ -102,7 +102,7 @@ class PersonRepositorySpec {
 
     @Test
     void testArrayContains() {
-        List<Person> people = personRepository.findByInterestsArrayContains("sports", "music");
+        List<Person> people = personRepository.findByInterestsArrayContains("sports");
         assertEquals(1, people.size());
         assertEquals("Josh", people.get(0).getName());
 
@@ -110,7 +110,7 @@ class PersonRepositorySpec {
         assertTrue(people.isEmpty());
 
         // Using specification
-        people = personRepository.findAll(interestsArrayContains("sports", "hiking", "music"));
+        people = personRepository.findAll(interestsArrayContains("hiking"));
         assertEquals(1, people.size());
         assertEquals("Josh", people.get(0).getName());
     }
