@@ -9,4 +9,5 @@ dependencies {
     implementation libs.mongodb.driver.sync
     testImplementation platform(libs.testcontainers.bom)
     testImplementation libs.testcontainers.mongodb
+    runtimeOnly mn.snakeyaml
 }
