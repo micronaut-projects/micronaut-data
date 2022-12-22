@@ -53,9 +53,9 @@ interface PersonRepository extends CrudRepository<Person, ObjectId>, JpaSpecific
     long deleteAll(DeleteSpecification<Person> spec)
     // end::delete[]
 
-    // tag::method_array_contains[]
-    List<Person> findByInterestsArrayContains(String interest)
-    // end::method_array_contains[]
+    // tag::method_collection_contains[]
+    List<Person> findByInterestsCollectionContains(String interest)
+    // end::method_collection_contains[]
 
     // tag::specifications[]
     // tag::allSpecifications[]
@@ -80,7 +80,7 @@ interface PersonRepository extends CrudRepository<Person, ObjectId>, JpaSpecific
         }
 
         // tag::spec_array_contains[]
-        static PredicateSpecification<Person> interestsArrayContains(String interest) {
+        static PredicateSpecification<Person> interestsContains(String interest) {
             return (root, criteriaBuilder) -> ((PersistentEntityCriteriaBuilder) criteriaBuilder).arrayContains(root.get("interests"), criteriaBuilder.literal(interest))
         }
         // end::spec_array_contains[]

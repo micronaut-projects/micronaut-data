@@ -91,9 +91,9 @@ interface PersonRepository : CrudRepository<Person, ObjectId>, JpaSpecificationE
 
     // end::delete[]
 
-    // tag::method_array_contains[]
-    fun findByInterestsArrayContains(interest: String): List<Person>
-    // end::method_array_contains[]
+    // tag::method_collection_contains[]
+    fun findByInterestsCollectionContains(interest: String): List<Person>
+    // end::method_collection_contains[]
 
     // tag::specifications[]
     // tag::allSpecifications[]
@@ -124,7 +124,7 @@ interface PersonRepository : CrudRepository<Person, ObjectId>, JpaSpecificationE
         // end::setUpdate[]
 
         // tag::spec_array_contains[]
-        fun interestsArrayContains(interest: String): PredicateSpecification<Person>? {
+        fun interestsContains(interest: String): PredicateSpecification<Person>? {
             return PredicateSpecification { root: Root<Person>, criteriaBuilder: CriteriaBuilder ->
                 (criteriaBuilder as PersistentEntityCriteriaBuilder).arrayContains(
                     root.get<Any>("interests"),

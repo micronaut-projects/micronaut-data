@@ -1,7 +1,7 @@
 package example
 
 import example.PersonRepository.Specifications.ageIsLessThan
-import example.PersonRepository.Specifications.interestsArrayContains
+import example.PersonRepository.Specifications.interestsContains
 import example.PersonRepository.Specifications.nameEquals
 import example.PersonRepository.Specifications.updateName
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
@@ -148,15 +148,15 @@ class PersonRepositorySpec : AbstractMongoSpec() {
 
     @Test
     fun testArrayContains() {
-        var people = personRepository.findByInterestsArrayContains("sports")
+        var people = personRepository.findByInterestsCollectionContains("sports")
         Assertions.assertEquals(1, people.size)
         Assertions.assertEquals("Josh", people[0].name)
 
-        people = personRepository.findByInterestsArrayContains("flying")
+        people = personRepository.findByInterestsCollectionContains("flying")
         Assertions.assertTrue(people.isEmpty())
 
         // Using specification
-        people = personRepository.findAll(interestsArrayContains( "hiking"))
+        people = personRepository.findAll(interestsContains( "hiking"))
         Assertions.assertEquals(1, people.size)
         Assertions.assertEquals("Josh", people[0].name)
     }

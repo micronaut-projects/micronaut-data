@@ -99,9 +99,9 @@ The following table summarizes the possible expressions and behaviour:
 |Finds results where the property is false
 |`findByAuthorEnabledFalse`
 
-|`ArrayContains`
+|`ArrayContains` or `CollectionContains`
 |Finds results where the property which is an array or list contains given element. Supported only by Micronaut Data MongoDB and Azure Cosmos Db.
-|`findByTagsArrayContains`
+|`findByTagsArrayContains` or `findByColorsCollectionContains`
 
 |===
 

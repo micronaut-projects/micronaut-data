@@ -11,7 +11,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import static example.PersonRepository.Specifications.ageIsLessThan;
-import static example.PersonRepository.Specifications.interestsArrayContains;
+import static example.PersonRepository.Specifications.interestsContains;
 import static example.PersonRepository.Specifications.nameEquals;
 import static example.PersonRepository.Specifications.setNewName;
 import static io.micronaut.data.repository.jpa.criteria.PredicateSpecification.not;
@@ -102,15 +102,15 @@ class PersonRepositorySpec {
 
     @Test
     void testArrayContains() {
-        List<Person> people = personRepository.findByInterestsArrayContains("sports");
+        List<Person> people = personRepository.findByInterestsCollectionContains("sports");
         assertEquals(1, people.size());
         assertEquals("Josh", people.get(0).getName());
 
-        people = personRepository.findByInterestsArrayContains("flying");
+        people = personRepository.findByInterestsCollectionContains("flying");
         assertTrue(people.isEmpty());
 
         // Using specification
-        people = personRepository.findAll(interestsArrayContains("hiking"));
+        people = personRepository.findAll(interestsContains("hiking"));
         assertEquals(1, people.size());
         assertEquals("Josh", people.get(0).getName());
     }
