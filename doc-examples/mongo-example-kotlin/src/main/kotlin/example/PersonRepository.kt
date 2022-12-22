@@ -91,9 +91,9 @@ interface PersonRepository : CrudRepository<Person, ObjectId>, JpaSpecificationE
 
     // end::delete[]
 
-    // tag::array_contains[]
+    // tag::method_array_contains[]
     fun findByInterestsArrayContains(vararg interests: String?): List<Person>
-    // end::array_contains[]
+    // end::method_array_contains[]
 
     // tag::specifications[]
     // tag::allSpecifications[]

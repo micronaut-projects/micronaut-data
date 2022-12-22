@@ -56,9 +56,9 @@ public interface PersonRepository extends CrudRepository<Person, ObjectId>, JpaS
     long deleteAll(DeleteSpecification<Person> spec);
     // end::delete[]
 
-    // tag::array_contains[]
+    // tag::method_array_contains[]
     List<Person> findByInterestsArrayContains(String... interests);
-    // end::array_contains[]
+    // end::method_array_contains[]
 
     // tag::specifications[]
     // tag::allSpecifications[]
