@@ -6,6 +6,8 @@ import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.Transient;
 import io.micronaut.data.annotation.Version;
 
+import java.util.List;
+
 @MappedEntity("no_partition_key")
 public class NoPartitionKeyEntity {
 
@@ -18,7 +20,7 @@ public class NoPartitionKeyEntity {
 
     private int grade;
 
-    private String[] tags;
+    private List<String> tags;
 
     private Double rating;
 
@@ -60,11 +62,11 @@ public class NoPartitionKeyEntity {
         this.grade = grade;
     }
 
-    public String[] getTags() {
+    public List<String> getTags() {
         return tags;
     }
 
-    public void setTags(String[] tags) {
+    public void setTags(List<String> tags) {
         this.tags = tags;
     }
 

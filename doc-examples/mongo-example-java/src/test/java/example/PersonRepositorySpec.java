@@ -6,12 +6,12 @@ import jakarta.inject.Inject;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
 
 import java.util.Arrays;
 import java.util.List;
 
 import static example.PersonRepository.Specifications.ageIsLessThan;
+import static example.PersonRepository.Specifications.interestsContains;
 import static example.PersonRepository.Specifications.nameEquals;
 import static example.PersonRepository.Specifications.setNewName;
 import static io.micronaut.data.repository.jpa.criteria.PredicateSpecification.not;
@@ -36,7 +36,7 @@ class PersonRepositorySpec {
                 new Person(
                         "Josh",
                         22
-                )
+                ).withInterests(Arrays.asList("sports", "music", "hiking"))
         ));
     }
 
@@ -98,6 +98,21 @@ class PersonRepositorySpec {
         assertEquals(2, all.size());
         assertTrue(all.stream().anyMatch(p -> p.getName().equals("Steven")));
         assertTrue(all.stream().anyMatch(p -> p.getName().equals("Josh")));
+    }
+
+    @Test
+    void testArrayContains() {
+        List<Person> people = personRepository.findByInterestsCollectionContains("sports");
+        assertEquals(1, people.size());
+        assertEquals("Josh", people.get(0).getName());
+
+        people = personRepository.findByInterestsCollectionContains("flying");
+        assertTrue(people.isEmpty());
+
+        // Using specification
+        people = personRepository.findAll(interestsContains("hiking"));
+        assertEquals(1, people.size());
+        assertEquals("Josh", people.get(0).getName());
     }
 
 }

@@ -202,7 +202,7 @@ abstract class AbstractCriteriaSpec extends Specification {
     }
 
     /**
-     * Currently ArrayContains criteria is supported only by Azure Cosmos Db.
+     * Currently ArrayContains criteria is supported only by Azure Cosmos Db and MongoDB.
      * If we introduce more criteria not supported by default then we can test it here.
      */
     void "test unsupported criteria"() {

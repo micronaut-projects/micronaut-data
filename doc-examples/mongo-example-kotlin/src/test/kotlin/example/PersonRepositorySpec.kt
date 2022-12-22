@@ -1,16 +1,18 @@
 package example
 
 import example.PersonRepository.Specifications.ageIsLessThan
+import example.PersonRepository.Specifications.interestsContains
 import example.PersonRepository.Specifications.nameEquals
 import example.PersonRepository.Specifications.updateName
-import jakarta.inject.Inject
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification.not
 import io.micronaut.data.runtime.criteria.get
 import io.micronaut.data.runtime.criteria.query
 import io.micronaut.data.runtime.criteria.where
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest
+import jakarta.inject.Inject
 import org.junit.jupiter.api.*
+import java.util.*
 
 @MicronautTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -26,8 +28,10 @@ class PersonRepositorySpec : AbstractMongoSpec() {
                         13
                 ),
                 Person(
-                        "Josh",
-                        22
+                    null,
+                    "Josh",
+                    22,
+                    listOf("music", "sports", "hiking")
                 )
         ))
     }
@@ -142,4 +146,18 @@ class PersonRepositorySpec : AbstractMongoSpec() {
         Assertions.assertEquals(1, all.size)
     }
 
+    @Test
+    fun testArrayContains() {
+        var people = personRepository.findByInterestsCollectionContains("sports")
+        Assertions.assertEquals(1, people.size)
+        Assertions.assertEquals("Josh", people[0].name)
+
+        people = personRepository.findByInterestsCollectionContains("flying")
+        Assertions.assertTrue(people.isEmpty())
+
+        // Using specification
+        people = personRepository.findAll(interestsContains( "hiking"))
+        Assertions.assertEquals(1, people.size)
+        Assertions.assertEquals("Josh", people[0].name)
+    }
 }

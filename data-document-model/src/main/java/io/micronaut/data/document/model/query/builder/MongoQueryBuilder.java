@@ -216,6 +216,19 @@ public final class MongoQueryBuilder implements QueryBuilder {
         addCriterionHandler(QueryModel.Contains.class, (context, obj, criterion) -> {
             handleRegexPropertyExpression(context, obj, criterion, criterion.isIgnoreCase(), false, false, false);
         });
+        addCriterionHandler(QueryModel.ArrayContains.class, (context, obj, criterion) -> {
+            PersistentPropertyPath propertyPath = context.getRequiredProperty(criterion);
+            Object value = criterion.getValue();
+            String criterionPropertyName = getPropertyPersistName(context.getRequiredProperty(criterion).getProperty());
+            Object criteriaValue;
+            if (value instanceof Iterable) {
+                List<?> values = CollectionUtils.iterableToList((Iterable) value);
+                criteriaValue = values.stream().map(val -> valueRepresentation(context, propertyPath, val)).collect(Collectors.toList());
+            } else {
+                criteriaValue = singletonList(valueRepresentation(context, propertyPath, value));
+            }
+            obj.put(criterionPropertyName, singletonMap("$all", criteriaValue));
+        });
     }
 
     private <T extends QueryModel.PropertyCriterion> CriterionHandler<T> propertyOperatorExpression(String op) {
