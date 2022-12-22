@@ -102,9 +102,6 @@ tasks.named("test") {
     systemProperty "java.util.concurrent.ForkJoinPool.common.parallelism", "2"
 }
 
-// TODO: Temp disable tests
-test.onlyIf { false }
-
 micronautBuild {
     resolutionStrategy {
         componentSelection {
