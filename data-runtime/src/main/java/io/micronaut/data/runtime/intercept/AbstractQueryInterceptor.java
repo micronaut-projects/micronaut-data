@@ -91,6 +91,7 @@ import static io.micronaut.data.intercept.annotation.DataMethod.META_MEMBER_PAGE
  * @since 1.0
  */
 public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<T, R> {
+    protected final ConversionService conversionService;
     protected final RepositoryOperations operations;
     protected final PreparedQueryResolver preparedQueryResolver;
     private final ConcurrentMap<RepositoryMethodKey, StoredQuery> countQueries = new ConcurrentHashMap<>(50);
@@ -107,6 +108,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
      */
     protected AbstractQueryInterceptor(@NonNull RepositoryOperations operations) {
         ArgumentUtils.requireNonNull("operations", operations);
+        this.conversionService = operations.getConversionService();
         this.operations = operations;
         this.storedQueryResolver = operations instanceof StoredQueryResolver ? (StoredQueryResolver) operations : new DefaultStoredQueryResolver() {
             @Override

@@ -10,7 +10,7 @@ application {
 }
 
 micronaut {
-    version micronautVersion
+    version libs.versions.micronaut.asProvider().get()
     runtime "netty"
     testRuntime "junit5"
     testResources {
@@ -22,7 +22,7 @@ micronaut {
 dependencies {
     annotationProcessor projects.dataDocumentProcessor
 
-    implementation 'io.micronaut.multitenancy:micronaut-multitenancy'
+    implementation("io.micronaut.multitenancy:micronaut-multitenancy:5.0.0-SNAPSHOT")
     implementation 'io.micronaut.reactor:micronaut-reactor'
     implementation 'io.micronaut:micronaut-http-client'
     implementation 'io.micronaut.data:micronaut-data-r2dbc'

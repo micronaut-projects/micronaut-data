@@ -11,7 +11,7 @@ application {
 }
 
 micronaut {
-    version project.ext.micronautVersion
+    version libs.versions.micronaut.asProvider().get()
     runtime "netty"
     testRuntime "junit5"
 }
@@ -23,6 +23,7 @@ dependencies {
     implementation "io.micronaut:micronaut-http-client"
     implementation projects.dataMongodb
     implementation libs.mongodb.driver.reactive
+    implementation mnKotlin.micronaut.kotlin.runtime
 
     compileOnly libs.javax.persistence.api
     implementation libs.jakarta.persistence.api

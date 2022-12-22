@@ -24,6 +24,7 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.async.publisher.Publishers;
+import io.micronaut.core.convert.ConversionService;
 import io.micronaut.inject.ExecutableMethod;
 import io.micronaut.transaction.SynchronousTransactionManager;
 import io.micronaut.transaction.TransactionDefinition;
@@ -74,16 +75,20 @@ public final class TransactionalInterceptor implements MethodInterceptor<Object,
     @Nullable
     private final TransactionDataSourceTenantResolver tenantResolver;
 
+    private final ConversionService conversionService;
+
     /**
      * Default constructor.
      *
      * @param transactionOperationsRegistry The {@link TransactionOperationsRegistry}
      * @param tenantResolver
+     * @param conversionService
      */
     public TransactionalInterceptor(@NonNull TransactionOperationsRegistry transactionOperationsRegistry,
-                                    @Nullable TransactionDataSourceTenantResolver tenantResolver) {
+                                    @Nullable TransactionDataSourceTenantResolver tenantResolver, ConversionService conversionService) {
         this.transactionOperationsRegistry = transactionOperationsRegistry;
         this.tenantResolver = tenantResolver;
+        this.conversionService = conversionService;
     }
 
     @Override
@@ -99,7 +104,7 @@ public final class TransactionalInterceptor implements MethodInterceptor<Object,
         } else {
             tenantDataSourceName = null;
         }
-        InterceptedMethod interceptedMethod = InterceptedMethod.of(context);
+        InterceptedMethod interceptedMethod = InterceptedMethod.of(context, conversionService);
         try {
             ExecutableMethod<Object, Object> executableMethod = context.getExecutableMethod();
             final TransactionInvocation<?> transactionInvocation = transactionInvocationMap
@@ -108,30 +113,34 @@ public final class TransactionalInterceptor implements MethodInterceptor<Object,
                         final TransactionDefinition transactionDefinition = resolveTransactionDefinition(executableMethod);
 
                         switch (interceptedMethod.resultType()) {
-                            case PUBLISHER:
+                            case PUBLISHER -> {
                                 ReactiveTransactionOperations<?> reactiveTransactionOperations = transactionOperationsRegistry.provideReactive(ReactiveTransactionOperations.class, dataSource);
                                 return new TransactionInvocation<>(null, reactiveTransactionOperations, null, transactionDefinition);
-                            case COMPLETION_STAGE:
+                            }
+                            case COMPLETION_STAGE -> {
                                 AsyncTransactionOperations<?> asyncTransactionOperations = transactionOperationsRegistry.provideAsync(AsyncTransactionOperations.class, dataSource);
                                 return new TransactionInvocation<>(null, null, asyncTransactionOperations, transactionDefinition);
-                            default:
+                            }
+                            default -> {
                                 TransactionOperations<?> transactionManager = transactionOperationsRegistry.provideSynchronous(SynchronousTransactionManager.class, dataSource);
                                 return new TransactionInvocation<>(transactionManager, null, null, transactionDefinition);
+                            }
                         }
                     });
 
             final TransactionDefinition definition = transactionInvocation.definition;
             switch (interceptedMethod.resultType()) {
-                case PUBLISHER:
+                case PUBLISHER -> {
                     ReactiveTransactionOperations<?> reactiveTransactionOperations = Objects.requireNonNull(transactionInvocation.reactiveTransactionOperations);
                     return interceptedMethod.handleResult(
-                            reactiveTransactionOperations.withTransaction(definition, (status) -> {
-                                context.setAttribute(ReactiveTransactionStatus.STATUS, status);
-                                context.setAttribute(ReactiveTransactionStatus.ATTRIBUTE, definition);
-                                return Publishers.convertPublisher(context.proceed(), Publisher.class);
-                            })
+                        reactiveTransactionOperations.withTransaction(definition, (status) -> {
+                            context.setAttribute(ReactiveTransactionStatus.STATUS, status);
+                            context.setAttribute(ReactiveTransactionStatus.ATTRIBUTE, definition);
+                            return Publishers.convertPublisher(conversionService, context.proceed(), Publisher.class);
+                        })
                     );
-                case COMPLETION_STAGE:
+                }
+                case COMPLETION_STAGE -> {
                     AsyncTransactionOperations<?> asyncTransactionOperations = Objects.requireNonNull(transactionInvocation.asyncTransactionOperations);
                     boolean isKotlinSuspended = interceptedMethod instanceof KotlinInterceptedMethod;
                     CompletionStage<?> result;
@@ -142,7 +151,8 @@ public final class TransactionalInterceptor implements MethodInterceptor<Object,
                         result = asyncTransactionOperations.withTransaction(definition, status -> interceptedMethod.interceptResultAsCompletionStage());
                     }
                     return interceptedMethod.handleResult(result);
-                case SYNCHRONOUS:
+                }
+                case SYNCHRONOUS -> {
                     TransactionOperations<?> transactionManager = Objects.requireNonNull(transactionInvocation.transactionManager);
                     return transactionManager.execute(definition, status -> {
                         TransactionInfo prev = TRANSACTION_INFO_HOLDER.get();
@@ -158,9 +168,10 @@ public final class TransactionalInterceptor implements MethodInterceptor<Object,
                             }
                         }
                     });
-                default:
+                }
+                default -> {
                     return interceptedMethod.unsupported();
-
+                }
             }
         } catch (Exception e) {
             return interceptedMethod.handleException(e);

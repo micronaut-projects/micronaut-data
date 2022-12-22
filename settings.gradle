@@ -28,6 +28,7 @@ micronautBuild {
     importMicronautCatalog("micronaut-spring")
     importMicronautCatalog("micronaut-serde")
     importMicronautCatalog("micronaut-sql")
+    importMicronautCatalog("micronaut-kotlin")
 }
 
 include 'data-bom'

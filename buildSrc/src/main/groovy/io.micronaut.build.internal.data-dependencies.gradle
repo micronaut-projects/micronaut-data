@@ -3,6 +3,10 @@ repositories {
     maven { url "https://s01.oss.sonatype.org/content/repositories/snapshots/" }
 }
 
+configurations.all {
+    resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
+}
+
 configurations {
     all {
         resolutionStrategy {
@@ -15,7 +19,7 @@ configurations {
                     throw new GradleException("Dependency 'groovy-all' not allowed!")
                 }
     //            if (details.requested.group == 'io.micronaut') {
-    //                details.useVersion libs.versions.micronaut.get()
+    //                details.useVersion libs.versions.micronaut.asPublisher().get()
     //            }
                 if (details.requested.group == 'io.micronaut.test') {
                     details.useVersion libs.versions.micronaut.test.get()
