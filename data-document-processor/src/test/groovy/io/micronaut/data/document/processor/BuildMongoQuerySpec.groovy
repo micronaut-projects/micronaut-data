@@ -451,4 +451,29 @@ interface PersonRepository extends GenericRepository<Person, String> {
         findByNameContainsQuery == '{name:{$options:\'\',$regex:\'$mn_qp:0\'}}'
         findByNameContainsIgnoreCaseQuery == '{name:{$options:\'i\',$regex:\'$mn_qp:0\'}}'
     }
+
+    void "test array contains query"() {
+        given:
+        def repository = buildRepository('test.DocumentRepository', """
+import io.micronaut.data.mongodb.annotation.*;
+import io.micronaut.data.document.tck.entities.Document;
+import java.util.List;
+
+@MongoRepository
+interface DocumentRepository extends GenericRepository<Document, String> {
+
+    List<Document> findByTagsArrayContains(String tag);
+
+    List<Document> findByTagsArrayContains(List<String> tags);
+}
+"""
+        )
+
+        when:
+        def findByTagsArrayContainsQuery = repository.getRequiredMethod("findByTagsArrayContains", String).getAnnotation(Query).stringValue().get()
+        def findByTagsArrayContainsListQuery = repository.getRequiredMethod("findByTagsArrayContains", List<String>).getAnnotation(Query).stringValue().get()
+        then:
+        findByTagsArrayContainsQuery == '{tags:{$all:[{$mn_qp:0}]}}'
+        findByTagsArrayContainsListQuery == '{tags:{$all:[{$mn_qp:0}]}}'
+    }
 }

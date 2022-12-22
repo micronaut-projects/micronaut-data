@@ -3,6 +3,7 @@ package example
 import io.micronaut.data.model.Page
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
+import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder
 import io.micronaut.data.mongodb.annotation.MongoRepository
 import io.micronaut.data.repository.CrudRepository
 import io.micronaut.data.repository.jpa.JpaSpecificationExecutor
@@ -13,6 +14,8 @@ import io.micronaut.data.repository.jpa.criteria.UpdateSpecification
 import io.micronaut.data.runtime.criteria.get
 import io.micronaut.data.runtime.criteria.update
 import io.micronaut.data.runtime.criteria.where
+import jakarta.persistence.criteria.CriteriaBuilder
+import jakarta.persistence.criteria.Root
 import org.bson.types.ObjectId
 import java.util.*
 
@@ -85,6 +88,13 @@ interface PersonRepository : CrudRepository<Person, ObjectId>, JpaSpecificationE
     fun deleteAll(spec: DeleteSpecification<Person>?): Long
 
     // end::delete[]
+
+    // end::delete[]
+
+    // tag::method_collection_contains[]
+    fun findByInterestsCollectionContains(interest: String): List<Person>
+    // end::method_collection_contains[]
+
     // tag::specifications[]
     // tag::allSpecifications[]
     object Specifications {
@@ -112,6 +122,17 @@ interface PersonRepository : CrudRepository<Person, ObjectId>, JpaSpecificationE
             }
         }
         // end::setUpdate[]
+
+        // tag::spec_array_contains[]
+        fun interestsContains(interest: String): PredicateSpecification<Person>? {
+            return PredicateSpecification { root: Root<Person>, criteriaBuilder: CriteriaBuilder ->
+                (criteriaBuilder as PersistentEntityCriteriaBuilder).arrayContains(
+                    root.get<Any>("interests"),
+                    criteriaBuilder.literal(interest)
+                )
+            }
+        }
+        // end::spec_array_contains[]
 
         // Different style using the criteria builder
         fun nameEquals2(name: String?) = PredicateSpecification { root, criteriaBuilder ->
