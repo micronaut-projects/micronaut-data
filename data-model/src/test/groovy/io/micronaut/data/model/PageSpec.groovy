@@ -91,7 +91,7 @@ class PageSpec extends Specification {
         deserializedPage == page
     }
 
-    @PendingFeature(reason = "Need to prioritize introspections over iterables")
+    //@PendingFeature(reason = "Need to prioritize introspections over iterables")
     void "test serialization and deserialization of a page - serde"() {
         def page = Page.of([new Dummy(
                 propertyOne: "value one",

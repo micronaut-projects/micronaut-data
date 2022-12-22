@@ -84,9 +84,6 @@ tasks.named("test") {
     systemProperty "oracle.jdbc.timezoneAsRegion", "false"
 }
 
-// TODO: Temp disable tests
-test.onlyIf { false }
-
 micronautBuild {
     resolutionStrategy {
         componentSelection {
