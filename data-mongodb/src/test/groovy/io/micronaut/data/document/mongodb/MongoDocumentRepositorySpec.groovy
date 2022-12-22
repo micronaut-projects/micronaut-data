@@ -34,6 +34,8 @@ import org.bson.BsonDocument
 
 import java.util.stream.Collectors
 
+import static io.micronaut.data.document.tck.repositories.DocumentRepository.Specifications.tagsArrayContains
+
 class MongoDocumentRepositorySpec extends AbstractDocumentRepositorySpec implements MongoTestPropertyProvider {
 
     MongoClient mongoClient = context.getBean(MongoClient)
@@ -445,6 +447,49 @@ class MongoDocumentRepositorySpec extends AbstractDocumentRepositorySpec impleme
             personsByNamesInList.size() == 1
     }
 
+    void "test find by array contains"() {
+        given:
+        var doc1 = new Document()
+        doc1.title = "Doc1"
+        doc1.tags = ["red", "blue", "white"]
+        documentRepository.save(doc1)
+        var doc2 = new Document()
+        doc2.title = "Doc2"
+        doc2.tags = ["red", "blue"]
+        documentRepository.save(doc2)
+        var doc3 = new Document()
+        doc3.title = "Doc3"
+        documentRepository.save(doc3)
+        when:
+        def result1 = documentRepository.findByTagsArrayContains("red")
+        def result2 = documentRepository.findByTagsArrayContains("grey")
+        def result3 = documentRepository.findByTagsArrayContains(Arrays.asList("red", "blue"))
+        def result4 = documentRepository.findByTagsArrayContains(Arrays.asList("red", "blue", "white"))
+        def result5 = documentRepository.findByTagsArrayContains(Arrays.asList("red", "white"))
+        def result6 = documentRepository.findByTagsArrayContains(Arrays.asList())
+        then:
+        result1.size() == 2
+        result2.size() == 0
+        result3.size() == 2
+        result4.size() == 1
+        result5.size() == 1
+        result6.size() == 0
+        when:"Test with criteria spec"
+        result1 = documentRepository.findAll(tagsArrayContains("red"))
+        result2 = documentRepository.findAll(tagsArrayContains("grey"))
+        result3 = documentRepository.findAll(tagsArrayContains("red", "blue"))
+        result4 = documentRepository.findAll(tagsArrayContains("red", "blue", "white"))
+        result5 = documentRepository.findAll(tagsArrayContains("red", "white"))
+        then:
+        result1.size() == 2
+        result2.size() == 0
+        result3.size() == 2
+        result4.size() == 1
+        result5.size() == 1
+        cleanup:
+        documentRepository.deleteAll()
+    }
+
     @Memoized
     MongoExecutorPersonRepository getMongoExecutorPersonRepository() {
         return context.getBean(MongoExecutorPersonRepository)
@@ -496,44 +541,5 @@ class MongoDocumentRepositorySpec extends AbstractDocumentRepositorySpec impleme
     @Override
     MongoDocumentRepository getDocumentRepository() {
         return context.getBean(MongoDocumentRepository)
-    }
-
-    void "test find by array contains"() {
-        given:
-        var doc1 = new Document()
-        doc1.title = "Doc1"
-        doc1.tags = ["red", "blue", "white"]
-        documentRepository.save(doc1)
-        var doc2 = new Document()
-        doc2.title = "Doc2"
-        doc2.tags = ["red", "blue"]
-        documentRepository.save(doc2)
-        var doc3 = new Document()
-        doc3.title = "Doc3"
-        documentRepository.save(doc3)
-        when:
-        def result1 = documentRepository.findByTagsContainingSingleTag("red")
-        def result2 = documentRepository.findByTagsContainingSingleTag("gray")
-        def result3 = documentRepository.findByTagsContainingMultipleTags(Arrays.asList("red", "blue"))
-        def result4 = documentRepository.findByTagsContainingMultipleTags(Arrays.asList("red", "blue", "white"))
-        def result5 = documentRepository.findByTagsContainingMultipleTags(Arrays.asList("red", "white"))
-        then:
-        result1.size() == 2
-        result2.size() == 0
-        result3.size() == 2
-        result4.size() == 1
-        result5.size() == 1
-        when:
-        result1 = documentRepository.findByTagsArrayContains("red")
-        result2 = documentRepository.findByTagsArrayContains("gray")
-        result3 = documentRepository.findByTagsArrayContains(Arrays.asList("red", "blue"))
-        result4 = documentRepository.findByTagsArrayContains(Arrays.asList("red", "blue", "white"))
-        result5 = documentRepository.findByTagsArrayContains(Arrays.asList("red", "white"))
-        then:
-        result1.size() == 2
-        result2.size() == 0
-        result3.size() == 2
-        result4.size() == 1
-        result5.size() == 1
     }
 }

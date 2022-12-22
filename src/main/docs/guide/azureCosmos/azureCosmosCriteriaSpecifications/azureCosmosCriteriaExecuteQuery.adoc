@@ -62,7 +62,7 @@ Then you can combine them for `find` or `count` queries:
 
 snippet::example.PersonRepositorySpec[project-base="doc-examples/azure-cosmos-example",source="test" tags="find",indent="0"]
 
-Specific criteria supported only by Micronaut Azure Cosmos Data is `ARRAY_CONTAINS` and for a class having an array of strings named `tags` it can be used either via custom repository method like this:
+Specific criteria supported Micronaut Azure Cosmos Data is `ARRAY_CONTAINS` and for a class having an array of strings named `tags` it can be used either via custom repository method like this:
 
 snippet::example.FamilyRepository[project-base="doc-examples/azure-cosmos-example",source="main" tags="method_array_contains",indent="0"]
 
