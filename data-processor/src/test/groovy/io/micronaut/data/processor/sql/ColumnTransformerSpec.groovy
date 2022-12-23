@@ -96,7 +96,7 @@ class Project {
         def sql = builder.buildQuery(QueryModel.from(entity).eq("name", new QueryParameter("xyz"))).query
 
         expect:
-        sql == 'SELECT project_."project_id_department_id",project_."project_id_project_id",LOWER(project_.name) AS name,project_.name AS db_name,UPPER(project_.org) AS org FROM "project" project_ WHERE (LOWER(project_.name) = ?)'
+        sql == 'SELECT project_."project_id_department_id",project_."project_id_project_id",LOWER(project_.name) AS name,project_.name AS db_name,UPPER(project_.org) AS org FROM "project" project_ WHERE (project_."name" = UPPER(?))'
     }
 
     void "test update query with column readers and writers"() {
@@ -111,7 +111,7 @@ class Project {
         ).query
 
         expect:
-        sql == 'UPDATE "project" SET "name"=UPPER(?),"org"=? WHERE (LOWER(name) = ? AND UPPER(org) = ?)'
+        sql == 'UPDATE "project" SET "name"=UPPER(?),"org"=? WHERE ("name" = UPPER(?) AND "org" = ?)'
     }
 
 
@@ -153,6 +153,6 @@ class Project {
             def sql = builder.buildQuery(QueryModel.from(entity).eq("xyz", new QueryParameter("xyz"))).query
 
         expect:
-            sql == 'SELECT transform_."project_id_department_id",transform_."project_id_project_id",UPPER(xyz@abc) AS xyz FROM "transform" transform_ WHERE (UPPER(xyz@abc) = ?)'
+            sql == 'SELECT transform_."project_id_department_id",transform_."project_id_project_id",UPPER(xyz@abc) AS xyz FROM "transform" transform_ WHERE (transform_."xyz" = LOWER(xyz@abc))'
     }
 }

@@ -136,4 +136,56 @@ interface BookRepository extends CrudRepository<Book, Long> {
             getDataInterceptor(deleteAllByAuthor) == "io.micronaut.data.intercept.DeleteAllInterceptor"
     }
 
+    void  "test build delete query with DataTransformer"() {
+        given:
+        def repository = buildRepository('test.UuidEntityRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+
+@JdbcRepository(dialect= Dialect.MYSQL)
+@io.micronaut.context.annotation.Executable
+interface UuidEntityRepository extends GenericRepository<UuidEntity, UUID> {
+    void deleteById(UUID id);
+
+    void deleteByIdGreaterThan(UUID id);
+}
+
+@MappedEntity
+class UuidEntity {
+
+    @Id
+    @AutoPopulated
+    @DataTransformer(read = "BIN_TO_UUID(@.id)", write = "UUID_TO_BIN(?)")
+    private UUID id;
+
+    private String name;
+
+    public UUID getId() {
+        return id;
+    }
+
+    public void setId(UUID id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+}
+
+""")
+        def deleteByIdMethod = repository.findMethod('deleteById', UUID).get()
+        def deleteByIdQuery = getQuery(deleteByIdMethod)
+        def deleteByIdGreaterThanMethod = repository.findMethod('deleteByIdGreaterThan', UUID).get()
+        def deleteByIdGreaterThanQuery = getQuery(deleteByIdGreaterThanMethod)
+        expect:
+        deleteByIdQuery == 'DELETE  FROM `uuid_entity`  WHERE (`id` = UUID_TO_BIN(?))'
+        deleteByIdGreaterThanQuery == 'DELETE  FROM `uuid_entity`  WHERE (`id` > UUID_TO_BIN(?))'
+    }
+
 }
