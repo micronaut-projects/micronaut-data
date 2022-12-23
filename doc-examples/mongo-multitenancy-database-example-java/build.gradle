@@ -27,6 +27,8 @@ dependencies {
     implementation 'io.micronaut.reactor:micronaut-reactor'
     implementation 'io.micronaut:micronaut-http-client'
     implementation 'io.micronaut.data:micronaut-data-mongodb'
+    implementation mnSerde.micronaut.serde.jackson
+
 //    implementation projects.dataMongodb
     implementation libs.mongodb.driver.sync
 

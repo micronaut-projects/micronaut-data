@@ -26,6 +26,7 @@ dependencies {
     implementation 'io.micronaut.reactor:micronaut-reactor'
     implementation 'io.micronaut:micronaut-http-client'
     implementation 'io.micronaut.data:micronaut-data-jdbc'
+    implementation mnSerde.micronaut.serde.jackson
 
     implementation libs.jakarta.persistence.api
     implementation libs.jakarta.transaction.api

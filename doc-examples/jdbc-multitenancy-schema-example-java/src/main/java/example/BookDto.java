@@ -2,9 +2,9 @@
 package example;
 
 import io.micronaut.core.annotation.Creator;
-import io.micronaut.core.annotation.Introspected;
+import io.micronaut.serde.annotation.Serdeable;
 
-@Introspected
+@Serdeable
 public class BookDto {
     private final String id;
     private final String title;
