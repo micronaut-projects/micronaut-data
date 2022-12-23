@@ -29,6 +29,7 @@ micronautBuild {
     importMicronautCatalog("micronaut-serde")
     importMicronautCatalog("micronaut-sql")
     importMicronautCatalog("micronaut-kotlin")
+    importMicronautCatalog("micronaut-multitenancy")
 }
 
 include 'data-bom'

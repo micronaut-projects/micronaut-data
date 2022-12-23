@@ -42,7 +42,7 @@ dependencies {
 
     testCompileOnly mn.micronaut.inject.groovy
 
-    testImplementation("io.micronaut.multitenancy:micronaut-multitenancy:5.0.0-SNAPSHOT")
+    testImplementation mnMultitenancy.micronaut.multitenancy
 
     testImplementation mn.micronaut.http.netty
     testRuntimeOnly mnSql.micronaut.jdbc.tomcat

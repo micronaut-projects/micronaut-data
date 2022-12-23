@@ -65,7 +65,7 @@ dependencies {
     testImplementation libs.drivers.r2dbc.postgresql
     testImplementation libs.drivers.jdbc.postgresql
 
-    testImplementation("io.micronaut.multitenancy:micronaut-multitenancy:5.0.0-SNAPSHOT")
+    testImplementation mnMultitenancy.micronaut.multitenancy
 
     testImplementation mn.micronaut.http.netty
 
