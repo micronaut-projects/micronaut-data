@@ -8,7 +8,7 @@ micronaut-gradle-plugin = "3.6.5"
 micronaut-mongo = "4.6.0"
 micronaut-azure = "3.6.0"
 
-groovy = "3.0.13"
+groovy = "3.0.14"
 
 javax-persistence = "2.2"
 jakarta-persistence = "3.0.0"
