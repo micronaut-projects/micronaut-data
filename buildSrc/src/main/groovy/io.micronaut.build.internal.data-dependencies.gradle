@@ -18,6 +18,7 @@ configurations {
                 if (details.requested.name == 'groovy-all') {
                     throw new GradleException("Dependency 'groovy-all' not allowed!")
                 }
+                
 //                if (details.requested.group == 'io.micronaut') {
 //                    if (libs.versions.micronaut instanceof org.gradle.api.provider.Provider) {
 //                        details.useVersion libs.versions.micronaut.get()
