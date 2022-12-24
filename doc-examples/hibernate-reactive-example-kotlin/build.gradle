@@ -23,6 +23,7 @@ dependencies {
 
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-reactive"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-reactor
     implementation "io.micronaut:micronaut-http-client"
     implementation projects.dataHibernateReactive
     implementation "io.micronaut.reactor:micronaut-reactor"
