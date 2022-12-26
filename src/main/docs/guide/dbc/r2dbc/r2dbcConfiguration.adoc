@@ -18,7 +18,7 @@ Micronaut Data R2DBC requires driver configuration using https://micronaut-proje
 |`org.mariadb:r2dbc-mariadb`
 
 |Postgres
-|`io.r2dbc:r2dbc-postgresql`
+|`org.postgresql:r2dbc-postgresql`
 
 |SQL Server
 |`io.r2dbc:r2dbc-mssql`

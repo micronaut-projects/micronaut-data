@@ -72,6 +72,13 @@ class BookRepositorySpec extends Specification {
         then:"The book was updated"
         book.title == "Changed"
 
+        when:"The book is partially updated"
+        bookRepository.updatePages(id, 1200)
+        book = bookRepository.findById(id).orElse(null)
+
+        then:
+        book.pages == 1200
+
         // Delete: Delete the book
         when:"The book is deleted"
         // tag::delete[]

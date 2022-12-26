@@ -1,7 +1,5 @@
 package example
 
-import io.micronaut.data.annotation.Repository
-import io.micronaut.data.mongodb.annotation.MongoRepository
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest
 import jakarta.inject.Inject
 import kotlinx.coroutines.Dispatchers
@@ -18,18 +16,13 @@ class MongoTxTest : AbstractMongoSpec() {
 
     @Inject
     private lateinit var repositorySuspended: ParentSuspendRepository
-    @Inject
-    private lateinit var repository: ParentRepository
-    @Inject
-    @Repository("custom")
-    private lateinit var repositoryForCustomDb: ParentRepository
+
     @Inject
     private lateinit var service: PersonSuspendRepositoryService
 
     @BeforeEach
     fun cleanup() {
-        repository.deleteAll()
-        repositoryForCustomDb.deleteAll()
+        service.deleteAll()
     }
 
     override fun getProperties(): Map<String, String> {

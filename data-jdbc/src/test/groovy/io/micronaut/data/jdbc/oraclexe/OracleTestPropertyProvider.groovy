@@ -15,11 +15,10 @@
  */
 package io.micronaut.data.jdbc.oraclexe
 
-
-import io.micronaut.data.jdbc.SharedDatabaseContainerTestPropertyProvider
+import io.micronaut.data.jdbc.SharedTestResourcesDatabaseTestPropertyProvider
 import io.micronaut.data.model.query.builder.sql.Dialect
 
-trait OracleTestPropertyProvider implements SharedDatabaseContainerTestPropertyProvider {
+trait OracleTestPropertyProvider implements SharedTestResourcesDatabaseTestPropertyProvider {
 
     @Override
     Dialect dialect() {
@@ -28,6 +27,6 @@ trait OracleTestPropertyProvider implements SharedDatabaseContainerTestPropertyP
 
     @Override
     int sharedSpecsCount() {
-        return 5
+        return 6
     }
 }

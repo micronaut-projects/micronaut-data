@@ -1,6 +1,7 @@
 package io.micronaut.data.document.mongodb
 
 import groovy.transform.CompileStatic
+import io.micronaut.aop.InvocationContext
 import io.micronaut.context.annotation.Property
 import io.micronaut.context.annotation.Requires
 import io.micronaut.core.convert.value.ConvertibleValues
@@ -62,10 +63,18 @@ class MongoMultipleDataSourceSpec extends Specification implements TestPropertyP
             otherPersonRepository.count() == 5
     }
 
+    static MongoDBContainer mongoDBContainer1
+    static MongoDBContainer mongoDBContainer2
+
+    def cleanupSpec() {
+        mongoDBContainer1.stop()
+        mongoDBContainer2.stop()
+    }
+
     @Override
     Map<String, String> getProperties() {
-        MongoDBContainer mongoDBContainer1 = new MongoDBContainer(DockerImageName.parse("mongo").withTag("5"))
-        MongoDBContainer mongoDBContainer2 = new MongoDBContainer(DockerImageName.parse("mongo").withTag("5"))
+        mongoDBContainer1 = new MongoDBContainer(DockerImageName.parse("mongo").withTag("5"))
+        mongoDBContainer2 = new MongoDBContainer(DockerImageName.parse("mongo").withTag("5"))
         mongoDBContainer1.start()
         mongoDBContainer2.start()
         return [
@@ -129,6 +138,11 @@ class MongoMultipleDataSourceSpec extends Specification implements TestPropertyP
 
                 @Override
                 StoredQuery<T, ?> getStoredQuery() {
+                    return null
+                }
+
+                @Override
+                InvocationContext<?, ?> getInvocationContext() {
                     return null
                 }
 

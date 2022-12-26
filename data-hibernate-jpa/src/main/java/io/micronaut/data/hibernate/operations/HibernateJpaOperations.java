@@ -334,12 +334,15 @@ public class HibernateJpaOperations extends AbstractHibernateOperations<Session,
     public <T> T update(@NonNull UpdateOperation<T> operation) {
         StoredQuery<T, ?> storedQuery = operation.getStoredQuery();
         return transactionOperations.executeWrite(status -> {
+            EntityManager session = sessionFactory.getCurrentSession();
             if (storedQuery != null) {
                 executeEntityUpdate(storedQuery, operation.getEntity());
+                if (flushIfNecessary(session, operation.getAnnotationMetadata())) {
+                    session.remove(operation.getEntity());
+                }
                 return operation.getEntity();
             }
             T entity = operation.getEntity();
-            EntityManager session = sessionFactory.getCurrentSession();
             entity = session.merge(entity);
             flushIfNecessary(session, operation.getAnnotationMetadata());
             return entity;
@@ -351,13 +354,18 @@ public class HibernateJpaOperations extends AbstractHibernateOperations<Session,
     public <T> Iterable<T> updateAll(@NonNull UpdateBatchOperation<T> operation) {
         StoredQuery<T, ?> storedQuery = operation.getStoredQuery();
         return transactionOperations.executeWrite(status -> {
+            EntityManager entityManager = sessionFactory.getCurrentSession();
             if (storedQuery != null) {
                 for (T entity : operation) {
                     executeEntityUpdate(storedQuery, entity);
                 }
+                if (flushIfNecessary(entityManager, operation.getAnnotationMetadata())) {
+                    for (T entity : operation) {
+                        entityManager.remove(entity);
+                    }
+                }
                 return operation;
             }
-            EntityManager entityManager = sessionFactory.getCurrentSession();
             List<T> results = new ArrayList<>();
             for (T entity : operation) {
                 T merge = entityManager.merge(entity);
@@ -386,13 +394,22 @@ public class HibernateJpaOperations extends AbstractHibernateOperations<Session,
         });
     }
 
-    private void flushIfNecessary(EntityManager entityManager, AnnotationMetadata annotationMetadata) {
+    private boolean flushIfNecessary(EntityManager entityManager, AnnotationMetadata annotationMetadata) {
+        return flushIfNecessary(entityManager, annotationMetadata, false);
+    }
+
+    private boolean flushIfNecessary(EntityManager entityManager, AnnotationMetadata annotationMetadata, boolean clear) {
         if (annotationMetadata.hasAnnotation(QueryHint.class)) {
             FlushModeType flushModeType = getFlushModeType(annotationMetadata);
             if (flushModeType == FlushModeType.AUTO) {
                 entityManager.flush();
+                if (clear) {
+                    entityManager.clear();
+                }
+                return true;
             }
         }
+        return false;
     }
 
     @NonNull
@@ -402,7 +419,9 @@ public class HibernateJpaOperations extends AbstractHibernateOperations<Session,
             String query = preparedQuery.getQuery();
             Query<?> q = getCurrentSession().createQuery(query);
             bindParameters(q, preparedQuery);
-            return Optional.of(q.executeUpdate());
+            int numAffected = q.executeUpdate();
+            flushIfNecessary(sessionFactory.getCurrentSession(), preparedQuery.getAnnotationMetadata(), true);
+            return Optional.of(numAffected);
         });
     }
 
@@ -410,10 +429,15 @@ public class HibernateJpaOperations extends AbstractHibernateOperations<Session,
     public <T> int delete(@NonNull DeleteOperation<T> operation) {
         StoredQuery<T, ?> storedQuery = operation.getStoredQuery();
         return transactionOperations.executeWrite(status -> {
+            Session session = getCurrentSession();
             if (storedQuery != null) {
-                return executeEntityUpdate(storedQuery, operation.getEntity());
+                int numAffected = executeEntityUpdate(storedQuery, operation.getEntity());
+                if (flushIfNecessary(session, operation.getAnnotationMetadata())) {
+                    session.remove(operation.getEntity());
+                }
+                return numAffected;
             }
-            getCurrentSession().remove(operation.getEntity());
+            session.remove(operation.getEntity());
             return 1;
         });
     }
@@ -422,15 +446,20 @@ public class HibernateJpaOperations extends AbstractHibernateOperations<Session,
     public <T> Optional<Number> deleteAll(@NonNull DeleteBatchOperation<T> operation) {
         StoredQuery<T, ?> storedQuery = operation.getStoredQuery();
         Integer result = transactionOperations.executeWrite(status -> {
+            Session session = getCurrentSession();
             if (storedQuery != null) {
                 int i = 0;
                 for (T entity : operation) {
                     i += executeEntityUpdate(storedQuery, entity);
                 }
+                if (flushIfNecessary(session, operation.getAnnotationMetadata())) {
+                    for (T entity : operation) {
+                        session.remove(entity);
+                    }
+                }
                 return i;
             }
             int i = 0;
-            Session session = getCurrentSession();
             for (T entity : operation) {
                 session.remove(entity);
                 i++;

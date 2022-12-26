@@ -19,8 +19,12 @@ import com.azure.cosmos.CosmosClient;
 import com.azure.cosmos.CosmosContainer;
 import com.azure.cosmos.CosmosDatabase;
 import com.azure.cosmos.models.CosmosContainerProperties;
+import com.azure.cosmos.models.CosmosContainerResponse;
+import com.azure.cosmos.models.CosmosDatabaseResponse;
+import com.azure.cosmos.models.CosmosResponse;
 import com.azure.cosmos.models.PartitionKeyDefinition;
 import com.azure.cosmos.models.ThroughputProperties;
+import com.azure.cosmos.models.ThroughputResponse;
 import io.micronaut.context.annotation.Context;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.exceptions.ConfigurationException;
@@ -33,6 +37,7 @@ import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.cosmos.config.CosmosDatabaseConfiguration;
 import io.micronaut.data.cosmos.config.StorageUpdatePolicy;
 import io.micronaut.data.cosmos.config.ThroughputSettings;
+import io.micronaut.data.cosmos.operations.CosmosDiagnosticsProcessor;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import org.slf4j.Logger;
@@ -64,12 +69,15 @@ final class CosmosDatabaseInitializer {
      *
      * @param cosmosClient the Cosmos Db client
      * @param runtimeEntityRegistry the runtime entity registry
+     * @param cosmosDiagnosticsProcessor the Cosmos diagnostics processor (can be null)
      * @param configuration the Cosmos Db configuration
      */
     @PostConstruct
     void initialize(CosmosClient cosmosClient,
-                           RuntimeEntityRegistry runtimeEntityRegistry,
-                           CosmosDatabaseConfiguration configuration) {
+                    RuntimeEntityRegistry runtimeEntityRegistry,
+                    @Nullable
+                    CosmosDiagnosticsProcessor cosmosDiagnosticsProcessor,
+                    CosmosDatabaseConfiguration configuration) {
         if (LOG.isDebugEnabled()) {
             LOG.debug("Cosmos Db Initialization Start");
         }
@@ -79,9 +87,9 @@ final class CosmosDatabaseInitializer {
             cosmosDatabase = cosmosClient.getDatabase(configuration.getDatabaseName());
         } else {
             ThroughputProperties throughputProperties = configuration.getThroughput() != null ? configuration.getThroughput().createThroughputProperties() : null;
-            cosmosDatabase = createOrUpdateDatabase(cosmosClient, configuration.getDatabaseName(), storageUpdatePolicy, throughputProperties);
+            cosmosDatabase = createOrUpdateDatabase(cosmosClient, cosmosDiagnosticsProcessor, configuration.getDatabaseName(), storageUpdatePolicy, throughputProperties);
         }
-        initContainers(configuration, cosmosDatabase, runtimeEntityRegistry);
+        initContainers(configuration, cosmosDatabase, runtimeEntityRegistry, cosmosDiagnosticsProcessor);
         if (LOG.isDebugEnabled()) {
             LOG.debug("Cosmos Db Initialization Finish");
         }
@@ -92,24 +100,39 @@ final class CosmosDatabaseInitializer {
      * Currently, we only support configuring database throughput.
      *
      * @param cosmosClient the cosmos client
+     * @param cosmosDiagnosticsProcessor the Cosmos diagnostics processor
      * @param databaseName the database name
      * @param storageUpdatePolicy the storage update policy, expected {@link StorageUpdatePolicy#CREATE_IF_NOT_EXISTS} or {@link StorageUpdatePolicy#UPDATE}
      * @param throughputProperties throughput properties from the configuration, can be null
      * @return CosmosDatabase instance for given database name
      */
-    private CosmosDatabase createOrUpdateDatabase(CosmosClient cosmosClient, String databaseName, StorageUpdatePolicy storageUpdatePolicy, @Nullable ThroughputProperties throughputProperties) {
+    private CosmosDatabase createOrUpdateDatabase(CosmosClient cosmosClient, CosmosDiagnosticsProcessor cosmosDiagnosticsProcessor, String databaseName,
+                                                  StorageUpdatePolicy storageUpdatePolicy, @Nullable ThroughputProperties throughputProperties) {
         CosmosDatabase cosmosDatabase;
         if (StorageUpdatePolicy.CREATE_IF_NOT_EXISTS.equals(storageUpdatePolicy)) {
-            if (throughputProperties != null) {
-                cosmosClient.createDatabaseIfNotExists(databaseName, throughputProperties);
-            } else {
-                cosmosClient.createDatabaseIfNotExists(databaseName);
+            CosmosDatabaseResponse cosmosDatabaseResponse;
+            try {
+                if (throughputProperties != null) {
+                    cosmosDatabaseResponse = cosmosClient.createDatabaseIfNotExists(databaseName, throughputProperties);
+                } else {
+                    cosmosDatabaseResponse = cosmosClient.createDatabaseIfNotExists(databaseName);
+                }
+            } catch (Exception e) {
+                throw CosmosUtils.cosmosAccessException(cosmosDiagnosticsProcessor, CosmosDiagnosticsProcessor.CREATE_DATABASE_IF_NOT_EXISTS,
+                    "Failed to create database", e);
             }
+            processDiagnostics(CosmosDiagnosticsProcessor.CREATE_DATABASE_IF_NOT_EXISTS, cosmosDiagnosticsProcessor, cosmosDatabaseResponse);
             cosmosDatabase = cosmosClient.getDatabase(databaseName);
         } else if (StorageUpdatePolicy.UPDATE.equals(storageUpdatePolicy)) {
             cosmosDatabase = cosmosClient.getDatabase(databaseName);
             if (throughputProperties != null) {
-                cosmosDatabase.replaceThroughput(throughputProperties);
+                try {
+                    ThroughputResponse throughputResponse = cosmosDatabase.replaceThroughput(throughputProperties);
+                    processDiagnostics(CosmosDiagnosticsProcessor.REPLACE_DATABASE_THROUGHPUT, cosmosDiagnosticsProcessor, throughputResponse);
+                } catch (Exception e) {
+                    throw CosmosUtils.cosmosAccessException(cosmosDiagnosticsProcessor, CosmosDiagnosticsProcessor.REPLACE_DATABASE_THROUGHPUT,
+                        "Failed to replace database throughput", e);
+                }
             }
         } else {
             throw new ConfigurationException("Unexpected StorageUpdatePolicy value " + storageUpdatePolicy);
@@ -131,16 +154,33 @@ final class CosmosDatabaseInitializer {
             .map(e -> runtimeEntityRegistry.getEntity(e.getBeanType())).toArray(RuntimePersistentEntity<?>[]::new);
     }
 
-    private void initContainers(CosmosDatabaseConfiguration configuration, CosmosDatabase cosmosDatabase, RuntimeEntityRegistry runtimeEntityRegistry) {
+    private void initContainers(CosmosDatabaseConfiguration configuration, CosmosDatabase cosmosDatabase, RuntimeEntityRegistry runtimeEntityRegistry,
+                                CosmosDiagnosticsProcessor cosmosDiagnosticsProcessor) {
         RuntimePersistentEntity<?>[] entities = getPersistentEntities(configuration, runtimeEntityRegistry);
         Map<String, CosmosDatabaseConfiguration.CosmosContainerSettings> cosmosContainerSettings = CollectionUtils.isEmpty(configuration.getContainers()) ? Collections.emptyMap() :
             configuration.getContainers().stream().collect(Collectors.toMap(CosmosDatabaseConfiguration.CosmosContainerSettings::getContainerName, Function.identity()));
         for (RuntimePersistentEntity<?> persistentEntity : entities) {
-            initContainer(cosmosContainerSettings, configuration.getUpdatePolicy(), persistentEntity, cosmosDatabase);
+            initContainer(cosmosContainerSettings, configuration.getUpdatePolicy(), persistentEntity, cosmosDatabase, cosmosDiagnosticsProcessor);
         }
     }
 
-    private void initContainer(Map<String, CosmosDatabaseConfiguration.CosmosContainerSettings> cosmosContainerSettingsMap, StorageUpdatePolicy updatePolicy, RuntimePersistentEntity<?> entity, CosmosDatabase cosmosDatabase) {
+    private CosmosContainerResponse createContainer(CosmosDatabase cosmosDatabase, String containerName, String partitionKey, ThroughputProperties throughputProperties,
+                                                    CosmosDiagnosticsProcessor cosmosDiagnosticsProcessor) {
+        CosmosContainerProperties containerProperties = new CosmosContainerProperties(containerName, partitionKey);
+        try {
+            if (throughputProperties == null) {
+                return cosmosDatabase.createContainerIfNotExists(containerProperties);
+            } else {
+                return cosmosDatabase.createContainerIfNotExists(containerProperties, throughputProperties);
+            }
+        } catch (Exception e) {
+            throw CosmosUtils.cosmosAccessException(cosmosDiagnosticsProcessor, CosmosDiagnosticsProcessor.CREATE_CONTAINER_IF_NOT_EXISTS,
+                "Failed to create container", e);
+        }
+    }
+
+    private void initContainer(Map<String, CosmosDatabaseConfiguration.CosmosContainerSettings> cosmosContainerSettingsMap, StorageUpdatePolicy updatePolicy, RuntimePersistentEntity<?> entity, CosmosDatabase cosmosDatabase,
+                               CosmosDiagnosticsProcessor cosmosDiagnosticsProcessor) {
         String containerName = entity.getPersistedName();
         CosmosDatabaseConfiguration.CosmosContainerSettings cosmosContainerSettings = cosmosContainerSettingsMap.get(containerName);
         CosmosEntity cosmosEntity = CosmosEntity.create(entity, cosmosContainerSettings);
@@ -153,18 +193,20 @@ final class CosmosDatabaseInitializer {
         ThroughputProperties throughputProperties = throughputSettings != null ? throughputSettings.createThroughputProperties() : null;
         // TODO: Later implement indexing policy, time to live, unique key etc.
         if (StorageUpdatePolicy.CREATE_IF_NOT_EXISTS.equals(updatePolicy)) {
-            CosmosContainerProperties containerProperties = new CosmosContainerProperties(containerName, partitionKey);
-            if (throughputProperties == null) {
-                cosmosDatabase.createContainerIfNotExists(containerProperties);
-            } else {
-                cosmosDatabase.createContainerIfNotExists(containerProperties, throughputProperties);
-            }
+            CosmosContainerResponse containerResponse = createContainer(cosmosDatabase, containerName, partitionKey, throughputProperties, cosmosDiagnosticsProcessor);
+            processDiagnostics(CosmosDiagnosticsProcessor.CREATE_CONTAINER_IF_NOT_EXISTS, cosmosDiagnosticsProcessor, containerResponse);
             return;
         }
         if (StorageUpdatePolicy.UPDATE.equals(updatePolicy)) {
             CosmosContainer cosmosContainer = cosmosDatabase.getContainer(containerName);
             if (throughputProperties != null) {
-                cosmosContainer.replaceThroughput(throughputProperties);
+                try {
+                    ThroughputResponse throughputResponse = cosmosContainer.replaceThroughput(throughputProperties);
+                    processDiagnostics(CosmosDiagnosticsProcessor.REPLACE_CONTAINER_THROUGHPUT, cosmosDiagnosticsProcessor, throughputResponse);
+                } catch (Exception e) {
+                    throw CosmosUtils.cosmosAccessException(cosmosDiagnosticsProcessor, CosmosDiagnosticsProcessor.REPLACE_CONTAINER_THROUGHPUT,
+                        "Failed to replace container throughput", e);
+                }
             }
             CosmosContainerProperties containerProperties = cosmosContainer.read().getProperties();
             PartitionKeyDefinition partitionKeyDef = new PartitionKeyDefinition();
@@ -172,8 +214,28 @@ final class CosmosDatabaseInitializer {
             paths.add(partitionKey);
             partitionKeyDef.setPaths(paths);
             containerProperties.setPartitionKeyDefinition(partitionKeyDef);
-            cosmosContainer.replace(containerProperties);
+            try {
+                CosmosContainerResponse cosmosContainerResponse = cosmosContainer.replace(containerProperties);
+                processDiagnostics(CosmosDiagnosticsProcessor.REPLACE_CONTAINER, cosmosDiagnosticsProcessor, cosmosContainerResponse);
+            } catch (Exception e) {
+                throw CosmosUtils.cosmosAccessException(cosmosDiagnosticsProcessor, CosmosDiagnosticsProcessor.REPLACE_CONTAINER,
+                    "Failed to replace container properties", e);
+            }
         }
     }
 
+    /**
+     * Processes diagnostics from the Cosmos response.
+     *
+     * @param operationName the operation name
+     * @param cosmosDiagnosticsProcessor the Cosmos diagnostics processor
+     * @param cosmosResponse the Cosmos response for various operations
+     * @param <T> the type of resource
+     */
+    private <T> void processDiagnostics(String operationName, @Nullable CosmosDiagnosticsProcessor cosmosDiagnosticsProcessor, @Nullable CosmosResponse<T> cosmosResponse) {
+        if (cosmosDiagnosticsProcessor == null || cosmosResponse == null) {
+            return;
+        }
+        cosmosDiagnosticsProcessor.processDiagnostics(operationName, cosmosResponse.getDiagnostics(), cosmosResponse.getActivityId(), cosmosResponse.getRequestCharge());
+    }
 }

@@ -139,7 +139,7 @@ interface CompanyRepository extends CrudRepository<Restaurant, Long> {
 //        def insertQuery = method.stringValue(Query).get()
 
         expect:
-        updateQuery == 'UPDATE `restaurant` SET `name`=?,`address_street`=?,`address_zip_code`=?,`hq_address_street`=?,`hq_address_zip_code`=? WHERE (`id` = ?)'
+        updateQuery == 'UPDATE `restaurant` SET `name`=?,`address_street`=?,`address_zip_code`=?,`hqaddress_street`=?,`hqaddress_zip_code`=? WHERE (`id` = ?)'
         getParameterPropertyPaths(method) == ["name", "address.street", "address.zipCode", "hqAddress.street", "hqAddress.zipCode", "id"] as String[]
     }
 

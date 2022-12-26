@@ -1,12 +1,12 @@
 plugins {
     id "groovy"
-    id "io.micronaut.application"
     id "io.micronaut.build.internal.data-example"
+    id "io.micronaut.application"
+    id 'io.micronaut.test-resources'
 }
 
 repositories {
     mavenCentral()
-    maven { url "https://s01.oss.sonatype.org/content/repositories/snapshots/" }
 }
 
 application {
@@ -25,7 +25,7 @@ dependencies {
 
     implementation 'io.micronaut.reactor:micronaut-reactor'
     implementation "io.micronaut:micronaut-http-client"
-    implementation projects.dataMongodb
+    implementation 'io.micronaut.data:micronaut-data-mongodb'
     implementation libs.mongodb.driver.sync
 
     compileOnly libs.javax.persistence.api
@@ -33,6 +33,4 @@ dependencies {
     implementation libs.jakarta.transaction.api
 
     runtimeOnly "ch.qos.logback:logback-classic"
-
-    testImplementation "org.testcontainers:mongodb"
 }

@@ -52,5 +52,5 @@ public interface R2dbcOperations extends ReactiveTransactionOperations<Connectio
      * @param <T> The emitted type
      * @return A publisher that emits the result type
      */
-    @NonNull <T> Publisher<T> withConnection(@NonNull Function<Connection, Publisher<T>> handler);
+    @NonNull <T> Publisher<T> withConnection(@NonNull Function<Connection, Publisher<? extends T>> handler);
 }

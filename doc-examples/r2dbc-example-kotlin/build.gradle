@@ -1,13 +1,12 @@
+import io.micronaut.testresources.buildtools.KnownModules
+
 plugins {
     id "org.jetbrains.kotlin.jvm"
     id "org.jetbrains.kotlin.kapt"
     id "org.jetbrains.kotlin.plugin.allopen"
     id "io.micronaut.application"
+    id "io.micronaut.test-resources"
     id "io.micronaut.build.internal.data-kotlin-example"
-}
-
-repositories {
-    mavenCentral()
 }
 
 application {
@@ -19,24 +18,24 @@ micronaut {
     version project.ext.micronautVersion
     runtime "netty"
     testRuntime "junit5"
+
+    testResources {
+        clientTimeout = 300
+    }
 }
 
 dependencies {
     kapt project(":data-processor")
-    implementation project(":data-r2dbc")
+    implementation("io.micronaut.data:micronaut-data-r2dbc")
     implementation("io.micronaut.flyway:micronaut-flyway")
     implementation "io.micronaut.sql:micronaut-jdbc-hikari"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-reactive"
     implementation libs.micronaut.serde.support
+    implementation "org.flywaydb:flyway-mysql"
 
-    runtimeOnly libs.drivers.r2dbc.postgresql
-    runtimeOnly libs.drivers.jdbc.postgresql
+    runtimeOnly libs.drivers.r2dbc.mariadb
+    runtimeOnly libs.drivers.jdbc.mariadb
 
     testImplementation "io.micronaut:micronaut-http-client"
-    testImplementation "org.testcontainers:postgresql"
-
-    // h2
-    testImplementation 'io.r2dbc:r2dbc-h2'
-    testRuntimeOnly "com.h2database:h2"
 }

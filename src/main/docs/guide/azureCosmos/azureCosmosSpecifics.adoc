@@ -24,3 +24,26 @@ In Azure Cosmos Db partition keys are the core element to distributing data effi
 Micronaut Data Cosmos tries to use a partition key whenever possible. Here are some repository method examples that make use of a partition key in read, update or delete operations
 
 snippet::example.FamilyRepository[project-base="doc-examples/azure-cosmos-example", source="main", tags="partitionkey"]
+
+=== Diagnostics ===
+
+Azure Cosmos Db provides operations diagnostics so users can get that information and perhaps integrate  with their logging or metrics system. In Micronaut Data Azure we expose interface api:io.micronaut.data.cosmos.operations.CosmosDiagnosticsProcessor[]. Users need to implement this interface and add it to the context so it can be available to our operations classes. It has only one method
+[source,java]
+----
+void processDiagnostics(String operationName, @Nullable CosmosDiagnostics cosmosDiagnostics, @Nullable String activityId, double requestCharge);
+----
+which is being called after each operation against Azure Cosmos Db. Parameter `operationName` is internal operation name in Micronaut Data Azure and it has got these known values:
+[source,java]
+----
+String CREATE_DATABASE_IF_NOT_EXISTS = "CreateDatabaseIfNotExists";
+String REPLACE_DATABASE_THROUGHPUT = "ReplaceDatabaseThroughput";
+String CREATE_CONTAINER_IF_NOT_EXISTS = "CreateContainerIfNotExists";
+String REPLACE_CONTAINER_THROUGHPUT = "ReplaceContainerThroughput";
+String REPLACE_CONTAINER = "ReplaceContainer";
+String QUERY_ITEMS = "QueryItems";
+String EXECUTE_BULK = "ExecuteBulk";
+String CREATE_ITEM = "CreateItem";
+String REPLACE_ITEM = "ReplaceItem";
+String DELETE_ITEM = "DeleteItem";
+----
+so user is aware for which operation diagnostics are being processed.

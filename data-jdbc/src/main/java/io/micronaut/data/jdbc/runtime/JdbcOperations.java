@@ -57,7 +57,6 @@ public interface JdbcOperations {
     @NonNull
     <R> R execute(@NonNull ConnectionCallback<R> callback);
 
-
     /**
      * Execute the given operation with the given callback.
      *

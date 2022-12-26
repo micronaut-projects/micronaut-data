@@ -30,6 +30,7 @@ import io.micronaut.data.repository.jpa.criteria.PredicateSpecification;
 import io.micronaut.data.tck.entities.Person;
 import io.micronaut.data.tck.entities.TotalDto;
 import io.reactivex.Single;
+import jakarta.persistence.criteria.JoinType;
 
 import java.util.Arrays;
 import java.util.List;
@@ -148,6 +149,10 @@ public interface PersonRepository extends CrudRepository<Person, Long>, Pageable
     int deleteCustomSingleNoEntity(String xyz);
 
     List<Person> findAllByAgeInRange(int from, int to);
+
+    Person updateByNameAndAge(String name, int age, Person person);
+
+    Long updatePerson(@Id Long id, @Parameter("age") int age);
 
     class Specifications {
 

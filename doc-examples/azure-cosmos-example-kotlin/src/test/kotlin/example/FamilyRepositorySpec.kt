@@ -2,6 +2,7 @@ package example
 
 import com.azure.cosmos.CosmosClient
 import com.azure.cosmos.models.*
+import example.FamilyRepository.Specifications.childrenArrayContainsGender
 import example.FamilyRepository.Specifications.idsIn
 import example.FamilyRepository.Specifications.idsInAndNotIn
 import example.FamilyRepository.Specifications.idsNotIn
@@ -18,6 +19,7 @@ import org.junit.jupiter.api.*
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable
 import java.util.*
+import java.util.AbstractMap.SimpleImmutableEntry
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @MicronautTest
@@ -79,6 +81,9 @@ class FamilyRepositorySpec : AbstractAzureCosmosTest() {
         familyRepository.save(createAndersenFamily())
         familyRepository.save(createWakefieldFamily())
 
+        var families = familyRepository.childrenArrayContainsGender(SimpleImmutableEntry("gender", "male"))
+        assertEquals(1, families.size)
+
         var optFamily1 = familyRepository.findById(ANDERSEN_FAMILY.id)
         var optFamily2 = familyRepository.findById(WAKEFIELD_FAMILY.id)
         assertTrue(optFamily1.isPresent)
@@ -92,7 +97,7 @@ class FamilyRepositorySpec : AbstractAzureCosmosTest() {
         assertNotNull(optFamily2.get().address)
         assertNotNull(optFamily2.get().documentVersion)
 
-        var families = familyRepository.findByLastNameLike("Ander%")
+        families = familyRepository.findByLastNameLike("Ander%")
         assertTrue(families.isNotEmpty())
         assertEquals(families[0].id, ANDERSEN_FAMILY.id)
         families = familyRepository.findByChildrenPetsType(PetType.CAT)
@@ -241,6 +246,7 @@ class FamilyRepositorySpec : AbstractAzureCosmosTest() {
     @Test
     fun testCriteria() {
         saveSampleFamilies()
+        assertEquals(2, familyRepository.findAll(childrenArrayContainsGender(GenderAware("female"))).size)
         assertTrue(familyRepository.findOne(lastNameEquals("Andersen")).isPresent)
         assertFalse(familyRepository.findOne(lastNameEquals(UUID.randomUUID().toString())).isPresent)
         assertEquals(2, familyRepository.findAll(idsIn(ANDERSEN_FAMILY.id, WAKEFIELD_FAMILY.id)).size)

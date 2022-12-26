@@ -25,6 +25,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
 
+import java.util.AbstractMap;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
@@ -39,6 +40,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import static example.FamilyRepository.Specifications.childrenArrayContainsGender;
 import static example.FamilyRepository.Specifications.idsIn;
 import static example.FamilyRepository.Specifications.idsInAndNotIn;
 import static example.FamilyRepository.Specifications.idsNotIn;
@@ -120,7 +122,10 @@ class FamilyRepositorySpec extends AbstractAzureCosmosTest {
         assertNotNull(optFamily2.get().getAddress());
         assertNotNull(optFamily2.get().getDocumentVersion());
 
-        List<Family> families = familyRepository.findByLastNameLike("Ander%");
+        List<Family> families = familyRepository.childrenArrayContainsGender(new AbstractMap.SimpleImmutableEntry<>("gender", "male"));
+        assertEquals(1, families.size());
+
+        families = familyRepository.findByLastNameLike("Ander%");
         assertTrue(families.size() > 0);
         assertEquals(families.get(0).getId(), ANDERSEN_FAMILY.getId());
 
@@ -276,6 +281,7 @@ class FamilyRepositorySpec extends AbstractAzureCosmosTest {
     @Test
     void testCriteria() {
         saveSampleFamilies();
+        assertEquals(2, familyRepository.findAll(childrenArrayContainsGender(new GenderAware("female"))).size());
         assertTrue(familyRepository.findOne(lastNameEquals("Andersen")).isPresent());
         assertFalse(familyRepository.findOne(lastNameEquals(UUID.randomUUID().toString())).isPresent());
         assertEquals(2, familyRepository.findAll(idsIn(ANDERSEN_FAMILY.getId(), WAKEFIELD_FAMILY.getId())).size());

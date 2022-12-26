@@ -52,10 +52,13 @@ import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.BsonObjectId;
+import org.bson.BsonRegularExpression;
 import org.bson.BsonValue;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.AbstractMap;
 import java.util.ArrayList;
@@ -64,6 +67,9 @@ import java.util.Collection;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
+import java.util.function.Supplier;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -71,21 +77,21 @@ import java.util.stream.Collectors;
  *
  * @param <E>   The entity type
  * @param <R>   The result type
- * @param <Dtb> The database type
  * @author Denis Stepanov
  * @since 3.3.
  */
 @Internal
-final class DefaultMongoStoredQuery<E, R, Dtb> extends DefaultBindableParametersStoredQuery<E, R> implements DelegateStoredQuery<E, R>, MongoStoredQuery<E, R, Dtb> {
+final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStoredQuery<E, R> implements DelegateStoredQuery<E, R>, MongoStoredQuery<E, R> {
 
+    private static final Pattern MONGO_PARAM_PATTERN = Pattern.compile("\\W*(\\" + MongoQueryBuilder.QUERY_PARAMETER_PLACEHOLDER + ":(\\d)+)\\W*");
+    private static final Logger LOG = LoggerFactory.getLogger(DefaultMongoStoredQuery.class);
     private static final BsonDocument EMPTY = new BsonDocument();
 
     private final StoredQuery<E, R> storedQuery;
-    private final CodecRegistry codecRegistry;
+    private final Supplier<CodecRegistry> codecRegistry;
     private final AttributeConverterRegistry attributeConverterRegistry;
     private final RuntimeEntityRegistry runtimeEntityRegistry;
     private final ConversionService<?> conversionService;
-    private final Dtb database;
     private final RuntimePersistentEntity<E> persistentEntity;
     private final UpdateData updateData;
     private final FindData findData;
@@ -94,31 +100,28 @@ final class DefaultMongoStoredQuery<E, R, Dtb> extends DefaultBindableParameters
     private final boolean isCount;
 
     DefaultMongoStoredQuery(StoredQuery<E, R> storedQuery,
-                            CodecRegistry codecRegistry,
+                            Supplier<CodecRegistry> codecRegistry,
                             AttributeConverterRegistry attributeConverterRegistry,
                             RuntimeEntityRegistry runtimeEntityRegistry,
                             ConversionService<?> conversionService,
-                            RuntimePersistentEntity<E> persistentEntity,
-                            Dtb database) {
+                            RuntimePersistentEntity<E> persistentEntity) {
         this(storedQuery,
                 codecRegistry,
                 attributeConverterRegistry,
                 runtimeEntityRegistry,
                 conversionService,
                 persistentEntity,
-                database,
                 storedQuery.getAnnotationMetadata().enumValue(DataMethod.NAME, DataMethod.META_MEMBER_OPERATION_TYPE, DataMethod.OperationType.class)
                         .orElseThrow(IllegalStateException::new),
                 storedQuery.getAnnotationMetadata().stringValue(Query.class, "update").orElse(null));
     }
 
     DefaultMongoStoredQuery(StoredQuery<E, R> storedQuery,
-                            CodecRegistry codecRegistry,
+                            Supplier<CodecRegistry> codecRegistry,
                             AttributeConverterRegistry attributeConverterRegistry,
                             RuntimeEntityRegistry runtimeEntityRegistry,
                             ConversionService<?> conversionService,
                             RuntimePersistentEntity<E> persistentEntity,
-                            Dtb database,
                             DataMethod.OperationType operationType,
                             String updateJson) {
         super(storedQuery, persistentEntity);
@@ -127,7 +130,6 @@ final class DefaultMongoStoredQuery<E, R, Dtb> extends DefaultBindableParameters
         this.attributeConverterRegistry = attributeConverterRegistry;
         this.runtimeEntityRegistry = runtimeEntityRegistry;
         this.conversionService = conversionService;
-        this.database = database;
         this.persistentEntity = persistentEntity;
         if (operationType == DataMethod.OperationType.QUERY || operationType == DataMethod.OperationType.EXISTS || operationType == DataMethod.OperationType.COUNT) {
             String query = storedQuery.getQuery();
@@ -222,8 +224,8 @@ final class DefaultMongoStoredQuery<E, R, Dtb> extends DefaultBindableParameters
     }
 
     @Override
-    public Dtb getDatabase() {
-        return database;
+    public RuntimePersistentEntity<E> getRuntimePersistentEntity() {
+        return persistentEntity;
     }
 
     @Override
@@ -316,13 +318,19 @@ final class DefaultMongoStoredQuery<E, R, Dtb> extends DefaultBindableParameters
                 }
             }
             return false;
-        } else if (value instanceof BsonArray) {
+        }
+        if (value instanceof BsonArray) {
             BsonArray bsonArray = (BsonArray) value;
             for (BsonValue bsonValue : bsonArray) {
                 if (needsProcessingValue(bsonValue)) {
                     return true;
                 }
             }
+        }
+        if (value instanceof BsonRegularExpression) {
+            BsonRegularExpression bsonRegularExpression = (BsonRegularExpression) value;
+            String pattern = bsonRegularExpression.getPattern();
+            return MONGO_PARAM_PATTERN.matcher(pattern).matches();
         }
         return false;
     }
@@ -438,6 +446,28 @@ final class DefaultMongoStoredQuery<E, R, Dtb> extends DefaultBindableParameters
                     }
                 }
             }
+        } else if (value instanceof BsonRegularExpression) {
+            BsonRegularExpression bsonRegularExpression = (BsonRegularExpression) value;
+            String pattern = bsonRegularExpression.getPattern();
+            Matcher matcher = MONGO_PARAM_PATTERN.matcher(pattern);
+            if (matcher.matches()) {
+                Integer queryParamIndex = null;
+                try {
+                    String queryParamIndexStr = matcher.group(2);
+                    queryParamIndex = Integer.parseInt(queryParamIndexStr);
+                } catch (Exception e) {
+                    LOG.info("Failed to get mongo parameter for regex {}", e);
+                }
+                if (queryParamIndex != null) {
+                    QueryParameterBinding queryParameterBinding = getQueryBindings().get(queryParamIndex);
+                    Map.Entry<QueryParameterBinding, Object> e = bind(queryParameterBinding, invocationContext, entity);
+                    if (e == null) {
+                        throw new DataAccessException("Cannot bind a value at index: " + queryParamIndex);
+                    }
+                    pattern = pattern.replace(matcher.group(1), e.getValue().toString());
+                    return new BsonRegularExpression(pattern, bsonRegularExpression.getOptions());
+                }
+            }
         }
         return value;
     }
@@ -481,10 +511,10 @@ final class DefaultMongoStoredQuery<E, R, Dtb> extends DefaultBindableParameters
                 if (isIdentityField && val instanceof String) {
                     return new BsonObjectId(new ObjectId((String) val));
                 }
-                return MongoUtils.toBsonValue(conversionService, val, codecRegistry);
+                return MongoUtils.toBsonValue(conversionService, val, codecRegistry.get());
             }).collect(Collectors.toList()));
         }
-        return MongoUtils.toBsonValue(conversionService, value, codecRegistry);
+        return MongoUtils.toBsonValue(conversionService, value, codecRegistry.get());
     }
 
     @Override

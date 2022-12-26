@@ -1,6 +1,7 @@
 plugins {
     id "java"
     id "io.micronaut.application"
+    id "io.micronaut.test-resources"
     id "io.micronaut.build.internal.data-example"
 }
 
@@ -17,7 +18,7 @@ micronaut {
 dependencies {
     annotationProcessor("io.micronaut:micronaut-graal")
     annotationProcessor project(":data-processor")
-    implementation project(":data-r2dbc")
+    implementation("io.micronaut.data:micronaut-data-r2dbc")
     implementation("io.micronaut.flyway:micronaut-flyway")
     implementation("io.micronaut.sql:micronaut-jdbc-hikari")
 
@@ -25,5 +26,4 @@ dependencies {
     runtimeOnly libs.drivers.jdbc.postgresql
 
     testImplementation "io.micronaut:micronaut-http-client"
-    testImplementation "org.testcontainers:postgresql"
 }

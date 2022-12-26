@@ -11,10 +11,4 @@
     <root level="error">
         <appender-ref ref="STDOUT" />
     </root>
-    <logger name="io.micronaut" level="INFO" />
-    <logger name="io.micronaut.transaction" level="DEBUG" />
-    <logger name="io.micronaut.data.hibernate" level="DEBUG" />
-    <logger name="org.hibernate.SQL" level="TRACE"/>
-    <logger name="org.hibernate.type" level="TRACE"/>
-    <logger name="org.hibernate.reactive" level="TRACE"/>
 </configuration>

@@ -15,23 +15,23 @@
  */
 package io.micronaut.data.jdbc.mariadb
 
-
-import io.micronaut.data.jdbc.SharedDatabaseContainerTestPropertyProvider
+import io.micronaut.data.jdbc.SharedTestResourcesDatabaseTestPropertyProvider
 import io.micronaut.data.model.query.builder.sql.Dialect
 
-trait MariaTestPropertyProvider implements SharedDatabaseContainerTestPropertyProvider {
+trait MariaTestPropertyProvider implements SharedTestResourcesDatabaseTestPropertyProvider {
 
     @Override
     Dialect dialect() {
         Dialect.MYSQL
     }
 
-    String driverName() {
+    @Override
+    String dbType() {
         "mariadb"
     }
 
     @Override
     int sharedSpecsCount() {
-        return 5
+        return 6
     }
 }

@@ -20,16 +20,15 @@ import io.micronaut.aop.InterceptedMethod;
 import io.micronaut.aop.MethodInterceptor;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.aop.kotlin.KotlinInterceptedMethod;
-import io.micronaut.context.BeanLocator;
-import io.micronaut.context.exceptions.ConfigurationException;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.async.publisher.Publishers;
 import io.micronaut.inject.ExecutableMethod;
-import io.micronaut.inject.qualifiers.Qualifiers;
 import io.micronaut.transaction.SynchronousTransactionManager;
 import io.micronaut.transaction.TransactionDefinition;
+import io.micronaut.transaction.TransactionOperations;
+import io.micronaut.transaction.TransactionOperationsRegistry;
 import io.micronaut.transaction.TransactionStatus;
 import io.micronaut.transaction.annotation.TransactionalAdvice;
 import io.micronaut.transaction.async.AsyncTransactionOperations;
@@ -68,18 +67,23 @@ public final class TransactionalInterceptor implements MethodInterceptor<Object,
                     return "Current aspect-driven transaction";
                 }
             };
-    private final Map<ExecutableMethod, TransactionInvocation> transactionInvocationMap = new ConcurrentHashMap<>(30);
+    private final Map<TenantExecutableMethod, TransactionInvocation> transactionInvocationMap = new ConcurrentHashMap<>(30);
 
     @NonNull
-    private final BeanLocator beanLocator;
+    private final TransactionOperationsRegistry transactionOperationsRegistry;
+    @Nullable
+    private final TransactionDataSourceTenantResolver tenantResolver;
 
     /**
      * Default constructor.
      *
-     * @param beanLocator The bean locator.
+     * @param transactionOperationsRegistry The {@link TransactionOperationsRegistry}
+     * @param tenantResolver
      */
-    public TransactionalInterceptor(@NonNull BeanLocator beanLocator) {
-        this.beanLocator = beanLocator;
+    public TransactionalInterceptor(@NonNull TransactionOperationsRegistry transactionOperationsRegistry,
+                                    @Nullable TransactionDataSourceTenantResolver tenantResolver) {
+        this.transactionOperationsRegistry = transactionOperationsRegistry;
+        this.tenantResolver = tenantResolver;
     }
 
     @Override
@@ -89,31 +93,29 @@ public final class TransactionalInterceptor implements MethodInterceptor<Object,
 
     @Override
     public Object intercept(MethodInvocationContext<Object, Object> context) {
+        String tenantDataSourceName;
+        if (tenantResolver != null) {
+            tenantDataSourceName = tenantResolver.resolveTenantDataSourceName();
+        } else {
+            tenantDataSourceName = null;
+        }
         InterceptedMethod interceptedMethod = InterceptedMethod.of(context);
         try {
+            ExecutableMethod<Object, Object> executableMethod = context.getExecutableMethod();
             final TransactionInvocation<?> transactionInvocation = transactionInvocationMap
-                    .computeIfAbsent(context.getExecutableMethod(), executableMethod -> {
-                        final String qualifier = executableMethod.stringValue(TransactionalAdvice.class).orElse(null);
+                    .computeIfAbsent(new TenantExecutableMethod(tenantDataSourceName, executableMethod), ignore -> {
+                        final String dataSource = tenantDataSourceName == null ? executableMethod.stringValue(TransactionalAdvice.class).orElse(null) : tenantDataSourceName;
                         final TransactionDefinition transactionDefinition = resolveTransactionDefinition(executableMethod);
 
                         switch (interceptedMethod.resultType()) {
                             case PUBLISHER:
-                                ReactiveTransactionOperations<?> reactiveTransactionOperations
-                                        = beanLocator.findBean(ReactiveTransactionOperations.class, qualifier != null ? Qualifiers.byName(qualifier) : null).orElse(null);
-                                if (reactiveTransactionOperations == null) {
-                                    throw new ConfigurationException("No reactive transaction management has been configured. Ensure you have correctly configured a reactive capable transaction manager");
-                                }
+                                ReactiveTransactionOperations<?> reactiveTransactionOperations = transactionOperationsRegistry.provideReactive(ReactiveTransactionOperations.class, dataSource);
                                 return new TransactionInvocation<>(null, reactiveTransactionOperations, null, transactionDefinition);
                             case COMPLETION_STAGE:
-                                AsyncTransactionOperations<?> asyncTransactionOperations
-                                        = beanLocator.findBean(AsyncTransactionOperations.class, qualifier != null ? Qualifiers.byName(qualifier) : null).orElse(null);
-                                if (asyncTransactionOperations == null) {
-                                    throw new ConfigurationException("No reactive transaction management has been configured. Ensure you have correctly configured a async capable transaction manager");
-                                }
+                                AsyncTransactionOperations<?> asyncTransactionOperations = transactionOperationsRegistry.provideAsync(AsyncTransactionOperations.class, dataSource);
                                 return new TransactionInvocation<>(null, null, asyncTransactionOperations, transactionDefinition);
                             default:
-                                SynchronousTransactionManager<?> transactionManager =
-                                        beanLocator.getBean(SynchronousTransactionManager.class, qualifier != null ? Qualifiers.byName(qualifier) : null);
+                                TransactionOperations<?> transactionManager = transactionOperationsRegistry.provideSynchronous(SynchronousTransactionManager.class, dataSource);
                                 return new TransactionInvocation<>(transactionManager, null, null, transactionDefinition);
                         }
                     });
@@ -141,7 +143,7 @@ public final class TransactionalInterceptor implements MethodInterceptor<Object,
                     }
                     return interceptedMethod.handleResult(result);
                 case SYNCHRONOUS:
-                    SynchronousTransactionManager<?> transactionManager = Objects.requireNonNull(transactionInvocation.transactionManager);
+                    TransactionOperations<?> transactionManager = Objects.requireNonNull(transactionInvocation.transactionManager);
                     return transactionManager.execute(definition, status -> {
                         TransactionInfo prev = TRANSACTION_INFO_HOLDER.get();
                         try {
@@ -204,14 +206,14 @@ public final class TransactionalInterceptor implements MethodInterceptor<Object,
      */
     private static final class TransactionInvocation<C> {
         @Nullable
-        final SynchronousTransactionManager<C> transactionManager;
+        final TransactionOperations<C> transactionManager;
         @Nullable
         final ReactiveTransactionOperations<C> reactiveTransactionOperations;
         @Nullable
         final AsyncTransactionOperations<C> asyncTransactionOperations;
         final TransactionDefinition definition;
 
-        TransactionInvocation(@Nullable SynchronousTransactionManager<C> transactionManager,
+        TransactionInvocation(@Nullable TransactionOperations<C> transactionManager,
                               @Nullable ReactiveTransactionOperations<C> reactiveTransactionOperations,
                               @Nullable AsyncTransactionOperations<C> asyncTransactionOperations,
                               TransactionDefinition definition) {
@@ -231,6 +233,35 @@ public final class TransactionalInterceptor implements MethodInterceptor<Object,
         private TransactionInfo(TransactionDefinition transactionDefinition, TransactionStatus<T> transactionStatus) {
             this.transactionDefinition = transactionDefinition;
             this.transactionStatus = transactionStatus;
+        }
+    }
+
+    private static final class TenantExecutableMethod {
+        private final String dataSource;
+        private final ExecutableMethod method;
+        private final int hashCode;
+
+        TenantExecutableMethod(String dataSource, ExecutableMethod method) {
+            this.dataSource = dataSource;
+            this.method = method;
+            this.hashCode = Objects.hash(dataSource, method);
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+            TenantExecutableMethod that = (TenantExecutableMethod) o;
+            return Objects.equals(dataSource, that.dataSource) && method.equals(that.method);
+        }
+
+        @Override
+        public int hashCode() {
+            return hashCode;
         }
     }
 }

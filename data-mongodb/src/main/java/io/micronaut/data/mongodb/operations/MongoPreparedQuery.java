@@ -17,24 +17,23 @@ package io.micronaut.data.mongodb.operations;
 
 import io.micronaut.core.annotation.Experimental;
 import io.micronaut.data.model.runtime.PreparedQuery;
-import io.micronaut.data.runtime.operations.internal.query.PersistentEntityAwareQuery;
+import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 
 /**
  * MongoDB's {@link PreparedQuery}.
  *
  * @param <E>   The entity type
  * @param <R>   The result type
- * @param <Dtb> The database type
  * @author Denis Stepanov
  * @since 3.3.0
  */
 @Experimental
-public interface MongoPreparedQuery<E, R, Dtb> extends PreparedQuery<E, R>, PersistentEntityAwareQuery<E> {
+public interface MongoPreparedQuery<E, R> extends PreparedQuery<E, R> {
 
     /**
-     * @return The associated databae
+     * @return The persistent entity
      */
-    Dtb getDatabase();
+    RuntimePersistentEntity<E> getPersistentEntity();
 
     /**
      * @return Is aggregation query?

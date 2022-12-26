@@ -5,3 +5,15 @@ flyway:
   datasources:
     default:
       enabled: true
+
+r2dbc:
+  datasources:
+    default:
+      db-type: postgresql
+      schema-generate: CREATE_DROP
+      dialect: POSTGRES
+datasources:
+  default:
+    db-type: postgresql
+    schema-generate: CREATE_DROP
+    dialect: POSTGRES

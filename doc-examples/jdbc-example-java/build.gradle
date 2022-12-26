@@ -13,7 +13,6 @@ application {
 }
 
 micronaut {
-    version micronautVersion
     runtime "netty"
     testRuntime "junit5"
 }

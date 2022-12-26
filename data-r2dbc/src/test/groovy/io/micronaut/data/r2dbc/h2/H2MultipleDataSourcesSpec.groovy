@@ -16,6 +16,9 @@ import jakarta.inject.Inject
 @Property(name = "r2dbc.datasources.other.url", value = "r2dbc:h2:mem:///otherdb;DB_CLOSE_DELAY=10")
 @Property(name = "r2dbc.datasources.other.schema-generate", value = "CREATE_DROP")
 @Property(name = "r2dbc.datasources.other.dialect", value = "H2")
+@Property(name = "r2dbc.datasources.other.username", value = "")
+@Property(name = "r2dbc.datasources.other.password", value = "")
+@Property(name = "r2dbc.datasources.other.packages", value = "io.micronaut.data.tck.entities,io.micronaut.data.tck.jdbc.entities,io.micronaut.data.r2dbc.h2")
 class H2MultipleDataSourcesSpec extends Specification implements H2TestPropertyProvider {
 
     @Inject OtherRepository otherRepository

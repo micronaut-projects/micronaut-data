@@ -864,6 +864,21 @@ abstract class AbstractRepositorySpec extends Specification {
         personRepository.findByName("Jeffrey").age == 30
     }
 
+    void "test update by multiple fields"() {
+        given:
+        savePersons(["Jeff", "James"])
+        def jeff = personRepository.findByName("Jeff")
+
+        when: "The person is updated by name and age"
+        def optPerson = personRepository.findById(jeff.id)
+        optPerson.present
+        def person = optPerson.get()
+        person.enabled = false
+        def updatedPerson = personRepository.updateByNameAndAge(person.name, person.age, person)
+        then: "the person is updated and update returns updated entity"
+        updatedPerson && !updatedPerson.enabled
+    }
+
     void "test delete all"() {
         given:
         int personsWithG = personRepository.findByNameLike("G%").size()
@@ -2346,6 +2361,70 @@ abstract class AbstractRepositorySpec extends Specification {
         studentRepository.delete(student)
         bookRepository.delete(book1)
         bookRepository.delete(book2)
+    }
+
+    void "test @Where and joins"() {
+        given:
+        def meal = mealRepository.save(new Meal(10))
+        def food = foodRepository.save(new Food("food", 80, 200, meal))
+        def food1 = foodRepository.save(new Food("food1", 50, 150, meal))
+        when:
+        def loadedMeal = mealRepository.searchById(meal.mid)
+        def optFood = foodRepository.findById(food.fid)
+        def optFood1 = foodRepository.findById(food1.fid)
+        then:
+        loadedMeal
+        loadedMeal.foods.size() == 2
+        optFood.present
+        optFood.get().meal.mid == loadedMeal.mid
+        optFood1.present
+        optFood1.get().meal.mid == loadedMeal.mid
+        when:
+        food.fresh = 'N'
+        foodRepository.update(food)
+        loadedMeal = mealRepository.searchById(meal.mid)
+        optFood = foodRepository.findById(food.fid)
+        optFood1 = foodRepository.findById(food1.fid)
+        then:
+        loadedMeal
+        loadedMeal.foods.size() == 1
+        !optFood.present
+        optFood1.present
+        when:
+        meal.actual = 'N'
+        mealRepository.update(meal)
+        loadedMeal = mealRepository.searchById(meal.mid)
+        optFood1 = foodRepository.findById(food1.fid)
+        then:
+        !loadedMeal
+        !optFood1.present
+        cleanup:
+        foodRepository.deleteById(food.fid)
+        foodRepository.deleteById(food1.fid)
+        mealRepository.deleteById(meal.mid)
+    }
+
+    void "test author page total size"() {
+        given:
+        def author = new Author()
+        author.name = "author"
+        authorRepository.save(author)
+        def book = new Book()
+        book.title = "book"
+        book.author = author
+        def book2 = new Book()
+        book2.title = "book2"
+        book2.author = author
+        bookRepository.save(book)
+        bookRepository.save(book2)
+        when:
+        def authorPage = authorRepository.findAll(Pageable.UNPAGED)
+        def bookPage = bookRepository.findAll(Pageable.from(0, 10, Sort.of(Sort.Order.asc("title"))))
+        then:
+        authorPage.totalSize == 1
+        authorPage.content.size() == 1
+        authorPage.content[0].books.size() == 2
+        bookPage.totalSize == 2
     }
 
     private GregorianCalendar getYearMonthDay(Date dateCreated) {

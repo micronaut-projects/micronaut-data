@@ -1,0 +1,9 @@
+test-resources:
+  containers:
+    mariadb:
+      image-name: mariadb:10.6 #Latest supported by Flyway
+
+micronaut:
+  http:
+    client:
+      read-timeout: 5m

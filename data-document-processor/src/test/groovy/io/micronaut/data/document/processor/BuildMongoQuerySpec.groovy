@@ -402,4 +402,53 @@ interface PersonRepository extends GenericRepository<Person, String> {
             findByIdIsEmptyQuery == '{$or:[{_id:{$eq:\'\'}},{_id:{$exists:false}}]}'
             findByIdEqualQuery == '{_id:{$eq:{$mn_qp:0}}}'
     }
+
+    void "test equal/not equal ignore case"() {
+        given:
+        def repository = buildRepository('test.PersonRepository', """
+import io.micronaut.data.mongodb.annotation.*;
+import io.micronaut.data.document.tck.entities.Person;
+import java.util.Optional;
+
+@MongoRepository
+interface PersonRepository extends GenericRepository<Person, String> {
+
+    Optional<Person> findByNameEqualIgnoreCase(String name);
+
+    List<Person> findByNameNotEqualIgnoreCase(String name);
+
+    List<Person> findByNameStartsWith(String name);
+
+    List<Person> findByNameStartsWithIgnoreCase(String name);
+
+    List<Person> findByNameEndsWith(String name);
+
+    List<Person> findByNameEndsWithIgnoreCase(String name);
+
+    List<Person> findByNameContains(String name);
+
+    List<Person> findByNameContainsIgnoreCase(String name);
+}
+"""
+        )
+
+        when:
+        def findByNameEqualIgnoreCaseQuery = repository.getRequiredMethod("findByNameEqualIgnoreCase", String).getAnnotation(Query).stringValue().get()
+        def findByNameNotEqualIgnoreCaseQuery = repository.getRequiredMethod("findByNameEqualIgnoreCase", String).getAnnotation(Query).stringValue().get()
+        def findByNameStartsWithQuery = repository.getRequiredMethod("findByNameStartsWith", String).getAnnotation(Query).stringValue().get()
+        def findByNameStartsWithIgnoreCaseQuery = repository.getRequiredMethod("findByNameStartsWithIgnoreCase", String).getAnnotation(Query).stringValue().get()
+        def findByNameEndsWithQuery = repository.getRequiredMethod("findByNameEndsWith", String).getAnnotation(Query).stringValue().get()
+        def findByNameEndsWithIgnoreCaseQuery = repository.getRequiredMethod("findByNameEndsWithIgnoreCase", String).getAnnotation(Query).stringValue().get()
+        def findByNameContainsQuery = repository.getRequiredMethod("findByNameContains", String).getAnnotation(Query).stringValue().get()
+        def findByNameContainsIgnoreCaseQuery = repository.getRequiredMethod("findByNameContainsIgnoreCase", String).getAnnotation(Query).stringValue().get()
+        then:
+        findByNameEqualIgnoreCaseQuery == '{name:{$options:\'i\',$regex:\'^$mn_qp:0$\'}}'
+        findByNameNotEqualIgnoreCaseQuery == '{name:{$options:\'i\',$regex:\'^$mn_qp:0$\'}}'
+        findByNameStartsWithQuery == '{name:{$options:\'\',$regex:\'^$mn_qp:0\'}}'
+        findByNameStartsWithIgnoreCaseQuery == '{name:{$options:\'i\',$regex:\'^$mn_qp:0\'}}'
+        findByNameEndsWithQuery == '{name:{$options:\'\',$regex:\'$mn_qp:0$\'}}'
+        findByNameEndsWithIgnoreCaseQuery == '{name:{$options:\'i\',$regex:\'$mn_qp:0$\'}}'
+        findByNameContainsQuery == '{name:{$options:\'\',$regex:\'$mn_qp:0\'}}'
+        findByNameContainsIgnoreCaseQuery == '{name:{$options:\'i\',$regex:\'$mn_qp:0\'}}'
+    }
 }

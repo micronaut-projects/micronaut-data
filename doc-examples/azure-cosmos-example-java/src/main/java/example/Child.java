@@ -7,11 +7,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Serdeable
-public class Child {
+public class Child extends GenderAware {
 
     private String firstName;
-
-    private String gender;
 
     private int grade;
 
@@ -24,14 +22,6 @@ public class Child {
 
     public void setFirstName(String firstName) {
         this.firstName = firstName;
-    }
-
-    public String getGender() {
-        return gender;
-    }
-
-    public void setGender(String gender) {
-        this.gender = gender;
     }
 
     public int getGrade() {

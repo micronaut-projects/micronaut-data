@@ -5,8 +5,8 @@ import jakarta.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
-import org.junit.Ignore
 import org.junit.jupiter.api.*
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import java.util.*
 
@@ -47,41 +47,31 @@ class TxTest2 : AbstractTest(false) {
     @Test
     @Order(2)
     fun normal() {
-        assertThrows<RuntimeException> {
+        val ex = assertThrows<RuntimeException> {
             service.normalStore()
         }
-
-        Assertions.assertEquals(0, service.count())
+        assertEquals("No backing TransactionOperations configured. Check your configuration and try again", ex.message)
+        assertEquals(0, service.count())
     }
 
     @Test
     @Order(3)
     fun coroutines() = runBlocking {
-        assertThrows<RuntimeException> {
+        val ex = assertThrows<RuntimeException> {
             service.coroutinesStore()
         }
-
-        Assertions.assertEquals(0, service.suspendCount())
+        assertEquals("myexception", ex.message)
+        assertEquals(0, service.suspendCount())
     }
 
     @Test
     @Order(4)
     fun coroutinesGeneric() = runBlocking {
-        assertThrows<RuntimeException> {
+        val ex = assertThrows<RuntimeException> {
             service.coroutinesGenericStore()
         }
-
-        Assertions.assertEquals(0, service.suspendCount())
-    }
-
-    @Test
-    @Order(5)
-    fun normal2() {
-        assertThrows<RuntimeException> {
-            service.normalStore()
-        }
-
-        Assertions.assertEquals(0, service.count())
+        assertTrue(ex.message!!.contains("is blocking, which is not supported"))
+        assertEquals(0, service.suspendCount())
     }
 
     @Test
@@ -93,75 +83,37 @@ class TxTest2 : AbstractTest(false) {
     }
 
     @Test
-    @Order(7)
-    fun normalWithCustomDSNotTransactional() {
-        assertThrows<RuntimeException> {
-            service.normalWithCustomDSNotTransactional()
-        }
-
-        Assertions.assertEquals(0, service.count())
-        Assertions.assertEquals(1, service.countForCustomDb()) // Custom DB save is not transactional
-    }
-
-    @Test
-    @Order(8)
-    fun normalWithCustomDSTransactional() {
-        assertThrows<RuntimeException> {
-            service.normalWithCustomDSTransactional()
-        }
-
-        Assertions.assertEquals(0, service.count())
-        Assertions.assertEquals(0, service.countForCustomDb())
-    }
-
-    @Test
     @Order(9)
     fun coroutinesStoreWithCustomDSNotTransactional() = runBlocking {
-        assertThrows<RuntimeException> {
+        val ex = assertThrows<RuntimeException> {
             service.coroutinesStoreWithCustomDBNotTransactional()
         }
-        Assertions.assertEquals(0, service.suspendCount())
-        Assertions.assertEquals(1, service.suspendCountForCustomDb()) // Custom DB save is not transactional
+        assertEquals("myexception", ex.message)
+        assertEquals(0, service.suspendCount())
+        assertEquals(1, service.suspendCountForCustomDb()) // Custom DB save is not transactional
     }
 
     @Test
     @Order(10)
     fun coroutinesStoreWithCustomDSTransactional() {
+        var ex1: RuntimeException? = null
+        var ex2: RuntimeException? = null
         runBlocking {
-            assertThrows<RuntimeException> {
+            ex1 = assertThrows {
                 service.coroutinesStoreWithCustomDBTransactional()
             }
-            Assertions.assertEquals(0, service.suspendCount())
-            Assertions.assertEquals(0, service.suspendCountForCustomDb())
+            assertEquals(0, service.suspendCount())
+            assertEquals(0, service.suspendCountForCustomDb())
         }
         runBlocking {
-            assertThrows<RuntimeException> {
+            ex2 = assertThrows {
                 service.coroutinesStoreWithCustomDBTransactional()
             }
         }
-        Assertions.assertEquals(0, service.count())
-        Assertions.assertEquals(0, service.countForCustomDb())
-    }
-
-    @Test
-    @Order(11)
-    fun coroutinesGenericStoreWithCustomDSTransactional() {
-        runBlocking {
-            assertThrows<RuntimeException> {
-                service.coroutinesGenericStoreWithCustomDb()
-            }
-            Assertions.assertEquals(0, service.suspendCount())
-            Assertions.assertEquals(0, service.suspendCountForCustomDb())
-        }
-        runBlocking {
-            assertThrows<RuntimeException> {
-                service.coroutinesGenericStoreWithCustomDb()
-            }
-            withContext(Dispatchers.IO) {
-                Assertions.assertEquals(0, service.count())
-                Assertions.assertEquals(0, service.countForCustomDb())
-            }
-        }
+        assertEquals("myexception", ex1!!.message)
+        assertEquals("myexception", ex2!!.message)
+        assertEquals(0, service.count())
+        assertEquals(0, service.countForCustomDb())
     }
 
     @Test
@@ -175,8 +127,8 @@ class TxTest2 : AbstractTest(false) {
         }
         runBlocking {
             withContext(Dispatchers.IO) {
-                Assertions.assertEquals(0, service.count())
-                Assertions.assertEquals(1, service.countForCustomDb())
+                assertEquals(0, service.count())
+                assertEquals(1, service.countForCustomDb())
             }
         }
     }
@@ -192,7 +144,7 @@ class TxTest2 : AbstractTest(false) {
         }
         runBlocking {
             withContext(Dispatchers.IO) {
-                Assertions.assertEquals(2, service.count())
+                assertEquals(2, service.count())
             }
         }
     }

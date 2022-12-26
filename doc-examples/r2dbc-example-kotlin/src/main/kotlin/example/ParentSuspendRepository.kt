@@ -8,7 +8,7 @@ import io.micronaut.data.repository.GenericRepository
 import java.util.*
 import javax.transaction.Transactional
 
-@R2dbcRepository(dialect = Dialect.POSTGRES)
+@R2dbcRepository(dialect = Dialect.MYSQL)
 interface ParentSuspendRepository : GenericRepository<Parent, Int> {
 
     @Join(value = "children", type = Join.Type.FETCH)

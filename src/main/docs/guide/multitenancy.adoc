@@ -1,0 +1,32 @@
+Micronaut Data supports multi-tenancy to allow the use of multiple databases or schemas by a single micronaut application.
+
+.Supported Multitenancy Modes
+- DATASOURCE - A separate database with a separate connection pool is used to store each tenants data. Internally different repository operations  / transaction manager instance will be used for each tenant.
+
+- SCHEMA - The same database, but different schemas are used to store each tenants data. Only supported by JDBC/R2DBC/MongoDB (collections)
+
+=== Datasource Mode
+The DATASOURCE mode is used in combination with the micronaut-multitenancy library in order to resolve the tenant name.
+In the below example, the tenant resolver is set to use a http header. See https://micronaut-projects.github.io/micronaut-multitenancy/latest/guide/[Micronaut Multitenancy] for more information.
+
+[source,yaml]
+----
+include::doc-examples/jdbc-multitenancy-datasource-example-java/src/main/resources/application.yml[]
+----
+
+The following HTTP clients will access a different tenant datasource:
+
+[source,java]
+----
+include::doc-examples/jdbc-multitenancy-schema-example-java/src/test/java/example/BookJdbcSchemaMultiTenancySpec.java[tags="clients"]
+----
+
+=== Schema Mode
+The SCHEMA mode uses a single datasource and set the active schema based on the tenant resolved.
+
+[source,yaml]
+----
+include::doc-examples/jdbc-multitenancy-schema-example-java/src/main/resources/application.yml[]
+----
+
+NOTE: You can use property `schema-generate-names` to specify multiple schemas to be created and initialized for testing.

@@ -55,17 +55,17 @@ DROP TABLE IF EXISTS `TestXyzCustomerDetails`;
 
 CREATE OR REPLACE TABLE `TestXyzCategory` (
   `id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-  `active` bit(1) DEFAULT NULL,
+  `active` boolean DEFAULT NULL,
   `createdAt` datetime(6) NOT NULL,
   `name` varchar(255) DEFAULT NULL,
-  `priority` bigint(20) DEFAULT NULL
+  `priority` bigint DEFAULT NULL
 );
 
 CREATE OR REPLACE TABLE `TestXyzCustomer` (
   `id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
   `createdAt` datetime(6) NOT NULL,
   `name` varchar(255) DEFAULT NULL,
-  `showCustomer` bit(1) DEFAULT NULL
+  `showCustomer` boolean DEFAULT NULL
 );
 
 CREATE OR REPLACE TABLE `TestXyzCustomerDetails` (
@@ -74,8 +74,8 @@ CREATE OR REPLACE TABLE `TestXyzCustomerDetails` (
   `detail` varchar(255) DEFAULT NULL,
   `label` varchar(255) DEFAULT NULL,
   `updatedAt` datetime(6) NOT NULL,
-  `categoryId` bigint(20) DEFAULT NULL,
-  `customerId` bigint(20) DEFAULT NULL
+  `categoryId` bigint DEFAULT NULL,
+  `customerId` bigint DEFAULT NULL
 );
 
 INSERT INTO TestXyzCategory

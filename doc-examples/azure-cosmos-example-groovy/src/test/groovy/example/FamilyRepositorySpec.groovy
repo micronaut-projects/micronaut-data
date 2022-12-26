@@ -8,6 +8,7 @@ import jakarta.inject.Inject
 import spock.lang.IgnoreIf
 import spock.lang.Shared
 
+import static example.FamilyRepository.Specifications.childrenArrayContainsGender
 import static example.FamilyRepository.Specifications.idsIn
 import static example.FamilyRepository.Specifications.idsInAndNotIn
 import static example.FamilyRepository.Specifications.idsNotIn
@@ -37,6 +38,10 @@ class FamilyRepositorySpec extends AbstractAzureCosmosSpec {
         given:
             saveSampleFamilies()
         when:
+            def families = familyRepository.childrenArrayContainsGender(new AbstractMap.SimpleImmutableEntry<String, Object>("gender", "male"))
+        then:
+            families.size() == 1
+        when:
             def optFamily1 = familyRepository.findById(ANDERSEN_FAMILY.id)
             def optFamily2 = familyRepository.findById(WAKEFIELD_FAMILY.id)
         then:
@@ -51,7 +56,7 @@ class FamilyRepositorySpec extends AbstractAzureCosmosSpec {
             optFamily2.get().address
             optFamily2.get().documentVersion
         when:
-            def families = familyRepository.findByLastNameLike("Ander%")
+            families = familyRepository.findByLastNameLike("Ander%")
         then:
             families.size() > 0
             families[0].id == ANDERSEN_FAMILY.id
@@ -215,7 +220,10 @@ class FamilyRepositorySpec extends AbstractAzureCosmosSpec {
     void "test criteria" () {
         when:
             saveSampleFamilies()
+            def genderAware = new GenderAware()
+            genderAware.gender = "female"
         then:
+            familyRepository.findAll(childrenArrayContainsGender(genderAware)).size() == 2
             familyRepository.findOne(lastNameEquals("Andersen")).present
             !familyRepository.findOne(lastNameEquals(UUID.randomUUID().toString())).present
             familyRepository.findAll(idsIn(ANDERSEN_FAMILY.id, WAKEFIELD_FAMILY.id)).size() == 2

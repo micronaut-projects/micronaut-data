@@ -31,13 +31,14 @@ shared:
     programmaticTransactions: Programmatic Transactions
     transactionalEvents: Transactional Events
   kotlinCriteria: Kotlin Criteria API extensions
+  multitenancy: Multi-tenancy
 
 hibernate:
   title: Micronaut Data JPA Hibernate
   hibernateJpaAnnotations: JPA Annotations
   hibernateQuickStart:
     title: Quick Start
-  hibernateLogging: Logging SQL with Micronaut Data JPA Hibernate    
+  hibernateLogging: Logging SQL with Micronaut Data JPA Hibernate
   hibernateJoinQueries: Join queries
   hibernateExplicitQueries: Explicit queries
   hibernateNativeQueries: Native queries

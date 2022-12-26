@@ -1,0 +1,20 @@
+test-resources:
+  containers:
+    mssql:
+      accept-license: true
+      startup-timeout: 300s
+    mariadb:
+      startup-timeout: 300s
+    mysql:
+      startup-timeout: 300s
+    oracle:
+      startup-timeout: 300s
+      image-name: gvenzl/oracle-xe:latest-faststart
+    postgres:
+      startup-timeout: 300s
+
+micronaut:
+  http:
+    client:
+      read-timeout: 5m
+

@@ -103,12 +103,12 @@ public class TransactionalEventInterceptor implements MethodInterceptor<Object, 
                     public void afterCompletion(@NonNull Status status) {
                         switch (status) {
                             case ROLLED_BACK:
-                                if (phase == TransactionalEventListener.TransactionPhase.AFTER_ROLLBACK) {
+                                if (phase == TransactionalEventListener.TransactionPhase.AFTER_ROLLBACK || phase == TransactionalEventListener.TransactionPhase.AFTER_COMPLETION) {
                                     context.proceed();
                                 }
                                 break;
                             case COMMITTED:
-                                if (phase == TransactionalEventListener.TransactionPhase.AFTER_COMMIT) {
+                                if (phase == TransactionalEventListener.TransactionPhase.AFTER_COMMIT || phase == TransactionalEventListener.TransactionPhase.AFTER_COMPLETION) {
                                     context.proceed();
                                 }
                                 break;

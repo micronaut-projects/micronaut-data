@@ -22,7 +22,7 @@ class OracleXEManualSchemaSpec extends AbstractManualSchemaSpec implements Oracl
 
     @Override
     List<String> createStatements() {
-        return Arrays.asList("CREATE SEQUENCE \"PATIENT_SEQ\" MINVALUE 1 START WITH 1 NOCACHE NOCYCLE",
+        return Arrays.asList("CREATE SEQUENCE \"PATIENT_SEQ\" MINVALUE 1 START WITH 1 CACHE 100 NOCYCLE",
                 "CREATE TABLE \"PATIENT\" (\"NAME\" VARCHAR(255), \"ID\" NUMBER(19) NOT NULL PRIMARY KEY, \"HISTORY\" VARCHAR(1000), \"DOCTOR_NOTES\" VARCHAR(255))")
     }
 

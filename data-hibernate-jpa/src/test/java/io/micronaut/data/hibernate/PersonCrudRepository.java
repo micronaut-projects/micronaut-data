@@ -16,7 +16,9 @@
 package io.micronaut.data.hibernate;
 
 import io.micronaut.context.annotation.Parameter;
+import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Query;
+import io.micronaut.data.annotation.QueryHint;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.jpa.repository.JpaRepository;
 import io.micronaut.data.model.Page;
@@ -58,4 +60,12 @@ public interface PersonCrudRepository extends JpaRepository<Person, Long>, Perso
 
     @Query("UPDATE Person p SET p.enabled = false WHERE p.id = :id")
     Publisher<Long> updatePersonRx(Long id);
+
+    @Override
+    @QueryHint(name = "javax.persistence.FlushModeType", value = "AUTO")
+    void updatePerson(@Id Long id, @Parameter("name") String name);
+
+    @Override
+    @QueryHint(name = "javax.persistence.FlushModeType", value = "AUTO")
+    Long updatePerson(@Id Long id, int age);
 }

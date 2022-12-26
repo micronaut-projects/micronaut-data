@@ -49,6 +49,8 @@ public final class CosmosDatabaseConfiguration {
 
     private List<String> packages = new ArrayList<>();
 
+    private boolean queryMetricsEnabled = true;
+
     public ThroughputSettings getThroughput() {
         return throughput;
     }
@@ -112,6 +114,26 @@ public final class CosmosDatabaseConfiguration {
      */
     public void setPackages(List<String> packages) {
         this.packages = packages;
+    }
+
+    /**
+     * Gets the indicator telling whether query metrics will be enabled for Azure Cosmos Db query requests.
+     * If this is turned off then detailed query metrics information will not be retrieved in the Cosmos Diagnostics query response.
+     * The default value is true.
+     *
+     * @return the query metrics enabled indicator
+     */
+    public boolean isQueryMetricsEnabled() {
+        return queryMetricsEnabled;
+    }
+
+    /**
+     * Sets the indicator telling whether query metrics will be enabled for Azure Cosmos Db query requests.
+     *
+     * @param queryMetricsEnabled the query metrics enabled indicator
+     */
+    public void setQueryMetricsEnabled(boolean queryMetricsEnabled) {
+        this.queryMetricsEnabled = queryMetricsEnabled;
     }
 
     /**

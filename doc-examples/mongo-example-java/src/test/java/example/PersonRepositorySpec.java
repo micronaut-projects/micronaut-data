@@ -20,9 +20,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @MicronautTest
-class PersonRepositorySpec extends AbstractMongoSpec {
+class PersonRepositorySpec {
 
     @Inject
     PersonRepository personRepository;

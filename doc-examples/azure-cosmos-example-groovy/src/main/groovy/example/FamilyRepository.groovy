@@ -13,8 +13,6 @@ import io.micronaut.data.repository.PageableRepository
 import io.micronaut.data.repository.jpa.JpaSpecificationExecutor
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
 
-import javax.persistence.criteria.CriteriaBuilder
-
 @CosmosRepository
 abstract class FamilyRepository implements PageableRepository<Family, String>, JpaSpecificationExecutor<Family> {
 
@@ -71,8 +69,13 @@ abstract class FamilyRepository implements PageableRepository<Family, String>, J
     abstract List<Family> findByLastNameLike(String lastName)
 
     // tag::method_array_contains[]
-    abstract List<Family> findByTagsArrayContains(String tag);
+    abstract List<Family> findByTagsArrayContains(String tag)
     // end::method_array_contains[]
+
+    // tag::array_contains_partial[]
+    @Query("SELECT DISTINCT VALUE f FROM family f WHERE ARRAY_CONTAINS(f.children, :gender, true)")
+    abstract List<Family> childrenArrayContainsGender(Map.Entry<String, Object> gender)
+    // end::array_contains_partial[]
 
     static class Specifications {
 
@@ -98,6 +101,11 @@ abstract class FamilyRepository implements PageableRepository<Family, String>, J
         }
         // end::predicate_array_contains[]
 
+        // tag::predicate_array_contains_partial[]
+        static PredicateSpecification<Family> childrenArrayContainsGender(GenderAware gender) {
+            return (root, criteriaBuilder) -> ((PersistentEntityCriteriaBuilder) criteriaBuilder).arrayContains(root.join("children"), criteriaBuilder.literal(gender))
+        }
+        // end::predicate_array_contains_partial[]
     }
 
 }

@@ -1,9 +1,11 @@
 package io.micronaut.data.r2dbc.sqlserver
 
 import io.micronaut.data.model.query.builder.sql.Dialect
-import io.micronaut.data.r2dbc.SharedDatabaseContainerTestPropertyProvider
+import io.micronaut.data.r2dbc.SharedTestResourcesDatabaseTestPropertyProvider
+import io.micronaut.data.r2dbc.TestResourcesDatabaseTestPropertyProvider
+import spock.lang.Shared
 
-trait SqlServerTestPropertyProvider implements SharedDatabaseContainerTestPropertyProvider {
+trait SqlServerTestPropertyProvider implements SharedTestResourcesDatabaseTestPropertyProvider {
 
     @Override
     Dialect dialect() {
@@ -12,8 +14,7 @@ trait SqlServerTestPropertyProvider implements SharedDatabaseContainerTestProper
 
     @Override
     int sharedSpecsCount() {
-        return 9
+        return 10
     }
-
 }
 

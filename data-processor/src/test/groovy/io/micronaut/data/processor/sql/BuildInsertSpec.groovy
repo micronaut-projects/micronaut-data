@@ -75,7 +75,7 @@ class Test {
 
         where:
         dialect            | query
-        Dialect.ORACLE     | 'CREATE TABLE "TEST" ("ID" NUMBER(19) GENERATED ALWAYS AS IDENTITY PRIMARY KEY,"NAME" VARCHAR(255) NOT NULL)'
+        Dialect.ORACLE     | 'CREATE TABLE "TEST" ("ID" NUMBER(19) GENERATED ALWAYS AS IDENTITY (MINVALUE 1 START WITH 1 CACHE 100 NOCYCLE) PRIMARY KEY,"NAME" VARCHAR(255) NOT NULL)'
         Dialect.H2         | 'CREATE TABLE `test` (`id` BIGINT AUTO_INCREMENT PRIMARY KEY,`name` VARCHAR(255) NOT NULL);'
         Dialect.POSTGRES   | 'CREATE TABLE "test" ("id" BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,"name" VARCHAR(255) NOT NULL);'
         Dialect.SQL_SERVER | 'CREATE TABLE [test] ([id] BIGINT PRIMARY KEY IDENTITY(1,1) NOT NULL,[name] VARCHAR(255) NOT NULL);'
@@ -359,8 +359,8 @@ interface MyInterface extends CrudRepository<Food, UUID> {
         def method = beanDefinition.findPossibleMethods("update").findFirst().get()
         expect:
 
-        getQuery(method) == 'UPDATE "food" SET "key"=?,"carbohydrates"=?,"portion_grams"=?,"updated_on"=?,"fk_meal_id"=?,"fk_alt_meal"=?,"loooooooooooooooooooooooooooooooooooooooooooooooooooooooong_name"=? WHERE ("fid" = ?)'
-        getParameterPropertyPaths(method) == ["key", "carbohydrates", "portionGrams", "updatedOn", "meal.mid", "alternativeMeal.mid", "longName", "fid"] as String[]
+        getQuery(method) == 'UPDATE "food" SET "key"=?,"carbohydrates"=?,"portion_grams"=?,"updated_on"=?,"fk_meal_id"=?,"fk_alt_meal"=?,"loooooooooooooooooooooooooooooooooooooooooooooooooooooooong_name"=?,"fresh"=? WHERE ("fid" = ? AND (fresh = \'Y\'))'
+        getParameterPropertyPaths(method) == ["key", "carbohydrates", "portionGrams", "updatedOn", "meal.mid", "alternativeMeal.mid", "longName", "fresh", "fid"] as String[]
     }
 
     void "test build custom SQL insert"() {
@@ -403,7 +403,7 @@ interface MyInterface extends CrudRepository<Food, UUID> {
         when:
         def save = beanDefinition.findPossibleMethods("saveCustom2").findFirst().get()
         then:
-        getQuery(save) == 'INSERT INTO "food" ("key","carbohydrates","portion_grams","created_on","updated_on","fk_meal_id","fk_alt_meal","loooooooooooooooooooooooooooooooooooooooooooooooooooooooong_name","fid") VALUES (?,?,?,?,?,?,?,?,?)'
+        getQuery(save) == 'INSERT INTO "food" ("key","carbohydrates","portion_grams","created_on","updated_on","fk_meal_id","fk_alt_meal","loooooooooooooooooooooooooooooooooooooooooooooooooooooooong_name","fresh","fid") VALUES (?,?,?,?,?,?,?,?,?,?)'
         getDataInterceptor(save) == "io.micronaut.data.intercept.SaveOneInterceptor"
     }
 }

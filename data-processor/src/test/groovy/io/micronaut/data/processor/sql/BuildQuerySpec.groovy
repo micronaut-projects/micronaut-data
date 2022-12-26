@@ -21,10 +21,12 @@ import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.entities.Invoice
 import io.micronaut.data.processor.visitors.AbstractDataSpec
 import io.micronaut.data.tck.entities.Author
+import io.micronaut.data.tck.entities.Restaurant
 import spock.lang.Issue
 import spock.lang.Unroll
 
 import static io.micronaut.data.processor.visitors.TestUtils.anyParameterExpandable
+import static io.micronaut.data.processor.visitors.TestUtils.getCountQuery
 import static io.micronaut.data.processor.visitors.TestUtils.getDataTypes
 import static io.micronaut.data.processor.visitors.TestUtils.getJoins
 import static io.micronaut.data.processor.visitors.TestUtils.getParameterBindingIndexes
@@ -199,7 +201,7 @@ interface MealRepository extends CrudRepository<Meal, Long> {
         def query = getQuery(repository.getRequiredMethod("searchById", Long))
 
         expect:"The query contains the correct join"
-        query.contains('ON meal_.`mid`=meal_foods_.`fk_meal_id` WHERE (meal_.`mid` = ?)')
+        query.contains('ON meal_.`mid`=meal_foods_.`fk_meal_id` WHERE (meal_.`mid` = ? AND (meal_.actual = \'Y\' AND meal_foods_.fresh = \'Y\'))')
 
     }
 
@@ -208,6 +210,7 @@ interface MealRepository extends CrudRepository<Meal, Long> {
         def repository = buildRepository('test.FoodRepository', """
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
 import io.micronaut.data.tck.entities.Food;
 import java.util.Optional;
 import java.util.UUID;
@@ -215,7 +218,7 @@ import java.util.UUID;
 @Repository(value = "secondary")
 @JdbcRepository(dialect= Dialect.MYSQL)
 @io.micronaut.context.annotation.Executable
-interface FoodRepository extends CrudRepository<Food, UUID> {
+interface FoodRepository extends GenericRepository<Food, UUID> {
 
     @Join("meal")
     Optional<Food> queryById(UUID uuid);
@@ -229,8 +232,8 @@ interface FoodRepository extends CrudRepository<Food, UUID> {
         def queryFind = getQuery(repository.getRequiredMethod("findById", UUID))
 
         expect:
-        query == 'SELECT food_.`fid`,food_.`key`,food_.`carbohydrates`,food_.`portion_grams`,food_.`created_on`,food_.`updated_on`,food_.`fk_meal_id`,food_.`fk_alt_meal`,food_.`loooooooooooooooooooooooooooooooooooooooooooooooooooooooong_name` AS ln,food_meal_.`current_blood_glucose` AS meal_current_blood_glucose,food_meal_.`created_on` AS meal_created_on,food_meal_.`updated_on` AS meal_updated_on FROM `food` food_ INNER JOIN `meal` food_meal_ ON food_.`fk_meal_id`=food_meal_.`mid` WHERE (food_.`fid` = ?)'
-        queryFind == 'SELECT food_.`fid`,food_.`key`,food_.`carbohydrates`,food_.`portion_grams`,food_.`created_on`,food_.`updated_on`,food_.`fk_meal_id`,food_.`fk_alt_meal`,food_.`loooooooooooooooooooooooooooooooooooooooooooooooooooooooong_name` AS ln FROM `food` food_ WHERE (food_.`fid` = ?)'
+        query == 'SELECT food_.`fid`,food_.`key`,food_.`carbohydrates`,food_.`portion_grams`,food_.`created_on`,food_.`updated_on`,food_.`fk_meal_id`,food_.`fk_alt_meal`,food_.`loooooooooooooooooooooooooooooooooooooooooooooooooooooooong_name` AS ln,food_.`fresh`,food_meal_.`current_blood_glucose` AS meal_current_blood_glucose,food_meal_.`created_on` AS meal_created_on,food_meal_.`updated_on` AS meal_updated_on,food_meal_.`actual` AS meal_actual FROM `food` food_ INNER JOIN `meal` food_meal_ ON food_.`fk_meal_id`=food_meal_.`mid` WHERE (food_.`fid` = ? AND (food_.fresh = \'Y\' AND food_meal_.actual = \'Y\'))'
+        queryFind == 'SELECT food_.`fid`,food_.`key`,food_.`carbohydrates`,food_.`portion_grams`,food_.`created_on`,food_.`updated_on`,food_.`fk_meal_id`,food_.`fk_alt_meal`,food_.`loooooooooooooooooooooooooooooooooooooooooooooooooooooooong_name` AS ln,food_.`fresh` FROM `food` food_ WHERE (food_.`fid` = ? AND (food_.fresh = \'Y\'))'
 
     }
 
@@ -362,7 +365,7 @@ interface MealRepository extends CrudRepository<Meal, Long> {
             def countMethod = repository.getRequiredMethod("countDistinctByFoodsAlternativeMealCurrentBloodGlucoseInList", List)
 
         then:
-            getQuery(countMethod) == 'SELECT COUNT(*) FROM `meal` meal_ INNER JOIN `food` meal_foods_ ON meal_.`mid`=meal_foods_.`fk_meal_id` INNER JOIN `meal` meal_foods_alternative_meal_ ON meal_foods_.`fk_alt_meal`=meal_foods_alternative_meal_.`mid` WHERE (meal_foods_alternative_meal_.`current_blood_glucose` IN (?))'
+            getQuery(countMethod) == 'SELECT COUNT(*) FROM `meal` meal_ INNER JOIN `food` meal_foods_ ON meal_.`mid`=meal_foods_.`fk_meal_id` INNER JOIN `meal` meal_foods_alternative_meal_ ON meal_foods_.`fk_alt_meal`=meal_foods_alternative_meal_.`mid` WHERE (meal_foods_alternative_meal_.`current_blood_glucose` IN (?) AND (meal_.actual = \'Y\' AND meal_foods_alternative_meal_.actual = \'Y\'))'
             isExpandableQuery(countMethod)
             anyParameterExpandable(countMethod)
 
@@ -510,7 +513,7 @@ interface MealRepository extends CrudRepository<Meal, Long> {
         def query = getQuery(repository.getRequiredMethod("findByCurrentBloodGlucoseInRange", int, int))
 
         expect:"The query contains the correct where clause for InRange (same as Between)"
-        query.contains('WHERE ((meal_.`current_blood_glucose` >= ? AND meal_.`current_blood_glucose` <= ?))')
+        query.contains('WHERE ((meal_.`current_blood_glucose` >= ? AND meal_.`current_blood_glucose` <= ?) AND (meal_.actual = \'Y\'))')
 
     }
 
@@ -658,5 +661,68 @@ interface BookRepository extends GenericRepository<Book, Long> {
         then:
         Throwable ex = thrown()
         ex.message.contains('ArrayContains is not supported by this implementation')
+    }
+
+    void "test repo for MappedProperty with Embedded"() {
+        given:
+        def repository = buildRepository('test.RestaurantRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Restaurant;
+import java.util.Optional;
+
+@JdbcRepository(dialect = Dialect.H2)
+interface RestaurantRepository extends GenericRepository<Restaurant, Long> {
+
+    Optional<Restaurant> findByName(String name);
+
+    Restaurant save(Restaurant entity);
+
+    Restaurant findByAddressStreet(String street);
+
+    String getMaxAddressStreetByName(String name);
+}
+
+""")
+
+        def findByNameQuery = getQuery(repository.getRequiredMethod("findByName", String))
+        def saveQuery = getQuery(repository.getRequiredMethod("save", Restaurant))
+        def findByAddressStreetQuery = getQuery(repository.getRequiredMethod("findByAddressStreet", String))
+        def getMaxAddressStreetByNameQuery = getQuery(repository.getRequiredMethod("getMaxAddressStreetByName", String))
+        expect:
+        findByNameQuery == 'SELECT restaurant_.`id`,restaurant_.`name`,restaurant_.`address_street`,restaurant_.`address_zip_code`,restaurant_.`hqaddress_street`,restaurant_.`hqaddress_zip_code` FROM `restaurant` restaurant_ WHERE (restaurant_.`name` = ?)'
+        saveQuery == 'INSERT INTO `restaurant` (`name`,`address_street`,`address_zip_code`,`hqaddress_street`,`hqaddress_zip_code`) VALUES (?,?,?,?,?)'
+        findByAddressStreetQuery == 'SELECT restaurant_.`id`,restaurant_.`name`,restaurant_.`address_street`,restaurant_.`address_zip_code`,restaurant_.`hqaddress_street`,restaurant_.`hqaddress_zip_code` FROM `restaurant` restaurant_ WHERE (restaurant_.`address_street` = ?)'
+        getMaxAddressStreetByNameQuery == 'SELECT MAX(restaurant_.`address_street`) FROM `restaurant` restaurant_ WHERE (restaurant_.`name` = ?)'
+    }
+
+    void "test count query with joins"() {
+        given:
+        def repository = buildRepository('test.AuthorRepository', """
+import io.micronaut.data.annotation.Join;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.Page;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Author;
+
+@JdbcRepository(dialect = Dialect.H2)
+interface AuthorRepository extends GenericRepository<Author, Long> {
+
+    @Join(value = "books", type = Join.Type.FETCH)
+    Page<Author> findAll(Pageable pageable);
+}
+
+""")
+
+        def method = repository.getRequiredMethod("findAll", Pageable)
+        def query = getQuery(method)
+        def countQuery = getCountQuery(method)
+
+        expect:
+        query == 'SELECT author_.`id`,author_.`name`,author_.`nick_name`,author_books_.`id` AS books_id,author_books_.`author_id` AS books_author_id,author_books_.`genre_id` AS books_genre_id,author_books_.`title` AS books_title,author_books_.`total_pages` AS books_total_pages,author_books_.`publisher_id` AS books_publisher_id,author_books_.`last_updated` AS books_last_updated FROM `author` author_ INNER JOIN `book` author_books_ ON author_.`id`=author_books_.`author_id`'
+        countQuery == 'SELECT COUNT(*) FROM `author` author_'
+
     }
 }

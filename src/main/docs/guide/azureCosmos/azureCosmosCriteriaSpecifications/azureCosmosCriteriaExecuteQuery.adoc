@@ -70,6 +70,14 @@ or predicate specification:
 
 snippet::example.FamilyRepository[project-base="doc-examples/azure-cosmos-example",source="main" tags="predicate_array_contains",indent="0"]
 
+For partial search using `ARRAY_CONTAINS` generic repository methods cannot be used but custom methods with raw query like this:
+
+snippet::example.FamilyRepository[project-base="doc-examples/azure-cosmos-example",source="main" tags="array_contains_partial",indent="0"]
+and then pass map entry with "gender" as key and gender as value, basically any object that will serialize to `{"gender": "<gender_value>"}` for this example.
+This will perform search against `children` array in the `Family` class using just `gender` field.
+It can be also achieved by using predicate specification:
+
+snippet::example.FamilyRepository[project-base="doc-examples/azure-cosmos-example",source="main" tags="predicate_array_contains_partial",indent="0"]
+
 NOTE: The examples use compile-known values, and in this case, it would be better to create custom repository methods which would come with compile-time generates queries and eliminate runtime overhead.
 It's recommended to use criteria only for dynamic queries where the query structure is not known at the build-time.
-

@@ -3,6 +3,7 @@ package io.micronaut.data.azure
 import com.azure.cosmos.CosmosClient
 import com.azure.cosmos.CosmosContainer
 import com.azure.cosmos.CosmosDatabase
+import com.azure.cosmos.CosmosDiagnostics
 import com.azure.cosmos.models.CosmosContainerProperties
 import com.azure.cosmos.models.CosmosContainerResponse
 import com.azure.cosmos.models.CosmosDatabaseResponse
@@ -13,10 +14,12 @@ import com.azure.cosmos.models.ThroughputProperties
 import com.azure.cosmos.util.CosmosPagedIterable
 import com.fasterxml.jackson.databind.node.ObjectNode
 import io.micronaut.context.ApplicationContext
+import io.micronaut.context.annotation.Requires
 import io.micronaut.core.type.Argument
 import io.micronaut.core.util.CollectionUtils
 import io.micronaut.core.util.StringUtils
 import io.micronaut.data.azure.entities.Address
+import io.micronaut.data.azure.entities.GenderAware
 import io.micronaut.data.azure.entities.ItemPrice
 import io.micronaut.data.azure.entities.Child
 import io.micronaut.data.azure.entities.CosmosBook
@@ -33,6 +36,7 @@ import io.micronaut.data.azure.repositories.UUIDEntityRepository
 import io.micronaut.data.azure.repositories.UserRepository
 import io.micronaut.data.cosmos.config.CosmosDatabaseConfiguration
 import io.micronaut.data.cosmos.config.StorageUpdatePolicy
+import io.micronaut.data.cosmos.operations.CosmosDiagnosticsProcessor
 import io.micronaut.data.exceptions.OptimisticLockException
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.repository.jpa.criteria.UpdateSpecification
@@ -40,10 +44,13 @@ import io.micronaut.serde.Decoder
 import io.micronaut.serde.Deserializer
 import io.micronaut.serde.SerdeRegistry
 import io.micronaut.serde.jackson.JacksonDecoder
+import jakarta.inject.Singleton
 import jakarta.persistence.criteria.CriteriaBuilder
 import jakarta.persistence.criteria.CriteriaUpdate
 import jakarta.persistence.criteria.Predicate
 import jakarta.persistence.criteria.Root
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import spock.lang.AutoCleanup
 import spock.lang.IgnoreIf
 import spock.lang.Shared
@@ -54,6 +61,7 @@ import static io.micronaut.data.azure.repositories.FamilyRepository.Specificatio
 import static io.micronaut.data.azure.repositories.FamilyRepository.Specifications.idsNotIn
 import static io.micronaut.data.azure.repositories.FamilyRepository.Specifications.lastNameEquals
 import static io.micronaut.data.azure.repositories.FamilyRepository.Specifications.registeredEquals
+import static io.micronaut.data.azure.repositories.FamilyRepository.Specifications.childrenArrayContainsGender
 
 @IgnoreIf({ env["GITHUB_WORKFLOW"] })
 class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties {
@@ -255,6 +263,12 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
         given:
             saveSampleFamilies()
         when:
+            def families = familyRepository.childrenArrayContainsGender(new AbstractMap.SimpleImmutableEntry<String, Object>("gender", "male"))
+            def families1 = familyRepository.findAll(childrenArrayContainsGender(new GenderAware("male")))
+        then:
+            families.size() == 1
+            families1.size() == 1
+        when:
             def optFamily1 = familyRepository.findById(ANDERSEN_FAMILY.id)
             def optFamily2 = familyRepository.findById(WAKEFIELD_FAMILY.id)
         then:
@@ -267,7 +281,7 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
             optFamily2.get().children.size() == WAKEFIELD_FAMILY.children.size()
             optFamily2.get().address
         when:
-            def families = familyRepository.findByLastNameLike("Ander%")
+            families = familyRepository.findByLastNameLike("Ander%")
         then:
             families.size() > 0
             families[0].id == ANDERSEN_FAMILY.id
@@ -445,6 +459,7 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
         when:
             saveSampleFamilies()
         then:
+            familyRepository.findAll(childrenArrayContainsGender(new GenderAware("female"))).size() == 2
             familyRepository.findOne(lastNameEquals("Andersen")).isPresent()
             !familyRepository.findOne(lastNameEquals(UUID.randomUUID().toString())).isPresent()
             familyRepository.findAll(idsIn(ANDERSEN_FAMILY.id, WAKEFIELD_FAMILY.id)).size() == 2
@@ -633,5 +648,16 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
             cosmosBookContainer.throughput.requestUnits == 1200
     }
 
+    @Requires(property = "spec.name", value = "CosmosBasicSpec")
+    @Singleton
+    static class LoggingCosmosDiagnosticsProcessor implements CosmosDiagnosticsProcessor {
+        private static final Logger LOG = LoggerFactory.getLogger(CosmosBasicSpec)
 
+        @Override
+        void processDiagnostics(String operationName, CosmosDiagnostics cosmosDiagnostics, String activityId, double requestCharge) {
+            if (LOG.isInfoEnabled()) {
+                LOG.info("Operation Name: {};\nDiagnostics: {};\nactivityId: {};\nrequestCharge: {}", cosmosDiagnostics, activityId, requestCharge)
+            }
+        }
+    }
 }

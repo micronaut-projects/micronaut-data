@@ -19,6 +19,7 @@ import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.Relation;
 
 
@@ -34,6 +35,7 @@ public class Restaurant {
     private final Address address;
 
     @Relation(Relation.Kind.EMBEDDED)
+    @MappedProperty("hqaddress_")
     @Nullable
     private Address hqAddress;
 

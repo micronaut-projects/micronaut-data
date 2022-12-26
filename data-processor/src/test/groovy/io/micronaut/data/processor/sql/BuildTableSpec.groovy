@@ -20,7 +20,6 @@ import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
 import io.micronaut.data.processor.visitors.AbstractDataSpec
 import io.micronaut.data.tck.entities.Restaurant
-import spock.lang.Requires
 import spock.lang.Unroll
 
 //@Requires({ javaVersion <= 1.8 })
@@ -34,7 +33,7 @@ class BuildTableSpec extends AbstractDataSpec {
         def sql = builder.buildBatchCreateTableStatement(entity)
 
         expect:"@Nullable @Embedded doesn't include NOT NULL declaration"
-        sql.contains("\"hq_address_street\" VARCHAR(255),")
+        sql.contains("\"hqaddress_street\" VARCHAR(255),")
 
         and:"regular @Embedded does include NOT NULL declaration"
         sql.contains("\"address_street\" VARCHAR(255) NOT NULL,")
@@ -84,7 +83,7 @@ class Test {
         Dialect.H2       | 'CREATE TABLE `test` (`id` BIGINT AUTO_INCREMENT PRIMARY KEY,`json` JSON NOT NULL);'
         Dialect.MYSQL    | 'CREATE TABLE `test` (`id` BIGINT PRIMARY KEY AUTO_INCREMENT,`json` JSON NOT NULL);'
         Dialect.POSTGRES | 'CREATE TABLE "test" ("id" BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,"json" JSONB NOT NULL);'
-        Dialect.ORACLE   | 'CREATE SEQUENCE "TEST_SEQ" MINVALUE 1 START WITH 1 NOCACHE NOCYCLE' + System.lineSeparator() +
+        Dialect.ORACLE   | 'CREATE SEQUENCE "TEST_SEQ" MINVALUE 1 START WITH 1 CACHE 100 NOCYCLE' + System.lineSeparator() +
                            'CREATE TABLE "TEST" ("ID" NUMBER(19) NOT NULL PRIMARY KEY,"JSON" CLOB NOT NULL)'
     }
 
@@ -286,7 +285,7 @@ class Test {
         Dialect.H2       | 'CREATE TABLE `test` (`id` BIGINT AUTO_INCREMENT PRIMARY KEY,`text1` VARCHAR(255) NOT NULL,`text2` VARCHAR(10) NOT NULL,`text3` VARCHAR(7) NOT NULL,`amount1` DECIMAL NOT NULL,`amount2` NUMERIC(11,2) NOT NULL,`amount3` DECIMAL NOT NULL,`float_amount1` FLOAT NOT NULL,`float_amount2` NUMERIC(11,2) NOT NULL,`double_amount1` DOUBLE NOT NULL,`double_amount2` NUMERIC(11,2) NOT NULL);'
         Dialect.MYSQL    | 'CREATE TABLE `test` (`id` BIGINT PRIMARY KEY AUTO_INCREMENT,`text1` VARCHAR(255) NOT NULL,`text2` VARCHAR(10) NOT NULL,`text3` VARCHAR(7) NOT NULL,`amount1` DECIMAL NOT NULL,`amount2` NUMERIC(11,2) NOT NULL,`amount3` DECIMAL NOT NULL,`float_amount1` FLOAT NOT NULL,`float_amount2` NUMERIC(11,2) NOT NULL,`double_amount1` DOUBLE NOT NULL,`double_amount2` NUMERIC(11,2) NOT NULL);'
         Dialect.POSTGRES | 'CREATE TABLE "test" ("id" BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,"text1" VARCHAR(255) NOT NULL,"text2" VARCHAR(10) NOT NULL,"text3" VARCHAR(7) NOT NULL,"amount1" DECIMAL NOT NULL,"amount2" NUMERIC(11,2) NOT NULL,"amount3" DECIMAL NOT NULL,"float_amount1" REAL NOT NULL,"float_amount2" NUMERIC(11,2) NOT NULL,"double_amount1" DOUBLE PRECISION NOT NULL,"double_amount2" NUMERIC(11,2) NOT NULL);'
-        Dialect.ORACLE   | 'CREATE SEQUENCE "TEST_SEQ" MINVALUE 1 START WITH 1 NOCACHE NOCYCLE' + System.lineSeparator() +
+        Dialect.ORACLE   | 'CREATE SEQUENCE "TEST_SEQ" MINVALUE 1 START WITH 1 CACHE 100 NOCYCLE' + System.lineSeparator() +
                 'CREATE TABLE "TEST" ("ID" NUMBER(19) NOT NULL PRIMARY KEY,"TEXT1" VARCHAR(255) NOT NULL,"TEXT2" VARCHAR(10) NOT NULL,"TEXT3" VARCHAR(7) NOT NULL,"AMOUNT1" FLOAT(126) NOT NULL,"AMOUNT2" NUMBER(11,2) NOT NULL,"AMOUNT3" FLOAT(126) NOT NULL,"FLOAT_AMOUNT1" FLOAT(53) NOT NULL,"FLOAT_AMOUNT2" NUMBER(11,2) NOT NULL,"DOUBLE_AMOUNT1" FLOAT(23) NOT NULL,"DOUBLE_AMOUNT2" NUMBER(11,2) NOT NULL)'
     }
 
@@ -322,5 +321,78 @@ class Test {
         Dialect.MYSQL    | 'CREATE TABLE `test` (`wakeup_time` TIME(6)  NOT NULL );'
         Dialect.POSTGRES | 'CREATE TABLE "test" ("wakeup_time" TIME(6)  NOT NULL );'
         Dialect.ORACLE   | 'CREATE TABLE "TEST" ("WAKEUP_TIME" DATE  NOT NULL )'
+    }
+
+    void "test create table MappedProperty with Embedded"() {
+        given:
+        def entity = buildJpaEntity('test.EmbeddedEntity', '''
+import io.micronaut.data.annotation.Embeddable;import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.MappedProperty;
+import io.micronaut.data.annotation.Relation;
+
+@MappedEntity
+class EmbeddedEntity {
+    @Id
+    private Long id;
+
+    @MappedProperty("emb_a_")
+    @Relation(Relation.Kind.EMBEDDED)
+    private Emb embA;
+
+    @MappedProperty("emb_b_")
+    @Relation(Relation.Kind.EMBEDDED)
+    private Emb embB;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Emb getEmbA() {
+        return this.embA;
+    }
+
+    public void setEmbA(Emb embA) {
+        this.embA = embA;
+    }
+
+    public Emb getEmbB() {
+        return this.embB;
+    }
+
+    public void setEmbB(Emb embB) {
+        this.embB = embB;
+    }
+}
+@Embeddable
+class Emb {
+    private String a;
+    private String b;
+
+    public String getA() {
+        return  a;
+    }
+    public void setA(String a) {
+        this.a = a;
+    }
+    public String getB() {
+        return  b;
+    }
+    public void setB(String b) {
+        this.b = b;
+    }
+}
+''')
+
+        when:
+        SqlQueryBuilder builder = new SqlQueryBuilder()
+        def sql = builder.buildBatchCreateTableStatement(entity)
+
+        then:
+        sql == 'CREATE TABLE "embedded_entity" ("id" BIGINT NOT NULL,"emb_a_a" VARCHAR(255) NOT NULL,"emb_a_b" VARCHAR(255) NOT NULL,"emb_b_a" VARCHAR(255) NOT NULL,"emb_b_b" VARCHAR(255) NOT NULL);'
     }
 }

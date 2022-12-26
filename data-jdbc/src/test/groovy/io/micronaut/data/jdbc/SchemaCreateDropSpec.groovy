@@ -21,7 +21,7 @@ import io.micronaut.data.tck.repositories.BookRepository
 import spock.lang.AutoCleanup
 import spock.lang.Specification
 
-abstract class SchemaCreateDropSpec extends Specification implements DatabaseTestPropertyProvider {
+abstract class SchemaCreateDropSpec extends Specification {
 
     abstract BookRepository getBookRepository()
 

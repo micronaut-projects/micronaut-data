@@ -23,6 +23,12 @@ import java.sql.Connection
 @Property(name = "datasources.other.name", value = "otherdb")
 @Property(name = "datasources.other.schema-generate", value = "CREATE_DROP")
 @Property(name = "datasources.other.dialect", value = "H2")
+@Property(name = "datasources.other.packages", value = "io.micronaut.data.tck.entities,io.micronaut.data.tck.jdbc.entities,io.micronaut.data.jdbc.h2")
+// This properties can be eliminated after TestResources bug is fixed
+@Property(name = "datasources.other.driverClassName", value = "org.h2.Driver")
+@Property(name = "datasources.other.url", value = "jdbc:h2:mem:other;LOCK_TIMEOUT=10000;DB_CLOSE_ON_EXIT=FALSE")
+@Property(name = "datasources.other.username", value = "")
+@Property(name = "datasources.other.password", value = "")
 class MultipleDataSourceSpec extends Specification {
 
     @Inject

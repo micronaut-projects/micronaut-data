@@ -1,0 +1,36 @@
+plugins {
+    id "java"
+    id "io.micronaut.build.internal.data-example"
+    id "io.micronaut.application"
+    id 'io.micronaut.test-resources'
+}
+
+application {
+    mainClass = "example.Application"
+}
+
+micronaut {
+    version micronautVersion
+    runtime "netty"
+    testRuntime "junit5"
+}
+
+dependencies {
+    annotationProcessor projects.dataDocumentProcessor
+
+    implementation 'io.micronaut.multitenancy:micronaut-multitenancy'
+    implementation 'io.micronaut.reactor:micronaut-reactor'
+    implementation 'io.micronaut:micronaut-http-client'
+    implementation 'io.micronaut.data:micronaut-data-r2dbc'
+
+    implementation libs.jakarta.persistence.api
+    implementation libs.jakarta.transaction.api
+
+    runtimeOnly libs.drivers.r2dbc.mariadb
+
+    testImplementation "io.micronaut:micronaut-http-client"
+
+    runtimeOnly "ch.qos.logback:logback-classic"
+
+    testResourcesService libs.drivers.jdbc.mariadb
+}

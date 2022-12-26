@@ -499,7 +499,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
 
                 createSequenceStmt += " MINVALUE 1 START WITH 1";
                 if (dialect == Dialect.ORACLE) {
-                    createSequenceStmt += " NOCACHE NOCYCLE";
+                    createSequenceStmt += " CACHE 100 NOCYCLE";
                 } else {
                     if (isSqlServer) {
                         createSequenceStmt += " INCREMENT BY 1";
@@ -514,14 +514,14 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     }
 
     private void addIndexes(PersistentEntity entity, String tableName, List<String> createStatements) {
-        final String indexes = createIndexes(entity, tableName);
-        if (indexes.length() > 0) {
-            createStatements.add(indexes);
+        final List<String> indexes = createIndexes(entity, tableName);
+        if (CollectionUtils.isNotEmpty(indexes)) {
+            createStatements.addAll(indexes);
         }
     }
 
-    private String createIndexes(PersistentEntity entity, String tableName) {
-        StringBuilder indexBuilder = new StringBuilder();
+    private List<String> createIndexes(PersistentEntity entity, String tableName) {
+        List<String> indexStatements = new ArrayList<>();
 
         final Optional<List<AnnotationValue<Index>>> indexes = entity
                 .findAnnotation(Indexes.class)
@@ -530,23 +530,30 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         Stream.of(indexes)
                 .flatMap(o -> o.map(Stream::of).orElseGet(Stream::empty))
                 .flatMap(Collection::stream)
-                .forEach(index -> addIndex(indexBuilder, new IndexConfiguration(index, tableName)));
+                .forEach(index -> indexStatements.add(addIndex(entity, new IndexConfiguration(index, tableName, entity.getPersistedName()))));
 
-        return indexBuilder.toString();
+        return indexStatements;
 
     }
 
-    private void addIndex(StringBuilder indexBuilder, IndexConfiguration config) {
-        indexBuilder.append("CREATE ")
-                .append(config.index.booleanValue("unique")
+    private String addIndex(PersistentEntity entity, IndexConfiguration config) {
+        // Create index name without escaped table name and then escape if needed
+        StringBuilder sbIndexName = new StringBuilder();
+        sbIndexName.append(config.index.stringValue("name")
+            .orElse(String.format(
+                "idx_%s%s", prepareNames(config.unquotedTableName),
+                makeTransformedColumnList(provideColumnList(config)))));
+        String indexName = sbIndexName.toString();
+        if (shouldEscape(entity)) {
+            indexName = quote(indexName);
+        }
+
+        StringBuilder indexBuilder = new StringBuilder();
+        indexBuilder.append("CREATE ").append(config.index.booleanValue("unique")
                         .map(isUnique -> isUnique ? "UNIQUE " : "")
                         .orElse(""))
-                .append("INDEX ")
-                .append(config.index.stringValue("name")
-                        .orElse(String.format(
-                                "idx_%s%s", prepareNames(config.tableName),
-                                makeTransformedColumnList(provideColumnList(config)))))
-                .append(" ON " +
+               .append("INDEX ");
+        indexBuilder.append(indexName).append(" ON " +
                         Optional.ofNullable(config.tableName)
                                 .orElseThrow(() -> new NullPointerException("Table name cannot be null")) +
                         " (" +
@@ -557,6 +564,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         } else {
             indexBuilder.append(");");
         }
+        return indexBuilder.toString();
     }
 
     private String provideColumnList(IndexConfiguration config) {
@@ -661,7 +669,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                         column += " NOT NULL DEFAULT SYS_GUID()";
                     } else if (type == IDENTITY) {
                         if (isPk) {
-                            column += " GENERATED ALWAYS AS IDENTITY";
+                            column += " GENERATED ALWAYS AS IDENTITY (MINVALUE 1 START WITH 1 CACHE 100 NOCYCLE)";
                         } else {
                             column += " NOT NULL";
                         }
@@ -1637,7 +1645,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     }
 
     @Override
-    protected final boolean computePropertyPaths() {
+    protected boolean computePropertyPaths() {
         return true;
     }
 
@@ -1747,11 +1755,14 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     private static class IndexConfiguration {
         AnnotationValue<?> index;
         String tableName;
+        String unquotedTableName;
 
-        public IndexConfiguration(AnnotationValue<?> index, String tableName) {
+        public IndexConfiguration(AnnotationValue<?> index, String tableName, String unquotedTableName) {
             this.index = index;
             this.tableName = tableName;
+            this.unquotedTableName = unquotedTableName;
         }
     }
 
 }
+
