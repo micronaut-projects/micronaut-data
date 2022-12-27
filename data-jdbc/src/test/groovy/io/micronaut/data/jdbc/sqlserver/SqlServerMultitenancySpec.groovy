@@ -12,7 +12,8 @@ class SqlServerMultitenancySpec extends AbstractJdbcMultitenancySpec implements 
 
     @Override
     Map<String, String> getExtraProperties() {
-        return [bookRepositoryClass: MSBookRepository.name]
+        return ['bookRepositoryClass': MSBookRepository.name,
+                'test-resources.containers.mssql.accept-license' : true]
     }
 
     @Override

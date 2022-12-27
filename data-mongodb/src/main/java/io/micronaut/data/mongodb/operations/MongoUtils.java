@@ -51,7 +51,7 @@ public final class MongoUtils {
     private MongoUtils() {
     }
 
-    public static BsonValue entityIdValue(ConversionService<?> conversionService,
+    public static BsonValue entityIdValue(ConversionService conversionService,
                                           RuntimePersistentEntity<?> persistentEntity,
                                           Object entity,
                                           CodecRegistry codecRegistry) {
@@ -63,7 +63,7 @@ public final class MongoUtils {
         throw new IllegalStateException("Cannot determine id!");
     }
 
-    public static BsonValue idValue(ConversionService<?> conversionService,
+    public static BsonValue idValue(ConversionService conversionService,
                                     RuntimePersistentEntity<?> persistentEntity,
                                     Object idValue,
                                     CodecRegistry codecRegistry) {
@@ -88,7 +88,7 @@ public final class MongoUtils {
         throw new IllegalStateException("Cannot determine id!");
     }
 
-    static Bson filterById(ConversionService<?> conversionService,
+    static Bson filterById(ConversionService conversionService,
                            RuntimePersistentEntity<?> persistentEntity,
                            Object value,
                            CodecRegistry codecRegistry) {
@@ -123,7 +123,7 @@ public final class MongoUtils {
         }
     }
 
-    public static BsonValue toBsonValue(ConversionService<?> conversionService, Object value, CodecRegistry codecRegistry) {
+    public static BsonValue toBsonValue(ConversionService conversionService, Object value, CodecRegistry codecRegistry) {
         if (value == null) {
             return BsonNull.VALUE;
         }
@@ -142,7 +142,7 @@ public final class MongoUtils {
         return BsonDocumentWrapper.asBsonDocument(value, codecRegistry).toBsonDocument();
     }
 
-    static BsonValue toBsonValue(ConversionService<?> conversionService, BsonType bsonType, Object value) {
+    static BsonValue toBsonValue(ConversionService conversionService, BsonType bsonType, Object value) {
         switch (bsonType) {
             case STRING:
                 return new BsonString(value.toString());

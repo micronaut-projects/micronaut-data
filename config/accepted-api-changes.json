@@ -598,5 +598,85 @@
     "type": "io.micronaut.data.r2dbc.config.DataR2dbcConfiguration",
     "member": "Constructor io.micronaut.data.r2dbc.config.DataR2dbcConfiguration(java.lang.String,io.r2dbc.spi.ConnectionFactory,io.micronaut.data.r2dbc.operations.R2dbcOperations)",
     "reason": "Constructor changed"
+  },
+  {
+    "type": "io.micronaut.data.annotation.TypeRole",
+    "member": "Field LAST_UPDATED_PROPERTY",
+    "reason": "Removed deprecated members for Micronaut 4"
+  },
+  {
+    "type": "io.micronaut.data.model.query.builder.QueryBuilder",
+    "member": "Field IN_VARIABLES_PATTERN",
+    "reason": "Removed deprecated members for Micronaut 4"
+  },
+  {
+    "type": "io.micronaut.data.model.runtime.DefaultStoredDataOperation",
+    "member": "Field NO_TRANSACTION",
+    "reason": "Removed deprecated members for Micronaut 4"
+  },
+  {
+    "type": "io.micronaut.data.hibernate.operations.HibernateJpaOperations",
+    "member": "Constructor io.micronaut.data.hibernate.operations.HibernateJpaOperations(org.hibernate.SessionFactory,io.micronaut.transaction.TransactionOperations,java.util.concurrent.ExecutorService,io.micronaut.data.model.runtime.RuntimeEntityRegistry)",
+    "reason": "Removed deprecated members for Micronaut 4"
+  },
+  {
+    "type": "io.micronaut.data.jdbc.mapper.ColumnIndexResultSetReader",
+    "member": "Constructor io.micronaut.data.jdbc.mapper.ColumnIndexResultSetReader()",
+    "reason": "Removed deprecated members for Micronaut 4"
+  },
+  {
+    "type": "io.micronaut.data.runtime.operations.ExecutorReactiveOperations",
+    "member": "Constructor io.micronaut.data.runtime.operations.ExecutorReactiveOperations(io.micronaut.data.operations.RepositoryOperations,java.util.concurrent.Executor)",
+    "reason": "Removed deprecated members for Micronaut 4"
+  },
+  {
+    "type": "io.micronaut.data.runtime.operations.ExecutorReactiveOperations",
+    "member": "Constructor io.micronaut.data.runtime.operations.ExecutorReactiveOperations(io.micronaut.data.runtime.operations.ExecutorAsyncOperations)",
+    "reason": "Removed deprecated members for Micronaut 4"
+  },
+  {
+    "type": "io.micronaut.transaction.interceptor.DefaultTransactionAttribute",
+    "member": "Constructor io.micronaut.transaction.interceptor.DefaultTransactionAttribute()",
+    "reason": "Removed deprecated members for Micronaut 4"
+  },
+  {
+    "type": "io.micronaut.transaction.interceptor.DefaultTransactionAttribute",
+    "member": "Implemented interface io.micronaut.transaction.TransactionDefinition",
+    "reason": "Removed deprecated members for Micronaut 4"
+  },
+  {
+    "type": "io.micronaut.transaction.interceptor.DefaultTransactionAttribute",
+    "member": "Implemented interface io.micronaut.transaction.interceptor.TransactionAttribute",
+    "reason": "Removed deprecated members for Micronaut 4"
+  },
+  {
+    "type": "io.micronaut.transaction.interceptor.DefaultTransactionAttribute",
+    "member": "Implemented interface java.io.Serializable",
+    "reason": "Removed deprecated members for Micronaut 4"
+  },
+  {
+    "type": "io.micronaut.transaction.interceptor.TransactionAttribute",
+    "member": "Implemented interface io.micronaut.transaction.TransactionDefinition",
+    "reason": "Removed deprecated members for Micronaut 4"
+  },
+  {
+    "type": "io.micronaut.transaction.support.DefaultTransactionDefinition",
+    "member": "Field PREFIX_TIMEOUT",
+    "reason": "Removed deprecated members for Micronaut 4"
+  },
+  {
+    "type": "io.micronaut.transaction.support.DefaultTransactionDefinition",
+    "member": "Field READ_ONLY_MARKER",
+    "reason": "Removed deprecated members for Micronaut 4"
+  },
+  {
+    "type": "io.micronaut.transaction.support.DefaultTransactionDefinition",
+    "member": "Field PREFIX_PROPAGATION",
+    "reason": "Removed deprecated members for Micronaut 4"
+  },
+  {
+    "type": "io.micronaut.transaction.support.DefaultTransactionDefinition",
+    "member": "Field PREFIX_ISOLATION",
+    "reason": "Removed deprecated members for Micronaut 4"
   }
 ]

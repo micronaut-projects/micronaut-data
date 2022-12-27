@@ -85,7 +85,7 @@ final class DataEncoderContext implements Serializer.EncoderContext {
     }
 
     @Override
-    public ConversionService<?> getConversionService() {
+    public ConversionService getConversionService() {
         return parent.getConversionService();
     }
 

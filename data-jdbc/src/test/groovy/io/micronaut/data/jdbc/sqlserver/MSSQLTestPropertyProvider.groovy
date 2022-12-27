@@ -29,4 +29,13 @@ trait MSSQLTestPropertyProvider implements SharedTestResourcesDatabaseTestProper
     int sharedSpecsCount() {
         return 9
     }
+
+    @Override
+    Map<String, String> getProperties() {
+        def properties = super.getProperties()
+        // note: we use a Boolean which is in conflict with the return type of the method
+        // but that's the only thing which works
+        properties['test-resources.containers.mssql.accept-license'] = true
+        return properties
+    }
 }

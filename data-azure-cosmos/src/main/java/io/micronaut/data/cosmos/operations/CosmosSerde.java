@@ -49,11 +49,10 @@ import java.io.IOException;
 final class CosmosSerde {
 
     private final SerdeRegistry serdeRegistry;
-    private final ObjectMapper objectMapper;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
-    protected CosmosSerde(SerdeRegistry serdeRegistry, ObjectMapper objectMapper) {
+    protected CosmosSerde(SerdeRegistry serdeRegistry) {
         this.serdeRegistry = serdeRegistry;
-        this.objectMapper = objectMapper;
     }
 
     /**

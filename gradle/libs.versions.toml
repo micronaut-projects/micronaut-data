@@ -1,14 +1,22 @@
 [versions]
-micronaut = "3.7.4"
-micronaut-test = "3.8.0"
-micronaut-serde = "1.5.0"
-micronaut-sql = "4.7.2"
+micronaut = "4.0.0-SNAPSHOT"
 micronaut-docs = "2.0.0"
-micronaut-gradle-plugin = "3.6.5"
-micronaut-mongo = "4.6.0"
-micronaut-azure = "4.0.0"
+micronaut-gradle-plugin = "3.6.6"
+micronaut-azure = "3.6.0"
+micronaut-testresources = "1.2.3"
 
-groovy = "3.0.14"
+micronaut-reactor = "3.0.0-SNAPSHOT"
+micronaut-rxjava2 = "2.0.0-SNAPSHOT"
+micronaut-r2dbc = "4.0.1-SNAPSHOT"
+micronaut-serde = "2.0.0-SNAPSHOT"
+micronaut-sql = "5.0.0-SNAPSHOT"
+micronaut-spring = "5.0.0-SNAPSHOT"
+micronaut-test = "4.0.0-SNAPSHOT"
+micronaut-mongo = "5.0.0-SNAPSHOT"
+micronaut-kotlin = "4.0.0-SNAPSHOT"
+micronaut-multitenancy = "5.0.0-SNAPSHOT"
+
+groovy = "4.0.6"
 
 javax-persistence = "2.2"
 jakarta-persistence = "3.0.0"
@@ -51,7 +59,7 @@ h2 = "2.1.214"
 
 benchmark-spring-data-mongodb = "4.4.2"
 benchmark-spring-data = "2021.2.6"
-spock = "2.0-groovy-3.0"
+spock = "2.2-groovy-4.0"
 cglib = "3.3.0"
 objenesis = "3.3"
 testcontainers = "1.17.6"
@@ -66,16 +74,24 @@ spring-boot-gradle-plugin = "2.6.7"
 spring-dependency-management-gradle-plugin = "1.1.0"
 shadow-gradle-plugin = "7.1.2"
 
+# Dependency versions which are found in the platform BOM
+# meaning that they should be extracted into their own BOM
+kotlin-coroutines = "1.6.4"
+
+
 [libraries]
 
+micronaut-testresources-client = { module = 'io.micronaut.testresources:micronaut-test-resources-client', version.ref = "micronaut-testresources" }
+
 reactor = { module = 'io.projectreactor:reactor-core' }
-rxjava2 = { module = 'io.reactivex.rxjava2:rxjava' }
 
-micronaut-reactor = { module = 'io.micronaut.reactor:micronaut-reactor' }
-micronaut-rxjava2 = { module = 'io.micronaut.rxjava2:micronaut-rxjava2' }
+micronaut-reactor = { module = 'io.micronaut.reactor:micronaut-reactor-bom', version.ref = "micronaut-reactor" }
+micronaut-rxjava2 = { module = 'io.micronaut.rxjava2:micronaut-rxjava2-bom', version.ref = "micronaut-rxjava2" }
+micronaut-kotlin = { module = 'io.micronaut.kotlin:micronaut-kotlin-bom', version.ref = "micronaut-kotlin" }
+micronaut-multitenancy = { module = 'io.micronaut.multitenancy:micronaut-multitenancy-bom', version.ref = "micronaut-multitenancy" }
 
-groovy-sql = { module = "org.codehaus.groovy:groovy-sql" }
-groovy-dateutil = { module = "org.codehaus.groovy:groovy-dateutil", version.ref = "groovy" }
+groovy-sql = { module = "org.apache.groovy:groovy-sql" }
+groovy-dateutil = { module = "org.apache.groovy:groovy-dateutil", version.ref = "groovy" }
 
 cglib = { module = "cglib:cglib-nodep", version.ref = "cglib" }
 objenesis = { module = "org.objenesis:objenesis", version.ref = "objenesis" }
@@ -86,7 +102,7 @@ jackson-databind = { module = "com.fasterxml.jackson.core:jackson-databind" }
 jackson-annotations = { module = "com.fasterxml.jackson.core:jackson-annotations" }
 
 kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib-jdk8" }
-kotlin-coroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core" }
+kotlin-coroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlin-coroutines" }
 
 javax-transaction-api = { module = "javax.transaction:javax.transaction-api", version.ref = "javax-transaction" }
 jakarta-transaction-api = { module = "jakarta.transaction:jakarta.transaction-api", version.ref = "jakarta-transaction" }
@@ -113,9 +129,9 @@ jupiter-engine = { module = 'org.junit.jupiter:junit-jupiter-engine' }
 
 # JPA
 
-micronaut-sql-hibernate-jpa = { module = "io.micronaut.sql:micronaut-hibernate-jpa", version.ref = "micronaut-sql" }
-micronaut-sql-hibernate-reactive = { module = "io.micronaut.sql:micronaut-hibernate-reactive", version.ref = "micronaut-sql" }
-micronaut-sql-hibernate-jpa-spring = { module = "io.micronaut.sql:micronaut-hibernate-jpa-spring", version.ref = "micronaut-sql" }
+micronaut-spring = { module = "io.micronaut.spring:micronaut-spring-bom", version.ref = "micronaut-spring" }
+
+micronaut-sql = { module = "io.micronaut.sql:micronaut-sql-bom", version.ref = "micronaut-sql" }
 
 hibernate-core = { module = "org.hibernate:hibernate-core", version.ref = "hibernate" }
 hibernate-jpamodelgen = { module = "org.hibernate:hibernate-jpamodelgen", version.ref = "hibernate" }
@@ -123,8 +139,6 @@ hibernate-jpamodelgen-jakarta = { module = "org.hibernate:hibernate-jpamodelgen-
 
 spring-data-jpa = { module = "org.springframework.data:spring-data-jpa", version.ref = "spring-data" }
 spring-data-commons = { module = "org.springframework.data:spring-data-commons", version.ref = "spring-data" }
-spring-jdbc = { module = "org.springframework:spring-jdbc", version.ref = "spring" }
-spring-orm = { module = "org.springframework:spring-orm", version.ref = "spring" }
 
 # Vertx DB
 
@@ -149,7 +163,7 @@ drivers-jdbc-mssql = { module = "com.microsoft.sqlserver:mssql-jdbc", version.re
 r2dbc-spi = { module = "io.r2dbc:r2dbc-spi", version.ref = "r2dbc" }
 r2dbc-pool = { module = "io.r2dbc:r2dbc-pool", version.ref = "r2dbc-pool" }
 
-micronaut-r2dbc = { module = "io.micronaut.r2dbc:micronaut-r2dbc-core" }
+micronaut-r2dbc = { module = "io.micronaut.r2dbc:micronaut-r2dbc-bom", version.ref = "micronaut-r2dbc" }
 
 drivers-r2dbc-h2 = { module = "io.r2dbc:r2dbc-h2", version.ref = "h2-r2dbc-driver" }
 drivers-r2dbc-oracle = { module = "com.oracle.database.r2dbc:oracle-r2dbc", version.ref = "oracle-r2dbc-driver" }
@@ -173,11 +187,7 @@ testcontainers-azure = { module = "org.testcontainers:azure" }
 
 # SERDE
 
-micronaut-serde-processor = { module = "io.micronaut.serde:micronaut-serde-processor", version.ref = "micronaut-serde" }
-micronaut-serde-bson = { module = "io.micronaut.serde:micronaut-serde-bson", version.ref = "micronaut-serde" }
-micronaut-serde-jackson = { module = "io.micronaut.serde:micronaut-serde-jackson", version.ref = "micronaut-serde" }
-micronaut-serde-api = { module = "io.micronaut.serde:micronaut-serde-api", version.ref = "micronaut-serde" }
-micronaut-serde-support = { module = "io.micronaut.serde:micronaut-serde-support", version.ref = "micronaut-serde" }
+micronaut-serde = { module = "io.micronaut.serde:micronaut-serde-bom", version.ref = "micronaut-serde" }
 
 # MONGO
 

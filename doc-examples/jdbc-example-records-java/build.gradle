@@ -4,16 +4,12 @@ plugins {
     id "io.micronaut.build.internal.data-example"
 }
 
-repositories {
-    mavenCentral()
-}
-
 application {
     mainClass = "example.Application"
 }
 
 micronaut {
-    version micronautVersion
+    version libs.versions.micronaut.asProvider().get()
     runtime "netty"
     testRuntime "junit5"
 }
@@ -29,15 +25,4 @@ dependencies {
     implementation libs.javax.transaction.api
     runtimeOnly "ch.qos.logback:logback-classic"
     runtimeOnly "com.h2database:h2"
-}
-
-tasks.withType(JavaCompile){
-    if (JavaVersion.current() == JavaVersion.VERSION_15) {
-        targetCompatibility("15")
-        sourceCompatibility("15")
-        options.compilerArgs.add("--enable-preview")
-    } else {
-        targetCompatibility("16")
-        sourceCompatibility("16")
-    }
 }

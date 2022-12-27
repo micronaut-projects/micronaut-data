@@ -7,16 +7,12 @@ plugins {
     id "io.micronaut.build.internal.data-kotlin-example"
 }
 
-repositories {
-    mavenCentral()
-}
-
 application {
     mainClass = "example.ApplicationKt"
 }
 
 micronaut {
-    version micronautVersion
+    version libs.versions.micronaut.asProvider().get()
     runtime "netty"
     testRuntime "junit5"
 }
@@ -26,6 +22,8 @@ dependencies {
     implementation "io.micronaut:micronaut-http-client"
     implementation project(":data-hibernate-jpa")
     implementation "io.micronaut.sql:micronaut-jdbc-tomcat"
+    implementation mnKotlin.micronaut.kotlin.runtime
+
     kapt "io.micronaut:micronaut-validation"
     kapt project(":data-processor")
     runtimeOnly "ch.qos.logback:logback-classic"

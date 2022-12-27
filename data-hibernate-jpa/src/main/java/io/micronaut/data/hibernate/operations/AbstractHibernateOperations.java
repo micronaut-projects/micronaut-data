@@ -92,7 +92,7 @@ public abstract class AbstractHibernateOperations<S, Q> implements HintsCapableR
     private static final String ENTITY_GRAPH_FETCH = "javax.persistence.fetchgraph";
     private static final String ENTITY_GRAPH_LOAD = "javax.persistence.loadgraph";
 
-    protected final ConversionService<?> dataConversionService;
+    protected final ConversionService dataConversionService;
     protected final RuntimeEntityRegistry runtimeEntityRegistry;
 
     /**
@@ -101,7 +101,7 @@ public abstract class AbstractHibernateOperations<S, Q> implements HintsCapableR
      * @param runtimeEntityRegistry The runtime entity registry
      * @param dataConversionService The data conversion service
      */
-    protected AbstractHibernateOperations(RuntimeEntityRegistry runtimeEntityRegistry, DataConversionService<?> dataConversionService) {
+    protected AbstractHibernateOperations(RuntimeEntityRegistry runtimeEntityRegistry, DataConversionService dataConversionService) {
         this.runtimeEntityRegistry = runtimeEntityRegistry;
         // Backwards compatibility should be removed in the next version
         this.dataConversionService = dataConversionService == null ? ConversionService.SHARED : dataConversionService;
@@ -128,7 +128,7 @@ public abstract class AbstractHibernateOperations<S, Q> implements HintsCapableR
     /**
      * @return The conversion service
      */
-    protected ConversionService<?> getConversionService() {
+    protected ConversionService getConversionService() {
         return dataConversionService;
     }
 
@@ -312,7 +312,7 @@ public abstract class AbstractHibernateOperations<S, Q> implements HintsCapableR
             if (preparedQuery.isNative()) {
                 q = createNativeQuery(session, queryStr, Tuple.class);
             } else if (queryStr.toLowerCase(Locale.ENGLISH).startsWith("select new ")) {
-                Class<R> wrapperType = ReflectionUtils.getWrapperType(preparedQuery.getResultType());
+                @SuppressWarnings("unchecked") Class<R> wrapperType = (Class<R>) ReflectionUtils.getWrapperType(preparedQuery.getResultType());
                 Q query = createQuery(session, queryStr, wrapperType);
                 bindPreparedQuery(query, preparedQuery, session);
                 resultCollector.collect(query);
@@ -333,14 +333,14 @@ public abstract class AbstractHibernateOperations<S, Q> implements HintsCapableR
                     }
 
                     @Override
-                    public ConversionService<?> getConversionService() {
+                    public ConversionService getConversionService() {
                         return dataConversionService;
                     }
 
                 }).map(tuple, preparedQuery.getResultType());
             });
         } else {
-            Class<R> wrapperType = ReflectionUtils.getWrapperType(preparedQuery.getResultType());
+            @SuppressWarnings("unchecked") Class<R> wrapperType = (Class<R>) ReflectionUtils.getWrapperType(preparedQuery.getResultType());
             Q q;
             if (preparedQuery.isNative()) {
                 Class<T> rootEntity = preparedQuery.getRootEntity();

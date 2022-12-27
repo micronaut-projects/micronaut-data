@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.hibernate;
 
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.annotation.Query;
@@ -28,7 +29,6 @@ import io.micronaut.data.tck.entities.Author;
 import io.micronaut.data.tck.entities.Book;
 import io.micronaut.data.tck.repositories.AuthorRepository;
 
-import io.micronaut.core.annotation.Nullable;
 import javax.transaction.Transactional;
 import java.util.Collection;
 import java.util.List;

@@ -3,7 +3,7 @@ package io.micronaut.data.runtime.criteria;
 import jakarta.persistence.metamodel.SingularAttribute;
 import jakarta.persistence.metamodel.StaticMetamodel;
 
-import javax.annotation.Generated;
+import jakarta.annotation.Generated;
 import java.math.BigDecimal;
 
 @Generated(value = "org.hibernate.jpamodelgen.JPAMetaModelEntityProcessor")

@@ -10,9 +10,13 @@ application {
 }
 
 micronaut {
-    version micronautVersion
+    version libs.versions.micronaut.asProvider().get()
     runtime "netty"
     testRuntime "junit5"
+    testResources {
+        clientTimeout = 300
+        version = libs.versions.micronaut.testresources.get()
+    }
 }
 
 dependencies {
@@ -30,4 +34,7 @@ dependencies {
     implementation libs.jakarta.transaction.api
 
     runtimeOnly "ch.qos.logback:logback-classic"
+
+    // Needed for EagerStartSpec
+    testImplementation("org.jetbrains.kotlin:kotlin-reflect:1.8.0-RC2")
 }

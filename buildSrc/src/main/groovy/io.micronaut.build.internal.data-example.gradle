@@ -3,6 +3,12 @@ plugins {
     id "io.micronaut.application"
 }
 
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
+
 configurations.all {
     resolutionStrategy.dependencySubstitution { DependencySubstitutions subs ->
         project.rootProject.subprojects {
@@ -14,17 +20,6 @@ configurations.all {
     }
 }
 
-tasks.named("test") {
-    onlyIf {
-        def disabled = project.path.contains("groovy") && JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_16)
-        !disabled
-    }
-}
-
-tasks.register("testExamples") {
-    dependsOn "test"
-}
-
 tasks.withType(JavaCompile).configureEach {
     options.fork = true
 }
@@ -32,4 +27,9 @@ tasks.withType(JavaCompile).configureEach {
 project.afterEvaluate {
     nativeCompile.enabled = false
     testNativeImage.enabled = false
+}
+
+dependencies {
+    testRuntimeOnly mnSerde.micronaut.serde.jackson
+    runtimeOnly mn.snakeyaml
 }

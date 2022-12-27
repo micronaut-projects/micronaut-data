@@ -4,6 +4,7 @@ import io.micronaut.core.annotation.NonNull
 import io.micronaut.data.annotation.event.*
 import io.micronaut.data.event.EntityEventContext
 import io.micronaut.data.event.EntityEventListener
+import io.micronaut.data.model.PersistentEntity
 import io.micronaut.data.model.runtime.RuntimePersistentEntity
 import io.micronaut.data.tck.entities.DomainEvents
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
@@ -34,8 +35,8 @@ class EntityEventRegistrySpec extends Specification {
     @Unroll
     void "test supports method for event type #eventType"() {
         given:
-        def eventTest1 = RuntimePersistentEntity.of(DomainEvents)
-        def eventLess = RuntimePersistentEntity.of(EventLess)
+        def eventTest1 = PersistentEntity.of(DomainEvents)
+        def eventLess = PersistentEntity.of(EventLess)
 
         expect:
         eventRegistry != null
@@ -49,7 +50,7 @@ class EntityEventRegistrySpec extends Specification {
     void "test fire pre persist event"() {
         given:
         def entity = new DomainEvents()
-        def mockEvent = new DefaultEntityEventContext(RuntimePersistentEntity.of(DomainEvents), entity)
+        def mockEvent = new DefaultEntityEventContext(PersistentEntity.of(DomainEvents), entity)
 
         when:
         eventRegistry.prePersist(mockEvent)
@@ -84,7 +85,7 @@ class EntityEventRegistrySpec extends Specification {
     void "test fire pre update event"() {
         given:
         def entity = new DomainEvents()
-        def mockEvent = new DefaultEntityEventContext(RuntimePersistentEntity.of(DomainEvents), entity)
+        def mockEvent = new DefaultEntityEventContext(PersistentEntity.of(DomainEvents), entity)
 
         when:
         eventRegistry.preUpdate(mockEvent)
@@ -112,7 +113,7 @@ class EntityEventRegistrySpec extends Specification {
     void "test fire pre remove event"() {
         given:
         def entity = new DomainEvents()
-        def mockEvent = new DefaultEntityEventContext(RuntimePersistentEntity.of(DomainEvents), entity)
+        def mockEvent = new DefaultEntityEventContext(PersistentEntity.of(DomainEvents), entity)
 
         when:
         eventRegistry.preRemove(mockEvent)
@@ -140,7 +141,7 @@ class EntityEventRegistrySpec extends Specification {
     void "test fire post load event"() {
         given:
         def entity = new DomainEvents()
-        def mockEvent = new DefaultEntityEventContext(RuntimePersistentEntity.of(DomainEvents), entity)
+        def mockEvent = new DefaultEntityEventContext(PersistentEntity.of(DomainEvents), entity)
 
         when:
         eventRegistry.postLoad(mockEvent)
@@ -165,7 +166,7 @@ class EntityEventRegistrySpec extends Specification {
     void "test fire post update event"() {
         given:
         def entity = new DomainEvents()
-        def mockEvent = new DefaultEntityEventContext(RuntimePersistentEntity.of(DomainEvents), entity)
+        def mockEvent = new DefaultEntityEventContext(PersistentEntity.of(DomainEvents), entity)
 
 
         when:
@@ -191,7 +192,7 @@ class EntityEventRegistrySpec extends Specification {
     void "test fire post remove event"() {
         given:
         def entity = new DomainEvents()
-        def mockEvent = new DefaultEntityEventContext(RuntimePersistentEntity.of(DomainEvents), entity)
+        def mockEvent = new DefaultEntityEventContext(PersistentEntity.of(DomainEvents), entity)
 
         when:
         eventRegistry.postRemove(mockEvent)
@@ -216,7 +217,7 @@ class EntityEventRegistrySpec extends Specification {
     void "test fire post persist event"() {
         given:
         def entity = new DomainEvents()
-        def mockEvent = new DefaultEntityEventContext(RuntimePersistentEntity.of(DomainEvents), entity)
+        def mockEvent = new DefaultEntityEventContext(PersistentEntity.of(DomainEvents), entity)
 
         when:
         eventRegistry.postPersist(mockEvent)

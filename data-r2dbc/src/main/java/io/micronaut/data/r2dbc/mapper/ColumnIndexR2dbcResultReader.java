@@ -39,7 +39,7 @@ import java.util.Date;
  * @since 1.0.0
  */
 public class ColumnIndexR2dbcResultReader implements ResultReader<Row, Integer> {
-    private final ConversionService<?> conversionService;
+    private final ConversionService conversionService;
 
     public ColumnIndexR2dbcResultReader() {
         this(null);
@@ -51,13 +51,13 @@ public class ColumnIndexR2dbcResultReader implements ResultReader<Row, Integer> 
      * @param conversionService The data conversion service
      * @since 3.1
      */
-    public ColumnIndexR2dbcResultReader(DataConversionService<?> conversionService) {
+    public ColumnIndexR2dbcResultReader(DataConversionService conversionService) {
         // Backwards compatibility should be removed in the next version
         this.conversionService = conversionService == null ? ConversionService.SHARED : conversionService;
     }
 
     @Override
-    public ConversionService<?> getConversionService() {
+    public ConversionService getConversionService() {
         return conversionService;
     }
 

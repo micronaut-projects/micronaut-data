@@ -287,9 +287,7 @@ public interface QueryModel extends Criteria {
      * @return The query
      */
     @NonNull
-    default JoinPath join(String path, @NonNull Join.Type joinType, @Nullable String alias) {
-        return join(path, joinType, alias);
-    }
+    JoinPath join(String path, @NonNull Join.Type joinType, @Nullable String alias);
 
     /**
      * Join on the given association.
@@ -1385,6 +1383,9 @@ public interface QueryModel extends Criteria {
             this.value = value;
         }
 
+        /**
+         * @return the literal value
+         */
         public Object getValue() {
             return value;
         }
@@ -1435,6 +1436,10 @@ public interface QueryModel extends Criteria {
             return this;
         }
 
+        /**
+         * Sets the alias.
+         * @param alias the alias
+         */
         public void setAlias(String alias) {
             this.alias = alias;
         }

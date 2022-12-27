@@ -4,16 +4,12 @@ plugins {
     id "io.micronaut.build.internal.data-example"
 }
 
-repositories {
-    mavenCentral()
-}
-
 application {
     mainClass = "example.Application"
 }
 
 micronaut {
-    version micronautVersion
+    version libs.versions.micronaut.asProvider().get()
     runtime "netty"
     testRuntime "junit5"
 }

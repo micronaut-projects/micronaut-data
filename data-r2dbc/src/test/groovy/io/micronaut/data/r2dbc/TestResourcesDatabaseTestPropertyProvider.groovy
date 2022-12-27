@@ -46,22 +46,28 @@ trait TestResourcesDatabaseTestPropertyProvider implements TestPropertyProvider 
 
     Map<String, String> getDataSourceProperties(String dataSourceName) {
         def prefix = 'r2dbc.datasources.' + dataSourceName
+        def dialect = dialect()
         def options = [
                 'micronaut.test.resources.scope': dbType(),
                 (prefix + '.db-type')         : dbType(),
                 (prefix + '.schema-generate') : schemaGenerate(),
-                (prefix + '.dialect')         : dialect(),
+                (prefix + '.dialect')         : dialect,
                 (prefix + '.packages')        : packages(),
                 (prefix + '.connectTimeout')  : Duration.ofMinutes(1).toString(),
                 (prefix + '.statementTimeout'): Duration.ofMinutes(1).toString(),
                 (prefix + '.lockTimeout')     : Duration.ofMinutes(1).toString()
         ] as Map<String, String>
-        if (dialect() == Dialect.H2) {
+        if (dialect == Dialect.H2) {
             options += [
                     (prefix + '.options.DB_CLOSE_DELAY')      : "10",
                     (prefix + '.options.DEFAULT_LOCK_TIMEOUT'): "10000",
                     (prefix + '.options.protocol')            : "mem"
             ]
+        }
+        if (dialect == Dialect.SQL_SERVER) {
+            // note: we use a Boolean which is in conflict with the return type of the method
+            // but that's the only thing which works
+            options += ['test-resources.containers.mssql.accept-license': true]
         }
 // TODO
 //        if (usePool()) {

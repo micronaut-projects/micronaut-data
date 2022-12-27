@@ -36,38 +36,6 @@ import java.util.Objects;
  */
 public class DefaultTransactionDefinition implements TransactionDefinition, Serializable {
 
-    /**
-     * Prefix for the propagation constants defined in TransactionDefinition.
-     *
-     * @deprecated not used field will be removed in the future major version
-     */
-    @Deprecated
-    public static final String PREFIX_PROPAGATION = "PROPAGATION_";
-
-    /**
-     * Prefix for the isolation constants defined in TransactionDefinition.
-     *
-     * @deprecated not used field will be removed in the future major version
-     */
-    @Deprecated
-    public static final String PREFIX_ISOLATION = "ISOLATION_";
-
-    /**
-     *  Prefix for transaction timeout values in description strings.
-     *
-     * @deprecated not used field will be removed in the future major version
-     */
-    @Deprecated
-    public static final String PREFIX_TIMEOUT = "timeout_";
-
-    /**
-     * Marker for read-only transactions in description strings.
-     *
-     * @deprecated not used field will be removed in the future major version
-     */
-    @Deprecated
-    public static final String READ_ONLY_MARKER = "readOnly";
-
     private Propagation propagationBehavior = Propagation.REQUIRED;
 
     private Isolation isolationLevel = Isolation.DEFAULT;

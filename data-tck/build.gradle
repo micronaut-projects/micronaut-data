@@ -3,7 +3,7 @@ plugins {
 }
 
 dependencies {
-    implementation platform(mn.micronaut.bom)
+    implementation platform(mn.micronaut.core.bom)
 
     annotationProcessor mn.micronaut.inject.java
     annotationProcessor projects.dataProcessor
@@ -12,10 +12,10 @@ dependencies {
     implementation mn.micronaut.http.server.netty
     implementation projects.dataModel
     implementation projects.dataJdbc
-    implementation libs.rxjava2
+    implementation mnRxjava2.rxjava2
     implementation libs.reactor
-    implementation mn.micronaut.test.spock
-    implementation mn.micronaut.test.core
+    implementation mnTest.micronaut.test.spock
+    implementation mnTest.micronaut.test.core
     implementation mn.jackson.databind
     implementation libs.groovy.dateutil
     implementation libs.javax.persistence.api

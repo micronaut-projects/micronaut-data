@@ -57,7 +57,7 @@ public abstract class AbstractRepositoryOperations implements ApplicationContext
     protected final EntityEventListener<Object> entityEventRegistry;
     protected final DateTimeProvider dateTimeProvider;
     protected final RuntimeEntityRegistry runtimeEntityRegistry;
-    protected final DataConversionService<?> conversionService;
+    protected final DataConversionService conversionService;
     protected final AttributeConverterRegistry attributeConverterRegistry;
     private final Map<Class, RuntimePersistentProperty> idReaders = new ConcurrentHashMap<>(10);
 
@@ -74,7 +74,7 @@ public abstract class AbstractRepositoryOperations implements ApplicationContext
             List<MediaTypeCodec> codecs,
             DateTimeProvider<Object> dateTimeProvider,
             RuntimeEntityRegistry runtimeEntityRegistry,
-            DataConversionService<?> conversionService,
+            DataConversionService conversionService,
             AttributeConverterRegistry attributeConverterRegistry) {
         this.dateTimeProvider = dateTimeProvider;
         this.runtimeEntityRegistry = runtimeEntityRegistry;
@@ -87,7 +87,7 @@ public abstract class AbstractRepositoryOperations implements ApplicationContext
     /**
      * @return the conversion service
      */
-    public DataConversionService<?> getConversionService() {
+    public DataConversionService getConversionService() {
         return conversionService;
     }
 

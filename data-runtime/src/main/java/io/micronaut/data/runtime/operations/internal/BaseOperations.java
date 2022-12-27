@@ -46,11 +46,11 @@ abstract class BaseOperations<T, Exc extends Exception> {
 
     protected final EntityEventListener<Object> entityEventListener;
     protected final RuntimePersistentEntity<T> persistentEntity;
-    protected final ConversionService<?> conversionService;
+    protected final ConversionService conversionService;
 
     BaseOperations(EntityEventListener<Object> entityEventListener,
                    RuntimePersistentEntity<T> persistentEntity,
-                   ConversionService<?> conversionService) {
+                   ConversionService conversionService) {
         this.entityEventListener = entityEventListener;
         this.persistentEntity = persistentEntity;
         this.conversionService = conversionService;

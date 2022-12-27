@@ -38,7 +38,7 @@ public class SqlDTOMapper<T, S, R> extends DTOMapper<T, S, R> implements SqlType
      */
     public SqlDTOMapper(RuntimePersistentEntity<T> persistentEntity,
                         ResultReader<S, String> resultReader,
-                        DataConversionService<?> conversionService) {
+                        DataConversionService conversionService) {
         this(persistentEntity, resultReader, null, conversionService);
     }
 
@@ -53,7 +53,7 @@ public class SqlDTOMapper<T, S, R> extends DTOMapper<T, S, R> implements SqlType
     public SqlDTOMapper(RuntimePersistentEntity<T> persistentEntity,
                         ResultReader<S, String> resultReader,
                         MediaTypeCodec jsonCodec,
-                        DataConversionService<?> conversionService) {
+                        DataConversionService conversionService) {
         super(persistentEntity, resultReader, jsonCodec, conversionService);
     }
 
@@ -70,7 +70,7 @@ public class SqlDTOMapper<T, S, R> extends DTOMapper<T, S, R> implements SqlType
                         RuntimePersistentEntity<?> dtoEntity,
                         ResultReader<S, String> resultReader,
                         MediaTypeCodec jsonCodec,
-                        DataConversionService<?> conversionService) {
+                        DataConversionService conversionService) {
         super(persistentEntity, dtoEntity, resultReader, jsonCodec, conversionService);
     }
 

@@ -45,14 +45,14 @@ import java.util.ListIterator;
 @Internal
 abstract class AbstractCascadeOperations {
 
-    private final ConversionService<?> conversionService;
+    private final ConversionService conversionService;
 
     /**
      * Default constructor.
      *
      * @param conversionService The conversion service.
      */
-    protected AbstractCascadeOperations(ConversionService<?> conversionService) {
+    protected AbstractCascadeOperations(ConversionService conversionService) {
         this.conversionService = conversionService;
     }
 

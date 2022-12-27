@@ -55,18 +55,7 @@ import java.util.function.Supplier;
 public class ExecutorReactiveOperations implements ReactiveRepositoryOperations {
 
     private final ExecutorAsyncOperations asyncOperations;
-    private final ConversionService<?> dataConversionService;
-
-    /**
-     * Default constructor.
-     *
-     * @param datastore The target operations
-     * @param executor  The executor to use.
-     */
-    @Deprecated
-    public ExecutorReactiveOperations(@NonNull RepositoryOperations datastore, @NonNull Executor executor) {
-        this(datastore, executor, null);
-    }
+    private final ConversionService dataConversionService;
 
     /**
      * Default constructor.
@@ -75,18 +64,8 @@ public class ExecutorReactiveOperations implements ReactiveRepositoryOperations 
      * @param executor              The executor to use.
      * @param dataConversionService The data conversion service
      */
-    public ExecutorReactiveOperations(@NonNull RepositoryOperations datastore, @NonNull Executor executor, DataConversionService<?> dataConversionService) {
+    public ExecutorReactiveOperations(@NonNull RepositoryOperations datastore, @NonNull Executor executor, DataConversionService dataConversionService) {
         this(new ExecutorAsyncOperations(datastore, executor), dataConversionService);
-    }
-
-    /**
-     * Default constructor.
-     *
-     * @param asyncOperations The instance operations instance
-     */
-    @Deprecated
-    public ExecutorReactiveOperations(@NonNull ExecutorAsyncOperations asyncOperations) {
-        this(asyncOperations, null);
     }
 
     /**
@@ -239,5 +218,10 @@ public class ExecutorReactiveOperations implements ReactiveRepositoryOperations 
         } else {
             return number;
         }
+    }
+
+    @Override
+    public ConversionService getConversionService() {
+        return dataConversionService;
     }
 }

@@ -12,7 +12,7 @@ application {
 }
 
 micronaut {
-    version micronautVersion
+    version libs.versions.micronaut.asProvider().get()
     runtime "netty"
     testRuntime "junit5"
 }
@@ -23,12 +23,15 @@ dependencies {
 
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-reactive"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-reactor"
     implementation "io.micronaut:micronaut-http-client"
     implementation projects.dataHibernateReactive
     implementation "io.micronaut.reactor:micronaut-reactor"
+    implementation mnKotlin.micronaut.kotlin.runtime
 
     runtimeOnly "ch.qos.logback:logback-classic"
     runtimeOnly libs.drivers.vertx.pg
 
+    testImplementation platform(libs.testcontainers.bom)
     testImplementation libs.testcontainers.postgresql
 }

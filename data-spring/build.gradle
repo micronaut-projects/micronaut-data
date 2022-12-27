@@ -9,15 +9,15 @@ dependencies {
     api libs.spring.data.commons
 
     implementation projects.dataRuntime
-    implementation libs.spring.jdbc
-    implementation mn.micronaut.spring
-    implementation (libs.micronaut.sql.hibernate.jpa.spring) {
+    implementation mnSpring.spring.jdbc
+    implementation mnSpring.micronaut.spring
+    implementation (mnSql.micronaut.hibernate.jpa.spring) {
         exclude group: 'io.micronaut.data'
     }
 
     compileOnly mn.micronaut.http
     compileOnly libs.spring.data.jpa
-    compileOnly libs.spring.orm
+    compileOnly mnSpring.spring.orm
     compileOnly (libs.hibernate.core) {
         exclude group: 'org.jboss.spec.javax.transaction', module: 'jboss-transaction-api_1.2_spec'
         exclude group: 'org.javassist', module: 'javassist'
@@ -33,8 +33,7 @@ dependencies {
     testImplementation projects.dataTck
     testImplementation libs.spring.data.jpa
 
-    testRuntimeOnly libs.h2
-    testRuntimeOnly libs.spring.orm
-    testRuntimeOnly libs.micronaut.sql.jdbc.tomcat
+    testRuntimeOnly mnSql.h2
+    testRuntimeOnly mnSpring.spring.orm
+    testRuntimeOnly mnSql.micronaut.jdbc.tomcat
 }
-

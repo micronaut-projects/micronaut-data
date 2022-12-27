@@ -1,5 +1,3 @@
-import io.micronaut.testresources.buildtools.KnownModules
-
 plugins {
     id "org.jetbrains.kotlin.jvm"
     id "org.jetbrains.kotlin.kapt"
@@ -15,12 +13,12 @@ application {
 
 micronaut {
     project.ext.micronautVersion
-    version project.ext.micronautVersion
+    version libs.versions.micronaut.asProvider().get()
     runtime "netty"
     testRuntime "junit5"
-
     testResources {
         clientTimeout = 300
+        version = libs.versions.micronaut.testresources.get()
     }
 }
 
@@ -31,11 +29,14 @@ dependencies {
     implementation "io.micronaut.sql:micronaut-jdbc-hikari"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-reactive"
-    implementation libs.micronaut.serde.support
+    implementation mnSerde.micronaut.serde.support
+    implementation mnKotlin.micronaut.kotlin.runtime
     implementation "org.flywaydb:flyway-mysql"
 
     runtimeOnly libs.drivers.r2dbc.mariadb
     runtimeOnly libs.drivers.jdbc.mariadb
 
     testImplementation "io.micronaut:micronaut-http-client"
+    compileOnly mnSerde.micronaut.serde.api
 }
+

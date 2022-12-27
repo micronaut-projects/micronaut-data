@@ -40,7 +40,7 @@ import java.util.Date;
  * @since 1.0.0
  */
 public final class ColumnNameResultSetReader implements ResultReader<ResultSet, String> {
-    private final ConversionService<?> conversionService;
+    private final ConversionService conversionService;
 
     public ColumnNameResultSetReader() {
         this(null);
@@ -52,13 +52,13 @@ public final class ColumnNameResultSetReader implements ResultReader<ResultSet, 
      * @param conversionService The data conversion service
      * @since 3.1
      */
-    public ColumnNameResultSetReader(DataConversionService<?> conversionService) {
+    public ColumnNameResultSetReader(DataConversionService conversionService) {
         // Backwards compatibility should be removed in the next version
         this.conversionService = conversionService == null ? ConversionService.SHARED : conversionService;
     }
 
     @Override
-    public ConversionService<?> getConversionService() {
+    public ConversionService getConversionService() {
         return conversionService;
     }
 

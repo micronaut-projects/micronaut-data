@@ -80,7 +80,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
     private final Map<String, JoinPath> joinPaths;
     private final String startingPrefix;
     private final MediaTypeCodec jsonCodec;
-    private final DataConversionService<?> conversionService;
+    private final DataConversionService conversionService;
     private final BiFunction<RuntimePersistentEntity<Object>, Object, Object> eventListener;
     private boolean callNext = true;
 
@@ -97,7 +97,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
             String prefix,
             @NonNull RuntimePersistentEntity<R> entity,
             @NonNull ResultReader<RS, String> resultReader,
-            @Nullable MediaTypeCodec jsonCodec, DataConversionService<?> conversionService) {
+            @Nullable MediaTypeCodec jsonCodec, DataConversionService conversionService) {
         this(entity, resultReader, Collections.emptySet(), prefix, jsonCodec, conversionService, null);
     }
 
@@ -114,7 +114,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
             @NonNull RuntimePersistentEntity<R> entity,
             @NonNull ResultReader<RS, String> resultReader,
             @Nullable Set<JoinPath> joinPaths,
-            @Nullable MediaTypeCodec jsonCodec, DataConversionService<?> conversionService) {
+            @Nullable MediaTypeCodec jsonCodec, DataConversionService conversionService) {
         this(entity, resultReader, joinPaths, null, jsonCodec, conversionService, null);
     }
 
@@ -133,7 +133,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
             @NonNull ResultReader<RS, String> resultReader,
             @Nullable Set<JoinPath> joinPaths,
             @Nullable MediaTypeCodec jsonCodec,
-            @Nullable BiFunction<RuntimePersistentEntity<Object>, Object, Object> loadListener, DataConversionService<?> conversionService) {
+            @Nullable BiFunction<RuntimePersistentEntity<Object>, Object, Object> loadListener, DataConversionService conversionService) {
         this(entity, resultReader, joinPaths, null, jsonCodec, conversionService, loadListener);
     }
 
@@ -151,7 +151,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
             @Nullable Set<JoinPath> joinPaths,
             String startingPrefix,
             @Nullable MediaTypeCodec jsonCodec,
-            DataConversionService<?> conversionService, @Nullable BiFunction<RuntimePersistentEntity<Object>, Object, Object> eventListener) {
+            DataConversionService conversionService, @Nullable BiFunction<RuntimePersistentEntity<Object>, Object, Object> eventListener) {
         this.conversionService = conversionService;
         ArgumentUtils.requireNonNull("entity", entity);
         ArgumentUtils.requireNonNull("resultReader", resultReader);
@@ -171,7 +171,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
     }
 
     @Override
-    public DataConversionService<?> getConversionService() {
+    public DataConversionService getConversionService() {
         return conversionService;
     }
 

@@ -45,7 +45,7 @@ public class DTOMapper<T, S, R> implements BeanIntrospectionMapper<S, R> {
     private final RuntimePersistentEntity<?> dtoEntity;
     private final ResultReader<S, String> resultReader;
     private final @Nullable MediaTypeCodec jsonCodec;
-    private final DataConversionService<?> conversionService;
+    private final DataConversionService conversionService;
 
     /**
      * Default constructor.
@@ -55,7 +55,7 @@ public class DTOMapper<T, S, R> implements BeanIntrospectionMapper<S, R> {
      */
     public DTOMapper(RuntimePersistentEntity<T> persistentEntity,
                      ResultReader<S, String> resultReader,
-                     DataConversionService<?> conversionService) {
+                     DataConversionService conversionService) {
         this(persistentEntity, resultReader, null, conversionService);
     }
 
@@ -69,7 +69,7 @@ public class DTOMapper<T, S, R> implements BeanIntrospectionMapper<S, R> {
     public DTOMapper(RuntimePersistentEntity<T> persistentEntity,
                      ResultReader<S, String> resultReader,
                      @Nullable MediaTypeCodec jsonCodec,
-                     DataConversionService<?> conversionService) {
+                     DataConversionService conversionService) {
         this(persistentEntity, persistentEntity, resultReader, jsonCodec, conversionService);
     }
 
@@ -85,7 +85,7 @@ public class DTOMapper<T, S, R> implements BeanIntrospectionMapper<S, R> {
                      RuntimePersistentEntity<?> dtoEntity,
                      ResultReader<S, String> resultReader,
                      @Nullable MediaTypeCodec jsonCodec,
-                     DataConversionService<?> conversionService) {
+                     DataConversionService conversionService) {
         this.conversionService = conversionService;
         ArgumentUtils.requireNonNull("persistentEntity", persistentEntity);
         ArgumentUtils.requireNonNull("resultReader", resultReader);
@@ -96,7 +96,7 @@ public class DTOMapper<T, S, R> implements BeanIntrospectionMapper<S, R> {
     }
 
     @Override
-    public DataConversionService<?> getConversionService() {
+    public DataConversionService getConversionService() {
         return conversionService;
     }
 

@@ -1,7 +1,7 @@
 plugins {
     id "java"
     id "io.micronaut.application"
-    id "io.micronaut.build.internal.data-example-java11"
+    id "io.micronaut.build.internal.data-example"
 }
 
 application {
@@ -9,7 +9,7 @@ application {
 }
 
 micronaut {
-    version micronautVersion
+    version libs.versions.micronaut.asProvider().get()
     runtime "netty"
     testRuntime "junit5"
 }
@@ -24,5 +24,6 @@ dependencies {
     runtimeOnly "io.micronaut.sql:micronaut-jdbc-tomcat"
     runtimeOnly libs.drivers.jdbc.postgresql
 
+    testImplementation platform(libs.testcontainers.bom)
     testImplementation libs.testcontainers.postgresql
 }

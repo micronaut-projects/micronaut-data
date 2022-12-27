@@ -10,9 +10,13 @@ application {
 }
 
 micronaut {
-    version project.ext.micronautVersion
+    version libs.versions.micronaut.asProvider().get()
     runtime "netty"
     testRuntime "junit5"
+    testResources {
+        clientTimeout = 300
+        version = libs.versions.micronaut.testresources.get()
+    }
 }
 
 dependencies {
@@ -21,9 +25,12 @@ dependencies {
     implementation("io.micronaut.data:micronaut-data-r2dbc")
     implementation("io.micronaut.flyway:micronaut-flyway")
     implementation("io.micronaut.sql:micronaut-jdbc-hikari")
+    implementation mnSerde.micronaut.serde.jackson
 
     runtimeOnly libs.drivers.r2dbc.postgresql
     runtimeOnly libs.drivers.jdbc.postgresql
+    runtimeOnly mn.snakeyaml
+    testRuntimeOnly mnSerde.micronaut.serde.jackson
 
     testImplementation "io.micronaut:micronaut-http-client"
 }

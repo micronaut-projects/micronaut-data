@@ -20,6 +20,7 @@ import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
+import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.annotation.QueryHint;
 import io.micronaut.data.hibernate.operations.AbstractHibernateOperations;
@@ -88,7 +89,7 @@ final class DefaultHibernateReactiveRepositoryOperations extends AbstractHiberna
 
     DefaultHibernateReactiveRepositoryOperations(SessionFactory sessionFactory,
                                                  RuntimeEntityRegistry runtimeEntityRegistry,
-                                                 DataConversionService<?> dataConversionService,
+                                                 DataConversionService dataConversionService,
                                                  @Parameter String name) {
         super(runtimeEntityRegistry, dataConversionService);
         this.sessionFactory = sessionFactory;
@@ -525,6 +526,11 @@ final class DefaultHibernateReactiveRepositoryOperations extends AbstractHiberna
             }
             return Mono.error(new TransactionSystemException("Error invoking doInTransaction handler: " + e.getMessage(), e));
         }
+    }
+
+    @Override
+    public ConversionService getConversionService() {
+        return dataConversionService;
     }
 
     private final class ListResultCollector<R> extends ResultCollector<R> {

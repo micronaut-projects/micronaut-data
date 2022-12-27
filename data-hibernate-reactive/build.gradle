@@ -2,34 +2,27 @@ plugins {
     id "io.micronaut.build.internal.data-module"
 }
 
-micronautBuild {
-    sourceCompatibility = "11"
-    targetCompatibility = "11"
-    binaryCompatibility {
-        enabled.set(false)
-    }
-}
-
 dependencies {
     annotationProcessor mn.micronaut.inject.java
     annotationProcessor mn.micronaut.graal
 
     api projects.dataHibernateJpa
-    api (libs.micronaut.sql.hibernate.reactive) {
+    api (mnSql.micronaut.hibernate.reactive) {
         exclude group: 'io.smallrye.reactive', module: 'mutiny'
     }
 
-    implementation libs.micronaut.reactor
+    implementation mnReactor.micronaut.reactor
 
     testAnnotationProcessor mn.micronaut.inject.java
     testAnnotationProcessor projects.dataProcessor
 
     testImplementation mn.micronaut.inject.groovy
     testImplementation projects.dataProcessor
-    testImplementation libs.micronaut.rxjava2
-    testImplementation libs.micronaut.reactor
+    testImplementation mnRxjava2.micronaut.rxjava2
+    testImplementation mnReactor.micronaut.reactor
     testImplementation projects.dataTck
     testImplementation libs.groovy.sql
+    testImplementation platform(libs.testcontainers.bom)
     testImplementation libs.testcontainers.postgresql
 
     testRuntimeOnly libs.drivers.vertx.pg

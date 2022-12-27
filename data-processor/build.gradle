@@ -6,19 +6,16 @@ dependencies {
 	api projects.dataModel
 	api libs.jakarta.persistence.api
 
-	compileOnly mn.micronaut.inject
+	compileOnly mn.micronaut.core.processor
 
 	testAnnotationProcessor mn.micronaut.inject.java
 
-	testImplementation libs.micronaut.reactor
+	testImplementation mnReactor.micronaut.reactor
 	testImplementation mn.micronaut.inject.groovy
 	testImplementation mn.micronaut.inject.java.test
 	testImplementation libs.javax.persistence.api
 	testImplementation libs.javax.transaction.api
 	testImplementation libs.jakarta.transaction.api
-	if (!JavaVersion.current().isJava9Compatible()) {
-		testImplementation files(org.gradle.internal.jvm.Jvm.current().toolsJar)
-	}
 	testImplementation libs.spring.data.jpa
 	testImplementation projects.dataTck
 }

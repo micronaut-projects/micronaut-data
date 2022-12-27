@@ -1,18 +1,37 @@
 repositories {
     mavenCentral()
+    maven { url "https://s01.oss.sonatype.org/content/repositories/snapshots/" }
+}
+
+configurations.all {
+    resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
 }
 
 configurations {
     all {
-        resolutionStrategy.eachDependency { DependencyResolveDetails details ->
-            if (details.requested.name == 'groovy-all') {
-                throw new GradleException("Dependency 'groovy-all' not allowed!")
+        resolutionStrategy {
+            dependencySubstitution {
+                substitute(module("org.codehaus.groovy:groovy"))
+                        .using(module("org.apache.groovy:groovy:4.0.5"))
             }
-//            if (details.requested.group == 'io.micronaut') {
-//                details.useVersion libs.versions.micronaut.get()
-//            }
-            if (details.requested.group == 'io.micronaut.test') {
-                details.useVersion libs.versions.micronaut.test.get()
+            eachDependency { DependencyResolveDetails details ->
+                if (details.requested.name == 'groovy-all') {
+                    throw new GradleException("Dependency 'groovy-all' not allowed!")
+                }
+                
+//                if (details.requested.group == 'io.micronaut') {
+//                    if (libs.versions.micronaut instanceof org.gradle.api.provider.Provider) {
+//                        details.useVersion libs.versions.micronaut.get()
+//                    } else {
+//                        details.useVersion libs.versions.micronaut.asProvider().get()
+//                    }
+//                }
+                if (details.requested.group == 'io.micronaut.test') {
+                    details.useVersion libs.versions.micronaut.test.get()
+                }
+                if (details.requested.group == 'io.micronaut.multitenancy') {
+                    details.useVersion libs.versions.micronaut.multitenancy.get()
+                }
             }
         }
     }

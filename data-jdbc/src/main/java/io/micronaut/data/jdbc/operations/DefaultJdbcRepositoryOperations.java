@@ -90,7 +90,7 @@ import jakarta.inject.Named;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.PreDestroy;
+import jakarta.annotation.PreDestroy;
 import javax.sql.DataSource;
 import java.io.Serializable;
 import java.sql.Connection;
@@ -175,7 +175,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                                               List<MediaTypeCodec> codecs,
                                               @NonNull DateTimeProvider dateTimeProvider,
                                               RuntimeEntityRegistry entityRegistry,
-                                              DataConversionService<?> conversionService,
+                                              DataConversionService conversionService,
                                               AttributeConverterRegistry attributeConverterRegistry,
                                               @Nullable
                                               SchemaTenantResolver schemaTenantResolver,

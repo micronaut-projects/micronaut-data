@@ -32,7 +32,7 @@ import io.micronaut.transaction.exceptions.*;
  * @author Juergen Hoeller
  * @since 1.1
  * @see TransactionStatus
- * @see TransactionDefinition#PROPAGATION_NESTED
+ * @see TransactionDefinition.Propagation#NESTED
  * @see java.sql.Savepoint
  */
 public interface SavepointManager {

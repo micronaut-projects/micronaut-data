@@ -17,7 +17,7 @@ dependencies {
 	compileOnly mn.micronaut.http
 	compileOnly libs.jakarta.persistence.api
 	compileOnly libs.javax.persistence.api
-    compileOnly mn.micronaut.multitenancy
+    compileOnly mnMultitenancy.micronaut.multitenancy
 
 	testAnnotationProcessor mn.micronaut.inject.java
 	testAnnotationProcessor projects.dataProcessor
@@ -27,13 +27,10 @@ dependencies {
 	testImplementation projects.dataProcessor
 	testImplementation mn.micronaut.inject.groovy
 	testImplementation mn.micronaut.http
-	testImplementation mn.micronaut.test.junit5
+	testImplementation mnTest.micronaut.test.junit5
 	testImplementation projects.dataTck
-}
 
-dependencies {
     testRuntimeOnly libs.jupiter.engine
-
     kaptTest mn.micronaut.inject.java
     kaptTest projects.dataProcessor
     testAnnotationProcessor mn.micronaut.inject.java

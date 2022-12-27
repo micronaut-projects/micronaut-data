@@ -15,7 +15,10 @@
  */
 package io.micronaut.data.runtime.convert
 
-
+import io.micronaut.context.BeanContext
+import io.micronaut.context.DefaultBeanContext
+import io.micronaut.core.convert.DefaultMutableConversionService
+import io.micronaut.core.convert.MutableConversionService
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -31,8 +34,13 @@ class DataConversionServiceSpec extends Specification {
     @Unroll
     def "test date conversion #obj to #targetType"() {
         given:
-            DataConversionService<?> conversionService = new DataConversionServiceFactory().build()
-
+            BeanContext mockBeanContext = new DefaultBeanContext() {
+                @Override
+                MutableConversionService getConversionService() {
+                    return new DefaultMutableConversionService()
+                }
+            }
+            DataConversionService conversionService = new DataConversionServiceFactory().build(mockBeanContext)
         when:
             def expectedValue = conversionService.convert(obj, targetType)
         then:

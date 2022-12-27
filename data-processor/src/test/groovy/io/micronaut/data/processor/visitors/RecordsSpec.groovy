@@ -1,11 +1,22 @@
 package io.micronaut.data.processor.visitors
 
 import io.micronaut.data.intercept.annotation.DataMethod
-import io.micronaut.data.intercept.reactive.*
+import io.micronaut.data.intercept.reactive.CountReactiveInterceptor
+import io.micronaut.data.intercept.reactive.DeleteAllReactiveInterceptor
+import io.micronaut.data.intercept.reactive.ExistsByReactiveInterceptor
+import io.micronaut.data.intercept.reactive.FindAllReactiveInterceptor
+import io.micronaut.data.intercept.reactive.FindByIdReactiveInterceptor
+import io.micronaut.data.intercept.reactive.FindOneReactiveInterceptor
+import io.micronaut.data.intercept.reactive.FindPageReactiveInterceptor
+import io.micronaut.data.intercept.reactive.FindSliceReactiveInterceptor
+import io.micronaut.data.intercept.reactive.SaveAllReactiveInterceptor
+import io.micronaut.data.intercept.reactive.SaveEntityReactiveInterceptor
+import io.micronaut.data.intercept.reactive.SaveOneReactiveInterceptor
+import io.micronaut.data.intercept.reactive.UpdateReactiveInterceptor
 import io.micronaut.data.model.DataType
+import io.micronaut.data.model.PersistentEntity
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
-import io.micronaut.data.model.runtime.RuntimePersistentEntity
 import spock.lang.IgnoreIf
 import spock.lang.Unroll
 
@@ -36,7 +47,7 @@ import io.micronaut.data.annotation.*;
 @io.micronaut.data.annotation.MappedEntity
 record Person(@Id @GeneratedValue @io.micronaut.core.annotation.Nullable Long id, String name, int age) {}
 ''')
-        def entity = RuntimePersistentEntity.of(introspection)
+        def entity = PersistentEntity.of(introspection)
         def property = entity.getPropertyByName("name")
         expect:
         property.dataType == DataType.STRING

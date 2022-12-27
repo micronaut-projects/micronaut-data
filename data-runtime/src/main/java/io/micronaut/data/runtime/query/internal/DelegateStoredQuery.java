@@ -171,12 +171,6 @@ public interface DelegateStoredQuery<E, R> extends StoredQuery<E, R> {
     }
 
     @Override
-    @Deprecated
-    default boolean hasInExpression() {
-        return getStoredQueryDelegate().hasInExpression();
-    }
-
-    @Override
     default boolean isRawQuery() {
         return getStoredQueryDelegate().isRawQuery();
     }

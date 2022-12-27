@@ -6,16 +6,12 @@ plugins {
     id "io.micronaut.build.internal.data-kotlin-example"
 }
 
-repositories {
-    mavenCentral()
-}
-
 application {
     mainClass = "example.ApplicationKt"
 }
 
 micronaut {
-    version project.ext.micronautVersion
+    version libs.versions.micronaut.asProvider().get()
     runtime "netty"
     testRuntime "junit5"
 }
@@ -29,6 +25,7 @@ dependencies {
     implementation libs.jakarta.persistence.api
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-reactive"
+    implementation mnKotlin.micronaut.kotlin.runtime
 
     runtimeOnly "ch.qos.logback:logback-classic"
 

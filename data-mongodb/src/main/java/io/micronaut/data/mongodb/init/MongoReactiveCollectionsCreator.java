@@ -31,7 +31,7 @@ import io.micronaut.data.mongodb.operations.MongoDatabaseNameProvider;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;

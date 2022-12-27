@@ -1,7 +1,4 @@
 pluginManagement {
-    plugins {
-        id 'io.micronaut.build.shared.settings' version '5.3.15'
-    }
     repositories {
         gradlePluginPortal()
         mavenCentral()
@@ -9,7 +6,7 @@ pluginManagement {
 }
 
 plugins {
-    id 'io.micronaut.build.shared.settings'
+    id 'io.micronaut.build.shared.settings' version '6.1.1'
 }
 
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
@@ -17,6 +14,7 @@ enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 dependencyResolutionManagement {
     repositories {
         mavenCentral()
+        maven { url "https://s01.oss.sonatype.org/content/repositories/snapshots/" }
     }
 }
 
@@ -24,6 +22,14 @@ rootProject.name = 'data-parent'
 
 micronautBuild {
     importMicronautCatalog()
+    importMicronautCatalog("micronaut-reactor")
+    importMicronautCatalog("micronaut-rxjava2")
+    importMicronautCatalog("micronaut-r2dbc")
+    importMicronautCatalog("micronaut-spring")
+    importMicronautCatalog("micronaut-serde")
+    importMicronautCatalog("micronaut-sql")
+    importMicronautCatalog("micronaut-kotlin")
+    importMicronautCatalog("micronaut-multitenancy")
 }
 
 include 'data-bom'
@@ -40,9 +46,8 @@ include 'data-document-tck'
 
 // implementations
 include 'data-hibernate-jpa'
-if (JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_11)) {
-    include 'data-hibernate-reactive'
-}
+include 'data-hibernate-reactive'
+
 include 'data-tx-hibernate'
 include 'data-jdbc'
 include 'data-r2dbc'
@@ -58,21 +63,18 @@ include 'doc-examples:hibernate-example-java'
 include 'doc-examples:hibernate-example-groovy'
 include 'doc-examples:hibernate-example-kotlin'
 
-if (JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_11)) {
-    include 'doc-examples:hibernate-reactive-example-java'
-    include 'doc-examples:hibernate-reactive-example-kotlin'
-    include 'doc-examples:hibernate-reactive-example-groovy'
-    include 'doc-examples:hibernate-sync-and-reactive-example-java'
-}
+include 'doc-examples:hibernate-reactive-example-java'
+include 'doc-examples:hibernate-reactive-example-kotlin'
+include 'doc-examples:hibernate-reactive-example-groovy'
+include 'doc-examples:hibernate-sync-and-reactive-example-java'
 
 include 'doc-examples:example-hibernate-and-jdbc'
 
 include 'doc-examples:jdbc-example-java'
 include 'doc-examples:jdbc-example-groovy'
 include 'doc-examples:jdbc-example-kotlin'
-if (JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_15)) {
-    include 'doc-examples:jdbc-example-records-java'
-}
+include 'doc-examples:jdbc-example-records-java'
+
 include 'doc-examples:jdbc-multitenancy-datasource-example-java'
 include 'doc-examples:jdbc-multitenancy-schema-example-java'
 
@@ -88,9 +90,8 @@ include 'doc-examples:mongo-example-java'
 include 'doc-examples:mongo-example-groovy'
 include 'doc-examples:mongo-example-kotlin'
 include 'doc-examples:mongo-reactive-example-kotlin'
-if (JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_15)) {
-    include 'doc-examples:mongo-example-records-java'
-}
+include 'doc-examples:mongo-example-records-java'
+
 include 'doc-examples:mongo-multitenancy-database-example-java'
 include 'doc-examples:mongo-multitenancy-datasource-example-java'
 
