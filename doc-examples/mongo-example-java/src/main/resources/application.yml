@@ -1,8 +1,6 @@
----
 micronaut:
   application:
-    name: example
+    name: data-example
   data:
     mongodb:
       create-collections: true
-      driver-type: reactive
