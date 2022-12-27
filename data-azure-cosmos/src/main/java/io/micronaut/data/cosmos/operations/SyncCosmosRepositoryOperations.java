@@ -20,6 +20,7 @@ import io.micronaut.context.ApplicationContext;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
+import io.micronaut.core.convert.ConversionService;
 import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.model.runtime.StoredQuery;
 import io.micronaut.data.operations.async.AsyncCapableRepository;
@@ -111,5 +112,10 @@ final class SyncCosmosRepositoryOperations implements
     @Override
     public <E, R> PreparedQuery<E, R> decorate(PreparedQuery<E, R> preparedQuery) {
         return reactiveCosmosRepositoryOperations.decorate(preparedQuery);
+    }
+
+    @Override
+    public ConversionService getConversionService() {
+        return reactiveCosmosRepositoryOperations.getConversionService();
     }
 }
