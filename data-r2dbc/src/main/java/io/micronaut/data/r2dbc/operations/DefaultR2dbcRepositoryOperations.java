@@ -1214,6 +1214,9 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
 
         @Override
         protected void execute() throws RuntimeException {
+            if (QUERY_LOG.isDebugEnabled()) {
+                QUERY_LOG.debug("Executing SQL query: {}", storedQuery.getQuery());
+            }
             Statement statement = prepare(ctx.connection);
             setParameters(statement, storedQuery);
             if (hasGeneratedId) {
@@ -1300,6 +1303,9 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
 
         @Override
         protected void execute() throws RuntimeException {
+            if (QUERY_LOG.isDebugEnabled()) {
+                QUERY_LOG.debug("Executing SQL query: {}", storedQuery.getQuery());
+            }
             Statement statement;
             if (hasGeneratedId) {
                 statement = ctx.connection.createStatement(storedQuery.getQuery())

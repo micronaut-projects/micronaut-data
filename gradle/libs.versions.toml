@@ -31,7 +31,7 @@ spring = "5.3.24"
 
 mongodb = "4.7.2"
 
-vertx = "4.3.6"
+vertx = "4.3.7"
 
 # JDBC Drivers
 
