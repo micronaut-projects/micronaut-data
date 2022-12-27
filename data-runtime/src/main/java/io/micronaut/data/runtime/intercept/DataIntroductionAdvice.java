@@ -28,6 +28,7 @@ import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.exceptions.EmptyResultException;
 import io.micronaut.data.intercept.DataInterceptor;
 import io.micronaut.data.intercept.RepositoryMethodKey;
+import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.inject.InjectionPoint;
 import io.micronaut.transaction.interceptor.TxCompletionStageDataIntroductionHelper;
 import jakarta.inject.Inject;
@@ -53,7 +54,7 @@ public final class DataIntroductionAdvice implements MethodInterceptor<Object, O
     @Nullable
     private final InjectionPoint<?> injectionPoint;
 
-    private final ConversionService conversionService;
+    private final DataConversionService conversionService;
 
     /**
      * Default constructor.
@@ -67,7 +68,7 @@ public final class DataIntroductionAdvice implements MethodInterceptor<Object, O
     public DataIntroductionAdvice(@NonNull DataInterceptorResolver dataInterceptorResolver,
                                   @Nullable TxCompletionStageDataIntroductionHelper completionStageHelper,
                                   @Nullable InjectionPoint<?> injectionPoint,
-                                  ConversionService conversionService) {
+                                  DataConversionService conversionService) {
         this.dataInterceptorResolver = dataInterceptorResolver;
         this.completionStageHelper = completionStageHelper;
         this.injectionPoint = injectionPoint;

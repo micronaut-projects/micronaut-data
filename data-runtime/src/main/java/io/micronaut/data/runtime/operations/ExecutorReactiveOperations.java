@@ -219,4 +219,9 @@ public class ExecutorReactiveOperations implements ReactiveRepositoryOperations 
             return number;
         }
     }
+
+    @Override
+    public ConversionService getConversionService() {
+        return dataConversionService;
+    }
 }

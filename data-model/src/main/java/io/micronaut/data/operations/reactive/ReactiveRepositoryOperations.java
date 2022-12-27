@@ -17,6 +17,7 @@ package io.micronaut.data.operations.reactive;
 
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.async.annotation.SingleResult;
+import io.micronaut.core.convert.ConversionServiceProvider;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.runtime.*;
 import org.reactivestreams.Publisher;
@@ -29,7 +30,7 @@ import java.io.Serializable;
  * @author graemerocher
  * @since 1.0.0
  */
-public interface ReactiveRepositoryOperations {
+public interface ReactiveRepositoryOperations extends ConversionServiceProvider {
 
     /**
      * Find one by ID.
