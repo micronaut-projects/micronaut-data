@@ -1,7 +1,7 @@
 plugins {
     id "groovy"
     id "io.micronaut.application"
-    id "io.micronaut.build.internal.data-example-java11"
+    id "io.micronaut.build.internal.data-example"
 }
 
 application {
@@ -9,7 +9,7 @@ application {
 }
 
 micronaut {
-    version micronautVersion
+    version libs.versions.micronaut.asProvider().get()
     runtime "netty"
     testRuntime "spock"
 }
@@ -22,5 +22,6 @@ dependencies {
     runtimeOnly "ch.qos.logback:logback-classic"
     runtimeOnly libs.drivers.vertx.pg
 
+    testImplementation platform(libs.testcontainers.bom)
     testImplementation libs.testcontainers.postgresql
 }

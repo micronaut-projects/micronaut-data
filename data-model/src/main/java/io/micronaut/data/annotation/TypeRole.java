@@ -15,7 +15,12 @@
  */
 package io.micronaut.data.annotation;
 
-import java.lang.annotation.*;
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Inherited;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
  * A type role indicates a method element in a repository that plays a role in query execution and should
@@ -59,12 +64,6 @@ public @interface TypeRole {
      * The parameter that defines an iterable of the entity instances.
      */
     String ENTITIES = "entities";
-
-    /**
-     * The last updated property of the entity for an update operation.
-     */
-    @Deprecated
-    String LAST_UPDATED_PROPERTY = "lastUpdatedProperty";
 
     /**
      * The parameter that is used to represent a {@link io.micronaut.data.model.Slice}.

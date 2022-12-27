@@ -8,7 +8,7 @@ dependencies {
 
     api projects.dataHibernateJpa
     api libs.spring.data.jpa
-    api (libs.micronaut.sql.hibernate.jpa) {
+    api (mnSql.micronaut.hibernate.jpa) {
         exclude group: 'io.micronaut.data'
     }
 
@@ -21,9 +21,9 @@ dependencies {
     testImplementation projects.dataProcessor
     testImplementation projects.dataHibernateJpa
     testImplementation projects.dataTck
-    testRuntimeOnly libs.h2
-    testRuntimeOnly (libs.micronaut.sql.hibernate.jpa.spring) {
+    testRuntimeOnly mnSql.h2
+    testRuntimeOnly (mnSql.micronaut.hibernate.jpa.spring) {
         exclude group: 'io.micronaut.data'
     }
-    testRuntimeOnly libs.micronaut.sql.jdbc.tomcat
+    testRuntimeOnly mnSql.micronaut.jdbc.tomcat
 }

@@ -36,7 +36,7 @@ import io.micronaut.data.runtime.config.SchemaGenerate;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import io.micronaut.transaction.jdbc.DelegatingDataSource;
 
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;

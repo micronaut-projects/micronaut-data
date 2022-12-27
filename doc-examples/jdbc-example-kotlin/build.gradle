@@ -6,10 +6,6 @@ plugins {
     id "io.micronaut.build.internal.data-kotlin-example"
 }
 
-repositories {
-    mavenCentral()
-}
-
 application {
     mainClass = "example.ApplicationKt"
 }
@@ -25,7 +21,8 @@ dependencies {
 
     implementation 'io.micronaut.rxjava2:micronaut-rxjava2'
     implementation 'io.micronaut.reactor:micronaut-reactor'
-    implementation libs.micronaut.serde.support
+    implementation mnSerde.micronaut.serde.support
+    implementation mnKotlin.micronaut.kotlin.runtime
 
     implementation "io.micronaut:micronaut-http-client"
     implementation project(":data-jdbc")

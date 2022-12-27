@@ -41,12 +41,7 @@ import java.util.Date;
  */
 public final class ColumnIndexResultSetReader implements ResultReader<ResultSet, Integer> {
 
-    private final ConversionService<?> conversionService;
-
-    @Deprecated
-    public ColumnIndexResultSetReader() {
-        this(null);
-    }
+    private final ConversionService conversionService;
 
     /**
      * Constructs a new instance.
@@ -54,13 +49,13 @@ public final class ColumnIndexResultSetReader implements ResultReader<ResultSet,
      * @param conversionService The data conversion service
      * @since 3.1
      */
-    public ColumnIndexResultSetReader(DataConversionService<?> conversionService) {
+    public ColumnIndexResultSetReader(DataConversionService conversionService) {
         // Backwards compatibility should be removed in the next version
         this.conversionService = conversionService == null ? ConversionService.SHARED : conversionService;
     }
 
     @Override
-    public ConversionService<?> getConversionService() {
+    public ConversionService getConversionService() {
         return conversionService;
     }
 

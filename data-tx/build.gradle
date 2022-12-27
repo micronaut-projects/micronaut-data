@@ -12,10 +12,10 @@ dependencies {
     implementation mn.micronaut.aop
 
     compileOnly libs.reactor
-    compileOnly mn.micronaut.spring
-    compileOnly libs.micronaut.sql.jdbc
-    compileOnly libs.spring.jdbc
-//    compileOnly mn.micronaut.test.core
+    compileOnly mnSpring.micronaut.spring
+    compileOnly mnSql.micronaut.jdbc
+    compileOnly mnSpring.spring.jdbc
+//    compileOnly mnTest.micronaut.test.core
     compileOnly libs.micronaut.test.core
     compileOnly libs.micronaut.test.spock
     compileOnly mn.micronaut.core.reactive
@@ -27,8 +27,8 @@ dependencies {
     testImplementation projects.dataProcessor
     testImplementation mn.micronaut.inject.java.test
     testImplementation mn.jackson.databind
-    testImplementation libs.micronaut.sql.jdbc
+    testImplementation mnSql.micronaut.jdbc
 
-    testRuntimeOnly libs.h2
-    testRuntimeOnly libs.micronaut.sql.jdbc.tomcat
+    testRuntimeOnly mnSql.h2
+    testRuntimeOnly mnSql.micronaut.jdbc.tomcat
 }

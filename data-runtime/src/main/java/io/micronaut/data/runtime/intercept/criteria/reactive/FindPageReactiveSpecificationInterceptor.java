@@ -71,7 +71,7 @@ public class FindPageReactiveSpecificationInterceptor extends AbstractReactiveSp
                 }
             });
         }
-        return Publishers.convertPublisher(result, context.getReturnType().getType());
+        return Publishers.convertPublisher(conversionService, result, context.getReturnType().getType());
 
     }
 

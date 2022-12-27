@@ -28,6 +28,7 @@ import io.micronaut.core.attr.AttributeHolder;
 import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.convert.ArgumentConversionContext;
 import io.micronaut.core.convert.ConversionContext;
+import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.exceptions.NonUniqueResultException;
@@ -174,7 +175,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         RuntimeEntityRegistry runtimeEntityRegistry,
         ApplicationContext applicationContext,
         @Nullable @Named("io") ExecutorService executorService,
-        DataConversionService<?> conversionService,
+        DataConversionService conversionService,
         AttributeConverterRegistry attributeConverterRegistry,
         @Nullable SchemaTenantResolver schemaTenantResolver,
         R2dbcSchemaHandler schemaHandler,
@@ -1079,6 +1080,10 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             throw new UnsupportedOperationException("The findAll method without an explicit query is not supported. Use findAll(PreparedQuery) instead");
         }
 
+        @Override
+        public ConversionService getConversionService() {
+            return conversionService;
+        }
     }
 
     private final class R2dbcParameterBinder implements BindableParametersStoredQuery.Binder {

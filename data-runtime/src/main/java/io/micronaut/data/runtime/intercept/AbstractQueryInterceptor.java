@@ -91,6 +91,7 @@ import static io.micronaut.data.intercept.annotation.DataMethod.META_MEMBER_PAGE
  * @since 1.0
  */
 public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<T, R> {
+    protected final ConversionService conversionService;
     protected final RepositoryOperations operations;
     protected final PreparedQueryResolver preparedQueryResolver;
     private final ConcurrentMap<RepositoryMethodKey, StoredQuery> countQueries = new ConcurrentHashMap<>(50);
@@ -107,6 +108,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
      */
     protected AbstractQueryInterceptor(@NonNull RepositoryOperations operations) {
         ArgumentUtils.requireNonNull("operations", operations);
+        this.conversionService = operations.getConversionService();
         this.operations = operations;
         this.storedQueryResolver = operations instanceof StoredQueryResolver ? (StoredQueryResolver) operations : new DefaultStoredQueryResolver() {
             @Override
@@ -536,32 +538,6 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
             }
         }
         return instance;
-    }
-
-    /**
-     * Convert a number argument if necessary.
-     *
-     * @param number   The number
-     * @param argument The argument
-     * @return The result
-     */
-    @Deprecated
-    @Nullable
-    protected Number convertNumberArgumentIfNecessary(Number number, Argument<?> argument) {
-        Argument<?> firstTypeVar = argument.getFirstTypeVariable().orElse(Argument.of(Long.class));
-        Class<?> type = firstTypeVar.getType();
-        if (type == Object.class || type == Void.class) {
-            return null;
-        }
-        if (number == null) {
-            number = 0;
-        }
-        if (!type.isInstance(number)) {
-            return (Number) operations.getConversionService().convert(number, firstTypeVar)
-                    .orElseThrow(() -> new IllegalStateException("Unsupported number type for return type: " + firstTypeVar));
-        } else {
-            return number;
-        }
     }
 
     /**

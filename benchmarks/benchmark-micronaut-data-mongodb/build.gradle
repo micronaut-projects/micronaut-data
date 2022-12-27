@@ -7,5 +7,7 @@ dependencies {
     annotationProcessor projects.dataDocumentProcessor
     implementation projects.dataMongodb
     implementation libs.mongodb.driver.sync
+    testImplementation platform(libs.testcontainers.bom)
     testImplementation libs.testcontainers.mongodb
+    runtimeOnly mn.snakeyaml
 }

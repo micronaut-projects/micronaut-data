@@ -17,7 +17,7 @@ dependencies {
     }
     api projects.dataTxHibernate
 
-    implementation (libs.micronaut.sql.hibernate.jpa) {
+    implementation (mnSql.micronaut.hibernate.jpa) {
         exclude group:'org.jboss.spec.javax.transaction', module:'jboss-transaction-api_1.2_spec'
         exclude group:'org.jboss:jandex', module:'jar'
         exclude group:'io.micronaut', module:'micronaut-spring'
@@ -36,13 +36,14 @@ dependencies {
 
     testImplementation mn.micronaut.inject.groovy
     testImplementation projects.dataProcessor
-    testImplementation libs.micronaut.rxjava2
-    testImplementation libs.micronaut.reactor
+    testImplementation mnRxjava2.micronaut.rxjava2
+    testImplementation mnReactor.micronaut.reactor
     testImplementation projects.dataTck
     testImplementation libs.groovy.sql
+    testImplementation platform(libs.testcontainers.bom)
     testImplementation libs.testcontainers.postgresql
 
-    testRuntimeOnly libs.h2
+    testRuntimeOnly mnSql.h2
     testRuntimeOnly libs.drivers.jdbc.postgresql
-    testRuntimeOnly libs.micronaut.sql.jdbc.tomcat
+    testRuntimeOnly mnSql.micronaut.jdbc.tomcat
 }

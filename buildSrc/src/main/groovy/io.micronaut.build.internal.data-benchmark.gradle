@@ -8,11 +8,6 @@ plugins {
 
 version "0.1"
 group "example"
-sourceCompatibility = '1.8'
-
-repositories {
-    mavenCentral()
-}
 
 dependencies {
     testImplementation "org.junit.jupiter:junit-jupiter-api"

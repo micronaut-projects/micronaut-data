@@ -54,7 +54,7 @@ final class HibernateRepositoryOperationsFactory {
                                        @Parameter @Nullable JpaConfiguration jpaConfiguration,
                                        @Named("io") @Nullable ExecutorService executorService,
                                        RuntimeEntityRegistry runtimeEntityRegistry,
-                                       DataConversionService<?> dataConversionService,
+                                       DataConversionService dataConversionService,
                                        BeanProvider<SynchronousTransactionManager> transactionOperations,
                                        Qualifier<SynchronousTransactionManager> qualifier,
                                        ApplicationContext applicationContext,

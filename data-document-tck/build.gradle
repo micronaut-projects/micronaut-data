@@ -7,8 +7,8 @@ dependencies {
     annotationProcessor projects.dataDocumentProcessor
 
     implementation projects.dataModel
-    implementation mn.micronaut.test.spock
-    implementation mn.micronaut.test.core
+    implementation mnTest.micronaut.test.spock
+    implementation mnTest.micronaut.test.core
     implementation libs.jakarta.persistence.api
 
     compileOnly mn.micronaut.inject.groovy

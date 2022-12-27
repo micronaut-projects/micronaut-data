@@ -61,7 +61,7 @@ public interface TypeMapper<D, R> {
     /**
      * @return The conversion service to use.
      */
-    default @NonNull ConversionService<?> getConversionService() {
+    default @NonNull ConversionService getConversionService() {
         return ConversionService.SHARED;
     }
 }

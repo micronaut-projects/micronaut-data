@@ -45,7 +45,7 @@ public class DefaultUpdateInterceptor<T> extends AbstractQueryInterceptor<T, Obj
         PreparedQuery<?, Number> preparedQuery = (PreparedQuery<?, Number>) prepareQuery(methodKey, context);
         Number number = operations.executeUpdate(preparedQuery).orElse(null);
         final Argument<Object> returnType = context.getReturnType().asArgument();
-        final Class<Object> type = ReflectionUtils.getWrapperType(returnType.getType());
+        final Class<?> type = ReflectionUtils.getWrapperType(returnType.getType());
         if (Number.class.isAssignableFrom(type)) {
             if (type.isInstance(number)) {
                 return number;

@@ -13,9 +13,9 @@ dependencies {
     api projects.dataRuntime
 
     implementation mn.micronaut.http
-    implementation mn.micronaut.sql.jdbc
+    implementation mnSql.micronaut.jdbc
 
-    compileOnly libs.micronaut.rxjava2
+    compileOnly mnRxjava2.micronaut.rxjava2
     compileOnly projects.dataHibernateJpa
     compileOnly libs.drivers.jdbc.oracle
 
@@ -24,20 +24,29 @@ dependencies {
 
     testImplementation projects.dataTck
     testImplementation projects.dataProcessor
-    testImplementation libs.micronaut.rxjava2
-    testImplementation libs.micronaut.reactor
+    testImplementation mnRxjava2.micronaut.rxjava2
+    testImplementation mnReactor.micronaut.reactor
     testImplementation libs.jackson.databind
     testImplementation libs.javax.persistence.api
     testImplementation libs.jakarta.persistence.api
     testImplementation libs.groovy.sql
     testImplementation mn.micronaut.validation
 
+    testImplementation platform(libs.testcontainers.bom)
+    testImplementation libs.testcontainers.spock
+    testImplementation libs.testcontainers.mysql
+    testImplementation libs.testcontainers.mariadb
+    testImplementation libs.testcontainers.postgresql
+    testImplementation libs.testcontainers.mssqlserver
+    testImplementation libs.testcontainers.oracle
+
     testCompileOnly mn.micronaut.inject.groovy
 
-    testImplementation mn.micronaut.multitenancy
+    testImplementation mnMultitenancy.micronaut.multitenancy
+
     testImplementation mn.micronaut.http.netty
-    testRuntimeOnly libs.micronaut.sql.jdbc.tomcat
-    testRuntimeOnly libs.h2
+    testRuntimeOnly mnSql.micronaut.jdbc.tomcat
+    testRuntimeOnly mnSql.h2
     testRuntimeOnly libs.drivers.jdbc.mariadb
     testRuntimeOnly libs.drivers.jdbc.oracle
     testRuntimeOnly libs.drivers.jdbc.mysql
@@ -50,7 +59,10 @@ dependencies {
     testResourcesService libs.drivers.jdbc.postgresql
     testResourcesService libs.drivers.jdbc.mssql
 
-    testImplementation("io.micronaut.testresources:micronaut-test-resources-client")
+    testImplementation libs.micronaut.testresources.client
+
+    // Needed for H2EagerContextSpec
+    testImplementation("org.jetbrains.kotlin:kotlin-reflect:1.8.0-RC2")
 }
 
 micronaut {
@@ -64,15 +76,12 @@ micronaut {
         additionalModules.add(KnownModules.JDBC_ORACLE_XE)
         additionalModules.add(KnownModules.JDBC_MSSQL)
         clientTimeout = 300
+        version = libs.versions.micronaut.testresources.get()
     }
 }
 
 tasks.named("test") {
     systemProperty "oracle.jdbc.timezoneAsRegion", "false"
-    // Disable MySql hanging tests on GraalVM
-    if (System.getProperty("java.vendor").toLowerCase().contains("graal")) {
-        exclude "**/jdbc/mysql/**"
-    }
 }
 
 micronautBuild {

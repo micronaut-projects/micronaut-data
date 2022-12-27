@@ -51,7 +51,7 @@ public final class ReactiveCascadeOperations<Ctx extends OperationContext> exten
      * @param conversionService The conversion service
      * @param helper            The helper
      */
-    public ReactiveCascadeOperations(ConversionService<?> conversionService, ReactiveCascadeOperationsHelper<Ctx> helper) {
+    public ReactiveCascadeOperations(ConversionService conversionService, ReactiveCascadeOperationsHelper<Ctx> helper) {
         super(conversionService);
         this.helper = helper;
     }

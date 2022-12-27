@@ -4,16 +4,12 @@ plugins {
     id "io.micronaut.build.internal.data-example"
 }
 
-repositories {
-    mavenCentral()
-}
-
 application {
     mainClass = "example.Application"
 }
 
 micronaut {
-    version micronautVersion
+    version libs.versions.micronaut.asProvider().get()
     runtime "netty"
     testRuntime "junit5"
 }
@@ -30,7 +26,7 @@ dependencies {
     implementation libs.jakarta.persistence.api
     implementation libs.javax.transaction.api
     runtimeOnly "ch.qos.logback:logback-classic"
-    runtimeOnly libs.h2
+    runtimeOnly mnSql.h2
     runtimeOnly libs.drivers.r2dbc.h2
 
 }

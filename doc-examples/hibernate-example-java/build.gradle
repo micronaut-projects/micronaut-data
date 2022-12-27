@@ -4,16 +4,12 @@ plugins {
     id "io.micronaut.build.internal.data-example"
 }
 
-repositories {
-    mavenCentral()
-}
-
 application {
     mainClass = "example.Application"
 }
 
 micronaut {
-    version micronautVersion
+    version libs.versions.micronaut.asProvider().get()
     runtime "netty"
     testRuntime "junit5"
 }
@@ -22,6 +18,7 @@ dependencies {
     annotationProcessor project(":data-processor")
     annotationProcessor "io.micronaut:micronaut-validation"
     annotationProcessor libs.hibernate.jpamodelgen
+    compileOnly mnSerde.micronaut.serde.api
     implementation "io.micronaut:micronaut-http-client"
     implementation 'io.micronaut.rxjava2:micronaut-rxjava2'
     implementation project(":data-hibernate-jpa")

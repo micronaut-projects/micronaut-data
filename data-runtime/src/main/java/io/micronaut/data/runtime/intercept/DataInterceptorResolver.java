@@ -35,6 +35,8 @@ import io.micronaut.data.runtime.multitenancy.DataSourceTenantResolver;
 import io.micronaut.inject.InjectionPoint;
 import jakarta.inject.Singleton;
 
+import java.lang.reflect.Modifier;
+import java.util.Collection;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
@@ -109,8 +111,14 @@ final class DataInterceptorResolver {
         }
 
         final RepositoryOperations datastore = repositoryOperationsRegistry.provide(operationsType, dataSourceName);
-        final BeanIntrospection<Object> introspection = BeanIntrospector.SHARED.findIntrospections(ref ->
-            ref.isPresent() && interceptorType.isAssignableFrom(ref.getBeanType())).stream().findFirst().orElseThrow(() ->
+        Collection<BeanIntrospection<Object>> candidates = BeanIntrospector.SHARED.findIntrospections(ref -> {
+            if (ref.isPresent()) {
+                Class<?> beanType = ref.getBeanType();
+                return interceptorType.isAssignableFrom(beanType) && !Modifier.isAbstract(beanType.getModifiers());
+            }
+            return false;
+        });
+        final BeanIntrospection<Object> introspection = candidates.stream().findFirst().orElseThrow(() ->
             new DataAccessException("No Data interceptor found for type: " + interceptorType)
         );
 

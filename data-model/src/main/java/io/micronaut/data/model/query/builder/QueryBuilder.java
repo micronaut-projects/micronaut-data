@@ -49,12 +49,6 @@ public interface QueryBuilder {
     Pattern VARIABLE_PATTERN = Pattern.compile("([^:])(:([a-zA-Z0-9]+))");
 
     /**
-     * A pattern used to find in queries in a query string.
-     */
-    @Deprecated
-    Pattern IN_VARIABLES_PATTERN = Pattern.compile("(?<singleGroup>:[a-zA-Z0-9]+)|(?<inGroup>IN\\((:[a-zA-Z0-9]+)\\))");
-
-    /**
      * Builds an insert statement for the given entity.
      * @param repositoryMetadata The repository annotation metadata
      * @param entity The entity

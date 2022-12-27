@@ -3,13 +3,14 @@ plugins {
     id 'io.micronaut.test-resources'
 }
 
-//println libs.versions.micronaut.class
+//println (libs.versions.micronaut.testresources.asProvider().get())
 
 micronaut {
     version = libs.versions.micronaut.asProvider().get()
     testResources {
         enabled = true
         inferClasspath = false
+        version = libs.versions.micronaut.testresources.get()
     }
 }
 
@@ -26,11 +27,14 @@ dependencies {
 
     api projects.dataRuntime
     api projects.dataDocumentModel
-    api libs.micronaut.serde.jackson
-    api libs.micronaut.serde.support
+    api mnSerde.micronaut.serde.jackson
+    api mnSerde.micronaut.serde.support
     api libs.micronaut.azure.cosmos
 
-    compileOnly libs.micronaut.reactor
+    runtimeOnly(mn.jackson.databind) {
+        because("Serde Cosmos depends on Jackson parsers")
+    }
+    compileOnly mnReactor.micronaut.reactor
 
     testAnnotationProcessor projects.dataDocumentProcessor
     testAnnotationProcessor mn.micronaut.inject.java
@@ -39,17 +43,14 @@ dependencies {
     testImplementation projects.dataDocumentProcessor
     testImplementation projects.dataDocumentTck
     testImplementation libs.jakarta.persistence.api
-    testImplementation libs.micronaut.rxjava2
-    testImplementation libs.micronaut.reactor
+    testImplementation mnRxjava2.micronaut.rxjava2
+    testImplementation mnReactor.micronaut.reactor
     testImplementation libs.jakarta.persistence.api
     testImplementation mn.micronaut.validation
+    testImplementation platform(libs.testcontainers.bom)
     testImplementation libs.testcontainers.spock
     testImplementation libs.testcontainers.azure
     testImplementation mn.micronaut.inject.java.test
 
     testCompileOnly mn.micronaut.inject.groovy
-
-    if (!JavaVersion.current().isJava9Compatible()) {
-        testImplementation files(org.gradle.internal.jvm.Jvm.current().toolsJar)
-    }
 }

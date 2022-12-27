@@ -4,8 +4,9 @@ plugins {
     id "io.micronaut.build.internal.data-dependencies"
 }
 
-micronautBuild {
-    sourceCompatibility = "11"
+repositories {
+    mavenCentral()
+    maven { url "https://s01.oss.sonatype.org/content/repositories/snapshots/" }
 }
 
 if (System.getenv("SONAR_TOKEN") != null) {

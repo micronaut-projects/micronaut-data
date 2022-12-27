@@ -51,7 +51,7 @@ public final class SyncCascadeOperations<Ctx extends OperationContext> extends A
      * @param conversionService The conversionService
      * @param helper            The helper
      */
-    public SyncCascadeOperations(ConversionService<?> conversionService, SyncCascadeOperationsHelper<Ctx> helper) {
+    public SyncCascadeOperations(ConversionService conversionService, SyncCascadeOperationsHelper<Ctx> helper) {
         super(conversionService);
         this.helper = helper;
     }

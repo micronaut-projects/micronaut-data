@@ -28,7 +28,6 @@ import io.micronaut.transaction.annotation.TransactionalEventListener;
 import io.micronaut.transaction.support.AbstractSynchronousTransactionManager;
 import io.micronaut.transaction.support.SynchronousTransactionState;
 import io.micronaut.transaction.support.TransactionSynchronizationAdapter;
-import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,15 +52,6 @@ public class TransactionalEventInterceptor implements MethodInterceptor<Object, 
     private final BeanLocator beanLocator;
     private final Map<ExecutableMethod, TransactionEventInvocation> transactionInvocationMap = new ConcurrentHashMap<>(10);
 
-    /**
-     * @deprecated Deprecated to be removed
-     */
-    @Deprecated
-    public TransactionalEventInterceptor() {
-        this(null);
-    }
-
-    @Inject
     public TransactionalEventInterceptor(BeanLocator beanLocator) {
         this.beanLocator = beanLocator;
     }

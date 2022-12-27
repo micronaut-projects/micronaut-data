@@ -653,7 +653,7 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
     /**
      * @param matchContext The match context
      * @param isQuery      true if is a query criteria
-     * @return a List of annotations values for {@Join} annotation.
+     * @return a List of annotations values for {@link Join} annotation.
      */
     @NonNull
     protected final List<AnnotationValue<Join>> joinSpecsAtMatchContext(@NonNull MethodMatchContext matchContext, boolean isQuery) {

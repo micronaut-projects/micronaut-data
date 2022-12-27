@@ -46,6 +46,7 @@ public class CountReactiveSpecificationInterceptor extends AbstractReactiveSpeci
     public Publisher<Number> intercept(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Publisher<Number>> context) {
         PreparedQuery<?, Long> preparedQuery = preparedQueryForCriteria(methodKey, context, Type.COUNT);
         return Publishers.convertPublisher(
+                conversionService,
                 reactiveOperations.findAll(preparedQuery),
                 context.getReturnType().getType()
         );

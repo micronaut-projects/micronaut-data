@@ -48,14 +48,14 @@ import java.util.function.Predicate;
 @Singleton
 public class AutoTimestampEntityEventListener extends AutoPopulatedEntityEventListener implements PropertyAutoPopulator<DateUpdated> {
     private final DateTimeProvider<?> dateTimeProvider;
-    private final DataConversionService<?> conversionService;
+    private final DataConversionService conversionService;
 
     /**
      * Default constructor.
      * @param dateTimeProvider The date time provider
      * @param conversionService The conversion service
      */
-    public AutoTimestampEntityEventListener(DateTimeProvider<?> dateTimeProvider, DataConversionService<?> conversionService) {
+    public AutoTimestampEntityEventListener(DateTimeProvider<?> dateTimeProvider, DataConversionService conversionService) {
         this.dateTimeProvider = dateTimeProvider;
         this.conversionService = conversionService;
     }

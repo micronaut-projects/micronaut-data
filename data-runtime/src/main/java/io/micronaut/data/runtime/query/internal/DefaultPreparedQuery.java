@@ -46,7 +46,7 @@ public final class DefaultPreparedQuery<E, RT> extends DefaultStoredDataOperatio
     private final String query;
     private final boolean dto;
     private final MethodInvocationContext<?, ?> context;
-    private final ConversionService<? extends ConversionService> conversionService;
+    private final ConversionService conversionService;
 
     /**
      * The default constructor.
@@ -64,7 +64,7 @@ public final class DefaultPreparedQuery<E, RT> extends DefaultStoredDataOperatio
             String finalQuery,
             @NonNull Pageable pageable,
             boolean dtoProjection,
-            ConversionService<?> conversionService) {
+            ConversionService conversionService) {
         super(context);
         this.context = context;
         this.query = finalQuery;

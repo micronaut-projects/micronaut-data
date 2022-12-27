@@ -32,7 +32,7 @@ jobs:
       - name: Set up JDK
         uses: actions/setup-java@v3
         with:
-          distribution: 'temurin'
+          distribution: 'adopt'
           java-version: ${{ matrix.java }}
       - name: Setup Gradle
         uses: gradle/gradle-build-action@v2.3.3
@@ -46,7 +46,7 @@ jobs:
       - name: Build with Gradle
         id: gradle
         run: |
-          ./gradlew check --no-daemon --parallel --continue
+          ./gradlew check --no-daemon --continue
         env:
            TESTCONTAINERS_RYUK_DISABLED: true
            GRADLE_ENTERPRISE_ACCESS_KEY: ${{ secrets.GRADLE_ENTERPRISE_ACCESS_KEY }}

@@ -5,27 +5,28 @@ plugins {
     id 'io.micronaut.test-resources'
 }
 
-repositories {
-    mavenCentral()
-}
-
 application {
     mainClass = "example.Application"
 }
 
 micronaut {
-    version micronautVersion
+    version libs.versions.micronaut.asProvider().get()
     runtime "netty"
     testRuntime "junit5"
+    testResources {
+        clientTimeout = 300
+        version = libs.versions.micronaut.testresources.get()
+    }
 }
 
 dependencies {
-    implementation 'io.micronaut.multitenancy:micronaut-multitenancy'
+    implementation mnMultitenancy.micronaut.multitenancy
     annotationProcessor projects.dataDocumentProcessor
 
     implementation 'io.micronaut.reactor:micronaut-reactor'
     implementation 'io.micronaut:micronaut-http-client'
     implementation 'io.micronaut.data:micronaut-data-jdbc'
+    implementation mnSerde.micronaut.serde.jackson
 
     implementation libs.jakarta.persistence.api
     implementation libs.jakarta.transaction.api

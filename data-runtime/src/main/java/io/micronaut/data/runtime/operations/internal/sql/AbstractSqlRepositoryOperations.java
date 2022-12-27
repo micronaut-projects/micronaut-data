@@ -126,7 +126,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
             DateTimeProvider<Object> dateTimeProvider,
             RuntimeEntityRegistry runtimeEntityRegistry,
             BeanContext beanContext,
-            DataConversionService<?> conversionService,
+            DataConversionService conversionService,
             AttributeConverterRegistry attributeConverterRegistry) {
         super(codecs, dateTimeProvider, runtimeEntityRegistry, conversionService, attributeConverterRegistry);
         this.dataSourceName = dataSourceName;

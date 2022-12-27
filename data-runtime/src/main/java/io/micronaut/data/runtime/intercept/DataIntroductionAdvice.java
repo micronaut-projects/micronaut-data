@@ -23,10 +23,12 @@ import io.micronaut.context.annotation.Prototype;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
+import io.micronaut.core.convert.ConversionService;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.exceptions.EmptyResultException;
 import io.micronaut.data.intercept.DataInterceptor;
 import io.micronaut.data.intercept.RepositoryMethodKey;
+import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.inject.InjectionPoint;
 import io.micronaut.transaction.interceptor.TxCompletionStageDataIntroductionHelper;
 import jakarta.inject.Inject;
@@ -52,38 +54,40 @@ public final class DataIntroductionAdvice implements MethodInterceptor<Object, O
     @Nullable
     private final InjectionPoint<?> injectionPoint;
 
+    private final DataConversionService conversionService;
+
     /**
      * Default constructor.
      *
      * @param dataInterceptorResolver The data interceptor resolver
      * @param completionStageHelper   The helper
      * @param injectionPoint          The injection point
+     * @param conversionService       The conversion service
      */
     @Inject
     public DataIntroductionAdvice(@NonNull DataInterceptorResolver dataInterceptorResolver,
                                   @Nullable TxCompletionStageDataIntroductionHelper completionStageHelper,
-                                  @Nullable InjectionPoint<?> injectionPoint) {
+                                  @Nullable InjectionPoint<?> injectionPoint,
+                                  DataConversionService conversionService) {
         this.dataInterceptorResolver = dataInterceptorResolver;
         this.completionStageHelper = completionStageHelper;
         this.injectionPoint = injectionPoint;
+        this.conversionService = conversionService;
     }
 
     @Override
     public Object intercept(MethodInvocationContext<Object, Object> context) {
         RepositoryMethodKey key = new RepositoryMethodKey(context.getTarget(), context.getExecutableMethod());
         DataInterceptor<Object, Object> dataInterceptor = dataInterceptorResolver.resolve(key, context, injectionPoint);
-        InterceptedMethod interceptedMethod = InterceptedMethod.of(context);
+        InterceptedMethod interceptedMethod = InterceptedMethod.of(context, conversionService);
         try {
-            switch (interceptedMethod.resultType()) {
-                case PUBLISHER:
-                    return interceptedMethod.handleResult(dataInterceptor.intercept(key, context));
-                case COMPLETION_STAGE:
-                    return interceptedMethod.handleResult(interceptCompletionStage(interceptedMethod, context, dataInterceptor, key));
-                case SYNCHRONOUS:
-                    return dataInterceptor.intercept(key, context);
-                default:
-                    return interceptedMethod.unsupported();
-            }
+            return switch (interceptedMethod.resultType()) {
+                case PUBLISHER ->
+                    interceptedMethod.handleResult(dataInterceptor.intercept(key, context));
+                case COMPLETION_STAGE ->
+                    interceptedMethod.handleResult(interceptCompletionStage(interceptedMethod, context, dataInterceptor, key));
+                case SYNCHRONOUS -> dataInterceptor.intercept(key, context);
+            };
         } catch (Exception e) {
             return interceptedMethod.handleException(e);
         }

@@ -18,6 +18,7 @@ package io.micronaut.data.hibernate.reactive.operations;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.convert.ConversionService;
 import io.micronaut.data.jpa.operations.JpaRepositoryOperations;
 import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
@@ -64,7 +65,7 @@ final class DefaultHibernateReactiveSynchronousRepositoryOperations implements B
                                                                    SessionFactory sessionFactory,
                                                                    @Parameter String name,
                                                                    RuntimeEntityRegistry runtimeEntityRegistry,
-                                                                   DataConversionService<?> dataConversionService) {
+                                                                   DataConversionService dataConversionService) {
         this.applicationContext = applicationContext;
         this.reactiveRepositoryOperations = new DefaultHibernateReactiveRepositoryOperations(sessionFactory, runtimeEntityRegistry, dataConversionService, name);
     }
@@ -149,5 +150,10 @@ final class DefaultHibernateReactiveSynchronousRepositoryOperations implements B
     @Override
     public <E, R> StoredQuery<E, R> decorate(StoredQuery<E, R> storedQuery) {
         return reactiveRepositoryOperations.decorate(storedQuery);
+    }
+
+    @Override
+    public ConversionService getConversionService() {
+        return reactiveRepositoryOperations.getConversionService();
     }
 }

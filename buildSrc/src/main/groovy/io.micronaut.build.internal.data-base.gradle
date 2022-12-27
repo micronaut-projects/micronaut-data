@@ -11,11 +11,6 @@ plugins {
 group "io.micronaut.data"
 version projectVersion
 
-java {
-    targetCompatibility = JavaVersion.VERSION_1_8
-    sourceCompatibility = JavaVersion.VERSION_1_8
-}
-
 tasks.withType(JavaCompile).configureEach {
     options.fork = true
     options.encoding = "UTF-8"
@@ -39,9 +34,6 @@ tasks.withType(Test).configureEach {
     usesService(testSemaphore)
     jvmArgs '-Xmx1024m'
     systemProperty "micronaut.cloud.platform", "OTHER"
-    if (JavaVersion.current() == JavaVersion.VERSION_15) {
-        jvmArgs "--enable-preview"
-    }
     timeout = Duration.ofHours(1)
     doFirst {
         testSemaphore.get()
@@ -54,4 +46,19 @@ tasks.withType(Test).configureEach {
 }
 
 abstract class TestSemaphore implements BuildService<BuildServiceParameters.None> {
+}
+
+configurations.all {
+    resolutionStrategy.dependencySubstitution {
+        rootProject.subprojects.each { p ->
+            if (!p.name.startsWith('test-')) {
+                if (p.name.contains('bom')) {
+                    substitute platform(module("io.micronaut.data:micronaut-${p.name}")) using platform(project(p.path)) because "we want to test with what we're building"
+                } else {
+                    substitute module("io.micronaut.data:micronaut-${p.name}") using project(p.path) because "we want to test with what we're building"
+                    substitute module("io.micronaut.data:${p.name}") using project(p.path) because "we want to test with what we're building"
+                }
+            }
+        }
+    }
 }
