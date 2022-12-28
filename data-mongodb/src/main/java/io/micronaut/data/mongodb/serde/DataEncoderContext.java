@@ -37,6 +37,7 @@ import io.micronaut.serde.reference.PropertyReference;
 import io.micronaut.serde.reference.SerializationReference;
 import org.bson.codecs.Codec;
 import org.bson.codecs.IterableCodec;
+import org.bson.codecs.MapCodec;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.types.ObjectId;
 
@@ -172,7 +173,7 @@ final class DataEncoderContext implements Serializer.EncoderContext {
         if (codec instanceof MappedCodec) {
             return ((MappedCodec<T>) codec).serializer;
         }
-        if (codec != null && !(codec instanceof IterableCodec)) {
+        if (codec != null && !(codec instanceof IterableCodec) && !(codec instanceof MapCodec)) {
             return new CodecBsonDecoder<>((Codec<T>) codec);
         }
         return parent.findSerializer(type);

@@ -19,6 +19,7 @@ import io.micronaut.data.document.mongodb.repositories.MongoSaleRepository
 import io.micronaut.data.document.mongodb.repositories.MongoStudentRepository
 import io.micronaut.data.document.tck.AbstractDocumentRepositorySpec
 import io.micronaut.data.document.tck.entities.Document
+import io.micronaut.data.document.tck.entities.Owner
 import io.micronaut.data.document.tck.entities.Quantity
 import io.micronaut.data.document.tck.entities.Sale
 import io.micronaut.data.document.tck.repositories.AuthorRepository
@@ -486,6 +487,26 @@ class MongoDocumentRepositorySpec extends AbstractDocumentRepositorySpec impleme
         result3.size() == 2
         result4.size() == 1
         result5.size() == 1
+        cleanup:
+        documentRepository.deleteAll()
+    }
+
+    void "test entity with map of objects"() {
+        given:
+        var doc1 = new Document()
+        doc1.title = "Doc1"
+        doc1.tags = ["red", "blue", "white"]
+        var owner1 = new Owner("Owner1")
+        owner1.age = 40
+        doc1.owners = Map.of("owner1", owner1)
+        documentRepository.save(doc1)
+        when:
+        var doc = documentRepository.findById(doc1.id)
+        then:
+        doc.present
+        doc.get().owners.size() == 1
+        doc.get().owners["owner1"].class == Owner.class
+        doc.get().owners["owner1"].name == "Owner1"
         cleanup:
         documentRepository.deleteAll()
     }
