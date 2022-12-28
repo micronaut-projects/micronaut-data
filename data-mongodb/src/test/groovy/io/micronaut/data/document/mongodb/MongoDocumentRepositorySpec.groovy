@@ -500,7 +500,10 @@ class MongoDocumentRepositorySpec extends AbstractDocumentRepositorySpec impleme
         owner1.age = 40
         var owner2 = new Owner("Owner2")
         owner2.age = 30
-        doc1.owners = Map.of("owner1", owner1, "owner2", owner2)
+        def owners = new HashMap<String, Owner>()
+        owners["owner1"] = owner1
+        owners["owner2"] = owner2
+        doc1.owners = owners
         documentRepository.save(doc1)
         when:
         var optDoc = documentRepository.findById(doc1.id)
