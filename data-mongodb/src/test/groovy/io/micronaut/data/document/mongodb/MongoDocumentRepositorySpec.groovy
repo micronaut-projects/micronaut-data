@@ -498,15 +498,22 @@ class MongoDocumentRepositorySpec extends AbstractDocumentRepositorySpec impleme
         doc1.tags = ["red", "blue", "white"]
         var owner1 = new Owner("Owner1")
         owner1.age = 40
-        doc1.owners = Map.of("owner1", owner1)
+        var owner2 = new Owner("Owner2")
+        owner2.age = 30
+        doc1.owners = Map.of("owner1", owner1, "owner2", owner2)
         documentRepository.save(doc1)
         when:
-        var doc = documentRepository.findById(doc1.id)
+        var optDoc = documentRepository.findById(doc1.id)
         then:
-        doc.present
-        doc.get().owners.size() == 1
-        doc.get().owners["owner1"].class == Owner.class
-        doc.get().owners["owner1"].name == "Owner1"
+        optDoc.present
+        def doc = optDoc.get()
+        doc.owners.size() == 2
+        doc.owners["owner1"].class == Owner.class
+        doc.owners["owner1"].name == "Owner1"
+        doc.owners["owner1"].age == 40
+        doc.owners["owner2"].class == Owner.class
+        doc.owners["owner2"].name == "Owner2"
+        doc.owners["owner2"].age == 30
         cleanup:
         documentRepository.deleteAll()
     }
