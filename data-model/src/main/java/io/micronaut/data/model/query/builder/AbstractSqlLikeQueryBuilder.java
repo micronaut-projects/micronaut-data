@@ -993,9 +993,8 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             StringBuilder additionalWhereBuff = buildAdditionalWhereClause(queryState, annotationMetadata);
             if (additionalWhereBuff.length() > 0) {
                 queryClause.append(WHERE_CLAUSE)
-                    .append(OPEN_BRACKET)
-                    .append(additionalWhereBuff.toString())
-                    .append(CLOSE_BRACKET);
+                    .append(OPEN_BRACKET);
+                appendAdditionalWhere(queryClause, queryState, additionalWhereBuff.toString());
             }
         }
     }
@@ -1031,7 +1030,8 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             while (matcher.find()) {
                 String name = matcher.group(3);
                 String placeholder = queryState.addAdditionalRequiredParameter(name);
-                matcher.appendReplacement(additionalWhereBuilder, placeholder);
+                //appendReplacement considers $ to be a special character, need to escape it.
+                matcher.appendReplacement(additionalWhereBuilder, Matcher.quoteReplacement(placeholder));
             }
             matcher.appendTail(additionalWhereBuilder);
             additionalWhere = additionalWhereBuilder.toString();
