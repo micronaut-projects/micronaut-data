@@ -605,15 +605,11 @@ public class HibernateTransactionManager extends AbstractSynchronousTransactionM
     @Override
     public boolean hasConnection() {
         final Session currentSession = sessionFactory.getCurrentSession();
-        return ((SessionImplementor) currentSession).isConnected();
+        return currentSession.isConnected();
     }
 
     private Connection getConnection(Session session) {
-        try {
-            return ((SessionImplementor) session).getJdbcConnectionAccess().obtainConnection();
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
+        return ((SessionImplementor) session).getJdbcCoordinator().getLogicalConnection().getPhysicalConnection();
     }
 
     /**

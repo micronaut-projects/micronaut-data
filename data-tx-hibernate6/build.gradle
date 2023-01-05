@@ -13,6 +13,10 @@ dependencies {
         exclude group: 'org.jboss:jandex', module: 'jar'
     }
 
+    api (mnSql.micronaut.hibernate.jpa) {
+        exclude module: 'data-tx-hibernate'
+    }
+
     implementation mn.micronaut.inject
 
     compileOnly mnSpring.spring.orm
@@ -24,6 +28,8 @@ dependencies {
     //testImplementation projects.dataTck
 
     testRuntimeOnly mnSql.h2
-    testRuntimeOnly projects.dataHibernateJpa
+    testRuntimeOnly (projects.dataHibernateJpa) {
+        exclude module: 'data-tx-hibernate'
+    }
     testRuntimeOnly mnSql.micronaut.jdbc.tomcat
 }
