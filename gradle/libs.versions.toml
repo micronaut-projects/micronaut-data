@@ -25,6 +25,7 @@ javax-transaction = "1.3"
 jakarta-transaction = "2.0.1"
 
 hibernate = "5.6.14.Final"
+hibernate6 = "6.1.6.Final"
 
 spring-data = "2.7.6"
 spring = "5.3.24"
@@ -136,6 +137,12 @@ micronaut-sql = { module = "io.micronaut.sql:micronaut-sql-bom", version.ref = "
 hibernate-core = { module = "org.hibernate:hibernate-core", version.ref = "hibernate" }
 hibernate-jpamodelgen = { module = "org.hibernate:hibernate-jpamodelgen", version.ref = "hibernate" }
 hibernate-jpamodelgen-jakarta = { module = "org.hibernate:hibernate-jpamodelgen-jakarta", version.ref = "hibernate" }
+
+# Hibernate6
+
+hibernate6-core = { module = "org.hibernate.orm:hibernate-core", version.ref = "hibernate6" }
+hibernate6-jpamodelgen = { module = "org.hibernate.orm:hibernate-jpamodelgen", version.ref = "hibernate6" }
+hibernate6-jpamodelgen-jakarta = { module = "org.hibernate.orm:hibernate-jpamodelgen-jakarta", version.ref = "hibernate6" }
 
 spring-data-jpa = { module = "org.springframework.data:spring-data-jpa", version.ref = "spring-data" }
 spring-data-commons = { module = "org.springframework.data:spring-data-commons", version.ref = "spring-data" }

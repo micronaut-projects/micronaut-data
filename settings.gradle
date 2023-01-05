@@ -49,6 +49,7 @@ include 'data-hibernate-jpa'
 include 'data-hibernate-reactive'
 
 include 'data-tx-hibernate'
+include 'data-tx-hibernate6'
 include 'data-jdbc'
 include 'data-r2dbc'
 include 'data-mongodb'
