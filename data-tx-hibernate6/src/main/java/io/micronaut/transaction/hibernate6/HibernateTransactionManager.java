@@ -32,7 +32,12 @@ import io.micronaut.transaction.support.DefaultTransactionStatus;
 import io.micronaut.transaction.support.ResourceTransactionManager;
 import io.micronaut.transaction.support.TransactionSynchronizationManager;
 import jakarta.inject.Inject;
-import org.hibernate.*;
+import org.hibernate.FlushMode;
+import org.hibernate.HibernateException;
+import org.hibernate.Interceptor;
+import org.hibernate.Session;
+import org.hibernate.SessionFactory;
+import org.hibernate.Transaction;
 import org.hibernate.engine.spi.SessionImplementor;
 import org.hibernate.resource.jdbc.spi.LogicalConnectionImplementor;
 import org.hibernate.resource.jdbc.spi.PhysicalConnectionHandlingMode;
@@ -42,7 +47,6 @@ import jakarta.persistence.EntityManagerFactory;
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.time.Duration;
 import java.util.Objects;
 
@@ -566,7 +570,7 @@ public class HibernateTransactionManager extends AbstractSynchronousTransactionM
      * <p>The default implementation checks the Session's connection release mode
      * to be "on_close".
      * @param session the Hibernate Session to check
-     * @see ConnectionReleaseMode#ON_CLOSE
+     * @see org.hibernate.ConnectionReleaseMode#ON_CLOSE
      * @return Whether the same connection is needed for the whole session
      */
     protected boolean isSameConnectionForEntireSession(Session session) {

@@ -30,6 +30,8 @@ import java.util.Map;
 /**
  * Current settings settings supplier.
  *
+ * TODO: Will be removed when micronaut-sql supports Hibernate6
+ *
  * @author Denis Stepanov
  * @since 4.5.0
  */

@@ -13,6 +13,7 @@ dependencies {
         exclude group: 'org.jboss:jandex', module: 'jar'
     }
 
+    // TODO: Import hibernate6 when ready
     api (mnSql.micronaut.hibernate.jpa) {
         exclude module: 'data-tx-hibernate'
     }
@@ -25,6 +26,7 @@ dependencies {
     testAnnotationProcessor projects.dataProcessor
 
     testImplementation projects.dataProcessor
+    // TODO: Separate tck for hibernate6?
     //testImplementation projects.dataTck
 
     testRuntimeOnly mnSql.h2

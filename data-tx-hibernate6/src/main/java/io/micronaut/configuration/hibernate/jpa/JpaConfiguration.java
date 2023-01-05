@@ -45,6 +45,8 @@ import java.util.stream.Collectors;
 /**
  * Configuration for JPA and Hibernate.
  *
+ * TODO: Will be removed when micronaut-sql supports Hibernate6
+ *
  * @author graemerocher
  * @since 1.0
  */
