@@ -7,31 +7,18 @@ dependencies {
     annotationProcessor mn.micronaut.graal
 
     api projects.dataTx
-    api (libs.hibernate6.core) {
-        exclude group: 'org.jboss.spec.javax.transaction', module: 'jboss-transaction-api_1.2_spec'
-        exclude group: 'org.javassist', module: 'javassist'
-        exclude group: 'org.jboss:jandex', module: 'jar'
-    }
-
-    // TODO: Import hibernate6 when ready
-    api (mnSql.micronaut.hibernate.jpa) {
-        exclude module: 'data-tx-hibernate'
-    }
-
+    api (libs.hibernate6.core)
+    api (mnSql.micronaut.hibernate6.jpa)
     implementation mn.micronaut.inject
-
     compileOnly mnSpring.spring.orm
 
     testAnnotationProcessor mn.micronaut.inject.java
     testAnnotationProcessor projects.dataProcessor
 
     testImplementation projects.dataProcessor
-    // TODO: Separate tck for hibernate6?
-    //testImplementation projects.dataTck
+    testImplementation projects.dataTck
 
     testRuntimeOnly mnSql.h2
-    testRuntimeOnly (projects.dataHibernateJpa) {
-        exclude module: 'data-tx-hibernate'
-    }
+    testRuntimeOnly (projects.dataHibernate6Jpa)
     testRuntimeOnly mnSql.micronaut.jdbc.tomcat
 }

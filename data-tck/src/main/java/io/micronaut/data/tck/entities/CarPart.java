@@ -15,18 +15,23 @@
  */
 package io.micronaut.data.tck.entities;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 @Entity
 @Table(name = "car_parts", schema = "ford", catalog = "ford_cat")
+@javax.persistence.Entity
+@javax.persistence.Table(name = "car_parts", schema = "ford", catalog = "ford_cat")
 public class CarPart {
 
     @GeneratedValue
     @Id
+    @javax.persistence.GeneratedValue
+    @javax.persistence.Id
     private Long partId;
 
     private String name;
     @ManyToOne
+    @javax.persistence.ManyToOne
     private Car car;
 
     public Car getCar() {

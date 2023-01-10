@@ -673,7 +673,8 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
             return false;
         }
         AnnotationMetadataHierarchy metadataHierarchy = new AnnotationMetadataHierarchy(matchContext.getRepositoryClass(), matchContext.getMethodElement());
-        if (metadataHierarchy.hasAnnotation("io.micronaut.data.jpa.annotation.EntityGraph")) {
+        if (metadataHierarchy.hasAnnotation("io.micronaut.data.jpa.annotation.EntityGraph") ||
+            metadataHierarchy.hasAnnotation("io.micronaut.data.jpa3.annotation.EntityGraph")) {
             return false;
         }
         if (metadataHierarchy.hasAnnotation(QueryHint.class) || metadataHierarchy.hasAnnotation(QueryHints.class)) {

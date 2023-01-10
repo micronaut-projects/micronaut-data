@@ -15,14 +15,17 @@
  */
 package io.micronaut.data.tck.entities;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.Id;
 
 @Entity
+@javax.persistence.Entity
 public class Publisher {
     @Id
     @GeneratedValue
+    @javax.persistence.Id
+    @javax.persistence.GeneratedValue
     private Long id;
 
     private String zipCode;

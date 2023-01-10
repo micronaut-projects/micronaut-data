@@ -21,21 +21,25 @@ import io.micronaut.data.annotation.DateCreated;
 import io.micronaut.data.annotation.DateUpdated;
 import io.micronaut.data.annotation.MappedProperty;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.ManyToOne;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.Id;
+import jakarta.persistence.ManyToOne;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
 @Entity(name = "jprod")
+@javax.persistence.Entity(name = "jprod")
 public class Product {
     @Id
     @GeneratedValue
+    @javax.persistence.Id
+    @javax.persistence.GeneratedValue
     private Long id;
 
     @ManyToOne
+    @javax.persistence.ManyToOne
     private Category category;
 
     private String name;

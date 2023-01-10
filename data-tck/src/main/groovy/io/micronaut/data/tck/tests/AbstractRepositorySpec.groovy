@@ -69,7 +69,6 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.stream.Collectors
 
-import static io.micronaut.data.repository.jpa.criteria.QuerySpecification.where
 import static io.micronaut.data.tck.repositories.BookSpecifications.hasChapter
 import static io.micronaut.data.tck.repositories.BookSpecifications.titleEquals
 import static io.micronaut.data.tck.repositories.BookSpecifications.titleEqualsWithJoin
@@ -465,7 +464,7 @@ abstract class AbstractRepositorySpec extends Specification {
             "James",
             ["Onur"],
             ["Cemo","Deniz","Olcay"],
-            "Utku");
+            "Utku")
 
         then:"The result is correct"
         persons != null
@@ -2025,11 +2024,11 @@ abstract class AbstractRepositorySpec extends Specification {
         then:
             personRepository.findOne(nameEquals("Jeff")).isPresent()
             !personRepository.findOne(nameEquals("Denis")).isPresent()
-            personRepository.findOne(where(nameEquals("Jeff"))).isPresent()
-            !personRepository.findOne(where(nameEquals("Denis"))).isPresent()
+            personRepository.findOne(QuerySpecification.where(nameEquals("Jeff"))).isPresent()
+            !personRepository.findOne(QuerySpecification.where(nameEquals("Denis"))).isPresent()
         then:
             personRepository.findAll(nameEquals("Jeff")).size() == 1
-            personRepository.findAll(where(nameEquals("Jeff"))).size() == 1
+            personRepository.findAll(QuerySpecification.where(nameEquals("Jeff"))).size() == 1
             personRepository.findAll(nameEquals("Denis")).size() == 0
             personRepository.findAll(null as QuerySpecification).size() == 2
             personRepository.findAll(null as PredicateSpecification).size() == 2
@@ -2039,12 +2038,12 @@ abstract class AbstractRepositorySpec extends Specification {
             personRepository.findAll(nameEquals("Jeff").and(nameEquals("Denis"))).size() == 0
             personRepository.findAll(nameEquals("Jeff").and(nameEquals("Jeff"))).size() == 1
             personRepository.findAll(nameEquals("Jeff").or(nameEquals("James"))).size() == 2
-            personRepository.findAll(where(nameEquals("Jeff")).or(nameEquals("Denis"))).size() == 1
-            personRepository.findAll(where(nameEquals("Jeff")).and(nameEquals("Denis"))).size() == 0
-            personRepository.findAll(where(nameEquals("Jeff")).and(nameEquals("Jeff"))).size() == 1
-            personRepository.findAll(where(nameEquals("Jeff")).or(nameEquals("James"))).size() == 2
-            personRepository.findAll(where(nameEquals("Jeff")).or(nameEquals("James")), Sort.of(Sort.Order.desc("name")))[1].name == "James"
-            personRepository.findAll(where(nameEquals("Jeff")).or(nameEquals("James")), Sort.of(Sort.Order.asc("name")))[1].name == "Jeff"
+            personRepository.findAll(QuerySpecification.where(nameEquals("Jeff")).or(nameEquals("Denis"))).size() == 1
+            personRepository.findAll(QuerySpecification.where(nameEquals("Jeff")).and(nameEquals("Denis"))).size() == 0
+            personRepository.findAll(QuerySpecification.where(nameEquals("Jeff")).and(nameEquals("Jeff"))).size() == 1
+            personRepository.findAll(QuerySpecification.where(nameEquals("Jeff")).or(nameEquals("James"))).size() == 2
+            personRepository.findAll(QuerySpecification.where(nameEquals("Jeff")).or(nameEquals("James")), Sort.of(Sort.Order.desc("name")))[1].name == "James"
+            personRepository.findAll(QuerySpecification.where(nameEquals("Jeff")).or(nameEquals("James")), Sort.of(Sort.Order.asc("name")))[1].name == "Jeff"
         when:
             def pred1 = nameEquals("Jeff").or(nameEquals("Denis"))
             def pred2 = pred1.or(nameEquals("Abc"))
@@ -2080,7 +2079,7 @@ abstract class AbstractRepositorySpec extends Specification {
             pagedSortedDesc.totalPages == 2
             pagedSortedDesc.totalSize == 2
         when:
-            def pagedSortedAsc = personRepository.findAll(where(nameEquals("Jeff")).or(nameEquals("James")), Pageable.from(0, 1).order(Sort.Order.asc("name")))
+            def pagedSortedAsc = personRepository.findAll(QuerySpecification.where(nameEquals("Jeff")).or(nameEquals("James")), Pageable.from(0, 1).order(Sort.Order.asc("name")))
         then:
             pagedSortedAsc.content.size() == 1
             pagedSortedAsc.content[0].name == "James"
@@ -2096,11 +2095,11 @@ abstract class AbstractRepositorySpec extends Specification {
         then:
             countOneByPredicateSpec == 1
         when:
-            def countAllByQuerySpec = personRepository.count(where(nameEquals("Jeff").or(nameEquals("James"))))
+            def countAllByQuerySpec = personRepository.count(QuerySpecification.where(nameEquals("Jeff").or(nameEquals("James"))))
         then:
             countAllByQuerySpec == 2
         when:
-            def countOneByQuerySpec = personRepository.count(where(nameEquals("Jeff")))
+            def countOneByQuerySpec = personRepository.count(QuerySpecification.where(nameEquals("Jeff")))
         then:
             countOneByQuerySpec == 1
         when:
@@ -2171,8 +2170,8 @@ abstract class AbstractRepositorySpec extends Specification {
             savePersons(["Jeff"])
             def existsPredicateSpec = personRepository.exists(nameEquals("Jeff"))
             def existsNotPredicateSpec = personRepository.exists(nameEquals("NotJeff"))
-            def existsQuerySpec = personRepository.exists(where(nameEquals("Jeff")))
-        def existsNotQuerySpec = personRepository.exists(where(nameEquals("NotJeff")))
+            def existsQuerySpec = personRepository.exists(QuerySpecification.where(nameEquals("Jeff")))
+        def existsNotQuerySpec = personRepository.exists(QuerySpecification.where(nameEquals("NotJeff")))
         then:
             existsPredicateSpec
             !existsNotPredicateSpec

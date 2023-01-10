@@ -91,7 +91,8 @@ public abstract class AbstractSpecificationMethodMatcher extends AbstractPrefixP
     }
 
     protected final boolean isFirstParameterMicronautJpaSpecification(@NonNull MethodElement methodElement) {
-        return isFirstParameterAssignable(methodElement, "io.micronaut.data.jpa.repository.criteria.Specification");
+        return isFirstParameterAssignable(methodElement, "io.micronaut.data.jpa.repository.criteria.Specification")
+            || isFirstParameterAssignable(methodElement, "io.micronaut.data.jpa3.repository.criteria.Specification");
     }
 
     protected final boolean isFirstParameterMicronautDataQuerySpecification(@NonNull MethodElement methodElement) {
@@ -119,7 +120,8 @@ public abstract class AbstractSpecificationMethodMatcher extends AbstractPrefixP
     }
 
     private boolean isFirstParameterMicronautDataPredicateSpecification(@NonNull MethodElement methodElement) {
-        return isFirstParameterAssignable(methodElement, "io.micronaut.data.repository.jpa.criteria.PredicateSpecification");
+        return isFirstParameterAssignable(methodElement, "io.micronaut.data.repository.jpa.criteria.PredicateSpecification")
+            || isFirstParameterAssignable(methodElement, "io.micronaut.data.repository.jpa3.criteria.PredicateSpecification");
     }
 
     private boolean isFirstParameterAssignable(@NonNull MethodElement methodElement, String clazz) {

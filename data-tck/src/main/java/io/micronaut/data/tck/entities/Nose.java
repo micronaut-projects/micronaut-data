@@ -15,19 +15,23 @@
  */
 package io.micronaut.data.tck.entities;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.OneToOne;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.Id;
+import jakarta.persistence.OneToOne;
 
 @Entity
+@javax.persistence.Entity
 public class Nose {
 
     @GeneratedValue
     @Id
+    @javax.persistence.GeneratedValue
+    @javax.persistence.Id
     private Long id;
 
     @OneToOne
+    @javax.persistence.OneToOne
     private Face face;
 
     public Face getFace() {

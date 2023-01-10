@@ -3,6 +3,7 @@ package io.micronaut.transaction.hibernate6
 import io.micronaut.context.BeanDefinitionRegistry
 import io.micronaut.context.annotation.Property
 import io.micronaut.context.event.ApplicationEventPublisher
+import io.micronaut.data.tck.entities.Book
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import io.micronaut.transaction.annotation.TransactionalEventListener
 import spock.lang.Specification
@@ -13,7 +14,7 @@ import jakarta.inject.Singleton
 import jakarta.persistence.EntityManager
 import javax.transaction.Transactional
 
-@MicronautTest(transactional = false, packages = "io.micronaut.transaction.hibernate6")
+@MicronautTest(transactional = false, packages = "io.micronaut.data.tck.entities")
 @Property(name = "datasources.default.name", value = "mydb")
 @Property(name = 'jpa.default.properties.hibernate.hbm2ddl.auto', value = 'create-drop')
 @Stepwise

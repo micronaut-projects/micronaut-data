@@ -16,7 +16,7 @@
 package io.micronaut.transaction.hibernate6;
 
 import io.micronaut.core.annotation.TypeHint;
-import io.micronaut.transaction.jpa.EntityManagerHolder;
+import io.micronaut.transaction.jpa.JpaEntityManagerHolder;
 import io.micronaut.transaction.support.SynchronousTransactionState;
 import io.micronaut.transaction.support.TransactionSynchronizationManager;
 import org.hibernate.FlushMode;
@@ -81,9 +81,9 @@ public final class MicronautSessionContext implements CurrentSessionContext {
                 }
             }
             return session;
-        } else if (value instanceof EntityManagerHolder) {
+        } else if (value instanceof JpaEntityManagerHolder) {
             // JpaTransactionManager
-            return ((EntityManagerHolder) value).getEntityManager().unwrap(Session.class);
+            return ((JpaEntityManagerHolder) value).getEntityManager().unwrap(Session.class);
         }
 
         SynchronousTransactionState state = TransactionSynchronizationManager.getSynchronousTransactionState(this.sessionFactory);
