@@ -25,6 +25,12 @@ tasks.register("testExamples") {
     dependsOn "test"
 }
 
+if (project.name.endsWith("kotlin")) {
+    tasks.register("testExamplesKotlin") {
+        dependsOn "test"
+    }
+}
+
 tasks.withType(JavaCompile).configureEach {
     options.fork = true
 }
