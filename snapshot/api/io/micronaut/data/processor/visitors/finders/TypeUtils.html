@@ -192,154 +192,152 @@ extends java.lang.Object</pre>
 </tr>
 <tr id="i1" class="rowColor">
 <td class="colFirst"><code>static boolean</code></td>
-<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#doesReturnBoolean(io.micronaut.inject.ast.MethodElement)">doesReturnBoolean</a></span>&#8203;(io.micronaut.inject.ast.MethodElement&nbsp;methodElement)</code></th>
+<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#doesMethodProducesABoolean(io.micronaut.inject.ast.MethodElement)">doesMethodProducesABoolean</a></span>&#8203;(io.micronaut.inject.ast.MethodElement&nbsp;methodElement)</code></th>
 <td class="colLast">
 <div class="block">Does the given method element return boolean.</div>
 </td>
 </tr>
 <tr id="i2" class="altColor">
 <td class="colFirst"><code>static boolean</code></td>
-<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#doesReturnNumber(io.micronaut.inject.ast.MethodElement)">doesReturnNumber</a></span>&#8203;(io.micronaut.inject.ast.MethodElement&nbsp;methodElement)</code></th>
+<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#doesMethodProducesANumber(io.micronaut.inject.ast.MethodElement)">doesMethodProducesANumber</a></span>&#8203;(io.micronaut.inject.ast.MethodElement&nbsp;methodElement)</code></th>
 <td class="colLast">
 <div class="block">Does the method return an object convertible to a number.</div>
 </td>
 </tr>
 <tr id="i3" class="rowColor">
 <td class="colFirst"><code>static boolean</code></td>
+<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#doesMethodProducesIterableOfAnEntity(io.micronaut.inject.ast.MethodElement)">doesMethodProducesIterableOfAnEntity</a></span>&#8203;(io.micronaut.inject.ast.MethodElement&nbsp;methodElement)</code></th>
+<td class="colLast">
+<div class="block">Checks whether the return type is supported.</div>
+</td>
+</tr>
+<tr id="i4" class="altColor">
+<td class="colFirst"><code>static boolean</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#doesReturnVoid(io.micronaut.inject.ast.MethodElement)">doesReturnVoid</a></span>&#8203;(io.micronaut.inject.ast.MethodElement&nbsp;methodElement)</code></th>
 <td class="colLast">
 <div class="block">Does the method element return void.</div>
 </td>
 </tr>
-<tr id="i4" class="altColor">
+<tr id="i5" class="rowColor">
+<td class="colFirst"><code>static io.micronaut.inject.ast.ClassElement</code></td>
+<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getKotlinCoroutineProducedType(io.micronaut.inject.ast.MethodElement)">getKotlinCoroutineProducedType</a></span>&#8203;(io.micronaut.inject.ast.MethodElement&nbsp;methodElement)</code></th>
+<td class="colLast">&nbsp;</td>
+</tr>
+<tr id="i6" class="altColor">
+<td class="colFirst"><code>static io.micronaut.inject.ast.ClassElement</code></td>
+<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getMethodProducingItemType(io.micronaut.inject.ast.MethodElement)">getMethodProducingItemType</a></span>&#8203;(io.micronaut.inject.ast.MethodElement&nbsp;methodElement)</code></th>
+<td class="colLast">&nbsp;</td>
+</tr>
+<tr id="i7" class="rowColor">
 <td class="colFirst"><code>static java.lang.String</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getTypeName(io.micronaut.inject.ast.ClassElement)">getTypeName</a></span>&#8203;(io.micronaut.inject.ast.ClassElement&nbsp;type)</code></th>
 <td class="colLast">
 <div class="block">Return the type for the given class element, wrapping primitives types if necessary.</div>
 </td>
 </tr>
-<tr id="i5" class="rowColor">
+<tr id="i8" class="altColor">
 <td class="colFirst"><code>static boolean</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#hasPersistedTypeArgument(io.micronaut.inject.ast.ClassElement)">hasPersistedTypeArgument</a></span>&#8203;(io.micronaut.inject.ast.ClassElement&nbsp;type)</code></th>
 <td class="colLast">
 <div class="block">Does the given type have a first argument annotated with <a href="../../../annotation/MappedEntity.html" title="annotation in io.micronaut.data.annotation"><code>MappedEntity</code></a>.</div>
 </td>
 </tr>
-<tr id="i6" class="altColor">
+<tr id="i9" class="rowColor">
 <td class="colFirst"><code>static boolean</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#isBoolean(io.micronaut.inject.ast.ClassElement)">isBoolean</a></span>&#8203;(io.micronaut.inject.ast.ClassElement&nbsp;type)</code></th>
 <td class="colLast">
 <div class="block">Is the type a boolean.</div>
 </td>
 </tr>
-<tr id="i7" class="rowColor">
+<tr id="i10" class="altColor">
 <td class="colFirst"><code>static boolean</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#isComparable(io.micronaut.inject.ast.ClassElement)">isComparable</a></span>&#8203;(io.micronaut.inject.ast.ClassElement&nbsp;type)</code></th>
 <td class="colLast">
 <div class="block">Is the type a number.</div>
 </td>
 </tr>
-<tr id="i8" class="altColor">
+<tr id="i11" class="rowColor">
 <td class="colFirst"><code>static boolean</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#isContainerType(io.micronaut.inject.ast.ClassElement)">isContainerType</a></span>&#8203;(io.micronaut.inject.ast.ClassElement&nbsp;type)</code></th>
 <td class="colLast">
 <div class="block">Is the type a container type such as a collection etc.</div>
 </td>
 </tr>
-<tr id="i9" class="rowColor">
+<tr id="i12" class="altColor">
 <td class="colFirst"><code>static boolean</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#isEntity(io.micronaut.inject.ast.ClassElement)">isEntity</a></span>&#8203;(io.micronaut.inject.ast.ClassElement&nbsp;type)</code></th>
 <td class="colLast">
 <div class="block">Does the given type have an <a href="../../../annotation/MappedEntity.html" title="annotation in io.micronaut.data.annotation"><code>MappedEntity</code></a>.</div>
 </td>
 </tr>
-<tr id="i10" class="altColor">
+<tr id="i13" class="rowColor">
 <td class="colFirst"><code>static boolean</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#isEntityContainerType(io.micronaut.inject.ast.ClassElement)">isEntityContainerType</a></span>&#8203;(io.micronaut.inject.ast.ClassElement&nbsp;type)</code></th>
 <td class="colLast">
 <div class="block">Is the given type a container type of entity.</div>
 </td>
 </tr>
-<tr id="i11" class="rowColor">
+<tr id="i14" class="altColor">
 <td class="colFirst"><code>static boolean</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#isFutureType(io.micronaut.inject.ast.ClassElement)">isFutureType</a></span>&#8203;(io.micronaut.inject.ast.ClassElement&nbsp;type)</code></th>
 <td class="colLast">
 <div class="block">Is the type a future type.</div>
 </td>
 </tr>
-<tr id="i12" class="altColor">
+<tr id="i15" class="rowColor">
 <td class="colFirst"><code>static boolean</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#isIterableOfEntity(io.micronaut.inject.ast.ClassElement)">isIterableOfEntity</a></span>&#8203;(io.micronaut.inject.ast.ClassElement&nbsp;type)</code></th>
 <td class="colLast">
 <div class="block">Is the element an iterable of an entity.</div>
 </td>
 </tr>
-<tr id="i13" class="rowColor">
+<tr id="i16" class="altColor">
 <td class="colFirst"><code>static boolean</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#isNumber(io.micronaut.inject.ast.ClassElement)">isNumber</a></span>&#8203;(io.micronaut.inject.ast.ClassElement&nbsp;type)</code></th>
 <td class="colLast">
 <div class="block">Is the type a number.</div>
 </td>
 </tr>
-<tr id="i14" class="altColor">
+<tr id="i17" class="rowColor">
 <td class="colFirst"><code>static boolean</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#isObjectClass(io.micronaut.inject.ast.ClassElement)">isObjectClass</a></span>&#8203;(io.micronaut.inject.ast.ClassElement&nbsp;type)</code></th>
 <td class="colLast">
 <div class="block">Whether the given type is Object.</div>
 </td>
 </tr>
-<tr id="i15" class="rowColor">
+<tr id="i18" class="altColor">
 <td class="colFirst"><code>static boolean</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#isReactiveOrFuture(io.micronaut.inject.ast.ClassElement)">isReactiveOrFuture</a></span>&#8203;(io.micronaut.inject.ast.ClassElement&nbsp;type)</code></th>
 <td class="colLast">
 <div class="block">Is the type a future type.</div>
 </td>
 </tr>
-<tr id="i16" class="altColor">
+<tr id="i19" class="rowColor">
 <td class="colFirst"><code>static boolean</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#isReactiveType(io.micronaut.inject.ast.ClassElement)">isReactiveType</a></span>&#8203;(io.micronaut.inject.ast.ClassElement&nbsp;type)</code></th>
 <td class="colLast">
 <div class="block">Is the type a reactive type.</div>
 </td>
 </tr>
-<tr id="i17" class="rowColor">
+<tr id="i20" class="altColor">
 <td class="colFirst"><code>static boolean</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#isValidBatchUpdateReturnType(io.micronaut.inject.ast.MethodElement)">isValidBatchUpdateReturnType</a></span>&#8203;(io.micronaut.inject.ast.MethodElement&nbsp;methodElement)</code></th>
 <td class="colLast">
 <div class="block">Returns true if the return type is considered valid for batch update operations likes deletes and updates.</div>
 </td>
 </tr>
-<tr id="i18" class="altColor">
+<tr id="i21" class="rowColor">
 <td class="colFirst"><code>static boolean</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#isValidCountReturnType(io.micronaut.data.processor.visitors.MatchContext)">isValidCountReturnType</a></span>&#8203;(<a href="../MatchContext.html" title="class in io.micronaut.data.processor.visitors">MatchContext</a>&nbsp;matchContext)</code></th>
 <td class="colLast">
 <div class="block">Checks whether the return type is supported.</div>
 </td>
 </tr>
-<tr id="i19" class="rowColor">
-<td class="colFirst"><code>static boolean</code></td>
-<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#isValidExistsReturnType(io.micronaut.data.processor.visitors.MatchContext)">isValidExistsReturnType</a></span>&#8203;(<a href="../MatchContext.html" title="class in io.micronaut.data.processor.visitors">MatchContext</a>&nbsp;context)</code></th>
-<td class="colLast">&nbsp;</td>
-</tr>
-<tr id="i20" class="altColor">
-<td class="colFirst"><code>static boolean</code></td>
-<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#isValidFindAllReturnType(io.micronaut.data.processor.visitors.MatchContext)">isValidFindAllReturnType</a></span>&#8203;(<a href="../MatchContext.html" title="class in io.micronaut.data.processor.visitors">MatchContext</a>&nbsp;matchContext)</code></th>
-<td class="colLast">
-<div class="block">Checks whether the return type is supported.</div>
-</td>
-</tr>
-<tr id="i21" class="rowColor">
+<tr id="i22" class="altColor">
 <td class="colFirst"><code>static boolean</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#isVoid(io.micronaut.inject.ast.ClassElement)">isVoid</a></span>&#8203;(io.micronaut.inject.ast.ClassElement&nbsp;type)</code></th>
 <td class="colLast">
 <div class="block">Is the type void.</div>
-</td>
-</tr>
-<tr id="i22" class="altColor">
-<td class="colFirst"><code>static boolean</code></td>
-<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#isVoidOrNumberArgument(io.micronaut.inject.ast.ClassElement)">isVoidOrNumberArgument</a></span>&#8203;(io.micronaut.inject.ast.ClassElement&nbsp;type)</code></th>
-<td class="colLast">
-<div class="block">Retruns true if no type argument is present, a void argument is present or a boolean argument is present.</div>
 </td>
 </tr>
 <tr id="i23" class="rowColor">
@@ -408,6 +406,17 @@ extends java.lang.Object</pre>
 <!--   -->
 </a>
 <h3>Method Detail</h3>
+<a id="getKotlinCoroutineProducedType(io.micronaut.inject.ast.MethodElement)">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>getKotlinCoroutineProducedType</h4>
+<pre class="methodSignature">@Nullable
+public static&nbsp;io.micronaut.inject.ast.ClassElement&nbsp;getKotlinCoroutineProducedType&#8203;(@NonNull
+                                                                                  io.micronaut.inject.ast.MethodElement&nbsp;methodElement)</pre>
+</li>
+</ul>
 <a id="isIterableOfEntity(io.micronaut.inject.ast.ClassElement)">
 <!--   -->
 </a>
@@ -476,14 +485,14 @@ extends java.lang.Object</pre>
 </dl>
 </li>
 </ul>
-<a id="doesReturnNumber(io.micronaut.inject.ast.MethodElement)">
+<a id="doesMethodProducesANumber(io.micronaut.inject.ast.MethodElement)">
 <!--   -->
 </a>
 <ul class="blockList">
 <li class="blockList">
-<h4>doesReturnNumber</h4>
-<pre class="methodSignature">public static&nbsp;boolean&nbsp;doesReturnNumber&#8203;(@NonNull
-                                       io.micronaut.inject.ast.MethodElement&nbsp;methodElement)</pre>
+<h4>doesMethodProducesANumber</h4>
+<pre class="methodSignature">public static&nbsp;boolean&nbsp;doesMethodProducesANumber&#8203;(@NonNull
+                                                io.micronaut.inject.ast.MethodElement&nbsp;methodElement)</pre>
 <div class="block">Does the method return an object convertible to a number.</div>
 <dl>
 <dt><span class="paramLabel">Parameters:</span></dt>
@@ -510,14 +519,25 @@ extends java.lang.Object</pre>
 </dl>
 </li>
 </ul>
-<a id="doesReturnBoolean(io.micronaut.inject.ast.MethodElement)">
+<a id="getMethodProducingItemType(io.micronaut.inject.ast.MethodElement)">
 <!--   -->
 </a>
 <ul class="blockList">
 <li class="blockList">
-<h4>doesReturnBoolean</h4>
-<pre class="methodSignature">public static&nbsp;boolean&nbsp;doesReturnBoolean&#8203;(@NonNull
-                                        io.micronaut.inject.ast.MethodElement&nbsp;methodElement)</pre>
+<h4>getMethodProducingItemType</h4>
+<pre class="methodSignature">@Nullable
+public static&nbsp;io.micronaut.inject.ast.ClassElement&nbsp;getMethodProducingItemType&#8203;(@NonNull
+                                                                              io.micronaut.inject.ast.MethodElement&nbsp;methodElement)</pre>
+</li>
+</ul>
+<a id="doesMethodProducesABoolean(io.micronaut.inject.ast.MethodElement)">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>doesMethodProducesABoolean</h4>
+<pre class="methodSignature">public static&nbsp;boolean&nbsp;doesMethodProducesABoolean&#8203;(@NonNull
+                                                 io.micronaut.inject.ast.MethodElement&nbsp;methodElement)</pre>
 <div class="block">Does the given method element return boolean.</div>
 <dl>
 <dt><span class="paramLabel">Parameters:</span></dt>
@@ -663,31 +683,6 @@ extends java.lang.Object</pre>
 </dl>
 </li>
 </ul>
-<a id="isValidExistsReturnType(io.micronaut.data.processor.visitors.MatchContext)">
-<!--   -->
-</a>
-<ul class="blockList">
-<li class="blockList">
-<h4>isValidExistsReturnType</h4>
-<pre class="methodSignature">public static&nbsp;boolean&nbsp;isValidExistsReturnType&#8203;(<a href="../MatchContext.html" title="class in io.micronaut.data.processor.visitors">MatchContext</a>&nbsp;context)</pre>
-</li>
-</ul>
-<a id="isVoidOrNumberArgument(io.micronaut.inject.ast.ClassElement)">
-<!--   -->
-</a>
-<ul class="blockList">
-<li class="blockList">
-<h4>isVoidOrNumberArgument</h4>
-<pre class="methodSignature">public static&nbsp;boolean&nbsp;isVoidOrNumberArgument&#8203;(io.micronaut.inject.ast.ClassElement&nbsp;type)</pre>
-<div class="block">Retruns true if no type argument is present, a void argument is present or a boolean argument is present.</div>
-<dl>
-<dt><span class="paramLabel">Parameters:</span></dt>
-<dd><code>type</code> - The type</dd>
-<dt><span class="returnLabel">Returns:</span></dt>
-<dd>True if the argument is a void argument</dd>
-</dl>
-</li>
-</ul>
 <a id="isValidBatchUpdateReturnType(io.micronaut.inject.ast.MethodElement)">
 <!--   -->
 </a>
@@ -720,17 +715,17 @@ extends java.lang.Object</pre>
 </dl>
 </li>
 </ul>
-<a id="isValidFindAllReturnType(io.micronaut.data.processor.visitors.MatchContext)">
+<a id="doesMethodProducesIterableOfAnEntity(io.micronaut.inject.ast.MethodElement)">
 <!--   -->
 </a>
 <ul class="blockList">
 <li class="blockList">
-<h4>isValidFindAllReturnType</h4>
-<pre class="methodSignature">public static&nbsp;boolean&nbsp;isValidFindAllReturnType&#8203;(<a href="../MatchContext.html" title="class in io.micronaut.data.processor.visitors">MatchContext</a>&nbsp;matchContext)</pre>
+<h4>doesMethodProducesIterableOfAnEntity</h4>
+<pre class="methodSignature">public static&nbsp;boolean&nbsp;doesMethodProducesIterableOfAnEntity&#8203;(io.micronaut.inject.ast.MethodElement&nbsp;methodElement)</pre>
 <div class="block">Checks whether the return type is supported.</div>
 <dl>
 <dt><span class="paramLabel">Parameters:</span></dt>
-<dd><code>matchContext</code> - The match context</dd>
+<dd><code>methodElement</code> - The method</dd>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>True if it is supported</dd>
 </dl>

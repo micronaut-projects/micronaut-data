@@ -80,43 +80,9 @@
 </tbody>
 </table>
 <div style="page-break-after: always;"></div>
-<a id="io.micronaut.data.cosmos.config.CosmosDatabaseConfiguration.CosmosContainerSettings" href="#io.micronaut.data.cosmos.config.CosmosDatabaseConfiguration.CosmosContainerSettings">&#128279;</a>
-<table class="tableblock frame-all grid-all stretch">
-<caption class="title">Table 2. Configuration Properties for <a href="../api/io/micronaut/data/cosmos/config/CosmosDatabaseConfiguration.CosmosContainerSettings.html">CosmosContainerSettings</a></caption>
-<colgroup>
-<col style="width: 33.3333%;">
-<col style="width: 33.3333%;">
-<col style="width: 33.3334%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Property</th>
-<th class="tableblock halign-left valign-top">Type</th>
-<th class="tableblock halign-left valign-top">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>azure.cosmos.database.container-settings[*].container-name</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">java.lang.String</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Sets the container name.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>azure.cosmos.database.container-settings[*].partition-key-path</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">java.lang.String</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Sets the container partition key path.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>azure.cosmos.database.container-settings[*].throughput</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/cosmos/config/ThroughputSettings.html">ThroughputSettings</a></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Sets the container throughput settings.</p></td>
-</tr>
-</tbody>
-</table>
-<div style="page-break-after: always;"></div>
 <a id="io.micronaut.data.cosmos.config.CosmosDatabaseConfiguration" href="#io.micronaut.data.cosmos.config.CosmosDatabaseConfiguration">&#128279;</a>
 <table class="tableblock frame-all grid-all stretch">
-<caption class="title">Table 3. Configuration Properties for <a href="../api/io/micronaut/data/cosmos/config/CosmosDatabaseConfiguration.html">CosmosDatabaseConfiguration</a></caption>
+<caption class="title">Table 2. Configuration Properties for <a href="../api/io/micronaut/data/cosmos/config/CosmosDatabaseConfiguration.html">CosmosDatabaseConfiguration</a></caption>
 <colgroup>
 <col style="width: 33.3333%;">
 <col style="width: 33.3333%;">
@@ -155,7 +121,7 @@
 <div style="page-break-after: always;"></div>
 <a id="io.micronaut.data.cosmos.config.CosmosDatabaseConfiguration.CosmosContainerSettings.ContainerThroughputSettings" href="#io.micronaut.data.cosmos.config.CosmosDatabaseConfiguration.CosmosContainerSettings.ContainerThroughputSettings">&#128279;</a>
 <table class="tableblock frame-all grid-all stretch">
-<caption class="title">Table 4. Configuration Properties for <a href="../api/io/micronaut/data/cosmos/config/CosmosDatabaseConfiguration.CosmosContainerSettings.ContainerThroughputSettings.html">ContainerThroughputSettings</a></caption>
+<caption class="title">Table 3. Configuration Properties for <a href="../api/io/micronaut/data/cosmos/config/CosmosDatabaseConfiguration.CosmosContainerSettings.ContainerThroughputSettings.html">ContainerThroughputSettings</a></caption>
 <colgroup>
 <col style="width: 33.3333%;">
 <col style="width: 33.3333%;">
@@ -178,6 +144,40 @@
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>azure.cosmos.database.container-settings[*].throughput-settings.auto-scale</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Sets the auto scaled indicator for throughput.</p></td>
+</tr>
+</tbody>
+</table>
+<div style="page-break-after: always;"></div>
+<a id="io.micronaut.data.cosmos.config.CosmosDatabaseConfiguration.CosmosContainerSettings" href="#io.micronaut.data.cosmos.config.CosmosDatabaseConfiguration.CosmosContainerSettings">&#128279;</a>
+<table class="tableblock frame-all grid-all stretch">
+<caption class="title">Table 4. Configuration Properties for <a href="../api/io/micronaut/data/cosmos/config/CosmosDatabaseConfiguration.CosmosContainerSettings.html">CosmosContainerSettings</a></caption>
+<colgroup>
+<col style="width: 33.3333%;">
+<col style="width: 33.3333%;">
+<col style="width: 33.3334%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Property</th>
+<th class="tableblock halign-left valign-top">Type</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>azure.cosmos.database.container-settings[*].container-name</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">java.lang.String</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Sets the container name.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>azure.cosmos.database.container-settings[*].partition-key-path</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">java.lang.String</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Sets the container partition key path.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>azure.cosmos.database.container-settings[*].throughput</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/cosmos/config/ThroughputSettings.html">ThroughputSettings</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Sets the container throughput settings.</p></td>
 </tr>
 </tbody>
 </table>
@@ -336,33 +336,9 @@
 </div>
 <div class="sect2">
 <h3 id="_data_runtime_config_properties">Data Runtime Config Properties</h3>
-<a id="io.micronaut.data.runtime.multitenancy.conf.MultiTenancyConfiguration" href="#io.micronaut.data.runtime.multitenancy.conf.MultiTenancyConfiguration">&#128279;</a>
-<table class="tableblock frame-all grid-all stretch">
-<caption class="title">Table 8. Configuration Properties for <a href="../api/io/micronaut/data/runtime/multitenancy/conf/MultiTenancyConfiguration.html">MultiTenancyConfiguration</a></caption>
-<colgroup>
-<col style="width: 33.3333%;">
-<col style="width: 33.3333%;">
-<col style="width: 33.3334%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Property</th>
-<th class="tableblock halign-left valign-top">Type</th>
-<th class="tableblock halign-left valign-top">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.data.multi-tenancy.mode</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/runtime/multitenancy/MultiTenancyMode.html">MultiTenancyMode</a></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Sets the multi-tenancy mode.</p></td>
-</tr>
-</tbody>
-</table>
-<div style="page-break-after: always;"></div>
 <a id="io.micronaut.data.runtime.config.DataConfiguration.PageableConfiguration" href="#io.micronaut.data.runtime.config.DataConfiguration.PageableConfiguration">&#128279;</a>
 <table class="tableblock frame-all grid-all stretch">
-<caption class="title">Table 9. Configuration Properties for <a href="../api/io/micronaut/data/runtime/config/DataConfiguration.PageableConfiguration.html">PageableConfiguration</a></caption>
+<caption class="title">Table 8. Configuration Properties for <a href="../api/io/micronaut/data/runtime/config/DataConfiguration.PageableConfiguration.html">PageableConfiguration</a></caption>
 <colgroup>
 <col style="width: 33.3333%;">
 <col style="width: 33.3333%;">
@@ -411,6 +387,30 @@
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.data.pageable.sort-delimiter</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">java.util.regex.Pattern</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">The delimiter to use to calculate sort order. Defaults to {@code ,}.</p></td>
+</tr>
+</tbody>
+</table>
+<div style="page-break-after: always;"></div>
+<a id="io.micronaut.data.runtime.multitenancy.conf.MultiTenancyConfiguration" href="#io.micronaut.data.runtime.multitenancy.conf.MultiTenancyConfiguration">&#128279;</a>
+<table class="tableblock frame-all grid-all stretch">
+<caption class="title">Table 9. Configuration Properties for <a href="../api/io/micronaut/data/runtime/multitenancy/conf/MultiTenancyConfiguration.html">MultiTenancyConfiguration</a></caption>
+<colgroup>
+<col style="width: 33.3333%;">
+<col style="width: 33.3333%;">
+<col style="width: 33.3334%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Property</th>
+<th class="tableblock halign-left valign-top">Type</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.data.multi-tenancy.mode</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/runtime/multitenancy/MultiTenancyMode.html">MultiTenancyMode</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Sets the multi-tenancy mode.</p></td>
 </tr>
 </tbody>
 </table>
