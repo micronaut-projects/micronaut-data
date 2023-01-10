@@ -50,6 +50,7 @@ import io.micronaut.data.runtime.operations.ExecutorReactiveOperations;
 import io.micronaut.jdbc.spring.HibernatePresenceCondition;
 import io.micronaut.transaction.TransactionOperations;
 import jakarta.inject.Named;
+import jakarta.persistence.NoResultException;
 import jakarta.persistence.Query;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
@@ -67,7 +68,6 @@ import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -137,17 +137,13 @@ public class HibernateJpaOperations extends AbstractHibernateOperations<Session,
 
     @Override
     protected void setParameter(Query query, String parameterName, Object value, Argument argument) {
-        if (value == null) {
-            // TODO: How to provide type, if needed at all?
-            query.setParameter(parameterName, null);
-        } else {
-            query.setParameter(parameterName, value);
-        }
+        // How to provide type, if needed at all? Was needed prior to Hibernate 6
+        query.setParameter(parameterName, value);
     }
 
     @Override
     protected void setParameterList(Query query, String parameterName, Collection<Object> value) {
-        // TODO: Can we pass collection as param like this?
+        // Passing collection as param like this as well, before Hibernate 6 there was other method to pass collection
         query.setParameter(parameterName, value);
     }
 
@@ -156,7 +152,7 @@ public class HibernateJpaOperations extends AbstractHibernateOperations<Session,
         if (value == null) {
             value = Collections.emptyList();
         }
-        // TODO: Can we ignore type?
+        // Can we ignore type? Was needed before Hibernate 6
         query.setParameter(parameterName, value);
     }
 
@@ -228,7 +224,7 @@ public class HibernateJpaOperations extends AbstractHibernateOperations<Session,
     @Override
     public <T, R> R findOne(@NonNull PreparedQuery<T, R> preparedQuery) {
         return transactionOperations.executeRead(status -> {
-            FirstResultCollector<R> collector = new FirstResultCollector<>(!preparedQuery.isNative());
+            FirstResultCollector<R> collector = new FirstResultCollector<>();
             collectFindOne(sessionFactory.getCurrentSession(), preparedQuery, collector);
             return collector.result;
         });
@@ -574,11 +570,9 @@ public class HibernateJpaOperations extends AbstractHibernateOperations<Session,
 
     private final class FirstResultCollector<R> extends ResultCollector<R> {
 
-        private final boolean limitOne;
         private R result;
 
-        private FirstResultCollector(boolean limitOne) {
-            this.limitOne = limitOne;
+        private FirstResultCollector() {
         }
 
         @Override
@@ -595,14 +589,11 @@ public class HibernateJpaOperations extends AbstractHibernateOperations<Session,
         }
 
         private <T> T getFirst(Query q) {
-            if (limitOne) {
-                q.setMaxResults(1);
+            try {
+                return (T) q.getSingleResult();
+            } catch (NoResultException e) {
+                return null;
             }
-            Iterator<T> iterator = q.getResultList().iterator();
-            if (iterator.hasNext()) {
-                return iterator.next();
-            }
-            return null;
         }
     }
 
