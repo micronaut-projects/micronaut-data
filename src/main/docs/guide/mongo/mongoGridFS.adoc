@@ -1,0 +1,121 @@
+== GridFS support for MongoDB
+
+This package adds support for
+https://www.mongodb.com/docs/manual/core/gridfs/[MongoDB GridFS]
+
+=== Configuration with a single bucket
+
+Base configuration key is `micronaut.data.mongodb.gridfs`
+
+[width="100%",cols="33%,5%,9%,53%",options="header",]
+|=======================================================================
+|Configuration |Type |Default Value |Notes
+|`micronaut.data.mongodb.gridfs.database` |String | |Database Name
+
+|`micronaut.data.mongodb.gridfs.bucket-name` |String |`files`
+|https://www.mongodb.com/docs/manual/core/gridfs/#gridfs-collections[Bucket
+Name]
+
+|`micronaut.data.mongodb.gridfs.chunk-size` |Integer |`1048576` |Chunk
+size to split the uploaded file
+
+|`micronaut.data.mongodb.gridfs.read-concern` |Enum | |Values: local,
+majority, linearizable, snapshot, available
+
+|`micronaut.data.mongodb.gridfs.read-preference` |Enum | |Values:
+primary, secondary, secondary_preferred, primary_preferred, nearest
+
+|`micronaut.data.mongodb.gridfs.write-concern` |Enum | |Values: w1, w2,
+w3, acknowledged, unacknowledged, journaled, majority
+|=======================================================================
+
+==== Example configuration
+
+[source,yaml]
+----
+micronaut:
+  data:
+    mongodb:
+      gridfs:
+        database: <database_name>
+        bucket-name: <name>
+        chunk-size: 10000
+        read-concern: majority
+        read-preference: primary
+        write-concern: w2
+----
+
+=== Configuration with multiple buckets
+
+Multiple buckets can be defined under the `buckets` map. Individual
+bucket can be configured the same as default bucket.
+
+[width="100%",cols="38%,5%,9%,48%",options="header",]
+|=======================================================================
+|Configuration |Type |Default Value |Notes
+|`micronaut.data.mongodb.gridfs.buckets.*.database` |String | |Database
+Name
+
+|`micronaut.data.mongodb.gridfs.buckets.*.chunk-size` |Integer
+|`1048576` |Chunk size to split the uploaded file
+
+|`micronaut.data.mongodb.gridfs.buckets.*.read-concern` |Enum | |Values:
+local, majority, linearizable, snapshot, available
+
+|`micronaut.data.mongodb.gridfs.buckets.*.read-preference` |Enum |
+|Values: primary, secondary, secondary_preferred, primary_preferred,
+nearest
+
+|`micronaut.data.mongodb.gridfs.buckets.*.write-concern` |Enum |
+|Values: w1, w2, w3, acknowledged, unacknowledged, journaled, majority
+|=======================================================================
+
+==== Example configuration
+
+[source,yaml]
+----
+micronaut:
+  data:
+    mongodb:
+      gridfs:
+        buckets:
+          bucket-name: # No overrides, uses default values
+          profile-pictures: # Bucket with overridden values
+            database: app_db
+            chunk-size: 2097152
+
+----
+
+=== Usage
+
+Bean of type `GridFSClient` is available for injection. Use the `@Named`
+annotation for getting a instance for a specific bucket.
+
+==== Example code
+
+[source,java]
+----
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
+import io.micronaut.data.mongodb.client.GridFSClient;
+
+public class MongoFileStorage {
+
+    private final GridFSClient defaultBucketClient;
+    private final GridFSClient namedBucketClient;
+
+    @Inject
+    public MongoFileStorage(GridFSClient defaultBucketClient,
+                            @Named("profile-pictures") GridFSClient namedBucketClient) {
+        this.defaultBucketClient = defaultBucketClient;
+        this.namedBucketClient = namedBucketClient;
+    }
+
+    public ObjectId yourUploadMethod(Path fileToUpload, String fileName, Map<String, String> metadata) {
+        return defaultBucketClient.uploadFile(fileToUpload, fileName, metadata);
+    }
+    public Optional<Path> downloadFile(ObjectId id) {
+        return defaultBucketClient.downloadFile(id);
+    }
+}
+----
