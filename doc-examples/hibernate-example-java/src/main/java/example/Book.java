@@ -3,7 +3,7 @@ package example;
 
 import io.micronaut.serde.annotation.Serdeable;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 @Serdeable
 @Entity

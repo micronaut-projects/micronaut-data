@@ -26,6 +26,7 @@ import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.data.annotation.QueryHint;
+import io.micronaut.data.jpa3.annotation.EntityGraph;
 import io.micronaut.data.jpa3.operations.JpaRepositoryOperations;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
@@ -50,7 +51,6 @@ import io.micronaut.data.runtime.operations.ExecutorReactiveOperations;
 import io.micronaut.jdbc.spring.HibernatePresenceCondition;
 import io.micronaut.transaction.TransactionOperations;
 import jakarta.inject.Named;
-import jakarta.persistence.NoResultException;
 import jakarta.persistence.Query;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
@@ -68,6 +68,7 @@ import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -224,7 +225,10 @@ public class HibernateJpaOperations extends AbstractHibernateOperations<Session,
     @Override
     public <T, R> R findOne(@NonNull PreparedQuery<T, R> preparedQuery) {
         return transactionOperations.executeRead(status -> {
-            FirstResultCollector<R> collector = new FirstResultCollector<>();
+            // limit does not work with native queries and does not produce expected
+            // results with EntityGraph annotation and joins
+            boolean limitOne = !preparedQuery.isNative() && !hasEntityGraph(preparedQuery.getAnnotationMetadata());
+            FirstResultCollector<R> collector = new FirstResultCollector<>(limitOne);
             collectFindOne(sessionFactory.getCurrentSession(), preparedQuery, collector);
             return collector.result;
         });
@@ -520,6 +524,10 @@ public class HibernateJpaOperations extends AbstractHibernateOperations<Session,
         );
     }
 
+    private boolean hasEntityGraph(AnnotationMetadata annotationMetadata) {
+        return annotationMetadata.hasAnnotation(EntityGraph.class);
+    }
+
     private final class ListResultCollector<R> extends ResultCollector<R> {
 
         private List<R> result;
@@ -570,9 +578,11 @@ public class HibernateJpaOperations extends AbstractHibernateOperations<Session,
 
     private final class FirstResultCollector<R> extends ResultCollector<R> {
 
+        private final boolean limitOne;
         private R result;
 
-        private FirstResultCollector() {
+        private FirstResultCollector(boolean limitOne) {
+            this.limitOne = limitOne;
         }
 
         @Override
@@ -589,11 +599,14 @@ public class HibernateJpaOperations extends AbstractHibernateOperations<Session,
         }
 
         private <T> T getFirst(Query q) {
-            try {
-                return (T) q.getSingleResult();
-            } catch (NoResultException e) {
-                return null;
+            if (limitOne) {
+                q.setMaxResults(1);
             }
+            Iterator<T> iterator = q.getResultList().iterator();
+            if (iterator.hasNext()) {
+                return iterator.next();
+            }
+            return null;
         }
     }
 
