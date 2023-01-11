@@ -120,6 +120,8 @@ snippet::example.BookRepository[project-base="doc-examples/hibernate-example", s
 
 In this example, in order for update to be propagated in the current session you can add `QueryHint` annotation to force session flush.
 
+For Hibernate 6 instead of `javax.persistence.FlushModeType` need to use `jakarta.persistence.FlushModeType`.
+
 === Deleting an Instance (Delete)
 
 To delete an instance use `deleteById`:

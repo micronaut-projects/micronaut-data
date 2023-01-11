@@ -61,6 +61,7 @@ include 'data-spring'
 include 'data-spring-jpa'
 
 // documentation samples
+include 'doc-examples:hibernate6-example-java'
 include 'doc-examples:hibernate-example-java'
 include 'doc-examples:hibernate-example-groovy'
 include 'doc-examples:hibernate-example-kotlin'
