@@ -21,6 +21,7 @@ import io.micronaut.validation.Validated;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -66,7 +67,7 @@ public interface CrudRepository<E, ID> extends GenericRepository<E, ID> {
      * @param <S> The generic type
      */
     @NonNull
-    <S extends E> Iterable<S> updateAll(@Valid @NotNull @NonNull Iterable<S> entities);
+    <S extends E> List<S> updateAll(@Valid @NotNull @NonNull Iterable<S> entities);
 
     /**
      * Saves all given entities, possibly returning new instances representing the saved state.
@@ -77,7 +78,7 @@ public interface CrudRepository<E, ID> extends GenericRepository<E, ID> {
      * @throws javax.validation.ConstraintViolationException if the entities are {@literal null}.
      */
     @NonNull
-    <S extends E> Iterable<S> saveAll(@Valid @NotNull @NonNull Iterable<S> entities);
+    <S extends E> List<S> saveAll(@Valid @NotNull @NonNull Iterable<S> entities);
 
     /**
      * Retrieves an entity by its id.
@@ -103,7 +104,7 @@ public interface CrudRepository<E, ID> extends GenericRepository<E, ID> {
      *
      * @return all entities
      */
-    @NonNull Iterable<E> findAll();
+    @NonNull List<E> findAll();
 
     /**
      * Returns the number of entities available.
