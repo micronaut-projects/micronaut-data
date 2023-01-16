@@ -100,13 +100,11 @@ public final class MongoQueryBuilder implements QueryBuilder {
         addCriterionHandler(QueryModel.Negation.class, (ctx, obj, negation) -> {
             if (negation.getCriteria().size() == 1) {
                 QueryModel.Criterion criterion = negation.getCriteria().iterator().next();
-                if (criterion instanceof QueryModel.In) {
-                    QueryModel.In in = (QueryModel.In) criterion;
+                if (criterion instanceof QueryModel.In in) {
                     handleCriterion(ctx, obj, new QueryModel.NotIn(in.getName(), in.getValue()));
                     return;
                 }
-                if (criterion instanceof QueryModel.NotIn) {
-                    QueryModel.NotIn notIn = (QueryModel.NotIn) criterion;
+                if (criterion instanceof QueryModel.NotIn notIn) {
                     handleCriterion(ctx, obj, new QueryModel.In(notIn.getName(), notIn.getValue()));
                     return;
                 }
@@ -482,10 +480,9 @@ public final class MongoQueryBuilder implements QueryBuilder {
 
                 PersistentPropertyPath propertyPath = currentLookup.persistentEntity.getPropertyPath(thisPath);
                 PersistentProperty property = propertyPath.getProperty();
-                if (!(property instanceof Association)) {
+                if (!(property instanceof Association association)) {
                     continue;
                 }
-                Association association = (Association) property;
                 if (association.getKind() == Relation.Kind.EMBEDDED) {
                     continue;
                 }
@@ -757,8 +754,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
                                  Map<String, Object> countObj) {
         if (!projectionList.isEmpty()) {
             for (QueryModel.Projection projection : projectionList) {
-                if (projection instanceof QueryModel.LiteralProjection) {
-                    QueryModel.LiteralProjection literalProjection = (QueryModel.LiteralProjection) projection;
+                if (projection instanceof QueryModel.LiteralProjection literalProjection) {
                     projectionObj.put("val", singletonMap("$literal", asLiteral(literalProjection.getValue())));
                 } else if (projection instanceof QueryModel.CountProjection) {
                     countObj.put("$count", "result");
@@ -766,8 +762,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
                     throw new UnsupportedOperationException("Not implemented yet");
                 } else if (projection instanceof QueryModel.IdProjection) {
                     projectionObj.put(MONGO_ID_FIELD, 1);
-                } else if (projection instanceof QueryModel.PropertyProjection) {
-                    QueryModel.PropertyProjection pp = (QueryModel.PropertyProjection) projection;
+                } else if (projection instanceof QueryModel.PropertyProjection pp) {
                     if (projection instanceof QueryModel.AvgProjection) {
                         addProjection(groupObj, pp, "$avg");
                     } else if (projection instanceof QueryModel.DistinctPropertyProjection) {
@@ -1049,9 +1044,9 @@ public final class MongoQueryBuilder implements QueryBuilder {
         } else if (obj instanceof Number) {
             sb.append(obj);
         } else {
-            sb.append("\'");
+            sb.append("'");
             sb.append(obj);
-            sb.append("\'");
+            sb.append("'");
         }
     }
 

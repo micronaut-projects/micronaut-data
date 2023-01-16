@@ -643,8 +643,7 @@ public final class DefaultMongoRepositoryOperations extends AbstractMongoReposit
             entity = triggerPostLoad(entity, persistentEntity, annotationMetadata);
         }
         for (PersistentProperty pp : persistentEntity.getPersistentProperties()) {
-            if (pp instanceof RuntimeAssociation) {
-                RuntimeAssociation runtimeAssociation = (RuntimeAssociation) pp;
+            if (pp instanceof RuntimeAssociation runtimeAssociation) {
                 Object o = runtimeAssociation.getProperty().get(entity);
                 if (o == null) {
                     continue;

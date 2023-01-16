@@ -89,8 +89,7 @@ final class SourcePersistentEntityCriteriaQueryImpl<T> extends AbstractPersisten
 
                 @Override
                 public void visit(PersistentPropertyPath<?> persistentPropertyPath) {
-                    if (persistentPropertyPath.getProperty() instanceof SourceAssociation) {
-                        SourceAssociation sourceAssociation = (SourceAssociation) persistentPropertyPath.getProperty();
+                    if (persistentPropertyPath.getProperty() instanceof SourceAssociation sourceAssociation) {
                         result[0] = sourceAssociation.getAssociatedEntity().getType().getName();
                     } else {
                         result[0] = ((SourcePersistentPropertyPath) persistentPropertyPath).getProperty().getType().getName();
@@ -131,7 +130,6 @@ final class SourcePersistentEntityCriteriaQueryImpl<T> extends AbstractPersisten
                             }
                             break;
                         default:
-                            return;
                     }
                 }
 

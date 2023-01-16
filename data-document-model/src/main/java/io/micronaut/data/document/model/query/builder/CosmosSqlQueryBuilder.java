@@ -327,7 +327,7 @@ public final class CosmosSqlQueryBuilder extends SqlQueryBuilder {
             String joinAlias = joinAliasOverride == null ? getAliasName(joinPath) : joinAliasOverride.get(joinPath);
             // cannot join family_.children c join family_children.pets p but instead must do
             // join family_.children c join c.pets p (must go via children table)
-            String path = new StringBuilder(logicalName).append(DOT).append(joinPath.getPath()).toString();
+            String path = logicalName + DOT + joinPath.getPath();
             for (Map.Entry<String, String> entry : joinedPaths.entrySet()) {
                 String joinedPath = entry.getKey();
                 String prefix = joinedPath + DOT;
@@ -401,8 +401,8 @@ public final class CosmosSqlQueryBuilder extends SqlQueryBuilder {
         String tableAlias = getAliasName(entity);
         String tableName = getTableName(entity);
 
-        final String finalQuery = new StringBuilder("SELECT * FROM ").append(tableName).append(SPACE).append(tableAlias).append(SPACE)
-            .append(resultQuery.substring(resultQuery.toLowerCase(Locale.ROOT).indexOf("where"))).toString();
+        final String finalQuery = "SELECT * FROM " + tableName + SPACE + tableAlias + SPACE +
+            resultQuery.substring(resultQuery.toLowerCase(Locale.ROOT).indexOf("where"));
         StringJoiner stringJoiner = new StringJoiner(",");
         propertiesToUpdate.keySet().forEach(stringJoiner::add);
         final String update = stringJoiner.toString();

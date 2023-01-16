@@ -487,11 +487,8 @@ public class TypeUtils {
         } else {
             if (isNumber(leftType) && isNumber(rightType)) {
                 return true;
-            } else if (isBoolean(leftType) && isBoolean(rightType)) {
-                return true;
-            }
+            } else return isBoolean(leftType) && isBoolean(rightType);
         }
-        return false;
     }
 
     /**

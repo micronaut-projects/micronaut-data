@@ -77,7 +77,7 @@ abstract class AbstractCascadeOperations {
                                T entity,
                                List<CascadeOp> cascadeOps) {
         for (RuntimeAssociation<T> association : persistentEntity.getAssociations()) {
-            BeanProperty<T, Object> beanProperty = (BeanProperty<T, Object>) association.getProperty();
+            BeanProperty<T, Object> beanProperty = association.getProperty();
             Object child = beanProperty.get(entity);
             if (child == null) {
                 continue;

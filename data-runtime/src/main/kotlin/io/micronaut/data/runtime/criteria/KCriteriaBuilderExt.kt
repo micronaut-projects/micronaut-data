@@ -100,7 +100,7 @@ class DeleteQueryBuilder<E>(private var dsl: Where<E>.() -> Unit, private var en
 @Experimental
 class WherePredicate<T>(var where: Where<T>.() -> Unit) : PredicateSpecification<T> {
 
-    override fun toPredicate(root: Root<T>, criteriaBuilder: CriteriaBuilder): Predicate? {
+    override fun toPredicate(root: Root<T>, criteriaBuilder: CriteriaBuilder): Predicate {
         val query = Where(root, criteriaBuilder)
         where.invoke(query)
         return query.toPredicate(true)

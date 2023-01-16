@@ -78,8 +78,7 @@ public final class SyncCascadeOperations<Ctx extends OperationContext> extends A
                 CascadeContext.of(ctx.associations, entity, (RuntimePersistentEntity<Object>) persistentEntity),
                 persistentEntity, entity, cascadeOps);
         for (CascadeOp cascadeOp : cascadeOps) {
-            if (cascadeOp instanceof CascadeOneOp) {
-                CascadeOneOp cascadeOneOp = (CascadeOneOp) cascadeOp;
+            if (cascadeOp instanceof CascadeOneOp cascadeOneOp) {
                 RuntimePersistentEntity<Object> childPersistentEntity = cascadeOp.childPersistentEntity;
                 Object child = cascadeOneOp.child;
                 if (ctx.persisted.contains(child)) {
@@ -111,8 +110,7 @@ public final class SyncCascadeOperations<Ctx extends OperationContext> extends A
                     helper.persistManyAssociation(ctx, association, entity, (RuntimePersistentEntity<Object>) persistentEntity, child, childPersistentEntity);
                 }
                 ctx.persisted.add(child);
-            } else if (cascadeOp instanceof CascadeManyOp) {
-                CascadeManyOp cascadeManyOp = (CascadeManyOp) cascadeOp;
+            } else if (cascadeOp instanceof CascadeManyOp cascadeManyOp) {
                 RuntimePersistentEntity<Object> childPersistentEntity = cascadeManyOp.childPersistentEntity;
 
                 List<Object> entities;
