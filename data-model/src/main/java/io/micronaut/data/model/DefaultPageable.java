@@ -76,10 +76,9 @@ final class DefaultPageable implements Pageable {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof DefaultPageable)) {
+        if (!(o instanceof DefaultPageable that)) {
             return false;
         }
-        DefaultPageable that = (DefaultPageable) o;
         return max == that.max &&
                 number == that.number &&
                 Objects.equals(sort, that.sort);

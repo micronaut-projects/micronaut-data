@@ -138,11 +138,11 @@ final class DataSerdeRegistry implements SerdeRegistry {
 
                 @Override
                 public Serializer<Object> createSpecific(EncoderContext encoderContext, Argument<?> type) throws SerdeException {
-                    RuntimePersistentEntity entity = runtimeEntityRegistry.getEntity(type.getType());
+                    RuntimePersistentEntity<Object> entity = runtimeEntityRegistry.getEntity((Class<Object>) type.getType());
                     if (entity.getIdentity() == null) {
                         throw new SerdeException("Cannot find ID of entity type: " + type);
                     }
-                    BeanProperty property = entity.getIdentity().getProperty();
+                    BeanProperty<Object, Object> property = entity.getIdentity().getProperty();
                     Argument<?> idType = entity.getIdentity().getArgument();
                     Serializer<Object> idSerializer = encoderContext.findCustomSerializer(IdSerializer.class).createSpecific(encoderContext, idType);
                     return new Serializer<Object>() {

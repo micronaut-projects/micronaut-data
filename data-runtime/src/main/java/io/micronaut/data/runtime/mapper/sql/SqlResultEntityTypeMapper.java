@@ -353,8 +353,8 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
         } else if (ctx.associations != null) {
             for (Map.Entry<Association, MappingContext> e : ctx.associations.entrySet()) {
                 MappingContext associationCtx = e.getValue();
-                RuntimeAssociation runtimeAssociation = (RuntimeAssociation) e.getKey();
-                BeanProperty beanProperty = runtimeAssociation.getProperty();
+                RuntimeAssociation<Object> runtimeAssociation = (RuntimeAssociation<Object>) e.getKey();
+                BeanProperty<Object, Object> beanProperty = runtimeAssociation.getProperty();
                 if (runtimeAssociation.getKind().isSingleEnded() && (associationCtx.manyAssociations == null || associationCtx.manyAssociations.isEmpty())) {
                     Object value = beanProperty.get(instance);
                     Object newValue = setChildrenAndTriggerPostLoad(value, associationCtx, instance);
@@ -491,7 +491,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
 
             if (id != null && identity != null) {
                 @SuppressWarnings("unchecked")
-                BeanProperty<K, Object> idProperty = (BeanProperty<K, Object>) identity.getProperty();
+                BeanProperty<K, Object> idProperty = identity.getProperty();
                 entity = (K) convertAndSetWithValue(entity, identity, idProperty, id);
             }
             RuntimePersistentProperty<K> version = persistentEntity.getVersion();
@@ -516,9 +516,8 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                     }
                 }
                 @SuppressWarnings("unchecked")
-                BeanProperty<K, Object> property = (BeanProperty<K, Object>) rpp.getProperty();
-                if (rpp instanceof Association) {
-                    Association entityAssociation = (Association) rpp;
+                BeanProperty<K, Object> property = rpp.getProperty();
+                if (rpp instanceof Association entityAssociation) {
                     if (rpp instanceof Embedded) {
                         Object value = readEntity(rs, ctx.embedded((Embedded) rpp), parent == null ? entity : parent, null);
                         entity = setProperty(property, entity, value);

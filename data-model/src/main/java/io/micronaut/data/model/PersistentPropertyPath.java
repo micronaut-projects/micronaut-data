@@ -139,16 +139,16 @@ public class PersistentPropertyPath {
         }
         Object value = bean;
         for (Association association : associations) {
-            RuntimePersistentProperty<?> property = (RuntimePersistentProperty) association;
-            BeanProperty beanProperty = property.getProperty();
+            RuntimePersistentProperty<Object> property = (RuntimePersistentProperty<Object>) association;
+            BeanProperty<Object, Object> beanProperty = property.getProperty();
             value = beanProperty.get(value);
             if (value == null) {
                 return null;
             }
         }
-        RuntimePersistentProperty<?> p = (RuntimePersistentProperty<?>) property;
+        RuntimePersistentProperty<Object> p = (RuntimePersistentProperty<Object>) property;
         if (value != null) {
-            BeanProperty beanProperty = p.getProperty();
+            BeanProperty<Object, Object> beanProperty = p.getProperty();
             value = beanProperty.get(value);
         }
         return value;

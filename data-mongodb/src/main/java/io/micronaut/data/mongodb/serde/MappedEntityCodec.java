@@ -37,7 +37,7 @@ class MappedEntityCodec<T> extends MappedCodec<T> implements CollectibleCodec<T>
     private final boolean isGeneratedId;
     private final boolean isGeneratedObjectIdAsString;
     private final boolean isGeneratedObjectId;
-    private final BeanProperty identityProperty;
+    private final BeanProperty<T, Object> identityProperty;
 
     /**
      * Default constructor.

@@ -38,11 +38,11 @@ import java.util.function.Supplier;
 public class RuntimePersistentProperty<T> implements PersistentProperty {
     public static final RuntimePersistentProperty<Object>[] EMPTY_PROPERTY_ARRAY = new RuntimePersistentProperty[0];
     private final RuntimePersistentEntity<T> owner;
-    private final BeanProperty<T, ?> property;
+    private final BeanProperty<T, Object> property;
     private final Class<?> type;
     private final DataType dataType;
     private final boolean constructorArg;
-    private final Argument<?> argument;
+    private final Argument<Object> argument;
     private final Supplier<AttributeConverter<Object, Object>> converter;
     private String persistedName;
 
@@ -52,7 +52,7 @@ public class RuntimePersistentProperty<T> implements PersistentProperty {
      * @param property The property
      * @param constructorArg whether it is a constructor arg
      */
-    RuntimePersistentProperty(RuntimePersistentEntity<T> owner, BeanProperty<T, ?> property, boolean constructorArg) {
+    RuntimePersistentProperty(RuntimePersistentEntity<T> owner, BeanProperty<T, Object> property, boolean constructorArg) {
         this.owner = owner;
         this.property = property;
         this.type = ReflectionUtils.getWrapperType(property.getType());
@@ -67,7 +67,7 @@ public class RuntimePersistentProperty<T> implements PersistentProperty {
     /**
      * @return The argument for this property.
      */
-    public Argument<?> getArgument() {
+    public Argument<Object> getArgument() {
         return argument;
     }
 
@@ -139,7 +139,7 @@ public class RuntimePersistentProperty<T> implements PersistentProperty {
     /**
      * @return The backing bean property
      */
-    public BeanProperty<T, ?> getProperty() {
+    public BeanProperty<T, Object> getProperty() {
         return property;
     }
 

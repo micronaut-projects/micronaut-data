@@ -117,7 +117,7 @@ public class AutoTimestampEntityEventListener extends AutoPopulatedEntityEventLi
                 }
             }
 
-            final BeanProperty<Object, Object> beanProperty = (BeanProperty<Object, Object>) property.getProperty();
+            final BeanProperty<Object, Object> beanProperty = property.getProperty();
             final Class<?> propertyType = property.getType();
             ChronoUnit truncateToValue;
             if (isUpdate) {

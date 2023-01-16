@@ -39,22 +39,15 @@ abstract class RuntimePersistentPropertyAttribute<T, E> implements Attribute<T, 
 
     @Override
     public PersistentAttributeType getPersistentAttributeType() {
-        if (persistentProperty instanceof RuntimeAssociation) {
-            RuntimeAssociation<Object> runtimeAssociation = (RuntimeAssociation<Object>) persistentProperty;
-            switch (runtimeAssociation.getKind()) {
-                case EMBEDDED:
-                    return PersistentAttributeType.EMBEDDED;
-                case ONE_TO_ONE:
-                    return PersistentAttributeType.ONE_TO_ONE;
-                case MANY_TO_ONE:
-                    return PersistentAttributeType.MANY_TO_ONE;
-                case ONE_TO_MANY:
-                    return PersistentAttributeType.ONE_TO_MANY;
-                case MANY_TO_MANY:
-                    return PersistentAttributeType.MANY_TO_MANY;
-                default:
-                    return PersistentAttributeType.BASIC;
-            }
+        if (persistentProperty instanceof RuntimeAssociation runtimeAssociation) {
+            return switch (runtimeAssociation.getKind()) {
+                case EMBEDDED -> PersistentAttributeType.EMBEDDED;
+                case ONE_TO_ONE -> PersistentAttributeType.ONE_TO_ONE;
+                case MANY_TO_ONE -> PersistentAttributeType.MANY_TO_ONE;
+                case ONE_TO_MANY -> PersistentAttributeType.ONE_TO_MANY;
+                case MANY_TO_MANY -> PersistentAttributeType.MANY_TO_MANY;
+                default -> PersistentAttributeType.BASIC;
+            };
         }
         return PersistentAttributeType.BASIC;
     }

@@ -771,7 +771,7 @@ public class DefaultReactiveMongoRepositoryOperations extends AbstractMongoRepos
                     }
                     return Mono.from(collection.insertOne(ctx.clientSession, d.entity, getInsertOneOptions(ctx.annotationMetadata))).map(insertOneResult -> {
                         BsonValue insertedId = insertOneResult.getInsertedId();
-                        BeanProperty<T, Object> property = (BeanProperty<T, Object>) persistentEntity.getIdentity().getProperty();
+                        BeanProperty<T, Object> property = persistentEntity.getIdentity().getProperty();
                         if (property.get(d.entity) == null) {
                             d.entity = updateEntityId(property, d.entity, insertedId);
                         }
@@ -1032,7 +1032,7 @@ public class DefaultReactiveMongoRepositoryOperations extends AbstractMongoRepos
                         if (hasGeneratedId) {
                             Map<Integer, BsonValue> insertedIds = insertManyResult.getInsertedIds();
                             RuntimePersistentProperty<T> identity = persistentEntity.getIdentity();
-                            BeanProperty<T, Object> idProperty = (BeanProperty<T, Object>) identity.getProperty();
+                            BeanProperty<T, Object> idProperty = identity.getProperty();
                             int index = 0;
                             for (Data d : list) {
                                 if (!d.vetoed) {

@@ -52,22 +52,22 @@ public final class MongoUtils {
     }
 
     public static BsonValue entityIdValue(ConversionService conversionService,
-                                          RuntimePersistentEntity<?> persistentEntity,
+                                          RuntimePersistentEntity<Object> persistentEntity,
                                           Object entity,
                                           CodecRegistry codecRegistry) {
-        RuntimePersistentProperty<?> identity = persistentEntity.getIdentity();
+        RuntimePersistentProperty<Object> identity = persistentEntity.getIdentity();
         if (identity != null) {
-            BeanProperty property = identity.getProperty();
+            BeanProperty<Object, Object> property = identity.getProperty();
             return idValue(conversionService, persistentEntity, property.get(entity), codecRegistry);
         }
         throw new IllegalStateException("Cannot determine id!");
     }
 
-    public static BsonValue idValue(ConversionService conversionService,
-                                    RuntimePersistentEntity<?> persistentEntity,
-                                    Object idValue,
-                                    CodecRegistry codecRegistry) {
-        RuntimePersistentProperty<?> identity = persistentEntity.getIdentity();
+    public static <T> BsonValue idValue(ConversionService conversionService,
+                                        RuntimePersistentEntity<T> persistentEntity,
+                                        Object idValue,
+                                        CodecRegistry codecRegistry) {
+        RuntimePersistentProperty<T> identity = persistentEntity.getIdentity();
         if (identity != null) {
             if (identity instanceof Association) {
                 return toBsonValue(conversionService, idValue, codecRegistry);
@@ -77,7 +77,7 @@ public final class MongoUtils {
                 BsonType bsonType = bsonRepresentation.getRequiredValue(BsonType.class);
                 return toBsonValue(conversionService, bsonType, idValue);
             } else {
-                BeanProperty property = identity.getProperty();
+                BeanProperty<T, Object> property = identity.getProperty();
                 Class<?> type = property.getType();
                 if (type == String.class && idValue != null) {
                     return new BsonObjectId(new ObjectId(idValue.toString()));

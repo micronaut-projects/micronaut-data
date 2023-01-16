@@ -67,10 +67,9 @@ class DefaultPage<T> extends DefaultSlice<T> implements Page<T> {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof DefaultPage)) {
+        if (!(o instanceof DefaultPage<?> that)) {
             return false;
         }
-        DefaultPage<?> that = (DefaultPage<?>) o;
         return totalSize == that.totalSize && super.equals(o);
     }
 
