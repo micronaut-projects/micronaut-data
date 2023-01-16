@@ -30,8 +30,8 @@ public class AuditCompanyListener {
                 AuditCompany entity = context.getEntity();
                 prePersist(entity);
                 RuntimePersistentEntity<AuditCompany> persistentEntity = context.getPersistentEntity();
-                BeanProperty<AuditCompany, Object> prop1 = (BeanProperty<AuditCompany, Object>) persistentEntity.getPropertyByName("createUser").getProperty();
-                BeanProperty<AuditCompany, Object> prop2 = (BeanProperty<AuditCompany, Object>) persistentEntity.getPropertyByName("updateUser").getProperty();
+                BeanProperty<AuditCompany, Object> prop1 = persistentEntity.getPropertyByName("createUser").getProperty();
+                BeanProperty<AuditCompany, Object> prop2 = persistentEntity.getPropertyByName("updateUser").getProperty();
                 context.setProperty(prop1, prop1.get(entity));
                 context.setProperty(prop2, prop2.get(entity));
                 return true;

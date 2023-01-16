@@ -1089,7 +1089,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                         if (generatedKeys.next()) {
                             RuntimePersistentProperty<T> identity = persistentEntity.getIdentity();
                             Object id = getGeneratedIdentity(generatedKeys, identity, storedQuery.getDialect());
-                            BeanProperty<T, Object> property = (BeanProperty<T, Object>) identity.getProperty();
+                            BeanProperty<T, Object> property = identity.getProperty();
                             entity = updateEntityId(property, entity, id);
                         } else {
                             throw new DataAccessException("Failed to generate ID for entity: " + entity);
@@ -1179,7 +1179,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                             throw new DataAccessException("Failed to generate ID for entity: " + d.entity);
                         } else {
                             Object id = iterator.next();
-                            d.entity = updateEntityId((BeanProperty<T, Object>) identity.getProperty(), d.entity, id);
+                            d.entity = updateEntityId(identity.getProperty(), d.entity, id);
                         }
                     }
                 }

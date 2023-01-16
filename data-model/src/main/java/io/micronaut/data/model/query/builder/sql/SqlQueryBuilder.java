@@ -538,12 +538,10 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
 
     private String addIndex(PersistentEntity entity, IndexConfiguration config) {
         // Create index name without escaped table name and then escape if needed
-        StringBuilder sbIndexName = new StringBuilder();
-        sbIndexName.append(config.index.stringValue("name")
+        String indexName = config.index.stringValue("name")
             .orElse(String.format(
                 "idx_%s%s", prepareNames(config.unquotedTableName),
-                makeTransformedColumnList(provideColumnList(config)))));
-        String indexName = sbIndexName.toString();
+                makeTransformedColumnList(provideColumnList(config))));
         if (shouldEscape(entity)) {
             indexName = quote(indexName);
         }
@@ -745,8 +743,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         return Stream.concat(Stream.of(persistentEntity.getIdentity()), persistentEntity.getPersistentProperties().stream())
                 .flatMap(this::flatMapEmbedded)
                 .filter(p -> {
-                    if (p instanceof Association) {
-                        Association a = (Association) p;
+                    if (p instanceof Association a) {
                         return isForeignKeyWithJoinTable(a);
                     }
                     return false;
@@ -792,12 +789,9 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
 
                     queryBuffer.append(COMMA);
 
-                    boolean includeIdentity = false;
-                    if (association.isForeignKey()) {
-                        // in the case of a foreign key association the ID is not in the table
-                        // so we need to retrieve it
-                        includeIdentity = true;
-                    }
+                    boolean includeIdentity = association.isForeignKey();
+                    // in the case of a foreign key association the ID is not in the table
+                    // so we need to retrieve it
                     traversePersistentProperties(associatedEntity, includeIdentity, true, (propertyAssociations, prop) -> {
                         String columnName;
                         if (computePropertyPaths()) {
@@ -895,8 +889,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         return Stream.concat(Stream.of(entity.getIdentity()), entity.getPersistentProperties().stream())
                 .flatMap(this::flatMapEmbedded)
                 .noneMatch(pp -> {
-                    if (pp instanceof Association) {
-                        Association association = (Association) pp;
+                    if (pp instanceof Association association) {
                         return !association.isForeignKey();
                     }
                     return true;
@@ -904,8 +897,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     }
 
     private Stream<? extends PersistentProperty> flatMapEmbedded(PersistentProperty pp) {
-        if (pp instanceof Embedded) {
-            Embedded embedded = (Embedded) pp;
+        if (pp instanceof Embedded embedded) {
             PersistentEntity embeddedEntity = embedded.getAssociatedEntity();
             return embeddedEntity.getPersistentProperties()
                     .stream()

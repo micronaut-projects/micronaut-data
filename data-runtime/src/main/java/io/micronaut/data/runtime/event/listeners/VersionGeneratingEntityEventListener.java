@@ -70,7 +70,7 @@ public class VersionGeneratingEntityEventListener implements EntityEventListener
         if (shouldSkip(context)) {
             return true;
         }
-        final BeanProperty<Object, Object> property = (BeanProperty<Object, Object>) context.getPersistentEntity().getVersion().getProperty();
+        final BeanProperty<Object, Object> property = context.getPersistentEntity().getVersion().getProperty();
         Object newVersion = init(property.getType());
         context.setProperty(property, newVersion);
         return true;
@@ -82,7 +82,7 @@ public class VersionGeneratingEntityEventListener implements EntityEventListener
             return true;
         }
         final Object entity = context.getEntity();
-        final BeanProperty<Object, Object> property = (BeanProperty<Object, Object>) context.getPersistentEntity().getVersion().getProperty();
+        final BeanProperty<Object, Object> property = context.getPersistentEntity().getVersion().getProperty();
         Object newVersion = increment(property.get(entity), property.getType());
         context.setProperty(property, newVersion);
         return true;

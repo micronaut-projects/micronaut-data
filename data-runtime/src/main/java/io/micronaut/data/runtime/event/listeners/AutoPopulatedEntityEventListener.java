@@ -26,7 +26,6 @@ import java.lang.annotation.Annotation;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 /**
  * Abstract implementation of a listener that handles {@link io.micronaut.data.annotation.AutoPopulated}.
@@ -59,7 +58,7 @@ public abstract class AutoPopulatedEntityEventListener implements EntityEventLis
                 }
                 propertyList.addAll(persistentProperties.stream()
                         .filter(PersistentProperty::isAutoPopulated)
-                        .collect(Collectors.toList()));
+                        .toList());
                 //noinspection unchecked
                 properties = propertyList.stream().filter(getPropertyPredicate()).toArray(RuntimePersistentProperty[]::new);
                 if (ArrayUtils.isEmpty(properties)) {

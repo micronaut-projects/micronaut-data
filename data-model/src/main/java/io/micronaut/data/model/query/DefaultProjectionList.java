@@ -30,7 +30,7 @@ import java.util.List;
  */
 class DefaultProjectionList implements ProjectionList {
 
-    private List<QueryModel.Projection> projections = new ArrayList(3);
+    private final List<QueryModel.Projection> projections = new ArrayList(3);
 
     /**
      * The backing list of projections.
@@ -52,9 +52,8 @@ class DefaultProjectionList implements ProjectionList {
                     QueryModel.Projection existing = projections.iterator().next();
                     if (existing instanceof QueryModel.CountProjection) {
                         return this;
-                    } else if (existing instanceof QueryModel.PropertyProjection) {
+                    } else if (existing instanceof QueryModel.PropertyProjection pp) {
                         projections.clear();
-                        QueryModel.PropertyProjection pp = (QueryModel.PropertyProjection) existing;
                         QueryModel.CountDistinctProjection newProjection = new QueryModel.CountDistinctProjection(pp.getPropertyName());
                         projections.add(newProjection);
                     } else if (existing instanceof QueryModel.IdProjection || existing instanceof QueryModel.DistinctProjection) {

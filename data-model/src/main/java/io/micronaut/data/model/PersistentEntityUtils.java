@@ -86,8 +86,7 @@ public final class PersistentEntityUtils {
     public static void traversePersistentProperties(List<Association> associations,
                                                      PersistentProperty property,
                                                      BiConsumer<List<Association>, PersistentProperty> consumerProperty) {
-        if (property instanceof Embedded) {
-            Embedded embedded = (Embedded) property;
+        if (property instanceof Embedded embedded) {
             PersistentEntity embeddedEntity = embedded.getAssociatedEntity();
             Collection<? extends PersistentProperty> embeddedProperties = embeddedEntity.getPersistentProperties();
             List<Association> newAssociations = new ArrayList<>(associations);
@@ -95,8 +94,7 @@ public final class PersistentEntityUtils {
             for (PersistentProperty embeddedProperty : embeddedProperties) {
                 traversePersistentProperties(newAssociations, embeddedProperty, consumerProperty);
             }
-        } else if (property instanceof Association) {
-            Association association = (Association) property;
+        } else if (property instanceof Association association) {
             if (association.isForeignKey()) {
                 return;
             }

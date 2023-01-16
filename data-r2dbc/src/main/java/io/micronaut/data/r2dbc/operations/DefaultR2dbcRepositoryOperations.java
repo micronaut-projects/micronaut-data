@@ -1232,7 +1232,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                     RuntimePersistentProperty<T> identity = persistentEntity.getIdentity();
                     return executeAndMapEachRowSingle(statement, row -> columnIndexResultSetReader.readDynamic(row, 0, identity.getDataType()))
                         .map(id -> {
-                            BeanProperty<T, Object> property = (BeanProperty<T, Object>) identity.getProperty();
+                            BeanProperty<T, Object> property = identity.getProperty();
                             d.entity = updateEntityId(property, d.entity, id);
                             return d;
                         });
@@ -1340,7 +1340,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                                     throw new DataAccessException("Failed to generate ID for entity: " + d.entity);
                                 } else {
                                     Object id = iterator.next();
-                                    d.entity = updateEntityId((BeanProperty<T, Object>) identity.getProperty(), d.entity, id);
+                                    d.entity = updateEntityId(identity.getProperty(), d.entity, id);
                                 }
                             }
                             return Mono.just(list);

@@ -36,6 +36,6 @@ public interface RuntimePersistentPropertyConversionContext extends ArgumentConv
 
     @Override
     default Argument<Object> getArgument() {
-        return (Argument<Object>) getRuntimePersistentProperty().getArgument();
+        return getRuntimePersistentProperty().getArgument();
     }
 }

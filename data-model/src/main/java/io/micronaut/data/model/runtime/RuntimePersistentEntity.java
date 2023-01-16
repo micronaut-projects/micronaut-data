@@ -329,12 +329,10 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity impleme
     @Override
     public List<String> getPersistentPropertyNames() {
         if (allPersistentPropertiesNames == null) {
-            allPersistentPropertiesNames = Collections.unmodifiableList(
-                    Arrays.stream(allPersistentProperties)
-                            .filter(Objects::nonNull)
-                            .map(RuntimePersistentProperty::getName)
-                            .collect(Collectors.toList())
-            );
+            allPersistentPropertiesNames = Arrays.stream(allPersistentProperties)
+                .filter(Objects::nonNull)
+                .map(RuntimePersistentProperty::getName)
+                .toList();
         }
         return allPersistentPropertiesNames;
     }

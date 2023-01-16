@@ -23,7 +23,6 @@ import io.micronaut.context.annotation.Prototype;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
-import io.micronaut.core.convert.ConversionService;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.exceptions.EmptyResultException;
 import io.micronaut.data.intercept.DataInterceptor;

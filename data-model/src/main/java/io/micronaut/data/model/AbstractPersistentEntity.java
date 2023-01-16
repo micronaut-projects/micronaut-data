@@ -71,8 +71,7 @@ public abstract class AbstractPersistentEntity implements PersistentEntity {
             return Optional.of(namingStrategy);
         } else {
             Object o = InstantiationUtils.tryInstantiate(className, classLoader).orElse(null);
-            if (o instanceof NamingStrategy) {
-                NamingStrategy ns = (NamingStrategy) o;
+            if (o instanceof NamingStrategy ns) {
                 NAMING_STRATEGIES.put(className, ns);
                 return Optional.of(ns);
             }
