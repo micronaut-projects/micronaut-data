@@ -60,6 +60,8 @@ import java.util.stream.Collectors;
 @Context
 @Internal
 @Requires(classes = CosmosClient.class)
+@Requires(property = "azure.cosmos.endpoint")
+@Requires(property = "azure.cosmos.key")
 final class CosmosDatabaseInitializer {
 
     private static final Logger LOG = LoggerFactory.getLogger(CosmosDatabaseInitializer.class);
