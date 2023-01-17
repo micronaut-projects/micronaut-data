@@ -17,24 +17,24 @@ package io.micronaut.data.tck.entities;
 
 import io.micronaut.data.annotation.DateUpdated;
 
-import javax.persistence.CascadeType;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.ManyToMany;
-import javax.persistence.ManyToOne;
-import javax.persistence.OneToMany;
-import javax.persistence.OneToOne;
-import javax.persistence.PostLoad;
-import javax.persistence.PostPersist;
-import javax.persistence.PostRemove;
-import javax.persistence.PostUpdate;
-import javax.persistence.PrePersist;
-import javax.persistence.PreRemove;
-import javax.persistence.PreUpdate;
-import javax.persistence.Transient;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.PostLoad;
+import jakarta.persistence.PostPersist;
+import jakarta.persistence.PostRemove;
+import jakarta.persistence.PostUpdate;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreRemove;
+import jakarta.persistence.PreUpdate;
+import jakarta.persistence.Transient;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -42,38 +42,49 @@ import java.util.List;
 import java.util.Set;
 
 @Entity
+@javax.persistence.Entity
 public class Book {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @javax.persistence.Id
+    @javax.persistence.GeneratedValue(strategy = javax.persistence.GenerationType.IDENTITY)
     private Long id;
     private String title;
     private int totalPages;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @javax.persistence.ManyToOne(fetch = javax.persistence.FetchType.LAZY)
     private Author author;
 
     @OneToOne
+    @javax.persistence.OneToOne
     private Genre genre;
 
     @ManyToOne
+    @javax.persistence.ManyToOne
     private Publisher publisher;
 
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "book")
+    @javax.persistence.OneToMany(cascade = javax.persistence.CascadeType.ALL, mappedBy = "book")
     private List<Page> pages = new ArrayList<>();
 
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "book")
+    @javax.persistence.OneToMany(cascade = javax.persistence.CascadeType.ALL, mappedBy = "book")
     private List<Chapter> chapters = new ArrayList<>();
 
     @ManyToMany(cascade = CascadeType.PERSIST)
+    @javax.persistence.ManyToMany(cascade = javax.persistence.CascadeType.PERSIST)
     private Set<Student> students = new HashSet<>();
 
     @Transient
+    @javax.persistence.Transient
     public int prePersist, postPersist, preUpdate, postUpdate, preRemove, postRemove, postLoad;
 
     @DateUpdated
     private LocalDateTime lastUpdated;
 
     @PrePersist
+    @javax.persistence.PrePersist
     protected void onPrePersist() {
         prePersist++;
     }
@@ -83,36 +94,43 @@ public class Book {
 //    }
 
     @PostPersist
+    @javax.persistence.PostPersist
     protected void onPostPersist() {
         postPersist++;
     }
 
     @PreUpdate
+    @javax.persistence.PreUpdate
     protected void onPreUpdate() {
         preUpdate++;
     }
 
     @PostUpdate
+    @javax.persistence.PostUpdate
     protected void onPostUpdate() {
         postUpdate++;
     }
 
     @PreRemove
+    @javax.persistence.PreRemove
     protected void onPreRemove() {
         preRemove++;
     }
 
     @PostRemove
+    @javax.persistence.PostRemove
     protected void onPostRemove() {
         postRemove++;
     }
 
     @PostLoad
+    @javax.persistence.PostLoad
     protected void onPostLoad() {
         postLoad++;
     }
 
     @Transient
+    @javax.persistence.Transient
     public void resetEventCounters() {
         prePersist = 0;
         postPersist = 0;

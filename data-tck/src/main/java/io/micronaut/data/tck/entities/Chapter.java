@@ -15,20 +15,24 @@
  */
 package io.micronaut.data.tck.entities;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.ManyToOne;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.Id;
+import jakarta.persistence.ManyToOne;
 
 @Entity
+@javax.persistence.Entity
 public class Chapter {
     @Id
     @GeneratedValue
+    @javax.persistence.Id
+    @javax.persistence.GeneratedValue
     private Long id;
     private String title;
     private int pages;
 
     @ManyToOne
+    @javax.persistence.ManyToOne
     private Book book;
 
     public int getPages() {

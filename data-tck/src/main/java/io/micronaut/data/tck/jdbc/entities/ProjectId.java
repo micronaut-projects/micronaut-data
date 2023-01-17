@@ -15,17 +15,22 @@
  */
 package io.micronaut.data.tck.jdbc.entities;
 
-import javax.persistence.Embeddable;
+import jakarta.persistence.Embeddable;
 import java.io.Serializable;
 
 @Embeddable
+@javax.persistence.Embeddable
 public class ProjectId implements Serializable {
-    private final int departmentId;
-    private final int projectId;
+    private int departmentId;
+    private int projectId;
 
     public ProjectId(int departmentId, int projectId) {
         this.departmentId = departmentId;
         this.projectId = projectId;
+    }
+
+    public ProjectId() {
+
     }
 
     public int getDepartmentId() {
@@ -34,5 +39,13 @@ public class ProjectId implements Serializable {
 
     public int getProjectId() {
         return projectId;
+    }
+
+    public void setDepartmentId(int departmentId) {
+        this.departmentId = departmentId;
+    }
+
+    public void setProjectId(int projectId) {
+        this.projectId = projectId;
     }
 }

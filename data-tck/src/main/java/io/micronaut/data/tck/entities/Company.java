@@ -19,18 +19,21 @@ import io.micronaut.core.annotation.Creator;
 import io.micronaut.data.annotation.DateCreated;
 import io.micronaut.data.annotation.DateUpdated;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.Id;
 import java.net.URL;
 import java.time.Instant;
 import java.util.Date;
 
 @Entity
+@javax.persistence.Entity
 public class Company {
 
     @GeneratedValue
     @Id
+    @javax.persistence.GeneratedValue
+    @javax.persistence.Id
     private Long myId;
     @DateCreated
     private Date dateCreated;
