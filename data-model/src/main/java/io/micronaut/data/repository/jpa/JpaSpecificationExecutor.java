@@ -214,5 +214,4 @@ public interface JpaSpecificationExecutor<T> {
      * @since 3.5.0
      */
     long updateAll(@Nullable CriteriaUpdateBuilder<T> builder);
-
 }
