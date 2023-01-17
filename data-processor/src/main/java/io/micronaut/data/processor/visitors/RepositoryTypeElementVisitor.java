@@ -93,12 +93,12 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
     private ClassElement currentClass;
     private ClassElement currentRepository;
     private QueryBuilder queryEncoder;
-    private Map<String, String> typeRoles = new HashMap<>();
-    private List<MethodMatcher> methodsMatchers;
+    private final Map<String, String> typeRoles = new HashMap<>();
+    private final List<MethodMatcher> methodsMatchers;
     private boolean failing = false;
-    private Set<String> visitedRepositories = new HashSet<>();
+    private final Set<String> visitedRepositories = new HashSet<>();
     private Map<String, DataType> dataTypes = Collections.emptyMap();
-    private Map<String, SourcePersistentEntity> entityMap = new HashMap<>(50);
+    private final Map<String, SourcePersistentEntity> entityMap = new HashMap<>(50);
     private Function<ClassElement, SourcePersistentEntity> entityResolver;
 
     {
@@ -147,8 +147,8 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
 
         entityResolver = new Function<ClassElement, SourcePersistentEntity>() {
 
-            MappedEntityVisitor mappedEntityVisitor = new MappedEntityVisitor();
-            MappedEntityVisitor embeddedMappedEntityVisitor = new MappedEntityVisitor(false);
+            final MappedEntityVisitor mappedEntityVisitor = new MappedEntityVisitor();
+            final MappedEntityVisitor embeddedMappedEntityVisitor = new MappedEntityVisitor(false);
 
             @Override
             public SourcePersistentEntity apply(ClassElement classElement) {

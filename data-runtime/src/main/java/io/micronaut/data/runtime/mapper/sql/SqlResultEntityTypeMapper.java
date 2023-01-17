@@ -505,8 +505,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                 if (rpp.isReadOnly()) {
                     continue;
                 } else if (rpp.isConstructorArgument()) {
-                    if (rpp instanceof Association) {
-                        Association a = (Association) rpp;
+                    if (rpp instanceof Association a) {
                         final Relation.Kind kind = a.getKind();
                         if (kind.isSingleEnded()) {
                             continue;
@@ -579,7 +578,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
         Object result = resultReader.readDynamic(rs, columnName, prop.getDataType());
         AttributeConverter<Object, Object> converter = prop.getConverter();
         if (converter != null) {
-            return converter.convertToEntityValue(result, ConversionContext.of((Argument) prop.getArgument()));
+            return converter.convertToEntityValue(result, ConversionContext.of(prop.getArgument()));
         }
         return result;
     }

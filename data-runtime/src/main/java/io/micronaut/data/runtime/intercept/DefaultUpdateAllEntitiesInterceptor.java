@@ -44,7 +44,7 @@ public class DefaultUpdateAllEntitiesInterceptor<T, R> extends AbstractQueryInte
     public R intercept(RepositoryMethodKey methodKey, MethodInvocationContext<T, R> context) {
         Iterable<R> iterable = (Iterable<R>) getEntitiesParameter(context, Object.class);
         //noinspection unchecked
-        Class<R> rootEntity = (Class<R>) getRequiredRootEntity(context);
+        Class<R> rootEntity = getRequiredRootEntity(context);
         Iterable<R> rs = operations.updateAll(getUpdateAllBatchOperation(context, rootEntity, iterable));
         ReturnType<R> rt = context.getReturnType();
         if (rt.isVoid()) {

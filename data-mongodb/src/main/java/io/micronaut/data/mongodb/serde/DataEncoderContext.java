@@ -53,7 +53,7 @@ final class DataEncoderContext implements Serializer.EncoderContext {
 
     private final Argument<ObjectId> OBJECT_ID = Argument.of(ObjectId.class);
 
-    private MongoDataConfiguration mongoDataConfiguration;
+    private final MongoDataConfiguration mongoDataConfiguration;
     private final AttributeConverterRegistry attributeConverterRegistry;
     private final Argument argument;
     private final RuntimePersistentEntity<Object> runtimePersistentEntity;

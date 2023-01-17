@@ -99,8 +99,7 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
         this.criteriaBuilder = operations.getApplicationContext().getBean(RuntimeCriteriaBuilder.class);
         if (operations instanceof MethodContextAwareStoredQueryDecorator) {
             storedQueryDecorator = (MethodContextAwareStoredQueryDecorator) operations;
-        } else if (operations instanceof StoredQueryDecorator) {
-            StoredQueryDecorator decorator = (StoredQueryDecorator) operations;
+        } else if (operations instanceof StoredQueryDecorator decorator) {
             storedQueryDecorator = new MethodContextAwareStoredQueryDecorator() {
                 @Override
                 public <E, K> StoredQuery<E, K> decorate(MethodInvocationContext<?, ?> context, StoredQuery<E, K> storedQuery) {
@@ -224,8 +223,7 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
 
         if (type == Type.FIND_ALL) {
             for (Object param : context.getParameterValues()) {
-                if (param instanceof Sort && param != pageable) {
-                    Sort sort = (Sort) param;
+                if (param instanceof Sort sort && param != pageable) {
                     if (sort.isSorted()) {
                         Root<?> root = criteriaQuery.getRoots().stream().findFirst().orElseThrow(() -> new IllegalStateException("The root not found!"));
                         criteriaQuery.orderBy(getOrders(sort, root, criteriaBuilder));

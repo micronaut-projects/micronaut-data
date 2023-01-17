@@ -305,8 +305,7 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
     }
 
     private boolean needsProcessingValue(BsonValue value) {
-        if (value instanceof BsonDocument) {
-            BsonDocument bsonDocument = (BsonDocument) value;
+        if (value instanceof BsonDocument bsonDocument) {
             BsonInt32 queryParameterIndex = bsonDocument.getInt32(MongoQueryBuilder.QUERY_PARAMETER_PLACEHOLDER, null);
             if (queryParameterIndex != null) {
                 return true;
@@ -319,16 +318,14 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
             }
             return false;
         }
-        if (value instanceof BsonArray) {
-            BsonArray bsonArray = (BsonArray) value;
+        if (value instanceof BsonArray bsonArray) {
             for (BsonValue bsonValue : bsonArray) {
                 if (needsProcessingValue(bsonValue)) {
                     return true;
                 }
             }
         }
-        if (value instanceof BsonRegularExpression) {
-            BsonRegularExpression bsonRegularExpression = (BsonRegularExpression) value;
+        if (value instanceof BsonRegularExpression bsonRegularExpression) {
             String pattern = bsonRegularExpression.getPattern();
             return MONGO_PARAM_PATTERN.matcher(pattern).matches();
         }
@@ -407,8 +404,7 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
     }
 
     private BsonValue replaceQueryParametersInBsonValue(BsonValue value, @Nullable InvocationContext<?, ?> invocationContext, @Nullable E entity) {
-        if (value instanceof BsonDocument) {
-            BsonDocument bsonDocument = (BsonDocument) value;
+        if (value instanceof BsonDocument bsonDocument) {
             BsonInt32 queryParameterIndex = bsonDocument.getInt32(MongoQueryBuilder.QUERY_PARAMETER_PLACEHOLDER, null);
             if (queryParameterIndex != null) {
                 int index = queryParameterIndex.getValue();
@@ -427,8 +423,7 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
                 }
             }
             return bsonDocument;
-        } else if (value instanceof BsonArray) {
-            BsonArray bsonArray = (BsonArray) value;
+        } else if (value instanceof BsonArray bsonArray) {
             for (int i = 0; i < bsonArray.size(); i++) {
                 BsonValue bsonValue = bsonArray.get(i);
                 BsonValue newValue = replaceQueryParametersInBsonValue(bsonValue, invocationContext, entity);
@@ -446,8 +441,7 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
                     }
                 }
             }
-        } else if (value instanceof BsonRegularExpression) {
-            BsonRegularExpression bsonRegularExpression = (BsonRegularExpression) value;
+        } else if (value instanceof BsonRegularExpression bsonRegularExpression) {
             String pattern = bsonRegularExpression.getPattern();
             Matcher matcher = MONGO_PARAM_PATTERN.matcher(pattern);
             if (matcher.matches()) {
@@ -479,8 +473,7 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
         if (queryParameterBinding.getPropertyPath() != null) {
             PersistentPropertyPath pp = getRequiredPropertyPath(queryParameterBinding, persistentEntity);
             RuntimePersistentProperty<?> persistentProperty = (RuntimePersistentProperty) pp.getProperty();
-            if (persistentProperty instanceof RuntimeAssociation) {
-                RuntimeAssociation runtimeAssociation = (RuntimeAssociation) persistentProperty;
+            if (persistentProperty instanceof RuntimeAssociation runtimeAssociation) {
                 RuntimePersistentProperty identity = runtimeAssociation.getAssociatedEntity().getIdentity();
                 isIdentity = identity != null && identity.getType() == String.class && identity.isGenerated();
             } else {

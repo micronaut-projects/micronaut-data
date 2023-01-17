@@ -80,8 +80,7 @@ public final class ReactiveCascadeOperations<Ctx extends OperationContext> exten
         Mono<T> monoEntity = Mono.just(entity);
 
         for (CascadeOp cascadeOp : cascadeOps) {
-            if (cascadeOp instanceof CascadeOneOp) {
-                CascadeOneOp cascadeOneOp = (CascadeOneOp) cascadeOp;
+            if (cascadeOp instanceof CascadeOneOp cascadeOneOp) {
                 Object child = cascadeOneOp.child;
                 RuntimePersistentEntity<Object> childPersistentEntity = cascadeOneOp.childPersistentEntity;
                 RuntimeAssociation<Object> association = (RuntimeAssociation) cascadeOp.ctx.getAssociation();
@@ -137,8 +136,7 @@ public final class ReactiveCascadeOperations<Ctx extends OperationContext> exten
                 }
                 });
 
-            } else if (cascadeOp instanceof CascadeManyOp) {
-                CascadeManyOp cascadeManyOp = (CascadeManyOp) cascadeOp;
+            } else if (cascadeOp instanceof CascadeManyOp cascadeManyOp) {
                 RuntimePersistentEntity<Object> childPersistentEntity = cascadeManyOp.childPersistentEntity;
 
                 if (cascadeType == Relation.Cascade.UPDATE) {
