@@ -3838,19 +3838,10 @@ You can use property <code>schema-generate-names</code> to specify multiple sche
 
 
 <div class="paragraph">
-<p>Micronaut Data JPA supports Hibernate 5. You can only use <code>javax.persistence</code> annotations such as <code>javax.persistence.Entity</code> to map your entities.</p>
+<p>Micronaut Data JPA supports Hibernate 5 and Hibernate 6. You can use <code>javax.persistence</code> annotations such as <code>javax.persistence.Entity</code> to map your entities.</p>
 </div>
-<div class="admonitionblock warning">
-<table>
-<tr>
-<td class="icon">
-<i class="fa icon-warning" title="Warning"></i>
-</td>
-<td class="content">
-Micronaut Data JPA does not support <code>jakarta.persistence</code> annotations.
-</td>
-</tr>
-</table>
+<div class="paragraph">
+<p>For Hibernate 6 Micronaut Data JPA supports <code>jakarta.persistence</code> annotations such as <code>jakarta.persistence.Entity</code> to map your entities.</p>
 </div>
 
 <h2 id="hibernateQuickStart"><a class="anchor" href="#hibernateQuickStart"></a>4.2 Quick Start</h2>
@@ -4254,6 +4245,9 @@ fun updatePages(@Id id: Long?, @Parameter("pages") pages: Int)</code></pre>
 </div>
 <div class="paragraph">
 <p>In this example, in order for update to be propagated in the current session you can add <code>QueryHint</code> annotation to force session flush.</p>
+</div>
+<div class="paragraph">
+<p>For Hibernate 6 instead of <code>javax.persistence.FlushModeType</code> need to use <code>jakarta.persistence.FlushModeType</code>.</p>
 </div>
 </div>
 <div class="sect2">

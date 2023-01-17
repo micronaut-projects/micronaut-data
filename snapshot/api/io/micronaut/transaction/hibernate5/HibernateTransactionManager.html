@@ -782,7 +782,7 @@ implements <a href="../support/ResourceTransactionManager.html" title="interface
 <div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">disconnectOnCompletion</span><wbr><span class="parameters">(org.hibernate.Session&nbsp;session)</span></div>
 <div class="block">Disconnect a pre-existing Hibernate Session on transaction completion,
  returning its database connection but preserving its entity state.
- <p>The default implementation simply calls <code>Session.disconnect()</code>.
+ <p>The default implementation simply calls <code>Session#disconnect()</code>.
  Subclasses may override this with a no-op or with fine-tuned disconnection logic.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -790,7 +790,7 @@ implements <a href="../support/ResourceTransactionManager.html" title="interface
 <dt>See Also:</dt>
 <dd>
 <ul class="see-list">
-<li><code>Session.disconnect()</code></li>
+<li><code>Session#disconnect()</code></li>
 </ul>
 </dd>
 </dl>
