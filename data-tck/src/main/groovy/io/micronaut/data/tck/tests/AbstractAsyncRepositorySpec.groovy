@@ -668,5 +668,6 @@ abstract class AbstractAsyncRepositorySpec extends Specification {
             }
             throw e
         }
+        
     }
 }
