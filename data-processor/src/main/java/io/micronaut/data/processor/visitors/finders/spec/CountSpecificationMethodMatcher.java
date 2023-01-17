@@ -61,7 +61,7 @@ public class CountSpecificationMethodMatcher extends AbstractSpecificationMethod
                 try {
                     classElement = getInterceptorElement(mc, "io.micronaut.data.jpa.repository.intercept.CountSpecificationInterceptor");
                 } catch (IllegalStateException e) {
-                    classElement = getInterceptorElement(mc, "io.micronaut.data.jpa3.repository.intercept.CountSpecificationInterceptor");
+                    classElement = getInterceptorElement(mc, "io.micronaut.data.hibernate6.jpa.repository.intercept.CountSpecificationInterceptor");
                 }
                 return new MethodMatchInfo(
                         DataMethod.OperationType.COUNT,

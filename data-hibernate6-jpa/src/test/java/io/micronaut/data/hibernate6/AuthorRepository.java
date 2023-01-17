@@ -19,7 +19,7 @@ import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.hibernate6.entities.AuthorDto;
-import io.micronaut.data.jpa3.annotation.EntityGraph;
+import io.micronaut.data.hibernate6.jpa.annotation.EntityGraph;
 import io.micronaut.data.tck.entities.Author;
 
 import javax.transaction.Transactional;

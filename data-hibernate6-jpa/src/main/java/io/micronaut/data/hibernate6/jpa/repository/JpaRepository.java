@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.jpa3.repository;
+package io.micronaut.data.hibernate6.jpa.repository;
 
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.annotation.QueryHint;
 import io.micronaut.data.intercept.annotation.DataMethod;
-import io.micronaut.data.jpa3.repository.intercept.FlushInterceptor;
-import io.micronaut.data.jpa3.repository.intercept.LoadInterceptor;
+import io.micronaut.data.hibernate6.jpa.repository.intercept.FlushInterceptor;
+import io.micronaut.data.hibernate6.jpa.repository.intercept.LoadInterceptor;
 import io.micronaut.data.model.Sort;
 import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.data.repository.PageableRepository;

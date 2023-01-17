@@ -5,7 +5,7 @@ import io.micronaut.core.annotation.Introspected
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.data.annotation.Join
 import io.micronaut.data.annotation.Repository
-import io.micronaut.data.jpa3.repository.JpaRepository
+import io.micronaut.data.hibernate6.jpa.repository.JpaRepository
 import io.micronaut.data.repository.GenericRepository
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import spock.lang.Shared

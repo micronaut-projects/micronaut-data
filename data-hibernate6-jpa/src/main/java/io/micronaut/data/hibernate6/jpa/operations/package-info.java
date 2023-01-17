@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 /**
- * JPA specific annotations.
+ * JPA extensions for {@link io.micronaut.data.operations.RepositoryOperations}.
  *
  * @author graemerocher
  * @since 1.0.0
  */
-package io.micronaut.data.jpa3.annotation;
+package io.micronaut.data.hibernate6.jpa.operations;

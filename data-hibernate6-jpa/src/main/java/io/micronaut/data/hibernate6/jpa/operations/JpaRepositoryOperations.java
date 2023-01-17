@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.jpa3.operations;
+package io.micronaut.data.hibernate6.jpa.operations;
 
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.operations.PrimaryRepositoryOperations;

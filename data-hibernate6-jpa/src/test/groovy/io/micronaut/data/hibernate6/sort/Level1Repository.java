@@ -3,7 +3,7 @@ package io.micronaut.data.hibernate6.sort;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.Repository;
-import io.micronaut.data.jpa3.repository.JpaRepository;
+import io.micronaut.data.hibernate6.jpa.repository.JpaRepository;
 import io.micronaut.data.model.Sort;
 
 import java.util.List;

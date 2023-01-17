@@ -18,7 +18,7 @@ package io.micronaut.data.hibernate6
 import io.micronaut.data.exceptions.EmptyResultException
 import io.micronaut.data.hibernate6.entities.Rating
 import io.micronaut.data.hibernate6.entities.UserWithWhere
-import io.micronaut.data.jpa3.repository.criteria.Specification
+import io.micronaut.data.hibernate6.jpa.repository.criteria.Specification
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
 import io.micronaut.data.tck.entities.Author

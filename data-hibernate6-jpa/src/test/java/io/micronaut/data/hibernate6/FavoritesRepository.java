@@ -17,7 +17,7 @@ package io.micronaut.data.hibernate6;
 
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.hibernate6.entities.Favorites;
-import io.micronaut.data.jpa3.repository.JpaRepository;
+import io.micronaut.data.hibernate6.jpa.repository.JpaRepository;
 
 import java.util.UUID;
 

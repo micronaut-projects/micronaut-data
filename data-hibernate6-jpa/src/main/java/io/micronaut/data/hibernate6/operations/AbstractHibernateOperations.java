@@ -29,7 +29,7 @@ import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.QueryHint;
-import io.micronaut.data.jpa3.annotation.EntityGraph;
+import io.micronaut.data.hibernate6.jpa.annotation.EntityGraph;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder;

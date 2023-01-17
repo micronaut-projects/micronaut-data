@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.jpa3.repository;
+package io.micronaut.data.hibernate6.jpa.repository;
 
 import io.micronaut.core.annotation.Nullable;
-import io.micronaut.data.jpa3.repository.criteria.Specification;
+import io.micronaut.data.hibernate6.jpa.repository.criteria.Specification;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;

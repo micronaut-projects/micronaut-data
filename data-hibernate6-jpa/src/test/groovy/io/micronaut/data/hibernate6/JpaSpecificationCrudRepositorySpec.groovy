@@ -63,7 +63,7 @@ class JpaSpecificationCrudRepositorySpec extends Specification {
         crudRepository.findAll().size() == 3
         crudRepository.listPeople("Fred").size() == 1
         when:
-        def page = crudRepository.findAll(new io.micronaut.data.jpa3.repository.criteria.Specification<Person>() {
+        def page = crudRepository.findAll(new io.micronaut.data.hibernate6.jpa.repository.criteria.Specification<Person>() {
             @Override
             Predicate toPredicate(Root<Person> root, CriteriaQuery<?> query, CriteriaBuilder criteriaBuilder) {
                 return null
@@ -197,7 +197,7 @@ class JpaSpecificationCrudRepositorySpec extends Specification {
         crudRepository.saveAll(people)
         then:"can be ordered case insensitively"
         def peopleIds = people.stream().map(p -> p.getId()).collect(Collectors.toList())
-        Page<Person> personsPaged = crudRepository.findAll(new io.micronaut.data.jpa3.repository.criteria.Specification<Person>() {
+        Page<Person> personsPaged = crudRepository.findAll(new io.micronaut.data.hibernate6.jpa.repository.criteria.Specification<Person>() {
             @Override
             Predicate toPredicate(Root<Person> root, CriteriaQuery<?> query, CriteriaBuilder criteriaBuilder) {
                 return root.get("id").in(peopleIds)

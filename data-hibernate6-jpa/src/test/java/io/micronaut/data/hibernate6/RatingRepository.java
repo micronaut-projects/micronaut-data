@@ -2,7 +2,7 @@ package io.micronaut.data.hibernate6;
 
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.hibernate6.entities.Rating;
-import io.micronaut.data.jpa3.annotation.EntityGraph;
+import io.micronaut.data.hibernate6.jpa.annotation.EntityGraph;
 import io.micronaut.data.repository.CrudRepository;
 
 import javax.transaction.Transactional;

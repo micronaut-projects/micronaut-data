@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 /**
- * Custom interceptors for JPA.
+ * JPA specific annotations.
  *
  * @author graemerocher
  * @since 1.0.0
  */
-package io.micronaut.data.jpa3.repository.intercept;
+package io.micronaut.data.hibernate6.jpa.annotation;
