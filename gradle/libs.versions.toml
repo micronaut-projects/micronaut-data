@@ -69,7 +69,7 @@ jetbrains-annotations = "24.0.0"
 
 # Gradle plugins
 
-kotlin-gradle-plugin = "1.7.22"
+kotlin-gradle-plugin = "1.8.0"
 jmh-gradle-plugin = "0.6.8"
 spring-boot-gradle-plugin = "2.6.7"
 spring-dependency-management-gradle-plugin = "1.1.0"
