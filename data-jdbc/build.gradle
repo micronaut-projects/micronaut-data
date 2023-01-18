@@ -62,7 +62,7 @@ dependencies {
     testImplementation libs.micronaut.testresources.client
 
     // Needed for H2EagerContextSpec
-    testImplementation("org.jetbrains.kotlin:kotlin-reflect:1.8.0-RC2")
+    testImplementation("org.jetbrains.kotlin:kotlin-reflect:1.8.0")
 }
 
 micronaut {
