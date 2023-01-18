@@ -166,7 +166,7 @@ interface CourseRepository extends CrudRepository<Course, String> {
 
     @Join(value = "students", type = Join.Type.LEFT_FETCH)
     @Override
-    Iterable<Course> findAll()
+    List<Course> findAll()
 }
 
 @MongoRepository
@@ -175,7 +175,7 @@ interface CourseRatingRepository extends CrudRepository<CourseRating, String> {
     @Join(value = "student", type = Join.Type.LEFT_FETCH)
     @Join(value = "course", type = Join.Type.LEFT_FETCH)
     @Override
-    Iterable<CourseRating> findAll()
+    List<CourseRating> findAll()
 
     @Join(value = "student", type = Join.Type.LEFT_FETCH)
     @Join(value = "course", type = Join.Type.LEFT_FETCH)
@@ -189,7 +189,7 @@ interface CourseRatingCompositeKeyRepository extends CrudRepository<CourseRating
     @Join(value = "student", type = Join.Type.LEFT_FETCH)
     @Join(value = "course", type = Join.Type.LEFT_FETCH)
     @Override
-    Iterable<CourseRatingCompositeKey> findAll()
+    List<CourseRatingCompositeKey> findAll()
 
     @Join(value = "student", type = Join.Type.LEFT_FETCH)
     @Join(value = "course", type = Join.Type.LEFT_FETCH)
