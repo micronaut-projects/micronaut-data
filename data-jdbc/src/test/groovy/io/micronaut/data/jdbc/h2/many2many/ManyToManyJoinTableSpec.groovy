@@ -213,7 +213,7 @@ interface CourseRepository extends CrudRepository<Course, Long> {
 
     @Join(value = "students", type = Join.Type.LEFT_FETCH)
     @Override
-    Iterable<Course> findAll()
+    List<Course> findAll()
 }
 
 @JdbcRepository(dialect = Dialect.H2)
@@ -222,7 +222,7 @@ interface CourseRatingRepository extends CrudRepository<CourseRating, Long> {
     @Join(value = "student", type = Join.Type.LEFT_FETCH)
     @Join(value = "course", type = Join.Type.LEFT_FETCH)
     @Override
-    Iterable<CourseRating> findAll()
+    List<CourseRating> findAll()
 
     @Join(value = "student", type = Join.Type.LEFT_FETCH)
     @Join(value = "course", type = Join.Type.LEFT_FETCH)
@@ -236,7 +236,7 @@ interface CourseRatingCompositeKeyRepository extends CrudRepository<CourseRating
     @Join(value = "student", type = Join.Type.LEFT_FETCH)
     @Join(value = "course", type = Join.Type.LEFT_FETCH)
     @Override
-    Iterable<CourseRatingCompositeKey> findAll()
+    List<CourseRatingCompositeKey> findAll()
 
     @Join(value = "student", type = Join.Type.LEFT_FETCH)
     @Join(value = "course", type = Join.Type.LEFT_FETCH)

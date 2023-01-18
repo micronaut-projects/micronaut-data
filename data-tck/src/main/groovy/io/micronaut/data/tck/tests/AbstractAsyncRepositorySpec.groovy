@@ -122,10 +122,10 @@ abstract class AbstractAsyncRepositorySpec extends Specification {
 
     void "test update many"() {
         when:
-        def people = personRepository.findAll().get().toList()
+        def people = personRepository.findAll().get()
         people.forEach() { it.name = it.name + " updated" }
         def recordsUpdated = personRepository.updateAll(people).get().size()
-        people = personRepository.findAll().get().toList()
+        people = personRepository.findAll().get()
 
         then:
         people.size() == 2
@@ -134,9 +134,9 @@ abstract class AbstractAsyncRepositorySpec extends Specification {
         people.get(1).name.endsWith(" updated")
 
         when:
-        people = personRepository.findAll().get().toList()
+        people = personRepository.findAll().get()
         people.forEach() { it.name = it.name + " X" }
-        def peopleUpdated = personRepository.updatePeople(people).get().toList()
+        def peopleUpdated = personRepository.updatePeople(people).get()
         people = personRepository.findAll().get()
 
         then:
@@ -153,7 +153,7 @@ abstract class AbstractAsyncRepositorySpec extends Specification {
         def saved = personRepository.saveCustom([new Person(name: "Abc", age: 12), new Person(name: "Xyz", age: 22)]).get()
 
         when:
-        def people = personRepository.findAll().get().toList()
+        def people = personRepository.findAll().get()
 
         then:
         saved == 2
@@ -191,7 +191,7 @@ abstract class AbstractAsyncRepositorySpec extends Specification {
         personRepository.saveCustomSingle(new Person(name: "Abc", age: 12)).get()
 
         when:
-        def people = personRepository.findAll().get().toList()
+        def people = personRepository.findAll().get()
 
         then:
         people.size() == 1
@@ -248,11 +248,11 @@ abstract class AbstractAsyncRepositorySpec extends Specification {
         personRepository.count().get() == 2
 
         when:
-        def rowsDeleted = personRepository.deleteManyReturnRowsDeleted(personRepository.findAll().get().toList()).get()
+        def rowsDeleted = personRepository.deleteManyReturnRowsDeleted(personRepository.findAll().get()).get()
 
         then:
         rowsDeleted == 2
-        personRepository.findAll().get().toList().isEmpty()
+        personRepository.findAll().get().isEmpty()
     }
 
     void "test delete one"() {
@@ -359,10 +359,10 @@ abstract class AbstractAsyncRepositorySpec extends Specification {
         savePersons(["Dennis", "Jeff", "James", "Dennis"])
 
         when:
-        def people = personRepository.findAll().get().toList()
+        def people = personRepository.findAll().get()
         people.findAll {it.name == "Dennis"}.forEach{ it.name = "DoNotDelete"}
         def deleted = personRepository.deleteCustom(people).get()
-        people = personRepository.findAll().get().toList()
+        people = personRepository.findAll().get()
 
         then:
         deleted == 2
@@ -376,10 +376,10 @@ abstract class AbstractAsyncRepositorySpec extends Specification {
         savePersons(["Dennis", "Jeff", "James", "Dennis"])
 
         when:
-        def people = personRepository.findAll().get().toList()
+        def people = personRepository.findAll().get()
         def jeff = people.find {it.name == "Jeff"}
         def deleted = personRepository.deleteCustomSingle(jeff).get()
-        people = personRepository.findAll().get().toList()
+        people = personRepository.findAll().get()
 
         then:
         deleted == 1
@@ -389,7 +389,7 @@ abstract class AbstractAsyncRepositorySpec extends Specification {
         def james = people.find {it.name == "James"}
         james.name = "DoNotDelete"
         deleted = personRepository.deleteCustomSingle(james).get()
-        people = personRepository.findAll().get().toList()
+        people = personRepository.findAll().get()
 
         then:
         deleted == 0
@@ -402,10 +402,10 @@ abstract class AbstractAsyncRepositorySpec extends Specification {
         savePersons(["Dennis", "Jeff", "James", "Dennis"])
 
         when:
-        def people = personRepository.findAll().get().toList()
+        def people = personRepository.findAll().get()
         def jeff = people.find {it.name == "Jeff"}
         def deleted = personRepository.deleteCustomSingleNoEntity(jeff.getName()).get()
-        people = personRepository.findAll().get().toList()
+        people = personRepository.findAll().get()
 
         then:
         deleted == 1
@@ -419,11 +419,11 @@ abstract class AbstractAsyncRepositorySpec extends Specification {
         then:
             personRepository.findOne(nameEquals("Jeff")).get()
             isEmptyResult { personRepository.findOne(nameEquals("Denis")).get() }
-            personRepository.findOne(where(nameEquals("Jeff"))).get()
-            isEmptyResult { personRepository.findOne(where(nameEquals("Denis"))).get() }
+            personRepository.findOne(QuerySpecification.where(nameEquals("Jeff"))).get()
+            isEmptyResult { personRepository.findOne(QuerySpecification.where(nameEquals("Denis"))).get() }
         then:
             personRepository.findAll(nameEquals("Jeff")).get().size() == 1
-            personRepository.findAll(where(nameEquals("Jeff"))).get().size() == 1
+            personRepository.findAll(QuerySpecification.where(nameEquals("Jeff"))).get().size() == 1
             personRepository.findAll(nameEquals("Denis")).get().size() == 0
             personRepository.findAll(null as QuerySpecification).get().size() == 2
             personRepository.findAll(null as PredicateSpecification).get().size() == 2
@@ -431,12 +431,12 @@ abstract class AbstractAsyncRepositorySpec extends Specification {
             personRepository.findAll(nameEquals("Jeff").and(nameEquals("Denis"))).get().size() == 0
             personRepository.findAll(nameEquals("Jeff").and(nameEquals("Jeff"))).get().size() == 1
             personRepository.findAll(nameEquals("Jeff").or(nameEquals("James"))).get().size() == 2
-            personRepository.findAll(where(nameEquals("Jeff")).or(nameEquals("Denis"))).get().size() == 1
-            personRepository.findAll(where(nameEquals("Jeff")).and(nameEquals("Denis"))).get().size() == 0
-            personRepository.findAll(where(nameEquals("Jeff")).and(nameEquals("Jeff"))).get().size() == 1
-            personRepository.findAll(where(nameEquals("Jeff")).or(nameEquals("James"))).get().size() == 2
-            personRepository.findAll(where(nameEquals("Jeff")).or(nameEquals("James")), Sort.of(Sort.Order.desc("name"))).get()[1].name == "James"
-            personRepository.findAll(where(nameEquals("Jeff")).or(nameEquals("James")), Sort.of(Sort.Order.asc("name"))).get()[1].name == "Jeff"
+            personRepository.findAll(QuerySpecification.where(nameEquals("Jeff")).or(nameEquals("Denis"))).get().size() == 1
+            personRepository.findAll(QuerySpecification.where(nameEquals("Jeff")).and(nameEquals("Denis"))).get().size() == 0
+            personRepository.findAll(QuerySpecification.where(nameEquals("Jeff")).and(nameEquals("Jeff"))).get().size() == 1
+            personRepository.findAll(QuerySpecification.where(nameEquals("Jeff")).or(nameEquals("James"))).get().size() == 2
+            personRepository.findAll(QuerySpecification.where(nameEquals("Jeff")).or(nameEquals("James")), Sort.of(Sort.Order.desc("name"))).get()[1].name == "James"
+            personRepository.findAll(QuerySpecification.where(nameEquals("Jeff")).or(nameEquals("James")), Sort.of(Sort.Order.asc("name"))).get()[1].name == "Jeff"
         when:
             def unpaged = personRepository.findAll(nameEquals("Jeff").or(nameEquals("James")), Pageable.UNPAGED).get()
         then:
@@ -466,7 +466,7 @@ abstract class AbstractAsyncRepositorySpec extends Specification {
             pagedSortedDesc.totalPages == 2
             pagedSortedDesc.totalSize == 2
         when:
-            def pagedSortedAsc = personRepository.findAll(where(nameEquals("Jeff")).or(nameEquals("James")), Pageable.from(0, 1).order(Sort.Order.asc("name"))).get()
+            def pagedSortedAsc = personRepository.findAll(QuerySpecification.where(nameEquals("Jeff")).or(nameEquals("James")), Pageable.from(0, 1).order(Sort.Order.asc("name"))).get()
         then:
             pagedSortedAsc.content.size() == 1
             pagedSortedAsc.content[0].name == "James"
@@ -482,11 +482,11 @@ abstract class AbstractAsyncRepositorySpec extends Specification {
         then:
             countOneByPredicateSpec == 1
         when:
-            def countAllByQuerySpec = personRepository.count(where(nameEquals("Jeff").or(nameEquals("James")))).get()
+            def countAllByQuerySpec = personRepository.count(QuerySpecification.where(nameEquals("Jeff").or(nameEquals("James")))).get()
         then:
             countAllByQuerySpec == 2
         when:
-            def countOneByQuerySpec = personRepository.count(where(nameEquals("Jeff"))).get()
+            def countOneByQuerySpec = personRepository.count(QuerySpecification.where(nameEquals("Jeff"))).get()
         then:
             countOneByQuerySpec == 1
         when:
@@ -497,14 +497,14 @@ abstract class AbstractAsyncRepositorySpec extends Specification {
             countAppByNullByQuerySpec == 2
         when:
             def deleted = personRepository.deleteAll(nameEquals("Jeff")).get()
-            def all = personRepository.findAll().get().toList()
+            def all = personRepository.findAll().get()
         then:
             deleted == 1
             all.size() == 1
             all[0].name == "James"
         when:
             deleted = personRepository.deleteAll(null as DeleteSpecification).get()
-            all = personRepository.findAll().get().toList()
+            all = personRepository.findAll().get()
         then:
             deleted == 1
             all.size() == 0
@@ -530,8 +530,8 @@ abstract class AbstractAsyncRepositorySpec extends Specification {
             savePersons(["Jeff"])
             def existsPredicateSpec = personRepository.exists(nameEquals("Jeff")).get()
             def existsNotPredicateSpec = personRepository.exists(nameEquals("NotJeff")).get()
-            def existsQuerySpec = personRepository.exists(where(nameEquals("Jeff"))).get()
-            def existsNotQuerySpec = personRepository.exists(where(nameEquals("NotJeff"))).get()
+            def existsQuerySpec = personRepository.exists(QuerySpecification.where(nameEquals("Jeff"))).get()
+            def existsNotQuerySpec = personRepository.exists(QuerySpecification.where(nameEquals("NotJeff"))).get()
         then:
             existsPredicateSpec
             !existsNotPredicateSpec
@@ -668,5 +668,6 @@ abstract class AbstractAsyncRepositorySpec extends Specification {
             }
             throw e
         }
+        
     }
 }

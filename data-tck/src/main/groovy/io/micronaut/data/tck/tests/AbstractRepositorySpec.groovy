@@ -117,7 +117,7 @@ abstract class AbstractRepositorySpec extends Specification {
         return false
     }
 
-    protected void savePersons(List<String> names) {
+    protected List<Person> savePersons(List<String> names) {
         personRepository.saveAll(names.collect { new Person(name: it) })
     }
 
@@ -597,20 +597,20 @@ abstract class AbstractRepositorySpec extends Specification {
         savePersons(["Jeff", "James"])
 
         when:
-        def people = personRepository.findAll().toList()
+        def people = personRepository.findAll()
         people.forEach() { it.name = it.name + " updated" }
         personRepository.updateAll(people)
-        people = personRepository.findAll().toList()
+        people = personRepository.findAll()
 
         then:
         people.get(0).name.endsWith(" updated")
         people.get(1).name.endsWith(" updated")
 
         when:
-        people = personRepository.findAll().toList()
+        people = personRepository.findAll()
         people.forEach() { it.name = it.name + " X" }
         def peopleUpdated = personRepository.updatePeople(people)
-        people = personRepository.findAll().toList()
+        people = personRepository.findAll()
 
         then:
         peopleUpdated.size() == 2
@@ -643,7 +643,7 @@ abstract class AbstractRepositorySpec extends Specification {
         personRepository.saveCustom([new Person(name: "Abc", age: 12), new Person(name: "Xyz", age: 22)])
 
         when:
-        def people = personRepository.findAll().toList()
+        def people = personRepository.findAll()
 
         then:
         people.size() == 2
@@ -658,7 +658,7 @@ abstract class AbstractRepositorySpec extends Specification {
         personRepository.saveCustomSingle(new Person(name: "Abc", age: 12))
 
         when:
-        def people = personRepository.findAll().toList()
+        def people = personRepository.findAll()
 
         then:
         people.size() == 1
@@ -671,7 +671,7 @@ abstract class AbstractRepositorySpec extends Specification {
 
         when:
         personRepository.updateNamesCustom("Denis", "Dennis")
-        def people = personRepository.findAll().toList()
+        def people = personRepository.findAll()
 
         then:
         people.count { it.name == "Dennis"} == 0
@@ -681,10 +681,10 @@ abstract class AbstractRepositorySpec extends Specification {
     void "test custom update only names"() {
         when:
         savePersons(["Dennis", "Jeff", "James", "Dennis"])
-        def people = personRepository.findAll().toList()
+        def people = personRepository.findAll()
         people.forEach {it.age = 100 }
         personRepository.updateAll(people)
-        people = personRepository.findAll().toList()
+        people = personRepository.findAll()
 
         then:
         people.size() == 4
@@ -696,7 +696,7 @@ abstract class AbstractRepositorySpec extends Specification {
             it.age = -1
         }
         int updated = personRepository.updateCustomOnlyNames(people)
-        people = personRepository.findAll().toList()
+        people = personRepository.findAll()
 
         then:
         updated == 4
@@ -710,10 +710,10 @@ abstract class AbstractRepositorySpec extends Specification {
         savePersons(["Dennis", "Jeff", "James", "Dennis"])
 
         when:
-        def people = personRepository.findAll().toList()
+        def people = personRepository.findAll()
         people.findAll {it.name == "Dennis"}.forEach{ it.name = "DoNotDelete"}
         def deleted = personRepository.deleteCustom(people)
-        people = personRepository.findAll().toList()
+        people = personRepository.findAll()
 
         then:
         deleted == 2
@@ -726,10 +726,10 @@ abstract class AbstractRepositorySpec extends Specification {
         savePersons(["Dennis", "Jeff", "James", "Dennis"])
 
         when:
-        def people = personRepository.findAll().toList()
+        def people = personRepository.findAll()
         def jeff = people.find {it.name == "Jeff"}
         def deleted = personRepository.deleteCustomSingle(jeff)
-        people = personRepository.findAll().toList()
+        people = personRepository.findAll()
 
         then:
         deleted == 1
@@ -739,7 +739,7 @@ abstract class AbstractRepositorySpec extends Specification {
         def james = people.find {it.name == "James"}
         james.name = "DoNotDelete"
         deleted = personRepository.deleteCustomSingle(james)
-        people = personRepository.findAll().toList()
+        people = personRepository.findAll()
 
         then:
         deleted == 0
@@ -751,10 +751,10 @@ abstract class AbstractRepositorySpec extends Specification {
         savePersons(["Dennis", "Jeff", "James", "Dennis"])
 
         when:
-        def people = personRepository.findAll().toList()
+        def people = personRepository.findAll()
         def jeff = people.find {it.name == "Jeff"}
         def deleted = personRepository.deleteCustomSingleNoEntity(jeff.getName())
-        people = personRepository.findAll().toList()
+        people = personRepository.findAll()
 
         then:
         deleted == 1
@@ -1228,9 +1228,10 @@ abstract class AbstractRepositorySpec extends Specification {
         when:
         def spain = new Country("Spain")
         def france = new Country("France")
-        countryRepository.saveAll(Arrays.asList(spain, france))
-        def countries = countryRepository.findAll().toList()
+        def saved = countryRepository.saveAll(Arrays.asList(spain, france))
+        def countries = countryRepository.findAll()
         then:
+        saved.size() == 2
         countries.size() == 2
         countries[0].uuid
         countries[1].uuid
@@ -1390,7 +1391,7 @@ abstract class AbstractRepositorySpec extends Specification {
         when:"Sorting by date created"
         def results = companyRepository.findAll(Sort.of(
                 Sort.Order.desc("name")
-        )).toList()
+        ))
 
         then:"no error occurs"
         results.size() == 2
@@ -1962,10 +1963,11 @@ abstract class AbstractRepositorySpec extends Specification {
             student1.version == 0
             student2.version == 0
         when:
-            studentRepository.updateAll([student1, student2])
+            def updated = studentRepository.updateAll([student1, student2])
             student1 = studentRepository.findById(student1.getId()).get()
             student2 = studentRepository.findById(student2.getId()).get()
         then:
+            updated.size() == 2
             student1.version == 1
             student2.version == 1
         when:
@@ -2121,14 +2123,14 @@ abstract class AbstractRepositorySpec extends Specification {
             jeffPerson.getId() == foundByIdPerson.getId() && jeffPerson.getName() == foundByIdPerson.getName()
         when:
             def deleted = personRepository.deleteAll(nameEquals("Jeff"))
-            def all = personRepository.findAll().toList()
+            def all = personRepository.findAll()
         then:
             deleted == 1
             all.size() == 1
             all[0].name == "James"
         when:
             deleted = personRepository.deleteAll(null as DeleteSpecification)
-            all = personRepository.findAll().toList()
+            all = personRepository.findAll()
         then:
             deleted == 1
             all.size() == 0

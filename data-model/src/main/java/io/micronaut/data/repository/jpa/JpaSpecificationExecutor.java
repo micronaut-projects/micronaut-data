@@ -33,7 +33,6 @@ import java.util.Optional;
 
 /**
  * Interface to allow execution of query/delete/update methods using dynamic JPA criteria API.
- *
  * Based on Spring Data's 'org.springframework.data.jpa.repository.JpaSpecificationExecutor'.
  *
  * @param <T> The entity type
@@ -215,5 +214,4 @@ public interface JpaSpecificationExecutor<T> {
      * @since 3.5.0
      */
     long updateAll(@Nullable CriteriaUpdateBuilder<T> builder);
-
 }

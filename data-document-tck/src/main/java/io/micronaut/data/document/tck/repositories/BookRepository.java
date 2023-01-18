@@ -47,7 +47,7 @@ public abstract class BookRepository implements PageableRepository<Book, String>
 
     @Override
     @Join("author.books")
-    public abstract Iterable<Book> findAll();
+    public abstract List<Book> findAll();
 
     @Join("author")
     public abstract Book findByTitle(String title);

@@ -21,6 +21,8 @@ import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
 
+import java.util.List;
+
 /**
  * A repository that supports pagination.
  *
@@ -38,7 +40,8 @@ public interface PageableRepository<E, ID> extends CrudRepository<E, ID> {
      * @param sort The sort
      * @return The iterable results
      */
-    @NonNull Iterable<E> findAll(@NonNull Sort sort);
+    @NonNull
+    List<E> findAll(@NonNull Sort sort);
 
     /**
      * Finds all records for the given pageable.
