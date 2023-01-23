@@ -39,8 +39,8 @@ jobs:
       - name: Setup GraalVM CE
         uses: graalvm/setup-graalvm@v1
         with:
-          version: ${{ matrix.graalvm }}
-          java-version: ${{ matrix.java }}
+          version: 'dev'
+          java-version: 'dev'
           components: 'native-image'
           github-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Setup Gradle
