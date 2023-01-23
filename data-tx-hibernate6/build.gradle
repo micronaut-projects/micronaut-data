@@ -8,7 +8,6 @@ dependencies {
 
     api projects.dataTx
     api (libs.hibernate6.core)
-    api (mnSql.micronaut.hibernate6.jpa)
     implementation mn.micronaut.inject
     compileOnly mnSpring.spring.orm
 
