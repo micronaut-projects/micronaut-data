@@ -2,12 +2,6 @@ plugins {
     id "io.micronaut.build.internal.data-tck"
 }
 
-java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(17)
-    }
-}
-
 dependencies {
     annotationProcessor mn.micronaut.inject.java
     annotationProcessor projects.dataDocumentProcessor
