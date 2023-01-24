@@ -10,12 +10,6 @@ micronautBuild {
     }
 }
 
-java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(17)
-    }
-}
-
 dependencies {
     testRuntimeOnly mnSerde.micronaut.serde.jackson
 }
