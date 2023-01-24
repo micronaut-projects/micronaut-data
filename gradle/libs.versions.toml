@@ -1,7 +1,7 @@
 [versions]
 micronaut = "4.0.0-SNAPSHOT"
 micronaut-docs = "2.0.0"
-micronaut-gradle-plugin = "3.6.6"
+micronaut-gradle-plugin = "3.7.0"
 micronaut-azure = "3.6.0"
 micronaut-testresources = "1.2.3"
 
@@ -16,7 +16,7 @@ micronaut-mongo = "5.0.0-SNAPSHOT"
 micronaut-kotlin = "4.0.0-SNAPSHOT"
 micronaut-multitenancy = "5.0.0-SNAPSHOT"
 
-groovy = "4.0.6"
+groovy = "4.0.8"
 
 javax-persistence = "2.2"
 jakarta-persistence = "3.0.0"
@@ -25,8 +25,9 @@ javax-transaction = "1.3"
 jakarta-transaction = "2.0.1"
 
 hibernate = "5.6.14.Final"
+hibernate6 = "6.1.6.Final"
 
-spring-data = "2.7.6"
+spring-data = "2.7.7"
 spring = "5.3.24"
 
 mongodb = "4.7.2"
@@ -36,8 +37,8 @@ vertx = "4.3.7"
 # JDBC Drivers
 
 oracle-jdbc-driver = "21.8.0.0"
-mariadb-jdbc-driver = "3.1.0"
-mysql-jdbc-driver = "8.0.31"
+mariadb-jdbc-driver = "3.1.1"
+mysql-jdbc-driver = "8.0.32"
 postgres-jdbc-driver = "42.5.1"
 mssql-jdbc-driver = "8.4.1.jre14"
 
@@ -49,7 +50,7 @@ r2dbc-pool = "1.0.0.RELEASE"
 oracle-r2dbc-driver = "1.1.0"
 mysql-r2dbc-driver = "0.8.2.RELEASE"
 h2-r2dbc-driver = "1.0.0.RELEASE"
-mariadb-r2dbc-driver = "1.1.2"
+mariadb-r2dbc-driver = "1.1.3"
 postgresql-r2dbc-driver = "1.0.0.RELEASE"
 mssql-r2dbc-driver = "1.0.0.RELEASE"
 
@@ -58,17 +59,17 @@ h2 = "2.1.214"
 # Testing and benchmarking
 
 benchmark-spring-data-mongodb = "4.4.2"
-benchmark-spring-data = "2021.2.6"
+benchmark-spring-data = "2021.2.7"
 spock = "2.2-groovy-4.0"
 cglib = "3.3.0"
 objenesis = "3.3"
 testcontainers = "1.17.6"
 jmh = "1.36"
-jetbrains-annotations = "23.1.0"
+jetbrains-annotations = "24.0.0"
 
 # Gradle plugins
 
-kotlin-gradle-plugin = "1.7.22"
+kotlin-gradle-plugin = "1.8.0"
 jmh-gradle-plugin = "0.6.8"
 spring-boot-gradle-plugin = "2.6.7"
 spring-dependency-management-gradle-plugin = "1.1.0"
@@ -136,6 +137,12 @@ micronaut-sql = { module = "io.micronaut.sql:micronaut-sql-bom", version.ref = "
 hibernate-core = { module = "org.hibernate:hibernate-core", version.ref = "hibernate" }
 hibernate-jpamodelgen = { module = "org.hibernate:hibernate-jpamodelgen", version.ref = "hibernate" }
 hibernate-jpamodelgen-jakarta = { module = "org.hibernate:hibernate-jpamodelgen-jakarta", version.ref = "hibernate" }
+
+# Hibernate6
+
+hibernate6-core = { module = "org.hibernate.orm:hibernate-core", version.ref = "hibernate6" }
+hibernate6-jpamodelgen = { module = "org.hibernate.orm:hibernate-jpamodelgen", version.ref = "hibernate6" }
+hibernate6-jpamodelgen-jakarta = { module = "org.hibernate.orm:hibernate-jpamodelgen-jakarta", version.ref = "hibernate6" }
 
 spring-data-jpa = { module = "org.springframework.data:spring-data-jpa", version.ref = "spring-data" }
 spring-data-commons = { module = "org.springframework.data:spring-data-commons", version.ref = "spring-data" }

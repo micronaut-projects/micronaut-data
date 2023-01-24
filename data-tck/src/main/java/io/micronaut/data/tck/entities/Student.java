@@ -18,17 +18,27 @@ package io.micronaut.data.tck.entities;
 import io.micronaut.data.annotation.DateCreated;
 import io.micronaut.data.annotation.DateUpdated;
 
-import javax.persistence.Entity;
-import javax.persistence.ManyToMany;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.Id;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.Version;
+
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
 @Entity
+@javax.persistence.Entity
 public class Student {
+
+    @Id
+    @GeneratedValue
     @javax.persistence.Id
     @javax.persistence.GeneratedValue
     private Long id;
+
+    @Version
     @javax.persistence.Version
     private Long version;
     private String name;
@@ -37,6 +47,7 @@ public class Student {
     @DateUpdated
     private Date lastUpdatedTime;
     @ManyToMany(mappedBy = "students")
+    @javax.persistence.ManyToMany(mappedBy = "students")
     private Set<Book> books = new HashSet<>();
 
     public Student() {

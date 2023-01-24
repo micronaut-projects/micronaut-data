@@ -202,8 +202,7 @@ public class ColumnNameR2dbcResultReader implements ResultReader<Row, String> {
         if (o instanceof String) {
             return (String) o;
         }
-        if (o instanceof Clob) {
-            Clob clob = (Clob) o;
+        if (o instanceof Clob clob) {
             CharSequence charSequence = Mono.from(clob.stream()).block();
             return charSequence == null ? null : charSequence.toString();
         }

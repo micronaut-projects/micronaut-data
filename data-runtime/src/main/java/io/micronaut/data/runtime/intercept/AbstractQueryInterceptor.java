@@ -118,8 +118,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
         };
         if (operations instanceof MethodContextAwareStoredQueryDecorator) {
             storedQueryDecorator = (MethodContextAwareStoredQueryDecorator) operations;
-        } else if (operations instanceof StoredQueryDecorator) {
-            StoredQueryDecorator decorator = (StoredQueryDecorator) operations;
+        } else if (operations instanceof StoredQueryDecorator decorator) {
             storedQueryDecorator = new MethodContextAwareStoredQueryDecorator() {
                 @Override
                 public <E, K> StoredQuery<E, K> decorate(MethodInvocationContext<?, ?> context, StoredQuery<E, K> storedQuery) {
@@ -671,7 +670,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
      */
     @NonNull
     protected <E> DeleteBatchOperation<E> getDeleteBatchOperation(@NonNull MethodInvocationContext<T, ?> context, @NonNull Iterable<E> iterable) {
-        @SuppressWarnings("unchecked") Class<E> rootEntity = (Class<E>) getRequiredRootEntity(context);
+        @SuppressWarnings("unchecked") Class<E> rootEntity = getRequiredRootEntity(context);
         return getDeleteBatchOperation(context, rootEntity, iterable);
     }
 

@@ -78,10 +78,9 @@ class DefaultSlice<T> implements Slice<T> {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof DefaultSlice)) {
+        if (!(o instanceof DefaultSlice<?> that)) {
             return false;
         }
-        DefaultSlice<?> that = (DefaultSlice<?>) o;
         return Objects.equals(content, that.content) &&
                 Objects.equals(pageable, that.pageable);
     }

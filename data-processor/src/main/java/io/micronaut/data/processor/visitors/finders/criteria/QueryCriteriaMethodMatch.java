@@ -270,10 +270,7 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
     }
 
     private boolean isDtoType(ClassElement classElement) {
-        if (classElement.getName().equals("org.bson.BsonDocument")) {
-            return true;
-        }
-        return false;
+        return classElement.getName().equals("org.bson.BsonDocument");
     }
 
     private List<SourcePersistentProperty> getDtoProjectionProperties(SourcePersistentEntity entity,

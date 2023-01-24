@@ -417,8 +417,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
     }
 
     protected final <E, R> SqlStoredQuery<E, R> getSqlStoredQuery(StoredQuery<E, R> storedQuery) {
-        if (storedQuery instanceof SqlStoredQuery) {
-            SqlStoredQuery<E, R> sqlStoredQuery = (SqlStoredQuery<E, R>) storedQuery;
+        if (storedQuery instanceof SqlStoredQuery<E, R> sqlStoredQuery) {
             if (sqlStoredQuery.isExpandableQuery() && !(sqlStoredQuery instanceof SqlPreparedQuery)) {
                 return new DefaultSqlPreparedQuery<>(sqlStoredQuery);
             }

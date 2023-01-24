@@ -319,18 +319,15 @@ public abstract class AbstractPersistentEntityCriteriaQuery<T> implements Persis
     }
 
     private boolean isOnlyIdRestriction(Expression<?> predicate) {
-        if (predicate instanceof PersistentPropertyBinaryPredicate) {
-            PersistentPropertyBinaryPredicate<?> pp = (PersistentPropertyBinaryPredicate<?>) predicate;
+        if (predicate instanceof PersistentPropertyBinaryPredicate<?> pp) {
             return pp.getProperty() == pp.getProperty().getOwner().getIdentity();
         }
-        if (predicate instanceof ConjunctionPredicate) {
-            ConjunctionPredicate conjunctionPredicate = (ConjunctionPredicate) predicate;
+        if (predicate instanceof ConjunctionPredicate conjunctionPredicate) {
             if (conjunctionPredicate.getPredicates().size() == 1) {
                 return isOnlyIdRestriction(conjunctionPredicate.getPredicates().iterator().next());
             }
         }
-        if (predicate instanceof DisjunctionPredicate) {
-            DisjunctionPredicate disjunctionPredicate = (DisjunctionPredicate) predicate;
+        if (predicate instanceof DisjunctionPredicate disjunctionPredicate) {
             if (disjunctionPredicate.getPredicates().size() == 1) {
                 return isOnlyIdRestriction(disjunctionPredicate.getPredicates().iterator().next());
             }

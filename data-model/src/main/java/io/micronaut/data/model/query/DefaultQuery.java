@@ -67,13 +67,12 @@ public class DefaultQuery implements QueryModel {
      */
     public AssociationQuery createQuery(String associationName) {
         final PersistentProperty property = entity.getPropertyByPath(associationName).orElse(null);
-        if (!(property instanceof Association)) {
+        if (!(property instanceof Association association)) {
             throw new IllegalArgumentException("Cannot query association [" +
                     associationName + "] of class [" + entity +
                     "]. The specified property is not an association.");
         }
 
-        Association association = (Association) property;
         return new AssociationQuery(associationName, association);
     }
 
@@ -750,13 +749,11 @@ public class DefaultQuery implements QueryModel {
     }
 
     private void addToJunction(QueryModel.Junction currentJunction, QueryModel.Criterion criterion) {
-        if (criterion instanceof QueryModel.PropertyCriterion) {
-            final QueryModel.PropertyCriterion pc = (QueryModel.PropertyCriterion) criterion;
+        if (criterion instanceof final PropertyCriterion pc) {
             Object value = pc.getValue();
             pc.setValue(value);
         }
-        if (criterion instanceof QueryModel.Junction) {
-            QueryModel.Junction j = (QueryModel.Junction) criterion;
+        if (criterion instanceof Junction j) {
             QueryModel.Junction newj;
             if (j instanceof QueryModel.Disjunction) {
                 newj = disjunction(currentJunction);

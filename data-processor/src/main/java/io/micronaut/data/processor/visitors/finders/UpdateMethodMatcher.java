@@ -87,7 +87,7 @@ public final class UpdateMethodMatcher extends AbstractPatternMethodMatcher {
     private UpdateCriteriaMethodMatch entityUpdate(java.util.regex.Matcher matcher, ParameterElement entityParameter, ParameterElement entitiesParameter) {
         return new UpdateCriteriaMethodMatch(matcher) {
 
-            ParameterElement entityParam = entityParameter == null ? entitiesParameter : entityParameter;
+            final ParameterElement entityParam = entityParameter == null ? entitiesParameter : entityParameter;
 
             @Override
             protected <T> void applyPredicates(List<ParameterElement> parameters,

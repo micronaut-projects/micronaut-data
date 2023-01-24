@@ -643,8 +643,7 @@ public final class DefaultMongoRepositoryOperations extends AbstractMongoReposit
             entity = triggerPostLoad(entity, persistentEntity, annotationMetadata);
         }
         for (PersistentProperty pp : persistentEntity.getPersistentProperties()) {
-            if (pp instanceof RuntimeAssociation) {
-                RuntimeAssociation runtimeAssociation = (RuntimeAssociation) pp;
+            if (pp instanceof RuntimeAssociation runtimeAssociation) {
                 Object o = runtimeAssociation.getProperty().get(entity);
                 if (o == null) {
                     continue;
@@ -771,7 +770,7 @@ public final class DefaultMongoRepositoryOperations extends AbstractMongoReposit
                 }
                 InsertOneResult insertOneResult = collection.insertOne(ctx.clientSession, entity, getInsertOneOptions(ctx.annotationMetadata));
                 BsonValue insertedId = insertOneResult.getInsertedId();
-                BeanProperty<T, Object> property = (BeanProperty<T, Object>) persistentEntity.getIdentity().getProperty();
+                BeanProperty<T, Object> property = persistentEntity.getIdentity().getProperty();
                 if (property.get(entity) == null) {
                     entity = updateEntityId(property, entity, insertedId);
                 }
@@ -980,7 +979,7 @@ public final class DefaultMongoRepositoryOperations extends AbstractMongoReposit
                 if (hasGeneratedId) {
                     Map<Integer, BsonValue> insertedIds = insertManyResult.getInsertedIds();
                     RuntimePersistentProperty<T> identity = persistentEntity.getIdentity();
-                    BeanProperty<T, Object> idProperty = (BeanProperty<T, Object>) identity.getProperty();
+                    BeanProperty<T, Object> idProperty = identity.getProperty();
                     int index = 0;
                     for (Data d : entities) {
                         if (!d.vetoed) {

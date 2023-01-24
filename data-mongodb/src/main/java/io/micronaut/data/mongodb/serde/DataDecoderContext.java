@@ -57,7 +57,7 @@ final class DataDecoderContext implements Deserializer.DecoderContext {
 
     private final Argument<ObjectId> OBJECT_ID = Argument.of(ObjectId.class);
 
-    private MongoDataConfiguration mongoDataConfiguration;
+    private final MongoDataConfiguration mongoDataConfiguration;
     private final AttributeConverterRegistry attributeConverterRegistry;
     private final Argument argument;
     private final RuntimePersistentEntity<Object> runtimePersistentEntity;

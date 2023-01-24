@@ -93,7 +93,7 @@ public class DefaultBindableParametersStoredQuery<E, R> implements BindableParam
         RuntimePersistentEntity<E> persistentEntity = getPersistentEntity();
         Class<?> parameterConverter = binding.getParameterConverterClass();
         Object value = binding.getValue();
-        RuntimePersistentProperty<?> persistentProperty = null;
+        RuntimePersistentProperty<Object> persistentProperty = null;
         Argument<?> argument = null;
         if (value == null) {
             if (binding.getParameterIndex() != -1) {
@@ -102,7 +102,7 @@ public class DefaultBindableParametersStoredQuery<E, R> implements BindableParam
                 argument = invocationContext.getArguments()[binding.getParameterIndex()];
             } else if (binding.isAutoPopulated()) {
                 PersistentPropertyPath pp = getRequiredPropertyPath(binding, persistentEntity);
-                persistentProperty = (RuntimePersistentProperty) pp.getProperty();
+                persistentProperty = (RuntimePersistentProperty<Object>) pp.getProperty();
                 if (binding.isRequiresPreviousPopulatedValue()) {
                     if (previousValues != null) {
                         value = previousValues.get(binding);
@@ -128,7 +128,7 @@ public class DefaultBindableParametersStoredQuery<E, R> implements BindableParam
             } else if (entity != null) {
                 PersistentPropertyPath pp = getRequiredPropertyPath(binding, persistentEntity);
                 value = pp.getPropertyValue(entity);
-                persistentProperty = (RuntimePersistentProperty<?>) pp.getProperty();
+                persistentProperty = (RuntimePersistentProperty<Object>) pp.getProperty();
             } else {
                 int currentIndex = binder.currentIndex();
                 if (currentIndex != -1) {

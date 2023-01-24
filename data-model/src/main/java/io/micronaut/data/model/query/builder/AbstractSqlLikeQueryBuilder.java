@@ -301,8 +301,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                     sb.append(",");
                 }
             }
-        } else if (value instanceof Object[]) {
-            Object[] objects = (Object[]) value;
+        } else if (value instanceof Object[] objects) {
             for (int i = 0; i < objects.length; i++) {
                 Object o = objects[i];
                 sb.append(asLiteral(o));
@@ -699,8 +698,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                     } else {
                         throw new IllegalArgumentException("Cannot query on ID with entity that has no ID");
                     }
-                } else if (projection instanceof QueryModel.PropertyProjection) {
-                    QueryModel.PropertyProjection pp = (QueryModel.PropertyProjection) projection;
+                } else if (projection instanceof QueryModel.PropertyProjection pp) {
                     String alias = pp.getAlias().orElse(null);
                     if (projection instanceof QueryModel.AvgProjection) {
                         appendFunctionProjection(queryState.getEntity(), AVG, pp, tableAlias, queryString);
@@ -994,7 +992,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             if (additionalWhereBuff.length() > 0) {
                 queryClause.append(WHERE_CLAUSE)
                     .append(OPEN_BRACKET)
-                    .append(additionalWhereBuff.toString())
+                    .append(additionalWhereBuff)
                     .append(CLOSE_BRACKET);
             }
         }
@@ -1156,8 +1154,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                                            Object value,
                                            String operator) {
 
-        if (value instanceof BindingParameter) {
-            BindingParameter bindingParameter = (BindingParameter) value;
+        if (value instanceof BindingParameter bindingParameter) {
             boolean computePropertyPaths = computePropertyPaths();
             if (!computePropertyPaths) {
                 appendPropertyRef(whereClause, propertyPath);

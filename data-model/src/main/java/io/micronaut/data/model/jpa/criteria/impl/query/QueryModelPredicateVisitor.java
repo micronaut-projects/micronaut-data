@@ -66,8 +66,7 @@ public class QueryModelPredicateVisitor implements PredicateVisitor {
     private void visit(IExpression<Boolean> expression) {
         if (expression instanceof PredicateVisitable) {
             ((PredicateVisitable) expression).accept(this);
-        } else if (expression instanceof PersistentPropertyPath) {
-            PersistentPropertyPath<?> propertyPath = (PersistentPropertyPath<?>) expression;
+        } else if (expression instanceof PersistentPropertyPath<?> propertyPath) {
             // TODO
             add(Restrictions.isTrue(getPropertyPath(propertyPath)));
         } else {

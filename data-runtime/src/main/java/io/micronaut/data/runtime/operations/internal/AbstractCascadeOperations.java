@@ -77,7 +77,7 @@ abstract class AbstractCascadeOperations {
                                T entity,
                                List<CascadeOp> cascadeOps) {
         for (RuntimeAssociation<T> association : persistentEntity.getAssociations()) {
-            BeanProperty<T, Object> beanProperty = (BeanProperty<T, Object>) association.getProperty();
+            BeanProperty<T, Object> beanProperty = association.getProperty();
             Object child = beanProperty.get(entity);
             if (child == null) {
                 continue;
@@ -137,7 +137,7 @@ abstract class AbstractCascadeOperations {
      * @return The entity instance
      */
     protected <T> T afterCascadedOne(T entity, List<Association> associations, Object prevChild, Object newChild) {
-        RuntimeAssociation<Object> association = (RuntimeAssociation<Object>) associations.iterator().next();
+        RuntimeAssociation<T> association = (RuntimeAssociation<T>) associations.iterator().next();
         if (associations.size() == 1) {
             if (association.isForeignKey()) {
                 PersistentAssociationPath inverse = association.getInversePathSide().orElse(null);
@@ -147,11 +147,11 @@ abstract class AbstractCascadeOperations {
                 }
             }
             if (prevChild != newChild) {
-                entity = setProperty((BeanProperty<T, Object>) association.getProperty(), entity, newChild);
+                entity = setProperty(association.getProperty(), entity, newChild);
             }
             return entity;
         } else {
-            BeanProperty<T, Object> property = (BeanProperty<T, Object>) association.getProperty();
+            BeanProperty<T, Object> property = association.getProperty();
             Object innerEntity = property.get(entity);
             Object newInnerEntity = afterCascadedOne(innerEntity, associations.subList(1, associations.size()), prevChild, newChild);
             if (newInnerEntity != innerEntity) {
@@ -172,7 +172,7 @@ abstract class AbstractCascadeOperations {
      * @return The entity instance
      */
     protected <T> T afterCascadedMany(T entity, List<Association> associations, Iterable<Object> prevChildren, List<Object> newChildren) {
-        RuntimeAssociation<Object> association = (RuntimeAssociation<Object>) associations.iterator().next();
+        RuntimeAssociation<T> association = (RuntimeAssociation<T>) associations.iterator().next();
         if (associations.size() == 1) {
             for (ListIterator<Object> iterator = newChildren.listIterator(); iterator.hasNext(); ) {
                 Object c = iterator.next();
@@ -187,11 +187,11 @@ abstract class AbstractCascadeOperations {
                 }
             }
             if (prevChildren != newChildren) {
-                entity = convertAndSetWithValue((BeanProperty<T, Object>) association.getProperty(), entity, newChildren);
+                entity = convertAndSetWithValue(association.getProperty(), entity, newChildren);
             }
             return entity;
         } else {
-            BeanProperty<T, Object> property = (BeanProperty<T, Object>) association.getProperty();
+            BeanProperty<T, Object> property = association.getProperty();
             Object innerEntity = property.get(entity);
             Object newInnerEntity = afterCascadedMany(innerEntity, associations.subList(1, associations.size()), prevChildren, newChildren);
             if (newInnerEntity != innerEntity) {

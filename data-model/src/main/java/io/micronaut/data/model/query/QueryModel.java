@@ -1048,7 +1048,7 @@ public interface QueryModel extends Criteria {
      * Used for exists subquery.
      */
     class Exists implements Criterion {
-        private QueryModel subquery;
+        private final QueryModel subquery;
 
         /**
          * Constructor for a subquery.
@@ -1070,7 +1070,7 @@ public interface QueryModel extends Criteria {
      * Used for exists subquery.
      */
     class NotExists implements Criterion {
-        private QueryModel subquery;
+        private final QueryModel subquery;
 
         /**
          * Constructor for a subquery.
@@ -1148,9 +1148,9 @@ public interface QueryModel extends Criteria {
      * Criterion used to restrict the result to be between values (range query).
      */
     class Between extends PropertyCriterion {
-        private String property;
-        private Object from;
-        private Object to;
+        private final String property;
+        private final Object from;
+        private final Object to;
 
         /**
          * Default constructor.
@@ -1409,7 +1409,7 @@ public interface QueryModel extends Criteria {
      * A projection that obtains the value of a property of an entity.
      */
     class PropertyProjection extends Projection {
-        private String propertyName;
+        private final String propertyName;
         private String alias;
 
         /**

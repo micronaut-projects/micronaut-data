@@ -16,14 +16,16 @@
 package io.micronaut.data.tck.entities;
 
 import io.micronaut.core.annotation.Creator;
-import javax.persistence.Column;
-import javax.persistence.EmbeddedId;
-import javax.persistence.Entity;
-import javax.persistence.Table;
+import jakarta.persistence.Column;
+import jakarta.persistence.EmbeddedId;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
 import java.util.Objects;
 
 @Entity
 @Table(name= "Shipment1")
+@javax.persistence.Entity
+@javax.persistence.Table(name= "Shipment1")
 public class Shipment {
 
     @Creator
@@ -37,9 +39,11 @@ public class Shipment {
     }
 
     @EmbeddedId
+    @javax.persistence.EmbeddedId
     private ShipmentId shipmentId;
 
     @Column(name = "field")
+    @javax.persistence.Column(name = "field")
     private String field;
 
     public ShipmentId getShipmentId() {

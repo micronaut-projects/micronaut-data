@@ -54,11 +54,18 @@ public class FindOneSpecificationMethodMatcher extends AbstractSpecificationMeth
                     getInterceptorElement(mc, "io.micronaut.data.spring.jpa.intercept.FindOneSpecificationInterceptor")
             );
         }
-        return mc -> new MethodMatchInfo(
+        return mc -> {
+            ClassElement classElement;
+            try {
+                classElement = getInterceptorElement(mc, "io.micronaut.data.jpa.repository.intercept.FindOneSpecificationInterceptor");
+            } catch (IllegalStateException e) {
+                classElement = getInterceptorElement(mc, "io.micronaut.data.hibernate6.jpa.repository.intercept.FindOneSpecificationInterceptor");
+            }
+            return new MethodMatchInfo(
                 DataMethod.OperationType.QUERY,
                 mc.getReturnType(),
-                getInterceptorElement(mc, "io.micronaut.data.jpa.repository.intercept.FindOneSpecificationInterceptor")
-        );
+                classElement);
+        };
     }
 
     @Override

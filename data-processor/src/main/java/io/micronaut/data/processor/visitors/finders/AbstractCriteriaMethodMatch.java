@@ -533,8 +533,7 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
                 genericType = genericType.getFirstTypeArgument().orElse(genericType);
             }
 
-            if (expression instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath) {
-                io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> pp = (io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?>) expression;
+            if (expression instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> pp) {
                 PersistentPropertyPath propertyPath = PersistentPropertyPath.of(pp.getAssociations(), pp.getProperty());
                 if (!isValidType(genericType, (SourcePersistentProperty) propertyPath.getProperty())) {
                     SourcePersistentProperty property = (SourcePersistentProperty) propertyPath.getProperty();
@@ -673,7 +672,8 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
             return false;
         }
         AnnotationMetadataHierarchy metadataHierarchy = new AnnotationMetadataHierarchy(matchContext.getRepositoryClass(), matchContext.getMethodElement());
-        if (metadataHierarchy.hasAnnotation("io.micronaut.data.jpa.annotation.EntityGraph")) {
+        if (metadataHierarchy.hasAnnotation("io.micronaut.data.jpa.annotation.EntityGraph") ||
+            metadataHierarchy.hasAnnotation("io.micronaut.data.hibernate6.jpa.annotation.EntityGraph")) {
             return false;
         }
         if (metadataHierarchy.hasAnnotation(QueryHint.class) || metadataHierarchy.hasAnnotation(QueryHints.class)) {

@@ -18,12 +18,14 @@ package io.micronaut.data.tck.jdbc.entities;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.jdbc.annotation.ColumnTransformer;
 
-import javax.persistence.EmbeddedId;
-import javax.persistence.Entity;
+import jakarta.persistence.EmbeddedId;
+import jakarta.persistence.Entity;
 
 @Entity
+@javax.persistence.Entity
 public class Transform {
     @EmbeddedId
+    @javax.persistence.EmbeddedId
     private ProjectId projectId;
     @ColumnTransformer(
             read = "UPPER(xyz@abc)",
