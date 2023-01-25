@@ -170,10 +170,12 @@ public class DefaultTransactionDefinition implements TransactionDefinition, Seri
      */
     public final void setTimeout(@NonNull Duration timeout) {
         //noinspection ConstantConditions
-        if (timeout == null || timeout.isNegative()) {
+        if (timeout == null || (timeout.isNegative() && TransactionDefinition.TIMEOUT_DEFAULT.getSeconds() != timeout.getSeconds())) {
             throw new IllegalArgumentException("Timeout must be a positive integer or TIMEOUT_DEFAULT");
         }
-        this.timeout = timeout;
+        if (TransactionDefinition.TIMEOUT_DEFAULT.getSeconds() != timeout.getSeconds()) {
+            this.timeout = timeout;
+        }
     }
 
     @Override
