@@ -259,9 +259,9 @@ public final class AnnotationMetadataHierarchy implements AnnotationMetadata {
 
     @NonNull
     @Override
-    public Map<String, Object> getDefaultValues(@NonNull String annotation) {
+    public Map<CharSequence, Object> getDefaultValues(@NonNull String annotation) {
         for (AnnotationMetadata annotationMetadata : hierarchy) {
-            final Map<String, Object> defaultValues = annotationMetadata.getDefaultValues(annotation);
+            final Map<CharSequence, Object> defaultValues = annotationMetadata.getDefaultValues(annotation);
             if (!defaultValues.isEmpty()) {
                 return defaultValues;
             }
