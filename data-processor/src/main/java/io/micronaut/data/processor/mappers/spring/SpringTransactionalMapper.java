@@ -43,26 +43,19 @@ public class SpringTransactionalMapper implements NamedAnnotationMapper {
     public List<AnnotationValue<?>> map(AnnotationValue<Annotation> annotation, VisitorContext visitorContext) {
         AnnotationValueBuilder<Annotation> builder =
                 AnnotationValue.builder("io.micronaut.transaction.annotation.TransactionalAdvice");
-        annotation.getValue(String.class).ifPresent(s -> {
+        annotation.stringValue().ifPresent(s -> {
             builder.value(s);
             builder.member("transactionManager", s);
         });
 
         Stream.of("propagation", "isolation", "transactionManager")
-                .forEach(member -> annotation.get(member, String.class).ifPresent(s -> builder.member(member, s)));
+                .forEach(member -> annotation.stringValue(member).ifPresent(s -> builder.member(member, s)));
         Stream.of("rollbackForClassName", "noRollbackForClassName")
-                .forEach(member -> annotation.get(member, String[].class).ifPresent(s -> builder.member(member, s)));
+                .forEach(member -> builder.member(member, annotation.stringValues(member)));
         Stream.of("rollbackFor", "noRollbackFor")
-                .forEach(member -> annotation.get(member, AnnotationClassValue[].class).ifPresent(classValues -> {
-                    String[] names = new String[classValues.length];
-                    for (int i = 0; i < classValues.length; i++) {
-                        AnnotationClassValue classValue = classValues[i];
-                        names[i] = classValue.getName();
-                    }
-                    builder.member(member, names);
-                }));
-        annotation.get("timeout", Integer.class).ifPresent(integer -> builder.member("timeout", integer));
-        annotation.get("readOnly", Boolean.class).ifPresent(bool -> builder.member("readOnly", bool));
+                .forEach(member -> builder.member(member, annotation.annotationClassValues(member)));
+        annotation.intValue("timeout").ifPresent(integer -> builder.member("timeout", integer));
+        annotation.booleanValue("readOnly").ifPresent(bool -> builder.member("readOnly", bool));
 
         return Collections.singletonList(builder.build());
     }

@@ -38,6 +38,7 @@ import io.micronaut.data.processor.model.SourcePersistentProperty;
 import io.micronaut.data.processor.visitors.finders.TypeUtils;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.PropertyElement;
+import io.micronaut.inject.processing.ProcessingException;
 import io.micronaut.inject.visitor.TypeElementVisitor;
 import io.micronaut.inject.visitor.VisitorContext;
 
@@ -48,8 +49,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static io.micronaut.data.processor.visitors.Utils.getConfiguredDataConverters;
 import static io.micronaut.data.processor.visitors.Utils.getConfiguredDataTypes;
@@ -106,7 +105,7 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
         NamingStrategy namingStrategy = resolveNamingStrategy(element);
         Optional<String> targetName = element.stringValue(MappedEntity.class);
         SourcePersistentEntity entity = entityResolver.apply(element);
-        if (isMappedEntity() && !targetName.isPresent()) {
+        if (isMappedEntity() && targetName.isEmpty()) {
             element.annotate(MappedEntity.class, builder -> {
 
                 String mappedName = namingStrategy.mappedName(entity);
@@ -119,10 +118,8 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
         List<SourcePersistentProperty> properties = entity.getPersistentProperties();
 
         final List<AnnotationValue<Index>> indexes = properties.stream()
-                .filter(x -> ((PersistentProperty) x).findAnnotation(Indexes.class).isPresent())
-                .map(prop -> prop.findAnnotation(Index.class))
-                .flatMap(o -> o.map(Stream::of).orElseGet(Stream::empty))
-                .collect(Collectors.toList());
+                .flatMap(prop -> prop.findAnnotation(Index.class).stream())
+                .toList();
 
         if (!indexes.isEmpty()) {
            element.annotate(Indexes.class, builder -> builder.values(indexes.toArray(new AnnotationValue[]{})));
@@ -177,8 +174,7 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
         }
         if (converter != null) {
             if (isRelation) {
-                context.fail("Relation cannot have converter specified", propertyElement);
-                return;
+                throw new ProcessingException(propertyElement, "Relation cannot have converter specified");
             }
             ClassElement persistedClassFromConverter = getPersistedClassFromConverter(converter, context);
             if (persistedClassFromConverter != null) {
@@ -189,8 +185,7 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
             if (dataType == null) {
                 dataType = getDataTypeFromConverter(propertyElement.getGenericType(), converter, dataTypes, context);
                 if (dataType == null) {
-                    context.fail("Cannot recognize proper data type. Please use @TypeDef to specify one", propertyElement);
-                    return;
+                    throw new ProcessingException(propertyElement, "Cannot recognize proper data type. Please use @TypeDef to specify one");
                 }
             }
         } else {
@@ -216,7 +211,7 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
             Relation.Kind kind = propertyElement.enumValue(Relation.class, Relation.Kind.class).orElse(Relation.Kind.MANY_TO_ONE);
             if (kind == Relation.Kind.EMBEDDED || kind == Relation.Kind.MANY_TO_ONE) {
                 if (propertyElement.stringValue(Relation.class, "mappedBy").isPresent()) {
-                    context.fail("Relation " + kind + " doesn't support 'mappedBy'.", propertyElement);
+                    throw new ProcessingException(propertyElement, "Relation " + kind + " doesn't support 'mappedBy'.");
                 }
             }
             if (kind == Relation.Kind.EMBEDDED) {
@@ -248,8 +243,10 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
         }
 
         Optional<String> mapping = annotationMetadata.stringValue(MappedProperty.class);
-        if (mappedEntity && !mapping.isPresent()) {
-            propertyElement.annotate(MappedProperty.class, builder -> builder.value(namingStrategy.mappedName(spp)).member("generated", true));
+        if (mappedEntity && mapping.isEmpty()) {
+            propertyElement.annotate(MappedProperty.class, builder -> builder.value(namingStrategy.mappedName(spp))
+                .member("generatedSimpleName", namingStrategy.mappedName(spp.getName()))
+                .member("generated", true));
         }
 
         if (dataType != DataType.OBJECT) {

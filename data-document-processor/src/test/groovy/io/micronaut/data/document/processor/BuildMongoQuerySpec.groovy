@@ -451,4 +451,32 @@ interface PersonRepository extends GenericRepository<Person, String> {
         findByNameContainsQuery == '{name:{$options:\'\',$regex:\'$mn_qp:0\'}}'
         findByNameContainsIgnoreCaseQuery == '{name:{$options:\'i\',$regex:\'$mn_qp:0\'}}'
     }
+
+    void "test projections"() {
+        given:
+        def repository = buildRepository('test.PersonRepository', """
+
+import io.micronaut.data.mongodb.annotation.*;
+import java.time.LocalDate;
+import io.micronaut.data.document.tck.entities.Person;
+import java.util.Optional;
+
+@MongoRepository
+interface PersonRepository extends GenericRepository<Person, String> {
+
+    LocalDate findMaxDateOfBirth();
+
+    LocalDate findMinDateOfBirth();
+}
+"""
+        )
+
+        when:
+        def findMaxDateOfBirthQuery = repository.getRequiredMethod("findMaxDateOfBirth").getAnnotation(Query).stringValue().get()
+        def findMinDateOfBirth = repository.getRequiredMethod("findMinDateOfBirth").getAnnotation(Query).stringValue().get()
+
+        then:
+        findMaxDateOfBirthQuery == '[{$group:{dateOfBirth:{$max:\'$date_of_birth\'},_id:null}}]'
+        findMinDateOfBirth == '[{$group:{dateOfBirth:{$min:\'$date_of_birth\'},_id:null}}]'
+    }
 }

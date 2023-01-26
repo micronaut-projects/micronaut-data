@@ -217,8 +217,8 @@ class MongoCriteriaSpec extends Specification {
             expectedQuery << [
                     '''[{$lookup:{from:'other_entity',localField:'_id',foreignField:'test._id',as:'others'}},{$match:{$expr:{$eq:['$amount','$others.amount']}}}]''',
                     '''[{$lookup:{from:'other_entity',localField:'_id',foreignField:'test._id',pipeline:[{$lookup:{from:'simple_entity',localField:'simple._id',foreignField:'_id',as:'simple'}},{$unwind:{path:'$simple',preserveNullAndEmptyArrays:true}}],as:'others'}},{$match:{$and:[{$expr:{$eq:['$amount','$others.amount']}},{$expr:{$eq:['$amount','$others.simple.amount']}}]}}]''',
-                    '''[{$lookup:{from:'other_entity',localField:'oneOther._id',foreignField:'_id',as:'oneOther'}},{$unwind:{path:'$oneOther',preserveNullAndEmptyArrays:true}},{$match:{'oneOther.name':{$eq:{$mn_qp:0}}}}]''',
-                    '''[{$lookup:{from:'other_entity',localField:'manyToOneOther._id',foreignField:'_id',as:'manyToOneOther'}},{$unwind:{path:'$manyToOneOther',preserveNullAndEmptyArrays:true}},{$match:{'manyToOneOther.name':{$eq:{$mn_qp:0}}}}]'''
+                    '''[{$lookup:{from:'other_entity',localField:'one_other._id',foreignField:'_id',as:'one_other'}},{$unwind:{path:'$one_other',preserveNullAndEmptyArrays:true}},{$match:{'one_other.name':{$eq:{$mn_qp:0}}}}]''',
+                    '''[{$lookup:{from:'other_entity',localField:'many_to_one_other._id',foreignField:'_id',as:'many_to_one_other'}},{$unwind:{path:'$many_to_one_other',preserveNullAndEmptyArrays:true}},{$match:{'many_to_one_other.name':{$eq:{$mn_qp:0}}}}]'''
             ]
     }
 

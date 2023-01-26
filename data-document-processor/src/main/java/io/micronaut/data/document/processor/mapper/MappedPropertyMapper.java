@@ -48,7 +48,14 @@ public class MappedPropertyMapper implements TypedAnnotationMapper<io.micronaut.
     public List<AnnotationValue<?>> map(AnnotationValue<MappedProperty> annotation, VisitorContext visitorContext) {
         AnnotationValueBuilder<SerdeConfig> builder = AnnotationValue.builder(SerdeConfig.class);
         annotation.stringValue().ifPresent(property -> {
-            builder.member(SerdeConfig.PROPERTY, property);
+            if (annotation.booleanValue("generated").orElse(false)) {
+                // For associations naming strategy will include `id` in the name
+                // we need to avoid it for document databases
+                // so if the property name is generated, use generated simple name
+                builder.member(SerdeConfig.PROPERTY, annotation.stringValue("generatedSimpleName").orElse(property));
+            } else {
+                builder.member(SerdeConfig.PROPERTY, property);
+            }
         });
         annotation.stringValue("converter").ifPresent(val -> {
             visitorContext.getClassElement(val).ifPresent(attributeConverterClassElement -> {
@@ -62,8 +69,8 @@ public class MappedPropertyMapper implements TypedAnnotationMapper<io.micronaut.
                 }
                 ClassElement converterPersistedType = typeArguments.get("Y");
                 if (converterPersistedType != null) {
-                    builder.member(SerdeConfig.SERIALIZE_AS, new AnnotationClassValue<Object>(converterPersistedType.getName()));
-                    builder.member(SerdeConfig.DESERIALIZE_AS, new AnnotationClassValue<Object>(converterPersistedType.getName()));
+                    builder.member(SerdeConfig.SERIALIZE_AS, new AnnotationClassValue<>(converterPersistedType.getName()));
+                    builder.member(SerdeConfig.DESERIALIZE_AS, new AnnotationClassValue<>(converterPersistedType.getName()));
                 }
             });
             builder.member(SerdeConfig.SERIALIZER_CLASS, CustomConverterSerializer.class);
