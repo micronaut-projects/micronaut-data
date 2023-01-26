@@ -16,7 +16,6 @@
 package io.micronaut.data.document.processor.mapper;
 
 import io.micronaut.core.annotation.AnnotationValue;
-import io.micronaut.data.annotation.Embeddable;
 import io.micronaut.data.annotation.EmbeddedId;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.document.serde.IdDeserializer;
