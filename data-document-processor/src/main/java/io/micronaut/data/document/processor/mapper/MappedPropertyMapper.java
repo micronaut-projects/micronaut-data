@@ -48,14 +48,7 @@ public class MappedPropertyMapper implements TypedAnnotationMapper<io.micronaut.
     public List<AnnotationValue<?>> map(AnnotationValue<MappedProperty> annotation, VisitorContext visitorContext) {
         AnnotationValueBuilder<SerdeConfig> builder = AnnotationValue.builder(SerdeConfig.class);
         annotation.stringValue().ifPresent(property -> {
-            if (annotation.booleanValue("generated").orElse(false)) {
-                // For associations naming strategy will include `id` in the name
-                // we need to avoid it for document databases
-                // so if the property name is generated, use generated simple name
-                builder.member(SerdeConfig.PROPERTY, annotation.stringValue("generatedSimpleName").orElse(property));
-            } else {
-                builder.member(SerdeConfig.PROPERTY, property);
-            }
+            builder.member(SerdeConfig.PROPERTY, property);
         });
         annotation.stringValue("converter").ifPresent(val -> {
             visitorContext.getClassElement(val).ifPresent(attributeConverterClassElement -> {
