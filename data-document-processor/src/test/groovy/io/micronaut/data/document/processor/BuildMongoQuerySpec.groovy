@@ -476,7 +476,7 @@ interface PersonRepository extends GenericRepository<Person, String> {
         def findMinDateOfBirth = repository.getRequiredMethod("findMinDateOfBirth").getAnnotation(Query).stringValue().get()
 
         then:
-        findMaxDateOfBirthQuery == '[{$group:{dateOfBirth:{$max:\'$date_of_birth\'},_id:null}}]'
-        findMinDateOfBirth == '[{$group:{dateOfBirth:{$min:\'$date_of_birth\'},_id:null}}]'
+        findMaxDateOfBirthQuery == '[{$group:{dateOfBirth:{$max:\'$dateOfBirth\'},_id:null}}]'
+        findMinDateOfBirth == '[{$group:{dateOfBirth:{$min:\'$dateOfBirth\'},_id:null}}]'
     }
 }

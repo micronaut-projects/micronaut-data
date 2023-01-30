@@ -22,9 +22,6 @@ import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.CollectionUtils;
-import io.micronaut.core.util.StringUtils;
-import io.micronaut.data.annotation.MappedProperty;
-import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.annotation.repeatable.WhereSpecifications;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.Embedded;
@@ -49,10 +46,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Optional;
 import java.util.StringJoiner;
 import java.util.function.BiConsumer;
-import java.util.function.Function;
 
 /**
  * The Azure Cosmos DB sql query builder.
@@ -62,7 +57,6 @@ import java.util.function.Function;
  */
 public final class CosmosSqlQueryBuilder extends SqlQueryBuilder {
 
-    private static final String GENERATED = "generated";
     private static final String VALUE = "VALUE ";
     private static final String SELECT_COUNT = "COUNT(1)";
     private static final String JOIN = " JOIN ";
@@ -108,118 +102,6 @@ public final class CosmosSqlQueryBuilder extends SqlQueryBuilder {
     @Override
     protected NamingStrategy getNamingStrategy(PersistentPropertyPath propertyPath) {
         return propertyPath.findNamingStrategy().orElse(RAW_NAMING_STRATEGY);
-    }
-
-    @Override
-    protected String getMappedName(NamingStrategy namingStrategy, PersistentProperty property) {
-        ArgumentUtils.requireNonNull("property", property);
-        if (property instanceof Association) {
-            return getMappedName(namingStrategy, (Association) property);
-        } else {
-            AnnotationMetadata propertyAnnotationMetadata = property.getAnnotationMetadata();
-            boolean generated = propertyAnnotationMetadata.booleanValue(MappedProperty.class, GENERATED).orElse(false);
-            return propertyAnnotationMetadata
-                .stringValue(MappedProperty.class)
-                .filter(n -> !generated && StringUtils.isNotEmpty(n))
-                .orElseGet(() -> namingStrategy.mappedName(property.getName()));
-        }
-    }
-
-    @Override
-    protected String getMappedName(NamingStrategy namingStrategy, Association association) {
-        AnnotationMetadata assocationAnnotationMetadata = association.getAnnotationMetadata();
-        boolean generated = assocationAnnotationMetadata.booleanValue(MappedProperty.class, GENERATED).orElse(false);
-        String providedName = generated ? null : assocationAnnotationMetadata.stringValue(MappedProperty.class).orElse(null);
-        if (providedName != null) {
-            return providedName;
-        }
-        if (association.isForeignKey()) {
-            Optional<Association> inverseSide = association.getInverseSide().map(Function.identity());
-            Association owningAssociation = inverseSide.orElse(association);
-            return namingStrategy.mappedName(owningAssociation.getOwner().getDecapitalizedName() + owningAssociation.getAssociatedEntity().getSimpleName());
-        } else {
-            switch (association.getKind()) {
-                case ONE_TO_ONE:
-                case MANY_TO_ONE:
-                    return namingStrategy.mappedName(association.getName() + namingStrategy.getForeignKeySuffix());
-                default:
-                    return namingStrategy.mappedName(association.getName());
-            }
-        }
-    }
-
-    @Override
-    protected String getMappedName(NamingStrategy namingStrategy, List<Association> associations, PersistentProperty property) {
-        if (associations.isEmpty()) {
-            return getMappedName(namingStrategy, property);
-        }
-        StringBuilder sb = new StringBuilder();
-        Association foreignAssociation = getForeignAssociation(sb, associations);
-        if (foreignAssociation != null) {
-            if (foreignAssociation.getAssociatedEntity() == property.getOwner()
-                && foreignAssociation.getAssociatedEntity().getIdentity() == property) {
-                AnnotationMetadata foreignAssociationAnnotationMetadata = foreignAssociation.getAnnotationMetadata();
-                String providedName = getProvidedName(foreignAssociationAnnotationMetadata);
-                if (providedName != null) {
-                    return providedName;
-                }
-                sb.append(namingStrategy.getForeignKeySuffix());
-                return namingStrategy.mappedName(sb.toString());
-            } else if (foreignAssociation.isForeignKey()) {
-                throw new IllegalStateException("Foreign association cannot be mapped!");
-            }
-        } else {
-            AnnotationMetadata propertyAnnotationMetadata = property.getAnnotationMetadata();
-            String providedName = getProvidedName(propertyAnnotationMetadata);
-            if (providedName != null) {
-                return providedName;
-            }
-        }
-        appendProperty(sb, property);
-        return namingStrategy.mappedName(sb.toString());
-    }
-
-    /**
-     * Gets provided name from the property annotation metadata. If there was "generated" attribute returns
-     * null meaning we want to recalculate field name, otherwise value of MappedProperty if defined or null if not defined.
-     *
-     * @param annotationMetadata the annotation metadata
-     * @return the field name, will be null if generated by the mapped entity visitor
-     */
-    private String getProvidedName(AnnotationMetadata annotationMetadata) {
-        boolean generated = annotationMetadata.booleanValue(MappedProperty.class, GENERATED).orElse(false);
-        return generated ? null : annotationMetadata.stringValue(MappedProperty.class).orElse(null);
-    }
-
-    /**
-     * Finds foreign association in list of associations.
-     * @param sb the string builder
-     * @param associations the list of associations
-     * @return foreign association if present in the list of associations
-     */
-    private Association getForeignAssociation(StringBuilder sb, List<Association> associations) {
-        Association foreignAssociation = null;
-        for (Association association : associations) {
-            if (association.getKind() != Relation.Kind.EMBEDDED && foreignAssociation == null) {
-                foreignAssociation = association;
-            }
-            appendProperty(sb, association);
-        }
-        return foreignAssociation;
-    }
-
-    /**
-     * Appends property name to the string builder, preceding with dot if prefix has been added.
-     *
-     * @param sb the string builder
-     * @param property the persistent property
-     */
-    private void appendProperty(StringBuilder sb, PersistentProperty property) {
-        if (sb.length() > 0) {
-            sb.append(DOT).append(property.getName());
-        } else {
-            sb.append(property.getName());
-        }
     }
 
     @Override
