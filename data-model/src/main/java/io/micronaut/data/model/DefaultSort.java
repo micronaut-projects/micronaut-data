@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.micronaut.core.annotation.Creator;
 import io.micronaut.core.util.ArgumentUtils;
 
@@ -77,6 +78,7 @@ final class DefaultSort implements Sort {
     }
 
     @Override
+    @JsonIgnore
     public boolean isSorted() {
         return CollectionUtils.isNotEmpty(orderBy);
     }
