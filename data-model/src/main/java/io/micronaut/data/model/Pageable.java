@@ -137,6 +137,7 @@ public interface Pageable extends Sort {
     }
 
     @Override
+    @JsonIgnore
     default boolean isSorted() {
         return getSort().isSorted();
     }
