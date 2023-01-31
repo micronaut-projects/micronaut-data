@@ -33,11 +33,6 @@ import java.lang.annotation.*;
 public @interface MappedProperty {
 
     /**
-     * name of the meta-annotation member to store the embedded property configuration.
-     */
-    String EMBEDDED_PROPERTIES = "embeddedProperties";
-
-    /**
      * name of the meta-annotation member to store the mapped property (column) alias configuration.
      */
     String ALIAS = "alias";
