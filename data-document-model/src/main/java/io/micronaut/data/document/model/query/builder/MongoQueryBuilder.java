@@ -288,12 +288,12 @@ public final class MongoQueryBuilder implements QueryBuilder {
     }
 
     private String getPropertyPersistName(PersistentProperty property) {
-        if (property.getOwner() != null && property.getOwner().getIdentity() == property) {
+        if (property.getOwner().getIdentity() == property) {
             return MONGO_ID_FIELD;
         }
         return property.getAnnotationMetadata()
-                .stringValue(SerdeConfig.class, SerdeConfig.PROPERTY)
-                .orElseGet(property::getName);
+            .stringValue(SerdeConfig.class, SerdeConfig.PROPERTY)
+            .orElseGet(property::getName);
     }
 
     private Object valueRepresentation(CriteriaContext context, PersistentPropertyPath propertyPath, Object value) {
@@ -763,33 +763,34 @@ public final class MongoQueryBuilder implements QueryBuilder {
                 } else if (projection instanceof QueryModel.IdProjection) {
                     projectionObj.put(MONGO_ID_FIELD, 1);
                 } else if (projection instanceof QueryModel.PropertyProjection pp) {
+                    String propertyName = pp.getPropertyName();
+                    PersistentPropertyPath propertyPath = entity.getPropertyPath(propertyName);
+                    if (propertyPath == null) {
+                        throw new IllegalArgumentException("Cannot project on non-existent property: " + propertyName);
+                    }
+                    String propertyPersistName = getPropertyPersistName(propertyPath.getProperty());
                     if (projection instanceof QueryModel.AvgProjection) {
-                        addProjection(groupObj, pp, "$avg");
+                        addProjection(groupObj, pp, "$avg", propertyPersistName);
                     } else if (projection instanceof QueryModel.DistinctPropertyProjection) {
                         throw new UnsupportedOperationException("Not implemented yet");
                     } else if (projection instanceof QueryModel.SumProjection) {
-                        addProjection(groupObj, pp, "$sum");
+                        addProjection(groupObj, pp, "$sum", propertyPersistName);
                     } else if (projection instanceof QueryModel.MinProjection) {
-                        addProjection(groupObj, pp, "$min");
+                        addProjection(groupObj, pp, "$min", propertyPersistName);
                     } else if (projection instanceof QueryModel.MaxProjection) {
-                        addProjection(groupObj, pp, "$max");
+                        addProjection(groupObj, pp, "$max", propertyPersistName);
                     } else if (projection instanceof QueryModel.CountDistinctProjection) {
                         throw new UnsupportedOperationException("Not implemented yet");
                     } else {
-                        String propertyName = pp.getPropertyName();
-                        PersistentPropertyPath propertyPath = entity.getPropertyPath(propertyName);
-                        if (propertyPath == null) {
-                            throw new IllegalArgumentException("Cannot project on non-existent property: " + propertyName);
-                        }
-                        projectionObj.put(getPropertyPersistName(propertyPath.getProperty()), 1);
+                        projectionObj.put(propertyPersistName, 1);
                     }
                 }
             }
         }
     }
 
-    private void addProjection(Map<String, Object> groupBy, QueryModel.PropertyProjection pr, String op) {
-        groupBy.put(pr.getAlias().orElse(pr.getPropertyName()), singletonMap(op, "$" + pr.getPropertyName()));
+    private void addProjection(Map<String, Object> groupBy, QueryModel.PropertyProjection pr, String op, String persistentPropertyName) {
+        groupBy.put(pr.getAlias().orElse(pr.getPropertyName()), singletonMap(op, "$" + persistentPropertyName));
     }
 
     @NonNull
@@ -899,15 +900,16 @@ public final class MongoQueryBuilder implements QueryBuilder {
 
         Map<String, Object> sets = new LinkedHashMap<>();
         for (Map.Entry<String, Object> e : propertiesToUpdate.entrySet()) {
+            PersistentPropertyPath propertyPath = findProperty(queryState, e.getKey(), null);
+            String propertyPersistName = getPropertyPersistName(propertyPath.getProperty());
             if (e.getValue() instanceof BindingParameter) {
-                PersistentPropertyPath propertyPath = findProperty(queryState, e.getKey(), null);
                 int index = queryState.pushParameter(
                         (BindingParameter) e.getValue(),
                         newBindingContext(propertyPath)
                 );
-                sets.put(e.getKey(), singletonMap(QUERY_PARAMETER_PLACEHOLDER, index));
+                sets.put(propertyPersistName, singletonMap(QUERY_PARAMETER_PLACEHOLDER, index));
             } else {
-                sets.put(e.getKey(), e.getValue());
+                sets.put(propertyPersistName, e.getValue());
             }
         }
 
