@@ -122,7 +122,7 @@ class Project {
             def sql = builder.buildInsert(AnnotationMetadata.EMPTY_METADATA, entity).query
 
         expect:
-            sql == 'INSERT INTO "transform" ("xyz","project_id_department_id","project_id_project_id") VALUES (LOWER(xyz@abc),?,?)'
+            sql == 'INSERT INTO "transform" ("xyz","project_id_department_id","project_id_project_id") VALUES (LOWER(?),?,?)'
 
     }
 
@@ -133,7 +133,7 @@ class Project {
             def sql = builder.buildUpdate(QueryModel.from(entity), Collections.singletonList("xyz")).query
 
         expect:
-            sql == 'UPDATE "transform" SET "xyz"=LOWER(xyz@abc)'
+            sql == 'UPDATE "transform" SET "xyz"=LOWER(?)'
     }
 
     void "test build query with column reader2"() {
@@ -153,6 +153,6 @@ class Project {
             def sql = builder.buildQuery(QueryModel.from(entity).eq("xyz", new QueryParameter("xyz"))).query
 
         expect:
-            sql == 'SELECT transform_."project_id_department_id",transform_."project_id_project_id",UPPER(xyz@abc) AS xyz FROM "transform" transform_ WHERE (transform_."xyz" = LOWER(xyz@abc))'
+            sql == 'SELECT transform_."project_id_department_id",transform_."project_id_project_id",UPPER(xyz@abc) AS xyz FROM "transform" transform_ WHERE (transform_."xyz" = LOWER(?))'
     }
 }
