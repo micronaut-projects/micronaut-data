@@ -1172,25 +1172,28 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
 
             boolean[] needsTrimming = {false};
             traversePersistentPropertiesForCriteria(propertyPath.getAssociations(), propertyPath.getProperty(), (associations, property) -> {
-                String readTransformer = getDataTransformerReadValue(currentAlias, property).orElse(null);
-                if (readTransformer != null) {
-                    whereClause.append(readTransformer);
-                } else {
-                    if (currentAlias != null) {
-                        whereClause.append(currentAlias).append(DOT);
-                    }
-                    String columnName = getMappedName(namingStrategy, associations, property);
-                    if (shouldEscape) {
-                        columnName = quote(columnName);
-                    }
-                    whereClause.append(columnName);
+                if (currentAlias != null) {
+                    whereClause.append(currentAlias).append(DOT);
                 }
+                String columnName = getMappedName(namingStrategy, associations, property);
+                if (shouldEscape) {
+                    columnName = quote(columnName);
+                }
+                whereClause.append(columnName);
 
                 whereClause.append(operator);
-                propertyParameterCreator.pushParameter(
-                    bindingParameter,
-                    newBindingContext(parameterPropertyPath, PersistentPropertyPath.of(associations, property))
-                );
+                String writeTransformer = getDataTransformerWriteValue(currentAlias, property).orElse(null);
+                Runnable pushParameter = () -> {
+                    propertyParameterCreator.pushParameter(
+                        bindingParameter,
+                        newBindingContext(parameterPropertyPath, PersistentPropertyPath.of(associations, property))
+                    );
+                };
+                if (writeTransformer != null) {
+                    appendTransformed(whereClause, writeTransformer, pushParameter);
+                } else {
+                    pushParameter.run();
+                }
                 whereClause.append(LOGICAL_AND);
                 needsTrimming[0] = true;
             });
