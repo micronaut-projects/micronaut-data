@@ -182,9 +182,10 @@ public @interface <span class="memberNameLabel">Where</span></pre>
 <pre>java.lang.String&nbsp;value</pre>
 <div class="block">The string value that represents the additional query criterion. For example: <code>enabled = true</code>
 
- <p>Note that if it may be required to specify the query alias in queries. For example: <code>book_.enabled = true</code></p>
+ <p>Note that if it may be required to specify the query alias in queries. For example: <code>book_.enabled = true</code>.
+ `@` can be used as a placeholder for the query's alias</p>
 
- <p>Parameterized variables can be specified using the dollar syntax: <code>book_.enabled = ${enabled}</code>. In
+ <p>Parameterized variables can be specified using the dollar syntax: <code>book_.enabled = :enabled</code>. In
  this case the parameter must be declared in the method signature a compilation error will occur.</p>
 
  <p>Use cases including soft-delete, multi-tenancy etc.</p></div>

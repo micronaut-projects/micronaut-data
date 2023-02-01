@@ -51,9 +51,9 @@
             </div>
 <div class="sect2">
 <h3 id="_data_azure_cosmos_config_properties">Data Azure Cosmos Config Properties</h3>
-<a id="io.micronaut.data.cosmos.config.CosmosDatabaseConfiguration" href="#io.micronaut.data.cosmos.config.CosmosDatabaseConfiguration">&#128279;</a>
+<a id="io.micronaut.data.cosmos.config.CosmosDatabaseConfiguration.CosmosContainerSettings" href="#io.micronaut.data.cosmos.config.CosmosDatabaseConfiguration.CosmosContainerSettings">&#128279;</a>
 <table class="tableblock frame-all grid-all stretch">
-<caption class="title">Table 1. Configuration Properties for <a href="../api/io/micronaut/data/cosmos/config/CosmosDatabaseConfiguration.html">CosmosDatabaseConfiguration</a></caption>
+<caption class="title">Table 1. Configuration Properties for <a href="../api/io/micronaut/data/cosmos/config/CosmosDatabaseConfiguration.CosmosContainerSettings.html">CosmosContainerSettings</a></caption>
 <colgroup>
 <col style="width: 33.3333%;">
 <col style="width: 33.3333%;">
@@ -68,24 +68,19 @@
 </thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>azure.cosmos.database.database-name</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>azure.cosmos.database.container-settings[*].container-name</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">java.lang.String</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Sets the database name.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Sets the container name.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>azure.cosmos.database.update-policy</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/cosmos/config/StorageUpdatePolicy.html">StorageUpdatePolicy</a></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Sets the update policy for the database to be used during startup.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>azure.cosmos.database.container-settings[*].partition-key-path</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">java.lang.String</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Sets the container partition key path.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>azure.cosmos.database.packages</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">java.util.List</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">the package names to be considered during init</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>azure.cosmos.database.query-metrics-enabled</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Sets the indicator telling whether query metrics will be enabled for Azure Cosmos Db query requests.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>azure.cosmos.database.container-settings[*].throughput</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/cosmos/config/ThroughputSettings.html">ThroughputSettings</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Sets the container throughput settings.</p></td>
 </tr>
 </tbody>
 </table>
@@ -119,9 +114,9 @@
 </tbody>
 </table>
 <div style="page-break-after: always;"></div>
-<a id="io.micronaut.data.cosmos.config.CosmosDatabaseConfiguration.CosmosContainerSettings" href="#io.micronaut.data.cosmos.config.CosmosDatabaseConfiguration.CosmosContainerSettings">&#128279;</a>
+<a id="io.micronaut.data.cosmos.config.CosmosDatabaseConfiguration" href="#io.micronaut.data.cosmos.config.CosmosDatabaseConfiguration">&#128279;</a>
 <table class="tableblock frame-all grid-all stretch">
-<caption class="title">Table 3. Configuration Properties for <a href="../api/io/micronaut/data/cosmos/config/CosmosDatabaseConfiguration.CosmosContainerSettings.html">CosmosContainerSettings</a></caption>
+<caption class="title">Table 3. Configuration Properties for <a href="../api/io/micronaut/data/cosmos/config/CosmosDatabaseConfiguration.html">CosmosDatabaseConfiguration</a></caption>
 <colgroup>
 <col style="width: 33.3333%;">
 <col style="width: 33.3333%;">
@@ -136,19 +131,24 @@
 </thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>azure.cosmos.database.container-settings[*].container-name</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>azure.cosmos.database.database-name</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">java.lang.String</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Sets the container name.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Sets the database name.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>azure.cosmos.database.container-settings[*].partition-key-path</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">java.lang.String</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Sets the container partition key path.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>azure.cosmos.database.update-policy</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/cosmos/config/StorageUpdatePolicy.html">StorageUpdatePolicy</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Sets the update policy for the database to be used during startup.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>azure.cosmos.database.container-settings[*].throughput</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/cosmos/config/ThroughputSettings.html">ThroughputSettings</a></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Sets the container throughput settings.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>azure.cosmos.database.packages</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">java.util.List</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">the package names to be considered during init</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>azure.cosmos.database.query-metrics-enabled</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Sets the indicator telling whether query metrics will be enabled for Azure Cosmos Db query requests.</p></td>
 </tr>
 </tbody>
 </table>
