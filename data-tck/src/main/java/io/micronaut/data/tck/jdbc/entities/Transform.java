@@ -27,7 +27,7 @@ public class Transform {
     private ProjectId projectId;
     @ColumnTransformer(
             read = "UPPER(xyz@abc)",
-            write = "LOWER(xyz@abc)"
+            write = "LOWER(?)"
     )
     @Nullable
     private String xyz;
