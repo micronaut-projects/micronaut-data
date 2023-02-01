@@ -35,9 +35,10 @@ public @interface Where {
     /**
      * The string value that represents the additional query criterion. For example: {@code enabled = true}
      *
-     * <p>Note that if it may be required to specify the query alias in queries. For example: {@code book_.enabled = true}</p>
+     * <p>Note that if it may be required to specify the query alias in queries. For example: {@code book_.enabled = true}.
+     * `@` can be used as a placeholder for the query's alias</p>
      *
-     * <p>Parameterized variables can be specified using the dollar syntax: {@code book_.enabled = ${enabled}}. In
+     * <p>Parameterized variables can be specified using the dollar syntax: {@code book_.enabled = :enabled}. In
      * this case the parameter must be declared in the method signature a compilation error will occur.</p>
      *
      * <p>Use cases including soft-delete, multi-tenancy etc.</p>
