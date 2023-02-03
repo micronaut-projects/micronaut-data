@@ -1,5 +1,5 @@
 [versions]
-micronaut = "3.7.4"
+micronaut = "3.7.6"
 micronaut-test = "3.7.0"
 micronaut-serde = "1.1.0"
 micronaut-sql = "4.7.2"
