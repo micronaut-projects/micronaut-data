@@ -1,6 +1,6 @@
 pluginManagement {
     plugins {
-        id 'io.micronaut.build.shared.settings' version '5.4.2'
+        id 'io.micronaut.build.shared.settings' version '5.4.5'
     }
     repositories {
         gradlePluginPortal()
