@@ -3731,27 +3731,7 @@ personRepository.updateAll(updateQuery)</code></pre>
 <p>The DATASOURCE mode is used in combination with the micronaut-multitenancy library in order to resolve the tenant name.
 In the below example, the tenant resolver is set to use a http header. See <a href="https://micronaut-projects.github.io/micronaut-multitenancy/latest/guide/">Micronaut Multitenancy</a> for more information.</p>
 </div>
-<div class="openblock">
-<div class="content">
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-properties hljs" data-lang="properties">micronaut.data.multi-tenancy.mode=DATASOURCE
-micronaut.multitenancy.tenantresolver.httpheader.enabled=true
-datasources.foo.url=jdbc:h2:mem:dbTenantFoo
-datasources.foo.driverClassName=org.h2.Driver
-datasources.foo.username=sa
-datasources.foo.password=
-datasources.foo.schema-generate=CREATE_DROP
-datasources.foo.dialect=H2
-datasources.bar.url=jdbc:h2:mem:dbTenantBar
-datasources.bar.driverClassName=org.h2.Driver
-datasources.bar.username=sa
-datasources.bar.password=
-datasources.bar.schema-generate=CREATE_DROP
-datasources.bar.dialect=H2</code></pre>
-</div>
-</div>
-<div class="listingblock multi-language-sample">
+<div class="listingblock">
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">micronaut:
   data:
@@ -3779,147 +3759,6 @@ datasources:
     dialect: H2</code></pre>
 </div>
 </div>
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="toml">[micronaut]
-  [micronaut.data]
-    [micronaut.data.multi-tenancy]
-      mode="DATASOURCE"
-  [micronaut.multitenancy]
-    [micronaut.multitenancy.tenantresolver]
-      [micronaut.multitenancy.tenantresolver.httpheader]
-        enabled=true
-[datasources]
-  [datasources.foo]
-    url="jdbc:h2:mem:dbTenantFoo"
-    driverClassName="org.h2.Driver"
-    username="sa"
-    password=""
-    schema-generate="CREATE_DROP"
-    dialect="H2"
-  [datasources.bar]
-    url="jdbc:h2:mem:dbTenantBar"
-    driverClassName="org.h2.Driver"
-    username="sa"
-    password=""
-    schema-generate="CREATE_DROP"
-    dialect="H2"</code></pre>
-</div>
-</div>
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-groovy-config hljs" data-lang="groovy-config">micronaut {
-  data {
-    multiTenancy {
-      mode = "DATASOURCE"
-    }
-  }
-  multitenancy {
-    tenantresolver {
-      httpheader {
-        enabled = true
-      }
-    }
-  }
-}
-datasources {
-  foo {
-    url = "jdbc:h2:mem:dbTenantFoo"
-    driverClassName = "org.h2.Driver"
-    username = "sa"
-    password = ""
-    schemaGenerate = "CREATE_DROP"
-    dialect = "H2"
-  }
-  bar {
-    url = "jdbc:h2:mem:dbTenantBar"
-    driverClassName = "org.h2.Driver"
-    username = "sa"
-    password = ""
-    schemaGenerate = "CREATE_DROP"
-    dialect = "H2"
-  }
-}</code></pre>
-</div>
-</div>
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-hocon hljs" data-lang="hocon">{
-  micronaut {
-    data {
-      multi-tenancy {
-        mode = "DATASOURCE"
-      }
-    }
-    multitenancy {
-      tenantresolver {
-        httpheader {
-          enabled = true
-        }
-      }
-    }
-  }
-  datasources {
-    foo {
-      url = "jdbc:h2:mem:dbTenantFoo"
-      driverClassName = "org.h2.Driver"
-      username = "sa"
-      password = ""
-      schema-generate = "CREATE_DROP"
-      dialect = "H2"
-    }
-    bar {
-      url = "jdbc:h2:mem:dbTenantBar"
-      driverClassName = "org.h2.Driver"
-      username = "sa"
-      password = ""
-      schema-generate = "CREATE_DROP"
-      dialect = "H2"
-    }
-  }
-}</code></pre>
-</div>
-</div>
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-json-config hljs" data-lang="json-config">{
-  "micronaut": {
-    "data": {
-      "multi-tenancy": {
-        "mode": "DATASOURCE"
-      }
-    },
-    "multitenancy": {
-      "tenantresolver": {
-        "httpheader": {
-          "enabled": true
-        }
-      }
-    }
-  },
-  "datasources": {
-    "foo": {
-      "url": "jdbc:h2:mem:dbTenantFoo",
-      "driverClassName": "org.h2.Driver",
-      "username": "sa",
-      "password": "",
-      "schema-generate": "CREATE_DROP",
-      "dialect": "H2"
-    },
-    "bar": {
-      "url": "jdbc:h2:mem:dbTenantBar",
-      "driverClassName": "org.h2.Driver",
-      "username": "sa",
-      "password": "",
-      "schema-generate": "CREATE_DROP",
-      "dialect": "H2"
-    }
-  }
-}</code></pre>
-</div>
-</div>
-</div>
-</div>
 <div class="paragraph">
 <p>The following HTTP clients will access a different tenant datasource:</p>
 </div>
@@ -3942,23 +3781,7 @@ interface BarBookClient extends BookClient {
 <div class="paragraph">
 <p>The SCHEMA mode uses a single datasource and set the active schema based on the tenant resolved.</p>
 </div>
-<div class="openblock">
-<div class="content">
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-properties hljs" data-lang="properties">micronaut.data.multi-tenancy.mode=SCHEMA
-micronaut.multitenancy.tenantresolver.httpheader.enabled=true
-datasources.default.url=jdbc:h2:mem:db
-datasources.default.driverClassName=org.h2.Driver
-datasources.default.username=sa
-datasources.default.password=
-datasources.default.dialect=H2
-datasources.default.schema-generate=CREATE_DROP
-datasources.default.schema-generate-names[0]=foo
-datasources.default.schema-generate-names[1]=bar</code></pre>
-</div>
-</div>
-<div class="listingblock multi-language-sample">
+<div class="listingblock">
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">micronaut:
   data:
@@ -3980,123 +3803,6 @@ datasources:
     schema-generate-names:
       - foo
       - bar</code></pre>
-</div>
-</div>
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="toml">[micronaut]
-  [micronaut.data]
-    [micronaut.data.multi-tenancy]
-      mode="SCHEMA"
-  [micronaut.multitenancy]
-    [micronaut.multitenancy.tenantresolver]
-      [micronaut.multitenancy.tenantresolver.httpheader]
-        enabled=true
-[datasources]
-  [datasources.default]
-    url="jdbc:h2:mem:db"
-    driverClassName="org.h2.Driver"
-    username="sa"
-    password=""
-    dialect="H2"
-    schema-generate="CREATE_DROP"
-    schema-generate-names=[
-      "foo",
-      "bar"
-    ]</code></pre>
-</div>
-</div>
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-groovy-config hljs" data-lang="groovy-config">micronaut {
-  data {
-    multiTenancy {
-      mode = "SCHEMA"
-    }
-  }
-  multitenancy {
-    tenantresolver {
-      httpheader {
-        enabled = true
-      }
-    }
-  }
-}
-datasources {
-  'default' {
-    url = "jdbc:h2:mem:db"
-    driverClassName = "org.h2.Driver"
-    username = "sa"
-    password = ""
-    dialect = "H2"
-    schemaGenerate = "CREATE_DROP"
-    schemaGenerateNames = ["foo", "bar"]
-  }
-}</code></pre>
-</div>
-</div>
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-hocon hljs" data-lang="hocon">{
-  micronaut {
-    data {
-      multi-tenancy {
-        mode = "SCHEMA"
-      }
-    }
-    multitenancy {
-      tenantresolver {
-        httpheader {
-          enabled = true
-        }
-      }
-    }
-  }
-  datasources {
-    default {
-      url = "jdbc:h2:mem:db"
-      driverClassName = "org.h2.Driver"
-      username = "sa"
-      password = ""
-      dialect = "H2"
-      schema-generate = "CREATE_DROP"
-      schema-generate-names = ["foo", "bar"]
-    }
-  }
-}</code></pre>
-</div>
-</div>
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-json-config hljs" data-lang="json-config">{
-  "micronaut": {
-    "data": {
-      "multi-tenancy": {
-        "mode": "SCHEMA"
-      }
-    },
-    "multitenancy": {
-      "tenantresolver": {
-        "httpheader": {
-          "enabled": true
-        }
-      }
-    }
-  },
-  "datasources": {
-    "default": {
-      "url": "jdbc:h2:mem:db",
-      "driverClassName": "org.h2.Driver",
-      "username": "sa",
-      "password": "",
-      "dialect": "H2",
-      "schema-generate": "CREATE_DROP",
-      "schema-generate-names": ["foo", "bar"]
-    }
-  }
-}</code></pre>
-</div>
-</div>
 </div>
 </div>
 <div class="admonitionblock note">
@@ -4241,21 +3947,9 @@ When working with JDBC drivers it&#8217;s required to add a JDBC Connection Pool
 <p>Use Micronaut SQL project documentation for more information regarding configuring <a href="https://micronaut-projects.github.io/micronaut-sql/latest/guide/index.html#hibernate">Hibernate</a>, <a href="https://micronaut-projects.github.io/micronaut-sql/latest/guide/index.html#jdbc">JDBC and pooling</a>.</p>
 </div>
 <div class="paragraph">
-<p>You need to configure the data source in the application configuration file. For example for H2:</p>
+<p>You need to configure the data source in <code>application.yml</code>. For example for H2:</p>
 </div>
-<div class="openblock">
-<div class="content">
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-properties hljs" data-lang="properties">datasources.default.url=jdbc:h2:mem:devDb
-datasources.default.driverClassName=org.h2.Driver
-datasources.default.username=sa
-datasources.default.password=
-datasources.default.schema-generate=CREATE_DROP
-datasources.default.dialect=H2</code></pre>
-</div>
-</div>
-<div class="listingblock multi-language-sample">
+<div class="listingblock">
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">datasources:
   default:
@@ -4267,129 +3961,15 @@ datasources.default.dialect=H2</code></pre>
     dialect: H2</code></pre>
 </div>
 </div>
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="toml">[datasources]
-  [datasources.default]
-    url="jdbc:h2:mem:devDb"
-    driverClassName="org.h2.Driver"
-    username="sa"
-    password=""
-    schema-generate="CREATE_DROP"
-    dialect="H2"</code></pre>
-</div>
-</div>
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-groovy-config hljs" data-lang="groovy-config">datasources {
-  'default' {
-    url = "jdbc:h2:mem:devDb"
-    driverClassName = "org.h2.Driver"
-    username = "sa"
-    password = ""
-    schemaGenerate = "CREATE_DROP"
-    dialect = "H2"
-  }
-}</code></pre>
-</div>
-</div>
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-hocon hljs" data-lang="hocon">{
-  datasources {
-    default {
-      url = "jdbc:h2:mem:devDb"
-      driverClassName = "org.h2.Driver"
-      username = "sa"
-      password = ""
-      schema-generate = "CREATE_DROP"
-      dialect = "H2"
-    }
-  }
-}</code></pre>
-</div>
-</div>
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-json-config hljs" data-lang="json-config">{
-  "datasources": {
-    "default": {
-      "url": "jdbc:h2:mem:devDb",
-      "driverClassName": "org.h2.Driver",
-      "username": "sa",
-      "password": "",
-      "schema-generate": "CREATE_DROP",
-      "dialect": "H2"
-    }
-  }
-}</code></pre>
-</div>
-</div>
-</div>
-</div>
 <div class="paragraph">
-<p>And add the following configuration in the application configuration file.</p>
+<p>And add the following configuration in <code>application.yml</code></p>
 </div>
-<div class="openblock">
-<div class="content">
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-properties hljs" data-lang="properties">jpa.default.entity-scan.packages=example.domain</code></pre>
-</div>
-</div>
-<div class="listingblock multi-language-sample">
+<div class="listingblock">
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">jpa:
   default:
     entity-scan:
         packages: 'example.domain'</code></pre>
-</div>
-</div>
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="toml">[jpa]
-  [jpa.default]
-    [jpa.default.entity-scan]
-      packages="example.domain"</code></pre>
-</div>
-</div>
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-groovy-config hljs" data-lang="groovy-config">jpa {
-  'default' {
-    entityScan {
-      packages = "example.domain"
-    }
-  }
-}</code></pre>
-</div>
-</div>
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-hocon hljs" data-lang="hocon">{
-  jpa {
-    default {
-      entity-scan {
-        packages = "example.domain"
-      }
-    }
-  }
-}</code></pre>
-</div>
-</div>
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-json-config hljs" data-lang="json-config">{
-  "jpa": {
-    "default": {
-      "entity-scan": {
-        "packages": "example.domain"
-      }
-    }
-  }
-}</code></pre>
-</div>
-</div>
 </div>
 </div>
 <div class="paragraph">
@@ -5387,18 +4967,8 @@ Hibernate Reactive requires Java 11 and Hibernate 5
 <div class="paragraph">
 <p>And configure it based on <a href="https://micronaut-projects.github.io/micronaut-sql/latest/guide/index.html#hibernate">Micronaut SQL Hibernate Reactive support</a>.</p>
 </div>
-<div class="openblock">
-<div class="content">
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-properties hljs" data-lang="properties">jpa.default.reactive=true
-jpa.default.properties.hibernate.hbm2ddl.auto=create-drop
-jpa.default.properties.hibernate.connection.url=jdbc:mysql://localhost:3307/my_db
-jpa.default.properties.hibernate.connection.username=myUser
-jpa.default.properties.hibernate.connection.password=myPassword</code></pre>
-</div>
-</div>
-<div class="listingblock multi-language-sample">
+<div class="listingblock">
+<div class="title">Example YAML configuration</div>
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">jpa:
   default:
@@ -5411,90 +4981,6 @@ jpa.default.properties.hibernate.connection.password=myPassword</code></pre>
           url: jdbc:mysql://localhost:3307/my_db
           username: myUser
           password: myPassword</code></pre>
-</div>
-</div>
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="toml">[jpa]
-  [jpa.default]
-    reactive=true
-    [jpa.default.properties]
-      [jpa.default.properties.hibernate]
-        [jpa.default.properties.hibernate.hbm2ddl]
-          auto="create-drop"
-        [jpa.default.properties.hibernate.connection]
-          url="jdbc:mysql://localhost:3307/my_db"
-          username="myUser"
-          password="myPassword"</code></pre>
-</div>
-</div>
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-groovy-config hljs" data-lang="groovy-config">jpa {
-  'default' {
-    reactive = true
-    properties {
-      hibernate {
-        hbm2ddl {
-          auto = "create-drop"
-        }
-        connection {
-          url = "jdbc:mysql://localhost:3307/my_db"
-          username = "myUser"
-          password = "myPassword"
-        }
-      }
-    }
-  }
-}</code></pre>
-</div>
-</div>
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-hocon hljs" data-lang="hocon">{
-  jpa {
-    default {
-      reactive = true
-      properties {
-        hibernate {
-          hbm2ddl {
-            auto = "create-drop"
-          }
-          connection {
-            url = "jdbc:mysql://localhost:3307/my_db"
-            username = "myUser"
-            password = "myPassword"
-          }
-        }
-      }
-    }
-  }
-}</code></pre>
-</div>
-</div>
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-json-config hljs" data-lang="json-config">{
-  "jpa": {
-    "default": {
-      "reactive": true,
-      "properties": {
-        "hibernate": {
-          "hbm2ddl": {
-            "auto": "create-drop"
-          },
-          "connection": {
-            "url": "jdbc:mysql://localhost:3307/my_db",
-            "username": "myUser",
-            "password": "myPassword"
-          }
-        }
-      }
-    }
-  }
-}</code></pre>
-</div>
-</div>
 </div>
 </div>
 <div class="paragraph">
@@ -5979,21 +5465,10 @@ For Kotlin the dependency should be in the <code>kapt</code> scope and for Groov
 </table>
 </div>
 <div class="paragraph">
-<p>Next up you need to configure at least one data source. The following snippet from the application configuration file is an example of configuring the default JDBC data source:</p>
+<p>Next up you need to configure at least one data source. The following snippet from <code>application.yml</code> is an example of configuring the default JDBC data source:</p>
 </div>
-<div class="openblock">
-<div class="content">
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-properties hljs" data-lang="properties">datasources.default.url=jdbc:h2:mem:devDb;LOCK_TIMEOUT=10000;DB_CLOSE_ON_EXIT=FALSE
-datasources.default.driverClassName=org.h2.Driver
-datasources.default.username=sa
-datasources.default.password=
-datasources.default.schema-generate=CREATE_DROP
-datasources.default.dialect=H2</code></pre>
-</div>
-</div>
-<div class="listingblock multi-language-sample">
+<div class="listingblock">
+<div class="title">Example YAML configuration</div>
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">datasources:
   default:
@@ -6003,66 +5478,6 @@ datasources.default.dialect=H2</code></pre>
     password: ''
     schema-generate: CREATE_DROP
     dialect: H2</code></pre>
-</div>
-</div>
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="toml">[datasources]
-  [datasources.default]
-    url="jdbc:h2:mem:devDb;LOCK_TIMEOUT=10000;DB_CLOSE_ON_EXIT=FALSE"
-    driverClassName="org.h2.Driver"
-    username="sa"
-    password=""
-    schema-generate="CREATE_DROP"
-    dialect="H2"</code></pre>
-</div>
-</div>
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-groovy-config hljs" data-lang="groovy-config">datasources {
-  'default' {
-    url = "jdbc:h2:mem:devDb;LOCK_TIMEOUT=10000;DB_CLOSE_ON_EXIT=FALSE"
-    driverClassName = "org.h2.Driver"
-    username = "sa"
-    password = ""
-    schemaGenerate = "CREATE_DROP"
-    dialect = "H2"
-  }
-}</code></pre>
-</div>
-</div>
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-hocon hljs" data-lang="hocon">{
-  datasources {
-    default {
-      url = "jdbc:h2:mem:devDb;LOCK_TIMEOUT=10000;DB_CLOSE_ON_EXIT=FALSE"
-      driverClassName = "org.h2.Driver"
-      username = "sa"
-      password = ""
-      schema-generate = "CREATE_DROP"
-      dialect = "H2"
-    }
-  }
-}</code></pre>
-</div>
-</div>
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-json-config hljs" data-lang="json-config">{
-  "datasources": {
-    "default": {
-      "url": "jdbc:h2:mem:devDb;LOCK_TIMEOUT=10000;DB_CLOSE_ON_EXIT=FALSE",
-      "driverClassName": "org.h2.Driver",
-      "username": "sa",
-      "password": "",
-      "schema-generate": "CREATE_DROP",
-      "dialect": "H2"
-    }
-  }
-}</code></pre>
-</div>
-</div>
 </div>
 </div>
 <div class="admonitionblock note">
@@ -6488,20 +5903,8 @@ Most of the database migration tools use JDBC driver to make DB changes. If you 
 </tr>
 </table>
 </div>
-<div class="openblock">
+<div class="listingblock">
 <div class="title">Using <code>schema-generate</code></div>
-<div class="content">
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-properties hljs" data-lang="properties">datasources.default.url=jdbc:h2:mem:devDb;LOCK_TIMEOUT=10000;DB_CLOSE_ON_EXIT=FALSE
-datasources.default.driverClassName=org.h2.Driver
-datasources.default.username=sa
-datasources.default.password=
-datasources.default.schema-generate=CREATE_DROP
-datasources.default.dialect=H2</code></pre>
-</div>
-</div>
-<div class="listingblock multi-language-sample">
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">datasources:
   default:
@@ -6513,66 +5916,6 @@ datasources.default.dialect=H2</code></pre>
     dialect: H2</code></pre>
 </div>
 </div>
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="toml">[datasources]
-  [datasources.default]
-    url="jdbc:h2:mem:devDb;LOCK_TIMEOUT=10000;DB_CLOSE_ON_EXIT=FALSE"
-    driverClassName="org.h2.Driver"
-    username="sa"
-    password=""
-    schema-generate="CREATE_DROP"
-    dialect="H2"</code></pre>
-</div>
-</div>
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-groovy-config hljs" data-lang="groovy-config">datasources {
-  'default' {
-    url = "jdbc:h2:mem:devDb;LOCK_TIMEOUT=10000;DB_CLOSE_ON_EXIT=FALSE"
-    driverClassName = "org.h2.Driver"
-    username = "sa"
-    password = ""
-    schemaGenerate = "CREATE_DROP"
-    dialect = "H2"
-  }
-}</code></pre>
-</div>
-</div>
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-hocon hljs" data-lang="hocon">{
-  datasources {
-    default {
-      url = "jdbc:h2:mem:devDb;LOCK_TIMEOUT=10000;DB_CLOSE_ON_EXIT=FALSE"
-      driverClassName = "org.h2.Driver"
-      username = "sa"
-      password = ""
-      schema-generate = "CREATE_DROP"
-      dialect = "H2"
-    }
-  }
-}</code></pre>
-</div>
-</div>
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-json-config hljs" data-lang="json-config">{
-  "datasources": {
-    "default": {
-      "url": "jdbc:h2:mem:devDb;LOCK_TIMEOUT=10000;DB_CLOSE_ON_EXIT=FALSE",
-      "driverClassName": "org.h2.Driver",
-      "username": "sa",
-      "password": "",
-      "schema-generate": "CREATE_DROP",
-      "dialect": "H2"
-    }
-  }
-}</code></pre>
-</div>
-</div>
-</div>
-</div>
 <div class="paragraph">
 <p>The <code>schema-generate</code> option is currently only recommended for simple applications, testing and demos and is not considered production-ready. The dialect set in configuration is the dialect that will be used to generate the schema.</p>
 </div>
@@ -6580,7 +5923,7 @@ datasources.default.dialect=H2</code></pre>
 <div class="sect2">
 <h3 id="_setting_the_dialect">Setting the Dialect</h3>
 <div class="paragraph">
-<p>As seen in the configuration above you should also configure the dialect. Although queries are precomputed in the repository some cases (like pagination) still require the dialect to specified. The following table summarizes the supported dialects:</p>
+<p>As seen in the YAML above you should also configure the dialect. Although queries are precomputed in the repository some cases (like pagination) still require the dialect to specified. The following table summarizes the supported dialects:</p>
 </div>
 <table class="tableblock frame-all grid-all stretch">
 <caption class="title">Table 1. Supported JDBC / R2DBC Dialects</caption>
@@ -6770,134 +6113,39 @@ CREATE TABLE author(id SERIAL NOT NULL PRIMARY KEY, name VARCHAR(255));</code></
 </div>
 </div>
 <div class="paragraph">
-<p>You can now configure your application to connect to the database using the application configuration file under <code>src/main/resources</code>:</p>
+<p>You can now configure your application to connect to the database using <code>src/main/resources/application.yml</code> which contains the application configuration:</p>
 </div>
-<div class="openblock">
+<div class="listingblock">
+<div class="title">Example <code>application.yml</code></div>
 <div class="content">
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-properties hljs" data-lang="properties">flyway.datasources.default.enabled=true
-datasources.default.url=jdbc:mysql://localhost:3306/mydatabase
-r2dbc.datasources.default.url=r2dbc:mysql:///mydatabase</code></pre>
-</div>
-</div>
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">flyway:
+<pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">flyway: <i class="conum" data-value="1"></i><b>(1)</b>
   datasources:
     default:
       enabled: true
 datasources:
-  default:
+  default: <i class="conum" data-value="2"></i><b>(2)</b>
     url: jdbc:mysql://localhost:3306/mydatabase
 r2dbc:
   datasources:
-    default: # <b class="conum">(3)</b>
+    default: <i class="conum" data-value="3"></i><b>(3)</b>
       url: r2dbc:mysql:///mydatabase</code></pre>
 </div>
 </div>
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="toml">[flyway]
-  [flyway.datasources]
-    [flyway.datasources.default]
-      enabled=true
-[datasources]
-  [datasources.default]
-    url="jdbc:mysql://localhost:3306/mydatabase"
-[r2dbc]
-  [r2dbc.datasources]
-    [r2dbc.datasources.default]
-      url="r2dbc:mysql:///mydatabase"</code></pre>
-</div>
-</div>
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-groovy-config hljs" data-lang="groovy-config">flyway {
-  datasources {
-    'default' {
-      enabled = true
-    }
-  }
-}
-datasources {
-  'default' {
-    url = "jdbc:mysql://localhost:3306/mydatabase"
-  }
-}
-r2dbc {
-  datasources {
-    'default' {
-      url = "r2dbc:mysql:///mydatabase"
-    }
-  }
-}</code></pre>
-</div>
-</div>
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-hocon hljs" data-lang="hocon">{
-  flyway {
-    datasources {
-      default {
-        enabled = true
-      }
-    }
-  }
-  datasources {
-    default {
-      url = "jdbc:mysql://localhost:3306/mydatabase"
-    }
-  }
-  r2dbc {
-    datasources {
-      default {
-        url = "r2dbc:mysql:///mydatabase"
-      }
-    }
-  }
-}</code></pre>
-</div>
-</div>
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-json-config hljs" data-lang="json-config">{
-  "flyway": {
-    "datasources": {
-      "default": {
-        "enabled": true
-      }
-    }
-  },
-  "datasources": {
-    "default": {
-      "url": "jdbc:mysql://localhost:3306/mydatabase"
-    }
-  },
-  "r2dbc": {
-    "datasources": {
-      "default": {
-        "url": "r2dbc:mysql:///mydatabase"
-      }
-    }
-  }
-}</code></pre>
-</div>
-</div>
-</div>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p>The <code>enabled</code> setting ensures the Flyway schema migration is applied. See <a href="https://micronaut-projects.github.io/micronaut-flyway/latest/guide/index.html">Micronaut Flyway</a> for more information.</p>
-</li>
-<li>
-<p>The Flyway configuration needs a JDBC datasource. <code>datasources.defaul.url</code> configures one. See <a href="#dbcConfiguration">datasource configuration</a> for more information.</p>
-</li>
-<li>
-<p><code>r2dbc.datasources.default.url</code> is used to configure the default R2DBC <code>ConnectionFactory</code></p>
-</li>
-</ul>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>The Flyway configuration ensures the schema migration is applied. See <a href="https://micronaut-projects.github.io/micronaut-flyway/latest/guide/index.html">Micronaut Flyway</a> for more information.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>The Flyway configuration needs a JDBC datasource configured, this setting configures one. See <a href="#dbcConfiguration">datasource configuration</a> for more information.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td>The property <code>r2dbc.datasources.default.url</code> is used to configure the default R2DBC <code>ConnectionFactory</code></td>
+</tr>
+</table>
 </div>
 <div class="admonitionblock tip">
 <table>
@@ -7247,22 +6495,8 @@ Most of the database migration tools use JDBC driver to make DB changes. Therefo
 <div class="paragraph">
 <p>If you want to quickly test out Micronaut Data R2DBC then you can set the <code>schema-generate</code> option of the data source to <code>create-drop</code> as well as the appropriate schema name:</p>
 </div>
-<div class="openblock">
+<div class="listingblock">
 <div class="title">Using <code>schema-generate</code></div>
-<div class="content">
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-properties hljs" data-lang="properties">micronaut.application.name=example
-flyway.datasources.default.enabled=true
-r2dbc.datasources.default.db-type=postgresql
-r2dbc.datasources.default.schema-generate=CREATE_DROP
-r2dbc.datasources.default.dialect=POSTGRES
-datasources.default.db-type=postgresql
-datasources.default.schema-generate=CREATE_DROP
-datasources.default.dialect=POSTGRES</code></pre>
-</div>
-</div>
-<div class="listingblock multi-language-sample">
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">micronaut:
   application:
@@ -7285,130 +6519,6 @@ datasources:
     dialect: POSTGRES</code></pre>
 </div>
 </div>
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="toml">[micronaut]
-  [micronaut.application]
-    name="example"
-[flyway]
-  [flyway.datasources]
-    [flyway.datasources.default]
-      enabled=true
-[r2dbc]
-  [r2dbc.datasources]
-    [r2dbc.datasources.default]
-      db-type="postgresql"
-      schema-generate="CREATE_DROP"
-      dialect="POSTGRES"
-[datasources]
-  [datasources.default]
-    db-type="postgresql"
-    schema-generate="CREATE_DROP"
-    dialect="POSTGRES"</code></pre>
-</div>
-</div>
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-groovy-config hljs" data-lang="groovy-config">micronaut {
-  application {
-    name = "example"
-  }
-}
-flyway {
-  datasources {
-    'default' {
-      enabled = true
-    }
-  }
-}
-r2dbc {
-  datasources {
-    'default' {
-      dbType = "postgresql"
-      schemaGenerate = "CREATE_DROP"
-      dialect = "POSTGRES"
-    }
-  }
-}
-datasources {
-  'default' {
-    dbType = "postgresql"
-    schemaGenerate = "CREATE_DROP"
-    dialect = "POSTGRES"
-  }
-}</code></pre>
-</div>
-</div>
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-hocon hljs" data-lang="hocon">{
-  micronaut {
-    application {
-      name = "example"
-    }
-  }
-  flyway {
-    datasources {
-      default {
-        enabled = true
-      }
-    }
-  }
-  r2dbc {
-    datasources {
-      default {
-        db-type = "postgresql"
-        schema-generate = "CREATE_DROP"
-        dialect = "POSTGRES"
-      }
-    }
-  }
-  datasources {
-    default {
-      db-type = "postgresql"
-      schema-generate = "CREATE_DROP"
-      dialect = "POSTGRES"
-    }
-  }
-}</code></pre>
-</div>
-</div>
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-json-config hljs" data-lang="json-config">{
-  "micronaut": {
-    "application": {
-      "name": "example"
-    }
-  },
-  "flyway": {
-    "datasources": {
-      "default": {
-        "enabled": true
-      }
-    }
-  },
-  "r2dbc": {
-    "datasources": {
-      "default": {
-        "db-type": "postgresql",
-        "schema-generate": "CREATE_DROP",
-        "dialect": "POSTGRES"
-      }
-    }
-  },
-  "datasources": {
-    "default": {
-      "db-type": "postgresql",
-      "schema-generate": "CREATE_DROP",
-      "dialect": "POSTGRES"
-    }
-  }
-}</code></pre>
-</div>
-</div>
-</div>
-</div>
 <div class="paragraph">
 <p>The <code>schema-generate</code> option is currently only recommended for simple applications, testing and demos and is not considered production-ready. The dialect set in configuration is the dialect that will be used to generate the schema.</p>
 </div>
@@ -7416,7 +6526,7 @@ datasources {
 <div class="sect2">
 <h3 id="_setting_the_dialect">Setting the Dialect</h3>
 <div class="paragraph">
-<p>As seen in the configuration above you should also configure the dialect. Although queries are precomputed in the repository some cases (like pagination) still require the dialect to specified. The following table summarizes the supported dialects:</p>
+<p>As seen in the YAML above you should also configure the dialect. Although queries are precomputed in the repository some cases (like pagination) still require the dialect to specified. The following table summarizes the supported dialects:</p>
 </div>
 <table class="tableblock frame-all grid-all stretch">
 <caption class="title">Table 2. Supported JDBC / R2DBC Dialects</caption>
@@ -11079,52 +10189,13 @@ It&#8217;s not possible to use both drivers at the same time. If you have both d
 </table>
 </div>
 <div class="paragraph">
-<p>Next up you need to configure at least one data source. The following snippet from the application configuration file is an example of configuring the default MongoDB data source:</p>
+<p>Next up you need to configure at least one data source. The following snippet from <code>application.yml</code> is an example of configuring the default MongoDB data source:</p>
 </div>
-<div class="openblock">
-<div class="content">
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-properties hljs" data-lang="properties">mongodb.uri=mongodb://username:password@localhost:27017/databaseName</code></pre>
-</div>
-</div>
-<div class="listingblock multi-language-sample">
+<div class="listingblock">
+<div class="title">Example YAML configuration</div>
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">mongodb:
   uri: mongodb://username:password@localhost:27017/databaseName</code></pre>
-</div>
-</div>
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="toml">[mongodb]
-  uri="mongodb://username:password@localhost:27017/databaseName"</code></pre>
-</div>
-</div>
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-groovy-config hljs" data-lang="groovy-config">mongodb {
-  uri = "mongodb://username:password@localhost:27017/databaseName"
-}</code></pre>
-</div>
-</div>
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-hocon hljs" data-lang="hocon">{
-  mongodb {
-    uri = "mongodb://username:password@localhost:27017/databaseName"
-  }
-}</code></pre>
-</div>
-</div>
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-json-config hljs" data-lang="json-config">{
-  "mongodb": {
-    "uri": "mongodb://username:password@localhost:27017/databaseName"
-  }
-}</code></pre>
-</div>
-</div>
 </div>
 </div>
 <div class="paragraph">
@@ -13889,23 +12960,12 @@ For Kotlin the dependency should be in the <code>kapt</code> scope and for Groov
 </div></p>
 </div>
 <div class="paragraph">
-<p>Next up you need to configure at least one data source. The following snippet from the application configuration file is an example of configuring the default Azure Cosmos Db data source:</p>
+<p>Next up you need to configure at least one data source. The following snippet from <code>application.yml</code> is an example of configuring the default Azure Cosmos Db data source:</p>
 </div>
-<div class="openblock">
-<div class="content">
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-properties hljs" data-lang="properties">micronaut.application.name=example
-azure.cosmos.default-gateway-mode=true
-azure.cosmos.endpoint-discovery-enabled=false
-azure.cosmos.endpoint=https://localhost:8081
-azure.cosmos.key=
-azure.cosmos.database.throughput-settings.request-units=1000
-azure.cosmos.database.throughput-settings.auto-scale=false
-azure.cosmos.database.database-name=testDb</code></pre>
+<div class="paragraph">
+<p>Example YAML configuration</p>
 </div>
-</div>
-<div class="listingblock multi-language-sample">
+<div class="listingblock">
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">micronaut:
   application:
@@ -13921,102 +12981,6 @@ azure:
         request-units: 1000
         auto-scale: false
       database-name: testDb</code></pre>
-</div>
-</div>
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="toml">[micronaut]
-  [micronaut.application]
-    name="example"
-[azure]
-  [azure.cosmos]
-    default-gateway-mode=true
-    endpoint-discovery-enabled=false
-    endpoint="https://localhost:8081"
-    key=""
-    [azure.cosmos.database]
-      [azure.cosmos.database.throughput-settings]
-        request-units=1000
-        auto-scale=false
-      database-name="testDb"</code></pre>
-</div>
-</div>
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-groovy-config hljs" data-lang="groovy-config">micronaut {
-  application {
-    name = "example"
-  }
-}
-azure {
-  cosmos {
-    defaultGatewayMode = true
-    endpointDiscoveryEnabled = false
-    endpoint = "https://localhost:8081"
-    key = ""
-    database {
-      throughputSettings {
-        requestUnits = 1000
-        autoScale = false
-      }
-      databaseName = "testDb"
-    }
-  }
-}</code></pre>
-</div>
-</div>
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-hocon hljs" data-lang="hocon">{
-  micronaut {
-    application {
-      name = "example"
-    }
-  }
-  azure {
-    cosmos {
-      default-gateway-mode = true
-      endpoint-discovery-enabled = false
-      endpoint = "https://localhost:8081"
-      key = ""
-      database {
-        throughput-settings {
-          request-units = 1000
-          auto-scale = false
-        }
-        database-name = "testDb"
-      }
-    }
-  }
-}</code></pre>
-</div>
-</div>
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-json-config hljs" data-lang="json-config">{
-  "micronaut": {
-    "application": {
-      "name": "example"
-    }
-  },
-  "azure": {
-    "cosmos": {
-      "default-gateway-mode": true,
-      "endpoint-discovery-enabled": false,
-      "endpoint": "https://localhost:8081",
-      "key": "",
-      "database": {
-        "throughput-settings": {
-          "request-units": 1000,
-          "auto-scale": false
-        },
-        "database-name": "testDb"
-      }
-    }
-  }
-}</code></pre>
-</div>
-</div>
 </div>
 </div>
 <div class="paragraph">
@@ -14327,33 +13291,12 @@ An additional way to configure the partition key value is adding the annotation 
 </table>
 </div>
 <div class="paragraph">
-<p>The below is an example application configuration showing container and db properties used when creating new containers if the containers don&#8217;t already exist:</p>
+<p>The below is an example YAML configuration showing container and db properties used when creating new containers if the containers don&#8217;t already exist:</p>
 </div>
-<div class="openblock">
-<div class="content">
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-properties hljs" data-lang="properties">micronaut.application.name=example
-azure.cosmos.default-gateway-mode=true
-azure.cosmos.endpoint-discovery-enabled=false
-azure.cosmos.endpoint=https://localhost:8081
-azure.cosmos.key=
-azure.cosmos.database.throughput-settings.request-units=1000
-azure.cosmos.database.throughput-settings.auto-scale=false
-azure.cosmos.database.database-name=testDb
-azure.cosmos.database.packages=io.micronaut.data.azure.entities
-azure.cosmos.database.update-policy=CREATE_IF_NOT_EXISTS
-azure.cosmos.database.container-settings[0].container-name=family
-azure.cosmos.database.container-settings[0].partition-key-path=/lastname
-azure.cosmos.database.container-settings[0].throughput-settings.request-units=1000
-azure.cosmos.database.container-settings[0].throughput-settings.auto-scale=false
-azure.cosmos.database.container-settings[1].container-name=book
-azure.cosmos.database.container-settings[1].partition-key-path=/id
-azure.cosmos.database.container-settings[1].throughput-settings.request-units=1200
-azure.cosmos.database.container-settings[1].throughput-settings.auto-scale=false</code></pre>
+<div class="paragraph">
+<p>Example YAML configuration</p>
 </div>
-</div>
-<div class="listingblock multi-language-sample">
+<div class="listingblock">
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">micronaut:
   application:
@@ -14382,167 +13325,6 @@ azure:
           throughput-settings:
             request-units: 1200
             auto-scale: false</code></pre>
-</div>
-</div>
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="toml">[micronaut]
-  [micronaut.application]
-    name="example"
-[azure]
-  [azure.cosmos]
-    default-gateway-mode=true
-    endpoint-discovery-enabled=false
-    endpoint="https://localhost:8081"
-    key=""
-    [azure.cosmos.database]
-      [azure.cosmos.database.throughput-settings]
-        request-units=1000
-        auto-scale=false
-      database-name="testDb"
-      packages="io.micronaut.data.azure.entities"
-      update-policy="CREATE_IF_NOT_EXISTS"
-      [[azure.cosmos.database.container-settings]]
-        container-name="family"
-        partition-key-path="/lastname"
-        [azure.cosmos.database.container-settings.throughput-settings]
-          request-units=1000
-          auto-scale=false
-      [[azure.cosmos.database.container-settings]]
-        container-name="book"
-        partition-key-path="/id"
-        [azure.cosmos.database.container-settings.throughput-settings]
-          request-units=1200
-          auto-scale=false</code></pre>
-</div>
-</div>
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-groovy-config hljs" data-lang="groovy-config">micronaut {
-  application {
-    name = "example"
-  }
-}
-azure {
-  cosmos {
-    defaultGatewayMode = true
-    endpointDiscoveryEnabled = false
-    endpoint = "https://localhost:8081"
-    key = ""
-    database {
-      throughputSettings {
-        requestUnits = 1000
-        autoScale = false
-      }
-      databaseName = "testDb"
-      packages = "io.micronaut.data.azure.entities"
-      updatePolicy = "CREATE_IF_NOT_EXISTS"
-      containerSettings = [{
-          containerName = "family"
-          partitionKeyPath = "/lastname"
-          throughputSettings {
-            requestUnits = 1000
-            autoScale = false
-          }
-        }, {
-          containerName = "book"
-          partitionKeyPath = "/id"
-          throughputSettings {
-            requestUnits = 1200
-            autoScale = false
-          }
-        }]
-    }
-  }
-}</code></pre>
-</div>
-</div>
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-hocon hljs" data-lang="hocon">{
-  micronaut {
-    application {
-      name = "example"
-    }
-  }
-  azure {
-    cosmos {
-      default-gateway-mode = true
-      endpoint-discovery-enabled = false
-      endpoint = "https://localhost:8081"
-      key = ""
-      database {
-        throughput-settings {
-          request-units = 1000
-          auto-scale = false
-        }
-        database-name = "testDb"
-        packages = "io.micronaut.data.azure.entities"
-        update-policy = "CREATE_IF_NOT_EXISTS"
-        container-settings = [{
-            container-name = "family"
-            partition-key-path = "/lastname"
-            throughput-settings {
-              request-units = 1000
-              auto-scale = false
-            }
-          }, {
-            container-name = "book"
-            partition-key-path = "/id"
-            throughput-settings {
-              request-units = 1200
-              auto-scale = false
-            }
-          }]
-      }
-    }
-  }
-}</code></pre>
-</div>
-</div>
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-json-config hljs" data-lang="json-config">{
-  "micronaut": {
-    "application": {
-      "name": "example"
-    }
-  },
-  "azure": {
-    "cosmos": {
-      "default-gateway-mode": true,
-      "endpoint-discovery-enabled": false,
-      "endpoint": "https://localhost:8081",
-      "key": "",
-      "database": {
-        "throughput-settings": {
-          "request-units": 1000,
-          "auto-scale": false
-        },
-        "database-name": "testDb",
-        "packages": "io.micronaut.data.azure.entities",
-        "update-policy": "CREATE_IF_NOT_EXISTS",
-        "container-settings": [{
-            "container-name": "family",
-            "partition-key-path": "/lastname",
-            "throughput-settings": {
-              "request-units": 1000,
-              "auto-scale": false
-            }
-          }, {
-            "container-name": "book",
-            "partition-key-path": "/id",
-            "throughput-settings": {
-              "request-units": 1200,
-              "auto-scale": false
-            }
-          }]
-      }
-    }
-  }
-}</code></pre>
-</div>
-</div>
 </div>
 </div>
 
