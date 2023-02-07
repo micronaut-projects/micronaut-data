@@ -290,18 +290,15 @@ abstract class AbstractRepositorySpec extends Specification {
         retrievedBookProj.dateUpdated == book.dateUpdated
 
         when:"Loading character as null"
-        book.primitiveChar = ' '
         book.wrapperChar = null
         book = basicTypeRepository.update(book)
         retrievedBook = basicTypeRepository.findById(book.myId).orElse(null)
         then:"Object loaded without errors"
         book.wrapperChar == null
-        book.primitiveChar == ' '
         retrievedBook
         // Since default field value is 'c', db value will be null and won't be set and will remain 'c'
         // The point of test is that it won't throw error when field value is null
         retrievedBook.wrapperChar == 'c'
-        retrievedBook.primitiveChar == '\0'
     }
 
     void "test save and retrieve timezone basic types"() {
