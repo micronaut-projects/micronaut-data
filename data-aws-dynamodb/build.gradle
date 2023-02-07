@@ -1,0 +1,49 @@
+plugins {
+    id "io.micronaut.build.internal.data-module"
+    id 'io.micronaut.test-resources'
+}
+
+micronaut {
+    version = libs.versions.micronaut.asProvider().get()
+    testResources {
+        enabled = false
+        inferClasspath = false
+        version = libs.versions.micronaut.testresources.get()
+    }
+}
+
+micronautBuild {
+    binaryCompatibility {
+        enabled = false
+    }
+}
+dependencies {
+    annotationProcessor projects.dataDocumentProcessor
+    annotationProcessor mn.micronaut.inject.java
+    annotationProcessor mn.micronaut.graal
+    annotationProcessor libs.micronaut.docs
+
+    api projects.dataRuntime
+    api projects.dataDocumentModel
+    api libs.aws.dynamodb
+
+    compileOnly mnReactor.micronaut.reactor
+
+    testAnnotationProcessor projects.dataDocumentProcessor
+    testAnnotationProcessor mn.micronaut.inject.java
+    testAnnotationProcessor libs.jakarta.persistence.api
+
+    testImplementation projects.dataDocumentProcessor
+    testImplementation projects.dataDocumentTck
+    testImplementation libs.jakarta.persistence.api
+    testImplementation mnRxjava2.micronaut.rxjava2
+    testImplementation mnReactor.micronaut.reactor
+    testImplementation libs.jakarta.persistence.api
+    testImplementation mn.micronaut.validation
+    testImplementation platform(libs.testcontainers.bom)
+    testImplementation libs.testcontainers.spock
+    testImplementation libs.testcontainers.azure
+    testImplementation mn.micronaut.inject.java.test
+
+    testCompileOnly mn.micronaut.inject.groovy
+}

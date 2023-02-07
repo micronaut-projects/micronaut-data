@@ -55,6 +55,7 @@ include 'data-jdbc'
 include 'data-r2dbc'
 include 'data-mongodb'
 include 'data-azure-cosmos'
+include 'data-aws-dynamodb'
 
 // Spring compatibility
 include 'data-spring'

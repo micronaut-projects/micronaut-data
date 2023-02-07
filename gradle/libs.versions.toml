@@ -56,6 +56,10 @@ mssql-r2dbc-driver = "1.0.0.RELEASE"
 
 h2 = "2.1.214"
 
+# AWS DynamoDB
+
+aws-dynamodb = "1.12.401"
+
 # Testing and benchmarking
 
 benchmark-spring-data-mongodb = "4.4.2"
@@ -178,6 +182,10 @@ drivers-r2dbc-mariadb = { module = "org.mariadb:r2dbc-mariadb", version.ref = "m
 drivers-r2dbc-mysql = { module = "dev.miku:r2dbc-mysql", version.ref = "mysql-r2dbc-driver" }
 drivers-r2dbc-mssql = { module = "io.r2dbc:r2dbc-mssql", version.ref = "mssql-r2dbc-driver" }
 drivers-r2dbc-postgresql = { module = "org.postgresql:r2dbc-postgresql", version.ref = "postgresql-r2dbc-driver" }
+
+# AWS DynamoDB
+
+aws-dynamodb = { module = "com.amazonaws:aws-java-sdk-dynamodb", version.ref = "aws-dynamodb"}
 
 # TESTCONTAINERS
 
