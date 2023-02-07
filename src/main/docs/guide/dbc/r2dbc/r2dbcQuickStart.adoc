@@ -60,17 +60,16 @@ Now define a SQL script that creates your initial schema in `src/main/resources/
 include::doc-examples/r2dbc-example-java/src/main/resources/db/migration/V1__create-schema.sql[]
 ----
 
-You can now configure your application to connect to the database using `src/main/resources/application.yml` which contains the application configuration:
+You can now configure your application to connect to the database using the application configuration file under `src/main/resources`:
 
-.Example `application.yml`
-[source,yaml]
+[configuration]
 ----
-flyway: # <1>
+flyway:
   datasources:
     default:
       enabled: true
 datasources:
-  default: # <2>
+  default:
     url: jdbc:mysql://localhost:3306/mydatabase
 r2dbc:
   datasources:
@@ -78,9 +77,9 @@ r2dbc:
       url: r2dbc:mysql:///mydatabase
 ----
 
-<1> The Flyway configuration ensures the schema migration is applied. See https://micronaut-projects.github.io/micronaut-flyway/latest/guide/index.html[Micronaut Flyway] for more information.
-<2> The Flyway configuration needs a JDBC datasource configured, this setting configures one. See <<dbcConfiguration, datasource configuration>> for more information.
-<3> The property `r2dbc.datasources.default.url` is used to configure the default R2DBC `ConnectionFactory`
+- The `enabled` setting ensures the Flyway schema migration is applied. See https://micronaut-projects.github.io/micronaut-flyway/latest/guide/index.html[Micronaut Flyway] for more information.
+- The Flyway configuration needs a JDBC datasource. `datasources.defaul.url` configures one. See <<dbcConfiguration, datasource configuration>> for more information.
+- `r2dbc.datasources.default.url` is used to configure the default R2DBC `ConnectionFactory`
 
 TIP: The R2DBC `ConnectionFactory` object can be injected anywhere in your code with dependency injection.
 

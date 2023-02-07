@@ -9,7 +9,7 @@ Micronaut Data supports multi-tenancy to allow the use of multiple databases or 
 The DATASOURCE mode is used in combination with the micronaut-multitenancy library in order to resolve the tenant name.
 In the below example, the tenant resolver is set to use a http header. See https://micronaut-projects.github.io/micronaut-multitenancy/latest/guide/[Micronaut Multitenancy] for more information.
 
-[source,yaml]
+[configuration]
 ----
 include::doc-examples/jdbc-multitenancy-datasource-example-java/src/main/resources/application.yml[]
 ----
@@ -24,7 +24,7 @@ include::doc-examples/jdbc-multitenancy-schema-example-java/src/test/java/exampl
 === Schema Mode
 The SCHEMA mode uses a single datasource and set the active schema based on the tenant resolved.
 
-[source,yaml]
+[configuration]
 ----
 include::doc-examples/jdbc-multitenancy-schema-example-java/src/main/resources/application.yml[]
 ----
