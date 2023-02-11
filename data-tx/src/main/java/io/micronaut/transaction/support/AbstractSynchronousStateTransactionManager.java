@@ -300,7 +300,7 @@ public abstract class AbstractSynchronousStateTransactionManager<T> implements S
      * <p>The recommended solution for handling failure of a subtransaction
      * is a "nested transaction", where the global transaction can be rolled
      * back to a savepoint taken at the beginning of the subtransaction.
-     * PROPAGATION_NESTED provides exactly those semantics; however, it will
+     * propagation NESTED provides exactly those semantics; however, it will
      * only work when nested transaction support is available. This is the case
      * with DataSourceTransactionManager, but not with JtaTransactionManager.
      *
