@@ -25,7 +25,7 @@ import javax.persistence.criteria.Root;
 
 /**
  * Specification in the sense of Domain Driven Design.
- * Fork from {@link org.springframework.data.jpa.domain.Specification}.
+ * Fork from org.springframework.data.jpa.domain.Specification.
  *
  * @author Oliver Gierke
  * @author Thomas Darimont

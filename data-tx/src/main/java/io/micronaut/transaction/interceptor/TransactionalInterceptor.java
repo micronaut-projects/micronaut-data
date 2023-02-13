@@ -78,7 +78,7 @@ public final class TransactionalInterceptor implements MethodInterceptor<Object,
      * Default constructor.
      *
      * @param transactionOperationsRegistry The {@link TransactionOperationsRegistry}
-     * @param tenantResolver
+     * @param tenantResolver The {@link TransactionDataSourceTenantResolver}
      */
     public TransactionalInterceptor(@NonNull TransactionOperationsRegistry transactionOperationsRegistry,
                                     @Nullable TransactionDataSourceTenantResolver tenantResolver) {
