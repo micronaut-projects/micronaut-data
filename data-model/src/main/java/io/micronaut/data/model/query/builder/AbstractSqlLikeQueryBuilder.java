@@ -454,7 +454,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         }
 
         StringBuilder select = new StringBuilder(SELECT_CLAUSE);
-        buildSelectClause(query, queryState, select);
+        buildSelectClause(annotationMetadata, query, queryState, select);
         appendForUpdate(QueryPosition.AFTER_TABLE_NAME, query, select);
         queryState.getQuery().insert(0, select);
 
@@ -613,7 +613,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         return new QueryState(query, allowJoins, useAlias);
     }
 
-    private void buildSelectClause(QueryModel query, QueryState queryState, StringBuilder queryString) {
+    private void buildSelectClause(AnnotationMetadata annotationMetadata, QueryModel query, QueryState queryState, StringBuilder queryString) {
         String logicalName = queryState.getRootAlias();
         PersistentEntity entity = queryState.getEntity();
         buildSelect(
@@ -625,10 +625,22 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         );
 
         String tableName = getTableName(entity);
-        queryString.append(FROM_CLAUSE)
-            .append(tableName)
-            .append(getTableAsKeyword())
-            .append(logicalName);
+        appendSelectFromClause(annotationMetadata, tableName, logicalName, queryString);
+    }
+
+    /**
+     * Appends FROM and table name (and/or alias) depending on the logic.
+     *
+     * @param annotationMetadata the method annotation metadata
+     * @param tableName the table name to select from
+     * @param logicalName the logical name (alias), may be null if alias is not being used
+     * @param queryString the query string builder
+     */
+    protected void appendSelectFromClause(AnnotationMetadata annotationMetadata, String tableName, String logicalName, StringBuilder queryString) {
+        queryString.append(FROM_CLAUSE).append(tableName);
+        if (logicalName != null) {
+            queryString.append(getTableAsKeyword()).append(logicalName);
+        }
     }
 
     /**

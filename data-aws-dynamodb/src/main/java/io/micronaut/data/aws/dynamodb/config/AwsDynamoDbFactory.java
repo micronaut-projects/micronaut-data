@@ -24,7 +24,6 @@ import io.micronaut.context.annotation.Bean;
 import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.data.aws.dynamodb.config.AwsDynamoDbConfiguration;
 import jakarta.inject.Singleton;
 
 /**

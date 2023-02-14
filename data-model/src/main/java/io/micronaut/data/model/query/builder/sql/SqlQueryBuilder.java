@@ -844,7 +844,10 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
             } else {
                 String column = getMappedName(namingStrategy, associations, property);
                 column = escapeColumnIfNeeded(column, escape);
-                sb.append(alias).append(DOT).append(column);
+                if (alias != null) {
+                    sb.append(alias).append(DOT);
+                }
+                sb.append(column);
                 if (useAlias) {
                     sb.append(AS_CLAUSE).append(columnAlias);
                 }
