@@ -84,7 +84,11 @@ public class TypeUtils {
      * @return True if is
      */
     public static boolean isIterableOfEntity(@Nullable ClassElement type) {
-        return type != null && type.isAssignable(Iterable.class) && hasPersistedTypeArgument(type);
+        return type != null && isIterableType(type) && hasPersistedTypeArgument(type);
+    }
+
+    public static boolean isIterableType(@Nullable ClassElement type) {
+        return type != null && type.isAssignable(Iterable.class);
     }
 
     /**
@@ -292,7 +296,7 @@ public class TypeUtils {
     public static boolean doesMethodProducesIterableOfAnEntity(MethodElement methodElement) {
         ClassElement returnType = methodElement.getGenericReturnType();
         if (TypeUtils.isReactiveType(returnType)) {
-            return TypeUtils.isEntity(methodElement.getGenericReturnType().getFirstTypeArgument().orElse(null));
+            return true;
         }
         if (TypeUtils.isFutureType(returnType)) {
             returnType = returnType.getFirstTypeArgument().orElse(null);
@@ -306,7 +310,7 @@ public class TypeUtils {
         if (methodElement.isSuspend()) {
             returnType = TypeUtils.getKotlinCoroutineProducedType(methodElement);
         }
-        return TypeUtils.isIterableOfEntity(returnType);
+        return TypeUtils.isIterableType(returnType);
     }
 
     /**
