@@ -161,4 +161,9 @@ class H2RepositorySpec extends AbstractRepositorySpec implements H2TestPropertyP
     boolean testLockingForUpdate() {
         return false
     }
+
+    @Override
+    boolean supportsNullCharacter() {
+        false
+    }
 }

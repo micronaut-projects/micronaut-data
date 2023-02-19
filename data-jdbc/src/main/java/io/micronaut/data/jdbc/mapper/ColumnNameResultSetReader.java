@@ -20,6 +20,7 @@ import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.convert.exceptions.ConversionErrorException;
 import io.micronaut.core.reflect.ReflectionUtils;
+import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.runtime.convert.DataConversionService;
@@ -131,7 +132,11 @@ public final class ColumnNameResultSetReader implements ResultReader<ResultSet, 
     @Override
     public char readChar(ResultSet resultSet, String name) {
         try {
-            return resultSet.getString(name).charAt(0);
+            String strValue = resultSet.getString(name);
+            if (StringUtils.isNotEmpty(strValue)) {
+                return strValue.charAt(0);
+            }
+            return 0;
         } catch (SQLException e) {
             throw exceptionForColumn(name, e);
         }
