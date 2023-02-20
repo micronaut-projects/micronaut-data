@@ -27,7 +27,7 @@ jakarta-transaction = "2.0.1"
 hibernate = "5.6.15.Final"
 hibernate6 = "6.1.7.Final"
 
-spring-data = "2.7.7"
+spring-data = "2.7.8"
 spring = "5.3.24"
 
 mongodb = "4.7.2"
@@ -59,7 +59,7 @@ h2 = "2.1.214"
 # Testing and benchmarking
 
 benchmark-spring-data-mongodb = "4.4.2"
-benchmark-spring-data = "2021.2.7"
+benchmark-spring-data = "2021.2.8"
 spock = "2.2-groovy-4.0"
 cglib = "3.3.0"
 objenesis = "3.3"
