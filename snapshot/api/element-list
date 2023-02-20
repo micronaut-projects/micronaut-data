@@ -21,6 +21,14 @@ io.micronaut.data.hibernate.operations
 io.micronaut.data.hibernate.reactive.operations
 io.micronaut.data.hibernate.reactive.repository.jpa
 io.micronaut.data.hibernate.reactive.repository.jpa.intercept
+io.micronaut.data.hibernate6.event
+io.micronaut.data.hibernate6.jpa.annotation
+io.micronaut.data.hibernate6.jpa.operations
+io.micronaut.data.hibernate6.jpa.repository
+io.micronaut.data.hibernate6.jpa.repository.criteria
+io.micronaut.data.hibernate6.jpa.repository.intercept
+io.micronaut.data.hibernate6.naming
+io.micronaut.data.hibernate6.operations
 io.micronaut.data.intercept
 io.micronaut.data.intercept.annotation
 io.micronaut.data.intercept.async
@@ -125,6 +133,7 @@ io.micronaut.transaction.annotation
 io.micronaut.transaction.async
 io.micronaut.transaction.exceptions
 io.micronaut.transaction.hibernate5
+io.micronaut.transaction.hibernate6
 io.micronaut.transaction.interceptor
 io.micronaut.transaction.interceptor.annotation
 io.micronaut.transaction.jdbc
