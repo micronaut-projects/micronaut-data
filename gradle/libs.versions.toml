@@ -1,7 +1,7 @@
 [versions]
 micronaut = "4.0.0-SNAPSHOT"
 micronaut-docs = "2.0.0"
-micronaut-gradle-plugin = "3.7.0"
+micronaut-gradle-plugin = "3.7.2"
 micronaut-azure = "3.8.0"
 micronaut-testresources = "1.2.3"
 
