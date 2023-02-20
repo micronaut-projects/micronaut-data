@@ -16,7 +16,7 @@ micronaut-mongo = "5.0.0-SNAPSHOT"
 micronaut-kotlin = "4.0.0-SNAPSHOT"
 micronaut-multitenancy = "5.0.0-SNAPSHOT"
 
-groovy = "4.0.8"
+groovy = "4.0.9"
 
 javax-persistence = "2.2"
 jakarta-persistence = "3.0.0"
