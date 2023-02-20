@@ -23,9 +23,12 @@ import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.document.model.query.builder.DynamoDbSqlQueryBuilder;
+import io.micronaut.data.exceptions.NonUniqueResultException;
 import io.micronaut.data.intercept.annotation.DataMethod;
+import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
 import io.micronaut.data.model.runtime.DeleteBatchOperation;
@@ -39,6 +42,9 @@ import io.micronaut.data.model.runtime.StoredQuery;
 import io.micronaut.data.model.runtime.UpdateOperation;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.date.DateTimeProvider;
+import io.micronaut.data.runtime.mapper.TypeMapper;
+import io.micronaut.data.runtime.mapper.sql.SqlDTOMapper;
+import io.micronaut.data.runtime.mapper.sql.SqlResultEntityTypeMapper;
 import io.micronaut.data.runtime.operations.internal.AbstractRepositoryOperations;
 import io.micronaut.data.runtime.operations.internal.sql.DefaultSqlPreparedQuery;
 import io.micronaut.data.runtime.operations.internal.sql.DefaultSqlStoredQuery;
@@ -52,6 +58,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -101,7 +108,6 @@ public class DefaultDynamoDbRepositoryOperations extends AbstractRepositoryOpera
     public <T, R> R findOne(PreparedQuery<T, R> preparedQuery) {
 
         SqlPreparedQuery<T, R> sqlPreparedQuery = getSqlPreparedQuery(preparedQuery);
-        sqlPreparedQuery.attachPageable(preparedQuery.getPageable(), true);
         sqlPreparedQuery.prepare(null);
 
         ExecuteStatementRequest executeStatementRequest = new ExecuteStatementRequest();
@@ -116,7 +122,34 @@ public class DefaultDynamoDbRepositoryOperations extends AbstractRepositoryOpera
         executeStatementRequest.setParameters(parameterValues);
 
         ExecuteStatementResult result = amazonDynamoDB.executeStatement(executeStatementRequest);
-
+        if (CollectionUtils.isEmpty(result.getItems())) {
+            return null;
+        }
+        if (result.getItems().size() > 1) {
+            throw new NonUniqueResultException();
+        }
+        Class<R> resultType = preparedQuery.getResultType();
+        DynamoDbResultReader resultReader = new DynamoDbResultReader();
+        if (preparedQuery.getResultDataType() == DataType.ENTITY) {
+            RuntimePersistentEntity<R> resultPersistentEntity = getEntity(resultType);
+            TypeMapper<List<Map<String, AttributeValue>>, R> mapper = new SqlResultEntityTypeMapper<>(
+                null, resultPersistentEntity, resultReader, jsonCodec, conversionService);
+            return mapper.map(result.getItems(), preparedQuery.getResultType());
+        } else {
+            if (preparedQuery.isDtoProjection()) {
+                TypeMapper<List<Map<String, AttributeValue>>, R> introspectedDataMapper = new SqlDTOMapper<>(
+                    persistentEntity,
+                    isRawQuery ? getEntity(preparedQuery.getResultType()) : persistentEntity,
+                    resultReader,
+                    jsonCodec,
+                    conversionService
+                );
+                return introspectedDataMapper.map(result.getItems(), resultType);
+            } else {
+                // TODO: Single resulting field
+                int x = 1;
+            }
+        }
         return null;
     }
 

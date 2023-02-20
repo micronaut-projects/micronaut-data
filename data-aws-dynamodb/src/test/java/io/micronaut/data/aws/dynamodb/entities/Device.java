@@ -3,8 +3,13 @@ package io.micronaut.data.aws.dynamodb.entities;
 import io.micronaut.data.annotation.EmbeddedId;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.Transient;
+import io.micronaut.data.annotation.TypeDef;
 import io.micronaut.data.aws.dynamodb.annotation.IndexPartitionKey;
 import io.micronaut.data.aws.dynamodb.annotation.IndexSortKey;
+import io.micronaut.data.model.DataType;
+
+import java.util.List;
+import java.util.Set;
 
 @MappedEntity("Device")
 public class Device {
@@ -19,6 +24,15 @@ public class Device {
 
     @IndexSortKey(globalSecondaryIndexNames = {"CountryRegionIndex"})
     private String region;
+
+    private boolean enabled;
+
+    @TypeDef(type = DataType.STRING_ARRAY)
+    private Set<String> notes;
+
+    @TypeDef(type = DataType.INTEGER_ARRAY)
+    private List<Integer> grades;
+
     public DeviceId getId() {
         return id;
     }
@@ -49,6 +63,30 @@ public class Device {
 
     public void setRegion(String region) {
         this.region = region;
+    }
+
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
+    }
+
+    public Set<String> getNotes() {
+        return notes;
+    }
+
+    public void setNotes(Set<String> notes) {
+        this.notes = notes;
+    }
+
+    public List<Integer> getGrades() {
+        return grades;
+    }
+
+    public void setGrades(List<Integer> grades) {
+        this.grades = grades;
     }
 
     @Transient

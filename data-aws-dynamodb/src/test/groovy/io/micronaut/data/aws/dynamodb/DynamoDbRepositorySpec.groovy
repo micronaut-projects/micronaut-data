@@ -44,12 +44,22 @@ class DynamoDbRepositorySpec extends Specification implements AwsDynamoDbTestPro
         device.description = "Wet Stone Sharpener"
         device.country = "Serbia"
         device.region = "Belgrade"
+        device.enabled = true
+        device.notes = Set.of("note1", "additional note")
+        device.grades = List.of(4, 5)
         def result = TableUtils.insertEntity(amazonDynamoDB, entity, dynamoEntity, device)
         then:
         result
         when:
         def optDevice = deviceRepository.findById(id)
         then:
-        !optDevice.present
+        optDevice.present
+        def loadedDevice = optDevice.get()
+        loadedDevice.description == device.description
+        loadedDevice.country == device.country
+        loadedDevice.region == device.region
+        loadedDevice.id.vendorId == device.id.vendorId
+        loadedDevice.id.product == device.id.product
+        loadedDevice.enabled == device.enabled
     }
 }

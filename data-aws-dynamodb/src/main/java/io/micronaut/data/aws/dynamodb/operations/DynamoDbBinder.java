@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2022 original authors
+ * Copyright 2017-2023 original authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.aws.dynamodb.operations;
 
+import com.amazonaws.services.dynamodbv2.document.ItemUtils;
 import com.amazonaws.services.dynamodbv2.model.AttributeValue;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
@@ -98,8 +99,6 @@ final class DynamoDbBinder implements BindableParametersStoredQuery.Binder {
 
     @Override
     public void bindMany(@NonNull QueryParameterBinding binding, @NonNull Collection<Object> values) {
-        // Query params were expanded, so we must expand parameters and bind query with newly created parameters
-        // No actual expanding if there is only one value to bind
         if (values.size() == 1) {
             doBind(binding, values.iterator().next());
             return;
@@ -142,17 +141,7 @@ final class DynamoDbBinder implements BindableParametersStoredQuery.Binder {
                 propertiesToUpdate.put(property, value);
             }
         }
-        AttributeValue attributeValue = new AttributeValue();
-        if (value instanceof Number number) {
-            attributeValue.withN(number.toString());
-        } else if (value instanceof String str) {
-            attributeValue.withS(str);
-        } else if (value == null) {
-            attributeValue.withNULL(true);
-        } else {
-            // TODO: Figure out complex types (Binary?, lists, maps)
-            attributeValue.withS(value.toString());
-        }
+        AttributeValue attributeValue = ItemUtils.toAttributeValue(value);
         parameterValues.add(attributeValue);
     }
 

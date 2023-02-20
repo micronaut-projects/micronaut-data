@@ -16,7 +16,7 @@ class DynamoDbEntitySpec extends Specification {
 
     void 'initialize entity from mapping class'() {
         given:
-        def entities = TableUtils.findMappedEntities(List.of("io.micronaut.data.aws.dynamodb.entities"), Device.class.name)
+        def entities = TableUtils.findMappedEntities(runtimeEntityRegistry, List.of("io.micronaut.data.aws.dynamodb.entities"), Device.class.name)
         entities.size() == 1
         def entity = entities[0]
         when:
