@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.aws.dynamodb.operations;
+package io.micronaut.data.aws.dynamodb.mapper;
 
 import com.amazonaws.services.dynamodbv2.model.AttributeValue;
 import com.amazonaws.util.BinaryUtils;
@@ -59,8 +59,7 @@ public class DynamoDbResultReader implements ResultReader<List<Map<String, Attri
             o = BinaryUtils.copyAllBytesFrom(byteBuffer);
         } else if (ByteBuffer.class.isAssignableFrom(type)) {
             o = attributeValue.getB();
-        } else if (isSet(type, attributeValue)) {
-            // type is java.lang.Object and we cannot rely on that
+        } else if (isSet(type)) {
             o = attributeValue.getSS();
             if (o == null) {
                 o = attributeValue.getNS();
@@ -71,7 +70,7 @@ public class DynamoDbResultReader implements ResultReader<List<Map<String, Attri
                 o = attributeValue.getBS();
             }
             // if o is null then there is something wrong
-        } else if (isList(type, attributeValue)) {
+        } else if (isList(type)) {
             o = attributeValue.getL();
             // convert List of AttributeValue to actual list type somehow?
         }
@@ -114,17 +113,11 @@ public class DynamoDbResultReader implements ResultReader<List<Map<String, Attri
         }
     }
 
-    private <T> boolean isSet(@NonNull Class<T> type, @NonNull AttributeValue attributeValue) {
-        if (Set.class.isAssignableFrom(type)) {
-            return true;
-        }
-        return attributeValue.getSS() != null || attributeValue.getBS() != null || attributeValue.getNS() != null;
+    private <T> boolean isSet(@NonNull Class<T> type) {
+        return Set.class.isAssignableFrom(type);
     }
 
-    private <T> boolean isList(@NonNull Class<T> type, @NonNull AttributeValue attributeValue) {
-        if (List.class.isAssignableFrom(type)) {
-            return true;
-        }
-        return attributeValue.getL() != null;
+    private <T> boolean isList(@NonNull Class<T> type) {
+        return List.class.isAssignableFrom(type);
     }
 }

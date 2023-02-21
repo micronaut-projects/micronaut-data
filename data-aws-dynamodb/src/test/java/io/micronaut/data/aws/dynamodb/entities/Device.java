@@ -3,10 +3,8 @@ package io.micronaut.data.aws.dynamodb.entities;
 import io.micronaut.data.annotation.EmbeddedId;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.Transient;
-import io.micronaut.data.annotation.TypeDef;
 import io.micronaut.data.aws.dynamodb.annotation.IndexPartitionKey;
 import io.micronaut.data.aws.dynamodb.annotation.IndexSortKey;
-import io.micronaut.data.model.DataType;
 
 import java.util.List;
 import java.util.Set;
@@ -27,10 +25,10 @@ public class Device {
 
     private boolean enabled;
 
-    @TypeDef(type = DataType.STRING_ARRAY)
     private Set<String> notes;
 
-    @TypeDef(type = DataType.INTEGER_ARRAY)
+    private Set<Integer> ratings;
+
     private List<Integer> grades;
 
     public DeviceId getId() {
@@ -83,6 +81,14 @@ public class Device {
 
     public List<Integer> getGrades() {
         return grades;
+    }
+
+    public Set<Integer> getRatings() {
+        return ratings;
+    }
+
+    public void setRatings(Set<Integer> ratings) {
+        this.ratings = ratings;
     }
 
     public void setGrades(List<Integer> grades) {

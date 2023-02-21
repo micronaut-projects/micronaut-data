@@ -47,6 +47,7 @@ class DynamoDbRepositorySpec extends Specification implements AwsDynamoDbTestPro
         device.enabled = true
         device.notes = Set.of("note1", "additional note")
         device.grades = List.of(4, 5)
+        device.ratings = List.of(2, 4, 5)
         def result = TableUtils.insertEntity(amazonDynamoDB, entity, dynamoEntity, device)
         then:
         result

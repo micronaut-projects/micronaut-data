@@ -25,6 +25,8 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.Query;
+import io.micronaut.data.aws.dynamodb.mapper.DynamoDbResultEntityMapper;
+import io.micronaut.data.aws.dynamodb.mapper.DynamoDbResultReader;
 import io.micronaut.data.document.model.query.builder.DynamoDbSqlQueryBuilder;
 import io.micronaut.data.exceptions.NonUniqueResultException;
 import io.micronaut.data.intercept.annotation.DataMethod;
@@ -132,11 +134,14 @@ public class DefaultDynamoDbRepositoryOperations extends AbstractRepositoryOpera
         DynamoDbResultReader resultReader = new DynamoDbResultReader();
         if (preparedQuery.getResultDataType() == DataType.ENTITY) {
             RuntimePersistentEntity<R> resultPersistentEntity = getEntity(resultType);
-            TypeMapper<List<Map<String, AttributeValue>>, R> mapper = new SqlResultEntityTypeMapper<>(
-                null, resultPersistentEntity, resultReader, jsonCodec, conversionService);
+            //TypeMapper<List<Map<String, AttributeValue>>, R> mapper = new SqlResultEntityTypeMapper<>(
+            //    null, resultPersistentEntity, resultReader, jsonCodec, conversionService);
+            TypeMapper<List<Map<String, AttributeValue>>, R> mapper = new DynamoDbResultEntityMapper<>(
+                            resultPersistentEntity, resultReader, jsonCodec, conversionService);
             return mapper.map(result.getItems(), preparedQuery.getResultType());
         } else {
             if (preparedQuery.isDtoProjection()) {
+                // TODO: Implement DynamoDB DTO mapper as well
                 TypeMapper<List<Map<String, AttributeValue>>, R> introspectedDataMapper = new SqlDTOMapper<>(
                     persistentEntity,
                     isRawQuery ? getEntity(preparedQuery.getResultType()) : persistentEntity,
