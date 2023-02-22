@@ -19,7 +19,7 @@ snippet::example.ProductRepository[project-base="doc-examples/hibernate-example"
 
 <1> The ann:data.annotation.Join[] is used to indicate a `JOIN FETCH` clause should be included.
 
-Note that the ann:data.annotation.Join[] annotation is repeatable and hence can be specified multiple times for different associations. In addition, the `type` member of the annotation can be used to specify the join type, for example `LEFT`, `INNER` or `RIGHT`.
+Note that the ann:data.annotation.Join[] annotation is repeatable and hence can be specified multiple times for different associations. In addition, the `type` member of the annotation can be used to specify the join type, for example `LEFT`, `INNER`, `RIGHT` or `OUTER`.
 
 === JPA 2.1 Entity Graphs
 
