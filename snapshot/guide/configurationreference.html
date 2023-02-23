@@ -51,43 +51,9 @@
             </div>
 <div class="sect2">
 <h3 id="_data_azure_cosmos_config_properties">Data Azure Cosmos Config Properties</h3>
-<a id="io.micronaut.data.cosmos.config.CosmosDatabaseConfiguration$CosmosContainerSettings" href="#io.micronaut.data.cosmos.config.CosmosDatabaseConfiguration$CosmosContainerSettings">&#128279;</a>
-<table class="tableblock frame-all grid-all stretch">
-<caption class="title">Table 1. Configuration Properties for <a href="../api/io/micronaut/data/cosmos/config/CosmosDatabaseConfiguration.CosmosContainerSettings.html">CosmosDatabaseConfiguration$CosmosContainerSettings</a></caption>
-<colgroup>
-<col style="width: 33.3333%;">
-<col style="width: 33.3333%;">
-<col style="width: 33.3334%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Property</th>
-<th class="tableblock halign-left valign-top">Type</th>
-<th class="tableblock halign-left valign-top">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>azure.cosmos.database.container-settings[*].container-name</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">java.lang.String</p></td>
-<td class="tableblock halign-left valign-top"></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>azure.cosmos.database.container-settings[*].partition-key-path</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">java.lang.String</p></td>
-<td class="tableblock halign-left valign-top"></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>azure.cosmos.database.container-settings[*].throughput</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/cosmos/config/CosmosDatabaseConfiguration.CosmosContainerSettings.ContainerThroughputSettings.html">CosmosDatabaseConfiguration$CosmosContainerSettings$ContainerThroughputSettings</a></p></td>
-<td class="tableblock halign-left valign-top"></td>
-</tr>
-</tbody>
-</table>
-<div style="page-break-after: always;"></div>
 <a id="io.micronaut.data.cosmos.config.CosmosDatabaseConfiguration$CosmosContainerSettings$ContainerThroughputSettings" href="#io.micronaut.data.cosmos.config.CosmosDatabaseConfiguration$CosmosContainerSettings$ContainerThroughputSettings">&#128279;</a>
 <table class="tableblock frame-all grid-all stretch">
-<caption class="title">Table 2. Configuration Properties for <a href="../api/io/micronaut/data/cosmos/config/CosmosDatabaseConfiguration.CosmosContainerSettings.ContainerThroughputSettings.html">CosmosDatabaseConfiguration$CosmosContainerSettings$ContainerThroughputSettings</a></caption>
+<caption class="title">Table 1. Configuration Properties for <a href="../api/io/micronaut/data/cosmos/config/CosmosDatabaseConfiguration.CosmosContainerSettings.ContainerThroughputSettings.html">CosmosDatabaseConfiguration$CosmosContainerSettings$ContainerThroughputSettings</a></caption>
 <colgroup>
 <col style="width: 33.3333%;">
 <col style="width: 33.3333%;">
@@ -116,7 +82,7 @@
 <div style="page-break-after: always;"></div>
 <a id="io.micronaut.data.cosmos.config.CosmosDatabaseConfiguration$DefaultThroughputSettings" href="#io.micronaut.data.cosmos.config.CosmosDatabaseConfiguration$DefaultThroughputSettings">&#128279;</a>
 <table class="tableblock frame-all grid-all stretch">
-<caption class="title">Table 3. Configuration Properties for <a href="../api/io/micronaut/data/cosmos/config/CosmosDatabaseConfiguration.DefaultThroughputSettings.html">CosmosDatabaseConfiguration$DefaultThroughputSettings</a></caption>
+<caption class="title">Table 2. Configuration Properties for <a href="../api/io/micronaut/data/cosmos/config/CosmosDatabaseConfiguration.DefaultThroughputSettings.html">CosmosDatabaseConfiguration$DefaultThroughputSettings</a></caption>
 <colgroup>
 <col style="width: 33.3333%;">
 <col style="width: 33.3333%;">
@@ -145,7 +111,7 @@
 <div style="page-break-after: always;"></div>
 <a id="io.micronaut.data.cosmos.config.CosmosDatabaseConfiguration" href="#io.micronaut.data.cosmos.config.CosmosDatabaseConfiguration">&#128279;</a>
 <table class="tableblock frame-all grid-all stretch">
-<caption class="title">Table 4. Configuration Properties for <a href="../api/io/micronaut/data/cosmos/config/CosmosDatabaseConfiguration.html">CosmosDatabaseConfiguration</a></caption>
+<caption class="title">Table 3. Configuration Properties for <a href="../api/io/micronaut/data/cosmos/config/CosmosDatabaseConfiguration.html">CosmosDatabaseConfiguration</a></caption>
 <colgroup>
 <col style="width: 33.3333%;">
 <col style="width: 33.3333%;">
@@ -180,6 +146,40 @@
 <td class="tableblock halign-left valign-top"><p class="tableblock">Gets the indicator telling whether query metrics will be enabled for Azure Cosmos Db query requests.
  If this is turned off then detailed query metrics information will not be retrieved in the Cosmos Diagnostics query response.
  The default value is true.</p></td>
+</tr>
+</tbody>
+</table>
+<div style="page-break-after: always;"></div>
+<a id="io.micronaut.data.cosmos.config.CosmosDatabaseConfiguration$CosmosContainerSettings" href="#io.micronaut.data.cosmos.config.CosmosDatabaseConfiguration$CosmosContainerSettings">&#128279;</a>
+<table class="tableblock frame-all grid-all stretch">
+<caption class="title">Table 4. Configuration Properties for <a href="../api/io/micronaut/data/cosmos/config/CosmosDatabaseConfiguration.CosmosContainerSettings.html">CosmosDatabaseConfiguration$CosmosContainerSettings</a></caption>
+<colgroup>
+<col style="width: 33.3333%;">
+<col style="width: 33.3333%;">
+<col style="width: 33.3334%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Property</th>
+<th class="tableblock halign-left valign-top">Type</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>azure.cosmos.database.container-settings[*].container-name</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">java.lang.String</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>azure.cosmos.database.container-settings[*].partition-key-path</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">java.lang.String</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>azure.cosmos.database.container-settings[*].throughput</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/cosmos/config/CosmosDatabaseConfiguration.CosmosContainerSettings.ContainerThroughputSettings.html">CosmosDatabaseConfiguration$CosmosContainerSettings$ContainerThroughputSettings</a></p></td>
+<td class="tableblock halign-left valign-top"></td>
 </tr>
 </tbody>
 </table>
