@@ -19,14 +19,8 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        graalvm: [ 'latest', 'dev' ]
+        graalvm: ['latest']
         java: [ '17' ]
-        include:
-          - graalvm: 'dev'
-            java: '19'
-        exclude:
-          - graalvm: 'dev'
-            java: '17'
     steps:
        # https://github.com/actions/virtual-environments/issues/709
       - name: Free disk space
@@ -82,7 +76,7 @@ jobs:
             })
       - name: Publish Test Report
         if: always()
-        uses: mikepenz/action-junit-report@v3.7.4
+        uses: mikepenz/action-junit-report@v3.7.5
         with:
           check_name: GraalVM CE CI / Test Report (Java ${{ matrix.java }})
           report_paths: '**/build/test-results/test/TEST-*.xml'
