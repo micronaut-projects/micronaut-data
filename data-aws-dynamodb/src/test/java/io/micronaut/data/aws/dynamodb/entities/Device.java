@@ -1,5 +1,7 @@
 package io.micronaut.data.aws.dynamodb.entities;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonSetter;
 import io.micronaut.data.annotation.EmbeddedId;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.Transient;
@@ -100,10 +102,24 @@ public class Device {
         return (id != null) ? id.getVendorId() : null;
     }
 
+    @JsonSetter
     public void setVendorId(Long vendorId) {
         if (id == null) {
             id = new DeviceId();
         }
         id.setVendorId(vendorId);
+    }
+
+    @Transient
+    public String getProduct() {
+        return id != null ? id.getProduct() : null;
+    }
+
+    @JsonSetter
+    public void setProduct(String product) {
+        if (id == null) {
+            id = new DeviceId();
+        }
+        id.setProduct(product);
     }
 }

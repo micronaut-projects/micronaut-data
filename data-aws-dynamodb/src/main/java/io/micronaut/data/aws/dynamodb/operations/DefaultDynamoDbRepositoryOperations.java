@@ -16,6 +16,8 @@
 package io.micronaut.data.aws.dynamodb.operations;
 
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
+import com.amazonaws.services.dynamodbv2.document.Item;
+import com.amazonaws.services.dynamodbv2.document.ItemUtils;
 import com.amazonaws.services.dynamodbv2.model.AttributeValue;
 import com.amazonaws.services.dynamodbv2.model.ExecuteStatementRequest;
 import com.amazonaws.services.dynamodbv2.model.ExecuteStatementResult;
@@ -25,9 +27,9 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.Query;
-import io.micronaut.data.aws.dynamodb.mapper.DynamoDbResultEntityMapper;
 import io.micronaut.data.aws.dynamodb.mapper.DynamoDbResultReader;
 import io.micronaut.data.document.model.query.builder.DynamoDbSqlQueryBuilder;
+import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.exceptions.NonUniqueResultException;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.DataType;
@@ -46,7 +48,6 @@ import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.date.DateTimeProvider;
 import io.micronaut.data.runtime.mapper.TypeMapper;
 import io.micronaut.data.runtime.mapper.sql.SqlDTOMapper;
-import io.micronaut.data.runtime.mapper.sql.SqlResultEntityTypeMapper;
 import io.micronaut.data.runtime.operations.internal.AbstractRepositoryOperations;
 import io.micronaut.data.runtime.operations.internal.sql.DefaultSqlPreparedQuery;
 import io.micronaut.data.runtime.operations.internal.sql.DefaultSqlStoredQuery;
@@ -54,6 +55,7 @@ import io.micronaut.data.runtime.operations.internal.sql.SqlPreparedQuery;
 import io.micronaut.data.runtime.query.MethodContextAwareStoredQueryDecorator;
 import io.micronaut.data.runtime.query.PreparedQueryDecorator;
 import io.micronaut.http.codec.MediaTypeCodec;
+import io.micronaut.serde.ObjectMapper;
 import jakarta.inject.Singleton;
 
 import java.io.Serializable;
@@ -79,6 +81,7 @@ public class DefaultDynamoDbRepositoryOperations extends AbstractRepositoryOpera
     DynamoDbRepositoryOperations {
 
     private final AmazonDynamoDB amazonDynamoDB;
+    private final ObjectMapper objectMapper;
 
     /**
      * Default constructor.
@@ -95,9 +98,11 @@ public class DefaultDynamoDbRepositoryOperations extends AbstractRepositoryOpera
                                                DateTimeProvider<Object> dateTimeProvider,
                                                RuntimeEntityRegistry runtimeEntityRegistry,
                                                DataConversionService conversionService,
-                                               AttributeConverterRegistry attributeConverterRegistry) {
+                                               AttributeConverterRegistry attributeConverterRegistry,
+                                               ObjectMapper objectMapper) {
         super(codecs, dateTimeProvider, runtimeEntityRegistry, conversionService, attributeConverterRegistry);
         this.amazonDynamoDB = amazonDynamoDB;
+        this.objectMapper = objectMapper;
     }
 
     @Override
@@ -134,11 +139,22 @@ public class DefaultDynamoDbRepositoryOperations extends AbstractRepositoryOpera
         DynamoDbResultReader resultReader = new DynamoDbResultReader();
         if (preparedQuery.getResultDataType() == DataType.ENTITY) {
             RuntimePersistentEntity<R> resultPersistentEntity = getEntity(resultType);
+
+            Item item = ItemUtils.toItem(result.getItems().get(0));
+            String itemString = item.toJSON();
+            try {
+                R entity = objectMapper.readValue(itemString, resultType);
+                return entity;
+            } catch (Exception e) {
+                throw new DataAccessException("Failed to deserialize entity", e);
+            }
+
             //TypeMapper<List<Map<String, AttributeValue>>, R> mapper = new SqlResultEntityTypeMapper<>(
             //    null, resultPersistentEntity, resultReader, jsonCodec, conversionService);
-            TypeMapper<List<Map<String, AttributeValue>>, R> mapper = new DynamoDbResultEntityMapper<>(
-                            resultPersistentEntity, resultReader, jsonCodec, conversionService);
-            return mapper.map(result.getItems(), preparedQuery.getResultType());
+
+            //TypeMapper<List<Map<String, AttributeValue>>, R> mapper = new DynamoDbResultEntityMapper<>(
+            //                resultPersistentEntity, resultReader, jsonCodec, conversionService);
+            //return mapper.map(result.getItems(), preparedQuery.getResultType());
         } else {
             if (preparedQuery.isDtoProjection()) {
                 // TODO: Implement DynamoDB DTO mapper as well

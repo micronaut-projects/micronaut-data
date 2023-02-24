@@ -26,6 +26,8 @@ dependencies {
     api projects.dataRuntime
     api projects.dataDocumentModel
     api libs.aws.dynamodb
+    api mnSerde.micronaut.serde.jackson
+    api mnSerde.micronaut.serde.support
 
     compileOnly mnReactor.micronaut.reactor
 
