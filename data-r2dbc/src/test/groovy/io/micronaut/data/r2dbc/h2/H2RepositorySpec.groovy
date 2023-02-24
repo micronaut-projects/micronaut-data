@@ -16,10 +16,22 @@
 package io.micronaut.data.r2dbc.h2
 
 import groovy.transform.Memoized
+import io.micronaut.data.tck.entities.Book
+import io.micronaut.data.tck.entities.Student
 import io.micronaut.data.tck.repositories.*
 import io.micronaut.data.tck.tests.AbstractRepositorySpec
 
 class H2RepositorySpec extends AbstractRepositorySpec implements H2TestPropertyProvider {
+
+    @Memoized
+    H2NewAuthorRepository newAuthorRepository() {
+        return context.getBean(H2NewAuthorRepository)
+    }
+
+    @Memoized
+    H2NewBookRepository newBookRepository() {
+        return context.getBean(H2NewBookRepository)
+    }
 
     @Memoized
     @Override
@@ -165,5 +177,42 @@ class H2RepositorySpec extends AbstractRepositorySpec implements H2TestPropertyP
     @Override
     boolean supportsNullCharacter() {
         false
+    }
+
+    void "H2 test ManyToMany join table with mappedBy"() {
+        given:
+        def author = new NewAuthor()
+        author.name = "Author1"
+        author.id = 1
+        def book1 = new NewBook()
+        book1.id = 1
+        newAuthorRepository().save(author)
+        book1.title = "Book1"
+        book1.getAuthors().add(author)
+        def book2 = new NewBook()
+        book2.id = 2
+        book2.title = "Book2"
+        book2.getAuthors().add(author)
+        newBookRepository().save(book1)
+        newBookRepository().save(book2)
+        when:
+        def loadedAuthor = newAuthorRepository().findOne(author.name).get()
+        def loadedBook1 = newBookRepository().findOne(book1.title).get()
+        def loadedBook2 = newBookRepository().findOne(book2.title).get()
+        then:
+        loadedAuthor
+        loadedAuthor.id == author.id
+        loadedAuthor.books.size() == 2
+        loadedAuthor.name == author.name
+        loadedBook1
+        loadedBook1.title == book1.title
+        loadedBook1.id == book1.id
+        loadedBook2
+        loadedBook2.title == book2.title
+        loadedBook2.id == book2.id
+        cleanup:
+        newAuthorRepository().delete(author)
+        newBookRepository().delete(book1)
+        newBookRepository().delete(book2)
     }
 }
