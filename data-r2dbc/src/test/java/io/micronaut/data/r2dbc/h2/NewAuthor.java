@@ -1,5 +1,6 @@
 package io.micronaut.data.r2dbc.h2;
 
+import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.Relation;
@@ -13,6 +14,7 @@ import java.util.Set;
 public class NewAuthor {
 
     @Id
+    @GeneratedValue
     private Long id;
 
     @NotEmpty
