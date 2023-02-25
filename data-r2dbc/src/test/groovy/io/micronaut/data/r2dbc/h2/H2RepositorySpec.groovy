@@ -181,37 +181,30 @@ class H2RepositorySpec extends AbstractRepositorySpec implements H2TestPropertyP
 
     void "H2 test ManyToMany join table with mappedBy"() {
         given:
-        def author = new NewAuthor()
-        author.name = "Author1"
-        author.id = 1
-        def book1 = new NewBook()
-        book1.id = 1
-        newAuthorRepository().save(author)
-        book1.title = "Book1"
-        book1.getAuthors().add(author)
-        def book2 = new NewBook()
-        book2.id = 2
-        book2.title = "Book2"
-        book2.getAuthors().add(author)
-        newBookRepository().save(book1)
-        newBookRepository().save(book2)
+        def author1 = newAuthorRepository().save("Author1")
+        def author2 = newAuthorRepository().save("Author2")
+        def book1 = newBookRepository().save("Book1", author1)
+        def book2 = newBookRepository().save("Book2", Set.of(author1, author2))
         when:
-        def loadedAuthor = newAuthorRepository().findOne(author.name).get()
+        def loadedAuthor = newAuthorRepository().findOne(author1.name).get()
         def loadedBook1 = newBookRepository().findOne(book1.title).get()
         def loadedBook2 = newBookRepository().findOne(book2.title).get()
         then:
         loadedAuthor
-        loadedAuthor.id == author.id
+        loadedAuthor.id == author1.id
         loadedAuthor.books.size() == 2
-        loadedAuthor.name == author.name
+        loadedAuthor.name == author1.name
         loadedBook1
         loadedBook1.title == book1.title
         loadedBook1.id == book1.id
+        loadedBook1.authors.size() == 1
         loadedBook2
         loadedBook2.title == book2.title
         loadedBook2.id == book2.id
+        loadedBook2.authors.size() == 2
         cleanup:
-        newAuthorRepository().delete(author)
+        newAuthorRepository().delete(author1)
+        newAuthorRepository().delete(author2)
         newBookRepository().delete(book1)
         newBookRepository().delete(book2)
     }
