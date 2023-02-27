@@ -73,7 +73,7 @@ kotlin-gradle-plugin = "1.8.10"
 jmh-gradle-plugin = "0.7.0"
 spring-boot-gradle-plugin = "2.6.7"
 spring-dependency-management-gradle-plugin = "1.1.0"
-shadow-gradle-plugin = "7.1.2"
+shadow-gradle-plugin = "8.0.0"
 
 # Dependency versions which are found in the platform BOM
 # meaning that they should be extracted into their own BOM
