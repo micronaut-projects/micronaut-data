@@ -4,6 +4,8 @@ import io.micronaut.data.annotation.Join;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.r2dbc.annotation.R2dbcRepository;
 import io.micronaut.data.repository.PageableRepository;
+import io.micronaut.data.repository.reactive.ReactiveStreamsPageableRepository;
+import reactor.core.publisher.Mono;
 
 import javax.transaction.Transactional;
 import javax.validation.constraints.NotEmpty;
@@ -16,7 +18,7 @@ import java.util.Set;
 @Join(value = "authors", type = Join.Type.FETCH)
 @R2dbcRepository(dialect = Dialect.H2)
 @Transactional
-public interface H2NewBookRepository extends PageableRepository<NewBook, Long> {
+public interface H2NewBookRepository extends ReactiveStreamsPageableRepository<NewBook, Long> {
 
     default NewBook save (final String title, NewAuthor... authors) {
         return save (title, new HashSet<>(Arrays.asList( authors )));
@@ -27,7 +29,7 @@ public interface H2NewBookRepository extends PageableRepository<NewBook, Long> {
         book.setTitle(title);
         book.setAuthors(authors);
 
-        return save (book);
+        return Mono.from(save(book)).block();
     }
 
     Optional<NewBook> findOne(String title );
