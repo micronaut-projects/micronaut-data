@@ -13,11 +13,9 @@ import java.util.Optional;
 @JdbcRepository(dialect = Dialect.ORACLE)
 public interface StudentViewRepository extends GenericRepository<StudentView, Long> {
 
-    @JsonDualityView
     @Query("SELECT * FROM student_schedule")
     List<StudentView> findAll();
 
-    @JsonDualityView
     @Query("SELECT ss.* FROM student_schedule ss WHERE ss.DATA.studentId=:studentId")
     Optional<StudentView> findByStudentId(Long studentId);
 }
