@@ -28,7 +28,6 @@ import io.micronaut.core.convert.ArgumentConversionContext;
 import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArgumentUtils;
-import io.micronaut.data.annotation.JsonDualityView;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.jdbc.config.DataJdbcConfiguration;
 import io.micronaut.data.jdbc.convert.JdbcConversionContext;
@@ -51,6 +50,7 @@ import io.micronaut.data.model.runtime.InsertOperation;
 import io.micronaut.data.model.runtime.PagedQuery;
 import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.model.runtime.QueryParameterBinding;
+import io.micronaut.data.model.runtime.QueryResultTransformerInfo;
 import io.micronaut.data.model.runtime.RuntimeAssociation;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
@@ -68,7 +68,7 @@ import io.micronaut.data.runtime.mapper.DTOMapper;
 import io.micronaut.data.runtime.mapper.ResultConsumer;
 import io.micronaut.data.runtime.mapper.ResultReader;
 import io.micronaut.data.runtime.mapper.TypeMapper;
-import io.micronaut.data.runtime.mapper.sql.JsonDualityViewEntityTypeMapper;
+import io.micronaut.data.runtime.mapper.sql.QueryResultTransformerMapper;
 import io.micronaut.data.runtime.mapper.sql.SqlDTOMapper;
 import io.micronaut.data.runtime.mapper.sql.SqlResultEntityTypeMapper;
 import io.micronaut.data.runtime.mapper.sql.SqlTypeMapper;
@@ -149,6 +149,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     @Nullable
     private final SchemaTenantResolver schemaTenantResolver;
     private final JdbcSchemaHandler schemaHandler;
+
 
     /**
      * Default constructor.
@@ -302,11 +303,6 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         return executeRead(connection -> {
             SqlPreparedQuery<T, R> preparedQuery = getSqlPreparedQuery(pq);
             RuntimePersistentEntity<T> persistentEntity = preparedQuery.getPersistentEntity();
-            boolean jsonDualityView = persistentEntity.getAnnotationMetadata().hasAnnotation(JsonDualityView.class);
-            Dialect dialect = preparedQuery.getDialect();
-            if (jsonDualityView && !dialect.supportsJsonDualityViews()) {
-                throw new UnsupportedOperationException("Database dialect " + dialect.name() + " does not support JSON duality views");
-            }
             try (PreparedStatement ps = prepareStatement(connection::prepareStatement, preparedQuery, false, true)) {
                 preparedQuery.bindParameters(new JdbcParameterBinder(connection, ps, preparedQuery.getDialect()));
                 try (ResultSet rs = ps.executeQuery()) {
@@ -320,9 +316,10 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                                 return o;
                             }
                         };
-                        if (jsonDualityView) {
-                            String viewColumn = getJsonDualityViewColumn(persistentEntity.getAnnotationMetadata());
-                            return readJsonDualityViewEntity(rs, viewColumn, persistentEntity, loadListener, resultType);
+                        QueryResultTransformerInfo queryResultTransformerInfo = preparedQuery.getQueryResultTransformerInfo();
+                        if (queryResultTransformerInfo != null) {
+                            MediaTypeCodec codec = getMediaTypeCodec(queryResultTransformerInfo.getMediaType());
+                            return rs.next() ? transformQueryResult(rs, queryResultTransformerInfo.getColumnName(), codec, persistentEntity, loadListener, resultType) : null;
                         } else {
                             final Set<JoinPath> joinFetchPaths = preparedQuery.getJoinFetchPaths();
                             SqlResultEntityTypeMapper<ResultSet, R> mapper = new SqlResultEntityTypeMapper<>(
@@ -348,9 +345,11 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                         }
                     } else if (rs.next()) {
                         if (preparedQuery.isDtoProjection()) {
-                            if (jsonDualityView) {
-                                String viewColumn = getJsonDualityViewColumn(persistentEntity.getAnnotationMetadata());
-                                return readJsonDualityViewEntity(rs, viewColumn, persistentEntity,null, resultType);
+                            QueryResultTransformerInfo queryResultTransformerInfo = preparedQuery.getQueryResultTransformerInfo();
+                            if (queryResultTransformerInfo != null) {
+                                String column = queryResultTransformerInfo.getColumnName();
+                                MediaTypeCodec codec = getMediaTypeCodec(queryResultTransformerInfo.getMediaType());
+                                return transformQueryResult(rs, column, codec, persistentEntity,null, resultType);
                             } else {
                                 boolean isRawQuery = preparedQuery.isRawQuery();
                                 TypeMapper<ResultSet, R> introspectedDataMapper = new SqlDTOMapper<>(
@@ -430,17 +429,14 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
 
             if (isEntity || dtoProjection) {
                 RuntimePersistentEntity<T> persistentEntity = preparedQuery.getPersistentEntity();
-                boolean jsonDualityView = persistentEntity.getAnnotationMetadata().hasAnnotation(JsonDualityView.class);
-                Dialect dialect = preparedQuery.getDialect();
-                if (jsonDualityView && !dialect.supportsJsonDualityViews()) {
-                    throw new UnsupportedOperationException("Database dialect " + dialect.name() + " does not support JSON duality views");
-                }
                 SqlResultConsumer sqlMappingConsumer = preparedQuery.hasResultConsumer() ? preparedQuery.getParameterInRole(SqlResultConsumer.ROLE, SqlResultConsumer.class).orElse(null) : null;
                 SqlTypeMapper<ResultSet, R> mapper;
                 if (dtoProjection) {
-                    if (jsonDualityView) {
-                        String viewColumn = getJsonDualityViewColumn(persistentEntity.getAnnotationMetadata());
-                        mapper = new JsonDualityViewEntityTypeMapper<>(viewColumn, persistentEntity, columnNameResultSetReader, jsonCodec, null);
+                    QueryResultTransformerInfo queryResultTransformerInfo = preparedQuery.getQueryResultTransformerInfo();
+                    if (queryResultTransformerInfo != null) {
+                        String column = queryResultTransformerInfo.getColumnName();
+                        MediaTypeCodec codec = getMediaTypeCodec(queryResultTransformerInfo.getMediaType());
+                        mapper = new QueryResultTransformerMapper<>(column, persistentEntity, columnNameResultSetReader, codec, null);
                     } else {
                         boolean isRawQuery = preparedQuery.isRawQuery();
                         mapper = new SqlDTOMapper<>(
@@ -459,9 +455,11 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                             return o;
                         }
                     };
-                    if (jsonDualityView) {
-                        String viewColumn = getJsonDualityViewColumn(persistentEntity.getAnnotationMetadata());
-                        mapper = new JsonDualityViewEntityTypeMapper<>(viewColumn, persistentEntity, columnNameResultSetReader, jsonCodec, loadListener);
+                    QueryResultTransformerInfo queryResultTransformerInfo = preparedQuery.getQueryResultTransformerInfo();
+                    if (queryResultTransformerInfo != null) {
+                        String column = queryResultTransformerInfo.getColumnName();
+                        MediaTypeCodec codec = getMediaTypeCodec(queryResultTransformerInfo.getMediaType());
+                        mapper = new QueryResultTransformerMapper<>(column, persistentEntity, columnNameResultSetReader, codec, loadListener);
                     } else {
                         Set<JoinPath> joinFetchPaths = preparedQuery.getJoinFetchPaths();
                         SqlResultEntityTypeMapper<ResultSet, R> entityTypeMapper = new SqlResultEntityTypeMapper<>(
@@ -1002,17 +1000,10 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         return isSupportsBatchInsert(persistentEntity, jdbcOperationContext.dialect);
     }
 
-    private String getJsonDualityViewColumn(AnnotationMetadata annotationMetadata) {
-        return annotationMetadata.getValue(JsonDualityView.class, "column", String.class).orElse(null);
-    }
-
-    private <R, T> R readJsonDualityViewEntity(ResultSet rs, String columnName, RuntimePersistentEntity<T> persistentEntity, BiFunction<RuntimePersistentEntity<Object>, Object, Object> loadListener, Class<R> type) throws SQLException {
-        if (rs.next()) {
-            JsonDualityViewEntityTypeMapper<T, ResultSet, R> mapper = new JsonDualityViewEntityTypeMapper(columnName, persistentEntity, columnNameResultSetReader,
-                jsonCodec, loadListener);
-            return mapper.map(rs, type);
-        }
-        return null;
+    private <R, T> R transformQueryResult(ResultSet rs, String columnName, MediaTypeCodec mediaTypeCodec, RuntimePersistentEntity<T> persistentEntity, BiFunction<RuntimePersistentEntity<Object>, Object, Object> loadListener, Class<R> type) throws SQLException {
+        QueryResultTransformerMapper<T, ResultSet, R> mapper = new QueryResultTransformerMapper(columnName, persistentEntity, columnNameResultSetReader,
+            mediaTypeCodec, loadListener);
+        return mapper.map(rs, type);
     }
 
     private final class JdbcParameterBinder implements BindableParametersStoredQuery.Binder {

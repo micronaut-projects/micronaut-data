@@ -30,10 +30,10 @@ import java.lang.annotation.Target;
  * @since 4.0.0
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.TYPE})
+@Target({ElementType.METHOD})
 @Documented
 @Inherited
-public @interface JsonDualityView {
+public @interface QueryResultTransformer {
     /**
      * The default column name for the JSON data.
      */
@@ -43,4 +43,9 @@ public @interface JsonDualityView {
      * @return The column containing JSON view result
      */
     String column() default DATA_COLUMN;
+
+    /**
+     * @return The media type result representation. For example "application/json"
+     */
+    String mediaType();
 }

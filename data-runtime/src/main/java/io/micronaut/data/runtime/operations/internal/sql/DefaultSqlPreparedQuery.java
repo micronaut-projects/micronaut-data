@@ -17,6 +17,7 @@ package io.micronaut.data.runtime.operations.internal.sql;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
+import io.micronaut.data.annotation.QueryResultTransformer;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
@@ -25,6 +26,7 @@ import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.model.runtime.QueryParameterBinding;
+import io.micronaut.data.model.runtime.QueryResultTransformerInfo;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.runtime.operations.internal.query.DefaultBindableParametersPreparedQuery;
@@ -50,6 +52,7 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
 
     protected final SqlStoredQuery<E, R> sqlStoredQuery;
     protected String query;
+    protected final QueryResultTransformerInfo queryResultTransformerInfo;
 
     public DefaultSqlPreparedQuery(PreparedQuery<E, R> preparedQuery) {
         this(preparedQuery, (SqlStoredQuery<E, R>) ((DelegateStoredQuery<Object, Object>) preparedQuery).getStoredQueryDelegate());
@@ -59,12 +62,14 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
         super(preparedQuery);
         this.sqlStoredQuery = sqlStoredQuery;
         this.query = sqlStoredQuery.getQuery();
+        this.queryResultTransformerInfo = createQueryResultTransformerInfo();
     }
 
     public DefaultSqlPreparedQuery(SqlStoredQuery<E, R> sqlStoredQuery) {
         super(new DummyPreparedQuery<>(sqlStoredQuery), null, sqlStoredQuery);
         this.sqlStoredQuery = sqlStoredQuery;
         this.query = sqlStoredQuery.getQuery();
+        this.queryResultTransformerInfo = createQueryResultTransformerInfo();
     }
 
     @Override
@@ -179,6 +184,11 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
         }
     }
 
+    @Override
+    public QueryResultTransformerInfo getQueryResultTransformerInfo() {
+        return queryResultTransformerInfo;
+    }
+
     /**
      * Build a sort for ID for the given entity.
      *
@@ -234,4 +244,12 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
         return 1;
     }
 
+    private QueryResultTransformerInfo createQueryResultTransformerInfo() {
+        if (!sqlStoredQuery.getAnnotationMetadata().hasAnnotation(QueryResultTransformer.class)) {
+            return null;
+        }
+        String columnName = sqlStoredQuery.getAnnotationMetadata().stringValue(QueryResultTransformer.class, "column").orElse(null);
+        String mediaType = sqlStoredQuery.getAnnotationMetadata().stringValue(QueryResultTransformer.class, "mediaType").orElse(null);
+        return new QueryResultTransformerInfo(columnName, mediaType);
+    }
 }

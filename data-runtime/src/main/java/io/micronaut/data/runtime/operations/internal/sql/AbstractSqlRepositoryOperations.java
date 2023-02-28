@@ -56,6 +56,7 @@ import io.micronaut.data.runtime.query.MethodContextAwareStoredQueryDecorator;
 import io.micronaut.data.runtime.query.PreparedQueryDecorator;
 import io.micronaut.data.runtime.query.internal.BasicStoredQuery;
 import io.micronaut.data.runtime.query.internal.QueryResultStoredQuery;
+import io.micronaut.http.MediaType;
 import io.micronaut.http.codec.MediaTypeCodec;
 import io.micronaut.inject.BeanDefinition;
 import io.micronaut.inject.qualifiers.Qualifiers;
@@ -97,11 +98,15 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
     protected final ResultReader<RS, Integer> columnIndexResultSetReader;
     @SuppressWarnings("WeakerAccess")
     protected final QueryStatement<PS, Integer> preparedStatementWriter;
+    protected final List<MediaTypeCodec> codecs;
+
     protected final Map<Class, SqlQueryBuilder> queryBuilders = new HashMap<>(10);
     protected final Map<Class, String> repositoriesWithHardcodedDataSource = new HashMap<>(10);
     private final Map<QueryKey, SqlStoredQuery> entityInserts = new ConcurrentHashMap<>(10);
     private final Map<QueryKey, SqlStoredQuery> entityUpdates = new ConcurrentHashMap<>(10);
     private final Map<Association, String> associationInserts = new ConcurrentHashMap<>(10);
+
+    private final Map<String, MediaTypeCodec> mediaTypeCodecMap = new ConcurrentHashMap<>(10);
 
     /**
      * Default constructor.
@@ -133,6 +138,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
         this.columnNameResultSetReader = columnNameResultSetReader;
         this.columnIndexResultSetReader = columnIndexResultSetReader;
         this.preparedStatementWriter = preparedStatementWriter;
+        this.codecs = codecs;
         Collection<BeanDefinition<Object>> beanDefinitions = beanContext
                 .getBeanDefinitions(Object.class, Qualifiers.byStereotype(Repository.class));
         for (BeanDefinition<Object> beanDefinition : beanDefinitions) {
@@ -514,4 +520,13 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
         PS create(String ps) throws Exception;
     }
 
+    /**
+     * Returns codec for given media type.
+     *
+     * @param mediaType the media type
+     * @return the {@link MediaTypeCodec} if found for given media type, otherwise null
+     */
+    protected MediaTypeCodec getMediaTypeCodec(String mediaType) {
+        return mediaTypeCodecMap.computeIfAbsent(mediaType, key -> resolveCodec(codecs, MediaType.of(mediaType)));
+    }
 }

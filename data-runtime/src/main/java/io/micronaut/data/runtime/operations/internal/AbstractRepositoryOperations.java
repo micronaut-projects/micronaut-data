@@ -97,7 +97,18 @@ public abstract class AbstractRepositoryOperations implements ApplicationContext
     }
 
     private MediaTypeCodec resolveJsonCodec(List<MediaTypeCodec> codecs) {
-        return CollectionUtils.isNotEmpty(codecs) ? codecs.stream().filter(c -> c.getMediaTypes().contains(MediaType.APPLICATION_JSON_TYPE)).findFirst().orElse(null) : null;
+        return resolveCodec(codecs, MediaType.APPLICATION_JSON_TYPE);
+    }
+
+    /**
+     * Resolves codec from the provided list for given media type.
+     *
+     * @param codecs the list of codecs
+     * @param mediaType the media type
+     * @return the {@link MediaTypeCodec} that can process given media type or null if none found
+     */
+    protected MediaTypeCodec resolveCodec(List<MediaTypeCodec> codecs, MediaType mediaType) {
+        return CollectionUtils.isNotEmpty(codecs) ? codecs.stream().filter(c -> c.getMediaTypes().contains(mediaType)).findFirst().orElse(null) : null;
     }
 
     @NonNull
