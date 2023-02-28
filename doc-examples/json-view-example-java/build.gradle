@@ -1,0 +1,39 @@
+plugins {
+    id "java"
+    id "io.micronaut.application"
+    id "io.micronaut.build.internal.data-example"
+}
+
+application {
+    mainClass = "example.Application"
+}
+
+micronaut {
+    version libs.versions.micronaut.asProvider().get()
+    runtime "netty"
+    testRuntime "junit5"
+}
+
+dependencies {
+    annotationProcessor projects.dataProcessor
+    annotationProcessor libs.hibernate.jpamodelgen.jakarta
+    annotationProcessor "io.micronaut:micronaut-validation"
+    annotationProcessor("io.micronaut.serde:micronaut-serde-processor")
+    implementation("io.micronaut.serde:micronaut-serde-jackson")
+    implementation project(":data-jdbc")
+    implementation 'io.micronaut.rxjava2:micronaut-rxjava2'
+    implementation "io.micronaut:micronaut-http-client"
+    implementation("io.micronaut.sql:micronaut-jdbc-hikari")
+    implementation libs.jakarta.persistence.api
+    implementation libs.javax.transaction.api
+    runtimeOnly "ch.qos.logback:logback-classic"
+    runtimeOnly("com.oracle.database.jdbc:ojdbc8")
+}
+
+sourceSets {
+    generated {
+        java {
+            srcDirs = ["$build/generated/java"]
+        }
+    }
+}

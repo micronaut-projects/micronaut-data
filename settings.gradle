@@ -83,6 +83,8 @@ include 'doc-examples:jdbc-multitenancy-schema-example-java'
 
 include 'doc-examples:jdbc-and-r2dbc-example-java'
 
+include 'doc-examples:json-view-example-java'
+
 include 'doc-examples:r2dbc-example-java'
 include 'doc-examples:r2dbc-example-groovy'
 include 'doc-examples:r2dbc-example-kotlin'

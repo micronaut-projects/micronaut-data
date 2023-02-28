@@ -1,0 +1,12 @@
+micronaut:
+  application:
+    name: micronautguide
+---
+datasources:
+  default:
+    url: "jdbc:oracle:thin:@127.0.0.1:1521/ORCLCDB"
+    username: dbUser
+    password: DbUserP4ssw0rd
+    dialect: ORACLE
+    driverClassName: oracle.jdbc.OracleDriver
+    initialization-fail-timeout: -1 # Disable fail fast pool init
