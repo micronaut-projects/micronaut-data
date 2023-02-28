@@ -300,13 +300,13 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     @Override
     public <T, R> R findOne(@NonNull PreparedQuery<T, R> pq) {
         return executeRead(connection -> {
-            boolean jsonDualityView = pq.getAnnotationMetadata().hasAnnotation(JsonDualityView.class);
             SqlPreparedQuery<T, R> preparedQuery = getSqlPreparedQuery(pq);
+            RuntimePersistentEntity<T> persistentEntity = preparedQuery.getPersistentEntity();
+            boolean jsonDualityView = persistentEntity.getAnnotationMetadata().hasAnnotation(JsonDualityView.class);
             Dialect dialect = preparedQuery.getDialect();
             if (jsonDualityView && !dialect.supportsJsonDualityViews()) {
                 throw new UnsupportedOperationException("Database dialect " + dialect.name() + " does not support JSON duality views");
             }
-            RuntimePersistentEntity<T> persistentEntity = preparedQuery.getPersistentEntity();
             try (PreparedStatement ps = prepareStatement(connection::prepareStatement, preparedQuery, false, true)) {
                 preparedQuery.bindParameters(new JdbcParameterBinder(connection, ps, preparedQuery.getDialect()));
                 try (ResultSet rs = ps.executeQuery()) {
@@ -321,7 +321,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                             }
                         };
                         if (jsonDualityView) {
-                            String viewColumn = getJsonDualityViewColumn(preparedQuery);
+                            String viewColumn = getJsonDualityViewColumn(persistentEntity.getAnnotationMetadata());
                             return readJsonDualityViewEntity(rs, viewColumn, persistentEntity, loadListener, resultType);
                         } else {
                             final Set<JoinPath> joinFetchPaths = preparedQuery.getJoinFetchPaths();
@@ -349,7 +349,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                     } else if (rs.next()) {
                         if (preparedQuery.isDtoProjection()) {
                             if (jsonDualityView) {
-                                String viewColumn = getJsonDualityViewColumn(preparedQuery);
+                                String viewColumn = getJsonDualityViewColumn(persistentEntity.getAnnotationMetadata());
                                 return readJsonDualityViewEntity(rs, viewColumn, persistentEntity,null, resultType);
                             } else {
                                 boolean isRawQuery = preparedQuery.isRawQuery();
@@ -429,17 +429,17 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             Spliterator<R> spliterator;
 
             if (isEntity || dtoProjection) {
-                boolean jsonDualityView = preparedQuery.getAnnotationMetadata().hasAnnotation(JsonDualityView.class);
+                RuntimePersistentEntity<T> persistentEntity = preparedQuery.getPersistentEntity();
+                boolean jsonDualityView = persistentEntity.getAnnotationMetadata().hasAnnotation(JsonDualityView.class);
                 Dialect dialect = preparedQuery.getDialect();
                 if (jsonDualityView && !dialect.supportsJsonDualityViews()) {
                     throw new UnsupportedOperationException("Database dialect " + dialect.name() + " does not support JSON duality views");
                 }
                 SqlResultConsumer sqlMappingConsumer = preparedQuery.hasResultConsumer() ? preparedQuery.getParameterInRole(SqlResultConsumer.ROLE, SqlResultConsumer.class).orElse(null) : null;
                 SqlTypeMapper<ResultSet, R> mapper;
-                RuntimePersistentEntity<T> persistentEntity = preparedQuery.getPersistentEntity();
                 if (dtoProjection) {
                     if (jsonDualityView) {
-                        String viewColumn = getJsonDualityViewColumn(preparedQuery);
+                        String viewColumn = getJsonDualityViewColumn(persistentEntity.getAnnotationMetadata());
                         mapper = new JsonDualityViewEntityTypeMapper<>(viewColumn, persistentEntity, columnNameResultSetReader, jsonCodec, null);
                     } else {
                         boolean isRawQuery = preparedQuery.isRawQuery();
@@ -460,7 +460,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                         }
                     };
                     if (jsonDualityView) {
-                        String viewColumn = getJsonDualityViewColumn(preparedQuery);
+                        String viewColumn = getJsonDualityViewColumn(persistentEntity.getAnnotationMetadata());
                         mapper = new JsonDualityViewEntityTypeMapper<>(viewColumn, persistentEntity, columnNameResultSetReader, jsonCodec, loadListener);
                     } else {
                         Set<JoinPath> joinFetchPaths = preparedQuery.getJoinFetchPaths();
@@ -1002,8 +1002,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         return isSupportsBatchInsert(persistentEntity, jdbcOperationContext.dialect);
     }
 
-    private String getJsonDualityViewColumn(PreparedQuery preparedQuery) {
-        return preparedQuery.getAnnotationMetadata().getValue(JsonDualityView.class, "column", String.class).orElse(null);
+    private String getJsonDualityViewColumn(AnnotationMetadata annotationMetadata) {
+        return annotationMetadata.getValue(JsonDualityView.class, "column", String.class).orElse(null);
     }
 
     private <R, T> R readJsonDualityViewEntity(ResultSet rs, String columnName, RuntimePersistentEntity<T> persistentEntity, BiFunction<RuntimePersistentEntity<Object>, Object, Object> loadListener, Class<R> type) throws SQLException {
