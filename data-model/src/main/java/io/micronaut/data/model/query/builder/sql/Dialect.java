@@ -44,7 +44,7 @@ public enum Dialect {
     /**
      * Oracle 12c or above.
      */
-    ORACLE(true, true, false, true),
+    ORACLE(true, true, false),
     /**
      * Ansi compliant SQL.
      */
@@ -54,8 +54,6 @@ public enum Dialect {
     private final boolean stringUUID;
     private final boolean supportsArrays;
 
-    private final boolean supportsJsonDualityViews;
-
     /**
      * Allows customization of batch support.
      * @param supportsBatch If batch is supported
@@ -63,21 +61,9 @@ public enum Dialect {
      * @param supportsArrays Does the dialect supports arrays
      */
     Dialect(boolean supportsBatch, boolean stringUUID, boolean supportsArrays) {
-        this(supportsBatch, stringUUID, supportsArrays, false);
-    }
-
-    /**
-     * Allows customization of batch support and JSON duality views.
-     * @param supportsBatch If batch is supported
-     * @param stringUUID Does the dialect require a string UUID
-     * @param supportsArrays Does the dialect supports arrays
-     * @param supportsJsonDualityViews Does the dialect support JSON duality views
-     */
-    Dialect(boolean supportsBatch, boolean stringUUID, boolean supportsArrays, boolean supportsJsonDualityViews) {
         this.supportsBatch = supportsBatch;
         this.stringUUID = stringUUID;
         this.supportsArrays = supportsArrays;
-        this.supportsJsonDualityViews = supportsJsonDualityViews;
     }
 
     /**
@@ -94,14 +80,6 @@ public enum Dialect {
      */
     public final boolean supportsArrays() {
         return supportsArrays;
-    }
-
-    /**
-     * Some databases support JSON duality views.
-     * @return true if database supports JSON duality views
-     */
-    public final boolean supportsJsonDualityViews() {
-        return supportsJsonDualityViews;
     }
 
     /**
