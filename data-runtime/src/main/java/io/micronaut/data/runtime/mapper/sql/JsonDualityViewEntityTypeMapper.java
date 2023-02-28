@@ -49,7 +49,7 @@ public class JsonDualityViewEntityTypeMapper<T, RS, R> implements SqlTypeMapper<
         this.columnName = columnName;
         this.entity = entity;
         this.resultReader = resultReader;
-        new ArgumentUtils.ArgumentCheck<>(() -> jsonCodec.getMediaTypes().contains(MediaType.APPLICATION_JSON_TYPE));
+        new ArgumentUtils.ArgumentCheck<>(() -> jsonCodec.getMediaTypes().contains(MediaType.APPLICATION_JSON_TYPE)).orElseFail("Provided codec doesn't support json");
         this.jsonCodec = jsonCodec;
         this.eventListener = eventListener;
     }
