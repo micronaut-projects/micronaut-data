@@ -19,7 +19,10 @@ import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Join;
+import io.micronaut.data.annotation.Query;
+import io.micronaut.data.annotation.QueryResult;
 import io.micronaut.data.repository.CrudRepository;
+import io.micronaut.data.tck.entities.Discount;
 import io.micronaut.data.tck.entities.Sale;
 import io.micronaut.data.tck.entities.SaleDTO;
 
@@ -38,4 +41,7 @@ public interface SaleRepository extends CrudRepository<Sale, Long> {
 
     void updateData(@Id Long id, @Parameter("data") Map<String, String> data, @Parameter("dataList") List<String> dataList);
 
+    @Query("SELECT extra_data AS extraData FROM sale WHERE id = :id")
+    @QueryResult(column = "extraData", queryResultType = QueryResult.QueryResultType.JSON)
+    Optional<Discount> getDiscountById(Long id);
 }

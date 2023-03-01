@@ -59,7 +59,7 @@ public class JsonQueryResultMapper<T, RS, R> implements SqlTypeMapper<RS, R> {
         try {
             entityInstance = objectMapper.readValue(columnData, type);
         } catch (IOException e) {
-            throw new DataAccessException("Failed to read entity from JSON", e);
+            throw new DataAccessException("Failed to read entity from JSON field [" + columnData + "] into type [" + type.getName() + "].", e);
         }
         if (entityInstance == null) {
             throw new DataAccessException("Unable to map result to entity of type [" + type.getName() + "]. Missing result data.");

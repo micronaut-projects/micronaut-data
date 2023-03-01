@@ -48,7 +48,7 @@ import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.model.runtime.convert.AttributeConverter;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.mapper.ResultReader;
-import io.micronaut.http.codec.MediaTypeCodec;
+import io.micronaut.serde.ObjectMapper;
 
 import javax.validation.constraints.NotNull;
 import java.sql.Array;
@@ -79,7 +79,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
     private final ResultReader<RS, String> resultReader;
     private final Map<String, JoinPath> joinPaths;
     private final String startingPrefix;
-    private final MediaTypeCodec jsonCodec;
+    private final ObjectMapper objectMapper;
     private final DataConversionService conversionService;
     private final BiFunction<RuntimePersistentEntity<Object>, Object, Object> eventListener;
     private boolean callNext = true;
@@ -90,15 +90,15 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
      * @param prefix            The prefix to startup from.
      * @param entity            The entity
      * @param resultReader      The result reader
-     * @param jsonCodec         The JSON codec
+     * @param objectMapper      The object mapper
      * @param conversionService The conversion service
      */
     public SqlResultEntityTypeMapper(
             String prefix,
             @NonNull RuntimePersistentEntity<R> entity,
             @NonNull ResultReader<RS, String> resultReader,
-            @Nullable MediaTypeCodec jsonCodec, DataConversionService conversionService) {
-        this(entity, resultReader, Collections.emptySet(), prefix, jsonCodec, conversionService, null);
+            @Nullable ObjectMapper objectMapper, DataConversionService conversionService) {
+        this(entity, resultReader, Collections.emptySet(), prefix, objectMapper, conversionService, null);
     }
 
     /**
@@ -107,15 +107,15 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
      * @param entity            The entity
      * @param resultReader      The result reader
      * @param joinPaths         The join paths
-     * @param jsonCodec         The JSON codec
+     * @param objectMapper      The object mapper
      * @param conversionService The conversion service
      */
     public SqlResultEntityTypeMapper(
             @NonNull RuntimePersistentEntity<R> entity,
             @NonNull ResultReader<RS, String> resultReader,
             @Nullable Set<JoinPath> joinPaths,
-            @Nullable MediaTypeCodec jsonCodec, DataConversionService conversionService) {
-        this(entity, resultReader, joinPaths, null, jsonCodec, conversionService, null);
+            @Nullable ObjectMapper objectMapper, DataConversionService conversionService) {
+        this(entity, resultReader, joinPaths, null, objectMapper, conversionService, null);
     }
 
     /**
@@ -124,7 +124,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
      * @param entity            The entity
      * @param resultReader      The result reader
      * @param joinPaths         The join paths
-     * @param jsonCodec         The JSON codec
+     * @param objectMapper      The object mapper
      * @param loadListener      The event listener
      * @param conversionService The conversion service
      */
@@ -132,9 +132,9 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
             @NonNull RuntimePersistentEntity<R> entity,
             @NonNull ResultReader<RS, String> resultReader,
             @Nullable Set<JoinPath> joinPaths,
-            @Nullable MediaTypeCodec jsonCodec,
+            @Nullable ObjectMapper objectMapper,
             @Nullable BiFunction<RuntimePersistentEntity<Object>, Object, Object> loadListener, DataConversionService conversionService) {
-        this(entity, resultReader, joinPaths, null, jsonCodec, conversionService, loadListener);
+        this(entity, resultReader, joinPaths, null, objectMapper, conversionService, loadListener);
     }
 
     /**
@@ -143,6 +143,9 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
      * @param entity            The entity
      * @param resultReader      The result reader
      * @param joinPaths         The join paths
+     * @param startingPrefix    The starting prefix
+     * @param objectMapper      The object mapper
+     * @param eventListener     The event listener used for trigger post load if configured
      * @param conversionService The conversion service
      */
     private SqlResultEntityTypeMapper(
@@ -150,13 +153,13 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
             @NonNull ResultReader<RS, String> resultReader,
             @Nullable Set<JoinPath> joinPaths,
             String startingPrefix,
-            @Nullable MediaTypeCodec jsonCodec,
+            @Nullable ObjectMapper objectMapper,
             DataConversionService conversionService, @Nullable BiFunction<RuntimePersistentEntity<Object>, Object, Object> eventListener) {
         this.conversionService = conversionService;
         ArgumentUtils.requireNonNull("entity", entity);
         ArgumentUtils.requireNonNull("resultReader", resultReader);
         this.entity = entity;
-        this.jsonCodec = jsonCodec;
+        this.objectMapper = objectMapper;
         this.resultReader = resultReader;
         this.eventListener = eventListener;
         if (CollectionUtils.isNotEmpty(joinPaths)) {
@@ -621,9 +624,9 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
         if (propertyType.isInstance(v)) {
             return v;
         }
-        if (jsonCodec != null && rpp.getDataType() == DataType.JSON) {
+        if (objectMapper != null && rpp.getDataType() == DataType.JSON) {
             try {
-                return jsonCodec.decode(rpp.getArgument(), v.toString());
+                return objectMapper.readValue(v.toString(), rpp.getArgument());
             } catch (Exception e) {
                 // Ignore and try basic convert
             }

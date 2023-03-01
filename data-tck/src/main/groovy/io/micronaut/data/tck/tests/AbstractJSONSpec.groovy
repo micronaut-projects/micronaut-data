@@ -17,6 +17,7 @@ package io.micronaut.data.tck.tests
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.micronaut.context.ApplicationContext
+import io.micronaut.data.tck.entities.Discount
 import io.micronaut.data.tck.entities.Sale
 import io.micronaut.data.tck.entities.SaleItem
 import io.micronaut.data.tck.repositories.SaleItemRepository
@@ -158,6 +159,34 @@ abstract class AbstractJSONSpec extends Specification {
         itemById.name == 'item 1'
         itemById.data == [count: "1"]
         itemById.sale.id == sale.id
+
+        cleanup:
+        cleanup()
+    }
+
+    void "test read DTO from JSON string field"() {
+        def objectMapper = new ObjectMapper()
+        def discount = new Discount()
+        discount.amount = 12
+        discount.numberOfDays = 5
+        discount.note = "Valid since April 1st"
+        given:
+        def sale = new Sale(name: "sale")
+        def extraData = objectMapper.writeValueAsString(discount)
+        sale.setExtraData(extraData)
+
+        when:
+        sale = saleRepository.save(sale)
+        def optSale = saleRepository.findById(sale.id)
+        def optLoadedDiscount = saleRepository.getDiscountById(sale.id)
+
+        then:
+        optSale.present
+        optLoadedDiscount.present
+        def loadedDiscount = optLoadedDiscount.get()
+        loadedDiscount.amount == discount.amount
+        loadedDiscount.note == discount.note
+        loadedDiscount.numberOfDays == discount.numberOfDays
 
         cleanup:
         cleanup()

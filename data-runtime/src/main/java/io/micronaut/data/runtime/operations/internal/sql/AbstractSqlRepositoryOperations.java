@@ -97,7 +97,6 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
     protected final ResultReader<RS, Integer> columnIndexResultSetReader;
     @SuppressWarnings("WeakerAccess")
     protected final QueryStatement<PS, Integer> preparedStatementWriter;
-
     protected final Map<Class, SqlQueryBuilder> queryBuilders = new HashMap<>(10);
     protected final Map<Class, String> repositoriesWithHardcodedDataSource = new HashMap<>(10);
     private final Map<QueryKey, SqlStoredQuery> entityInserts = new ConcurrentHashMap<>(10);
@@ -514,5 +513,4 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
     protected interface StatementSupplier<PS> {
         PS create(String ps) throws Exception;
     }
-    
 }

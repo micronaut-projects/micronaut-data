@@ -1,4 +1,4 @@
-package io.micronaut.data.jdbc.h2;
+package io.micronaut.data.tck.entities;
 
 import io.micronaut.serde.annotation.Serdeable;
 

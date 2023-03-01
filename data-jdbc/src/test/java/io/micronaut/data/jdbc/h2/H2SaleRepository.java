@@ -15,18 +15,10 @@
  */
 package io.micronaut.data.jdbc.h2;
 
-import io.micronaut.data.annotation.Query;
-import io.micronaut.data.annotation.QueryResult;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.tck.repositories.SaleRepository;
 
-import java.util.Optional;
-
 @JdbcRepository(dialect = Dialect.H2)
 public interface H2SaleRepository extends SaleRepository {
-
-    @Query("SELECT extra_data AS extraData FROM sale WHERE id = :id")
-    @QueryResult(column = "extraData", queryResultType = QueryResult.QueryResultType.JSON)
-    Optional<Discount> getDiscountById(Long id);
 }

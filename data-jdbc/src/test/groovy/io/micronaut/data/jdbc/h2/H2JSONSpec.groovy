@@ -15,11 +15,8 @@
  */
 package io.micronaut.data.jdbc.h2
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import groovy.transform.Memoized
-import io.micronaut.data.tck.entities.Sale
 import io.micronaut.data.tck.repositories.SaleItemRepository
-import io.micronaut.data.tck.repositories.SaleRepository
 import io.micronaut.data.tck.tests.AbstractJSONSpec
 
 class H2JSONSpec extends AbstractJSONSpec implements H2TestPropertyProvider {
@@ -36,32 +33,4 @@ class H2JSONSpec extends AbstractJSONSpec implements H2TestPropertyProvider {
         return applicationContext.getBean(H2SaleItemRepository)
     }
 
-    void "test read DTO from JSON string field"() {
-        def objectMapper = new ObjectMapper()
-        def discount = new Discount()
-        discount.amount = 12
-        discount.numberOfDays = 5
-        discount.note = "Valid since April 1st"
-        given:
-        def sale = new Sale(name: "sale")
-        def extraData = objectMapper.writeValueAsString(discount)
-        sale.setExtraData(extraData)
-
-        when:
-        sale = saleRepository.save(sale)
-        def optSale = saleRepository.findById(sale.id)
-        def optLoadedDiscount = saleRepository.getDiscountById(sale.id)
-
-        then:
-        optSale.present
-        optLoadedDiscount.present
-        def loadedDiscount = optLoadedDiscount.get()
-        loadedDiscount.amount == discount.amount
-        loadedDiscount.note == discount.note
-        loadedDiscount.numberOfDays == discount.numberOfDays
-
-        cleanup:
-        saleRepository.deleteAll()
-        saleItemRepository.deleteAll()
-    }
 }
