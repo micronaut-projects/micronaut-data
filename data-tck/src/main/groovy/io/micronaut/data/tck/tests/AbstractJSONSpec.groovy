@@ -222,6 +222,12 @@ abstract class AbstractJSONSpec extends Specification {
         optLoadedSale.present
         verifySale(sale1, optLoadedSale.get())
 
+        when:"Test tabular query result"
+        optLoadedSale = saleRepository.findByName(sale1.name)
+        then:
+        optLoadedSale.present
+        verifySale(sale1, optLoadedSale.get())
+
         cleanup:
         cleanup()
     }

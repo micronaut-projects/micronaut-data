@@ -693,7 +693,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                         }
                     };
                     QueryResultInfo queryResultInfo = preparedQuery.getQueryResultInfo();
-                    if (queryResultInfo != null && queryResultInfo.getQueryResultType() == QueryResult.QueryResultType.JSON) {
+                    if (queryResultInfo != null && queryResultInfo.getType() == QueryResult.Type.JSON) {
                         JsonQueryResultMapper<T, Row, R> jsonQueryResultMapper = new JsonQueryResultMapper(queryResultInfo.getColumnName(), persistentEntity, columnNameResultSetReader,
                             objectMapper, loadListener);
                         return executeAndMapEachRow(statement, row -> jsonQueryResultMapper.map(row, resultType));
@@ -717,7 +717,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                     boolean isRawQuery = preparedQuery.isRawQuery();
                     TypeMapper<Row, R> mapper;
                     QueryResultInfo queryResultInfo = preparedQuery.getQueryResultInfo();
-                    if (queryResultInfo != null && queryResultInfo.getQueryResultType() == QueryResult.QueryResultType.JSON) {
+                    if (queryResultInfo != null && queryResultInfo.getType() == QueryResult.Type.JSON) {
                         mapper = new JsonQueryResultMapper(queryResultInfo.getColumnName(), persistentEntity, columnNameResultSetReader,
                             objectMapper, null);
                     } else {
@@ -761,7 +761,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                     RuntimePersistentEntity<T> persistentEntity = preparedQuery.getPersistentEntity();
                     if (dtoProjection) {
                         QueryResultInfo queryResultInfo = preparedQuery.getQueryResultInfo();
-                        if (queryResultInfo != null && queryResultInfo.getQueryResultType() == QueryResult.QueryResultType.JSON) {
+                        if (queryResultInfo != null && queryResultInfo.getType() == QueryResult.Type.JSON) {
                             mapper = new JsonQueryResultMapper(queryResultInfo.getColumnName(), persistentEntity, columnNameResultSetReader,
                                 objectMapper, null);
                         } else {
@@ -783,7 +783,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                             }
                         };
                         QueryResultInfo queryResultInfo = preparedQuery.getQueryResultInfo();
-                        if (queryResultInfo != null && queryResultInfo.getQueryResultType() == QueryResult.QueryResultType.JSON) {
+                        if (queryResultInfo != null && queryResultInfo.getType() == QueryResult.Type.JSON) {
                             mapper = new JsonQueryResultMapper(queryResultInfo.getColumnName(), persistentEntity, columnNameResultSetReader,
                                 objectMapper, loadListener);
                         } else {

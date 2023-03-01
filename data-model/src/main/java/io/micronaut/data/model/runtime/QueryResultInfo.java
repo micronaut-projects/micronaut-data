@@ -17,6 +17,7 @@ package io.micronaut.data.model.runtime;
 
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
+import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.data.annotation.QueryResult;
 
 /**
@@ -28,15 +29,16 @@ import io.micronaut.data.annotation.QueryResult;
 public class QueryResultInfo {
 
     private final String columnName;
-    private final QueryResult.QueryResultType queryResultType;
+    private final QueryResult.Type type;
 
-    public QueryResultInfo(@NonNull QueryResult.QueryResultType queryResultType, @Nullable String columnName) {
+    public QueryResultInfo(@NonNull QueryResult.Type type, @Nullable String columnName) {
+        ArgumentUtils.requireNonNull("type", type);
+        this.type = type;
         this.columnName = columnName;
-        this.queryResultType = queryResultType;
     }
 
     /**
-     * @return the column name from which result will be read and transformed. Used only if {@link #queryResultType} is JSON
+     * @return the column name from which result will be read and transformed. Used only if {@link #type} is JSON
      */
     public String getColumnName() {
         return columnName;
@@ -45,7 +47,7 @@ public class QueryResultInfo {
     /**
      * @return the query result type
      */
-    public QueryResult.QueryResultType getQueryResultType() {
-        return queryResultType;
+    public QueryResult.Type getType() {
+        return type;
     }
 }

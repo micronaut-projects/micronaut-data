@@ -26,7 +26,6 @@ import io.micronaut.data.tck.entities.Discount;
 import io.micronaut.data.tck.entities.Sale;
 import io.micronaut.data.tck.entities.SaleDTO;
 
-import javax.validation.constraints.NotNull;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -42,14 +41,18 @@ public interface SaleRepository extends CrudRepository<Sale, Long> {
     void updateData(@Id Long id, @Parameter("data") Map<String, String> data, @Parameter("dataList") List<String> dataList);
 
     @Query("SELECT extra_data AS extraData FROM sale WHERE id = :id")
-    @QueryResult(column = "extraData", queryResultType = QueryResult.QueryResultType.JSON)
+    @QueryResult(column = "extraData", type = QueryResult.Type.JSON)
     Optional<Discount> getDiscountById(Long id);
 
     @Query("SELECT extra_data AS DATA FROM sale WHERE name = :name")
-    @QueryResult(column = "DATA", queryResultType = QueryResult.QueryResultType.JSON)
+    @QueryResult(type = QueryResult.Type.JSON)
     List<Sale> findAllByNameFromJson(String name);
 
     @Query("SELECT extra_data AS DATA FROM sale WHERE name = :name")
-    @QueryResult(column = "DATA", queryResultType = QueryResult.QueryResultType.JSON)
+    @QueryResult(type = QueryResult.Type.JSON)
     Optional<Sale> findByNameFromJson(String name);
+
+    @Join("items")
+    @QueryResult(type = QueryResult.Type.TABULAR)
+    Optional<Sale> findByName(String name);
 }

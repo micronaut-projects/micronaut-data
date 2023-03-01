@@ -248,8 +248,8 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
         if (!sqlStoredQuery.getAnnotationMetadata().hasAnnotation(QueryResult.class)) {
             return null;
         }
-        QueryResult.QueryResultType queryResultType = sqlStoredQuery.getAnnotationMetadata().enumValue(QueryResult.class, "queryResultType", QueryResult.QueryResultType.class).orElse(null);
-        String columnName = sqlStoredQuery.getAnnotationMetadata().stringValue(QueryResult.class, "column").orElse(null);
-        return new QueryResultInfo(queryResultType, columnName);
+        QueryResult.Type type = sqlStoredQuery.getAnnotationMetadata().enumValue(QueryResult.class, "type", QueryResult.Type.class).orElse(null);
+        String columnName = sqlStoredQuery.getAnnotationMetadata().getValue(QueryResult.class, "column", String.class).orElse(null);
+        return new QueryResultInfo(type, columnName);
     }
 }

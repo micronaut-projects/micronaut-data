@@ -322,7 +322,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                             }
                         };
                         QueryResultInfo queryResultInfo = preparedQuery.getQueryResultInfo();
-                        if (queryResultInfo != null && queryResultInfo.getQueryResultType() == QueryResult.QueryResultType.JSON) {
+                        if (queryResultInfo != null && queryResultInfo.getType() == QueryResult.Type.JSON) {
                             return rs.next() ? transformJsonQueryResult(rs, queryResultInfo.getColumnName(), persistentEntity, loadListener, resultType) : null;
                         } else {
                             final Set<JoinPath> joinFetchPaths = preparedQuery.getJoinFetchPaths();
@@ -350,7 +350,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                     } else if (rs.next()) {
                         if (preparedQuery.isDtoProjection()) {
                             QueryResultInfo queryResultInfo = preparedQuery.getQueryResultInfo();
-                            if (queryResultInfo != null && queryResultInfo.getQueryResultType() == QueryResult.QueryResultType.JSON) {
+                            if (queryResultInfo != null && queryResultInfo.getType() == QueryResult.Type.JSON) {
                                 String column = queryResultInfo.getColumnName();
                                 return transformJsonQueryResult(rs, column, persistentEntity, null, resultType);
                             } else {
@@ -436,7 +436,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                 SqlTypeMapper<ResultSet, R> mapper;
                 if (dtoProjection) {
                     QueryResultInfo queryResultInfo = preparedQuery.getQueryResultInfo();
-                    if (queryResultInfo != null && queryResultInfo.getQueryResultType() == QueryResult.QueryResultType.JSON) {
+                    if (queryResultInfo != null && queryResultInfo.getType() == QueryResult.Type.JSON) {
                         String column = queryResultInfo.getColumnName();
                         mapper = new JsonQueryResultMapper<>(column, persistentEntity, columnNameResultSetReader, objectMapper, null);
                     } else {
@@ -458,7 +458,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                         }
                     };
                     QueryResultInfo queryResultInfo = preparedQuery.getQueryResultInfo();
-                    if (queryResultInfo != null && queryResultInfo.getQueryResultType() == QueryResult.QueryResultType.JSON) {
+                    if (queryResultInfo != null && queryResultInfo.getType() == QueryResult.Type.JSON) {
                         String column = queryResultInfo.getColumnName();
                         mapper = new JsonQueryResultMapper<>(column, persistentEntity, columnNameResultSetReader, objectMapper, loadListener);
                     } else {

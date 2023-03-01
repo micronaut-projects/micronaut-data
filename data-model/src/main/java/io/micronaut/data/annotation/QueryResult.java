@@ -36,19 +36,24 @@ import java.lang.annotation.Target;
 public @interface QueryResult {
 
     /**
+     * The default column name for the JSON data.
+     */
+    String DATA_COLUMN = "DATA";
+
+    /**
      * @return The column containing JSON result
      */
-    String column();
+    String column() default DATA_COLUMN;
 
     /**
      * @return The query result type
      */
-    QueryResultType queryResultType();
+    Type type();
 
     /**
      * Supported query result types.
      */
-    enum QueryResultType {
+    enum Type {
         /**
          * Default query result.
          */

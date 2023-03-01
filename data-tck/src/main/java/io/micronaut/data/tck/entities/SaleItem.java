@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.tck.entities;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.annotation.*;
 import io.micronaut.data.model.DataType;
@@ -31,7 +31,7 @@ public class SaleItem {
 
     @Relation(value = Relation.Kind.MANY_TO_ONE, cascade = Relation.Cascade.ALL)
     @MappedProperty("fk_sale_id")
-    @JsonIgnore // To avoid infinite recursion when reading Sale from JSON
+    @JsonBackReference // To avoid infinite recursion when reading Sale from JSON
     private Sale sale;
 
     private String name;

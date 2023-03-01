@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.tck.entities;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Id;
@@ -54,6 +55,7 @@ public class Sale {
     @Relation(
         value = Relation.Kind.ONE_TO_MANY,
         mappedBy = "sale")
+    @JsonManagedReference
     private Set<SaleItem> items;
 
     public Long getId() {
