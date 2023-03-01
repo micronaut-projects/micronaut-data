@@ -187,7 +187,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                                               @Nullable
                                               SchemaTenantResolver schemaTenantResolver,
                                               JdbcSchemaHandler schemaHandler,
-                                              ObjectMapper objectMapper) {
+                                              @Nullable ObjectMapper objectMapper) {
         super(
                 dataSourceName,
                 new ColumnNameResultSetReader(conversionService),
@@ -352,7 +352,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                             QueryResultInfo queryResultInfo = preparedQuery.getQueryResultInfo();
                             if (queryResultInfo != null && queryResultInfo.getQueryResultType() == QueryResult.QueryResultType.JSON) {
                                 String column = queryResultInfo.getColumnName();
-                                return transformJsonQueryResult(rs, column, persistentEntity,null, resultType);
+                                return transformJsonQueryResult(rs, column, persistentEntity, null, resultType);
                             } else {
                                 boolean isRawQuery = preparedQuery.isRawQuery();
                                 TypeMapper<ResultSet, R> introspectedDataMapper = new SqlDTOMapper<>(

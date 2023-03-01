@@ -44,4 +44,12 @@ public interface SaleRepository extends CrudRepository<Sale, Long> {
     @Query("SELECT extra_data AS extraData FROM sale WHERE id = :id")
     @QueryResult(column = "extraData", queryResultType = QueryResult.QueryResultType.JSON)
     Optional<Discount> getDiscountById(Long id);
+
+    @Query("SELECT extra_data AS DATA FROM sale WHERE name = :name")
+    @QueryResult(column = "DATA", queryResultType = QueryResult.QueryResultType.JSON)
+    List<Sale> findAllByNameFromJson(String name);
+
+    @Query("SELECT extra_data AS DATA FROM sale WHERE name = :name")
+    @QueryResult(column = "DATA", queryResultType = QueryResult.QueryResultType.JSON)
+    Optional<Sale> findByNameFromJson(String name);
 }

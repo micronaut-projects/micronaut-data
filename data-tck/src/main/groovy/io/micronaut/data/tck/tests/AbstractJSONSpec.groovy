@@ -191,4 +191,46 @@ abstract class AbstractJSONSpec extends Specification {
         cleanup:
         cleanup()
     }
+
+    void "test read entity from JSON string field"() {
+        def objectMapper = new ObjectMapper()
+        given:
+        def sale1 = new Sale(name: "sale1")
+        sale1.data = ["sale1_field1": "value1"]
+        sale1.dataList = ["sale1_data1", "sale2_data2"]
+        sale1.quantities = ["sale1_item1": 3, "sale1_item2": 2]
+        sale1 = saleRepository.save(sale1)
+        saleItemRepository.save(new SaleItem(null, sale1, "sale1 item 1", [count: "1"]))
+        saleItemRepository.save(new SaleItem(null, sale1, "sale1 item 2", [count: "2"]))
+
+        sale1 = saleRepository.findById(sale1.id).get()
+        def sale1Str = objectMapper.writeValueAsString(sale1)
+        sale1.extraData = sale1Str
+        saleRepository.update(sale1)
+
+        when:
+        def loadedSales = saleRepository.findAllByNameFromJson(sale1.name)
+
+        then:
+        loadedSales.size() == 1
+        verifySale(sale1, loadedSales[0])
+
+        when:
+        def optLoadedSale = saleRepository.findByNameFromJson(sale1.name)
+
+        then:
+        optLoadedSale.present
+        verifySale(sale1, optLoadedSale.get())
+
+        cleanup:
+        cleanup()
+    }
+
+    void verifySale(Sale actualSale, Sale expectedSale) {
+        expectedSale.id == actualSale.id
+        expectedSale.name == actualSale.name
+        expectedSale.dataList == actualSale.dataList
+        expectedSale.quantities == actualSale.quantities
+        expectedSale.items.size() == actualSale.items.size()
+    }
 }
