@@ -20,12 +20,13 @@ import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.runtime.mapper.ResultReader;
-import io.micronaut.http.codec.MediaTypeCodec;
+import io.micronaut.serde.ObjectMapper;
 
+import java.io.IOException;
 import java.util.function.BiFunction;
 
 /**
- * The query result transformer mapper. Transforms result from single column into the given entity.
+ * The JSON query result mapper. Transforms result from single column with JSON value into the given entity.
  *
  * @author radovanradic
  * @since 4.0.0.
@@ -34,27 +35,32 @@ import java.util.function.BiFunction;
  * @param <RS> The result set type
  * @param <R>  The result type
  */
-public class QueryResultTransformerMapper<T, RS, R> implements SqlTypeMapper<RS, R> {
+public class JsonQueryResultMapper<T, RS, R> implements SqlTypeMapper<RS, R> {
 
     private final String columnName;
     private final RuntimePersistentEntity<T> entity;
     private final ResultReader<RS, String> resultReader;
-    private final MediaTypeCodec mediaTypeCodec;
+    private final ObjectMapper objectMapper;
     private final BiFunction<RuntimePersistentEntity<Object>, Object, Object> eventListener;
 
-    public QueryResultTransformerMapper(@NonNull String columnName, @NonNull RuntimePersistentEntity<T> entity, @NonNull ResultReader<RS, String> resultReader, @NonNull MediaTypeCodec mediaTypeCodec,
-                                        @Nullable BiFunction<RuntimePersistentEntity<Object>, Object, Object> eventListener) {
+    public JsonQueryResultMapper(@NonNull String columnName, @NonNull RuntimePersistentEntity<T> entity, @NonNull ResultReader<RS, String> resultReader, @NonNull ObjectMapper objectMapper,
+                                 @Nullable BiFunction<RuntimePersistentEntity<Object>, Object, Object> eventListener) {
         this.columnName = columnName;
         this.entity = entity;
         this.resultReader = resultReader;
-        this.mediaTypeCodec = mediaTypeCodec;
+        this.objectMapper = objectMapper;
         this.eventListener = eventListener;
     }
 
     @Override
     public R map(RS object, Class<R> type) throws DataAccessException {
         String columnData = resultReader.readString(object, columnName);
-        R entityInstance = mediaTypeCodec.decode(type, columnData);
+        R entityInstance;
+        try {
+            entityInstance = objectMapper.readValue(columnData, type);
+        } catch (IOException e) {
+            throw new DataAccessException("Failed to read entity from JSON", e);
+        }
         if (entityInstance == null) {
             throw new DataAccessException("Unable to map result to entity of type [" + type.getName() + "]. Missing result data.");
         }

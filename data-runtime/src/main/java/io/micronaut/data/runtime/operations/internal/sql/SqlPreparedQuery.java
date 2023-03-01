@@ -18,7 +18,7 @@ package io.micronaut.data.runtime.operations.internal.sql;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.model.Pageable;
-import io.micronaut.data.model.runtime.QueryResultTransformerInfo;
+import io.micronaut.data.model.runtime.QueryResultInfo;
 import io.micronaut.data.runtime.operations.internal.query.BindableParametersPreparedQuery;
 
 /**
@@ -49,7 +49,7 @@ public interface SqlPreparedQuery<E, R> extends BindableParametersPreparedQuery<
     void attachPageable(Pageable pageable, boolean isSingleResult);
 
     /**
-     * @return the query result transformer info
+     * @return the query result info
      */
-    QueryResultTransformerInfo getQueryResultTransformerInfo();
+    QueryResultInfo getQueryResultInfo();
 }

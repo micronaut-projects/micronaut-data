@@ -23,8 +23,8 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Defines JSON duality view that is used to load data from one or more table into the JSON view and represents an entity.
- * Currently supported only by Oracle database.
+ * Defines query result for database query execution. Is query result type is TABULAR it means default query result
+ * and JSON will mean result will contain single column with the JSON value.
  *
  * @author radovanradic
  * @since 4.0.0
@@ -33,19 +33,29 @@ import java.lang.annotation.Target;
 @Target({ElementType.METHOD})
 @Documented
 @Inherited
-public @interface QueryResultTransformer {
-    /**
-     * The default column name for the JSON data.
-     */
-    String DATA_COLUMN = "DATA";
+public @interface QueryResult {
 
     /**
-     * @return The column containing JSON view result
+     * @return The column containing JSON result
      */
-    String column() default DATA_COLUMN;
+    String column();
 
     /**
-     * @return The media type result representation. For example "application/json"
+     * @return The query result type
      */
-    String mediaType();
+    QueryResultType queryResultType();
+
+    /**
+     * Supported query result types.
+     */
+    enum QueryResultType {
+        /**
+         * Default query result.
+         */
+        TABULAR,
+        /**
+         * JSON result when query will produce single column with JSON value.
+         */
+        JSON
+    }
 }

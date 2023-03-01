@@ -16,34 +16,36 @@
 package io.micronaut.data.model.runtime;
 
 import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.annotation.Nullable;
+import io.micronaut.data.annotation.QueryResult;
 
 /**
- * The information about query result transformer info for the method.
+ * The information about query result info for the query method.
  *
  * @author radovanradic
  * @since 4.0.0
  */
-public class QueryResultTransformerInfo {
+public class QueryResultInfo {
 
     private final String columnName;
-    private final String mediaType;
+    private final QueryResult.QueryResultType queryResultType;
 
-    public QueryResultTransformerInfo(@NonNull String columnName, @NonNull String mediaType) {
+    public QueryResultInfo(@NonNull QueryResult.QueryResultType queryResultType, @Nullable String columnName) {
         this.columnName = columnName;
-        this.mediaType = mediaType;
+        this.queryResultType = queryResultType;
     }
 
     /**
-     * @return the column name from which result will be read and transformed
+     * @return the column name from which result will be read and transformed. Used only if {@link #queryResultType} is JSON
      */
     public String getColumnName() {
         return columnName;
     }
 
     /**
-     * @return the media type that column result produced
+     * @return the query result type
      */
-    public String getMediaType() {
-        return mediaType;
+    public QueryResult.QueryResultType getQueryResultType() {
+        return queryResultType;
     }
 }

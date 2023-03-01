@@ -11,6 +11,7 @@ dependencies {
 	annotationProcessor libs.micronaut.docs
 
 	api projects.dataModel
+	api mnSerde.micronaut.serde.support
 
 	implementation libs.reactor
 
