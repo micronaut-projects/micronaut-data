@@ -214,11 +214,14 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
                 }
                 break;
             case JSON:
-                if (value != null && objectMapper  != null && !value.getClass().equals(String.class)) {
+                if (value != null && !value.getClass().equals(String.class)) {
+                    if (objectMapper == null) {
+                        throw new RuntimeException("For JSON data types support Micronaut ObjectMapper needs to be provided.");
+                    }
                     try {
                         value = new String(objectMapper.writeValueAsBytes(value), StandardCharsets.UTF_8);
                     } catch (IOException e) {
-                            throw new DataAccessException("Failed setting JSON field parameter at index " + index, e);
+                        throw new DataAccessException("Failed setting JSON field parameter at index " + index, e);
                     }
                 }
                 break;
