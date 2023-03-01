@@ -20,7 +20,6 @@ import io.micronaut.context.ApplicationContextProvider;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.event.EntityEventContext;
 import io.micronaut.data.event.EntityEventListener;
@@ -36,10 +35,7 @@ import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.date.DateTimeProvider;
 import io.micronaut.data.runtime.event.DefaultEntityEventContext;
-import io.micronaut.http.MediaType;
-import io.micronaut.http.codec.MediaTypeCodec;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -53,7 +49,6 @@ import java.util.stream.Stream;
  */
 @Internal
 public abstract class AbstractRepositoryOperations implements ApplicationContextProvider {
-    protected final MediaTypeCodec jsonCodec;
     protected final EntityEventListener<Object> entityEventRegistry;
     protected final DateTimeProvider dateTimeProvider;
     protected final RuntimeEntityRegistry runtimeEntityRegistry;
@@ -64,14 +59,12 @@ public abstract class AbstractRepositoryOperations implements ApplicationContext
     /**
      * Default constructor.
      *
-     * @param codecs                     The media type codecs
      * @param dateTimeProvider           The date time provider
      * @param runtimeEntityRegistry      The entity registry
      * @param conversionService          The conversion service
      * @param attributeConverterRegistry The attribute converter registry
      */
     protected AbstractRepositoryOperations(
-            List<MediaTypeCodec> codecs,
             DateTimeProvider<Object> dateTimeProvider,
             RuntimeEntityRegistry runtimeEntityRegistry,
             DataConversionService conversionService,
@@ -79,7 +72,6 @@ public abstract class AbstractRepositoryOperations implements ApplicationContext
         this.dateTimeProvider = dateTimeProvider;
         this.runtimeEntityRegistry = runtimeEntityRegistry;
         this.entityEventRegistry = runtimeEntityRegistry.getEntityEventListener();
-        this.jsonCodec = resolveJsonCodec(codecs);
         this.conversionService = conversionService;
         this.attributeConverterRegistry = attributeConverterRegistry;
     }
@@ -94,10 +86,6 @@ public abstract class AbstractRepositoryOperations implements ApplicationContext
     @Override
     public ApplicationContext getApplicationContext() {
         return runtimeEntityRegistry.getApplicationContext();
-    }
-
-    private MediaTypeCodec resolveJsonCodec(List<MediaTypeCodec> codecs) {
-        return CollectionUtils.isNotEmpty(codecs) ? codecs.stream().filter(c -> c.getMediaTypes().contains(MediaType.APPLICATION_JSON_TYPE)).findFirst().orElse(null) : null;
     }
 
     @NonNull

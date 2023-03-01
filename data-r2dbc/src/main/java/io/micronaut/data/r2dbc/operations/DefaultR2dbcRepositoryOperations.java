@@ -80,7 +80,6 @@ import io.micronaut.data.runtime.operations.internal.sql.AbstractSqlRepositoryOp
 import io.micronaut.data.runtime.operations.internal.sql.SqlPreparedQuery;
 import io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery;
 import io.micronaut.data.runtime.support.AbstractConversionContext;
-import io.micronaut.http.codec.MediaTypeCodec;
 import io.micronaut.serde.ObjectMapper;
 import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.exceptions.NoTransactionException;
@@ -153,14 +152,12 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
     private final SchemaTenantResolver schemaTenantResolver;
     private final R2dbcSchemaHandler schemaHandler;
     private final DataR2dbcConfiguration configuration;
-    private final ObjectMapper objectMapper;
 
     /**
      * Default constructor.
      *
      * @param dataSourceName             The data source name
      * @param connectionFactory          The associated connection factory
-     * @param mediaTypeCodecList         The media type codec list
      * @param dateTimeProvider           The date time provider
      * @param runtimeEntityRegistry      The runtime entity registry
      * @param applicationContext         The bean context
@@ -176,7 +173,6 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
     protected DefaultR2dbcRepositoryOperations(
         @Parameter String dataSourceName,
         ConnectionFactory connectionFactory,
-        List<MediaTypeCodec> mediaTypeCodecList,
         @NonNull DateTimeProvider<Object> dateTimeProvider,
         RuntimeEntityRegistry runtimeEntityRegistry,
         ApplicationContext applicationContext,
@@ -192,11 +188,12 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             new ColumnNameR2dbcResultReader(conversionService),
             new ColumnIndexR2dbcResultReader(conversionService),
             new R2dbcQueryStatement(conversionService),
-            mediaTypeCodecList,
             dateTimeProvider,
             runtimeEntityRegistry,
             applicationContext,
-            conversionService, attributeConverterRegistry);
+            conversionService,
+            attributeConverterRegistry,
+            objectMapper);
         this.connectionFactory = connectionFactory;
         this.ioExecutorService = executorService;
         this.schemaTenantResolver = schemaTenantResolver;
@@ -212,7 +209,6 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         this.txStatusKey = ReactorReactiveTransactionOperations.TRANSACTION_STATUS_KEY_PREFIX + "." + NAME + "." + name;
         this.txDefinitionKey = ReactorReactiveTransactionOperations.TRANSACTION_DEFINITION_KEY_PREFIX + "." + NAME + "." + name;
         this.currentConnectionKey = "io.micronaut." + NAME + ".connection." + name;
-        this.objectMapper = objectMapper;
     }
 
     @Override

@@ -11,11 +11,10 @@ dependencies {
 	annotationProcessor libs.micronaut.docs
 
 	api projects.dataModel
-	api mnSerde.micronaut.serde.support
+	compileOnly mnSerde.micronaut.serde.support
 
 	implementation libs.reactor
 
-	compileOnly mn.micronaut.http
 	compileOnly libs.jakarta.persistence.api
 	compileOnly libs.javax.persistence.api
     compileOnly mnMultitenancy.micronaut.multitenancy

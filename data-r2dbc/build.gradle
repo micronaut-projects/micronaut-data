@@ -18,7 +18,7 @@ dependencies {
     api libs.r2dbc.spi
 
     implementation mn.micronaut.context
-    implementation mn.micronaut.http
+    implementation mnSerde.micronaut.serde.support
     implementation mnReactor.micronaut.reactor
 
     testImplementation projects.dataTck

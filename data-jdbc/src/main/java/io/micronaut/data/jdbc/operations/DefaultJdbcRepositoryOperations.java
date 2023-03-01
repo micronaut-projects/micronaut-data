@@ -85,7 +85,6 @@ import io.micronaut.data.runtime.operations.internal.sql.AbstractSqlRepositoryOp
 import io.micronaut.data.runtime.operations.internal.sql.SqlPreparedQuery;
 import io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery;
 import io.micronaut.data.runtime.support.AbstractConversionContext;
-import io.micronaut.http.codec.MediaTypeCodec;
 import io.micronaut.serde.ObjectMapper;
 import io.micronaut.transaction.TransactionOperations;
 import io.micronaut.transaction.jdbc.DataSourceUtils;
@@ -151,7 +150,6 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     @Nullable
     private final SchemaTenantResolver schemaTenantResolver;
     private final JdbcSchemaHandler schemaHandler;
-    private final ObjectMapper objectMapper;
 
     /**
      * Default constructor.
@@ -162,7 +160,6 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
      * @param transactionOperations      The JDBC operations for the data source
      * @param executorService            The executor service
      * @param beanContext                The bean context
-     * @param codecs                     The codecs
      * @param dateTimeProvider           The dateTimeProvider
      * @param entityRegistry             The entity registry
      * @param conversionService          The conversion service
@@ -179,7 +176,6 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                                               @Parameter TransactionOperations<Connection> transactionOperations,
                                               @Named("io") @Nullable ExecutorService executorService,
                                               BeanContext beanContext,
-                                              List<MediaTypeCodec> codecs,
                                               @NonNull DateTimeProvider dateTimeProvider,
                                               RuntimeEntityRegistry entityRegistry,
                                               DataConversionService conversionService,
@@ -193,11 +189,11 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                 new ColumnNameResultSetReader(conversionService),
                 new ColumnIndexResultSetReader(conversionService),
                 new JdbcQueryStatement(conversionService),
-                codecs,
                 dateTimeProvider,
                 entityRegistry,
                 beanContext,
-                conversionService, attributeConverterRegistry);
+                conversionService, attributeConverterRegistry,
+                objectMapper);
         this.schemaTenantResolver = schemaTenantResolver;
         this.schemaHandler = schemaHandler;
         ArgumentUtils.requireNonNull("dataSource", dataSource);
@@ -208,7 +204,6 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         this.executorService = executorService;
         this.cascadeOperations = new SyncCascadeOperations<>(conversionService, this);
         this.jdbcConfiguration = jdbcConfiguration;
-        this.objectMapper = objectMapper;
     }
 
     @NonNull

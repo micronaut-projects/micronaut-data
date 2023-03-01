@@ -38,12 +38,12 @@ public @interface QueryResult {
     /**
      * The default column name for the JSON data.
      */
-    String DATA_COLUMN = "DATA";
+    String DEFAULT_COLUMN = "DATA";
 
     /**
      * @return The column containing JSON result
      */
-    String column() default DATA_COLUMN;
+    String column() default DEFAULT_COLUMN;
 
     /**
      * @return The query result type

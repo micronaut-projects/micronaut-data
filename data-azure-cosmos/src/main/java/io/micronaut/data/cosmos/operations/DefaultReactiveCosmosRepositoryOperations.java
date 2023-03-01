@@ -87,7 +87,6 @@ import io.micronaut.data.runtime.operations.internal.sql.SqlPreparedQuery;
 import io.micronaut.data.runtime.query.MethodContextAwareStoredQueryDecorator;
 import io.micronaut.data.runtime.query.PreparedQueryDecorator;
 import io.micronaut.data.runtime.query.internal.QueryResultStoredQuery;
-import io.micronaut.http.codec.MediaTypeCodec;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import jakarta.inject.Singleton;
 import org.slf4j.Logger;
@@ -145,7 +144,6 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
     /**
      * Default constructor.
      *
-     * @param codecs                     The media type codecs
      * @param dateTimeProvider           The date time provider
      * @param runtimeEntityRegistry      The entity registry
      * @param conversionService          The conversion service
@@ -155,8 +153,7 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
      * @param cosmosDiagnosticsProcessor The Cosmos diagnostics processor, can be null
      * @param configuration              The Cosmos database configuration
      */
-    public DefaultReactiveCosmosRepositoryOperations(List<MediaTypeCodec> codecs,
-                                                     DateTimeProvider<Object> dateTimeProvider,
+    public DefaultReactiveCosmosRepositoryOperations(DateTimeProvider<Object> dateTimeProvider,
                                                      RuntimeEntityRegistry runtimeEntityRegistry,
                                                      DataConversionService conversionService,
                                                      AttributeConverterRegistry attributeConverterRegistry,
@@ -165,7 +162,7 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
                                                      @Nullable
                                                      CosmosDiagnosticsProcessor cosmosDiagnosticsProcessor,
                                                      CosmosDatabaseConfiguration configuration) {
-        super(codecs, dateTimeProvider, runtimeEntityRegistry, conversionService, attributeConverterRegistry);
+        super(dateTimeProvider, runtimeEntityRegistry, conversionService, attributeConverterRegistry);
         this.cosmosSerde = cosmosSerde;
         this.cosmosAsyncDatabase = cosmosAsyncClient.getDatabase(configuration.getDatabaseName());
         this.cosmosDiagnosticsProcessor = cosmosDiagnosticsProcessor;
