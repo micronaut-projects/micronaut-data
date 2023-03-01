@@ -17,6 +17,7 @@ package io.micronaut.data.runtime.mapper.sql;
 
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
+import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.runtime.mapper.ResultReader;
@@ -45,6 +46,7 @@ public class JsonQueryResultMapper<T, RS, R> implements SqlTypeMapper<RS, R> {
 
     public JsonQueryResultMapper(@NonNull String columnName, @NonNull RuntimePersistentEntity<T> entity, @NonNull ResultReader<RS, String> resultReader, @NonNull ObjectMapper objectMapper,
                                  @Nullable BiFunction<RuntimePersistentEntity<Object>, Object, Object> eventListener) {
+        ArgumentUtils.requireNonNull("objectMapper", objectMapper);
         this.columnName = columnName;
         this.entity = entity;
         this.resultReader = resultReader;
