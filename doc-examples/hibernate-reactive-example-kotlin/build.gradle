@@ -18,7 +18,7 @@ micronaut {
 }
 
 dependencies {
-    kapt "io.micronaut:micronaut-validation"
+    kapt "io.micronaut.validation:micronaut-validation"
     annotationProcessor projects.dataProcessor
 
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core"

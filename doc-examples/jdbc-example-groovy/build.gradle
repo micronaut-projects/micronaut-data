@@ -16,11 +16,11 @@ micronaut {
 
 dependencies {
     compileOnly project(":data-processor")
-    compileOnly "io.micronaut:micronaut-validation"
+    compileOnly "io.micronaut.validation:micronaut-validation"
     implementation 'io.micronaut.rxjava2:micronaut-rxjava2'
     implementation project(":data-jdbc")
     implementation "io.micronaut:micronaut-http-client"
-    implementation "io.micronaut:micronaut-validation"
+    implementation "io.micronaut.validation:micronaut-validation"
     implementation "io.micronaut.sql:micronaut-jdbc-tomcat"
     implementation libs.jakarta.persistence.api
     implementation libs.javax.transaction.api
