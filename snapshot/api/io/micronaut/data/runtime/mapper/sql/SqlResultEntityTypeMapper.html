@@ -119,27 +119,27 @@ implements <a href="SqlTypeMapper.html" title="interface in io.micronaut.data.ru
 <div class="summary-table two-column-summary">
 <div class="table-header col-first">Constructor</div>
 <div class="table-header col-last">Description</div>
-<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(io.micronaut.data.model.runtime.RuntimePersistentEntity,io.micronaut.data.runtime.mapper.ResultReader,java.util.Set,io.micronaut.http.codec.MediaTypeCodec,io.micronaut.data.runtime.convert.DataConversionService)" class="member-name-link">SqlResultEntityTypeMapper</a><wbr>(<a href="../../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;<a href="SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">R</a>&gt;&nbsp;entity,
+<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(io.micronaut.data.model.runtime.RuntimePersistentEntity,io.micronaut.data.runtime.mapper.ResultReader,java.util.Set,io.micronaut.serde.ObjectMapper,io.micronaut.data.runtime.convert.DataConversionService)" class="member-name-link">SqlResultEntityTypeMapper</a><wbr>(<a href="../../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;<a href="SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">R</a>&gt;&nbsp;entity,
  <a href="../ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a>&lt;<a href="SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">RS</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;resultReader,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Set.html" title="class or interface in java.util" class="external-link">Set</a>&lt;<a href="../../../model/query/JoinPath.html" title="class in io.micronaut.data.model.query">JoinPath</a>&gt;&nbsp;joinPaths,
- io.micronaut.http.codec.MediaTypeCodec&nbsp;jsonCodec,
+ io.micronaut.serde.ObjectMapper&nbsp;objectMapper,
  <a href="../../convert/DataConversionService.html" title="interface in io.micronaut.data.runtime.convert">DataConversionService</a>&nbsp;conversionService)</code></div>
 <div class="col-last even-row-color">
 <div class="block">Constructor used to customize the join paths.</div>
 </div>
-<div class="col-constructor-name odd-row-color"><code><a href="#%3Cinit%3E(io.micronaut.data.model.runtime.RuntimePersistentEntity,io.micronaut.data.runtime.mapper.ResultReader,java.util.Set,io.micronaut.http.codec.MediaTypeCodec,java.util.function.BiFunction,io.micronaut.data.runtime.convert.DataConversionService)" class="member-name-link">SqlResultEntityTypeMapper</a><wbr>(<a href="../../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;<a href="SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">R</a>&gt;&nbsp;entity,
+<div class="col-constructor-name odd-row-color"><code><a href="#%3Cinit%3E(io.micronaut.data.model.runtime.RuntimePersistentEntity,io.micronaut.data.runtime.mapper.ResultReader,java.util.Set,io.micronaut.serde.ObjectMapper,java.util.function.BiFunction,io.micronaut.data.runtime.convert.DataConversionService)" class="member-name-link">SqlResultEntityTypeMapper</a><wbr>(<a href="../../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;<a href="SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">R</a>&gt;&nbsp;entity,
  <a href="../ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a>&lt;<a href="SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">RS</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;resultReader,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Set.html" title="class or interface in java.util" class="external-link">Set</a>&lt;<a href="../../../model/query/JoinPath.html" title="class in io.micronaut.data.model.query">JoinPath</a>&gt;&nbsp;joinPaths,
- io.micronaut.http.codec.MediaTypeCodec&nbsp;jsonCodec,
+ io.micronaut.serde.ObjectMapper&nbsp;objectMapper,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/function/BiFunction.html" title="class or interface in java.util.function" class="external-link">BiFunction</a>&lt;<a href="../../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;,<wbr><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;&nbsp;loadListener,
  <a href="../../convert/DataConversionService.html" title="interface in io.micronaut.data.runtime.convert">DataConversionService</a>&nbsp;conversionService)</code></div>
 <div class="col-last odd-row-color">
 <div class="block">Constructor used to customize the join paths.</div>
 </div>
-<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(java.lang.String,io.micronaut.data.model.runtime.RuntimePersistentEntity,io.micronaut.data.runtime.mapper.ResultReader,io.micronaut.http.codec.MediaTypeCodec,io.micronaut.data.runtime.convert.DataConversionService)" class="member-name-link">SqlResultEntityTypeMapper</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;prefix,
+<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(java.lang.String,io.micronaut.data.model.runtime.RuntimePersistentEntity,io.micronaut.data.runtime.mapper.ResultReader,io.micronaut.serde.ObjectMapper,io.micronaut.data.runtime.convert.DataConversionService)" class="member-name-link">SqlResultEntityTypeMapper</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;prefix,
  <a href="../../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;<a href="SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">R</a>&gt;&nbsp;entity,
  <a href="../ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a>&lt;<a href="SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">RS</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;resultReader,
- io.micronaut.http.codec.MediaTypeCodec&nbsp;jsonCodec,
+ io.micronaut.serde.ObjectMapper&nbsp;objectMapper,
  <a href="../../convert/DataConversionService.html" title="interface in io.micronaut.data.runtime.convert">DataConversionService</a>&nbsp;conversionService)</code></div>
 <div class="col-last even-row-color">
 <div class="block">Default constructor.</div>
@@ -221,7 +221,7 @@ implements <a href="SqlTypeMapper.html" title="interface in io.micronaut.data.ru
 <h2>Constructor Details</h2>
 <ul class="member-list">
 <li>
-<section class="detail" id="&lt;init&gt;(java.lang.String,io.micronaut.data.model.runtime.RuntimePersistentEntity,io.micronaut.data.runtime.mapper.ResultReader,io.micronaut.http.codec.MediaTypeCodec,io.micronaut.data.runtime.convert.DataConversionService)">
+<section class="detail" id="&lt;init&gt;(java.lang.String,io.micronaut.data.model.runtime.RuntimePersistentEntity,io.micronaut.data.runtime.mapper.ResultReader,io.micronaut.serde.ObjectMapper,io.micronaut.data.runtime.convert.DataConversionService)">
 <h3>SqlResultEntityTypeMapper</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name">SqlResultEntityTypeMapper</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;prefix,
  @NonNull
@@ -229,7 +229,7 @@ implements <a href="SqlTypeMapper.html" title="interface in io.micronaut.data.ru
  @NonNull
  <a href="../ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a>&lt;<a href="SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">RS</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;resultReader,
  @Nullable
- io.micronaut.http.codec.MediaTypeCodec&nbsp;jsonCodec,
+ io.micronaut.serde.ObjectMapper&nbsp;objectMapper,
  <a href="../../convert/DataConversionService.html" title="interface in io.micronaut.data.runtime.convert">DataConversionService</a>&nbsp;conversionService)</span></div>
 <div class="block">Default constructor.</div>
 <dl class="notes">
@@ -237,13 +237,13 @@ implements <a href="SqlTypeMapper.html" title="interface in io.micronaut.data.ru
 <dd><code>prefix</code> - The prefix to startup from.</dd>
 <dd><code>entity</code> - The entity</dd>
 <dd><code>resultReader</code> - The result reader</dd>
-<dd><code>jsonCodec</code> - The JSON codec</dd>
+<dd><code>objectMapper</code> - The object mapper</dd>
 <dd><code>conversionService</code> - The conversion service</dd>
 </dl>
 </section>
 </li>
 <li>
-<section class="detail" id="&lt;init&gt;(io.micronaut.data.model.runtime.RuntimePersistentEntity,io.micronaut.data.runtime.mapper.ResultReader,java.util.Set,io.micronaut.http.codec.MediaTypeCodec,io.micronaut.data.runtime.convert.DataConversionService)">
+<section class="detail" id="&lt;init&gt;(io.micronaut.data.model.runtime.RuntimePersistentEntity,io.micronaut.data.runtime.mapper.ResultReader,java.util.Set,io.micronaut.serde.ObjectMapper,io.micronaut.data.runtime.convert.DataConversionService)">
 <h3>SqlResultEntityTypeMapper</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name">SqlResultEntityTypeMapper</span><wbr><span class="parameters">(@NonNull
  <a href="../../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;<a href="SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">R</a>&gt;&nbsp;entity,
@@ -252,7 +252,7 @@ implements <a href="SqlTypeMapper.html" title="interface in io.micronaut.data.ru
  @Nullable
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Set.html" title="class or interface in java.util" class="external-link">Set</a>&lt;<a href="../../../model/query/JoinPath.html" title="class in io.micronaut.data.model.query">JoinPath</a>&gt;&nbsp;joinPaths,
  @Nullable
- io.micronaut.http.codec.MediaTypeCodec&nbsp;jsonCodec,
+ io.micronaut.serde.ObjectMapper&nbsp;objectMapper,
  <a href="../../convert/DataConversionService.html" title="interface in io.micronaut.data.runtime.convert">DataConversionService</a>&nbsp;conversionService)</span></div>
 <div class="block">Constructor used to customize the join paths.</div>
 <dl class="notes">
@@ -260,13 +260,13 @@ implements <a href="SqlTypeMapper.html" title="interface in io.micronaut.data.ru
 <dd><code>entity</code> - The entity</dd>
 <dd><code>resultReader</code> - The result reader</dd>
 <dd><code>joinPaths</code> - The join paths</dd>
-<dd><code>jsonCodec</code> - The JSON codec</dd>
+<dd><code>objectMapper</code> - The object mapper</dd>
 <dd><code>conversionService</code> - The conversion service</dd>
 </dl>
 </section>
 </li>
 <li>
-<section class="detail" id="&lt;init&gt;(io.micronaut.data.model.runtime.RuntimePersistentEntity,io.micronaut.data.runtime.mapper.ResultReader,java.util.Set,io.micronaut.http.codec.MediaTypeCodec,java.util.function.BiFunction,io.micronaut.data.runtime.convert.DataConversionService)">
+<section class="detail" id="&lt;init&gt;(io.micronaut.data.model.runtime.RuntimePersistentEntity,io.micronaut.data.runtime.mapper.ResultReader,java.util.Set,io.micronaut.serde.ObjectMapper,java.util.function.BiFunction,io.micronaut.data.runtime.convert.DataConversionService)">
 <h3>SqlResultEntityTypeMapper</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name">SqlResultEntityTypeMapper</span><wbr><span class="parameters">(@NonNull
  <a href="../../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;<a href="SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">R</a>&gt;&nbsp;entity,
@@ -275,7 +275,7 @@ implements <a href="SqlTypeMapper.html" title="interface in io.micronaut.data.ru
  @Nullable
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Set.html" title="class or interface in java.util" class="external-link">Set</a>&lt;<a href="../../../model/query/JoinPath.html" title="class in io.micronaut.data.model.query">JoinPath</a>&gt;&nbsp;joinPaths,
  @Nullable
- io.micronaut.http.codec.MediaTypeCodec&nbsp;jsonCodec,
+ io.micronaut.serde.ObjectMapper&nbsp;objectMapper,
  @Nullable
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/function/BiFunction.html" title="class or interface in java.util.function" class="external-link">BiFunction</a>&lt;<a href="../../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;,<wbr><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;&nbsp;loadListener,
  <a href="../../convert/DataConversionService.html" title="interface in io.micronaut.data.runtime.convert">DataConversionService</a>&nbsp;conversionService)</span></div>
@@ -285,7 +285,7 @@ implements <a href="SqlTypeMapper.html" title="interface in io.micronaut.data.ru
 <dd><code>entity</code> - The entity</dd>
 <dd><code>resultReader</code> - The result reader</dd>
 <dd><code>joinPaths</code> - The join paths</dd>
-<dd><code>jsonCodec</code> - The JSON codec</dd>
+<dd><code>objectMapper</code> - The object mapper</dd>
 <dd><code>loadListener</code> - The event listener</dd>
 <dd><code>conversionService</code> - The conversion service</dd>
 </dl>

@@ -119,12 +119,9 @@ implements io.micronaut.context.ApplicationContextProvider</span></div>
 <div class="col-first odd-row-color"><code>protected final <a href="../../../event/EntityEventListener.html" title="interface in io.micronaut.data.event">EntityEventListener</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;</code></div>
 <div class="col-second odd-row-color"><code><a href="#entityEventRegistry" class="member-name-link">entityEventRegistry</a></code></div>
 <div class="col-last odd-row-color">&nbsp;</div>
-<div class="col-first even-row-color"><code>protected final io.micronaut.http.codec.MediaTypeCodec</code></div>
-<div class="col-second even-row-color"><code><a href="#jsonCodec" class="member-name-link">jsonCodec</a></code></div>
+<div class="col-first even-row-color"><code>protected final <a href="../../../model/runtime/RuntimeEntityRegistry.html" title="interface in io.micronaut.data.model.runtime">RuntimeEntityRegistry</a></code></div>
+<div class="col-second even-row-color"><code><a href="#runtimeEntityRegistry" class="member-name-link">runtimeEntityRegistry</a></code></div>
 <div class="col-last even-row-color">&nbsp;</div>
-<div class="col-first odd-row-color"><code>protected final <a href="../../../model/runtime/RuntimeEntityRegistry.html" title="interface in io.micronaut.data.model.runtime">RuntimeEntityRegistry</a></code></div>
-<div class="col-second odd-row-color"><code><a href="#runtimeEntityRegistry" class="member-name-link">runtimeEntityRegistry</a></code></div>
-<div class="col-last odd-row-color">&nbsp;</div>
 </div>
 </section>
 </li>
@@ -138,8 +135,7 @@ implements io.micronaut.context.ApplicationContextProvider</span></div>
 <div class="table-header col-second">Constructor</div>
 <div class="table-header col-last">Description</div>
 <div class="col-first even-row-color"><code>protected </code></div>
-<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(java.util.List,io.micronaut.data.runtime.date.DateTimeProvider,io.micronaut.data.model.runtime.RuntimeEntityRegistry,io.micronaut.data.runtime.convert.DataConversionService,io.micronaut.data.model.runtime.AttributeConverterRegistry)" class="member-name-link">AbstractRepositoryOperations</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;io.micronaut.http.codec.MediaTypeCodec&gt;&nbsp;codecs,
- <a href="../../date/DateTimeProvider.html" title="interface in io.micronaut.data.runtime.date">DateTimeProvider</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;&nbsp;dateTimeProvider,
+<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(io.micronaut.data.runtime.date.DateTimeProvider,io.micronaut.data.model.runtime.RuntimeEntityRegistry,io.micronaut.data.runtime.convert.DataConversionService,io.micronaut.data.model.runtime.AttributeConverterRegistry)" class="member-name-link">AbstractRepositoryOperations</a><wbr>(<a href="../../date/DateTimeProvider.html" title="interface in io.micronaut.data.runtime.date">DateTimeProvider</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;&nbsp;dateTimeProvider,
  <a href="../../../model/runtime/RuntimeEntityRegistry.html" title="interface in io.micronaut.data.model.runtime">RuntimeEntityRegistry</a>&nbsp;runtimeEntityRegistry,
  <a href="../../convert/DataConversionService.html" title="interface in io.micronaut.data.runtime.convert">DataConversionService</a>&nbsp;conversionService,
  <a href="../../../model/runtime/AttributeConverterRegistry.html" title="interface in io.micronaut.data.model.runtime">AttributeConverterRegistry</a>&nbsp;attributeConverterRegistry)</code></div>
@@ -211,12 +207,6 @@ implements io.micronaut.context.ApplicationContextProvider</span></div>
 <h2>Field Details</h2>
 <ul class="member-list">
 <li>
-<section class="detail" id="jsonCodec">
-<h3>jsonCodec</h3>
-<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type">io.micronaut.http.codec.MediaTypeCodec</span>&nbsp;<span class="element-name">jsonCodec</span></div>
-</section>
-</li>
-<li>
 <section class="detail" id="entityEventRegistry">
 <h3>entityEventRegistry</h3>
 <div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type"><a href="../../../event/EntityEventListener.html" title="interface in io.micronaut.data.event">EntityEventListener</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;</span>&nbsp;<span class="element-name">entityEventRegistry</span></div>
@@ -255,17 +245,15 @@ implements io.micronaut.context.ApplicationContextProvider</span></div>
 <h2>Constructor Details</h2>
 <ul class="member-list">
 <li>
-<section class="detail" id="&lt;init&gt;(java.util.List,io.micronaut.data.runtime.date.DateTimeProvider,io.micronaut.data.model.runtime.RuntimeEntityRegistry,io.micronaut.data.runtime.convert.DataConversionService,io.micronaut.data.model.runtime.AttributeConverterRegistry)">
+<section class="detail" id="&lt;init&gt;(io.micronaut.data.runtime.date.DateTimeProvider,io.micronaut.data.model.runtime.RuntimeEntityRegistry,io.micronaut.data.runtime.convert.DataConversionService,io.micronaut.data.model.runtime.AttributeConverterRegistry)">
 <h3>AbstractRepositoryOperations</h3>
-<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="element-name">AbstractRepositoryOperations</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;io.micronaut.http.codec.MediaTypeCodec&gt;&nbsp;codecs,
- <a href="../../date/DateTimeProvider.html" title="interface in io.micronaut.data.runtime.date">DateTimeProvider</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;&nbsp;dateTimeProvider,
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="element-name">AbstractRepositoryOperations</span><wbr><span class="parameters">(<a href="../../date/DateTimeProvider.html" title="interface in io.micronaut.data.runtime.date">DateTimeProvider</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;&nbsp;dateTimeProvider,
  <a href="../../../model/runtime/RuntimeEntityRegistry.html" title="interface in io.micronaut.data.model.runtime">RuntimeEntityRegistry</a>&nbsp;runtimeEntityRegistry,
  <a href="../../convert/DataConversionService.html" title="interface in io.micronaut.data.runtime.convert">DataConversionService</a>&nbsp;conversionService,
  <a href="../../../model/runtime/AttributeConverterRegistry.html" title="interface in io.micronaut.data.model.runtime">AttributeConverterRegistry</a>&nbsp;attributeConverterRegistry)</span></div>
 <div class="block">Default constructor.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
-<dd><code>codecs</code> - The media type codecs</dd>
 <dd><code>dateTimeProvider</code> - The date time provider</dd>
 <dd><code>runtimeEntityRegistry</code> - The entity registry</dd>
 <dd><code>conversionService</code> - The conversion service</dd>
