@@ -18,7 +18,7 @@ dependencies {
     api libs.r2dbc.spi
 
     implementation mn.micronaut.context
-    implementation mn.micronaut.http
+    implementation mnSerde.micronaut.serde.support
     implementation mnReactor.micronaut.reactor
 
     testImplementation projects.dataTck
@@ -33,7 +33,7 @@ dependencies {
     testImplementation libs.javax.persistence.api
     testImplementation libs.jakarta.persistence.api
     testImplementation libs.groovy.sql
-    testImplementation mn.micronaut.validation
+    testImplementation mnValidation.micronaut.validation
 
     testImplementation mn.micronaut.http.server.netty
     testImplementation mn.micronaut.http.client

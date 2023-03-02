@@ -16,10 +16,10 @@ micronaut {
 
 dependencies {
     annotationProcessor project(":data-processor")
-    annotationProcessor "io.micronaut:micronaut-validation"
+    annotationProcessor "io.micronaut.validation:micronaut-validation"
     implementation project(":data-jdbc")
     implementation "io.micronaut:micronaut-http-client"
-    implementation "io.micronaut:micronaut-validation"
+    implementation "io.micronaut.validation:micronaut-validation"
     implementation "io.micronaut.sql:micronaut-jdbc-tomcat"
     implementation libs.jakarta.persistence.api
     implementation libs.javax.transaction.api

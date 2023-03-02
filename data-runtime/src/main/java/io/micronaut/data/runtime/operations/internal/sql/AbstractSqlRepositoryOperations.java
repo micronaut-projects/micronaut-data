@@ -56,11 +56,12 @@ import io.micronaut.data.runtime.query.MethodContextAwareStoredQueryDecorator;
 import io.micronaut.data.runtime.query.PreparedQueryDecorator;
 import io.micronaut.data.runtime.query.internal.BasicStoredQuery;
 import io.micronaut.data.runtime.query.internal.QueryResultStoredQuery;
-import io.micronaut.http.codec.MediaTypeCodec;
 import io.micronaut.inject.BeanDefinition;
 import io.micronaut.inject.qualifiers.Qualifiers;
+import io.micronaut.serde.ObjectMapper;
 import org.slf4j.Logger;
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.AbstractMap;
 import java.util.ArrayList;
@@ -97,6 +98,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
     protected final ResultReader<RS, Integer> columnIndexResultSetReader;
     @SuppressWarnings("WeakerAccess")
     protected final QueryStatement<PS, Integer> preparedStatementWriter;
+    protected final ObjectMapper objectMapper;
     protected final Map<Class, SqlQueryBuilder> queryBuilders = new HashMap<>(10);
     protected final Map<Class, String> repositoriesWithHardcodedDataSource = new HashMap<>(10);
     private final Map<QueryKey, SqlStoredQuery> entityInserts = new ConcurrentHashMap<>(10);
@@ -110,29 +112,30 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
      * @param columnNameResultSetReader  The column name result reader
      * @param columnIndexResultSetReader The column index result reader
      * @param preparedStatementWriter    The prepared statement writer
-     * @param codecs                     The media type codecs
      * @param dateTimeProvider           The date time provider
      * @param runtimeEntityRegistry      The entity registry
      * @param beanContext                The bean context
      * @param conversionService          The conversion service
      * @param attributeConverterRegistry The attribute converter registry
+     * @param objectMapper               The object mapper
      */
     protected AbstractSqlRepositoryOperations(
             String dataSourceName,
             ResultReader<RS, String> columnNameResultSetReader,
             ResultReader<RS, Integer> columnIndexResultSetReader,
             QueryStatement<PS, Integer> preparedStatementWriter,
-            List<MediaTypeCodec> codecs,
             DateTimeProvider<Object> dateTimeProvider,
             RuntimeEntityRegistry runtimeEntityRegistry,
             BeanContext beanContext,
             DataConversionService conversionService,
-            AttributeConverterRegistry attributeConverterRegistry) {
-        super(codecs, dateTimeProvider, runtimeEntityRegistry, conversionService, attributeConverterRegistry);
+            AttributeConverterRegistry attributeConverterRegistry,
+            ObjectMapper objectMapper) {
+        super(dateTimeProvider, runtimeEntityRegistry, conversionService, attributeConverterRegistry);
         this.dataSourceName = dataSourceName;
         this.columnNameResultSetReader = columnNameResultSetReader;
         this.columnIndexResultSetReader = columnIndexResultSetReader;
         this.preparedStatementWriter = preparedStatementWriter;
+        this.objectMapper = objectMapper;
         Collection<BeanDefinition<Object>> beanDefinitions = beanContext
                 .getBeanDefinitions(Object.class, Qualifiers.byStereotype(Repository.class));
         for (BeanDefinition<Object> beanDefinition : beanDefinitions) {
@@ -211,8 +214,15 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
                 }
                 break;
             case JSON:
-                if (value != null && jsonCodec != null && !value.getClass().equals(String.class)) {
-                    value = new String(jsonCodec.encode(value), StandardCharsets.UTF_8);
+                if (value != null && !value.getClass().equals(String.class)) {
+                    if (objectMapper == null) {
+                        throw new IllegalStateException("For JSON data types support Micronaut ObjectMapper needs to be available on the classpath.");
+                    }
+                    try {
+                        value = new String(objectMapper.writeValueAsBytes(value), StandardCharsets.UTF_8);
+                    } catch (IOException e) {
+                        throw new DataAccessException("Failed setting JSON field parameter at index " + index, e);
+                    }
                 }
                 break;
             case ENTITY:
@@ -513,5 +523,4 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
     protected interface StatementSupplier<PS> {
         PS create(String ps) throws Exception;
     }
-
 }

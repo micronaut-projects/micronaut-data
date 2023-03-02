@@ -32,6 +32,6 @@ trait MariaTestPropertyProvider implements SharedTestResourcesDatabaseTestProper
 
     @Override
     int sharedSpecsCount() {
-        return 6
+        return 7
     }
 }
