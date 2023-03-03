@@ -22,6 +22,7 @@ import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.annotation.AutoPopulated;
+import io.micronaut.data.annotation.JsonView;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.exceptions.DataAccessException;
@@ -51,6 +52,7 @@ import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.date.DateTimeProvider;
 import io.micronaut.data.runtime.mapper.QueryStatement;
 import io.micronaut.data.runtime.mapper.ResultReader;
+import io.micronaut.data.runtime.mapper.sql.JsonQueryResultMapper;
 import io.micronaut.data.runtime.operations.internal.AbstractRepositoryOperations;
 import io.micronaut.data.runtime.query.MethodContextAwareStoredQueryDecorator;
 import io.micronaut.data.runtime.query.PreparedQueryDecorator;
@@ -71,6 +73,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -481,6 +484,49 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
         return true;
     }
 
+    /**
+     * Creates {@link JsonQueryResultMapper} for JSON deserialization.
+     *
+     * @param dialect the SQL dialect
+     * @param columnName the column name where JSON result is stored
+     * @param persistentEntity the persistent entity
+     * @param loadListener the load listener if needed after entity loaded
+     * @return the {@link JsonQueryResultMapper}
+     * @param <T> the entity type
+     */
+    protected final <T> JsonQueryResultMapper createJsonQueryResultMapper(Dialect dialect, String columnName,
+                                                                  RuntimePersistentEntity<T> persistentEntity, BiFunction<RuntimePersistentEntity<Object>, Object, Object> loadListener) {
+        if (persistentEntity.getAnnotationMetadata().hasAnnotation(JsonView.class)) {
+            if (dialect.supportsJsonView()) {
+                return createJsonQueryResultMapperForJsonView(dialect, columnName, persistentEntity, loadListener);
+            }
+            throw new UnsupportedOperationException("Dialect " + dialect + " does not support JsonView.");
+        }
+        return createDefaultJsonQueryResultMapper(columnName, persistentEntity, loadListener);
+    }
+
+    /**
+     * Creates {@link JsonQueryResultMapper} specific for {@link JsonView} deserialization.
+     *
+     * @param dialect the SQL dialect
+     * @param columnName the column name where JSON View result is stored
+     * @param persistentEntity the persistent entity
+     * @param loadListener the load listener if needed after entity loaded
+     * @return the {@link JsonQueryResultMapper} to deserialize JSON View result
+     * @param <T> the entity type
+     */
+    protected <T> JsonQueryResultMapper createJsonQueryResultMapperForJsonView(Dialect dialect, String columnName, RuntimePersistentEntity<T> persistentEntity,
+                                                                             BiFunction<RuntimePersistentEntity<Object>, Object, Object> loadListener) {
+        // By default, JsonView is not supported and extending class can override implementation if some
+        // dialects support it. For Jdbc and R2Dbc Oracle Json View support is implemented.
+        throw new UnsupportedOperationException("Dialect " + dialect + " does not support JsonView.");
+    }
+
+    private <T> JsonQueryResultMapper createDefaultJsonQueryResultMapper(String columnName, RuntimePersistentEntity<T> persistentEntity,
+                                                                         BiFunction<RuntimePersistentEntity<Object>, Object, Object> loadListener) {
+        return new JsonQueryResultMapper(columnName, persistentEntity, columnNameResultSetReader,
+            objectMapper, loadListener);
+    }
 
     /**
      * Used to cache queries for entities.

@@ -56,7 +56,7 @@ public class JsonQueryResultMapper<T, RS, R> implements SqlTypeMapper<RS, R> {
 
     @Override
     public R map(RS object, Class<R> type) throws DataAccessException {
-        String columnData = resultReader.readString(object, columnName);
+        byte[] columnData = readBytes(object, columnName);
         R entityInstance;
         try {
             entityInstance = objectMapper.readValue(columnData, type);
@@ -77,6 +77,17 @@ public class JsonQueryResultMapper<T, RS, R> implements SqlTypeMapper<RS, R> {
     @Override
     public boolean hasNext(RS resultSet) {
         return resultReader.next(resultSet);
+    }
+
+    /**
+     * Reads bytes from the result set from given column name.
+     *
+     * @param object the result set
+     * @param columnName the column name
+     * @return the bytes read from the result set column
+     */
+    protected byte[] readBytes(RS object, String columnName) {
+        return resultReader.readBytes(object, columnName);
     }
 
     private <K> K triggerPostLoad(RuntimePersistentEntity<?> persistentEntity, K entity) {

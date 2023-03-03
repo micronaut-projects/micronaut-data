@@ -65,6 +65,7 @@ import io.micronaut.data.r2dbc.mapper.R2dbcQueryStatement;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.convert.RuntimePersistentPropertyConversionContext;
 import io.micronaut.data.runtime.date.DateTimeProvider;
+import io.micronaut.data.runtime.mapper.ResultReader;
 import io.micronaut.data.runtime.mapper.TypeMapper;
 import io.micronaut.data.runtime.mapper.sql.JsonQueryResultMapper;
 import io.micronaut.data.runtime.mapper.sql.SqlDTOMapper;
@@ -81,6 +82,8 @@ import io.micronaut.data.runtime.operations.internal.sql.SqlPreparedQuery;
 import io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery;
 import io.micronaut.data.runtime.support.AbstractConversionContext;
 import io.micronaut.serde.ObjectMapper;
+import io.micronaut.serde.oracle.jdbc.json.OracleJdbcJsonBinaryObjectMapper;
+import io.micronaut.serde.oracle.jdbc.json.OracleJdbcJsonTextObjectMapper;
 import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.exceptions.NoTransactionException;
 import io.micronaut.transaction.exceptions.TransactionSystemException;
@@ -97,6 +100,7 @@ import io.r2dbc.spi.Result;
 import io.r2dbc.spi.Row;
 import io.r2dbc.spi.Statement;
 import jakarta.inject.Named;
+import oracle.r2dbc.OracleR2dbcObject;
 import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -152,6 +156,10 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
     private final SchemaTenantResolver schemaTenantResolver;
     private final R2dbcSchemaHandler schemaHandler;
     private final DataR2dbcConfiguration configuration;
+    @Nullable
+    private final OracleJdbcJsonBinaryObjectMapper oracleOsonMapper;
+    @Nullable
+    private final OracleJdbcJsonTextObjectMapper oracleTextMapper;
 
     /**
      * Default constructor.
@@ -168,6 +176,8 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
      * @param schemaHandler              The schema handler
      * @param configuration              The configuration
      * @param objectMapper               The object mapper
+     * @param oracleOsonMapper           Oracle JSON binary object mapper
+     * @param oracleTextMapper           Oracle JSON text object mapper
      */
     @Internal
     protected DefaultR2dbcRepositoryOperations(
@@ -182,7 +192,9 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         @Nullable SchemaTenantResolver schemaTenantResolver,
         R2dbcSchemaHandler schemaHandler,
         @Parameter DataR2dbcConfiguration configuration,
-        ObjectMapper objectMapper) {
+        ObjectMapper objectMapper,
+        @Nullable OracleJdbcJsonBinaryObjectMapper oracleOsonMapper,
+        @Nullable OracleJdbcJsonTextObjectMapper oracleTextMapper) {
         super(
             dataSourceName,
             new ColumnNameR2dbcResultReader(conversionService),
@@ -209,6 +221,8 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         this.txStatusKey = ReactorReactiveTransactionOperations.TRANSACTION_STATUS_KEY_PREFIX + "." + NAME + "." + name;
         this.txDefinitionKey = ReactorReactiveTransactionOperations.TRANSACTION_DEFINITION_KEY_PREFIX + "." + NAME + "." + name;
         this.currentConnectionKey = "io.micronaut." + NAME + ".connection." + name;
+        this.oracleOsonMapper = oracleOsonMapper;
+        this.oracleTextMapper = oracleTextMapper;
     }
 
     @Override
@@ -540,6 +554,19 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             });
     }
 
+    @Override
+    protected <T> JsonQueryResultMapper createJsonQueryResultMapperForJsonView(Dialect dialect, String columnName, RuntimePersistentEntity<T> persistentEntity,
+                                                                               BiFunction<RuntimePersistentEntity<Object>, Object, Object> loadListener) {
+        if (dialect == Dialect.ORACLE) {
+            if (oracleOsonMapper != null && oracleTextMapper != null) {
+                return new OracleJsonQueryResultMapper(columnName, persistentEntity, columnNameResultSetReader,
+                    oracleTextMapper, loadListener);
+            }
+            throw new IllegalStateException("In order to deserialize Oracle Json View Micronaut Oracle object and text mappers must be on the class path.");
+        }
+        return super.createJsonQueryResultMapperForJsonView(dialect, columnName, persistentEntity, loadListener);
+    }
+
     private ReactiveTransactionStatus<Connection> existingTransaction(ReactiveTransactionStatus<Connection> existing) {
         return new ReactiveTransactionStatus<Connection>() {
             @Override
@@ -605,6 +632,28 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         return Flux.from(statement.execute())
             .flatMap(Result::getRowsUpdated)
             .map((Number n) -> n.longValue());
+    }
+
+    /**
+     * Oracle R2Dbc implementation for Oracle Json View query result mapper.
+     * @param <T> the entity type
+     */
+    private final class OracleJsonQueryResultMapper<T> extends JsonQueryResultMapper<T, Row, String> {
+
+        public OracleJsonQueryResultMapper(@NonNull java.lang.String columnName, @NonNull RuntimePersistentEntity<T> entity, @NonNull ResultReader<Row, String> resultReader, @NonNull ObjectMapper objectMapper,
+                                           @Nullable BiFunction<RuntimePersistentEntity<Object>, Object, Object> eventListener) {
+            super(columnName, entity, resultReader, objectMapper, eventListener);
+        }
+
+        @Override
+        protected byte[] readBytes(Row rs, java.lang.String columnName) {
+            try {
+                OracleR2dbcObject object = rs.get(columnName, OracleR2dbcObject.class);
+                return oracleTextMapper.writeValueAsBytes(object);
+            } catch (Exception e) {
+                throw new DataAccessException("Error reading object for name [" + columnName + "] from result set: " + e.getMessage(), e);
+            }
+        }
     }
 
     /**
@@ -690,8 +739,8 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                     };
                     QueryResultInfo queryResultInfo = preparedQuery.getQueryResultInfo();
                     if (queryResultInfo != null && queryResultInfo.getType() == QueryResult.Type.JSON) {
-                        JsonQueryResultMapper<T, Row, R> jsonQueryResultMapper = new JsonQueryResultMapper(queryResultInfo.getColumnName(), persistentEntity, columnNameResultSetReader,
-                            objectMapper, loadListener);
+                        JsonQueryResultMapper<T, Row, R> jsonQueryResultMapper = createJsonQueryResultMapper(preparedQuery.getDialect(),
+                            queryResultInfo.getColumnName(), persistentEntity, loadListener);
                         return executeAndMapEachRow(statement, row -> jsonQueryResultMapper.map(row, resultType));
                     }
                     SqlResultEntityTypeMapper<Row, R> mapper = new SqlResultEntityTypeMapper<>(
@@ -714,8 +763,8 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                     TypeMapper<Row, R> mapper;
                     QueryResultInfo queryResultInfo = preparedQuery.getQueryResultInfo();
                     if (queryResultInfo != null && queryResultInfo.getType() == QueryResult.Type.JSON) {
-                        mapper = new JsonQueryResultMapper(queryResultInfo.getColumnName(), persistentEntity, columnNameResultSetReader,
-                            objectMapper, null);
+                        mapper = createJsonQueryResultMapper(preparedQuery.getDialect(), queryResultInfo.getColumnName(),
+                            persistentEntity, null);
                     } else {
                         mapper = new SqlDTOMapper<>(
                             persistentEntity,
@@ -758,8 +807,8 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                     if (dtoProjection) {
                         QueryResultInfo queryResultInfo = preparedQuery.getQueryResultInfo();
                         if (queryResultInfo != null && queryResultInfo.getType() == QueryResult.Type.JSON) {
-                            mapper = new JsonQueryResultMapper(queryResultInfo.getColumnName(), persistentEntity, columnNameResultSetReader,
-                                objectMapper, null);
+                            mapper = createJsonQueryResultMapper(preparedQuery.getDialect(),
+                                queryResultInfo.getColumnName(), persistentEntity, null);
                         } else {
                             boolean isRawQuery = preparedQuery.isRawQuery();
                             mapper = new SqlDTOMapper<>(
@@ -780,8 +829,8 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                         };
                         QueryResultInfo queryResultInfo = preparedQuery.getQueryResultInfo();
                         if (queryResultInfo != null && queryResultInfo.getType() == QueryResult.Type.JSON) {
-                            mapper = new JsonQueryResultMapper(queryResultInfo.getColumnName(), persistentEntity, columnNameResultSetReader,
-                                objectMapper, loadListener);
+                            mapper = createJsonQueryResultMapper(preparedQuery.getDialect(),
+                                queryResultInfo.getColumnName(), persistentEntity, loadListener);
                         } else {
                             Set<JoinPath> joinFetchPaths = preparedQuery.getJoinFetchPaths();
                             SqlResultEntityTypeMapper<Row, R> entityTypeMapper = new SqlResultEntityTypeMapper<>(

@@ -86,10 +86,13 @@ import io.micronaut.data.runtime.operations.internal.sql.SqlPreparedQuery;
 import io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery;
 import io.micronaut.data.runtime.support.AbstractConversionContext;
 import io.micronaut.serde.ObjectMapper;
+import io.micronaut.serde.oracle.jdbc.json.OracleJdbcJsonBinaryObjectMapper;
+import io.micronaut.serde.oracle.jdbc.json.OracleJdbcJsonTextObjectMapper;
 import io.micronaut.transaction.TransactionOperations;
 import io.micronaut.transaction.jdbc.DataSourceUtils;
 import io.micronaut.transaction.jdbc.DelegatingDataSource;
 import jakarta.inject.Named;
+import oracle.sql.json.OracleJsonObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -150,6 +153,10 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     @Nullable
     private final SchemaTenantResolver schemaTenantResolver;
     private final JdbcSchemaHandler schemaHandler;
+    @Nullable
+    private final OracleJdbcJsonBinaryObjectMapper oracleOsonMapper;
+    @Nullable
+    private final OracleJdbcJsonTextObjectMapper oracleTextMapper;
 
     /**
      * Default constructor.
@@ -167,6 +174,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
      * @param schemaTenantResolver       The schema tenant resolver
      * @param schemaHandler              The schema handler
      * @param objectMapper               The object mapper
+     * @param oracleOsonMapper           Oracle JSON binary object mapper
+     * @param oracleTextMapper           Oracle JSON text object mapper
      */
     @Internal
     @SuppressWarnings("ParameterNumber")
@@ -183,7 +192,9 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                                               @Nullable
                                               SchemaTenantResolver schemaTenantResolver,
                                               JdbcSchemaHandler schemaHandler,
-                                              @Nullable ObjectMapper objectMapper) {
+                                              @Nullable ObjectMapper objectMapper,
+                                              @Nullable OracleJdbcJsonBinaryObjectMapper oracleOsonMapper,
+                                              @Nullable OracleJdbcJsonTextObjectMapper oracleTextMapper) {
         super(
                 dataSourceName,
                 new ColumnNameResultSetReader(conversionService),
@@ -204,6 +215,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         this.executorService = executorService;
         this.cascadeOperations = new SyncCascadeOperations<>(conversionService, this);
         this.jdbcConfiguration = jdbcConfiguration;
+        this.oracleOsonMapper = oracleOsonMapper;
+        this.oracleTextMapper = oracleTextMapper;
     }
 
     @NonNull
@@ -318,7 +331,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                         };
                         QueryResultInfo queryResultInfo = preparedQuery.getQueryResultInfo();
                         if (queryResultInfo != null && queryResultInfo.getType() == QueryResult.Type.JSON) {
-                            return rs.next() ? transformJsonQueryResult(rs, queryResultInfo.getColumnName(), persistentEntity, loadListener, resultType) : null;
+                            return rs.next() ? transformJsonQueryResult(rs, preparedQuery.getDialect(), queryResultInfo.getColumnName(), persistentEntity, resultType, loadListener) : null;
                         } else {
                             final Set<JoinPath> joinFetchPaths = preparedQuery.getJoinFetchPaths();
                             SqlResultEntityTypeMapper<ResultSet, R> mapper = new SqlResultEntityTypeMapper<>(
@@ -347,7 +360,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                             QueryResultInfo queryResultInfo = preparedQuery.getQueryResultInfo();
                             if (queryResultInfo != null && queryResultInfo.getType() == QueryResult.Type.JSON) {
                                 String column = queryResultInfo.getColumnName();
-                                return transformJsonQueryResult(rs, column, persistentEntity, null, resultType);
+                                return transformJsonQueryResult(rs, preparedQuery.getDialect(), column, persistentEntity, resultType, null);
                             } else {
                                 boolean isRawQuery = preparedQuery.isRawQuery();
                                 TypeMapper<ResultSet, R> introspectedDataMapper = new SqlDTOMapper<>(
@@ -433,7 +446,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                     QueryResultInfo queryResultInfo = preparedQuery.getQueryResultInfo();
                     if (queryResultInfo != null && queryResultInfo.getType() == QueryResult.Type.JSON) {
                         String column = queryResultInfo.getColumnName();
-                        mapper = new JsonQueryResultMapper<>(column, persistentEntity, columnNameResultSetReader, objectMapper, null);
+                        mapper = createJsonQueryResultMapper(preparedQuery.getDialect(), column, persistentEntity, null);
                     } else {
                         boolean isRawQuery = preparedQuery.isRawQuery();
                         mapper = new SqlDTOMapper<>(
@@ -455,7 +468,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                     QueryResultInfo queryResultInfo = preparedQuery.getQueryResultInfo();
                     if (queryResultInfo != null && queryResultInfo.getType() == QueryResult.Type.JSON) {
                         String column = queryResultInfo.getColumnName();
-                        mapper = new JsonQueryResultMapper<>(column, persistentEntity, columnNameResultSetReader, objectMapper, loadListener);
+                        mapper = createJsonQueryResultMapper(preparedQuery.getDialect(), column, persistentEntity, loadListener);
                     } else {
                         Set<JoinPath> joinFetchPaths = preparedQuery.getJoinFetchPaths();
                         SqlResultEntityTypeMapper<ResultSet, R> entityTypeMapper = new SqlResultEntityTypeMapper<>(
@@ -996,10 +1009,46 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         return isSupportsBatchInsert(persistentEntity, jdbcOperationContext.dialect);
     }
 
-    private <R, T> R transformJsonQueryResult(ResultSet rs, String columnName, RuntimePersistentEntity<T> persistentEntity, BiFunction<RuntimePersistentEntity<Object>, Object, Object> loadListener, Class<R> type) throws SQLException {
-        JsonQueryResultMapper<T, ResultSet, R> mapper = new JsonQueryResultMapper(columnName, persistentEntity, columnNameResultSetReader,
-            objectMapper, loadListener);
+    private <R, T> R transformJsonQueryResult(ResultSet rs, Dialect dialect, String columnName,
+                                              RuntimePersistentEntity<T> persistentEntity, Class<R> type,
+                                              BiFunction<RuntimePersistentEntity<Object>, Object, Object> loadListener) throws SQLException {
+        JsonQueryResultMapper<T, ResultSet, R> mapper = createJsonQueryResultMapper(dialect, columnName, persistentEntity, loadListener);
         return mapper.map(rs, type);
+    }
+
+    @Override
+    protected <T> JsonQueryResultMapper createJsonQueryResultMapperForJsonView(Dialect dialect, String columnName, RuntimePersistentEntity<T> persistentEntity,
+                                                                                BiFunction<RuntimePersistentEntity<Object>, Object, Object> loadListener) {
+        if (dialect == Dialect.ORACLE) {
+            if (oracleOsonMapper != null && oracleTextMapper != null) {
+                return new OracleJsonQueryResultMapper(columnName, persistentEntity, columnNameResultSetReader,
+                    oracleTextMapper, loadListener);
+            }
+            throw new IllegalStateException("In order to deserialize Oracle Json View Micronaut Oracle object and text mappers must be on the class path.");
+        }
+        return super.createJsonQueryResultMapperForJsonView(dialect, columnName, persistentEntity, loadListener);
+    }
+
+    /**
+     * Oracle Jdbc implementation for Oracle Json View query result mapper.
+     * @param <T> the entity type
+     */
+    private final class OracleJsonQueryResultMapper<T> extends JsonQueryResultMapper<T, ResultSet, String> {
+
+        public OracleJsonQueryResultMapper(@NonNull java.lang.String columnName, @NonNull RuntimePersistentEntity<T> entity, @NonNull ResultReader<ResultSet, java.lang.String> resultReader, @NonNull ObjectMapper objectMapper,
+                                           @Nullable BiFunction<RuntimePersistentEntity<Object>, Object, Object> eventListener) {
+            super(columnName, entity, resultReader, objectMapper, eventListener);
+        }
+
+        @Override
+        protected byte[] readBytes(ResultSet rs, java.lang.String columnName) {
+            try {
+                OracleJsonObject object = rs.getObject(columnName, OracleJsonObject.class);
+                return oracleTextMapper.writeValueAsBytes(object);
+            } catch (Exception e) {
+                throw new DataAccessException("Error reading object for name [" + columnName + "] from result set: " + e.getMessage(), e);
+            }
+        }
     }
 
     private final class JdbcParameterBinder implements BindableParametersStoredQuery.Binder {
