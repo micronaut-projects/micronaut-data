@@ -76,6 +76,7 @@ import io.micronaut.data.runtime.operations.internal.AbstractSyncEntitiesOperati
 import io.micronaut.data.runtime.operations.internal.AbstractSyncEntityOperations;
 import io.micronaut.data.runtime.operations.internal.OperationContext;
 import io.micronaut.data.runtime.operations.internal.SyncCascadeOperations;
+import io.micronaut.http.codec.MediaTypeCodec;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import jakarta.inject.Named;
 import org.bson.BsonDocument;
@@ -127,6 +128,7 @@ public final class DefaultMongoRepositoryOperations extends AbstractMongoReposit
      *
      * @param serverName                  The server name
      * @param beanContext                 The bean context
+     * @param codecs                      The media type codecs
      * @param dateTimeProvider            The date time provider
      * @param runtimeEntityRegistry       The entity registry
      * @param conversionService           The conversion service
@@ -137,6 +139,7 @@ public final class DefaultMongoRepositoryOperations extends AbstractMongoReposit
      */
     DefaultMongoRepositoryOperations(@Nullable @Parameter String serverName,
                                      BeanContext beanContext,
+                                     List<MediaTypeCodec> codecs,
                                      DateTimeProvider<Object> dateTimeProvider,
                                      RuntimeEntityRegistry runtimeEntityRegistry,
                                      DataConversionService conversionService,
@@ -144,7 +147,7 @@ public final class DefaultMongoRepositoryOperations extends AbstractMongoReposit
                                      MongoClient mongoClient,
                                      MongoCollectionNameProvider collectionNameProvider,
                                      @Named("io") @Nullable ExecutorService executorService) {
-        super(dateTimeProvider, runtimeEntityRegistry, conversionService, attributeConverterRegistry, collectionNameProvider,
+        super(codecs, dateTimeProvider, runtimeEntityRegistry, conversionService, attributeConverterRegistry, collectionNameProvider,
             beanContext.getBean(MongoDatabaseNameProvider.class, "Primary".equals(serverName) ? null : Qualifiers.byName(serverName)));
         this.mongoClient = mongoClient;
         this.cascadeOperations = new SyncCascadeOperations<>(conversionService, this);

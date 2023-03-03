@@ -77,10 +77,10 @@ import io.micronaut.data.runtime.operations.internal.OperationContext;
 import io.micronaut.data.runtime.operations.internal.ReactiveCascadeOperations;
 import io.micronaut.data.runtime.operations.internal.query.BindableParametersStoredQuery;
 import io.micronaut.data.runtime.operations.internal.sql.AbstractSqlRepositoryOperations;
+import io.micronaut.http.codec.MediaTypeCodec;
 import io.micronaut.data.runtime.operations.internal.sql.SqlPreparedQuery;
 import io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery;
 import io.micronaut.data.runtime.support.AbstractConversionContext;
-import io.micronaut.serde.ObjectMapper;
 import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.exceptions.NoTransactionException;
 import io.micronaut.transaction.exceptions.TransactionSystemException;
@@ -158,6 +158,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
      *
      * @param dataSourceName             The data source name
      * @param connectionFactory          The associated connection factory
+     * @param mediaTypeCodecList         The media type codec list
      * @param dateTimeProvider           The date time provider
      * @param runtimeEntityRegistry      The runtime entity registry
      * @param applicationContext         The bean context
@@ -167,12 +168,12 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
      * @param schemaTenantResolver       The schema tenant resolver
      * @param schemaHandler              The schema handler
      * @param configuration              The configuration
-     * @param objectMapper               The object mapper
      */
     @Internal
     protected DefaultR2dbcRepositoryOperations(
         @Parameter String dataSourceName,
         ConnectionFactory connectionFactory,
+        List<MediaTypeCodec> mediaTypeCodecList,
         @NonNull DateTimeProvider<Object> dateTimeProvider,
         RuntimeEntityRegistry runtimeEntityRegistry,
         ApplicationContext applicationContext,
@@ -181,19 +182,18 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         AttributeConverterRegistry attributeConverterRegistry,
         @Nullable SchemaTenantResolver schemaTenantResolver,
         R2dbcSchemaHandler schemaHandler,
-        @Parameter DataR2dbcConfiguration configuration,
-        ObjectMapper objectMapper) {
+        @Parameter DataR2dbcConfiguration configuration) {
         super(
             dataSourceName,
             new ColumnNameR2dbcResultReader(conversionService),
             new ColumnIndexR2dbcResultReader(conversionService),
             new R2dbcQueryStatement(conversionService),
+            mediaTypeCodecList,
             dateTimeProvider,
             runtimeEntityRegistry,
             applicationContext,
             conversionService,
-            attributeConverterRegistry,
-            objectMapper);
+            attributeConverterRegistry);
         this.connectionFactory = connectionFactory;
         this.ioExecutorService = executorService;
         this.schemaTenantResolver = schemaTenantResolver;
@@ -691,14 +691,14 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                     QueryResultInfo queryResultInfo = preparedQuery.getQueryResultInfo();
                     if (queryResultInfo != null && queryResultInfo.getType() == QueryResult.Type.JSON) {
                         JsonQueryResultMapper<T, Row, R> jsonQueryResultMapper = new JsonQueryResultMapper(queryResultInfo.getColumnName(), persistentEntity, columnNameResultSetReader,
-                            objectMapper, loadListener);
+                            jsonCodec, loadListener);
                         return executeAndMapEachRow(statement, row -> jsonQueryResultMapper.map(row, resultType));
                     }
                     SqlResultEntityTypeMapper<Row, R> mapper = new SqlResultEntityTypeMapper<>(
                         persistentEntity,
                         columnNameResultSetReader,
                         preparedQuery.getJoinFetchPaths(),
-                        objectMapper,
+                        jsonCodec,
                         loadListener,
                         conversionService);
                     SqlResultEntityTypeMapper.PushingMapper<Row, R> rowsMapper = mapper.readOneWithJoins();
@@ -715,13 +715,13 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                     QueryResultInfo queryResultInfo = preparedQuery.getQueryResultInfo();
                     if (queryResultInfo != null && queryResultInfo.getType() == QueryResult.Type.JSON) {
                         mapper = new JsonQueryResultMapper(queryResultInfo.getColumnName(), persistentEntity, columnNameResultSetReader,
-                            objectMapper, null);
+                            jsonCodec, null);
                     } else {
                         mapper = new SqlDTOMapper<>(
                             persistentEntity,
                             isRawQuery ? getEntity(preparedQuery.getResultType()) : persistentEntity,
                             columnNameResultSetReader,
-                            objectMapper,
+                            jsonCodec,
                             conversionService
                         );
                     }
@@ -759,14 +759,14 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                         QueryResultInfo queryResultInfo = preparedQuery.getQueryResultInfo();
                         if (queryResultInfo != null && queryResultInfo.getType() == QueryResult.Type.JSON) {
                             mapper = new JsonQueryResultMapper(queryResultInfo.getColumnName(), persistentEntity, columnNameResultSetReader,
-                                objectMapper, null);
+                                jsonCodec, null);
                         } else {
                             boolean isRawQuery = preparedQuery.isRawQuery();
                             mapper = new SqlDTOMapper<>(
                                 persistentEntity,
                                 isRawQuery ? getEntity(preparedQuery.getResultType()) : persistentEntity,
                                 columnNameResultSetReader,
-                                objectMapper,
+                                jsonCodec,
                                 conversionService
                             );
                         }
@@ -781,14 +781,14 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                         QueryResultInfo queryResultInfo = preparedQuery.getQueryResultInfo();
                         if (queryResultInfo != null && queryResultInfo.getType() == QueryResult.Type.JSON) {
                             mapper = new JsonQueryResultMapper(queryResultInfo.getColumnName(), persistentEntity, columnNameResultSetReader,
-                                objectMapper, loadListener);
+                                jsonCodec, loadListener);
                         } else {
                             Set<JoinPath> joinFetchPaths = preparedQuery.getJoinFetchPaths();
                             SqlResultEntityTypeMapper<Row, R> entityTypeMapper = new SqlResultEntityTypeMapper<>(
                                 getEntity(resultType),
                                 columnNameResultSetReader,
                                 joinFetchPaths,
-                                objectMapper,
+                                jsonCodec,
                                 loadListener,
                                 conversionService);
                             boolean onlySingleEndedJoins = isOnlySingleEndedJoins(persistentEntity, joinFetchPaths);

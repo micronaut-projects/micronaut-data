@@ -46,6 +46,7 @@ import io.micronaut.data.runtime.operations.internal.AbstractRepositoryOperation
 import io.micronaut.data.runtime.query.MethodContextAwareStoredQueryDecorator;
 import io.micronaut.data.runtime.query.PreparedQueryDecorator;
 import io.micronaut.data.runtime.query.internal.QueryResultStoredQuery;
+import io.micronaut.http.codec.MediaTypeCodec;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
 import org.bson.BsonNull;
@@ -54,6 +55,7 @@ import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 import org.slf4j.Logger;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -78,6 +80,7 @@ abstract class AbstractMongoRepositoryOperations<Dtb> extends AbstractRepository
     /**
      * Default constructor.
      *
+     * @param codecs                     The media type codecs
      * @param dateTimeProvider           The date time provider
      * @param runtimeEntityRegistry      The entity registry
      * @param conversionService          The conversion service
@@ -85,13 +88,14 @@ abstract class AbstractMongoRepositoryOperations<Dtb> extends AbstractRepository
      * @param collectionNameProvider     The collection name provider
      * @param databaseNameProvider       The database name provider
      */
-    protected AbstractMongoRepositoryOperations(DateTimeProvider<Object> dateTimeProvider,
+    protected AbstractMongoRepositoryOperations(List<MediaTypeCodec> codecs,
+                                                DateTimeProvider<Object> dateTimeProvider,
                                                 RuntimeEntityRegistry runtimeEntityRegistry,
                                                 DataConversionService conversionService,
                                                 AttributeConverterRegistry attributeConverterRegistry,
                                                 MongoCollectionNameProvider collectionNameProvider,
                                                 MongoDatabaseNameProvider databaseNameProvider) {
-        super(dateTimeProvider, runtimeEntityRegistry, conversionService, attributeConverterRegistry);
+        super(codecs, dateTimeProvider, runtimeEntityRegistry, conversionService, attributeConverterRegistry);
         this.collectionNameProvider = collectionNameProvider;
         this.databaseNameProvider = databaseNameProvider;
     }
