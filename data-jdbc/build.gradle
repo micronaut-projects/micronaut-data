@@ -12,7 +12,7 @@ dependencies {
 
     api projects.dataRuntime
 
-    implementation mnSerde.micronaut.serde.support
+    compileOnly mnSerde.micronaut.serde.support
     implementation mnSql.micronaut.jdbc
 
     compileOnly mnRxjava2.micronaut.rxjava2
@@ -63,6 +63,7 @@ dependencies {
 
     // Needed for H2EagerContextSpec
     testImplementation("org.jetbrains.kotlin:kotlin-reflect:1.8.10")
+    testImplementation mnSerde.micronaut.serde.support
 }
 
 micronaut {

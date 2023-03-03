@@ -18,7 +18,7 @@ dependencies {
     api libs.r2dbc.spi
 
     implementation mn.micronaut.context
-    implementation mnSerde.micronaut.serde.support
+    compileOnly mnSerde.micronaut.serde.support
     implementation mnReactor.micronaut.reactor
 
     testImplementation projects.dataTck
@@ -79,6 +79,7 @@ dependencies {
     testResourcesService libs.drivers.jdbc.mssql
 
     testImplementation libs.micronaut.testresources.client
+    testImplementation mnSerde.micronaut.serde.support
 }
 
 micronaut {
