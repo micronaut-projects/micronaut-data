@@ -10,4 +10,5 @@ dependencies {
     implementation "io.micronaut.sql:micronaut-jdbc-hikari"
     runtimeOnly "com.h2database:h2"
     runtimeOnly mn.snakeyaml
+    runtimeOnly mnSerde.micronaut.serde.support
 }
