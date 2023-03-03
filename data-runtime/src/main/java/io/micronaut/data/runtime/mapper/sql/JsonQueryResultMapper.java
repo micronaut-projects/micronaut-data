@@ -87,7 +87,7 @@ public class JsonQueryResultMapper<T, RS, R> implements SqlTypeMapper<RS, R> {
      * @return the bytes read from the result set column
      */
     protected byte[] readBytes(RS object, String columnName) {
-        return resultReader.readBytes(object, columnName);
+        return resultReader.getRequiredValue(object, columnName, byte[].class);
     }
 
     private <K> K triggerPostLoad(RuntimePersistentEntity<?> persistentEntity, K entity) {

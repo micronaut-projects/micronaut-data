@@ -19,7 +19,7 @@ dependencies {
 
     implementation mn.micronaut.context
     implementation mnSerde.micronaut.serde.support
-    implementation mnSerde.micronaut.serde.oracle.jdbc.json
+    compileOnly mnSerde.micronaut.serde.oracle.jdbc.json
     implementation mnReactor.micronaut.reactor
 
     compileOnly libs.drivers.r2dbc.oracle

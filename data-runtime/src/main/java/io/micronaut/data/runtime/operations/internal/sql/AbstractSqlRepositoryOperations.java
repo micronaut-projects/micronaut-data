@@ -64,6 +64,7 @@ import io.micronaut.inject.BeanDefinition;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import io.micronaut.serde.ObjectMapper;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -97,6 +98,9 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
         PreparedQueryDecorator,
         MethodContextAwareStoredQueryDecorator,
         HintsCapableRepository {
+
+    private static final Logger LOG = LoggerFactory.getLogger(AbstractSqlRepositoryOperations.class);
+
     protected static final Logger QUERY_LOG = DataSettings.QUERY_LOG;
     protected final String dataSourceName;
     @SuppressWarnings("WeakerAccess")
@@ -513,7 +517,9 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
             if (jsonViewQueryResultMapperFactory != null) {
                 return jsonViewQueryResultMapperFactory.createJsonViewQueryResultMapper(columnName, persistentEntity, columnNameResultSetReader, objectMapper, loadListener);
             }
-            throw new UnsupportedOperationException("Dialect " + dialect + " does not support JsonView.");
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Using default JSON view query result mapper for dialect: {} as custom is not configured.", dialect);
+            }
         }
         return createDefaultJsonQueryResultMapper(columnName, persistentEntity, loadListener);
     }
