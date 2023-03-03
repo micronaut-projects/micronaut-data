@@ -24,6 +24,7 @@ import io.micronaut.data.runtime.mapper.ResultReader;
 import io.micronaut.serde.ObjectMapper;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.function.BiFunction;
 
 /**
@@ -38,10 +39,10 @@ import java.util.function.BiFunction;
  */
 public class JsonQueryResultMapper<T, RS, R> implements SqlTypeMapper<RS, R> {
 
-    private final String columnName;
-    private final RuntimePersistentEntity<T> entity;
+    protected final String columnName;
+    protected final RuntimePersistentEntity<T> entity;
     private final ResultReader<RS, String> resultReader;
-    private final ObjectMapper objectMapper;
+    protected final ObjectMapper objectMapper;
     private final BiFunction<RuntimePersistentEntity<Object>, Object, Object> eventListener;
 
     public JsonQueryResultMapper(@NonNull String columnName, @NonNull RuntimePersistentEntity<T> entity, @NonNull ResultReader<RS, String> resultReader, @NonNull ObjectMapper objectMapper,
@@ -55,8 +56,8 @@ public class JsonQueryResultMapper<T, RS, R> implements SqlTypeMapper<RS, R> {
     }
 
     @Override
-    public R map(RS object, Class<R> type) throws DataAccessException {
-        byte[] columnData = readBytes(object, columnName);
+    public R map(RS rs, Class<R> type) throws DataAccessException {
+        byte[] columnData = readBytes(rs, columnName);
         R entityInstance;
         try {
             entityInstance = objectMapper.readValue(columnData, type);
@@ -74,23 +75,24 @@ public class JsonQueryResultMapper<T, RS, R> implements SqlTypeMapper<RS, R> {
         throw new UnsupportedOperationException("Custom field read is not supported");
     }
 
+    /**
+     * Reads bytes from the result set from given column name.
+     *
+     * @param rs the result set
+     * @param columnName the column name
+     * @return the bytes read from the result set column
+     */
+    protected byte[] readBytes(RS rs, String columnName) {
+        String data = resultReader.readString(rs, columnName);
+        return data == null ? null : data.getBytes(StandardCharsets.UTF_8);
+    }
+
     @Override
     public boolean hasNext(RS resultSet) {
         return resultReader.next(resultSet);
     }
 
-    /**
-     * Reads bytes from the result set from given column name.
-     *
-     * @param object the result set
-     * @param columnName the column name
-     * @return the bytes read from the result set column
-     */
-    protected byte[] readBytes(RS object, String columnName) {
-        return resultReader.getRequiredValue(object, columnName, byte[].class);
-    }
-
-    private <K> K triggerPostLoad(RuntimePersistentEntity<?> persistentEntity, K entity) {
+    protected <K> K triggerPostLoad(RuntimePersistentEntity<?> persistentEntity, K entity) {
         K finalEntity;
         if (eventListener != null && persistentEntity.hasPostLoadEventListeners()) {
             finalEntity = (K) eventListener.apply((RuntimePersistentEntity<Object>) persistentEntity, entity);
