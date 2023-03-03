@@ -101,6 +101,7 @@ import io.r2dbc.spi.Row;
 import io.r2dbc.spi.Statement;
 import jakarta.inject.Named;
 import oracle.r2dbc.OracleR2dbcObject;
+import oracle.sql.json.OracleJsonObject;
 import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -648,7 +649,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         @Override
         protected byte[] readBytes(Row rs, java.lang.String columnName) {
             try {
-                OracleR2dbcObject object = rs.get(columnName, OracleR2dbcObject.class);
+                OracleJsonObject object = rs.get(columnName, OracleJsonObject.class);
                 return oracleTextMapper.writeValueAsBytes(object);
             } catch (Exception e) {
                 throw new DataAccessException("Error reading object for name [" + columnName + "] from result set: " + e.getMessage(), e);
