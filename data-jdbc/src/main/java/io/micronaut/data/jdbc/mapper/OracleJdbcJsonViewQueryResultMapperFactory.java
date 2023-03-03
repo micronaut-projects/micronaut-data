@@ -26,7 +26,7 @@ import io.micronaut.data.runtime.mapper.ResultReader;
 import io.micronaut.data.runtime.mapper.sql.JsonQueryResultMapper;
 import io.micronaut.data.runtime.mapper.sql.JsonViewQueryResultMapperFactory;
 import io.micronaut.serde.ObjectMapper;
-import io.micronaut.serde.oracle.jdbc.json.OracleJdbcJsonTextObjectMapper;
+import io.micronaut.serde.oracle.jdbc.json.OracleJdbcJsonBinaryObjectMapper;
 import jakarta.inject.Singleton;
 import oracle.sql.json.OracleJsonObject;
 
@@ -42,19 +42,19 @@ import java.util.function.BiFunction;
  * @param <T> the entity type
  */
 @Singleton
-@Requires(classes = OracleJdbcJsonTextObjectMapper.class)
+@Requires(classes = OracleJdbcJsonBinaryObjectMapper.class)
 @Internal
 class OracleJdbcJsonViewQueryResultMapperFactory<T> implements JsonViewQueryResultMapperFactory<T, ResultSet, String> {
 
-    private final OracleJdbcJsonTextObjectMapper oracleTextMapper;
+    private final OracleJdbcJsonBinaryObjectMapper oracleOsonMapper;
 
     /**
      * The default constructor.
      *
-     * @param oracleTextMapper the oracle JSON object mapper
+     * @param oracleOsonMapper the oracle JSON object mapper
      */
-    public OracleJdbcJsonViewQueryResultMapperFactory(OracleJdbcJsonTextObjectMapper oracleTextMapper) {
-        this.oracleTextMapper = oracleTextMapper;
+    public OracleJdbcJsonViewQueryResultMapperFactory(OracleJdbcJsonBinaryObjectMapper oracleOsonMapper) {
+        this.oracleOsonMapper = oracleOsonMapper;
     }
 
     @Override
@@ -64,7 +64,7 @@ class OracleJdbcJsonViewQueryResultMapperFactory<T> implements JsonViewQueryResu
 
     @Override
     public JsonQueryResultMapper<T, ResultSet, String> createJsonViewQueryResultMapper(String columnName, RuntimePersistentEntity<T> entity, ResultReader<ResultSet, String> resultReader, ObjectMapper objectMapper, BiFunction<RuntimePersistentEntity<Object>, Object, Object> eventListener) {
-        return new OracleJsonQueryResultMapper<>(columnName, entity, resultReader, objectMapper, eventListener);
+        return new OracleJsonQueryResultMapper<>(columnName, entity, resultReader, oracleOsonMapper, eventListener);
     }
 
     /**
@@ -82,7 +82,7 @@ class OracleJdbcJsonViewQueryResultMapperFactory<T> implements JsonViewQueryResu
         protected byte[] readBytes(ResultSet rs, java.lang.String columnName) {
             try {
                 OracleJsonObject object = rs.getObject(columnName, OracleJsonObject.class);
-                return oracleTextMapper.writeValueAsBytes(object);
+                return oracleOsonMapper.writeValueAsBytes(object);
             } catch (Exception e) {
                 throw new DataAccessException("Error reading object for name [" + columnName + "] from result set: " + e.getMessage(), e);
             }
