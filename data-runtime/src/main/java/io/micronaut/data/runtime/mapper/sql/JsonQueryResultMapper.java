@@ -39,10 +39,10 @@ import java.util.function.BiFunction;
  */
 public class JsonQueryResultMapper<T, RS, R> implements SqlTypeMapper<RS, R> {
 
-    protected final String columnName;
-    protected final RuntimePersistentEntity<T> entity;
+    private final String columnName;
+    private final RuntimePersistentEntity<T> entity;
     private final ResultReader<RS, String> resultReader;
-    protected final ObjectMapper objectMapper;
+    private final ObjectMapper objectMapper;
     private final BiFunction<RuntimePersistentEntity<Object>, Object, Object> eventListener;
 
     public JsonQueryResultMapper(@NonNull String columnName, @NonNull RuntimePersistentEntity<T> entity, @NonNull ResultReader<RS, String> resultReader, @NonNull ObjectMapper objectMapper,
@@ -92,7 +92,7 @@ public class JsonQueryResultMapper<T, RS, R> implements SqlTypeMapper<RS, R> {
         return resultReader.next(resultSet);
     }
 
-    protected <K> K triggerPostLoad(RuntimePersistentEntity<?> persistentEntity, K entity) {
+    private <K> K triggerPostLoad(RuntimePersistentEntity<?> persistentEntity, K entity) {
         K finalEntity;
         if (eventListener != null && persistentEntity.hasPostLoadEventListeners()) {
             finalEntity = (K) eventListener.apply((RuntimePersistentEntity<Object>) persistentEntity, entity);
