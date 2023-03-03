@@ -21,6 +21,7 @@ import io.micronaut.context.BeanContext;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.AutoPopulated;
 import io.micronaut.data.annotation.JsonView;
 import io.micronaut.data.annotation.Repository;
@@ -53,6 +54,7 @@ import io.micronaut.data.runtime.date.DateTimeProvider;
 import io.micronaut.data.runtime.mapper.QueryStatement;
 import io.micronaut.data.runtime.mapper.ResultReader;
 import io.micronaut.data.runtime.mapper.sql.JsonQueryResultMapper;
+import io.micronaut.data.runtime.mapper.sql.JsonViewQueryResultMapperFactory;
 import io.micronaut.data.runtime.operations.internal.AbstractRepositoryOperations;
 import io.micronaut.data.runtime.query.MethodContextAwareStoredQueryDecorator;
 import io.micronaut.data.runtime.query.PreparedQueryDecorator;
@@ -68,12 +70,14 @@ import java.nio.charset.StandardCharsets;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -107,20 +111,22 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
     private final Map<QueryKey, SqlStoredQuery> entityInserts = new ConcurrentHashMap<>(10);
     private final Map<QueryKey, SqlStoredQuery> entityUpdates = new ConcurrentHashMap<>(10);
     private final Map<Association, String> associationInserts = new ConcurrentHashMap<>(10);
+    private final Map<Dialect, JsonViewQueryResultMapperFactory> jsonViewQueryResultMapperFactoryMap;
 
     /**
      * Default constructor.
      *
-     * @param dataSourceName             The datasource name
-     * @param columnNameResultSetReader  The column name result reader
-     * @param columnIndexResultSetReader The column index result reader
-     * @param preparedStatementWriter    The prepared statement writer
-     * @param dateTimeProvider           The date time provider
-     * @param runtimeEntityRegistry      The entity registry
-     * @param beanContext                The bean context
-     * @param conversionService          The conversion service
-     * @param attributeConverterRegistry The attribute converter registry
-     * @param objectMapper               The object mapper
+     * @param dataSourceName                        The datasource name
+     * @param columnNameResultSetReader             The column name result reader
+     * @param columnIndexResultSetReader            The column index result reader
+     * @param preparedStatementWriter               The prepared statement writer
+     * @param dateTimeProvider                      The date time provider
+     * @param runtimeEntityRegistry                 The entity registry
+     * @param beanContext                           The bean context
+     * @param conversionService                     The conversion service
+     * @param attributeConverterRegistry            The attribute converter registry
+     * @param objectMapper                          The object mapper
+     * @param jsonViewQueryResultMapperFactories    The factories for JSON view query result mappers
      */
     protected AbstractSqlRepositoryOperations(
             String dataSourceName,
@@ -132,13 +138,19 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
             BeanContext beanContext,
             DataConversionService conversionService,
             AttributeConverterRegistry attributeConverterRegistry,
-            ObjectMapper objectMapper) {
+            ObjectMapper objectMapper,
+            List<JsonViewQueryResultMapperFactory> jsonViewQueryResultMapperFactories) {
         super(dateTimeProvider, runtimeEntityRegistry, conversionService, attributeConverterRegistry);
         this.dataSourceName = dataSourceName;
         this.columnNameResultSetReader = columnNameResultSetReader;
         this.columnIndexResultSetReader = columnIndexResultSetReader;
         this.preparedStatementWriter = preparedStatementWriter;
         this.objectMapper = objectMapper;
+        if (CollectionUtils.isEmpty(jsonViewQueryResultMapperFactories)) {
+            jsonViewQueryResultMapperFactoryMap = Collections.emptyMap();
+        } else {
+            jsonViewQueryResultMapperFactoryMap = jsonViewQueryResultMapperFactories.stream().collect(Collectors.toMap(JsonViewQueryResultMapperFactory::getDialect, Function.identity()));
+        }
         Collection<BeanDefinition<Object>> beanDefinitions = beanContext
                 .getBeanDefinitions(Object.class, Qualifiers.byStereotype(Repository.class));
         for (BeanDefinition<Object> beanDefinition : beanDefinitions) {
@@ -497,29 +509,13 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
     protected final <T> JsonQueryResultMapper createJsonQueryResultMapper(Dialect dialect, String columnName,
                                                                   RuntimePersistentEntity<T> persistentEntity, BiFunction<RuntimePersistentEntity<Object>, Object, Object> loadListener) {
         if (persistentEntity.getAnnotationMetadata().hasAnnotation(JsonView.class)) {
-            if (dialect.supportsJsonView()) {
-                return createJsonQueryResultMapperForJsonView(dialect, columnName, persistentEntity, loadListener);
+            JsonViewQueryResultMapperFactory jsonViewQueryResultMapperFactory = jsonViewQueryResultMapperFactoryMap.get(dialect);
+            if (jsonViewQueryResultMapperFactory != null) {
+                return jsonViewQueryResultMapperFactory.createJsonViewQueryResultMapper(columnName, persistentEntity, columnNameResultSetReader, objectMapper, loadListener);
             }
             throw new UnsupportedOperationException("Dialect " + dialect + " does not support JsonView.");
         }
         return createDefaultJsonQueryResultMapper(columnName, persistentEntity, loadListener);
-    }
-
-    /**
-     * Creates {@link JsonQueryResultMapper} specific for {@link JsonView} deserialization.
-     *
-     * @param dialect the SQL dialect
-     * @param columnName the column name where JSON View result is stored
-     * @param persistentEntity the persistent entity
-     * @param loadListener the load listener if needed after entity loaded
-     * @return the {@link JsonQueryResultMapper} to deserialize JSON View result
-     * @param <T> the entity type
-     */
-    protected <T> JsonQueryResultMapper createJsonQueryResultMapperForJsonView(Dialect dialect, String columnName, RuntimePersistentEntity<T> persistentEntity,
-                                                                             BiFunction<RuntimePersistentEntity<Object>, Object, Object> loadListener) {
-        // By default, JsonView is not supported and extending class can override implementation if some
-        // dialects support it. For Jdbc and R2Dbc Oracle Json View support is implemented.
-        throw new UnsupportedOperationException("Dialect " + dialect + " does not support JsonView.");
     }
 
     private <T> JsonQueryResultMapper createDefaultJsonQueryResultMapper(String columnName, RuntimePersistentEntity<T> persistentEntity,

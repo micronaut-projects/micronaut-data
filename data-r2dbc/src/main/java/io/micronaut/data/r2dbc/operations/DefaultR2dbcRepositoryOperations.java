@@ -65,9 +65,9 @@ import io.micronaut.data.r2dbc.mapper.R2dbcQueryStatement;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.convert.RuntimePersistentPropertyConversionContext;
 import io.micronaut.data.runtime.date.DateTimeProvider;
-import io.micronaut.data.runtime.mapper.ResultReader;
 import io.micronaut.data.runtime.mapper.TypeMapper;
 import io.micronaut.data.runtime.mapper.sql.JsonQueryResultMapper;
+import io.micronaut.data.runtime.mapper.sql.JsonViewQueryResultMapperFactory;
 import io.micronaut.data.runtime.mapper.sql.SqlDTOMapper;
 import io.micronaut.data.runtime.mapper.sql.SqlResultEntityTypeMapper;
 import io.micronaut.data.runtime.multitenancy.SchemaTenantResolver;
@@ -82,8 +82,6 @@ import io.micronaut.data.runtime.operations.internal.sql.SqlPreparedQuery;
 import io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery;
 import io.micronaut.data.runtime.support.AbstractConversionContext;
 import io.micronaut.serde.ObjectMapper;
-import io.micronaut.serde.oracle.jdbc.json.OracleJdbcJsonBinaryObjectMapper;
-import io.micronaut.serde.oracle.jdbc.json.OracleJdbcJsonTextObjectMapper;
 import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.exceptions.NoTransactionException;
 import io.micronaut.transaction.exceptions.TransactionSystemException;
@@ -100,8 +98,6 @@ import io.r2dbc.spi.Result;
 import io.r2dbc.spi.Row;
 import io.r2dbc.spi.Statement;
 import jakarta.inject.Named;
-import oracle.r2dbc.OracleR2dbcObject;
-import oracle.sql.json.OracleJsonObject;
 import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -157,28 +153,23 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
     private final SchemaTenantResolver schemaTenantResolver;
     private final R2dbcSchemaHandler schemaHandler;
     private final DataR2dbcConfiguration configuration;
-    @Nullable
-    private final OracleJdbcJsonBinaryObjectMapper oracleOsonMapper;
-    @Nullable
-    private final OracleJdbcJsonTextObjectMapper oracleTextMapper;
 
     /**
      * Default constructor.
      *
-     * @param dataSourceName             The data source name
-     * @param connectionFactory          The associated connection factory
-     * @param dateTimeProvider           The date time provider
-     * @param runtimeEntityRegistry      The runtime entity registry
-     * @param applicationContext         The bean context
-     * @param executorService            The executor
-     * @param conversionService          The conversion service
-     * @param attributeConverterRegistry The attribute converter registry
-     * @param schemaTenantResolver       The schema tenant resolver
-     * @param schemaHandler              The schema handler
-     * @param configuration              The configuration
-     * @param objectMapper               The object mapper
-     * @param oracleOsonMapper           Oracle JSON binary object mapper
-     * @param oracleTextMapper           Oracle JSON text object mapper
+     * @param dataSourceName                        The data source name
+     * @param connectionFactory                     The associated connection factory
+     * @param dateTimeProvider                      The date time provider
+     * @param runtimeEntityRegistry                 The runtime entity registry
+     * @param applicationContext                    The bean context
+     * @param executorService                       The executor
+     * @param conversionService                     The conversion service
+     * @param attributeConverterRegistry            The attribute converter registry
+     * @param schemaTenantResolver                  The schema tenant resolver
+     * @param schemaHandler                         The schema handler
+     * @param configuration                         The configuration
+     * @param objectMapper                          The object mapper
+     * @param jsonViewQueryResultMapperFactories    The factories for JSON view query result mappers
      */
     @Internal
     protected DefaultR2dbcRepositoryOperations(
@@ -194,8 +185,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         R2dbcSchemaHandler schemaHandler,
         @Parameter DataR2dbcConfiguration configuration,
         ObjectMapper objectMapper,
-        @Nullable OracleJdbcJsonBinaryObjectMapper oracleOsonMapper,
-        @Nullable OracleJdbcJsonTextObjectMapper oracleTextMapper) {
+        List<JsonViewQueryResultMapperFactory> jsonViewQueryResultMapperFactories) {
         super(
             dataSourceName,
             new ColumnNameR2dbcResultReader(conversionService),
@@ -206,7 +196,8 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             applicationContext,
             conversionService,
             attributeConverterRegistry,
-            objectMapper);
+            objectMapper,
+            jsonViewQueryResultMapperFactories);
         this.connectionFactory = connectionFactory;
         this.ioExecutorService = executorService;
         this.schemaTenantResolver = schemaTenantResolver;
@@ -222,8 +213,6 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         this.txStatusKey = ReactorReactiveTransactionOperations.TRANSACTION_STATUS_KEY_PREFIX + "." + NAME + "." + name;
         this.txDefinitionKey = ReactorReactiveTransactionOperations.TRANSACTION_DEFINITION_KEY_PREFIX + "." + NAME + "." + name;
         this.currentConnectionKey = "io.micronaut." + NAME + ".connection." + name;
-        this.oracleOsonMapper = oracleOsonMapper;
-        this.oracleTextMapper = oracleTextMapper;
     }
 
     @Override
@@ -555,19 +544,6 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             });
     }
 
-    @Override
-    protected <T> JsonQueryResultMapper createJsonQueryResultMapperForJsonView(Dialect dialect, String columnName, RuntimePersistentEntity<T> persistentEntity,
-                                                                               BiFunction<RuntimePersistentEntity<Object>, Object, Object> loadListener) {
-        if (dialect == Dialect.ORACLE) {
-            if (oracleOsonMapper != null && oracleTextMapper != null) {
-                return new OracleJsonQueryResultMapper(columnName, persistentEntity, columnNameResultSetReader,
-                    oracleTextMapper, loadListener);
-            }
-            throw new IllegalStateException("In order to deserialize Oracle Json View Micronaut Oracle object and text mappers must be on the class path.");
-        }
-        return super.createJsonQueryResultMapperForJsonView(dialect, columnName, persistentEntity, loadListener);
-    }
-
     private ReactiveTransactionStatus<Connection> existingTransaction(ReactiveTransactionStatus<Connection> existing) {
         return new ReactiveTransactionStatus<Connection>() {
             @Override
@@ -633,28 +609,6 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         return Flux.from(statement.execute())
             .flatMap(Result::getRowsUpdated)
             .map((Number n) -> n.longValue());
-    }
-
-    /**
-     * Oracle R2Dbc implementation for Oracle Json View query result mapper.
-     * @param <T> the entity type
-     */
-    private final class OracleJsonQueryResultMapper<T> extends JsonQueryResultMapper<T, Row, String> {
-
-        public OracleJsonQueryResultMapper(@NonNull java.lang.String columnName, @NonNull RuntimePersistentEntity<T> entity, @NonNull ResultReader<Row, String> resultReader, @NonNull ObjectMapper objectMapper,
-                                           @Nullable BiFunction<RuntimePersistentEntity<Object>, Object, Object> eventListener) {
-            super(columnName, entity, resultReader, objectMapper, eventListener);
-        }
-
-        @Override
-        protected byte[] readBytes(Row rs, java.lang.String columnName) {
-            try {
-                OracleJsonObject object = rs.get(columnName, OracleJsonObject.class);
-                return oracleTextMapper.writeValueAsBytes(object);
-            } catch (Exception e) {
-                throw new DataAccessException("Error reading object for name [" + columnName + "] from result set: " + e.getMessage(), e);
-            }
-        }
     }
 
     /**
