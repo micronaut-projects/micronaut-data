@@ -577,7 +577,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
      * Obtain the string that selects all columns from the entity.
      *
      * @param queryState  The query state
-     * @param queryBuffer
+     * @param queryBuffer The query buffer
      */
     protected abstract void selectAllColumns(QueryState queryState, StringBuilder queryBuffer);
 

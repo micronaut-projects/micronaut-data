@@ -58,8 +58,8 @@ public class R2dbcSchemaGenerator {
     /**
      * Default constructor.
      *
-     * @param configurations     The configurations.
-     * @param schemaHandler
+     * @param configurations The configurations.
+     * @param schemaHandler The schema handler
      */
     public R2dbcSchemaGenerator(List<DataR2dbcConfiguration> configurations, R2dbcSchemaHandler schemaHandler) {
         this.configurations = configurations;

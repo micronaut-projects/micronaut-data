@@ -6,8 +6,8 @@ import jakarta.persistence.metamodel.StaticMetamodel;
 import jakarta.annotation.Generated;
 import java.math.BigDecimal;
 
-@Generated(value = "org.hibernate.jpamodelgen.JPAMetaModelEntityProcessor")
-@StaticMetamodel(io.micronaut.data.runtime.criteria.OtherEntity.class)
+@Generated("org.hibernate.jpamodelgen.JPAMetaModelEntityProcessor")
+@StaticMetamodel(OtherEntity.class)
 public abstract class OtherEntity_ {
 
 	public static volatile SingularAttribute<OtherEntity, Boolean> enabled2;

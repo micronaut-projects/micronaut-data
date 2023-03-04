@@ -102,7 +102,6 @@ public interface StoredQueryResolver {
      * @param queryParts         The query parts
      * @param queryParameters    The query parameters
      * @return new instance of stored query
-     * @return
      */
     StoredQuery<Object, Long> createCountStoredQuery(ExecutableMethod<?, ?> executableMethod,
                                                      DataMethod.OperationType operationType,

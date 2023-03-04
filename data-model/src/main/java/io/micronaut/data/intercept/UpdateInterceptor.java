@@ -18,9 +18,10 @@ package io.micronaut.data.intercept;
 /**
  * Implements update with lookup by id.
  *
+ * @param <T> The declaring type
+ *
  * @author graemerocher
  * @since 1.0
- * @param <T>
  */
 public interface UpdateInterceptor<T> extends DataInterceptor<T, Object> {
 }

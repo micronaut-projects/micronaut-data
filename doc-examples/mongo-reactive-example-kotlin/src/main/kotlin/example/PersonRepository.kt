@@ -95,7 +95,7 @@ interface PersonRepository : CrudRepository<Person, ObjectId>, JpaSpecificationE
         }
 
         // end::specifications[]
-        fun setNewName(newName: String) = UpdateSpecification<Person> { root, query, criteriaBuilder ->
+        fun setNewName(newName: String) = UpdateSpecification<Person> { root, query, _ ->
             // tag::setUpdate[]
             query.set(root.get("name"), newName)
             // end::setUpdate[]

@@ -19,7 +19,6 @@ package io.micronaut.transaction.support;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.transaction.SavepointManager;
-import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.TransactionStatus;
 import io.micronaut.transaction.exceptions.NestedTransactionNotSupportedException;
 import io.micronaut.transaction.exceptions.TransactionException;
@@ -123,7 +122,7 @@ public abstract class AbstractTransactionStatus<T> implements TransactionStatus<
 
     /**
      * Set a savepoint for this transaction. Useful for paropagation NESTED.
-     * @see TransactionDefinition.Propagation#NESTED
+     * @see io.micronaut.transaction.TransactionDefinition.Propagation#NESTED
      * @param savepoint  The save point
      */
     protected void setSavepoint(@Nullable Object savepoint) {

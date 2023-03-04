@@ -124,7 +124,7 @@ interface PersonRepository : CrudRepository<Person, ObjectId>, JpaSpecificationE
         // end::setUpdate[]
 
         // tag::spec_array_contains[]
-        fun interestsContains(interest: String): PredicateSpecification<Person>? {
+        fun interestsContains(interest: String): PredicateSpecification<Person> {
             return PredicateSpecification { root: Root<Person>, criteriaBuilder: CriteriaBuilder ->
                 (criteriaBuilder as PersistentEntityCriteriaBuilder).arrayContains(
                     root.get<Any>("interests"),
@@ -143,7 +143,7 @@ interface PersonRepository : CrudRepository<Person, ObjectId>, JpaSpecificationE
             criteriaBuilder.lessThan(root[Person::age], age)
         }
 
-        fun setNewName2(newName: String) = UpdateSpecification { root, query, criteriaBuilder ->
+        fun setNewName2(newName: String) = UpdateSpecification { root, query, _ ->
             // tag::setUpdate[]
             query.set(root[Person::name], newName)
             // end::setUpdate[]

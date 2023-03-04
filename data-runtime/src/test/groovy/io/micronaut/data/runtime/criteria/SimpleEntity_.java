@@ -6,7 +6,7 @@ import jakarta.persistence.metamodel.StaticMetamodel;
 import jakarta.annotation.Generated;
 import java.math.BigDecimal;
 
-@Generated(value = "org.hibernate.jpamodelgen.JPAMetaModelEntityProcessor")
+@Generated("org.hibernate.jpamodelgen.JPAMetaModelEntityProcessor")
 @StaticMetamodel(SimpleEntity.class)
 public abstract class SimpleEntity_ {
 

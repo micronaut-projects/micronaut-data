@@ -9,6 +9,7 @@ import io.micronaut.data.mongodb.annotation.MongoRepository
 import io.micronaut.data.repository.CrudRepository
 import org.bson.types.ObjectId
 import java.util.*
+import javax.validation.constraints.NotNull
 
 // tag::studentRepository[]
 @MongoRepository
@@ -20,7 +21,7 @@ interface StudentRepository : CrudRepository<Student, ObjectId> {
 
     // end::studentRepository[]
     @Join("courses")
-    override fun findById(@NonNull id: ObjectId?): Optional<Student>
+    override fun findById(@NotNull @NonNull id: @NotNull ObjectId): Optional<Student>
 
     @JoinSpecifications(
             Join("courses"),

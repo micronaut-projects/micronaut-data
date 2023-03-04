@@ -183,6 +183,8 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
      * @param <T>               The query declaring type
      * @param <R>               The query result type
      * @return The prepared statement
+     *
+     * @throws Exc The exception type
      */
     protected <T, R> PS prepareStatement(StatementSupplier<PS> statementFunction,
                                          @NonNull PreparedQuery<T, R> preparedQuery,
