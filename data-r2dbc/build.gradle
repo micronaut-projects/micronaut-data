@@ -18,7 +18,7 @@ dependencies {
     api libs.r2dbc.spi
 
     implementation mn.micronaut.context
-    compileOnly mnSerde.micronaut.serde.support
+    implementation mnSerde.micronaut.serde.support
     compileOnly mnSerde.micronaut.serde.oracle.jdbc.json
     implementation mnReactor.micronaut.reactor
 

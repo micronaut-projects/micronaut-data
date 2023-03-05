@@ -12,7 +12,7 @@ dependencies {
 
     api projects.dataRuntime
 
-    compileOnly mnSerde.micronaut.serde.support
+    implementation mnSerde.micronaut.serde.support
     compileOnly mnSerde.micronaut.serde.oracle.jdbc.json
     implementation mnSql.micronaut.jdbc
 

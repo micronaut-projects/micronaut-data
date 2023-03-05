@@ -567,7 +567,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
 
 
         JsonColumnReaderProvider(ObjectMapper objectMapper, List<SqlJsonColumnReader<RS>> jsonColumnReaders) {
-            this.defaultJsonColumnReader = new JsonColumnReader<>(objectMapper);
+            this.defaultJsonColumnReader = objectMapper == null ? null : new JsonColumnReader<>(objectMapper);
             if (CollectionUtils.isEmpty(jsonColumnReaders)) {
                 jsonColumnReaderMap = Collections.emptyMap();
             } else {
