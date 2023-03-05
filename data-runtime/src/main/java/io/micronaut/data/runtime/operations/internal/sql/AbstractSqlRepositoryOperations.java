@@ -23,7 +23,6 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.AutoPopulated;
-import io.micronaut.data.annotation.JsonView;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.exceptions.DataAccessException;
@@ -51,10 +50,11 @@ import io.micronaut.data.operations.HintsCapableRepository;
 import io.micronaut.data.runtime.config.DataSettings;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.date.DateTimeProvider;
+import io.micronaut.data.runtime.mapper.JsonColumnReader;
 import io.micronaut.data.runtime.mapper.QueryStatement;
 import io.micronaut.data.runtime.mapper.ResultReader;
 import io.micronaut.data.runtime.mapper.sql.JsonQueryResultMapper;
-import io.micronaut.data.runtime.mapper.sql.JsonViewQueryResultMapperFactory;
+import io.micronaut.data.runtime.mapper.sql.SqlJsonColumnReader;
 import io.micronaut.data.runtime.operations.internal.AbstractRepositoryOperations;
 import io.micronaut.data.runtime.query.MethodContextAwareStoredQueryDecorator;
 import io.micronaut.data.runtime.query.PreparedQueryDecorator;
@@ -115,22 +115,22 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
     private final Map<QueryKey, SqlStoredQuery> entityInserts = new ConcurrentHashMap<>(10);
     private final Map<QueryKey, SqlStoredQuery> entityUpdates = new ConcurrentHashMap<>(10);
     private final Map<Association, String> associationInserts = new ConcurrentHashMap<>(10);
-    private final Map<Dialect, JsonViewQueryResultMapperFactory> jsonViewQueryResultMapperFactoryMap;
+    private final JsonColumnReaderProvider<RS> jsonColumnReaderProvider;
 
     /**
      * Default constructor.
      *
-     * @param dataSourceName                        The datasource name
-     * @param columnNameResultSetReader             The column name result reader
-     * @param columnIndexResultSetReader            The column index result reader
-     * @param preparedStatementWriter               The prepared statement writer
-     * @param dateTimeProvider                      The date time provider
-     * @param runtimeEntityRegistry                 The entity registry
-     * @param beanContext                           The bean context
-     * @param conversionService                     The conversion service
-     * @param attributeConverterRegistry            The attribute converter registry
-     * @param objectMapper                          The object mapper
-     * @param jsonViewQueryResultMapperFactories    The factories for JSON view query result mappers
+     * @param dataSourceName               The datasource name
+     * @param columnNameResultSetReader    The column name result reader
+     * @param columnIndexResultSetReader   The column index result reader
+     * @param preparedStatementWriter      The prepared statement writer
+     * @param dateTimeProvider             The date time provider
+     * @param runtimeEntityRegistry        The entity registry
+     * @param beanContext                  The bean context
+     * @param conversionService            The conversion service
+     * @param attributeConverterRegistry   The attribute converter registry
+     * @param objectMapper                 The object mapper
+     * @param sqlJsonColumnReaders         The custom SQL json column readers
      */
     protected AbstractSqlRepositoryOperations(
             String dataSourceName,
@@ -143,18 +143,14 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
             DataConversionService conversionService,
             AttributeConverterRegistry attributeConverterRegistry,
             ObjectMapper objectMapper,
-            List<JsonViewQueryResultMapperFactory> jsonViewQueryResultMapperFactories) {
+            List<SqlJsonColumnReader<RS>> sqlJsonColumnReaders) {
         super(dateTimeProvider, runtimeEntityRegistry, conversionService, attributeConverterRegistry);
         this.dataSourceName = dataSourceName;
         this.columnNameResultSetReader = columnNameResultSetReader;
         this.columnIndexResultSetReader = columnIndexResultSetReader;
         this.preparedStatementWriter = preparedStatementWriter;
         this.objectMapper = objectMapper;
-        if (CollectionUtils.isEmpty(jsonViewQueryResultMapperFactories)) {
-            jsonViewQueryResultMapperFactoryMap = Collections.emptyMap();
-        } else {
-            jsonViewQueryResultMapperFactoryMap = jsonViewQueryResultMapperFactories.stream().collect(Collectors.toMap(JsonViewQueryResultMapperFactory::getDialect, Function.identity()));
-        }
+        this.jsonColumnReaderProvider = new JsonColumnReaderProvider<>(objectMapper, sqlJsonColumnReaders);
         Collection<BeanDefinition<Object>> beanDefinitions = beanContext
                 .getBeanDefinitions(Object.class, Qualifiers.byStereotype(Repository.class));
         for (BeanDefinition<Object> beanDefinition : beanDefinitions) {
@@ -512,22 +508,8 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
      */
     protected final <T> JsonQueryResultMapper createJsonQueryResultMapper(Dialect dialect, String columnName,
                                                                   RuntimePersistentEntity<T> persistentEntity, BiFunction<RuntimePersistentEntity<Object>, Object, Object> loadListener) {
-        if (persistentEntity.getAnnotationMetadata().hasAnnotation(JsonView.class)) {
-            JsonViewQueryResultMapperFactory jsonViewQueryResultMapperFactory = jsonViewQueryResultMapperFactoryMap.get(dialect);
-            if (jsonViewQueryResultMapperFactory != null) {
-                return jsonViewQueryResultMapperFactory.createJsonViewQueryResultMapper(columnName, persistentEntity, columnNameResultSetReader, objectMapper, loadListener);
-            }
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("Using default JSON view query result mapper for dialect: {} as custom is not configured.", dialect);
-            }
-        }
-        return createDefaultJsonQueryResultMapper(columnName, persistentEntity, loadListener);
-    }
-
-    private <T> JsonQueryResultMapper createDefaultJsonQueryResultMapper(String columnName, RuntimePersistentEntity<T> persistentEntity,
-                                                                         BiFunction<RuntimePersistentEntity<Object>, Object, Object> loadListener) {
         return new JsonQueryResultMapper(columnName, persistentEntity, columnNameResultSetReader,
-            objectMapper, loadListener);
+            jsonColumnReaderProvider.provide(dialect), loadListener);
     }
 
     /**
@@ -570,5 +552,43 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
     @FunctionalInterface
     protected interface StatementSupplier<PS> {
         PS create(String ps) throws Exception;
+    }
+
+
+    /**
+     * The provider for {@link JsonColumnReader} when JSON columns are being read.
+     *
+     * @param <RS> the result set type
+     */
+    private static final class JsonColumnReaderProvider<RS> {
+
+        private final JsonColumnReader<RS> defaultJsonColumnReader;
+        private final Map<Dialect, SqlJsonColumnReader<RS>> jsonColumnReaderMap;
+
+
+        JsonColumnReaderProvider(ObjectMapper objectMapper, List<SqlJsonColumnReader<RS>> jsonColumnReaders) {
+            this.defaultJsonColumnReader = new JsonColumnReader<>(objectMapper);
+            if (CollectionUtils.isEmpty(jsonColumnReaders)) {
+                jsonColumnReaderMap = Collections.emptyMap();
+            } else {
+                jsonColumnReaderMap = jsonColumnReaders.stream().collect(Collectors.toMap(SqlJsonColumnReader::getDialect, Function.identity()));
+            }
+        }
+
+        /**
+         * Provides {@link JsonQueryResultMapper} for given SQL dialect.
+         *
+         * @param dialect the SQL dialect
+         */
+        JsonColumnReader<RS> provide(Dialect dialect) {
+            JsonColumnReader<RS> jsonColumnReader = jsonColumnReaderMap.get(dialect);
+            if (jsonColumnReader != null) {
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Using custom JSON column reader for dialect: {}", dialect);
+                }
+                return jsonColumnReader;
+            }
+            return defaultJsonColumnReader;
+        }
     }
 }

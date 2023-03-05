@@ -20,11 +20,9 @@ import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
+import io.micronaut.data.runtime.mapper.JsonColumnReader;
 import io.micronaut.data.runtime.mapper.ResultReader;
-import io.micronaut.serde.ObjectMapper;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.function.BiFunction;
 
 /**
@@ -42,28 +40,22 @@ public class JsonQueryResultMapper<T, RS, R> implements SqlTypeMapper<RS, R> {
     private final String columnName;
     private final RuntimePersistentEntity<T> entity;
     private final ResultReader<RS, String> resultReader;
-    private final ObjectMapper objectMapper;
+    private final JsonColumnReader<RS> jsonColumnReader;
     private final BiFunction<RuntimePersistentEntity<Object>, Object, Object> eventListener;
 
-    public JsonQueryResultMapper(@NonNull String columnName, @NonNull RuntimePersistentEntity<T> entity, @NonNull ResultReader<RS, String> resultReader, @NonNull ObjectMapper objectMapper,
+    public JsonQueryResultMapper(@NonNull String columnName, @NonNull RuntimePersistentEntity<T> entity, @NonNull ResultReader<RS, String> resultReader, @NonNull JsonColumnReader jsonColumnReader,
                                  @Nullable BiFunction<RuntimePersistentEntity<Object>, Object, Object> eventListener) {
-        ArgumentUtils.requireNonNull("objectMapper", objectMapper);
+        ArgumentUtils.requireNonNull("jsonColumnReader", jsonColumnReader);
         this.columnName = columnName;
         this.entity = entity;
         this.resultReader = resultReader;
-        this.objectMapper = objectMapper;
+        this.jsonColumnReader = jsonColumnReader;
         this.eventListener = eventListener;
     }
 
     @Override
     public R map(RS rs, Class<R> type) throws DataAccessException {
-        byte[] columnData = readBytes(rs, columnName);
-        R entityInstance;
-        try {
-            entityInstance = objectMapper.readValue(columnData, type);
-        } catch (IOException e) {
-            throw new DataAccessException("Failed to read entity from JSON field [" + columnName + "] into type [" + type.getName() + "].", e);
-        }
+        R entityInstance = jsonColumnReader.readJsonColumn(resultReader, rs, columnName, type);
         if (entityInstance == null) {
             throw new DataAccessException("Unable to map result to entity of type [" + type.getName() + "]. Missing result data.");
         }
@@ -73,18 +65,6 @@ public class JsonQueryResultMapper<T, RS, R> implements SqlTypeMapper<RS, R> {
     @Override
     public Object read(RS object, String name) {
         throw new UnsupportedOperationException("Custom field read is not supported");
-    }
-
-    /**
-     * Reads bytes from the result set from given column name.
-     *
-     * @param rs the result set
-     * @param columnName the column name
-     * @return the bytes read from the result set column
-     */
-    protected byte[] readBytes(RS rs, String columnName) {
-        String data = resultReader.readString(rs, columnName);
-        return data == null ? null : data.getBytes(StandardCharsets.UTF_8);
     }
 
     @Override

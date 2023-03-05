@@ -70,8 +70,8 @@ import io.micronaut.data.runtime.mapper.ResultConsumer;
 import io.micronaut.data.runtime.mapper.ResultReader;
 import io.micronaut.data.runtime.mapper.TypeMapper;
 import io.micronaut.data.runtime.mapper.sql.JsonQueryResultMapper;
-import io.micronaut.data.runtime.mapper.sql.JsonViewQueryResultMapperFactory;
 import io.micronaut.data.runtime.mapper.sql.SqlDTOMapper;
+import io.micronaut.data.runtime.mapper.sql.SqlJsonColumnReader;
 import io.micronaut.data.runtime.mapper.sql.SqlResultEntityTypeMapper;
 import io.micronaut.data.runtime.mapper.sql.SqlTypeMapper;
 import io.micronaut.data.runtime.multitenancy.SchemaTenantResolver;
@@ -155,20 +155,20 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     /**
      * Default constructor.
      *
-     * @param dataSourceName                        The data source name
-     * @param jdbcConfiguration                     The jdbcConfiguration
-     * @param dataSource                            The datasource
-     * @param transactionOperations                 The JDBC operations for the data source
-     * @param executorService                       The executor service
-     * @param beanContext                           The bean context
-     * @param dateTimeProvider                      The dateTimeProvider
-     * @param entityRegistry                        The entity registry
-     * @param conversionService                     The conversion service
-     * @param attributeConverterRegistry            The attribute converter registry
-     * @param schemaTenantResolver                  The schema tenant resolver
-     * @param schemaHandler                         The schema handler
-     * @param objectMapper                          The object mapper
-     * @param jsonViewQueryResultMapperFactories    The factories for JSON view query result mappers
+     * @param dataSourceName                  The data source name
+     * @param jdbcConfiguration               The jdbcConfiguration
+     * @param dataSource                      The datasource
+     * @param transactionOperations           The JDBC operations for the data source
+     * @param executorService                 The executor service
+     * @param beanContext                     The bean context
+     * @param dateTimeProvider                The dateTimeProvider
+     * @param entityRegistry                  The entity registry
+     * @param conversionService               The conversion service
+     * @param attributeConverterRegistry      The attribute converter registry
+     * @param schemaTenantResolver            The schema tenant resolver
+     * @param schemaHandler                   The schema handler
+     * @param objectMapper                    The object mapper
+     * @param sqlJsonColumnReaders            The custom SQL json column readers
      */
     @Internal
     @SuppressWarnings("ParameterNumber")
@@ -186,7 +186,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                                               SchemaTenantResolver schemaTenantResolver,
                                               JdbcSchemaHandler schemaHandler,
                                               @Nullable ObjectMapper objectMapper,
-                                              List<JsonViewQueryResultMapperFactory> jsonViewQueryResultMapperFactories) {
+                                              List<SqlJsonColumnReader<ResultSet>> sqlJsonColumnReaders) {
         super(
                 dataSourceName,
                 new ColumnNameResultSetReader(conversionService),
@@ -197,7 +197,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                 beanContext,
                 conversionService, attributeConverterRegistry,
                 objectMapper,
-                jsonViewQueryResultMapperFactories);
+                sqlJsonColumnReaders);
         this.schemaTenantResolver = schemaTenantResolver;
         this.schemaHandler = schemaHandler;
         ArgumentUtils.requireNonNull("dataSource", dataSource);

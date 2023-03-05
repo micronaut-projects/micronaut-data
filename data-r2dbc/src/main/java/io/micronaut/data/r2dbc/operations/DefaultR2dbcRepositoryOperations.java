@@ -67,8 +67,8 @@ import io.micronaut.data.runtime.convert.RuntimePersistentPropertyConversionCont
 import io.micronaut.data.runtime.date.DateTimeProvider;
 import io.micronaut.data.runtime.mapper.TypeMapper;
 import io.micronaut.data.runtime.mapper.sql.JsonQueryResultMapper;
-import io.micronaut.data.runtime.mapper.sql.JsonViewQueryResultMapperFactory;
 import io.micronaut.data.runtime.mapper.sql.SqlDTOMapper;
+import io.micronaut.data.runtime.mapper.sql.SqlJsonColumnReader;
 import io.micronaut.data.runtime.mapper.sql.SqlResultEntityTypeMapper;
 import io.micronaut.data.runtime.multitenancy.SchemaTenantResolver;
 import io.micronaut.data.runtime.operations.ReactorToAsyncOperationsAdaptor;
@@ -157,19 +157,19 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
     /**
      * Default constructor.
      *
-     * @param dataSourceName                        The data source name
-     * @param connectionFactory                     The associated connection factory
-     * @param dateTimeProvider                      The date time provider
-     * @param runtimeEntityRegistry                 The runtime entity registry
-     * @param applicationContext                    The bean context
-     * @param executorService                       The executor
-     * @param conversionService                     The conversion service
-     * @param attributeConverterRegistry            The attribute converter registry
-     * @param schemaTenantResolver                  The schema tenant resolver
-     * @param schemaHandler                         The schema handler
-     * @param configuration                         The configuration
-     * @param objectMapper                          The object mapper
-     * @param jsonViewQueryResultMapperFactories    The factories for JSON view query result mappers
+     * @param dataSourceName               he data source name
+     * @param connectionFactory            The associated connection factory
+     * @param dateTimeProvider             The date time provider
+     * @param runtimeEntityRegistry        The runtime entity registry
+     * @param applicationContext           The bean context
+     * @param executorService              The executor
+     * @param conversionService            The conversion service
+     * @param attributeConverterRegistry   The attribute converter registry
+     * @param schemaTenantResolver         The schema tenant resolver
+     * @param schemaHandler                The schema handler
+     * @param configuration                The configuration
+     * @param objectMapper                 The object mapper
+     * @param sqlJsonColumnReaders         The custom SQL json column readers
      */
     @Internal
     protected DefaultR2dbcRepositoryOperations(
@@ -185,7 +185,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         R2dbcSchemaHandler schemaHandler,
         @Parameter DataR2dbcConfiguration configuration,
         ObjectMapper objectMapper,
-        List<JsonViewQueryResultMapperFactory> jsonViewQueryResultMapperFactories) {
+        List<SqlJsonColumnReader<Row>> sqlJsonColumnReaders) {
         super(
             dataSourceName,
             new ColumnNameR2dbcResultReader(conversionService),
@@ -197,7 +197,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             conversionService,
             attributeConverterRegistry,
             objectMapper,
-            jsonViewQueryResultMapperFactories);
+            sqlJsonColumnReaders);
         this.connectionFactory = connectionFactory;
         this.ioExecutorService = executorService;
         this.schemaTenantResolver = schemaTenantResolver;
