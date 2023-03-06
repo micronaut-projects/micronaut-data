@@ -58,6 +58,9 @@ class OracleJdbcJsonColumnReader extends SqlJsonColumnReader<ResultSet> {
     public <T> T readJsonColumn(ResultReader<ResultSet, String> resultReader, ResultSet resultSet, String columnName, Argument<T> argument) {
         try {
             OracleJsonObject oracleJsonObject = resultSet.getObject(columnName, OracleJsonObject.class);
+            if (oracleJsonObject == null) {
+                return null;
+            }
             byte[] content = jsonMapper.writeValueAsBytes(oracleJsonObject);
             return jsonMapper.readValue(content, argument);
         } catch (Exception e) {

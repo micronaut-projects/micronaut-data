@@ -581,7 +581,10 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
         }
         DataType dataType = prop.getDataType();
         Object result;
-        if (dataType == DataType.JSON && jsonColumnReader != null) {
+        if (dataType == DataType.JSON) {
+            if (jsonColumnReader == null) {
+                throw new IllegalStateException("For JSON data types support Micronaut JsonMapper needs to be available on the classpath.");
+            }
             result = jsonColumnReader.readJsonColumn(resultReader, rs, columnName, prop.getArgument());
         } else {
             result = resultReader.readDynamic(rs, columnName, prop.getDataType());
