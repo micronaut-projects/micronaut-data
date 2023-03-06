@@ -141,8 +141,8 @@ implements io.micronaut.context.ApplicationContextProvider, <a href="../../../qu
 <div class="col-first even-row-color"><code>protected final <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
 <div class="col-second even-row-color"><code><a href="#dataSourceName" class="member-name-link">dataSourceName</a></code></div>
 <div class="col-last even-row-color">&nbsp;</div>
-<div class="col-first odd-row-color"><code>protected final io.micronaut.serde.ObjectMapper</code></div>
-<div class="col-second odd-row-color"><code><a href="#objectMapper" class="member-name-link">objectMapper</a></code></div>
+<div class="col-first odd-row-color"><code>protected final io.micronaut.json.JsonMapper</code></div>
+<div class="col-second odd-row-color"><code><a href="#jsonMapper" class="member-name-link">jsonMapper</a></code></div>
 <div class="col-last odd-row-color">&nbsp;</div>
 <div class="col-first even-row-color"><code>protected final <a href="../../../mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a>&lt;<a href="AbstractSqlRepositoryOperations.html" title="type parameter in AbstractSqlRepositoryOperations">PS</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</code></div>
 <div class="col-second even-row-color"><code><a href="#preparedStatementWriter" class="member-name-link">preparedStatementWriter</a></code></div>
@@ -172,7 +172,7 @@ implements io.micronaut.context.ApplicationContextProvider, <a href="../../../qu
 <div class="table-header col-second">Constructor</div>
 <div class="table-header col-last">Description</div>
 <div class="col-first even-row-color"><code>protected </code></div>
-<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(java.lang.String,io.micronaut.data.runtime.mapper.ResultReader,io.micronaut.data.runtime.mapper.ResultReader,io.micronaut.data.runtime.mapper.QueryStatement,io.micronaut.data.runtime.date.DateTimeProvider,io.micronaut.data.model.runtime.RuntimeEntityRegistry,io.micronaut.context.BeanContext,io.micronaut.data.runtime.convert.DataConversionService,io.micronaut.data.model.runtime.AttributeConverterRegistry,io.micronaut.serde.ObjectMapper)" class="member-name-link">AbstractSqlRepositoryOperations</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;dataSourceName,
+<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(java.lang.String,io.micronaut.data.runtime.mapper.ResultReader,io.micronaut.data.runtime.mapper.ResultReader,io.micronaut.data.runtime.mapper.QueryStatement,io.micronaut.data.runtime.date.DateTimeProvider,io.micronaut.data.model.runtime.RuntimeEntityRegistry,io.micronaut.context.BeanContext,io.micronaut.data.runtime.convert.DataConversionService,io.micronaut.data.model.runtime.AttributeConverterRegistry,io.micronaut.json.JsonMapper)" class="member-name-link">AbstractSqlRepositoryOperations</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;dataSourceName,
  <a href="../../../mapper/ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a>&lt;<a href="AbstractSqlRepositoryOperations.html" title="type parameter in AbstractSqlRepositoryOperations">RS</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;columnNameResultSetReader,
  <a href="../../../mapper/ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a>&lt;<a href="AbstractSqlRepositoryOperations.html" title="type parameter in AbstractSqlRepositoryOperations">RS</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;&nbsp;columnIndexResultSetReader,
  <a href="../../../mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a>&lt;<a href="AbstractSqlRepositoryOperations.html" title="type parameter in AbstractSqlRepositoryOperations">PS</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;&nbsp;preparedStatementWriter,
@@ -181,7 +181,7 @@ implements io.micronaut.context.ApplicationContextProvider, <a href="../../../qu
  io.micronaut.context.BeanContext&nbsp;beanContext,
  <a href="../../../convert/DataConversionService.html" title="interface in io.micronaut.data.runtime.convert">DataConversionService</a>&nbsp;conversionService,
  <a href="../../../../model/runtime/AttributeConverterRegistry.html" title="interface in io.micronaut.data.model.runtime">AttributeConverterRegistry</a>&nbsp;attributeConverterRegistry,
- io.micronaut.serde.ObjectMapper&nbsp;objectMapper)</code></div>
+ io.micronaut.json.JsonMapper&nbsp;jsonMapper)</code></div>
 <div class="col-last even-row-color">
 <div class="block">Default constructor.</div>
 </div>
@@ -344,9 +344,9 @@ R&gt;&nbsp;<a href="AbstractSqlRepositoryOperations.html" title="type parameter 
 </section>
 </li>
 <li>
-<section class="detail" id="objectMapper">
-<h3>objectMapper</h3>
-<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type">io.micronaut.serde.ObjectMapper</span>&nbsp;<span class="element-name">objectMapper</span></div>
+<section class="detail" id="jsonMapper">
+<h3>jsonMapper</h3>
+<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type">io.micronaut.json.JsonMapper</span>&nbsp;<span class="element-name">jsonMapper</span></div>
 </section>
 </li>
 <li>
@@ -370,7 +370,7 @@ R&gt;&nbsp;<a href="AbstractSqlRepositoryOperations.html" title="type parameter 
 <h2>Constructor Details</h2>
 <ul class="member-list">
 <li>
-<section class="detail" id="&lt;init&gt;(java.lang.String,io.micronaut.data.runtime.mapper.ResultReader,io.micronaut.data.runtime.mapper.ResultReader,io.micronaut.data.runtime.mapper.QueryStatement,io.micronaut.data.runtime.date.DateTimeProvider,io.micronaut.data.model.runtime.RuntimeEntityRegistry,io.micronaut.context.BeanContext,io.micronaut.data.runtime.convert.DataConversionService,io.micronaut.data.model.runtime.AttributeConverterRegistry,io.micronaut.serde.ObjectMapper)">
+<section class="detail" id="&lt;init&gt;(java.lang.String,io.micronaut.data.runtime.mapper.ResultReader,io.micronaut.data.runtime.mapper.ResultReader,io.micronaut.data.runtime.mapper.QueryStatement,io.micronaut.data.runtime.date.DateTimeProvider,io.micronaut.data.model.runtime.RuntimeEntityRegistry,io.micronaut.context.BeanContext,io.micronaut.data.runtime.convert.DataConversionService,io.micronaut.data.model.runtime.AttributeConverterRegistry,io.micronaut.json.JsonMapper)">
 <h3>AbstractSqlRepositoryOperations</h3>
 <div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="element-name">AbstractSqlRepositoryOperations</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;dataSourceName,
  <a href="../../../mapper/ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a>&lt;<a href="AbstractSqlRepositoryOperations.html" title="type parameter in AbstractSqlRepositoryOperations">RS</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;columnNameResultSetReader,
@@ -381,7 +381,7 @@ R&gt;&nbsp;<a href="AbstractSqlRepositoryOperations.html" title="type parameter 
  io.micronaut.context.BeanContext&nbsp;beanContext,
  <a href="../../../convert/DataConversionService.html" title="interface in io.micronaut.data.runtime.convert">DataConversionService</a>&nbsp;conversionService,
  <a href="../../../../model/runtime/AttributeConverterRegistry.html" title="interface in io.micronaut.data.model.runtime">AttributeConverterRegistry</a>&nbsp;attributeConverterRegistry,
- io.micronaut.serde.ObjectMapper&nbsp;objectMapper)</span></div>
+ io.micronaut.json.JsonMapper&nbsp;jsonMapper)</span></div>
 <div class="block">Default constructor.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -394,7 +394,7 @@ R&gt;&nbsp;<a href="AbstractSqlRepositoryOperations.html" title="type parameter 
 <dd><code>beanContext</code> - The bean context</dd>
 <dd><code>conversionService</code> - The conversion service</dd>
 <dd><code>attributeConverterRegistry</code> - The attribute converter registry</dd>
-<dd><code>objectMapper</code> - The object mapper</dd>
+<dd><code>jsonMapper</code> - The JSON mapper</dd>
 </dl>
 </section>
 </li>
