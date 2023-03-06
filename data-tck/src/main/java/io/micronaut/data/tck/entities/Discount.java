@@ -1,8 +1,8 @@
 package io.micronaut.data.tck.entities;
 
-import io.micronaut.serde.annotation.Serdeable;
+import io.micronaut.core.annotation.Introspected;
 
-@Serdeable
+@Introspected
 public class Discount {
 
     private Double amount;
