@@ -19,7 +19,6 @@ package io.micronaut.data.jdbc.h2
 import io.micronaut.data.tck.entities.Food
 import io.micronaut.data.tck.entities.Meal
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
-import spock.lang.Ignore
 import spock.lang.Shared
 import spock.lang.Specification
 
