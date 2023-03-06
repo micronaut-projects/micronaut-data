@@ -22,9 +22,11 @@ dependencies {
 
     testAnnotationProcessor mn.micronaut.inject.java
     testAnnotationProcessor projects.dataProcessor
+    testAnnotationProcessor mnValidation.micronaut.validation.processor
 
     testImplementation projects.dataTck
     testImplementation projects.dataProcessor
+    testImplementation mnValidation.micronaut.validation.processor
     testImplementation mnRxjava2.micronaut.rxjava2
     testImplementation mnReactor.micronaut.reactor
     testImplementation libs.jackson.databind
