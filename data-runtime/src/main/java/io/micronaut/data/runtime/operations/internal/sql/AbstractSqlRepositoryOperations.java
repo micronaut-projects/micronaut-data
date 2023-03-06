@@ -41,6 +41,7 @@ import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
 import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.model.runtime.QueryParameterBinding;
+import io.micronaut.data.model.runtime.QueryResultInfo;
 import io.micronaut.data.model.runtime.RuntimeAssociation;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
@@ -55,6 +56,7 @@ import io.micronaut.data.runtime.mapper.QueryStatement;
 import io.micronaut.data.runtime.mapper.ResultReader;
 import io.micronaut.data.runtime.mapper.sql.JsonQueryResultMapper;
 import io.micronaut.data.runtime.mapper.sql.SqlJsonColumnReader;
+import io.micronaut.data.runtime.mapper.sql.SqlTypeMapper;
 import io.micronaut.data.runtime.operations.internal.AbstractRepositoryOperations;
 import io.micronaut.data.runtime.query.MethodContextAwareStoredQueryDecorator;
 import io.micronaut.data.runtime.query.PreparedQueryDecorator;
@@ -68,6 +70,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.sql.ResultSet;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -497,16 +500,59 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
     }
 
     /**
+     * Creates {@link SqlTypeMapper} for reading results from single column into an entity. For now, we support reading from JSON column,
+     * however in support we might add XML support etc.
+     *
+     * @param queryResultInfo the query result info telling what format we read from
+     * @param dialect the SQL dialect
+     * @param columnName the column name where we are reading from
+     * @param persistentEntity the persistent entity
+     * @param loadListener the load listener if needed after entity loaded
+     * @return the {@link SqlTypeMapper} able to decode from column value into given type
+     * @param <T> the entity type
+     * @param <RS> the result set type
+     * @param <R> the result type
+     */
+    protected final <T, RS, R> SqlTypeMapper<RS, R> createQueryResultMapper(QueryResultInfo queryResultInfo, Dialect dialect, String columnName,
+                                                                    RuntimePersistentEntity<T> persistentEntity, BiFunction<RuntimePersistentEntity<Object>, Object, Object> loadListener) {
+        return switch (queryResultInfo.getType()) {
+            case JSON -> createJsonQueryResultMapper(dialect, columnName, persistentEntity, loadListener);
+            default -> throw new IllegalStateException("Unexpected query result type: " + queryResultInfo.getType());
+        };
+    }
+
+    /**
+     * Reads an object from the result set and given column.
+     *
+     * @param queryResultInfo the query result info telling what format we read from
+     * @param rs the result set
+     * @param dialect the SQL dialect
+     * @param columnName the column name where we are reading from
+     * @param persistentEntity the persistent entity
+     * @param type the result type
+     * @param loadListener the load listener if needed after entity loaded
+     * @return an object read from the result set column
+     * @param <R> the result type
+     * @param <T> the entity type
+     */
+    protected final <R, T> R mapQueryColumnResult(QueryResultInfo queryResultInfo, ResultSet rs, Dialect dialect, String columnName,
+                                          RuntimePersistentEntity<T> persistentEntity, Class<R> type,
+                                          BiFunction<RuntimePersistentEntity<Object>, Object, Object> loadListener) {
+        SqlTypeMapper<ResultSet, R> mapper = createQueryResultMapper(queryResultInfo, dialect, columnName, persistentEntity, loadListener);
+        return mapper.map(rs, type);
+    }
+
+    /**
      * Creates {@link JsonQueryResultMapper} for JSON deserialization.
      *
      * @param dialect the SQL dialect
-     * @param columnName the column name where JSON result is stored
+     * @param columnName the column name where query result is stored
      * @param persistentEntity the persistent entity
      * @param loadListener the load listener if needed after entity loaded
      * @return the {@link JsonQueryResultMapper}
      * @param <T> the entity type
      */
-    protected final <T> JsonQueryResultMapper createJsonQueryResultMapper(Dialect dialect, String columnName,
+    private <T> JsonQueryResultMapper createJsonQueryResultMapper(Dialect dialect, String columnName,
                                                                   RuntimePersistentEntity<T> persistentEntity, BiFunction<RuntimePersistentEntity<Object>, Object, Object> loadListener) {
         return new JsonQueryResultMapper(columnName, persistentEntity, columnNameResultSetReader,
             jsonColumnReaderProvider.get(dialect), loadListener);
