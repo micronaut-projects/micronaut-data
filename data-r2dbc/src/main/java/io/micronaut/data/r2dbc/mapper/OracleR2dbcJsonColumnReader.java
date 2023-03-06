@@ -16,6 +16,7 @@
 package io.micronaut.data.r2dbc.mapper;
 
 import io.micronaut.context.annotation.Requires;
+import io.micronaut.core.annotation.Experimental;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.exceptions.DataAccessException;
@@ -37,6 +38,7 @@ import oracle.sql.json.OracleJsonObject;
 @Singleton
 @Requires(classes = OracleJdbcJsonTextObjectMapper.class)
 @Internal
+@Experimental
 class OracleR2dbcJsonColumnReader extends SqlJsonColumnReader<Row> {
 
     /**

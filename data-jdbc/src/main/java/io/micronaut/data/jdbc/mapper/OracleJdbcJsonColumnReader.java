@@ -16,6 +16,7 @@
 package io.micronaut.data.jdbc.mapper;
 
 import io.micronaut.context.annotation.Requires;
+import io.micronaut.core.annotation.Experimental;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.exceptions.DataAccessException;
@@ -38,6 +39,7 @@ import java.sql.ResultSet;
 @Singleton
 @Requires(classes = OracleJdbcJsonTextObjectMapper.class)
 @Internal
+@Experimental
 class OracleJdbcJsonColumnReader extends SqlJsonColumnReader<ResultSet> {
 
     /**
