@@ -29,7 +29,7 @@ import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.runtime.convert.DataConversionService;
-import io.micronaut.serde.ObjectMapper;
+import io.micronaut.json.JsonMapper;
 
 import java.io.IOException;
 
@@ -46,7 +46,7 @@ public class DTOMapper<T, S, R> implements BeanIntrospectionMapper<S, R> {
     private final RuntimePersistentEntity<T> persistentEntity;
     private final RuntimePersistentEntity<?> dtoEntity;
     private final ResultReader<S, String> resultReader;
-    private final @Nullable ObjectMapper objectMapper;
+    private final @Nullable JsonMapper jsonMapper;
     private final DataConversionService conversionService;
 
     /**
@@ -65,14 +65,14 @@ public class DTOMapper<T, S, R> implements BeanIntrospectionMapper<S, R> {
      * Default constructor.
      * @param persistentEntity The entity
      * @param resultReader The result reader
-     * @param objectMapper The object mapper
+     * @param jsonMapper The JSON mapper
      * @param conversionService
      */
     public DTOMapper(RuntimePersistentEntity<T> persistentEntity,
                      ResultReader<S, String> resultReader,
-                     @Nullable ObjectMapper objectMapper,
+                     @Nullable JsonMapper jsonMapper,
                      DataConversionService conversionService) {
-        this(persistentEntity, persistentEntity, resultReader, objectMapper, conversionService);
+        this(persistentEntity, persistentEntity, resultReader, jsonMapper, conversionService);
     }
 
     /**
@@ -80,13 +80,13 @@ public class DTOMapper<T, S, R> implements BeanIntrospectionMapper<S, R> {
      * @param persistentEntity The entity
      * @param dtoEntity The dto entity
      * @param resultReader The result reader
-     * @param objectMapper The object mapper
+     * @param jsonMapper The JSON mapper
      * @param conversionService
      */
     public DTOMapper(RuntimePersistentEntity<T> persistentEntity,
                      RuntimePersistentEntity<?> dtoEntity,
                      ResultReader<S, String> resultReader,
-                     @Nullable ObjectMapper objectMapper,
+                     @Nullable JsonMapper jsonMapper,
                      DataConversionService conversionService) {
         this.conversionService = conversionService;
         ArgumentUtils.requireNonNull("persistentEntity", persistentEntity);
@@ -94,7 +94,7 @@ public class DTOMapper<T, S, R> implements BeanIntrospectionMapper<S, R> {
         this.persistentEntity = persistentEntity;
         this.dtoEntity = dtoEntity;
         this.resultReader = resultReader;
-        this.objectMapper = objectMapper;
+        this.jsonMapper = jsonMapper;
     }
 
     @Override
@@ -150,10 +150,10 @@ public class DTOMapper<T, S, R> implements BeanIntrospectionMapper<S, R> {
         if (StringUtils.isNotEmpty(aliasPropertyName)) {
             propertyName = aliasPropertyName;
         }
-        if (dataType == DataType.JSON && objectMapper != null) {
+        if (dataType == DataType.JSON && jsonMapper != null) {
             String data = resultReader.readString(resultSet, propertyName);
             try {
-                return objectMapper.readValue(data, property.getArgument());
+                return jsonMapper.readValue(data, property.getArgument());
             } catch (IOException e) {
                 throw new DataAccessException("Failed to read from JSON field [" + propertyName + "].", e);
             }
