@@ -49,7 +49,7 @@ import io.micronaut.data.model.runtime.convert.AttributeConverter;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.mapper.JsonColumnReader;
 import io.micronaut.data.runtime.mapper.ResultReader;
-import io.micronaut.serde.ObjectMapper;
+import io.micronaut.json.JsonMapper;
 
 import javax.validation.constraints.NotNull;
 import java.sql.Array;
@@ -632,9 +632,9 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
             return v;
         }
         if (jsonColumnReader != null && rpp.getDataType() == DataType.JSON) {
-            ObjectMapper objectMapper = jsonColumnReader.getObjectMapper();
+            JsonMapper jsonMapper = jsonColumnReader.getJsonMapper();
             try {
-                return objectMapper.readValue(v.toString(), rpp.getArgument());
+                return jsonMapper.readValue(v.toString(), rpp.getArgument());
             } catch (Exception e) {
                 // Ignore and try basic convert
             }

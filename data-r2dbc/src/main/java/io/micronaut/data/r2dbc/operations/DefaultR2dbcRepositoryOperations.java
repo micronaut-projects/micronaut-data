@@ -81,7 +81,7 @@ import io.micronaut.data.runtime.operations.internal.sql.AbstractSqlRepositoryOp
 import io.micronaut.data.runtime.operations.internal.sql.SqlPreparedQuery;
 import io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery;
 import io.micronaut.data.runtime.support.AbstractConversionContext;
-import io.micronaut.serde.ObjectMapper;
+import io.micronaut.json.JsonMapper;
 import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.exceptions.NoTransactionException;
 import io.micronaut.transaction.exceptions.TransactionSystemException;
@@ -168,7 +168,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
      * @param schemaTenantResolver         The schema tenant resolver
      * @param schemaHandler                The schema handler
      * @param configuration                The configuration
-     * @param objectMapper                 The object mapper
+     * @param jsonMapper                   The JSON mapper
      * @param sqlJsonColumnReaders         The custom SQL json column readers
      */
     @Internal
@@ -184,7 +184,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         @Nullable SchemaTenantResolver schemaTenantResolver,
         R2dbcSchemaHandler schemaHandler,
         @Parameter DataR2dbcConfiguration configuration,
-        ObjectMapper objectMapper,
+        @Nullable JsonMapper jsonMapper,
         List<SqlJsonColumnReader<Row>> sqlJsonColumnReaders) {
         super(
             dataSourceName,
@@ -196,7 +196,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             applicationContext,
             conversionService,
             attributeConverterRegistry,
-            objectMapper,
+            jsonMapper,
             sqlJsonColumnReaders);
         this.connectionFactory = connectionFactory;
         this.ioExecutorService = executorService;
@@ -695,9 +695,9 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                     };
                     QueryResultInfo queryResultInfo = preparedQuery.getQueryResultInfo();
                     if (queryResultInfo != null && queryResultInfo.getType() != QueryResult.Type.TABULAR) {
-                        SqlTypeMapper<Row, R> jsonQueryResultMapper = createQueryResultMapper(queryResultInfo, dialect, queryResultInfo.getColumnName(),
+                        SqlTypeMapper<Row, R> queryResultMapper = createQueryResultMapper(queryResultInfo, dialect, queryResultInfo.getColumnName(),
                             persistentEntity, loadListener);
-                        return executeAndMapEachRow(statement, row -> jsonQueryResultMapper.map(row, resultType));
+                        return executeAndMapEachRow(statement, row -> queryResultMapper.map(row, resultType));
                     }
                     SqlResultEntityTypeMapper<Row, R> mapper = new SqlResultEntityTypeMapper<>(
                         persistentEntity,

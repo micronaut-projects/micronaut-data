@@ -85,7 +85,7 @@ import io.micronaut.data.runtime.operations.internal.sql.AbstractSqlRepositoryOp
 import io.micronaut.data.runtime.operations.internal.sql.SqlPreparedQuery;
 import io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery;
 import io.micronaut.data.runtime.support.AbstractConversionContext;
-import io.micronaut.serde.ObjectMapper;
+import io.micronaut.json.JsonMapper;
 import io.micronaut.transaction.TransactionOperations;
 import io.micronaut.transaction.jdbc.DataSourceUtils;
 import io.micronaut.transaction.jdbc.DelegatingDataSource;
@@ -154,20 +154,19 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     /**
      * Default constructor.
      *
-     * @param dataSourceName                  The data source name
-     * @param jdbcConfiguration               The jdbcConfiguration
-     * @param dataSource                      The datasource
-     * @param transactionOperations           The JDBC operations for the data source
-     * @param executorService                 The executor service
-     * @param beanContext                     The bean context
-     * @param dateTimeProvider                The dateTimeProvider
-     * @param entityRegistry                  The entity registry
-     * @param conversionService               The conversion service
-     * @param attributeConverterRegistry      The attribute converter registry
-     * @param schemaTenantResolver            The schema tenant resolver
-     * @param schemaHandler                   The schema handler
-     * @param objectMapper                    The object mapper
-     * @param sqlJsonColumnReaders            The custom SQL json column readers
+     * @param dataSourceName             The data source name
+     * @param jdbcConfiguration          The jdbcConfiguration
+     * @param dataSource                 The datasource
+     * @param transactionOperations      The JDBC operations for the data source
+     * @param executorService            The executor service
+     * @param beanContext                The bean context
+     * @param dateTimeProvider           The dateTimeProvider
+     * @param entityRegistry             The entity registry
+     * @param conversionService          The conversion service
+     * @param attributeConverterRegistry The attribute converter registry
+     * @param schemaTenantResolver       The schema tenant resolver
+     * @param schemaHandler              The schema handler
+     * @param jsonMapper                 The JSON mapper
      */
     @Internal
     @SuppressWarnings("ParameterNumber")
@@ -184,7 +183,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                                               @Nullable
                                               SchemaTenantResolver schemaTenantResolver,
                                               JdbcSchemaHandler schemaHandler,
-                                              @Nullable ObjectMapper objectMapper,
+                                              @Nullable JsonMapper jsonMapper,
                                               List<SqlJsonColumnReader<ResultSet>> sqlJsonColumnReaders) {
         super(
                 dataSourceName,
@@ -195,7 +194,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                 entityRegistry,
                 beanContext,
                 conversionService, attributeConverterRegistry,
-                objectMapper,
+                jsonMapper,
                 sqlJsonColumnReaders);
         this.schemaTenantResolver = schemaTenantResolver;
         this.schemaHandler = schemaHandler;

@@ -64,7 +64,7 @@ import io.micronaut.data.runtime.query.internal.BasicStoredQuery;
 import io.micronaut.data.runtime.query.internal.QueryResultStoredQuery;
 import io.micronaut.inject.BeanDefinition;
 import io.micronaut.inject.qualifiers.Qualifiers;
-import io.micronaut.serde.ObjectMapper;
+import io.micronaut.json.JsonMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -112,7 +112,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
     protected final ResultReader<RS, Integer> columnIndexResultSetReader;
     @SuppressWarnings("WeakerAccess")
     protected final QueryStatement<PS, Integer> preparedStatementWriter;
-    protected final ObjectMapper objectMapper;
+    protected final JsonMapper jsonMapper;
     protected final JsonColumnReaderProvider<RS> jsonColumnReaderProvider;
     protected final Map<Class, SqlQueryBuilder> queryBuilders = new HashMap<>(10);
     protected final Map<Class, String> repositoriesWithHardcodedDataSource = new HashMap<>(10);
@@ -132,7 +132,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
      * @param beanContext                  The bean context
      * @param conversionService            The conversion service
      * @param attributeConverterRegistry   The attribute converter registry
-     * @param objectMapper                 The object mapper
+     * @param jsonMapper                   The JSON mapper
      * @param sqlJsonColumnReaders         The custom SQL json column readers
      */
     protected AbstractSqlRepositoryOperations(
@@ -145,15 +145,15 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
             BeanContext beanContext,
             DataConversionService conversionService,
             AttributeConverterRegistry attributeConverterRegistry,
-            ObjectMapper objectMapper,
+            JsonMapper jsonMapper,
             List<SqlJsonColumnReader<RS>> sqlJsonColumnReaders) {
         super(dateTimeProvider, runtimeEntityRegistry, conversionService, attributeConverterRegistry);
         this.dataSourceName = dataSourceName;
         this.columnNameResultSetReader = columnNameResultSetReader;
         this.columnIndexResultSetReader = columnIndexResultSetReader;
         this.preparedStatementWriter = preparedStatementWriter;
-        this.objectMapper = objectMapper;
-        this.jsonColumnReaderProvider = new JsonColumnReaderProvider<>(objectMapper, sqlJsonColumnReaders);
+        this.jsonMapper = jsonMapper;
+        this.jsonColumnReaderProvider = new JsonColumnReaderProvider<>(jsonMapper, sqlJsonColumnReaders);
         Collection<BeanDefinition<Object>> beanDefinitions = beanContext
                 .getBeanDefinitions(Object.class, Qualifiers.byStereotype(Repository.class));
         for (BeanDefinition<Object> beanDefinition : beanDefinitions) {
@@ -233,11 +233,11 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
                 break;
             case JSON:
                 if (value != null && !value.getClass().equals(String.class)) {
-                    if (objectMapper == null) {
+                    if (jsonMapper == null) {
                         throw new IllegalStateException("For JSON data types support Micronaut ObjectMapper needs to be available on the classpath.");
                     }
                     try {
-                        value = new String(objectMapper.writeValueAsBytes(value), StandardCharsets.UTF_8);
+                        value = new String(jsonMapper.writeValueAsBytes(value), StandardCharsets.UTF_8);
                     } catch (IOException e) {
                         throw new DataAccessException("Failed setting JSON field parameter at index " + index, e);
                     }
@@ -611,8 +611,8 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
         private final JsonColumnReader<RS> defaultJsonColumnReader;
         private final Map<Dialect, SqlJsonColumnReader<RS>> jsonColumnReaderMap;
 
-        JsonColumnReaderProvider(ObjectMapper objectMapper, List<SqlJsonColumnReader<RS>> jsonColumnReaders) {
-            this.defaultJsonColumnReader = objectMapper == null ? null : new JsonColumnReader<>(objectMapper);
+        JsonColumnReaderProvider(JsonMapper jsonMapper, List<SqlJsonColumnReader<RS>> jsonColumnReaders) {
+            this.defaultJsonColumnReader = jsonMapper == null ? null : new JsonColumnReader<>(jsonMapper);
             if (CollectionUtils.isEmpty(jsonColumnReaders)) {
                 jsonColumnReaderMap = Collections.emptyMap();
             } else {
