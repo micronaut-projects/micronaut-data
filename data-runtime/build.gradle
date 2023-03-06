@@ -6,18 +6,18 @@ plugins {
 
 dependencies {
 	kapt mn.micronaut.inject.java
-    kapt libs.micronaut.docs
+	kapt libs.micronaut.docs
 	annotationProcessor mn.micronaut.inject.java
 	annotationProcessor libs.micronaut.docs
 
 	api projects.dataModel
-	compileOnly mnSerde.micronaut.serde.support
+	compileOnly mn.micronaut.json.core
 
 	implementation libs.reactor
 
 	compileOnly libs.jakarta.persistence.api
 	compileOnly libs.javax.persistence.api
-    compileOnly mnMultitenancy.micronaut.multitenancy
+	compileOnly mnMultitenancy.micronaut.multitenancy
 
 	testAnnotationProcessor mn.micronaut.inject.java
 	testAnnotationProcessor projects.dataProcessor
