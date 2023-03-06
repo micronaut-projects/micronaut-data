@@ -19,7 +19,7 @@ import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.data.exceptions.DataAccessException;
-import io.micronaut.serde.ObjectMapper;
+import io.micronaut.json.JsonMapper;
 
 import java.io.IOException;
 
@@ -35,11 +35,11 @@ public class JsonColumnReader<RS> {
 
     private static final String NULL_VALUE = "null";
 
-    protected final ObjectMapper objectMapper;
+    protected final JsonMapper jsonMapper;
 
-    public JsonColumnReader(ObjectMapper objectMapper) {
-        ArgumentUtils.requireNonNull("objectMapper", objectMapper);
-        this.objectMapper = objectMapper;
+    public JsonColumnReader(JsonMapper jsonMapper) {
+        ArgumentUtils.requireNonNull("jsonMapper", jsonMapper);
+        this.jsonMapper = jsonMapper;
     }
 
     /**
@@ -61,16 +61,16 @@ public class JsonColumnReader<RS> {
             return (T) data;
         }
         try {
-            return objectMapper.readValue(data, argument);
+            return jsonMapper.readValue(data, argument);
         } catch (IOException e) {
             throw new DataAccessException("Failed to read from JSON field [" + columnName + "].", e);
         }
     }
 
     /**
-     * @return the object mapper
+     * @return the json mapper
      */
-    @NonNull public ObjectMapper getObjectMapper() {
-        return objectMapper;
+    @NonNull public JsonMapper getJsonMapper() {
+        return jsonMapper;
     }
 }

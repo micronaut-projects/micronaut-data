@@ -18,7 +18,7 @@ package io.micronaut.data.runtime.mapper.sql;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.runtime.mapper.JsonColumnReader;
-import io.micronaut.serde.ObjectMapper;
+import io.micronaut.json.JsonMapper;
 
 /**
  * The SQL json column reader abstract class. If some dialect has specific logic for reading and converting JSON
@@ -31,8 +31,8 @@ import io.micronaut.serde.ObjectMapper;
  */
 public abstract class SqlJsonColumnReader<RS> extends JsonColumnReader<RS> {
 
-    public SqlJsonColumnReader(ObjectMapper objectMapper) {
-        super(objectMapper);
+    protected SqlJsonColumnReader(JsonMapper jsonMapper) {
+        super(jsonMapper);
     }
 
     /**

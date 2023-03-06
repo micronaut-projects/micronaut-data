@@ -78,6 +78,7 @@ public class DTOMapper<T, S, R> implements BeanIntrospectionMapper<S, R> {
      * @param dtoEntity The dto entity
      * @param resultReader The result reader
      * @param jsonColumnReader The JSON column reader
+     * @param conversionService
      */
     public DTOMapper(RuntimePersistentEntity<T> persistentEntity,
                      RuntimePersistentEntity<?> dtoEntity,

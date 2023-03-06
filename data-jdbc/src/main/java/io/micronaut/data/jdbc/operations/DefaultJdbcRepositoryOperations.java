@@ -154,19 +154,20 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     /**
      * Default constructor.
      *
-     * @param dataSourceName             The data source name
-     * @param jdbcConfiguration          The jdbcConfiguration
-     * @param dataSource                 The datasource
-     * @param transactionOperations      The JDBC operations for the data source
-     * @param executorService            The executor service
-     * @param beanContext                The bean context
-     * @param dateTimeProvider           The dateTimeProvider
-     * @param entityRegistry             The entity registry
-     * @param conversionService          The conversion service
-     * @param attributeConverterRegistry The attribute converter registry
-     * @param schemaTenantResolver       The schema tenant resolver
-     * @param schemaHandler              The schema handler
-     * @param jsonMapper                 The JSON mapper
+     * @param dataSourceName                  The data source name
+     * @param jdbcConfiguration               The jdbcConfiguration
+     * @param dataSource                      The datasource
+     * @param transactionOperations           The JDBC operations for the data source
+     * @param executorService                 The executor service
+     * @param beanContext                     The bean context
+     * @param dateTimeProvider                The dateTimeProvider
+     * @param entityRegistry                  The entity registry
+     * @param conversionService               The conversion service
+     * @param attributeConverterRegistry      The attribute converter registry
+     * @param schemaTenantResolver            The schema tenant resolver
+     * @param schemaHandler                   The schema handler
+     * @param jsonMapper                      The JSON mapper
+     * @param sqlJsonColumnReaders            The custom SQL json column readers
      */
     @Internal
     @SuppressWarnings("ParameterNumber")
