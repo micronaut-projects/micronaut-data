@@ -234,7 +234,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
             case JSON:
                 if (value != null && !value.getClass().equals(String.class)) {
                     if (jsonMapper == null) {
-                        throw new IllegalStateException("For JSON data types support Micronaut ObjectMapper needs to be available on the classpath.");
+                        throw new IllegalStateException("For JSON data types support Micronaut JsonMapper needs to be available on the classpath.");
                     }
                     try {
                         value = new String(jsonMapper.writeValueAsBytes(value), StandardCharsets.UTF_8);

@@ -631,7 +631,10 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
         if (propertyType.isInstance(v)) {
             return v;
         }
-        if (jsonColumnReader != null && rpp.getDataType() == DataType.JSON) {
+        if (rpp.getDataType() == DataType.JSON) {
+            if (jsonColumnReader == null) {
+                throw new IllegalStateException("For JSON data types support Micronaut JsonMapper needs to be available on the classpath.");
+            }
             JsonMapper jsonMapper = jsonColumnReader.getJsonMapper();
             try {
                 return jsonMapper.readValue(v.toString(), rpp.getArgument());

@@ -157,7 +157,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
     /**
      * Default constructor.
      *
-     * @param dataSourceName               he data source name
+     * @param dataSourceName               The data source name
      * @param connectionFactory            The associated connection factory
      * @param dateTimeProvider             The date time provider
      * @param runtimeEntityRegistry        The runtime entity registry

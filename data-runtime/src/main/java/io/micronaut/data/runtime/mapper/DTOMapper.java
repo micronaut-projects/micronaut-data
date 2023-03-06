@@ -147,7 +147,10 @@ public class DTOMapper<T, S, R> implements BeanIntrospectionMapper<S, R> {
         if (StringUtils.isNotEmpty(aliasPropertyName)) {
             propertyName = aliasPropertyName;
         }
-        if (dataType == DataType.JSON && jsonColumnReader != null) {
+        if (dataType == DataType.JSON) {
+            if (jsonColumnReader == null) {
+                throw new IllegalStateException("For JSON data types support Micronaut JsonMapper needs to be available on the classpath.");
+            }
             return jsonColumnReader.readJsonColumn(resultReader, resultSet, propertyName, property.getArgument());
         } else {
             return read(resultSet, propertyName, dataType);

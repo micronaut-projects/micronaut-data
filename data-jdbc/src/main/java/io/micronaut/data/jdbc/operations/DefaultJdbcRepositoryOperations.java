@@ -194,7 +194,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                 dateTimeProvider,
                 entityRegistry,
                 beanContext,
-                conversionService, attributeConverterRegistry,
+                conversionService,
+                attributeConverterRegistry,
                 jsonMapper,
                 sqlJsonColumnReaders);
         this.schemaTenantResolver = schemaTenantResolver;
