@@ -17,6 +17,7 @@ package io.micronaut.data.r2dbc.mapper;
 
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.type.Argument;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.runtime.mapper.ResultReader;
@@ -53,11 +54,11 @@ class OracleR2dbcJsonColumnReader extends SqlJsonColumnReader<Row> {
     }
 
     @Override
-    public <T> T readJsonColumn(ResultReader<Row, String> resultReader, Row resultSet, String columnName, Class<T> type) {
+    public <T> T readJsonColumn(ResultReader<Row, String> resultReader, Row resultSet, String columnName, Argument<T> argument) {
         try {
             OracleJsonObject oracleJsonObject = resultSet.get(columnName, OracleJsonObject.class);
             byte[] content = objectMapper.writeValueAsBytes(oracleJsonObject);
-            return objectMapper.readValue(content, type);
+            return objectMapper.readValue(content, argument);
         } catch (Exception e) {
             throw new DataAccessException("Failed to read from JSON field [" + columnName + "].", e);
         }

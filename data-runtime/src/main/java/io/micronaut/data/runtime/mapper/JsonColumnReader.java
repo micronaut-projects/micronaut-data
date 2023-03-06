@@ -15,6 +15,8 @@
  */
 package io.micronaut.data.runtime.mapper;
 
+import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.serde.ObjectMapper;
@@ -31,6 +33,8 @@ import java.io.IOException;
  */
 public class JsonColumnReader<RS> {
 
+    private static final String NULL_VALUE = "null";
+
     protected final ObjectMapper objectMapper;
 
     public JsonColumnReader(ObjectMapper objectMapper) {
@@ -44,17 +48,29 @@ public class JsonColumnReader<RS> {
      * @param resultReader the result reader
      * @param resultSet the result set
      * @param columnName the column name
-     * @param type the result type
+     * @param argument the result type argument
      * @return object of type T read from JSON column
      * @param <T> the result type
      */
-    public <T> T readJsonColumn(ResultReader<RS, String> resultReader, RS resultSet, String columnName, Class<T> type) {
+    public <T> T readJsonColumn(ResultReader<RS, String> resultReader, RS resultSet, String columnName, Argument<T> argument) {
         String data = resultReader.readString(resultSet, columnName);
+        if (data == null || data.equals(NULL_VALUE)) {
+            return null;
+        }
+        if (argument.getType().isInstance(data)) {
+            return (T) data;
+        }
         try {
-            return objectMapper.readValue(data, type);
+            return objectMapper.readValue(data, argument);
         } catch (IOException e) {
             throw new DataAccessException("Failed to read from JSON field [" + columnName + "].", e);
         }
     }
 
+    /**
+     * @return the object mapper
+     */
+    @NonNull public ObjectMapper getObjectMapper() {
+        return objectMapper;
+    }
 }

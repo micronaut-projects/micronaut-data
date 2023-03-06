@@ -110,12 +110,12 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
     @SuppressWarnings("WeakerAccess")
     protected final QueryStatement<PS, Integer> preparedStatementWriter;
     protected final ObjectMapper objectMapper;
+    protected final JsonColumnReaderProvider<RS> jsonColumnReaderProvider;
     protected final Map<Class, SqlQueryBuilder> queryBuilders = new HashMap<>(10);
     protected final Map<Class, String> repositoriesWithHardcodedDataSource = new HashMap<>(10);
     private final Map<QueryKey, SqlStoredQuery> entityInserts = new ConcurrentHashMap<>(10);
     private final Map<QueryKey, SqlStoredQuery> entityUpdates = new ConcurrentHashMap<>(10);
     private final Map<Association, String> associationInserts = new ConcurrentHashMap<>(10);
-    private final JsonColumnReaderProvider<RS> jsonColumnReaderProvider;
 
     /**
      * Default constructor.
@@ -509,7 +509,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
     protected final <T> JsonQueryResultMapper createJsonQueryResultMapper(Dialect dialect, String columnName,
                                                                   RuntimePersistentEntity<T> persistentEntity, BiFunction<RuntimePersistentEntity<Object>, Object, Object> loadListener) {
         return new JsonQueryResultMapper(columnName, persistentEntity, columnNameResultSetReader,
-            jsonColumnReaderProvider.provide(dialect), loadListener);
+            jsonColumnReaderProvider.get(dialect), loadListener);
     }
 
     /**
@@ -560,11 +560,10 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
      *
      * @param <RS> the result set type
      */
-    private static final class JsonColumnReaderProvider<RS> {
+    protected static final class JsonColumnReaderProvider<RS> {
 
         private final JsonColumnReader<RS> defaultJsonColumnReader;
         private final Map<Dialect, SqlJsonColumnReader<RS>> jsonColumnReaderMap;
-
 
         JsonColumnReaderProvider(ObjectMapper objectMapper, List<SqlJsonColumnReader<RS>> jsonColumnReaders) {
             this.defaultJsonColumnReader = objectMapper == null ? null : new JsonColumnReader<>(objectMapper);
@@ -579,8 +578,9 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
          * Provides {@link JsonQueryResultMapper} for given SQL dialect.
          *
          * @param dialect the SQL dialect
+         * @return the {@link JsonColumnReader} for given dialect, or default JSON column reader if dialect does not have specific one
          */
-        JsonColumnReader<RS> provide(Dialect dialect) {
+        public JsonColumnReader<RS> get(Dialect dialect) {
             JsonColumnReader<RS> jsonColumnReader = jsonColumnReaderMap.get(dialect);
             if (jsonColumnReader != null) {
                 if (LOG.isDebugEnabled()) {
@@ -588,6 +588,15 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
                 }
                 return jsonColumnReader;
             }
+            return defaultJsonColumnReader;
+        }
+
+        /**
+         * Provides default {@link JsonColumnReader}.
+         *
+         * @return the default json column reader
+         */
+        public JsonColumnReader<RS> getDefault() {
             return defaultJsonColumnReader;
         }
     }

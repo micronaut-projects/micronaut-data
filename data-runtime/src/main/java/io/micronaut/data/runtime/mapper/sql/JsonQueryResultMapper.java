@@ -17,6 +17,7 @@ package io.micronaut.data.runtime.mapper.sql;
 
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
+import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
@@ -55,7 +56,7 @@ public class JsonQueryResultMapper<T, RS, R> implements SqlTypeMapper<RS, R> {
 
     @Override
     public R map(RS rs, Class<R> type) throws DataAccessException {
-        R entityInstance = jsonColumnReader.readJsonColumn(resultReader, rs, columnName, type);
+        R entityInstance = jsonColumnReader.readJsonColumn(resultReader, rs, columnName, Argument.of(type));
         if (entityInstance == null) {
             throw new DataAccessException("Unable to map result to entity of type [" + type.getName() + "]. Missing result data.");
         }

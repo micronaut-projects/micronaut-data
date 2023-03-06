@@ -679,9 +679,10 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         public <T, R> Mono<R> findOne(@NonNull PreparedQuery<T, R> pq) {
             SqlPreparedQuery<T, R> preparedQuery = getSqlPreparedQuery(pq);
             return withNewOrExistingTransactionMono(preparedQuery, false, status -> {
+                Dialect dialect = preparedQuery.getDialect();
                 Connection connection = status.getConnection();
                 Statement statement = prepareStatement(connection::createStatement, preparedQuery, false, true);
-                preparedQuery.bindParameters(new R2dbcParameterBinder(connection, statement, preparedQuery.getDialect()));
+                preparedQuery.bindParameters(new R2dbcParameterBinder(connection, statement, dialect));
                 if (preparedQuery.getResultDataType() == DataType.ENTITY) {
                     Class<R> resultType = preparedQuery.getResultType();
                     RuntimePersistentEntity<R> persistentEntity = getEntity(resultType);
@@ -694,15 +695,15 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                     };
                     QueryResultInfo queryResultInfo = preparedQuery.getQueryResultInfo();
                     if (queryResultInfo != null && queryResultInfo.getType() == QueryResult.Type.JSON) {
-                        JsonQueryResultMapper<T, Row, R> jsonQueryResultMapper = createJsonQueryResultMapper(preparedQuery.getDialect(),
-                            queryResultInfo.getColumnName(), persistentEntity, loadListener);
+                        JsonQueryResultMapper<T, Row, R> jsonQueryResultMapper = createJsonQueryResultMapper(dialect, queryResultInfo.getColumnName(),
+                            persistentEntity, loadListener);
                         return executeAndMapEachRow(statement, row -> jsonQueryResultMapper.map(row, resultType));
                     }
                     SqlResultEntityTypeMapper<Row, R> mapper = new SqlResultEntityTypeMapper<>(
                         persistentEntity,
                         columnNameResultSetReader,
                         preparedQuery.getJoinFetchPaths(),
-                        objectMapper,
+                        jsonColumnReaderProvider.get(dialect),
                         loadListener,
                         conversionService);
                     SqlResultEntityTypeMapper.PushingMapper<Row, R> rowsMapper = mapper.readOneWithJoins();
@@ -718,14 +719,14 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                     TypeMapper<Row, R> mapper;
                     QueryResultInfo queryResultInfo = preparedQuery.getQueryResultInfo();
                     if (queryResultInfo != null && queryResultInfo.getType() == QueryResult.Type.JSON) {
-                        mapper = createJsonQueryResultMapper(preparedQuery.getDialect(), queryResultInfo.getColumnName(),
+                        mapper = createJsonQueryResultMapper(dialect, queryResultInfo.getColumnName(),
                             persistentEntity, null);
                     } else {
                         mapper = new SqlDTOMapper<>(
                             persistentEntity,
                             isRawQuery ? getEntity(preparedQuery.getResultType()) : persistentEntity,
                             columnNameResultSetReader,
-                            objectMapper,
+                            jsonColumnReaderProvider.get(dialect),
                             conversionService
                         );
                     }
@@ -750,9 +751,10 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         public <T, R> Flux<R> findAll(@NonNull PreparedQuery<T, R> pq) {
             SqlPreparedQuery<T, R> preparedQuery = getSqlPreparedQuery(pq);
             return withNewOrExistingTransactionFlux(preparedQuery, false, status -> {
+                Dialect dialect = preparedQuery.getDialect();
                 Connection connection = status.getConnection();
                 Statement statement = prepareStatement(connection::createStatement, preparedQuery, false, false);
-                preparedQuery.bindParameters(new R2dbcParameterBinder(connection, statement, preparedQuery.getDialect()));
+                preparedQuery.bindParameters(new R2dbcParameterBinder(connection, statement, dialect));
                 Class<R> resultType = preparedQuery.getResultType();
                 boolean dtoProjection = preparedQuery.isDtoProjection();
                 boolean isEntity = preparedQuery.getResultDataType() == DataType.ENTITY;
@@ -762,15 +764,14 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                     if (dtoProjection) {
                         QueryResultInfo queryResultInfo = preparedQuery.getQueryResultInfo();
                         if (queryResultInfo != null && queryResultInfo.getType() == QueryResult.Type.JSON) {
-                            mapper = createJsonQueryResultMapper(preparedQuery.getDialect(),
-                                queryResultInfo.getColumnName(), persistentEntity, null);
+                            mapper = createJsonQueryResultMapper(dialect, queryResultInfo.getColumnName(), persistentEntity, null);
                         } else {
                             boolean isRawQuery = preparedQuery.isRawQuery();
                             mapper = new SqlDTOMapper<>(
                                 persistentEntity,
                                 isRawQuery ? getEntity(preparedQuery.getResultType()) : persistentEntity,
                                 columnNameResultSetReader,
-                                objectMapper,
+                                jsonColumnReaderProvider.get(dialect),
                                 conversionService
                             );
                         }
@@ -784,15 +785,14 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                         };
                         QueryResultInfo queryResultInfo = preparedQuery.getQueryResultInfo();
                         if (queryResultInfo != null && queryResultInfo.getType() == QueryResult.Type.JSON) {
-                            mapper = createJsonQueryResultMapper(preparedQuery.getDialect(),
-                                queryResultInfo.getColumnName(), persistentEntity, loadListener);
+                            mapper = createJsonQueryResultMapper(dialect, queryResultInfo.getColumnName(), persistentEntity, loadListener);
                         } else {
                             Set<JoinPath> joinFetchPaths = preparedQuery.getJoinFetchPaths();
                             SqlResultEntityTypeMapper<Row, R> entityTypeMapper = new SqlResultEntityTypeMapper<>(
                                 getEntity(resultType),
                                 columnNameResultSetReader,
                                 joinFetchPaths,
-                                objectMapper,
+                                jsonColumnReaderProvider.get(dialect),
                                 loadListener,
                                 conversionService);
                             boolean onlySingleEndedJoins = isOnlySingleEndedJoins(persistentEntity, joinFetchPaths);

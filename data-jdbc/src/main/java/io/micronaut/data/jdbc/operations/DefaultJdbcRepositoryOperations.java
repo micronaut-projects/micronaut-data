@@ -307,8 +307,9 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         return executeRead(connection -> {
             SqlPreparedQuery<T, R> preparedQuery = getSqlPreparedQuery(pq);
             RuntimePersistentEntity<T> persistentEntity = preparedQuery.getPersistentEntity();
+            Dialect dialect = preparedQuery.getDialect();
             try (PreparedStatement ps = prepareStatement(connection::prepareStatement, preparedQuery, false, true)) {
-                preparedQuery.bindParameters(new JdbcParameterBinder(connection, ps, preparedQuery.getDialect()));
+                preparedQuery.bindParameters(new JdbcParameterBinder(connection, ps, dialect));
                 try (ResultSet rs = ps.executeQuery()) {
                     Class<R> resultType = preparedQuery.getResultType();
                     if (preparedQuery.getResultDataType() == DataType.ENTITY) {
@@ -322,14 +323,14 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                         };
                         QueryResultInfo queryResultInfo = preparedQuery.getQueryResultInfo();
                         if (queryResultInfo != null && queryResultInfo.getType() == QueryResult.Type.JSON) {
-                            return rs.next() ? transformJsonQueryResult(rs, preparedQuery.getDialect(), queryResultInfo.getColumnName(), persistentEntity, resultType, loadListener) : null;
+                            return rs.next() ? transformJsonQueryResult(rs, dialect, queryResultInfo.getColumnName(), persistentEntity, resultType, loadListener) : null;
                         } else {
                             final Set<JoinPath> joinFetchPaths = preparedQuery.getJoinFetchPaths();
                             SqlResultEntityTypeMapper<ResultSet, R> mapper = new SqlResultEntityTypeMapper<>(
                                 resultPersistentEntity,
                                 columnNameResultSetReader,
                                 joinFetchPaths,
-                                objectMapper,
+                                jsonColumnReaderProvider.get(dialect),
                                 loadListener,
                                 conversionService);
                             SqlResultEntityTypeMapper.PushingMapper<ResultSet, R> oneMapper = mapper.readOneWithJoins();
@@ -342,7 +343,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                             R result = oneMapper.getResult();
                             if (preparedQuery.hasResultConsumer()) {
                                 preparedQuery.getParameterInRole(SqlResultConsumer.ROLE, SqlResultConsumer.class)
-                                    .ifPresent(consumer -> consumer.accept(result, newMappingContext(rs)));
+                                    .ifPresent(consumer -> consumer.accept(result, newMappingContext(rs, dialect)));
                             }
                             return result;
                         }
@@ -351,14 +352,14 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                             QueryResultInfo queryResultInfo = preparedQuery.getQueryResultInfo();
                             if (queryResultInfo != null && queryResultInfo.getType() == QueryResult.Type.JSON) {
                                 String column = queryResultInfo.getColumnName();
-                                return transformJsonQueryResult(rs, preparedQuery.getDialect(), column, persistentEntity, resultType, null);
+                                return transformJsonQueryResult(rs, dialect, column, persistentEntity, resultType, null);
                             } else {
                                 boolean isRawQuery = preparedQuery.isRawQuery();
                                 TypeMapper<ResultSet, R> introspectedDataMapper = new SqlDTOMapper<>(
                                     persistentEntity,
                                     isRawQuery ? getEntity(preparedQuery.getResultType()) : persistentEntity,
                                     columnNameResultSetReader,
-                                    objectMapper,
+                                    jsonColumnReaderProvider.get(dialect),
                                     conversionService
                                 );
                                 return introspectedDataMapper.map(rs, resultType);
@@ -410,11 +411,12 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         SqlPreparedQuery<T, R> preparedQuery = getSqlPreparedQuery(pq);
         Class<R> resultType = preparedQuery.getResultType();
         AtomicBoolean finished = new AtomicBoolean();
+        Dialect dialect = preparedQuery.getDialect();
 
         PreparedStatement ps;
         try {
             ps = prepareStatement(connection::prepareStatement, preparedQuery, false, false);
-            preparedQuery.bindParameters(new JdbcParameterBinder(connection, ps, preparedQuery.getDialect()));
+            preparedQuery.bindParameters(new JdbcParameterBinder(connection, ps, dialect));
         } catch (Exception e) {
             throw new DataAccessException("SQL Error preparing Query: " + e.getMessage(), e);
         }
@@ -437,14 +439,14 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                     QueryResultInfo queryResultInfo = preparedQuery.getQueryResultInfo();
                     if (queryResultInfo != null && queryResultInfo.getType() == QueryResult.Type.JSON) {
                         String column = queryResultInfo.getColumnName();
-                        mapper = createJsonQueryResultMapper(preparedQuery.getDialect(), column, persistentEntity, null);
+                        mapper = createJsonQueryResultMapper(dialect, column, persistentEntity, null);
                     } else {
                         boolean isRawQuery = preparedQuery.isRawQuery();
                         mapper = new SqlDTOMapper<>(
                             persistentEntity,
                             isRawQuery ? getEntity(preparedQuery.getResultType()) : persistentEntity,
                             columnNameResultSetReader,
-                            objectMapper,
+                            jsonColumnReaderProvider.get(dialect),
                             conversionService
                         );
                     }
@@ -459,14 +461,14 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                     QueryResultInfo queryResultInfo = preparedQuery.getQueryResultInfo();
                     if (queryResultInfo != null && queryResultInfo.getType() == QueryResult.Type.JSON) {
                         String column = queryResultInfo.getColumnName();
-                        mapper = createJsonQueryResultMapper(preparedQuery.getDialect(), column, persistentEntity, loadListener);
+                        mapper = createJsonQueryResultMapper(dialect, column, persistentEntity, loadListener);
                     } else {
                         Set<JoinPath> joinFetchPaths = preparedQuery.getJoinFetchPaths();
                         SqlResultEntityTypeMapper<ResultSet, R> entityTypeMapper = new SqlResultEntityTypeMapper<>(
                             getEntity(resultType),
                             columnNameResultSetReader,
                             joinFetchPaths,
-                            objectMapper,
+                            jsonColumnReaderProvider.get(dialect),
                             loadListener,
                             conversionService);
                         boolean onlySingleEndedJoins = isOnlySingleEndedJoins(persistentEntity, joinFetchPaths);
@@ -879,7 +881,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                 prefix,
                 getEntity(type),
                 columnNameResultSetReader,
-                objectMapper,
+                jsonColumnReaderProvider.getDefault(),
                 conversionService).map(resultSet, type);
     }
 
@@ -889,7 +891,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         return new DTOMapper<E, ResultSet, D>(
                 getEntity(rootEntity),
                 columnNameResultSetReader,
-                objectMapper,
+                jsonColumnReaderProvider.getDefault(),
                 conversionService).map(resultSet, dtoType);
     }
 
@@ -898,7 +900,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     public <T> Stream<T> entityStream(@NonNull ResultSet resultSet, @Nullable String prefix, @NonNull Class<T> rootEntity) {
         ArgumentUtils.requireNonNull("resultSet", resultSet);
         ArgumentUtils.requireNonNull("rootEntity", rootEntity);
-        TypeMapper<ResultSet, T> mapper = new SqlResultEntityTypeMapper<>(prefix, getEntity(rootEntity), columnNameResultSetReader, objectMapper, conversionService);
+        TypeMapper<ResultSet, T> mapper = new SqlResultEntityTypeMapper<>(prefix, getEntity(rootEntity), columnNameResultSetReader,
+            jsonColumnReaderProvider.getDefault(), conversionService);
         Iterable<T> iterable = () -> new Iterator<T>() {
             boolean fetched = false;
             boolean end = false;
@@ -936,7 +939,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     }
 
     @NonNull
-    private ResultConsumer.Context<ResultSet> newMappingContext(ResultSet rs) {
+    private ResultConsumer.Context<ResultSet> newMappingContext(ResultSet rs, Dialect dialect) {
         return new ResultConsumer.Context<ResultSet>() {
             @Override
             public ResultSet getResultSet() {
@@ -956,7 +959,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                         prefix,
                         entity,
                         columnNameResultSetReader,
-                        objectMapper,
+                        jsonColumnReaderProvider.getDefault(),
                         conversionService);
                 return mapper.map(rs, type);
             }
@@ -968,7 +971,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                 TypeMapper<ResultSet, D> introspectedDataMapper = new DTOMapper<>(
                         entity,
                         columnNameResultSetReader,
-                        objectMapper,
+                        jsonColumnReaderProvider.get(dialect),
                         conversionService);
                 return introspectedDataMapper.map(rs, dtoType);
             }
