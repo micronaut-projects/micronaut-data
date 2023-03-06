@@ -19,7 +19,7 @@ import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.mapper.DTOMapper;
 import io.micronaut.data.runtime.mapper.ResultReader;
-import io.micronaut.http.codec.MediaTypeCodec;
+import io.micronaut.json.JsonMapper;
 
 /**
  * Subclass of {@link DTOMapper} specifically for SQL.
@@ -47,14 +47,14 @@ public class SqlDTOMapper<T, S, R> extends DTOMapper<T, S, R> implements SqlType
      *
      * @param persistentEntity The entity
      * @param resultReader     The result reader
-     * @param jsonCodec        The json codec
+     * @param jsonMapper       The json mapper
      * @param conversionService The conversion service
      */
     public SqlDTOMapper(RuntimePersistentEntity<T> persistentEntity,
                         ResultReader<S, String> resultReader,
-                        MediaTypeCodec jsonCodec,
+                        JsonMapper jsonMapper,
                         DataConversionService conversionService) {
-        super(persistentEntity, resultReader, jsonCodec, conversionService);
+        super(persistentEntity, resultReader, jsonMapper, conversionService);
     }
 
     /**
@@ -63,15 +63,15 @@ public class SqlDTOMapper<T, S, R> extends DTOMapper<T, S, R> implements SqlType
      * @param persistentEntity The entity
      * @param dtoEntity        The DTO entity
      * @param resultReader     The result reader
-     * @param jsonCodec        The json codec
+     * @param jsonMapper       The json mapper
      * @param conversionService The conversion service
      */
     public SqlDTOMapper(RuntimePersistentEntity<T> persistentEntity,
                         RuntimePersistentEntity<?> dtoEntity,
                         ResultReader<S, String> resultReader,
-                        MediaTypeCodec jsonCodec,
+                        JsonMapper jsonMapper,
                         DataConversionService conversionService) {
-        super(persistentEntity, dtoEntity, resultReader, jsonCodec, conversionService);
+        super(persistentEntity, dtoEntity, resultReader, jsonMapper, conversionService);
     }
 
     @Override
