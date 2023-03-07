@@ -47,7 +47,6 @@ import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.model.runtime.convert.AttributeConverter;
 import io.micronaut.data.runtime.convert.DataConversionService;
-import io.micronaut.data.runtime.mapper.JsonColumnReader;
 import io.micronaut.data.runtime.mapper.ResultReader;
 import io.micronaut.json.JsonMapper;
 
@@ -80,7 +79,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
     private final ResultReader<RS, String> resultReader;
     private final Map<String, JoinPath> joinPaths;
     private final String startingPrefix;
-    private final JsonColumnReader<RS> jsonColumnReader;
+    private final JsonMapper jsonMapper;
     private final DataConversionService conversionService;
     private final BiFunction<RuntimePersistentEntity<Object>, Object, Object> eventListener;
     private boolean callNext = true;
@@ -91,15 +90,15 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
      * @param prefix            The prefix to startup from.
      * @param entity            The entity
      * @param resultReader      The result reader
-     * @param jsonColumnReader  The JSON column reader
+     * @param jsonMapper        The json mapper
      * @param conversionService The conversion service
      */
     public SqlResultEntityTypeMapper(
-            String prefix,
-            @NonNull RuntimePersistentEntity<R> entity,
-            @NonNull ResultReader<RS, String> resultReader,
-            @Nullable JsonColumnReader<RS> jsonColumnReader, DataConversionService conversionService) {
-        this(entity, resultReader, Collections.emptySet(), prefix, jsonColumnReader, conversionService, null);
+        String prefix,
+        @NonNull RuntimePersistentEntity<R> entity,
+        @NonNull ResultReader<RS, String> resultReader,
+        @Nullable JsonMapper jsonMapper, DataConversionService conversionService) {
+        this(entity, resultReader, Collections.emptySet(), prefix, jsonMapper, conversionService, null);
     }
 
     /**
@@ -108,15 +107,15 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
      * @param entity            The entity
      * @param resultReader      The result reader
      * @param joinPaths         The join paths
-     * @param jsonColumnReader  The JSON column reader
+     * @param jsonMapper        The json mapper
      * @param conversionService The conversion service
      */
     public SqlResultEntityTypeMapper(
-            @NonNull RuntimePersistentEntity<R> entity,
-            @NonNull ResultReader<RS, String> resultReader,
-            @Nullable Set<JoinPath> joinPaths,
-            @Nullable JsonColumnReader<RS> jsonColumnReader, DataConversionService conversionService) {
-        this(entity, resultReader, joinPaths, null, jsonColumnReader, conversionService, null);
+        @NonNull RuntimePersistentEntity<R> entity,
+        @NonNull ResultReader<RS, String> resultReader,
+        @Nullable Set<JoinPath> joinPaths,
+        @Nullable JsonMapper jsonMapper, DataConversionService conversionService) {
+        this(entity, resultReader, joinPaths, null, jsonMapper, conversionService, null);
     }
 
     /**
@@ -125,17 +124,17 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
      * @param entity            The entity
      * @param resultReader      The result reader
      * @param joinPaths         The join paths
-     * @param jsonColumnReader  The JSON column reader
+     * @param jsonMapper        The json mapper
      * @param loadListener      The event listener
      * @param conversionService The conversion service
      */
     public SqlResultEntityTypeMapper(
-            @NonNull RuntimePersistentEntity<R> entity,
-            @NonNull ResultReader<RS, String> resultReader,
-            @Nullable Set<JoinPath> joinPaths,
-            @Nullable JsonColumnReader<RS> jsonColumnReader,
-            @Nullable BiFunction<RuntimePersistentEntity<Object>, Object, Object> loadListener, DataConversionService conversionService) {
-        this(entity, resultReader, joinPaths, null, jsonColumnReader, conversionService, loadListener);
+        @NonNull RuntimePersistentEntity<R> entity,
+        @NonNull ResultReader<RS, String> resultReader,
+        @Nullable Set<JoinPath> joinPaths,
+        @Nullable JsonMapper jsonMapper,
+        @Nullable BiFunction<RuntimePersistentEntity<Object>, Object, Object> loadListener, DataConversionService conversionService) {
+        this(entity, resultReader, joinPaths, null, jsonMapper, conversionService, loadListener);
     }
 
     /**
@@ -145,22 +144,22 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
      * @param resultReader      The result reader
      * @param joinPaths         The join paths
      * @param startingPrefix    The starting prefix
-     * @param jsonColumnReader  The JSON column reader
+     * @param jsonMapper        The json mapper
      * @param eventListener     The event listener used for trigger post load if configured
      * @param conversionService The conversion service
      */
     private SqlResultEntityTypeMapper(
-            @NonNull RuntimePersistentEntity<R> entity,
-            @NonNull ResultReader<RS, String> resultReader,
-            @Nullable Set<JoinPath> joinPaths,
-            String startingPrefix,
-            @Nullable JsonColumnReader<RS> jsonColumnReader,
-            DataConversionService conversionService, @Nullable BiFunction<RuntimePersistentEntity<Object>, Object, Object> eventListener) {
+        @NonNull RuntimePersistentEntity<R> entity,
+        @NonNull ResultReader<RS, String> resultReader,
+        @Nullable Set<JoinPath> joinPaths,
+        String startingPrefix,
+        @Nullable JsonMapper jsonMapper,
+        DataConversionService conversionService, @Nullable BiFunction<RuntimePersistentEntity<Object>, Object, Object> eventListener) {
         this.conversionService = conversionService;
         ArgumentUtils.requireNonNull("entity", entity);
         ArgumentUtils.requireNonNull("resultReader", resultReader);
         this.entity = entity;
-        this.jsonColumnReader = jsonColumnReader;
+        this.jsonMapper = jsonMapper;
         this.resultReader = resultReader;
         this.eventListener = eventListener;
         if (CollectionUtils.isNotEmpty(joinPaths)) {
@@ -225,8 +224,8 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
         String columnName;
         if (property == null) {
             dataType = argument.getAnnotationMetadata()
-                    .enumValue(TypeDef.class, "type", DataType.class)
-                    .orElseGet(() -> DataType.forType(argument.getType()));
+                .enumValue(TypeDef.class, "type", DataType.class)
+                .orElseGet(() -> DataType.forType(argument.getType()));
             columnName = argument.getName();
         } else {
             dataType = property.getDataType();
@@ -579,16 +578,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
         } else if (ctx.prefix != null && ctx.prefix.length() != 0) {
             columnName = ctx.prefix + columnName;
         }
-        DataType dataType = prop.getDataType();
-        Object result;
-        if (dataType == DataType.JSON) {
-            if (jsonColumnReader == null) {
-                throw new IllegalStateException("For JSON data types support Micronaut JsonMapper needs to be available on the classpath.");
-            }
-            result = jsonColumnReader.readJsonColumn(resultReader, rs, columnName, prop.getArgument());
-        } else {
-            result = resultReader.readDynamic(rs, columnName, prop.getDataType());
-        }
+        Object result = resultReader.readDynamic(rs, columnName, prop.getDataType());
         AttributeConverter<Object, Object> converter = prop.getConverter();
         if (converter != null) {
             return converter.convertToEntityValue(result, ConversionContext.of(prop.getArgument()));
@@ -634,11 +624,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
         if (propertyType.isInstance(v)) {
             return v;
         }
-        if (rpp.getDataType() == DataType.JSON) {
-            if (jsonColumnReader == null) {
-                throw new IllegalStateException("For JSON data types support Micronaut JsonMapper needs to be available on the classpath.");
-            }
-            JsonMapper jsonMapper = jsonColumnReader.getJsonMapper();
+        if (jsonMapper != null && rpp.getDataType() == DataType.JSON) {
             try {
                 return jsonMapper.readValue(v.toString(), rpp.getArgument());
             } catch (Exception e) {
@@ -715,14 +701,14 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
 
         public static <K> MappingContext<K> of(RuntimePersistentEntity<K> persistentEntity, String prefix) {
             return new MappingContext<>(
-                    persistentEntity,
-                    persistentEntity,
-                    persistentEntity.getNamingStrategy(),
-                    prefix,
-                    null,
-                    Collections.emptyList(),
-                    Collections.emptyList(),
-                    null);
+                persistentEntity,
+                persistentEntity,
+                persistentEntity.getNamingStrategy(),
+                prefix,
+                null,
+                Collections.emptyList(),
+                Collections.emptyList(),
+                null);
         }
 
         public <K> MappingContext<K> embedded(Embedded embedded) {
@@ -735,14 +721,14 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
         public <K> MappingContext<K> path(Association association) {
             RuntimePersistentEntity<K> associatedEntity = (RuntimePersistentEntity) association.getAssociatedEntity();
             return new MappingContext<>(
-                    rootPersistentEntity,
-                    associatedEntity,
-                    namingStrategy,
-                    prefix,
-                    jp,
-                    joinPath,
-                    associated(embeddedPath, association),
-                    association
+                rootPersistentEntity,
+                associatedEntity,
+                namingStrategy,
+                prefix,
+                jp,
+                joinPath,
+                associated(embeddedPath, association),
+                association
             );
         }
 
@@ -764,14 +750,14 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
 
         private <K> MappingContext<K> copy() {
             MappingContext ctx = new MappingContext<>(
-                    rootPersistentEntity,
-                    persistentEntity,
-                    namingStrategy,
-                    prefix,
-                    jp,
-                    joinPath,
-                    embeddedPath,
-                    association
+                rootPersistentEntity,
+                persistentEntity,
+                namingStrategy,
+                prefix,
+                jp,
+                joinPath,
+                embeddedPath,
+                association
             );
             return ctx;
         }
@@ -780,28 +766,28 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
             JoinPath jp = findJoinPath(joinPaths, association);
             RuntimePersistentEntity<K> associatedEntity = (RuntimePersistentEntity<K>) association.getAssociatedEntity();
             return new MappingContext<>(
-                    rootPersistentEntity,
-                    associatedEntity,
-                    associatedEntity.getNamingStrategy(),
-                    jp == null ? prefix : jp.getAlias().orElse(prefix),
-                    jp,
-                    associated(this.joinPath, association),
-                    Collections.emptyList(), // Reset path,
-                    association
+                rootPersistentEntity,
+                associatedEntity,
+                associatedEntity.getNamingStrategy(),
+                jp == null ? prefix : jp.getAlias().orElse(prefix),
+                jp,
+                associated(this.joinPath, association),
+                Collections.emptyList(), // Reset path,
+                association
             );
         }
 
         private <K> MappingContext<K> embeddedAssociation(Embedded embedded) {
             RuntimePersistentEntity<K> associatedEntity = (RuntimePersistentEntity) embedded.getAssociatedEntity();
             return new MappingContext<>(
-                    rootPersistentEntity,
-                    associatedEntity,
-                    associatedEntity.findNamingStrategy().orElse(namingStrategy),
-                    prefix,
-                    jp,
-                    joinPath,
-                    associated(embeddedPath, embedded),
-                    embedded
+                rootPersistentEntity,
+                associatedEntity,
+                associatedEntity.findNamingStrategy().orElse(namingStrategy),
+                prefix,
+                jp,
+                joinPath,
+                associated(embeddedPath, embedded),
+                embedded
             );
         }
 

@@ -24,10 +24,11 @@ import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.runtime.mapper.ResultReader;
 import io.micronaut.data.runtime.mapper.sql.SqlJsonColumnReader;
 import io.micronaut.data.runtime.operations.internal.sql.SqlPreparedQuery;
-import io.micronaut.serde.oracle.jdbc.json.OracleJdbcJsonTextObjectMapper;
+import io.micronaut.json.JsonMapper;
+import io.micronaut.serde.oracle.jdbc.json.OracleJdbcJsonBinaryObjectMapper;
 import io.r2dbc.spi.Row;
 import jakarta.inject.Singleton;
-import oracle.sql.json.OracleJsonObject;
+import oracle.sql.json.OracleJsonParser;
 
 /**
  * The Oracle R2DBC json column reader.
@@ -37,36 +38,42 @@ import oracle.sql.json.OracleJsonObject;
  *
  */
 @Singleton
-@Requires(classes = OracleJdbcJsonTextObjectMapper.class)
+@Requires(classes = OracleJdbcJsonBinaryObjectMapper.class)
 @Internal
 @Experimental
-class OracleR2dbcJsonColumnReader extends SqlJsonColumnReader<Row> {
+class OracleR2dbcJsonColumnReader implements SqlJsonColumnReader<Row> {
+
+    private final OracleJdbcJsonBinaryObjectMapper oracleJdbcJsonMapper;
 
     /**
      * The default constructor.
      *
-     * @param oracleJdbcJsonTextObjectMapper the oracle JSON object mapper
+     * @param oracleJdbcJsonMapper the oracle JSON object mapper
      */
-    public OracleR2dbcJsonColumnReader(OracleJdbcJsonTextObjectMapper oracleJdbcJsonTextObjectMapper) {
-        super(oracleJdbcJsonTextObjectMapper);
+    public OracleR2dbcJsonColumnReader(OracleJdbcJsonBinaryObjectMapper oracleJdbcJsonMapper) {
+        this.oracleJdbcJsonMapper = oracleJdbcJsonMapper;
     }
 
     @Override
     public <T> T readJsonColumn(ResultReader<Row, String> resultReader, Row resultSet, String columnName, Argument<T> argument) {
         try {
-            OracleJsonObject oracleJsonObject = resultSet.get(columnName, OracleJsonObject.class);
-            if (oracleJsonObject == null) {
+            OracleJsonParser jsonParser = resultSet.get(columnName, OracleJsonParser.class);
+            if (jsonParser == null) {
                 return null;
             }
-            byte[] content = getJsonMapper().writeValueAsBytes(oracleJsonObject);
-            return getJsonMapper().readValue(content, argument);
+            return oracleJdbcJsonMapper.readValue(jsonParser, argument);
         } catch (Exception e) {
             throw new DataAccessException("Failed to read from JSON field [" + columnName + "].", e);
         }
     }
 
     @Override
-    public boolean supports(SqlPreparedQuery sqlPreparedQuery) {
+    public JsonMapper getJsonMapper() {
+        return oracleJdbcJsonMapper;
+    }
+
+    @Override
+    public boolean supports(SqlPreparedQuery<?, ?> sqlPreparedQuery) {
         return sqlPreparedQuery.getDialect() == Dialect.ORACLE;
     }
 }

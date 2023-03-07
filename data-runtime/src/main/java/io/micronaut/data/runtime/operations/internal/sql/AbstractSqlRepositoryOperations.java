@@ -50,11 +50,9 @@ import io.micronaut.data.operations.HintsCapableRepository;
 import io.micronaut.data.runtime.config.DataSettings;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.date.DateTimeProvider;
-import io.micronaut.data.runtime.mapper.JsonColumnReader;
 import io.micronaut.data.runtime.mapper.QueryStatement;
 import io.micronaut.data.runtime.mapper.ResultReader;
 import io.micronaut.data.runtime.mapper.sql.JsonQueryResultMapper;
-import io.micronaut.data.runtime.mapper.sql.SqlJsonColumnReader;
 import io.micronaut.data.runtime.mapper.sql.SqlTypeMapper;
 import io.micronaut.data.runtime.operations.internal.AbstractRepositoryOperations;
 import io.micronaut.data.runtime.query.MethodContextAwareStoredQueryDecorator;
@@ -65,7 +63,6 @@ import io.micronaut.inject.BeanDefinition;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import io.micronaut.json.JsonMapper;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -99,8 +96,6 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
         MethodContextAwareStoredQueryDecorator,
         HintsCapableRepository {
 
-    private static final Logger LOG = LoggerFactory.getLogger(AbstractSqlRepositoryOperations.class);
-
     protected static final Logger QUERY_LOG = DataSettings.QUERY_LOG;
     protected final String dataSourceName;
     @SuppressWarnings("WeakerAccess")
@@ -110,7 +105,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
     @SuppressWarnings("WeakerAccess")
     protected final QueryStatement<PS, Integer> preparedStatementWriter;
     protected final JsonMapper jsonMapper;
-    protected final JsonColumnReaderProvider<RS> jsonColumnReaderProvider;
+    protected final SqlJsonColumnReaderProvider<RS> sqlJsonColumnReaderProvider;
     protected final Map<Class, SqlQueryBuilder> queryBuilders = new HashMap<>(10);
     protected final Map<Class, String> repositoriesWithHardcodedDataSource = new HashMap<>(10);
     private final Map<QueryKey, SqlStoredQuery> entityInserts = new ConcurrentHashMap<>(10);
@@ -130,7 +125,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
      * @param conversionService            The conversion service
      * @param attributeConverterRegistry   The attribute converter registry
      * @param jsonMapper                   The JSON mapper
-     * @param sqlJsonColumnReaders         The custom SQL json column readers
+     * @param sqlJsonColumnReaderProvider  The SQL JSON column reader provider
      */
     protected AbstractSqlRepositoryOperations(
             String dataSourceName,
@@ -143,14 +138,14 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
             DataConversionService conversionService,
             AttributeConverterRegistry attributeConverterRegistry,
             JsonMapper jsonMapper,
-            List<SqlJsonColumnReader<RS>> sqlJsonColumnReaders) {
+            SqlJsonColumnReaderProvider<RS> sqlJsonColumnReaderProvider) {
         super(dateTimeProvider, runtimeEntityRegistry, conversionService, attributeConverterRegistry);
         this.dataSourceName = dataSourceName;
         this.columnNameResultSetReader = columnNameResultSetReader;
         this.columnIndexResultSetReader = columnIndexResultSetReader;
         this.preparedStatementWriter = preparedStatementWriter;
         this.jsonMapper = jsonMapper;
-        this.jsonColumnReaderProvider = new JsonColumnReaderProvider<>(jsonMapper, sqlJsonColumnReaders);
+        this.sqlJsonColumnReaderProvider = sqlJsonColumnReaderProvider;
         Collection<BeanDefinition<Object>> beanDefinitions = beanContext
                 .getBeanDefinitions(Object.class, Qualifiers.byStereotype(Repository.class));
         for (BeanDefinition<Object> beanDefinition : beanDefinitions) {
@@ -551,7 +546,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
     private <T> JsonQueryResultMapper createJsonQueryResultMapper(SqlPreparedQuery sqlPreparedQuery, String columnName,
                                                                   RuntimePersistentEntity<T> persistentEntity, BiFunction<RuntimePersistentEntity<Object>, Object, Object> loadListener) {
         return new JsonQueryResultMapper(columnName, persistentEntity, columnNameResultSetReader,
-            jsonColumnReaderProvider.get(sqlPreparedQuery), loadListener);
+            sqlJsonColumnReaderProvider.get(sqlPreparedQuery), loadListener);
     }
 
     /**
@@ -594,65 +589,5 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
     @FunctionalInterface
     protected interface StatementSupplier<PS> {
         PS create(String ps) throws Exception;
-    }
-
-
-    /**
-     * The provider for {@link JsonColumnReader} when JSON columns are being read.
-     *
-     * @param <RS> the result set type
-     */
-    protected static final class JsonColumnReaderProvider<RS> {
-
-        private final JsonColumnReader<RS> defaultJsonColumnReader;
-        private final List<SqlJsonColumnReader<RS>> jsonColumnReaders;
-
-        JsonColumnReaderProvider(JsonMapper jsonMapper, List<SqlJsonColumnReader<RS>> jsonColumnReaders) {
-            this.defaultJsonColumnReader = jsonMapper == null ? null : new JsonColumnReader<>() {
-
-                @Override
-                public JsonMapper getJsonMapper() {
-                    return jsonMapper;
-                }
-            };
-            this.jsonColumnReaders = jsonColumnReaders;
-        }
-
-        /**
-         * Provides {@link JsonQueryResultMapper} for given SQL dialect.
-         *
-         * @param sqlPreparedQuery the SQL prepared query
-         * @return the {@link JsonColumnReader} for given dialect, or default JSON column reader if dialect does not have specific one
-         */
-        public JsonColumnReader<RS> get(SqlPreparedQuery sqlPreparedQuery) {
-            JsonColumnReader<RS> supportedJsonColumnReader = null;
-            QueryResultInfo queryResultInfo = sqlPreparedQuery.getQueryResultInfo();
-            if (queryResultInfo != null && queryResultInfo.getType() == io.micronaut.data.annotation.QueryResult.Type.JSON) {
-                for (SqlJsonColumnReader<RS> jsonColumnReader : jsonColumnReaders) {
-                    if (jsonColumnReader.supports(sqlPreparedQuery)) {
-                        supportedJsonColumnReader = jsonColumnReader;
-                        break;
-                    }
-                }
-            }
-
-            if (supportedJsonColumnReader != null) {
-                if (LOG.isDebugEnabled()) {
-                    LOG.debug("Using custom JSON column reader for dialect {} and query result info {}",
-                        sqlPreparedQuery.getDialect(), sqlPreparedQuery.getQueryResultInfo());
-                }
-                return supportedJsonColumnReader;
-            }
-            return defaultJsonColumnReader;
-        }
-
-        /**
-         * Provides default {@link JsonColumnReader}.
-         *
-         * @return the default json column reader
-         */
-        public JsonColumnReader<RS> getDefault() {
-            return defaultJsonColumnReader;
-        }
     }
 }

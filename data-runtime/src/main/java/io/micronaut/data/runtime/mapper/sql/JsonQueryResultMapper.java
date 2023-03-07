@@ -21,7 +21,6 @@ import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
-import io.micronaut.data.runtime.mapper.JsonColumnReader;
 import io.micronaut.data.runtime.mapper.ResultReader;
 
 import java.util.function.BiFunction;
@@ -41,22 +40,23 @@ public class JsonQueryResultMapper<T, RS, R> implements SqlTypeMapper<RS, R> {
     private final String columnName;
     private final RuntimePersistentEntity<T> entity;
     private final ResultReader<RS, String> resultReader;
-    private final JsonColumnReader<RS> jsonColumnReader;
+    private final SqlJsonColumnReader<RS> sqlJsonColumnReader;
     private final BiFunction<RuntimePersistentEntity<Object>, Object, Object> eventListener;
 
-    public JsonQueryResultMapper(@NonNull String columnName, @NonNull RuntimePersistentEntity<T> entity, @NonNull ResultReader<RS, String> resultReader, @NonNull JsonColumnReader jsonColumnReader,
+    public JsonQueryResultMapper(@NonNull String columnName, @NonNull RuntimePersistentEntity<T> entity, @NonNull ResultReader<RS, String> resultReader,
+                                 @NonNull SqlJsonColumnReader<RS> sqlJsonColumnReader,
                                  @Nullable BiFunction<RuntimePersistentEntity<Object>, Object, Object> eventListener) {
-        ArgumentUtils.requireNonNull("jsonColumnReader", jsonColumnReader);
+        ArgumentUtils.requireNonNull("sqlJsonColumnReader", sqlJsonColumnReader);
         this.columnName = columnName;
         this.entity = entity;
         this.resultReader = resultReader;
-        this.jsonColumnReader = jsonColumnReader;
+        this.sqlJsonColumnReader = sqlJsonColumnReader;
         this.eventListener = eventListener;
     }
 
     @Override
     public R map(RS rs, Class<R> type) throws DataAccessException {
-        R entityInstance = jsonColumnReader.readJsonColumn(resultReader, rs, columnName, Argument.of(type));
+        R entityInstance = sqlJsonColumnReader.readJsonColumn(resultReader, rs, columnName, Argument.of(type));
         if (entityInstance == null) {
             throw new DataAccessException("Unable to map result to entity of type [" + type.getName() + "]. Missing result data.");
         }

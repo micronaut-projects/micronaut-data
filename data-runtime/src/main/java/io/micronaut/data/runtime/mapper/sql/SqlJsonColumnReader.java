@@ -15,13 +15,17 @@
  */
 package io.micronaut.data.runtime.mapper.sql;
 
-import io.micronaut.core.util.ArgumentUtils;
-import io.micronaut.data.runtime.mapper.JsonColumnReader;
+import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.type.Argument;
+import io.micronaut.data.exceptions.DataAccessException;
+import io.micronaut.data.runtime.mapper.ResultReader;
 import io.micronaut.data.runtime.operations.internal.sql.SqlPreparedQuery;
 import io.micronaut.json.JsonMapper;
 
+import java.io.IOException;
+
 /**
- * The SQL json column reader abstract class. If some dialect has specific logic for reading and converting JSON
+ * The SQL json column reader interface. If some dialect has specific logic for reading and converting JSON
  * columns then it can extend this class and be injected into the context and SQL operations.
  *
  * @author radovanradic
@@ -29,14 +33,9 @@ import io.micronaut.json.JsonMapper;
  *
  * @param <RS> the result set type
  */
-public abstract class SqlJsonColumnReader<RS> implements JsonColumnReader<RS> {
+public interface SqlJsonColumnReader<RS> {
 
-    private final JsonMapper jsonMapper;
-
-    protected SqlJsonColumnReader(JsonMapper jsonMapper) {
-        ArgumentUtils.requireNonNull("jsonMapper", jsonMapper);
-        this.jsonMapper = jsonMapper;
-    }
+    String NULL_VALUE = "null";
 
     /**
      * Gets an indicator telling whether reader can interpret results from the SQL prepared query.
@@ -44,10 +43,35 @@ public abstract class SqlJsonColumnReader<RS> implements JsonColumnReader<RS> {
      * @param sqlPreparedQuery the SQL prepared query
      * @return true if reader can interpret results from the query
      */
-    public abstract boolean supports(SqlPreparedQuery sqlPreparedQuery);
+    boolean supports(SqlPreparedQuery<?, ?> sqlPreparedQuery);
 
-    @Override
-    public JsonMapper getJsonMapper() {
-        return jsonMapper;
+    /**
+     * Reads JSON column from the result set and returns as expected type.
+     *
+     * @param resultReader the result reader
+     * @param resultSet the result set
+     * @param columnName the column name
+     * @param argument the result type argument
+     * @return object of type T read from JSON column
+     * @param <T> the result type
+     */
+    default <T> T readJsonColumn(ResultReader<RS, String> resultReader, RS resultSet, String columnName, Argument<T> argument) {
+        String data = resultReader.readString(resultSet, columnName);
+        if (data == null || data.equals(NULL_VALUE)) {
+            return null;
+        }
+        if (argument.getType().isInstance(data)) {
+            return (T) data;
+        }
+        try {
+            return getJsonMapper().readValue(data, argument);
+        } catch (IOException e) {
+            throw new DataAccessException("Failed to read from JSON field [" + columnName + "].", e);
+        }
     }
+
+    /**
+     * @return the json mapper
+     */
+    @NonNull JsonMapper getJsonMapper();
 }

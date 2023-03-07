@@ -67,7 +67,6 @@ import io.micronaut.data.runtime.convert.RuntimePersistentPropertyConversionCont
 import io.micronaut.data.runtime.date.DateTimeProvider;
 import io.micronaut.data.runtime.mapper.TypeMapper;
 import io.micronaut.data.runtime.mapper.sql.SqlDTOMapper;
-import io.micronaut.data.runtime.mapper.sql.SqlJsonColumnReader;
 import io.micronaut.data.runtime.mapper.sql.SqlResultEntityTypeMapper;
 import io.micronaut.data.runtime.mapper.sql.SqlTypeMapper;
 import io.micronaut.data.runtime.multitenancy.SchemaTenantResolver;
@@ -78,6 +77,7 @@ import io.micronaut.data.runtime.operations.internal.OperationContext;
 import io.micronaut.data.runtime.operations.internal.ReactiveCascadeOperations;
 import io.micronaut.data.runtime.operations.internal.query.BindableParametersStoredQuery;
 import io.micronaut.data.runtime.operations.internal.sql.AbstractSqlRepositoryOperations;
+import io.micronaut.data.runtime.operations.internal.sql.SqlJsonColumnReaderProvider;
 import io.micronaut.data.runtime.operations.internal.sql.SqlPreparedQuery;
 import io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery;
 import io.micronaut.data.runtime.support.AbstractConversionContext;
@@ -169,7 +169,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
      * @param schemaHandler                The schema handler
      * @param configuration                The configuration
      * @param jsonMapper                   The JSON mapper
-     * @param sqlJsonColumnReaders         The custom SQL json column readers
+     * @param sqlJsonColumnReaderProvider  The SQL JSON column reader provider
      */
     @Internal
     protected DefaultR2dbcRepositoryOperations(
@@ -185,7 +185,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         R2dbcSchemaHandler schemaHandler,
         @Parameter DataR2dbcConfiguration configuration,
         @Nullable JsonMapper jsonMapper,
-        List<SqlJsonColumnReader<Row>> sqlJsonColumnReaders) {
+        SqlJsonColumnReaderProvider<Row> sqlJsonColumnReaderProvider) {
         super(
             dataSourceName,
             new ColumnNameR2dbcResultReader(conversionService),
@@ -197,7 +197,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             conversionService,
             attributeConverterRegistry,
             jsonMapper,
-            sqlJsonColumnReaders);
+            sqlJsonColumnReaderProvider);
         this.connectionFactory = connectionFactory;
         this.ioExecutorService = executorService;
         this.schemaTenantResolver = schemaTenantResolver;
@@ -702,7 +702,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                         persistentEntity,
                         columnNameResultSetReader,
                         preparedQuery.getJoinFetchPaths(),
-                        jsonColumnReaderProvider.get(preparedQuery),
+                        jsonMapper,
                         loadListener,
                         conversionService);
                     SqlResultEntityTypeMapper.PushingMapper<Row, R> rowsMapper = mapper.readOneWithJoins();
@@ -722,7 +722,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                             persistentEntity,
                             isRawQuery ? getEntity(preparedQuery.getResultType()) : persistentEntity,
                             columnNameResultSetReader,
-                            jsonColumnReaderProvider.get(preparedQuery),
+                            jsonMapper,
                             conversionService
                         );
                     } else {
@@ -767,7 +767,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                                 persistentEntity,
                                 isRawQuery ? getEntity(preparedQuery.getResultType()) : persistentEntity,
                                 columnNameResultSetReader,
-                                jsonColumnReaderProvider.get(preparedQuery),
+                                jsonMapper,
                                 conversionService
                             );
                         } else {
@@ -788,7 +788,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                                 getEntity(resultType),
                                 columnNameResultSetReader,
                                 joinFetchPaths,
-                                jsonColumnReaderProvider.get(preparedQuery),
+                                jsonMapper,
                                 loadListener,
                                 conversionService);
                             boolean onlySingleEndedJoins = isOnlySingleEndedJoins(persistentEntity, joinFetchPaths);

@@ -29,6 +29,9 @@ import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.runtime.convert.DataConversionService;
+import io.micronaut.json.JsonMapper;
+
+import java.io.IOException;
 
 /**
  * A {@link BeanIntrospectionMapper} that reads the result using the specified
@@ -43,7 +46,7 @@ public class DTOMapper<T, S, R> implements BeanIntrospectionMapper<S, R> {
     private final RuntimePersistentEntity<T> persistentEntity;
     private final RuntimePersistentEntity<?> dtoEntity;
     private final ResultReader<S, String> resultReader;
-    private final @Nullable JsonColumnReader<S> jsonColumnReader;
+    private final @Nullable JsonMapper jsonMapper;
     private final DataConversionService conversionService;
 
     /**
@@ -62,14 +65,14 @@ public class DTOMapper<T, S, R> implements BeanIntrospectionMapper<S, R> {
      * Default constructor.
      * @param persistentEntity The entity
      * @param resultReader The result reader
-     * @param jsonColumnReader The JSON column reader
+     * @param jsonMapper The JSON mapper
      * @param conversionService
      */
     public DTOMapper(RuntimePersistentEntity<T> persistentEntity,
                      ResultReader<S, String> resultReader,
-                     @Nullable JsonColumnReader<S> jsonColumnReader,
+                     @Nullable JsonMapper jsonMapper,
                      DataConversionService conversionService) {
-        this(persistentEntity, persistentEntity, resultReader, jsonColumnReader, conversionService);
+        this(persistentEntity, persistentEntity, resultReader, jsonMapper, conversionService);
     }
 
     /**
@@ -77,13 +80,13 @@ public class DTOMapper<T, S, R> implements BeanIntrospectionMapper<S, R> {
      * @param persistentEntity The entity
      * @param dtoEntity The dto entity
      * @param resultReader The result reader
-     * @param jsonColumnReader The JSON column reader
+     * @param jsonMapper The JSON mapper
      * @param conversionService
      */
     public DTOMapper(RuntimePersistentEntity<T> persistentEntity,
                      RuntimePersistentEntity<?> dtoEntity,
                      ResultReader<S, String> resultReader,
-                     @Nullable JsonColumnReader<S> jsonColumnReader,
+                     @Nullable JsonMapper jsonMapper,
                      DataConversionService conversionService) {
         this.conversionService = conversionService;
         ArgumentUtils.requireNonNull("persistentEntity", persistentEntity);
@@ -91,7 +94,7 @@ public class DTOMapper<T, S, R> implements BeanIntrospectionMapper<S, R> {
         this.persistentEntity = persistentEntity;
         this.dtoEntity = dtoEntity;
         this.resultReader = resultReader;
-        this.jsonColumnReader = jsonColumnReader;
+        this.jsonMapper = jsonMapper;
     }
 
     @Override
@@ -126,8 +129,8 @@ public class DTOMapper<T, S, R> implements BeanIntrospectionMapper<S, R> {
                 }
             }
             DataType type = argument.getAnnotationMetadata()
-                    .enumValue(TypeDef.class, "type", DataType.class)
-                    .orElseGet(() -> DataType.forType(argument.getType()));
+                .enumValue(TypeDef.class, "type", DataType.class)
+                .orElseGet(() -> DataType.forType(argument.getType()));
             return read(object, name, type);
         } else {
             return read(object, pp);
@@ -147,11 +150,13 @@ public class DTOMapper<T, S, R> implements BeanIntrospectionMapper<S, R> {
         if (StringUtils.isNotEmpty(aliasPropertyName)) {
             propertyName = aliasPropertyName;
         }
-        if (dataType == DataType.JSON) {
-            if (jsonColumnReader == null) {
-                throw new IllegalStateException("For JSON data types support Micronaut JsonMapper needs to be available on the classpath.");
+        if (dataType == DataType.JSON && jsonMapper != null) {
+            String data = resultReader.readString(resultSet, propertyName);
+            try {
+                return jsonMapper.readValue(data, property.getArgument());
+            } catch (IOException e) {
+                throw new DataAccessException("Failed to read from JSON field [" + propertyName + "].", e);
             }
-            return jsonColumnReader.readJsonColumn(resultReader, resultSet, propertyName, property.getArgument());
         } else {
             return read(resultSet, propertyName, dataType);
         }
@@ -166,9 +171,9 @@ public class DTOMapper<T, S, R> implements BeanIntrospectionMapper<S, R> {
      */
     public @Nullable Object read(@NonNull S resultSet, @NonNull String persistedName, @NonNull DataType dataType) {
         return resultReader.readDynamic(
-                resultSet,
-                persistedName,
-                dataType
+            resultSet,
+            persistedName,
+            dataType
         );
     }
 
