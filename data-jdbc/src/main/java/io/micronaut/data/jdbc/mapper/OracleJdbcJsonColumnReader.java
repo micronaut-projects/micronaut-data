@@ -23,6 +23,7 @@ import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.runtime.mapper.ResultReader;
 import io.micronaut.data.runtime.mapper.sql.SqlJsonColumnReader;
+import io.micronaut.data.runtime.operations.internal.sql.SqlPreparedQuery;
 import io.micronaut.serde.oracle.jdbc.json.OracleJdbcJsonTextObjectMapper;
 import jakarta.inject.Singleton;
 import oracle.sql.json.OracleJsonObject;
@@ -52,11 +53,6 @@ class OracleJdbcJsonColumnReader extends SqlJsonColumnReader<ResultSet> {
     }
 
     @Override
-    public Dialect getDialect() {
-        return Dialect.ORACLE;
-    }
-
-    @Override
     public <T> T readJsonColumn(ResultReader<ResultSet, String> resultReader, ResultSet resultSet, String columnName, Argument<T> argument) {
         try {
             OracleJsonObject oracleJsonObject = resultSet.getObject(columnName, OracleJsonObject.class);
@@ -68,5 +64,10 @@ class OracleJdbcJsonColumnReader extends SqlJsonColumnReader<ResultSet> {
         } catch (Exception e) {
             throw new DataAccessException("Failed to read from JSON field [" + columnName + "].", e);
         }
+    }
+
+    @Override
+    public boolean supports(SqlPreparedQuery sqlPreparedQuery) {
+        return sqlPreparedQuery.getDialect() != Dialect.ORACLE;
     }
 }

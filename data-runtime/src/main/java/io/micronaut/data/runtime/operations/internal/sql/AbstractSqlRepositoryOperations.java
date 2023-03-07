@@ -21,7 +21,6 @@ import io.micronaut.context.BeanContext;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.AutoPopulated;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.annotation.TypeRole;
@@ -74,14 +73,12 @@ import java.sql.ResultSet;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiFunction;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -503,8 +500,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
      * Creates {@link SqlTypeMapper} for reading results from single column into an entity. For now, we support reading from JSON column,
      * however in support we might add XML support etc.
      *
-     * @param queryResultInfo the query result info telling what format we read from
-     * @param dialect the SQL dialect
+     * @param sqlPreparedQuery the SQL prepared query
      * @param columnName the column name where we are reading from
      * @param persistentEntity the persistent entity
      * @param loadListener the load listener if needed after entity loaded
@@ -513,10 +509,11 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
      * @param <RS> the result set type
      * @param <R> the result type
      */
-    protected final <T, RS, R> SqlTypeMapper<RS, R> createQueryResultMapper(QueryResultInfo queryResultInfo, Dialect dialect, String columnName,
+    protected final <T, RS, R> SqlTypeMapper<RS, R> createQueryResultMapper(SqlPreparedQuery sqlPreparedQuery, String columnName,
                                                                     RuntimePersistentEntity<T> persistentEntity, BiFunction<RuntimePersistentEntity<Object>, Object, Object> loadListener) {
+        QueryResultInfo queryResultInfo = sqlPreparedQuery.getQueryResultInfo();
         return switch (queryResultInfo.getType()) {
-            case JSON -> createJsonQueryResultMapper(dialect, columnName, persistentEntity, loadListener);
+            case JSON -> createJsonQueryResultMapper(sqlPreparedQuery, columnName, persistentEntity, loadListener);
             default -> throw new IllegalStateException("Unexpected query result type: " + queryResultInfo.getType());
         };
     }
@@ -524,9 +521,8 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
     /**
      * Reads an object from the result set and given column.
      *
-     * @param queryResultInfo the query result info telling what format we read from
+     * @param sqlPreparedQuery the SQL prepared query
      * @param rs the result set
-     * @param dialect the SQL dialect
      * @param columnName the column name where we are reading from
      * @param persistentEntity the persistent entity
      * @param type the result type
@@ -535,27 +531,27 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
      * @param <R> the result type
      * @param <T> the entity type
      */
-    protected final <R, T> R mapQueryColumnResult(QueryResultInfo queryResultInfo, ResultSet rs, Dialect dialect, String columnName,
+    protected final <R, T> R mapQueryColumnResult(SqlPreparedQuery sqlPreparedQuery, ResultSet rs, String columnName,
                                           RuntimePersistentEntity<T> persistentEntity, Class<R> type,
                                           BiFunction<RuntimePersistentEntity<Object>, Object, Object> loadListener) {
-        SqlTypeMapper<ResultSet, R> mapper = createQueryResultMapper(queryResultInfo, dialect, columnName, persistentEntity, loadListener);
+        SqlTypeMapper<ResultSet, R> mapper = createQueryResultMapper(sqlPreparedQuery, columnName, persistentEntity, loadListener);
         return mapper.map(rs, type);
     }
 
     /**
      * Creates {@link JsonQueryResultMapper} for JSON deserialization.
      *
-     * @param dialect the SQL dialect
+     * @param sqlPreparedQuery the SQL prepared query
      * @param columnName the column name where query result is stored
      * @param persistentEntity the persistent entity
      * @param loadListener the load listener if needed after entity loaded
      * @return the {@link JsonQueryResultMapper}
      * @param <T> the entity type
      */
-    private <T> JsonQueryResultMapper createJsonQueryResultMapper(Dialect dialect, String columnName,
+    private <T> JsonQueryResultMapper createJsonQueryResultMapper(SqlPreparedQuery sqlPreparedQuery, String columnName,
                                                                   RuntimePersistentEntity<T> persistentEntity, BiFunction<RuntimePersistentEntity<Object>, Object, Object> loadListener) {
         return new JsonQueryResultMapper(columnName, persistentEntity, columnNameResultSetReader,
-            jsonColumnReaderProvider.get(dialect), loadListener);
+            jsonColumnReaderProvider.get(sqlPreparedQuery), loadListener);
     }
 
     /**
@@ -609,30 +605,37 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
     protected static final class JsonColumnReaderProvider<RS> {
 
         private final JsonColumnReader<RS> defaultJsonColumnReader;
-        private final Map<Dialect, SqlJsonColumnReader<RS>> jsonColumnReaderMap;
+        private final List<SqlJsonColumnReader<RS>> jsonColumnReaders;
 
         JsonColumnReaderProvider(JsonMapper jsonMapper, List<SqlJsonColumnReader<RS>> jsonColumnReaders) {
             this.defaultJsonColumnReader = jsonMapper == null ? null : new JsonColumnReader<>(jsonMapper);
-            if (CollectionUtils.isEmpty(jsonColumnReaders)) {
-                jsonColumnReaderMap = Collections.emptyMap();
-            } else {
-                jsonColumnReaderMap = jsonColumnReaders.stream().collect(Collectors.toMap(SqlJsonColumnReader::getDialect, Function.identity()));
-            }
+            this.jsonColumnReaders = jsonColumnReaders;
         }
 
         /**
          * Provides {@link JsonQueryResultMapper} for given SQL dialect.
          *
-         * @param dialect the SQL dialect
+         * @param sqlPreparedQuery the SQL prepared query
          * @return the {@link JsonColumnReader} for given dialect, or default JSON column reader if dialect does not have specific one
          */
-        public JsonColumnReader<RS> get(Dialect dialect) {
-            JsonColumnReader<RS> jsonColumnReader = jsonColumnReaderMap.get(dialect);
-            if (jsonColumnReader != null) {
-                if (LOG.isDebugEnabled()) {
-                    LOG.debug("Using custom JSON column reader for dialect: {}", dialect);
+        public JsonColumnReader<RS> get(SqlPreparedQuery sqlPreparedQuery) {
+            JsonColumnReader<RS> supportedJsonColumnReader = null;
+            QueryResultInfo queryResultInfo = sqlPreparedQuery.getQueryResultInfo();
+            if (queryResultInfo != null && queryResultInfo.getType() == io.micronaut.data.annotation.QueryResult.Type.JSON) {
+                for (SqlJsonColumnReader<RS> jsonColumnReader : jsonColumnReaders) {
+                    if (jsonColumnReader.supports(sqlPreparedQuery)) {
+                        supportedJsonColumnReader = jsonColumnReader;
+                        break;
+                    }
                 }
-                return jsonColumnReader;
+            }
+
+            if (supportedJsonColumnReader != null) {
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Using custom JSON column reader for dialect {} and query result info {}",
+                        sqlPreparedQuery.getDialect(), sqlPreparedQuery.getQueryResultInfo());
+                }
+                return supportedJsonColumnReader;
             }
             return defaultJsonColumnReader;
         }

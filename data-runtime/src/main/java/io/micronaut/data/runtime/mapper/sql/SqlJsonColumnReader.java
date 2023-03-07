@@ -15,9 +15,8 @@
  */
 package io.micronaut.data.runtime.mapper.sql;
 
-import io.micronaut.core.annotation.Nullable;
-import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.runtime.mapper.JsonColumnReader;
+import io.micronaut.data.runtime.operations.internal.sql.SqlPreparedQuery;
 import io.micronaut.json.JsonMapper;
 
 /**
@@ -36,7 +35,10 @@ public abstract class SqlJsonColumnReader<RS> extends JsonColumnReader<RS> {
     }
 
     /**
-     * @return dialect that this mapper supports
+     * Gets an indicator telling whether reader can interpret results from the SQL prepared query.
+     *
+     * @param sqlPreparedQuery the SQL prepared query
+     * @return true if reader can interpret results from the query
      */
-    public abstract @Nullable Dialect getDialect();
+    public abstract boolean supports(SqlPreparedQuery sqlPreparedQuery);
 }

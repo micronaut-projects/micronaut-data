@@ -50,4 +50,13 @@ public class QueryResultInfo {
     public QueryResult.Type getType() {
         return type;
     }
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("QueryResultInfo{");
+        sb.append("type=").append(type);
+        sb.append(", columnName='").append(columnName).append('\'');
+        sb.append('}');
+        return sb.toString();
+    }
 }
