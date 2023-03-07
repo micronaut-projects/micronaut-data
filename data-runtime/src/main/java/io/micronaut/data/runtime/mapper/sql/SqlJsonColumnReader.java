@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.runtime.mapper.sql;
 
+import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.data.runtime.mapper.JsonColumnReader;
 import io.micronaut.data.runtime.operations.internal.sql.SqlPreparedQuery;
 import io.micronaut.json.JsonMapper;
@@ -28,10 +29,13 @@ import io.micronaut.json.JsonMapper;
  *
  * @param <RS> the result set type
  */
-public abstract class SqlJsonColumnReader<RS> extends JsonColumnReader<RS> {
+public abstract class SqlJsonColumnReader<RS> implements JsonColumnReader<RS> {
+
+    private final JsonMapper jsonMapper;
 
     protected SqlJsonColumnReader(JsonMapper jsonMapper) {
-        super(jsonMapper);
+        ArgumentUtils.requireNonNull("jsonMapper", jsonMapper);
+        this.jsonMapper = jsonMapper;
     }
 
     /**
@@ -41,4 +45,9 @@ public abstract class SqlJsonColumnReader<RS> extends JsonColumnReader<RS> {
      * @return true if reader can interpret results from the query
      */
     public abstract boolean supports(SqlPreparedQuery sqlPreparedQuery);
+
+    @Override
+    public JsonMapper getJsonMapper() {
+        return jsonMapper;
+    }
 }

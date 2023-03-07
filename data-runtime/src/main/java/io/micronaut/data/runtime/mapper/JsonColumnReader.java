@@ -17,7 +17,6 @@ package io.micronaut.data.runtime.mapper;
 
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.type.Argument;
-import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.json.JsonMapper;
 
@@ -31,16 +30,9 @@ import java.io.IOException;
  *
  * @param <RS> the result set type
  */
-public class JsonColumnReader<RS> {
+public interface JsonColumnReader<RS> {
 
-    private static final String NULL_VALUE = "null";
-
-    protected final JsonMapper jsonMapper;
-
-    public JsonColumnReader(JsonMapper jsonMapper) {
-        ArgumentUtils.requireNonNull("jsonMapper", jsonMapper);
-        this.jsonMapper = jsonMapper;
-    }
+    String NULL_VALUE = "null";
 
     /**
      * Reads JSON column from the result set and returns as expected type.
@@ -52,7 +44,7 @@ public class JsonColumnReader<RS> {
      * @return object of type T read from JSON column
      * @param <T> the result type
      */
-    public <T> T readJsonColumn(ResultReader<RS, String> resultReader, RS resultSet, String columnName, Argument<T> argument) {
+    default <T> T readJsonColumn(ResultReader<RS, String> resultReader, RS resultSet, String columnName, Argument<T> argument) {
         String data = resultReader.readString(resultSet, columnName);
         if (data == null || data.equals(NULL_VALUE)) {
             return null;
@@ -61,7 +53,7 @@ public class JsonColumnReader<RS> {
             return (T) data;
         }
         try {
-            return jsonMapper.readValue(data, argument);
+            return getJsonMapper().readValue(data, argument);
         } catch (IOException e) {
             throw new DataAccessException("Failed to read from JSON field [" + columnName + "].", e);
         }
@@ -70,7 +62,5 @@ public class JsonColumnReader<RS> {
     /**
      * @return the json mapper
      */
-    @NonNull public JsonMapper getJsonMapper() {
-        return jsonMapper;
-    }
+    @NonNull public JsonMapper getJsonMapper();
 }

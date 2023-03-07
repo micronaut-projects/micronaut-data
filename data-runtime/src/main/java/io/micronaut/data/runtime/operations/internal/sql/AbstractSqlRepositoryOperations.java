@@ -608,7 +608,13 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
         private final List<SqlJsonColumnReader<RS>> jsonColumnReaders;
 
         JsonColumnReaderProvider(JsonMapper jsonMapper, List<SqlJsonColumnReader<RS>> jsonColumnReaders) {
-            this.defaultJsonColumnReader = jsonMapper == null ? null : new JsonColumnReader<>(jsonMapper);
+            this.defaultJsonColumnReader = jsonMapper == null ? null : new JsonColumnReader<>() {
+
+                @Override
+                public JsonMapper getJsonMapper() {
+                    return jsonMapper;
+                }
+            };
             this.jsonColumnReaders = jsonColumnReaders;
         }
 
