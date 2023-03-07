@@ -26,7 +26,6 @@ import io.micronaut.data.runtime.mapper.sql.SqlJsonColumnReader;
 import io.micronaut.data.runtime.operations.internal.sql.SqlPreparedQuery;
 import io.micronaut.serde.oracle.jdbc.json.OracleJdbcJsonTextObjectMapper;
 import jakarta.inject.Singleton;
-import oracle.sql.json.OracleJsonObject;
 
 import java.sql.ResultSet;
 
@@ -55,11 +54,10 @@ class OracleJdbcJsonColumnReader extends SqlJsonColumnReader<ResultSet> {
     @Override
     public <T> T readJsonColumn(ResultReader<ResultSet, String> resultReader, ResultSet resultSet, String columnName, Argument<T> argument) {
         try {
-            OracleJsonObject oracleJsonObject = resultSet.getObject(columnName, OracleJsonObject.class);
-            if (oracleJsonObject == null) {
+            byte[] content = resultSet.getBytes(columnName);
+            if (content == null) {
                 return null;
             }
-            byte[] content = jsonMapper.writeValueAsBytes(oracleJsonObject);
             return jsonMapper.readValue(content, argument);
         } catch (Exception e) {
             throw new DataAccessException("Failed to read from JSON field [" + columnName + "].", e);
