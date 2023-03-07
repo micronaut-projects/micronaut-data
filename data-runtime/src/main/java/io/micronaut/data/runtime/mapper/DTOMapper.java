@@ -129,8 +129,8 @@ public class DTOMapper<T, S, R> implements BeanIntrospectionMapper<S, R> {
                 }
             }
             DataType type = argument.getAnnotationMetadata()
-                .enumValue(TypeDef.class, "type", DataType.class)
-                .orElseGet(() -> DataType.forType(argument.getType()));
+                    .enumValue(TypeDef.class, "type", DataType.class)
+                    .orElseGet(() -> DataType.forType(argument.getType()));
             return read(object, name, type);
         } else {
             return read(object, pp);
@@ -171,9 +171,9 @@ public class DTOMapper<T, S, R> implements BeanIntrospectionMapper<S, R> {
      */
     public @Nullable Object read(@NonNull S resultSet, @NonNull String persistedName, @NonNull DataType dataType) {
         return resultReader.readDynamic(
-            resultSet,
-            persistedName,
-            dataType
+                resultSet,
+                persistedName,
+                dataType
         );
     }
 
