@@ -68,6 +68,6 @@ class OracleJdbcJsonColumnReader extends SqlJsonColumnReader<ResultSet> {
 
     @Override
     public boolean supports(SqlPreparedQuery sqlPreparedQuery) {
-        return sqlPreparedQuery.getDialect() != Dialect.ORACLE;
+        return sqlPreparedQuery.getDialect() == Dialect.ORACLE;
     }
 }

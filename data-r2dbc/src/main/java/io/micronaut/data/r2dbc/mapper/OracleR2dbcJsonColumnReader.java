@@ -67,6 +67,6 @@ class OracleR2dbcJsonColumnReader extends SqlJsonColumnReader<Row> {
 
     @Override
     public boolean supports(SqlPreparedQuery sqlPreparedQuery) {
-        return sqlPreparedQuery.getDialect() != Dialect.ORACLE;
+        return sqlPreparedQuery.getDialect() == Dialect.ORACLE;
     }
 }
