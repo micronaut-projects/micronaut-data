@@ -357,7 +357,7 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Abstract SQL repository implementation not specifically bound to JDBC.</div>
 </dd>
-<dt><a href="io/micronaut/data/runtime/operations/internal/sql/AbstractSqlRepositoryOperations.html#%3Cinit%3E(java.lang.String,io.micronaut.data.runtime.mapper.ResultReader,io.micronaut.data.runtime.mapper.ResultReader,io.micronaut.data.runtime.mapper.QueryStatement,io.micronaut.data.runtime.date.DateTimeProvider,io.micronaut.data.model.runtime.RuntimeEntityRegistry,io.micronaut.context.BeanContext,io.micronaut.data.runtime.convert.DataConversionService,io.micronaut.data.model.runtime.AttributeConverterRegistry,io.micronaut.json.JsonMapper)" class="member-name-link">AbstractSqlRepositoryOperations(String, ResultReader&lt;RS, String&gt;, ResultReader&lt;RS, Integer&gt;, QueryStatement&lt;PS, Integer&gt;, DateTimeProvider&lt;Object&gt;, RuntimeEntityRegistry, BeanContext, DataConversionService, AttributeConverterRegistry, JsonMapper)</a> - Constructor for class io.micronaut.data.runtime.operations.internal.sql.<a href="io/micronaut/data/runtime/operations/internal/sql/AbstractSqlRepositoryOperations.html" title="class in io.micronaut.data.runtime.operations.internal.sql">AbstractSqlRepositoryOperations</a></dt>
+<dt><a href="io/micronaut/data/runtime/operations/internal/sql/AbstractSqlRepositoryOperations.html#%3Cinit%3E(java.lang.String,io.micronaut.data.runtime.mapper.ResultReader,io.micronaut.data.runtime.mapper.ResultReader,io.micronaut.data.runtime.mapper.QueryStatement,io.micronaut.data.runtime.date.DateTimeProvider,io.micronaut.data.model.runtime.RuntimeEntityRegistry,io.micronaut.context.BeanContext,io.micronaut.data.runtime.convert.DataConversionService,io.micronaut.data.model.runtime.AttributeConverterRegistry,io.micronaut.json.JsonMapper,io.micronaut.data.runtime.operations.internal.sql.SqlJsonColumnReaderProvider)" class="member-name-link">AbstractSqlRepositoryOperations(String, ResultReader&lt;RS, String&gt;, ResultReader&lt;RS, Integer&gt;, QueryStatement&lt;PS, Integer&gt;, DateTimeProvider&lt;Object&gt;, RuntimeEntityRegistry, BeanContext, DataConversionService, AttributeConverterRegistry, JsonMapper, SqlJsonColumnReaderProvider&lt;RS&gt;)</a> - Constructor for class io.micronaut.data.runtime.operations.internal.sql.<a href="io/micronaut/data/runtime/operations/internal/sql/AbstractSqlRepositoryOperations.html" title="class in io.micronaut.data.runtime.operations.internal.sql">AbstractSqlRepositoryOperations</a></dt>
 <dd>
 <div class="block">Default constructor.</div>
 </dd>
@@ -2479,6 +2479,10 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Create a native query.</div>
 </dd>
+<dt><a href="io/micronaut/data/runtime/operations/internal/sql/AbstractSqlRepositoryOperations.html#createQueryResultMapper(io.micronaut.data.runtime.operations.internal.sql.SqlPreparedQuery,java.lang.String,io.micronaut.data.model.runtime.RuntimePersistentEntity,java.util.function.BiFunction)" class="member-name-link">createQueryResultMapper(SqlPreparedQuery, String, RuntimePersistentEntity&lt;T&gt;, BiFunction&lt;RuntimePersistentEntity&lt;Object&gt;, Object, Object&gt;)</a> - Method in class io.micronaut.data.runtime.operations.internal.sql.<a href="io/micronaut/data/runtime/operations/internal/sql/AbstractSqlRepositoryOperations.html" title="class in io.micronaut.data.runtime.operations.internal.sql">AbstractSqlRepositoryOperations</a></dt>
+<dd>
+<div class="block">Creates <a href="io/micronaut/data/runtime/mapper/sql/SqlTypeMapper.html" title="interface in io.micronaut.data.runtime.mapper.sql"><code>SqlTypeMapper</code></a> for reading results from single column into an entity.</div>
+</dd>
 <dt><a href="io/micronaut/transaction/jdbc/ConnectionHolder.html#createSavepoint()" class="member-name-link">createSavepoint()</a> - Method in class io.micronaut.transaction.jdbc.<a href="io/micronaut/transaction/jdbc/ConnectionHolder.html" title="class in io.micronaut.transaction.jdbc">ConnectionHolder</a></dt>
 <dd>
 <div class="block">Create a new JDBC 3.0 Savepoint for the current Connection,
@@ -3123,7 +3127,7 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Implementation of <a href="io/micronaut/data/jdbc/operations/JdbcRepositoryOperations.html" title="interface in io.micronaut.data.jdbc.operations"><code>JdbcRepositoryOperations</code></a>.</div>
 </dd>
-<dt><a href="io/micronaut/data/jdbc/operations/DefaultJdbcRepositoryOperations.html#%3Cinit%3E(java.lang.String,io.micronaut.data.jdbc.config.DataJdbcConfiguration,javax.sql.DataSource,io.micronaut.transaction.TransactionOperations,java.util.concurrent.ExecutorService,io.micronaut.context.BeanContext,io.micronaut.data.runtime.date.DateTimeProvider,io.micronaut.data.model.runtime.RuntimeEntityRegistry,io.micronaut.data.runtime.convert.DataConversionService,io.micronaut.data.model.runtime.AttributeConverterRegistry,io.micronaut.data.runtime.multitenancy.SchemaTenantResolver,io.micronaut.data.jdbc.operations.JdbcSchemaHandler,io.micronaut.json.JsonMapper)" class="member-name-link">DefaultJdbcRepositoryOperations(String, DataJdbcConfiguration, DataSource, TransactionOperations&lt;Connection&gt;, ExecutorService, BeanContext, DateTimeProvider, RuntimeEntityRegistry, DataConversionService, AttributeConverterRegistry, SchemaTenantResolver, JdbcSchemaHandler, JsonMapper)</a> - Constructor for class io.micronaut.data.jdbc.operations.<a href="io/micronaut/data/jdbc/operations/DefaultJdbcRepositoryOperations.html" title="class in io.micronaut.data.jdbc.operations">DefaultJdbcRepositoryOperations</a></dt>
+<dt><a href="io/micronaut/data/jdbc/operations/DefaultJdbcRepositoryOperations.html#%3Cinit%3E(java.lang.String,io.micronaut.data.jdbc.config.DataJdbcConfiguration,javax.sql.DataSource,io.micronaut.transaction.TransactionOperations,java.util.concurrent.ExecutorService,io.micronaut.context.BeanContext,io.micronaut.data.runtime.date.DateTimeProvider,io.micronaut.data.model.runtime.RuntimeEntityRegistry,io.micronaut.data.runtime.convert.DataConversionService,io.micronaut.data.model.runtime.AttributeConverterRegistry,io.micronaut.data.runtime.multitenancy.SchemaTenantResolver,io.micronaut.data.jdbc.operations.JdbcSchemaHandler,io.micronaut.json.JsonMapper,io.micronaut.data.runtime.operations.internal.sql.SqlJsonColumnReaderProvider)" class="member-name-link">DefaultJdbcRepositoryOperations(String, DataJdbcConfiguration, DataSource, TransactionOperations&lt;Connection&gt;, ExecutorService, BeanContext, DateTimeProvider, RuntimeEntityRegistry, DataConversionService, AttributeConverterRegistry, SchemaTenantResolver, JdbcSchemaHandler, JsonMapper, SqlJsonColumnReaderProvider&lt;ResultSet&gt;)</a> - Constructor for class io.micronaut.data.jdbc.operations.<a href="io/micronaut/data/jdbc/operations/DefaultJdbcRepositoryOperations.html" title="class in io.micronaut.data.jdbc.operations">DefaultJdbcRepositoryOperations</a></dt>
 <dd>
 <div class="block">Default constructor.</div>
 </dd>
@@ -5986,6 +5990,10 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Gets <a href="io/micronaut/data/cosmos/common/CosmosEntity.html" title="class in io.micronaut.data.cosmos.common"><code>CosmosEntity</code></a> that was initialized during app startup for given <a href="io/micronaut/data/model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime"><code>RuntimePersistentEntity</code></a>.</div>
 </dd>
+<dt><a href="io/micronaut/data/runtime/operations/internal/sql/SqlJsonColumnReaderProvider.html#get(io.micronaut.data.runtime.operations.internal.sql.SqlPreparedQuery)" class="member-name-link">get(SqlPreparedQuery)</a> - Method in class io.micronaut.data.runtime.operations.internal.sql.<a href="io/micronaut/data/runtime/operations/internal/sql/SqlJsonColumnReaderProvider.html" title="class in io.micronaut.data.runtime.operations.internal.sql">SqlJsonColumnReaderProvider</a></dt>
+<dd>
+<div class="block">Provides <a href="io/micronaut/data/runtime/mapper/sql/SqlJsonColumnReader.html" title="interface in io.micronaut.data.runtime.mapper.sql"><code>SqlJsonColumnReader</code></a> for given SQL prepared query.</div>
+</dd>
 <dt><a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentEntityJoinSupport.html#get(jakarta.persistence.metamodel.MapAttribute)" class="member-name-link">get(MapAttribute&lt;E, K, V&gt;)</a> - Method in class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentEntityJoinSupport.html" title="class in io.micronaut.data.model.jpa.criteria.impl">AbstractPersistentEntityJoinSupport</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentPropertyPath.html#get(jakarta.persistence.metamodel.MapAttribute)" class="member-name-link">get(MapAttribute&lt;T, K, V&gt;)</a> - Method in class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentPropertyPath.html" title="class in io.micronaut.data.model.jpa.criteria.impl">AbstractPersistentPropertyPath</a></dt>
@@ -6499,6 +6507,10 @@ loadScripts(document, 'script');</script>
 </dd>
 <dt><a href="io/micronaut/data/model/PersistentEntity.html#getDecapitalizedName()" class="member-name-link">getDecapitalizedName()</a> - Method in interface io.micronaut.data.model.<a href="io/micronaut/data/model/PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/runtime/operations/internal/sql/SqlJsonColumnReaderProvider.html#getDefault()" class="member-name-link">getDefault()</a> - Method in class io.micronaut.data.runtime.operations.internal.sql.<a href="io/micronaut/data/runtime/operations/internal/sql/SqlJsonColumnReaderProvider.html" title="class in io.micronaut.data.runtime.operations.internal.sql">SqlJsonColumnReaderProvider</a></dt>
+<dd>
+<div class="block">Provides default <a href="io/micronaut/data/runtime/mapper/sql/SqlJsonColumnReader.html" title="interface in io.micronaut.data.runtime.mapper.sql"><code>SqlJsonColumnReader</code></a>.</div>
+</dd>
 <dt><a href="io/micronaut/data/runtime/config/DataConfiguration.PageableConfiguration.html#getDefaultPageSize()" class="member-name-link">getDefaultPageSize()</a> - Method in class io.micronaut.data.runtime.config.<a href="io/micronaut/data/runtime/config/DataConfiguration.PageableConfiguration.html" title="class in io.micronaut.data.runtime.config">DataConfiguration.PageableConfiguration</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/transaction/support/AbstractSynchronousStateTransactionManager.html#getDefaultTimeout()" class="member-name-link">getDefaultTimeout()</a> - Method in class io.micronaut.transaction.support.<a href="io/micronaut/transaction/support/AbstractSynchronousStateTransactionManager.html" title="class in io.micronaut.transaction.support">AbstractSynchronousStateTransactionManager</a></dt>
@@ -6937,6 +6949,8 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/micronaut/data/model/jpa/criteria/PersistentAssociationPath.html#getJoinType()" class="member-name-link">getJoinType()</a> - Method in interface io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentAssociationPath</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/query/JoinPath.html#getJoinType()" class="member-name-link">getJoinType()</a> - Method in class io.micronaut.data.model.query.<a href="io/micronaut/data/model/query/JoinPath.html" title="class in io.micronaut.data.model.query">JoinPath</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/runtime/mapper/sql/SqlJsonColumnReader.html#getJsonMapper()" class="member-name-link">getJsonMapper()</a> - Method in interface io.micronaut.data.runtime.mapper.sql.<a href="io/micronaut/data/runtime/mapper/sql/SqlJsonColumnReader.html" title="interface in io.micronaut.data.runtime.mapper.sql">SqlJsonColumnReader</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.Placeholder.html#getKey()" class="member-name-link">getKey()</a> - Method in class io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.Placeholder.html" title="class in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder.Placeholder</a></dt>
 <dd>
@@ -11092,7 +11106,7 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">The JSON query result mapper.</div>
 </dd>
-<dt><a href="io/micronaut/data/runtime/mapper/sql/JsonQueryResultMapper.html#%3Cinit%3E(java.lang.String,io.micronaut.data.model.runtime.RuntimePersistentEntity,io.micronaut.data.runtime.mapper.ResultReader,io.micronaut.json.JsonMapper,java.util.function.BiFunction)" class="member-name-link">JsonQueryResultMapper(String, RuntimePersistentEntity&lt;T&gt;, ResultReader&lt;RS, String&gt;, JsonMapper, BiFunction&lt;RuntimePersistentEntity&lt;Object&gt;, Object, Object&gt;)</a> - Constructor for class io.micronaut.data.runtime.mapper.sql.<a href="io/micronaut/data/runtime/mapper/sql/JsonQueryResultMapper.html" title="class in io.micronaut.data.runtime.mapper.sql">JsonQueryResultMapper</a></dt>
+<dt><a href="io/micronaut/data/runtime/mapper/sql/JsonQueryResultMapper.html#%3Cinit%3E(java.lang.String,io.micronaut.data.model.runtime.RuntimePersistentEntity,io.micronaut.data.runtime.mapper.ResultReader,io.micronaut.data.runtime.mapper.sql.SqlJsonColumnReader,java.util.function.BiFunction)" class="member-name-link">JsonQueryResultMapper(String, RuntimePersistentEntity&lt;T&gt;, ResultReader&lt;RS, String&gt;, SqlJsonColumnReader&lt;RS&gt;, BiFunction&lt;RuntimePersistentEntity&lt;Object&gt;, Object, Object&gt;)</a> - Constructor for class io.micronaut.data.runtime.mapper.sql.<a href="io/micronaut/data/runtime/mapper/sql/JsonQueryResultMapper.html" title="class in io.micronaut.data.runtime.mapper.sql">JsonQueryResultMapper</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/mappers/jta/JtaTransactionalMapper.html" class="type-name-link" title="class in io.micronaut.data.processor.mappers.jta">JtaTransactionalMapper</a> - Class in <a href="io/micronaut/data/processor/mappers/jta/package-summary.html">io.micronaut.data.processor.mappers.jta</a></dt>
 <dd>
@@ -11690,6 +11704,10 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/exceptions/MappingException.html#%3Cinit%3E(java.lang.String,java.lang.Throwable)" class="member-name-link">MappingException(String, Throwable)</a> - Constructor for exception io.micronaut.data.exceptions.<a href="io/micronaut/data/exceptions/MappingException.html" title="class in io.micronaut.data.exceptions">MappingException</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/runtime/operations/internal/sql/AbstractSqlRepositoryOperations.html#mapQueryColumnResult(io.micronaut.data.runtime.operations.internal.sql.SqlPreparedQuery,java.sql.ResultSet,java.lang.String,io.micronaut.data.model.runtime.RuntimePersistentEntity,java.lang.Class,java.util.function.BiFunction)" class="member-name-link">mapQueryColumnResult(SqlPreparedQuery, ResultSet, String, RuntimePersistentEntity&lt;T&gt;, Class&lt;R&gt;, BiFunction&lt;RuntimePersistentEntity&lt;Object&gt;, Object, Object&gt;)</a> - Method in class io.micronaut.data.runtime.operations.internal.sql.<a href="io/micronaut/data/runtime/operations/internal/sql/AbstractSqlRepositoryOperations.html" title="class in io.micronaut.data.runtime.operations.internal.sql">AbstractSqlRepositoryOperations</a></dt>
+<dd>
+<div class="block">Reads an object from the result set and given column.</div>
+</dd>
 <dt><a href="io/micronaut/data/document/processor/matchers/MongoExecutorQueryMethodMatcher.html#match(io.micronaut.data.processor.visitors.MethodMatchContext)" class="member-name-link">match(MethodMatchContext)</a> - Method in class io.micronaut.data.document.processor.matchers.<a href="io/micronaut/data/document/processor/matchers/MongoExecutorQueryMethodMatcher.html" title="class in io.micronaut.data.document.processor.matchers">MongoExecutorQueryMethodMatcher</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/document/processor/matchers/MongoRawQueryMethodMatcher.html#match(io.micronaut.data.processor.visitors.MethodMatchContext)" class="member-name-link">match(MethodMatchContext)</a> - Method in class io.micronaut.data.document.processor.matchers.<a href="io/micronaut/data/document/processor/matchers/MongoRawQueryMethodMatcher.html" title="class in io.micronaut.data.document.processor.matchers">MongoRawQueryMethodMatcher</a></dt>
@@ -12726,6 +12744,8 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Check if data not vetoed.</div>
 </dd>
+<dt><a href="io/micronaut/data/runtime/mapper/sql/SqlJsonColumnReader.html#NULL_VALUE" class="member-name-link">NULL_VALUE</a> - Static variable in interface io.micronaut.data.runtime.mapper.sql.<a href="io/micronaut/data/runtime/mapper/sql/SqlJsonColumnReader.html" title="interface in io.micronaut.data.runtime.mapper.sql">SqlJsonColumnReader</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/jpa/criteria/impl/AbstractCriteriaBuilder.html#nullif(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" class="member-name-link">nullif(Expression&lt;Y&gt;, Expression&lt;?&gt;)</a> - Method in class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/AbstractCriteriaBuilder.html" title="class in io.micronaut.data.model.jpa.criteria.impl">AbstractCriteriaBuilder</a></dt>
 <dd>
 <div class="block">Not supported yet.</div>
@@ -15050,6 +15070,10 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Read a int value for the given name.</div>
 </dd>
+<dt><a href="io/micronaut/data/runtime/mapper/sql/SqlJsonColumnReader.html#readJsonColumn(io.micronaut.data.runtime.mapper.ResultReader,RS,java.lang.String,io.micronaut.core.type.Argument)" class="member-name-link">readJsonColumn(ResultReader&lt;RS, String&gt;, RS, String, Argument&lt;T&gt;)</a> - Method in interface io.micronaut.data.runtime.mapper.sql.<a href="io/micronaut/data/runtime/mapper/sql/SqlJsonColumnReader.html" title="interface in io.micronaut.data.runtime.mapper.sql">SqlJsonColumnReader</a></dt>
+<dd>
+<div class="block">Reads JSON column from the result set and returns as expected type.</div>
+</dd>
 <dt><a href="io/micronaut/data/r2dbc/mapper/ColumnIndexR2dbcResultReader.html#readLong(io.r2dbc.spi.Row,java.lang.Integer)" class="member-name-link">readLong(Row, Integer)</a> - Method in class io.micronaut.data.r2dbc.mapper.<a href="io/micronaut/data/r2dbc/mapper/ColumnIndexR2dbcResultReader.html" title="class in io.micronaut.data.r2dbc.mapper">ColumnIndexR2dbcResultReader</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/r2dbc/mapper/ColumnNameR2dbcResultReader.html#readLong(io.r2dbc.spi.Row,java.lang.String)" class="member-name-link">readLong(Row, String)</a> - Method in class io.micronaut.data.r2dbc.mapper.<a href="io/micronaut/data/r2dbc/mapper/ColumnNameR2dbcResultReader.html" title="class in io.micronaut.data.r2dbc.mapper">ColumnNameR2dbcResultReader</a></dt>
@@ -17123,6 +17147,20 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Default constructor.</div>
 </dd>
+<dt><a href="io/micronaut/data/runtime/mapper/sql/SqlJsonColumnReader.html" class="type-name-link" title="interface in io.micronaut.data.runtime.mapper.sql">SqlJsonColumnReader</a>&lt;<a href="io/micronaut/data/runtime/mapper/sql/SqlJsonColumnReader.html" title="type parameter in SqlJsonColumnReader">RS</a>&gt; - Interface in <a href="io/micronaut/data/runtime/mapper/sql/package-summary.html">io.micronaut.data.runtime.mapper.sql</a></dt>
+<dd>
+<div class="block">The SQL json column reader interface.</div>
+</dd>
+<dt><a href="io/micronaut/data/runtime/operations/internal/sql/AbstractSqlRepositoryOperations.html#sqlJsonColumnReaderProvider" class="member-name-link">sqlJsonColumnReaderProvider</a> - Variable in class io.micronaut.data.runtime.operations.internal.sql.<a href="io/micronaut/data/runtime/operations/internal/sql/AbstractSqlRepositoryOperations.html" title="class in io.micronaut.data.runtime.operations.internal.sql">AbstractSqlRepositoryOperations</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/runtime/operations/internal/sql/SqlJsonColumnReaderProvider.html" class="type-name-link" title="class in io.micronaut.data.runtime.operations.internal.sql">SqlJsonColumnReaderProvider</a>&lt;<a href="io/micronaut/data/runtime/operations/internal/sql/SqlJsonColumnReaderProvider.html" title="type parameter in SqlJsonColumnReaderProvider">RS</a>&gt; - Class in <a href="io/micronaut/data/runtime/operations/internal/sql/package-summary.html">io.micronaut.data.runtime.operations.internal.sql</a></dt>
+<dd>
+<div class="block">The provider for <a href="io/micronaut/data/runtime/mapper/sql/SqlJsonColumnReader.html" title="interface in io.micronaut.data.runtime.mapper.sql"><code>SqlJsonColumnReader</code></a> when JSON columns are being read from <a href="io/micronaut/data/runtime/operations/internal/sql/SqlPreparedQuery.html" title="interface in io.micronaut.data.runtime.operations.internal.sql"><code>SqlPreparedQuery</code></a> results.</div>
+</dd>
+<dt><a href="io/micronaut/data/runtime/operations/internal/sql/SqlJsonColumnReaderProvider.html#%3Cinit%3E(io.micronaut.json.JsonMapper,java.util.List)" class="member-name-link">SqlJsonColumnReaderProvider(JsonMapper, List&lt;SqlJsonColumnReader&lt;RS&gt;&gt;)</a> - Constructor for class io.micronaut.data.runtime.operations.internal.sql.<a href="io/micronaut/data/runtime/operations/internal/sql/SqlJsonColumnReaderProvider.html" title="class in io.micronaut.data.runtime.operations.internal.sql">SqlJsonColumnReaderProvider</a></dt>
+<dd>
+<div class="block">Default constructor.</div>
+</dd>
 <dt><a href="io/micronaut/data/annotation/sql/SqlMembers.html" class="type-name-link" title="interface in io.micronaut.data.annotation.sql">SqlMembers</a> - Interface in <a href="io/micronaut/data/annotation/sql/package-summary.html">io.micronaut.data.annotation.sql</a></dt>
 <dd>
 <div class="block">Interface for meta annotation members specific to SQL.</div>
@@ -17366,6 +17404,10 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/event/listeners/PreUpdateEventListener.html#supports(io.micronaut.data.model.runtime.RuntimePersistentEntity,java.lang.Class)" class="member-name-link">supports(RuntimePersistentEntity&lt;T&gt;, Class&lt;? extends Annotation&gt;)</a> - Method in interface io.micronaut.data.event.listeners.<a href="io/micronaut/data/event/listeners/PreUpdateEventListener.html" title="interface in io.micronaut.data.event.listeners">PreUpdateEventListener</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/runtime/mapper/sql/SqlJsonColumnReader.html#supports(io.micronaut.data.runtime.operations.internal.sql.SqlPreparedQuery)" class="member-name-link">supports(SqlPreparedQuery&lt;?, ?&gt;)</a> - Method in interface io.micronaut.data.runtime.mapper.sql.<a href="io/micronaut/data/runtime/mapper/sql/SqlJsonColumnReader.html" title="interface in io.micronaut.data.runtime.mapper.sql">SqlJsonColumnReader</a></dt>
+<dd>
+<div class="block">Gets an indicator telling whether reader can interpret results from the SQL prepared query.</div>
+</dd>
 <dt><a href="io/micronaut/data/runtime/support/convert/AttributeConverterProvider.html#supports(java.lang.Class)" class="member-name-link">supports(Class&lt;?&gt;)</a> - Method in interface io.micronaut.data.runtime.support.convert.<a href="io/micronaut/data/runtime/support/convert/AttributeConverterProvider.html" title="interface in io.micronaut.data.runtime.support.convert">AttributeConverterProvider</a></dt>
 <dd>
 <div class="block">Does support providing an instance of this converter class.</div>
@@ -17606,6 +17648,8 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.Placeholder.html#toString()" class="member-name-link">toString()</a> - Method in class io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.Placeholder.html" title="class in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder.Placeholder</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/query/JoinPath.html#toString()" class="member-name-link">toString()</a> - Method in class io.micronaut.data.model.query.<a href="io/micronaut/data/model/query/JoinPath.html" title="class in io.micronaut.data.model.query">JoinPath</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/model/runtime/QueryResultInfo.html#toString()" class="member-name-link">toString()</a> - Method in class io.micronaut.data.model.runtime.<a href="io/micronaut/data/model/runtime/QueryResultInfo.html" title="class in io.micronaut.data.model.runtime">QueryResultInfo</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/runtime/RuntimePersistentEntity.html#toString()" class="member-name-link">toString()</a> - Method in class io.micronaut.data.model.runtime.<a href="io/micronaut/data/model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a></dt>
 <dd>&nbsp;</dd>
