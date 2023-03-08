@@ -40,6 +40,7 @@ import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
 import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.model.runtime.QueryParameterBinding;
+import io.micronaut.data.model.runtime.QueryResultInfo;
 import io.micronaut.data.model.runtime.RuntimeAssociation;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
@@ -51,6 +52,8 @@ import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.date.DateTimeProvider;
 import io.micronaut.data.runtime.mapper.QueryStatement;
 import io.micronaut.data.runtime.mapper.ResultReader;
+import io.micronaut.data.runtime.mapper.sql.JsonQueryResultMapper;
+import io.micronaut.data.runtime.mapper.sql.SqlTypeMapper;
 import io.micronaut.data.runtime.operations.internal.AbstractRepositoryOperations;
 import io.micronaut.data.runtime.query.MethodContextAwareStoredQueryDecorator;
 import io.micronaut.data.runtime.query.PreparedQueryDecorator;
@@ -63,6 +66,7 @@ import org.slf4j.Logger;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.sql.ResultSet;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -71,6 +75,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -90,6 +95,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
         PreparedQueryDecorator,
         MethodContextAwareStoredQueryDecorator,
         HintsCapableRepository {
+
     protected static final Logger QUERY_LOG = DataSettings.QUERY_LOG;
     protected final String dataSourceName;
     @SuppressWarnings("WeakerAccess")
@@ -99,6 +105,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
     @SuppressWarnings("WeakerAccess")
     protected final QueryStatement<PS, Integer> preparedStatementWriter;
     protected final JsonMapper jsonMapper;
+    protected final SqlJsonColumnReaderProvider<RS> sqlJsonColumnReaderProvider;
     protected final Map<Class, SqlQueryBuilder> queryBuilders = new HashMap<>(10);
     protected final Map<Class, String> repositoriesWithHardcodedDataSource = new HashMap<>(10);
     private final Map<QueryKey, SqlStoredQuery> entityInserts = new ConcurrentHashMap<>(10);
@@ -108,16 +115,17 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
     /**
      * Default constructor.
      *
-     * @param dataSourceName             The datasource name
-     * @param columnNameResultSetReader  The column name result reader
-     * @param columnIndexResultSetReader The column index result reader
-     * @param preparedStatementWriter    The prepared statement writer
-     * @param dateTimeProvider           The date time provider
-     * @param runtimeEntityRegistry      The entity registry
-     * @param beanContext                The bean context
-     * @param conversionService          The conversion service
-     * @param attributeConverterRegistry The attribute converter registry
-     * @param jsonMapper                 The JSON mapper
+     * @param dataSourceName               The datasource name
+     * @param columnNameResultSetReader    The column name result reader
+     * @param columnIndexResultSetReader   The column index result reader
+     * @param preparedStatementWriter      The prepared statement writer
+     * @param dateTimeProvider             The date time provider
+     * @param runtimeEntityRegistry        The entity registry
+     * @param beanContext                  The bean context
+     * @param conversionService            The conversion service
+     * @param attributeConverterRegistry   The attribute converter registry
+     * @param jsonMapper                   The JSON mapper
+     * @param sqlJsonColumnReaderProvider  The SQL JSON column reader provider
      */
     protected AbstractSqlRepositoryOperations(
             String dataSourceName,
@@ -129,13 +137,15 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
             BeanContext beanContext,
             DataConversionService conversionService,
             AttributeConverterRegistry attributeConverterRegistry,
-            JsonMapper jsonMapper) {
+            JsonMapper jsonMapper,
+            SqlJsonColumnReaderProvider<RS> sqlJsonColumnReaderProvider) {
         super(dateTimeProvider, runtimeEntityRegistry, conversionService, attributeConverterRegistry);
         this.dataSourceName = dataSourceName;
         this.columnNameResultSetReader = columnNameResultSetReader;
         this.columnIndexResultSetReader = columnIndexResultSetReader;
         this.preparedStatementWriter = preparedStatementWriter;
         this.jsonMapper = jsonMapper;
+        this.sqlJsonColumnReaderProvider = sqlJsonColumnReaderProvider;
         Collection<BeanDefinition<Object>> beanDefinitions = beanContext
                 .getBeanDefinitions(Object.class, Qualifiers.byStereotype(Repository.class));
         for (BeanDefinition<Object> beanDefinition : beanDefinitions) {
@@ -216,7 +226,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
             case JSON:
                 if (value != null && !value.getClass().equals(String.class)) {
                     if (jsonMapper == null) {
-                        throw new IllegalStateException("For JSON data types support Micronaut ObjectMapper needs to be available on the classpath.");
+                        throw new IllegalStateException("For JSON data types support Micronaut JsonMapper needs to be available on the classpath.");
                     }
                     try {
                         value = new String(jsonMapper.writeValueAsBytes(value), StandardCharsets.UTF_8);
@@ -481,6 +491,63 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
         return true;
     }
 
+    /**
+     * Creates {@link SqlTypeMapper} for reading results from single column into an entity. For now, we support reading from JSON column,
+     * however in support we might add XML support etc.
+     *
+     * @param sqlPreparedQuery the SQL prepared query
+     * @param columnName the column name where we are reading from
+     * @param persistentEntity the persistent entity
+     * @param loadListener the load listener if needed after entity loaded
+     * @return the {@link SqlTypeMapper} able to decode from column value into given type
+     * @param <T> the entity type
+     * @param <RS> the result set type
+     * @param <R> the result type
+     */
+    protected final <T, RS, R> SqlTypeMapper<RS, R> createQueryResultMapper(SqlPreparedQuery sqlPreparedQuery, String columnName,
+                                                                    RuntimePersistentEntity<T> persistentEntity, BiFunction<RuntimePersistentEntity<Object>, Object, Object> loadListener) {
+        QueryResultInfo queryResultInfo = sqlPreparedQuery.getQueryResultInfo();
+        return switch (queryResultInfo.getType()) {
+            case JSON -> createJsonQueryResultMapper(sqlPreparedQuery, columnName, persistentEntity, loadListener);
+            default -> throw new IllegalStateException("Unexpected query result type: " + queryResultInfo.getType());
+        };
+    }
+
+    /**
+     * Reads an object from the result set and given column.
+     *
+     * @param sqlPreparedQuery the SQL prepared query
+     * @param rs the result set
+     * @param columnName the column name where we are reading from
+     * @param persistentEntity the persistent entity
+     * @param type the result type
+     * @param loadListener the load listener if needed after entity loaded
+     * @return an object read from the result set column
+     * @param <R> the result type
+     * @param <T> the entity type
+     */
+    protected final <R, T> R mapQueryColumnResult(SqlPreparedQuery sqlPreparedQuery, ResultSet rs, String columnName,
+                                          RuntimePersistentEntity<T> persistentEntity, Class<R> type,
+                                          BiFunction<RuntimePersistentEntity<Object>, Object, Object> loadListener) {
+        SqlTypeMapper<ResultSet, R> mapper = createQueryResultMapper(sqlPreparedQuery, columnName, persistentEntity, loadListener);
+        return mapper.map(rs, type);
+    }
+
+    /**
+     * Creates {@link JsonQueryResultMapper} for JSON deserialization.
+     *
+     * @param sqlPreparedQuery the SQL prepared query
+     * @param columnName the column name where query result is stored
+     * @param persistentEntity the persistent entity
+     * @param loadListener the load listener if needed after entity loaded
+     * @return the {@link JsonQueryResultMapper}
+     * @param <T> the entity type
+     */
+    private <T> JsonQueryResultMapper createJsonQueryResultMapper(SqlPreparedQuery sqlPreparedQuery, String columnName,
+                                                                  RuntimePersistentEntity<T> persistentEntity, BiFunction<RuntimePersistentEntity<Object>, Object, Object> loadListener) {
+        return new JsonQueryResultMapper(columnName, persistentEntity, columnNameResultSetReader,
+            sqlJsonColumnReaderProvider.get(sqlPreparedQuery), loadListener);
+    }
 
     /**
      * Used to cache queries for entities.

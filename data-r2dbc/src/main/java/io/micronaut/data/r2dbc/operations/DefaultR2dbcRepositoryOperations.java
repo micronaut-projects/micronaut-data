@@ -66,9 +66,9 @@ import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.convert.RuntimePersistentPropertyConversionContext;
 import io.micronaut.data.runtime.date.DateTimeProvider;
 import io.micronaut.data.runtime.mapper.TypeMapper;
-import io.micronaut.data.runtime.mapper.sql.JsonQueryResultMapper;
 import io.micronaut.data.runtime.mapper.sql.SqlDTOMapper;
 import io.micronaut.data.runtime.mapper.sql.SqlResultEntityTypeMapper;
+import io.micronaut.data.runtime.mapper.sql.SqlTypeMapper;
 import io.micronaut.data.runtime.multitenancy.SchemaTenantResolver;
 import io.micronaut.data.runtime.operations.ReactorToAsyncOperationsAdaptor;
 import io.micronaut.data.runtime.operations.internal.AbstractReactiveEntitiesOperations;
@@ -77,6 +77,7 @@ import io.micronaut.data.runtime.operations.internal.OperationContext;
 import io.micronaut.data.runtime.operations.internal.ReactiveCascadeOperations;
 import io.micronaut.data.runtime.operations.internal.query.BindableParametersStoredQuery;
 import io.micronaut.data.runtime.operations.internal.sql.AbstractSqlRepositoryOperations;
+import io.micronaut.data.runtime.operations.internal.sql.SqlJsonColumnReaderProvider;
 import io.micronaut.data.runtime.operations.internal.sql.SqlPreparedQuery;
 import io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery;
 import io.micronaut.data.runtime.support.AbstractConversionContext;
@@ -156,17 +157,19 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
     /**
      * Default constructor.
      *
-     * @param dataSourceName             The data source name
-     * @param connectionFactory          The associated connection factory
-     * @param dateTimeProvider           The date time provider
-     * @param runtimeEntityRegistry      The runtime entity registry
-     * @param applicationContext         The bean context
-     * @param executorService            The executor
-     * @param conversionService          The conversion service
-     * @param attributeConverterRegistry The attribute converter registry
-     * @param schemaTenantResolver       The schema tenant resolver
-     * @param schemaHandler              The schema handler
-     * @param configuration              The configuration
+     * @param dataSourceName               The data source name
+     * @param connectionFactory            The associated connection factory
+     * @param dateTimeProvider             The date time provider
+     * @param runtimeEntityRegistry        The runtime entity registry
+     * @param applicationContext           The bean context
+     * @param executorService              The executor
+     * @param conversionService            The conversion service
+     * @param attributeConverterRegistry   The attribute converter registry
+     * @param schemaTenantResolver         The schema tenant resolver
+     * @param schemaHandler                The schema handler
+     * @param configuration                The configuration
+     * @param jsonMapper                   The JSON mapper
+     * @param sqlJsonColumnReaderProvider  The SQL JSON column reader provider
      */
     @Internal
     protected DefaultR2dbcRepositoryOperations(
@@ -181,7 +184,8 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         @Nullable SchemaTenantResolver schemaTenantResolver,
         R2dbcSchemaHandler schemaHandler,
         @Parameter DataR2dbcConfiguration configuration,
-        @Nullable JsonMapper jsonMapper) {
+        @Nullable JsonMapper jsonMapper,
+        SqlJsonColumnReaderProvider<Row> sqlJsonColumnReaderProvider) {
         super(
             dataSourceName,
             new ColumnNameR2dbcResultReader(conversionService),
@@ -192,7 +196,8 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             applicationContext,
             conversionService,
             attributeConverterRegistry,
-            jsonMapper);
+            jsonMapper,
+            sqlJsonColumnReaderProvider);
         this.connectionFactory = connectionFactory;
         this.ioExecutorService = executorService;
         this.schemaTenantResolver = schemaTenantResolver;
@@ -688,10 +693,10 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                         }
                     };
                     QueryResultInfo queryResultInfo = preparedQuery.getQueryResultInfo();
-                    if (queryResultInfo != null && queryResultInfo.getType() == QueryResult.Type.JSON) {
-                        JsonQueryResultMapper<T, Row, R> jsonQueryResultMapper = new JsonQueryResultMapper(queryResultInfo.getColumnName(), persistentEntity, columnNameResultSetReader,
-                            jsonMapper, loadListener);
-                        return executeAndMapEachRow(statement, row -> jsonQueryResultMapper.map(row, resultType));
+                    if (queryResultInfo != null && queryResultInfo.getType() != QueryResult.Type.TABULAR) {
+                        SqlTypeMapper<Row, R> queryResultMapper = createQueryResultMapper(preparedQuery, queryResultInfo.getColumnName(),
+                            persistentEntity, loadListener);
+                        return executeAndMapEachRow(statement, row -> queryResultMapper.map(row, resultType));
                     }
                     SqlResultEntityTypeMapper<Row, R> mapper = new SqlResultEntityTypeMapper<>(
                         persistentEntity,
@@ -712,10 +717,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                     boolean isRawQuery = preparedQuery.isRawQuery();
                     TypeMapper<Row, R> mapper;
                     QueryResultInfo queryResultInfo = preparedQuery.getQueryResultInfo();
-                    if (queryResultInfo != null && queryResultInfo.getType() == QueryResult.Type.JSON) {
-                        mapper = new JsonQueryResultMapper(queryResultInfo.getColumnName(), persistentEntity, columnNameResultSetReader,
-                            jsonMapper, null);
-                    } else {
+                    if (queryResultInfo == null || queryResultInfo.getType() == QueryResult.Type.TABULAR) {
                         mapper = new SqlDTOMapper<>(
                             persistentEntity,
                             isRawQuery ? getEntity(preparedQuery.getResultType()) : persistentEntity,
@@ -723,6 +725,9 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                             jsonMapper,
                             conversionService
                         );
+                    } else {
+                        mapper = createQueryResultMapper(preparedQuery, queryResultInfo.getColumnName(),
+                            persistentEntity, null);
                     }
 
                     return executeAndMapEachRow(statement, row -> mapper.map(row, resultType));
@@ -756,10 +761,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                     RuntimePersistentEntity<T> persistentEntity = preparedQuery.getPersistentEntity();
                     if (dtoProjection) {
                         QueryResultInfo queryResultInfo = preparedQuery.getQueryResultInfo();
-                        if (queryResultInfo != null && queryResultInfo.getType() == QueryResult.Type.JSON) {
-                            mapper = new JsonQueryResultMapper(queryResultInfo.getColumnName(), persistentEntity, columnNameResultSetReader,
-                                jsonMapper, null);
-                        } else {
+                        if (queryResultInfo == null || queryResultInfo.getType() == QueryResult.Type.TABULAR) {
                             boolean isRawQuery = preparedQuery.isRawQuery();
                             mapper = new SqlDTOMapper<>(
                                 persistentEntity,
@@ -768,6 +770,8 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                                 jsonMapper,
                                 conversionService
                             );
+                        } else {
+                            mapper = createQueryResultMapper(preparedQuery, queryResultInfo.getColumnName(), persistentEntity, null);
                         }
                     } else {
                         BiFunction<RuntimePersistentEntity<Object>, Object, Object> loadListener = (loadedEntity, o) -> {
@@ -778,10 +782,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                             }
                         };
                         QueryResultInfo queryResultInfo = preparedQuery.getQueryResultInfo();
-                        if (queryResultInfo != null && queryResultInfo.getType() == QueryResult.Type.JSON) {
-                            mapper = new JsonQueryResultMapper(queryResultInfo.getColumnName(), persistentEntity, columnNameResultSetReader,
-                                jsonMapper, loadListener);
-                        } else {
+                        if (queryResultInfo == null || queryResultInfo.getType() == QueryResult.Type.TABULAR) {
                             Set<JoinPath> joinFetchPaths = preparedQuery.getJoinFetchPaths();
                             SqlResultEntityTypeMapper<Row, R> entityTypeMapper = new SqlResultEntityTypeMapper<>(
                                 getEntity(resultType),
@@ -801,6 +802,8 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                             } else {
                                 mapper = entityTypeMapper;
                             }
+                        } else {
+                            mapper = createQueryResultMapper(preparedQuery, queryResultInfo.getColumnName(), persistentEntity, loadListener);
                         }
                     }
                     return executeAndMapEachRow(statement, row -> mapper.map(row, resultType));
