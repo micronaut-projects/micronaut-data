@@ -476,4 +476,65 @@ interface DocumentRepository extends GenericRepository<Document, String> {
         findByTagsArrayContainsQuery == '{tags:{$all:[{$mn_qp:0}]}}'
         findByTagsArrayContainsListQuery == '{tags:{$all:[{$mn_qp:0}]}}'
     }
+
+    void "test query by field in embedded relation"() {
+        given:
+        def repository = buildRepository('test.TestRepository', """
+import io.micronaut.data.annotation.Embeddable;
+import io.micronaut.data.mongodb.annotation.*;
+import org.bson.types.ObjectId;
+
+@MongoRepository
+interface TestRepository extends GenericRepository<TestEntity, String> {
+
+    TestEntity findByParentChildIn(List<String> children);
+
+    TestEntity findByParentChildInList(List<String> children);
+
+    TestEntity findByParentChildEquals(String child);
+
+    TestEntity findByParentChildIsNotEmpty();
+}
+
+@Embeddable
+class ParentObject {
+
+    private String child;
+
+    public String getChild() { return child; }
+
+    public void setChild(String child) { this.child = child; }
+}
+
+@MappedEntity("test")
+class TestEntity {
+
+    @Id
+    private ObjectId id;
+
+    @Relation(value = Relation.Kind.EMBEDDED)
+    private ParentObject parent;
+
+    public ObjectId getId() { return id; }
+
+    public void setId(ObjectId id) { this.id = id; }
+
+    public ParentObject getParent() { return parent; }
+
+    public void setParent(ParentObject parent) { this.parent = parent; }
+}
+"""
+        )
+
+        when:
+        def queryIn = TestUtils.getQuery(repository.getRequiredMethod("findByParentChildIn", List<String>))
+        def queryInList = TestUtils.getQuery(repository.getRequiredMethod("findByParentChildInList", List<String>))
+        def queryEquals = TestUtils.getQuery(repository.getRequiredMethod("findByParentChildEquals", String))
+        def queryIsNotEmpty = TestUtils.getQuery(repository.getRequiredMethod("findByParentChildIsNotEmpty"))
+        then:
+        queryIn == '{\'parent.child\':{$in:[{$mn_qp:0}]}}'
+        queryInList == '{\'parent.child\':{$in:[{$mn_qp:0}]}}'
+        queryEquals == '{\'parent.child\':{$eq:{$mn_qp:0}}}'
+        queryIsNotEmpty == '{$and:[{\'parent.child\':{$ne:\'\'}},{\'parent.child\':{$exists:true}}]}'
+    }
 }

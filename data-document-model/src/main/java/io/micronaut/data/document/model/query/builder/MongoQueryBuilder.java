@@ -160,14 +160,14 @@ public final class MongoQueryBuilder implements QueryBuilder {
             return new RegexPattern(value.toString());
         }));
         addCriterionHandler(QueryModel.IsEmpty.class, (context, obj, criterion) -> {
-            String criterionPropertyName = getPropertyPersistName(context.getRequiredProperty(criterion).getProperty());
+            String criterionPropertyName = getCriterionPropertyName(criterion.getProperty(), context);
             obj.put("$or", asList(
                     singletonMap(criterionPropertyName, singletonMap("$eq", "")),
                     singletonMap(criterionPropertyName, singletonMap("$exists", false))
             ));
         });
         addCriterionHandler(QueryModel.IsNotEmpty.class, (context, obj, criterion) -> {
-            String criterionPropertyName = getPropertyPersistName(context.getRequiredProperty(criterion).getProperty());
+            String criterionPropertyName = getCriterionPropertyName(criterion.getProperty(), context);
             obj.put("$and", asList(
                     singletonMap(criterionPropertyName, singletonMap("$ne", "")),
                     singletonMap(criterionPropertyName, singletonMap("$exists", true))
@@ -176,7 +176,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
         addCriterionHandler(QueryModel.In.class, (context, obj, criterion) -> {
             PersistentPropertyPath propertyPath = context.getRequiredProperty(criterion);
             Object value = criterion.getValue();
-            String criterionPropertyName = getPropertyPersistName(context.getRequiredProperty(criterion).getProperty());
+            String criterionPropertyName = getCriterionPropertyName(criterion.getProperty(), context);
             if (value instanceof Iterable) {
                 List<?> values = CollectionUtils.iterableToList((Iterable) value);
                 obj.put(criterionPropertyName, singletonMap("$in", values.stream().map(val -> valueRepresentation(context, propertyPath, val)).collect(Collectors.toList())));
@@ -187,7 +187,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
         addCriterionHandler(QueryModel.NotIn.class, (context, obj, criterion) -> {
             PersistentPropertyPath propertyPath = context.getRequiredProperty(criterion);
             Object value = criterion.getValue();
-            String criterionPropertyName = getPropertyPersistName(context.getRequiredProperty(criterion).getProperty());
+            String criterionPropertyName = getCriterionPropertyName(criterion.getProperty(), context);
             if (value instanceof Iterable) {
                 List<?> values = CollectionUtils.iterableToList((Iterable) value);
                 obj.put(criterionPropertyName, singletonMap("$nin", values.stream().map(val -> valueRepresentation(context, propertyPath, val)).collect(Collectors.toList())));
@@ -221,7 +221,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
         addCriterionHandler(QueryModel.ArrayContains.class, (context, obj, criterion) -> {
             PersistentPropertyPath propertyPath = context.getRequiredProperty(criterion);
             Object value = criterion.getValue();
-            String criterionPropertyName = getPropertyPersistName(context.getRequiredProperty(criterion).getProperty());
+            String criterionPropertyName = getCriterionPropertyName(criterion.getProperty(), context);
             Object criteriaValue;
             if (value instanceof Iterable) {
                 List<?> values = CollectionUtils.iterableToList((Iterable) value);
@@ -298,8 +298,25 @@ public final class MongoQueryBuilder implements QueryBuilder {
         } else {
             filterValue = regexCriteria;
         }
-        String criterionPropertyName = getPropertyPersistName(propertyPath.getProperty());
+        String criterionPropertyName = getCriterionPropertyName(criterion.getProperty(), context);
         obj.put(criterionPropertyName, filterValue);
+    }
+
+    /**
+     * Gets criterion property name. Used as sort of adapter if property in criteria should have different name that the persistent property.
+     * Used currently for id property name to be generated as _id when used in criteria.
+     *
+     * @param name    the criteria property name
+     * @param context the criteria context
+     * @return resulting name for the criteria, if identity field is used in criteria then returns _id else original criteria property name
+     */
+    private String getCriterionPropertyName(String name, CriteriaContext context) {
+        PersistentEntity persistentEntity = context.getPersistentEntity();
+        PersistentProperty identity = persistentEntity.getIdentity();
+        if (identity != null && identity.getName().equals(name)) {
+            return MONGO_ID_FIELD;
+        }
+        return name;
     }
 
     private String getPropertyPersistName(PersistentProperty property) {
