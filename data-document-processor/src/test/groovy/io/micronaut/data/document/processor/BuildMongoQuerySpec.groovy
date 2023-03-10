@@ -482,6 +482,7 @@ interface DocumentRepository extends GenericRepository<Document, String> {
         def repository = buildRepository('test.TestRepository', """
 import io.micronaut.data.annotation.Embeddable;
 import io.micronaut.data.mongodb.annotation.*;
+import org.bson.types.ObjectId;
 
 @MongoRepository
 interface TestRepository extends GenericRepository<TestEntity, String> {
@@ -496,16 +497,32 @@ interface TestRepository extends GenericRepository<TestEntity, String> {
 }
 
 @Embeddable
-record ParentObject(
-    String child) {}
+class ParentObject {
+
+    private String child;
+
+    public String getChild() { return child; }
+
+    public void setChild(String child) { this.child = child; }
+}
 
 @MappedEntity("test")
-record TestEntity (
+class TestEntity {
+
     @Id
-    String objectId,
+    private ObjectId id;
 
     @Relation(value = Relation.Kind.EMBEDDED)
-    ParentObject parent) {}
+    private ParentObject parent;
+
+    public ObjectId getId() { return id; }
+
+    public void setId(ObjectId id) { this.id = id; }
+
+    public ParentObject getParent() { return parent; }
+
+    public void setParent(ParentObject parent) { this.parent = parent; }
+}
 """
         )
 
