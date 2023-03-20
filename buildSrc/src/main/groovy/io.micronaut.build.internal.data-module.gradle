@@ -14,12 +14,12 @@ dependencies {
     testRuntimeOnly mnSerde.micronaut.serde.jackson
 }
 
-def checkModulesOptional = rootProject.tasks.findByName("checkModules")
-def checkModules
-if (checkModulesOptional) {
-    checkModules = checkModulesOptional
+def testModulesOptional = rootProject.tasks.findByName("testModules")
+def testModules
+if (testModulesOptional) {
+    testModules = testModulesOptional
 } else {
-    checkModules = rootProject.tasks.register("checkModules").get()
+    testModules = rootProject.tasks.register("testModules").get()
 }
 
-checkModules.dependsOn tasks.named("check")
+testModules.mustRunAfter(tasks.named("test"))

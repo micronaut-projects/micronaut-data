@@ -24,10 +24,22 @@ tasks.withType(JavaCompile).configureEach {
     options.fork = true
 }
 
-tasks.named("check") {
-    // Let core modules checks pass first so the test containers don't eat all the memory
-    dependsOn rootProject.tasks.named("checkModules")
-}
+//if (micronautBuild.environment.githubAction.get()) {
+    def waitForTasks = [
+            ":data-hibernate6-jpa:test",
+            ":data-jdbc:test",
+            ":data-r2dbc:test",
+            ":data-mongodb:test"
+    ] as Object[]
+    tasks.named("classes") {
+        // Postpone examples processing
+        mustRunAfter waitForTasks
+    }
+    tasks.named("test") {
+        // Let core modules tests pass first so the test containers don't eat all the memory
+        mustRunAfter waitForTasks
+    }
+//}
 
 tasks.register("testExamples") {
     dependsOn "test"

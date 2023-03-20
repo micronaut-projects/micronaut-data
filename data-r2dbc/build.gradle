@@ -108,9 +108,11 @@ tasks.named("test") {
     systemProperty "java.util.concurrent.ForkJoinPool.common.parallelism", "2"
 }
 
-tasks.named("check") {
-    // Let JDBC checks pass first so the test containers don't eat all the memory
-    dependsOn ":data-jdbc:check"
+if (micronautBuild.environment.githubAction.get()) {
+    tasks.named("test") {
+        // Let JDBC checks tests first so the test containers don't eat all the memory
+        mustRunAfter ":data-jdbc:test"
+    }
 }
 
 micronautBuild {
