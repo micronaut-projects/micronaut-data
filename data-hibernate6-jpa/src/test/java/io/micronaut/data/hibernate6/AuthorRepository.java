@@ -23,7 +23,7 @@ import io.micronaut.data.hibernate6.jpa.annotation.EntityGraph;
 import io.micronaut.data.tck.entities.Author;
 
 import javax.transaction.Transactional;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 import java.util.List;
 import java.util.Optional;
 

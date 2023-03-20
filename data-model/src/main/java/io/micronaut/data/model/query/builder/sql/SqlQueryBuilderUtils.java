@@ -63,7 +63,7 @@ final class SqlQueryBuilderUtils {
 
         switch (dataType) {
             case STRING:
-                int stringLength = annotationMetadata.findAnnotation("javax.validation.constraints.Size$List")
+                int stringLength = annotationMetadata.findAnnotation("jakarta.validation.constraints.Size$List")
                     .flatMap(v -> {
                         Optional value = v.getValue(AnnotationValue.class);
                         return (Optional<AnnotationValue<Annotation>>) value;

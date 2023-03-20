@@ -7,7 +7,7 @@ import io.micronaut.data.repository.reactive.ReactiveStreamsCrudRepository;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 @R2dbcRepository(dialect = Dialect.POSTGRES) // <1>
 public interface AuthorRepository extends ReactiveStreamsCrudRepository<Author, Long> {

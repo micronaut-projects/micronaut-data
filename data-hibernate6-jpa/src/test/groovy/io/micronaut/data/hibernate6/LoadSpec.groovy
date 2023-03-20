@@ -10,7 +10,7 @@ import spock.lang.Specification
 import spock.lang.Stepwise
 
 import jakarta.inject.Inject
-import javax.validation.ConstraintViolationException
+import jakarta.validation.ConstraintViolationException
 
 @MicronautTest(rollback = false, packages = "io.micronaut.data.tck.entities")
 @Property(name = "datasources.default.name", value = "mydb")

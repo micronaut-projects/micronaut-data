@@ -19,8 +19,8 @@ import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Blocking;
 import io.micronaut.validation.Validated;
 
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import java.util.List;
 import java.util.Optional;
 
@@ -41,7 +41,7 @@ public interface CrudRepository<E, ID> extends GenericRepository<E, ID> {
       *
      * @param entity The entity to save. Must not be {@literal null}.
      * @return The saved entity will never be {@literal null}.
-     * @throws javax.validation.ConstraintViolationException if the entity is {@literal null} or invalid.
+     * @throws jakarta.validation.ConstraintViolationException if the entity is {@literal null} or invalid.
      * @param <S> The generic type
      */
     @NonNull
@@ -52,7 +52,7 @@ public interface CrudRepository<E, ID> extends GenericRepository<E, ID> {
      *
      * @param entity The entity to save. Must not be {@literal null}.
      * @return The updated entity will never be {@literal null}.
-     * @throws javax.validation.ConstraintViolationException if the entity is {@literal null} or invalid.
+     * @throws jakarta.validation.ConstraintViolationException if the entity is {@literal null} or invalid.
      * @param <S> The generic type
      */
     @NonNull
@@ -63,7 +63,7 @@ public interface CrudRepository<E, ID> extends GenericRepository<E, ID> {
      *
      * @param entities The entities to update. Must not be {@literal null}.
      * @return The updated entities will never be {@literal null}.
-     * @throws javax.validation.ConstraintViolationException if entities is {@literal null} or invalid.
+     * @throws jakarta.validation.ConstraintViolationException if entities is {@literal null} or invalid.
      * @param <S> The generic type
      */
     @NonNull
@@ -75,7 +75,7 @@ public interface CrudRepository<E, ID> extends GenericRepository<E, ID> {
      * @param entities The entities to saved. Must not be {@literal null}.
      * @param <S> The generic type
      * @return The saved entities objects. will never be {@literal null}.
-     * @throws javax.validation.ConstraintViolationException if the entities are {@literal null}.
+     * @throws jakarta.validation.ConstraintViolationException if the entities are {@literal null}.
      */
     @NonNull
     <S extends E> List<S> saveAll(@Valid @NotNull @NonNull Iterable<S> entities);
@@ -85,7 +85,7 @@ public interface CrudRepository<E, ID> extends GenericRepository<E, ID> {
      *
      * @param id The ID of the entity to retrieve. Must not be {@literal null}.
      * @return the entity with the given id or {@literal Optional#empty()} if none found
-     * @throws javax.validation.ConstraintViolationException if the id is {@literal null}.
+     * @throws jakarta.validation.ConstraintViolationException if the id is {@literal null}.
      */
     @NonNull
     Optional<E> findById(@NotNull @NonNull ID id);
@@ -95,7 +95,7 @@ public interface CrudRepository<E, ID> extends GenericRepository<E, ID> {
      *
      * @param id must not be {@literal null}.
      * @return {@literal true} if an entity with the given id exists, {@literal false} otherwise.
-     * @throws javax.validation.ConstraintViolationException if the id is {@literal null}.
+     * @throws jakarta.validation.ConstraintViolationException if the id is {@literal null}.
      */
     boolean existsById(@NotNull @NonNull ID id);
 
@@ -117,7 +117,7 @@ public interface CrudRepository<E, ID> extends GenericRepository<E, ID> {
      * Deletes the entity with the given id.
      *
      * @param id must not be {@literal null}.
-     * @throws javax.validation.ConstraintViolationException if the entity is {@literal null}.
+     * @throws jakarta.validation.ConstraintViolationException if the entity is {@literal null}.
      */
     void deleteById(@NonNull @NotNull ID id);
 
@@ -125,7 +125,7 @@ public interface CrudRepository<E, ID> extends GenericRepository<E, ID> {
      * Deletes a given entity.
      *
      * @param entity The entity to delete
-     * @throws javax.validation.ConstraintViolationException if the entity is {@literal null}.
+     * @throws jakarta.validation.ConstraintViolationException if the entity is {@literal null}.
      */
     void delete(@NonNull @NotNull E entity);
 
@@ -133,7 +133,7 @@ public interface CrudRepository<E, ID> extends GenericRepository<E, ID> {
      * Deletes the given entities.
      *
      * @param entities The entities to delete
-     * @throws javax.validation.ConstraintViolationException if the entity is {@literal null}.
+     * @throws jakarta.validation.ConstraintViolationException if the entity is {@literal null}.
      */
     void deleteAll(@NonNull @NotNull Iterable<? extends E> entities);
 

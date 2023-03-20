@@ -27,7 +27,7 @@ import spock.lang.Specification
 
 import jakarta.inject.Inject
 import javax.persistence.Entity
-import javax.validation.constraints.NotNull
+import jakarta.validation.constraints.NotNull
 
 @MicronautTest
 @H2DBProperties

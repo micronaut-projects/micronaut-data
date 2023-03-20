@@ -20,8 +20,8 @@ import io.micronaut.data.annotation.*;
 
 import io.micronaut.core.annotation.Nullable;
 import javax.persistence.Id;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import java.util.Date;
 import java.util.UUID;
 

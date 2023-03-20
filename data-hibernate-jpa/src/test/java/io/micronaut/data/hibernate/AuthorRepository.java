@@ -23,7 +23,7 @@ import io.micronaut.data.jpa.annotation.EntityGraph;
 import io.micronaut.data.tck.entities.Author;
 
 import javax.transaction.Transactional;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 import java.util.List;
 import java.util.Optional;
 
@@ -43,7 +43,7 @@ public interface AuthorRepository extends io.micronaut.data.tck.repositories.Aut
 
     @Query(nativeQuery = true, value = "SELECT id FROM (VALUES (1),(2),(4),(5)) AS t(id)")
     List<Long> longs();
-  
+
     @Query(value = "select id as authorId, name as authorName from Author", nativeQuery = true)
     List<AuthorDto> getAuthorsByNativeQuery();
 

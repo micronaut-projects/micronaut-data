@@ -31,7 +31,7 @@ import javax.persistence.EmbeddedId;
 import javax.persistence.Entity;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 @Entity
 @Table(
@@ -124,7 +124,7 @@ class Owner {
     public void setId(Long id) {
         this.id = id;
     }
-  
+
 }
 
 @Entity
@@ -202,11 +202,11 @@ import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 @javax.persistence.Table(name = "likes")
 class Like{
     @javax.persistence.EmbeddedId private LikeId likeId;
-    
+
     public void setLikeId(LikeId likeId) {
         this.likeId = likeId;
-    }        
-    
+    }
+
     public LikeId getLikeId() {
         return likeId;
     }
@@ -216,19 +216,19 @@ class Like{
 class LikeId {
     private UUID imageIdentifier;
     private UUID userIdentifier;
-        
+
     public UUID getImageIdentifier() {
         return imageIdentifier;
     }
-    
+
     public void setImageIdentifier(UUID uuid) {
         imageIdentifier = uuid;
     }
-    
+
     public UUID getUserIdentifier() {
         return userIdentifier;
     }
-    
+
     public void setUserIdentifier(UUID uuid) {
         userIdentifier = uuid;
     }
@@ -259,11 +259,11 @@ import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 @javax.persistence.Table(name = "likes")
 class Like{
     @javax.persistence.EmbeddedId private LikeId likeId;
-    
+
     public void setLikeId(LikeId likeId) {
         this.likeId = likeId;
-    }        
-    
+    }
+
     public LikeId getLikeId() {
         return likeId;
     }
@@ -273,19 +273,19 @@ class Like{
 class LikeId {
     private UUID imageIdentifier;
     private UUID userIdentifier;
-        
+
     public UUID getImageIdentifier() {
         return imageIdentifier;
     }
-    
+
     public void setImageIdentifier(UUID uuid) {
         imageIdentifier = uuid;
     }
-    
+
     public UUID getUserIdentifier() {
         return userIdentifier;
     }
-    
+
     public void setUserIdentifier(UUID uuid) {
         userIdentifier = uuid;
     }
