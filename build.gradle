@@ -16,5 +16,3 @@ if (System.getenv("SONAR_TOKEN") != null) {
         }
     }
 }
-
-tasks.register("checkModules")

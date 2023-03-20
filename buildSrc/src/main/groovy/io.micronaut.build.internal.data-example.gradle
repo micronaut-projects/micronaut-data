@@ -26,7 +26,7 @@ tasks.withType(JavaCompile).configureEach {
 
 tasks.named("check") {
     // Let core modules checks pass first so the test containers don't eat all the memory
-    dependsOn ":checkModules"
+    dependsOn rootProject.tasks.named("checkModules")
 }
 
 tasks.register("testExamples") {
