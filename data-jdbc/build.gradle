@@ -22,7 +22,7 @@ dependencies {
 
     testAnnotationProcessor mn.micronaut.inject.java
     testAnnotationProcessor projects.dataProcessor
-    testCompileOnly mnValidation.micronaut.validation.processor
+    testAnnotationProcessor mnValidation.micronaut.validation.processor
 
     testImplementation projects.dataTck
     testImplementation projects.dataProcessor
@@ -33,6 +33,7 @@ dependencies {
     testImplementation libs.jakarta.persistence.api
     testImplementation libs.groovy.sql
     testImplementation mnValidation.micronaut.validation
+    testImplementation mnValidation.micronaut.validation.processor
 
     testImplementation platform(libs.testcontainers.bom)
     testImplementation libs.testcontainers.spock
