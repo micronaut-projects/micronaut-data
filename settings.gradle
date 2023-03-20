@@ -46,8 +46,10 @@ include 'data-tck'
 include 'data-document-tck'
 
 // implementations
-include 'data-hibernate-jpa'
-include 'data-hibernate-reactive'
+
+// TODO
+//include 'data-hibernate-jpa'
+//include 'data-hibernate-reactive'
 include 'data-hibernate6-jpa'
 
 include 'data-tx-hibernate'
