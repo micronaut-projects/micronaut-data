@@ -91,7 +91,7 @@ tasks.named("test") {
 if (micronautBuild.environment.githubAction.get()) {
     tasks.named("test") {
         // Let some of the checks tests first so the test containers don't eat all the memory
-        mustRunAfter ":data-hibernate6-jpa:test"
+        mustRunAfter ":data-hibernate-jpa:test"
         mustRunAfter ":data-mongodb:test"
     }
 }

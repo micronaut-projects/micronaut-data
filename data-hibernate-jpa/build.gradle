@@ -5,6 +5,7 @@ plugins {
 dependencies {
     annotationProcessor mn.micronaut.inject.java
     annotationProcessor mn.micronaut.graal
+    testAnnotationProcessor mnValidation.micronaut.validation.processor
 
     api projects.dataRuntime
     api projects.dataModel
@@ -26,7 +27,8 @@ dependencies {
 
     testAnnotationProcessor mn.micronaut.inject.java
     testAnnotationProcessor projects.dataProcessor
-    testAnnotationProcessor mnValidation.micronaut.validation.processor
+    testImplementation mnValidation.micronaut.validation
+    testImplementation mnValidation.micronaut.validation.processor
 
     testImplementation mn.micronaut.inject.groovy
     testImplementation projects.dataProcessor
