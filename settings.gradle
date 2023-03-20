@@ -52,7 +52,7 @@ include 'data-document-tck'
 //include 'data-hibernate-reactive'
 include 'data-hibernate6-jpa'
 
-include 'data-tx-hibernate'
+//include 'data-tx-hibernate'
 include 'data-tx-hibernate6'
 include 'data-jdbc'
 include 'data-r2dbc'
@@ -60,21 +60,21 @@ include 'data-mongodb'
 include 'data-azure-cosmos'
 
 // Spring compatibility
-include 'data-spring'
-include 'data-spring-jpa'
+//include 'data-spring'
+//include 'data-spring-jpa'
 
 // documentation samples
 include 'doc-examples:hibernate6-example-java'
-include 'doc-examples:hibernate-example-java'
-include 'doc-examples:hibernate-example-groovy'
-include 'doc-examples:hibernate-example-kotlin'
+//include 'doc-examples:hibernate-example-java'
+//include 'doc-examples:hibernate-example-groovy'
+//include 'doc-examples:hibernate-example-kotlin'
+//
+//include 'doc-examples:hibernate-reactive-example-java'
+//include 'doc-examples:hibernate-reactive-example-kotlin'
+//include 'doc-examples:hibernate-reactive-example-groovy'
+//include 'doc-examples:hibernate-sync-and-reactive-example-java'
 
-include 'doc-examples:hibernate-reactive-example-java'
-include 'doc-examples:hibernate-reactive-example-kotlin'
-include 'doc-examples:hibernate-reactive-example-groovy'
-include 'doc-examples:hibernate-sync-and-reactive-example-java'
-
-include 'doc-examples:example-hibernate-and-jdbc'
+//include 'doc-examples:example-hibernate-and-jdbc'
 
 include 'doc-examples:jdbc-example-java'
 include 'doc-examples:jdbc-example-groovy'
@@ -106,9 +106,9 @@ include 'doc-examples:azure-cosmos-example-groovy'
 include 'doc-examples:azure-cosmos-example-kotlin'
 
 // benchmarks
-include 'benchmarks:benchmark-micronaut-data-jpa'
-include 'benchmarks:benchmark-micronaut-data-jdbc'
-include 'benchmarks:benchmark-micronaut-data-mongodb'
-include 'benchmarks:benchmark-spring-data'
-include 'benchmarks:benchmark-spring-data-jdbc'
-include 'benchmarks:benchmark-spring-data-mongodb'
+//include 'benchmarks:benchmark-micronaut-data-jpa'
+//include 'benchmarks:benchmark-micronaut-data-jdbc'
+//include 'benchmarks:benchmark-micronaut-data-mongodb'
+//include 'benchmarks:benchmark-spring-data'
+//include 'benchmarks:benchmark-spring-data-jdbc'
+//include 'benchmarks:benchmark-spring-data-mongodb'

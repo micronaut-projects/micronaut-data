@@ -24,6 +24,15 @@ tasks.withType(JavaCompile).configureEach {
     options.fork = true
 }
 
+tasks.named("check") {
+    // Let core modules checks pass first so the test containers don't eat all the memory
+    dependsOn ":checkModules"
+}
+
+tasks.register("testExamples") {
+    dependsOn "test"
+}
+
 project.afterEvaluate {
     nativeCompile.enabled = false
     testNativeImage.enabled = false

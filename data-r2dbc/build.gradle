@@ -108,6 +108,11 @@ tasks.named("test") {
     systemProperty "java.util.concurrent.ForkJoinPool.common.parallelism", "2"
 }
 
+tasks.named("check") {
+    // Let JDBC checks pass first so the test containers don't eat all the memory
+    dependsOn ":data-jdbc:check"
+}
+
 micronautBuild {
     resolutionStrategy {
         componentSelection {

@@ -13,3 +13,7 @@ micronautBuild {
 dependencies {
     testRuntimeOnly mnSerde.micronaut.serde.jackson
 }
+
+tasks.register("checkModules") {
+    dependsOn "check"
+}
