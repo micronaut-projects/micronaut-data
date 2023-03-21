@@ -74,7 +74,7 @@ public class Meal {
         this.actual = 'Y';
     }
 
-    public Meal(@NotNull @Size(max = 999) int currentBloodGlucose) {
+    public Meal(@NotNull @Max(9999) int currentBloodGlucose) {
         this.currentBloodGlucose = currentBloodGlucose;
     }
 
