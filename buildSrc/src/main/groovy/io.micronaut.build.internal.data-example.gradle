@@ -38,11 +38,13 @@ if (micronautBuild.environment.githubAction.get()) {
     tasks.named("processResources") {
         mustRunAfter waitForTasks
     }
-    tasks.named("internalStartTestResourcesService") {
-        mustRunAfter waitForTasks
+    def internalStartTestResourcesServiceTask = tasks.findByName("internalStartTestResourcesService");
+    if (internalStartTestResourcesServiceTask) {
+        internalStartTestResourcesServiceTask.mustRunAfter waitForTasks
     }
-    tasks.named("kaptGenerateStubsKotlin") {
-        mustRunAfter waitForTasks
+    def kaptGenerateStubsKotlinTask = tasks.findByName("kaptGenerateStubsKotlin");
+    if (kaptGenerateStubsKotlinTask) {
+        kaptGenerateStubsKotlinTask.mustRunAfter waitForTasks
     }
     tasks.named("test") {
         mustRunAfter waitForTasks
