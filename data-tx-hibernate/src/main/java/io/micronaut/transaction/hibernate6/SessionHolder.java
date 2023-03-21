@@ -16,7 +16,7 @@
 package io.micronaut.transaction.hibernate6;
 
 import io.micronaut.core.annotation.Nullable;
-import io.micronaut.transaction.jpa.JpaEntityManagerHolder;
+import io.micronaut.transaction.jpa.EntityManagerHolder;
 import org.hibernate.FlushMode;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
@@ -24,7 +24,7 @@ import org.hibernate.Transaction;
 /**
  * Resource holder wrapping a Hibernate {@link Session} (plus an optional {@link Transaction}).
  * {@link org.springframework.orm.hibernate5.HibernateTransactionManager} binds instances of this class to the thread,
- * for a given {@link org.hibernate.SessionFactory}. Extends {@link JpaEntityManagerHolder}
+ * for a given {@link org.hibernate.SessionFactory}. Extends {@link EntityManagerHolder}
  * as of 5.1, automatically exposing an {@code EntityManager} handle on Hibernate 5.2+.
  *
  * <p>Note: This is an SPI class, not intended to be used by applications.
@@ -34,7 +34,7 @@ import org.hibernate.Transaction;
  * @see HibernateTransactionManager
  * @see SessionFactoryUtils
  */
-public class SessionHolder extends JpaEntityManagerHolder {
+public class SessionHolder extends EntityManagerHolder {
 
     private final Session session;
 

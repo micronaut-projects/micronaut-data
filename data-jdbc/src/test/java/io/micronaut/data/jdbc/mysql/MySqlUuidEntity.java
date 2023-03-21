@@ -6,8 +6,8 @@ import io.micronaut.data.annotation.TypeDef;
 import io.micronaut.data.jdbc.annotation.ColumnTransformer;
 import io.micronaut.data.model.DataType;
 
-import javax.persistence.Column;
-import javax.persistence.Convert;
+import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import java.util.UUID;
 
 @MappedEntity

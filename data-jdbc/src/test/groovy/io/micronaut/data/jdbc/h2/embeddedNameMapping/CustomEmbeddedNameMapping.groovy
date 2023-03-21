@@ -22,7 +22,7 @@ import spock.lang.Shared
 import spock.lang.Specification
 
 import jakarta.inject.Inject
-import javax.persistence.Embedded
+import jakarta.persistence.Embedded
 
 @MicronautTest
 @H2DBProperties

@@ -19,7 +19,7 @@ import io.micronaut.core.annotation.Creator;
 import io.micronaut.data.annotation.*;
 
 import io.micronaut.core.annotation.Nullable;
-import javax.persistence.Id;
+import jakarta.persistence.Id;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import java.util.Date;

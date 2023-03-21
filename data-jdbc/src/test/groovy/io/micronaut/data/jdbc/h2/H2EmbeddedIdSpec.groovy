@@ -26,7 +26,7 @@ import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import spock.lang.Specification
 
 import jakarta.inject.Inject
-import javax.persistence.Entity
+import jakarta.persistence.Entity
 import jakarta.validation.constraints.NotNull
 
 @MicronautTest

@@ -56,7 +56,7 @@ public interface JpaRepository<E, ID> extends CrudRepository<E, ID>, PageableRep
      * @param <S> The entity generic type
      * @return The entity, possibly mutated
      */
-    @QueryHint(name = "javax.persistence.FlushModeType", value = "AUTO")
+    @QueryHint(name = "jakarta.persistence.FlushModeType", value = "AUTO")
     <S extends E> S saveAndFlush(@NonNull @Valid @NotNull S entity);
 
     /**

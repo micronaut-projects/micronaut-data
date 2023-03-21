@@ -54,15 +54,15 @@ import org.hibernate.graph.Graph;
 import org.hibernate.graph.RootGraph;
 import org.hibernate.graph.SubGraph;
 
-import javax.persistence.FlushModeType;
-import javax.persistence.Tuple;
-import javax.persistence.TupleElement;
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Expression;
-import javax.persistence.criteria.Order;
-import javax.persistence.criteria.Path;
-import javax.persistence.criteria.Root;
+import jakarta.persistence.FlushModeType;
+import jakarta.persistence.Tuple;
+import jakarta.persistence.TupleElement;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Expression;
+import jakarta.persistence.criteria.Order;
+import jakarta.persistence.criteria.Path;
+import jakarta.persistence.criteria.Root;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -89,8 +89,8 @@ import java.util.stream.Collectors;
 public abstract class AbstractHibernateOperations<S, Q> implements HintsCapableRepository, PreparedQueryDecorator, StoredQueryDecorator {
 
     private static final JpaQueryBuilder QUERY_BUILDER = new JpaQueryBuilder();
-    private static final String ENTITY_GRAPH_FETCH = "javax.persistence.fetchgraph";
-    private static final String ENTITY_GRAPH_LOAD = "javax.persistence.loadgraph";
+    private static final String ENTITY_GRAPH_FETCH = "jakarta.persistence.fetchgraph";
+    private static final String ENTITY_GRAPH_LOAD = "jakarta.persistence.loadgraph";
 
     protected final ConversionService dataConversionService;
     protected final RuntimeEntityRegistry runtimeEntityRegistry;
@@ -232,7 +232,7 @@ public abstract class AbstractHibernateOperations<S, Q> implements HintsCapableR
      * @param <T>        The entity type
      * @return The graph
      */
-    protected abstract <T> javax.persistence.EntityGraph<T> getEntityGraph(S session, Class<T> entityType, String graphName);
+    protected abstract <T> jakarta.persistence.EntityGraph<T> getEntityGraph(S session, Class<T> entityType, String graphName);
 
     /**
      * Creates an entity graph.
@@ -242,7 +242,7 @@ public abstract class AbstractHibernateOperations<S, Q> implements HintsCapableR
      * @param <T>        The entityType
      * @return The graph
      */
-    protected abstract <T> javax.persistence.EntityGraph<T> createEntityGraph(S session, Class<T> entityType);
+    protected abstract <T> jakarta.persistence.EntityGraph<T> createEntityGraph(S session, Class<T> entityType);
 
     /**
      * Create a new query.
@@ -442,7 +442,7 @@ public abstract class AbstractHibernateOperations<S, Q> implements HintsCapableR
                 if (ENTITY_GRAPH_FETCH.equals(hintName) || ENTITY_GRAPH_LOAD.equals(hintName)) {
                     String graphName = preparedQuery.getAnnotationMetadata().stringValue(EntityGraph.class).orElse(null);
                     if (graphName != null) {
-                        javax.persistence.EntityGraph<?> entityGraph = getEntityGraph(session, preparedQuery.getRootEntity(), graphName);
+                        jakarta.persistence.EntityGraph<?> entityGraph = getEntityGraph(session, preparedQuery.getRootEntity(), graphName);
                         setHint(q, hintName, entityGraph);
                     } else if (value instanceof String[]) {
                         String[] pathsDefinitions = (String[]) value;

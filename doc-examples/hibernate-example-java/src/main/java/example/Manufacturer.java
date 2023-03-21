@@ -3,7 +3,7 @@ package example;
 
 import org.hibernate.annotations.BatchSize;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 @Entity
 @BatchSize(size = 10)

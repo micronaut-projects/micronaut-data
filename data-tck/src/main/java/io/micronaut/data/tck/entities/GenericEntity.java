@@ -15,8 +15,8 @@
  */
 package io.micronaut.data.tck.entities;
 
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.Id;
 
 public abstract class GenericEntity<T> {
     @Id

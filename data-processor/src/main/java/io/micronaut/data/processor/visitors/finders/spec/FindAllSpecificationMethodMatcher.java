@@ -65,12 +65,7 @@ public class FindAllSpecificationMethodMatcher extends AbstractSpecificationMeth
                 );
             }
             return mc -> {
-                ClassElement classElement;
-                try {
-                    classElement = getInterceptorElement(mc, "io.micronaut.data.jpa.repository.intercept.FindAllSpecificationInterceptor");
-                } catch (IllegalStateException e) {
-                    classElement = getInterceptorElement(mc, "io.micronaut.data.hibernate6.jpa.repository.intercept.FindAllSpecificationInterceptor");
-                }
+                ClassElement classElement = getInterceptorElement(mc, "io.micronaut.data.jpa.repository.intercept.FindAllSpecificationInterceptor");
                 return new MethodMatchInfo(
                     DataMethod.OperationType.QUERY,
                     mc.getReturnType(),

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.transaction.hibernate5;
+package io.micronaut.transaction.hibernate6;
 
 import io.micronaut.core.annotation.TypeHint;
 import io.micronaut.transaction.jpa.EntityManagerHolder;
@@ -75,7 +75,7 @@ public final class MicronautSessionContext implements CurrentSessionContext {
                     // with FlushMode.MANUAL, which needs to allow flushing within the transaction.
                     FlushMode flushMode = session.getHibernateFlushMode();
                     if (flushMode.equals(FlushMode.MANUAL) && !state.isTransactionReadOnly()) {
-                        session.setFlushMode(FlushMode.AUTO);
+                        session.setFlushMode(FlushMode.AUTO.toJpaFlushMode());
                         sessionHolder.setPreviousFlushMode(flushMode);
                     }
                 }
@@ -92,7 +92,7 @@ public final class MicronautSessionContext implements CurrentSessionContext {
         }
         Session session = this.sessionFactory.openSession();
         if (state.isTransactionReadOnly()) {
-            session.setFlushMode(FlushMode.MANUAL);
+            session.setFlushMode(FlushMode.MANUAL.toJpaFlushMode());
         }
         SessionHolder sessionHolder = new SessionHolder(session);
         state.registerSynchronization(new SessionSynchronization(sessionHolder, this.sessionFactory, true));

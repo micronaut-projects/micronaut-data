@@ -24,11 +24,11 @@ import io.micronaut.data.jpa.repository.criteria.Specification;
 import io.micronaut.data.model.Sort;
 import io.micronaut.data.operations.RepositoryOperations;
 
-import javax.persistence.EntityManager;
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Predicate;
-import javax.persistence.criteria.Root;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
 
 /**
  * Implementation of the unpaged version of {@code findAll(Specification)}.
@@ -60,8 +60,8 @@ public class FindAllSpecificationInterceptor extends AbstractSpecificationInterc
         final Specification specification = getSpecification(context);
         final EntityManager entityManager = jpaOperations.getCurrentEntityManager();
         final CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
-        final CriteriaQuery<Object> query = criteriaBuilder.createQuery((Class<Object>) getRequiredRootEntity(context));
-        final Root<Object> root = query.from((Class<Object>) getRequiredRootEntity(context));
+        final CriteriaQuery<Object> query = criteriaBuilder.createQuery(getRequiredRootEntity(context));
+        final Root<Object> root = query.from(getRequiredRootEntity(context));
         final Predicate predicate = specification.toPredicate(root, query, criteriaBuilder);
         if (predicate != null) {
             query.where(predicate);

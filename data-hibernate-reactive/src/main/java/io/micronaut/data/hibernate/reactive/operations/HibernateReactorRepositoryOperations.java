@@ -23,7 +23,7 @@ import org.hibernate.reactive.stage.Stage;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import javax.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaBuilder;
 import java.util.function.Function;
 
 /**

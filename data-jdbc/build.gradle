@@ -17,7 +17,7 @@ dependencies {
     implementation mnSql.micronaut.jdbc
 
     compileOnly mnRxjava2.micronaut.rxjava2
-    compileOnly projects.dataHibernate6Jpa
+    compileOnly projects.dataHibernateJpa
     compileOnly libs.drivers.jdbc.oracle
 
     testAnnotationProcessor mn.micronaut.inject.java

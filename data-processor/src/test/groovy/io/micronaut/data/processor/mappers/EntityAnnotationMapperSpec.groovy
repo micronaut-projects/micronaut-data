@@ -32,7 +32,7 @@ class EntityAnnotationMapperSpec extends AbstractTypeElementSpec {
 package test;
 
 import io.micronaut.core.annotation.Introspected;
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 @Entity
 @Table(name="test_tb1", indexes = {@Index(name = "idx_test_name", columnList = "name",  unique = true)})
@@ -42,7 +42,7 @@ class Test {
     private Long id;
     @Transient
     private String tmp;
-    
+
     @Column(name="test_name")
     public String getName() {
         return name;
@@ -51,7 +51,7 @@ class Test {
     public void setName(String name) {
         this.name = name;
     }
-    
+
 
     public Long getId() {
         return id;

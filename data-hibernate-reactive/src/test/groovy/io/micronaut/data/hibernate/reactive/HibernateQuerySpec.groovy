@@ -34,7 +34,7 @@ import spock.lang.PendingFeature
 import spock.lang.Shared
 import spock.lang.Specification
 
-import javax.persistence.OptimisticLockException
+import jakarta.persistence.OptimisticLockException
 
 @MicronautTest(packages = "io.micronaut.data.tck.entities", transactional = false)
 class HibernateQuerySpec extends Specification implements PostgresHibernateReactiveProperties {
