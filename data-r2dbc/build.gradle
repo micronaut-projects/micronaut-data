@@ -105,8 +105,8 @@ micronaut {
 }
 
 tasks.withType(Test).configureEach {
-    jvmArgs '-Xmx2048m'
-
+//    jvmArgs '-Xmx2048m'
+//
     systemProperty "oracle.jdbc.timezoneAsRegion", "false"
     systemProperty "java.net.preferIPv4Stack", "true"
     systemProperty "java.util.concurrent.ForkJoinPool.common.parallelism", "2"
