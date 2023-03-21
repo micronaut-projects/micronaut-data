@@ -25,7 +25,6 @@ tasks.withType(JavaCompile).configureEach {
 }
 
 tasks.withType(Test).configureEach {
-    jvmArgs '-Xmx1024m'
     systemProperty "micronaut.cloud.platform", "OTHER"
     timeout = Duration.ofHours(1)
     if (micronautBuild.environment.githubAction.get()) {

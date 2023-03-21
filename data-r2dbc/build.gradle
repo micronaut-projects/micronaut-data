@@ -104,14 +104,14 @@ micronaut {
     }
 }
 
-tasks.named("test") {
+tasks.withType(Test).configureEach {
+    jvmArgs '-Xmx2048m'
+
     systemProperty "oracle.jdbc.timezoneAsRegion", "false"
     systemProperty "java.net.preferIPv4Stack", "true"
     systemProperty "java.util.concurrent.ForkJoinPool.common.parallelism", "2"
-}
 
-if (micronautBuild.environment.githubAction.get()) {
-    tasks.named("test") {
+    if (micronautBuild.environment.githubAction.get()) {
         // Let JDBC checks tests first so the test containers don't eat all the memory
         mustRunAfter ":data-jdbc:test"
     }

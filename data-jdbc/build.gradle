@@ -85,12 +85,11 @@ micronaut {
     }
 }
 
-tasks.named("test") {
+tasks.withType(Test).configureEach {
+    jvmArgs '-Xmx2048m'
     systemProperty "oracle.jdbc.timezoneAsRegion", "false"
-}
 
-if (micronautBuild.environment.githubAction.get()) {
-    tasks.named("test") {
+    if (micronautBuild.environment.githubAction.get()) {
         // Let some of the checks tests first so the test containers don't eat all the memory
         mustRunAfter ":data-hibernate-jpa:test"
         mustRunAfter ":data-hibernate-reactive:test"
