@@ -86,7 +86,7 @@ micronaut {
 }
 
 tasks.withType(Test).configureEach {
-//    jvmArgs '-Xmx2048m'
+    jvmArgs '-Xmx3072m'
     systemProperty "oracle.jdbc.timezoneAsRegion", "false"
 
     if (micronautBuild.environment.githubAction.get()) {
