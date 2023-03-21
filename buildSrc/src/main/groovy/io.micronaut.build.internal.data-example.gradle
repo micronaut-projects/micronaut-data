@@ -31,12 +31,20 @@ if (micronautBuild.environment.githubAction.get()) {
             ":data-r2dbc:test",
             ":data-mongodb:test"
     ] as Object[]
-    tasks.named("classes") {
-        // Postpone examples processing
+    // Let core modules tests pass first so the test containers don't eat all the memory
+    tasks.named("compileJava") {
+        mustRunAfter waitForTasks
+    }
+    tasks.named("processResources") {
+        mustRunAfter waitForTasks
+    }
+    tasks.named("internalStartTestResourcesService") {
+        mustRunAfter waitForTasks
+    }
+    tasks.named("kaptGenerateStubsKotlin") {
         mustRunAfter waitForTasks
     }
     tasks.named("test") {
-        // Let core modules tests pass first so the test containers don't eat all the memory
         mustRunAfter waitForTasks
     }
 }
