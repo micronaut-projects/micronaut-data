@@ -85,6 +85,8 @@ dependencies {
 
     testImplementation libs.micronaut.testresources.client
     testImplementation mnSerde.micronaut.serde.support
+
+    testRuntimeOnly mn.snakeyaml
 }
 
 micronaut {
