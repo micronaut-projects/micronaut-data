@@ -91,8 +91,7 @@ class SpringCrudRepositoryJpaSpec extends Specification {
         sorted.last().name == "Jeff"
 
         crudRepository.findOne(SpringCrudRepository.Specifications.nameEquals("James")).get().name == "James"
-        // TODO: hibernate6 with pageable throws an error. Skip these tests for now
-        /*
+
         def page2Req = PageRequest.of(1, 2, Sort.by("age"))
         def page1Req = PageRequest.of(0, 2, Sort.by("age"))
         def page1 = crudRepository.findAll(SpringCrudRepository.Specifications.ageGreaterThanThirty(), page1Req)
@@ -101,7 +100,7 @@ class SpringCrudRepositoryJpaSpec extends Specification {
         page2.content*.name == ["Bob", "Jeff"]
         page1.size == 2
         page1.content*.name == ["James", "Fred"]
-        */
+
     }
 
     void "test delete by id"() {
@@ -167,8 +166,7 @@ class SpringCrudRepositoryJpaSpec extends Specification {
         crudRepository.findByName("Jack") != null
     }
 
-    // TODO: Fix later
-    @Ignore("Still not working correctly")
+    @Ignore("Fix delete spec")
     void "test delete spec"() {
         when:"A person is saved"
         def p1 = new Person(name: "NewPerson", age: 25)
@@ -180,7 +178,7 @@ class SpringCrudRepositoryJpaSpec extends Specification {
         found.name == p1.name
 
         when:"A new person deleted"
-        def deletedCount = crudRepository.delete(SpringCrudRepository.Specifications.nameEquals(found.name))
+        def deletedCount = crudRepository.delete(SpringCrudRepository.Specifications.deleteNameEquals(found.name))
 
         then:"Person is deleted"
         deletedCount == 1
