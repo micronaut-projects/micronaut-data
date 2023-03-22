@@ -29,7 +29,7 @@ class MappedEntityVisitorSpec extends AbstractTypeElementSpec {
         buildBeanIntrospection('test.BadBean', '''
 package test;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import jakarta.inject.*;
 
 @Singleton
@@ -50,7 +50,7 @@ class BadBean {
         buildBeanIntrospection('test.BadEventEntity', '''
 package test;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.util.UUID;
 
 @Entity
@@ -85,7 +85,7 @@ package test;
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.data.annotation.TypeDef;
 import io.micronaut.data.model.DataType;
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.util.UUID;
 
 @Entity
@@ -154,7 +154,7 @@ package test;
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.data.annotation.TypeDef;
 import io.micronaut.data.model.DataType;
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.util.UUID;
 
 @Entity
@@ -209,7 +209,7 @@ class Name {
 package test;
 
 import io.micronaut.core.annotation.Introspected;
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.util.UUID;
 
 @Embeddable
@@ -251,7 +251,7 @@ class TestEntity {
 package test;
 
 import io.micronaut.core.annotation.Introspected;
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.util.UUID;
 @Entity
 class TestEntity {
@@ -308,7 +308,7 @@ package test;
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.data.annotation.TypeDef;
 import io.micronaut.data.model.DataType;
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.util.UUID;
 
 @Entity
@@ -359,7 +359,7 @@ import io.micronaut.data.annotation.TypeDef;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.runtime.convert.AttributeConverter;
 import io.micronaut.core.convert.ConversionContext;
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.util.UUID;
 import io.micronaut.data.annotation.MappedProperty;
 

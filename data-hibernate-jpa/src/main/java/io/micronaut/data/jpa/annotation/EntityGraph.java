@@ -20,7 +20,7 @@ import io.micronaut.context.annotation.AliasFor;
 import java.lang.annotation.*;
 
 /**
- * Allows configuring JPA 2.1 entity graphs on query methods. Largely based on the same annotation as in Spring Data.
+ * Allows configuring JPA 3.0 entity graphs on query methods. Largely based on the same annotation as in Spring Data.
  *
  * @author graemerocher
  * @since 1.0.0
@@ -50,7 +50,7 @@ public @interface EntityGraph {
      * @see <a href="https://download.oracle.com/otn-pub/jcp/persistence-2_1-fr-eval-spec/JavaPersistence.pdf">JPA 2.1
      *      Specification: 3.7.4.2 Load Graph Semantics</a>
      */
-    String hint() default "javax.persistence.fetchgraph";
+    String hint() default "jakarta.persistence.fetchgraph";
 
     /**
      * The attributes paths to include in the entity graph.

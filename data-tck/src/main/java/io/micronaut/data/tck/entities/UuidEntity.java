@@ -22,9 +22,9 @@ import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.model.DataType;
 
-import javax.persistence.Column;
-import javax.persistence.Embedded;
-import javax.persistence.ManyToOne;
+import jakarta.persistence.Column;
+import jakarta.persistence.Embedded;
+import jakarta.persistence.ManyToOne;
 import java.util.UUID;
 
 @MappedEntity(alias = "uidx") // UID is reserved word in Oracle DB

@@ -19,9 +19,10 @@ import io.micronaut.core.annotation.Creator;
 import io.micronaut.data.annotation.*;
 
 import io.micronaut.core.annotation.Nullable;
-import javax.persistence.Id;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
+import jakarta.persistence.Id;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import java.util.Date;
 import java.util.UUID;
 
@@ -37,11 +38,11 @@ public class Food {
     @NotNull
     private String key;
 
-    @Size(max=9999)
+    @Max(9999)
     @NotNull
     private int carbohydrates;
 
-    @Size(max=9999)
+    @Max(9999)
     @NotNull
     private int portionGrams;
 
@@ -68,8 +69,8 @@ public class Food {
 
     public Food(
             @Size(max = 36) @NotNull String key,
-            @Size(max = 9999) @NotNull int carbohydrates,
-            @Size(max = 9999) @NotNull int portionGrams,
+            @Max(9999) @NotNull int carbohydrates,
+            @Max(9999) @NotNull int portionGrams,
             @Nullable Meal meal) {
         this.key = key;
         this.carbohydrates = carbohydrates;
@@ -82,8 +83,8 @@ public class Food {
     public Food(
             UUID fid,
             @Size(max = 36) @NotNull String key,
-            @Size(max = 9999) @NotNull int carbohydrates,
-            @Size(max = 9999) @NotNull int portionGrams,
+            @Max(9999) @NotNull int carbohydrates,
+            @Max(9999) @NotNull int portionGrams,
             Date createdOn,
             Date updatedOn,
             @Nullable Meal meal) {

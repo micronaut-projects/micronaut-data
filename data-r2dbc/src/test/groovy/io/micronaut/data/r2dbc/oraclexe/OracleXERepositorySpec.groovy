@@ -20,7 +20,6 @@ import io.micronaut.data.tck.repositories.*
 import io.micronaut.data.tck.tests.AbstractRepositorySpec
 import spock.lang.IgnoreIf
 
-@IgnoreIf({ !jvm.isJava11Compatible() })
 class OracleXERepositorySpec extends AbstractRepositorySpec implements OracleXETestPropertyProvider {
 
     @Override

@@ -1,7 +1,7 @@
 
 package example
 
-import javax.persistence.*
+import jakarta.persistence.*
 
 @Entity
 class Manufacturer {

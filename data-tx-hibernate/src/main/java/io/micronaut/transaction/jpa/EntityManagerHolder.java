@@ -20,13 +20,13 @@ import io.micronaut.core.annotation.Nullable;
 import io.micronaut.transaction.SavepointManager;
 import io.micronaut.transaction.support.ResourceHolderSupport;
 
-import javax.persistence.EntityManager;
+import jakarta.persistence.EntityManager;
 import java.util.Objects;
 
 /**
  * Resource holder wrapping a JPA {@link EntityManager}.
  * {@code JpaTransactionManager} binds instances of this class to the thread,
- * for a given {@link javax.persistence.EntityManagerFactory}.
+ * for a given {@link jakarta.persistence.EntityManagerFactory}.
  *
  * <p>Also serves as a base class for {@link org.springframework.orm.hibernate5.SessionHolder},
  * as of 5.1.
@@ -34,7 +34,7 @@ import java.util.Objects;
  * <p>Note: This is an SPI class, not intended to be used by applications.
  *
  * @author Juergen Hoeller
- * @author graemerocher 
+ * @author graemerocher
  * @since 2.0
  */
 public class EntityManagerHolder extends ResourceHolderSupport {

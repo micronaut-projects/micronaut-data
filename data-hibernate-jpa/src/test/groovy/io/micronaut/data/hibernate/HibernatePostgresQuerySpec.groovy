@@ -23,6 +23,6 @@ import io.micronaut.test.extensions.spock.annotation.MicronautTest
 @Property(name = 'datasources.default.url', value = 'jdbc:tc:postgresql:10:///mydb')
 @Property(name = 'datasources.default.driverClassName', value = 'org.testcontainers.jdbc.ContainerDatabaseDriver')
 @Property(name = 'jpa.default.properties.hibernate.hbm2ddl.auto', value = 'create-drop')
-@Property(name = 'jpa.default.properties.hibernate.dialect', value = 'org.hibernate.dialect.PostgreSQL95Dialect')
+@Property(name = 'jpa.default.properties.hibernate.dialect', value = 'org.hibernate.dialect.PostgreSQLDialect')
 class HibernatePostgresQuerySpec extends AbstractHibernateQuerySpec {
 }

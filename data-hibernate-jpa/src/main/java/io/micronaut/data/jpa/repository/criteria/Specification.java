@@ -18,14 +18,14 @@ package io.micronaut.data.jpa.repository.criteria;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Predicate;
-import javax.persistence.criteria.Root;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
 
 /**
  * Specification in the sense of Domain Driven Design.
- * Fork from {@link org.springframework.data.jpa.domain.Specification}.
+ * Fork from org.springframework.data.jpa.domain.Specification.
  *
  * @author Oliver Gierke
  * @author Thomas Darimont

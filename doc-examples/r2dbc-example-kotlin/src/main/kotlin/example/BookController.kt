@@ -3,7 +3,7 @@ package example
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.annotation.*
 import kotlinx.coroutines.flow.Flow
-import javax.validation.Valid
+import jakarta.validation.Valid
 
 @Controller("/books")
 class BookController(private val bookRepository: BookRepository) {

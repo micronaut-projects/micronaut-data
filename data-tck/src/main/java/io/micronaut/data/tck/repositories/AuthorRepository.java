@@ -26,7 +26,7 @@ import io.micronaut.data.tck.entities.Author;
 
 import io.micronaut.core.annotation.Nullable;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import java.util.List;
 import java.util.Optional;
