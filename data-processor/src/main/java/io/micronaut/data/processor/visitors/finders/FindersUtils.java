@@ -342,6 +342,21 @@ public interface FindersUtils {
         );
     }
 
+    static Map.Entry<ClassElement, ClassElement> pickDeleteSpecInterceptor(MethodMatchContext matchContext, ClassElement returnType) {
+        if (isFutureType(matchContext, returnType)) {
+            return typeAndInterceptorEntry(getAsyncType(matchContext, returnType),
+                getInterceptorElement(matchContext, "io.micronaut.data.runtime.intercept.criteria.async.DeleteAsyncSpecificationInterceptor")
+            );
+        } else if (isReactiveType(returnType)) {
+            return typeAndInterceptorEntry(returnType.getFirstTypeArgument().orElse(null),
+                getInterceptorElement(matchContext, "io.micronaut.data.runtime.intercept.criteria.reactive.DeleteReactiveSpecificationInterceptor")
+            );
+        }
+        return typeAndInterceptorEntry(returnType.getType(),
+            getInterceptorElement(matchContext, "io.micronaut.data.runtime.intercept.criteria.DeleteSpecificationInterceptor")
+        );
+    }
+
     static Map.Entry<ClassElement, ClassElement> pickFindAllSpecInterceptor(MethodMatchContext matchContext, ClassElement returnType) {
         if (isFutureType(matchContext, returnType)) {
             return typeAndInterceptorEntry(getAsyncType(matchContext, returnType),
