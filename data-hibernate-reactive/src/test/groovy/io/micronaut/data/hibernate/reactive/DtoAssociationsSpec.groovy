@@ -14,10 +14,10 @@ import reactor.core.publisher.Mono
 import spock.lang.Shared
 import spock.lang.Specification
 
-import javax.persistence.Entity
-import javax.persistence.Id
-import javax.persistence.ManyToMany
-import javax.persistence.Table
+import jakarta.persistence.Entity
+import jakarta.persistence.Id
+import jakarta.persistence.ManyToMany
+import jakarta.persistence.Table
 
 @MicronautTest(transactional = false)
 class DtoAssociationsSpec extends Specification implements PostgresHibernateReactiveProperties {

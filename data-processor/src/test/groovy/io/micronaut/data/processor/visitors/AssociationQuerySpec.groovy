@@ -30,7 +30,7 @@ import io.micronaut.inject.writer.BeanDefinitionVisitor
 import spock.lang.Unroll
 
 import javax.annotation.processing.SupportedAnnotationTypes
-import javax.persistence.Entity
+import jakarta.persistence.Entity
 
 class AssociationQuerySpec extends AbstractTypeElementSpec {
     @Unroll
@@ -72,7 +72,7 @@ import io.micronaut.data.repository.GenericRepository;
 @io.micronaut.context.annotation.Executable
 interface MyInterface extends io.micronaut.data.repository.GenericRepository<$returnType.simpleName, Long>{
     @Join(value="author", type=Join.Type.LEFT)
-    List<$returnType.simpleName> $method(${arguments.entrySet().collect { "$it.value.name $it.key" }.join(',')});    
+    List<$returnType.simpleName> $method(${arguments.entrySet().collect { "$it.value.name $it.key" }.join(',')});
 }
 
 

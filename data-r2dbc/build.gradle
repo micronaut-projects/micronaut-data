@@ -30,6 +30,7 @@ dependencies {
     testImplementation mnRxjava2.micronaut.rxjava2
 
     testAnnotationProcessor mn.micronaut.inject.java
+    testAnnotationProcessor mnValidation.micronaut.validation.processor
     testAnnotationProcessor projects.dataProcessor
 
     testImplementation mn.jackson.databind
@@ -37,6 +38,7 @@ dependencies {
     testImplementation libs.jakarta.persistence.api
     testImplementation libs.groovy.sql
     testImplementation mnValidation.micronaut.validation
+    testImplementation mnValidation.micronaut.validation.processor
 
     testImplementation mn.micronaut.http.server.netty
     testImplementation mn.micronaut.http.client
@@ -83,6 +85,8 @@ dependencies {
 
     testImplementation libs.micronaut.testresources.client
     testImplementation mnSerde.micronaut.serde.support
+
+    testRuntimeOnly mn.snakeyaml
 }
 
 micronaut {
@@ -100,10 +104,17 @@ micronaut {
     }
 }
 
-tasks.named("test") {
+tasks.withType(Test).configureEach {
+    jvmArgs '-Xmx3072m'
+//
     systemProperty "oracle.jdbc.timezoneAsRegion", "false"
     systemProperty "java.net.preferIPv4Stack", "true"
     systemProperty "java.util.concurrent.ForkJoinPool.common.parallelism", "2"
+
+    if (micronautBuild.environment.githubAction.get()) {
+        // Let JDBC checks tests first so the test containers don't eat all the memory
+        mustRunAfter ":data-jdbc:test"
+    }
 }
 
 micronautBuild {
@@ -117,4 +128,3 @@ micronautBuild {
         }
     }
 }
-

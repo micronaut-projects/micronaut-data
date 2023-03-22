@@ -46,12 +46,11 @@ include 'data-tck'
 include 'data-document-tck'
 
 // implementations
+
 include 'data-hibernate-jpa'
 include 'data-hibernate-reactive'
-include 'data-hibernate6-jpa'
 
 include 'data-tx-hibernate'
-include 'data-tx-hibernate6'
 include 'data-jdbc'
 include 'data-r2dbc'
 include 'data-mongodb'
@@ -62,7 +61,6 @@ include 'data-spring'
 include 'data-spring-jpa'
 
 // documentation samples
-include 'doc-examples:hibernate6-example-java'
 include 'doc-examples:hibernate-example-java'
 include 'doc-examples:hibernate-example-groovy'
 include 'doc-examples:hibernate-example-kotlin'

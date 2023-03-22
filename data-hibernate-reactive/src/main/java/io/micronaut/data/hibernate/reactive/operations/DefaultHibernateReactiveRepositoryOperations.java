@@ -54,12 +54,12 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.util.context.ContextView;
 
-import javax.persistence.EntityGraph;
-import javax.persistence.FlushModeType;
-import javax.persistence.Tuple;
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.ParameterExpression;
+import jakarta.persistence.EntityGraph;
+import jakarta.persistence.FlushModeType;
+import jakarta.persistence.Tuple;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.ParameterExpression;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.Objects;
@@ -148,7 +148,8 @@ final class DefaultHibernateReactiveRepositoryOperations extends AbstractHiberna
     @Override
     protected void setHint(Stage.Query<?> query, String hintName, Object value) {
         if (value instanceof EntityGraph) {
-            query.setPlan((EntityGraph) value);
+            // TODO: Do we need to check for EntityGraph or can set any object as hint?
+            query.setHint(hintName, value);
             return;
         }
         throw new IllegalStateException("Unrecognized parameter: " + hintName + " with value: " + value);

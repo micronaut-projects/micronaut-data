@@ -187,8 +187,8 @@ interface TestRepository extends CrudRepository<Person, Long> {
 import io.micronaut.data.tck.entities.Person;
 import io.micronaut.data.repository.reactive.*;
 
-import javax.persistence.Entity;
-import javax.persistence.Table;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
 import java.util.UUID;
 
 @Entity
@@ -247,8 +247,8 @@ interface TestRepository extends ReactiveStreamsCrudRepository<UserWithWhere, UU
             def repository = buildRepository('test.TestRepository', '''
 import io.micronaut.data.repository.reactive.*;
 
-import javax.persistence.Entity;
-import javax.persistence.Table;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
 import java.util.UUID;
 
 @Entity
@@ -306,15 +306,15 @@ interface TestRepository extends ReactorCrudRepository<UserWithWhere, UUID> {
             def repository = buildRepository('test.TestRepository', '''
 import io.micronaut.data.repository.async.*;
 
-import javax.persistence.Entity;
-import javax.persistence.Table;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
 import java.util.UUID;
 
 @Entity
 @Table(name = "users")
 @Where(value = "@.deleted = false")
 class UserWithWhere {
-    @javax.persistence.Id
+    @jakarta.persistence.Id
     private UUID id;
     private String email;
     private Boolean deleted;

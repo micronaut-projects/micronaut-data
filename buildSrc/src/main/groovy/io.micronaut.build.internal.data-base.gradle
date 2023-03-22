@@ -24,28 +24,14 @@ tasks.withType(JavaCompile).configureEach {
     ])
 }
 
-def testSemaphore = gradle.sharedServices.registerIfAbsent("testSemaphore", TestSemaphore) {
-    def concurrentTests = micronautBuild.environment.githubAction.map { isCi -> isCi ? 1 : Math.max(1, Runtime.runtime.availableProcessors().intdiv(2i)) }
-    maxParallelUsages = providers.gradleProperty("max.concurrent.tests").map(Integer::parseInt).orElse(concurrentTests).get()
-    println("Allowing ${concurrentTests.get()} concurrent tests")
-}
-
 tasks.withType(Test).configureEach {
-    usesService(testSemaphore)
-    jvmArgs '-Xmx1024m'
     systemProperty "micronaut.cloud.platform", "OTHER"
     timeout = Duration.ofHours(1)
-    doFirst {
-        testSemaphore.get()
-    }
     if (micronautBuild.environment.githubAction.get()) {
         plugins.withId("io.micronaut.test-resources") {
             finalizedBy("stopTestResourcesService")
         }
     }
-}
-
-abstract class TestSemaphore implements BuildService<BuildServiceParameters.None> {
 }
 
 configurations.all {

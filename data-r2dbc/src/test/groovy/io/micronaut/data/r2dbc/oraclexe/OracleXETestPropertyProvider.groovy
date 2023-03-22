@@ -13,6 +13,6 @@ trait OracleXETestPropertyProvider implements SharedTestResourcesDatabaseTestPro
 
     @Override
     int sharedSpecsCount() {
-        return 10
+        return 9
     }
 }

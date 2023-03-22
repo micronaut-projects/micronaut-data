@@ -13,3 +13,13 @@ micronautBuild {
 dependencies {
     testRuntimeOnly mnSerde.micronaut.serde.jackson
 }
+
+def testModulesOptional = rootProject.tasks.findByName("testModules")
+def testModules
+if (testModulesOptional) {
+    testModules = testModulesOptional
+} else {
+    testModules = rootProject.tasks.register("testModules").get()
+}
+
+testModules.mustRunAfter(tasks.named("test"))
