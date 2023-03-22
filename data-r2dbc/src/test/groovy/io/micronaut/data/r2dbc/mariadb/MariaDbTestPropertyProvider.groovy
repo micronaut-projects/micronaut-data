@@ -18,7 +18,7 @@ trait MariaDbTestPropertyProvider implements SharedTestResourcesDatabaseTestProp
 
     @Override
     int sharedSpecsCount() {
-        return 11
+        return 10
     }
 
     Map<String, String> getDataSourceProperties(String dataSourceName) {

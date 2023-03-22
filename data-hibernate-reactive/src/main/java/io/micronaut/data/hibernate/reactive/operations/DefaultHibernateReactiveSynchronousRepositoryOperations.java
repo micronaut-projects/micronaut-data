@@ -36,8 +36,8 @@ import jakarta.annotation.PreDestroy;
 import org.hibernate.SessionFactory;
 import reactor.core.publisher.Mono;
 
-import javax.persistence.EntityManager;
-import javax.persistence.EntityManagerFactory;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityManagerFactory;
 import java.io.Closeable;
 import java.io.Serializable;
 import java.util.Map;

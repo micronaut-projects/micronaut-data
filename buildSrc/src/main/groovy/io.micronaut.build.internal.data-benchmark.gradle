@@ -36,3 +36,21 @@ jmh {
 jmhJar {
     mergeServiceFiles()
 }
+
+
+if (micronautBuild.environment.githubAction.get()) {
+    def waitForTasks = [
+            ":data-hibernate-jpa:test",
+            ":data-jdbc:test",
+            ":data-r2dbc:test",
+            ":data-mongodb:test"
+    ] as Object[]
+    tasks.named("classes") {
+        // Postpone examples processing
+        mustRunAfter waitForTasks
+    }
+    tasks.named("test") {
+        // Let core modules tests pass first so the test containers don't eat all the memory
+        mustRunAfter waitForTasks
+    }
+}

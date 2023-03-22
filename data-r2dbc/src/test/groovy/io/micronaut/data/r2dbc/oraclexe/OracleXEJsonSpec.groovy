@@ -21,7 +21,6 @@ import io.micronaut.data.tck.repositories.SaleRepository
 import io.micronaut.data.tck.tests.AbstractJSONSpec
 import spock.lang.IgnoreIf
 
-@IgnoreIf({ !jvm.isJava11Compatible() })
 class OracleXEJsonSpec extends AbstractJSONSpec implements OracleXETestPropertyProvider {
     @Override
     SaleRepository getSaleRepository() {

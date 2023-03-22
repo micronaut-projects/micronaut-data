@@ -166,13 +166,13 @@ class Test {
     private String text1;
     @Column(length=10)
     private String text2;
-    @javax.validation.constraints.Size(min=5, max=7)
+    @jakarta.validation.constraints.Size(min=5, max=7)
     private String text3;
 
     private BigDecimal amount1;
     @Column(precision = 11, scale = 2)
     private BigDecimal amount2;
-    @javax.validation.constraints.Size(min=5, max=7)
+    @jakarta.validation.constraints.Size(min=5, max=7)
     private BigDecimal amount3;
 
     private Float floatAmount1;

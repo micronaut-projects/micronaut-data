@@ -1,6 +1,6 @@
 package example
 
-import javax.persistence.*
+import jakarta.persistence.*
 
 @Entity
 data class Parent(

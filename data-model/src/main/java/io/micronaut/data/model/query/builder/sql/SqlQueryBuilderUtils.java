@@ -58,17 +58,17 @@ final class SqlQueryBuilderUtils {
         if (definition != null) {
             return column + " " + definition;
         }
-        OptionalInt precision = annotationMetadata.intValue("javax.persistence.Column", "precision");
-        OptionalInt scale = annotationMetadata.intValue("javax.persistence.Column", "scale");
+        OptionalInt precision = findPersistenceColumnValue(annotationMetadata, "precision");
+        OptionalInt scale = findPersistenceColumnValue(annotationMetadata, "scale");
 
         switch (dataType) {
             case STRING:
-                int stringLength = annotationMetadata.findAnnotation("javax.validation.constraints.Size$List")
+                int stringLength = annotationMetadata.findAnnotation("jakarta.validation.constraints.Size$List")
                     .flatMap(v -> {
                         Optional value = v.getValue(AnnotationValue.class);
                         return (Optional<AnnotationValue<Annotation>>) value;
                     }).map(v -> v.intValue("max"))
-                    .orElseGet(() -> annotationMetadata.intValue("javax.persistence.Column", "length"))
+                    .orElseGet(() -> findPersistenceColumnValue(annotationMetadata, "length"))
                     .orElse(255);
 
                 column += " VARCHAR(" + stringLength + ")";
@@ -362,5 +362,22 @@ final class SqlQueryBuilderUtils {
                 }
         }
         return column;
+    }
+
+    /**
+     * Finds int value for javax.persistence.Column given value, if not present falls back to jakarta.persistence.Column.
+     *
+     * @param annotationMetadata the annotation metadata
+     * @param value the annotation value to be looked at
+     * @return OptionalInt for given annotation value
+     */
+    private static OptionalInt findPersistenceColumnValue(AnnotationMetadata annotationMetadata, String value) {
+        String annotationName = "javax.persistence.Column";
+        OptionalInt optionalInt = annotationMetadata.intValue(annotationName, value);
+        if (optionalInt.isEmpty()) {
+            annotationName = "jakarta.persistence.Column";
+            optionalInt = annotationMetadata.intValue(annotationName, value);
+        }
+        return optionalInt;
     }
 }

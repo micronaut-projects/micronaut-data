@@ -22,8 +22,8 @@ import spock.lang.Shared
 import spock.lang.Specification
 
 import jakarta.inject.Inject
-import javax.persistence.CascadeType
-import javax.persistence.OneToMany
+import jakarta.persistence.CascadeType
+import jakarta.persistence.OneToMany
 
 @Ignore
 @MicronautTest
@@ -231,7 +231,7 @@ class CompositeSpec extends Specification implements H2TestPropertyProvider {
         then:
             statements.join("\n") == 'CREATE TABLE "comp_settlement" ("code" VARCHAR(255) NOT NULL,"code_id" INT NOT NULL,"id_county_id_id" INT NOT NULL,"id_county_id_state_id" INT NOT NULL,"description" VARCHAR(255) NOT NULL,"settlement_type_id" BIGINT NOT NULL,"zone_id" BIGINT NOT NULL,"is_enabled" BOOLEAN NOT NULL, PRIMARY KEY("code","code_id","id_county_id_id","id_county_id_state_id"));'
     }
-    
+
     void "test build create Citizen"() {
         when:
             QueryBuilder encoder = new SqlQueryBuilder()

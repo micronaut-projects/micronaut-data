@@ -90,6 +90,7 @@ class SpringCrudRepositorySpec extends Specification {
         sorted.last().name == "Jeff"
 
         crudRepository.findOne(SpringCrudRepository.Specifications.nameEquals("James")).get().name == "James"
+
         def page2Req = PageRequest.of(1, 2, Sort.by("age"))
         def page1Req = PageRequest.of(0, 2, Sort.by("age"))
         def page1 = crudRepository.findAll(SpringCrudRepository.Specifications.ageGreaterThanThirty(), page1Req)
@@ -98,8 +99,6 @@ class SpringCrudRepositorySpec extends Specification {
         page2.content*.name == ["Bob", "Jeff"]
         page1.size == 2
         page1.content*.name == ["James", "Fred"]
-
-
     }
 
     void "test delete by id"() {

@@ -4,7 +4,7 @@ package example
 import io.micronaut.data.annotation.Repository
 import io.micronaut.data.repository.CrudRepository
 
-import javax.persistence.EntityManager
+import jakarta.persistence.EntityManager
 
 @Repository
 abstract class AbstractBookRepository(private val entityManager: EntityManager) : CrudRepository<Book, Long> {

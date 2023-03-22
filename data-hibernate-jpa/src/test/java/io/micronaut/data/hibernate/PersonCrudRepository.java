@@ -62,10 +62,10 @@ public interface PersonCrudRepository extends JpaRepository<Person, Long>, Perso
     Publisher<Long> updatePersonRx(Long id);
 
     @Override
-    @QueryHint(name = "javax.persistence.FlushModeType", value = "AUTO")
+    @QueryHint(name = "jakarta.persistence.FlushModeType", value = "AUTO")
     void updatePerson(@Id Long id, @Parameter("name") String name);
 
     @Override
-    @QueryHint(name = "javax.persistence.FlushModeType", value = "AUTO")
+    @QueryHint(name = "jakarta.persistence.FlushModeType", value = "AUTO")
     Long updatePerson(@Id Long id, int age);
 }

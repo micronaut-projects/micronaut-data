@@ -17,10 +17,10 @@ package io.micronaut.data.model.entities
 
 import jakarta.persistence.ManyToOne
 
-import javax.persistence.Entity
-import javax.persistence.GeneratedValue
-import javax.persistence.Id
-import javax.persistence.Version
+import jakarta.persistence.Entity
+import jakarta.persistence.GeneratedValue
+import jakarta.persistence.Id
+import jakarta.persistence.Version
 
 @Entity
 class Purchase {

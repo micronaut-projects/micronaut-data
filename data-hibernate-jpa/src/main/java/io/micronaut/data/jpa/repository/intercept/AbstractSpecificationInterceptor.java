@@ -22,11 +22,11 @@ import io.micronaut.data.model.Sort;
 import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.runtime.intercept.AbstractQueryInterceptor;
 
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.Expression;
-import javax.persistence.criteria.Order;
-import javax.persistence.criteria.Path;
-import javax.persistence.criteria.Root;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.Expression;
+import jakarta.persistence.criteria.Order;
+import jakarta.persistence.criteria.Path;
+import jakarta.persistence.criteria.Root;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -63,7 +63,7 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
     }
 
     protected final List<Order> getOrders(Sort sort, Root<?> root, CriteriaBuilder cb) {
-        List<javax.persistence.criteria.Order> orders = new ArrayList<>();
+        List<jakarta.persistence.criteria.Order> orders = new ArrayList<>();
         for (Sort.Order order : sort.getOrderBy()) {
             Path<Object> propertyPath = (Path<Object>) root;
             for (String path : StringUtils.splitOmitEmptyStrings(order.getProperty(), '.')) {

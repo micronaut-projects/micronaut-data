@@ -24,6 +24,41 @@ tasks.withType(JavaCompile).configureEach {
     options.fork = true
 }
 
+if (micronautBuild.environment.githubAction.get()) {
+    def waitForTasks = [
+            ":data-hibernate-jpa:test",
+            ":data-jdbc:test",
+            ":data-r2dbc:test",
+            ":data-mongodb:test"
+    ] as Object[]
+    // Let core modules tests pass first so the test containers don't eat all the memory
+    tasks.named("compileJava") {
+        mustRunAfter waitForTasks
+    }
+    tasks.named("processResources") {
+        mustRunAfter waitForTasks
+    }
+    def compileKotlinTask = tasks.findByName("compileKotlin")
+    if (compileKotlinTask) {
+        compileKotlinTask.mustRunAfter waitForTasks
+    }
+    def internalStartTestResourcesServiceTask = tasks.findByName("internalStartTestResourcesService")
+    if (internalStartTestResourcesServiceTask) {
+        internalStartTestResourcesServiceTask.mustRunAfter waitForTasks
+    }
+    def kaptGenerateStubsKotlinTask = tasks.findByName("kaptGenerateStubsKotlin")
+    if (kaptGenerateStubsKotlinTask) {
+        kaptGenerateStubsKotlinTask.mustRunAfter waitForTasks
+    }
+    tasks.named("test") {
+        mustRunAfter waitForTasks
+    }
+}
+
+tasks.register("testExamples") {
+    dependsOn "test"
+}
+
 project.afterEvaluate {
     nativeCompile.enabled = false
     testNativeImage.enabled = false

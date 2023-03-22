@@ -63,13 +63,13 @@ public abstract class BookRepository extends io.micronaut.data.tck.repositories.
     )
     abstract List<Book> findAllByTitleStartsWith(String text);
 
-    @Where(value = "total_pages > :pages")
+    @Where(value = "totalPages > :pages")
     abstract List<Book> findByTitleStartsWith(String title, int pages);
 
     @Query(value = "select count(*) from book b where b.title like :title and b.total_pages > :pages", nativeQuery = true)
     abstract int countNativeByTitleWithPagesGreaterThan(String title, int pages);
 
-    @Query(value = "select * from book where (CASE WHEN :arg0 is not null THEN title = :arg0 ELSE true END)", nativeQuery = true)
+    @Query(value = "select * from book where (CASE WHEN CAST(:arg0 AS VARCHAR) is not null THEN title = :arg0 ELSE true END)", nativeQuery = true)
     public abstract List<Book> listNativeBooksNullableSearch(@Nullable String arg0);
 
     @Query(value = "select * from book where (CASE WHEN exists ( select (:arg0) ) THEN title IN (:arg0) ELSE true END)", nativeQuery = true)
