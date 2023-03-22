@@ -19,10 +19,6 @@ import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.operations.RepositoryOperations;
-import jakarta.persistence.criteria.CriteriaBuilder;
-import jakarta.persistence.criteria.CriteriaQuery;
-import jakarta.persistence.criteria.Predicate;
-import jakarta.persistence.criteria.Root;
 import org.springframework.data.jpa.domain.Specification;
 
 /**
@@ -48,13 +44,7 @@ public class FindOneSpecificationInterceptor extends io.micronaut.data.jpa.repos
         final Object parameterValue = context.getParameterValues()[0];
         if (parameterValue instanceof Specification) {
             Specification springSpecification = (Specification) parameterValue;
-            return new io.micronaut.data.jpa.repository.criteria.Specification() {
-
-                @Override
-                public Predicate toPredicate(Root root, CriteriaQuery query, CriteriaBuilder criteriaBuilder) {
-                    return springSpecification.toPredicate(root, query, criteriaBuilder);
-                }
-            };
+            return (root, query, criteriaBuilder) -> springSpecification.toPredicate(root, query, criteriaBuilder);
         }
         return super.getSpecification(context);
     }

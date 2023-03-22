@@ -68,7 +68,7 @@ final class SqlQueryBuilderUtils {
                         Optional value = v.getValue(AnnotationValue.class);
                         return (Optional<AnnotationValue<Annotation>>) value;
                     }).map(v -> v.intValue("max"))
-                    .orElseGet(() -> findPersistenceColumnValue(annotationMetadata,"length"))
+                    .orElseGet(() -> findPersistenceColumnValue(annotationMetadata, "length"))
                     .orElse(255);
 
                 column += " VARCHAR(" + stringLength + ")";
