@@ -42,6 +42,7 @@ class BookRepositorySpec : AbstractTest(false) {
             assertEquals("The Shining", bookDTO2.title)
         }
     }
+    
     @Test
     fun testMultipleDtoQuery() {
         runBlocking {

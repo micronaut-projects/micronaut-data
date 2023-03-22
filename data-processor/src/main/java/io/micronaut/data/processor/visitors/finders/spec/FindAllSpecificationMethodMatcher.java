@@ -52,7 +52,7 @@ public class FindAllSpecificationMethodMatcher extends AbstractSpecificationMeth
 
     @Override
     protected MethodMatch match(MethodMatchContext matchContext, java.util.regex.Matcher matcher) {
-        if (TypeUtils.doesMethodProducesIterableOfAnEntity(matchContext.getMethodElement()) && isCorrectParameters(matchContext.getMethodElement())) {
+        if (TypeUtils.doesMethodProducesIterableOfAnEntityOrDto(matchContext.getMethodElement()) && isCorrectParameters(matchContext.getMethodElement())) {
             if (isFirstParameterMicronautDataQuerySpecification(matchContext.getMethodElement())) {
                 Map.Entry<ClassElement, ClassElement> e = FindersUtils.pickFindAllSpecInterceptor(matchContext, matchContext.getReturnType());
                 return mc -> new MethodMatchInfo(DataMethod.OperationType.QUERY, e.getKey(), e.getValue());

@@ -16,6 +16,7 @@
 package io.micronaut.data.processor.visitors.finders;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.reflect.ClassUtils;
@@ -84,11 +85,17 @@ public class TypeUtils {
      * @return True if is
      */
     public static boolean isIterableOfEntity(@Nullable ClassElement type) {
-        return type != null && isIterableType(type) && hasPersistedTypeArgument(type);
+        return type != null && isIterableOfDto(type) && hasPersistedTypeArgument(type);
     }
 
-    public static boolean isIterableType(@Nullable ClassElement type) {
-        return type != null && type.isAssignable(Iterable.class);
+    /**
+     * Is the element an iterable of an dto.
+     *
+     * @param type The type
+     * @return True if is
+     */
+    public static boolean isIterableOfDto(@Nullable ClassElement type) {
+        return type != null && type.isAssignable(Iterable.class) && isDto(type.getFirstTypeArgument().orElse(null));
     }
 
     /**
@@ -102,6 +109,15 @@ public class TypeUtils {
     }
 
     /**
+     * Does the given type have an {@link MappedEntity} or {@link io.micronaut.core.annotation.Introspected}.
+     * @param type The type
+     * @return True if it does
+     */
+    public static boolean isEntityOrDto(@Nullable ClassElement type) {
+        return isEntity(type) || isDto(type);
+    }
+
+    /**
      * Does the given type have an {@link MappedEntity}.
      * @param type The type
      * @return True if it does
@@ -111,6 +127,18 @@ public class TypeUtils {
             return false;
         }
         return type.hasAnnotation(MappedEntity.class);
+    }
+
+    /**
+     * Does the given type have an {@link io.micronaut.core.annotation.Introspected}.
+     * @param type The type
+     * @return True if it does
+     */
+    public static boolean isDto(@Nullable ClassElement type) {
+        if (type == null) {
+            return false;
+        }
+        return type.hasAnnotation(Introspected.class);
     }
 
     /**
@@ -293,10 +321,11 @@ public class TypeUtils {
      * @param methodElement The method
      * @return True if it is supported
      */
-    public static boolean doesMethodProducesIterableOfAnEntity(MethodElement methodElement) {
+    public static boolean doesMethodProducesIterableOfAnEntityOrDto(MethodElement methodElement) {
         ClassElement returnType = methodElement.getGenericReturnType();
         if (TypeUtils.isReactiveType(returnType)) {
-            return true;
+            ClassElement type = methodElement.getGenericReturnType().getFirstTypeArgument().orElse(null);
+            return TypeUtils.isEntityOrDto(type);
         }
         if (TypeUtils.isFutureType(returnType)) {
             returnType = returnType.getFirstTypeArgument().orElse(null);
@@ -310,7 +339,7 @@ public class TypeUtils {
         if (methodElement.isSuspend()) {
             returnType = TypeUtils.getKotlinCoroutineProducedType(methodElement);
         }
-        return TypeUtils.isIterableType(returnType);
+        return TypeUtils.isIterableOfEntity(returnType) || TypeUtils.isIterableOfDto(returnType);
     }
 
     /**
