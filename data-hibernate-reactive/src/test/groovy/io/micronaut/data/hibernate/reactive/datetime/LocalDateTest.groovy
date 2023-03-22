@@ -17,9 +17,9 @@ package io.micronaut.data.hibernate.reactive.datetime
 
 import io.micronaut.data.annotation.DateCreated
 
-import javax.persistence.Entity
-import javax.persistence.GeneratedValue
-import javax.persistence.Id
+import jakarta.persistence.Entity
+import jakarta.persistence.GeneratedValue
+import jakarta.persistence.Id
 import java.time.LocalDate
 
 @Entity

@@ -4,7 +4,7 @@ package example
 import io.micronaut.transaction.SynchronousTransactionManager
 import java.sql.Connection
 import jakarta.inject.Singleton
-import javax.persistence.EntityManager
+import jakarta.persistence.EntityManager
 
 @Singleton
 class ProductManager(

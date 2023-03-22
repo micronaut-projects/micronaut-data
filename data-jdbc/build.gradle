@@ -22,6 +22,7 @@ dependencies {
 
     testAnnotationProcessor mn.micronaut.inject.java
     testAnnotationProcessor projects.dataProcessor
+    testAnnotationProcessor mnValidation.micronaut.validation.processor
 
     testImplementation projects.dataTck
     testImplementation projects.dataProcessor
@@ -32,6 +33,7 @@ dependencies {
     testImplementation libs.jakarta.persistence.api
     testImplementation libs.groovy.sql
     testImplementation mnValidation.micronaut.validation
+    testImplementation mnValidation.micronaut.validation.processor
 
     testImplementation platform(libs.testcontainers.bom)
     testImplementation libs.testcontainers.spock
@@ -53,6 +55,7 @@ dependencies {
     testRuntimeOnly libs.drivers.jdbc.mysql
     testRuntimeOnly libs.drivers.jdbc.postgresql
     testRuntimeOnly libs.drivers.jdbc.mssql
+    testRuntimeOnly mn.snakeyaml
 
     testResourcesService libs.drivers.jdbc.mariadb
     testResourcesService libs.drivers.jdbc.oracle
@@ -82,8 +85,19 @@ micronaut {
     }
 }
 
-tasks.named("test") {
+tasks.withType(Test).configureEach {
+    jvmArgs '-Xmx1024m'
     systemProperty "oracle.jdbc.timezoneAsRegion", "false"
+
+    if (micronautBuild.environment.githubAction.get()) {
+        // Let some of the checks tests first so the test containers don't eat all the memory
+        mustRunAfter ":data-processor:test"
+        mustRunAfter ":data-document-processor:test"
+        mustRunAfter ":data-hibernate-jpa:test"
+        mustRunAfter ":data-hibernate-reactive:test"
+        mustRunAfter ":data-mongodb:test"
+        mustRunAfter ":data-azure-cosmos:test"
+    }
 }
 
 micronautBuild {

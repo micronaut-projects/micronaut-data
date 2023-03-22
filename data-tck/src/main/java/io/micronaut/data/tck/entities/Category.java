@@ -19,7 +19,7 @@ import io.micronaut.data.annotation.DateCreated;
 
 import io.micronaut.core.annotation.Nullable;
 import jakarta.persistence.*;
-import javax.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotBlank;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Objects;

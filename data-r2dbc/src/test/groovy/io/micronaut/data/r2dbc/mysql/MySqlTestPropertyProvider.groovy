@@ -12,6 +12,6 @@ trait MySqlTestPropertyProvider implements SharedTestResourcesDatabaseTestProper
 
     @Override
     int sharedSpecsCount() {
-        return 11
+        return 10
     }
 }

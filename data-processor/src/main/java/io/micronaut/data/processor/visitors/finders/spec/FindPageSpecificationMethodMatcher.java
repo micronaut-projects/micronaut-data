@@ -74,12 +74,7 @@ public class FindPageSpecificationMethodMatcher extends AbstractSpecificationMet
                 );
             }
             return mc -> {
-                ClassElement classElement;
-                try {
-                    classElement = getInterceptorElement(mc, "io.micronaut.data.jpa.repository.intercept.FindPageSpecificationInterceptor");
-                } catch (IllegalStateException e) {
-                    classElement = getInterceptorElement(mc, "io.micronaut.data.hibernate6.jpa.repository.intercept.FindPageSpecificationInterceptor");
-                }
+                ClassElement classElement = getInterceptorElement(mc, "io.micronaut.data.jpa.repository.intercept.FindPageSpecificationInterceptor");
                 return new MethodMatchInfo(
                     DataMethod.OperationType.QUERY,
                     mc.getReturnType(),

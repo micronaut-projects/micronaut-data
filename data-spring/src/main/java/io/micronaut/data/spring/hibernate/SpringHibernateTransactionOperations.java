@@ -101,7 +101,7 @@ public class SpringHibernateTransactionOperations implements TransactionOperatio
     @Override
     public Connection getConnection() {
         final SessionImplementor session = (SessionImplementor) sessionFactory.getCurrentSession();
-        return session.connection();
+        return session.getJdbcCoordinator().getLogicalConnection().getPhysicalConnection();
     }
 
     @Override
@@ -188,7 +188,7 @@ public class SpringHibernateTransactionOperations implements TransactionOperatio
         @Override
         public Connection getConnection() {
             final SessionImplementor session = (SessionImplementor) sessionFactory.getCurrentSession();
-            return session.connection();
+            return session.getJdbcCoordinator().getLogicalConnection().getPhysicalConnection();
         }
 
         @Override
