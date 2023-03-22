@@ -105,7 +105,6 @@ include 'doc-examples:azure-cosmos-example-kotlin'
 include 'benchmarks:benchmark-micronaut-data-jpa'
 include 'benchmarks:benchmark-micronaut-data-jdbc'
 include 'benchmarks:benchmark-micronaut-data-mongodb'
-// TODO: Disable temporary
-// include 'benchmarks:benchmark-spring-data'
+include 'benchmarks:benchmark-spring-data'
 include 'benchmarks:benchmark-spring-data-jdbc'
 include 'benchmarks:benchmark-spring-data-mongodb'

@@ -15,7 +15,7 @@
  */
 package example;
 
-import jakarta.persistence.*;
+import javax.persistence.*;
 
 @Entity
 public class Book {
