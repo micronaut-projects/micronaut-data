@@ -28,13 +28,13 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.query.QueryUtils;
 
-import javax.persistence.EntityManager;
-import javax.persistence.TypedQuery;
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Order;
-import javax.persistence.criteria.Predicate;
-import javax.persistence.criteria.Root;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.TypedQuery;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Order;
+import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
 import java.util.List;
 
 /**
@@ -73,8 +73,8 @@ public class FindPageSpecificationInterceptor extends AbstractQueryInterceptor<O
             Specification specification = (Specification) parameterValue;
             final EntityManager entityManager = jpaOperations.getCurrentEntityManager();
             final CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
-            final CriteriaQuery<Object> query = criteriaBuilder.createQuery((Class<Object>) getRequiredRootEntity(context));
-            final Root<Object> root = query.from((Class<Object>) getRequiredRootEntity(context));
+            final CriteriaQuery<Object> query = criteriaBuilder.createQuery(getRequiredRootEntity(context));
+            final Root<Object> root = query.from(getRequiredRootEntity(context));
             final Predicate predicate = specification.toPredicate(root, query, criteriaBuilder);
             if (predicate != null) {
                 query.where(predicate);
@@ -101,7 +101,7 @@ public class FindPageSpecificationInterceptor extends AbstractQueryInterceptor<O
                     final List<Object> results = typedQuery.getResultList();
                     final CriteriaQuery<Long> countQuery = criteriaBuilder.createQuery(Long.class);
                     final Root<?> countRoot = countQuery.from(getRequiredRootEntity(context));
-                    final Predicate countPredicate = specification.toPredicate(root, query, criteriaBuilder);
+                    final Predicate countPredicate = specification.toPredicate(countRoot, query, criteriaBuilder);
                     countQuery.where(countPredicate);
                     countQuery.select(criteriaBuilder.count(countRoot));
 

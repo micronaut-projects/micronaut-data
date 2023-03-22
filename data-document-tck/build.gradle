@@ -5,6 +5,7 @@ plugins {
 dependencies {
     annotationProcessor mn.micronaut.inject.java
     annotationProcessor projects.dataDocumentProcessor
+    annotationProcessor mnValidation.micronaut.validation.processor
 
     implementation projects.dataModel
     implementation mnTest.micronaut.test.spock

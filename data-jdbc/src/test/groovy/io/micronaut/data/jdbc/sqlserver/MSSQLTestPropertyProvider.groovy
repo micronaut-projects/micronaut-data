@@ -27,7 +27,7 @@ trait MSSQLTestPropertyProvider implements SharedTestResourcesDatabaseTestProper
 
     @Override
     int sharedSpecsCount() {
-        return 10
+        return 8
     }
 
     @Override

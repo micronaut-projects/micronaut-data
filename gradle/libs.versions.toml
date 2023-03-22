@@ -25,10 +25,10 @@ jakarta-javax-persistence = "3.1.0"
 javax-transaction = "1.3"
 jakarta-transaction = "2.0.1"
 
-hibernate = "5.6.15.Final"
-hibernate6 = "6.1.7.Final"
+hibernate = "6.2.0.CR4"
+hibernate-jpamodelgen-jakarta = "6.0.0.Alpha9"
 
-spring-data = "2.7.9"
+spring-data = "3.0.3"
 spring = "5.3.24"
 
 mongodb = "4.7.2"
@@ -136,15 +136,9 @@ micronaut-spring = { module = "io.micronaut.spring:micronaut-spring-bom", versio
 
 micronaut-sql = { module = "io.micronaut.sql:micronaut-sql-bom", version.ref = "micronaut-sql" }
 
-hibernate-core = { module = "org.hibernate:hibernate-core", version.ref = "hibernate" }
-hibernate-jpamodelgen = { module = "org.hibernate:hibernate-jpamodelgen", version.ref = "hibernate" }
-hibernate-jpamodelgen-jakarta = { module = "org.hibernate:hibernate-jpamodelgen-jakarta", version.ref = "hibernate" }
-
-# Hibernate6
-
-hibernate6-core = { module = "org.hibernate.orm:hibernate-core", version.ref = "hibernate6" }
-hibernate6-jpamodelgen = { module = "org.hibernate.orm:hibernate-jpamodelgen", version.ref = "hibernate6" }
-hibernate6-jpamodelgen-jakarta = { module = "org.hibernate.orm:hibernate-jpamodelgen-jakarta", version.ref = "hibernate6" }
+hibernate-core = { module = "org.hibernate.orm:hibernate-core", version.ref = "hibernate" }
+hibernate-jpamodelgen = { module = "org.hibernate.orm:hibernate-jpamodelgen", version.ref = "hibernate" }
+hibernate-jpamodelgen-jakarta = { module = "org.hibernate.orm:hibernate-jpamodelgen-jakarta", version.ref = "hibernate-jpamodelgen-jakarta" }
 
 spring-data-jpa = { module = "org.springframework.data:spring-data-jpa", version.ref = "spring-data" }
 spring-data-commons = { module = "org.springframework.data:spring-data-commons", version.ref = "spring-data" }

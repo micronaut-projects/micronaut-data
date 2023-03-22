@@ -50,7 +50,7 @@ import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.mapper.ResultReader;
 import io.micronaut.json.JsonMapper;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 import java.sql.Array;
 import java.sql.SQLException;
 import java.util.ArrayList;

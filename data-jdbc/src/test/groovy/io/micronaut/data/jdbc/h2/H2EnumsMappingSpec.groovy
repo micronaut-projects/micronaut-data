@@ -20,9 +20,9 @@ import spock.lang.AutoCleanup
 import spock.lang.Shared
 import spock.lang.Specification
 
-import javax.persistence.Entity
-import javax.persistence.EnumType
-import javax.persistence.Enumerated
+import jakarta.persistence.Entity
+import jakarta.persistence.EnumType
+import jakarta.persistence.Enumerated
 import javax.transaction.Transactional
 
 @MicronautTest

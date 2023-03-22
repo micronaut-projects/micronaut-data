@@ -17,7 +17,6 @@ package io.micronaut.data.r2dbc.oraclexe
 
 import spock.lang.IgnoreIf
 
-@IgnoreIf({ !jvm.isJava11Compatible() })
 class OracleXERepositoryPoolSpec extends OracleXERepositorySpec {
 
     @Override

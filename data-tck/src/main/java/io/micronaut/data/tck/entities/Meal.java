@@ -19,10 +19,9 @@ import io.micronaut.core.annotation.Creator;
 import io.micronaut.data.annotation.*;
 
 import io.micronaut.core.annotation.Nullable;
-import javax.persistence.Id;
-import javax.validation.constraints.Max;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
+import jakarta.persistence.Id;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.NotNull;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Set;
@@ -74,7 +73,7 @@ public class Meal {
         this.actual = 'Y';
     }
 
-    public Meal(@NotNull @Size(max = 999) int currentBloodGlucose) {
+    public Meal(@NotNull @Max(9999) int currentBloodGlucose) {
         this.currentBloodGlucose = currentBloodGlucose;
     }
 

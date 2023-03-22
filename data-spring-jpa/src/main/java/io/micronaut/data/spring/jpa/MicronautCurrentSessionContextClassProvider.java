@@ -17,7 +17,7 @@ package io.micronaut.data.spring.jpa;
 
 import io.micronaut.configuration.hibernate.jpa.HibernateCurrentSessionContextClassProvider;
 import io.micronaut.context.annotation.Primary;
-import io.micronaut.transaction.hibernate5.MicronautSessionContext;
+import io.micronaut.transaction.hibernate6.MicronautSessionContext;
 import org.hibernate.context.spi.CurrentSessionContext;
 
 import jakarta.inject.Singleton;

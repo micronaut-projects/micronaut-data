@@ -18,7 +18,7 @@ package io.micronaut.data.tck.entities;
 import io.micronaut.data.annotation.Embeddable;
 import io.micronaut.data.annotation.MappedProperty;
 
-import javax.persistence.ManyToOne;
+import jakarta.persistence.ManyToOne;
 
 @Embeddable
 public class UuidEmbeddedChildEntity {

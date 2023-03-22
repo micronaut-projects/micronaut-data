@@ -13,6 +13,6 @@ trait PostgresTestPropertyProvider implements SharedTestResourcesDatabaseTestPro
 
     @Override
     int sharedSpecsCount() {
-        return 13
+        return 12
     }
 }

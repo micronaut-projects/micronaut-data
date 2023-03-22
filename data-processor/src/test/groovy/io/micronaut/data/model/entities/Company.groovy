@@ -17,9 +17,9 @@ package io.micronaut.data.model.entities
 
 import io.micronaut.data.annotation.DateCreated
 import io.micronaut.data.annotation.DateUpdated
-import javax.persistence.Entity
-import javax.persistence.GeneratedValue
-import javax.persistence.Id
+import jakarta.persistence.Entity
+import jakarta.persistence.GeneratedValue
+import jakarta.persistence.Id
 import java.time.Instant
 
 @Entity

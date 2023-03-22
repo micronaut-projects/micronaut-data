@@ -10,7 +10,7 @@ import io.micronaut.data.mongodb.annotation.MongoRepository;
 import io.micronaut.data.repository.CrudRepository;
 import org.bson.types.ObjectId;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 import java.util.Optional;
 
 // tag::options[]

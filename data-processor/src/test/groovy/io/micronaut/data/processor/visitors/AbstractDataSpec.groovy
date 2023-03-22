@@ -40,7 +40,7 @@ package $pkg;
 
 import io.micronaut.data.annotation.DateCreated;
 import io.micronaut.data.annotation.DateUpdated;
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.util.*;
 
 $source
@@ -82,7 +82,7 @@ $source
         return buildBeanDefinition(name + BeanDefinitionVisitor.PROXY_SUFFIX, """
 package $pkg;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import io.micronaut.data.repository.*;
 import io.micronaut.data.annotation.Repository;
 import java.util.*;
@@ -115,7 +115,7 @@ $source
     public $it.value.name get$propertyName() {
         return $it.key;
     }
-    
+
     public void set$propertyName($it.value.name $it.key) {
         this.$it.key = $it.key;
     }"""
@@ -128,11 +128,11 @@ class $name {
     @GeneratedValue
     private Long id;
     ${properties.collect { 'private ' + it.value.name + ' ' + it.key + ';' }.join("\n")}
-    
+
     public Long getId() {
         return id;
     }
-    
+
     public void setId(Long id) {
         this.id = id;
     }
@@ -155,7 +155,7 @@ class $name {
     public $it.value.name get$propertyName() {
         return $it.key;
     }
-    
+
     public void set$propertyName($it.value.name $it.key) {
         this.$it.key = $it.key;
     }"""
