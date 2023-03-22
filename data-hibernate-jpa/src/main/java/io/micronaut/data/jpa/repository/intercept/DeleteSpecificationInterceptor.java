@@ -24,13 +24,10 @@ import io.micronaut.data.jpa.operations.JpaRepositoryOperations;
 import io.micronaut.data.jpa.repository.criteria.Specification;
 import io.micronaut.data.operations.RepositoryOperations;
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.TypedQuery;
 import jakarta.persistence.criteria.CriteriaBuilder;
-import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.CriteriaDelete;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
-
-import java.util.Collections;
 
 /**
  * Interceptor that supports delete specifications.
@@ -49,8 +46,8 @@ public class DeleteSpecificationInterceptor extends AbstractSpecificationInterce
      */
     public DeleteSpecificationInterceptor(@NonNull RepositoryOperations operations) {
         super(operations);
-        if (operations instanceof JpaRepositoryOperations) {
-            this.jpaOperations = (JpaRepositoryOperations) operations;
+        if (operations instanceof JpaRepositoryOperations jpaRepositoryOperations) {
+            this.jpaOperations = jpaRepositoryOperations;
         } else {
             throw new IllegalStateException("Repository operations must be na instance of JpaRepositoryOperations");
         }
@@ -58,25 +55,16 @@ public class DeleteSpecificationInterceptor extends AbstractSpecificationInterce
 
     @Override
     public Number intercept(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Number> context) {
-        // TODO: Implement deleteCriteria
         Specification specification = getSpecification(context);
         final EntityManager entityManager = jpaOperations.getCurrentEntityManager();
         final CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
-        final CriteriaQuery<Long> query = criteriaBuilder.createQuery(Long.class);
-        final Root<?> root = query.from(getRequiredRootEntity(context));
-        final Predicate predicate = specification.toPredicate(root, query, criteriaBuilder);
+        final CriteriaDelete criteriaDelete = criteriaBuilder.createCriteriaDelete(getRequiredRootEntity(context));
+        final Root<?> root = criteriaDelete.from(getRequiredRootEntity(context));
+        Predicate predicate = specification.toPredicate(root, null, criteriaBuilder);
         if (predicate != null) {
-            query.where(predicate);
+            criteriaDelete.where(predicate);
         }
-        if (query.isDistinct()) {
-            query.select(criteriaBuilder.countDistinct(root));
-        } else {
-            query.select(criteriaBuilder.count(root));
-        }
-        query.orderBy(Collections.emptyList());
-
-        final TypedQuery<Long> typedQuery = entityManager.createQuery(query);
-        final Long result = typedQuery.getSingleResult();
+        final int result = entityManager.createQuery(criteriaDelete).executeUpdate();
         final ReturnType<Number> rt = context.getReturnType();
         final Class<Number> returnType = rt.getType();
         if (returnType.isInstance(result)) {

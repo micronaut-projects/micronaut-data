@@ -21,7 +21,6 @@ import io.micronaut.data.tck.entities.Person
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
-import spock.lang.Ignore
 import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Stepwise
@@ -166,7 +165,6 @@ class SpringCrudRepositoryJpaSpec extends Specification {
         crudRepository.findByName("Jack") != null
     }
 
-    @Ignore("Still not completed")
     void "test delete spec"() {
         when:"A person is saved"
         def p1 = new Person(name: "NewPerson", age: 25)
