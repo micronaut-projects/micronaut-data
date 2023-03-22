@@ -158,14 +158,14 @@ public final class MongoQueryBuilder implements QueryBuilder {
             return new RegexPattern(value.toString());
         }));
         addCriterionHandler(QueryModel.IsEmpty.class, (context, obj, criterion) -> {
-            String criterionPropertyName = getPropertyPersistName(context.getRequiredProperty(criterion).getProperty());
+            String criterionPropertyName = getCriterionPropertyName(criterion.getProperty(), context);
             obj.put("$or", asList(
                     singletonMap(criterionPropertyName, singletonMap("$eq", "")),
                     singletonMap(criterionPropertyName, singletonMap("$exists", false))
             ));
         });
         addCriterionHandler(QueryModel.IsNotEmpty.class, (context, obj, criterion) -> {
-            String criterionPropertyName = getPropertyPersistName(context.getRequiredProperty(criterion).getProperty());
+            String criterionPropertyName = getCriterionPropertyName(criterion.getProperty(), context);
             obj.put("$and", asList(
                     singletonMap(criterionPropertyName, singletonMap("$ne", "")),
                     singletonMap(criterionPropertyName, singletonMap("$exists", true))
@@ -174,7 +174,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
         addCriterionHandler(QueryModel.In.class, (context, obj, criterion) -> {
             PersistentPropertyPath propertyPath = context.getRequiredProperty(criterion);
             Object value = criterion.getValue();
-            String criterionPropertyName = getPropertyPersistName(context.getRequiredProperty(criterion).getProperty());
+            String criterionPropertyName = getCriterionPropertyName(criterion.getProperty(), context);
             if (value instanceof Iterable) {
                 List<?> values = CollectionUtils.iterableToList((Iterable) value);
                 obj.put(criterionPropertyName, singletonMap("$in", values.stream().map(val -> valueRepresentation(context, propertyPath, val)).collect(Collectors.toList())));
@@ -185,7 +185,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
         addCriterionHandler(QueryModel.NotIn.class, (context, obj, criterion) -> {
             PersistentPropertyPath propertyPath = context.getRequiredProperty(criterion);
             Object value = criterion.getValue();
-            String criterionPropertyName = getPropertyPersistName(context.getRequiredProperty(criterion).getProperty());
+            String criterionPropertyName = getCriterionPropertyName(criterion.getProperty(), context);
             if (value instanceof Iterable) {
                 List<?> values = CollectionUtils.iterableToList((Iterable) value);
                 obj.put(criterionPropertyName, singletonMap("$nin", values.stream().map(val -> valueRepresentation(context, propertyPath, val)).collect(Collectors.toList())));
