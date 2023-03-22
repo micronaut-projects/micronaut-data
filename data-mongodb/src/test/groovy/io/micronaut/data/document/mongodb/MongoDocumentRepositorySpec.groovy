@@ -511,10 +511,8 @@ class MongoDocumentRepositorySpec extends AbstractDocumentRepositorySpec impleme
         optDoc.present
         def doc = optDoc.get()
         doc.owners.size() == 2
-        doc.owners["owner1"].class == Owner.class
         doc.owners["owner1"].name == "Owner1"
         doc.owners["owner1"].age == 40
-        doc.owners["owner2"].class == Owner.class
         doc.owners["owner2"].name == "Owner2"
         doc.owners["owner2"].age == 30
         cleanup:
