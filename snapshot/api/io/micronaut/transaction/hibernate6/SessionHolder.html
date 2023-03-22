@@ -73,7 +73,7 @@ loadScripts(document, 'script');</script>
 </div>
 <div class="inheritance" title="Inheritance Tree"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">java.lang.Object</a>
 <div class="inheritance"><a href="../support/ResourceHolderSupport.html" title="class in io.micronaut.transaction.support">io.micronaut.transaction.support.ResourceHolderSupport</a>
-<div class="inheritance"><a href="../jpa/JpaEntityManagerHolder.html" title="class in io.micronaut.transaction.jpa">io.micronaut.transaction.jpa.JpaEntityManagerHolder</a>
+<div class="inheritance"><a href="../jpa/EntityManagerHolder.html" title="class in io.micronaut.transaction.jpa">io.micronaut.transaction.jpa.EntityManagerHolder</a>
 <div class="inheritance">io.micronaut.transaction.hibernate6.SessionHolder</div>
 </div>
 </div>
@@ -85,10 +85,10 @@ loadScripts(document, 'script');</script>
 </dl>
 <hr>
 <div class="type-signature"><span class="modifiers">public class </span><span class="element-name type-name-label">SessionHolder</span>
-<span class="extends-implements">extends <a href="../jpa/JpaEntityManagerHolder.html" title="class in io.micronaut.transaction.jpa">JpaEntityManagerHolder</a></span></div>
+<span class="extends-implements">extends <a href="../jpa/EntityManagerHolder.html" title="class in io.micronaut.transaction.jpa">EntityManagerHolder</a></span></div>
 <div class="block">Resource holder wrapping a Hibernate <code>Session</code> (plus an optional <code>Transaction</code>).
  <code>HibernateTransactionManager</code> binds instances of this class to the thread,
- for a given <code>SessionFactory</code>. Extends <a href="../jpa/JpaEntityManagerHolder.html" title="class in io.micronaut.transaction.jpa"><code>JpaEntityManagerHolder</code></a>
+ for a given <code>SessionFactory</code>. Extends <a href="../jpa/EntityManagerHolder.html" title="class in io.micronaut.transaction.jpa"><code>EntityManagerHolder</code></a>
  as of 5.1, automatically exposing an <code>EntityManager</code> handle on Hibernate 5.2+.
 
  <p>Note: This is an SPI class, not intended to be used by applications.</div>
@@ -160,8 +160,8 @@ loadScripts(document, 'script');</script>
 </div>
 </div>
 <div class="inherited-list">
-<h3 id="methods-inherited-from-class-io.micronaut.transaction.jpa.JpaEntityManagerHolder">Methods inherited from class&nbsp;io.micronaut.transaction.jpa.<a href="../jpa/JpaEntityManagerHolder.html" title="class in io.micronaut.transaction.jpa">JpaEntityManagerHolder</a></h3>
-<code><a href="../jpa/JpaEntityManagerHolder.html#getEntityManager()">getEntityManager</a>, <a href="../jpa/JpaEntityManagerHolder.html#getSavepointManager()">getSavepointManager</a>, <a href="../jpa/JpaEntityManagerHolder.html#isTransactionActive()">isTransactionActive</a>, <a href="../jpa/JpaEntityManagerHolder.html#setSavepointManager(io.micronaut.transaction.SavepointManager)">setSavepointManager</a>, <a href="../jpa/JpaEntityManagerHolder.html#setTransactionActive(boolean)">setTransactionActive</a></code></div>
+<h3 id="methods-inherited-from-class-io.micronaut.transaction.jpa.EntityManagerHolder">Methods inherited from class&nbsp;io.micronaut.transaction.jpa.<a href="../jpa/EntityManagerHolder.html" title="class in io.micronaut.transaction.jpa">EntityManagerHolder</a></h3>
+<code><a href="../jpa/EntityManagerHolder.html#getEntityManager()">getEntityManager</a>, <a href="../jpa/EntityManagerHolder.html#getSavepointManager()">getSavepointManager</a>, <a href="../jpa/EntityManagerHolder.html#isTransactionActive()">isTransactionActive</a>, <a href="../jpa/EntityManagerHolder.html#setSavepointManager(io.micronaut.transaction.SavepointManager)">setSavepointManager</a>, <a href="../jpa/EntityManagerHolder.html#setTransactionActive(boolean)">setTransactionActive</a></code></div>
 <div class="inherited-list">
 <h3 id="methods-inherited-from-class-io.micronaut.transaction.support.ResourceHolderSupport">Methods inherited from class&nbsp;io.micronaut.transaction.support.<a href="../support/ResourceHolderSupport.html" title="class in io.micronaut.transaction.support">ResourceHolderSupport</a></h3>
 <code><a href="../support/ResourceHolderSupport.html#getDeadline()">getDeadline</a>, <a href="../support/ResourceHolderSupport.html#getTimeToLiveInMillis()">getTimeToLiveInMillis</a>, <a href="../support/ResourceHolderSupport.html#getTimeToLiveInSeconds()">getTimeToLiveInSeconds</a>, <a href="../support/ResourceHolderSupport.html#hasTimeout()">hasTimeout</a>, <a href="../support/ResourceHolderSupport.html#isOpen()">isOpen</a>, <a href="../support/ResourceHolderSupport.html#isRollbackOnly()">isRollbackOnly</a>, <a href="../support/ResourceHolderSupport.html#isSynchronizedWithTransaction()">isSynchronizedWithTransaction</a>, <a href="../support/ResourceHolderSupport.html#isVoid()">isVoid</a>, <a href="../support/ResourceHolderSupport.html#released()">released</a>, <a href="../support/ResourceHolderSupport.html#requested()">requested</a>, <a href="../support/ResourceHolderSupport.html#reset()">reset</a>, <a href="../support/ResourceHolderSupport.html#resetRollbackOnly()">resetRollbackOnly</a>, <a href="../support/ResourceHolderSupport.html#setRollbackOnly()">setRollbackOnly</a>, <a href="../support/ResourceHolderSupport.html#setSynchronizedWithTransaction(boolean)">setSynchronizedWithTransaction</a>, <a href="../support/ResourceHolderSupport.html#setTimeout(java.time.Duration)">setTimeout</a>, <a href="../support/ResourceHolderSupport.html#setTimeoutInMillis(long)">setTimeoutInMillis</a>, <a href="../support/ResourceHolderSupport.html#unbound()">unbound</a></code></div>
@@ -261,7 +261,7 @@ loadScripts(document, 'script');</script>
 <div class="block">Clear the transactional state of this resource holder.</div>
 <dl class="notes">
 <dt>Overrides:</dt>
-<dd><code><a href="../jpa/JpaEntityManagerHolder.html#clear()">clear</a></code>&nbsp;in class&nbsp;<code><a href="../jpa/JpaEntityManagerHolder.html" title="class in io.micronaut.transaction.jpa">JpaEntityManagerHolder</a></code></dd>
+<dd><code><a href="../jpa/EntityManagerHolder.html#clear()">clear</a></code>&nbsp;in class&nbsp;<code><a href="../jpa/EntityManagerHolder.html" title="class in io.micronaut.transaction.jpa">EntityManagerHolder</a></code></dd>
 </dl>
 </section>
 </li>
