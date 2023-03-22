@@ -61,7 +61,7 @@ abstract class AbstractManualSchemaSpec extends Specification {
         }))
     }
 
-    private void createSchema() {
+    void createSchema() {
         Flux.from(withConnection(connection -> {
             Flux<Void> createTablesFlow = Flux.fromIterable(createStatements())
                     .concatMap(sql -> {
@@ -79,7 +79,7 @@ abstract class AbstractManualSchemaSpec extends Specification {
         })).blockLast()
     }
 
-    private void dropSchema() {
+    void dropSchema() {
         Flux.from(withConnection(connection -> {
             Flux<Void> createTablesFlow = Flux.fromIterable(dropStatements())
                     .concatMap(sql -> {

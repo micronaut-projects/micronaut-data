@@ -20,6 +20,7 @@ import io.micronaut.core.annotation.Experimental;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.type.Argument;
+import io.micronaut.data.model.JsonDataObject;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.runtime.mapper.ResultReader;
@@ -29,8 +30,13 @@ import io.micronaut.json.JsonMapper;
 import io.micronaut.serde.oracle.jdbc.json.OracleJdbcJsonBinaryObjectMapper;
 import jakarta.inject.Singleton;
 import oracle.sql.json.OracleJsonParser;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.sql.Blob;
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.Types;
 
 /**
  * The Oracle JDBC json column reader.
@@ -43,27 +49,41 @@ import java.sql.ResultSet;
 @Requires(classes = OracleJdbcJsonBinaryObjectMapper.class)
 @Internal
 @Experimental
-class OracleJdbcJsonColumnReader implements SqlJsonColumnReader<ResultSet> {
+class OracleJdbcJsonBinaryColumnReader implements SqlJsonColumnReader<ResultSet> {
 
-    private final OracleJdbcJsonBinaryObjectMapper oracleJdbcJsonMapper;
+    private static final Logger LOG = LoggerFactory.getLogger(OracleJdbcJsonBinaryColumnReader.class);
+
+    private final OracleJdbcJsonBinaryObjectMapper binaryJsonMapper;
 
     /**
      * The default constructor.
      *
-     * @param oracleJdbcJsonMapper the oracle JSON mapper
+     * @param binaryJsonMapper the oracle JSON mapper
      */
-    public OracleJdbcJsonColumnReader(OracleJdbcJsonBinaryObjectMapper oracleJdbcJsonMapper) {
-        this.oracleJdbcJsonMapper = oracleJdbcJsonMapper;
+    public OracleJdbcJsonBinaryColumnReader(OracleJdbcJsonBinaryObjectMapper binaryJsonMapper) {
+        this.binaryJsonMapper = binaryJsonMapper;
     }
 
     @Override
     public <T> T readJsonColumn(ResultReader<ResultSet, String> resultReader, ResultSet resultSet, String columnName, Argument<T> argument) {
         try {
+            ResultSetMetaData resultSetMetaData = resultSet.getMetaData();
+            int colIndex = resultSet.findColumn(columnName);
+            int colType = resultSetMetaData.getColumnType(colIndex);
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Attempt to read JSON column [{}] for given SQL type [{}]",
+                    columnName, resultSetMetaData.getColumnTypeName(colIndex));
+            }
+            if (Types.BLOB == colType) {
+                Blob blob = resultSet.getBlob(colIndex);
+                return binaryJsonMapper.readValue(blob.getBinaryStream(), argument);
+            }
+            // Otherwise read using OracleJsonParser which might throw exception if underlying field is Clob or Varchar
             OracleJsonParser jsonParser = resultSet.getObject(columnName, OracleJsonParser.class);
             if (jsonParser == null) {
                 return null;
             }
-            return oracleJdbcJsonMapper.readValue(jsonParser, argument);
+            return binaryJsonMapper.readValue(jsonParser, argument);
         } catch (Exception e) {
             throw new DataAccessException("Failed to read from JSON field [" + columnName + "].", e);
         }
@@ -72,11 +92,16 @@ class OracleJdbcJsonColumnReader implements SqlJsonColumnReader<ResultSet> {
     @Override
     @NonNull
     public JsonMapper getJsonMapper() {
-        return oracleJdbcJsonMapper;
+        return binaryJsonMapper;
     }
 
     @Override
-    public boolean supports(SqlPreparedQuery<?, ?> sqlPreparedQuery) {
-        return sqlPreparedQuery.getDialect() == Dialect.ORACLE;
+    public boolean supportsReadResults(SqlPreparedQuery<?, ?> sqlPreparedQuery, Class<?> type) {
+        return sqlPreparedQuery.getDialect() == Dialect.ORACLE && JsonDataObject.class.isAssignableFrom(type);
+    }
+
+    @Override
+    public boolean supportsResultSetType(Class<ResultSet> resultSetType) {
+        return ResultSet.class.isAssignableFrom(resultSetType);
     }
 }

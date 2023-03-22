@@ -19,9 +19,9 @@ import io.micronaut.core.annotation.Creator;
 import io.micronaut.data.annotation.*;
 
 import io.micronaut.core.annotation.Nullable;
-import jakarta.persistence.Id;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.NotNull;
+import jakarta.persistence.Id;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Set;

@@ -41,10 +41,17 @@ public interface SqlJsonColumnReader<RS> {
      * Gets an indicator telling whether reader can interpret results from the SQL prepared query.
      *
      * @param sqlPreparedQuery the SQL prepared query
+     * @param type the type to be mapped into
      * @return true if reader can interpret results from the query
      */
-    boolean supports(SqlPreparedQuery<?, ?> sqlPreparedQuery);
+    default boolean supportsReadResults(SqlPreparedQuery<?, ?> sqlPreparedQuery, Class<?> type) {
+        return true;
+    }
 
+    default boolean supportsResultSetType(Class<RS> resultSetType) {
+        return true;
+    }
+    
     /**
      * Reads JSON column from the result set and returns as expected type.
      *

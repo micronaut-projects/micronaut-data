@@ -41,7 +41,7 @@ abstract class AbstractManualSchemaSpec extends Specification {
         return "INSERT INTO patient (name, history, doctor_notes) VALUES (?, ?, ?)"
     }
 
-    private void createSchema() {
+    void createSchema() {
         try {
             def conn = dataSource.getConnection()
             createStatements().forEach(st -> conn.prepareStatement(st).executeUpdate())
@@ -50,7 +50,7 @@ abstract class AbstractManualSchemaSpec extends Specification {
         }
     }
 
-    private void dropSchema() {
+    void dropSchema() {
         try {
             def conn = dataSource.getConnection()
             dropStatements().forEach(st -> conn.prepareStatement(st).executeUpdate())

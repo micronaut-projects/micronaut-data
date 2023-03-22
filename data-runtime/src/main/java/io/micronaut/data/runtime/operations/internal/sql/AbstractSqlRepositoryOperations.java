@@ -25,6 +25,7 @@ import io.micronaut.data.annotation.AutoPopulated;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.exceptions.DataAccessException;
+import io.micronaut.data.exceptions.OptimisticLockException;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.DataType;
@@ -53,6 +54,7 @@ import io.micronaut.data.runtime.date.DateTimeProvider;
 import io.micronaut.data.runtime.mapper.QueryStatement;
 import io.micronaut.data.runtime.mapper.ResultReader;
 import io.micronaut.data.runtime.mapper.sql.JsonQueryResultMapper;
+import io.micronaut.data.runtime.mapper.sql.SqlJsonValueMapper;
 import io.micronaut.data.runtime.mapper.sql.SqlTypeMapper;
 import io.micronaut.data.runtime.operations.internal.AbstractRepositoryOperations;
 import io.micronaut.data.runtime.query.MethodContextAwareStoredQueryDecorator;
@@ -65,8 +67,7 @@ import io.micronaut.json.JsonMapper;
 import org.slf4j.Logger;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -105,7 +106,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
     @SuppressWarnings("WeakerAccess")
     protected final QueryStatement<PS, Integer> preparedStatementWriter;
     protected final JsonMapper jsonMapper;
-    protected final SqlJsonColumnReaderProvider<RS> sqlJsonColumnReaderProvider;
+    protected final SqlJsonColumnMapperProvider<RS> sqlJsonColumnMapperProvider;
     protected final Map<Class, SqlQueryBuilder> queryBuilders = new HashMap<>(10);
     protected final Map<Class, String> repositoriesWithHardcodedDataSource = new HashMap<>(10);
     private final Map<QueryKey, SqlStoredQuery> entityInserts = new ConcurrentHashMap<>(10);
@@ -125,7 +126,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
      * @param conversionService            The conversion service
      * @param attributeConverterRegistry   The attribute converter registry
      * @param jsonMapper                   The JSON mapper
-     * @param sqlJsonColumnReaderProvider  The SQL JSON column reader provider
+     * @param sqlJsonColumnMapperProvider  The SQL JSON column mapper provider
      */
     protected AbstractSqlRepositoryOperations(
             String dataSourceName,
@@ -138,14 +139,14 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
             DataConversionService conversionService,
             AttributeConverterRegistry attributeConverterRegistry,
             JsonMapper jsonMapper,
-            SqlJsonColumnReaderProvider<RS> sqlJsonColumnReaderProvider) {
+            SqlJsonColumnMapperProvider<RS> sqlJsonColumnMapperProvider) {
         super(dateTimeProvider, runtimeEntityRegistry, conversionService, attributeConverterRegistry);
         this.dataSourceName = dataSourceName;
         this.columnNameResultSetReader = columnNameResultSetReader;
         this.columnIndexResultSetReader = columnIndexResultSetReader;
         this.preparedStatementWriter = preparedStatementWriter;
         this.jsonMapper = jsonMapper;
-        this.sqlJsonColumnReaderProvider = sqlJsonColumnReaderProvider;
+        this.sqlJsonColumnMapperProvider = sqlJsonColumnMapperProvider;
         Collection<BeanDefinition<Object>> beanDefinitions = beanContext
                 .getBeanDefinitions(Object.class, Qualifiers.byStereotype(Repository.class));
         for (BeanDefinition<Object> beanDefinition : beanDefinitions) {
@@ -214,9 +215,10 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
      * @param index             The index
      * @param dataType          The data type
      * @param value             The value
-     * @param dialect           The dialect
+     * @param storedQuery       The SQL stored query
      */
-    protected void setStatementParameter(PS preparedStatement, int index, DataType dataType, Object value, Dialect dialect) {
+    protected void setStatementParameter(PS preparedStatement, int index, DataType dataType, Object value, SqlStoredQuery<?, ?> storedQuery) {
+        Dialect dialect = storedQuery.getDialect();
         switch (dataType) {
             case UUID:
                 if (value != null && dialect.requiresStringUUID(dataType)) {
@@ -225,11 +227,14 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
                 break;
             case JSON:
                 if (value != null && !value.getClass().equals(String.class)) {
-                    if (jsonMapper == null) {
+                    SqlJsonValueMapper sqlJsonValueMapper = sqlJsonColumnMapperProvider.getJsonValueMapper(storedQuery, value);
+                    if (sqlJsonValueMapper == null) {
+                        // if json mapper is not on the classpath and provided value is string
+                        // assume we don't need conversion and can use parameter
                         throw new IllegalStateException("For JSON data types support Micronaut JsonMapper needs to be available on the classpath.");
                     }
                     try {
-                        value = new String(jsonMapper.writeValueAsBytes(value), StandardCharsets.UTF_8);
+                        value = sqlJsonValueMapper.mapValue(value);
                     } catch (IOException e) {
                         throw new DataAccessException("Failed setting JSON field parameter at index " + index, e);
                     }
@@ -242,7 +247,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
                     if (id == null) {
                         throw new DataAccessException("Supplied entity is a transient instance: " + value);
                     }
-                    setStatementParameter(preparedStatement, index, idReader.getDataType(), id, dialect);
+                    setStatementParameter(preparedStatement, index, idReader.getDataType(), id, storedQuery);
                     return;
                 }
                 break;
@@ -255,6 +260,13 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
         if (QUERY_LOG.isTraceEnabled()) {
             QUERY_LOG.trace("Binding parameter at position {} to value {} with data type: {}", index, value, dataType);
         }
+
+        /// We want to avoid potential conversion for JSON because mapper already returned value ready to be set as statement parameter
+        if (dataType == DataType.JSON && value != null) {
+            preparedStatementWriter.setValue(preparedStatement, index, value);
+            return;
+        }
+
         preparedStatementWriter.setDynamic(preparedStatement, index, dataType, value);
     }
 
@@ -497,18 +509,19 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
      *
      * @param sqlPreparedQuery the SQL prepared query
      * @param columnName the column name where we are reading from
+     * @param resultType the result type
+     * @param resultSetType resultSetType the result set type (different for R2dbc and Jdbc)
      * @param persistentEntity the persistent entity
      * @param loadListener the load listener if needed after entity loaded
      * @return the {@link SqlTypeMapper} able to decode from column value into given type
      * @param <T> the entity type
-     * @param <RS> the result set type
      * @param <R> the result type
      */
-    protected final <T, RS, R> SqlTypeMapper<RS, R> createQueryResultMapper(SqlPreparedQuery sqlPreparedQuery, String columnName,
+    protected final <T, R> SqlTypeMapper<RS, R> createQueryResultMapper(SqlPreparedQuery sqlPreparedQuery, String columnName, Class<R> resultType, Class<RS> resultSetType,
                                                                     RuntimePersistentEntity<T> persistentEntity, BiFunction<RuntimePersistentEntity<Object>, Object, Object> loadListener) {
         QueryResultInfo queryResultInfo = sqlPreparedQuery.getQueryResultInfo();
         return switch (queryResultInfo.getType()) {
-            case JSON -> createJsonQueryResultMapper(sqlPreparedQuery, columnName, persistentEntity, loadListener);
+            case JSON -> createJsonQueryResultMapper(sqlPreparedQuery, columnName, resultType, resultSetType, persistentEntity, loadListener);
             default -> throw new IllegalStateException("Unexpected query result type: " + queryResultInfo.getType());
         };
     }
@@ -521,16 +534,33 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
      * @param columnName the column name where we are reading from
      * @param persistentEntity the persistent entity
      * @param type the result type
+     * @param resultSetType the result set type
      * @param loadListener the load listener if needed after entity loaded
      * @return an object read from the result set column
      * @param <R> the result type
      * @param <T> the entity type
      */
-    protected final <R, T> R mapQueryColumnResult(SqlPreparedQuery sqlPreparedQuery, ResultSet rs, String columnName,
-                                          RuntimePersistentEntity<T> persistentEntity, Class<R> type,
+    protected final <R, T> R mapQueryColumnResult(SqlPreparedQuery sqlPreparedQuery, RS rs, String columnName,
+                                          RuntimePersistentEntity<T> persistentEntity, Class<R> type, Class<RS> resultSetType,
                                           BiFunction<RuntimePersistentEntity<Object>, Object, Object> loadListener) {
-        SqlTypeMapper<ResultSet, R> mapper = createQueryResultMapper(sqlPreparedQuery, columnName, persistentEntity, loadListener);
+        SqlTypeMapper<RS, R> mapper = createQueryResultMapper(sqlPreparedQuery, columnName, type, resultSetType, persistentEntity, loadListener);
         return mapper.map(rs, type);
+    }
+
+    /**
+     * Handles SQL exception, used in context of update but could be used elsewhere.
+     * It can throw custom exception based on the {@link SQLException}.
+     *
+     * @param sqlException the SQL exception
+     * @param dialect the SQL dialect
+     * @return custom exception based on {@link SQLException} that was thrown or that same
+     * exception if nothing specific was about it
+     */
+    protected static Throwable handleSqlException(SQLException sqlException, Dialect dialect) {
+        if (dialect == Dialect.ORACLE) {
+            return OracleSqlExceptionHandler.handleSqlException(sqlException);
+        }
+        return sqlException;
     }
 
     /**
@@ -538,15 +568,42 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
      *
      * @param sqlPreparedQuery the SQL prepared query
      * @param columnName the column name where query result is stored
+     * @param resultType the result type
+     * @param resultSetType the result set type
      * @param persistentEntity the persistent entity
      * @param loadListener the load listener if needed after entity loaded
      * @return the {@link JsonQueryResultMapper}
      * @param <T> the entity type
      */
-    private <T> JsonQueryResultMapper createJsonQueryResultMapper(SqlPreparedQuery sqlPreparedQuery, String columnName,
+    private <T> JsonQueryResultMapper createJsonQueryResultMapper(SqlPreparedQuery sqlPreparedQuery, String columnName, Class<?> resultType, Class<RS> resultSetType,
                                                                   RuntimePersistentEntity<T> persistentEntity, BiFunction<RuntimePersistentEntity<Object>, Object, Object> loadListener) {
         return new JsonQueryResultMapper(columnName, persistentEntity, columnNameResultSetReader,
-            sqlJsonColumnReaderProvider.get(sqlPreparedQuery), loadListener);
+            sqlJsonColumnMapperProvider.getJsonColumnReader(sqlPreparedQuery, resultType, resultSetType), loadListener);
+    }
+
+    /**
+     * Handles {@link SQLException} for Oracle update commands. Can add more logic if needed, but this
+     * now handles only optimistic locking exception for given error code.
+     */
+    private static final class OracleSqlExceptionHandler {
+        private static final int JSON_VIEW_ETAG_NOT_MATCHING_ERROR = 42699;
+
+        /**
+         * Handles SQL exception for Oracle dialect, used in context of update but could be used elsewhere.
+         * It can throw custom exception based on the {@link SQLException}.
+         * Basically throws {@link OptimisticLockException} if error thrown is matching expected error code
+         * that is used to represent ETAG not matching when updating Json View.
+         *
+         * @param sqlException the SQL exception
+         * @return custom exception based on {@link SQLException} that was thrown or that same
+         * exception if nothing specific was about it
+         */
+        static Throwable handleSqlException(SQLException sqlException) {
+            if (sqlException.getErrorCode() == JSON_VIEW_ETAG_NOT_MATCHING_ERROR) {
+                return new OptimisticLockException("ETAG did not match when updating record");
+            }
+            return sqlException;
+        }
     }
 
     /**

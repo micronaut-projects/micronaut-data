@@ -233,10 +233,12 @@ abstract class AbstractJSONSpec extends Specification {
     }
 
     void verifySale(Sale actualSale, Sale expectedSale) {
-        expectedSale.id == actualSale.id
-        expectedSale.name == actualSale.name
-        expectedSale.dataList == actualSale.dataList
-        expectedSale.quantities == actualSale.quantities
-        expectedSale.items.size() == actualSale.items.size()
+        verifyAll {
+            expectedSale.id == actualSale.id
+            expectedSale.name == actualSale.name
+            expectedSale.dataList == actualSale.dataList
+            expectedSale.quantities == actualSale.quantities
+            expectedSale.items.size() == actualSale.items.size()
+        }
     }
 }
