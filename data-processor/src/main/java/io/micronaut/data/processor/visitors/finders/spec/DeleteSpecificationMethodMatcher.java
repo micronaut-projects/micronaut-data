@@ -19,18 +19,16 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.data.processor.visitors.finders.AbstractSpecificationMethodMatcher;
-import io.micronaut.data.processor.visitors.finders.FindersUtils;
 import io.micronaut.data.processor.visitors.finders.MethodMatchInfo;
 import io.micronaut.data.processor.visitors.finders.TypeUtils;
 import io.micronaut.inject.ast.ClassElement;
 
-import java.util.Map;
 
 /**
  * Delete specification method.
  *
- * @author Denis Stepanov
- * @since 3.2
+ * @author radovanradic
+ * @since 4.0.0
  */
 @Internal
 public class DeleteSpecificationMethodMatcher extends AbstractSpecificationMethodMatcher {
@@ -45,8 +43,21 @@ public class DeleteSpecificationMethodMatcher extends AbstractSpecificationMetho
     @Override
     protected MethodMatch match(MethodMatchContext matchContext, java.util.regex.Matcher matcher) {
         if (TypeUtils.isValidBatchUpdateReturnType(matchContext.getMethodElement())) {
-            Map.Entry<ClassElement, ClassElement> e = FindersUtils.pickDeleteSpecInterceptor(matchContext, matchContext.getReturnType());
-            return mc -> new MethodMatchInfo(DataMethod.OperationType.DELETE, e.getKey(), e.getValue());
+            return mc -> {
+                if (isFirstParameterSpringJpaSpecification(mc.getMethodElement())) {
+                    return new MethodMatchInfo(
+                        DataMethod.OperationType.DELETE,
+                        mc.getReturnType(),
+                        getInterceptorElement(mc, "io.micronaut.data.spring.jpa.intercept.DeleteSpecificationInterceptor")
+                    );
+                }
+                ClassElement classElement = getInterceptorElement(mc, "io.micronaut.data.jpa.repository.intercept.DeleteSpecificationInterceptor");
+                return new MethodMatchInfo(
+                    DataMethod.OperationType.DELETE,
+                    mc.getReturnType(),
+                    classElement
+                );
+            };
         }
         return null;
     }

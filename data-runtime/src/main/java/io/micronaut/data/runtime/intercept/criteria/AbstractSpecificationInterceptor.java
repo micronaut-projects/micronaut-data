@@ -154,7 +154,7 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
             storedQuery = buildFind(context, type, pageable, sqlQueryBuilder, joinPaths);
         } else if (type == Type.COUNT) {
             storedQuery = buildCount(context, sqlQueryBuilder);
-        } else if (type == Type.DELETE_ALL || type == Type.DELETE) {
+        } else if (type == Type.DELETE_ALL) {
             storedQuery = buildDeleteAll(context, sqlQueryBuilder);
         } else if (type == Type.UPDATE_ALL) {
             storedQuery = buildUpdateAll(context, sqlQueryBuilder);
@@ -436,7 +436,7 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
     }
 
     protected enum Type {
-        COUNT, FIND_ONE, FIND_PAGE, FIND_ALL, DELETE_ALL, UPDATE_ALL, EXISTS, DELETE
+        COUNT, FIND_ONE, FIND_PAGE, FIND_ALL, DELETE_ALL, UPDATE_ALL, EXISTS
     }
 
 }

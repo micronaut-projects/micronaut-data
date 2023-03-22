@@ -166,7 +166,7 @@ class SpringCrudRepositoryJpaSpec extends Specification {
         crudRepository.findByName("Jack") != null
     }
 
-    @Ignore("Fix delete spec")
+    @Ignore("Still not completed")
     void "test delete spec"() {
         when:"A person is saved"
         def p1 = new Person(name: "NewPerson", age: 25)
@@ -178,7 +178,7 @@ class SpringCrudRepositoryJpaSpec extends Specification {
         found.name == p1.name
 
         when:"A new person deleted"
-        def deletedCount = crudRepository.delete(SpringCrudRepository.Specifications.deleteNameEquals(found.name))
+        def deletedCount = crudRepository.delete(SpringCrudRepository.Specifications.nameEquals(found.name))
 
         then:"Person is deleted"
         deletedCount == 1
