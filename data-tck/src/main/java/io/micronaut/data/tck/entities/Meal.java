@@ -22,7 +22,6 @@ import io.micronaut.core.annotation.Nullable;
 import jakarta.persistence.Id;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Set;

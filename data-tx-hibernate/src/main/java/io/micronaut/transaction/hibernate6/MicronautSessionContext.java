@@ -60,11 +60,10 @@ public final class MicronautSessionContext implements CurrentSessionContext {
     @SuppressWarnings("deprecation")
     public Session currentSession() throws HibernateException {
         Object value = TransactionSynchronizationManager.getResource(this.sessionFactory);
-        if (value instanceof Session) {
-            return (Session) value;
-        } else if (value instanceof SessionHolder) {
+        if (value instanceof Session session) {
+            return session;
+        } else if (value instanceof SessionHolder sessionHolder) {
             // HibernateTransactionManager
-            SessionHolder sessionHolder = (SessionHolder) value;
             Session session = sessionHolder.getSession();
             if (!sessionHolder.isSynchronizedWithTransaction()) {
                 SynchronousTransactionState state = TransactionSynchronizationManager.getSynchronousTransactionState(this.sessionFactory);
@@ -81,9 +80,9 @@ public final class MicronautSessionContext implements CurrentSessionContext {
                 }
             }
             return session;
-        } else if (value instanceof EntityManagerHolder) {
+        } else if (value instanceof EntityManagerHolder entityManagerHolder) {
             // JpaTransactionManager
-            return ((EntityManagerHolder) value).getEntityManager().unwrap(Session.class);
+            return entityManagerHolder.getEntityManager().unwrap(Session.class);
         }
 
         SynchronousTransactionState state = TransactionSynchronizationManager.getSynchronousTransactionState(this.sessionFactory);

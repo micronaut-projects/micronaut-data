@@ -75,7 +75,6 @@ import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -478,27 +477,27 @@ public class HibernateJpaOperations extends AbstractHibernateOperations<Session,
     @NonNull
     @Override
     public ExecutorAsyncOperations async() {
-        ExecutorAsyncOperations asyncOperations = this.asyncOperations;
-        if (asyncOperations == null) {
+        ExecutorAsyncOperations executorAsyncOperations = this.asyncOperations;
+        if (executorAsyncOperations == null) {
             synchronized (this) { // double check
-                asyncOperations = this.asyncOperations;
-                if (asyncOperations == null) {
-                    asyncOperations = new ExecutorAsyncOperations(
+                executorAsyncOperations = this.asyncOperations;
+                if (executorAsyncOperations == null) {
+                    executorAsyncOperations = new ExecutorAsyncOperations(
                         this,
                         executorService != null ? executorService : newLocalThreadPool()
                     );
-                    this.asyncOperations = asyncOperations;
+                    this.asyncOperations = executorAsyncOperations;
                 }
             }
         }
-        return asyncOperations;
+        return executorAsyncOperations;
     }
 
     @NonNull
     @Override
     public ReactiveRepositoryOperations reactive() {
-        if (dataConversionService instanceof DataConversionService) {
-            return new ExecutorReactiveOperations(async(), (DataConversionService) dataConversionService);
+        if (dataConversionService instanceof DataConversionService asDataConversionService) {
+            return new ExecutorReactiveOperations(async(), asDataConversionService);
         }
         return new ExecutorReactiveOperations(async(), null);
     }
@@ -517,7 +516,7 @@ public class HibernateJpaOperations extends AbstractHibernateOperations<Session,
 
     @Override
     public void flush() {
-        transactionOperations.executeWrite((status) -> {
+        transactionOperations.executeWrite(status -> {
                 sessionFactory.getCurrentSession().flush();
                 return null;
             }
@@ -534,12 +533,12 @@ public class HibernateJpaOperations extends AbstractHibernateOperations<Session,
 
         @Override
         protected void collectTuple(Query query, Function<Tuple, R> fn) {
-            result = ((List<Tuple>) query.getResultList()).stream().map(fn).collect(Collectors.toList());
+            result = ((List<Tuple>) query.getResultList()).stream().map(fn).toList();
         }
 
         @Override
         protected void collect(Query query) {
-            result = (List<R>) query.getResultList();
+            result = query.getResultList();
         }
     }
 
@@ -554,7 +553,7 @@ public class HibernateJpaOperations extends AbstractHibernateOperations<Session,
 
         @Override
         protected void collect(Query query) {
-            result = (Stream<R>) query.getResultStream();
+            result = query.getResultStream();
         }
     }
 

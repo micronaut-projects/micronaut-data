@@ -48,6 +48,9 @@ public abstract class SessionFactoryUtils {
 
     private static final Logger LOG = LoggerFactory.getLogger(SessionFactoryUtils.class);
 
+    private SessionFactoryUtils() {
+    }
+
     /**
      * Trigger a flush on the given Hibernate Session.
      *
@@ -76,7 +79,7 @@ public abstract class SessionFactoryUtils {
                 session.close();
             } catch (HibernateException ex) {
                 LOG.debug("Could not close Hibernate Session", ex);
-            } catch (Throwable ex) {
+            } catch (Exception ex) {
                 LOG.debug("Unexpected exception on closing Hibernate Session", ex);
             }
         }

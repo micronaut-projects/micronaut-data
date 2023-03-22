@@ -49,8 +49,8 @@ public class FlushSynchronization extends TransactionSynchronizationAdapter {
 
     @Override
     public boolean equals(@Nullable Object other) {
-        return (this == other || (other instanceof FlushSynchronization &&
-                this.session == ((FlushSynchronization) other).session));
+        return (this == other || (other instanceof FlushSynchronization flushSynchronization &&
+                this.session == flushSynchronization.session));
     }
 
     @Override

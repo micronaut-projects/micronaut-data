@@ -148,7 +148,7 @@ final class DefaultHibernateReactiveRepositoryOperations extends AbstractHiberna
     @Override
     protected void setHint(Stage.Query<?> query, String hintName, Object value) {
         if (value instanceof EntityGraph) {
-            // TODO: Do we need to check for EntityGraph?
+            // TODO: Do we need to check for EntityGraph or can set any object as hint?
             query.setHint(hintName, value);
             return;
         }
