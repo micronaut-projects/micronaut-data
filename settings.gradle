@@ -72,8 +72,7 @@ include 'doc-examples:hibernate-sync-and-reactive-example-java'
 
 include 'doc-examples:example-hibernate-and-jdbc'
 
-// TODO: Add back when fixed
-// include 'doc-examples:jdbc-example-java'
+include 'doc-examples:jdbc-example-java'
 include 'doc-examples:jdbc-example-groovy'
 include 'doc-examples:jdbc-example-kotlin'
 include 'doc-examples:jdbc-example-records-java'
