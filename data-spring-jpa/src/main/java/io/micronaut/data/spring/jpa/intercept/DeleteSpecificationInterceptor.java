@@ -42,9 +42,8 @@ public class DeleteSpecificationInterceptor extends io.micronaut.data.jpa.reposi
     @Override
     protected io.micronaut.data.jpa.repository.criteria.Specification getSpecification(MethodInvocationContext<?, ?> context) {
         final Object parameterValue = context.getParameterValues()[0];
-        if (parameterValue instanceof Specification) {
-            Specification springSpecification = (Specification) parameterValue;
-            return (root, query, criteriaBuilder) -> springSpecification.toPredicate(root, query, criteriaBuilder);
+        if (parameterValue instanceof Specification springSpecification) {
+            return springSpecification::toPredicate;
         }
         return super.getSpecification(context);
     }
