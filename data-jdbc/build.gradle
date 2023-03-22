@@ -86,11 +86,13 @@ micronaut {
 }
 
 tasks.withType(Test).configureEach {
-    jvmArgs '-Xmx3072m'
+    jvmArgs '-Xmx1024m'
     systemProperty "oracle.jdbc.timezoneAsRegion", "false"
 
     if (micronautBuild.environment.githubAction.get()) {
         // Let some of the checks tests first so the test containers don't eat all the memory
+        mustRunAfter ":data-processor:test"
+        mustRunAfter ":data-document-processor:test"
         mustRunAfter ":data-hibernate-jpa:test"
         mustRunAfter ":data-hibernate-reactive:test"
         mustRunAfter ":data-mongodb:test"
