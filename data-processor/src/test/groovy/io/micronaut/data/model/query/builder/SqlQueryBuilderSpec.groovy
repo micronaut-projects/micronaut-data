@@ -33,22 +33,7 @@ import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
 import io.micronaut.data.model.query.factory.Projections
 import io.micronaut.data.model.runtime.RuntimePersistentEntity
-import io.micronaut.data.tck.entities.Book
-import io.micronaut.data.tck.entities.Car
-import io.micronaut.data.tck.entities.Challenge
-import io.micronaut.data.tck.entities.City
-import io.micronaut.data.tck.entities.CountryRegion
-import io.micronaut.data.tck.entities.Meal
-import io.micronaut.data.tck.entities.Product
-import io.micronaut.data.tck.entities.Restaurant
-import io.micronaut.data.tck.entities.Sale
-import io.micronaut.data.tck.entities.Shipment
-import io.micronaut.data.tck.entities.ShipmentWithIndex
-import io.micronaut.data.tck.entities.ShipmentWithIndexOnClass
-import io.micronaut.data.tck.entities.ShipmentWithIndexOnClassAndFields
-import io.micronaut.data.tck.entities.ShipmentWithIndexOnFields
-import io.micronaut.data.tck.entities.ShipmentWithIndexOnFieldsCompositeIndexes
-import io.micronaut.data.tck.entities.UuidEntity
+import io.micronaut.data.tck.entities.*
 import io.micronaut.data.tck.jdbc.entities.Project
 import io.micronaut.data.tck.jdbc.entities.UserRole
 import spock.lang.Requires
@@ -214,6 +199,94 @@ interface MyRepository {
 
         expect:
         encoded.query == 'SELECT book_.`id`,book_.`author_id`,book_.`genre_id`,book_.`title`,book_.`total_pages`,book_.`publisher_id`,book_.`last_updated`,book_genre_.`genre_name` AS genre_genre_name,book_author_.`name` AS author_name,book_author_.`nick_name` AS author_nick_name FROM `book` book_ LEFT JOIN `genre` book_genre_ ON book_.`genre_id`=book_genre_.`id` INNER JOIN `author` book_author_ ON book_.`author_id`=book_author_.`id` WHERE (book_.`id` = ?)'
+
+    }
+
+    void "test encode to-one join - single level, two join entities, outer joins"() {
+        given:
+        PersistentEntity entity = PersistentEntity.of(Book)
+        QueryModel q = QueryModel.from(entity)
+        q.idEq(new QueryParameter("test"))
+        q.join(entity.getPropertyByName("author") as Association, Join.Type.OUTER)
+        q.join(entity.getPropertyByName("genre") as Association, Join.Type.OUTER_FETCH)
+        QueryBuilder encoder = new SqlQueryBuilder(Dialect.POSTGRES)
+        def encoded = encoder.buildQuery(q)
+
+        expect:
+        encoded.query == 'SELECT book_."id",book_."author_id",book_."genre_id",book_."title",book_."total_pages",book_."publisher_id",book_."last_updated",book_genre_."genre_name" AS genre_genre_name FROM "book" book_ FULL OUTER JOIN "genre" book_genre_ ON book_."genre_id"=book_genre_."id" FULL OUTER JOIN "author" book_author_ ON book_."author_id"=book_author_."id" WHERE (book_."id" = ?)'
+
+    }
+
+
+    void "test encode to-one join - unsupported outer join throws exception for H2 Dialect"() {
+        given:
+        PersistentEntity entity = PersistentEntity.of(Book)
+        QueryModel q = QueryModel.from(entity)
+        q.join(entity.getPropertyByName("author") as Association, Join.Type.OUTER)
+        QueryBuilder encoder = new SqlQueryBuilder(Dialect.H2)
+
+        when:
+        encoder.buildQuery(q)
+
+        then:
+        def e = thrown(IllegalArgumentException)
+
+        expect:
+        e.message == "Unsupported join type [OUTER] by dialect [H2]"
+
+    }
+
+    void "test encode to-one join - unsupported outer fetch join throws exception for H2 Dialect"() {
+        given:
+        PersistentEntity entity = PersistentEntity.of(Book)
+        QueryModel q = QueryModel.from(entity)
+        q.join(entity.getPropertyByName("author") as Association, Join.Type.OUTER_FETCH)
+        QueryBuilder encoder = new SqlQueryBuilder(Dialect.H2)
+
+        when:
+        encoder.buildQuery(q)
+
+        then:
+        def e = thrown(IllegalArgumentException)
+
+        expect:
+        e.message == "Unsupported join type [OUTER_FETCH] by dialect [H2]"
+
+    }
+
+    void "test encode to-one join - unsupported outer join throws exception for MYSQL Dialect"() {
+        given:
+        PersistentEntity entity = PersistentEntity.of(Book)
+        QueryModel q = QueryModel.from(entity)
+        q.join(entity.getPropertyByName("author") as Association, Join.Type.OUTER)
+        QueryBuilder encoder = new SqlQueryBuilder(Dialect.MYSQL)
+
+        when:
+        encoder.buildQuery(q)
+
+        then:
+        def e = thrown(IllegalArgumentException)
+
+        expect:
+        e.message == "Unsupported join type [OUTER] by dialect [MYSQL]"
+
+    }
+
+    void "test encode to-one join - unsupported outer fetch join throws exception for MYSQL Dialect"() {
+        given:
+        PersistentEntity entity = PersistentEntity.of(Book)
+        QueryModel q = QueryModel.from(entity)
+        q.join(entity.getPropertyByName("author") as Association, Join.Type.OUTER_FETCH)
+        QueryBuilder encoder = new SqlQueryBuilder(Dialect.MYSQL)
+
+        when:
+        encoder.buildQuery(q)
+
+        then:
+        def e = thrown(IllegalArgumentException)
+
+        expect:
+        e.message == "Unsupported join type [OUTER_FETCH] by dialect [MYSQL]"
 
     }
 
