@@ -40,7 +40,7 @@ vertx = "4.4.0"
 oracle-jdbc-driver = "21.9.0.0"
 mariadb-jdbc-driver = "3.1.2"
 mysql-jdbc-driver = "8.0.32"
-postgres-jdbc-driver = "42.5.4"
+postgres-jdbc-driver = "42.6.0"
 mssql-jdbc-driver = "8.4.1.jre14"
 
 # R2DBC Drivers
