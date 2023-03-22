@@ -6,6 +6,7 @@ dependencies {
     implementation platform(mn.micronaut.core.bom)
 
     annotationProcessor mn.micronaut.inject.java
+    annotationProcessor mnValidation.micronaut.validation.processor
     annotationProcessor projects.dataProcessor
 
     implementation mn.micronaut.http.client

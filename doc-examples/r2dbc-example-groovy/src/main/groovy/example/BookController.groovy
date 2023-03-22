@@ -5,8 +5,8 @@ import io.micronaut.http.annotation.*
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 
-import javax.validation.Valid
-import javax.validation.constraints.NotNull
+import jakarta.validation.Valid
+import jakarta.validation.constraints.NotNull
 
 @Controller("/books")
 class BookController {

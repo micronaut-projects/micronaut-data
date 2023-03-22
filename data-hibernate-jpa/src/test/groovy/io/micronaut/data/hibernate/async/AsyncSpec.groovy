@@ -85,7 +85,7 @@ class AsyncSpec extends Specification {
         when:"An entity is not found"
         def notThere = asyncCrudRepository.findById(1000L)
                 .exceptionally({ Throwable t ->
-                    if (t instanceof EmptyResultException) {
+                    if (t instanceof EmptyResultException || t.getCause() instanceof EmptyResultException) {
                         return null
                     }
                     throw t

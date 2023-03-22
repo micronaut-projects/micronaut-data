@@ -9,7 +9,7 @@ import org.springframework.transaction.interceptor.TransactionAspectSupport
 import spock.lang.Specification
 
 import jakarta.inject.Inject
-import javax.persistence.EntityManager
+import jakarta.persistence.EntityManager
 import javax.transaction.Transactional
 
 @MicronautTest(packages = "io.micronaut.data.tck.entities", transactional = false)
