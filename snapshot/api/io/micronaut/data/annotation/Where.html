@@ -116,9 +116,10 @@ loadScripts(document, 'script');</script>
 <div class="member-signature"><span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">value</span></div>
 <div class="block">The string value that represents the additional query criterion. For example: <code>enabled = true</code>
 
- <p>Note that if it may be required to specify the query alias in queries. For example: <code>book_.enabled = true</code></p>
+ <p>Note that if it may be required to specify the query alias in queries. For example: <code>book_.enabled = true</code>.
+ `@` can be used as a placeholder for the query's alias</p>
 
- <p>Parameterized variables can be specified using the dollar syntax: <code>book_.enabled = ${enabled}</code>. In
+ <p>Parameterized variables can be specified using the dollar syntax: <code>book_.enabled = :enabled</code>. In
  this case the parameter must be declared in the method signature a compilation error will occur.</p>
 
  <p>Use cases including soft-delete, multi-tenancy etc.</p></div>

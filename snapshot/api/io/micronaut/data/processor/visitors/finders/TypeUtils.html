@@ -120,112 +120,110 @@ loadScripts(document, 'script');</script>
 <div class="block">Return true if the left type is compatible or can be assigned to the right type.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static boolean</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#doesReturnBoolean(io.micronaut.inject.ast.MethodElement)" class="member-name-link">doesReturnBoolean</a><wbr>(io.micronaut.inject.ast.MethodElement&nbsp;methodElement)</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#doesMethodProducesABoolean(io.micronaut.inject.ast.MethodElement)" class="member-name-link">doesMethodProducesABoolean</a><wbr>(io.micronaut.inject.ast.MethodElement&nbsp;methodElement)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
 <div class="block">Does the given method element return boolean.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static boolean</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#doesReturnNumber(io.micronaut.inject.ast.MethodElement)" class="member-name-link">doesReturnNumber</a><wbr>(io.micronaut.inject.ast.MethodElement&nbsp;methodElement)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#doesMethodProducesANumber(io.micronaut.inject.ast.MethodElement)" class="member-name-link">doesMethodProducesANumber</a><wbr>(io.micronaut.inject.ast.MethodElement&nbsp;methodElement)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
 <div class="block">Does the method return an object convertible to a number.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static boolean</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#doesReturnVoid(io.micronaut.inject.ast.MethodElement)" class="member-name-link">doesReturnVoid</a><wbr>(io.micronaut.inject.ast.MethodElement&nbsp;methodElement)</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#doesMethodProducesIterableOfAnEntity(io.micronaut.inject.ast.MethodElement)" class="member-name-link">doesMethodProducesIterableOfAnEntity</a><wbr>(io.micronaut.inject.ast.MethodElement&nbsp;methodElement)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
+<div class="block">Checks whether the return type is supported.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static boolean</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#doesReturnVoid(io.micronaut.inject.ast.MethodElement)" class="member-name-link">doesReturnVoid</a><wbr>(io.micronaut.inject.ast.MethodElement&nbsp;methodElement)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
 <div class="block">Does the method element return void.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#getTypeName(io.micronaut.inject.ast.ClassElement)" class="member-name-link">getTypeName</a><wbr>(io.micronaut.inject.ast.ClassElement&nbsp;type)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static io.micronaut.inject.ast.ClassElement</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#getKotlinCoroutineProducedType(io.micronaut.inject.ast.MethodElement)" class="member-name-link">getKotlinCoroutineProducedType</a><wbr>(io.micronaut.inject.ast.MethodElement&nbsp;methodElement)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static io.micronaut.inject.ast.ClassElement</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#getMethodProducingItemType(io.micronaut.inject.ast.MethodElement)" class="member-name-link">getMethodProducingItemType</a><wbr>(io.micronaut.inject.ast.MethodElement&nbsp;methodElement)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#getTypeName(io.micronaut.inject.ast.ClassElement)" class="member-name-link">getTypeName</a><wbr>(io.micronaut.inject.ast.ClassElement&nbsp;type)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
 <div class="block">Return the type for the given class element, wrapping primitives types if necessary.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static boolean</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#hasPersistedTypeArgument(io.micronaut.inject.ast.ClassElement)" class="member-name-link">hasPersistedTypeArgument</a><wbr>(io.micronaut.inject.ast.ClassElement&nbsp;type)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static boolean</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#hasPersistedTypeArgument(io.micronaut.inject.ast.ClassElement)" class="member-name-link">hasPersistedTypeArgument</a><wbr>(io.micronaut.inject.ast.ClassElement&nbsp;type)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
 <div class="block">Does the given type have a first argument annotated with <a href="../../../annotation/MappedEntity.html" title="annotation interface in io.micronaut.data.annotation"><code>MappedEntity</code></a>.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static boolean</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#isBoolean(io.micronaut.inject.ast.ClassElement)" class="member-name-link">isBoolean</a><wbr>(io.micronaut.inject.ast.ClassElement&nbsp;type)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static boolean</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#isBoolean(io.micronaut.inject.ast.ClassElement)" class="member-name-link">isBoolean</a><wbr>(io.micronaut.inject.ast.ClassElement&nbsp;type)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
 <div class="block">Is the type a boolean.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static boolean</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#isComparable(io.micronaut.inject.ast.ClassElement)" class="member-name-link">isComparable</a><wbr>(io.micronaut.inject.ast.ClassElement&nbsp;type)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static boolean</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#isComparable(io.micronaut.inject.ast.ClassElement)" class="member-name-link">isComparable</a><wbr>(io.micronaut.inject.ast.ClassElement&nbsp;type)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
 <div class="block">Is the type a number.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static boolean</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#isContainerType(io.micronaut.inject.ast.ClassElement)" class="member-name-link">isContainerType</a><wbr>(io.micronaut.inject.ast.ClassElement&nbsp;type)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static boolean</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#isContainerType(io.micronaut.inject.ast.ClassElement)" class="member-name-link">isContainerType</a><wbr>(io.micronaut.inject.ast.ClassElement&nbsp;type)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
 <div class="block">Is the type a container type such as a collection etc.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static boolean</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#isEntity(io.micronaut.inject.ast.ClassElement)" class="member-name-link">isEntity</a><wbr>(io.micronaut.inject.ast.ClassElement&nbsp;type)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static boolean</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#isEntity(io.micronaut.inject.ast.ClassElement)" class="member-name-link">isEntity</a><wbr>(io.micronaut.inject.ast.ClassElement&nbsp;type)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
 <div class="block">Does the given type have an <a href="../../../annotation/MappedEntity.html" title="annotation interface in io.micronaut.data.annotation"><code>MappedEntity</code></a>.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static boolean</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#isEntityContainerType(io.micronaut.inject.ast.ClassElement)" class="member-name-link">isEntityContainerType</a><wbr>(io.micronaut.inject.ast.ClassElement&nbsp;type)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static boolean</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#isEntityContainerType(io.micronaut.inject.ast.ClassElement)" class="member-name-link">isEntityContainerType</a><wbr>(io.micronaut.inject.ast.ClassElement&nbsp;type)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
 <div class="block">Is the given type a container type of entity.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static boolean</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#isFutureType(io.micronaut.inject.ast.ClassElement)" class="member-name-link">isFutureType</a><wbr>(io.micronaut.inject.ast.ClassElement&nbsp;type)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static boolean</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#isFutureType(io.micronaut.inject.ast.ClassElement)" class="member-name-link">isFutureType</a><wbr>(io.micronaut.inject.ast.ClassElement&nbsp;type)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
 <div class="block">Is the type a future type.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static boolean</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#isIterableOfEntity(io.micronaut.inject.ast.ClassElement)" class="member-name-link">isIterableOfEntity</a><wbr>(io.micronaut.inject.ast.ClassElement&nbsp;type)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static boolean</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#isIterableOfEntity(io.micronaut.inject.ast.ClassElement)" class="member-name-link">isIterableOfEntity</a><wbr>(io.micronaut.inject.ast.ClassElement&nbsp;type)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
 <div class="block">Is the element an iterable of an entity.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static boolean</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#isNumber(io.micronaut.inject.ast.ClassElement)" class="member-name-link">isNumber</a><wbr>(io.micronaut.inject.ast.ClassElement&nbsp;type)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static boolean</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#isNumber(io.micronaut.inject.ast.ClassElement)" class="member-name-link">isNumber</a><wbr>(io.micronaut.inject.ast.ClassElement&nbsp;type)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
 <div class="block">Is the type a number.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static boolean</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#isObjectClass(io.micronaut.inject.ast.ClassElement)" class="member-name-link">isObjectClass</a><wbr>(io.micronaut.inject.ast.ClassElement&nbsp;type)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static boolean</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#isObjectClass(io.micronaut.inject.ast.ClassElement)" class="member-name-link">isObjectClass</a><wbr>(io.micronaut.inject.ast.ClassElement&nbsp;type)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
 <div class="block">Whether the given type is Object.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static boolean</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#isReactiveOrFuture(io.micronaut.inject.ast.ClassElement)" class="member-name-link">isReactiveOrFuture</a><wbr>(io.micronaut.inject.ast.ClassElement&nbsp;type)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static boolean</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#isReactiveOrFuture(io.micronaut.inject.ast.ClassElement)" class="member-name-link">isReactiveOrFuture</a><wbr>(io.micronaut.inject.ast.ClassElement&nbsp;type)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
 <div class="block">Is the type a future type.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static boolean</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#isReactiveType(io.micronaut.inject.ast.ClassElement)" class="member-name-link">isReactiveType</a><wbr>(io.micronaut.inject.ast.ClassElement&nbsp;type)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static boolean</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#isReactiveType(io.micronaut.inject.ast.ClassElement)" class="member-name-link">isReactiveType</a><wbr>(io.micronaut.inject.ast.ClassElement&nbsp;type)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
 <div class="block">Is the type a reactive type.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static boolean</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#isValidBatchUpdateReturnType(io.micronaut.inject.ast.MethodElement)" class="member-name-link">isValidBatchUpdateReturnType</a><wbr>(io.micronaut.inject.ast.MethodElement&nbsp;methodElement)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static boolean</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#isValidBatchUpdateReturnType(io.micronaut.inject.ast.MethodElement)" class="member-name-link">isValidBatchUpdateReturnType</a><wbr>(io.micronaut.inject.ast.MethodElement&nbsp;methodElement)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
 <div class="block">Returns true if the return type is considered valid for batch update operations likes deletes and updates.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static boolean</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#isValidCountReturnType(io.micronaut.data.processor.visitors.MatchContext)" class="member-name-link">isValidCountReturnType</a><wbr>(<a href="../MatchContext.html" title="class in io.micronaut.data.processor.visitors">MatchContext</a>&nbsp;matchContext)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
-<div class="block">Checks whether the return type is supported.</div>
-</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static boolean</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#isValidExistsReturnType(io.micronaut.data.processor.visitors.MatchContext)" class="member-name-link">isValidExistsReturnType</a><wbr>(<a href="../MatchContext.html" title="class in io.micronaut.data.processor.visitors">MatchContext</a>&nbsp;context)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static boolean</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#isValidFindAllReturnType(io.micronaut.data.processor.visitors.MatchContext)" class="member-name-link">isValidFindAllReturnType</a><wbr>(<a href="../MatchContext.html" title="class in io.micronaut.data.processor.visitors">MatchContext</a>&nbsp;matchContext)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
-<div class="block">Checks whether the return type is supported.</div>
-</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static boolean</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#isVoid(io.micronaut.inject.ast.ClassElement)" class="member-name-link">isVoid</a><wbr>(io.micronaut.inject.ast.ClassElement&nbsp;type)</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#isValidCountReturnType(io.micronaut.data.processor.visitors.MatchContext)" class="member-name-link">isValidCountReturnType</a><wbr>(<a href="../MatchContext.html" title="class in io.micronaut.data.processor.visitors">MatchContext</a>&nbsp;matchContext)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
-<div class="block">Is the type void.</div>
+<div class="block">Checks whether the return type is supported.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static boolean</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#isVoidOrNumberArgument(io.micronaut.inject.ast.ClassElement)" class="member-name-link">isVoidOrNumberArgument</a><wbr>(io.micronaut.inject.ast.ClassElement&nbsp;type)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#isVoid(io.micronaut.inject.ast.ClassElement)" class="member-name-link">isVoid</a><wbr>(io.micronaut.inject.ast.ClassElement&nbsp;type)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
-<div class="block">Retruns true if no type argument is present, a void argument is present or a boolean argument is present.</div>
+<div class="block">Is the type void.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#resolveDataConverter(io.micronaut.inject.ast.ClassElement,java.util.Map)" class="member-name-link">resolveDataConverter</a><wbr>(io.micronaut.inject.ast.ClassElement&nbsp;type,
@@ -275,6 +273,14 @@ loadScripts(document, 'script');</script>
 <section class="method-details" id="method-detail">
 <h2>Method Details</h2>
 <ul class="member-list">
+<li>
+<section class="detail" id="getKotlinCoroutineProducedType(io.micronaut.inject.ast.MethodElement)">
+<h3>getKotlinCoroutineProducedType</h3>
+<div class="member-signature"><span class="annotations">@Nullable
+</span><span class="modifiers">public static</span>&nbsp;<span class="return-type">io.micronaut.inject.ast.ClassElement</span>&nbsp;<span class="element-name">getKotlinCoroutineProducedType</span><wbr><span class="parameters">(@NonNull
+ io.micronaut.inject.ast.MethodElement&nbsp;methodElement)</span></div>
+</section>
+</li>
 <li>
 <section class="detail" id="isIterableOfEntity(io.micronaut.inject.ast.ClassElement)">
 <h3>isIterableOfEntity</h3>
@@ -332,9 +338,9 @@ loadScripts(document, 'script');</script>
 </section>
 </li>
 <li>
-<section class="detail" id="doesReturnNumber(io.micronaut.inject.ast.MethodElement)">
-<h3>doesReturnNumber</h3>
-<div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">doesReturnNumber</span><wbr><span class="parameters">(@NonNull
+<section class="detail" id="doesMethodProducesANumber(io.micronaut.inject.ast.MethodElement)">
+<h3>doesMethodProducesANumber</h3>
+<div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">doesMethodProducesANumber</span><wbr><span class="parameters">(@NonNull
  io.micronaut.inject.ast.MethodElement&nbsp;methodElement)</span></div>
 <div class="block">Does the method return an object convertible to a number.</div>
 <dl class="notes">
@@ -360,9 +366,17 @@ loadScripts(document, 'script');</script>
 </section>
 </li>
 <li>
-<section class="detail" id="doesReturnBoolean(io.micronaut.inject.ast.MethodElement)">
-<h3>doesReturnBoolean</h3>
-<div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">doesReturnBoolean</span><wbr><span class="parameters">(@NonNull
+<section class="detail" id="getMethodProducingItemType(io.micronaut.inject.ast.MethodElement)">
+<h3>getMethodProducingItemType</h3>
+<div class="member-signature"><span class="annotations">@Nullable
+</span><span class="modifiers">public static</span>&nbsp;<span class="return-type">io.micronaut.inject.ast.ClassElement</span>&nbsp;<span class="element-name">getMethodProducingItemType</span><wbr><span class="parameters">(@NonNull
+ io.micronaut.inject.ast.MethodElement&nbsp;methodElement)</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="doesMethodProducesABoolean(io.micronaut.inject.ast.MethodElement)">
+<h3>doesMethodProducesABoolean</h3>
+<div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">doesMethodProducesABoolean</span><wbr><span class="parameters">(@NonNull
  io.micronaut.inject.ast.MethodElement&nbsp;methodElement)</span></div>
 <div class="block">Does the given method element return boolean.</div>
 <dl class="notes">
@@ -486,25 +500,6 @@ loadScripts(document, 'script');</script>
 </section>
 </li>
 <li>
-<section class="detail" id="isValidExistsReturnType(io.micronaut.data.processor.visitors.MatchContext)">
-<h3>isValidExistsReturnType</h3>
-<div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">isValidExistsReturnType</span><wbr><span class="parameters">(<a href="../MatchContext.html" title="class in io.micronaut.data.processor.visitors">MatchContext</a>&nbsp;context)</span></div>
-</section>
-</li>
-<li>
-<section class="detail" id="isVoidOrNumberArgument(io.micronaut.inject.ast.ClassElement)">
-<h3>isVoidOrNumberArgument</h3>
-<div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">isVoidOrNumberArgument</span><wbr><span class="parameters">(io.micronaut.inject.ast.ClassElement&nbsp;type)</span></div>
-<div class="block">Retruns true if no type argument is present, a void argument is present or a boolean argument is present.</div>
-<dl class="notes">
-<dt>Parameters:</dt>
-<dd><code>type</code> - The type</dd>
-<dt>Returns:</dt>
-<dd>True if the argument is a void argument</dd>
-</dl>
-</section>
-</li>
-<li>
 <section class="detail" id="isValidBatchUpdateReturnType(io.micronaut.inject.ast.MethodElement)">
 <h3>isValidBatchUpdateReturnType</h3>
 <div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">isValidBatchUpdateReturnType</span><wbr><span class="parameters">(io.micronaut.inject.ast.MethodElement&nbsp;methodElement)</span></div>
@@ -531,13 +526,13 @@ loadScripts(document, 'script');</script>
 </section>
 </li>
 <li>
-<section class="detail" id="isValidFindAllReturnType(io.micronaut.data.processor.visitors.MatchContext)">
-<h3>isValidFindAllReturnType</h3>
-<div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">isValidFindAllReturnType</span><wbr><span class="parameters">(<a href="../MatchContext.html" title="class in io.micronaut.data.processor.visitors">MatchContext</a>&nbsp;matchContext)</span></div>
+<section class="detail" id="doesMethodProducesIterableOfAnEntity(io.micronaut.inject.ast.MethodElement)">
+<h3>doesMethodProducesIterableOfAnEntity</h3>
+<div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">doesMethodProducesIterableOfAnEntity</span><wbr><span class="parameters">(io.micronaut.inject.ast.MethodElement&nbsp;methodElement)</span></div>
 <div class="block">Checks whether the return type is supported.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
-<dd><code>matchContext</code> - The match context</dd>
+<dd><code>methodElement</code> - The method</dd>
 <dt>Returns:</dt>
 <dd>True if it is supported</dd>
 </dl>

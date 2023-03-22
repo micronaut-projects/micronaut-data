@@ -946,7 +946,7 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Implementation of the asynchronous transaction manager using a reactive transaction manager.</div>
 </dd>
-<dt><a href="io/micronaut/transaction/async/AsyncUsingReactiveTransactionOperations.html#%3Cinit%3E(io.micronaut.transaction.reactive.ReactorReactiveTransactionOperations,io.micronaut.transaction.interceptor.CoroutineTxHelper)" class="member-name-link">AsyncUsingReactiveTransactionOperations(ReactorReactiveTransactionOperations&lt;C&gt;, CoroutineTxHelper)</a> - Constructor for class io.micronaut.transaction.async.<a href="io/micronaut/transaction/async/AsyncUsingReactiveTransactionOperations.html" title="class in io.micronaut.transaction.async">AsyncUsingReactiveTransactionOperations</a></dt>
+<dt><a href="io/micronaut/transaction/async/AsyncUsingReactiveTransactionOperations.html#%3Cinit%3E(io.micronaut.transaction.reactive.ReactorReactiveTransactionOperations,io.micronaut.transaction.interceptor.CoroutineTxHelper,io.micronaut.transaction.interceptor.ReactorCoroutineTxHelper)" class="member-name-link">AsyncUsingReactiveTransactionOperations(ReactorReactiveTransactionOperations&lt;C&gt;, CoroutineTxHelper, ReactorCoroutineTxHelper)</a> - Constructor for class io.micronaut.transaction.async.<a href="io/micronaut/transaction/async/AsyncUsingReactiveTransactionOperations.html" title="class in io.micronaut.transaction.async">AsyncUsingReactiveTransactionOperations</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/transaction/async/AsyncUsingSyncTransactionOperations.html" class="type-name-link" title="class in io.micronaut.transaction.async">AsyncUsingSyncTransactionOperations</a>&lt;<a href="io/micronaut/transaction/async/AsyncUsingSyncTransactionOperations.html" title="type parameter in AsyncUsingSyncTransactionOperations">C</a>&gt; - Class in <a href="io/micronaut/transaction/async/package-summary.html">io.micronaut.transaction.async</a></dt>
 <dd>
@@ -3831,13 +3831,17 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Whether this association cascades the given types.</div>
 </dd>
-<dt><a href="io/micronaut/data/processor/visitors/finders/TypeUtils.html#doesReturnBoolean(io.micronaut.inject.ast.MethodElement)" class="member-name-link">doesReturnBoolean(MethodElement)</a> - Static method in class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/TypeUtils.html" title="class in io.micronaut.data.processor.visitors.finders">TypeUtils</a></dt>
+<dt><a href="io/micronaut/data/processor/visitors/finders/TypeUtils.html#doesMethodProducesABoolean(io.micronaut.inject.ast.MethodElement)" class="member-name-link">doesMethodProducesABoolean(MethodElement)</a> - Static method in class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/TypeUtils.html" title="class in io.micronaut.data.processor.visitors.finders">TypeUtils</a></dt>
 <dd>
 <div class="block">Does the given method element return boolean.</div>
 </dd>
-<dt><a href="io/micronaut/data/processor/visitors/finders/TypeUtils.html#doesReturnNumber(io.micronaut.inject.ast.MethodElement)" class="member-name-link">doesReturnNumber(MethodElement)</a> - Static method in class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/TypeUtils.html" title="class in io.micronaut.data.processor.visitors.finders">TypeUtils</a></dt>
+<dt><a href="io/micronaut/data/processor/visitors/finders/TypeUtils.html#doesMethodProducesANumber(io.micronaut.inject.ast.MethodElement)" class="member-name-link">doesMethodProducesANumber(MethodElement)</a> - Static method in class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/TypeUtils.html" title="class in io.micronaut.data.processor.visitors.finders">TypeUtils</a></dt>
 <dd>
 <div class="block">Does the method return an object convertible to a number.</div>
+</dd>
+<dt><a href="io/micronaut/data/processor/visitors/finders/TypeUtils.html#doesMethodProducesIterableOfAnEntity(io.micronaut.inject.ast.MethodElement)" class="member-name-link">doesMethodProducesIterableOfAnEntity(MethodElement)</a> - Static method in class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/TypeUtils.html" title="class in io.micronaut.data.processor.visitors.finders">TypeUtils</a></dt>
+<dd>
+<div class="block">Checks whether the return type is supported.</div>
 </dd>
 <dt><a href="io/micronaut/data/processor/visitors/finders/TypeUtils.html#doesReturnVoid(io.micronaut.inject.ast.MethodElement)" class="member-name-link">doesReturnVoid(MethodElement)</a> - Static method in class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/TypeUtils.html" title="class in io.micronaut.data.processor.visitors.finders">TypeUtils</a></dt>
 <dd>
@@ -4702,7 +4706,7 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/visitors/finders/Restrictions.PropertyRestriction.html#find(io.micronaut.data.model.jpa.criteria.PersistentEntityRoot,io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder,jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.ParameterExpression%5B%5D)" class="member-name-link">find(PersistentEntityRoot&lt;?&gt;, PersistentEntityCriteriaBuilder, Expression&lt;T&gt;, ParameterExpression&lt;T&gt;[])</a> - Method in interface io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/Restrictions.PropertyRestriction.html" title="interface in io.micronaut.data.processor.visitors.finders">Restrictions.PropertyRestriction</a></dt>
 <dd>&nbsp;</dd>
-<dt><a href="io/micronaut/data/processor/visitors/finders/Restrictions.PropertyArrayContains.html#find(io.micronaut.data.model.jpa.criteria.PersistentEntityRoot,io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder,jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.ParameterExpression%5B%5D)" class="member-name-link">find(PersistentEntityRoot&lt;?&gt;, PersistentEntityCriteriaBuilder, Expression&lt;T&gt;, ParameterExpression&lt;T&gt;[])</a> - Method in class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/Restrictions.PropertyArrayContains.html" title="class in io.micronaut.data.processor.visitors.finders">Restrictions.PropertyArrayContains</a></dt>
+<dt><a href="io/micronaut/data/processor/visitors/finders/Restrictions.PropertyCollectionContains.html#find(io.micronaut.data.model.jpa.criteria.PersistentEntityRoot,io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder,jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.ParameterExpression%5B%5D)" class="member-name-link">find(PersistentEntityRoot&lt;?&gt;, PersistentEntityCriteriaBuilder, Expression&lt;T&gt;, ParameterExpression&lt;T&gt;[])</a> - Method in class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/Restrictions.PropertyCollectionContains.html" title="class in io.micronaut.data.processor.visitors.finders">Restrictions.PropertyCollectionContains</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/visitors/finders/Restrictions.PropertyIsNotEmpty.html#find(io.micronaut.data.model.jpa.criteria.PersistentEntityRoot,io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder,jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.ParameterExpression%5B%5D)" class="member-name-link">find(PersistentEntityRoot&lt;?&gt;, PersistentEntityCriteriaBuilder, Expression&lt;String&gt;, ParameterExpression&lt;String&gt;[])</a> - Method in class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/Restrictions.PropertyIsNotEmpty.html" title="class in io.micronaut.data.processor.visitors.finders">Restrictions.PropertyIsNotEmpty</a></dt>
 <dd>&nbsp;</dd>
@@ -5935,7 +5939,7 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/runtime/RuntimePersistentEntity.html#getAssociations()" class="member-name-link">getAssociations()</a> - Method in class io.micronaut.data.model.runtime.<a href="io/micronaut/data/model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a></dt>
 <dd>&nbsp;</dd>
-<dt><a href="io/micronaut/data/processor/visitors/finders/FindersUtils.html#getAsyncType(io.micronaut.data.processor.visitors.MethodMatchContext,io.micronaut.inject.ast.ClassElement)" class="member-name-link">getAsyncType(MethodMatchContext, ClassElement)</a> - Static method in interface io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/FindersUtils.html" title="interface in io.micronaut.data.processor.visitors.finders">FindersUtils</a></dt>
+<dt><a href="io/micronaut/data/processor/visitors/finders/FindersUtils.html#getAsyncType(io.micronaut.inject.ast.MethodElement,io.micronaut.inject.ast.ClassElement)" class="member-name-link">getAsyncType(MethodElement, ClassElement)</a> - Static method in interface io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/FindersUtils.html" title="interface in io.micronaut.data.processor.visitors.finders">FindersUtils</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/jpa/criteria/PersistentAssociationPath.html#getAttribute()" class="member-name-link">getAttribute()</a> - Method in interface io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentAssociationPath</a></dt>
 <dd>&nbsp;</dd>
@@ -6694,6 +6698,8 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/model/SourceAssociation.html#getKind()" class="member-name-link">getKind()</a> - Method in class io.micronaut.data.processor.model.<a href="io/micronaut/data/processor/model/SourceAssociation.html" title="class in io.micronaut.data.processor.model">SourceAssociation</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/processor/visitors/finders/TypeUtils.html#getKotlinCoroutineProducedType(io.micronaut.inject.ast.MethodElement)" class="member-name-link">getKotlinCoroutineProducedType(MethodElement)</a> - Static method in class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/TypeUtils.html" title="class in io.micronaut.data.processor.visitors.finders">TypeUtils</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/transaction/interceptor/KotlinInterceptedMethodAsyncResultSupplier.html#getKotlinInterceptedMethod()" class="member-name-link">getKotlinInterceptedMethod()</a> - Method in class io.micronaut.transaction.interceptor.<a href="io/micronaut/transaction/interceptor/KotlinInterceptedMethodAsyncResultSupplier.html" title="class in io.micronaut.transaction.interceptor">KotlinInterceptedMethodAsyncResultSupplier</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/support/AbstractConversionContext.html#getLastError()" class="member-name-link">getLastError()</a> - Method in class io.micronaut.data.runtime.support.<a href="io/micronaut/data/runtime/support/AbstractConversionContext.html" title="class in io.micronaut.data.runtime.support">AbstractConversionContext</a></dt>
@@ -6745,6 +6751,8 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html#getMethod()" class="member-name-link">getMethod()</a> - Method in class io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html" title="class in io.micronaut.data.runtime.query.internal">DefaultStoredQuery</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/visitors/MatchContext.html#getMethodElement()" class="member-name-link">getMethodElement()</a> - Method in class io.micronaut.data.processor.visitors.<a href="io/micronaut/data/processor/visitors/MatchContext.html" title="class in io.micronaut.data.processor.visitors">MatchContext</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/processor/visitors/finders/TypeUtils.html#getMethodProducingItemType(io.micronaut.inject.ast.MethodElement)" class="member-name-link">getMethodProducingItemType(MethodElement)</a> - Static method in class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/TypeUtils.html" title="class in io.micronaut.data.processor.visitors.finders">TypeUtils</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/mongodb/operations/options/MongoFindOptions.html#getMin()" class="member-name-link">getMin()</a> - Method in class io.micronaut.data.mongodb.operations.options.<a href="io/micronaut/data/mongodb/operations/options/MongoFindOptions.html" title="class in io.micronaut.data.mongodb.operations.options">MongoFindOptions</a></dt>
 <dd>&nbsp;</dd>
@@ -6947,6 +6955,8 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/micronaut/data/processor/visitors/finders/Restrictions.PropertyArrayContains.html#getName()" class="member-name-link">getName()</a> - Method in class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/Restrictions.PropertyArrayContains.html" title="class in io.micronaut.data.processor.visitors.finders">Restrictions.PropertyArrayContains</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/visitors/finders/Restrictions.PropertyBetween.html#getName()" class="member-name-link">getName()</a> - Method in class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/Restrictions.PropertyBetween.html" title="class in io.micronaut.data.processor.visitors.finders">Restrictions.PropertyBetween</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/processor/visitors/finders/Restrictions.PropertyCollectionContains.html#getName()" class="member-name-link">getName()</a> - Method in class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/Restrictions.PropertyCollectionContains.html" title="class in io.micronaut.data.processor.visitors.finders">Restrictions.PropertyCollectionContains</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/visitors/finders/Restrictions.PropertyContaining.html#getName()" class="member-name-link">getName()</a> - Method in class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/Restrictions.PropertyContaining.html" title="class in io.micronaut.data.processor.visitors.finders">Restrictions.PropertyContaining</a></dt>
 <dd>&nbsp;</dd>
@@ -7650,6 +7660,8 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/r2dbc/config/DataR2dbcConfiguration.html#getR2dbcOperations()" class="member-name-link">getR2dbcOperations()</a> - Method in class io.micronaut.data.r2dbc.config.<a href="io/micronaut/data/r2dbc/config/DataR2dbcConfiguration.html" title="class in io.micronaut.data.r2dbc.config">DataR2dbcConfiguration</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/transaction/interceptor/ReactorCoroutineTxHelper.html#getReactorContext(io.micronaut.aop.kotlin.KotlinInterceptedMethod)" class="member-name-link">getReactorContext(KotlinInterceptedMethod)</a> - Method in class io.micronaut.transaction.interceptor.<a href="io/micronaut/transaction/interceptor/ReactorCoroutineTxHelper.html" title="class in io.micronaut.transaction.interceptor">ReactorCoroutineTxHelper</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/mongodb/operations/DefaultReactiveMongoRepositoryOperations.html#getReplaceOptions(io.micronaut.core.annotation.AnnotationMetadata)" class="member-name-link">getReplaceOptions(AnnotationMetadata)</a> - Method in class io.micronaut.data.mongodb.operations.<a href="io/micronaut/data/mongodb/operations/DefaultReactiveMongoRepositoryOperations.html" title="class in io.micronaut.data.mongodb.operations">DefaultReactiveMongoRepositoryOperations</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/visitors/MatchContext.html#getRepositoryClass()" class="member-name-link">getRepositoryClass()</a> - Method in class io.micronaut.data.processor.visitors.<a href="io/micronaut/data/processor/visitors/MatchContext.html" title="class in io.micronaut.data.processor.visitors">MatchContext</a></dt>
@@ -7686,7 +7698,7 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/visitors/finders/Restrictions.Restriction.html#getRequiredParameters()" class="member-name-link">getRequiredParameters()</a> - Method in interface io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/Restrictions.Restriction.html" title="interface in io.micronaut.data.processor.visitors.finders">Restrictions.Restriction</a></dt>
 <dd>&nbsp;</dd>
-<dt><a href="io/micronaut/data/processor/visitors/finders/Restrictions.PropertyArrayContains.html#getRequiredParameters()" class="member-name-link">getRequiredParameters()</a> - Method in class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/Restrictions.PropertyArrayContains.html" title="class in io.micronaut.data.processor.visitors.finders">Restrictions.PropertyArrayContains</a></dt>
+<dt><a href="io/micronaut/data/processor/visitors/finders/Restrictions.PropertyCollectionContains.html#getRequiredParameters()" class="member-name-link">getRequiredParameters()</a> - Method in class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/Restrictions.PropertyCollectionContains.html" title="class in io.micronaut.data.processor.visitors.finders">Restrictions.PropertyCollectionContains</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/visitors/finders/Restrictions.PropertyIsNotEmpty.html#getRequiredParameters()" class="member-name-link">getRequiredParameters()</a> - Method in class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/Restrictions.PropertyIsNotEmpty.html" title="class in io.micronaut.data.processor.visitors.finders">Restrictions.PropertyIsNotEmpty</a></dt>
 <dd>&nbsp;</dd>
@@ -7796,7 +7808,11 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/micronaut/data/mongodb/operations/options/MongoFindOptions.html#getReturnKey()" class="member-name-link">getReturnKey()</a> - Method in class io.micronaut.data.mongodb.operations.options.<a href="io/micronaut/data/mongodb/operations/options/MongoFindOptions.html" title="class in io.micronaut.data.mongodb.operations.options">MongoFindOptions</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/visitors/MatchContext.html#getReturnType()" class="member-name-link">getReturnType()</a> - Method in class io.micronaut.data.processor.visitors.<a href="io/micronaut/data/processor/visitors/MatchContext.html" title="class in io.micronaut.data.processor.visitors">MatchContext</a></dt>
-<dd>&nbsp;</dd>
+<dd>
+<div class="deprecation-block"><span class="deprecated-label">Deprecated.</span>
+<div class="deprecation-comment">Use <a href="io/micronaut/data/processor/visitors/MatchContext.html#getMethodElement()"><code>MatchContext.getMethodElement()</code></a> and <a href="io/micronaut/data/processor/visitors/MatchContext.html#getReturnType()"><code>MatchContext.getReturnType()</code></a>.</div>
+</div>
+</dd>
 <dt><a href="io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html#getReturnType(io.micronaut.aop.MethodInvocationContext)" class="member-name-link">getReturnType(MethodInvocationContext&lt;?, ?&gt;)</a> - Method in class io.micronaut.data.runtime.intercept.<a href="io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html" title="class in io.micronaut.data.runtime.intercept">AbstractQueryInterceptor</a></dt>
 <dd>
 <div class="block">Returns the return type.</div>
@@ -9869,12 +9885,12 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Whether to lock the selected entities.</div>
 </dd>
-<dt><a href="io/micronaut/data/processor/visitors/finders/FindersUtils.html#isFutureType(io.micronaut.data.processor.visitors.MethodMatchContext,io.micronaut.inject.ast.ClassElement)" class="member-name-link">isFutureType(MethodMatchContext, ClassElement)</a> - Static method in interface io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/FindersUtils.html" title="interface in io.micronaut.data.processor.visitors.finders">FindersUtils</a></dt>
-<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/visitors/finders/TypeUtils.html#isFutureType(io.micronaut.inject.ast.ClassElement)" class="member-name-link">isFutureType(ClassElement)</a> - Static method in class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/TypeUtils.html" title="class in io.micronaut.data.processor.visitors.finders">TypeUtils</a></dt>
 <dd>
 <div class="block">Is the type a future type.</div>
 </dd>
+<dt><a href="io/micronaut/data/processor/visitors/finders/FindersUtils.html#isFutureType(io.micronaut.inject.ast.MethodElement,io.micronaut.inject.ast.ClassElement)" class="member-name-link">isFutureType(MethodElement, ClassElement)</a> - Static method in interface io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/FindersUtils.html" title="interface in io.micronaut.data.processor.visitors.finders">FindersUtils</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/PersistentProperty.html#isGenerated()" class="member-name-link">isGenerated()</a> - Method in interface io.micronaut.data.model.<a href="io/micronaut/data/model/PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a></dt>
 <dd>
 <div class="block">Whether the property is generated.</div>
@@ -10390,12 +10406,6 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Checks whether the return type is supported.</div>
 </dd>
-<dt><a href="io/micronaut/data/processor/visitors/finders/TypeUtils.html#isValidExistsReturnType(io.micronaut.data.processor.visitors.MatchContext)" class="member-name-link">isValidExistsReturnType(MatchContext)</a> - Static method in class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/TypeUtils.html" title="class in io.micronaut.data.processor.visitors.finders">TypeUtils</a></dt>
-<dd>&nbsp;</dd>
-<dt><a href="io/micronaut/data/processor/visitors/finders/TypeUtils.html#isValidFindAllReturnType(io.micronaut.data.processor.visitors.MatchContext)" class="member-name-link">isValidFindAllReturnType(MatchContext)</a> - Static method in class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/TypeUtils.html" title="class in io.micronaut.data.processor.visitors.finders">TypeUtils</a></dt>
-<dd>
-<div class="block">Checks whether the return type is supported.</div>
-</dd>
 <dt><a href="io/micronaut/data/processor/visitors/finders/FindersUtils.html#isValidResultType(io.micronaut.inject.ast.ClassElement)" class="member-name-link">isValidResultType(ClassElement)</a> - Static method in interface io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/FindersUtils.html" title="interface in io.micronaut.data.processor.visitors.finders">FindersUtils</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/PersistentEntity.html#isVersioned()" class="member-name-link">isVersioned()</a> - Method in interface io.micronaut.data.model.<a href="io/micronaut/data/model/PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a></dt>
@@ -10412,10 +10422,6 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/micronaut/data/processor/visitors/finders/TypeUtils.html#isVoid(io.micronaut.inject.ast.ClassElement)" class="member-name-link">isVoid(ClassElement)</a> - Static method in class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/TypeUtils.html" title="class in io.micronaut.data.processor.visitors.finders">TypeUtils</a></dt>
 <dd>
 <div class="block">Is the type void.</div>
-</dd>
-<dt><a href="io/micronaut/data/processor/visitors/finders/TypeUtils.html#isVoidOrNumberArgument(io.micronaut.inject.ast.ClassElement)" class="member-name-link">isVoidOrNumberArgument(ClassElement)</a> - Static method in class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/TypeUtils.html" title="class in io.micronaut.data.processor.visitors.finders">TypeUtils</a></dt>
-<dd>
-<div class="block">Retruns true if no type argument is present, a void argument is present or a boolean argument is present.</div>
 </dd>
 <dt><a href="io/micronaut/transaction/jdbc/DelegatingDataSource.html#isWrapperFor(java.lang.Class)" class="member-name-link">isWrapperFor(Class&lt;?&gt;)</a> - Method in class io.micronaut.transaction.jdbc.<a href="io/micronaut/transaction/jdbc/DelegatingDataSource.html" title="class in io.micronaut.transaction.jdbc">DelegatingDataSource</a></dt>
 <dd>&nbsp;</dd>
@@ -13590,6 +13596,8 @@ loadScripts(document, 'script');</script>
 </dd>
 <dt><a href="io/micronaut/data/processor/visitors/finders/Restrictions.PropertyBetween.html#%3Cinit%3E()" class="member-name-link">PropertyBetween()</a> - Constructor for class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/Restrictions.PropertyBetween.html" title="class in io.micronaut.data.processor.visitors.finders">Restrictions.PropertyBetween</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/processor/visitors/finders/Restrictions.PropertyCollectionContains.html#%3Cinit%3E()" class="member-name-link">PropertyCollectionContains()</a> - Constructor for class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/Restrictions.PropertyCollectionContains.html" title="class in io.micronaut.data.processor.visitors.finders">Restrictions.PropertyCollectionContains</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/query/QueryModel.PropertyComparisonCriterion.html#%3Cinit%3E(java.lang.String,java.lang.String)" class="member-name-link">PropertyComparisonCriterion(String, String)</a> - Constructor for class io.micronaut.data.model.query.<a href="io/micronaut/data/model/query/QueryModel.PropertyComparisonCriterion.html" title="class in io.micronaut.data.model.query">QueryModel.PropertyComparisonCriterion</a></dt>
 <dd>
 <div class="block">Default constructor.</div>
@@ -14345,6 +14353,12 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Status object for reactive transactions.</div>
 </dd>
+<dt><a href="io/micronaut/transaction/interceptor/ReactorCoroutineTxHelper.html" class="type-name-link" title="class in io.micronaut.transaction.interceptor">ReactorCoroutineTxHelper</a> - Class in <a href="io/micronaut/transaction/interceptor/package-summary.html">io.micronaut.transaction.interceptor</a></dt>
+<dd>
+<div class="block">Helper to setup Kotlin coroutine context with Reactor.</div>
+</dd>
+<dt><a href="io/micronaut/transaction/interceptor/ReactorCoroutineTxHelper.html#%3Cinit%3E()" class="member-name-link">ReactorCoroutineTxHelper()</a> - Constructor for class io.micronaut.transaction.interceptor.<a href="io/micronaut/transaction/interceptor/ReactorCoroutineTxHelper.html" title="class in io.micronaut.transaction.interceptor">ReactorCoroutineTxHelper</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/r2dbc/repository/ReactorCrudRepository.html" class="type-name-link" title="interface in io.micronaut.data.r2dbc.repository">ReactorCrudRepository</a>&lt;<a href="io/micronaut/data/r2dbc/repository/ReactorCrudRepository.html" title="type parameter in ReactorCrudRepository">E</a>,<wbr><a href="io/micronaut/data/r2dbc/repository/ReactorCrudRepository.html" title="type parameter in ReactorCrudRepository">ID</a>&gt; - Interface in <a href="io/micronaut/data/r2dbc/repository/package-summary.html">io.micronaut.data.r2dbc.repository</a></dt>
 <dd>
 <div class="deprecation-block"><span class="deprecated-label">Deprecated.</span>
@@ -14946,7 +14960,7 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Builds a join table insert.</div>
 </dd>
-<dt><a href="io/micronaut/data/processor/visitors/finders/FindersUtils.html#resolveAsyncFindInterceptor(io.micronaut.data.processor.visitors.MethodMatchContext,io.micronaut.inject.ast.ClassElement,io.micronaut.inject.ast.ClassElement)" class="member-name-link">resolveAsyncFindInterceptor(MethodMatchContext, ClassElement, ClassElement)</a> - Static method in interface io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/FindersUtils.html" title="interface in io.micronaut.data.processor.visitors.finders">FindersUtils</a></dt>
+<dt><a href="io/micronaut/data/processor/visitors/finders/FindersUtils.html#resolveAsyncFindInterceptor(io.micronaut.data.processor.visitors.MethodMatchContext,io.micronaut.inject.ast.ClassElement)" class="member-name-link">resolveAsyncFindInterceptor(MethodMatchContext, ClassElement)</a> - Static method in interface io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/FindersUtils.html" title="interface in io.micronaut.data.processor.visitors.finders">FindersUtils</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/runtime/RuntimePersistentEntity.html#resolveConverter(java.lang.Class)" class="member-name-link">resolveConverter(Class&lt;?&gt;)</a> - Method in class io.micronaut.data.model.runtime.<a href="io/micronaut/data/model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a></dt>
 <dd>
@@ -15087,6 +15101,10 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/micronaut/data/processor/visitors/finders/Restrictions.PropertyBetween.html" class="type-name-link" title="class in io.micronaut.data.processor.visitors.finders">Restrictions.PropertyBetween</a>&lt;<a href="io/micronaut/data/processor/visitors/finders/Restrictions.PropertyBetween.html" title="type parameter in Restrictions.PropertyBetween">T</a> extends <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Comparable.html" title="class or interface in java.lang" class="external-link">Comparable</a>&lt;? super <a href="io/micronaut/data/processor/visitors/finders/Restrictions.PropertyBetween.html" title="type parameter in Restrictions.PropertyBetween">T</a>&gt;&gt; - Class in <a href="io/micronaut/data/processor/visitors/finders/package-summary.html">io.micronaut.data.processor.visitors.finders</a></dt>
 <dd>
 <div class="block">Between restriction.</div>
+</dd>
+<dt><a href="io/micronaut/data/processor/visitors/finders/Restrictions.PropertyCollectionContains.html" class="type-name-link" title="class in io.micronaut.data.processor.visitors.finders">Restrictions.PropertyCollectionContains</a>&lt;<a href="io/micronaut/data/processor/visitors/finders/Restrictions.PropertyCollectionContains.html" title="type parameter in Restrictions.PropertyCollectionContains">T</a>&gt; - Class in <a href="io/micronaut/data/processor/visitors/finders/package-summary.html">io.micronaut.data.processor.visitors.finders</a></dt>
+<dd>
+<div class="block">Collection contains restriction.</div>
 </dd>
 <dt><a href="io/micronaut/data/processor/visitors/finders/Restrictions.PropertyContaining.html" class="type-name-link" title="class in io.micronaut.data.processor.visitors.finders">Restrictions.PropertyContaining</a> - Class in <a href="io/micronaut/data/processor/visitors/finders/package-summary.html">io.micronaut.data.processor.visitors.finders</a></dt>
 <dd>

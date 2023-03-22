@@ -106,8 +106,9 @@ implements <a href="AsyncTransactionOperations.html" title="interface in io.micr
 <div class="summary-table two-column-summary">
 <div class="table-header col-first">Constructor</div>
 <div class="table-header col-last">Description</div>
-<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(io.micronaut.transaction.reactive.ReactorReactiveTransactionOperations,io.micronaut.transaction.interceptor.CoroutineTxHelper)" class="member-name-link">AsyncUsingReactiveTransactionOperations</a><wbr>(<a href="../reactive/ReactorReactiveTransactionOperations.html" title="interface in io.micronaut.transaction.reactive">ReactorReactiveTransactionOperations</a>&lt;<a href="AsyncUsingReactiveTransactionOperations.html" title="type parameter in AsyncUsingReactiveTransactionOperations">C</a>&gt;&nbsp;reactiveTransactionOperations,
- <a href="../interceptor/CoroutineTxHelper.html" title="class in io.micronaut.transaction.interceptor">CoroutineTxHelper</a>&nbsp;coroutineTxHelper)</code></div>
+<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(io.micronaut.transaction.reactive.ReactorReactiveTransactionOperations,io.micronaut.transaction.interceptor.CoroutineTxHelper,io.micronaut.transaction.interceptor.ReactorCoroutineTxHelper)" class="member-name-link">AsyncUsingReactiveTransactionOperations</a><wbr>(<a href="../reactive/ReactorReactiveTransactionOperations.html" title="interface in io.micronaut.transaction.reactive">ReactorReactiveTransactionOperations</a>&lt;<a href="AsyncUsingReactiveTransactionOperations.html" title="type parameter in AsyncUsingReactiveTransactionOperations">C</a>&gt;&nbsp;reactiveTransactionOperations,
+ <a href="../interceptor/CoroutineTxHelper.html" title="class in io.micronaut.transaction.interceptor">CoroutineTxHelper</a>&nbsp;coroutineTxHelper,
+ <a href="../interceptor/ReactorCoroutineTxHelper.html" title="class in io.micronaut.transaction.interceptor">ReactorCoroutineTxHelper</a>&nbsp;reactorCoroutineTxHelper)</code></div>
 <div class="col-last even-row-color">&nbsp;</div>
 </div>
 </section>
@@ -150,11 +151,13 @@ implements <a href="AsyncTransactionOperations.html" title="interface in io.micr
 <h2>Constructor Details</h2>
 <ul class="member-list">
 <li>
-<section class="detail" id="&lt;init&gt;(io.micronaut.transaction.reactive.ReactorReactiveTransactionOperations,io.micronaut.transaction.interceptor.CoroutineTxHelper)">
+<section class="detail" id="&lt;init&gt;(io.micronaut.transaction.reactive.ReactorReactiveTransactionOperations,io.micronaut.transaction.interceptor.CoroutineTxHelper,io.micronaut.transaction.interceptor.ReactorCoroutineTxHelper)">
 <h3>AsyncUsingReactiveTransactionOperations</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name">AsyncUsingReactiveTransactionOperations</span><wbr><span class="parameters">(<a href="../reactive/ReactorReactiveTransactionOperations.html" title="interface in io.micronaut.transaction.reactive">ReactorReactiveTransactionOperations</a>&lt;<a href="AsyncUsingReactiveTransactionOperations.html" title="type parameter in AsyncUsingReactiveTransactionOperations">C</a>&gt;&nbsp;reactiveTransactionOperations,
  @Nullable
- <a href="../interceptor/CoroutineTxHelper.html" title="class in io.micronaut.transaction.interceptor">CoroutineTxHelper</a>&nbsp;coroutineTxHelper)</span></div>
+ <a href="../interceptor/CoroutineTxHelper.html" title="class in io.micronaut.transaction.interceptor">CoroutineTxHelper</a>&nbsp;coroutineTxHelper,
+ @Nullable
+ <a href="../interceptor/ReactorCoroutineTxHelper.html" title="class in io.micronaut.transaction.interceptor">ReactorCoroutineTxHelper</a>&nbsp;reactorCoroutineTxHelper)</span></div>
 </section>
 </li>
 </ul>
