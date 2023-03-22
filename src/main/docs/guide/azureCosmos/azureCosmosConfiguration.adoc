@@ -6,10 +6,9 @@ Currently, it is only possible to configure a small subset of properties for the
 
 NOTE: An additional way to configure the partition key value is adding the annotation ann:io.micronaut.data.cosmos.annotation.PartitionKey[]
 
-The below is an example YAML configuration showing container and db properties used when creating new containers if the containers don't already exist:
+The below is an example application configuration showing container and db properties used when creating new containers if the containers don't already exist:
 
-Example YAML configuration
-[source,yaml]
+[configuration]
 ----
 include::doc-examples/azure-cosmos-example-java/src/main/resources/application-example.yml[]
 ----

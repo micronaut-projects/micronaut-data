@@ -825,4 +825,17 @@ public final class Restrictions {
             return "ArrayContains";
         }
     }
+
+    /**
+     * Collection contains restriction.
+     *
+     * @param <T> The property type
+     */
+    public static class PropertyCollectionContains<T> extends PropertyArrayContains<T> {
+
+        @Override
+        public String getName() {
+            return "CollectionContains";
+        }
+    }
 }

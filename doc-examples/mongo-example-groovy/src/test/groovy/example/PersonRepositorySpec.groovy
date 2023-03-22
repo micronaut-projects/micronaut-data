@@ -6,6 +6,7 @@ import jakarta.inject.Inject
 import spock.lang.Specification
 
 import static example.PersonRepository.Specifications.ageIsLessThan
+import static example.PersonRepository.Specifications.interestsContains
 import static example.PersonRepository.Specifications.nameEquals
 import static example.PersonRepository.Specifications.setNewName
 import static io.micronaut.data.repository.jpa.criteria.PredicateSpecification.not
@@ -26,7 +27,7 @@ class PersonRepositorySpec extends Specification {
                 new Person(
                         "Josh",
                         22
-                )
+                ).withInterests(Arrays.asList("sports", "music", "hiking"))
         ))
     }
 
@@ -98,4 +99,20 @@ class PersonRepositorySpec extends Specification {
             all.stream().anyMatch(p -> p.getName() == "Josh")
     }
 
+    void "array contains"() {
+        when:
+            List<Person> people = personRepository.findByInterestsCollectionContains("sports")
+        then:
+            people.size() == 1
+            people[0].name == "Josh"
+        when:
+            people = personRepository.findByInterestsCollectionContains("flying")
+        then:
+            people.size() == 0
+        when:"Using specification"
+            people = personRepository.findAll(interestsContains("hiking"))
+        then:
+            people.size() == 1
+            people[0].name == "Josh"
+    }
 }

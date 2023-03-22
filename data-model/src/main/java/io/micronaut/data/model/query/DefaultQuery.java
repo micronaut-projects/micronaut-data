@@ -85,6 +85,7 @@ public class DefaultQuery implements QueryModel {
     /**
      * @return The criteria defined by this query
      */
+    @Override
     public QueryModel.Junction getCriteria() {
         return criteria;
     }

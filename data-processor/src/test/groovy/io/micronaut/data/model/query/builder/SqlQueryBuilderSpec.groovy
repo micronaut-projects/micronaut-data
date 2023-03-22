@@ -102,6 +102,52 @@ interface MyRepository {
         builder.buildInsert(annotationMetadata, entity).query == 'INSERT INTO sale (name,data,quantities,extra_data,data_list) VALUES ($1,to_json($2::json),to_json($3::json),to_json($4::json),to_json($5::json))'
     }
 
+    @Requires({ javaVersion >= 1.8 })
+    void 'test where annotation replacement'() {
+        given:
+        def annotationMetadata = buildTypeAnnotationMetadata('''
+package test;
+import io.micronaut.data.annotation.*;
+import io.micronaut.data.model.query.builder.sql.*;
+import java.lang.annotation.*;
+import io.micronaut.data.jdbc.annotation.*;
+import io.micronaut.context.annotation.*;
+
+@MyAnnotation(dialect = Dialect.POSTGRES)
+@Where("@.name = :name")
+interface MyRepository {
+}
+
+@RepositoryConfiguration(
+        queryBuilder = SqlQueryBuilder.class
+)
+@SqlQueryConfiguration(
+    @SqlQueryConfiguration.DialectConfiguration(
+        dialect = Dialect.POSTGRES,
+        positionalParameterFormat = "$%s",
+        escapeQueries = false
+    )
+)
+@Retention(RetentionPolicy.RUNTIME)
+@Repository
+@interface MyAnnotation {
+    @AliasFor(annotation = Repository.class, member = "dialect")
+    Dialect dialect() default Dialect.ANSI;
+}
+''')
+
+        SqlQueryBuilder builder = new SqlQueryBuilder(annotationMetadata)
+        PersistentEntity entity = PersistentEntity.of(Sale)
+        def queryModel = QueryModel.from(entity)
+
+        expect:
+        builder.dialect == Dialect.POSTGRES
+        builder.buildQuery(annotationMetadata, queryModel).query == 'SELECT sale_.id,sale_.name,sale_.data,sale_.quantities,sale_.extra_data,sale_.data_list FROM sale sale_ WHERE (sale_.name =$1)'
+        builder.buildDelete(annotationMetadata, queryModel).query == 'DELETE  FROM sale  WHERE (name =$1)'
+        builder.buildUpdate(annotationMetadata, queryModel, Arrays.asList("name")).query == 'UPDATE sale SET name=$1 WHERE (name =$2)'
+        builder.buildInsert(annotationMetadata, entity).query == 'INSERT INTO sale (name,data,quantities,extra_data,data_list) VALUES ($1,to_json($2::json),to_json($3::json),to_json($4::json),to_json($5::json))'
+    }
+
 
     void "test encode update with JSON and MySQL"() {
         when:"A update is encoded"

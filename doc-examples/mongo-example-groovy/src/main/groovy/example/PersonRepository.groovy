@@ -4,6 +4,7 @@ package example
 import io.micronaut.data.model.Page
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
+import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder
 import io.micronaut.data.mongodb.annotation.MongoRepository
 import io.micronaut.data.repository.CrudRepository
 import io.micronaut.data.repository.jpa.JpaSpecificationExecutor
@@ -52,6 +53,10 @@ interface PersonRepository extends CrudRepository<Person, ObjectId>, JpaSpecific
     long deleteAll(DeleteSpecification<Person> spec)
     // end::delete[]
 
+    // tag::method_collection_contains[]
+    List<Person> findByInterestsCollectionContains(String interest)
+    // end::method_collection_contains[]
+
     // tag::specifications[]
     // tag::allSpecifications[]
     class Specifications {
@@ -73,6 +78,13 @@ interface PersonRepository extends CrudRepository<Person, ObjectId>, JpaSpecific
                 null
             }
         }
+
+        // tag::spec_array_contains[]
+        static PredicateSpecification<Person> interestsContains(String interest) {
+            return (root, criteriaBuilder) -> ((PersistentEntityCriteriaBuilder) criteriaBuilder).arrayContains(root.get("interests"), criteriaBuilder.literal(interest))
+        }
+        // end::spec_array_contains[]
+
         // tag::specifications[]
     }
     // end::allSpecifications[]

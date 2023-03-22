@@ -62,7 +62,7 @@ Then you can combine them for `find` or `count` queries:
 
 snippet::example.PersonRepositorySpec[project-base="doc-examples/azure-cosmos-example",source="test" tags="find",indent="0"]
 
-Specific criteria supported only by Micronaut Azure Cosmos Data is `ARRAY_CONTAINS` and for a class having an array of strings named `tags` it can be used either via custom repository method like this:
+Specific criteria supported by Micronaut Azure Cosmos Data is `ArrayContains` or `CollectionContains` and for a class having an array or list of strings field named `tags` it can be used either via custom repository method like this:
 
 snippet::example.FamilyRepository[project-base="doc-examples/azure-cosmos-example",source="main" tags="method_array_contains",indent="0"]
 
@@ -70,7 +70,8 @@ or predicate specification:
 
 snippet::example.FamilyRepository[project-base="doc-examples/azure-cosmos-example",source="main" tags="predicate_array_contains",indent="0"]
 
-For partial search using `ARRAY_CONTAINS` generic repository methods cannot be used but custom methods with raw query like this:
+Please note that Microsoft Data Azure Cosmos Db supports searching for list or array containing only against single element.
+For partial search using `ArrayContains` generic repository methods cannot be used but custom methods with raw query like this:
 
 snippet::example.FamilyRepository[project-base="doc-examples/azure-cosmos-example",source="main" tags="array_contains_partial",indent="0"]
 and then pass map entry with "gender" as key and gender as value, basically any object that will serialize to `{"gender": "<gender_value>"}` for this example.

@@ -29,6 +29,7 @@ dependencies {
     implementation "io.micronaut.sql:micronaut-jdbc-hikari"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-reactive"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-reactor"
     implementation mnSerde.micronaut.serde.support
     implementation mnKotlin.micronaut.kotlin.runtime
     implementation "org.flywaydb:flyway-mysql"

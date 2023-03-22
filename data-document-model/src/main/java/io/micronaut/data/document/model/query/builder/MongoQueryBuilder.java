@@ -216,6 +216,19 @@ public final class MongoQueryBuilder implements QueryBuilder {
         addCriterionHandler(QueryModel.Contains.class, (context, obj, criterion) -> {
             handleRegexPropertyExpression(context, obj, criterion, criterion.isIgnoreCase(), false, false, false);
         });
+        addCriterionHandler(QueryModel.ArrayContains.class, (context, obj, criterion) -> {
+            PersistentPropertyPath propertyPath = context.getRequiredProperty(criterion);
+            Object value = criterion.getValue();
+            String criterionPropertyName = getCriterionPropertyName(criterion.getProperty(), context);
+            Object criteriaValue;
+            if (value instanceof Iterable) {
+                List<?> values = CollectionUtils.iterableToList((Iterable) value);
+                criteriaValue = values.stream().map(val -> valueRepresentation(context, propertyPath, val)).collect(Collectors.toList());
+            } else {
+                criteriaValue = singletonList(valueRepresentation(context, propertyPath, value));
+            }
+            obj.put(criterionPropertyName, singletonMap("$all", criteriaValue));
+        });
     }
 
     private <T extends QueryModel.PropertyCriterion> CriterionHandler<T> propertyOperatorExpression(String op) {
@@ -283,8 +296,25 @@ public final class MongoQueryBuilder implements QueryBuilder {
         } else {
             filterValue = regexCriteria;
         }
-        String criterionPropertyName = getPropertyPersistName(propertyPath.getProperty());
+        String criterionPropertyName = getCriterionPropertyName(criterion.getProperty(), context);
         obj.put(criterionPropertyName, filterValue);
+    }
+
+    /**
+     * Gets criterion property name. Used as sort of adapter if property in criteria should have different name that the persistent property.
+     * Used currently for id property name to be generated as _id when used in criteria.
+     *
+     * @param name    the criteria property name
+     * @param context the criteria context
+     * @return resulting name for the criteria, if identity field is used in criteria then returns _id else original criteria property name
+     */
+    private String getCriterionPropertyName(String name, CriteriaContext context) {
+        PersistentEntity persistentEntity = context.getPersistentEntity();
+        PersistentProperty identity = persistentEntity.getIdentity();
+        if (identity != null && identity.getName().equals(name)) {
+            return MONGO_ID_FIELD;
+        }
+        return name;
     }
 
     private String getPropertyPersistName(PersistentProperty property) {

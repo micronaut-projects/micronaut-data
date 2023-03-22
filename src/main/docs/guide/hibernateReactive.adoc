@@ -30,8 +30,7 @@ dependency:vertx-oracle-client[groupId="io.vertx"]
 
 And configure it based on https://micronaut-projects.github.io/micronaut-sql/latest/guide/index.html#hibernate[Micronaut SQL Hibernate Reactive support].
 
-.Example YAML configuration
-[source,yaml]
+[configuration]
 ----
 include::doc-examples/hibernate-reactive-example-java/src/main/resources/application.yml[]
 ----
