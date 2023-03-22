@@ -49,7 +49,7 @@ NOTE: Most of the database migration tools use JDBC driver to make DB changes. T
 If you want to quickly test out Micronaut Data R2DBC then you can set the `schema-generate` option of the data source to `create-drop` as well as the appropriate schema name:
 
 .Using `schema-generate`
-[source,yaml]
+[configuration]
 ----
 include::doc-examples/r2dbc-example-java/src/main/resources/application.yml[]
 ----
@@ -58,7 +58,7 @@ The `schema-generate` option is currently only recommended for simple applicatio
 
 === Setting the Dialect
 
-As seen in the YAML above you should also configure the dialect. Although queries are precomputed in the repository some cases (like pagination) still require the dialect to specified. The following table summarizes the supported dialects:
+As seen in the configuration above you should also configure the dialect. Although queries are precomputed in the repository some cases (like pagination) still require the dialect to specified. The following table summarizes the supported dialects:
 
 .Supported JDBC / R2DBC Dialects
 [cols=2*]

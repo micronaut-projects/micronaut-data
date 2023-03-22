@@ -29,3 +29,9 @@ Micronaut Data MongoDB introduces one special repository interface api:data.mong
  - `com.mongodb.client.model.Filters`
  - `com.mongodb.client.model.Aggregates`
  - `com.mongodb.client.model.Updates`
+
+Specific criteria supported by Micronaut Data MongoDB that allows to filter documents by checking occurrences in list or array of strings in given field can be achieved using `ArrayContains` or `CollectionContains` criteria. Here is an example of repository method declaration which will search people which interests field (list of strings) contains given value(s):
+
+snippet::example.PersonRepository[project-base="doc-examples/mongo-example",source="main" tags="method_collection_contains",indent="0"]
+
+Micronaut Data MongoDB supports array or list containment check for single or multiple values using `ArrayContains` or `CollectionContains` criteria.

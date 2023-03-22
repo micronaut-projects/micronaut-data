@@ -28,6 +28,7 @@ import io.micronaut.data.mongodb.conf.RequiresReactiveMongo;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.transaction.async.AsyncUsingReactiveTransactionOperations;
 import io.micronaut.transaction.interceptor.CoroutineTxHelper;
+import io.micronaut.transaction.interceptor.ReactorCoroutineTxHelper;
 import io.micronaut.transaction.reactive.ReactorReactiveTransactionOperations;
 import io.micronaut.transaction.sync.SynchronousFromReactiveTransactionManager;
 import jakarta.inject.Named;
@@ -65,15 +66,15 @@ final class MongoReactiveTransactionManagerFactory {
     @Singleton
     <T> AsyncUsingReactiveTransactionOperations<T> buildPrimaryAsyncTransactionOperations(@Primary ReactorReactiveTransactionOperations<T> reactiveTransactionOperations,
                                                                                           @Nullable CoroutineTxHelper coroutineTxHelper,
-                                                                                          @Named(TaskExecutors.IO) ExecutorService executorService) {
-        return new AsyncUsingReactiveTransactionOperations<>(reactiveTransactionOperations, coroutineTxHelper);
+                                                                                          @Nullable ReactorCoroutineTxHelper reactiveHibernateHelper) {
+        return new AsyncUsingReactiveTransactionOperations<>(reactiveTransactionOperations, coroutineTxHelper, reactiveHibernateHelper);
     }
 
     @EachBean(NamedMongoConfiguration.class)
     <T> AsyncUsingReactiveTransactionOperations<T> buildAsyncTransactionOperations(@Parameter ReactorReactiveTransactionOperations<T> reactiveTransactionOperations,
                                                                                    @Nullable CoroutineTxHelper coroutineTxHelper,
-                                                                                   @Named(TaskExecutors.IO) ExecutorService executorService) {
-        return new AsyncUsingReactiveTransactionOperations<>(reactiveTransactionOperations, coroutineTxHelper);
+                                                                                   @Nullable ReactorCoroutineTxHelper reactiveHibernateHelper) {
+        return new AsyncUsingReactiveTransactionOperations<>(reactiveTransactionOperations, coroutineTxHelper, reactiveHibernateHelper);
     }
 
 }

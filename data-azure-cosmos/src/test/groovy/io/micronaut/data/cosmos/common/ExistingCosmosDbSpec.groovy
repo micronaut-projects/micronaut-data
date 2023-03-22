@@ -1,6 +1,6 @@
-package io.micronaut.data.azure
+package io.micronaut.data.cosmos.common
 
-
+import com.azure.cosmos.CosmosAsyncClient
 import com.azure.cosmos.CosmosClient
 import com.azure.cosmos.models.CosmosContainerProperties
 import com.azure.cosmos.models.ExcludedPath
@@ -12,6 +12,7 @@ import com.azure.cosmos.models.ThroughputProperties
 import com.azure.cosmos.models.UniqueKey
 import com.azure.cosmos.models.UniqueKeyPolicy
 import io.micronaut.context.ApplicationContext
+import io.micronaut.data.azure.AzureCosmosTestProperties
 import io.micronaut.data.azure.entities.CosmosBook
 import io.micronaut.data.azure.repositories.CosmosBookRepository
 import io.micronaut.data.cosmos.config.CosmosDatabaseConfiguration
@@ -132,14 +133,18 @@ class ExistingCosmosDbSpec extends Specification implements AzureCosmosTestPrope
     def "test configuration"() {
         given:
             def config = context.getBean(CosmosDatabaseConfiguration)
+            def client = context.getBean(CosmosClient)
+            def cosmosDatabaseInitializer = context.getBean(CosmosDatabaseInitializer)
 
         expect:
             config.databaseName == 'mydb'
             config.throughput.autoScale
             config.throughput.requestUnits == 1000
             config.updatePolicy == StorageUpdatePolicy.NONE
-
             !config.containers || config.containers.size() == 0
+
+            client
+            cosmosDatabaseInitializer
     }
 
 

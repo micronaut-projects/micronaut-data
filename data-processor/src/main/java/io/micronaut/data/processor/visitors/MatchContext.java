@@ -123,8 +123,10 @@ public class MatchContext implements AnnotationMetadataProvider {
 
     /**
      * @return The return type
+     * @deprecated Use {@link #getMethodElement()} and {@link #getReturnType()}.
      */
     @NonNull
+    @Deprecated
     public ClassElement getReturnType() {
         return returnType;
     }

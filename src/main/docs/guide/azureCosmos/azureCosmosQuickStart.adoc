@@ -10,10 +10,9 @@ You should then configure a compile-scoped dependency on the `micronaut-data-azu
 
 dependency:io.micronaut.data:micronaut-data-azure-cosmos[]
 
-Next up you need to configure at least one data source. The following snippet from `application.yml` is an example of configuring the default Azure Cosmos Db data source:
+Next up you need to configure at least one data source. The following snippet from the application configuration file is an example of configuring the default Azure Cosmos Db data source:
 
-Example YAML configuration
-[source,yaml]
+[configuration]
 ----
 include::doc-examples/azure-cosmos-example-java/src/main/resources/application.yml[]
 ----

@@ -9,6 +9,7 @@ import com.mongodb.client.model.UpdateOptions
 import com.mongodb.client.model.Updates
 import groovy.transform.Memoized
 import io.micronaut.data.document.mongodb.repositories.MongoAuthorRepository
+import io.micronaut.data.document.mongodb.repositories.MongoDocumentRepository
 import io.micronaut.data.document.mongodb.repositories.MongoExecutorPersonRepository
 import io.micronaut.data.document.mongodb.repositories.MongoBasicTypesRepository
 import io.micronaut.data.document.mongodb.repositories.MongoBookRepository
@@ -17,6 +18,8 @@ import io.micronaut.data.document.mongodb.repositories.MongoPersonRepository
 import io.micronaut.data.document.mongodb.repositories.MongoSaleRepository
 import io.micronaut.data.document.mongodb.repositories.MongoStudentRepository
 import io.micronaut.data.document.tck.AbstractDocumentRepositorySpec
+import io.micronaut.data.document.tck.entities.Document
+import io.micronaut.data.document.tck.entities.Owner
 import io.micronaut.data.document.tck.entities.Quantity
 import io.micronaut.data.document.tck.entities.Sale
 import io.micronaut.data.document.tck.repositories.AuthorRepository
@@ -31,6 +34,8 @@ import io.micronaut.data.mongodb.operations.options.MongoFindOptions
 import org.bson.BsonDocument
 
 import java.util.stream.Collectors
+
+import static io.micronaut.data.document.tck.repositories.DocumentRepository.Specifications.tagsArrayContains
 
 class MongoDocumentRepositorySpec extends AbstractDocumentRepositorySpec implements MongoTestPropertyProvider {
 
@@ -443,6 +448,77 @@ class MongoDocumentRepositorySpec extends AbstractDocumentRepositorySpec impleme
             personsByNamesInList.size() == 1
     }
 
+    void "test find by array contains"() {
+        given:
+        var doc1 = new Document()
+        doc1.title = "Doc1"
+        doc1.tags = ["red", "blue", "white"]
+        documentRepository.save(doc1)
+        var doc2 = new Document()
+        doc2.title = "Doc2"
+        doc2.tags = ["red", "blue"]
+        documentRepository.save(doc2)
+        var doc3 = new Document()
+        doc3.title = "Doc3"
+        documentRepository.save(doc3)
+        when:
+        def result1 = documentRepository.findByTagsArrayContains("red")
+        def result2 = documentRepository.findByTagsArrayContains("grey")
+        def result3 = documentRepository.findByTagsArrayContains(Arrays.asList("red", "blue"))
+        def result4 = documentRepository.findByTagsArrayContains(Arrays.asList("red", "blue", "white"))
+        def result5 = documentRepository.findByTagsArrayContains(Arrays.asList("red", "white"))
+        def result6 = documentRepository.findByTagsArrayContains(Arrays.asList())
+        then:
+        result1.size() == 2
+        result2.size() == 0
+        result3.size() == 2
+        result4.size() == 1
+        result5.size() == 1
+        result6.size() == 0
+        when:"Test with criteria spec"
+        result1 = documentRepository.findAll(tagsArrayContains("red"))
+        result2 = documentRepository.findAll(tagsArrayContains("grey"))
+        result3 = documentRepository.findAll(tagsArrayContains("red", "blue"))
+        result4 = documentRepository.findAll(tagsArrayContains("red", "blue", "white"))
+        result5 = documentRepository.findAll(tagsArrayContains("red", "white"))
+        then:
+        result1.size() == 2
+        result2.size() == 0
+        result3.size() == 2
+        result4.size() == 1
+        result5.size() == 1
+        cleanup:
+        documentRepository.deleteAll()
+    }
+
+    void "test entity with map of objects"() {
+        given:
+        var doc1 = new Document()
+        doc1.title = "Doc1"
+        doc1.tags = ["red", "blue", "white"]
+        var owner1 = new Owner("Owner1")
+        owner1.age = 40
+        var owner2 = new Owner("Owner2")
+        owner2.age = 30
+        def owners = new HashMap<String, Owner>()
+        owners["owner1"] = owner1
+        owners["owner2"] = owner2
+        doc1.owners = owners
+        documentRepository.save(doc1)
+        when:
+        var optDoc = documentRepository.findById(doc1.id)
+        then:
+        optDoc.present
+        def doc = optDoc.get()
+        doc.owners.size() == 2
+        doc.owners["owner1"].name == "Owner1"
+        doc.owners["owner1"].age == 40
+        doc.owners["owner2"].name == "Owner2"
+        doc.owners["owner2"].age == 30
+        cleanup:
+        documentRepository.deleteAll()
+    }
+
     @Memoized
     MongoExecutorPersonRepository getMongoExecutorPersonRepository() {
         return context.getBean(MongoExecutorPersonRepository)
@@ -488,5 +564,11 @@ class MongoDocumentRepositorySpec extends AbstractDocumentRepositorySpec impleme
     @Override
     DomainEventsRepository getEventsRepository() {
         return context.getBean(MongoDomainEventsRepository)
+    }
+
+    @Memoized
+    @Override
+    MongoDocumentRepository getDocumentRepository() {
+        return context.getBean(MongoDocumentRepository)
     }
 }
