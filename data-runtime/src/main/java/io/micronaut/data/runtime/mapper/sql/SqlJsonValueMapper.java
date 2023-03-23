@@ -23,7 +23,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
 /**
- * The SQL json parameter mapper. Default implementation which converts object to a string.
+ * The SQL JSON parameter value mapper. Default implementation which converts object to a JSON string.
  *
  * @author radovanradic
  * @since 4.0.0

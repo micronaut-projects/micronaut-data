@@ -48,10 +48,17 @@ public interface SqlJsonColumnReader<RS> {
         return true;
     }
 
+    /**
+     * Gets an indicator telling whether SQL json column reader can read from given result set.
+     * The default one should as it reads using {@link ResultReader} that should match with parametrized result set type.
+     *
+     * @param resultSetType the result set type
+     * @return true if can read from given result set type
+     */
     default boolean supportsResultSetType(Class<RS> resultSetType) {
         return true;
     }
-    
+
     /**
      * Reads JSON column from the result set and returns as expected type.
      *
