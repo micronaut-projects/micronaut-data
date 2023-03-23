@@ -308,7 +308,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             SqlPreparedQuery<T, R> preparedQuery = getSqlPreparedQuery(pq);
             RuntimePersistentEntity<T> persistentEntity = preparedQuery.getPersistentEntity();
             try (PreparedStatement ps = prepareStatement(connection::prepareStatement, preparedQuery, false, true)) {
-                preparedQuery.bindParameters(new JdbcParameterBinder(connection, ps, preparedQuery.getDialect(), preparedQuery));
+                preparedQuery.bindParameters(new JdbcParameterBinder(connection, ps, preparedQuery));
                 try (ResultSet rs = ps.executeQuery()) {
                     Class<R> resultType = preparedQuery.getResultType();
                     if (preparedQuery.getResultDataType() == DataType.ENTITY) {
@@ -388,7 +388,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             try {
                 SqlPreparedQuery<T, Boolean> preparedQuery = getSqlPreparedQuery(pq);
                 try (PreparedStatement ps = prepareStatement(connection::prepareStatement, preparedQuery, false, true)) {
-                    preparedQuery.bindParameters(new JdbcParameterBinder(connection, ps, preparedQuery.getDialect(), preparedQuery));
+                    preparedQuery.bindParameters(new JdbcParameterBinder(connection, ps, preparedQuery));
                     try (ResultSet rs = ps.executeQuery()) {
                         return rs.next();
                     }
@@ -414,7 +414,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         PreparedStatement ps;
         try {
             ps = prepareStatement(connection::prepareStatement, preparedQuery, false, false);
-            preparedQuery.bindParameters(new JdbcParameterBinder(connection, ps, preparedQuery.getDialect(), preparedQuery));
+            preparedQuery.bindParameters(new JdbcParameterBinder(connection, ps, preparedQuery));
         } catch (Exception e) {
             throw new DataAccessException("SQL Error preparing Query: " + e.getMessage(), e);
         }
@@ -581,7 +581,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             SqlPreparedQuery<?, Number> preparedQuery = getSqlPreparedQuery(pq);
             try {
                 try (PreparedStatement ps = prepareStatement(connection::prepareStatement, preparedQuery, true, false)) {
-                    preparedQuery.bindParameters(new JdbcParameterBinder(connection, ps, preparedQuery.getDialect(), preparedQuery));
+                    preparedQuery.bindParameters(new JdbcParameterBinder(connection, ps, preparedQuery));
                     int result = ps.executeUpdate();
                     if (QUERY_LOG.isTraceEnabled()) {
                         QUERY_LOG.trace("Update operation updated {} records", result);
@@ -1010,13 +1010,11 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         private final SqlStoredQuery<?, ?> sqlStoredQuery;
         private final Connection connection;
         private final PreparedStatement ps;
-        private final Dialect dialect;
         private int index = 1;
 
-        public JdbcParameterBinder(Connection connection, PreparedStatement ps, Dialect dialect, SqlStoredQuery<?, ?> sqlStoredQuery) {
+        public JdbcParameterBinder(Connection connection, PreparedStatement ps, SqlStoredQuery<?, ?> sqlStoredQuery) {
             this.connection = connection;
             this.ps = ps;
-            this.dialect = dialect;
             this.sqlStoredQuery = sqlStoredQuery;
         }
 
@@ -1121,7 +1119,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                 QUERY_LOG.debug("Executing SQL query: {}", storedQuery.getQuery());
             }
             try (PreparedStatement ps = prepare(ctx.connection, storedQuery)) {
-                storedQuery.bindParameters(new JdbcParameterBinder(ctx.connection, ps, ctx.dialect, storedQuery), ctx.invocationContext, entity, previousValues);
+                storedQuery.bindParameters(new JdbcParameterBinder(ctx.connection, ps, storedQuery), ctx.invocationContext, entity, previousValues);
                 rowsUpdated = ps.executeUpdate();
                 if (hasGeneratedId) {
                     try (ResultSet generatedKeys = ps.getGeneratedKeys()) {
@@ -1187,7 +1185,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                 if (d.vetoed) {
                     continue;
                 }
-                storedQuery.bindParameters(new JdbcParameterBinder(ctx.connection, stmt, ctx.dialect, storedQuery), ctx.invocationContext, d.entity, d.previousValues);
+                storedQuery.bindParameters(new JdbcParameterBinder(ctx.connection, stmt, storedQuery), ctx.invocationContext, d.entity, d.previousValues);
                 stmt.addBatch();
             }
         }

@@ -602,7 +602,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
     }
 
     private static Mono<Number> executeAndGetRowsUpdatedSingle(Statement statement, Dialect dialect) {
-        return executeAndGetRowsUpdated(statement, dialect)
+        return executeAndGetRowsUpdated(statement)
             .onErrorResume(throwable -> {
                 if (throwable.getCause() instanceof SQLException sqlException) {
                     Throwable newThrowable = handleSqlException(sqlException, dialect);
@@ -613,7 +613,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             .as(DefaultR2dbcRepositoryOperations::toSingleResult);
     }
 
-    private static Flux<Number> executeAndGetRowsUpdated(Statement statement, Dialect dialect) {
+    private static Flux<Number> executeAndGetRowsUpdated(Statement statement) {
         return Flux.from(statement.execute())
             .flatMap(Result::getRowsUpdated)
             .map((Number n) -> n.longValue());
@@ -676,7 +676,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             return withNewOrExistingTransactionMono(preparedQuery, false, status -> {
                 Connection connection = status.getConnection();
                 Statement statement = prepareStatement(connection::createStatement, preparedQuery, false, true);
-                preparedQuery.bindParameters(new R2dbcParameterBinder(connection, statement, preparedQuery.getDialect(), preparedQuery));
+                preparedQuery.bindParameters(new R2dbcParameterBinder(connection, statement, preparedQuery));
                 return executeAndMapEachRow(statement, row -> true).collectList()
                     .map(records -> !records.isEmpty() && records.stream().allMatch(v -> v));
             });
@@ -689,7 +689,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             return withNewOrExistingTransactionMono(preparedQuery, false, status -> {
                 Connection connection = status.getConnection();
                 Statement statement = prepareStatement(connection::createStatement, preparedQuery, false, true);
-                preparedQuery.bindParameters(new R2dbcParameterBinder(connection, statement, preparedQuery.getDialect(), preparedQuery));
+                preparedQuery.bindParameters(new R2dbcParameterBinder(connection, statement, preparedQuery));
                 if (preparedQuery.getResultDataType() == DataType.ENTITY) {
                     Class<R> resultType = preparedQuery.getResultType();
                     RuntimePersistentEntity<R> persistentEntity = getEntity(resultType);
@@ -760,7 +760,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             return withNewOrExistingTransactionFlux(preparedQuery, false, status -> {
                 Connection connection = status.getConnection();
                 Statement statement = prepareStatement(connection::createStatement, preparedQuery, false, false);
-                preparedQuery.bindParameters(new R2dbcParameterBinder(connection, statement, preparedQuery.getDialect(), preparedQuery));
+                preparedQuery.bindParameters(new R2dbcParameterBinder(connection, statement, preparedQuery));
                 Class<R> resultType = preparedQuery.getResultType();
                 boolean dtoProjection = preparedQuery.isDtoProjection();
                 boolean isEntity = preparedQuery.getResultDataType() == DataType.ENTITY;
@@ -844,7 +844,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                 Connection connection = status.getConnection();
                 Statement statement = prepareStatement(connection::createStatement, preparedQuery, true, true);
                 Dialect dialect = preparedQuery.getDialect();
-                preparedQuery.bindParameters(new R2dbcParameterBinder(connection, statement, dialect, preparedQuery));
+                preparedQuery.bindParameters(new R2dbcParameterBinder(connection, statement, preparedQuery));
                 return executeAndGetRowsUpdatedSingle(statement, dialect)
                     .flatMap((Number rowsUpdated) -> {
                         if (QUERY_LOG.isTraceEnabled()) {
@@ -1135,17 +1135,15 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         private final Statement ps;
         private final SqlStoredQuery<?, ?> sqlStoredQuery;
 
-        private final Dialect dialect;
         private int index = 0;
 
         private R2dbcParameterBinder(R2dbcOperationContext ctx, Statement ps, SqlStoredQuery<?, ?> sqlStoredQuery) {
-            this(ctx.connection, ps, ctx.dialect, sqlStoredQuery);
+            this(ctx.connection, ps, sqlStoredQuery);
         }
 
-        private R2dbcParameterBinder(Connection connection, Statement ps, Dialect dialect, SqlStoredQuery<?, ?> sqlStoredQuery) {
+        private R2dbcParameterBinder(Connection connection, Statement ps, SqlStoredQuery<?, ?> sqlStoredQuery) {
             this.connection = connection;
             this.ps = ps;
-            this.dialect = dialect;
             this.sqlStoredQuery = sqlStoredQuery;
         }
 
@@ -1399,7 +1397,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                         if (notVetoedEntities.isEmpty()) {
                             return Mono.just(Tuples.of(list, 0L));
                         }
-                        return executeAndGetRowsUpdated(statement, ctx.dialect)
+                        return executeAndGetRowsUpdated(statement)
                             .map(Number::longValue)
                             .reduce(0L, Long::sum)
                             .map(rowsUpdated -> {

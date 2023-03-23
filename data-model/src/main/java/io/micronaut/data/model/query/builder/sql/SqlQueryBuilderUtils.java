@@ -260,9 +260,6 @@ final class SqlQueryBuilderUtils {
                     case SQL_SERVER:
                         column += " NVARCHAR(MAX)";
                         break;
-                    case ORACLE:
-                        column += " CLOB";
-                        break;
                     default:
                         column += " JSON";
                         break;

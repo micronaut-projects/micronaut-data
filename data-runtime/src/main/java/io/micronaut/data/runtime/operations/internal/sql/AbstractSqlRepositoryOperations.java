@@ -228,35 +228,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
                 }
                 break;
             case JSON:
-                if (value != null) {
-                    boolean handled = false;
-                    // In case parameter is JsonDataObject telling we need to find custom SqlJsonValueMapper
-                    // to set JSON parameter
-                    if (value instanceof JsonDataObject) {
-                        SqlJsonValueMapper sqlJsonValueMapper = sqlJsonColumnMapperProvider.getJsonValueMapper(storedQuery);
-                        if (sqlJsonValueMapper == null) {
-                            // if json mapper is not on the classpath and object needs to use JSON value mapper
-                            throw new IllegalStateException("For JSON data types support Micronaut JsonMapper needs to be available on the classpath.");
-                        }
-                        try {
-                            value = sqlJsonValueMapper.mapValue(value);
-                            handled = true;
-                        } catch (IOException e) {
-                            throw new DataAccessException("Failed setting JSON field parameter at index " + index, e);
-                        }
-                    }
-                    // Default logic to serialize JSON value
-                    if (!handled && !value.getClass().equals(String.class)) {
-                        if (jsonMapper == null) {
-                            throw new IllegalStateException("For JSON data types support Micronaut JsonMapper needs to be available on the classpath.");
-                        }
-                        try {
-                            value = new String(jsonMapper.writeValueAsBytes(value), StandardCharsets.UTF_8);
-                        } catch (IOException e) {
-                            throw new DataAccessException("Failed setting JSON field parameter at index " + index, e);
-                        }
-                    }
-                }
+                value = getJsonValue(storedQuery, index, value);
                 break;
             case ENTITY:
                 if (value != null) {
@@ -286,6 +258,40 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
         }
 
         preparedStatementWriter.setDynamic(preparedStatement, index, dataType, value);
+    }
+
+    private Object getJsonValue(SqlStoredQuery<?, ?> storedQuery, int index, Object value) {
+        if (value == null) {
+            return null;
+        }
+        boolean handled = false;
+        // In case parameter is JsonDataObject telling we need to find custom SqlJsonValueMapper
+        // to set JSON parameter
+        if (value instanceof JsonDataObject) {
+            SqlJsonValueMapper sqlJsonValueMapper = sqlJsonColumnMapperProvider.getJsonValueMapper(storedQuery);
+            if (sqlJsonValueMapper == null) {
+                // if json mapper is not on the classpath and object needs to use JSON value mapper
+                throw new IllegalStateException("For JSON data types support Micronaut JsonMapper needs to be available on the classpath.");
+            }
+            try {
+                value = sqlJsonValueMapper.mapValue(value);
+                handled = true;
+            } catch (IOException e) {
+                throw new DataAccessException("Failed setting JSON field parameter at index " + index, e);
+            }
+        }
+        // Default logic to serialize JSON value
+        if (!handled && !value.getClass().equals(String.class)) {
+            if (jsonMapper == null) {
+                throw new IllegalStateException("For JSON data types support Micronaut JsonMapper needs to be available on the classpath.");
+            }
+            try {
+                value = new String(jsonMapper.writeValueAsBytes(value), StandardCharsets.UTF_8);
+            } catch (IOException e) {
+                throw new DataAccessException("Failed setting JSON field parameter at index " + index, e);
+            }
+        }
+        return value;
     }
 
     /**
@@ -535,7 +541,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
      * @param <T> the entity type
      * @param <R> the result type
      */
-    protected final <T, R> SqlTypeMapper<RS, R> createQueryResultMapper(SqlPreparedQuery sqlPreparedQuery, String columnName, Class<R> resultType, Class<RS> resultSetType,
+    protected final <T, R> SqlTypeMapper<RS, R> createQueryResultMapper(SqlPreparedQuery<?, ?> sqlPreparedQuery, String columnName, Class<R> resultType, Class<RS> resultSetType,
                                                                     RuntimePersistentEntity<T> persistentEntity, BiFunction<RuntimePersistentEntity<Object>, Object, Object> loadListener) {
         QueryResultInfo queryResultInfo = sqlPreparedQuery.getQueryResultInfo();
         return switch (queryResultInfo.getType()) {
@@ -558,7 +564,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
      * @param <R> the result type
      * @param <T> the entity type
      */
-    protected final <R, T> R mapQueryColumnResult(SqlPreparedQuery sqlPreparedQuery, RS rs, String columnName,
+    protected final <R, T> R mapQueryColumnResult(SqlPreparedQuery<?, ?> sqlPreparedQuery, RS rs, String columnName,
                                           RuntimePersistentEntity<T> persistentEntity, Class<R> resultType, Class<RS> resultSetType,
                                           BiFunction<RuntimePersistentEntity<Object>, Object, Object> loadListener) {
         SqlTypeMapper<RS, R> mapper = createQueryResultMapper(sqlPreparedQuery, columnName, resultType, resultSetType, persistentEntity, loadListener);
@@ -593,9 +599,9 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
      * @return the {@link JsonQueryResultMapper}
      * @param <T> the entity type
      */
-    private <T> JsonQueryResultMapper createJsonQueryResultMapper(SqlPreparedQuery sqlPreparedQuery, String columnName, Class<?> resultType, Class<RS> resultSetType,
+    private <T, R> JsonQueryResultMapper<T, RS, R> createJsonQueryResultMapper(SqlPreparedQuery<?, ?> sqlPreparedQuery, String columnName, Class<R> resultType, Class<RS> resultSetType,
                                                                   RuntimePersistentEntity<T> persistentEntity, BiFunction<RuntimePersistentEntity<Object>, Object, Object> loadListener) {
-        return new JsonQueryResultMapper(columnName, persistentEntity, columnNameResultSetReader,
+        return new JsonQueryResultMapper<>(columnName, persistentEntity, columnNameResultSetReader,
             sqlJsonColumnMapperProvider.getJsonColumnReader(sqlPreparedQuery, resultType, resultSetType), loadListener);
     }
 
