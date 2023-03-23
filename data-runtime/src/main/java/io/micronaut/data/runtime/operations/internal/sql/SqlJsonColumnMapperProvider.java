@@ -84,7 +84,7 @@ public class SqlJsonColumnMapperProvider<RS> {
         QueryResultInfo queryResultInfo = sqlPreparedQuery.getQueryResultInfo();
         if (queryResultInfo != null && queryResultInfo.getType() == io.micronaut.data.annotation.QueryResult.Type.JSON) {
             for (SqlJsonColumnReader<RS> sqlJsonColumnReader : sqlJsonColumnReaders) {
-                if (sqlJsonColumnReader.supportsResultSetType(resultSetType) && sqlJsonColumnReader.supportsReadResults(sqlPreparedQuery, resultType)) {
+                if (sqlJsonColumnReader.supportsResultSetType(resultSetType) && sqlJsonColumnReader.supportsRead(sqlPreparedQuery, resultType)) {
                     supportedSqlJsonColumnReader = sqlJsonColumnReader;
                     break;
                 }

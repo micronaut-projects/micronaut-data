@@ -38,13 +38,13 @@ public interface SqlJsonColumnReader<RS> {
     String NULL_VALUE = "null";
 
     /**
-     * Gets an indicator telling whether reader can interpret results from the SQL prepared query.
+     * Gets an indicator telling whether reader can interpret results from the SQL prepared query and map to given type.
      *
      * @param sqlPreparedQuery the SQL prepared query
      * @param type the type to be mapped into
      * @return true if reader can interpret results from the query
      */
-    default boolean supportsReadResults(SqlPreparedQuery<?, ?> sqlPreparedQuery, Class<?> type) {
+    default boolean supportsRead(SqlPreparedQuery<?, ?> sqlPreparedQuery, Class<?> type) {
         return true;
     }
 

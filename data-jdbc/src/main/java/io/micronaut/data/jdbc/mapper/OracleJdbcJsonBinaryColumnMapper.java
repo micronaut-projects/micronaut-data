@@ -100,7 +100,7 @@ class OracleJdbcJsonBinaryColumnMapper implements SqlJsonColumnReader<ResultSet>
     }
 
     @Override
-    public boolean supportsReadResults(SqlPreparedQuery<?, ?> sqlPreparedQuery, Class<?> type) {
+    public boolean supportsRead(SqlPreparedQuery<?, ?> sqlPreparedQuery, Class<?> type) {
         return sqlPreparedQuery.getDialect() == Dialect.ORACLE && JsonDataObject.class.isAssignableFrom(type);
     }
 
