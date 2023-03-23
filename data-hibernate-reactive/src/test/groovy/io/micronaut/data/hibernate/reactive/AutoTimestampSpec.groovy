@@ -95,7 +95,7 @@ class AutoTimestampSpec extends Specification implements PostgresHibernateReacti
         face.id != null
         dateCreated != null
         face.dateCreated == face.lastUpdated
-        taskRepo.findById(face.id).block().dateCreated == face.dateCreated
+        taskRepo.findById(face.id).block().dateCreated.toEpochMilli() == face.dateCreated.toEpochMilli()
 
         when:
         face.setName("Bar")
@@ -103,8 +103,8 @@ class AutoTimestampSpec extends Specification implements PostgresHibernateReacti
         def task2 = taskRepo.findById(face.id).block()
 
         then:
-        face.dateCreated == dateCreated
-        face.dateCreated == task2.dateCreated
+        face.dateCreated.toEpochMilli() == dateCreated.toEpochMilli()
+        face.dateCreated.toEpochMilli() == task2.dateCreated.toEpochMilli()
         task2.name == "Bar"
         task2.lastUpdated > task2.dateCreated
     }
