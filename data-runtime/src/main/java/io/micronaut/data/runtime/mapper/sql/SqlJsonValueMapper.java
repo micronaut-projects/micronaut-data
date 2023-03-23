@@ -31,25 +31,25 @@ import java.nio.charset.StandardCharsets;
 public interface SqlJsonValueMapper {
 
     /**
-     * Converts an object to JSON string using json mapper.
+     * Converts an object to JSON using json mapper.
+     * Default implementation produces JSON string, other implementation may return byte array etc.
      *
-     * @param object object of to convert to JSON string
-     * @return the JSON string created from the object using json mapper
+     * @param object object of to convert to JSON
+     * @return the JSON created from the object using json mapper
      * @throws IOException exception that can be thrown when encoding JSON
      */
-    default String mapValue(Object object) throws IOException {
+    default Object mapValue(Object object) throws IOException {
         return new String(getJsonMapper().writeValueAsBytes(object), StandardCharsets.UTF_8);
     }
 
     /**
-     * Gets an indicator telling whether mapper can map parameter value to JSON byte array for given
+     * Gets an indicator telling whether mapper can map parameter value to JSON for given
      * SQL stored query and parameter and object being mapped.
      *
-     * @param sqlStoredQuery the SQL stored query
-     * @param value the object value to be mapped
-     * @return true if mapper can map parameter to JSON byte array in context of given SQL stored query
+     * @param sqlStoredQuery the SQL stored query being executed that needs to convert JSON parameter
+     * @return true if mapper can map parameter to JSON in context of given SQL stored query
      */
-    default boolean canMapValue(SqlStoredQuery<?, ?> sqlStoredQuery, Object value) {
+    default boolean supportsMapValue(SqlStoredQuery<?, ?> sqlStoredQuery) {
         return true;
     }
 

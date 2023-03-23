@@ -75,11 +75,11 @@ public class SqlJsonColumnMapperProvider<RS> {
      *
      * @param sqlPreparedQuery the SQL prepared query
      * @param resultType the result type to be returned
-     * @param resultSetType the result set type (for R2dbc and Jdbc it is different for example)
+     * @param resultSetType the result set type (for R2Dbc and Jdbc it is different for example)
      * @return the {@link SqlJsonColumnReader} for given SQL prepared query, or default {@link SqlJsonColumnReader}
      * if prepared query does not have specific one that it supports
      */
-    public SqlJsonColumnReader<RS> getJsonColumnReader(SqlPreparedQuery<?, ?> sqlPreparedQuery, Class<?> resultType, Class<RS> resultSetType) {
+    public SqlJsonColumnReader<RS> getJsonColumnReader(SqlPreparedQuery<?, ?> sqlPreparedQuery,  Class<?> resultType, Class<RS> resultSetType) {
         SqlJsonColumnReader<RS> supportedSqlJsonColumnReader = null;
         QueryResultInfo queryResultInfo = sqlPreparedQuery.getQueryResultInfo();
         if (queryResultInfo != null && queryResultInfo.getType() == io.micronaut.data.annotation.QueryResult.Type.JSON) {
@@ -110,14 +110,13 @@ public class SqlJsonColumnMapperProvider<RS> {
      * Otherwise, it will return default {@link SqlJsonValueMapper}.
      *
      * @param sqlStoredQuery the SQL stored query
-     * @param value the value to be mapped
      * @return the {@link SqlJsonValueMapper} for given SQL stored query, or default {@link SqlJsonValueMapper}
      * if stored query does not have specific one that it supports
      */
-    public SqlJsonValueMapper getJsonValueMapper(SqlStoredQuery<?, ?> sqlStoredQuery, Object value) {
+    public SqlJsonValueMapper getJsonValueMapper(SqlStoredQuery<?, ?> sqlStoredQuery) {
         SqlJsonValueMapper supportedSqlJsonValueMapper = null;
         for (SqlJsonValueMapper sqlJsonValueMapper : sqlJsonValueMappers) {
-            if (sqlJsonValueMapper.canMapValue(sqlStoredQuery, value)) {
+            if (sqlJsonValueMapper.supportsMapValue(sqlStoredQuery)) {
                 supportedSqlJsonValueMapper = sqlJsonValueMapper;
                 break;
             }

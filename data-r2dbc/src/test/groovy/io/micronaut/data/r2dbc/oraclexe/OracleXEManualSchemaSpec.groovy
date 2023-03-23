@@ -38,7 +38,7 @@ class OracleXEManualSchemaSpec extends AbstractManualSchemaSpec implements Oracl
     List<String> createStatements() {
         return Arrays.asList("CREATE SEQUENCE \"PATIENT_SEQ\" MINVALUE 1 START WITH 1 CACHE 100 NOCYCLE",
                 "CREATE TABLE \"PATIENT\" (\"NAME\" VARCHAR(255), \"ID\" NUMBER(19) NOT NULL PRIMARY KEY, \"HISTORY\" VARCHAR(1000), \"DOCTOR_NOTES\" VARCHAR(255))",
-                "CREATE TABLE \"JSON_ENTITY\" (\"ID\" NUMBER(19) NOT NULL PRIMARY KEY, \"SAMPLE_DATA\" JSON)")
+                "CREATE TABLE \"JSON_ENTITY\" (\"ID\" NUMBER(19) NOT NULL PRIMARY KEY, \"SAMPLE_DATA\" BLOB)")
     }
 
     @Override
@@ -50,6 +50,7 @@ class OracleXEManualSchemaSpec extends AbstractManualSchemaSpec implements Oracl
     String insertStatement() {
         return "INSERT INTO \"PATIENT\" (\"NAME\", \"HISTORY\", \"DOCTOR_NOTES\", \"ID\") VALUES (?, ?, ?, \"PATIENT_SEQ\".nextval)";
     }
+
     void "test JSON object retrieval"() {
         given:
         createSchema()

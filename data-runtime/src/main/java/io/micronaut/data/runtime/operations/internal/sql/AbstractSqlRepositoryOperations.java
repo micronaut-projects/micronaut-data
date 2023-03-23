@@ -29,6 +29,7 @@ import io.micronaut.data.exceptions.OptimisticLockException;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.DataType;
+import io.micronaut.data.model.JsonDataObject;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentEntityUtils;
 import io.micronaut.data.model.PersistentProperty;
@@ -67,6 +68,7 @@ import io.micronaut.json.JsonMapper;
 import org.slf4j.Logger;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
 import java.util.AbstractMap;
 import java.util.ArrayList;
@@ -226,17 +228,33 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
                 }
                 break;
             case JSON:
-                if (value != null && !value.getClass().equals(String.class)) {
-                    SqlJsonValueMapper sqlJsonValueMapper = sqlJsonColumnMapperProvider.getJsonValueMapper(storedQuery, value);
-                    if (sqlJsonValueMapper == null) {
-                        // if json mapper is not on the classpath and provided value is string
-                        // assume we don't need conversion and can use parameter
-                        throw new IllegalStateException("For JSON data types support Micronaut JsonMapper needs to be available on the classpath.");
+                if (value != null) {
+                    boolean handled = false;
+                    // In case parameter is JsonDataObject telling we need to find custom SqlJsonValueMapper
+                    // to set JSON parameter
+                    if (value instanceof JsonDataObject) {
+                        SqlJsonValueMapper sqlJsonValueMapper = sqlJsonColumnMapperProvider.getJsonValueMapper(storedQuery);
+                        if (sqlJsonValueMapper == null) {
+                            // if json mapper is not on the classpath and object needs to use JSON value mapper
+                            throw new IllegalStateException("For JSON data types support Micronaut JsonMapper needs to be available on the classpath.");
+                        }
+                        try {
+                            value = sqlJsonValueMapper.mapValue(value);
+                            handled = true;
+                        } catch (IOException e) {
+                            throw new DataAccessException("Failed setting JSON field parameter at index " + index, e);
+                        }
                     }
-                    try {
-                        value = sqlJsonValueMapper.mapValue(value);
-                    } catch (IOException e) {
-                        throw new DataAccessException("Failed setting JSON field parameter at index " + index, e);
+                    // Default logic to serialize JSON value
+                    if (!handled && !value.getClass().equals(String.class)) {
+                        if (jsonMapper == null) {
+                            throw new IllegalStateException("For JSON data types support Micronaut JsonMapper needs to be available on the classpath.");
+                        }
+                        try {
+                            value = new String(jsonMapper.writeValueAsBytes(value), StandardCharsets.UTF_8);
+                        } catch (IOException e) {
+                            throw new DataAccessException("Failed setting JSON field parameter at index " + index, e);
+                        }
                     }
                 }
                 break;
@@ -533,7 +551,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
      * @param rs the result set
      * @param columnName the column name where we are reading from
      * @param persistentEntity the persistent entity
-     * @param type the result type
+     * @param resultType the result type
      * @param resultSetType the result set type
      * @param loadListener the load listener if needed after entity loaded
      * @return an object read from the result set column
@@ -541,10 +559,10 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
      * @param <T> the entity type
      */
     protected final <R, T> R mapQueryColumnResult(SqlPreparedQuery sqlPreparedQuery, RS rs, String columnName,
-                                          RuntimePersistentEntity<T> persistentEntity, Class<R> type, Class<RS> resultSetType,
+                                          RuntimePersistentEntity<T> persistentEntity, Class<R> resultType, Class<RS> resultSetType,
                                           BiFunction<RuntimePersistentEntity<Object>, Object, Object> loadListener) {
-        SqlTypeMapper<RS, R> mapper = createQueryResultMapper(sqlPreparedQuery, columnName, type, resultSetType, persistentEntity, loadListener);
-        return mapper.map(rs, type);
+        SqlTypeMapper<RS, R> mapper = createQueryResultMapper(sqlPreparedQuery, columnName, resultType, resultSetType, persistentEntity, loadListener);
+        return mapper.map(rs, resultType);
     }
 
     /**

@@ -734,8 +734,8 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                             conversionService
                         );
                     } else {
-                        mapper = createQueryResultMapper(preparedQuery, queryResultInfo.getColumnName(),
-                            resultType, Row.class, persistentEntity, null);
+                        mapper = createQueryResultMapper(preparedQuery, queryResultInfo.getColumnName(), resultType,
+                            Row.class, persistentEntity, null);
                     }
 
                     return executeAndMapEachRow(statement, row -> mapper.map(row, resultType));
@@ -779,7 +779,8 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                                 conversionService
                             );
                         } else {
-                            mapper = createQueryResultMapper(preparedQuery, queryResultInfo.getColumnName(), resultType, Row.class, persistentEntity, null);
+                            mapper = createQueryResultMapper(preparedQuery, queryResultInfo.getColumnName(), resultType,
+                                Row.class, persistentEntity, null);
                         }
                     } else {
                         BiFunction<RuntimePersistentEntity<Object>, Object, Object> loadListener = (loadedEntity, o) -> {
@@ -811,7 +812,8 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                                 mapper = entityTypeMapper;
                             }
                         } else {
-                            mapper = createQueryResultMapper(preparedQuery, queryResultInfo.getColumnName(), resultType, Row.class, persistentEntity, loadListener);
+                            mapper = createQueryResultMapper(preparedQuery, queryResultInfo.getColumnName(), resultType,
+                                Row.class, persistentEntity, loadListener);
                         }
                     }
                     return executeAndMapEachRow(statement, row -> mapper.map(row, resultType));
