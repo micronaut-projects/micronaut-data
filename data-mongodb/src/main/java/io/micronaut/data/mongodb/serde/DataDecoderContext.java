@@ -40,12 +40,12 @@ import org.bson.BsonDocument;
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.Codec;
 import org.bson.codecs.IterableCodec;
-import org.bson.codecs.MapCodec;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.types.ObjectId;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Map;
 
 /**
  * The Micronaut Data's Serde's {@link io.micronaut.serde.Deserializer.DecoderContext}.
@@ -188,7 +188,7 @@ final class DataDecoderContext implements Deserializer.DecoderContext {
         if (codec instanceof MappedCodec) {
             return ((MappedCodec<? extends T>) codec).deserializer;
         }
-        if (codec != null && !(codec instanceof IterableCodec) && !(codec instanceof MapCodec)) {
+        if (codec != null && !(codec instanceof IterableCodec) && !(Map.class.isAssignableFrom(codec.getEncoderClass()))) {
             return new CodecBsonDecoder<T>((Codec<T>) codec);
         }
         return parent.findDeserializer(type);

@@ -511,10 +511,14 @@ class MongoDocumentRepositorySpec extends AbstractDocumentRepositorySpec impleme
         optDoc.present
         def doc = optDoc.get()
         doc.owners.size() == 2
-        doc.owners["owner1"].name == "Owner1"
-        doc.owners["owner1"].age == 40
-        doc.owners["owner2"].name == "Owner2"
-        doc.owners["owner2"].age == 30
+        def docOwner1 = doc.owners["owner1"]
+        docOwner1.name == "Owner1"
+        docOwner1.age == 40
+        docOwner1.class == Owner
+        def docOwner2 = doc.owners["owner2"]
+        docOwner2.name == "Owner2"
+        docOwner2.age == 30
+        docOwner2.class == Owner
         cleanup:
         documentRepository.deleteAll()
     }
