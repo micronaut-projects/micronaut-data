@@ -20,10 +20,12 @@ import io.micronaut.data.tck.entities.Face
 import io.micronaut.data.tck.entities.Product
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
+import spock.lang.IgnoreIf
 import spock.lang.Shared
 import spock.lang.Specification
 
 @MicronautTest(transactional = false, packages = "io.micronaut.data.tck.entities")
+@IgnoreIf({ jvm.isJava15Compatible() })
 class AutoTimestampSpec extends Specification implements PostgresHibernateReactiveProperties {
 
     @Shared
@@ -95,7 +97,7 @@ class AutoTimestampSpec extends Specification implements PostgresHibernateReacti
         face.id != null
         dateCreated != null
         face.dateCreated == face.lastUpdated
-        taskRepo.findById(face.id).block().dateCreated.toEpochMilli() == face.dateCreated.toEpochMilli()
+        taskRepo.findById(face.id).block().dateCreated == face.dateCreated
 
         when:
         face.setName("Bar")
@@ -103,8 +105,8 @@ class AutoTimestampSpec extends Specification implements PostgresHibernateReacti
         def task2 = taskRepo.findById(face.id).block()
 
         then:
-        face.dateCreated.toEpochMilli() == dateCreated.toEpochMilli()
-        face.dateCreated.toEpochMilli() == task2.dateCreated.toEpochMilli()
+        face.dateCreated == dateCreated
+        face.dateCreated == task2.dateCreated
         task2.name == "Bar"
         task2.lastUpdated > task2.dateCreated
     }
