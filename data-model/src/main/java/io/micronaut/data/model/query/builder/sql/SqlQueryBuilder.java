@@ -908,6 +908,10 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
 
     @Override
     public String resolveJoinType(Join.Type jt) {
+        if (!this.dialect.supportsJoinType(jt)) {
+            throw new IllegalArgumentException("Unsupported join type [" + jt + "] by dialect [" + this.dialect + "]");
+        }
+
         String joinType;
         switch (jt) {
             case LEFT:
@@ -919,6 +923,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                 joinType = " RIGHT JOIN ";
                 break;
             case OUTER:
+            case OUTER_FETCH:
                 joinType = " FULL OUTER JOIN ";
                 break;
             default:
