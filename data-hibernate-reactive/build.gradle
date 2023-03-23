@@ -24,6 +24,11 @@ dependencies {
     testImplementation libs.groovy.sql
     testImplementation platform(libs.testcontainers.bom)
     testImplementation libs.testcontainers.postgresql
+    testImplementation libs.testcontainers.mysql
 
     testRuntimeOnly libs.drivers.vertx.pg
+    testRuntimeOnly libs.drivers.vertx.mysql
+
+    // Testcontainers wait function needs the driver
+    testImplementation libs.drivers.jdbc.mysql
 }
