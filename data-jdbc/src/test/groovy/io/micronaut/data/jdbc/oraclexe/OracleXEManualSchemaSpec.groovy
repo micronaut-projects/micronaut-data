@@ -19,6 +19,7 @@ import io.micronaut.data.tck.repositories.PatientRepository
 import java.nio.charset.Charset
 import java.time.Duration
 import java.time.LocalDateTime
+import java.time.ZoneOffset
 
 class OracleXEManualSchemaSpec extends AbstractManualSchemaSpec implements OracleTestPropertyProvider {
 
@@ -47,7 +48,7 @@ class OracleXEManualSchemaSpec extends AbstractManualSchemaSpec implements Oracl
     List<String> createStatements() {
         return Arrays.asList("CREATE SEQUENCE \"PATIENT_SEQ\" MINVALUE 1 START WITH 1 CACHE 100 NOCYCLE",
             "CREATE TABLE \"PATIENT\" (\"NAME\" VARCHAR(255), \"ID\" NUMBER(19) NOT NULL PRIMARY KEY, \"HISTORY\" VARCHAR(1000), \"DOCTOR_NOTES\" VARCHAR(255))",
-            "CREATE TABLE \"JSON_ENTITY\" (\"ID\" NUMBER(19) NOT NULL PRIMARY KEY, \"SAMPLE_DATA\" BLOB)",
+            "CREATE TABLE \"JSON_ENTITY\" (\"ID\" NUMBER(19) NOT NULL PRIMARY KEY, \"SAMPLE_DATA\" JSON)",
             "CREATE TABLE \"JSON_DATA\" (\"ID\" NUMBER(19) NOT NULL PRIMARY KEY, \"NAME\" VARCHAR(100), \"CREATED_DATE\" TIMESTAMP (6), \"DURATION\" INTERVAL DAY (2) TO SECOND (6))")
     }
 
@@ -103,7 +104,7 @@ class OracleXEManualSchemaSpec extends AbstractManualSchemaSpec implements Oracl
         def loadedJsonData = optJsonData.get()
         loadedJsonData.id == jsonData.id
         loadedJsonData.name == jsonData.name
-        loadedJsonData.createdDate == jsonData.createdDate
+        loadedJsonData.createdDate.toInstant(ZoneOffset.UTC).toEpochMilli() == jsonData.createdDate.toInstant(ZoneOffset.UTC).toEpochMilli()
         loadedJsonData.duration == jsonData.duration
         cleanup:
         dropSchema()
