@@ -1,10 +1,14 @@
 package io.micronaut.data.jdbc.oraclexe
 
 import groovy.transform.Memoized
+import io.micronaut.data.annotation.Id
+import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.Query
 import io.micronaut.data.annotation.QueryResult
 import io.micronaut.data.jdbc.AbstractManualSchemaSpec
 import io.micronaut.data.jdbc.annotation.JdbcRepository
+import io.micronaut.data.jdbc.h2.LocalDateTimeSpec
+import io.micronaut.data.model.JsonDataObject
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.repository.CrudRepository
 import io.micronaut.data.runtime.config.SchemaGenerate
@@ -34,16 +38,22 @@ class OracleXEManualSchemaSpec extends AbstractManualSchemaSpec implements Oracl
         return context.getBean(OracleXEJsonEntityRepository)
     }
 
+    @Memoized
+    OracleXEJsonDataRepository getJsonDataRepository() {
+        return context.getBean(OracleXEJsonDataRepository)
+    }
+
     @Override
     List<String> createStatements() {
         return Arrays.asList("CREATE SEQUENCE \"PATIENT_SEQ\" MINVALUE 1 START WITH 1 CACHE 100 NOCYCLE",
             "CREATE TABLE \"PATIENT\" (\"NAME\" VARCHAR(255), \"ID\" NUMBER(19) NOT NULL PRIMARY KEY, \"HISTORY\" VARCHAR(1000), \"DOCTOR_NOTES\" VARCHAR(255))",
-            "CREATE TABLE \"JSON_ENTITY\" (\"ID\" NUMBER(19) NOT NULL PRIMARY KEY, \"SAMPLE_DATA\" BLOB)")
+            "CREATE TABLE \"JSON_ENTITY\" (\"ID\" NUMBER(19) NOT NULL PRIMARY KEY, \"SAMPLE_DATA\" BLOB)",
+            "CREATE TABLE \"JSON_DATA\" (\"ID\" NUMBER(19) NOT NULL PRIMARY KEY, \"NAME\" VARCHAR(100), \"CREATED_DATE\" TIMESTAMP (6), \"DURATION\" INTERVAL DAY (2) TO SECOND (6))")
     }
 
     @Override
     List<String> dropStatements() {
-        return Arrays.asList("DROP TABLE \"PATIENT\" PURGE", "DROP SEQUENCE \"PATIENT_SEQ\"", "DROP TABLE \"JSON_ENTITY\"")
+        return Arrays.asList("DROP TABLE \"PATIENT\" PURGE", "DROP SEQUENCE \"PATIENT_SEQ\"", "DROP TABLE \"JSON_ENTITY\"", "DROP TABLE \"JSON_DATA\"")
     }
 
     @Override
@@ -80,6 +90,21 @@ class OracleXEManualSchemaSpec extends AbstractManualSchemaSpec implements Oracl
         loadedSampleData.memo == sampleData.memo
         loadedSampleData.duration == sampleData.duration
         loadedSampleData.uuid == sampleData.uuid
+        when:
+        def jsonData = new JsonData()
+        jsonData.id = 100L
+        jsonData.name = "Custom Name"
+        jsonData.createdDate = LocalDateTime.now()
+        jsonData.duration = Duration.ofHours(12)
+        jsonDataRepository.save(jsonData)
+        def optJsonData = jsonDataRepository.getJsonDataById(100L)
+        then:
+        optJsonData.present
+        def loadedJsonData = optJsonData.get()
+        loadedJsonData.id == jsonData.id
+        loadedJsonData.name == jsonData.name
+        loadedJsonData.createdDate == jsonData.createdDate
+        loadedJsonData.duration == jsonData.duration
         cleanup:
         dropSchema()
     }
@@ -90,6 +115,57 @@ interface OracleXEJsonEntityRepository extends CrudRepository<JsonEntity, Long> 
 
     @Query("SELECT SAMPLE_DATA AS DATA FROM JSON_ENTITY WHERE ID = :id")
     @QueryResult(type = QueryResult.Type.JSON)
-    Optional<SampleData> findJsonSampleDataByEntityId(Long id);
+    Optional<SampleData> findJsonSampleDataByEntityId(Long id)
 
+}
+
+@JdbcRepository(dialect = Dialect.ORACLE)
+interface OracleXEJsonDataRepository extends CrudRepository<JsonData, Long> {
+
+    void saveJsonData(JsonData jsonData)
+
+    @Query("SELECT JSON_OBJECT('id' VALUE \"ID\", 'name' VALUE \"NAME\", 'createdDate' VALUE \"CREATED_DATE\", 'duration' VALUE \"DURATION\") AS \"DATA\" FROM JSON_DATA")
+    @QueryResult(type = QueryResult.Type.JSON)
+    Optional<JsonData> getJsonDataById(Long id)
+}
+
+@MappedEntity
+class JsonData {
+    @Id
+    private Long id
+    private String name
+    private LocalDateTime createdDate
+    private Duration duration
+
+    Long getId() {
+        return id
+    }
+
+    void setId(Long id) {
+        this.id = id
+    }
+
+    String getName() {
+        return name
+    }
+
+    void setName(String name) {
+        this.name = name
+    }
+
+    LocalDateTime getCreatedDate() {
+        return createdDate
+    }
+
+    void setCreatedDate(LocalDateTime createdDate) {
+        this.createdDate = createdDate
+    }
+
+    Duration getDuration() {
+        return duration
+    }
+
+    void setDuration(Duration duration) {
+        this.duration = duration
+    }
 }
