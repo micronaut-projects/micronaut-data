@@ -228,7 +228,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
                 }
                 break;
             case JSON:
-                value = getJsonValue(storedQuery, index, value);
+                value = getJsonValue(storedQuery, dataType, index, value);
                 break;
             case ENTITY:
                 if (value != null) {
@@ -260,7 +260,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
         preparedStatementWriter.setDynamic(preparedStatement, index, dataType, value);
     }
 
-    private Object getJsonValue(SqlStoredQuery<?, ?> storedQuery, int index, Object value) {
+    private Object getJsonValue(SqlStoredQuery<?, ?> storedQuery, DataType dataType, int index, Object value) {
         if (value == null) {
             return null;
         }
@@ -268,7 +268,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
         // In case parameter is JsonDataObject telling we need to find custom SqlJsonValueMapper
         // to set JSON parameter
         if (value instanceof JsonDataObject) {
-            SqlJsonValueMapper sqlJsonValueMapper = sqlJsonColumnMapperProvider.getJsonValueMapper(storedQuery);
+            SqlJsonValueMapper sqlJsonValueMapper = sqlJsonColumnMapperProvider.getJsonValueMapper(storedQuery, dataType);
             if (sqlJsonValueMapper == null) {
                 // if json mapper is not on the classpath and object needs to use JSON value mapper
                 throw new IllegalStateException("For JSON data types support Micronaut JsonMapper needs to be available on the classpath.");
@@ -533,6 +533,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
      *
      * @param sqlPreparedQuery the SQL prepared query
      * @param columnName the column name where we are reading from
+     * @param dataType the column data type
      * @param resultType the result type
      * @param resultSetType resultSetType the result set type (different for R2dbc and Jdbc)
      * @param persistentEntity the persistent entity
@@ -541,11 +542,11 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
      * @param <T> the entity type
      * @param <R> the result type
      */
-    protected final <T, R> SqlTypeMapper<RS, R> createQueryResultMapper(SqlPreparedQuery<?, ?> sqlPreparedQuery, String columnName, Class<R> resultType, Class<RS> resultSetType,
+    protected final <T, R> SqlTypeMapper<RS, R> createQueryResultMapper(SqlPreparedQuery<?, ?> sqlPreparedQuery, String columnName, DataType dataType, Class<R> resultType, Class<RS> resultSetType,
                                                                     RuntimePersistentEntity<T> persistentEntity, BiFunction<RuntimePersistentEntity<Object>, Object, Object> loadListener) {
         QueryResultInfo queryResultInfo = sqlPreparedQuery.getQueryResultInfo();
         return switch (queryResultInfo.getType()) {
-            case JSON -> createJsonQueryResultMapper(sqlPreparedQuery, columnName, resultType, resultSetType, persistentEntity, loadListener);
+            case JSON -> createJsonQueryResultMapper(sqlPreparedQuery, columnName, dataType, resultType, resultSetType, persistentEntity, loadListener);
             default -> throw new IllegalStateException("Unexpected query result type: " + queryResultInfo.getType());
         };
     }
@@ -556,6 +557,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
      * @param sqlPreparedQuery the SQL prepared query
      * @param rs the result set
      * @param columnName the column name where we are reading from
+     * @param dataType the column data type
      * @param persistentEntity the persistent entity
      * @param resultType the result type
      * @param resultSetType the result set type
@@ -564,10 +566,10 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
      * @param <R> the result type
      * @param <T> the entity type
      */
-    protected final <R, T> R mapQueryColumnResult(SqlPreparedQuery<?, ?> sqlPreparedQuery, RS rs, String columnName,
+    protected final <R, T> R mapQueryColumnResult(SqlPreparedQuery<?, ?> sqlPreparedQuery, RS rs, String columnName, DataType dataType,
                                           RuntimePersistentEntity<T> persistentEntity, Class<R> resultType, Class<RS> resultSetType,
                                           BiFunction<RuntimePersistentEntity<Object>, Object, Object> loadListener) {
-        SqlTypeMapper<RS, R> mapper = createQueryResultMapper(sqlPreparedQuery, columnName, resultType, resultSetType, persistentEntity, loadListener);
+        SqlTypeMapper<RS, R> mapper = createQueryResultMapper(sqlPreparedQuery, columnName, dataType, resultType, resultSetType, persistentEntity, loadListener);
         return mapper.map(rs, resultType);
     }
 
@@ -592,6 +594,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
      *
      * @param sqlPreparedQuery the SQL prepared query
      * @param columnName the column name where query result is stored
+     * @param dataType the column data type
      * @param resultType the result type
      * @param resultSetType the result set type
      * @param persistentEntity the persistent entity
@@ -599,10 +602,10 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
      * @return the {@link JsonQueryResultMapper}
      * @param <T> the entity type
      */
-    private <T, R> JsonQueryResultMapper<T, RS, R> createJsonQueryResultMapper(SqlPreparedQuery<?, ?> sqlPreparedQuery, String columnName, Class<R> resultType, Class<RS> resultSetType,
+    private <T, R> JsonQueryResultMapper<T, RS, R> createJsonQueryResultMapper(SqlPreparedQuery<?, ?> sqlPreparedQuery, String columnName, DataType dataType, Class<R> resultType, Class<RS> resultSetType,
                                                                   RuntimePersistentEntity<T> persistentEntity, BiFunction<RuntimePersistentEntity<Object>, Object, Object> loadListener) {
-        return new JsonQueryResultMapper<>(columnName, persistentEntity, columnNameResultSetReader,
-            sqlJsonColumnMapperProvider.getJsonColumnReader(sqlPreparedQuery, resultType, resultSetType), loadListener);
+        return new JsonQueryResultMapper<>(columnName, dataType, persistentEntity, columnNameResultSetReader,
+            sqlJsonColumnMapperProvider.getJsonColumnReader(sqlPreparedQuery, dataType, resultType, resultSetType), loadListener);
     }
 
     /**

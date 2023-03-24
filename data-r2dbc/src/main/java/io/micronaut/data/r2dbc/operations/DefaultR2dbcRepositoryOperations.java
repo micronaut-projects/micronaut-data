@@ -702,7 +702,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                     };
                     QueryResultInfo queryResultInfo = preparedQuery.getQueryResultInfo();
                     if (queryResultInfo != null && queryResultInfo.getType() != QueryResult.Type.TABULAR) {
-                        SqlTypeMapper<Row, R> queryResultMapper = createQueryResultMapper(preparedQuery, queryResultInfo.getColumnName(),
+                        SqlTypeMapper<Row, R> queryResultMapper = createQueryResultMapper(preparedQuery, queryResultInfo.getColumnName(), queryResultInfo.getDataType(),
                             resultType, Row.class, persistentEntity, loadListener);
                         return executeAndMapEachRow(statement, row -> queryResultMapper.map(row, resultType));
                     }
@@ -734,7 +734,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                             conversionService
                         );
                     } else {
-                        mapper = createQueryResultMapper(preparedQuery, queryResultInfo.getColumnName(), resultType,
+                        mapper = createQueryResultMapper(preparedQuery, queryResultInfo.getColumnName(), queryResultInfo.getDataType(), resultType,
                             Row.class, persistentEntity, null);
                     }
 
@@ -779,7 +779,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                                 conversionService
                             );
                         } else {
-                            mapper = createQueryResultMapper(preparedQuery, queryResultInfo.getColumnName(), resultType,
+                            mapper = createQueryResultMapper(preparedQuery, queryResultInfo.getColumnName(), queryResultInfo.getDataType(), resultType,
                                 Row.class, persistentEntity, null);
                         }
                     } else {
@@ -812,7 +812,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                                 mapper = entityTypeMapper;
                             }
                         } else {
-                            mapper = createQueryResultMapper(preparedQuery, queryResultInfo.getColumnName(), resultType,
+                            mapper = createQueryResultMapper(preparedQuery, queryResultInfo.getColumnName(), queryResultInfo.getDataType(), resultType,
                                 Row.class, persistentEntity, loadListener);
                         }
                     }

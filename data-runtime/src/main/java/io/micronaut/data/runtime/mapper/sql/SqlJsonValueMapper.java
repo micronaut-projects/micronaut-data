@@ -16,6 +16,7 @@
 package io.micronaut.data.runtime.mapper.sql;
 
 import io.micronaut.core.annotation.NonNull;
+import io.micronaut.data.model.DataType;
 import io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery;
 import io.micronaut.json.JsonMapper;
 
@@ -47,9 +48,10 @@ public interface SqlJsonValueMapper {
      * SQL stored query and parameter and object being mapped.
      *
      * @param sqlStoredQuery the SQL stored query being executed that needs to convert JSON parameter
+     * @param dataType the column data type
      * @return true if mapper can map parameter to JSON in context of given SQL stored query
      */
-    default boolean supportsMapValue(SqlStoredQuery<?, ?> sqlStoredQuery) {
+    default boolean supportsMapValue(SqlStoredQuery<?, ?> sqlStoredQuery, DataType dataType) {
         return true;
     }
 

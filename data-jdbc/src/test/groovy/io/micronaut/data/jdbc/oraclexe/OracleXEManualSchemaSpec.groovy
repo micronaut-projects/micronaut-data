@@ -44,15 +44,17 @@ class OracleXEManualSchemaSpec extends AbstractManualSchemaSpec implements Oracl
 
     @Override
     List<String> createStatements() {
-        return Arrays.asList("""CREATE SEQUENCE "PATIENT_SEQ" MINVALUE 1 START WITH 1 CACHE 100 NOCYCLE""",
-            """CREATE TABLE "PATIENT" ("NAME" VARCHAR(255), "ID" NUMBER(19) NOT NULL PRIMARY KEY, "HISTORY" VARCHAR(1000), "DOCTOR_NOTES" VARCHAR(255))""",
-            """CREATE TABLE "JSON_ENTITY" ("ID" NUMBER(19) NOT NULL PRIMARY KEY, "SAMPLE_DATA" JSON)""",
-            """CREATE TABLE "JSON_DATA" ("ID" NUMBER(19) NOT NULL PRIMARY KEY, "NAME" VARCHAR(100), "CREATED_DATE" TIMESTAMP (6), "DURATION" INTERVAL DAY (2) TO SECOND (6))""")
+        def statements = Arrays.asList(""" CREATE SEQUENCE "PATIENT_SEQ" MINVALUE 1 START WITH 1 CACHE 100 NOCYCLE """,
+            """ CREATE TABLE "PATIENT" ("NAME" VARCHAR(255), "ID" NUMBER(19) NOT NULL PRIMARY KEY, "HISTORY" VARCHAR(1000), "DOCTOR_NOTES" VARCHAR(255)) """,
+            """ CREATE TABLE "JSON_ENTITY" ("ID" NUMBER(19) NOT NULL PRIMARY KEY, "SAMPLE_DATA" JSON) """,
+            """ CREATE TABLE "JSON_DATA" ("ID" NUMBER(19) NOT NULL PRIMARY KEY, "NAME" VARCHAR(100), "CREATED_DATE" TIMESTAMP (6), "DURATION" INTERVAL DAY (2) TO SECOND (6)) """)
+        return statements
     }
 
     @Override
     List<String> dropStatements() {
-        return Arrays.asList("""DROP TABLE "PATIENT" PURGE", "DROP SEQUENCE "PATIENT_SEQ"", "DROP TABLE "JSON_ENTITY"", "DROP TABLE "JSON_DATA""")
+        def statements = Arrays.asList(""" DROP TABLE "PATIENT" PURGE """, """ DROP SEQUENCE "PATIENT_SEQ" """, """ DROP TABLE "JSON_ENTITY" """, """ DROP TABLE "JSON_DATA" """)
+        return statements
     }
 
     @Override
@@ -121,7 +123,7 @@ interface OracleXEJsonEntityRepository extends CrudRepository<JsonEntity, Long> 
 @JdbcRepository(dialect = Dialect.ORACLE)
 interface OracleXEJsonDataRepository extends CrudRepository<JsonData, Long> {
 
-    @Query("""SELECT JSON_OBJECT('id' VALUE "ID", 'name' VALUE "NAME", 'createdDate' VALUE "CREATED_DATE", 'duration' VALUE "DURATION") AS "DATA" FROM JSON_DATA""")
+    @Query(""" SELECT JSON_OBJECT('id' VALUE "ID", 'name' VALUE "NAME", 'createdDate' VALUE "CREATED_DATE", 'duration' VALUE "DURATION") AS "DATA" FROM JSON_DATA """)
     @QueryResult(type = QueryResult.Type.JSON)
     Optional<JsonData> getJsonDataById(Long id)
 }

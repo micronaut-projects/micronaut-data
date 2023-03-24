@@ -18,6 +18,7 @@ package io.micronaut.data.runtime.mapper.sql;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.exceptions.DataAccessException;
+import io.micronaut.data.model.DataType;
 import io.micronaut.data.runtime.mapper.ResultReader;
 import io.micronaut.data.runtime.operations.internal.sql.SqlPreparedQuery;
 import io.micronaut.json.JsonMapper;
@@ -41,10 +42,11 @@ public interface SqlJsonColumnReader<RS> {
      * Gets an indicator telling whether reader can interpret results from the SQL prepared query and map to given type.
      *
      * @param sqlPreparedQuery the SQL prepared query
+     * @param dataType the column data type
      * @param type the type to be mapped into
      * @return true if reader can interpret results from the query
      */
-    default boolean supportsRead(SqlPreparedQuery<?, ?> sqlPreparedQuery, Class<?> type) {
+    default boolean supportsRead(SqlPreparedQuery<?, ?> sqlPreparedQuery, DataType dataType, Class<?> type) {
         return true;
     }
 
@@ -65,11 +67,12 @@ public interface SqlJsonColumnReader<RS> {
      * @param resultReader the result reader
      * @param resultSet the result set
      * @param columnName the column name
+     * @param dataType the column data type
      * @param argument the result type argument
      * @return object of type T read from JSON column
      * @param <T> the result type
      */
-    default <T> T readJsonColumn(ResultReader<RS, String> resultReader, RS resultSet, String columnName, Argument<T> argument) {
+    default <T> T readJsonColumn(ResultReader<RS, String> resultReader, RS resultSet, String columnName, DataType dataType, Argument<T> argument) {
         String data = resultReader.readString(resultSet, columnName);
         if (data == null || data.equals(NULL_VALUE)) {
             return null;

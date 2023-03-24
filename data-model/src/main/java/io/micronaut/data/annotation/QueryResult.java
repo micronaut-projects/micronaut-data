@@ -15,6 +15,8 @@
  */
 package io.micronaut.data.annotation;
 
+import io.micronaut.data.model.DataType;
+
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Inherited;
@@ -44,6 +46,11 @@ public @interface QueryResult {
      * @return The column containing JSON result
      */
     String column() default DEFAULT_COLUMN;
+
+    /**
+     * @return The data type for the underlying column.
+     */
+    DataType dataType() default DataType.JSON;
 
     /**
      * @return The query result type

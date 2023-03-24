@@ -19,6 +19,7 @@ import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.data.annotation.QueryResult;
+import io.micronaut.data.model.DataType;
 
 /**
  * The information about query result info for the query method.
@@ -30,11 +31,14 @@ public class QueryResultInfo {
 
     private final String columnName;
     private final QueryResult.Type type;
+    private final DataType dataType;
 
-    public QueryResultInfo(@NonNull QueryResult.Type type, @Nullable String columnName) {
+    public QueryResultInfo(@NonNull QueryResult.Type type, @Nullable String columnName, @NonNull DataType dataType) {
         ArgumentUtils.requireNonNull("type", type);
+        ArgumentUtils.requireNonNull("dataType", dataType);
         this.type = type;
         this.columnName = columnName;
+        this.dataType = dataType;
     }
 
     /**
@@ -42,6 +46,13 @@ public class QueryResultInfo {
      */
     public String getColumnName() {
         return columnName;
+    }
+
+    /**
+     * @return the data type of the column
+     */
+    public DataType getDataType() {
+        return dataType;
     }
 
     /**
@@ -56,6 +67,7 @@ public class QueryResultInfo {
         final StringBuilder sb = new StringBuilder("QueryResultInfo{");
         sb.append("type=").append(type);
         sb.append(", columnName='").append(columnName).append('\'');
+        sb.append(", dataType='").append(dataType).append('\'');
         sb.append('}');
         return sb.toString();
     }

@@ -344,7 +344,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                             }
                             return result;
                         } else {
-                            return rs.next() ? mapQueryColumnResult(preparedQuery, rs, queryResultInfo.getColumnName(), persistentEntity, resultType, ResultSet.class, loadListener) : null;
+                            return rs.next() ? mapQueryColumnResult(preparedQuery, rs, queryResultInfo.getColumnName(), queryResultInfo.getDataType(),
+                                persistentEntity, resultType, ResultSet.class, loadListener) : null;
                         }
                     } else if (rs.next()) {
                         if (preparedQuery.isDtoProjection()) {
@@ -361,7 +362,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                                 return introspectedDataMapper.map(rs, resultType);
                             } else {
                                 String column = queryResultInfo.getColumnName();
-                                return mapQueryColumnResult(preparedQuery, rs, column, persistentEntity, resultType, ResultSet.class, null);
+                                DataType dataType = queryResultInfo.getDataType();
+                                return mapQueryColumnResult(preparedQuery, rs, column, dataType, persistentEntity, resultType, ResultSet.class, null);
                             }
                         } else {
                             Object v = columnIndexResultSetReader.readDynamic(rs, 1, preparedQuery.getResultDataType());
@@ -446,7 +448,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                         );
                     } else {
                         String column = queryResultInfo.getColumnName();
-                        mapper = createQueryResultMapper(preparedQuery, column, resultType, ResultSet.class, persistentEntity, null);
+                        DataType dataType = queryResultInfo.getDataType();
+                        mapper = createQueryResultMapper(preparedQuery, column, dataType, resultType, ResultSet.class, persistentEntity, null);
                     }
                 } else {
                     BiFunction<RuntimePersistentEntity<Object>, Object, Object> loadListener = (loadedEntity, o) -> {
@@ -483,7 +486,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                         }
                     } else {
                         String column = queryResultInfo.getColumnName();
-                        mapper = createQueryResultMapper(preparedQuery, column, resultType, ResultSet.class, persistentEntity, loadListener);
+                        DataType dataType = queryResultInfo.getDataType();
+                        mapper = createQueryResultMapper(preparedQuery, column, dataType, resultType, ResultSet.class, persistentEntity, loadListener);
                     }
                 }
                 spliterator = new Spliterators.AbstractSpliterator<R>(Long.MAX_VALUE,

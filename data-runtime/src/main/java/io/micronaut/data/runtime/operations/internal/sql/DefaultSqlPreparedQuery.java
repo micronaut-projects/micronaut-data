@@ -19,6 +19,7 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.annotation.QueryResult;
 import io.micronaut.data.exceptions.DataAccessException;
+import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder;
@@ -250,6 +251,7 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
         }
         QueryResult.Type type = sqlStoredQuery.getAnnotationMetadata().enumValue(QueryResult.class, "type", QueryResult.Type.class).orElse(null);
         String columnName = sqlStoredQuery.getAnnotationMetadata().getValue(QueryResult.class, "column", String.class).orElse(null);
-        return new QueryResultInfo(type, columnName);
+        DataType dataType = sqlStoredQuery.getAnnotationMetadata().getValue(QueryResult.class, "dataType", DataType.class).orElse(null);
+        return new QueryResultInfo(type, columnName, dataType);
     }
 }
