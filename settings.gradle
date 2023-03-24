@@ -80,6 +80,9 @@ include 'doc-examples:jdbc-example-records-java'
 include 'doc-examples:jdbc-multitenancy-datasource-example-java'
 include 'doc-examples:jdbc-multitenancy-schema-example-java'
 
+include 'doc-examples:json-view-example-java'
+include 'doc-examples:json-view-r2dbc-example-java'
+
 include 'doc-examples:jdbc-and-r2dbc-example-java'
 
 include 'doc-examples:r2dbc-example-java'

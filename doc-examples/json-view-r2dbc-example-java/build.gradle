@@ -1,0 +1,28 @@
+plugins {
+    id "java"
+    id "io.micronaut.application"
+    id "io.micronaut.build.internal.data-example"
+}
+
+application {
+    mainClass = "example.Application"
+}
+
+micronaut {
+    version libs.versions.micronaut.asProvider().get()
+    runtime "netty"
+    testRuntime "junit5"
+}
+
+dependencies {
+    annotationProcessor("io.micronaut:micronaut-graal")
+    annotationProcessor project(":data-processor")
+    implementation("io.micronaut.data:micronaut-data-r2dbc")
+    annotationProcessor("io.micronaut.serde:micronaut-serde-processor")
+    implementation mnSerde.micronaut.serde.jackson
+    implementation mn.micronaut.http.client
+    runtimeOnly libs.drivers.r2dbc.oracle
+    runtimeOnly mn.snakeyaml
+    testRuntimeOnly mnSerde.micronaut.serde.jackson
+    testRuntimeOnly mnSerde.micronaut.serde.oracle.jdbc.json
+}

@@ -1,0 +1,16 @@
+micronaut:
+  application:
+    name: example
+  http:
+    client:
+      read-timeout: "10m"
+
+r2dbc:
+  datasources:
+    default:
+      url: "r2dbc:oracle:thin://localhost:1521:ORCLCDB"
+      username: dbUser
+      password: DbUserP4ssw0rd
+      dialect: ORACLE
+      driverClassName: oracle.jdbc.OracleDriver
+      initialization-fail-timeout: -1 # Disable fail fast pool init
