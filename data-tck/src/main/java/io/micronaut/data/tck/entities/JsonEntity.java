@@ -2,8 +2,9 @@ package io.micronaut.data.tck.entities;
 
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.annotation.Id;
-import io.micronaut.data.annotation.JsonDataType;
 import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.TypeDef;
+import io.micronaut.data.model.DataType;
 
 @MappedEntity
 public class JsonEntity {
@@ -11,7 +12,7 @@ public class JsonEntity {
     @Id
     private Long id;
 
-    @JsonDataType
+    @TypeDef(type = DataType.JSON)
     @Nullable
     private SampleData sampleData;
 
