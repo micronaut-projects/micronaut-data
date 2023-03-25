@@ -74,7 +74,7 @@ public class StudentController {
                 usrView.setName("User123");
                 // Make update fail due to different etag
                 // usrView.setMetadata(Metadata.of("TEST", usrView.getMetadata().getAsof()));
-                boolean updateCustomObject = true;
+                boolean updateCustomObject = false;
                 if (!updateCustomObject) {
                     usrRepository.update(usrView, usrView.getUsrId());
                 } else {
