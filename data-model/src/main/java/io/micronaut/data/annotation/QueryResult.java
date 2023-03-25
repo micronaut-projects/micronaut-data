@@ -48,7 +48,7 @@ public @interface QueryResult {
     String column() default DEFAULT_COLUMN;
 
     /**
-     * @return The data type for the underlying column.
+     * @return The data type that resulting column will hold. It helps to pick proper column reader based on result data type
      */
     DataType dataType() default DataType.JSON;
 

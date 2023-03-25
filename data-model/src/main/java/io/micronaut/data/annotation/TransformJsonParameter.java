@@ -13,13 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.model;
+package io.micronaut.data.annotation;
+
+import java.lang.annotation.*;
 
 /**
- * Marker interface representing objects that need to be JSON serialized.
+ * This annotation tells that repository method saving data is expected to have parameters that need to be converted to JSON using
+ * builtin JSON column mapper provider. Without this annotation, parameters of {@link io.micronaut.data.model.DataType#JSON} will be converted to
+ * JSON string.
  *
  * @author radovanradic
  * @since 4.0.0
  */
-public interface JsonDataObject {
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ElementType.TYPE, ElementType.METHOD})
+@Documented
+@Inherited
+public @interface TransformJsonParameter {
 }

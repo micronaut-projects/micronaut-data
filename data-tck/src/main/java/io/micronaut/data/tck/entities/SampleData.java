@@ -1,14 +1,13 @@
 package io.micronaut.data.tck.entities;
 
 import io.micronaut.core.annotation.Introspected;
-import io.micronaut.data.model.JsonDataObject;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Introspected
-public class SampleData implements JsonDataObject {
+public class SampleData {
 
     private LocalDateTime localDateTime;
 

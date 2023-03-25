@@ -1,18 +1,23 @@
 package io.micronaut.data.jdbc.oraclexe
 
 import groovy.transform.Memoized
+import io.micronaut.core.annotation.NonNull
 import io.micronaut.data.annotation.Id
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.Query
 import io.micronaut.data.annotation.QueryResult
+import io.micronaut.data.annotation.TransformJsonParameter
 import io.micronaut.data.jdbc.AbstractManualSchemaSpec
 import io.micronaut.data.jdbc.annotation.JdbcRepository
+import io.micronaut.data.model.DataType
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.repository.CrudRepository
 import io.micronaut.data.runtime.config.SchemaGenerate
 import io.micronaut.data.tck.entities.JsonEntity
 import io.micronaut.data.tck.entities.SampleData
 import io.micronaut.data.tck.repositories.PatientRepository
+import jakarta.validation.Valid
+import jakarta.validation.constraints.NotNull
 
 import java.nio.charset.Charset
 import java.time.Duration
@@ -118,13 +123,17 @@ interface OracleXEJsonEntityRepository extends CrudRepository<JsonEntity, Long> 
     @QueryResult(type = QueryResult.Type.JSON)
     Optional<SampleData> findJsonSampleDataByEntityId(Long id)
 
+    @NonNull
+    @Override
+    @TransformJsonParameter
+    JsonEntity save(@Valid @NotNull @NonNull JsonEntity entity)
 }
 
 @JdbcRepository(dialect = Dialect.ORACLE)
 interface OracleXEJsonDataRepository extends CrudRepository<JsonData, Long> {
 
     @Query(""" SELECT JSON_OBJECT('id' VALUE "ID", 'name' VALUE "NAME", 'createdDate' VALUE "CREATED_DATE", 'duration' VALUE "DURATION") AS "DATA" FROM JSON_DATA """)
-    @QueryResult(type = QueryResult.Type.JSON)
+    @QueryResult(type = QueryResult.Type.JSON, dataType = DataType.STRING)
     Optional<JsonData> getJsonDataById(Long id)
 }
 

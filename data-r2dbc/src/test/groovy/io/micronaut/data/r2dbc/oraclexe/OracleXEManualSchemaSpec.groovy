@@ -5,6 +5,7 @@ import io.micronaut.core.annotation.Nullable
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.Query
 import io.micronaut.data.annotation.QueryResult
+import io.micronaut.data.annotation.TransformJsonParameter
 import io.micronaut.data.annotation.TypeDef
 import io.micronaut.data.model.DataType
 import io.micronaut.data.model.query.builder.sql.Dialect
@@ -70,7 +71,7 @@ class OracleXEManualSchemaSpec extends AbstractManualSchemaSpec implements Oracl
         sampleData.grade = 1
         sampleData.rating = 9.75d
         jsonEntity.sampleData = sampleData
-        jsonEntityRepository.save(jsonEntity)
+        jsonEntityRepository.insert(jsonEntity.id, jsonEntity.sampleData)
         when:
         def optSampleData = jsonEntityRepository.findJsonSampleDataByEntityId(jsonEntity.id)
         then:
@@ -94,6 +95,9 @@ interface OracleXEJsonEntityRepository extends CrudRepository<JsonEntity, Long> 
 
     @Query("SELECT SAMPLE_DATA AS DATA FROM JSON_ENTITY WHERE ID = :id")
     @QueryResult(type = QueryResult.Type.JSON, dataType = DataType.BYTE_ARRAY)
-    Optional<SampleData> findJsonSampleDataByEntityId(Long id);
+    Optional<SampleData> findJsonSampleDataByEntityId(Long id)
 
+    @Query("INSERT INTO JSON_ENTITY (ID, SAMPLE_DATA) VALUES (:id, :sampleData)")
+    @TransformJsonParameter
+    JsonEntity insert(Long id, @TypeDef(type = DataType.JSON) SampleData sampleData)
 }

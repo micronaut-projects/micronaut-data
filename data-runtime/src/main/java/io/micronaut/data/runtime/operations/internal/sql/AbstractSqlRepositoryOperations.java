@@ -29,7 +29,6 @@ import io.micronaut.data.exceptions.OptimisticLockException;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.DataType;
-import io.micronaut.data.model.JsonDataObject;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentEntityUtils;
 import io.micronaut.data.model.PersistentProperty;
@@ -264,29 +263,27 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
         if (value == null) {
             return null;
         }
-        boolean handled = false;
-        // In case parameter is JsonDataObject telling we need to find custom SqlJsonValueMapper
+        // In case method is annotated with TransformJsonParameter telling we need to find custom SqlJsonValueMapper
         // to set JSON parameter
-        if (value instanceof JsonDataObject) {
+        if (storedQuery.shouldTransformJsonParameter()) {
             SqlJsonValueMapper sqlJsonValueMapper = sqlJsonColumnMapperProvider.getJsonValueMapper(storedQuery, dataType);
             if (sqlJsonValueMapper == null) {
                 // if json mapper is not on the classpath and object needs to use JSON value mapper
                 throw new IllegalStateException("For JSON data types support Micronaut JsonMapper needs to be available on the classpath.");
             }
             try {
-                value = sqlJsonValueMapper.mapValue(value);
-                handled = true;
+                return sqlJsonValueMapper.mapValue(value);
             } catch (IOException e) {
                 throw new DataAccessException("Failed setting JSON field parameter at index " + index, e);
             }
         }
         // Default logic to serialize JSON value
-        if (!handled && !value.getClass().equals(String.class)) {
+        if (!value.getClass().equals(String.class)) {
             if (jsonMapper == null) {
                 throw new IllegalStateException("For JSON data types support Micronaut JsonMapper needs to be available on the classpath.");
             }
             try {
-                value = new String(jsonMapper.writeValueAsBytes(value), StandardCharsets.UTF_8);
+                return new String(jsonMapper.writeValueAsBytes(value), StandardCharsets.UTF_8);
             } catch (IOException e) {
                 throw new DataAccessException("Failed setting JSON field parameter at index " + index, e);
             }
