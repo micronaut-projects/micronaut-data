@@ -22,7 +22,6 @@ import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.DataType;
-import io.micronaut.data.model.JsonDataObject;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.runtime.mapper.ResultReader;
 import io.micronaut.data.runtime.mapper.sql.SqlJsonColumnReader;
@@ -92,8 +91,7 @@ class OracleJdbcJsonBinaryColumnMapper implements SqlJsonColumnReader<ResultSet>
 
     @Override
     public boolean supportsRead(SqlPreparedQuery<?, ?> sqlPreparedQuery, DataType dataType, Class<?> type) {
-        return (dataType == DataType.BYTE_ARRAY || dataType == DataType.JSON)
-            && sqlPreparedQuery.getDialect() == Dialect.ORACLE && JsonDataObject.class.isAssignableFrom(type);
+        return (dataType == DataType.BYTE_ARRAY || dataType == DataType.JSON) && sqlPreparedQuery.getDialect() == Dialect.ORACLE;
     }
 
     @Override
@@ -108,6 +106,7 @@ class OracleJdbcJsonBinaryColumnMapper implements SqlJsonColumnReader<ResultSet>
 
     @Override
     public boolean supportsMapValue(SqlStoredQuery<?, ?> sqlStoredQuery, DataType dataType) {
-        return (dataType == DataType.BYTE_ARRAY || dataType == DataType.JSON) && sqlStoredQuery.getDialect() == Dialect.ORACLE;
+        return (dataType == DataType.BYTE_ARRAY || dataType == DataType.JSON)
+            && sqlStoredQuery.shouldTransformJsonParameter() && sqlStoredQuery.getDialect() == Dialect.ORACLE;
     }
 }
