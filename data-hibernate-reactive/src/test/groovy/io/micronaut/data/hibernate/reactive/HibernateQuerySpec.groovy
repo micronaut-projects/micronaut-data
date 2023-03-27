@@ -327,7 +327,6 @@ class HibernateQuerySpec extends Specification implements PostgresHibernateReact
         !result.isPresent()
     }
 
-    @PendingFeature
     void "test @Where annotation placeholder"() {
         given:
         def size = bookRepository.countNativeByTitleWithPagesGreaterThan("The%", 300).block()
