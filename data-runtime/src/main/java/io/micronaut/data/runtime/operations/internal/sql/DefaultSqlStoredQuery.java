@@ -103,4 +103,5 @@ public class DefaultSqlStoredQuery<E, R> extends DefaultBindableParametersStored
             .filter(e -> e.getValue() != null)
             .collect(Collectors.toMap(AbstractMap.SimpleEntry::getKey, AbstractMap.SimpleEntry::getValue));
     }
+
 }

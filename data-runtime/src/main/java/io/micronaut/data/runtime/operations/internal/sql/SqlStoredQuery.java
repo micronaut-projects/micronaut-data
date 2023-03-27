@@ -58,4 +58,5 @@ public interface SqlStoredQuery<E, R> extends BindableParametersStoredQuery<E, R
      * @return collected values
      */
     Map<QueryParameterBinding, Object> collectAutoPopulatedPreviousValues(E entity);
+
 }
