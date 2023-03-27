@@ -30,12 +30,15 @@ import java.time.temporal.ChronoUnit
 
 /**
  * All tests in data-hibernate-reactive use Postgres but we need at least one for MySql.
+ * MySql is currently failing with timeout when getting results using .block(timeout) so all tests are marked
+ * @PendingFeature until root cause found and fixed.
+ * NOTE: Tests are passing when connecting to local MySql instance but failing with testcontainers.
  */
 @MicronautTest(transactional = true, packages = "io.micronaut.data.tck.entities")
 @Stepwise
 class MySqlCrudRepositorySpec extends Specification implements MySqlHibernateReactiveProperties {
 
-    private static final Duration TEST_TIMEOUT = Duration.of(3, ChronoUnit.SECONDS)
+    private static final Duration TEST_TIMEOUT = Duration.of(2, ChronoUnit.SECONDS)
 
     @Inject
     @Shared
@@ -47,7 +50,7 @@ class MySqlCrudRepositorySpec extends Specification implements MySqlHibernateRea
 
     /**
      * This will be called from each method, to avoid test failure on setup.
-     * Currently MySql is not supported and will throw IllegalException because of timeout on block(timeout)
+     * Currently MySql will throw IllegalException because of timeout on block(timeout)
      */
     void setupData() {
         if (crudRepository.count().block(TEST_TIMEOUT) == 0) {

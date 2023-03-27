@@ -52,10 +52,14 @@ public interface AuthorRepository extends ReactorCrudRepository<Author, Long> {
     Mono<Author> findByName(String name);
 
     @Join("books")
+    @Join(value = "books.genre", type = Join.Type.LEFT_FETCH)
+    @Join(value = "books.publisher", type = Join.Type.LEFT_FETCH)
     Mono<Author> searchByName(String name);
 
     @Override
     @Join(value = "books", type = Join.Type.LEFT_FETCH)
     @Join(value = "books.pages", type = Join.Type.LEFT_FETCH)
+    @Join(value = "books.genre", type = Join.Type.LEFT_FETCH)
+    @Join(value = "books.publisher", type = Join.Type.LEFT_FETCH)
     Mono<Author> findById(Long aLong);
 }

@@ -20,12 +20,12 @@ import io.micronaut.data.tck.entities.Face
 import io.micronaut.data.tck.entities.Product
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
-import spock.lang.IgnoreIf
 import spock.lang.Shared
 import spock.lang.Specification
 
+import java.time.temporal.ChronoUnit
+
 @MicronautTest(transactional = false, packages = "io.micronaut.data.tck.entities")
-@IgnoreIf({ jvm.isJava15Compatible() })
 class AutoTimestampSpec extends Specification implements PostgresHibernateReactiveProperties {
 
     @Shared
@@ -50,7 +50,7 @@ class AutoTimestampSpec extends Specification implements PostgresHibernateReacti
         company.myId != null
         dateCreated != null
         company.dateCreated.toInstant().toEpochMilli() == company.lastUpdated.toEpochMilli()
-        companyRepo.findById(company.myId).block().dateCreated == company.dateCreated
+        companyRepo.findById(company.myId).block().dateCreated.time == company.dateCreated.time
 
         when:
         companyRepo.update(company.myId, "Changed").block()
@@ -73,18 +73,18 @@ class AutoTimestampSpec extends Specification implements PostgresHibernateReacti
         product.id != null
         dateCreated != null
         product.dateCreated == product.lastUpdated
-        productRepo.findById(product.id).block().dateCreated == product.dateCreated
+        productRepo.findById(product.id).block().dateCreated.truncatedTo(ChronoUnit.MILLIS) == product.dateCreated.truncatedTo(ChronoUnit.MILLIS)
 
         when:
-        product.changePrice()
+        product.changePrice(null)
         productRepo.update(product.id, BigDecimal.TEN).block()
         def product2 = productRepo.findById(product.id).block()
 
         then:
-        product.dateCreated == dateCreated
-        product.dateCreated == product2.dateCreated
+        product.dateCreated.truncatedTo(ChronoUnit.MILLIS) == dateCreated.truncatedTo(ChronoUnit.MILLIS)
+        product.dateCreated.truncatedTo(ChronoUnit.MILLIS) == product2.dateCreated.truncatedTo(ChronoUnit.MILLIS)
         product2.price == BigDecimal.TEN
-        product2.lastUpdated > product2.dateCreated
+        product2.lastUpdated.truncatedTo(ChronoUnit.MILLIS) > product2.dateCreated.truncatedTo(ChronoUnit.MILLIS)
     }
 
     void "test java.time.Instant date created and last updated"() {
@@ -96,8 +96,8 @@ class AutoTimestampSpec extends Specification implements PostgresHibernateReacti
         then:
         face.id != null
         dateCreated != null
-        face.dateCreated == face.lastUpdated
-        taskRepo.findById(face.id).block().dateCreated == face.dateCreated
+        face.dateCreated.toEpochMilli() == face.lastUpdated.toEpochMilli()
+        taskRepo.findById(face.id).block().dateCreated.toEpochMilli() == face.dateCreated.toEpochMilli()
 
         when:
         face.setName("Bar")
@@ -105,9 +105,9 @@ class AutoTimestampSpec extends Specification implements PostgresHibernateReacti
         def task2 = taskRepo.findById(face.id).block()
 
         then:
-        face.dateCreated == dateCreated
-        face.dateCreated == task2.dateCreated
+        face.dateCreated.toEpochMilli() == dateCreated.toEpochMilli()
+        face.dateCreated.toEpochMilli() == task2.dateCreated.toEpochMilli()
         task2.name == "Bar"
-        task2.lastUpdated > task2.dateCreated
+        task2.lastUpdated.toEpochMilli() > task2.dateCreated.toEpochMilli()
     }
 }

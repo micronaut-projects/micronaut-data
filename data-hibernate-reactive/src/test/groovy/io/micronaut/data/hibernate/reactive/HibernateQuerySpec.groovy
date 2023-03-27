@@ -143,7 +143,6 @@ class HibernateQuerySpec extends Specification implements PostgresHibernateReact
             books3[0].title == "The Border"
     }
 
-    @PendingFeature
     void "author find by id with joins"() {
         when:
         def author = authorRepository.searchByName("Stephen King").block()
@@ -163,7 +162,7 @@ class HibernateQuerySpec extends Specification implements PostgresHibernateReact
         author == null
     }
 
-    @PendingFeature
+    @PendingFeature(reason = "join books collection not returning all items with EntityGraph")
     void "author find by id with EntityGraph"() {
         when:
         def author = authorRepository.searchByName("Stephen King").block()
@@ -175,7 +174,7 @@ class HibernateQuerySpec extends Specification implements PostgresHibernateReact
         author.books[1].pages.size() == 0
     }
 
-    @PendingFeature
+    @PendingFeature(reason = "join books collection not returning all items with EntityGraph")
     void "Rating find by id with named EntityGraph"() {
         setup:
         Book book = bookRepository.findByTitle("The Power of the Dog").block()
@@ -323,7 +322,6 @@ class HibernateQuerySpec extends Specification implements PostgresHibernateReact
         !result.isPresent()
     }
 
-    @PendingFeature
     void "test @Where annotation placeholder"() {
         given:
         def size = bookRepository.countNativeByTitleWithPagesGreaterThan("The%", 300).block()
@@ -390,7 +388,6 @@ class HibernateQuerySpec extends Specification implements PostgresHibernateReact
             books12.size() == 1
     }
 
-    @PendingFeature
     void "test IN queries"() {
         when:
             def books1 = bookRepository.listNativeBooksWithTitleInCollection(null).collectList().block()
@@ -437,7 +434,6 @@ class HibernateQuerySpec extends Specification implements PostgresHibernateReact
             books1.size() == 1
     }
 
-    @PendingFeature
     void "test join on many ended association"() {
         when:
         def author = authorRepository.searchByName("Stephen King").block()
@@ -447,7 +443,6 @@ class HibernateQuerySpec extends Specification implements PostgresHibernateReact
         author.books.size() == 2
     }
 
-    @PendingFeature
     void "test update many"() {
         when:
             def author = authorRepository.searchByName("Stephen King").block()
@@ -458,7 +453,6 @@ class HibernateQuerySpec extends Specification implements PostgresHibernateReact
             author.getBooks().every {it.title.endsWith(" updated")}
     }
 
-    @PendingFeature
     void "test update custom only titles"() {
         when:
             def author = authorRepository.searchByName("Stephen King").block()
@@ -476,7 +470,6 @@ class HibernateQuerySpec extends Specification implements PostgresHibernateReact
             author.getBooks().every {it.totalPages > 0}
     }
 
-    @PendingFeature
     void "test custom insert"() {
         when:
             def author = authorRepository.searchByName("Stephen King").block()
@@ -491,7 +484,6 @@ class HibernateQuerySpec extends Specification implements PostgresHibernateReact
             authorAfter.books.find { it.title == "Xyz" }
     }
 
-    @PendingFeature
     void "test custom single insert"() {
         when:
             def author = authorRepository.searchByName("Stephen King").block()
@@ -525,7 +517,6 @@ class HibernateQuerySpec extends Specification implements PostgresHibernateReact
             firstBook != null
     }
 
-    @PendingFeature
     void "test custom delete"() {
         when:
             def author = authorRepository.searchByName("Stephen King").block()
@@ -540,7 +531,6 @@ class HibernateQuerySpec extends Specification implements PostgresHibernateReact
             author.books.size() == 1
     }
 
-    @PendingFeature
     void "test custom delete single"() {
         when:
             def author = authorRepository.searchByName("Stephen King").block()
@@ -563,7 +553,6 @@ class HibernateQuerySpec extends Specification implements PostgresHibernateReact
             author.books.size() == 1
     }
 
-    @PendingFeature
     void "test custom delete by title"() {
         when:
             def author = authorRepository.searchByName("Stephen King").block()
@@ -576,7 +565,6 @@ class HibernateQuerySpec extends Specification implements PostgresHibernateReact
             author.books.size() == 1
     }
 
-    @PendingFeature
     void "test update relation custom query"() {
         when:
             def book = bookRepository.findAllByTitleStartsWith("Along Came a Spider").collectList().block().first()
@@ -587,7 +575,6 @@ class HibernateQuerySpec extends Specification implements PostgresHibernateReact
             book.author.id == book.author.id
     }
 
-    @PendingFeature
     void "test update relation"() {
         when:
             def book = bookRepository.findAllByTitleStartsWith("Along Came a Spider").collectList().block().first()
@@ -598,7 +585,6 @@ class HibernateQuerySpec extends Specification implements PostgresHibernateReact
             book.author.id == book.author.id
     }
 
-    @PendingFeature
     void "test query by relation"() {
         when:
             def author = authorRepository.searchByName("Stephen King").block()
@@ -616,7 +602,7 @@ class HibernateQuerySpec extends Specification implements PostgresHibernateReact
 
     void "test specification and pageable"() {
         when:
-            def value = bookRepository.findAll(testJoin("Stephen King"), Pageable.from(0)).block();
+            def value = bookRepository.findAll(testJoin("Stephen King"), Pageable.from(0)).block()
         then:
             value.totalSize == 2
             value.content.size() == 2
