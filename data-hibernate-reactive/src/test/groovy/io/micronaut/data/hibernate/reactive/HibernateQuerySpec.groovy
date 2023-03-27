@@ -36,10 +36,6 @@ import spock.lang.Specification
 
 import jakarta.persistence.OptimisticLockException
 
-/**
- * Bunch of @PendingFeature tests here are because it seems hibernate reactive 2 Alpha using hibernate 6 CR is not handling
- * joins well as previous version (hibernate reactive 1.1.x and hibernate 5.x).
- */
 @MicronautTest(packages = "io.micronaut.data.tck.entities", transactional = false)
 class HibernateQuerySpec extends Specification implements PostgresHibernateReactiveProperties {
 
@@ -166,7 +162,7 @@ class HibernateQuerySpec extends Specification implements PostgresHibernateReact
         author == null
     }
 
-    @PendingFeature(reason = "join collection not returning all items with EntityGraph")
+    @PendingFeature(reason = "join books collection not returning all items with EntityGraph")
     void "author find by id with EntityGraph"() {
         when:
         def author = authorRepository.searchByName("Stephen King").block()
@@ -178,7 +174,7 @@ class HibernateQuerySpec extends Specification implements PostgresHibernateReact
         author.books[1].pages.size() == 0
     }
 
-    @PendingFeature(reason = "join collection not returning all items with EntityGraph")
+    @PendingFeature(reason = "join books collection not returning all items with EntityGraph")
     void "Rating find by id with named EntityGraph"() {
         setup:
         Book book = bookRepository.findByTitle("The Power of the Dog").block()
@@ -429,7 +425,7 @@ class HibernateQuerySpec extends Specification implements PostgresHibernateReact
             books8a.size() == 0
     }
 
-    @PendingFeature(reason = "setParameterList method is missing")
+    @PendingFeature(reason = "`setParameterList method is missing`")
     @Issue('https://github.com/micronaut-projects/micronaut-data/issues/1131')
     void "test IN queries with multiple parameters"() {
         when:

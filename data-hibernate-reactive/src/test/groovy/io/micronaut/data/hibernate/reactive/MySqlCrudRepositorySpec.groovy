@@ -30,8 +30,9 @@ import java.time.temporal.ChronoUnit
 
 /**
  * All tests in data-hibernate-reactive use Postgres but we need at least one for MySql.
- * MySql is currently failing with timeout when getting results so all tests are marked
+ * MySql is currently failing with timeout when getting results using .block(timeout) so all tests are marked
  * @PendingFeature until root cause found and fixed.
+ * NOTE: Tests are passing when connecting to local MySql instance but failing with testcontainers.
  */
 @MicronautTest(transactional = true, packages = "io.micronaut.data.tck.entities")
 @Stepwise
