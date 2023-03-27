@@ -20,6 +20,7 @@ import io.micronaut.core.annotation.Experimental;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.type.Argument;
+import io.micronaut.data.annotation.TransformJsonParameter;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.query.builder.sql.Dialect;
@@ -105,7 +106,8 @@ class OracleR2dbcJsonBinaryColumnMapper implements SqlJsonColumnReader<Row>, Sql
 
     @Override
     public boolean supportsMapValue(SqlStoredQuery<?, ?> sqlStoredQuery, DataType dataType) {
-        return (dataType == DataType.BYTE_ARRAY || dataType == DataType.JSON) && sqlStoredQuery.shouldTransformJsonParameter()
-            && sqlStoredQuery.getDialect() == Dialect.ORACLE;
+        return (dataType == DataType.BYTE_ARRAY || dataType == DataType.JSON)
+            && sqlStoredQuery.getDialect() == Dialect.ORACLE
+            && sqlStoredQuery.getAnnotationMetadata().hasAnnotation(TransformJsonParameter.class);
     }
 }

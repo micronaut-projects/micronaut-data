@@ -23,6 +23,7 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.annotation.AutoPopulated;
 import io.micronaut.data.annotation.Repository;
+import io.micronaut.data.annotation.TransformJsonParameter;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.exceptions.OptimisticLockException;
@@ -250,7 +251,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
             QUERY_LOG.trace("Binding parameter at position {} to value {} with data type: {}", index, value, dataType);
         }
 
-        /// We want to avoid potential conversion for JSON because mapper already returned value ready to be set as statement parameter
+        // We want to avoid potential conversion for JSON because mapper already returned value ready to be set as statement parameter
         if (dataType == DataType.JSON && value != null) {
             preparedStatementWriter.setValue(preparedStatement, index, value);
             return;
@@ -265,7 +266,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
         }
         // In case method is annotated with TransformJsonParameter telling we need to find custom SqlJsonValueMapper
         // to set JSON parameter
-        if (storedQuery.shouldTransformJsonParameter()) {
+        if (storedQuery.getAnnotationMetadata().hasAnnotation(TransformJsonParameter.class)) {
             SqlJsonValueMapper sqlJsonValueMapper = sqlJsonColumnMapperProvider.getJsonValueMapper(storedQuery, dataType);
             if (sqlJsonValueMapper == null) {
                 // if json mapper is not on the classpath and object needs to use JSON value mapper

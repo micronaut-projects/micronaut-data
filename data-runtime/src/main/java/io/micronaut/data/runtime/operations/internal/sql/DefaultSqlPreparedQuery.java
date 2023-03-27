@@ -18,7 +18,6 @@ package io.micronaut.data.runtime.operations.internal.sql;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.annotation.QueryResult;
-import io.micronaut.data.annotation.TransformJsonParameter;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.Pageable;
@@ -55,7 +54,6 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
     protected final SqlStoredQuery<E, R> sqlStoredQuery;
     protected String query;
     protected final QueryResultInfo queryResultInfo;
-    private final boolean transformJsonParameter;
 
     public DefaultSqlPreparedQuery(PreparedQuery<E, R> preparedQuery) {
         this(preparedQuery, (SqlStoredQuery<E, R>) ((DelegateStoredQuery<Object, Object>) preparedQuery).getStoredQueryDelegate());
@@ -66,7 +64,6 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
         this.sqlStoredQuery = sqlStoredQuery;
         this.query = sqlStoredQuery.getQuery();
         this.queryResultInfo = createQueryResultInfo();
-        this.transformJsonParameter = storedQuery.getAnnotationMetadata().hasAnnotation(TransformJsonParameter.class);
     }
 
     public DefaultSqlPreparedQuery(SqlStoredQuery<E, R> sqlStoredQuery) {
@@ -74,7 +71,6 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
         this.sqlStoredQuery = sqlStoredQuery;
         this.query = sqlStoredQuery.getQuery();
         this.queryResultInfo = createQueryResultInfo();
-        this.transformJsonParameter = storedQuery.getAnnotationMetadata().hasAnnotation(TransformJsonParameter.class);
     }
 
     @Override
@@ -192,11 +188,6 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
     @Override
     public QueryResultInfo getQueryResultInfo() {
         return queryResultInfo;
-    }
-
-    @Override
-    public boolean shouldTransformJsonParameter() {
-        return transformJsonParameter;
     }
 
     /**

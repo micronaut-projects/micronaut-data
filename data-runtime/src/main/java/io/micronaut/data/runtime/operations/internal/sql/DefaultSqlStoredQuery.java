@@ -18,7 +18,6 @@ package io.micronaut.data.runtime.operations.internal.sql;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.beans.BeanWrapper;
 import io.micronaut.core.type.Argument;
-import io.micronaut.data.annotation.TransformJsonParameter;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.runtime.QueryParameterBinding;
@@ -45,7 +44,6 @@ import java.util.stream.Collectors;
 public class DefaultSqlStoredQuery<E, R> extends DefaultBindableParametersStoredQuery<E, R> implements SqlStoredQuery<E, R> {
 
     private final boolean expandableQuery;
-    private final boolean transformJsonParameter;
     private final SqlQueryBuilder queryBuilder;
 
     /**
@@ -64,7 +62,6 @@ public class DefaultSqlStoredQuery<E, R> extends DefaultBindableParametersStored
         if (expandableQuery && expandableQueryParts.length != queryParameterBindings.size() + 1) {
             throw new IllegalStateException("Expandable query parts size should be the same as parameters size + 1. " + expandableQueryParts.length + " != 1 + " + queryParameterBindings.size() + " " + storedQuery.getQuery() + " " + Arrays.toString(expandableQueryParts));
         }
-        this.transformJsonParameter = storedQuery.getAnnotationMetadata().hasAnnotation(TransformJsonParameter.class);
     }
 
     @Override
@@ -105,10 +102,5 @@ public class DefaultSqlStoredQuery<E, R> extends DefaultBindableParametersStored
             })
             .filter(e -> e.getValue() != null)
             .collect(Collectors.toMap(AbstractMap.SimpleEntry::getKey, AbstractMap.SimpleEntry::getValue));
-    }
-
-    @Override
-    public boolean shouldTransformJsonParameter() {
-        return transformJsonParameter;
     }
 }
