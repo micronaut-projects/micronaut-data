@@ -37,7 +37,7 @@ import java.time.temporal.ChronoUnit
 @Stepwise
 class MySqlCrudRepositorySpec extends Specification implements MySqlHibernateReactiveProperties {
 
-    private static final Duration TEST_TIMEOUT = Duration.of(3, ChronoUnit.SECONDS)
+    private static final Duration TEST_TIMEOUT = Duration.of(2, ChronoUnit.SECONDS)
 
     @Inject
     @Shared
