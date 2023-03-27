@@ -425,7 +425,7 @@ class HibernateQuerySpec extends Specification implements PostgresHibernateReact
             books8a.size() == 0
     }
 
-    @PendingFeature(reason = "`setParameterList method is missing`")
+    @PendingFeature(reason = "setParameterList method is missing")
     @Issue('https://github.com/micronaut-projects/micronaut-data/issues/1131')
     void "test IN queries with multiple parameters"() {
         when:
