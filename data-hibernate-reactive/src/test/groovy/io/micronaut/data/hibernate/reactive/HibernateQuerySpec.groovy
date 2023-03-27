@@ -36,6 +36,10 @@ import spock.lang.Specification
 
 import jakarta.persistence.OptimisticLockException
 
+/**
+ * Bunch of @PendingFeature tests here are because it seems hibernate reactive 2 Alpha using hibernate 6 CR is not handling
+ * joins well as previous version (hibernate reactive 1.1.x and hibernate 5.x).
+ */
 @MicronautTest(packages = "io.micronaut.data.tck.entities", transactional = false)
 class HibernateQuerySpec extends Specification implements PostgresHibernateReactiveProperties {
 
