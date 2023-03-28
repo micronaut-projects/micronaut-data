@@ -130,8 +130,8 @@ interface OracleXEJsonEntityRepository extends CrudRepository<JsonEntity, Long> 
 @JdbcRepository(dialect = Dialect.ORACLE)
 interface OracleXEJsonDataRepository extends CrudRepository<JsonData, Long> {
 
-    @Query(""" SELECT JSON_OBJECT('id' VALUE "ID", 'name' VALUE "NAME", 'createdDate' VALUE "CREATED_DATE", 'duration' VALUE "DURATION") AS "DATA" FROM JSON_DATA """)
-    @QueryResult(type = QueryResult.Type.JSON, dataType = DataType.STRING)
+    @Query(""" SELECT JSON{'id' : "ID", 'name' : "NAME", 'createdDate' : "CREATED_DATE", 'duration' : "DURATION"} AS "DATA" FROM JSON_DATA """)
+    @QueryResult(type = QueryResult.Type.JSON, dataType = DataType.JSON)
     Optional<JsonData> getJsonDataById(Long id)
 }
 
