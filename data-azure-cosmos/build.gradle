@@ -3,10 +3,8 @@ plugins {
     id 'io.micronaut.test-resources'
 }
 
-//println (libs.versions.micronaut.testresources.asProvider().get())
-
 micronaut {
-    version = libs.versions.micronaut.asProvider().get()
+    version = projectVersion
     testResources {
         enabled = true
         inferClasspath = false

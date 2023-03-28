@@ -71,7 +71,7 @@ dependencies {
 }
 
 micronaut {
-    version = libs.versions.micronaut.asProvider().get()
+    version = projectVersion
     testResources {
         enabled = true
         inferClasspath = false
