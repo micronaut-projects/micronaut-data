@@ -20,17 +20,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@javax.persistence.Entity
 public class Shelf {
     @GeneratedValue
     @Id
-    @javax.persistence.GeneratedValue
-    @javax.persistence.Id
     private Long id;
     private String shelfName;
 
     @OneToMany(cascade = CascadeType.ALL)
-    @javax.persistence.OneToMany(cascade = javax.persistence.CascadeType.ALL)
     private List<Book> books = new ArrayList<>();
 
     public Long getId() {

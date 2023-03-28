@@ -21,17 +21,13 @@ import jakarta.persistence.Id;
 import jakarta.persistence.OneToOne;
 
 @Entity
-@javax.persistence.Entity
 public class Nose {
 
     @GeneratedValue
     @Id
-    @javax.persistence.GeneratedValue
-    @javax.persistence.Id
     private Long id;
 
     @OneToOne
-    @javax.persistence.OneToOne
     private Face face;
 
     public Face getFace() {

@@ -21,18 +21,14 @@ import jakarta.persistence.Id;
 import jakarta.persistence.ManyToOne;
 
 @Entity
-@javax.persistence.Entity
 public class Chapter {
     @Id
     @GeneratedValue
-    @javax.persistence.Id
-    @javax.persistence.GeneratedValue
     private Long id;
     private String title;
     private int pages;
 
     @ManyToOne
-    @javax.persistence.ManyToOne
     private Book book;
 
     public int getPages() {
