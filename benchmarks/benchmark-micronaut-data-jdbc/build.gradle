@@ -4,7 +4,7 @@ plugins {
 }
 
 micronaut {
-    version projectVersion
+    version '4.0.0-SNAPSHOT'
 }
 
 dependencies {

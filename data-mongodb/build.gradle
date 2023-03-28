@@ -4,7 +4,8 @@ plugins {
 }
 
 micronaut {
-    version = projectVersion
+    // version = libs.versions.micronaut.asProvider().get()
+    version = '4.0.0-SNAPSHOT'
     testResources {
         clientTimeout = 300
         version = libs.versions.micronaut.testresources.get()
