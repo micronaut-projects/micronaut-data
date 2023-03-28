@@ -11,7 +11,7 @@ application {
 }
 
 micronaut {
-    version project.ext.micronautVersion
+    version projectVersion
     runtime "netty"
     testRuntime "junit5"
 }

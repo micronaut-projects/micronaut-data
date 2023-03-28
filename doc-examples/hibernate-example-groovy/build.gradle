@@ -9,7 +9,7 @@ application {
 }
 
 micronaut {
-    version libs.versions.micronaut.asProvider().get()
+    version projectVersion
     runtime "netty"
     testRuntime "spock"
 }

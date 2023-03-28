@@ -3,6 +3,10 @@ plugins {
     id "io.micronaut.build.internal.data-micronaut-benchmark"
 }
 
+micronaut {
+    version projectVersion
+}
+
 dependencies {
     annotationProcessor project(":data-processor")
     implementation project(":data-hibernate-jpa")
