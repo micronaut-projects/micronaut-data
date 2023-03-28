@@ -23,7 +23,6 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.annotation.AutoPopulated;
 import io.micronaut.data.annotation.Repository;
-import io.micronaut.data.annotation.TransformJsonParameter;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.exceptions.OptimisticLockException;
@@ -68,7 +67,6 @@ import io.micronaut.json.JsonMapper;
 import org.slf4j.Logger;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
 import java.util.AbstractMap;
 import java.util.ArrayList;
@@ -261,35 +259,19 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
     }
 
     private Object getJsonValue(SqlStoredQuery<?, ?> storedQuery, DataType dataType, int index, Object value) {
-        if (value == null) {
-            return null;
+        if (value == null || value.getClass().equals(String.class)) {
+            return value;
         }
-        // In case method is annotated with TransformJsonParameter telling we need to find custom SqlJsonValueMapper
-        // to set JSON parameter
-        if (storedQuery.getAnnotationMetadata().hasAnnotation(TransformJsonParameter.class)) {
-            SqlJsonValueMapper sqlJsonValueMapper = sqlJsonColumnMapperProvider.getJsonValueMapper(storedQuery, dataType);
-            if (sqlJsonValueMapper == null) {
-                // if json mapper is not on the classpath and object needs to use JSON value mapper
-                throw new IllegalStateException("For JSON data types support Micronaut JsonMapper needs to be available on the classpath.");
-            }
-            try {
-                return sqlJsonValueMapper.mapValue(value);
-            } catch (IOException e) {
-                throw new DataAccessException("Failed setting JSON field parameter at index " + index, e);
-            }
+        SqlJsonValueMapper sqlJsonValueMapper = sqlJsonColumnMapperProvider.getJsonValueMapper(storedQuery, dataType, value);
+        if (sqlJsonValueMapper == null) {
+            // if json mapper is not on the classpath and object needs to use JSON value mapper
+            throw new IllegalStateException("For JSON data types support Micronaut JsonMapper needs to be available on the classpath.");
         }
-        // Default logic to serialize JSON value
-        if (!value.getClass().equals(String.class)) {
-            if (jsonMapper == null) {
-                throw new IllegalStateException("For JSON data types support Micronaut JsonMapper needs to be available on the classpath.");
-            }
-            try {
-                return new String(jsonMapper.writeValueAsBytes(value), StandardCharsets.UTF_8);
-            } catch (IOException e) {
-                throw new DataAccessException("Failed setting JSON field parameter at index " + index, e);
-            }
+        try {
+            return sqlJsonValueMapper.mapValue(value);
+        } catch (IOException e) {
+            throw new DataAccessException("Failed setting JSON field parameter at index " + index, e);
         }
-        return value;
     }
 
     /**

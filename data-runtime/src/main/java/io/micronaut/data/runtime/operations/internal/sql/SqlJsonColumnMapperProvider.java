@@ -113,10 +113,14 @@ public class SqlJsonColumnMapperProvider<RS> {
      *
      * @param sqlStoredQuery the SQL stored query
      * @param dataType the data type
+     * @param value the value to be mapped
      * @return the {@link SqlJsonValueMapper} for given SQL stored query, or default {@link SqlJsonValueMapper}
      * if stored query does not have specific one that it supports
      */
-    public SqlJsonValueMapper getJsonValueMapper(SqlStoredQuery<?, ?> sqlStoredQuery, DataType dataType) {
+    public SqlJsonValueMapper getJsonValueMapper(SqlStoredQuery<?, ?> sqlStoredQuery, DataType dataType, Object value) {
+        if (value == null || value.getClass().equals(String.class)) {
+            return defaultSqlJsonValueMapper;
+        }
         SqlJsonValueMapper supportedSqlJsonValueMapper = null;
         for (SqlJsonValueMapper sqlJsonValueMapper : sqlJsonValueMappers) {
             if (sqlJsonValueMapper.supportsMapValue(sqlStoredQuery, dataType)) {

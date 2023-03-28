@@ -40,6 +40,13 @@ public interface SqlJsonValueMapper {
      * @throws IOException exception that can be thrown when encoding JSON
      */
     default Object mapValue(Object object) throws IOException {
+        if (object == null) {
+            return null;
+        }
+        if (object.getClass().equals(String.class)) {
+            // No need to serialize String
+            return object;
+        }
         return new String(getJsonMapper().writeValueAsBytes(object), StandardCharsets.UTF_8);
     }
 
