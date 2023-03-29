@@ -3,6 +3,10 @@ plugins {
     id "io.micronaut.build.internal.data-micronaut-benchmark"
 }
 
+micronaut {
+    version '4.0.0-SNAPSHOT'
+}
+
 dependencies {
     annotationProcessor projects.dataDocumentProcessor
     implementation projects.dataMongodb

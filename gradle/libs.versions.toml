@@ -1,21 +1,21 @@
 [versions]
-micronaut = "4.0.0-SNAPSHOT"
+micronaut = "4.0.0-M1"
 micronaut-docs = "2.0.0"
-micronaut-gradle-plugin = "3.7.6"
+micronaut-gradle-plugin = "3.7.7"
 micronaut-azure = "3.9.0"
 micronaut-testresources = "1.2.5"
 
-micronaut-reactor = "3.0.0-SNAPSHOT"
-micronaut-rxjava2 = "2.0.0-SNAPSHOT"
+micronaut-reactor = "3.0.0-M1"
+micronaut-rxjava2 = "2.0.0-M1"
 micronaut-r2dbc = "4.0.1-SNAPSHOT"
-micronaut-serde = "2.0.0-SNAPSHOT"
-micronaut-sql = "5.0.0-SNAPSHOT"
-micronaut-spring = "5.0.0-SNAPSHOT"
+micronaut-serde = "2.0.0-M1"
+micronaut-sql = "5.0.0-M1"
+micronaut-spring = "5.0.0-M1"
 micronaut-test = "4.0.0-SNAPSHOT"
-micronaut-mongo = "5.0.0-SNAPSHOT"
-micronaut-kotlin = "4.0.0-SNAPSHOT"
-micronaut-multitenancy = "5.0.0-SNAPSHOT"
-micronaut-validation = "4.0.0-SNAPSHOT"
+micronaut-mongo = "5.0.0-M1"
+micronaut-kotlin = "4.0.0-M1"
+micronaut-multitenancy = "5.0.0-M1"
+micronaut-validation = "4.0.0-M2"
 
 groovy = "4.0.10"
 
@@ -28,7 +28,7 @@ jakarta-transaction = "2.0.1"
 hibernate = "6.2.0.CR4"
 hibernate-jpamodelgen-jakarta = "6.0.0.Alpha9"
 
-spring-data = "3.0.3"
+spring-data = "3.0.4"
 spring = "5.3.24"
 
 mongodb = "4.7.2"
@@ -38,7 +38,7 @@ vertx = "4.4.0"
 # JDBC Drivers
 
 oracle-jdbc-driver = "21.9.0.0"
-mariadb-jdbc-driver = "3.1.2"
+mariadb-jdbc-driver = "3.1.3"
 mysql-jdbc-driver = "8.0.32"
 postgres-jdbc-driver = "42.6.0"
 mssql-jdbc-driver = "8.4.1.jre14"
@@ -60,7 +60,7 @@ h2 = "2.1.214"
 # Testing and benchmarking
 
 benchmark-spring-data-mongodb = "4.4.2"
-benchmark-spring-data = "2021.2.9"
+benchmark-spring-data = "2021.2.10"
 spock = "2.2-groovy-4.0"
 cglib = "3.3.0"
 objenesis = "3.3"
@@ -148,6 +148,7 @@ spring-data-commons = { module = "org.springframework.data:spring-data-commons",
 
 vertx-core = { module = "io.vertx:vertx-core", version.ref = "vertx" }
 drivers-vertx-pg = { module = "io.vertx:vertx-pg-client", version.ref = "vertx" }
+drivers-vertx-mysql = { module = "io.vertx:vertx-mysql-client", version.ref = "vertx" }
 
 # JDBC
 
