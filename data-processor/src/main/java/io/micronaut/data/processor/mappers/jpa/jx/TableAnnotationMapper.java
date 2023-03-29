@@ -18,6 +18,7 @@ package io.micronaut.data.processor.mappers.jpa.jx;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.AnnotationValueBuilder;
 import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.Index;
 import io.micronaut.data.annotation.Indexes;
 import io.micronaut.data.annotation.MappedEntity;
@@ -54,14 +55,16 @@ public class TableAnnotationMapper implements NamedAnnotationMapper {
         annotation.stringValue(SqlMembers.CATALOG).ifPresent(catalog -> builder.member(SqlMembers.CATALOG, catalog));
         annotation.stringValue("schema").ifPresent(schema -> builder.member("schema", schema));
         final AnnotationValueBuilder<Indexes> idxBuilder = AnnotationValue.builder(Indexes.class);
-        Optional.ofNullable((AnnotationValue<Annotation>[]) annotation.getValues().get("indexes"))
-                .ifPresent(indexes -> {
-                    final AnnotationValue<Index>[] annotationValues =
-                            (AnnotationValue<Index>[]) Arrays.stream(indexes)
-                                    .map(a -> mapper.map(a, null)
-                                    .get(0)).toArray(AnnotationValue[]::new);
-                   idxBuilder.member("value", annotationValues);
-                });
+
+        List<AnnotationValue<Annotation>> indexesValue = annotation.getAnnotations("indexes");
+        if (CollectionUtils.isNotEmpty(indexesValue)) {
+            final AnnotationValue<Index>[] annotationValues =
+                (AnnotationValue<Index>[]) indexesValue.stream()
+                    .map(a -> mapper.map(a, null)
+                        .get(0)).toArray(AnnotationValue[]::new);
+            idxBuilder.member("value", annotationValues);
+        }
+
         return Arrays.asList(builder.build(), idxBuilder.build());
     }
 }
