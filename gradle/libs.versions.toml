@@ -59,7 +59,7 @@ h2 = "2.1.214"
 
 # Testing and benchmarking
 
-benchmark-spring-data-mongodb = "4.4.2"
+benchmark-spring-data-mongodb = "4.7.2"
 benchmark-spring-data = "2021.2.10"
 spock = "2.2-groovy-4.0"
 cglib = "3.3.0"
@@ -72,7 +72,7 @@ jetbrains-annotations = "24.0.1"
 
 kotlin-gradle-plugin = "1.8.10"
 jmh-gradle-plugin = "0.7.0"
-spring-boot-gradle-plugin = "2.6.7"
+spring-boot-gradle-plugin = "2.7.10"
 spring-dependency-management-gradle-plugin = "1.1.0"
 shadow-gradle-plugin = "8.0.0"
 
