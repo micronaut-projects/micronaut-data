@@ -30,16 +30,12 @@ import java.time.LocalDateTime;
 import java.util.Objects;
 
 @Entity(name = "jprod")
-@javax.persistence.Entity(name = "jprod")
 public class Product {
     @Id
     @GeneratedValue
-    @javax.persistence.Id
-    @javax.persistence.GeneratedValue
     private Long id;
 
     @ManyToOne
-    @javax.persistence.ManyToOne
     private Category category;
 
     private String name;
