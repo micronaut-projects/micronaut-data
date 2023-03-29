@@ -29,7 +29,6 @@ hibernate = "6.2.0.CR4"
 hibernate-jpamodelgen-jakarta = "6.0.0.Alpha9"
 
 spring-data = "3.0.4"
-spring = "6.0.7"
 
 mongodb = "4.7.2"
 
