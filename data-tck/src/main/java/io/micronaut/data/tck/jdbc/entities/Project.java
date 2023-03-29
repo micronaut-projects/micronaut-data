@@ -22,10 +22,8 @@ import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
 
 @Entity
-@javax.persistence.Entity
 public class Project {
     @EmbeddedId
-    @javax.persistence.EmbeddedId
     private ProjectId projectId;
     @ColumnTransformer(
             read = "UPPER(@.org)"

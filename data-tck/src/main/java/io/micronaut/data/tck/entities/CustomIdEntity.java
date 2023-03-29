@@ -20,13 +20,10 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 
 @Entity
-@javax.persistence.Entity
 public class CustomIdEntity {
 
     @Id
     @GeneratedValue
-    @javax.persistence.Id
-    @javax.persistence.GeneratedValue
     private Long customId;
 
     private Long id;

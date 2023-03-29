@@ -25,13 +25,9 @@ import java.math.BigDecimal;
 
 @Entity
 @Table(name = "ORDERS")
-@javax.persistence.Entity
-@javax.persistence.Table(name = "ORDERS")
 public class Order {
     @Id
     @GeneratedValue
-    @javax.persistence.Id
-    @javax.persistence.GeneratedValue
     private Long id;
 
     private String customer;

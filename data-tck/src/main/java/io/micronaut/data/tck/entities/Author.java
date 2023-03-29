@@ -26,22 +26,17 @@ import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 
 @Entity
-@javax.persistence.Entity
 public class Author {
 
     @Id
-    @javax.persistence.Id
     @GeneratedValue
-    @javax.persistence.GeneratedValue
     private Long id;
 
     private String name;
     @Column(nullable = true)
-    @javax.persistence.Column(nullable = true)
     private String nickName;
 
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "author")
-    @javax.persistence.OneToMany(cascade = javax.persistence.CascadeType.ALL, mappedBy = "author")
     private Set<Book> books = new HashSet<>();
 
     public Long getId() {

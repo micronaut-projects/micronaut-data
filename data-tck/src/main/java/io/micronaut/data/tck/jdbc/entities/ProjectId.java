@@ -19,7 +19,6 @@ import jakarta.persistence.Embeddable;
 import java.io.Serializable;
 
 @Embeddable
-@javax.persistence.Embeddable
 public class ProjectId implements Serializable {
     private int departmentId;
     private int projectId;
