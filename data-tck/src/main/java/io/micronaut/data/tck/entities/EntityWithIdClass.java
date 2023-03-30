@@ -21,14 +21,10 @@ import jakarta.persistence.IdClass;
 
 @Entity
 @IdClass(EntityIdClass.class)
-@javax.persistence.Entity
-@javax.persistence.IdClass(EntityIdClass.class)
 public class EntityWithIdClass {
     @Id
-    @javax.persistence.Id
     Long id1;
     @Id
-    @javax.persistence.Id
     Long id2;
 
     String name;

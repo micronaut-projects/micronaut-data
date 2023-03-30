@@ -29,17 +29,13 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Entity
-@javax.persistence.Entity
 public class Student {
 
     @Id
     @GeneratedValue
-    @javax.persistence.Id
-    @javax.persistence.GeneratedValue
     private Long id;
 
     @Version
-    @javax.persistence.Version
     private Long version;
     private String name;
     @DateCreated
@@ -47,7 +43,6 @@ public class Student {
     @DateUpdated
     private Date lastUpdatedTime;
     @ManyToMany(mappedBy = "students")
-    @javax.persistence.ManyToMany(mappedBy = "students")
     private Set<Book> books = new HashSet<>();
 
     public Student() {

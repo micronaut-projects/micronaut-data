@@ -27,13 +27,10 @@ import java.time.Instant;
 import java.util.Date;
 
 @Entity
-@javax.persistence.Entity
 public class Company {
 
     @GeneratedValue
     @Id
-    @javax.persistence.GeneratedValue
-    @javax.persistence.Id
     private Long myId;
     @DateCreated
     private Date dateCreated;

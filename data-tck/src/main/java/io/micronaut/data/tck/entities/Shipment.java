@@ -24,8 +24,6 @@ import java.util.Objects;
 
 @Entity
 @Table(name= "Shipment1")
-@javax.persistence.Entity
-@javax.persistence.Table(name= "Shipment1")
 public class Shipment {
 
     @Creator
@@ -39,11 +37,9 @@ public class Shipment {
     }
 
     @EmbeddedId
-    @javax.persistence.EmbeddedId
     private ShipmentId shipmentId;
 
     @Column(name = "field")
-    @javax.persistence.Column(name = "field")
     private String field;
 
     public ShipmentId getShipmentId() {
