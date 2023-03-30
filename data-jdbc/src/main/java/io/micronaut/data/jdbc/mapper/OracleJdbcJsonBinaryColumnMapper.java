@@ -49,7 +49,7 @@ import java.sql.ResultSet;
 @Requires(classes = OracleJdbcJsonBinaryObjectMapper.class)
 @Internal
 @Experimental
-class OracleJdbcJsonBinaryColumnMapper implements SqlJsonColumnReader<ResultSet>, SqlJsonValueMapper {
+final class OracleJdbcJsonBinaryColumnMapper implements SqlJsonColumnReader<ResultSet>, SqlJsonValueMapper {
 
     private final OracleJdbcJsonBinaryObjectMapper binaryJsonMapper;
     private final ObjectMapper defaultObjectMapper;
@@ -59,7 +59,7 @@ class OracleJdbcJsonBinaryColumnMapper implements SqlJsonColumnReader<ResultSet>
      *
      * @param binaryJsonMapper the oracle JSON mapper
      */
-    public OracleJdbcJsonBinaryColumnMapper(OracleJdbcJsonBinaryObjectMapper binaryJsonMapper, @Primary ObjectMapper defaultObjectMapper) {
+    OracleJdbcJsonBinaryColumnMapper(OracleJdbcJsonBinaryObjectMapper binaryJsonMapper, @Primary ObjectMapper defaultObjectMapper) {
         this.binaryJsonMapper = binaryJsonMapper;
         this.defaultObjectMapper = defaultObjectMapper;
     }
@@ -67,29 +67,31 @@ class OracleJdbcJsonBinaryColumnMapper implements SqlJsonColumnReader<ResultSet>
     @Override
     public <T> T readJsonColumn(ResultReader<ResultSet, String> resultReader, ResultSet resultSet, String columnName, JsonType jsonType, Argument<T> argument) {
         try {
-            if (jsonType == JsonType.NATIVE) {
-                OracleJsonParser jsonParser = resultSet.getObject(columnName, OracleJsonParser.class);
-                if (jsonParser == null) {
-                    return null;
+            switch (jsonType) {
+                case NATIVE -> {
+                    OracleJsonParser jsonParser = resultSet.getObject(columnName, OracleJsonParser.class);
+                    if (jsonParser == null) {
+                        return null;
+                    }
+                    return binaryJsonMapper.readValue(jsonParser, argument);
                 }
-                return binaryJsonMapper.readValue(jsonParser, argument);
-            }
-            if (jsonType == JsonType.BLOB) {
-                byte[] bytes = resultSet.getBytes(columnName);
-                if (bytes == null) {
-                    return null;
+                case BLOB -> {
+                    byte[] bytes = resultSet.getBytes(columnName);
+                    if (bytes == null) {
+                        return null;
+                    }
+                    return binaryJsonMapper.readValue(bytes, argument);
                 }
-                return binaryJsonMapper.readValue(bytes, argument);
-            }
-            if (jsonType == JsonType.STRING) {
-                String data = resultReader.readString(resultSet, columnName);
-                if (data == null) {
-                    return null;
+                case STRING -> {
+                    String data = resultReader.readString(resultSet, columnName);
+                    if (data == null) {
+                        return null;
+                    }
+                    if (argument.getType().equals(String.class)) {
+                        return (T) data;
+                    }
+                    return defaultObjectMapper.readValue(data, argument);
                 }
-                if (argument.getType().equals(String.class)) {
-                    return (T) data;
-                }
-                return defaultObjectMapper.readValue(data, argument);
             }
         } catch (Exception e) {
             throw new DataAccessException("Failed to read from JSON field [" + columnName + "].", e);

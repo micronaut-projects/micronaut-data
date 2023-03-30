@@ -54,7 +54,7 @@ class OracleXEManualSchemaSpec extends AbstractManualSchemaSpec implements Oracl
     List<String> createStatements() {
         return Arrays.asList(""" CREATE SEQUENCE "PATIENT_SEQ" MINVALUE 1 START WITH 1 CACHE 100 NOCYCLE """,
             """ CREATE TABLE "PATIENT" ("NAME" VARCHAR(255), "ID" NUMBER(19) NOT NULL PRIMARY KEY, "HISTORY" VARCHAR(1000), "DOCTOR_NOTES" VARCHAR(255)) """,
-            """ CREATE TABLE "JSON_ENTITY" ("ID" NUMBER(19) NOT NULL PRIMARY KEY, "SAMPLE_DATA" CLOB) """,
+            """ CREATE TABLE "JSON_ENTITY" ("ID" NUMBER(19) NOT NULL PRIMARY KEY, "SAMPLE_DATA" JSON) """,
             """ CREATE TABLE "JSON_DATA" ("ID" NUMBER(19) NOT NULL PRIMARY KEY, "NAME" VARCHAR(100), "CREATED_DATE" TIMESTAMP (6), "DURATION" INTERVAL DAY (2) TO SECOND (6)) """)
     }
 
@@ -121,7 +121,7 @@ class OracleXEManualSchemaSpec extends AbstractManualSchemaSpec implements Oracl
 interface OracleXEJsonEntityRepository extends CrudRepository<JsonEntity, Long> {
 
     @Query("SELECT SAMPLE_DATA AS DATA FROM JSON_ENTITY WHERE ID = :id")
-    @QueryResult(type = QueryResult.Type.JSON, jsonType = JsonType.STRING)
+    @QueryResult(type = QueryResult.Type.JSON, jsonType = JsonType.NATIVE)
     Optional<SampleData> findJsonSampleDataByEntityId(Long id)
 
     @NonNull
@@ -133,7 +133,7 @@ interface OracleXEJsonEntityRepository extends CrudRepository<JsonEntity, Long> 
 interface OracleXEJsonDataRepository extends CrudRepository<JsonData, Long> {
 
     @Query(""" SELECT JSON{'id' : "ID", 'name' : "NAME", 'createdDate' : "CREATED_DATE", 'duration' : "DURATION"} AS "DATA" FROM JSON_DATA """)
-    @QueryResult(type = QueryResult.Type.JSON, jsonType = JsonType.STRING)
+    @QueryResult(type = QueryResult.Type.JSON, jsonType = JsonType.NATIVE)
     Optional<JsonData> getJsonDataById(Long id)
 }
 
@@ -185,7 +185,7 @@ class JsonEntity {
     private Long id
 
     @TypeDef(type = DataType.JSON)
-    @JsonRepresentation(type = JsonType.STRING)
+    @JsonRepresentation(type = JsonType.NATIVE)
     @Nullable
     private SampleData sampleData
 

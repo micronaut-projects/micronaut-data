@@ -45,7 +45,7 @@ public interface SqlJsonValueMapper {
             return null;
         }
         // This doesn't support writing to blob
-        if (object.getClass().equals(String.class)) {
+        if (object instanceof String) {
             // No need to serialize String
             return object;
         }

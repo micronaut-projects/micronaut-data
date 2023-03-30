@@ -67,29 +67,31 @@ class OracleR2dbcJsonBinaryColumnMapper implements SqlJsonColumnReader<Row>, Sql
     @Override
     public <T> T readJsonColumn(ResultReader<Row, String> resultReader, Row resultSet, String columnName, JsonType jsonType, Argument<T> argument) {
         try {
-            if (jsonType == JsonType.NATIVE) {
-                OracleJsonParser jsonParser = resultSet.get(columnName, OracleJsonParser.class);
-                if (jsonParser == null) {
-                    return null;
+            switch (jsonType) {
+                case NATIVE -> {
+                    OracleJsonParser jsonParser = resultSet.get(columnName, OracleJsonParser.class);
+                    if (jsonParser == null) {
+                        return null;
+                    }
+                    return binaryJsonMapper.readValue(jsonParser, argument);
                 }
-                return binaryJsonMapper.readValue(jsonParser, argument);
-            }
-            if (jsonType == JsonType.BLOB) {
-                byte[] bytes = resultSet.get(columnName, byte[].class);
-                if (bytes == null) {
-                    return null;
+                case BLOB -> {
+                    byte[] bytes = resultSet.get(columnName, byte[].class);
+                    if (bytes == null) {
+                        return null;
+                    }
+                    return binaryJsonMapper.readValue(bytes, argument);
                 }
-                return binaryJsonMapper.readValue(bytes, argument);
-            }
-            if (jsonType == JsonType.STRING) {
-                String data = resultReader.readString(resultSet, columnName);
-                if (data == null) {
-                    return null;
+                case STRING -> {
+                    String data = resultReader.readString(resultSet, columnName);
+                    if (data == null) {
+                        return null;
+                    }
+                    if (argument.getType().equals(String.class)) {
+                        return (T) data;
+                    }
+                    return defaultObjectMapper.readValue(data, argument);
                 }
-                if (argument.getType().equals(String.class)) {
-                    return (T) data;
-                }
-                return defaultObjectMapper.readValue(data, argument);
             }
         } catch (Exception e) {
             throw new DataAccessException("Failed to read from JSON field [" + columnName + "].", e);

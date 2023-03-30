@@ -38,7 +38,7 @@ import java.util.List;
  */
 @Internal
 @Singleton
-public class SqlJsonColumnMapperProvider<RS> {
+public final class SqlJsonColumnMapperProvider<RS> {
 
     private static final Logger LOG = LoggerFactory.getLogger(SqlJsonColumnMapperProvider.class);
 
