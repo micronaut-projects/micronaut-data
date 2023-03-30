@@ -1060,17 +1060,20 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         }
 
         @Override
-        public void bindOne(QueryParameterBinding binding, RuntimePersistentProperty<?> property, Object value) {
-            JsonType jsonType = binding.getJsonType();
-            if (jsonType == null && property != null) {
-                jsonType = property.getJsonType();
+        public void bindOne(QueryParameterBinding binding, @Nullable RuntimePersistentProperty<?> property, Object value) {
+            JsonType jsonType = null;
+            if (binding.getDataType() == DataType.JSON) {
+                jsonType = binding.getJsonType();
+                if (jsonType == null && property != null) {
+                    jsonType = property.getJsonType();
+                }
             }
             setStatementParameter(ps, index, binding.getDataType(), jsonType, value, sqlStoredQuery);
             index++;
         }
 
         @Override
-        public void bindMany(QueryParameterBinding binding, RuntimePersistentProperty<?> property, Collection<Object> values) {
+        public void bindMany(QueryParameterBinding binding, @Nullable RuntimePersistentProperty<?> property, Collection<Object> values) {
             for (Object value : values) {
                 bindOne(binding, property, value);
             }

@@ -273,6 +273,13 @@ abstract class AbstractJSONSpec extends Specification {
         loadedJsonEntity.jsonString == jsonEntity.jsonString
         loadedJsonEntity.jsonBlob == jsonEntity.jsonBlob
         loadedJsonEntity.jsonNative == jsonEntity.jsonNative
+        when:"Update JSON field as parameter"
+        jsonEntity.jsonString.description = "Updated via param"
+        jsonEntityRepository.updateJsonStringById(jsonEntity.id, jsonEntity.jsonString)
+        optSampleDataFromJsonString = jsonEntityRepository.findJsonStringSampleDataByEntityId(jsonEntity.id)
+        then:"Value should be updated"
+        optSampleDataFromJsonString.present
+        optSampleDataFromJsonString.get().description == "Updated via param"
     }
 
     void verifySale(Sale actualSale, Sale expectedSale) {
