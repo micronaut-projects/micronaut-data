@@ -1,0 +1,51 @@
+plugins {
+    id "io.micronaut.application"
+//    id "io.micronaut.test-resources" Integrate after https://github.com/micronaut-projects/micronaut-test-resources/issues/142
+    id "io.micronaut.build.internal.data-kotlin-ksp-example"
+}
+
+application {
+    mainClass = "example.ApplicationKt"
+}
+
+micronaut {
+    version = '4.0.0-SNAPSHOT'
+    runtime "netty"
+    testRuntime "junit5"
+}
+
+configurations.all {
+    resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
+}
+
+//kotlin {
+//    kotlinDaemonJvmArgs = ['-Xdebug', '-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5005']
+//}
+
+tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
+    kotlinOptions {
+        jvmTarget = "17"
+        freeCompilerArgs = ['-Xjvm-default=all']
+    }
+}
+
+dependencies {
+    ksp projects.dataDocumentProcessor
+    implementation 'io.micronaut.rxjava2:micronaut-rxjava2'
+    implementation 'io.micronaut.reactor:micronaut-reactor'
+
+    implementation "io.micronaut:micronaut-http-client"
+    implementation 'io.micronaut.data:micronaut-data-mongodb'
+    implementation libs.mongodb.driver.sync
+    implementation mnKotlin.micronaut.kotlin.runtime
+
+    compileOnly libs.javax.persistence.api
+    implementation libs.jakarta.persistence.api
+    implementation libs.jakarta.transaction.api
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-reactive"
+
+    runtimeOnly "ch.qos.logback:logback-classic"
+
+    testImplementation "org.testcontainers:mongodb"
+}

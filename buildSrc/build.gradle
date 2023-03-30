@@ -3,8 +3,14 @@ plugins {
 }
 
 repositories {
+    mavenLocal()
     gradlePluginPortal()
     mavenCentral()
+    maven { url "https://s01.oss.sonatype.org/content/repositories/snapshots/" }
+}
+
+configurations.all {
+    resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
 }
 
 dependencies {
@@ -12,6 +18,7 @@ dependencies {
     implementation libs.gradle.kotlin
     implementation libs.gradle.kotlin.allopen
     implementation libs.gradle.kotlin.noarg
+    implementation libs.gradle.ksp
     implementation libs.gradle.jmh
     implementation libs.gradle.spring.boot
     implementation libs.gradle.spring.dependencies
