@@ -88,8 +88,7 @@ public final class SqlJsonColumnMapperProvider<RS> {
 
         if (supportedSqlJsonColumnReader != null) {
             if (LOG.isDebugEnabled()) {
-                LOG.debug("Using custom JSON column reader for dialect",
-                    sqlPreparedQuery.getDialect());
+                LOG.debug("Using custom JSON column reader for dialect {}", sqlPreparedQuery.getDialect());
             }
             return supportedSqlJsonColumnReader;
         }

@@ -1229,7 +1229,6 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
             return values.add(transformer);
         }
         if (dt == DataType.JSON) {
-            JsonType jsonType = property.getJsonType();
             switch (dialect) {
                 case POSTGRES:
                     return values.add("to_json(" + formatParameter(values.size() + 1).getName() + "::json)");
