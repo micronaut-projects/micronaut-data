@@ -18,9 +18,11 @@ package io.micronaut.data.processor.model.criteria.impl;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.annotation.AutoPopulated;
 import io.micronaut.data.annotation.Expandable;
+import io.micronaut.data.annotation.JsonRepresentation;
 import io.micronaut.data.annotation.TypeDef;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.DataType;
+import io.micronaut.data.model.JsonType;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.jpa.criteria.impl.ParameterExpressionImpl;
@@ -90,6 +92,7 @@ public final class SourceParameterExpressionImpl extends ParameterExpressionImpl
             Objects.requireNonNull(parameterElement);
             int index = Arrays.asList(parameters).indexOf(parameterElement);
             DataType dataType = getDataType(null, parameterElement);
+            JsonType jsonType = getJsonType(null, parameterElement);
             String converter = parameterElement.stringValue(TypeDef.class, "converter").orElse(null);
             boolean isExpandable = isExpandable(bindingContext, dataType);
             return new QueryParameterBinding() {
@@ -106,6 +109,11 @@ public final class SourceParameterExpressionImpl extends ParameterExpressionImpl
                 @Override
                 public DataType getDataType() {
                     return dataType;
+                }
+
+                @Override
+                public JsonType getJsonType() {
+                    return jsonType;
                 }
 
                 @Override
@@ -127,6 +135,7 @@ public final class SourceParameterExpressionImpl extends ParameterExpressionImpl
                         .map(ap -> ap.getRequiredValue(AutoPopulated.UPDATEABLE, Boolean.class))
                         .orElse(false);
         DataType dataType = getDataType(propertyPath, parameterElement);
+        JsonType jsonType = getJsonType(propertyPath, parameterElement);
         String converterClassName = ((SourcePersistentProperty) propertyPath.getProperty()).getConverterClassName();
         int index = parameterElement == null || isEntityParameter ? -1 : Arrays.asList(parameters).indexOf(parameterElement);
         String[] path = asStringPath(outgoingQueryParameterProperty.getAssociations(), outgoingQueryParameterProperty.getProperty());
@@ -142,6 +151,11 @@ public final class SourceParameterExpressionImpl extends ParameterExpressionImpl
             @Override
             public DataType getDataType() {
                 return dataType;
+            }
+
+            @Override
+            public JsonType getJsonType() {
+                return jsonType;
             }
 
             @Override
@@ -235,6 +249,26 @@ public final class SourceParameterExpressionImpl extends ParameterExpressionImpl
             return TypeUtils.resolveDataType(type, dataTypes);
         }
         return DataType.OBJECT;
+    }
+
+    private JsonType getJsonType(PersistentPropertyPath propertyPath, ParameterElement parameterElement) {
+        if (propertyPath != null) {
+            PersistentProperty property = propertyPath.getProperty();
+            if (!(property instanceof Association)) {
+                JsonType jsonType = property.getJsonType();
+                if (jsonType != null) {
+                    return jsonType;
+                }
+            }
+        }
+        if (parameterElement != null) {
+            JsonType jsonType = parameterElement.enumValue(JsonRepresentation.class, "type", JsonType.class).orElse(null);
+            if (jsonType != null) {
+                return jsonType;
+            }
+        }
+        // default
+        return JsonType.STRING;
     }
 
     private String[] asStringPath(List<Association> associations, PersistentProperty property) {

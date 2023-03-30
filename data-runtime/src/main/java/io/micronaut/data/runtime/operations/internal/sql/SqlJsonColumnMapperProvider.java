@@ -17,8 +17,7 @@ package io.micronaut.data.runtime.operations.internal.sql;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Nullable;
-import io.micronaut.data.model.DataType;
-import io.micronaut.data.model.runtime.QueryResultInfo;
+import io.micronaut.data.model.JsonType;
 import io.micronaut.data.runtime.mapper.sql.SqlJsonColumnReader;
 import io.micronaut.data.runtime.mapper.sql.SqlJsonValueMapper;
 import io.micronaut.json.JsonMapper;
@@ -69,40 +68,34 @@ public class SqlJsonColumnMapperProvider<RS> {
     }
 
     /**
-     * Provides {@link SqlJsonColumnReader} for given SQL prepared query. If query is single column result producing JSON
-     * and if there is specific {@link SqlJsonColumnReader} that supports given prepared query then it will be returned.
-     * Otherwise, it will return default {@link SqlJsonColumnReader}. In case query doesn't produce single column of JSON type
-     * it will return null;
+     * Provides {@link SqlJsonColumnReader} for given SQL prepared query. If there is specific {@link SqlJsonColumnReader}
+     * that supports given prepared query and result set type then it will be returned.
+     * Otherwise, it will return default {@link SqlJsonColumnReader}.
      *
      * @param sqlPreparedQuery the SQL prepared query
-     * @param dataType the data type
-     * @param resultType the result type to be returned
      * @param resultSetType the result set type (for R2Dbc and Jdbc it is different for example)
      * @return the {@link SqlJsonColumnReader} for given SQL prepared query, or default {@link SqlJsonColumnReader}
      * if prepared query does not have specific one that it supports
      */
-    public SqlJsonColumnReader<RS> getJsonColumnReader(SqlPreparedQuery<?, ?> sqlPreparedQuery, DataType dataType, Class<?> resultType, Class<RS> resultSetType) {
+    public SqlJsonColumnReader<RS> getJsonColumnReader(SqlPreparedQuery<?, ?> sqlPreparedQuery, Class<RS> resultSetType) {
         SqlJsonColumnReader<RS> supportedSqlJsonColumnReader = null;
-        QueryResultInfo queryResultInfo = sqlPreparedQuery.getQueryResultInfo();
-        if (queryResultInfo != null && queryResultInfo.getType() == io.micronaut.data.annotation.QueryResult.Type.JSON) {
-            for (SqlJsonColumnReader<RS> sqlJsonColumnReader : sqlJsonColumnReaders) {
-                if (sqlJsonColumnReader.supportsResultSetType(resultSetType) && sqlJsonColumnReader.supportsRead(sqlPreparedQuery, dataType, resultType)) {
-                    supportedSqlJsonColumnReader = sqlJsonColumnReader;
-                    break;
-                }
+        for (SqlJsonColumnReader<RS> sqlJsonColumnReader : sqlJsonColumnReaders) {
+            if (sqlJsonColumnReader.supportsResultSetType(resultSetType) && sqlJsonColumnReader.supportsRead(sqlPreparedQuery)) {
+                supportedSqlJsonColumnReader = sqlJsonColumnReader;
+                break;
             }
         }
 
         if (supportedSqlJsonColumnReader != null) {
             if (LOG.isDebugEnabled()) {
-                LOG.debug("Using custom JSON column reader for dialect {} and query result info {}",
-                    sqlPreparedQuery.getDialect(), queryResultInfo);
+                LOG.debug("Using custom JSON column reader for dialect",
+                    sqlPreparedQuery.getDialect());
             }
             return supportedSqlJsonColumnReader;
         }
         if (defaultSqlJsonColumnReader == null && LOG.isDebugEnabled()) {
-            LOG.debug("No default SqlJsonColumnReader found for dialect {} and query result info {}. Need to add Micronaut JsonMapper to the classpath.",
-                sqlPreparedQuery.getDialect(), queryResultInfo);
+            LOG.debug("No default SqlJsonColumnReader found for dialect {}. Need to add Micronaut JsonMapper to the classpath.",
+                sqlPreparedQuery.getDialect());
         }
         return defaultSqlJsonColumnReader;
     }
@@ -112,14 +105,18 @@ public class SqlJsonColumnMapperProvider<RS> {
      * Otherwise, it will return default {@link SqlJsonValueMapper}.
      *
      * @param sqlStoredQuery the SQL stored query
-     * @param dataType the data type
+     * @param jsonType the JSON representation type
+     * @param value the value to be mapped
      * @return the {@link SqlJsonValueMapper} for given SQL stored query, or default {@link SqlJsonValueMapper}
      * if stored query does not have specific one that it supports
      */
-    public SqlJsonValueMapper getJsonValueMapper(SqlStoredQuery<?, ?> sqlStoredQuery, DataType dataType) {
+    public SqlJsonValueMapper getJsonValueMapper(SqlStoredQuery<?, ?> sqlStoredQuery, JsonType jsonType, Object value) {
+        if (value == null || value.getClass().equals(String.class)) {
+            return defaultSqlJsonValueMapper;
+        }
         SqlJsonValueMapper supportedSqlJsonValueMapper = null;
         for (SqlJsonValueMapper sqlJsonValueMapper : sqlJsonValueMappers) {
-            if (sqlJsonValueMapper.supportsMapValue(sqlStoredQuery, dataType)) {
+            if (sqlJsonValueMapper.supportsMapValue(sqlStoredQuery, jsonType)) {
                 supportedSqlJsonValueMapper = sqlJsonValueMapper;
                 break;
             }

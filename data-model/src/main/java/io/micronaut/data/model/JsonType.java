@@ -13,36 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.tck.entities;
+package io.micronaut.data.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Id;
-import jakarta.persistence.OneToOne;
+/**
+ * Enum of JSON type representations or actually storage types. It is useful to know how to store and retrieve JSON fields.
+ *
+ * @author radovanradic
+ * @since 4.0.0
+ * @see PersistentProperty#getJsonType()
+ */
+public enum JsonType {
+    /**
+     * Usually stored in JSON specific column type supported by all databases.
+     */
+    NATIVE,
 
-@Entity
-public class Nose {
-
-    @GeneratedValue
-    @Id
-    private Long id;
-
-    @OneToOne
-    private Face face;
-
-    public Face getFace() {
-        return face;
-    }
-
-    public void setFace(Face face) {
-        this.face = face;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
+    /**
+     * Stored in CLOB without conversion.
+     */
+    STRING,
+    /**
+     * JSON value stored in BLOB. Supported by Oracle, in other databases basically just byte array.
+     */
+    BLOB
 }

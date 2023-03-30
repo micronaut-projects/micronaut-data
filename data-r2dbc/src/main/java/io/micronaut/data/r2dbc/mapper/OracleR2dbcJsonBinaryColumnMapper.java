@@ -15,13 +15,14 @@
  */
 package io.micronaut.data.r2dbc.mapper;
 
+import io.micronaut.context.annotation.Primary;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Experimental;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.exceptions.DataAccessException;
-import io.micronaut.data.model.DataType;
+import io.micronaut.data.model.JsonType;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.runtime.mapper.ResultReader;
 import io.micronaut.data.runtime.mapper.sql.SqlJsonColumnReader;
@@ -29,13 +30,13 @@ import io.micronaut.data.runtime.mapper.sql.SqlJsonValueMapper;
 import io.micronaut.data.runtime.operations.internal.sql.SqlPreparedQuery;
 import io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery;
 import io.micronaut.json.JsonMapper;
+import io.micronaut.serde.ObjectMapper;
 import io.micronaut.serde.oracle.jdbc.json.OracleJdbcJsonBinaryObjectMapper;
 import io.r2dbc.spi.Row;
 import jakarta.inject.Singleton;
 import oracle.sql.json.OracleJsonParser;
 
 import java.io.IOException;
-import java.sql.Blob;
 
 /**
  * The Oracle JDBC json binary column reader and value mapper.
@@ -51,35 +52,49 @@ import java.sql.Blob;
 class OracleR2dbcJsonBinaryColumnMapper implements SqlJsonColumnReader<Row>, SqlJsonValueMapper {
 
     private final OracleJdbcJsonBinaryObjectMapper binaryJsonMapper;
+    private final ObjectMapper defaultObjectMapper;
 
     /**
      * The default constructor.
      *
      * @param binaryJsonMapper the oracle JSON mapper
      */
-    public OracleR2dbcJsonBinaryColumnMapper(OracleJdbcJsonBinaryObjectMapper binaryJsonMapper) {
+    public OracleR2dbcJsonBinaryColumnMapper(OracleJdbcJsonBinaryObjectMapper binaryJsonMapper, @Primary ObjectMapper defaultObjectMapper) {
         this.binaryJsonMapper = binaryJsonMapper;
+        this.defaultObjectMapper = defaultObjectMapper;
     }
 
     @Override
-    public <T> T readJsonColumn(ResultReader<Row, String> resultReader, Row resultSet, String columnName, DataType dataType, Argument<T> argument) {
+    public <T> T readJsonColumn(ResultReader<Row, String> resultReader, Row resultSet, String columnName, JsonType jsonType, Argument<T> argument) {
         try {
-            if (dataType == DataType.BYTE_ARRAY) {
-                Blob blob = resultSet.get(columnName, Blob.class);
-                return binaryJsonMapper.readValue(blob.getBinaryStream(), argument);
-            }
-            if (dataType == DataType.JSON) {
-                // Otherwise read using OracleJsonParser which might throw exception if underlying field is Clob or Varchar
+            if (jsonType == JsonType.NATIVE) {
                 OracleJsonParser jsonParser = resultSet.get(columnName, OracleJsonParser.class);
                 if (jsonParser == null) {
                     return null;
                 }
                 return binaryJsonMapper.readValue(jsonParser, argument);
             }
-            throw new DataAccessException("Unexpected data type " + dataType + " for JSON binary data column [" + columnName + "]");
+            if (jsonType == JsonType.BLOB) {
+                byte[] bytes = resultSet.get(columnName, byte[].class);
+                if (bytes == null) {
+                    return null;
+                }
+                return binaryJsonMapper.readValue(bytes, argument);
+            }
+            if (jsonType == JsonType.STRING) {
+                String data = resultReader.readString(resultSet, columnName);
+                if (data == null) {
+                    return null;
+                }
+                if (argument.getType().equals(String.class)) {
+                    return (T) data;
+                }
+                return defaultObjectMapper.readValue(data, argument);
+            }
         } catch (Exception e) {
             throw new DataAccessException("Failed to read from JSON field [" + columnName + "].", e);
         }
+        throw new DataAccessException("Unexpected json type " + jsonType + " for JSON field [" + columnName + "]");
     }
 
     @Override
@@ -89,8 +104,8 @@ class OracleR2dbcJsonBinaryColumnMapper implements SqlJsonColumnReader<Row>, Sql
     }
 
     @Override
-    public boolean supportsRead(SqlPreparedQuery<?, ?> sqlPreparedQuery, DataType dataType, Class<?> type) {
-        return (dataType == DataType.BYTE_ARRAY || dataType == DataType.JSON) && sqlPreparedQuery.getDialect() == Dialect.ORACLE;
+    public boolean supportsRead(SqlPreparedQuery<?, ?> sqlPreparedQuery) {
+        return sqlPreparedQuery.getDialect() == Dialect.ORACLE;
     }
 
     @Override
@@ -99,13 +114,16 @@ class OracleR2dbcJsonBinaryColumnMapper implements SqlJsonColumnReader<Row>, Sql
     }
 
     @Override
-    public Object mapValue(Object object) throws IOException {
-        return binaryJsonMapper.writeValueAsBytes(object);
+    public Object mapValue(Object object, JsonType jsonType) throws IOException {
+        if (jsonType == JsonType.STRING && defaultObjectMapper != null) {
+            return defaultObjectMapper.writeValueAsString(object);
+        } else {
+            return binaryJsonMapper.writeValueAsBytes(object);
+        }
     }
 
     @Override
-    public boolean supportsMapValue(SqlStoredQuery<?, ?> sqlStoredQuery, DataType dataType) {
-        return (dataType == DataType.BYTE_ARRAY || dataType == DataType.JSON) && sqlStoredQuery.shouldTransformJsonParameter()
-            && sqlStoredQuery.getDialect() == Dialect.ORACLE;
+    public boolean supportsMapValue(SqlStoredQuery<?, ?> sqlStoredQuery, JsonType jsonType) {
+        return (jsonType == JsonType.NATIVE || jsonType == JsonType.BLOB) && sqlStoredQuery.getDialect() == Dialect.ORACLE;
     }
 }

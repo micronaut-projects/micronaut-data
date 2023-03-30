@@ -21,14 +21,12 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.reflect.ReflectionUtils;
 import io.micronaut.core.util.StringUtils;
-import io.micronaut.data.annotation.Query;
-import io.micronaut.data.annotation.QueryHint;
-import io.micronaut.data.annotation.RepositoryConfiguration;
-import io.micronaut.data.annotation.TypeRole;
+import io.micronaut.data.annotation.*;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.intercept.annotation.DataMethodQueryParameter;
 import io.micronaut.data.model.AssociationUtils;
 import io.micronaut.data.model.DataType;
+import io.micronaut.data.model.JsonType;
 import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.runtime.DefaultStoredDataOperation;
@@ -172,10 +170,12 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
                 if (parameterBindingPath.length == 0) {
                     parameterBindingPath = null;
                 }
+                JsonType jsonType = av.enumValue(DataMethodQueryParameter.META_MEMBER_JSON_TYPE, JsonType.class).orElse(null);
                 queryParameters.add(
                         new StoredQueryParameter(
                                 av.stringValue(DataMethodQueryParameter.META_MEMBER_NAME).orElse(null),
                                 isNumericPlaceHolder ? av.enumValue(DataMethodQueryParameter.META_MEMBER_DATA_TYPE, DataType.class).orElse(DataType.OBJECT) : null,
+                                jsonType,
                                 av.intValue(DataMethodQueryParameter.META_MEMBER_PARAMETER_INDEX).orElse(-1),
                                 parameterBindingPath,
                                 propertyPath,

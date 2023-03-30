@@ -2,18 +2,21 @@ package io.micronaut.data.jdbc.oraclexe
 
 import groovy.transform.Memoized
 import io.micronaut.core.annotation.NonNull
+import io.micronaut.core.annotation.Nullable
 import io.micronaut.data.annotation.Id
+import io.micronaut.data.annotation.JsonRepresentation
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.Query
 import io.micronaut.data.annotation.QueryResult
-import io.micronaut.data.annotation.TransformJsonParameter
+import io.micronaut.data.annotation.TypeDef
 import io.micronaut.data.jdbc.AbstractManualSchemaSpec
 import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.model.DataType
+import io.micronaut.data.model.JsonType
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.repository.CrudRepository
 import io.micronaut.data.runtime.config.SchemaGenerate
-import io.micronaut.data.tck.entities.JsonEntity
+
 import io.micronaut.data.tck.entities.SampleData
 import io.micronaut.data.tck.repositories.PatientRepository
 import jakarta.validation.Valid
@@ -49,17 +52,15 @@ class OracleXEManualSchemaSpec extends AbstractManualSchemaSpec implements Oracl
 
     @Override
     List<String> createStatements() {
-        def statements = Arrays.asList(""" CREATE SEQUENCE "PATIENT_SEQ" MINVALUE 1 START WITH 1 CACHE 100 NOCYCLE """,
+        return Arrays.asList(""" CREATE SEQUENCE "PATIENT_SEQ" MINVALUE 1 START WITH 1 CACHE 100 NOCYCLE """,
             """ CREATE TABLE "PATIENT" ("NAME" VARCHAR(255), "ID" NUMBER(19) NOT NULL PRIMARY KEY, "HISTORY" VARCHAR(1000), "DOCTOR_NOTES" VARCHAR(255)) """,
-            """ CREATE TABLE "JSON_ENTITY" ("ID" NUMBER(19) NOT NULL PRIMARY KEY, "SAMPLE_DATA" JSON) """,
+            """ CREATE TABLE "JSON_ENTITY" ("ID" NUMBER(19) NOT NULL PRIMARY KEY, "SAMPLE_DATA" CLOB) """,
             """ CREATE TABLE "JSON_DATA" ("ID" NUMBER(19) NOT NULL PRIMARY KEY, "NAME" VARCHAR(100), "CREATED_DATE" TIMESTAMP (6), "DURATION" INTERVAL DAY (2) TO SECOND (6)) """)
-        return statements
     }
 
     @Override
     List<String> dropStatements() {
-        def statements = Arrays.asList(""" DROP TABLE "PATIENT" PURGE """, """ DROP SEQUENCE "PATIENT_SEQ" """, """ DROP TABLE "JSON_ENTITY" """, """ DROP TABLE "JSON_DATA" """)
-        return statements
+        return Arrays.asList(""" DROP TABLE "PATIENT" PURGE """, """ DROP SEQUENCE "PATIENT_SEQ" """, """ DROP TABLE "JSON_ENTITY" """, """ DROP TABLE "JSON_DATA" """)
     }
 
     @Override
@@ -120,20 +121,19 @@ class OracleXEManualSchemaSpec extends AbstractManualSchemaSpec implements Oracl
 interface OracleXEJsonEntityRepository extends CrudRepository<JsonEntity, Long> {
 
     @Query("SELECT SAMPLE_DATA AS DATA FROM JSON_ENTITY WHERE ID = :id")
-    @QueryResult(type = QueryResult.Type.JSON)
+    @QueryResult(type = QueryResult.Type.JSON, jsonType = JsonType.STRING)
     Optional<SampleData> findJsonSampleDataByEntityId(Long id)
 
     @NonNull
     @Override
-    @TransformJsonParameter
     JsonEntity save(@Valid @NotNull @NonNull JsonEntity entity)
 }
 
 @JdbcRepository(dialect = Dialect.ORACLE)
 interface OracleXEJsonDataRepository extends CrudRepository<JsonData, Long> {
 
-    @Query(""" SELECT JSON_OBJECT('id' VALUE "ID", 'name' VALUE "NAME", 'createdDate' VALUE "CREATED_DATE", 'duration' VALUE "DURATION") AS "DATA" FROM JSON_DATA """)
-    @QueryResult(type = QueryResult.Type.JSON, dataType = DataType.STRING)
+    @Query(""" SELECT JSON{'id' : "ID", 'name' : "NAME", 'createdDate' : "CREATED_DATE", 'duration' : "DURATION"} AS "DATA" FROM JSON_DATA """)
+    @QueryResult(type = QueryResult.Type.JSON, jsonType = JsonType.STRING)
     Optional<JsonData> getJsonDataById(Long id)
 }
 
@@ -175,5 +175,34 @@ class JsonData {
 
     void setDuration(Duration duration) {
         this.duration = duration
+    }
+}
+
+@MappedEntity
+class JsonEntity {
+
+    @Id
+    private Long id
+
+    @TypeDef(type = DataType.JSON)
+    @JsonRepresentation(type = JsonType.STRING)
+    @Nullable
+    private SampleData sampleData
+
+    Long getId() {
+        return id
+    }
+
+    void setId(Long id) {
+        this.id = id
+    }
+
+    @Nullable
+    SampleData getSampleData() {
+        return sampleData
+    }
+
+    void setSampleData(@Nullable SampleData sampleData) {
+        this.sampleData = sampleData
     }
 }

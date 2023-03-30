@@ -27,8 +27,6 @@ import java.util.Objects;
 
 @Entity
 @Table(indexes = {@Index(columnList = "field, taxCode", unique = true)})
-@javax.persistence.Entity
-@javax.persistence.Table(indexes = {@javax.persistence.Index(columnList = "field, taxCode", unique = true)})
 public class ShipmentWithIndex {
 
     @Creator
@@ -44,17 +42,13 @@ public class ShipmentWithIndex {
 
     @Id
     @GeneratedValue
-    @javax.persistence.Id
-    @javax.persistence.GeneratedValue
     private Long shipmentId;
 
     @Column(name = "field")
-    @javax.persistence.Column(name = "field")
     private String field;
 
 
     @Column(name = "taxCode")
-    @javax.persistence.Column(name = "taxCode")
     private String taxCode;
 
     public Long getShipmentId() {

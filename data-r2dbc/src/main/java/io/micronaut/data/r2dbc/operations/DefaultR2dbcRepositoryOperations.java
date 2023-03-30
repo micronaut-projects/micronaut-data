@@ -34,6 +34,7 @@ import io.micronaut.data.annotation.QueryResult;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.exceptions.NonUniqueResultException;
 import io.micronaut.data.model.DataType;
+import io.micronaut.data.model.JsonType;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.query.builder.sql.Dialect;
@@ -702,15 +703,15 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                     };
                     QueryResultInfo queryResultInfo = preparedQuery.getQueryResultInfo();
                     if (queryResultInfo != null && queryResultInfo.getType() != QueryResult.Type.TABULAR) {
-                        SqlTypeMapper<Row, R> queryResultMapper = createQueryResultMapper(preparedQuery, queryResultInfo.getColumnName(), queryResultInfo.getDataType(),
-                            resultType, Row.class, persistentEntity, loadListener);
+                        SqlTypeMapper<Row, R> queryResultMapper = createQueryResultMapper(preparedQuery, queryResultInfo.getColumnName(), queryResultInfo.getJsonType(),
+                            Row.class, persistentEntity, loadListener);
                         return executeAndMapEachRow(statement, row -> queryResultMapper.map(row, resultType));
                     }
                     SqlResultEntityTypeMapper<Row, R> mapper = new SqlResultEntityTypeMapper<>(
                         persistentEntity,
                         columnNameResultSetReader,
                         preparedQuery.getJoinFetchPaths(),
-                        jsonMapper,
+                        sqlJsonColumnMapperProvider.getJsonColumnReader(preparedQuery, Row.class),
                         loadListener,
                         conversionService);
                     SqlResultEntityTypeMapper.PushingMapper<Row, R> rowsMapper = mapper.readOneWithJoins();
@@ -730,11 +731,11 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                             persistentEntity,
                             isRawQuery ? getEntity(preparedQuery.getResultType()) : persistentEntity,
                             columnNameResultSetReader,
-                            jsonMapper,
+                            sqlJsonColumnMapperProvider.getJsonColumnReader(preparedQuery, Row.class),
                             conversionService
                         );
                     } else {
-                        mapper = createQueryResultMapper(preparedQuery, queryResultInfo.getColumnName(), queryResultInfo.getDataType(), resultType,
+                        mapper = createQueryResultMapper(preparedQuery, queryResultInfo.getColumnName(), queryResultInfo.getJsonType(),
                             Row.class, persistentEntity, null);
                     }
 
@@ -775,11 +776,11 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                                 persistentEntity,
                                 isRawQuery ? getEntity(preparedQuery.getResultType()) : persistentEntity,
                                 columnNameResultSetReader,
-                                jsonMapper,
+                                sqlJsonColumnMapperProvider.getJsonColumnReader(preparedQuery, Row.class),
                                 conversionService
                             );
                         } else {
-                            mapper = createQueryResultMapper(preparedQuery, queryResultInfo.getColumnName(), queryResultInfo.getDataType(), resultType,
+                            mapper = createQueryResultMapper(preparedQuery, queryResultInfo.getColumnName(), queryResultInfo.getJsonType(),
                                 Row.class, persistentEntity, null);
                         }
                     } else {
@@ -797,7 +798,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                                 getEntity(resultType),
                                 columnNameResultSetReader,
                                 joinFetchPaths,
-                                jsonMapper,
+                                sqlJsonColumnMapperProvider.getJsonColumnReader(preparedQuery, Row.class),
                                 loadListener,
                                 conversionService);
                             boolean onlySingleEndedJoins = isOnlySingleEndedJoins(persistentEntity, joinFetchPaths);
@@ -812,7 +813,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                                 mapper = entityTypeMapper;
                             }
                         } else {
-                            mapper = createQueryResultMapper(preparedQuery, queryResultInfo.getColumnName(), queryResultInfo.getDataType(), resultType,
+                            mapper = createQueryResultMapper(preparedQuery, queryResultInfo.getColumnName(), queryResultInfo.getJsonType(),
                                 Row.class, persistentEntity, loadListener);
                         }
                     }
@@ -1186,15 +1187,19 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         }
 
         @Override
-        public void bindOne(QueryParameterBinding binding, Object value) {
-            setStatementParameter(ps, index, binding.getDataType(), value, sqlStoredQuery);
+        public void bindOne(QueryParameterBinding binding, RuntimePersistentProperty<?> property,  Object value) {
+            JsonType jsonType = binding.getJsonType();
+            if (jsonType == null && property != null) {
+                jsonType = property.getJsonType();
+            }
+            setStatementParameter(ps, index, binding.getDataType(), jsonType, value, sqlStoredQuery);
             index++;
         }
 
         @Override
-        public void bindMany(QueryParameterBinding binding, Collection<Object> values) {
+        public void bindMany(QueryParameterBinding binding, RuntimePersistentProperty<?> property, Collection<Object> values) {
             for (Object value : values) {
-                bindOne(binding, value);
+                bindOne(binding, property, value);
             }
 
         }

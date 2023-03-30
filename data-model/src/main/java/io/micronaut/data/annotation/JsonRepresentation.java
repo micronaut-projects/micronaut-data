@@ -25,49 +25,18 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Defines query result for database query execution. Is query result type is TABULAR it means default query result
- * and JSON will mean result will contain single column with the JSON value.
- *
+ * The custom annotation used for {@link io.micronaut.data.model.DataType#JSON} fields that can help us determing how to store and retrieve json fields.
  * @author radovanradic
  * @since 4.0.0
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.TYPE, ElementType.METHOD})
+@Target({ElementType.PARAMETER, ElementType.METHOD, ElementType.FIELD})
 @Documented
 @Inherited
-public @interface QueryResult {
+public @interface JsonRepresentation {
 
     /**
-     * The default column name for the JSON data.
+     * @return the JSON representation type
      */
-    String DEFAULT_COLUMN = "DATA";
-
-    /**
-     * @return The column containing JSON result
-     */
-    String column() default DEFAULT_COLUMN;
-
-    /**
-     * @return The JSON type that resulting column will hold. It helps to pick proper column reader based on result data type
-     */
-    JsonType jsonType() default JsonType.STRING;
-
-    /**
-     * @return The query result type
-     */
-    Type type();
-
-    /**
-     * Supported query result types.
-     */
-    enum Type {
-        /**
-         * Default query result.
-         */
-        TABULAR,
-        /**
-         * JSON result when query will produce single column with JSON value.
-         */
-        JSON
-    }
+    JsonType type() default JsonType.STRING;
 }

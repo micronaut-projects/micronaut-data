@@ -59,11 +59,4 @@ public interface SqlStoredQuery<E, R> extends BindableParametersStoredQuery<E, R
      */
     Map<QueryParameterBinding, Object> collectAutoPopulatedPreviousValues(E entity);
 
-    /**
-     * @return whether save methods should convert JSON data type parameter(s) to JSON using provided JSON column mappers or just convert to JSON string
-     * as default
-     */
-    default boolean shouldTransformJsonParameter() {
-        return false;
-    }
 }

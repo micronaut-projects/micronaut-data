@@ -23,6 +23,7 @@ import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.exceptions.MappingException;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.DataType;
+import io.micronaut.data.model.JsonType;
 import io.micronaut.data.model.PersistentProperty;
 
 import java.lang.annotation.Annotation;
@@ -253,23 +254,7 @@ final class SqlQueryBuilderUtils {
                 }
                 break;
             case JSON:
-                switch (dialect) {
-                    case POSTGRES:
-                        column += " JSONB";
-                        break;
-                    case SQL_SERVER:
-                        column += " NVARCHAR(MAX)";
-                        break;
-                    case ORACLE:
-                        column += " CLOB";
-                        break;
-                    default:
-                        column += " JSON";
-                        break;
-                }
-                if (required) {
-                    column += " NOT NULL";
-                }
+                column = column + jsonColumnDefinition(prop, dialect, required);
                 break;
             case STRING_ARRAY:
             case CHARACTER_ARRAY:
@@ -362,6 +347,35 @@ final class SqlQueryBuilderUtils {
                 }
         }
         return column;
+    }
+
+    private static String jsonColumnDefinition(PersistentProperty prop, Dialect dialect, boolean required) {
+        JsonType jsonType = prop.getJsonType();
+        String result = "";
+        switch (dialect) {
+            case POSTGRES:
+                result += " JSONB";
+                break;
+            case SQL_SERVER:
+                result += " NVARCHAR(MAX)";
+                break;
+            case ORACLE:
+                if (jsonType == JsonType.NATIVE) {
+                    result += " JSON";
+                } else if (jsonType == JsonType.BLOB) {
+                    result += " BLOB";
+                } else {
+                    result += " CLOB";
+                }
+                break;
+            default:
+                result += " JSON";
+                break;
+        }
+        if (required) {
+            result += " NOT NULL";
+        }
+        return result;
     }
 
     /**

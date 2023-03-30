@@ -25,13 +25,11 @@ import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.TypeDef;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.DataType;
+import io.micronaut.data.model.JsonType;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.runtime.convert.DataConversionService;
-import io.micronaut.json.JsonMapper;
-
-import java.io.IOException;
 
 /**
  * A {@link BeanIntrospectionMapper} that reads the result using the specified
@@ -46,7 +44,7 @@ public class DTOMapper<T, S, R> implements BeanIntrospectionMapper<S, R> {
     private final RuntimePersistentEntity<T> persistentEntity;
     private final RuntimePersistentEntity<?> dtoEntity;
     private final ResultReader<S, String> resultReader;
-    private final @Nullable JsonMapper jsonMapper;
+    private final @Nullable JsonColumnReader<S> jsonColumnReader;
     private final DataConversionService conversionService;
 
     /**
@@ -65,14 +63,14 @@ public class DTOMapper<T, S, R> implements BeanIntrospectionMapper<S, R> {
      * Default constructor.
      * @param persistentEntity The entity
      * @param resultReader The result reader
-     * @param jsonMapper The JSON mapper
+     * @param jsonColumnReader The JSON column reader
      * @param conversionService
      */
     public DTOMapper(RuntimePersistentEntity<T> persistentEntity,
                      ResultReader<S, String> resultReader,
-                     @Nullable JsonMapper jsonMapper,
+                     @Nullable JsonColumnReader<S> jsonColumnReader,
                      DataConversionService conversionService) {
-        this(persistentEntity, persistentEntity, resultReader, jsonMapper, conversionService);
+        this(persistentEntity, persistentEntity, resultReader, jsonColumnReader, conversionService);
     }
 
     /**
@@ -80,13 +78,13 @@ public class DTOMapper<T, S, R> implements BeanIntrospectionMapper<S, R> {
      * @param persistentEntity The entity
      * @param dtoEntity The dto entity
      * @param resultReader The result reader
-     * @param jsonMapper The JSON mapper
+     * @param jsonColumnReader The JSON column reader
      * @param conversionService
      */
     public DTOMapper(RuntimePersistentEntity<T> persistentEntity,
                      RuntimePersistentEntity<?> dtoEntity,
                      ResultReader<S, String> resultReader,
-                     @Nullable JsonMapper jsonMapper,
+                     @Nullable JsonColumnReader<S> jsonColumnReader,
                      DataConversionService conversionService) {
         this.conversionService = conversionService;
         ArgumentUtils.requireNonNull("persistentEntity", persistentEntity);
@@ -94,7 +92,7 @@ public class DTOMapper<T, S, R> implements BeanIntrospectionMapper<S, R> {
         this.persistentEntity = persistentEntity;
         this.dtoEntity = dtoEntity;
         this.resultReader = resultReader;
-        this.jsonMapper = jsonMapper;
+        this.jsonColumnReader = jsonColumnReader;
     }
 
     @Override
@@ -150,13 +148,9 @@ public class DTOMapper<T, S, R> implements BeanIntrospectionMapper<S, R> {
         if (StringUtils.isNotEmpty(aliasPropertyName)) {
             propertyName = aliasPropertyName;
         }
-        if (dataType == DataType.JSON && jsonMapper != null) {
-            String data = resultReader.readString(resultSet, propertyName);
-            try {
-                return jsonMapper.readValue(data, property.getArgument());
-            } catch (IOException e) {
-                throw new DataAccessException("Failed to read from JSON field [" + propertyName + "].", e);
-            }
+        if (dataType == DataType.JSON && jsonColumnReader != null) {
+            JsonType jsonType = property.getJsonType();
+            return jsonColumnReader.readJsonColumn(resultReader, resultSet, propertyName, jsonType, property.getArgument());
         } else {
             return read(resultSet, propertyName, dataType);
         }

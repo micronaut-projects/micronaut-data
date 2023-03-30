@@ -19,7 +19,7 @@ import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.data.annotation.QueryResult;
-import io.micronaut.data.model.DataType;
+import io.micronaut.data.model.JsonType;
 
 /**
  * The information about query result info for the query method.
@@ -31,14 +31,14 @@ public class QueryResultInfo {
 
     private final String columnName;
     private final QueryResult.Type type;
-    private final DataType dataType;
+    private final JsonType jsonType;
 
-    public QueryResultInfo(@NonNull QueryResult.Type type, @Nullable String columnName, @NonNull DataType dataType) {
+    public QueryResultInfo(@NonNull QueryResult.Type type, @Nullable String columnName, @NonNull JsonType jsonType) {
         ArgumentUtils.requireNonNull("type", type);
-        ArgumentUtils.requireNonNull("dataType", dataType);
+        ArgumentUtils.requireNonNull("jsonType", jsonType);
         this.type = type;
         this.columnName = columnName;
-        this.dataType = dataType;
+        this.jsonType = jsonType;
     }
 
     /**
@@ -49,10 +49,10 @@ public class QueryResultInfo {
     }
 
     /**
-     * @return the data type of the column
+     * @return the json representation type
      */
-    public DataType getDataType() {
-        return dataType;
+    public JsonType getJsonType() {
+        return jsonType;
     }
 
     /**
@@ -64,11 +64,9 @@ public class QueryResultInfo {
 
     @Override
     public String toString() {
-        final StringBuilder sb = new StringBuilder("QueryResultInfo{");
-        sb.append("type=").append(type);
-        sb.append(", columnName='").append(columnName).append('\'');
-        sb.append(", dataType='").append(dataType).append('\'');
-        sb.append('}');
-        return sb.toString();
+        return "QueryResultInfo{" + "type=" + type +
+            ", columnName='" + columnName + '\'' +
+            ", jsonType='" + jsonType + '\'' +
+            '}';
     }
 }

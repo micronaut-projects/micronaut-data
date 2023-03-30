@@ -20,6 +20,7 @@ import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.DataType;
+import io.micronaut.data.model.JsonType;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder;
@@ -908,6 +909,11 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
                     @Override
                     public DataType getDataType() {
                         return outgoingQueryParameterProperty.getProperty().getDataType();
+                    }
+
+                    @Override
+                    public JsonType getJsonType() {
+                        return outgoingQueryParameterProperty.getProperty().getJsonType();
                     }
 
                     @Override

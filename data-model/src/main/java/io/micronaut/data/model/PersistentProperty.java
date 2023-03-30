@@ -21,6 +21,7 @@ import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.naming.NameUtils;
 import io.micronaut.data.annotation.AutoPopulated;
 import io.micronaut.data.annotation.GeneratedValue;
+import io.micronaut.data.annotation.JsonRepresentation;
 import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.TypeDef;
 import io.micronaut.data.model.runtime.convert.AttributeConverter;
@@ -153,6 +154,15 @@ public interface PersistentProperty extends PersistentElement {
                         }
                     });
         }
+    }
+
+    /**
+     * @return The json type for {@link DataType#JSON} fields. If none specified, default is {@link JsonType#STRING}.
+     */
+    default JsonType getJsonType() {
+        AnnotationMetadata annotationMetadata = getAnnotationMetadata();
+        return annotationMetadata.enumValue(JsonRepresentation.class, "type", JsonType.class)
+            .orElse(JsonType.STRING);
     }
 
     /**
