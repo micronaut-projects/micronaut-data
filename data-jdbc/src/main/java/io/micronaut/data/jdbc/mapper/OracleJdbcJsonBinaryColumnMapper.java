@@ -92,11 +92,11 @@ final class OracleJdbcJsonBinaryColumnMapper implements SqlJsonColumnReader<Resu
                     }
                     return defaultObjectMapper.readValue(data, argument);
                 }
+                default -> throw new DataAccessException("Unexpected json type " + jsonType + " for JSON field [" + columnName + "]");
             }
         } catch (Exception e) {
             throw new DataAccessException("Failed to read from JSON field [" + columnName + "].", e);
         }
-        throw new DataAccessException("Unexpected json type " + jsonType + " for JSON field [" + columnName + "]");
     }
 
     @Override
