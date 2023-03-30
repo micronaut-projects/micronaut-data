@@ -17,6 +17,7 @@ package io.micronaut.data.runtime.query.internal;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.DataType;
+import io.micronaut.data.model.JsonType;
 import io.micronaut.data.model.runtime.QueryParameterBinding;
 
 import java.util.Arrays;
@@ -33,6 +34,7 @@ public final class StoredQueryParameter implements QueryParameterBinding {
 
     private final String name;
     private final DataType dataType;
+    private final JsonType jsonType;
     private final int parameterIndex;
     private final String[] parameterBindingPath;
     private final String[] propertyPath;
@@ -47,6 +49,7 @@ public final class StoredQueryParameter implements QueryParameterBinding {
 
     StoredQueryParameter(String name,
                          DataType dataType,
+                         JsonType jsonType,
                          int parameterIndex,
                          String[] parameterBindingPath,
                          String[] propertyPath,
@@ -57,6 +60,7 @@ public final class StoredQueryParameter implements QueryParameterBinding {
                          List<? extends QueryParameterBinding> all) {
         this.name = name;
         this.dataType = dataType;
+        this.jsonType = jsonType;
         this.parameterIndex = parameterIndex;
         this.parameterBindingPath = parameterBindingPath;
         this.propertyPath = propertyPath;
@@ -75,6 +79,11 @@ public final class StoredQueryParameter implements QueryParameterBinding {
     @Override
     public DataType getDataType() {
         return dataType;
+    }
+
+    @Override
+    public JsonType getJsonType() {
+        return jsonType;
     }
 
     @Override

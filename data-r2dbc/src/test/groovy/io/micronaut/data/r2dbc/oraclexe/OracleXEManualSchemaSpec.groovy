@@ -2,18 +2,20 @@ package io.micronaut.data.r2dbc.oraclexe
 
 import groovy.transform.Memoized
 import io.micronaut.core.annotation.Nullable
+import io.micronaut.data.annotation.Id
+import io.micronaut.data.annotation.JsonRepresentation
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.Query
 import io.micronaut.data.annotation.QueryResult
-import io.micronaut.data.annotation.TransformJsonParameter
 import io.micronaut.data.annotation.TypeDef
 import io.micronaut.data.model.DataType
+import io.micronaut.data.model.JsonType
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.r2dbc.AbstractManualSchemaSpec
 import io.micronaut.data.r2dbc.annotation.R2dbcRepository
 import io.micronaut.data.repository.CrudRepository
 import io.micronaut.data.runtime.config.SchemaGenerate
-import io.micronaut.data.tck.entities.JsonEntity
+
 import io.micronaut.data.tck.entities.SampleData
 import io.micronaut.data.tck.repositories.PatientRepository
 
@@ -43,7 +45,7 @@ class OracleXEManualSchemaSpec extends AbstractManualSchemaSpec implements Oracl
     List<String> createStatements() {
         return Arrays.asList(""" CREATE SEQUENCE "PATIENT_SEQ" MINVALUE 1 START WITH 1 CACHE 100 NOCYCLE """,
                 """ CREATE TABLE "PATIENT" ("NAME" VARCHAR(255), "ID" NUMBER(19) NOT NULL PRIMARY KEY, "HISTORY" VARCHAR(1000), "DOCTOR_NOTES" VARCHAR(255)) """,
-                """ CREATE TABLE "JSON_ENTITY" ("ID" NUMBER(19) NOT NULL PRIMARY KEY, "SAMPLE_DATA" BLOB) """)
+                """ CREATE TABLE "JSON_ENTITY" ("ID" NUMBER(19) NOT NULL PRIMARY KEY, "SAMPLE_DATA" JSON) """)
     }
 
     @Override
@@ -94,10 +96,37 @@ class OracleXEManualSchemaSpec extends AbstractManualSchemaSpec implements Oracl
 interface OracleXEJsonEntityRepository extends CrudRepository<JsonEntity, Long> {
 
     @Query("SELECT SAMPLE_DATA AS DATA FROM JSON_ENTITY WHERE ID = :id")
-    @QueryResult(type = QueryResult.Type.JSON, dataType = DataType.BYTE_ARRAY)
+    @QueryResult(type = QueryResult.Type.JSON, jsonType = JsonType.NATIVE)
     Optional<SampleData> findJsonSampleDataByEntityId(Long id)
 
     @Query("INSERT INTO JSON_ENTITY (ID, SAMPLE_DATA) VALUES (:id, :sampleData)")
-    @TransformJsonParameter
-    JsonEntity insert(Long id, @TypeDef(type = DataType.JSON) SampleData sampleData)
+    JsonEntity insert(Long id, @TypeDef(type = DataType.JSON) @JsonRepresentation(type = JsonType.NATIVE) SampleData sampleData)
+}
+
+@MappedEntity
+class JsonEntity {
+
+    @Id
+    private Long id
+
+    @TypeDef(type = DataType.JSON)
+    @Nullable
+    private SampleData sampleData
+
+    Long getId() {
+        return id
+    }
+
+    void setId(Long id) {
+        this.id = id
+    }
+
+    @Nullable
+    SampleData getSampleData() {
+        return sampleData
+    }
+
+    void setSampleData(@Nullable SampleData sampleData) {
+        this.sampleData = sampleData
+    }
 }

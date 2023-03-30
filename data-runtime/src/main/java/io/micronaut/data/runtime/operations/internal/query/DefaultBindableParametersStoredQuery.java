@@ -165,7 +165,7 @@ public class DefaultBindableParametersStoredQuery<E, R> implements BindableParam
             } else if (persistentProperty != null && !binding.isAutoPopulated()) {
                 value = binder.convert(value, persistentProperty);
             }
-            binder.bindOne(binding, value);
+            binder.bindOne(binding, persistentProperty, value);
         } else {
             values = new ArrayList<>(values);
             for (ListIterator<Object> iterator = values.listIterator(); iterator.hasNext(); ) {
@@ -177,7 +177,7 @@ public class DefaultBindableParametersStoredQuery<E, R> implements BindableParam
                 }
                 iterator.set(v);
             }
-            binder.bindMany(binding, values);
+            binder.bindMany(binding, persistentProperty, values);
         }
     }
 

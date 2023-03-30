@@ -23,6 +23,7 @@ import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.SupplierUtil;
 import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.model.DataType;
+import io.micronaut.data.model.JsonType;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.runtime.convert.AttributeConverter;
 
@@ -41,6 +42,7 @@ public class RuntimePersistentProperty<T> implements PersistentProperty {
     private final BeanProperty<T, Object> property;
     private final Class<?> type;
     private final DataType dataType;
+    private final JsonType jsonType;
     private final boolean constructorArg;
     private final Argument<Object> argument;
     private final Supplier<AttributeConverter<Object, Object>> converter;
@@ -57,6 +59,7 @@ public class RuntimePersistentProperty<T> implements PersistentProperty {
         this.property = property;
         this.type = ReflectionUtils.getWrapperType(property.getType());
         this.dataType = PersistentProperty.super.getDataType();
+        this.jsonType = PersistentProperty.super.getJsonType();
         this.constructorArg = constructorArg;
         this.argument = property.asArgument();
         this.converter = property.classValue(MappedProperty.class, "converter")
@@ -89,6 +92,11 @@ public class RuntimePersistentProperty<T> implements PersistentProperty {
     @Override
     public DataType getDataType() {
         return dataType;
+    }
+
+    @Override
+    public JsonType getJsonType() {
+        return jsonType;
     }
 
     @Override

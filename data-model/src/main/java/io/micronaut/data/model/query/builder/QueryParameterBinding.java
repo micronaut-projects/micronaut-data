@@ -17,7 +17,9 @@ package io.micronaut.data.model.query.builder;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Nullable;
+import io.micronaut.data.annotation.JsonRepresentation;
 import io.micronaut.data.model.DataType;
+import io.micronaut.data.model.JsonType;
 
 /**
  * Query parameter binding, represents the data needed to bind a property to the query parameter.
@@ -37,6 +39,12 @@ public interface QueryParameterBinding {
      * @return The data type
      */
     DataType getDataType();
+
+    /**
+     * @return The json representation type if getDataType is {@link DataType#JSON} and is annotated with {@link JsonRepresentation}
+     * annotation
+     */
+    JsonType getJsonType();
 
     /**
      * @return The converter class name
