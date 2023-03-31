@@ -617,7 +617,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
          */
         static Throwable handleSqlException(SQLException sqlException) {
             if (sqlException.getErrorCode() == JSON_VIEW_ETAG_NOT_MATCHING_ERROR) {
-                return new OptimisticLockException("ETAG did not match when updating record");
+                return new OptimisticLockException("ETAG did not match when updating record", sqlException);
             }
             return sqlException;
         }
