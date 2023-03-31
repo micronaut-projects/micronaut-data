@@ -124,7 +124,7 @@ io.micronaut.transaction
 io.micronaut.transaction.annotation
 io.micronaut.transaction.async
 io.micronaut.transaction.exceptions
-io.micronaut.transaction.hibernate5
+io.micronaut.transaction.hibernate6
 io.micronaut.transaction.interceptor
 io.micronaut.transaction.interceptor.annotation
 io.micronaut.transaction.jdbc
