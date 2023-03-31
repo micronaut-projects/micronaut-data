@@ -170,12 +170,13 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
                 if (parameterBindingPath.length == 0) {
                     parameterBindingPath = null;
                 }
-                JsonDataType jsonDataType = av.enumValue(DataMethodQueryParameter.META_MEMBER_JSON_DATA_TYPE, JsonDataType.class).orElse(null);
+                DataType dataType = isNumericPlaceHolder ? av.enumValue(DataMethodQueryParameter.META_MEMBER_DATA_TYPE, DataType.class).orElse(DataType.OBJECT) : null;
+                JsonDataType jsonDataType = dataType != null ? av.enumValue(DataMethodQueryParameter.META_MEMBER_JSON_DATA_TYPE, JsonDataType.class).orElse(JsonDataType.DEFAULT) : null;
                 queryParameters.add(
                         new StoredQueryParameter(
                                 av.stringValue(DataMethodQueryParameter.META_MEMBER_NAME).orElse(null),
-                                isNumericPlaceHolder ? av.enumValue(DataMethodQueryParameter.META_MEMBER_DATA_TYPE, DataType.class).orElse(DataType.OBJECT) : null,
-                            jsonDataType,
+                                dataType,
+                                jsonDataType,
                                 av.intValue(DataMethodQueryParameter.META_MEMBER_PARAMETER_INDEX).orElse(-1),
                                 parameterBindingPath,
                                 propertyPath,

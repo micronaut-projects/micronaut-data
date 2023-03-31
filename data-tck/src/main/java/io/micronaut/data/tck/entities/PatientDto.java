@@ -2,8 +2,10 @@ package io.micronaut.data.tck.entities;
 
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.annotation.Nullable;
+import io.micronaut.data.annotation.JsonRepresentation;
 import io.micronaut.data.annotation.TypeDef;
 import io.micronaut.data.model.DataType;
+import io.micronaut.data.model.JsonDataType;
 
 import java.util.List;
 
@@ -17,6 +19,7 @@ public class PatientDto {
     private final String doctorNotes;
 
     @TypeDef(type = DataType.JSON)
+    @JsonRepresentation(type = JsonDataType.BLOB)
     private final List<String> appointments;
 
     public PatientDto(String name, String history, String doctorNotes, @Nullable List<String> appointments) {

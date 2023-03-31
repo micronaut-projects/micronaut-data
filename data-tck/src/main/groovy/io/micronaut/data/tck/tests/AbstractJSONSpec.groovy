@@ -252,16 +252,16 @@ abstract class AbstractJSONSpec extends Specification {
         sampleData.description = "sample description"
         sampleData.grade = 1
         sampleData.rating = 9.75d
-        jsonEntity.jsonNative = sampleData
+        jsonEntity.jsonDefault = sampleData
         jsonEntity.jsonBlob = sampleData
         jsonEntity.jsonString = sampleData
         jsonEntityRepository.save(jsonEntity)
         when:"Entities loaded from appropriate JSON fields"
-        def optSampleDataFromJsonNative = jsonEntityRepository.findJsonNativeById(jsonEntity.id)
+        def optSampleDataFromJsonDefault = jsonEntityRepository.findJsonDefaultById(jsonEntity.id)
         def optSampleDataFromJsonString = jsonEntityRepository.findJsonStringById(jsonEntity.id)
         def optSampleDataFromJsonBlob = jsonEntityRepository.findJsonBlobById(jsonEntity.id)
         then:"Entities are retrieved and properly deserialized"
-        optSampleDataFromJsonNative.present && optSampleDataFromJsonNative.get() == sampleData
+        optSampleDataFromJsonDefault.present && optSampleDataFromJsonDefault.get() == sampleData
         optSampleDataFromJsonString.present && optSampleDataFromJsonString.get() == sampleData
         optSampleDataFromJsonBlob.present && optSampleDataFromJsonBlob.get() == sampleData
         when:"JsonEntity loaded from the DB"
@@ -272,7 +272,7 @@ abstract class AbstractJSONSpec extends Specification {
         loadedJsonEntity.id == jsonEntity.id
         loadedJsonEntity.jsonString == jsonEntity.jsonString
         loadedJsonEntity.jsonBlob == jsonEntity.jsonBlob
-        loadedJsonEntity.jsonNative == jsonEntity.jsonNative
+        loadedJsonEntity.jsonDefault == jsonEntity.jsonDefault
         when:"Update JSON field as parameter"
         jsonEntity.jsonString.description = "Updated via param"
         jsonEntity.jsonBlob.grade = 15

@@ -16,8 +16,8 @@ import java.util.Optional;
 
 public interface JsonEntityRepository extends CrudRepository<JsonEntity, Long> {
 
-    @QueryResult(type = QueryResult.Type.JSON, jsonDataType = JsonDataType.NATIVE, column = "json_native")
-    Optional<SampleData> findJsonNativeById(Long id);
+    @QueryResult(type = QueryResult.Type.JSON, jsonDataType = JsonDataType.DEFAULT, column = "json_default")
+    Optional<SampleData> findJsonDefaultById(Long id);
 
     @QueryResult(type = QueryResult.Type.JSON, jsonDataType = JsonDataType.BLOB, column = "json_blob")
     Optional<SampleData> findJsonBlobById(Long id);

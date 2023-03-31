@@ -65,6 +65,6 @@ class OracleXEJSONSpec extends AbstractJSONSpec implements OracleTestPropertyPro
 interface OracleXEJsonDataRepository extends CrudRepository<JsonData, Long> {
 
     @Query(""" SELECT JSON{'id' : "ID", 'name' : "NAME", 'createdDate' : "CREATED_DATE", 'duration' : "DURATION"} AS "DATA" FROM JSON_DATA """)
-    @QueryResult(type = QueryResult.Type.JSON, jsonDataType = JsonDataType.NATIVE)
+    @QueryResult(type = QueryResult.Type.JSON, jsonDataType = JsonDataType.DEFAULT)
     Optional<JsonData> getJsonDataById(Long id)
 }

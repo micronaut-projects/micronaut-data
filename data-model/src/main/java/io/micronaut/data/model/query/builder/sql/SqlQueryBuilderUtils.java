@@ -360,7 +360,7 @@ final class SqlQueryBuilderUtils {
                 result += " NVARCHAR(MAX)";
                 break;
             case ORACLE:
-                if (jsonDataType == JsonDataType.NATIVE) {
+                if (jsonDataType == JsonDataType.DEFAULT) {
                     result += " JSON";
                 } else if (jsonDataType == JsonDataType.BLOB) {
                     result += " BLOB";

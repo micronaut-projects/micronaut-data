@@ -15,9 +15,9 @@ public class JsonEntity {
     private Long id;
 
     @TypeDef(type = DataType.JSON)
-    @JsonRepresentation(type = JsonDataType.NATIVE)
+    @JsonRepresentation(type = JsonDataType.DEFAULT)
     @Nullable
-    private SampleData jsonNative;
+    private SampleData jsonDefault;
 
     @TypeDef(type = DataType.JSON)
     @JsonRepresentation(type = JsonDataType.BLOB)
@@ -38,12 +38,12 @@ public class JsonEntity {
     }
 
     @Nullable
-    public SampleData getJsonNative() {
-        return jsonNative;
+    public SampleData getJsonDefault() {
+        return jsonDefault;
     }
 
-    public void setJsonNative(@Nullable SampleData jsonNative) {
-        this.jsonNative = jsonNative;
+    public void setJsonDefault(@Nullable SampleData jsonDefault) {
+        this.jsonDefault = jsonDefault;
     }
 
     @Nullable

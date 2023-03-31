@@ -59,7 +59,7 @@ public interface QueryParameterBinding {
     }
 
     /**
-     * @return The JSON representation type if data type is JSON, default {@link JsonDataType#NATIVE}
+     * @return The JSON representation type if data type is JSON, default {@link JsonDataType#DEFAULT}
      */
     @Nullable
     default JsonDataType getJsonDataType() {
