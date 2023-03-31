@@ -18,7 +18,6 @@ package io.micronaut.data.runtime.operations.internal.sql;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
-import io.micronaut.data.annotation.JsonRepresentation;
 import io.micronaut.data.annotation.QueryResult;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.JsonDataType;
