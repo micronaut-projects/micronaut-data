@@ -92,13 +92,13 @@ final class CosmosBinder implements BindableParametersStoredQuery.Binder {
     }
 
     @Override
-    public void bindOne(@NonNull QueryParameterBinding binding, RuntimePersistentProperty<?> property, Object value) {
+    public void bindOne(@NonNull QueryParameterBinding binding, @Nullable RuntimePersistentProperty<?> property, Object value) {
         String parameterName = getParameterName(binding, isRawQuery);
         doBind(binding, value, parameterName);
     }
 
     @Override
-    public void bindMany(@NonNull QueryParameterBinding binding, RuntimePersistentProperty<?> property, @NonNull Collection<Object> values) {
+    public void bindMany(@NonNull QueryParameterBinding binding, @Nullable RuntimePersistentProperty<?> property, @NonNull Collection<Object> values) {
         // Query params were expanded, so we must expand parameters and bind query with newly created parameters
         String parameterName = getParameterName(binding, isRawQuery);
         // No actual expanding if there is only one value to bind

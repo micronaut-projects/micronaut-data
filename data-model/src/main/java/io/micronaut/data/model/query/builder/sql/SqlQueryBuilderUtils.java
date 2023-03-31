@@ -23,7 +23,7 @@ import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.exceptions.MappingException;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.DataType;
-import io.micronaut.data.model.JsonType;
+import io.micronaut.data.model.JsonDataType;
 import io.micronaut.data.model.PersistentProperty;
 
 import java.lang.annotation.Annotation;
@@ -350,7 +350,7 @@ final class SqlQueryBuilderUtils {
     }
 
     private static String jsonColumnDefinition(PersistentProperty prop, Dialect dialect, boolean required) {
-        JsonType jsonType = prop.getJsonType();
+        JsonDataType jsonDataType = prop.getJsonDataType();
         String result = "";
         switch (dialect) {
             case POSTGRES:
@@ -360,9 +360,9 @@ final class SqlQueryBuilderUtils {
                 result += " NVARCHAR(MAX)";
                 break;
             case ORACLE:
-                if (jsonType == JsonType.NATIVE) {
+                if (jsonDataType == JsonDataType.NATIVE) {
                     result += " JSON";
-                } else if (jsonType == JsonType.BLOB) {
+                } else if (jsonDataType == JsonDataType.BLOB) {
                     result += " BLOB";
                 } else {
                     result += " CLOB";

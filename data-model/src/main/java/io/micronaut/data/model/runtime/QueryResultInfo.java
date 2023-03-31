@@ -19,7 +19,7 @@ import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.data.annotation.QueryResult;
-import io.micronaut.data.model.JsonType;
+import io.micronaut.data.model.JsonDataType;
 
 /**
  * The information about query result info for the query method.
@@ -31,14 +31,13 @@ public class QueryResultInfo {
 
     private final String columnName;
     private final QueryResult.Type type;
-    private final JsonType jsonType;
+    private final JsonDataType jsonDataType;
 
-    public QueryResultInfo(@NonNull QueryResult.Type type, @Nullable String columnName, @NonNull JsonType jsonType) {
+    public QueryResultInfo(@NonNull QueryResult.Type type, @Nullable String columnName, @NonNull JsonDataType jsonDataType) {
         ArgumentUtils.requireNonNull("type", type);
-        ArgumentUtils.requireNonNull("jsonType", jsonType);
         this.type = type;
         this.columnName = columnName;
-        this.jsonType = jsonType;
+        this.jsonDataType = jsonDataType;
     }
 
     /**
@@ -49,10 +48,10 @@ public class QueryResultInfo {
     }
 
     /**
-     * @return the json representation type
+     * @return the json representation data type
      */
-    public JsonType getJsonType() {
-        return jsonType;
+    public JsonDataType getJsonDataType() {
+        return jsonDataType;
     }
 
     /**
@@ -66,7 +65,7 @@ public class QueryResultInfo {
     public String toString() {
         return "QueryResultInfo{" + "type=" + type +
             ", columnName='" + columnName + '\'' +
-            ", jsonType='" + jsonType + '\'' +
+            ", jsonDataType='" + jsonDataType + '\'' +
             '}';
     }
 }

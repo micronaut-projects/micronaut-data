@@ -4,6 +4,7 @@ import io.micronaut.core.annotation.Introspected;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.UUID;
 
 @Introspected
@@ -89,4 +90,33 @@ public class SampleData {
         this.rating = rating;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        SampleData that = (SampleData) o;
+
+        if (grade != that.grade) return false;
+        if (!localDateTime.equals(that.localDateTime)) return false;
+        if (!uuid.equals(that.uuid)) return false;
+        if (!etag.equals(that.etag)) return false;
+        if (!Arrays.equals(memo, that.memo)) return false;
+        if (!duration.equals(that.duration)) return false;
+        if (!description.equals(that.description)) return false;
+        return rating.equals(that.rating);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = localDateTime.hashCode();
+        result = 31 * result + uuid.hashCode();
+        result = 31 * result + etag.hashCode();
+        result = 31 * result + Arrays.hashCode(memo);
+        result = 31 * result + duration.hashCode();
+        result = 31 * result + description.hashCode();
+        result = 31 * result + grade;
+        result = 31 * result + rating.hashCode();
+        return result;
+    }
 }

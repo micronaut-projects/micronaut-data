@@ -25,7 +25,7 @@ import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.TypeDef;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.DataType;
-import io.micronaut.data.model.JsonType;
+import io.micronaut.data.model.JsonDataType;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
@@ -149,8 +149,8 @@ public class DTOMapper<T, S, R> implements BeanIntrospectionMapper<S, R> {
             propertyName = aliasPropertyName;
         }
         if (dataType == DataType.JSON && jsonColumnReader != null) {
-            JsonType jsonType = property.getJsonType();
-            return jsonColumnReader.readJsonColumn(resultReader, resultSet, propertyName, jsonType, property.getArgument());
+            JsonDataType jsonDataType = property.getJsonDataType();
+            return jsonColumnReader.readJsonColumn(resultReader, resultSet, propertyName, jsonDataType, property.getArgument());
         } else {
             return read(resultSet, propertyName, dataType);
         }

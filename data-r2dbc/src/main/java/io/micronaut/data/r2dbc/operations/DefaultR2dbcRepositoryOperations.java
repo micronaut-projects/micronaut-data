@@ -34,7 +34,7 @@ import io.micronaut.data.annotation.QueryResult;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.exceptions.NonUniqueResultException;
 import io.micronaut.data.model.DataType;
-import io.micronaut.data.model.JsonType;
+import io.micronaut.data.model.JsonDataType;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.query.builder.sql.Dialect;
@@ -703,7 +703,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                     };
                     QueryResultInfo queryResultInfo = preparedQuery.getQueryResultInfo();
                     if (queryResultInfo != null && queryResultInfo.getType() != QueryResult.Type.TABULAR) {
-                        SqlTypeMapper<Row, R> queryResultMapper = createQueryResultMapper(preparedQuery, queryResultInfo.getColumnName(), queryResultInfo.getJsonType(),
+                        SqlTypeMapper<Row, R> queryResultMapper = createQueryResultMapper(preparedQuery, queryResultInfo.getColumnName(), queryResultInfo.getJsonDataType(),
                             Row.class, persistentEntity, loadListener);
                         return executeAndMapEachRow(statement, row -> queryResultMapper.map(row, resultType));
                     }
@@ -735,20 +735,27 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                             conversionService
                         );
                     } else {
-                        mapper = createQueryResultMapper(preparedQuery, queryResultInfo.getColumnName(), queryResultInfo.getJsonType(),
+                        mapper = createQueryResultMapper(preparedQuery, queryResultInfo.getColumnName(), queryResultInfo.getJsonDataType(),
                             Row.class, persistentEntity, null);
                     }
 
                     return executeAndMapEachRow(statement, row -> mapper.map(row, resultType));
                 }
                 return executeAndMapEachRow(statement, row -> {
-                    Object v = columnIndexResultSetReader.readDynamic(row, 0, preparedQuery.getResultDataType());
-                    if (v == null) {
-                        return Flux.<R>empty();
-                    } else if (resultType.isInstance(v)) {
-                        return Flux.just((R) v);
+                    QueryResultInfo queryResultInfo = preparedQuery.getQueryResultInfo();
+                    if (queryResultInfo == null || queryResultInfo.getType() == QueryResult.Type.TABULAR) {
+                        Object v = columnIndexResultSetReader.readDynamic(row, 0, preparedQuery.getResultDataType());
+                        if (v == null) {
+                            return Flux.<R>empty();
+                        } else if (resultType.isInstance(v)) {
+                            return Flux.just((R) v);
+                        } else {
+                            return Flux.just(columnIndexResultSetReader.convertRequired(v, resultType));
+                        }
                     } else {
-                        return Flux.just(columnIndexResultSetReader.convertRequired(v, resultType));
+                        TypeMapper<Row, R> mapper = createQueryResultMapper(preparedQuery, queryResultInfo.getColumnName(), queryResultInfo.getJsonDataType(),
+                            Row.class, preparedQuery.getPersistentEntity(), null);
+                        return Flux.just(mapper.map(row, resultType));
                     }
                 }).flatMap(m -> m);
             });
@@ -780,7 +787,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                                 conversionService
                             );
                         } else {
-                            mapper = createQueryResultMapper(preparedQuery, queryResultInfo.getColumnName(), queryResultInfo.getJsonType(),
+                            mapper = createQueryResultMapper(preparedQuery, queryResultInfo.getColumnName(), queryResultInfo.getJsonDataType(),
                                 Row.class, persistentEntity, null);
                         }
                     } else {
@@ -813,7 +820,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                                 mapper = entityTypeMapper;
                             }
                         } else {
-                            mapper = createQueryResultMapper(preparedQuery, queryResultInfo.getColumnName(), queryResultInfo.getJsonType(),
+                            mapper = createQueryResultMapper(preparedQuery, queryResultInfo.getColumnName(), queryResultInfo.getJsonDataType(),
                                 Row.class, persistentEntity, loadListener);
                         }
                     }
@@ -1187,17 +1194,20 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         }
 
         @Override
-        public void bindOne(QueryParameterBinding binding, RuntimePersistentProperty<?> property,  Object value) {
-            JsonType jsonType = binding.getJsonType();
-            if (jsonType == null && property != null) {
-                jsonType = property.getJsonType();
+        public void bindOne(QueryParameterBinding binding, @Nullable RuntimePersistentProperty<?> property,  Object value) {
+            JsonDataType jsonDataType = null;
+            if (binding.getDataType() == DataType.JSON) {
+                jsonDataType = binding.getJsonDataType();
+                if (jsonDataType == null && property != null) {
+                    jsonDataType = property.getJsonDataType();
+                }
             }
-            setStatementParameter(ps, index, binding.getDataType(), jsonType, value, sqlStoredQuery);
+            setStatementParameter(ps, index, binding.getDataType(), jsonDataType, value, sqlStoredQuery);
             index++;
         }
 
         @Override
-        public void bindMany(QueryParameterBinding binding, RuntimePersistentProperty<?> property, Collection<Object> values) {
+        public void bindMany(QueryParameterBinding binding, @Nullable RuntimePersistentProperty<?> property, Collection<Object> values) {
             for (Object value : values) {
                 bindOne(binding, property, value);
             }

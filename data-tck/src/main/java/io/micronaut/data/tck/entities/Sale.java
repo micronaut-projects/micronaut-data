@@ -24,7 +24,7 @@ import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.annotation.TypeDef;
 import io.micronaut.data.model.DataType;
-import io.micronaut.data.model.JsonType;
+import io.micronaut.data.model.JsonDataType;
 
 import java.util.List;
 import java.util.Map;
@@ -39,12 +39,12 @@ public class Sale {
     private String name;
 
     @TypeDef(type = DataType.JSON)
-    @JsonRepresentation(type = JsonType.BLOB)
+    @JsonRepresentation(type = JsonDataType.BLOB)
     @Nullable
     private Map<String, String> data;
 
     @TypeDef(type = DataType.JSON)
-    @JsonRepresentation(type = JsonType.STRING)
+    @JsonRepresentation(type = JsonDataType.STRING)
     @Nullable
     private String extraData;
 

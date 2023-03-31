@@ -459,7 +459,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
             if (!supportsImplicitQueries && !finalEncodeEntityParameters) {
                 builder.member(DataMethodQueryParameter.META_MEMBER_DATA_TYPE, p.getDataType());
             }
-            builder.member(DataMethodQueryParameter.META_MEMBER_JSON_TYPE, p.getJsonType());
+            builder.member(DataMethodQueryParameter.META_MEMBER_JSON_DATA_TYPE, p.getJsonDataType());
             if (p.getConverterClassName() != null) {
                 builder.member(DataMethodQueryParameter.META_MEMBER_CONVERTER, new AnnotationClassValue<>(p.getConverterClassName()));
             }

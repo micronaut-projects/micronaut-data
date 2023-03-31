@@ -18,13 +18,20 @@ package io.micronaut.data.tck.tests
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.micronaut.context.ApplicationContext
 import io.micronaut.data.tck.entities.Discount
+import io.micronaut.data.tck.entities.JsonEntity
 import io.micronaut.data.tck.entities.Sale
 import io.micronaut.data.tck.entities.SaleItem
+import io.micronaut.data.tck.entities.SampleData
+import io.micronaut.data.tck.repositories.JsonEntityRepository
 import io.micronaut.data.tck.repositories.SaleItemRepository
 import io.micronaut.data.tck.repositories.SaleRepository
 import spock.lang.AutoCleanup
 import spock.lang.Shared
 import spock.lang.Specification
+
+import java.nio.charset.Charset
+import java.time.Duration
+import java.time.LocalDateTime
 
 abstract class AbstractJSONSpec extends Specification {
 
@@ -34,6 +41,7 @@ abstract class AbstractJSONSpec extends Specification {
 
     abstract SaleRepository getSaleRepository();
     abstract SaleItemRepository getSaleItemRepository();
+    abstract JsonEntityRepository getJsonEntityRepository();
 
     def cleanup() {
         saleRepository.deleteAll()
@@ -230,6 +238,53 @@ abstract class AbstractJSONSpec extends Specification {
 
         cleanup:
         cleanup()
+    }
+
+    void "test JSON fields retrieval"() {
+        def jsonEntity = new JsonEntity()
+        jsonEntity.id = 1L
+        def sampleData = new SampleData()
+        sampleData.etag = UUID.randomUUID().toString()
+        sampleData.memo = "memo".getBytes(Charset.defaultCharset())
+        sampleData.uuid = UUID.randomUUID()
+        sampleData.duration = Duration.ofHours(15)
+        sampleData.localDateTime = LocalDateTime.now()
+        sampleData.description = "sample description"
+        sampleData.grade = 1
+        sampleData.rating = 9.75d
+        jsonEntity.jsonNative = sampleData
+        jsonEntity.jsonBlob = sampleData
+        jsonEntity.jsonString = sampleData
+        jsonEntityRepository.save(jsonEntity)
+        when:"Entities loaded from appropriate JSON fields"
+        def optSampleDataFromJsonNative = jsonEntityRepository.findJsonNativeById(jsonEntity.id)
+        def optSampleDataFromJsonString = jsonEntityRepository.findJsonStringById(jsonEntity.id)
+        def optSampleDataFromJsonBlob = jsonEntityRepository.findJsonBlobById(jsonEntity.id)
+        then:"Entities are retrieved and properly deserialized"
+        optSampleDataFromJsonNative.present && optSampleDataFromJsonNative.get() == sampleData
+        optSampleDataFromJsonString.present && optSampleDataFromJsonString.get() == sampleData
+        optSampleDataFromJsonBlob.present && optSampleDataFromJsonBlob.get() == sampleData
+        when:"JsonEntity loaded from the DB"
+        def jsonEntityOpt = jsonEntityRepository.findById(jsonEntity.id)
+        then:"all JSON fields are retrieved"
+        jsonEntityOpt.present
+        def loadedJsonEntity = jsonEntityOpt.get()
+        loadedJsonEntity.id == jsonEntity.id
+        loadedJsonEntity.jsonString == jsonEntity.jsonString
+        loadedJsonEntity.jsonBlob == jsonEntity.jsonBlob
+        loadedJsonEntity.jsonNative == jsonEntity.jsonNative
+        when:"Update JSON field as parameter"
+        jsonEntity.jsonString.description = "Updated via param"
+        jsonEntity.jsonBlob.grade = 15
+        jsonEntityRepository.updateJsonStringById(jsonEntity.id, jsonEntity.jsonString)
+        jsonEntityRepository.updateJsonBlobById(jsonEntity.id, jsonEntity.jsonBlob)
+        optSampleDataFromJsonString = jsonEntityRepository.findJsonStringById(jsonEntity.id)
+        optSampleDataFromJsonBlob = jsonEntityRepository.findJsonBlobById(jsonEntity.id)
+        then:"Value should be updated"
+        optSampleDataFromJsonString.present
+        optSampleDataFromJsonString.get().description == "Updated via param"
+        optSampleDataFromJsonBlob.present
+        optSampleDataFromJsonBlob.get().grade == 15
     }
 
     void verifySale(Sale actualSale, Sale expectedSale) {

@@ -38,7 +38,7 @@ import io.micronaut.data.exceptions.MappingException;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.Embedded;
-import io.micronaut.data.model.JsonType;
+import io.micronaut.data.model.JsonDataType;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
@@ -965,8 +965,8 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                         }
 
                         @Override
-                        public JsonType getJsonType() {
-                            return property.getJsonType();
+                        public JsonDataType getJsonDataType() {
+                            return property.getJsonDataType();
                         }
 
                         @Override
@@ -1000,7 +1000,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                 }
 
                 @Override
-                public JsonType getJsonType() {
+                public JsonDataType getJsonDataType() {
                     return null;
                 }
 
@@ -1055,8 +1055,8 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                         }
 
                         @Override
-                        public JsonType getJsonType() {
-                            return property.getJsonType();
+                        public JsonDataType getJsonDataType() {
+                            return property.getJsonDataType();
                         }
 
                         @Override
@@ -1229,7 +1229,6 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
             return values.add(transformer);
         }
         if (dt == DataType.JSON) {
-            JsonType jsonType = property.getJsonType();
             switch (dialect) {
                 case POSTGRES:
                     return values.add("to_json(" + formatParameter(values.size() + 1).getName() + "::json)");

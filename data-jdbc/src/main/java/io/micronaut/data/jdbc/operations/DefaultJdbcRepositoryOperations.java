@@ -39,7 +39,7 @@ import io.micronaut.data.jdbc.mapper.SqlResultConsumer;
 import io.micronaut.data.jdbc.runtime.ConnectionCallback;
 import io.micronaut.data.jdbc.runtime.PreparedStatementCallback;
 import io.micronaut.data.model.DataType;
-import io.micronaut.data.model.JsonType;
+import io.micronaut.data.model.JsonDataType;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.query.builder.sql.Dialect;
@@ -345,7 +345,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                             }
                             return result;
                         } else {
-                            return rs.next() ? mapQueryColumnResult(preparedQuery, rs, queryResultInfo.getColumnName(), queryResultInfo.getJsonType(),
+                            return rs.next() ? mapQueryColumnResult(preparedQuery, rs, queryResultInfo.getColumnName(), queryResultInfo.getJsonDataType(),
                                 persistentEntity, resultType, ResultSet.class, loadListener) : null;
                         }
                     } else if (rs.next()) {
@@ -363,17 +363,24 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                                 return introspectedDataMapper.map(rs, resultType);
                             } else {
                                 String column = queryResultInfo.getColumnName();
-                                JsonType jsonType = queryResultInfo.getJsonType();
-                                return mapQueryColumnResult(preparedQuery, rs, column, jsonType, persistentEntity, resultType, ResultSet.class, null);
+                                JsonDataType jsonDataType = queryResultInfo.getJsonDataType();
+                                return mapQueryColumnResult(preparedQuery, rs, column, jsonDataType, persistentEntity, resultType, ResultSet.class, null);
                             }
                         } else {
-                            Object v = columnIndexResultSetReader.readDynamic(rs, 1, preparedQuery.getResultDataType());
-                            if (v == null) {
-                                return null;
-                            } else if (resultType.isInstance(v)) {
-                                return (R) v;
+                            QueryResultInfo queryResultInfo = preparedQuery.getQueryResultInfo();
+                            if (queryResultInfo == null || queryResultInfo.getType() == QueryResult.Type.TABULAR) {
+                                Object v = columnIndexResultSetReader.readDynamic(rs, 1, preparedQuery.getResultDataType());
+                                if (v == null) {
+                                    return null;
+                                } else if (resultType.isInstance(v)) {
+                                    return (R) v;
+                                } else {
+                                    return columnIndexResultSetReader.convertRequired(v, resultType);
+                                }
                             } else {
-                                return columnIndexResultSetReader.convertRequired(v, resultType);
+                                String column = queryResultInfo.getColumnName();
+                                JsonDataType jsonDataType = queryResultInfo.getJsonDataType();
+                                return mapQueryColumnResult(preparedQuery, rs, column, jsonDataType, persistentEntity, resultType, ResultSet.class, null);
                             }
                         }
                     }
@@ -449,8 +456,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                         );
                     } else {
                         String column = queryResultInfo.getColumnName();
-                        JsonType jsonType = queryResultInfo.getJsonType();
-                        mapper = createQueryResultMapper(preparedQuery, column, jsonType, ResultSet.class, persistentEntity, null);
+                        JsonDataType jsonDataType = queryResultInfo.getJsonDataType();
+                        mapper = createQueryResultMapper(preparedQuery, column, jsonDataType, ResultSet.class, persistentEntity, null);
                     }
                 } else {
                     BiFunction<RuntimePersistentEntity<Object>, Object, Object> loadListener = (loadedEntity, o) -> {
@@ -487,8 +494,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                         }
                     } else {
                         String column = queryResultInfo.getColumnName();
-                        JsonType jsonType = queryResultInfo.getJsonType();
-                        mapper = createQueryResultMapper(preparedQuery, column, jsonType, ResultSet.class, persistentEntity, loadListener);
+                        JsonDataType jsonDataType = queryResultInfo.getJsonDataType();
+                        mapper = createQueryResultMapper(preparedQuery, column, jsonDataType, ResultSet.class, persistentEntity, loadListener);
                     }
                 }
                 spliterator = new Spliterators.AbstractSpliterator<R>(Long.MAX_VALUE,
@@ -1060,17 +1067,20 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         }
 
         @Override
-        public void bindOne(QueryParameterBinding binding, RuntimePersistentProperty<?> property, Object value) {
-            JsonType jsonType = binding.getJsonType();
-            if (jsonType == null && property != null) {
-                jsonType = property.getJsonType();
+        public void bindOne(QueryParameterBinding binding, @Nullable RuntimePersistentProperty<?> property, Object value) {
+            JsonDataType jsonDataType = null;
+            if (binding.getDataType() == DataType.JSON) {
+                jsonDataType = binding.getJsonDataType();
+                if (jsonDataType == null && property != null) {
+                    jsonDataType = property.getJsonDataType();
+                }
             }
-            setStatementParameter(ps, index, binding.getDataType(), jsonType, value, sqlStoredQuery);
+            setStatementParameter(ps, index, binding.getDataType(), jsonDataType, value, sqlStoredQuery);
             index++;
         }
 
         @Override
-        public void bindMany(QueryParameterBinding binding, RuntimePersistentProperty<?> property, Collection<Object> values) {
+        public void bindMany(QueryParameterBinding binding, @Nullable RuntimePersistentProperty<?> property, Collection<Object> values) {
             for (Object value : values) {
                 bindOne(binding, property, value);
             }
