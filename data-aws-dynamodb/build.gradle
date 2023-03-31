@@ -4,7 +4,7 @@ plugins {
 }
 
 micronaut {
-    version = libs.versions.micronaut.asProvider().get()
+    version = "4.0.0-SNAPSHOT"
     testResources {
         enabled = false
         inferClasspath = false
@@ -39,7 +39,7 @@ dependencies {
     testImplementation mnRxjava2.micronaut.rxjava2
     testImplementation mnReactor.micronaut.reactor
     testImplementation libs.jakarta.persistence.api
-    testImplementation mn.micronaut.validation
+    testImplementation mnValidation.micronaut.validation
     testImplementation platform(libs.testcontainers.bom)
     testImplementation libs.testcontainers.spock
     testImplementation libs.testcontainers.azure
