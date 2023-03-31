@@ -46,7 +46,7 @@ import io.micronaut.data.model.query.QueryModel;
 import io.micronaut.data.model.query.QueryParameter;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -991,9 +991,8 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             StringBuilder additionalWhereBuff = buildAdditionalWhereClause(queryState, annotationMetadata);
             if (additionalWhereBuff.length() > 0) {
                 queryClause.append(WHERE_CLAUSE)
-                    .append(OPEN_BRACKET)
-                    .append(additionalWhereBuff)
-                    .append(CLOSE_BRACKET);
+                    .append(OPEN_BRACKET);
+                appendAdditionalWhere(queryClause, queryState, additionalWhereBuff.toString());
             }
         }
     }
@@ -1029,7 +1028,8 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             while (matcher.find()) {
                 String name = matcher.group(3);
                 String placeholder = queryState.addAdditionalRequiredParameter(name);
-                matcher.appendReplacement(additionalWhereBuilder, placeholder);
+                //appendReplacement considers $ to be a special character, need to escape it.
+                matcher.appendReplacement(additionalWhereBuilder, Matcher.quoteReplacement(placeholder));
             }
             matcher.appendTail(additionalWhereBuilder);
             additionalWhere = additionalWhereBuilder.toString();
@@ -1172,25 +1172,28 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
 
             boolean[] needsTrimming = {false};
             traversePersistentPropertiesForCriteria(propertyPath.getAssociations(), propertyPath.getProperty(), (associations, property) -> {
-                String readTransformer = getDataTransformerReadValue(currentAlias, property).orElse(null);
-                if (readTransformer != null) {
-                    whereClause.append(readTransformer);
-                } else {
-                    if (currentAlias != null) {
-                        whereClause.append(currentAlias).append(DOT);
-                    }
-                    String columnName = getMappedName(namingStrategy, associations, property);
-                    if (shouldEscape) {
-                        columnName = quote(columnName);
-                    }
-                    whereClause.append(columnName);
+                if (currentAlias != null) {
+                    whereClause.append(currentAlias).append(DOT);
                 }
+                String columnName = getMappedName(namingStrategy, associations, property);
+                if (shouldEscape) {
+                    columnName = quote(columnName);
+                }
+                whereClause.append(columnName);
 
                 whereClause.append(operator);
-                propertyParameterCreator.pushParameter(
-                    bindingParameter,
-                    newBindingContext(parameterPropertyPath, PersistentPropertyPath.of(associations, property))
-                );
+                String writeTransformer = getDataTransformerWriteValue(currentAlias, property).orElse(null);
+                Runnable pushParameter = () -> {
+                    propertyParameterCreator.pushParameter(
+                        bindingParameter,
+                        newBindingContext(parameterPropertyPath, PersistentPropertyPath.of(associations, property))
+                    );
+                };
+                if (writeTransformer != null) {
+                    appendTransformed(whereClause, writeTransformer, pushParameter);
+                } else {
+                    pushParameter.run();
+                }
                 whereClause.append(LOGICAL_AND);
                 needsTrimming[0] = true;
             });

@@ -80,7 +80,7 @@ public interface BookRepository extends ReactorPageableRepository<Book, Long>, R
 
     Flux<Book> findAllByTitleStartingWith(String text);
 
-    @Where(value = "total_pages > :pages")
+    @Where(value = "totalPages > :pages")
     Flux<Book> findByTitleStartsWith(String title, int pages);
 
     @Join("author")

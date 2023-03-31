@@ -1,10 +1,13 @@
 
 package example;
 
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
 import org.bson.types.ObjectId;
+
+import java.util.List;
 
 @MappedEntity
 public class Person {
@@ -13,6 +16,7 @@ public class Person {
     private ObjectId id;
     private String name;
     private int age;
+    private List<String> interests;
 
     public Person() {
     }
@@ -49,5 +53,18 @@ public class Person {
 
     public void setAge(int age) {
         this.age = age;
+    }
+
+    public List<String> getInterests() {
+        return interests;
+    }
+
+    public void setInterests(List<String> interests) {
+        this.interests = interests;
+    }
+
+    public Person withInterests(@NonNull List<String> interests) {
+        this.interests = interests;
+        return this;
     }
 }

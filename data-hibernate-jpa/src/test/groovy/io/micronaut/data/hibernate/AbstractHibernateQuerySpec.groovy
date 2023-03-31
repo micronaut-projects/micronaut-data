@@ -33,7 +33,7 @@ import org.hibernate.LazyInitializationException
 import spock.lang.Issue
 import spock.lang.Shared
 
-import javax.persistence.OptimisticLockException
+import jakarta.persistence.OptimisticLockException
 
 abstract class AbstractHibernateQuerySpec extends AbstractQuerySpec {
 

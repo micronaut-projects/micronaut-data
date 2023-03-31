@@ -21,6 +21,7 @@ import io.micronaut.core.annotation.Nullable;
 import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.interceptor.CoroutineTxHelper;
 import io.micronaut.transaction.interceptor.KotlinInterceptedMethodAsyncResultSupplier;
+import io.micronaut.transaction.interceptor.ReactorCoroutineTxHelper;
 import io.micronaut.transaction.reactive.ReactiveTransactionStatus;
 import io.micronaut.transaction.reactive.ReactorReactiveTransactionOperations;
 import io.micronaut.transaction.support.TransactionSynchronizationManager;
@@ -49,11 +50,15 @@ public final class AsyncUsingReactiveTransactionOperations<C> implements AsyncTr
     private final ReactorReactiveTransactionOperations<C> reactiveTransactionOperations;
     @Nullable
     private final CoroutineTxHelper coroutineTxHelper;
+    @Nullable
+    private final ReactorCoroutineTxHelper reactorCoroutineTxHelper;
 
     public AsyncUsingReactiveTransactionOperations(ReactorReactiveTransactionOperations<C> reactiveTransactionOperations,
-                                                   @Nullable CoroutineTxHelper coroutineTxHelper) {
+                                                   @Nullable CoroutineTxHelper coroutineTxHelper,
+                                                   @Nullable ReactorCoroutineTxHelper reactorCoroutineTxHelper) {
         this.reactiveTransactionOperations = reactiveTransactionOperations;
         this.coroutineTxHelper = coroutineTxHelper;
+        this.reactorCoroutineTxHelper = reactorCoroutineTxHelper;
     }
 
     @Override
@@ -61,13 +66,20 @@ public final class AsyncUsingReactiveTransactionOperations<C> implements AsyncTr
                                                   Function<AsyncTransactionStatus<C>, CompletionStage<T>> handler) {
         try (TransactionSynchronizationStateOp op = TransactionSynchronizationManager.withGuardedState()) {
             TransactionSynchronizationManager.TransactionSynchronizationState state = op.getOrCreateState();
+            ContextView previousContext = null;
             if (coroutineTxHelper != null && handler instanceof KotlinInterceptedMethodAsyncResultSupplier) {
                 KotlinInterceptedMethod kotlinInterceptedMethod = ((KotlinInterceptedMethodAsyncResultSupplier) handler).getKotlinInterceptedMethod();
                 Objects.requireNonNull(coroutineTxHelper).setupTxState(kotlinInterceptedMethod, state);
+                if (reactorCoroutineTxHelper != null) {
+                    previousContext = reactorCoroutineTxHelper.getReactorContext(kotlinInterceptedMethod);
+                }
             }
             // Reactive transaction manager applied on Kotlin coroutine
             // Use reactive transaction manager to open a transaction and send the Reactor context in the coroutine context
-            ContextView previousContext = (ContextView) TransactionSynchronizationManager.getResource(ContextView.class);
+            if (previousContext == null) {
+                previousContext = (ContextView) TransactionSynchronizationManager.getResource(ContextView.class);
+            }
+            ContextView finalPreviousContext = previousContext;
             Mono<T> result = Mono.fromDirect(reactiveTransactionOperations.withTransaction(definition, status -> {
                 return Mono.deferContextual(contextView -> {
                         try (TransactionSynchronizationStateOp ignore = TransactionSynchronizationManager.withState(state)) {
@@ -81,8 +93,8 @@ public final class AsyncUsingReactiveTransactionOperations<C> implements AsyncTr
                         try (TransactionSynchronizationStateOp ignore = TransactionSynchronizationManager.withState(state)) {
                             TransactionSynchronizationManager.unbindResourceIfPossible(ContextView.class);
                         }
-                        if (previousContext != null) {
-                            TransactionSynchronizationManager.bindResource(ContextView.class, previousContext);
+                        if (finalPreviousContext != null) {
+                            TransactionSynchronizationManager.bindResource(ContextView.class, finalPreviousContext);
                         }
                     });
             }));

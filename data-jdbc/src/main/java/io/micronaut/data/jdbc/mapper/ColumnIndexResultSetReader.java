@@ -19,6 +19,7 @@ import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.convert.exceptions.ConversionErrorException;
+import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.runtime.convert.DataConversionService;
@@ -101,7 +102,11 @@ public final class ColumnIndexResultSetReader implements ResultReader<ResultSet,
     @Override
     public char readChar(ResultSet resultSet, Integer index) {
         try {
-            return resultSet.getString(index).charAt(0);
+            String strValue = resultSet.getString(index);
+            if (StringUtils.isNotEmpty(strValue)) {
+                return strValue.charAt(0);
+            }
+            return 0;
         } catch (SQLException e) {
             throw exceptionForColumn(index, e);
         }

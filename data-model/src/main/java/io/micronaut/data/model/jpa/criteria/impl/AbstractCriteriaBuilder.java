@@ -20,6 +20,7 @@ import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.DataType;
+import io.micronaut.data.model.JsonDataType;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder;
@@ -59,6 +60,9 @@ import java.math.BigInteger;
 import java.sql.Date;
 import java.sql.Time;
 import java.sql.Timestamp;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -911,6 +915,11 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
                     }
 
                     @Override
+                    public JsonDataType getJsonDataType() {
+                        return outgoingQueryParameterProperty.getProperty().getJsonDataType();
+                    }
+
+                    @Override
                     public String[] getPropertyPath() {
                         return asStringPath(outgoingQueryParameterProperty.getAssociations(), outgoingQueryParameterProperty.getProperty());
                     }
@@ -1594,5 +1603,60 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
     @Override
     public Predicate arrayContains(Expression<?> x, Expression<?> y) {
         return predicate(x, y, PredicateBinaryOp.ARRAY_CONTAINS);
+    }
+
+    @Override
+    public Expression<LocalDate> localDate() {
+        throw notSupportedOperation();
+    }
+
+    @Override
+    public Expression<LocalDateTime> localDateTime() {
+        throw notSupportedOperation();
+    }
+
+    @Override
+    public Expression<LocalTime> localTime() {
+        throw notSupportedOperation();
+    }
+
+    @Override
+    public Expression<Integer> sign(Expression<? extends Number> x) {
+        throw notSupportedOperation();
+    }
+
+    @Override
+    public <N extends Number> Expression<N> ceiling(Expression<N> x) {
+        throw notSupportedOperation();
+    }
+
+    @Override
+    public <N extends Number> Expression<N> floor(Expression<N> x) {
+        throw notSupportedOperation();
+    }
+
+    @Override
+    public Expression<Double> exp(Expression<? extends Number> x) {
+        throw notSupportedOperation();
+    }
+
+    @Override
+    public Expression<Double> ln(Expression<? extends Number> x) {
+        throw notSupportedOperation();
+    }
+
+    @Override
+    public Expression<Double> power(Expression<? extends Number> x, Expression<? extends Number> y) {
+        throw notSupportedOperation();
+    }
+
+    @Override
+    public Expression<Double> power(Expression<? extends Number> x, Number y) {
+        throw notSupportedOperation();
+    }
+
+    @Override
+    public <T extends Number> Expression<T> round(Expression<T> x, Integer n) {
+        throw notSupportedOperation();
     }
 }

@@ -22,6 +22,7 @@ import io.micronaut.core.beans.BeanWrapper;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.model.DataType;
+import io.micronaut.data.model.JsonDataType;
 import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.runtime.DelegatingQueryParameterBinding;
 import io.micronaut.data.model.runtime.QueryParameterBinding;
@@ -148,6 +149,11 @@ public class DefaultBindableParametersStoredQuery<E, R> implements BindableParam
                     @Override
                     public DataType getDataType() {
                         return finalPersistentProperty.getDataType();
+                    }
+
+                    @Override
+                    public JsonDataType getJsonDataType() {
+                        return finalPersistentProperty.getJsonDataType();
                     }
                 };
             }

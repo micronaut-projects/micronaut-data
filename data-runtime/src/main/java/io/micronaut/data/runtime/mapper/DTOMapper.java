@@ -25,11 +25,11 @@ import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.TypeDef;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.DataType;
+import io.micronaut.data.model.JsonDataType;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.runtime.convert.DataConversionService;
-import io.micronaut.http.codec.MediaTypeCodec;
 
 /**
  * A {@link BeanIntrospectionMapper} that reads the result using the specified
@@ -44,7 +44,7 @@ public class DTOMapper<T, S, R> implements BeanIntrospectionMapper<S, R> {
     private final RuntimePersistentEntity<T> persistentEntity;
     private final RuntimePersistentEntity<?> dtoEntity;
     private final ResultReader<S, String> resultReader;
-    private final @Nullable MediaTypeCodec jsonCodec;
+    private final @Nullable JsonColumnReader<S> jsonColumnReader;
     private final DataConversionService conversionService;
 
     /**
@@ -63,14 +63,14 @@ public class DTOMapper<T, S, R> implements BeanIntrospectionMapper<S, R> {
      * Default constructor.
      * @param persistentEntity The entity
      * @param resultReader The result reader
-     * @param jsonCodec The JSON codec
+     * @param jsonColumnReader The JSON column reader
      * @param conversionService
      */
     public DTOMapper(RuntimePersistentEntity<T> persistentEntity,
                      ResultReader<S, String> resultReader,
-                     @Nullable MediaTypeCodec jsonCodec,
+                     @Nullable JsonColumnReader<S> jsonColumnReader,
                      DataConversionService conversionService) {
-        this(persistentEntity, persistentEntity, resultReader, jsonCodec, conversionService);
+        this(persistentEntity, persistentEntity, resultReader, jsonColumnReader, conversionService);
     }
 
     /**
@@ -78,13 +78,13 @@ public class DTOMapper<T, S, R> implements BeanIntrospectionMapper<S, R> {
      * @param persistentEntity The entity
      * @param dtoEntity The dto entity
      * @param resultReader The result reader
-     * @param jsonCodec The JSON codec
+     * @param jsonColumnReader The JSON column reader
      * @param conversionService
      */
     public DTOMapper(RuntimePersistentEntity<T> persistentEntity,
                      RuntimePersistentEntity<?> dtoEntity,
                      ResultReader<S, String> resultReader,
-                     @Nullable MediaTypeCodec jsonCodec,
+                     @Nullable JsonColumnReader<S> jsonColumnReader,
                      DataConversionService conversionService) {
         this.conversionService = conversionService;
         ArgumentUtils.requireNonNull("persistentEntity", persistentEntity);
@@ -92,7 +92,7 @@ public class DTOMapper<T, S, R> implements BeanIntrospectionMapper<S, R> {
         this.persistentEntity = persistentEntity;
         this.dtoEntity = dtoEntity;
         this.resultReader = resultReader;
-        this.jsonCodec = jsonCodec;
+        this.jsonColumnReader = jsonColumnReader;
     }
 
     @Override
@@ -148,9 +148,9 @@ public class DTOMapper<T, S, R> implements BeanIntrospectionMapper<S, R> {
         if (StringUtils.isNotEmpty(aliasPropertyName)) {
             propertyName = aliasPropertyName;
         }
-        if (dataType == DataType.JSON && jsonCodec != null) {
-            String data = resultReader.readString(resultSet, propertyName);
-            return jsonCodec.decode(property.getArgument(), data);
+        if (dataType == DataType.JSON && jsonColumnReader != null) {
+            JsonDataType jsonDataType = property.getJsonDataType();
+            return jsonColumnReader.readJsonColumn(resultReader, resultSet, propertyName, jsonDataType, property.getArgument());
         } else {
             return read(resultSet, propertyName, dataType);
         }

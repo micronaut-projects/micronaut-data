@@ -10,7 +10,7 @@ dependencies {
 
     api projects.dataTx
     api mn.micronaut.inject
-    api mn.micronaut.validation
+    api mnValidation.micronaut.validation
     api mn.micronaut.aop
 
     implementation libs.reactor

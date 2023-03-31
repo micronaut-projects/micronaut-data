@@ -287,6 +287,19 @@ abstract class AbstractRepositorySpec extends Specification {
         retrievedBookProj.offsetDateTime == book.offsetDateTime
         retrievedBookProj.dateCreated == book.dateCreated
         retrievedBookProj.dateUpdated == book.dateUpdated
+
+        if (supportsNullCharacter()) {
+            when: "Loading character as null"
+            book.wrapperChar = null
+            book = basicTypeRepository.update(book)
+            retrievedBook = basicTypeRepository.findById(book.myId).orElse(null)
+            then: "Object loaded without errors"
+            book.wrapperChar == null
+            retrievedBook
+            // Since default field value is 'c', db value will be null and won't be set and will remain 'c'
+            // The point of test is that it won't throw error when field value is null
+            retrievedBook.wrapperChar == 'c'
+        }
     }
 
     void "test save and retrieve timezone basic types"() {
@@ -2433,5 +2446,9 @@ abstract class AbstractRepositorySpec extends Specification {
         def localDate = LocalDate.of(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH) + 1, cal.get(Calendar.DAY_OF_MONTH))
         GregorianCalendar calendar = new GregorianCalendar(localDate.year, localDate.month.value, localDate.dayOfMonth)
         calendar
+    }
+
+    boolean supportsNullCharacter() {
+        true
     }
 }

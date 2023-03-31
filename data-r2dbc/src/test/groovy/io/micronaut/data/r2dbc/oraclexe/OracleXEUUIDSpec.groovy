@@ -20,7 +20,6 @@ import io.micronaut.data.tck.repositories.UuidRepository
 import io.micronaut.data.tck.tests.AbstractUUIDSpec
 import spock.lang.IgnoreIf
 
-@IgnoreIf({ !jvm.isJava11Compatible() })
 class OracleXEUUIDSpec extends AbstractUUIDSpec implements OracleXETestPropertyProvider {
 
     @Memoized

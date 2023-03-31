@@ -5,21 +5,15 @@ plugins {
 dependencies {
     annotationProcessor mn.micronaut.inject.java
     annotationProcessor mn.micronaut.graal
+    testAnnotationProcessor mnValidation.micronaut.validation.processor
 
     api projects.dataRuntime
     api projects.dataModel
-    api libs.jakarta.persistence.api2
-    api (libs.hibernate.core) {
-        exclude group: "javax.persistence", module:"javax.persistence-api"
-        exclude group: 'org.jboss.spec.javax.transaction', module: 'jboss-transaction-api_1.2_spec'
-        exclude group: 'org.javassist', module: 'javassist'
-        exclude group: 'org.jboss:jandex', module: 'jar'
-    }
+    api libs.jakarta.persistence.api
+    api libs.hibernate.core
     api projects.dataTxHibernate
 
     implementation (mnSql.micronaut.hibernate.jpa) {
-        exclude group:'org.jboss.spec.javax.transaction', module:'jboss-transaction-api_1.2_spec'
-        exclude group:'org.jboss:jandex', module:'jar'
         exclude group:'io.micronaut', module:'micronaut-spring'
         exclude group:'org.springframework', module:'spring-aop'
         exclude group:'org.springframework', module:'spring-orm'
@@ -33,6 +27,8 @@ dependencies {
 
     testAnnotationProcessor mn.micronaut.inject.java
     testAnnotationProcessor projects.dataProcessor
+    testImplementation mnValidation.micronaut.validation
+    testImplementation mnValidation.micronaut.validation.processor
 
     testImplementation mn.micronaut.inject.groovy
     testImplementation projects.dataProcessor

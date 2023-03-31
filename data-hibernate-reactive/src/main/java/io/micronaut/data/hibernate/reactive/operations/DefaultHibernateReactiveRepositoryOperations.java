@@ -54,12 +54,11 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.util.context.ContextView;
 
-import javax.persistence.EntityGraph;
-import javax.persistence.FlushModeType;
-import javax.persistence.Tuple;
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.ParameterExpression;
+import jakarta.persistence.EntityGraph;
+import jakarta.persistence.FlushModeType;
+import jakarta.persistence.Tuple;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.Objects;
@@ -126,8 +125,7 @@ final class DefaultHibernateReactiveRepositoryOperations extends AbstractHiberna
     @Override
     protected void setParameter(Stage.Query<?> query, String parameterName, Object value, Argument argument) {
         if (value == null) {
-            ParameterExpression parameter = sessionFactory.getCriteriaBuilder().parameter(argument.getType(), parameterName);
-            query.setParameter(parameter, null);
+            query.setParameter(parameterName, null, argument.getType());
         } else {
             query.setParameter(parameterName, value);
         }
@@ -135,20 +133,18 @@ final class DefaultHibernateReactiveRepositoryOperations extends AbstractHiberna
 
     @Override
     protected void setParameterList(Stage.Query<?> query, String parameterName, Collection<Object> value) {
-        query.setParameter(parameterName, value);
+        query.setParameterList(parameterName, value);
     }
 
     @Override
     protected void setParameterList(Stage.Query<?> query, String parameterName, Collection<Object> value, Argument argument) {
-        //QueryParameterBindings
-        ParameterExpression parameter = sessionFactory.getCriteriaBuilder().parameter(argument.getType(), parameterName);
-        query.setParameter(parameter, value);
+        query.setParameterList(parameterName, value, argument.getType());
     }
 
     @Override
     protected void setHint(Stage.Query<?> query, String hintName, Object value) {
         if (value instanceof EntityGraph) {
-            query.setPlan((EntityGraph) value);
+            query.setHint(hintName, value);
             return;
         }
         throw new IllegalStateException("Unrecognized parameter: " + hintName + " with value: " + value);

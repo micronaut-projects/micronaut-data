@@ -6,7 +6,7 @@ dependencies {
     annotationProcessor mn.micronaut.inject.java
     annotationProcessor mn.micronaut.graal
     api mn.micronaut.inject
-    api mn.micronaut.validation
+    api mnValidation.micronaut.validation
     api mn.micronaut.aop
     api projects.dataModel
     api mnSerde.micronaut.serde.api

@@ -24,8 +24,8 @@ import io.micronaut.data.model.Sort;
 import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.data.repository.PageableRepository;
 
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.util.List;
 
@@ -56,7 +56,7 @@ public interface JpaRepository<E, ID> extends CrudRepository<E, ID>, PageableRep
      * @param <S> The entity generic type
      * @return The entity, possibly mutated
      */
-    @QueryHint(name = "javax.persistence.FlushModeType", value = "AUTO")
+    @QueryHint(name = "jakarta.persistence.FlushModeType", value = "AUTO")
     <S extends E> S saveAndFlush(@NonNull @Valid @NotNull S entity);
 
     /**

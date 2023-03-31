@@ -16,6 +16,7 @@
 package io.micronaut.data.processor.visitors.finders;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.reflect.ClassUtils;
@@ -64,6 +65,19 @@ public class TypeUtils {
 
     private static final Map<String, DataType> RESOLVED_DATA_TYPES = new HashMap<>(50);
 
+    @Nullable
+    public static ClassElement getKotlinCoroutineProducedType(@NonNull MethodElement methodElement) {
+        if (!methodElement.isSuspend()) {
+            throw new IllegalStateException("Not a coroutine method!");
+        }
+        ClassElement returnType = methodElement.getGenericReturnType();
+        if (returnType.getName().equals("kotlinx.coroutines.flow.Flow")) {
+            return returnType.getFirstTypeArgument().orElse(null);
+        }
+        ParameterElement[] suspendParameters = methodElement.getSuspendParameters();
+        return suspendParameters[suspendParameters.length - 1].getGenericType().getFirstTypeArgument().orElse(null);
+    }
+
     /**
      * Is the element an iterable of an entity.
      *
@@ -71,7 +85,17 @@ public class TypeUtils {
      * @return True if is
      */
     public static boolean isIterableOfEntity(@Nullable ClassElement type) {
-        return type != null && type.isAssignable(Iterable.class) && hasPersistedTypeArgument(type);
+        return type != null && isIterableOfDto(type) && hasPersistedTypeArgument(type);
+    }
+
+    /**
+     * Is the element an iterable of an dto.
+     *
+     * @param type The type
+     * @return True if is
+     */
+    public static boolean isIterableOfDto(@Nullable ClassElement type) {
+        return type != null && type.isAssignable(Iterable.class) && isDto(type.getFirstTypeArgument().orElse(null));
     }
 
     /**
@@ -85,6 +109,15 @@ public class TypeUtils {
     }
 
     /**
+     * Does the given type have an {@link MappedEntity} or {@link io.micronaut.core.annotation.Introspected}.
+     * @param type The type
+     * @return True if it does
+     */
+    public static boolean isEntityOrDto(@Nullable ClassElement type) {
+        return isEntity(type) || isDto(type);
+    }
+
+    /**
      * Does the given type have an {@link MappedEntity}.
      * @param type The type
      * @return True if it does
@@ -93,7 +126,19 @@ public class TypeUtils {
         if (type == null) {
             return false;
         }
-        return type.hasAnnotation(MappedEntity.class);
+        return type.hasStereotype(MappedEntity.class);
+    }
+
+    /**
+     * Does the given type have an {@link io.micronaut.core.annotation.Introspected}.
+     * @param type The type
+     * @return True if it does
+     */
+    public static boolean isDto(@Nullable ClassElement type) {
+        if (type == null) {
+            return false;
+        }
+        return type.hasStereotype(Introspected.class);
     }
 
     /**
@@ -114,13 +159,8 @@ public class TypeUtils {
      * @param methodElement The method element
      * @return True if it does
      */
-    public static boolean doesReturnNumber(@NonNull MethodElement methodElement) {
-        ClassElement returnType = methodElement.getGenericReturnType();
-        if (returnType != null) {
-            return isNumber(returnType);
-        } else {
-            return false;
-        }
+    public static boolean doesMethodProducesANumber(@NonNull MethodElement methodElement) {
+        return isNumber(getMethodProducingItemType(methodElement));
     }
 
     /**
@@ -129,8 +169,19 @@ public class TypeUtils {
      * @return True if it returns void
      */
     public static boolean doesReturnVoid(@NonNull MethodElement methodElement) {
-        ClassElement rt = methodElement.getReturnType();
-        return isVoid(rt);
+        ClassElement producingItemType = getMethodProducingItemType(methodElement);
+        return producingItemType == null || isVoid(producingItemType);
+    }
+
+    @Nullable
+    public static ClassElement getMethodProducingItemType(@NonNull MethodElement methodElement) {
+        ClassElement returnType = methodElement.getGenericReturnType();
+        if (isReactiveOrFuture(returnType)) {
+            returnType = returnType.getFirstTypeArgument().orElse(null);
+        } else if (methodElement.isSuspend()) {
+            returnType = getKotlinCoroutineProducedType(methodElement);
+        }
+        return returnType;
     }
 
     /**
@@ -138,8 +189,8 @@ public class TypeUtils {
      * @param methodElement The method element
      * @return True if it does
      */
-    public static boolean doesReturnBoolean(@NonNull MethodElement methodElement) {
-        return isBoolean(methodElement.getGenericReturnType());
+    public static boolean doesMethodProducesABoolean(@NonNull MethodElement methodElement) {
+        return isBoolean(getMethodProducingItemType(methodElement));
     }
 
     /**
@@ -232,7 +283,7 @@ public class TypeUtils {
      * @return True if is void
      */
     public static boolean isVoid(@Nullable ClassElement type) {
-        return type != null && (type.isAssignable(Void.class) || type.isAssignable(void.class));
+        return type != null && (type.isAssignable(Void.class) || type.isAssignable(void.class) || type.getName().equals("kotlin.Unit"));
     }
 
     /**
@@ -245,36 +296,13 @@ public class TypeUtils {
                 (type.isAssignable(Boolean.class) || (type.isPrimitive() && type.getName().equals("boolean")));
     }
 
-    public static boolean isValidExistsReturnType(MatchContext context) {
-        return (doesReturnBoolean(context.getMethodElement()) ||
-            (isReactiveOrFuture(context.getReturnType()) && isBoolean(
-                context.getReturnType().getFirstTypeArgument().orElse(null)
-            )));
-    }
-
-    /**
-     * Retruns true if no type argument is present, a void argument is present or a boolean argument is present.
-     * @param type The type
-     * @return True if the argument is a void argument
-     */
-    public static boolean isVoidOrNumberArgument(ClassElement type) {
-        if (type == null) {
-            return false;
-        }
-        ClassElement ce = type.getFirstTypeArgument().orElse(null);
-        return ce == null || ce.isAssignable(Void.class) || isNumber(ce);
-    }
-
     /**
      * Returns true if the return type is considered valid for batch update operations likes deletes and updates.
      * @param methodElement The method element
      * @return True if is valid
      */
     public static boolean isValidBatchUpdateReturnType(MethodElement methodElement) {
-        return doesReturnVoid(methodElement) ||
-                doesReturnNumber(methodElement) ||
-                (isReactiveOrFuture(methodElement.getReturnType()) &&
-                        isVoidOrNumberArgument(methodElement.getReturnType()));
+        return doesReturnVoid(methodElement) || doesMethodProducesANumber(methodElement);
     }
 
     /**
@@ -284,21 +312,20 @@ public class TypeUtils {
      * @return True if it is supported
      */
     public static boolean isValidCountReturnType(MatchContext matchContext) {
-        return TypeUtils.doesReturnNumber(matchContext.getMethodElement()) ||
-                (TypeUtils.isReactiveOrFuture(matchContext.getReturnType()) &&
-                        TypeUtils.isNumber(matchContext.getReturnType().getFirstTypeArgument().orElse(null)));
+        return TypeUtils.doesMethodProducesANumber(matchContext.getMethodElement());
     }
 
     /**
      * Checks whether the return type is supported.
      *
-     * @param matchContext The match context
+     * @param methodElement The method
      * @return True if it is supported
      */
-    public static boolean isValidFindAllReturnType(MatchContext matchContext) {
-        ClassElement returnType = matchContext.getMethodElement().getGenericReturnType();
+    public static boolean doesMethodProducesIterableOfAnEntityOrDto(MethodElement methodElement) {
+        ClassElement returnType = methodElement.getGenericReturnType();
         if (TypeUtils.isReactiveType(returnType)) {
-            return TypeUtils.isEntity(matchContext.getReturnType().getFirstTypeArgument().orElse(null));
+            ClassElement type = methodElement.getGenericReturnType().getFirstTypeArgument().orElse(null);
+            return TypeUtils.isEntityOrDto(type);
         }
         if (TypeUtils.isFutureType(returnType)) {
             returnType = returnType.getFirstTypeArgument().orElse(null);
@@ -309,10 +336,10 @@ public class TypeUtils {
                 return true;
             }
         }
-        if (matchContext.getMethodElement().isSuspend()) {
-            return true;
+        if (methodElement.isSuspend()) {
+            returnType = TypeUtils.getKotlinCoroutineProducedType(methodElement);
         }
-        return TypeUtils.isIterableOfEntity(returnType);
+        return TypeUtils.isIterableOfEntity(returnType) || TypeUtils.isIterableOfDto(returnType);
     }
 
     /**

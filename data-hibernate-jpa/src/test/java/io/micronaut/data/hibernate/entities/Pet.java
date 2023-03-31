@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.hibernate.entities;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.util.UUID;
 
 @Entity

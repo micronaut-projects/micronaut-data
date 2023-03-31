@@ -15,13 +15,16 @@
  */
 package io.micronaut.data.tck.entities;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.JsonRepresentation;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.annotation.TypeDef;
 import io.micronaut.data.model.DataType;
+import io.micronaut.data.model.JsonDataType;
 
 import java.util.List;
 import java.util.Map;
@@ -36,10 +39,12 @@ public class Sale {
     private String name;
 
     @TypeDef(type = DataType.JSON)
+    @JsonRepresentation(type = JsonDataType.BLOB)
     @Nullable
     private Map<String, String> data;
 
     @TypeDef(type = DataType.JSON)
+    @JsonRepresentation(type = JsonDataType.STRING)
     @Nullable
     private String extraData;
 
@@ -54,6 +59,7 @@ public class Sale {
     @Relation(
         value = Relation.Kind.ONE_TO_MANY,
         mappedBy = "sale")
+    @JsonManagedReference
     private Set<SaleItem> items;
 
     public Long getId() {

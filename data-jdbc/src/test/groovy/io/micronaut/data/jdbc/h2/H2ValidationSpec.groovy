@@ -23,7 +23,7 @@ import spock.lang.Shared
 import spock.lang.Specification
 
 import jakarta.inject.Inject
-import javax.validation.ConstraintViolationException
+import jakarta.validation.ConstraintViolationException
 
 @MicronautTest
 @H2DBProperties

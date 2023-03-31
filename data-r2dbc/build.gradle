@@ -18,8 +18,11 @@ dependencies {
     api libs.r2dbc.spi
 
     implementation mn.micronaut.context
-    implementation mn.micronaut.http
+    implementation mn.micronaut.json.core
+    compileOnly mnSerde.micronaut.serde.oracle.jdbc.json
     implementation mnReactor.micronaut.reactor
+
+    compileOnly libs.drivers.r2dbc.oracle
 
     testImplementation projects.dataTck
     testImplementation mnTest.micronaut.test.spock
@@ -27,13 +30,15 @@ dependencies {
     testImplementation mnRxjava2.micronaut.rxjava2
 
     testAnnotationProcessor mn.micronaut.inject.java
+    testAnnotationProcessor mnValidation.micronaut.validation.processor
     testAnnotationProcessor projects.dataProcessor
 
     testImplementation mn.jackson.databind
     testImplementation libs.javax.persistence.api
     testImplementation libs.jakarta.persistence.api
     testImplementation libs.groovy.sql
-    testImplementation mn.micronaut.validation
+    testImplementation mnValidation.micronaut.validation
+    testImplementation mnValidation.micronaut.validation.processor
 
     testImplementation mn.micronaut.http.server.netty
     testImplementation mn.micronaut.http.client
@@ -79,10 +84,14 @@ dependencies {
     testResourcesService libs.drivers.jdbc.mssql
 
     testImplementation libs.micronaut.testresources.client
+    testImplementation mnSerde.micronaut.serde.support
+    testRuntimeOnly mn.snakeyaml
+    testRuntimeOnly mnSerde.micronaut.serde.oracle.jdbc.json
 }
 
 micronaut {
-    version = libs.versions.micronaut.asProvider().get()
+    // version = libs.versions.micronaut.asProvider().get()
+    version = '4.0.0-SNAPSHOT'
     testResources {
         enabled = true
         inferClasspath = false
@@ -96,10 +105,17 @@ micronaut {
     }
 }
 
-tasks.named("test") {
+tasks.withType(Test).configureEach {
+    jvmArgs '-Xmx3072m'
+//
     systemProperty "oracle.jdbc.timezoneAsRegion", "false"
     systemProperty "java.net.preferIPv4Stack", "true"
     systemProperty "java.util.concurrent.ForkJoinPool.common.parallelism", "2"
+
+    if (micronautBuild.environment.githubAction.get()) {
+        // Let JDBC checks tests first so the test containers don't eat all the memory
+        mustRunAfter ":data-jdbc:test"
+    }
 }
 
 micronautBuild {
@@ -113,4 +129,3 @@ micronautBuild {
         }
     }
 }
-

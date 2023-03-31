@@ -4,7 +4,8 @@ plugins {
 }
 
 micronaut {
-    version = libs.versions.micronaut.asProvider().get()
+    // version = libs.versions.micronaut.asProvider().get()
+    version = '4.0.0-SNAPSHOT'
     testResources {
         clientTimeout = 300
         version = libs.versions.micronaut.testresources.get()
@@ -46,7 +47,7 @@ dependencies {
     testImplementation mnRxjava2.micronaut.rxjava2
     testImplementation mnReactor.micronaut.reactor
     testImplementation libs.jakarta.persistence.api
-    testImplementation mn.micronaut.validation
+    testImplementation mnValidation.micronaut.validation
     testImplementation platform(libs.testcontainers.bom)
 
     // Remove after https://github.com/micronaut-projects/micronaut-test-resources/issues/142

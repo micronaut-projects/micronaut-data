@@ -18,6 +18,7 @@ package io.micronaut.data.annotation;
 import io.micronaut.data.annotation.repeatable.JoinSpecifications;
 
 import java.lang.annotation.*;
+import java.util.EnumSet;
 
 /**
  * A @Join defines how a join for a particular association path should be generated.
@@ -56,7 +57,13 @@ public @interface Join {
         RIGHT_FETCH,
         FETCH,
         INNER,
-        OUTER;
+        OUTER,
+        OUTER_FETCH;
+
+        /**
+         * An enumset of all enum values.
+         */
+        public static final EnumSet<Type> ALL_TYPES = EnumSet.allOf(Type.class);
 
         /**
          * @return an indicator telling whether join type is fetching

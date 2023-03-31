@@ -16,7 +16,12 @@
 package io.micronaut.data.model.query.builder.sql;
 
 import io.micronaut.core.annotation.NonNull;
+import io.micronaut.data.annotation.Join;
 import io.micronaut.data.model.DataType;
+
+import java.util.EnumSet;
+
+import static io.micronaut.data.annotation.Join.Type.*;
 
 /**
  * The SQL dialect to use.
@@ -28,42 +33,63 @@ public enum Dialect {
     /**
      * H2 database.
      */
-    H2(true, false, true),
+    H2(true, false, true,
+        EnumSet.of(
+            DEFAULT,
+            LEFT,
+            LEFT_FETCH,
+            RIGHT,
+            RIGHT_FETCH,
+            FETCH,
+            INNER
+        )),
     /**
      * MySQL 5.5 or above.
      */
-    MYSQL(true, true, false),
+    MYSQL(true, true, false, EnumSet.of(
+        DEFAULT,
+        LEFT,
+        LEFT_FETCH,
+        RIGHT,
+        RIGHT_FETCH,
+        FETCH,
+        INNER
+    )),
     /**
      * Postgres 9.5 or later.
      */
-    POSTGRES(true, false, true),
+    POSTGRES(true, false, true, ALL_TYPES),
     /**
      * SQL server 2012 or above.
      */
-    SQL_SERVER(false, false, false),
+    SQL_SERVER(false, false, false, ALL_TYPES),
     /**
      * Oracle 12c or above.
      */
-    ORACLE(true, true, false),
+    ORACLE(true, true, false, ALL_TYPES),
     /**
      * Ansi compliant SQL.
      */
-    ANSI(true, false, true);
+    ANSI(true, false, true, ALL_TYPES);
 
     private final boolean supportsBatch;
     private final boolean stringUUID;
     private final boolean supportsArrays;
+
+    private final EnumSet<Join.Type> joinTypesSupported;
 
     /**
      * Allows customization of batch support.
      * @param supportsBatch If batch is supported
      * @param stringUUID Does the dialect require a string UUID
      * @param supportsArrays Does the dialect supports arrays
+     * @param joinTypesSupported EnumSet of supported join types.
      */
-    Dialect(boolean supportsBatch, boolean stringUUID, boolean supportsArrays) {
+    Dialect(boolean supportsBatch, boolean stringUUID, boolean supportsArrays, EnumSet<Join.Type> joinTypesSupported) {
         this.supportsBatch = supportsBatch;
         this.stringUUID = stringUUID;
         this.supportsArrays = supportsArrays;
+        this.joinTypesSupported = joinTypesSupported;
     }
 
     /**
@@ -106,4 +132,15 @@ public enum Dialect {
     public final boolean requiresStringUUID(@NonNull DataType type) {
         return type == DataType.UUID && this.stringUUID;
     }
+
+    /**
+     * Determines whether the join type is supported this dialect.
+     *
+     * @param joinType the join type
+     * @return True if the type is supported by this dialect.
+     */
+    public final boolean supportsJoinType(@NonNull Join.Type joinType) {
+        return this.joinTypesSupported.contains(joinType);
+    }
+
 }

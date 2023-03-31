@@ -84,7 +84,7 @@ class Test {
         Dialect.MYSQL    | 'CREATE TABLE `test` (`id` BIGINT PRIMARY KEY AUTO_INCREMENT,`json` JSON NOT NULL);'
         Dialect.POSTGRES | 'CREATE TABLE "test" ("id" BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,"json" JSONB NOT NULL);'
         Dialect.ORACLE   | 'CREATE SEQUENCE "TEST_SEQ" MINVALUE 1 START WITH 1 CACHE 100 NOCYCLE' + System.lineSeparator() +
-                           'CREATE TABLE "TEST" ("ID" NUMBER(19) NOT NULL PRIMARY KEY,"JSON" CLOB NOT NULL)'
+                           'CREATE TABLE "TEST" ("ID" NUMBER(19) NOT NULL PRIMARY KEY,"JSON" JSON NOT NULL)'
     }
 
     void "test custom column definition"() {
@@ -166,13 +166,13 @@ class Test {
     private String text1;
     @Column(length=10)
     private String text2;
-    @javax.validation.constraints.Size(min=5, max=7)
+    @jakarta.validation.constraints.Size(min=5, max=7)
     private String text3;
 
     private BigDecimal amount1;
     @Column(precision = 11, scale = 2)
     private BigDecimal amount2;
-    @javax.validation.constraints.Size(min=5, max=7)
+    @jakarta.validation.constraints.Size(min=5, max=7)
     private BigDecimal amount3;
 
     private Float floatAmount1;

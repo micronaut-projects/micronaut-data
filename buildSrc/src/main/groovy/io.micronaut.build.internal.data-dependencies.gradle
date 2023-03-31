@@ -12,13 +12,13 @@ configurations {
         resolutionStrategy {
             dependencySubstitution {
                 substitute(module("org.codehaus.groovy:groovy"))
-                        .using(module("org.apache.groovy:groovy:4.0.9"))
+                        .using(module("org.apache.groovy:groovy:4.0.11"))
             }
             eachDependency { DependencyResolveDetails details ->
                 if (details.requested.name == 'groovy-all') {
                     throw new GradleException("Dependency 'groovy-all' not allowed!")
                 }
-                
+
 //                if (details.requested.group == 'io.micronaut') {
 //                    if (libs.versions.micronaut instanceof org.gradle.api.provider.Provider) {
 //                        details.useVersion libs.versions.micronaut.get()
@@ -31,6 +31,9 @@ configurations {
                 }
                 if (details.requested.group == 'io.micronaut.multitenancy') {
                     details.useVersion libs.versions.micronaut.multitenancy.get()
+                }
+                if (details.requested.group == 'org.hibernate.reactive') {
+                    details.useVersion "2.0.0.Beta1" // TODO: Remove after SQL release
                 }
             }
         }

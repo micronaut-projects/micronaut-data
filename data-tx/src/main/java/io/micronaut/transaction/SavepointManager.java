@@ -24,14 +24,16 @@ import io.micronaut.transaction.exceptions.*;
  *
  * <p>Note that savepoints can only work within an active transaction.
  * Just use this programmatic savepoint handling for advanced needs;
- * else, a subtransaction with PROPAGATION_NESTED is preferable.
+ * else, a subtransaction with propagation NESTED is preferable.
  *
  * <p>This interface is inspired by JDBC 3.0's Savepoint mechanism
- * but is independent from any specific persistence technology.
+ * but is independent of any specific persistence technology.
  *
  * @author Juergen Hoeller
  * @since 1.1
  * @see TransactionStatus
+ * @see TransactionDefinition.Propagation#NESTED
+ * * @see java.sql.Savepoint
  * @see TransactionDefinition.Propagation#NESTED
  * @see java.sql.Savepoint
  */

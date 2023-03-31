@@ -29,6 +29,7 @@ import io.micronaut.data.document.tck.entities.Student
 import io.micronaut.data.document.tck.repositories.AuthorRepository
 import io.micronaut.data.document.tck.repositories.BasicTypesRepository
 import io.micronaut.data.document.tck.repositories.BookRepository
+import io.micronaut.data.document.tck.repositories.DocumentRepository
 import io.micronaut.data.document.tck.repositories.DomainEventsRepository
 import io.micronaut.data.document.tck.repositories.PersonRepository
 import io.micronaut.data.document.tck.repositories.SaleRepository
@@ -74,6 +75,8 @@ abstract class AbstractDocumentRepositorySpec extends Specification {
     abstract SaleRepository getSaleRepository()
 
     abstract DomainEventsRepository getEventsRepository()
+
+    abstract DocumentRepository getDocumentRepository()
 
     @AutoCleanup
     @Shared
