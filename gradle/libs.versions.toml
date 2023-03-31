@@ -17,7 +17,7 @@ micronaut-kotlin = "4.0.0-M1"
 micronaut-multitenancy = "5.0.0-M1"
 micronaut-validation = "4.0.0-M2"
 
-groovy = "4.0.10"
+groovy = "4.0.11"
 
 javax-persistence = "2.2"
 jakarta-persistence = "3.0.0"
