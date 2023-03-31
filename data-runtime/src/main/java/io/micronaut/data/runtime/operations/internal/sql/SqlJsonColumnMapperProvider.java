@@ -34,17 +34,17 @@ import java.util.List;
  * @author radovanradic
  * @since 4.0.0
  *
- * @param <RS> the reader result set type
+ * @param <S> the reader result set type
  */
 @Internal
 @Singleton
-public final class SqlJsonColumnMapperProvider<RS> {
+public final class SqlJsonColumnMapperProvider<S> {
 
     private static final Logger LOG = LoggerFactory.getLogger(SqlJsonColumnMapperProvider.class);
 
-    private final List<SqlJsonColumnReader<RS>> sqlJsonColumnReaders;
+    private final List<SqlJsonColumnReader<S>> sqlJsonColumnReaders;
     private final List<SqlJsonValueMapper> sqlJsonValueMappers;
-    private final SqlJsonColumnReader<RS> defaultSqlJsonColumnReader;
+    private final SqlJsonColumnReader<S> defaultSqlJsonColumnReader;
     private final SqlJsonValueMapper defaultSqlJsonValueMapper;
 
     /**
@@ -54,7 +54,7 @@ public final class SqlJsonColumnMapperProvider<RS> {
      * @param sqlJsonColumnReaders list of custom SQL JSON column readers
      * @param sqlJsonValueMappers  list of custom SQL JSON value mappers
      */
-    public SqlJsonColumnMapperProvider(@Nullable JsonMapper jsonMapper, List<SqlJsonColumnReader<RS>> sqlJsonColumnReaders,
+    public SqlJsonColumnMapperProvider(@Nullable JsonMapper jsonMapper, List<SqlJsonColumnReader<S>> sqlJsonColumnReaders,
                                        List<SqlJsonValueMapper> sqlJsonValueMappers) {
         this.sqlJsonColumnReaders = sqlJsonColumnReaders;
         this.sqlJsonValueMappers = sqlJsonValueMappers;
@@ -77,9 +77,9 @@ public final class SqlJsonColumnMapperProvider<RS> {
      * @return the {@link SqlJsonColumnReader} for given SQL prepared query, or default {@link SqlJsonColumnReader}
      * if prepared query does not have specific one that it supports
      */
-    public SqlJsonColumnReader<RS> getJsonColumnReader(SqlPreparedQuery<?, ?> sqlPreparedQuery, Class<RS> resultSetType) {
-        SqlJsonColumnReader<RS> supportedSqlJsonColumnReader = null;
-        for (SqlJsonColumnReader<RS> sqlJsonColumnReader : sqlJsonColumnReaders) {
+    public SqlJsonColumnReader<S> getJsonColumnReader(SqlPreparedQuery<?, ?> sqlPreparedQuery, Class<S> resultSetType) {
+        SqlJsonColumnReader<S> supportedSqlJsonColumnReader = null;
+        for (SqlJsonColumnReader<S> sqlJsonColumnReader : sqlJsonColumnReaders) {
             if (sqlJsonColumnReader.supportsResultSetType(resultSetType) && sqlJsonColumnReader.supportsRead(sqlPreparedQuery)) {
                 supportedSqlJsonColumnReader = sqlJsonColumnReader;
                 break;

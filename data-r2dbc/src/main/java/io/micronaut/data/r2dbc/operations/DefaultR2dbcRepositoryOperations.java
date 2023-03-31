@@ -755,7 +755,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                     } else {
                         TypeMapper<Row, R> mapper = createQueryResultMapper(preparedQuery, queryResultInfo.getColumnName(), queryResultInfo.getJsonDataType(),
                             Row.class, preparedQuery.getPersistentEntity(), null);
-                        return Flux.just((R) mapper.map(row, resultType));
+                        return Flux.just(mapper.map(row, resultType));
                     }
                 }).flatMap(m -> m);
             });

@@ -1,6 +1,9 @@
 package io.micronaut.data.tck.repositories;
 
+import io.micronaut.context.annotation.Parameter;
 import io.micronaut.data.annotation.Query;
+import io.micronaut.data.annotation.TypeDef;
+import io.micronaut.data.model.DataType;
 import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.data.tck.entities.Patient;
 import io.micronaut.data.tck.entities.PatientDto;
@@ -15,4 +18,7 @@ public interface PatientRepository extends CrudRepository<Patient, Long> {
 
     @Query("select * from patient where name = :name")
     List<PatientDto> findAllByNameWithQuery(String name);
+
+    @Query("UPDATE patient SET appointments = :appointments WHERE name = :name")
+    void updateAppointmentsByName(@Parameter String name, @TypeDef(type = DataType.JSON) List<String> appointments);
 }
