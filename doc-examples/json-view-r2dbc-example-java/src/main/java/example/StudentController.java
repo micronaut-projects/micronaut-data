@@ -1,6 +1,7 @@
 
 package example;
 
+import example.domain.Metadata;
 import example.domain.Usr;
 import example.domain.UsrDto;
 import example.domain.view.StudentView;

@@ -4,12 +4,17 @@ plugins {
     id "io.micronaut.build.internal.data-example"
 }
 
+repositories {
+    mavenCentral()
+    maven { url "https://s01.oss.sonatype.org/content/repositories/snapshots/" }
+}
+
 application {
     mainClass = "example.Application"
 }
 
 micronaut {
-    version libs.versions.micronaut.asProvider().get()
+    version "4.0.0-SNAPSHOT"
     runtime "netty"
     testRuntime "junit5"
 }
@@ -25,4 +30,6 @@ dependencies {
     runtimeOnly mn.snakeyaml
     testRuntimeOnly mnSerde.micronaut.serde.jackson
     testRuntimeOnly mnSerde.micronaut.serde.oracle.jdbc.json
+
+    implementation "com.fasterxml.jackson.core:jackson-databind:2.14.2"
 }

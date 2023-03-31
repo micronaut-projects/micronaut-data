@@ -12,8 +12,6 @@ import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Get;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
-import io.micronaut.serde.oracle.jdbc.json.OracleJdbcJsonBinaryObjectMapper;
-import io.micronaut.serde.oracle.jdbc.json.OracleJdbcJsonTextObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,17 +34,11 @@ public class StudentController {
     private final StudentRepository studentRepository;
     private final UsrRepository usrRepository;
 
-    private final OracleJdbcJsonTextObjectMapper textObjectMapper;
-    private final OracleJdbcJsonBinaryObjectMapper binaryObjectMapper;
-
     public StudentController(StudentViewRepository studentViewRepository, StudentRepository studentRepository,
-                             UsrRepository usrRepository, OracleJdbcJsonTextObjectMapper textObjectMapper,
-                             OracleJdbcJsonBinaryObjectMapper binaryObjectMapper) {
+                             UsrRepository usrRepository) {
         this.studentViewRepository = studentViewRepository;
         this.studentRepository = studentRepository;
         this.usrRepository = usrRepository;
-        this.textObjectMapper = textObjectMapper;
-        this.binaryObjectMapper = binaryObjectMapper;
     }
 
     @Get("/{id}")
@@ -74,19 +66,7 @@ public class StudentController {
                 usrView.setName("User123");
                 // Make update fail due to different etag
                 // usrView.setMetadata(Metadata.of("TEST", usrView.getMetadata().getAsof()));
-                boolean updateCustomObject = false;
-                if (!updateCustomObject) {
-                    usrRepository.update(usrView, usrView.getUsrId());
-                } else {
-                    boolean updateBinary = false;
-                    if (updateBinary) {
-                        byte[] bytes = binaryObjectMapper.writeValueAsBytes(usrView);
-                        usrRepository.updateBinary(bytes, usrView.getUsrId());
-                    } else {
-                        String data = textObjectMapper.writeValueAsString(usrView);
-                        usrRepository.updateCustom(data, usrView.getUsrId());
-                    }
-                }
+                usrRepository.update(usrView, usrView.getUsrId());
 
                 // Create new one on the fly
                 boolean insertNew = id == 2;
