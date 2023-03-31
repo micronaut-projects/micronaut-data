@@ -37,5 +37,5 @@ dependencies {
     runtimeOnly "ch.qos.logback:logback-classic"
 
     // Needed for EagerStartSpec
-    testImplementation("org.jetbrains.kotlin:kotlin-reflect:1.8.10")
+    testImplementation("org.jetbrains.kotlin:kotlin-reflect:1.8.20")
 }
