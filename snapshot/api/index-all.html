@@ -3843,7 +3843,7 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Does the method return an object convertible to a number.</div>
 </dd>
-<dt><a href="io/micronaut/data/processor/visitors/finders/TypeUtils.html#doesMethodProducesIterableOfAnEntity(io.micronaut.inject.ast.MethodElement)" class="member-name-link">doesMethodProducesIterableOfAnEntity(MethodElement)</a> - Static method in class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/TypeUtils.html" title="class in io.micronaut.data.processor.visitors.finders">TypeUtils</a></dt>
+<dt><a href="io/micronaut/data/processor/visitors/finders/TypeUtils.html#doesMethodProducesIterableOfAnEntityOrDto(io.micronaut.inject.ast.MethodElement)" class="member-name-link">doesMethodProducesIterableOfAnEntityOrDto(MethodElement)</a> - Static method in class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/TypeUtils.html" title="class in io.micronaut.data.processor.visitors.finders">TypeUtils</a></dt>
 <dd>
 <div class="block">Checks whether the return type is supported.</div>
 </dd>
@@ -9727,6 +9727,10 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Is the query result a DTO query.</div>
 </dd>
+<dt><a href="io/micronaut/data/processor/visitors/finders/TypeUtils.html#isDto(io.micronaut.inject.ast.ClassElement)" class="member-name-link">isDto(ClassElement)</a> - Static method in class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/TypeUtils.html" title="class in io.micronaut.data.processor.visitors.finders">TypeUtils</a></dt>
+<dd>
+<div class="block">Does the given type have an <code>Introspected</code>.</div>
+</dd>
 <dt><a href="io/micronaut/data/model/runtime/StoredQuery.html#isDtoProjection()" class="member-name-link">isDtoProjection()</a> - Method in interface io.micronaut.data.model.runtime.<a href="io/micronaut/data/model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a></dt>
 <dd>
 <div class="block">Returns whether the query returns the actual entity or a Data Transfer Object (DTO) project.</div>
@@ -9792,6 +9796,10 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/micronaut/data/processor/visitors/finders/TypeUtils.html#isEntityContainerType(io.micronaut.inject.ast.ClassElement)" class="member-name-link">isEntityContainerType(ClassElement)</a> - Static method in class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/TypeUtils.html" title="class in io.micronaut.data.processor.visitors.finders">TypeUtils</a></dt>
 <dd>
 <div class="block">Is the given type a container type of entity.</div>
+</dd>
+<dt><a href="io/micronaut/data/processor/visitors/finders/TypeUtils.html#isEntityOrDto(io.micronaut.inject.ast.ClassElement)" class="member-name-link">isEntityOrDto(ClassElement)</a> - Static method in class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/TypeUtils.html" title="class in io.micronaut.data.processor.visitors.finders">TypeUtils</a></dt>
+<dd>
+<div class="block">Does the given type have an <a href="io/micronaut/data/annotation/MappedEntity.html" title="annotation interface in io.micronaut.data.annotation"><code>MappedEntity</code></a> or <code>Introspected</code>.</div>
 </dd>
 <dt><a href="io/micronaut/data/model/PersistentProperty.html#isEnum()" class="member-name-link">isEnum()</a> - Method in interface io.micronaut.data.model.<a href="io/micronaut/data/model/PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a></dt>
 <dd>&nbsp;</dd>
@@ -9917,6 +9925,10 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/mongodb/conf/MongoDataConfiguration.html#isIgnoreJsonViews()" class="member-name-link">isIgnoreJsonViews()</a> - Method in class io.micronaut.data.mongodb.conf.<a href="io/micronaut/data/mongodb/conf/MongoDataConfiguration.html" title="class in io.micronaut.data.mongodb.conf">MongoDataConfiguration</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/processor/visitors/finders/TypeUtils.html#isIterableOfDto(io.micronaut.inject.ast.ClassElement)" class="member-name-link">isIterableOfDto(ClassElement)</a> - Static method in class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/TypeUtils.html" title="class in io.micronaut.data.processor.visitors.finders">TypeUtils</a></dt>
+<dd>
+<div class="block">Is the element an iterable of an dto.</div>
+</dd>
 <dt><a href="io/micronaut/data/processor/visitors/finders/TypeUtils.html#isIterableOfEntity(io.micronaut.inject.ast.ClassElement)" class="member-name-link">isIterableOfEntity(ClassElement)</a> - Static method in class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/TypeUtils.html" title="class in io.micronaut.data.processor.visitors.finders">TypeUtils</a></dt>
 <dd>
 <div class="block">Is the element an iterable of an entity.</div>
