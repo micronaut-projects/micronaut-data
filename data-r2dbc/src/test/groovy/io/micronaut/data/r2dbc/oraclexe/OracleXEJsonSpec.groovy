@@ -18,7 +18,7 @@ package io.micronaut.data.r2dbc.oraclexe
 import groovy.transform.Memoized
 import io.micronaut.data.annotation.Query
 import io.micronaut.data.annotation.QueryResult
-import io.micronaut.data.model.JsonType
+import io.micronaut.data.model.JsonDataType
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.r2dbc.annotation.R2dbcRepository
 import io.micronaut.data.repository.CrudRepository
@@ -78,6 +78,6 @@ class OracleXEJsonSpec extends AbstractJSONSpec implements OracleXETestPropertyP
 interface OracleXEJsonDataRepository extends CrudRepository<JsonData, Long> {
 
     @Query(""" SELECT JSON{'id' : "ID", 'name' : "NAME", 'createdDate' : "CREATED_DATE", 'duration' : "DURATION"} AS "DATA" FROM JSON_DATA """)
-    @QueryResult(type = QueryResult.Type.JSON, jsonType = JsonType.NATIVE)
+    @QueryResult(type = QueryResult.Type.JSON, jsonDataType = JsonDataType.NATIVE)
     Optional<JsonData> getJsonDataById(Long id)
 }

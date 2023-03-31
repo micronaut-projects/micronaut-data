@@ -16,13 +16,13 @@
 package io.micronaut.data.model;
 
 /**
- * Enum of JSON type representations or actually storage types. It is useful to know how to store and retrieve JSON fields.
+ * Enum of JSON data type representations or actually storage types. It is useful to know how to store and retrieve JSON fields.
  *
  * @author radovanradic
  * @since 4.0.0
- * @see PersistentProperty#getJsonType()
+ * @see PersistentProperty#getJsonDataType()
  */
-public enum JsonType {
+public enum JsonDataType {
     /**
      * Usually stored in JSON specific column type supported by all databases.
      */
@@ -35,5 +35,5 @@ public enum JsonType {
     /**
      * JSON value stored in BLOB. Supported by Oracle, in other databases basically just byte array.
      */
-    BLOB
+    BLOB;
 }

@@ -257,9 +257,9 @@ abstract class AbstractJSONSpec extends Specification {
         jsonEntity.jsonString = sampleData
         jsonEntityRepository.save(jsonEntity)
         when:"Entities loaded from appropriate JSON fields"
-        def optSampleDataFromJsonNative = jsonEntityRepository.findJsonNativeSampleDataByEntityId(jsonEntity.id)
-        def optSampleDataFromJsonString = jsonEntityRepository.findJsonStringSampleDataByEntityId(jsonEntity.id)
-        def optSampleDataFromJsonBlob = jsonEntityRepository.findJsonBlobSampleDataByEntityId(jsonEntity.id)
+        def optSampleDataFromJsonNative = jsonEntityRepository.findJsonNativeById(jsonEntity.id)
+        def optSampleDataFromJsonString = jsonEntityRepository.findJsonStringById(jsonEntity.id)
+        def optSampleDataFromJsonBlob = jsonEntityRepository.findJsonBlobById(jsonEntity.id)
         then:"Entities are retrieved and properly deserialized"
         optSampleDataFromJsonNative.present && optSampleDataFromJsonNative.get() == sampleData
         optSampleDataFromJsonString.present && optSampleDataFromJsonString.get() == sampleData
@@ -278,8 +278,8 @@ abstract class AbstractJSONSpec extends Specification {
         jsonEntity.jsonBlob.grade = 15
         jsonEntityRepository.updateJsonStringById(jsonEntity.id, jsonEntity.jsonString)
         jsonEntityRepository.updateJsonBlobById(jsonEntity.id, jsonEntity.jsonBlob)
-        optSampleDataFromJsonString = jsonEntityRepository.findJsonStringSampleDataByEntityId(jsonEntity.id)
-        optSampleDataFromJsonBlob = jsonEntityRepository.findJsonBlobSampleDataByEntityId(jsonEntity.id)
+        optSampleDataFromJsonString = jsonEntityRepository.findJsonStringById(jsonEntity.id)
+        optSampleDataFromJsonBlob = jsonEntityRepository.findJsonBlobById(jsonEntity.id)
         then:"Value should be updated"
         optSampleDataFromJsonString.present
         optSampleDataFromJsonString.get().description == "Updated via param"

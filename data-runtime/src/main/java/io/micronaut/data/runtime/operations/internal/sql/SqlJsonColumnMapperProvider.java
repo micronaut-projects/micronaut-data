@@ -17,7 +17,7 @@ package io.micronaut.data.runtime.operations.internal.sql;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Nullable;
-import io.micronaut.data.model.JsonType;
+import io.micronaut.data.model.JsonDataType;
 import io.micronaut.data.runtime.mapper.sql.SqlJsonColumnReader;
 import io.micronaut.data.runtime.mapper.sql.SqlJsonValueMapper;
 import io.micronaut.json.JsonMapper;
@@ -104,18 +104,18 @@ public final class SqlJsonColumnMapperProvider<RS> {
      * Otherwise, it will return default {@link SqlJsonValueMapper}.
      *
      * @param sqlStoredQuery the SQL stored query
-     * @param jsonType the JSON representation type
+     * @param jsonDataType the JSON representation type
      * @param value the value to be mapped
      * @return the {@link SqlJsonValueMapper} for given SQL stored query, or default {@link SqlJsonValueMapper}
      * if stored query does not have specific one that it supports
      */
-    public SqlJsonValueMapper getJsonValueMapper(SqlStoredQuery<?, ?> sqlStoredQuery, JsonType jsonType, Object value) {
+    public SqlJsonValueMapper getJsonValueMapper(SqlStoredQuery<?, ?> sqlStoredQuery, JsonDataType jsonDataType, Object value) {
         if (value == null || value.getClass().equals(String.class)) {
             return defaultSqlJsonValueMapper;
         }
         SqlJsonValueMapper supportedSqlJsonValueMapper = null;
         for (SqlJsonValueMapper sqlJsonValueMapper : sqlJsonValueMappers) {
-            if (sqlJsonValueMapper.supportsMapValue(sqlStoredQuery, jsonType)) {
+            if (sqlJsonValueMapper.supportsMapValue(sqlStoredQuery, jsonDataType)) {
                 supportedSqlJsonValueMapper = sqlJsonValueMapper;
                 break;
             }

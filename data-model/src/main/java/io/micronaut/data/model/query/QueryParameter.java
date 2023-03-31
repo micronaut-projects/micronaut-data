@@ -20,7 +20,7 @@ import io.micronaut.core.naming.Named;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.DataType;
-import io.micronaut.data.model.JsonType;
+import io.micronaut.data.model.JsonDataType;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.query.builder.QueryParameterBinding;
@@ -104,8 +104,8 @@ public class QueryParameter implements Named, BindingParameter {
             }
 
             @Override
-            public JsonType getJsonType() {
-                return outgoingQueryParameterProperty.getProperty().getJsonType();
+            public JsonDataType getJsonDataType() {
+                return outgoingQueryParameterProperty.getProperty().getJsonDataType();
             }
 
             @Override

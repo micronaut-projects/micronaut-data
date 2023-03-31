@@ -26,7 +26,7 @@ import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.intercept.annotation.DataMethodQueryParameter;
 import io.micronaut.data.model.AssociationUtils;
 import io.micronaut.data.model.DataType;
-import io.micronaut.data.model.JsonType;
+import io.micronaut.data.model.JsonDataType;
 import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.runtime.DefaultStoredDataOperation;
@@ -170,12 +170,12 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
                 if (parameterBindingPath.length == 0) {
                     parameterBindingPath = null;
                 }
-                JsonType jsonType = av.enumValue(DataMethodQueryParameter.META_MEMBER_JSON_TYPE, JsonType.class).orElse(null);
+                JsonDataType jsonDataType = av.enumValue(DataMethodQueryParameter.META_MEMBER_JSON_DATA_TYPE, JsonDataType.class).orElse(null);
                 queryParameters.add(
                         new StoredQueryParameter(
                                 av.stringValue(DataMethodQueryParameter.META_MEMBER_NAME).orElse(null),
                                 isNumericPlaceHolder ? av.enumValue(DataMethodQueryParameter.META_MEMBER_DATA_TYPE, DataType.class).orElse(DataType.OBJECT) : null,
-                                jsonType,
+                            jsonDataType,
                                 av.intValue(DataMethodQueryParameter.META_MEMBER_PARAMETER_INDEX).orElse(-1),
                                 parameterBindingPath,
                                 propertyPath,

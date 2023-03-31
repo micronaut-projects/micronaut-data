@@ -19,7 +19,7 @@ import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.exceptions.DataAccessException;
-import io.micronaut.data.model.JsonType;
+import io.micronaut.data.model.JsonDataType;
 import io.micronaut.json.JsonMapper;
 
 import java.io.IOException;
@@ -35,19 +35,24 @@ import java.io.IOException;
 public interface JsonColumnReader<S> {
 
     /**
+     * JSON string null value.
+     */
+    String NULL_VALUE = "null";
+
+    /**
      * Reads JSON column from the result set and returns as expected type.
      *
      * @param resultReader the result reader
      * @param resultSet the result set
      * @param columnName the column name
-     * @param jsonType the JSON type
+     * @param jsonDataType the JSON type
      * @param argument the result type argument
      * @return object of type T read from JSON column
      * @param <T> the result type
      */
-    default  <T> T readJsonColumn(ResultReader<S, String> resultReader, S resultSet, String columnName, JsonType jsonType, Argument<T> argument) {
+    default  <T> T readJsonColumn(ResultReader<S, String> resultReader, S resultSet, String columnName, JsonDataType jsonDataType, Argument<T> argument) {
         String data = resultReader.readString(resultSet, columnName);
-        if (StringUtils.isEmpty(data)) {
+        if (StringUtils.isEmpty(data) || data.equals(NULL_VALUE)) {
             return null;
         }
         if (argument.getType().equals(String.class)) {

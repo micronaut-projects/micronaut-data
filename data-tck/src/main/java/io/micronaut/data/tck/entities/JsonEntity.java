@@ -6,7 +6,7 @@ import io.micronaut.data.annotation.JsonRepresentation;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.TypeDef;
 import io.micronaut.data.model.DataType;
-import io.micronaut.data.model.JsonType;
+import io.micronaut.data.model.JsonDataType;
 
 @MappedEntity
 public class JsonEntity {
@@ -15,17 +15,17 @@ public class JsonEntity {
     private Long id;
 
     @TypeDef(type = DataType.JSON)
-    @JsonRepresentation(type = JsonType.NATIVE)
+    @JsonRepresentation(type = JsonDataType.NATIVE)
     @Nullable
     private SampleData jsonNative;
 
     @TypeDef(type = DataType.JSON)
-    @JsonRepresentation(type = JsonType.BLOB)
+    @JsonRepresentation(type = JsonDataType.BLOB)
     @Nullable
     private SampleData jsonBlob;
 
     @TypeDef(type = DataType.JSON)
-    @JsonRepresentation(type = JsonType.STRING)
+    @JsonRepresentation(type = JsonDataType.STRING)
     @Nullable
     private SampleData jsonString;
 

@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.annotation;
 
-import io.micronaut.data.model.JsonType;
+import io.micronaut.data.model.JsonDataType;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
@@ -36,7 +36,12 @@ import java.lang.annotation.Target;
 public @interface JsonRepresentation {
 
     /**
+     * The default JsonDataType value.
+     */
+    JsonDataType DEFAULT_JSON_TYPE = JsonDataType.NATIVE;
+
+    /**
      * @return the JSON representation type
      */
-    JsonType type() default JsonType.STRING;
+    JsonDataType type() default JsonDataType.NATIVE;
 }

@@ -22,7 +22,7 @@ import io.micronaut.data.annotation.JsonRepresentation;
 import io.micronaut.data.annotation.TypeDef;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.DataType;
-import io.micronaut.data.model.JsonType;
+import io.micronaut.data.model.JsonDataType;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.jpa.criteria.impl.ParameterExpressionImpl;
@@ -92,7 +92,7 @@ public final class SourceParameterExpressionImpl extends ParameterExpressionImpl
             Objects.requireNonNull(parameterElement);
             int index = Arrays.asList(parameters).indexOf(parameterElement);
             DataType dataType = getDataType(null, parameterElement);
-            JsonType jsonType = getJsonType(null, parameterElement);
+            JsonDataType jsonDataType = dataType == DataType.JSON ? getJsonDataType(null, parameterElement) : null;
             String converter = parameterElement.stringValue(TypeDef.class, "converter").orElse(null);
             boolean isExpandable = isExpandable(bindingContext, dataType);
             return new QueryParameterBinding() {
@@ -112,8 +112,8 @@ public final class SourceParameterExpressionImpl extends ParameterExpressionImpl
                 }
 
                 @Override
-                public JsonType getJsonType() {
-                    return jsonType;
+                public JsonDataType getJsonDataType() {
+                    return jsonDataType;
                 }
 
                 @Override
@@ -135,7 +135,7 @@ public final class SourceParameterExpressionImpl extends ParameterExpressionImpl
                         .map(ap -> ap.getRequiredValue(AutoPopulated.UPDATEABLE, Boolean.class))
                         .orElse(false);
         DataType dataType = getDataType(propertyPath, parameterElement);
-        JsonType jsonType = getJsonType(propertyPath, parameterElement);
+        JsonDataType jsonDataType = getJsonDataType(propertyPath, parameterElement);
         String converterClassName = ((SourcePersistentProperty) propertyPath.getProperty()).getConverterClassName();
         int index = parameterElement == null || isEntityParameter ? -1 : Arrays.asList(parameters).indexOf(parameterElement);
         String[] path = asStringPath(outgoingQueryParameterProperty.getAssociations(), outgoingQueryParameterProperty.getProperty());
@@ -154,8 +154,8 @@ public final class SourceParameterExpressionImpl extends ParameterExpressionImpl
             }
 
             @Override
-            public JsonType getJsonType() {
-                return jsonType;
+            public JsonDataType getJsonDataType() {
+                return jsonDataType;
             }
 
             @Override
@@ -251,24 +251,24 @@ public final class SourceParameterExpressionImpl extends ParameterExpressionImpl
         return DataType.OBJECT;
     }
 
-    private JsonType getJsonType(PersistentPropertyPath propertyPath, ParameterElement parameterElement) {
+    private JsonDataType getJsonDataType(PersistentPropertyPath propertyPath, ParameterElement parameterElement) {
         if (propertyPath != null) {
             PersistentProperty property = propertyPath.getProperty();
             if (!(property instanceof Association)) {
-                JsonType jsonType = property.getJsonType();
-                if (jsonType != null) {
-                    return jsonType;
+                JsonDataType jsonDataType = property.getJsonDataType();
+                if (jsonDataType != null) {
+                    return jsonDataType;
                 }
             }
         }
         if (parameterElement != null) {
-            JsonType jsonType = parameterElement.enumValue(JsonRepresentation.class, "type", JsonType.class).orElse(null);
-            if (jsonType != null) {
-                return jsonType;
+            JsonDataType jsonDataType = parameterElement.enumValue(JsonRepresentation.class, "type", JsonDataType.class).orElse(JsonRepresentation.DEFAULT_JSON_TYPE);
+            if (jsonDataType != null) {
+                return jsonDataType;
             }
         }
         // default
-        return JsonType.STRING;
+        return JsonRepresentation.DEFAULT_JSON_TYPE;
     }
 
     private String[] asStringPath(List<Association> associations, PersistentProperty property) {

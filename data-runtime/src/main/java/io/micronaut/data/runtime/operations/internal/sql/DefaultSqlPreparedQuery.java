@@ -18,9 +18,10 @@ package io.micronaut.data.runtime.operations.internal.sql;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
+import io.micronaut.data.annotation.JsonRepresentation;
 import io.micronaut.data.annotation.QueryResult;
 import io.micronaut.data.exceptions.DataAccessException;
-import io.micronaut.data.model.JsonType;
+import io.micronaut.data.model.JsonDataType;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder;
@@ -253,7 +254,7 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
         AnnotationValue<QueryResult> queryResultAnn = sqlStoredQuery.getAnnotationMetadata().getAnnotation(QueryResult.class);
         QueryResult.Type type =  queryResultAnn.enumValue("type", QueryResult.Type.class).orElse(QueryResult.Type.JSON);
         String columnName = queryResultAnn.getRequiredValue("column", String.class);
-        JsonType jsonType = queryResultAnn.enumValue("jsonType", JsonType.class).orElse(JsonType.STRING);
-        return new QueryResultInfo(type, columnName, jsonType);
+        JsonDataType jsonDataType = type == QueryResult.Type.JSON ? queryResultAnn.enumValue("jsonDataType", JsonDataType.class).orElse(JsonRepresentation.DEFAULT_JSON_TYPE) : null;
+        return new QueryResultInfo(type, columnName, jsonDataType);
     }
 }

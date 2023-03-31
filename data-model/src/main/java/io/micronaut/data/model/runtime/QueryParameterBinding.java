@@ -19,7 +19,7 @@ import io.micronaut.core.annotation.Experimental;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.model.DataType;
-import io.micronaut.data.model.JsonType;
+import io.micronaut.data.model.JsonDataType;
 
 /**
  * The query parameter binding.
@@ -59,10 +59,10 @@ public interface QueryParameterBinding {
     }
 
     /**
-     * @return The JSON representation type if data type is JSON, default STRING
+     * @return The JSON representation type if data type is JSON, default {@link JsonDataType#NATIVE}
      */
     @Nullable
-    default JsonType getJsonType() {
+    default JsonDataType getJsonDataType() {
         return null;
     }
 
