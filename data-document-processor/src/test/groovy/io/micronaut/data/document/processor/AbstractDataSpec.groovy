@@ -42,7 +42,7 @@ package $pkg;
 
 import io.micronaut.data.annotation.DateCreated;
 import io.micronaut.data.annotation.DateUpdated;
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.util.*;
 
 $source
@@ -84,7 +84,7 @@ $source
         return buildBeanDefinition(name + BeanDefinitionVisitor.PROXY_SUFFIX, """
 package $pkg;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import io.micronaut.data.repository.*;
 import io.micronaut.data.annotation.Repository;
 import java.util.*;

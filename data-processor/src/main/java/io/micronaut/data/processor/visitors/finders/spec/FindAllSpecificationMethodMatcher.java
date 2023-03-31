@@ -52,7 +52,7 @@ public class FindAllSpecificationMethodMatcher extends AbstractSpecificationMeth
 
     @Override
     protected MethodMatch match(MethodMatchContext matchContext, java.util.regex.Matcher matcher) {
-        if (TypeUtils.isValidFindAllReturnType(matchContext) && isCorrectParameters(matchContext.getMethodElement())) {
+        if (TypeUtils.doesMethodProducesIterableOfAnEntityOrDto(matchContext.getMethodElement()) && isCorrectParameters(matchContext.getMethodElement())) {
             if (isFirstParameterMicronautDataQuerySpecification(matchContext.getMethodElement())) {
                 Map.Entry<ClassElement, ClassElement> e = FindersUtils.pickFindAllSpecInterceptor(matchContext, matchContext.getReturnType());
                 return mc -> new MethodMatchInfo(DataMethod.OperationType.QUERY, e.getKey(), e.getValue());
@@ -65,12 +65,7 @@ public class FindAllSpecificationMethodMatcher extends AbstractSpecificationMeth
                 );
             }
             return mc -> {
-                ClassElement classElement;
-                try {
-                    classElement = getInterceptorElement(mc, "io.micronaut.data.jpa.repository.intercept.FindAllSpecificationInterceptor");
-                } catch (IllegalStateException e) {
-                    classElement = getInterceptorElement(mc, "io.micronaut.data.hibernate6.jpa.repository.intercept.FindAllSpecificationInterceptor");
-                }
+                ClassElement classElement = getInterceptorElement(mc, "io.micronaut.data.jpa.repository.intercept.FindAllSpecificationInterceptor");
                 return new MethodMatchInfo(
                     DataMethod.OperationType.QUERY,
                     mc.getReturnType(),

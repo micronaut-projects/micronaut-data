@@ -75,9 +75,10 @@ import io.micronaut.data.model.Slice;
 import io.micronaut.data.processor.visitors.MatchFailedException;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.inject.ast.ClassElement;
+import io.micronaut.inject.ast.MethodElement;
 import org.reactivestreams.Publisher;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 import java.lang.reflect.Array;
 import java.lang.reflect.Modifier;
 import java.util.AbstractMap;
@@ -97,7 +98,7 @@ public interface FindersUtils {
                                                                                                            boolean hasMultipleEntityParameter,
                                                                                                            DataMethod.OperationType operationType,
                                                                                                            MethodMatchContext matchContext) {
-        ClassElement returnType = matchContext.getReturnType();
+        ClassElement returnType = matchContext.getMethodElement().getGenericReturnType();
         switch (operationType) {
             case DELETE:
                 if (hasEntityParameter) {
@@ -140,8 +141,8 @@ public interface FindersUtils {
     }
 
     static Map.Entry<ClassElement, Class<? extends DataInterceptor>> pickSaveOneInterceptor(MethodMatchContext matchContext, ClassElement returnType) {
-        if (isFutureType(matchContext, returnType)) {
-            return typeAndInterceptorEntry(getAsyncType(matchContext, returnType), SaveOneAsyncInterceptor.class);
+        if (isFutureType(matchContext.getMethodElement(), returnType)) {
+            return typeAndInterceptorEntry(getAsyncType(matchContext.getMethodElement(), returnType), SaveOneAsyncInterceptor.class);
         } else if (isReactiveType(returnType)) {
             return typeAndInterceptorEntry(returnType.getFirstTypeArgument().orElse(null), SaveOneReactiveInterceptor.class);
         }
@@ -149,8 +150,8 @@ public interface FindersUtils {
     }
 
     static Map.Entry<ClassElement, Class<? extends DataInterceptor>> pickUpdateAllEntitiesInterceptor(MethodMatchContext matchContext, ClassElement returnType) {
-        if (isFutureType(matchContext, returnType)) {
-            return typeAndInterceptorEntry(getAsyncType(matchContext, returnType), UpdateAllEntriesAsyncInterceptor.class);
+        if (isFutureType(matchContext.getMethodElement(), returnType)) {
+            return typeAndInterceptorEntry(getAsyncType(matchContext.getMethodElement(), returnType), UpdateAllEntriesAsyncInterceptor.class);
         } else if (isReactiveType(returnType)) {
             return typeAndInterceptorEntry(returnType.getFirstTypeArgument().orElse(null), UpdateAllEntitiesReactiveInterceptor.class);
         }
@@ -158,8 +159,8 @@ public interface FindersUtils {
     }
 
     static Map.Entry<ClassElement, Class<? extends DataInterceptor>> pickDeleteInterceptor(MethodMatchContext matchContext, ClassElement returnType) {
-        if (isFutureType(matchContext, returnType)) {
-            return typeAndInterceptorEntry(getAsyncType(matchContext, returnType), DeleteOneAsyncInterceptor.class);
+        if (isFutureType(matchContext.getMethodElement(), returnType)) {
+            return typeAndInterceptorEntry(getAsyncType(matchContext.getMethodElement(), returnType), DeleteOneAsyncInterceptor.class);
         } else if (isReactiveType(returnType)) {
             return typeAndInterceptorEntry(returnType.getFirstTypeArgument().orElse(null), DeleteOneReactiveInterceptor.class);
         }
@@ -167,8 +168,8 @@ public interface FindersUtils {
     }
 
     static Map.Entry<ClassElement, Class<? extends DataInterceptor>> pickDeleteAllInterceptor(MethodMatchContext matchContext, ClassElement returnType) {
-        if (isFutureType(matchContext, returnType)) {
-            return typeAndInterceptorEntry(getAsyncType(matchContext, returnType), DeleteAllAsyncInterceptor.class);
+        if (isFutureType(matchContext.getMethodElement(), returnType)) {
+            return typeAndInterceptorEntry(getAsyncType(matchContext.getMethodElement(), returnType), DeleteAllAsyncInterceptor.class);
         } else if (isReactiveType(returnType)) {
             return typeAndInterceptorEntry(returnType.getFirstTypeArgument().orElse(null), DeleteAllReactiveInterceptor.class);
         }
@@ -176,8 +177,8 @@ public interface FindersUtils {
     }
 
     static Map.Entry<ClassElement, Class<? extends DataInterceptor>> pickSaveEntityInterceptor(MethodMatchContext matchContext, ClassElement returnType) {
-        if (isFutureType(matchContext, returnType)) {
-            return typeAndInterceptorEntry(getAsyncType(matchContext, returnType), SaveEntityAsyncInterceptor.class);
+        if (isFutureType(matchContext.getMethodElement(), returnType)) {
+            return typeAndInterceptorEntry(getAsyncType(matchContext.getMethodElement(), returnType), SaveEntityAsyncInterceptor.class);
         } else if (isReactiveType(returnType)) {
             return typeAndInterceptorEntry(returnType.getFirstTypeArgument().orElse(null), SaveEntityReactiveInterceptor.class);
         }
@@ -185,8 +186,8 @@ public interface FindersUtils {
     }
 
     static Map.Entry<ClassElement, Class<? extends DataInterceptor>> pickSaveAllEntitiesInterceptor(MethodMatchContext matchContext, ClassElement returnType) {
-        if (isFutureType(matchContext, returnType)) {
-            return typeAndInterceptorEntry(getAsyncType(matchContext, returnType), SaveAllAsyncInterceptor.class);
+        if (isFutureType(matchContext.getMethodElement(), returnType)) {
+            return typeAndInterceptorEntry(getAsyncType(matchContext.getMethodElement(), returnType), SaveAllAsyncInterceptor.class);
         } else if (isReactiveType(returnType)) {
             return typeAndInterceptorEntry(returnType.getFirstTypeArgument().orElse(null), SaveAllReactiveInterceptor.class);
         }
@@ -194,8 +195,8 @@ public interface FindersUtils {
     }
 
     static Map.Entry<ClassElement, Class<? extends DataInterceptor>> pickUpdateInterceptor(MethodMatchContext matchContext, ClassElement returnType) {
-        if (isFutureType(matchContext, returnType)) {
-            return typeAndInterceptorEntry(getAsyncType(matchContext, returnType), UpdateAsyncInterceptor.class);
+        if (isFutureType(matchContext.getMethodElement(), returnType)) {
+            return typeAndInterceptorEntry(getAsyncType(matchContext.getMethodElement(), returnType), UpdateAsyncInterceptor.class);
         } else if (isReactiveType(returnType)) {
             return typeAndInterceptorEntry(returnType.getFirstTypeArgument().orElse(null), UpdateReactiveInterceptor.class);
         }
@@ -203,8 +204,8 @@ public interface FindersUtils {
     }
 
     static Map.Entry<ClassElement, Class<? extends DataInterceptor>> pickUpdateEntityInterceptor(MethodMatchContext matchContext, ClassElement returnType) {
-        if (isFutureType(matchContext, returnType)) {
-            return typeAndInterceptorEntry(getAsyncType(matchContext, returnType), UpdateEntityAsyncInterceptor.class);
+        if (isFutureType(matchContext.getMethodElement(), returnType)) {
+            return typeAndInterceptorEntry(getAsyncType(matchContext.getMethodElement(), returnType), UpdateEntityAsyncInterceptor.class);
         } else if (isReactiveType(returnType)) {
             return typeAndInterceptorEntry(returnType.getFirstTypeArgument().orElse(null), UpdateEntityReactiveInterceptor.class);
         }
@@ -213,8 +214,8 @@ public interface FindersUtils {
 
     static Map.Entry<ClassElement, Class<? extends DataInterceptor>> resolveFindInterceptor(MethodMatchContext matchContext, ClassElement returnType) {
         Map.Entry<ClassElement, Class<? extends DataInterceptor>> entry;
-        if (isFutureType(matchContext, returnType)) {
-            entry = resolveAsyncFindInterceptor(matchContext, returnType, getAsyncType(matchContext, returnType));
+        if (isFutureType(matchContext.getMethodElement(), returnType)) {
+            entry = resolveAsyncFindInterceptor(matchContext, getAsyncType(matchContext.getMethodElement(), returnType));
         } else if (isReactiveType(returnType)) {
             entry = resolveReactiveFindInterceptor(matchContext, returnType, returnType.getFirstTypeArgument().orElseThrow(IllegalStateException::new));
         } else {
@@ -261,7 +262,7 @@ public interface FindersUtils {
     }
 
     static Map.Entry<ClassElement, Class<? extends DataInterceptor>> resolveAsyncFindInterceptor(
-            @NonNull MethodMatchContext matchContext, @NonNull ClassElement returnType, @NonNull ClassElement asyncType) {
+            @NonNull MethodMatchContext matchContext, @NonNull ClassElement asyncType) {
         ClassElement firstTypeArgument = asyncType.getFirstTypeArgument().orElse(null);
         if (isPage(matchContext, asyncType)) {
             return typeAndInterceptorEntry(firstTypeArgument, FindPageAsyncInterceptor.class);
@@ -269,7 +270,7 @@ public interface FindersUtils {
             return typeAndInterceptorEntry(firstTypeArgument, FindSliceAsyncInterceptor.class);
         } else if (isContainer(asyncType, Iterable.class)) {
             return typeAndInterceptorEntry(firstTypeArgument, FindAllAsyncInterceptor.class);
-        } else if (isContainer(returnType, Optional.class)) {
+        } else if (isContainer(asyncType, Optional.class)) {
             return typeAndInterceptorEntry(firstTypeArgument, FindOneAsyncInterceptor.class);
         } else {
             return typeAndInterceptorEntry(asyncType, FindOneAsyncInterceptor.class);
@@ -277,8 +278,8 @@ public interface FindersUtils {
     }
 
     static Map.Entry<ClassElement, Class<? extends DataInterceptor>> pickCountInterceptor(MethodMatchContext matchContext, ClassElement returnType) {
-        if (isFutureType(matchContext, returnType)) {
-            return typeAndInterceptorEntry(getAsyncType(matchContext, returnType), CountAsyncInterceptor.class);
+        if (isFutureType(matchContext.getMethodElement(), returnType)) {
+            return typeAndInterceptorEntry(getAsyncType(matchContext.getMethodElement(), returnType), CountAsyncInterceptor.class);
         } else if (isReactiveType(returnType)) {
             return typeAndInterceptorEntry(returnType.getFirstTypeArgument().orElse(null), CountReactiveInterceptor.class);
         }
@@ -286,8 +287,8 @@ public interface FindersUtils {
     }
 
     static Map.Entry<ClassElement, Class<? extends DataInterceptor>> pickExistsInterceptor(MethodMatchContext matchContext, ClassElement returnType) {
-        if (isFutureType(matchContext, returnType)) {
-            return typeAndInterceptorEntry(getAsyncType(matchContext, returnType), ExistsByAsyncInterceptor.class);
+        if (isFutureType(matchContext.getMethodElement(), returnType)) {
+            return typeAndInterceptorEntry(getAsyncType(matchContext.getMethodElement(), returnType), ExistsByAsyncInterceptor.class);
         } else if (isReactiveType(returnType)) {
             return typeAndInterceptorEntry(returnType.getFirstTypeArgument().orElse(null), ExistsByReactiveInterceptor.class);
         }
@@ -295,8 +296,8 @@ public interface FindersUtils {
     }
 
     static Map.Entry<ClassElement, Class<? extends DataInterceptor>> pickFindByIdInterceptor(MethodMatchContext matchContext, ClassElement returnType) {
-        if (isFutureType(matchContext, returnType)) {
-            return typeAndInterceptorEntry(getAsyncType(matchContext, returnType), FindByIdAsyncInterceptor.class);
+        if (isFutureType(matchContext.getMethodElement(), returnType)) {
+            return typeAndInterceptorEntry(getAsyncType(matchContext.getMethodElement(), returnType), FindByIdAsyncInterceptor.class);
         } else if (isReactiveType(returnType)) {
             return typeAndInterceptorEntry(returnType.getFirstTypeArgument().orElse(null), FindByIdReactiveInterceptor.class);
         }
@@ -304,8 +305,8 @@ public interface FindersUtils {
     }
 
     static Map.Entry<ClassElement, Class<? extends DataInterceptor>> pickFindOneInterceptor(MethodMatchContext matchContext, ClassElement returnType) {
-        if (isFutureType(matchContext, returnType)) {
-            return typeAndInterceptorEntry(getAsyncType(matchContext, returnType), FindOneAsyncInterceptor.class);
+        if (isFutureType(matchContext.getMethodElement(), returnType)) {
+            return typeAndInterceptorEntry(getAsyncType(matchContext.getMethodElement(), returnType), FindOneAsyncInterceptor.class);
         } else if (isReactiveType(returnType)) {
             return typeAndInterceptorEntry(returnType.getFirstTypeArgument().orElse(null), FindOneReactiveInterceptor.class);
         }
@@ -313,8 +314,8 @@ public interface FindersUtils {
     }
 
     static Map.Entry<ClassElement, ClassElement> pickCountSpecInterceptor(MethodMatchContext matchContext, ClassElement returnType) {
-        if (isFutureType(matchContext, returnType)) {
-            return typeAndInterceptorEntry(getAsyncType(matchContext, returnType),
+        if (isFutureType(matchContext.getMethodElement(), returnType)) {
+            return typeAndInterceptorEntry(getAsyncType(matchContext.getMethodElement(), returnType),
                     getInterceptorElement(matchContext, "io.micronaut.data.runtime.intercept.criteria.async.CountAsyncSpecificationInterceptor")
             );
         } else if (isReactiveType(returnType)) {
@@ -328,8 +329,8 @@ public interface FindersUtils {
     }
 
     static Map.Entry<ClassElement, ClassElement> pickDeleteAllSpecInterceptor(MethodMatchContext matchContext, ClassElement returnType) {
-        if (isFutureType(matchContext, returnType)) {
-            return typeAndInterceptorEntry(getAsyncType(matchContext, returnType),
+        if (isFutureType(matchContext.getMethodElement(), returnType)) {
+            return typeAndInterceptorEntry(getAsyncType(matchContext.getMethodElement(), returnType),
                     getInterceptorElement(matchContext, "io.micronaut.data.runtime.intercept.criteria.async.DeleteAllAsyncSpecificationInterceptor")
             );
         } else if (isReactiveType(returnType)) {
@@ -343,8 +344,8 @@ public interface FindersUtils {
     }
 
     static Map.Entry<ClassElement, ClassElement> pickFindAllSpecInterceptor(MethodMatchContext matchContext, ClassElement returnType) {
-        if (isFutureType(matchContext, returnType)) {
-            return typeAndInterceptorEntry(getAsyncType(matchContext, returnType),
+        if (isFutureType(matchContext.getMethodElement(), returnType)) {
+            return typeAndInterceptorEntry(getAsyncType(matchContext.getMethodElement(), returnType),
                     getInterceptorElement(matchContext, "io.micronaut.data.runtime.intercept.criteria.async.FindAllAsyncSpecificationInterceptor")
             );
         } else if (isReactiveType(returnType)) {
@@ -358,8 +359,8 @@ public interface FindersUtils {
     }
 
     static Map.Entry<ClassElement, ClassElement> pickFindOneSpecInterceptor(MethodMatchContext matchContext, ClassElement returnType) {
-        if (isFutureType(matchContext, returnType)) {
-            return typeAndInterceptorEntry(getAsyncType(matchContext, returnType),
+        if (isFutureType(matchContext.getMethodElement(), returnType)) {
+            return typeAndInterceptorEntry(getAsyncType(matchContext.getMethodElement(), returnType),
                     getInterceptorElement(matchContext, "io.micronaut.data.runtime.intercept.criteria.async.FindOneAsyncSpecificationInterceptor")
             );
         }
@@ -374,8 +375,8 @@ public interface FindersUtils {
     }
 
     static Map.Entry<ClassElement, ClassElement> pickFindPageSpecInterceptor(MethodMatchContext matchContext, ClassElement returnType) {
-        if (isFutureType(matchContext, returnType)) {
-            return typeAndInterceptorEntry(getAsyncType(matchContext, returnType),
+        if (isFutureType(matchContext.getMethodElement(), returnType)) {
+            return typeAndInterceptorEntry(getAsyncType(matchContext.getMethodElement(), returnType),
                     getInterceptorElement(matchContext, "io.micronaut.data.runtime.intercept.criteria.async.FindPageAsyncSpecificationInterceptor")
             );
         } else if (isReactiveType(returnType)) {
@@ -389,8 +390,8 @@ public interface FindersUtils {
     }
 
     static Map.Entry<ClassElement, ClassElement> pickUpdateAllSpecInterceptor(MethodMatchContext matchContext, ClassElement returnType) {
-        if (isFutureType(matchContext, returnType)) {
-            return typeAndInterceptorEntry(getAsyncType(matchContext, returnType),
+        if (isFutureType(matchContext.getMethodElement(), returnType)) {
+            return typeAndInterceptorEntry(getAsyncType(matchContext.getMethodElement(), returnType),
                     getInterceptorElement(matchContext, "io.micronaut.data.runtime.intercept.criteria.async.UpdateAllAsyncSpecificationInterceptor")
             );
         } else if (isReactiveType(returnType)) {
@@ -404,8 +405,8 @@ public interface FindersUtils {
     }
 
     static Map.Entry<ClassElement, ClassElement> pickExistsSpecInterceptor(MethodMatchContext matchContext, ClassElement returnType) {
-        if (isFutureType(matchContext, returnType)) {
-            return typeAndInterceptorEntry(getAsyncType(matchContext, returnType),
+        if (isFutureType(matchContext.getMethodElement(), returnType)) {
+            return typeAndInterceptorEntry(getAsyncType(matchContext.getMethodElement(), returnType),
                 getInterceptorElement(matchContext, "io.micronaut.data.runtime.intercept.criteria.async.ExistsAsyncSpecificationInterceptor")
             );
         } else if (isReactiveType(returnType)) {
@@ -418,15 +419,12 @@ public interface FindersUtils {
         );
     }
 
-    static ClassElement getAsyncType(@NonNull MethodMatchContext matchContext,
+    static ClassElement getAsyncType(@NonNull MethodElement methodElement,
                                      @NonNull ClassElement returnType) {
-        if (matchContext.getMethodElement().isSuspend()) {
-            if (returnType.getName().equals("kotlinx.coroutines.flow.Flow")) {
-                return returnType.getFirstTypeArgument().orElseThrow(IllegalStateException::new);
-            }
-            return returnType;
+        if (methodElement.isSuspend()) {
+            return TypeUtils.getKotlinCoroutineProducedType(methodElement);
         }
-        return returnType.getFirstTypeArgument().orElseThrow(IllegalStateException::new);
+        return returnType.getFirstTypeArgument().orElse(null);
     }
 
     static Map.Entry<ClassElement, Class<? extends DataInterceptor>> typeAndInterceptorEntry(ClassElement type, Class<? extends DataInterceptor> interceptor) {
@@ -437,8 +435,8 @@ public interface FindersUtils {
         return new AbstractMap.SimpleEntry<>(type, interceptor);
     }
 
-    static boolean isFutureType(MethodMatchContext methodMatchContext, @Nullable ClassElement type) {
-        return methodMatchContext.getMethodElement().isSuspend() || isOneOfContainers(type, CompletionStage.class, Future.class);
+    static boolean isFutureType(MethodElement methodElement, @Nullable ClassElement type) {
+        return methodElement.isSuspend() || isOneOfContainers(type, CompletionStage.class, Future.class);
     }
 
     static boolean isReactiveType(@Nullable ClassElement type) {

@@ -555,6 +555,12 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
         if (TypeUtils.areTypesCompatible(genericType, property.getType()) && !TypeUtils.isObjectClass(genericType)) {
             return true;
         }
+        if (TypeUtils.isContainerType(property.getType())) {
+            ClassElement genericPropertyType = property.getType().getFirstTypeArgument().orElse(property.getType());
+            if (TypeUtils.areTypesCompatible(genericType, genericPropertyType) && !TypeUtils.isObjectClass(genericType)) {
+                return true;
+            }
+        }
         if (owner.hasCompositeIdentity() && property.getOwner().getCompositeIdentity()[0].equals(property)) {
             // Workaround for composite properties
             return true;
@@ -672,8 +678,7 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
             return false;
         }
         AnnotationMetadataHierarchy metadataHierarchy = new AnnotationMetadataHierarchy(matchContext.getRepositoryClass(), matchContext.getMethodElement());
-        if (metadataHierarchy.hasAnnotation("io.micronaut.data.jpa.annotation.EntityGraph") ||
-            metadataHierarchy.hasAnnotation("io.micronaut.data.hibernate6.jpa.annotation.EntityGraph")) {
+        if (metadataHierarchy.hasAnnotation("io.micronaut.data.jpa.annotation.EntityGraph")) {
             return false;
         }
         if (metadataHierarchy.hasAnnotation(QueryHint.class) || metadataHierarchy.hasAnnotation(QueryHints.class)) {

@@ -90,7 +90,7 @@ public interface BindableParametersStoredQuery<E, R> extends StoredQuery<E, R>, 
         /**
          * Bind the value.
          *
-         * @param binding The binding
+         * @param binding  The binding
          * @param value    The value
          */
         void bindOne(@NonNull QueryParameterBinding binding, @Nullable Object value);

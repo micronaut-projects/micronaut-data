@@ -6,7 +6,7 @@ pluginManagement {
 }
 
 plugins {
-    id 'io.micronaut.build.shared.settings' version '6.2.2'
+    id 'io.micronaut.build.shared.settings' version '6.3.5'
 }
 
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
@@ -30,6 +30,7 @@ micronautBuild {
     importMicronautCatalog("micronaut-sql")
     importMicronautCatalog("micronaut-kotlin")
     importMicronautCatalog("micronaut-multitenancy")
+    importMicronautCatalog("micronaut-validation")
 }
 
 include 'data-bom'
@@ -45,12 +46,11 @@ include 'data-tck'
 include 'data-document-tck'
 
 // implementations
+
 include 'data-hibernate-jpa'
 include 'data-hibernate-reactive'
-include 'data-hibernate6-jpa'
 
 include 'data-tx-hibernate'
-include 'data-tx-hibernate6'
 include 'data-jdbc'
 include 'data-r2dbc'
 include 'data-mongodb'
@@ -62,7 +62,6 @@ include 'data-spring'
 include 'data-spring-jpa'
 
 // documentation samples
-include 'doc-examples:hibernate6-example-java'
 include 'doc-examples:hibernate-example-java'
 include 'doc-examples:hibernate-example-groovy'
 include 'doc-examples:hibernate-example-kotlin'

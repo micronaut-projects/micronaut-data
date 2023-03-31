@@ -90,10 +90,9 @@ dependency:org.mongodb:mongodb-driver-reactivestreams[scope="runtime"].
 
 NOTE: It's not possible to use both drivers at the same time. If you have both drivers on the classpath you can use property `micronaut.data.mongodb.driver-type` and value: `sync` or `reactive` to select proper driver.
 
-Next up you need to configure at least one data source. The following snippet from `application.yml` is an example of configuring the default MongoDB data source:
+Next up you need to configure at least one data source. The following snippet from the application configuration file is an example of configuring the default MongoDB data source:
 
-.Example YAML configuration
-[source,yaml]
+[configuration]
 ----
 mongodb:
   uri: mongodb://username:password@localhost:27017/databaseName

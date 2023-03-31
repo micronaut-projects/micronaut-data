@@ -41,7 +41,7 @@ interface CoroutineJpaSpecificationExecutor<T> {
      * @param spec The query specification
      * @return optional found result
      */
-    fun findOne(spec: QuerySpecification<T>?): T?
+    suspend fun findOne(spec: QuerySpecification<T>?): T?
 
     /**
      * Returns a single entity matching the given [PredicateSpecification].
@@ -49,7 +49,7 @@ interface CoroutineJpaSpecificationExecutor<T> {
      * @param spec The query specification
      * @return optional found result
      */
-    fun findOne(spec: PredicateSpecification<T>?): T?
+    suspend fun findOne(spec: PredicateSpecification<T>?): T?
 
     /**
      * Returns all entities matching the given [QuerySpecification].
@@ -74,7 +74,7 @@ interface CoroutineJpaSpecificationExecutor<T> {
      * @param pageable The pageable object
      * @return a page
      */
-    fun findAll(spec: QuerySpecification<T>?, pageable: Pageable): Page<T>
+    suspend fun findAll(spec: QuerySpecification<T>?, pageable: Pageable): Page<T>
 
     /**
      * Returns a [Page] of entities matching the given [PredicateSpecification].
@@ -83,7 +83,7 @@ interface CoroutineJpaSpecificationExecutor<T> {
      * @param pageable The pageable object
      * @return a page
      */
-    fun findAll(spec: PredicateSpecification<T>?, pageable: Pageable): Page<T>
+    suspend fun findAll(spec: PredicateSpecification<T>?, pageable: Pageable): Page<T>
 
     /**
      * Returns all entities matching the given [QuerySpecification] and [Sort].

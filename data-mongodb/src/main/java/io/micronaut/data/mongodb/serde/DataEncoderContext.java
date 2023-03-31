@@ -41,6 +41,7 @@ import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.types.ObjectId;
 
 import java.io.IOException;
+import java.util.Map;
 
 /**
  * The Micronaut Data's Serde's {@link io.micronaut.serde.Serializer.EncoderContext}.
@@ -172,7 +173,7 @@ final class DataEncoderContext implements Serializer.EncoderContext {
         if (codec instanceof MappedCodec) {
             return ((MappedCodec<T>) codec).serializer;
         }
-        if (codec != null && !(codec instanceof IterableCodec)) {
+        if (codec != null && !(codec instanceof IterableCodec) && !(Map.class.isAssignableFrom(codec.getEncoderClass()))) {
             return new CodecBsonDecoder<>((Codec<T>) codec);
         }
         return parent.findSerializer(type);

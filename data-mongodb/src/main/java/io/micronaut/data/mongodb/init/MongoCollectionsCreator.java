@@ -15,13 +15,14 @@
  */
 package io.micronaut.data.mongodb.init;
 
-import com.mongodb.reactivestreams.client.MongoClient;
-import com.mongodb.reactivestreams.client.MongoDatabase;
+import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoDatabase;
 import io.micronaut.configuration.mongo.core.AbstractMongoConfiguration;
 import io.micronaut.context.BeanLocator;
 import io.micronaut.context.annotation.Context;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
@@ -29,13 +30,12 @@ import io.micronaut.data.mongodb.conf.MongoDataConfiguration;
 import io.micronaut.data.mongodb.conf.RequiresSyncMongo;
 import io.micronaut.data.mongodb.operations.MongoDatabaseNameProvider;
 import jakarta.annotation.PostConstruct;
-import reactor.core.publisher.Flux;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * MongoDB's collections creator.
@@ -72,7 +72,7 @@ public final class MongoCollectionsCreator extends AbstractMongoCollectionsCreat
 
                 @Override
                 public Set<String> listCollectionNames(MongoDatabase database) {
-                    return databaseCollections.computeIfAbsent(database.getName(), s -> Flux.from(database.listCollectionNames()).collect(Collectors.toSet()).block());
+                    return databaseCollections.computeIfAbsent(database.getName(), s -> new HashSet<>(CollectionUtils.iterableToSet(database.listCollectionNames())));
                 }
 
                 @Override

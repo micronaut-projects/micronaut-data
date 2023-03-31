@@ -22,6 +22,7 @@ import io.micronaut.core.annotation.Nullable;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.transaction.async.AsyncUsingReactiveTransactionOperations;
 import io.micronaut.transaction.interceptor.CoroutineTxHelper;
+import io.micronaut.transaction.interceptor.ReactorCoroutineTxHelper;
 import io.micronaut.transaction.reactive.ReactorReactiveTransactionOperations;
 import io.micronaut.transaction.sync.SynchronousFromReactiveTransactionManager;
 import io.r2dbc.spi.ConnectionFactory;
@@ -48,8 +49,9 @@ final class R2dbcTransactionManagerFactory {
     @EachBean(ConnectionFactory.class)
     <T> AsyncUsingReactiveTransactionOperations<T> buildAsyncTransactionOperations(@Parameter String dataSourceName,
                                                                                    @Parameter ReactorReactiveTransactionOperations<T> reactiveTransactionOperations,
-                                                                                   @Nullable CoroutineTxHelper coroutineTxHelper) {
-        return new AsyncUsingReactiveTransactionOperations<>(reactiveTransactionOperations, coroutineTxHelper);
+                                                                                   @Nullable CoroutineTxHelper coroutineTxHelper,
+                                                                                   @Nullable ReactorCoroutineTxHelper reactorCoroutineTxHelper) {
+        return new AsyncUsingReactiveTransactionOperations<>(reactiveTransactionOperations, coroutineTxHelper, reactorCoroutineTxHelper);
     }
 
 }

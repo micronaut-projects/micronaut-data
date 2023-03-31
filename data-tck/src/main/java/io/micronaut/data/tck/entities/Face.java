@@ -26,13 +26,10 @@ import jakarta.persistence.OneToOne;
 import java.time.Instant;
 
 @Entity
-@javax.persistence.Entity
 public class Face {
 
     @GeneratedValue
     @Id
-    @javax.persistence.GeneratedValue
-    @javax.persistence.Id
     private Long id;
     private String name;
 
@@ -59,7 +56,6 @@ public class Face {
     }
 
     @OneToOne(mappedBy = "face")
-    @javax.persistence.OneToOne(mappedBy = "face")
     private Nose nose;
 
     public Long getId() {

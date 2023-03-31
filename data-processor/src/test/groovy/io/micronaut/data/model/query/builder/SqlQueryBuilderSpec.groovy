@@ -33,22 +33,7 @@ import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
 import io.micronaut.data.model.query.factory.Projections
 import io.micronaut.data.model.runtime.RuntimePersistentEntity
-import io.micronaut.data.tck.entities.Book
-import io.micronaut.data.tck.entities.Car
-import io.micronaut.data.tck.entities.Challenge
-import io.micronaut.data.tck.entities.City
-import io.micronaut.data.tck.entities.CountryRegion
-import io.micronaut.data.tck.entities.Meal
-import io.micronaut.data.tck.entities.Product
-import io.micronaut.data.tck.entities.Restaurant
-import io.micronaut.data.tck.entities.Sale
-import io.micronaut.data.tck.entities.Shipment
-import io.micronaut.data.tck.entities.ShipmentWithIndex
-import io.micronaut.data.tck.entities.ShipmentWithIndexOnClass
-import io.micronaut.data.tck.entities.ShipmentWithIndexOnClassAndFields
-import io.micronaut.data.tck.entities.ShipmentWithIndexOnFields
-import io.micronaut.data.tck.entities.ShipmentWithIndexOnFieldsCompositeIndexes
-import io.micronaut.data.tck.entities.UuidEntity
+import io.micronaut.data.tck.entities.*
 import io.micronaut.data.tck.jdbc.entities.Project
 import io.micronaut.data.tck.jdbc.entities.UserRole
 import spock.lang.Requires
@@ -99,6 +84,52 @@ interface MyRepository {
         builder.buildQuery(queryModel).query == 'SELECT sale_.id,sale_.name,sale_.data,sale_.quantities,sale_.extra_data,sale_.data_list FROM sale sale_ WHERE (sale_.name = $1)'
         builder.buildDelete(queryModel).query == 'DELETE  FROM sale  WHERE (name = $1)'
         builder.buildUpdate(queryModel, Arrays.asList("name")).query == 'UPDATE sale SET name=$1 WHERE (name = $2)'
+        builder.buildInsert(annotationMetadata, entity).query == 'INSERT INTO sale (name,data,quantities,extra_data,data_list) VALUES ($1,to_json($2::json),to_json($3::json),to_json($4::json),to_json($5::json))'
+    }
+
+    @Requires({ javaVersion >= 1.8 })
+    void 'test where annotation replacement'() {
+        given:
+        def annotationMetadata = buildTypeAnnotationMetadata('''
+package test;
+import io.micronaut.data.annotation.*;
+import io.micronaut.data.model.query.builder.sql.*;
+import java.lang.annotation.*;
+import io.micronaut.data.jdbc.annotation.*;
+import io.micronaut.context.annotation.*;
+
+@MyAnnotation(dialect = Dialect.POSTGRES)
+@Where("@.name = :name")
+interface MyRepository {
+}
+
+@RepositoryConfiguration(
+        queryBuilder = SqlQueryBuilder.class
+)
+@SqlQueryConfiguration(
+    @SqlQueryConfiguration.DialectConfiguration(
+        dialect = Dialect.POSTGRES,
+        positionalParameterFormat = "$%s",
+        escapeQueries = false
+    )
+)
+@Retention(RetentionPolicy.RUNTIME)
+@Repository
+@interface MyAnnotation {
+    @AliasFor(annotation = Repository.class, member = "dialect")
+    Dialect dialect() default Dialect.ANSI;
+}
+''')
+
+        SqlQueryBuilder builder = new SqlQueryBuilder(annotationMetadata)
+        PersistentEntity entity = PersistentEntity.of(Sale)
+        def queryModel = QueryModel.from(entity)
+
+        expect:
+        builder.dialect == Dialect.POSTGRES
+        builder.buildQuery(annotationMetadata, queryModel).query == 'SELECT sale_.id,sale_.name,sale_.data,sale_.quantities,sale_.extra_data,sale_.data_list FROM sale sale_ WHERE (sale_.name =$1)'
+        builder.buildDelete(annotationMetadata, queryModel).query == 'DELETE  FROM sale  WHERE (name =$1)'
+        builder.buildUpdate(annotationMetadata, queryModel, Arrays.asList("name")).query == 'UPDATE sale SET name=$1 WHERE (name =$2)'
         builder.buildInsert(annotationMetadata, entity).query == 'INSERT INTO sale (name,data,quantities,extra_data,data_list) VALUES ($1,to_json($2::json),to_json($3::json),to_json($4::json),to_json($5::json))'
     }
 
@@ -168,6 +199,94 @@ interface MyRepository {
 
         expect:
         encoded.query == 'SELECT book_.`id`,book_.`author_id`,book_.`genre_id`,book_.`title`,book_.`total_pages`,book_.`publisher_id`,book_.`last_updated`,book_genre_.`genre_name` AS genre_genre_name,book_author_.`name` AS author_name,book_author_.`nick_name` AS author_nick_name FROM `book` book_ LEFT JOIN `genre` book_genre_ ON book_.`genre_id`=book_genre_.`id` INNER JOIN `author` book_author_ ON book_.`author_id`=book_author_.`id` WHERE (book_.`id` = ?)'
+
+    }
+
+    void "test encode to-one join - single level, two join entities, outer joins"() {
+        given:
+        PersistentEntity entity = PersistentEntity.of(Book)
+        QueryModel q = QueryModel.from(entity)
+        q.idEq(new QueryParameter("test"))
+        q.join(entity.getPropertyByName("author") as Association, Join.Type.OUTER)
+        q.join(entity.getPropertyByName("genre") as Association, Join.Type.OUTER_FETCH)
+        QueryBuilder encoder = new SqlQueryBuilder(Dialect.POSTGRES)
+        def encoded = encoder.buildQuery(q)
+
+        expect:
+        encoded.query == 'SELECT book_."id",book_."author_id",book_."genre_id",book_."title",book_."total_pages",book_."publisher_id",book_."last_updated",book_genre_."genre_name" AS genre_genre_name FROM "book" book_ FULL OUTER JOIN "genre" book_genre_ ON book_."genre_id"=book_genre_."id" FULL OUTER JOIN "author" book_author_ ON book_."author_id"=book_author_."id" WHERE (book_."id" = ?)'
+
+    }
+
+
+    void "test encode to-one join - unsupported outer join throws exception for H2 Dialect"() {
+        given:
+        PersistentEntity entity = PersistentEntity.of(Book)
+        QueryModel q = QueryModel.from(entity)
+        q.join(entity.getPropertyByName("author") as Association, Join.Type.OUTER)
+        QueryBuilder encoder = new SqlQueryBuilder(Dialect.H2)
+
+        when:
+        encoder.buildQuery(q)
+
+        then:
+        def e = thrown(IllegalArgumentException)
+
+        expect:
+        e.message == "Unsupported join type [OUTER] by dialect [H2]"
+
+    }
+
+    void "test encode to-one join - unsupported outer fetch join throws exception for H2 Dialect"() {
+        given:
+        PersistentEntity entity = PersistentEntity.of(Book)
+        QueryModel q = QueryModel.from(entity)
+        q.join(entity.getPropertyByName("author") as Association, Join.Type.OUTER_FETCH)
+        QueryBuilder encoder = new SqlQueryBuilder(Dialect.H2)
+
+        when:
+        encoder.buildQuery(q)
+
+        then:
+        def e = thrown(IllegalArgumentException)
+
+        expect:
+        e.message == "Unsupported join type [OUTER_FETCH] by dialect [H2]"
+
+    }
+
+    void "test encode to-one join - unsupported outer join throws exception for MYSQL Dialect"() {
+        given:
+        PersistentEntity entity = PersistentEntity.of(Book)
+        QueryModel q = QueryModel.from(entity)
+        q.join(entity.getPropertyByName("author") as Association, Join.Type.OUTER)
+        QueryBuilder encoder = new SqlQueryBuilder(Dialect.MYSQL)
+
+        when:
+        encoder.buildQuery(q)
+
+        then:
+        def e = thrown(IllegalArgumentException)
+
+        expect:
+        e.message == "Unsupported join type [OUTER] by dialect [MYSQL]"
+
+    }
+
+    void "test encode to-one join - unsupported outer fetch join throws exception for MYSQL Dialect"() {
+        given:
+        PersistentEntity entity = PersistentEntity.of(Book)
+        QueryModel q = QueryModel.from(entity)
+        q.join(entity.getPropertyByName("author") as Association, Join.Type.OUTER_FETCH)
+        QueryBuilder encoder = new SqlQueryBuilder(Dialect.MYSQL)
+
+        when:
+        encoder.buildQuery(q)
+
+        then:
+        def e = thrown(IllegalArgumentException)
+
+        expect:
+        e.message == "Unsupported join type [OUTER_FETCH] by dialect [MYSQL]"
 
     }
 

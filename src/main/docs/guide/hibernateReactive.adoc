@@ -8,7 +8,7 @@ Include Hibernate reactive Micronaut Data support:
 
 dependency:io.micronaut.data:micronaut-data-hibernate-reactive[]
 
-NOTE: Hibernate Reactive requires Java 11 and Hibernate 5
+NOTE: Hibernate Reactive in Micronaut Data requires Hibernate 6
 
 The configuration differs from the ordinary <<hibernateQuickStart, Hibernate quick start>> since Hibernate Reactive does not use traditional JDBC drivers but instead custom drivers provided by the https://vertx.io/docs/#databases[Vertx project]. You  need to select an appropriate driver for your database:
 
@@ -30,8 +30,7 @@ dependency:vertx-oracle-client[groupId="io.vertx"]
 
 And configure it based on https://micronaut-projects.github.io/micronaut-sql/latest/guide/index.html#hibernate[Micronaut SQL Hibernate Reactive support].
 
-.Example YAML configuration
-[source,yaml]
+[configuration]
 ----
 include::doc-examples/hibernate-reactive-example-java/src/main/resources/application.yml[]
 ----

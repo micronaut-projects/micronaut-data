@@ -15,9 +15,12 @@
  */
 package io.micronaut.data.runtime.operations.internal.sql;
 
+import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
+import io.micronaut.data.annotation.QueryResult;
 import io.micronaut.data.exceptions.DataAccessException;
+import io.micronaut.data.model.JsonDataType;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder;
@@ -25,6 +28,7 @@ import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.model.runtime.QueryParameterBinding;
+import io.micronaut.data.model.runtime.QueryResultInfo;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.runtime.operations.internal.query.DefaultBindableParametersPreparedQuery;
@@ -50,6 +54,7 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
 
     protected final SqlStoredQuery<E, R> sqlStoredQuery;
     protected String query;
+    protected final QueryResultInfo queryResultInfo;
 
     public DefaultSqlPreparedQuery(PreparedQuery<E, R> preparedQuery) {
         this(preparedQuery, (SqlStoredQuery<E, R>) ((DelegateStoredQuery<Object, Object>) preparedQuery).getStoredQueryDelegate());
@@ -59,12 +64,14 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
         super(preparedQuery);
         this.sqlStoredQuery = sqlStoredQuery;
         this.query = sqlStoredQuery.getQuery();
+        this.queryResultInfo = createQueryResultInfo();
     }
 
     public DefaultSqlPreparedQuery(SqlStoredQuery<E, R> sqlStoredQuery) {
         super(new DummyPreparedQuery<>(sqlStoredQuery), null, sqlStoredQuery);
         this.sqlStoredQuery = sqlStoredQuery;
         this.query = sqlStoredQuery.getQuery();
+        this.queryResultInfo = createQueryResultInfo();
     }
 
     @Override
@@ -179,6 +186,11 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
         }
     }
 
+    @Override
+    public QueryResultInfo getQueryResultInfo() {
+        return queryResultInfo;
+    }
+
     /**
      * Build a sort for ID for the given entity.
      *
@@ -234,4 +246,14 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
         return 1;
     }
 
+    private QueryResultInfo createQueryResultInfo() {
+        if (!sqlStoredQuery.getAnnotationMetadata().hasAnnotation(QueryResult.class)) {
+            return null;
+        }
+        AnnotationValue<QueryResult> queryResultAnn = sqlStoredQuery.getAnnotationMetadata().getAnnotation(QueryResult.class);
+        QueryResult.Type type =  queryResultAnn.enumValue("type", QueryResult.Type.class).orElse(QueryResult.Type.JSON);
+        String columnName = queryResultAnn.getRequiredValue("column", String.class);
+        JsonDataType jsonDataType = type == QueryResult.Type.JSON ? queryResultAnn.enumValue("jsonDataType", JsonDataType.class).orElse(JsonDataType.DEFAULT) : null;
+        return new QueryResultInfo(type, columnName, jsonDataType);
+    }
 }

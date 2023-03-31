@@ -99,7 +99,7 @@ interface BookRepository extends CrudRepository<Book, Long> { // <2>
     // end::update2[]
 
     // tag::update3[]
-    @QueryHint(name = "javax.persistence.FlushModeType", value = "AUTO")
+    @QueryHint(name = "jakarta.persistence.FlushModeType", value = "AUTO")
     void updatePages(@Id Long id, @Parameter("pages") int pages);
     // end::update3[]
 

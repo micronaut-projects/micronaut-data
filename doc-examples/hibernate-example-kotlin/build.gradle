@@ -12,7 +12,8 @@ application {
 }
 
 micronaut {
-    version libs.versions.micronaut.asProvider().get()
+    // version = libs.versions.micronaut.asProvider().get()
+    version = '4.0.0-SNAPSHOT'
     runtime "netty"
     testRuntime "junit5"
 }
@@ -24,7 +25,7 @@ dependencies {
     implementation "io.micronaut.sql:micronaut-jdbc-tomcat"
     implementation mnKotlin.micronaut.kotlin.runtime
 
-    kapt "io.micronaut:micronaut-validation"
+    kapt "io.micronaut.validation:micronaut-validation"
     kapt project(":data-processor")
     runtimeOnly "ch.qos.logback:logback-classic"
     runtimeOnly "com.h2database:h2"

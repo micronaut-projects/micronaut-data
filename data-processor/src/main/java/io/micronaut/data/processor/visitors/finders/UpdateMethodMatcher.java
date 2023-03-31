@@ -133,6 +133,7 @@ public final class UpdateMethodMatcher extends AbstractPatternMethodMatcher {
 
             @Override
             protected Map.Entry<ClassElement, Class<? extends DataInterceptor>> resolveReturnTypeAndInterceptor(MethodMatchContext matchContext) {
+                MethodElement methodElement = matchContext.getMethodElement();
                 Map.Entry<ClassElement, Class<? extends DataInterceptor>> e = super.resolveReturnTypeAndInterceptor(matchContext);
                 ClassElement returnType = e.getKey();
                 if (returnType != null
@@ -140,7 +141,7 @@ public final class UpdateMethodMatcher extends AbstractPatternMethodMatcher {
                         && !TypeUtils.isNumber(returnType)
                         && !returnType.hasStereotype(MappedEntity.class)
                         && !(TypeUtils.isReactiveOrFuture(matchContext.getReturnType()) && TypeUtils.isObjectClass(returnType))) {
-                    throw new MatchFailedException("Cannot implement update method for specified return type: " + returnType.getName());
+                    throw new MatchFailedException("Cannot implement update method for specified return type: " + returnType.getName() + " " + methodElement.getReturnType() + " " + methodElement.getDescription(false));
                 }
                 return e;
             }

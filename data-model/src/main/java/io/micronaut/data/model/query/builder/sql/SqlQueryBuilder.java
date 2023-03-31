@@ -38,6 +38,7 @@ import io.micronaut.data.exceptions.MappingException;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.Embedded;
+import io.micronaut.data.model.JsonDataType;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
@@ -911,6 +912,10 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
 
     @Override
     public String resolveJoinType(Join.Type jt) {
+        if (!this.dialect.supportsJoinType(jt)) {
+            throw new IllegalArgumentException("Unsupported join type [" + jt + "] by dialect [" + this.dialect + "]");
+        }
+
         String joinType;
         switch (jt) {
             case LEFT:
@@ -922,6 +927,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                 joinType = " RIGHT JOIN ";
                 break;
             case OUTER:
+            case OUTER_FETCH:
                 joinType = " FULL OUTER JOIN ";
                 break;
             default:
@@ -962,6 +968,11 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                         }
 
                         @Override
+                        public JsonDataType getJsonDataType() {
+                            return property.getJsonDataType();
+                        }
+
+                        @Override
                         public String[] getPropertyPath() {
                             return path;
                         }
@@ -989,6 +1000,11 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                 @Override
                 public DataType getDataType() {
                     return version.getDataType();
+                }
+
+                @Override
+                public JsonDataType getJsonDataType() {
+                    return null;
                 }
 
                 @Override
@@ -1039,6 +1055,11 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                         @Override
                         public DataType getDataType() {
                             return property.getDataType();
+                        }
+
+                        @Override
+                        public JsonDataType getJsonDataType() {
+                            return property.getJsonDataType();
                         }
 
                         @Override

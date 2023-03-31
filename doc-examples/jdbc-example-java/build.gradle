@@ -9,19 +9,20 @@ application {
 }
 
 micronaut {
-    version libs.versions.micronaut.asProvider().get()
+    // version = libs.versions.micronaut.asProvider().get()
+    version = '4.0.0-SNAPSHOT'
     runtime "netty"
     testRuntime "junit5"
 }
 
 dependencies {
     annotationProcessor projects.dataProcessor
-    annotationProcessor libs.hibernate.jpamodelgen.jakarta
-    annotationProcessor "io.micronaut:micronaut-validation"
+    annotationProcessor libs.hibernate.jpamodelgen
+    annotationProcessor "io.micronaut.validation:micronaut-validation"
     implementation project(":data-jdbc")
     implementation 'io.micronaut.rxjava2:micronaut-rxjava2'
     implementation "io.micronaut:micronaut-http-client"
-    implementation "io.micronaut:micronaut-validation"
+    implementation "io.micronaut.validation:micronaut-validation"
     implementation "io.micronaut.sql:micronaut-jdbc-tomcat"
     implementation libs.jakarta.persistence.api
     implementation libs.javax.transaction.api

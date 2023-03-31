@@ -37,7 +37,7 @@ abstract class AbstractManualSchemaSpec extends Specification {
 
     List<String> createStatements() {
         // We want id on the second column to test scenario getting auto generated id not on the first position
-        return Arrays.asList("CREATE TABLE patient(name VARCHAR(255), id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY, history VARCHAR(1000), doctor_notes VARCHAR(255))")
+        return Arrays.asList("CREATE TABLE patient(name VARCHAR(255), id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY, history VARCHAR(1000), doctor_notes VARCHAR(255), appointments JSON)")
     }
 
     List<String> dropStatements() {
@@ -61,7 +61,7 @@ abstract class AbstractManualSchemaSpec extends Specification {
         }))
     }
 
-    private void createSchema() {
+    void createSchema() {
         Flux.from(withConnection(connection -> {
             Flux<Void> createTablesFlow = Flux.fromIterable(createStatements())
                     .concatMap(sql -> {
@@ -79,7 +79,7 @@ abstract class AbstractManualSchemaSpec extends Specification {
         })).blockLast()
     }
 
-    private void dropSchema() {
+    void dropSchema() {
         Flux.from(withConnection(connection -> {
             Flux<Void> createTablesFlow = Flux.fromIterable(dropStatements())
                     .concatMap(sql -> {
@@ -97,7 +97,7 @@ abstract class AbstractManualSchemaSpec extends Specification {
         })).blockLast()
     }
 
-    private Mono<Long> insertRecord(String name, String history, String doctorNotes) {
+    Long insertRecord(String name, String history, String doctorNotes) {
         return withConnection(connection -> {
             def insertStmt = connection.createStatement(insertStatement())
             insertStmt.bind(0, name)
@@ -106,7 +106,7 @@ abstract class AbstractManualSchemaSpec extends Specification {
             return Flux.from(insertStmt.execute())
                     .flatMap(Result::getRowsUpdated)
                     .map((Number n) -> n.longValue())
-        }).next()
+        }).next().block()
     }
 
     void "test save and load record when id not first field in the table"() {
@@ -131,8 +131,10 @@ abstract class AbstractManualSchemaSpec extends Specification {
             def name = "pt1"
             def history = "flu"
             def doctorNotes = "mild"
-            def inserted = insertRecord(name, history, doctorNotes).block()
+            def appointments = List.of("Dr1 April 2022", "Dr2 June 2022")
+            def inserted = insertRecord(name, history, doctorNotes)
             inserted == 1
+            patientRepository.updateAppointmentsByName(name, appointments)
         when:
             def patientDtos = patientRepository.findAllByNameWithQuery(name)
         then:
@@ -140,13 +142,16 @@ abstract class AbstractManualSchemaSpec extends Specification {
             patientDtos[0].name == name
             patientDtos[0].history == history
             patientDtos[0].doctorNotes == doctorNotes
+            patientDtos[0].appointments == appointments
         when:
             def optPatientDto = patientRepository.findByNameWithQuery(name)
         then:
             optPatientDto.present
-            optPatientDto.get().name == name
-            optPatientDto.get().history == history
-            optPatientDto.get().doctorNotes == doctorNotes
+            def patientDto = optPatientDto.get()
+            patientDto.name == name
+            patientDto.history == history
+            patientDto.doctorNotes == doctorNotes
+            patientDto.appointments == appointments
         cleanup:
             dropSchema()
     }

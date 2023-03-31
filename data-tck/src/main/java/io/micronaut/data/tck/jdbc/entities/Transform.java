@@ -22,14 +22,12 @@ import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
 
 @Entity
-@javax.persistence.Entity
 public class Transform {
     @EmbeddedId
-    @javax.persistence.EmbeddedId
     private ProjectId projectId;
     @ColumnTransformer(
             read = "UPPER(xyz@abc)",
-            write = "LOWER(xyz@abc)"
+            write = "LOWER(?)"
     )
     @Nullable
     private String xyz;

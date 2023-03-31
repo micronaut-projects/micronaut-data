@@ -65,7 +65,6 @@ import io.micronaut.data.runtime.operations.internal.AbstractReactiveEntitiesOpe
 import io.micronaut.data.runtime.operations.internal.AbstractReactiveEntityOperations;
 import io.micronaut.data.runtime.operations.internal.OperationContext;
 import io.micronaut.data.runtime.operations.internal.ReactiveCascadeOperations;
-import io.micronaut.http.codec.MediaTypeCodec;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.exceptions.NoTransactionException;
@@ -128,7 +127,6 @@ public class DefaultReactiveMongoRepositoryOperations extends AbstractMongoRepos
      *
      * @param serverName                 The server name
      * @param beanContext                The bean context
-     * @param codecs                     The media type codecs
      * @param dateTimeProvider           The date time provider
      * @param runtimeEntityRegistry      The entity registry
      * @param conversionService          The conversion service
@@ -138,14 +136,13 @@ public class DefaultReactiveMongoRepositoryOperations extends AbstractMongoRepos
      */
     DefaultReactiveMongoRepositoryOperations(@Parameter String serverName,
                                              BeanContext beanContext,
-                                             List<MediaTypeCodec> codecs,
                                              DateTimeProvider<Object> dateTimeProvider,
                                              RuntimeEntityRegistry runtimeEntityRegistry,
                                              DataConversionService conversionService,
                                              AttributeConverterRegistry attributeConverterRegistry,
                                              MongoClient mongoClient,
                                              MongoCollectionNameProvider collectionNameProvider) {
-        super(codecs, dateTimeProvider, runtimeEntityRegistry, conversionService, attributeConverterRegistry, collectionNameProvider,
+        super(dateTimeProvider, runtimeEntityRegistry, conversionService, attributeConverterRegistry, collectionNameProvider,
             beanContext.getBean(MongoDatabaseNameProvider.class, "Primary".equals(serverName) ? null : Qualifiers.byName(serverName))
         );
         this.serverName = serverName;

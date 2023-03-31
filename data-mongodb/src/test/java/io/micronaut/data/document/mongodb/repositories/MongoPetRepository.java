@@ -8,8 +8,8 @@ import org.reactivestreams.Publisher;
 import reactor.core.publisher.Mono;
 
 import javax.transaction.Transactional;
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 
 @MongoRepository
 interface MongoPetRepository extends ReactiveStreamsCrudRepository<Pet, String> {

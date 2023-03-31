@@ -19,19 +19,16 @@ import io.micronaut.data.annotation.DateCreated;
 
 import io.micronaut.core.annotation.Nullable;
 import jakarta.persistence.*;
-import javax.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotBlank;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
 @Entity(name = "jcat")
-@javax.persistence.Entity(name = "jcat")
 public class Category {
     @Id
     @GeneratedValue
-    @javax.persistence.Id
-    @javax.persistence.GeneratedValue
     private Long id;
     @NotBlank
     private String name;
@@ -39,7 +36,6 @@ public class Category {
     private int position;
 
     @OneToMany(mappedBy = "category")
-    @javax.persistence.OneToMany(mappedBy = "category")
     @Nullable
     private Set<Product> productList = new HashSet<>();
 

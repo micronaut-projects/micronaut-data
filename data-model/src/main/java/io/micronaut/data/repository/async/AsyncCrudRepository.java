@@ -19,8 +19,8 @@ import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.NonBlocking;
 import io.micronaut.data.repository.GenericRepository;
 
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -38,7 +38,7 @@ public interface AsyncCrudRepository<E, ID> extends GenericRepository<E, ID> {
      *
      * @param entity The entity to save. Must not be {@literal null}.
      * @return The saved entity will never be {@literal null}.
-     * @throws javax.validation.ConstraintViolationException if the entity is {@literal null} or invalid.
+     * @throws jakarta.validation.ConstraintViolationException if the entity is {@literal null} or invalid.
      * @param <S> The generic type
      */
     @NonNull
@@ -49,7 +49,7 @@ public interface AsyncCrudRepository<E, ID> extends GenericRepository<E, ID> {
      *
      * @param entity The entity to updated. Must not be {@literal null}.
      * @return The updated entity will never be {@literal null}.
-     * @throws javax.validation.ConstraintViolationException if the entity is {@literal null} or invalid.
+     * @throws jakarta.validation.ConstraintViolationException if the entity is {@literal null} or invalid.
      * @param <S> The generic type
      */
     @NonNull
@@ -60,7 +60,7 @@ public interface AsyncCrudRepository<E, ID> extends GenericRepository<E, ID> {
      *
      * @param entities The entities to update. Must not be {@literal null}.
      * @return The updating entity will never be {@literal null}.
-     * @throws javax.validation.ConstraintViolationException if the entity is {@literal null} or invalid.
+     * @throws jakarta.validation.ConstraintViolationException if the entity is {@literal null} or invalid.
      * @param <S> The generic type
      */
     @NonNull
@@ -72,7 +72,7 @@ public interface AsyncCrudRepository<E, ID> extends GenericRepository<E, ID> {
      * @param entities The entities to saved. Must not be {@literal null}.
      * @param <S> The generic type
      * @return The saved entities objects. will never be {@literal null}.
-     * @throws javax.validation.ConstraintViolationException if the entities are {@literal null}.
+     * @throws jakarta.validation.ConstraintViolationException if the entities are {@literal null}.
      */
     @NonNull
     <S extends E> CompletableFuture<? extends Iterable<S>> saveAll(@Valid @NotNull @NonNull Iterable<S> entities);
@@ -82,7 +82,7 @@ public interface AsyncCrudRepository<E, ID> extends GenericRepository<E, ID> {
      *
      * @param id The ID of the entity to retrieve. Must not be {@literal null}.
      * @return the entity with the given id or emits an {@link io.micronaut.data.exceptions.EmptyResultException} if it the entity is not found
-     * @throws javax.validation.ConstraintViolationException if the id is {@literal null}.
+     * @throws jakarta.validation.ConstraintViolationException if the id is {@literal null}.
      * @throws io.micronaut.data.exceptions.EmptyResultException if no entity exists for the ID
      */
     @NonNull
@@ -93,7 +93,7 @@ public interface AsyncCrudRepository<E, ID> extends GenericRepository<E, ID> {
      *
      * @param id must not be {@literal null}.
      * @return {@literal true} if an entity with the given id exists, {@literal false} otherwise.
-     * @throws javax.validation.ConstraintViolationException if the id is {@literal null}.
+     * @throws jakarta.validation.ConstraintViolationException if the id is {@literal null}.
      */
     @NonNull CompletableFuture<Boolean> existsById(@NotNull @NonNull ID id);
 
@@ -116,7 +116,7 @@ public interface AsyncCrudRepository<E, ID> extends GenericRepository<E, ID> {
      *
      * @param id must not be {@literal null}.
      * @return A future that executes the delete operation
-     * @throws javax.validation.ConstraintViolationException if the entity is {@literal null}.
+     * @throws jakarta.validation.ConstraintViolationException if the entity is {@literal null}.
      */
     @NonNull CompletableFuture<Void> deleteById(@NonNull @NotNull ID id);
 
@@ -125,7 +125,7 @@ public interface AsyncCrudRepository<E, ID> extends GenericRepository<E, ID> {
      *
      * @param entity The entity to delete
      * @return A future that executes the delete operation
-     * @throws javax.validation.ConstraintViolationException if the entity is {@literal null}.
+     * @throws jakarta.validation.ConstraintViolationException if the entity is {@literal null}.
      */
     @NonNull CompletableFuture<Void> delete(@NonNull @NotNull E entity);
 
@@ -134,7 +134,7 @@ public interface AsyncCrudRepository<E, ID> extends GenericRepository<E, ID> {
      *
      * @param entities The entities to delete
      * @return A future that executes the delete operation
-     * @throws javax.validation.ConstraintViolationException if the entity is {@literal null}.
+     * @throws jakarta.validation.ConstraintViolationException if the entity is {@literal null}.
      */
     @NonNull CompletableFuture<Void> deleteAll(@NonNull @NotNull Iterable<? extends E> entities);
 

@@ -52,11 +52,8 @@ public class FindPageSpecificationMethodMatcher extends AbstractSpecificationMet
 
     @Override
     protected MethodMatch match(MethodMatchContext matchContext, java.util.regex.Matcher matcher) {
-        ClassElement returnType = matchContext.getReturnType();
-        if (TypeUtils.isReactiveOrFuture(returnType)) {
-            returnType = returnType.getFirstTypeArgument().orElseThrow(IllegalStateException::new);
-        }
-        if ((returnType.isAssignable("org.springframework.data.domain.Page") || returnType.isAssignable("io.micronaut.data.model.Page"))
+        ClassElement returnType = TypeUtils.getMethodProducingItemType(matchContext.getMethodElement());
+        if (returnType != null && (returnType.isAssignable("org.springframework.data.domain.Page") || returnType.isAssignable("io.micronaut.data.model.Page"))
                 && areParametersValid(matchContext.getMethodElement())) {
             if (isFirstParameterMicronautDataQuerySpecification(matchContext.getMethodElement())) {
                 Map.Entry<ClassElement, ClassElement> e = FindersUtils.pickFindPageSpecInterceptor(matchContext, matchContext.getReturnType());
@@ -74,12 +71,7 @@ public class FindPageSpecificationMethodMatcher extends AbstractSpecificationMet
                 );
             }
             return mc -> {
-                ClassElement classElement;
-                try {
-                    classElement = getInterceptorElement(mc, "io.micronaut.data.jpa.repository.intercept.FindPageSpecificationInterceptor");
-                } catch (IllegalStateException e) {
-                    classElement = getInterceptorElement(mc, "io.micronaut.data.hibernate6.jpa.repository.intercept.FindPageSpecificationInterceptor");
-                }
+                ClassElement classElement = getInterceptorElement(mc, "io.micronaut.data.jpa.repository.intercept.FindPageSpecificationInterceptor");
                 return new MethodMatchInfo(
                     DataMethod.OperationType.QUERY,
                     mc.getReturnType(),

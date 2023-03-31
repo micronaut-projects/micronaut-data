@@ -22,20 +22,15 @@ import java.util.Set;
 
 @Entity
 @Table(name = "cars", schema = "ford", catalog = "ford_cat")
-@javax.persistence.Entity
-@javax.persistence.Table(name = "cars", schema = "ford", catalog = "ford_cat")
 public class Car {
     @GeneratedValue
     @Id
-    @javax.persistence.GeneratedValue
-    @javax.persistence.Id
     private Long id;
 
     @Nullable
     private String name;
 
     @OneToMany(mappedBy = "car")
-    @javax.persistence.OneToMany(mappedBy = "car")
     private Set<CarPart> parts = new HashSet<>();
 
     public Long getId() {
