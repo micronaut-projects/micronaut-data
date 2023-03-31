@@ -188,7 +188,7 @@ final class DataDecoderContext implements Deserializer.DecoderContext {
         if (codec instanceof MappedCodec) {
             return ((MappedCodec<? extends T>) codec).deserializer;
         }
-        if (codec != null && !(codec instanceof IterableCodec) && !(Map.class.isAssignableFrom(codec.getEncoderClass()))) {
+        if (codec != null && !(codec instanceof IterableCodec) && !(Map.class.isAssignableFrom(codec.getEncoderClass())) && !(Collection.class.isAssignableFrom(codec.getEncoderClass()))) {
             return new CodecBsonDecoder<T>((Codec<T>) codec);
         }
         return parent.findDeserializer(type);

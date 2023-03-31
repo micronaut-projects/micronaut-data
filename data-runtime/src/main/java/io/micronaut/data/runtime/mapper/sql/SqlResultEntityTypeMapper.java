@@ -573,7 +573,6 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
         Object result;
         if (dataType == DataType.JSON && jsonColumnReader != null) {
             JsonDataType jsonDataType = prop.getJsonDataType();
-            // TODO: Try/catch and swallow?
             result = jsonColumnReader.readJsonColumn(resultReader, rs, columnName, jsonDataType, prop.getArgument());
         } else {
             result = resultReader.readDynamic(rs, columnName, dataType);

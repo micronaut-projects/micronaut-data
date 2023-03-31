@@ -33,7 +33,7 @@ public class QueryResultInfo {
     private final QueryResult.Type type;
     private final JsonDataType jsonDataType;
 
-    public QueryResultInfo(@NonNull QueryResult.Type type, @Nullable String columnName, @NonNull JsonDataType jsonDataType) {
+    public QueryResultInfo(@NonNull QueryResult.Type type, @Nullable String columnName, @Nullable JsonDataType jsonDataType) {
         ArgumentUtils.requireNonNull("type", type);
         this.type = type;
         this.columnName = columnName;

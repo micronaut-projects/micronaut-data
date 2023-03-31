@@ -608,7 +608,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                 if (throwable instanceof DataAccessException dataAccessException) {
                     throw dataAccessException;
                 }
-                throw new DataAccessException("Error executing SQL UPDATE: " + throwable.getMessage(), e);
+                throw new DataAccessException("Error executing SQL UPDATE: " + e.getMessage(), e);
             }
         });
     }
