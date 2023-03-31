@@ -126,7 +126,7 @@ public class TypeUtils {
         if (type == null) {
             return false;
         }
-        return type.hasAnnotation(MappedEntity.class);
+        return type.hasStereotype(MappedEntity.class);
     }
 
     /**
@@ -138,7 +138,7 @@ public class TypeUtils {
         if (type == null) {
             return false;
         }
-        return type.hasAnnotation(Introspected.class);
+        return type.hasStereotype(Introspected.class);
     }
 
     /**
