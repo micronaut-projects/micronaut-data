@@ -26,10 +26,10 @@ public interface JsonEntityRepository extends CrudRepository<JsonEntity, Long> {
     @QueryResult(type = QueryResult.Type.JSON, jsonDataType = JsonDataType.STRING, column = "json_string")
     Optional<SampleData> findJsonStringById(Long id);
 
-    void updateJsonStringById(@Id Long id, @JsonRepresentation(type = JsonDataType.BLOB) @Parameter SampleData jsonString);
+    void updateJsonStringById(@Id Long id, @Parameter SampleData jsonString);
 
     @Query("UPDATE json_entity SET json_blob = :jsonBlob WHERE id = :id")
-    void updateJsonBlobById(Long id, @JsonRepresentation(type = JsonDataType.BLOB) SampleData jsonBlob);
+    void updateJsonBlobById(Long id, SampleData jsonBlob);
 
     @NonNull
     @Override
