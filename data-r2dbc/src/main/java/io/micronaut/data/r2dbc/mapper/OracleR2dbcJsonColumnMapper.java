@@ -15,7 +15,6 @@
  */
 package io.micronaut.data.r2dbc.mapper;
 
-import io.micronaut.context.annotation.Primary;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Experimental;
 import io.micronaut.core.annotation.Internal;
@@ -30,8 +29,8 @@ import io.micronaut.data.runtime.mapper.sql.SqlJsonValueMapper;
 import io.micronaut.data.runtime.operations.internal.sql.SqlPreparedQuery;
 import io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery;
 import io.micronaut.json.JsonMapper;
-import io.micronaut.serde.ObjectMapper;
 import io.micronaut.serde.oracle.jdbc.json.OracleJdbcJsonBinaryObjectMapper;
+import io.micronaut.serde.oracle.jdbc.json.OracleJdbcJsonTextObjectMapper;
 import io.r2dbc.spi.Row;
 import jakarta.inject.Singleton;
 import oracle.sql.json.OracleJsonParser;
@@ -46,22 +45,23 @@ import java.io.IOException;
  *
  */
 @Singleton
-@Requires(classes = OracleJdbcJsonBinaryObjectMapper.class)
+@Requires(classes = {OracleJdbcJsonBinaryObjectMapper.class, OracleJdbcJsonTextObjectMapper.class})
 @Internal
 @Experimental
-class OracleR2dbcJsonBinaryColumnMapper implements SqlJsonColumnReader<Row>, SqlJsonValueMapper {
+class OracleR2dbcJsonColumnMapper implements SqlJsonColumnReader<Row>, SqlJsonValueMapper {
 
-    private final OracleJdbcJsonBinaryObjectMapper binaryJsonMapper;
-    private final ObjectMapper defaultObjectMapper;
+    private final OracleJdbcJsonBinaryObjectMapper binaryObjectMapper;
+    private final OracleJdbcJsonTextObjectMapper textObjectMapper;
 
     /**
      * The default constructor.
      *
-     * @param binaryJsonMapper the oracle JSON mapper
+     * @param binaryObjectMapper the Oracle JSON binary mapper
+     * @param textObjectMapper the Oracle JSON text mapper
      */
-    public OracleR2dbcJsonBinaryColumnMapper(OracleJdbcJsonBinaryObjectMapper binaryJsonMapper, @Primary ObjectMapper defaultObjectMapper) {
-        this.binaryJsonMapper = binaryJsonMapper;
-        this.defaultObjectMapper = defaultObjectMapper;
+    public OracleR2dbcJsonColumnMapper(OracleJdbcJsonBinaryObjectMapper binaryObjectMapper, OracleJdbcJsonTextObjectMapper textObjectMapper) {
+        this.binaryObjectMapper = binaryObjectMapper;
+        this.textObjectMapper = textObjectMapper;
     }
 
     @Override
@@ -73,14 +73,14 @@ class OracleR2dbcJsonBinaryColumnMapper implements SqlJsonColumnReader<Row>, Sql
                     if (jsonParser == null) {
                         return null;
                     }
-                    return binaryJsonMapper.readValue(jsonParser, argument);
+                    return binaryObjectMapper.readValue(jsonParser, argument);
                 }
                 case BLOB -> {
                     byte[] bytes = resultSet.get(columnName, byte[].class);
                     if (bytes == null) {
                         return null;
                     }
-                    return binaryJsonMapper.readValue(bytes, argument);
+                    return binaryObjectMapper.readValue(bytes, argument);
                 }
                 case STRING -> {
                     String data = resultReader.readString(resultSet, columnName);
@@ -90,7 +90,7 @@ class OracleR2dbcJsonBinaryColumnMapper implements SqlJsonColumnReader<Row>, Sql
                     if (argument.getType().equals(String.class)) {
                         return (T) data;
                     }
-                    return defaultObjectMapper.readValue(data, argument);
+                    return textObjectMapper.readValue(data, argument);
                 }
                 default -> throw new DataAccessException("Unexpected json type " + jsonDataType + " for JSON field [" + columnName + "]");
             }
@@ -102,7 +102,7 @@ class OracleR2dbcJsonBinaryColumnMapper implements SqlJsonColumnReader<Row>, Sql
     @Override
     @NonNull
     public JsonMapper getJsonMapper() {
-        return binaryJsonMapper;
+        return textObjectMapper;
     }
 
     @Override
@@ -117,15 +117,15 @@ class OracleR2dbcJsonBinaryColumnMapper implements SqlJsonColumnReader<Row>, Sql
 
     @Override
     public Object mapValue(Object object, JsonDataType jsonDataType) throws IOException {
-        if (jsonDataType == JsonDataType.STRING && defaultObjectMapper != null) {
-            return defaultObjectMapper.writeValueAsString(object);
+        if (jsonDataType == JsonDataType.STRING) {
+            return textObjectMapper.writeValueAsString(object);
         } else {
-            return binaryJsonMapper.writeValueAsBytes(object);
+            return binaryObjectMapper.writeValueAsBytes(object);
         }
     }
 
     @Override
     public boolean supportsMapValue(SqlStoredQuery<?, ?> sqlStoredQuery, JsonDataType jsonDataType) {
-        return (jsonDataType == JsonDataType.NATIVE || jsonDataType == JsonDataType.BLOB) && sqlStoredQuery.getDialect() == Dialect.ORACLE;
+        return sqlStoredQuery.getDialect() == Dialect.ORACLE;
     }
 }
