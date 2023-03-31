@@ -17,7 +17,7 @@ micronaut-kotlin = "4.0.0-M1"
 micronaut-multitenancy = "5.0.0-M1"
 micronaut-validation = "4.0.0-M2"
 
-groovy = "4.0.10"
+groovy = "4.0.11"
 
 javax-persistence = "2.2"
 jakarta-persistence = "3.0.0"
@@ -25,14 +25,14 @@ jakarta-javax-persistence = "3.1.0"
 javax-transaction = "1.3"
 jakarta-transaction = "2.0.1"
 
-hibernate = "6.2.0.CR4"
+hibernate = "6.2.0.Final"
 hibernate-jpamodelgen-jakarta = "6.0.0.Alpha9"
 
 spring-data = "3.0.4"
 
-mongodb = "4.7.2"
+mongodb = "4.9.0"
 
-vertx = "4.4.0"
+vertx = "4.4.1"
 
 # JDBC Drivers
 
@@ -40,7 +40,7 @@ oracle-jdbc-driver = "21.9.0.0"
 mariadb-jdbc-driver = "3.1.3"
 mysql-jdbc-driver = "8.0.32"
 postgres-jdbc-driver = "42.6.0"
-mssql-jdbc-driver = "8.4.1.jre14"
+mssql-jdbc-driver = "12.2.0.jre11"
 
 # R2DBC Drivers
 

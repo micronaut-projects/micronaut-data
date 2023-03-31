@@ -34,6 +34,7 @@ dependencies {
     implementation mnSerde.micronaut.serde.support
     implementation mnKotlin.micronaut.kotlin.runtime
     implementation "org.flywaydb:flyway-mysql"
+    implementation libs.jakarta.persistence.api
 
     runtimeOnly libs.drivers.r2dbc.mariadb
     runtimeOnly libs.drivers.jdbc.mariadb
