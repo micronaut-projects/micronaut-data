@@ -393,7 +393,7 @@ public abstract class AbstractHibernateOperations<S, Q> implements HintsCapableR
             }
 
             @Override
-            public void bindOne(QueryParameterBinding binding, @Nullable RuntimePersistentProperty<?> property,  Object value) {
+            public void bindOne(QueryParameterBinding binding, Object value) {
                 String parameterName = Objects.requireNonNull(binding.getName(), "Parameter name cannot be null!");
                 if (preparedQuery.isNative()) {
                     int parameterIndex = binding.getParameterIndex();
@@ -420,8 +420,8 @@ public abstract class AbstractHibernateOperations<S, Q> implements HintsCapableR
             }
 
             @Override
-            public void bindMany(QueryParameterBinding binding, @Nullable RuntimePersistentProperty<?> property,  Collection<Object> values) {
-                bindOne(binding, property, values);
+            public void bindMany(QueryParameterBinding binding, Collection<Object> values) {
+                bindOne(binding, values);
             }
 
         });

@@ -69,7 +69,7 @@ class OracleR2dbcJsonColumnMapper implements SqlJsonColumnReader<Row>, SqlJsonVa
     public <T> T readJsonColumn(ResultReader<Row, String> resultReader, Row resultSet, String columnName, JsonDataType jsonDataType, Argument<T> argument) {
         try {
             switch (jsonDataType) {
-                case NATIVE -> {
+                case DEFAULT -> {
                     OracleJsonParser jsonParser = resultSet.get(columnName, OracleJsonParser.class);
                     if (jsonParser == null) {
                         return null;

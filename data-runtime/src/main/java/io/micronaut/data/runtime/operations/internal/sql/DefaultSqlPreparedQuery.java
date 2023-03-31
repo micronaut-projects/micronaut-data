@@ -254,7 +254,7 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
         AnnotationValue<QueryResult> queryResultAnn = sqlStoredQuery.getAnnotationMetadata().getAnnotation(QueryResult.class);
         QueryResult.Type type =  queryResultAnn.enumValue("type", QueryResult.Type.class).orElse(QueryResult.Type.JSON);
         String columnName = queryResultAnn.getRequiredValue("column", String.class);
-        JsonDataType jsonDataType = type == QueryResult.Type.JSON ? queryResultAnn.enumValue("jsonDataType", JsonDataType.class).orElse(JsonRepresentation.DEFAULT_JSON_TYPE) : null;
+        JsonDataType jsonDataType = type == QueryResult.Type.JSON ? queryResultAnn.enumValue("jsonDataType", JsonDataType.class).orElse(JsonDataType.DEFAULT) : null;
         return new QueryResultInfo(type, columnName, jsonDataType);
     }
 }

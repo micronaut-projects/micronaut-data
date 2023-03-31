@@ -50,7 +50,7 @@ public @interface QueryResult {
     /**
      * @return The JSON data type that resulting column will hold. It helps to pick proper column reader based on result data type
      */
-    JsonDataType jsonDataType() default JsonDataType.NATIVE;
+    JsonDataType jsonDataType() default JsonDataType.DEFAULT;
 
     /**
      * @return The query result type

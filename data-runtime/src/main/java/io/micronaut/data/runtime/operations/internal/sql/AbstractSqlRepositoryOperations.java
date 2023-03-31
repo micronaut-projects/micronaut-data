@@ -390,6 +390,11 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
                 }
 
                 @Override
+                public JsonDataType getJsonDataType() {
+                    return property.getKey().getJsonDataType();
+                }
+
+                @Override
                 public Object getValue() {
                     return property.getValue();
                 }
@@ -406,6 +411,11 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
                 @Override
                 public DataType getDataType() {
                     return pp.getProperty().getDataType();
+                }
+
+                @Override
+                public JsonDataType getJsonDataType() {
+                    return pp.getProperty().getJsonDataType();
                 }
 
                 @Override

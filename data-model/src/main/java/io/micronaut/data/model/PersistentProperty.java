@@ -157,12 +157,12 @@ public interface PersistentProperty extends PersistentElement {
     }
 
     /**
-     * @return The json data type for {@link DataType#JSON} fields. If none specified, default is {@link JsonDataType#NATIVE}.
+     * @return The json data type for {@link DataType#JSON} fields. If none specified, default is {@link JsonDataType#DEFAULT}.
      */
     default JsonDataType getJsonDataType() {
         AnnotationMetadata annotationMetadata = getAnnotationMetadata();
         return annotationMetadata.enumValue(JsonRepresentation.class, "type", JsonDataType.class)
-            .orElse(JsonDataType.NATIVE);
+            .orElse(JsonDataType.DEFAULT);
     }
 
     /**

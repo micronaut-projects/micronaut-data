@@ -390,13 +390,13 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
             }
 
             @Override
-            public void bindOne(QueryParameterBinding binding, @Nullable RuntimePersistentProperty<?> property, Object value) {
+            public void bindOne(QueryParameterBinding binding, Object value) {
                 holder[0] = new AbstractMap.SimpleEntry<>(binding, value);
             }
 
             @Override
-            public void bindMany(QueryParameterBinding binding, @Nullable RuntimePersistentProperty<?> property, Collection<Object> values) {
-                bindOne(binding, property, values);
+            public void bindMany(QueryParameterBinding binding, Collection<Object> values) {
+                bindOne(binding, values);
             }
 
         }, invocationContext, entity, null, queryParameterBinding);

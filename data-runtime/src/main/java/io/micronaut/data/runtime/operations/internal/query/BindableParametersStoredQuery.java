@@ -91,19 +91,17 @@ public interface BindableParametersStoredQuery<E, R> extends StoredQuery<E, R>, 
          * Bind the value.
          *
          * @param binding  The binding
-         * @param property The property that binding is done for
          * @param value    The value
          */
-        void bindOne(@NonNull QueryParameterBinding binding, @Nullable RuntimePersistentProperty<?> property, @Nullable Object value);
+        void bindOne(@NonNull QueryParameterBinding binding, @Nullable Object value);
 
         /**
          * Bind multiple values.
          *
          * @param binding The binding
-         * @param property The property that binding is done for
          * @param values  The values
          */
-        void bindMany(@NonNull QueryParameterBinding binding, @Nullable RuntimePersistentProperty<?> property, @NonNull Collection<Object> values);
+        void bindMany(@NonNull QueryParameterBinding binding, @NonNull Collection<Object> values);
 
         /**
          * @return current index

@@ -36,12 +36,7 @@ import java.lang.annotation.Target;
 public @interface JsonRepresentation {
 
     /**
-     * The default JsonDataType value.
-     */
-    JsonDataType DEFAULT_JSON_TYPE = JsonDataType.NATIVE;
-
-    /**
      * @return the JSON representation type
      */
-    JsonDataType type() default JsonDataType.NATIVE;
+    JsonDataType type() default JsonDataType.DEFAULT;
 }

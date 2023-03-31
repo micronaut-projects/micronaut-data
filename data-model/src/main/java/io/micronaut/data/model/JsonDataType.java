@@ -26,7 +26,7 @@ public enum JsonDataType {
     /**
      * Usually stored in JSON specific column type supported by all databases.
      */
-    NATIVE,
+    DEFAULT,
 
     /**
      * Stored in CLOB without conversion.

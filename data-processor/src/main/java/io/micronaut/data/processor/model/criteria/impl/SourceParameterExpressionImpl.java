@@ -262,13 +262,13 @@ public final class SourceParameterExpressionImpl extends ParameterExpressionImpl
             }
         }
         if (parameterElement != null) {
-            JsonDataType jsonDataType = parameterElement.enumValue(JsonRepresentation.class, "type", JsonDataType.class).orElse(JsonRepresentation.DEFAULT_JSON_TYPE);
+            JsonDataType jsonDataType = parameterElement.enumValue(JsonRepresentation.class, "type", JsonDataType.class).orElse(JsonDataType.DEFAULT);
             if (jsonDataType != null) {
                 return jsonDataType;
             }
         }
         // default
-        return JsonRepresentation.DEFAULT_JSON_TYPE;
+        return JsonDataType.DEFAULT;
     }
 
     private String[] asStringPath(List<Association> associations, PersistentProperty property) {

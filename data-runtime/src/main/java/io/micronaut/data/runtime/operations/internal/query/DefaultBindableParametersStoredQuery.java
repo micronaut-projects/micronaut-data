@@ -22,6 +22,7 @@ import io.micronaut.core.beans.BeanWrapper;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.model.DataType;
+import io.micronaut.data.model.JsonDataType;
 import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.runtime.DelegatingQueryParameterBinding;
 import io.micronaut.data.model.runtime.QueryParameterBinding;
@@ -149,6 +150,11 @@ public class DefaultBindableParametersStoredQuery<E, R> implements BindableParam
                     public DataType getDataType() {
                         return finalPersistentProperty.getDataType();
                     }
+
+                    @Override
+                    public JsonDataType getJsonDataType() {
+                        return finalPersistentProperty.getJsonDataType();
+                    }
                 };
             }
         }
@@ -165,7 +171,7 @@ public class DefaultBindableParametersStoredQuery<E, R> implements BindableParam
             } else if (persistentProperty != null && !binding.isAutoPopulated()) {
                 value = binder.convert(value, persistentProperty);
             }
-            binder.bindOne(binding, persistentProperty, value);
+            binder.bindOne(binding, value);
         } else {
             values = new ArrayList<>(values);
             for (ListIterator<Object> iterator = values.listIterator(); iterator.hasNext(); ) {
@@ -177,7 +183,7 @@ public class DefaultBindableParametersStoredQuery<E, R> implements BindableParam
                 }
                 iterator.set(v);
             }
-            binder.bindMany(binding, persistentProperty, values);
+            binder.bindMany(binding, values);
         }
     }
 
