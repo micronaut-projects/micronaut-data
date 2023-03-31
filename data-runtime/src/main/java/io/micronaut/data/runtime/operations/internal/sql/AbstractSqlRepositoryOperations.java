@@ -215,7 +215,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
      * @param preparedStatement The prepared statement
      * @param index             The index
      * @param dataType          The data type
-     * @param jsonDataType          The JSON representation type if data type is JSON
+     * @param jsonDataType      The JSON representation type if data type is JSON
      * @param value             The value
      * @param storedQuery       The SQL stored query
      */
