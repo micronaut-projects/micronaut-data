@@ -20,6 +20,7 @@ import io.micronaut.core.annotation.Experimental;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.type.Argument;
+import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.JsonDataType;
 import io.micronaut.data.model.query.builder.sql.Dialect;
@@ -84,7 +85,7 @@ class OracleR2dbcJsonColumnMapper implements SqlJsonColumnReader<Row>, SqlJsonVa
                 }
                 case STRING -> {
                     String data = resultReader.readString(resultSet, columnName);
-                    if (data == null) {
+                    if (StringUtils.isEmpty(data) || data.equals(NULL_VALUE)) {
                         return null;
                     }
                     if (argument.getType().equals(String.class)) {

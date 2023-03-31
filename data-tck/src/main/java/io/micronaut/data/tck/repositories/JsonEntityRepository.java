@@ -3,7 +3,6 @@ package io.micronaut.data.tck.repositories;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.annotation.Id;
-import io.micronaut.data.annotation.JsonRepresentation;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.QueryResult;
 import io.micronaut.data.model.JsonDataType;
