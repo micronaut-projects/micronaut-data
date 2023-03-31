@@ -85,8 +85,8 @@ dependencies {
 
     testImplementation libs.micronaut.testresources.client
     testImplementation mnSerde.micronaut.serde.support
-
     testRuntimeOnly mn.snakeyaml
+    testRuntimeOnly mnSerde.micronaut.serde.oracle.jdbc.json
 }
 
 micronaut {

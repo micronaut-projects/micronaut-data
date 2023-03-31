@@ -20,6 +20,7 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.reflect.ClassUtils;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.DataType;
+import io.micronaut.data.model.JsonDataType;
 import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.model.runtime.QueryParameterBinding;
@@ -160,6 +161,11 @@ public final class QueryResultStoredQuery<E, R> extends BasicStoredQuery<E, R> {
         @Override
         public DataType getDataType() {
             return p.getDataType();
+        }
+
+        @Override
+        public JsonDataType getJsonDataType() {
+            return p.getJsonDataType();
         }
 
         @Override
