@@ -51,7 +51,7 @@ loadScripts(document, 'script');</script>
 </ul>
 <ul class="sub-nav-list">
 <li>Detail:&nbsp;</li>
-<li><a href="#field-detail">Field</a>&nbsp;|&nbsp;</li>
+<li>Field&nbsp;|&nbsp;</li>
 <li>Constr&nbsp;|&nbsp;</li>
 <li><a href="#method-detail">Method</a></li>
 </ul>
@@ -69,16 +69,21 @@ loadScripts(document, 'script');</script>
 <!-- ======== START OF CLASS DATA ======== -->
 <div class="header">
 <div class="sub-title"><span class="package-label-in-type">Package</span>&nbsp;<a href="package-summary.html">io.micronaut.data.runtime.mapper.sql</a></div>
-<h1 title="Interface SqlJsonColumnReader" class="title">Interface SqlJsonColumnReader&lt;RS&gt;</h1>
+<h1 title="Interface SqlJsonColumnReader" class="title">Interface SqlJsonColumnReader&lt;S&gt;</h1>
 </div>
 <section class="class-description" id="class-description">
 <dl class="notes">
 <dt>Type Parameters:</dt>
-<dd><code>RS</code> - the result set type</dd>
+<dd><code>S</code> - the result set type</dd>
+</dl>
+<dl class="notes">
+<dt>All Superinterfaces:</dt>
+<dd><code><a href="../JsonColumnReader.html" title="interface in io.micronaut.data.runtime.mapper">JsonColumnReader</a>&lt;S&gt;</code></dd>
 </dl>
 <hr>
-<div class="type-signature"><span class="modifiers">public interface </span><span class="element-name type-name-label">SqlJsonColumnReader&lt;RS&gt;</span></div>
-<div class="block">The SQL json column reader interface. If some dialect has specific logic for reading and converting JSON
+<div class="type-signature"><span class="modifiers">public interface </span><span class="element-name type-name-label">SqlJsonColumnReader&lt;S&gt;</span><span class="extends-implements">
+extends <a href="../JsonColumnReader.html" title="interface in io.micronaut.data.runtime.mapper">JsonColumnReader</a>&lt;S&gt;</span></div>
+<div class="block">The SQL json column reader. If some dialect has specific logic for reading and converting JSON
  columns then it can extend this class and be injected into the context and SQL operations.</div>
 <dl class="notes">
 <dt>Since:</dt>
@@ -93,15 +98,9 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="field-summary" id="field-summary">
 <h2>Field Summary</h2>
-<div class="caption"><span>Fields</span></div>
-<div class="summary-table three-column-summary">
-<div class="table-header col-first">Modifier and Type</div>
-<div class="table-header col-second">Field</div>
-<div class="table-header col-last">Description</div>
-<div class="col-first even-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color"><code><a href="#NULL_VALUE" class="member-name-link">NULL_VALUE</a></code></div>
-<div class="col-last even-row-color">&nbsp;</div>
-</div>
+<div class="inherited-list">
+<h3 id="fields-inherited-from-class-io.micronaut.data.runtime.mapper.JsonColumnReader">Fields inherited from interface&nbsp;io.micronaut.data.runtime.mapper.<a href="../JsonColumnReader.html" title="interface in io.micronaut.data.runtime.mapper">JsonColumnReader</a></h3>
+<code><a href="../JsonColumnReader.html#NULL_VALUE">NULL_VALUE</a></code></div>
 </section>
 </li>
 <!-- ========== METHOD SUMMARY =========== -->
@@ -109,68 +108,43 @@ loadScripts(document, 'script');</script>
 <section class="method-summary" id="method-summary">
 <h2>Method Summary</h2>
 <div id="method-summary-table">
-<div class="table-tabs" role="tablist" aria-orientation="horizontal"><button id="method-summary-table-tab0" role="tab" aria-selected="true" aria-controls="method-summary-table.tabpanel" tabindex="0" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table', 3)" class="active-table-tab">All Methods</button><button id="method-summary-table-tab2" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab2', 3)" class="table-tab">Instance Methods</button><button id="method-summary-table-tab3" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab3', 3)" class="table-tab">Abstract Methods</button><button id="method-summary-table-tab5" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab5', 3)" class="table-tab">Default Methods</button></div>
+<div class="table-tabs" role="tablist" aria-orientation="horizontal"><button id="method-summary-table-tab0" role="tab" aria-selected="true" aria-controls="method-summary-table.tabpanel" tabindex="0" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table', 3)" class="active-table-tab">All Methods</button><button id="method-summary-table-tab2" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab2', 3)" class="table-tab">Instance Methods</button><button id="method-summary-table-tab5" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab5', 3)" class="table-tab">Default Methods</button></div>
 <div id="method-summary-table.tabpanel" role="tabpanel">
 <div class="summary-table three-column-summary" aria-labelledby="method-summary-table-tab0">
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>io.micronaut.json.JsonMapper</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#getJsonMapper()" class="member-name-link">getJsonMapper</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default &lt;T&gt;&nbsp;T</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#readJsonColumn(io.micronaut.data.runtime.mapper.ResultReader,RS,java.lang.String,io.micronaut.core.type.Argument)" class="member-name-link">readJsonColumn</a><wbr>(<a href="../ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a>&lt;<a href="SqlJsonColumnReader.html" title="type parameter in SqlJsonColumnReader">RS</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;resultReader,
- <a href="SqlJsonColumnReader.html" title="type parameter in SqlJsonColumnReader">RS</a>&nbsp;resultSet,
- <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;columnName,
- io.micronaut.core.type.Argument&lt;T&gt;&nbsp;argument)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
-<div class="block">Reads JSON column from the result set and returns as expected type.</div>
-</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>boolean</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#supports(io.micronaut.data.runtime.operations.internal.sql.SqlPreparedQuery)" class="member-name-link">supports</a><wbr>(<a href="../../operations/internal/sql/SqlPreparedQuery.html" title="interface in io.micronaut.data.runtime.operations.internal.sql">SqlPreparedQuery</a>&lt;?,<wbr>?&gt;&nbsp;sqlPreparedQuery)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default boolean</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#supportsRead(io.micronaut.data.runtime.operations.internal.sql.SqlPreparedQuery)" class="member-name-link">supportsRead</a><wbr>(<a href="../../operations/internal/sql/SqlPreparedQuery.html" title="interface in io.micronaut.data.runtime.operations.internal.sql">SqlPreparedQuery</a>&lt;?,<wbr>?&gt;&nbsp;sqlPreparedQuery)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
 <div class="block">Gets an indicator telling whether reader can interpret results from the SQL prepared query.</div>
 </div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default boolean</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#supportsResultSetType(java.lang.Class)" class="member-name-link">supportsResultSetType</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;<a href="SqlJsonColumnReader.html" title="type parameter in SqlJsonColumnReader">S</a>&gt;&nbsp;resultSetType)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
+<div class="block">Gets an indicator telling whether SQL json column reader can read from given result set.</div>
 </div>
 </div>
 </div>
+</div>
+<div class="inherited-list">
+<h3 id="methods-inherited-from-class-io.micronaut.data.runtime.mapper.JsonColumnReader">Methods inherited from interface&nbsp;io.micronaut.data.runtime.mapper.<a href="../JsonColumnReader.html" title="interface in io.micronaut.data.runtime.mapper">JsonColumnReader</a></h3>
+<code><a href="../JsonColumnReader.html#getJsonMapper()">getJsonMapper</a>, <a href="../JsonColumnReader.html#readJsonColumn(io.micronaut.data.runtime.mapper.ResultReader,S,java.lang.String,io.micronaut.data.model.JsonDataType,io.micronaut.core.type.Argument)">readJsonColumn</a></code></div>
 </section>
 </li>
 </ul>
 </section>
 <section class="details">
 <ul class="details-list">
-<!-- ============ FIELD DETAIL =========== -->
-<li>
-<section class="field-details" id="field-detail">
-<h2>Field Details</h2>
-<ul class="member-list">
-<li>
-<section class="detail" id="NULL_VALUE">
-<h3>NULL_VALUE</h3>
-<div class="member-signature"><span class="modifiers">static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">NULL_VALUE</span></div>
-<dl class="notes">
-<dt>See Also:</dt>
-<dd>
-<ul class="see-list">
-<li><a href="../../../../../../constant-values.html#io.micronaut.data.runtime.mapper.sql.SqlJsonColumnReader.NULL_VALUE">Constant Field Values</a></li>
-</ul>
-</dd>
-</dl>
-</section>
-</li>
-</ul>
-</section>
-</li>
 <!-- ============ METHOD DETAIL ========== -->
 <li>
 <section class="method-details" id="method-detail">
 <h2>Method Details</h2>
 <ul class="member-list">
 <li>
-<section class="detail" id="supports(io.micronaut.data.runtime.operations.internal.sql.SqlPreparedQuery)">
-<h3>supports</h3>
-<div class="member-signature"><span class="return-type">boolean</span>&nbsp;<span class="element-name">supports</span><wbr><span class="parameters">(<a href="../../operations/internal/sql/SqlPreparedQuery.html" title="interface in io.micronaut.data.runtime.operations.internal.sql">SqlPreparedQuery</a>&lt;?,<wbr>?&gt;&nbsp;sqlPreparedQuery)</span></div>
+<section class="detail" id="supportsRead(io.micronaut.data.runtime.operations.internal.sql.SqlPreparedQuery)">
+<h3>supportsRead</h3>
+<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">supportsRead</span><wbr><span class="parameters">(<a href="../../operations/internal/sql/SqlPreparedQuery.html" title="interface in io.micronaut.data.runtime.operations.internal.sql">SqlPreparedQuery</a>&lt;?,<wbr>?&gt;&nbsp;sqlPreparedQuery)</span></div>
 <div class="block">Gets an indicator telling whether reader can interpret results from the SQL prepared query.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -181,34 +155,16 @@ loadScripts(document, 'script');</script>
 </section>
 </li>
 <li>
-<section class="detail" id="readJsonColumn(io.micronaut.data.runtime.mapper.ResultReader,RS,java.lang.String,io.micronaut.core.type.Argument)">
-<h3 id="readJsonColumn(io.micronaut.data.runtime.mapper.ResultReader,java.lang.Object,java.lang.String,io.micronaut.core.type.Argument)">readJsonColumn</h3>
-<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type">T</span>&nbsp;<span class="element-name">readJsonColumn</span><wbr><span class="parameters">(<a href="../ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a>&lt;<a href="SqlJsonColumnReader.html" title="type parameter in SqlJsonColumnReader">RS</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;resultReader,
- <a href="SqlJsonColumnReader.html" title="type parameter in SqlJsonColumnReader">RS</a>&nbsp;resultSet,
- <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;columnName,
- io.micronaut.core.type.Argument&lt;T&gt;&nbsp;argument)</span></div>
-<div class="block">Reads JSON column from the result set and returns as expected type.</div>
+<section class="detail" id="supportsResultSetType(java.lang.Class)">
+<h3>supportsResultSetType</h3>
+<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">supportsResultSetType</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;<a href="SqlJsonColumnReader.html" title="type parameter in SqlJsonColumnReader">S</a>&gt;&nbsp;resultSetType)</span></div>
+<div class="block">Gets an indicator telling whether SQL json column reader can read from given result set.
+ The default one should as it reads using <a href="../ResultReader.html" title="interface in io.micronaut.data.runtime.mapper"><code>ResultReader</code></a> that should match with parametrized result set type.</div>
 <dl class="notes">
-<dt>Type Parameters:</dt>
-<dd><code>T</code> - the result type</dd>
 <dt>Parameters:</dt>
-<dd><code>resultReader</code> - the result reader</dd>
-<dd><code>resultSet</code> - the result set</dd>
-<dd><code>columnName</code> - the column name</dd>
-<dd><code>argument</code> - the result type argument</dd>
+<dd><code>resultSetType</code> - the result set type</dd>
 <dt>Returns:</dt>
-<dd>object of type T read from JSON column</dd>
-</dl>
-</section>
-</li>
-<li>
-<section class="detail" id="getJsonMapper()">
-<h3>getJsonMapper</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-</span><span class="return-type">io.micronaut.json.JsonMapper</span>&nbsp;<span class="element-name">getJsonMapper</span>()</div>
-<dl class="notes">
-<dt>Returns:</dt>
-<dd>the json mapper</dd>
+<dd>true if it can read from given result set type</dd>
 </dl>
 </section>
 </li>

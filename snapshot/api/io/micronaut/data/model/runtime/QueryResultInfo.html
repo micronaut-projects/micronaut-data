@@ -96,8 +96,9 @@ loadScripts(document, 'script');</script>
 <div class="summary-table two-column-summary">
 <div class="table-header col-first">Constructor</div>
 <div class="table-header col-last">Description</div>
-<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(io.micronaut.data.annotation.QueryResult.Type,java.lang.String)" class="member-name-link">QueryResultInfo</a><wbr>(<a href="../../annotation/QueryResult.Type.html" title="enum class in io.micronaut.data.annotation">QueryResult.Type</a>&nbsp;type,
- <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;columnName)</code></div>
+<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(io.micronaut.data.annotation.QueryResult.Type,java.lang.String,io.micronaut.data.model.JsonDataType)" class="member-name-link">QueryResultInfo</a><wbr>(<a href="../../annotation/QueryResult.Type.html" title="enum class in io.micronaut.data.annotation">QueryResult.Type</a>&nbsp;type,
+ <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;columnName,
+ <a href="../JsonDataType.html" title="enum class in io.micronaut.data.model">JsonDataType</a>&nbsp;jsonDataType)</code></div>
 <div class="col-last even-row-color">&nbsp;</div>
 </div>
 </section>
@@ -116,12 +117,15 @@ loadScripts(document, 'script');</script>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getColumnName()" class="member-name-link">getColumnName</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../../annotation/QueryResult.Type.html" title="enum class in io.micronaut.data.annotation">QueryResult.Type</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getType()" class="member-name-link">getType</a>()</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../JsonDataType.html" title="enum class in io.micronaut.data.model">JsonDataType</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getJsonDataType()" class="member-name-link">getJsonDataType</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#toString()" class="member-name-link">toString</a>()</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../../annotation/QueryResult.Type.html" title="enum class in io.micronaut.data.annotation">QueryResult.Type</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getType()" class="member-name-link">getType</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#toString()" class="member-name-link">toString</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 </div>
 </div>
 </div>
@@ -140,12 +144,14 @@ loadScripts(document, 'script');</script>
 <h2>Constructor Details</h2>
 <ul class="member-list">
 <li>
-<section class="detail" id="&lt;init&gt;(io.micronaut.data.annotation.QueryResult.Type,java.lang.String)">
+<section class="detail" id="&lt;init&gt;(io.micronaut.data.annotation.QueryResult.Type,java.lang.String,io.micronaut.data.model.JsonDataType)">
 <h3>QueryResultInfo</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name">QueryResultInfo</span><wbr><span class="parameters">(@NonNull
  <a href="../../annotation/QueryResult.Type.html" title="enum class in io.micronaut.data.annotation">QueryResult.Type</a>&nbsp;type,
  @Nullable
- <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;columnName)</span></div>
+ <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;columnName,
+ @Nullable
+ <a href="../JsonDataType.html" title="enum class in io.micronaut.data.model">JsonDataType</a>&nbsp;jsonDataType)</span></div>
 </section>
 </li>
 </ul>
@@ -163,6 +169,16 @@ loadScripts(document, 'script');</script>
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>the column name from which result will be read and transformed. Used only if <code>type</code> is JSON</dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="getJsonDataType()">
+<h3>getJsonDataType</h3>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="../JsonDataType.html" title="enum class in io.micronaut.data.model">JsonDataType</a></span>&nbsp;<span class="element-name">getJsonDataType</span>()</div>
+<dl class="notes">
+<dt>Returns:</dt>
+<dd>the json representation data type</dd>
 </dl>
 </section>
 </li>

@@ -107,7 +107,8 @@ implements <a href="SqlTypeMapper.html" title="interface in io.micronaut.data.ru
 <div class="summary-table two-column-summary">
 <div class="table-header col-first">Constructor</div>
 <div class="table-header col-last">Description</div>
-<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(java.lang.String,io.micronaut.data.model.runtime.RuntimePersistentEntity,io.micronaut.data.runtime.mapper.ResultReader,io.micronaut.data.runtime.mapper.sql.SqlJsonColumnReader,java.util.function.BiFunction)" class="member-name-link">JsonQueryResultMapper</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;columnName,
+<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(java.lang.String,io.micronaut.data.model.JsonDataType,io.micronaut.data.model.runtime.RuntimePersistentEntity,io.micronaut.data.runtime.mapper.ResultReader,io.micronaut.data.runtime.mapper.sql.SqlJsonColumnReader,java.util.function.BiFunction)" class="member-name-link">JsonQueryResultMapper</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;columnName,
+ <a href="../../../model/JsonDataType.html" title="enum class in io.micronaut.data.model">JsonDataType</a>&nbsp;jsonDataType,
  <a href="../../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;<a href="JsonQueryResultMapper.html" title="type parameter in JsonQueryResultMapper">T</a>&gt;&nbsp;entity,
  <a href="../ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a>&lt;<a href="JsonQueryResultMapper.html" title="type parameter in JsonQueryResultMapper">RS</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;resultReader,
  <a href="SqlJsonColumnReader.html" title="interface in io.micronaut.data.runtime.mapper.sql">SqlJsonColumnReader</a>&lt;<a href="JsonQueryResultMapper.html" title="type parameter in JsonQueryResultMapper">RS</a>&gt;&nbsp;sqlJsonColumnReader,
@@ -165,10 +166,12 @@ implements <a href="SqlTypeMapper.html" title="interface in io.micronaut.data.ru
 <h2>Constructor Details</h2>
 <ul class="member-list">
 <li>
-<section class="detail" id="&lt;init&gt;(java.lang.String,io.micronaut.data.model.runtime.RuntimePersistentEntity,io.micronaut.data.runtime.mapper.ResultReader,io.micronaut.data.runtime.mapper.sql.SqlJsonColumnReader,java.util.function.BiFunction)">
+<section class="detail" id="&lt;init&gt;(java.lang.String,io.micronaut.data.model.JsonDataType,io.micronaut.data.model.runtime.RuntimePersistentEntity,io.micronaut.data.runtime.mapper.ResultReader,io.micronaut.data.runtime.mapper.sql.SqlJsonColumnReader,java.util.function.BiFunction)">
 <h3>JsonQueryResultMapper</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name">JsonQueryResultMapper</span><wbr><span class="parameters">(@NonNull
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;columnName,
+ @NonNull
+ <a href="../../../model/JsonDataType.html" title="enum class in io.micronaut.data.model">JsonDataType</a>&nbsp;jsonDataType,
  @NonNull
  <a href="../../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;<a href="JsonQueryResultMapper.html" title="type parameter in JsonQueryResultMapper">T</a>&gt;&nbsp;entity,
  @NonNull

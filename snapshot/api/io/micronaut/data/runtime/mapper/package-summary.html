@@ -104,24 +104,28 @@ loadScripts(document, 'script');</script>
 <div class="block">A <a href="BeanIntrospectionMapper.html" title="interface in io.micronaut.data.runtime.mapper"><code>BeanIntrospectionMapper</code></a> that reads the result using the specified
  <a href="../../model/PersistentEntity.html" title="interface in io.micronaut.data.model"><code>PersistentEntity</code></a> and <a href="ResultReader.html" title="interface in io.micronaut.data.runtime.mapper"><code>ResultReader</code></a> and using the <a href="BeanIntrospectionMapper.html#map(D,java.lang.Class)"><code>BeanIntrospectionMapper.map(Object, Class)</code></a> allows mapping a result to a introspected Data Transfer Object (DTO).</div>
 </div>
-<div class="col-first even-row-color class-summary class-summary-tab1"><a href="QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a>&lt;PS,<wbr>IDX&gt;</div>
+<div class="col-first even-row-color class-summary class-summary-tab1"><a href="JsonColumnReader.html" title="interface in io.micronaut.data.runtime.mapper">JsonColumnReader</a>&lt;S&gt;</div>
 <div class="col-last even-row-color class-summary class-summary-tab1">
+<div class="block">The wrapper around <code>JsonMapper</code> to read JSON values from the result set.</div>
+</div>
+<div class="col-first odd-row-color class-summary class-summary-tab1"><a href="QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a>&lt;PS,<wbr>IDX&gt;</div>
+<div class="col-last odd-row-color class-summary class-summary-tab1">
 <div class="block">An abstract interface over prepared statements.</div>
 </div>
-<div class="col-first odd-row-color class-summary class-summary-tab1"><a href="ResultConsumer.html" title="interface in io.micronaut.data.runtime.mapper">ResultConsumer</a>&lt;T,<wbr>RS&gt;</div>
-<div class="col-last odd-row-color class-summary class-summary-tab1">
+<div class="col-first even-row-color class-summary class-summary-tab1"><a href="ResultConsumer.html" title="interface in io.micronaut.data.runtime.mapper">ResultConsumer</a>&lt;T,<wbr>RS&gt;</div>
+<div class="col-last even-row-color class-summary class-summary-tab1">
 <div class="block">A mapping function can be used as a method parameter to repository methods to allow custom mapping of results.</div>
 </div>
-<div class="col-first even-row-color class-summary class-summary-tab1"><a href="ResultConsumer.Context.html" title="interface in io.micronaut.data.runtime.mapper">ResultConsumer.Context</a>&lt;RS&gt;</div>
-<div class="col-last even-row-color class-summary class-summary-tab1">
+<div class="col-first odd-row-color class-summary class-summary-tab1"><a href="ResultConsumer.Context.html" title="interface in io.micronaut.data.runtime.mapper">ResultConsumer.Context</a>&lt;RS&gt;</div>
+<div class="col-last odd-row-color class-summary class-summary-tab1">
 <div class="block">A context object that simplifies mapping results to objects.</div>
 </div>
-<div class="col-first odd-row-color class-summary class-summary-tab1"><a href="ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a>&lt;RS,<wbr>IDX&gt;</div>
-<div class="col-last odd-row-color class-summary class-summary-tab1">
+<div class="col-first even-row-color class-summary class-summary-tab1"><a href="ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a>&lt;RS,<wbr>IDX&gt;</div>
+<div class="col-last even-row-color class-summary class-summary-tab1">
 <div class="block">A result reader is a type that is capable of reading data from the given result set type.</div>
 </div>
-<div class="col-first even-row-color class-summary class-summary-tab1"><a href="TypeMapper.html" title="interface in io.micronaut.data.runtime.mapper">TypeMapper</a>&lt;D,<wbr>R&gt;</div>
-<div class="col-last even-row-color class-summary class-summary-tab1">
+<div class="col-first odd-row-color class-summary class-summary-tab1"><a href="TypeMapper.html" title="interface in io.micronaut.data.runtime.mapper">TypeMapper</a>&lt;D,<wbr>R&gt;</div>
+<div class="col-last odd-row-color class-summary class-summary-tab1">
 <div class="block">A context object to facilitate and ease mapping objects programmatically.</div>
 </div>
 </div>
