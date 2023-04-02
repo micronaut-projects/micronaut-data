@@ -6,7 +6,7 @@ micronaut-azure = "3.9.0"
 micronaut-testresources = "1.2.5"
 
 micronaut-reactor = "3.0.0-M1"
-micronaut-rxjava2 = "2.0.0-M1"
+micronaut-rxjava2 = "2.0.0-SNAPSHOT"
 micronaut-r2dbc = "5.0.0-M1"
 micronaut-serde = "2.0.0-M1"
 micronaut-sql = "5.0.0-M1"
