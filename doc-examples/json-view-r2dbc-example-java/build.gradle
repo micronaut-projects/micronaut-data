@@ -30,6 +30,4 @@ dependencies {
     runtimeOnly mn.snakeyaml
     testRuntimeOnly mnSerde.micronaut.serde.jackson
     testRuntimeOnly mnSerde.micronaut.serde.oracle.jdbc.json
-
-    implementation "com.fasterxml.jackson.core:jackson-databind:2.14.2"
 }
