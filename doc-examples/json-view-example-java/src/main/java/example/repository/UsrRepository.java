@@ -18,11 +18,14 @@ public interface UsrRepository extends PageableRepository<Usr, Long> {
 
     @Query("SELECT uv.* FROM usr_view uv WHERE uv.DATA.usrId=:usrId")
     @QueryResult(type = QueryResult.Type.JSON)
-    Optional<UsrView> findByUsrId(Long usrId);
+    Optional<UsrView> findUsrViewByUsrId(Long usrId);
 
-    @Query("UPDATE USR_VIEW uv SET uv.data = :data WHERE uv.data.usrId = :usrId")
-    void update(@TypeDef(type = DataType.JSON) UsrView data, Long usrId);
+    @Query("UPDATE USR_VIEW uv SET uv.data = :data WHERE uv.DATA.usrId = :usrId")
+    void updateUsrView(@TypeDef(type = DataType.JSON) UsrView data, Long usrId);
 
     @Query("INSERT INTO USR_VIEW VALUES (:data)")
-    void insert(@TypeDef(type = DataType.JSON) @Parameter("data") UsrView usrView);
+    void insertUsrView(@TypeDef(type = DataType.JSON) @Parameter("data") UsrView usrView);
+
+    @Query("DELETE FROM USR_VIEW uv WHERE uv.DATA.usrId = :usrId")
+    int deleteUsrView(Long usrId);
 }

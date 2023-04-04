@@ -6,6 +6,7 @@ import example.repository.YmIntervalToPeriodConverter;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.MappedProperty;
+import io.micronaut.data.annotation.Transient;
 import io.micronaut.data.annotation.TypeDef;
 import io.micronaut.data.model.DataType;
 import io.micronaut.serde.annotation.Serdeable;
@@ -13,6 +14,8 @@ import io.micronaut.serde.annotation.Serdeable;
 import java.sql.Blob;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.Period;
 import java.util.Date;
 
@@ -29,15 +32,11 @@ public record Usr(
         Duration ds,
         Double bd,
 
-        @MappedProperty("FDATE")
-        Date date,
+        @MappedProperty("fdate")
+        LocalDate date,
 
        /* @MappedProperty("tstz")
         OffsetDateTime offsetDateTime, */
 
-        @MappedProperty("TS")
-        Instant instant,
-
-        @JsonIgnore
-        Blob memo
+        LocalDateTime ts
 ) {}

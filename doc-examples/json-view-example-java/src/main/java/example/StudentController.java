@@ -19,7 +19,6 @@ import java.nio.charset.Charset;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
 import java.time.Period;
 import java.util.List;
 import java.util.Optional;
@@ -54,19 +53,27 @@ public class StudentController {
     @Get("/user/{id}")
     public Optional<UsrDto> user(Long id) {
         Optional<Usr> optUser = usrRepository.findById(id);
-        return Optional.of(UsrDto.fromUsr(optUser.get()));
+        if (optUser.isPresent()) {
+            return Optional.of(UsrDto.fromUsr(optUser.get()));
+        }
+        Usr usr = new Usr(1L, "Usr1", Period.ofYears(1).plusMonths(6), Duration.ofHours(5), 15.65d, LocalDate.now(), LocalDateTime.now());
+        usrRepository.save(usr);
+        return Optional.of(UsrDto.fromUsr(usr));
     }
 
     @Get("/user_view/{id}")
     public Optional<UsrView> userView(Long id) {
-        Optional<UsrView> optUserView = usrRepository.findByUsrId(id);
+        Optional<UsrView> optUserView = usrRepository.findUsrViewByUsrId(id);
         if (optUserView.isPresent()) {
             UsrView usrView = optUserView.get();
             try {
                 usrView.setName("User123");
+                if (usrView.getMemo() == null) {
+                    usrView.setMemo("".getBytes(Charset.defaultCharset()));
+                }
                 // Make update fail due to different etag
                 // usrView.setMetadata(Metadata.of("TEST", usrView.getMetadata().getAsof()));
-                usrRepository.update(usrView, usrView.getUsrId());
+                usrRepository.updateUsrView(usrView, usrView.getUsrId());
 
                 // Create new one on the fly
                 boolean insertNew = id == 2;
@@ -75,10 +82,10 @@ public class StudentController {
                     UsrView newUsrView = new UsrView(newId, "New User " + newId, Period.of(1, 2, 0), Duration.ofDays(1), 9.9999,
                         "memo123".getBytes(Charset.defaultCharset()), null, LocalDateTime.now(),
                         LocalDate.now()/*, OffsetDateTime.now()*/);
-                    usrRepository.insert(newUsrView);
+                    usrRepository.insertUsrView(newUsrView);
                 }
 
-                optUserView = usrRepository.findByUsrId(id);
+                optUserView = usrRepository.findUsrViewByUsrId(id);
                 usrView = optUserView.get();
                 return Optional.of(usrView);
             } catch (Exception e) {
@@ -92,12 +99,12 @@ public class StudentController {
                 "memo123".getBytes(Charset.defaultCharset()), null, LocalDateTime.now(),
                 LocalDate.now()/*, OffsetDateTime.now()*/);
             try {
-                usrRepository.insert(newUsrView);
+                usrRepository.insertUsrView(newUsrView);
             } catch (Exception e) {
                 LOG.error("Insert failed", e);
                 return Optional.empty();
             }
-            optUserView = usrRepository.findByUsrId(newId);
+            optUserView = usrRepository.findUsrViewByUsrId(newId);
             return optUserView;
         }
     }

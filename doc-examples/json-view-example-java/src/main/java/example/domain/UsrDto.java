@@ -20,7 +20,7 @@ public class UsrDto {
 
     private LocalDateTime ts;
 
-    private LocalDate fdate;
+    private LocalDate date;
 
     public UsrDto(Long id, String name, Period ym, Duration ds, Double bd) {
         this.id = id;
@@ -31,7 +31,7 @@ public class UsrDto {
     }
 
     public UsrDto(Long id, String name, Period ym, Duration ds, Double bd,
-                  /*OffsetDateTime tstz,*/ LocalDateTime ts, LocalDate fdate) {
+                  /*OffsetDateTime tstz,*/ LocalDateTime ts, LocalDate date) {
         this.id = id;
         this.name = name;
         this.ym = ym;
@@ -39,7 +39,7 @@ public class UsrDto {
         this.bd = bd;
         //this.tstz = tstz;
         this.ts = ts;
-        this.fdate = fdate;
+        this.date = date;
     }
 
     public Long getId() {
@@ -98,12 +98,12 @@ public class UsrDto {
         this.ts = ts;
     }
 
-    public LocalDate getFdate() {
-        return fdate;
+    public LocalDate getDate() {
+        return date;
     }
 
-    public void setFdate(LocalDate fdate) {
-        this.fdate = fdate;
+    public void setDate(LocalDate date) {
+        this.date = date;
     }
 
     public static UsrDto fromUsr(Usr usr) {

@@ -3,6 +3,7 @@ package example.repository;
 import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.data.model.runtime.convert.AttributeConverter;
 import jakarta.inject.Singleton;
+import oracle.jdbc.driver.json.OracleJsonExceptions;
 import oracle.jdbc.driver.json.binary.OsonPrimitiveConversions;
 import oracle.sql.INTERVALYM;
 
@@ -13,7 +14,13 @@ public class YmIntervalToPeriodConverter implements AttributeConverter<Period, I
 
     @Override
     public INTERVALYM convertToPersistedValue(Period entityValue, ConversionContext context) {
-        return null;
+        if (entityValue == null) {
+            return null;
+        }
+        byte[] bytes = OsonPrimitiveConversions.periodToIntervalYM(OracleJsonExceptions.ORACLE_FACTORY, entityValue);
+        INTERVALYM result = new INTERVALYM();
+        result.setBytes(bytes);
+        return result;
     }
 
     @Override

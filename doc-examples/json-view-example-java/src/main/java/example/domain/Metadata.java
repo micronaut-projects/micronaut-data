@@ -1,4 +1,4 @@
-package example;
+package example.domain;
 
 import io.micronaut.serde.annotation.Serdeable;
 

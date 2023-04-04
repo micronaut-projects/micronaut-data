@@ -14,7 +14,13 @@ public class DsIntervalToDurationConverter implements AttributeConverter<Duratio
 
     @Override
     public INTERVALDS convertToPersistedValue(Duration entityValue, ConversionContext context) {
-        return null;
+        if (entityValue == null) {
+            return null;
+        }
+        byte[] bytes = OsonPrimitiveConversions.durationToIntervalDS(entityValue);
+        INTERVALDS result = new INTERVALDS();
+        result.setBytes(bytes);
+        return result;
     }
 
     @Override

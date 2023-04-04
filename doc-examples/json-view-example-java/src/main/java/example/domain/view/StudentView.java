@@ -1,7 +1,7 @@
 package example.domain.view;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import example.Metadata;
+import example.domain.Metadata;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.serde.annotation.Serdeable;
