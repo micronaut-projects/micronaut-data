@@ -32,9 +32,6 @@ configurations {
                 if (details.requested.group == 'io.micronaut.multitenancy') {
                     details.useVersion libs.versions.micronaut.multitenancy.get()
                 }
-                if (details.requested.group == 'org.hibernate.reactive') {
-                    details.useVersion "2.0.0.Beta1" // TODO: Remove after SQL release
-                }
             }
         }
     }
