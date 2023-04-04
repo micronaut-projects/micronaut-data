@@ -8,7 +8,6 @@ import io.micronaut.serde.annotation.Serdeable;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
 import java.time.Period;
 
 @Serdeable
@@ -32,10 +31,10 @@ public class UsrView {
 
     private LocalDate date;
 
-    private OffsetDateTime tstz;
+   // private OffsetDateTime tstz;
 
     public UsrView(Long usrId, String name, Period ym, @Nullable Duration ds, Double bd, @Nullable byte[] memo, Metadata metadata, @Nullable LocalDateTime ts,
-                   @Nullable LocalDate date, @Nullable OffsetDateTime tstz) {
+                   @Nullable LocalDate date/*, @Nullable OffsetDateTime tstz*/) {
         this.usrId = usrId;
         this.name = name;
         this.ym = ym;
@@ -45,7 +44,7 @@ public class UsrView {
         this.metadata = metadata;
         this.ts = ts;
         this.date = date;
-        this.tstz = tstz;
+       // this.tstz = tstz;
     }
 
     public Long getUsrId() {
@@ -120,11 +119,11 @@ public class UsrView {
         this.date = date;
     }
 
-    public OffsetDateTime getTstz() {
+   /* public OffsetDateTime getTstz() {
         return tstz;
     }
 
     public void setTstz(OffsetDateTime tstz) {
         this.tstz = tstz;
-    }
+    } */
 }

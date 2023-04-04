@@ -13,7 +13,6 @@ import io.micronaut.serde.annotation.Serdeable;
 import java.sql.Blob;
 import java.time.Duration;
 import java.time.Instant;
-import java.time.OffsetDateTime;
 import java.time.Period;
 import java.util.Date;
 
@@ -33,8 +32,8 @@ public record Usr(
         @MappedProperty("FDATE")
         Date date,
 
-        @MappedProperty("tstz")
-        OffsetDateTime offsetDateTime,
+       /* @MappedProperty("tstz")
+        OffsetDateTime offsetDateTime, */
 
         @MappedProperty("TS")
         Instant instant,

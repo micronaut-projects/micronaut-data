@@ -1,7 +1,6 @@
 
 package example;
 
-import example.domain.Metadata;
 import example.domain.Usr;
 import example.domain.UsrDto;
 import example.domain.view.StudentView;
@@ -21,7 +20,6 @@ import java.nio.charset.Charset;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
 import java.time.Period;
 import java.util.Optional;
 
@@ -72,7 +70,7 @@ public class StudentController {
                     Long newId = id + 1;
                     UsrView newUsrView = new UsrView(newId, "New User " + newId, Period.of(1, 2, 0), Duration.ofDays(1), 9.9999,
                         "memo123".getBytes(Charset.defaultCharset()), null, LocalDateTime.now(),
-                        LocalDate.now(), OffsetDateTime.now());
+                        LocalDate.now()/*, OffsetDateTime.now()*/);
                     usrRepository.insert(newUsrView);
                 }
 
@@ -88,7 +86,7 @@ public class StudentController {
             Long newId = id < 1 ? 1 : id;
             UsrView newUsrView = new UsrView(newId, "New User " + newId, Period.of(1, 2, 0), Duration.ofDays(1), 9.9999,
                 "memo123".getBytes(Charset.defaultCharset()), null, LocalDateTime.now(),
-                LocalDate.now(), OffsetDateTime.now());
+                LocalDate.now()/*, OffsetDateTime.now()*/);
             try {
                 usrRepository.insert(newUsrView);
             } catch (Exception e) {

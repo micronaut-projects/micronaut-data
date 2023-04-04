@@ -74,7 +74,7 @@ public class StudentController {
                     Long newId = id + 1;
                     UsrView newUsrView = new UsrView(newId, "New User " + newId, Period.of(1, 2, 0), Duration.ofDays(1), 9.9999,
                         "memo123".getBytes(Charset.defaultCharset()), null, LocalDateTime.now(),
-                        LocalDate.now(), OffsetDateTime.now());
+                        LocalDate.now()/*, OffsetDateTime.now()*/);
                     usrRepository.insert(newUsrView);
                 }
 
@@ -90,7 +90,7 @@ public class StudentController {
             Long newId = id < 1 ? 1 : id;
             UsrView newUsrView = new UsrView(newId, "New User " + newId, Period.of(1, 2, 0), Duration.ofDays(1), 9.9999,
                 "memo123".getBytes(Charset.defaultCharset()), null, LocalDateTime.now(),
-                LocalDate.now(), OffsetDateTime.now());
+                LocalDate.now()/*, OffsetDateTime.now()*/);
             try {
                 usrRepository.insert(newUsrView);
             } catch (Exception e) {

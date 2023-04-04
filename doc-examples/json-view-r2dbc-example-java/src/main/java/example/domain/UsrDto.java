@@ -6,7 +6,6 @@ import io.micronaut.serde.annotation.Serdeable;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
 import java.time.Period;
 
 @Serdeable
@@ -17,7 +16,7 @@ public class UsrDto {
     private Duration ds;
     private Double bd;
 
-    private OffsetDateTime tstz;
+   // private OffsetDateTime tstz;
 
     private LocalDateTime ts;
 
@@ -32,13 +31,13 @@ public class UsrDto {
     }
 
     public UsrDto(Long id, String name, Period ym, Duration ds, Double bd,
-                  OffsetDateTime tstz, LocalDateTime ts, LocalDate fdate) {
+                  /*OffsetDateTime tstz,*/ LocalDateTime ts, LocalDate fdate) {
         this.id = id;
         this.name = name;
         this.ym = ym;
         this.ds = ds;
         this.bd = bd;
-        this.tstz = tstz;
+        //this.tstz = tstz;
         this.ts = ts;
         this.fdate = fdate;
     }
@@ -83,13 +82,13 @@ public class UsrDto {
         this.bd = bd;
     }
 
-    public OffsetDateTime getTstz() {
+   /* public OffsetDateTime getTstz() {
         return tstz;
     }
 
     public void setTstz(OffsetDateTime tstz) {
         this.tstz = tstz;
-    }
+    } */
 
     public LocalDateTime getTs() {
         return ts;
@@ -119,6 +118,6 @@ public class UsrDto {
             return null;
         }
         return new UsrDto(usrView.getUsrId(), usrView.getName(), usrView.getYm(), usrView.getDs(), usrView.getBd(),
-            usrView.getTstz(), usrView.getTs(), usrView.getDate());
+            /*usrView.getTstz(),*/ usrView.getTs(), usrView.getDate());
     }
 }
