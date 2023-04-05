@@ -5,9 +5,9 @@ import example.domain.Usr;
 import example.domain.UsrDto;
 import example.domain.view.StudentView;
 import example.domain.view.UsrView;
-import example.repository.StudentRepository;
 import example.repository.StudentViewRepository;
 import example.repository.UsrRepository;
+import example.repository.UsrViewRepository;
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Get;
 import io.micronaut.scheduling.TaskExecutors;
@@ -30,14 +30,15 @@ public class StudentController {
     private static final Logger LOG = LoggerFactory.getLogger(StudentController.class);
 
     private final StudentViewRepository studentViewRepository;
-    private final StudentRepository studentRepository;
     private final UsrRepository usrRepository;
+    private final UsrViewRepository usrViewRepository;
 
-    public StudentController(StudentViewRepository studentViewRepository, StudentRepository studentRepository,
-                             UsrRepository usrRepository) {
+    public StudentController(StudentViewRepository studentViewRepository,
+                             UsrRepository usrRepository,
+                             UsrViewRepository usrViewRepository) {
         this.studentViewRepository = studentViewRepository;
-        this.studentRepository = studentRepository;
         this.usrRepository = usrRepository;
+        this.usrViewRepository = usrViewRepository;
     }
 
     @Get("/{id}")
@@ -63,7 +64,7 @@ public class StudentController {
 
     @Get("/user_view/{id}")
     public Optional<UsrView> userView(Long id) {
-        Optional<UsrView> optUserView = usrRepository.findUsrViewByUsrId(id);
+        Optional<UsrView> optUserView = usrViewRepository.findUsrViewByUsrId(id);
         if (optUserView.isPresent()) {
             UsrView usrView = optUserView.get();
             try {
@@ -73,7 +74,7 @@ public class StudentController {
                 }
                 // Make update fail due to different etag
                 // usrView.setMetadata(Metadata.of("TEST", usrView.getMetadata().getAsof()));
-                usrRepository.updateUsrView(usrView, usrView.getUsrId());
+                usrViewRepository.updateUsrView(usrView, usrView.getUsrId());
 
                 // Create new one on the fly
                 boolean insertNew = id == 2;
@@ -82,10 +83,10 @@ public class StudentController {
                     UsrView newUsrView = new UsrView(newId, "New User " + newId, Period.of(1, 2, 0), Duration.ofDays(1), 9.9999,
                         "memo123".getBytes(Charset.defaultCharset()), null, LocalDateTime.now(),
                         LocalDate.now()/*, OffsetDateTime.now()*/);
-                    usrRepository.insertUsrView(newUsrView);
+                    usrViewRepository.insertUsrView(newUsrView);
                 }
 
-                optUserView = usrRepository.findUsrViewByUsrId(id);
+                optUserView = usrViewRepository.findUsrViewByUsrId(id);
                 usrView = optUserView.get();
                 return Optional.of(usrView);
             } catch (Exception e) {
@@ -99,12 +100,12 @@ public class StudentController {
                 "memo123".getBytes(Charset.defaultCharset()), null, LocalDateTime.now(),
                 LocalDate.now()/*, OffsetDateTime.now()*/);
             try {
-                usrRepository.insertUsrView(newUsrView);
+                usrViewRepository.insertUsrView(newUsrView);
             } catch (Exception e) {
                 LOG.error("Insert failed", e);
                 return Optional.empty();
             }
-            optUserView = usrRepository.findUsrViewByUsrId(newId);
+            optUserView = usrViewRepository.findUsrViewByUsrId(newId);
             return optUserView;
         }
     }

@@ -110,7 +110,7 @@ public class UsrDto {
         if (usr == null) {
             return null;
         }
-        return new UsrDto(usr.id(), usr.name(), usr.ym(), usr.ds(), usr.bd());
+        return new UsrDto(usr.getId(), usr.getName(), usr.getYm(), usr.getDs(), usr.getBd());
     }
 
     public static UsrDto fromUsrView(UsrView usrView) {

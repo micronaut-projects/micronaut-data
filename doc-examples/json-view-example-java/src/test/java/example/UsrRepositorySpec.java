@@ -3,6 +3,7 @@ package example;
 import example.domain.Usr;
 import example.domain.view.UsrView;
 import example.repository.UsrRepository;
+import example.repository.UsrViewRepository;
 import io.micronaut.data.exceptions.OptimisticLockException;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
@@ -29,6 +30,9 @@ public class UsrRepositorySpec {
     @Inject
     UsrRepository usrRepository;
 
+    @Inject
+    UsrViewRepository usrViewRepository;
+
     @Test
     void testCrud() {
         Long id = 10L;
@@ -38,47 +42,47 @@ public class UsrRepositorySpec {
             usrRepository.save(usr);
         }
 
-        Optional<UsrView> optUsrView = usrRepository.findUsrViewByUsrId(id);
+        Optional<UsrView> optUsrView = usrViewRepository.findUsrViewByUsrId(id);
         Assertions.assertTrue(optUsrView.isPresent());
         UsrView usrView = optUsrView.get();
         usrView.setName("User10-Updated");
         if (usrView.getMemo() == null) {
             usrView.setMemo("".getBytes(Charset.defaultCharset()));
         }
-        usrRepository.updateUsrView(usrView, id);
+        usrViewRepository.updateUsrView(usrView, id);
 
         optUsr = usrRepository.findById(id);
         Assertions.assertTrue(optUsr.isPresent());
-        Assertions.assertEquals(usrView.getName(), optUsr.get().name());
+        Assertions.assertEquals(usrView.getName(), optUsr.get().getName());
 
-        usrRepository.updateUsrViewBd(150.5, id);
+        usrViewRepository.updateUsrViewBd(150.5, id);
         optUsr = usrRepository.findById(id);
         Assertions.assertTrue(optUsr.isPresent());
-        Assertions.assertEquals(150.5, optUsr.get().bd());
+        Assertions.assertEquals(150.5, optUsr.get().getBd());
 
-        int deletedCount = usrRepository.deleteUsrView(id);
+        int deletedCount = usrViewRepository.deleteUsrView(id);
         Assertions.assertEquals(1, deletedCount);
 
         Assertions.assertFalse(usrRepository.findById(id).isPresent());
-        Assertions.assertFalse(usrRepository.findUsrViewByUsrId(id).isPresent());
+        Assertions.assertFalse(usrViewRepository.findUsrViewByUsrId(id).isPresent());
 
         id = 20L;
-        optUsrView = usrRepository.findUsrViewByUsrId(id);
+        optUsrView = usrViewRepository.findUsrViewByUsrId(id);
         if (!optUsrView.isPresent()) {
             usrView = new UsrView(id, "User" + id, Period.ofYears(2).plusMonths(10), Duration.ofMinutes(30), 9.9999,
                 ("memo" + id).getBytes(Charset.defaultCharset()), null, LocalDateTime.now(), LocalDate.now());
-            usrRepository.insertUsrView(usrView);
+            usrViewRepository.insertUsrView(usrView);
         }
 
         optUsr = usrRepository.findById(id);
         Assertions.assertTrue(optUsr.isPresent());
-        Assertions.assertEquals(usrView.getName(), optUsr.get().name());
+        Assertions.assertEquals(usrView.getName(), optUsr.get().getName());
 
         // Test optimistic locking
-        usrView = usrRepository.findUsrViewByUsrId(id).get();
+        usrView = usrViewRepository.findUsrViewByUsrId(id).get();
         usrView.getMetadata().setEtag(UUID.randomUUID().toString());
         try {
-            usrRepository.updateUsrView(usrView, id);
+            usrViewRepository.updateUsrView(usrView, id);
             Assertions.fail("Should throw OptimisticLockException when ETAG is not matching");
         } catch (OptimisticLockException e) {
             Assertions.assertTrue(e.getMessage().startsWith("ETAG did not match when updating record"));
@@ -87,6 +91,6 @@ public class UsrRepositorySpec {
         usrRepository.deleteAll();
 
         Assertions.assertFalse(usrRepository.findById(id).isPresent());
-        Assertions.assertFalse(usrRepository.findUsrViewByUsrId(id).isPresent());
+        Assertions.assertFalse(usrViewRepository.findUsrViewByUsrId(id).isPresent());
     }
 }
