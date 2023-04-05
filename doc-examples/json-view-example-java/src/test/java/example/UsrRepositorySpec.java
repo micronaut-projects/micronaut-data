@@ -51,6 +51,11 @@ public class UsrRepositorySpec {
         Assertions.assertTrue(optUsr.isPresent());
         Assertions.assertEquals(usrView.getName(), optUsr.get().name());
 
+        usrRepository.updateUsrViewBd(150.5, id);
+        optUsr = usrRepository.findById(id);
+        Assertions.assertTrue(optUsr.isPresent());
+        Assertions.assertEquals(150.5, optUsr.get().bd());
+
         int deletedCount = usrRepository.deleteUsrView(id);
         Assertions.assertEquals(1, deletedCount);
 

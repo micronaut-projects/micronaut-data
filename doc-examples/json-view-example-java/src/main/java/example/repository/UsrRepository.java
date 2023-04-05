@@ -28,4 +28,7 @@ public interface UsrRepository extends PageableRepository<Usr, Long> {
 
     @Query("DELETE FROM USR_VIEW uv WHERE uv.DATA.usrId = :usrId")
     int deleteUsrView(Long usrId);
+
+    @Query("UPDATE USR_VIEW uv SET uv.DATA = json_transform(DATA, SET '$.bd' = :bd) WHERE uv.DATA.usrId = :usrId")
+    void updateUsrViewBd(Double bd, Long usrId);
 }
