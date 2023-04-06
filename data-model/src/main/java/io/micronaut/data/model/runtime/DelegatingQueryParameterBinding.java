@@ -19,6 +19,7 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.model.DataType;
+import io.micronaut.data.model.JsonDataType;
 
 /**
  * Delegating {@link QueryParameterBinding}. Intended for overriding some of the {@link QueryParameterBinding}'s properties.
@@ -50,6 +51,11 @@ public abstract class DelegatingQueryParameterBinding implements QueryParameterB
     @Override
     public DataType getDataType() {
         return delegate.getDataType();
+    }
+
+    @Override
+    public JsonDataType getJsonDataType() {
+        return delegate.getJsonDataType();
     }
 
     @Override

@@ -16,8 +16,10 @@
 package io.micronaut.data.r2dbc.mariadb
 
 import groovy.transform.Memoized
+import io.micronaut.data.r2dbc.mysql.MySqlJsonEntityRepository
 import io.micronaut.data.r2dbc.mysql.MySqlSaleItemRepository
 import io.micronaut.data.r2dbc.mysql.MySqlSaleRepository
+import io.micronaut.data.tck.repositories.JsonEntityRepository
 import io.micronaut.data.tck.repositories.SaleItemRepository
 import io.micronaut.data.tck.repositories.SaleRepository
 import io.micronaut.data.tck.tests.AbstractJSONSpec
@@ -34,5 +36,11 @@ class MariaDbJsonSpec extends AbstractJSONSpec implements MariaDbTestPropertyPro
     @Override
     SaleItemRepository getSaleItemRepository() {
         return applicationContext.getBean(MySqlSaleItemRepository)
+    }
+
+    @Memoized
+    @Override
+    JsonEntityRepository getJsonEntityRepository() {
+        return applicationContext.getBean(MySqlJsonEntityRepository)
     }
 }

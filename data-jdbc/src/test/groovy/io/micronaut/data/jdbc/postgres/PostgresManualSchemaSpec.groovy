@@ -14,7 +14,7 @@ class PostgresManualSchemaSpec extends AbstractManualSchemaSpec implements Postg
 
     @Override
     List<String> createStatements() {
-        return Arrays.asList("CREATE TABLE patient(name VARCHAR(255), id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY, history VARCHAR(1000), doctor_notes VARCHAR(255))")
+        return Arrays.asList("CREATE TABLE patient(name VARCHAR(255), id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY, history VARCHAR(1000), doctor_notes VARCHAR(255), appointments JSONB)")
     }
 
     @Memoized

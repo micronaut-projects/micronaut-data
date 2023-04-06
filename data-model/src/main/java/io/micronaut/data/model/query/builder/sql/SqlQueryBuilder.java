@@ -38,6 +38,7 @@ import io.micronaut.data.exceptions.MappingException;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.Embedded;
+import io.micronaut.data.model.JsonDataType;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
@@ -964,6 +965,11 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                         }
 
                         @Override
+                        public JsonDataType getJsonDataType() {
+                            return property.getJsonDataType();
+                        }
+
+                        @Override
                         public String[] getPropertyPath() {
                             return path;
                         }
@@ -991,6 +997,11 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                 @Override
                 public DataType getDataType() {
                     return version.getDataType();
+                }
+
+                @Override
+                public JsonDataType getJsonDataType() {
+                    return null;
                 }
 
                 @Override
@@ -1041,6 +1052,11 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                         @Override
                         public DataType getDataType() {
                             return property.getDataType();
+                        }
+
+                        @Override
+                        public JsonDataType getJsonDataType() {
+                            return property.getJsonDataType();
                         }
 
                         @Override
