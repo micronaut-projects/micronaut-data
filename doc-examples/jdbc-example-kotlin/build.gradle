@@ -30,8 +30,8 @@ dependencies {
     implementation "io.micronaut.sql:micronaut-jdbc-tomcat"
     implementation libs.jakarta.persistence.api
     implementation libs.javax.transaction.api
-    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core"
-    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-reactive"
+    implementation libs.kotlin.coroutines
+    implementation libs.kotlin.coroutines.reactive
 
     runtimeOnly "ch.qos.logback:logback-classic"
     runtimeOnly "com.h2database:h2"

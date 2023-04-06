@@ -22,9 +22,9 @@ dependencies {
     kapt "io.micronaut.validation:micronaut-validation"
     annotationProcessor projects.dataProcessor
 
-    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core"
-    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-reactive"
-    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-reactor"
+    implementation libs.kotlin.coroutines
+    implementation libs.kotlin.coroutines.reactive
+    implementation libs.kotlin.coroutines.reactor
     implementation "io.micronaut:micronaut-http-client"
     implementation projects.dataHibernateReactive
     implementation "io.micronaut.reactor:micronaut-reactor"

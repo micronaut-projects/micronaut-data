@@ -22,7 +22,6 @@ tasks.named("jmh") {
     testRuntimeClasspath.setFrom() // clear test runtime classpath
 }
 
-project.afterEvaluate {
-    nativeCompile.enabled = false
-    testNativeImage.enabled = false
+graalvmNative {
+    testSupport = false
 }
