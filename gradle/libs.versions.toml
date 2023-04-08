@@ -30,7 +30,7 @@ hibernate-jpamodelgen-jakarta = "6.0.0.Alpha9"
 
 spring-data = "3.0.4"
 
-mongodb = "4.9.0"
+mongodb = "4.9.1"
 
 vertx = "4.4.1"
 
