@@ -37,6 +37,10 @@ import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Stepwise
 
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.ZoneOffset
+
 import static io.micronaut.data.repository.jpa.criteria.QuerySpecification.where
 import static io.micronaut.data.tck.repositories.PersonRepository.Specifications.nameEquals
 
@@ -726,6 +730,20 @@ abstract class AbstractReactiveRepositorySpec extends Specification {
             page.totalSize == 50
             page.nextPageable().offset == 20
             page.nextPageable().number == 2
+    }
+
+    def "test mono projection"() {
+        given:
+            def student = new Student("Denis")
+        when:
+            studentRepository.save(student).blockingGet()
+            def date = java.util.Date.from(LocalDate.now().atStartOfDay()
+                    .atZone(ZoneId.systemDefault())
+                    .toInstant());
+        then:
+            studentRepository.findByName("Denis").block().creationTime == date
+            studentRepository.findCreationTimeByName("Denis").block() == date
+            studentRepository.findMaxCreationTimeByName("Denis").block() == date
     }
 
     protected void savePersons(List<String> names) {

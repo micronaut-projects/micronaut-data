@@ -21,6 +21,9 @@ import io.micronaut.data.annotation.Version;
 import io.micronaut.data.repository.reactive.RxJavaCrudRepository;
 import io.micronaut.data.tck.entities.Student;
 import io.reactivex.Completable;
+import reactor.core.publisher.Mono;
+
+import java.util.Date;
 
 public interface StudentReactiveRepository extends RxJavaCrudRepository<Student, Long> {
 
@@ -31,5 +34,11 @@ public interface StudentReactiveRepository extends RxJavaCrudRepository<Student,
     Completable deleteByIdAndVersionAndName(@Id Long id, @Version Long version, String name);
 
     Completable deleteByIdAndVersion(@Id Long id, @Version Long version);
+
+    Mono<Student> findByName(String name);
+
+    Mono<Date> findCreationTimeByName(String name);
+
+    Mono<Date> findMaxCreationTimeByName(String name);
 
 }
