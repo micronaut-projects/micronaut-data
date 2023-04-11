@@ -4,6 +4,7 @@ import io.micronaut.data.annotation.Join
 import io.micronaut.data.annotation.Query
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.r2dbc.annotation.R2dbcRepository
+import io.micronaut.data.repository.jpa.criteria.CriteriaQueryBuilder
 import io.micronaut.data.repository.kotlin.CoroutineCrudRepository
 import kotlinx.coroutines.flow.Flow
 import javax.transaction.Transactional
@@ -28,5 +29,7 @@ interface BookRepository : CoroutineCrudRepository<Book, Long> {
     suspend fun customFindOne(title: String): BookDTO?
 
     suspend fun findOne(title: String): BookDTO?
+
+    fun findAll(specification: CriteriaQueryBuilder<BookDTO>): Flow<BookDTO>
 
 }
