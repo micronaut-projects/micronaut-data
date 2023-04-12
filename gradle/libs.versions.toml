@@ -63,7 +63,7 @@ benchmark-spring-data = "2022.0.4"
 spock = "2.2-groovy-4.0"
 cglib = "3.3.0"
 objenesis = "3.3"
-testcontainers = "1.17.6"
+testcontainers = "1.18.0"
 jmh = "1.36"
 jetbrains-annotations = "24.0.1"
 
