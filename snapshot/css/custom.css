@@ -259,7 +259,7 @@ Changes to make individual pages render properly
     display: none;
 }
 
-/* 
+/*
 
 Dark theme overrides
 
@@ -298,18 +298,18 @@ html .dark-mode, body.dark-mode, .dark-mode #main, .dark-mode .docs-content {
     color: #f0bcb4
 }
 
-.dark-mode a, .dark-mode a:hover, .dark-mode a:focus, .dark-mode a:active, .dark-mode a:hover, 
-.dark-mode #table-of-content a:hover strong, .dark-mode #table-of-content a strong, .dark-mode .menu a:hover, 
+.dark-mode a, .dark-mode a:hover, .dark-mode a:focus, .dark-mode a:active, .dark-mode a:hover,
+.dark-mode #table-of-content a:hover strong, .dark-mode #table-of-content a strong, .dark-mode .menu a:hover,
 .dark-mode .local .local-title .toggle a {
     color: #77aeff !important;
 }
 
-.dark-mode .subheader, .dark-mode .admonitionblock td.content > .title, .dark-mode .audioblock > .title, 
-.dark-mode .exampleblock > .title, .dark-mode .imageblock > .title, .dark-mode .listingblock > .title, 
-.dark-mode .literalblock > .title, .dark-mode .stemblock > .title, .dark-mode .openblock > .title, 
-.dark-mode .paragraph > .title, .dark-mode .quoteblock > .title, .dark-mode table.tableblock > .title, 
-.dark-mode .verseblock > .title, .dark-mode .videoblock > .title, .dark-mode .dlist > .title, 
-.dark-mode .olist > .title, .dark-mode .ulist > .title, .dark-mode .qlist > .title, .dark-mode .hdlist > .title, 
+.dark-mode .subheader, .dark-mode .admonitionblock td.content > .title, .dark-mode .audioblock > .title,
+.dark-mode .exampleblock > .title, .dark-mode .imageblock > .title, .dark-mode .listingblock > .title,
+.dark-mode .literalblock > .title, .dark-mode .stemblock > .title, .dark-mode .openblock > .title,
+.dark-mode .paragraph > .title, .dark-mode .quoteblock > .title, .dark-mode table.tableblock > .title,
+.dark-mode .verseblock > .title, .dark-mode .videoblock > .title, .dark-mode .dlist > .title,
+.dark-mode .olist > .title, .dark-mode .ulist > .title, .dark-mode .qlist > .title, .dark-mode .hdlist > .title,
 .dark-mode .quoteblock blockquote::before {
     color: #ff9686;
 }
@@ -356,7 +356,7 @@ html .dark-mode, body.dark-mode, .dark-mode #main, .dark-mode .docs-content {
     border-left: 0px none;
 }
 
-.dark-mode .admonitionblock td.icon .icon-note::before, .dark-mode .admonitionblock td.icon [class^="fa icon-"], 
+.dark-mode .admonitionblock td.icon .icon-note::before, .dark-mode .admonitionblock td.icon [class^="fa icon-"],
 .dark-mode .admonitionblock td.icon .icon-tip::before {
     text-shadow: none;
     color: rgba(255, 255, 255, 0.8);
@@ -373,8 +373,8 @@ html .dark-mode, body.dark-mode, .dark-mode #main, .dark-mode .docs-content {
     color: #aaaaaa;
 }
 
-.dark-mode .literalblock pre, .dark-mode .listingblock pre:not(.highlight), 
-.dark-mode .listingblock pre[class="highlight"], .dark-mode .listingblock pre[class^="highlight "], 
+.dark-mode .literalblock pre, .dark-mode .listingblock pre:not(.highlight),
+.dark-mode .listingblock pre[class="highlight"], .dark-mode .listingblock pre[class^="highlight "],
 .dark-mode .listingblock pre.CodeRay, .dark-mode .listingblock pre.prettyprint {
     background-color: #222222;
 }
@@ -426,4 +426,59 @@ html .dark-mode, body.dark-mode, .dark-mode #main, .dark-mode .docs-content {
 .dark-mode * {
     scrollbar-color: #555 rgba(0, 0, 0, 0.3);
     scrollbar-width: thin;
+}
+
+/* For mobile phones: */
+@media only screen and (max-width: 428px) and (orientation: portrait), only screen and (max-width: 926px) and (orientation: landscape) {
+    #main {
+        border: 0;
+        padding: 0 !important;
+    }
+
+    #navigation ul li {
+        padding: 7px 0;
+    }
+
+    #table-of-content {
+        margin-top: 50px;
+    }
+
+    .toc-content {
+        padding-left: 20px;
+    }
+
+    table {
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+    }
+
+    code {
+        word-break: break-word;
+    }
+
+    .contribute-btn {
+        bottom: auto;
+        float: none;
+        right: auto;
+        position: unset;
+        margin-bottom: 7px;
+    }
+
+    .contribute-btn .btn {
+        font-size: 11px;
+        padding: 4px 9px;
+    }
+
+    .note {
+        width: auto;
+    }
+
+    h1 {
+        margin-bottom: 0.1em;
+    }
+
+    .listingblock > div {
+        overflow: hidden;
+    }
 }
