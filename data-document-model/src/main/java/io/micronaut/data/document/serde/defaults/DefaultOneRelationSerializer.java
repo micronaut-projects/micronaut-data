@@ -13,32 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.cosmos.serde;
+package io.micronaut.data.document.serde.defaults;
 
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.type.Argument;
-import io.micronaut.data.document.serde.ManyRelationSerializer;
-import io.micronaut.serde.Encoder;
+import io.micronaut.data.document.serde.OneRelationSerializer;
 import io.micronaut.serde.Serializer;
+import io.micronaut.serde.exceptions.SerdeException;
+import io.micronaut.serde.util.CustomizableSerializer;
 import jakarta.inject.Singleton;
 
-import java.io.IOException;
-
 /**
- * Default {@link ManyRelationSerializer} implementation.
+ * Default {@link OneRelationSerializer} implementation.
  *
  * @author radovanradic
+ * @author Denis Stepanov
  * @since 3.9.0
  */
+@Internal
 @Singleton
-final class DefaultManyRelationSerializer implements ManyRelationSerializer {
+final class DefaultOneRelationSerializer implements OneRelationSerializer, CustomizableSerializer<Object> {
+
     @Override
-    @SuppressWarnings("java:S3740") // Disabled SonarLint rule for: Raw types should not be used
-    public void serialize(Encoder encoder, EncoderContext context, Argument<?> type, Object value) throws IOException {
-        if (value == null) {
-            encoder.encodeNull();
-        } else {
-            Serializer serializer = context.findSerializer(type);
-            serializer.createSpecific(context, type).serialize(encoder, context, type, value);
-        }
+    public Serializer<Object> createSpecific(EncoderContext context, Argument<?> type) throws SerdeException {
+        Serializer<? super Object> serializer = context.findSerializer(type);
+        return serializer.createSpecific(context, type);
     }
+
 }

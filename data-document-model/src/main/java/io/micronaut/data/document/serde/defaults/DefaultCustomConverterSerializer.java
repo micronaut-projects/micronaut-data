@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.cosmos.serde;
+package io.micronaut.data.document.serde.defaults;
 
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.core.type.Argument;
@@ -22,19 +23,21 @@ import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.document.serde.CustomConverterSerializer;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
 import io.micronaut.data.model.runtime.convert.AttributeConverter;
-import io.micronaut.serde.Encoder;
 import io.micronaut.serde.Serializer;
 import io.micronaut.serde.exceptions.SerdeException;
+import io.micronaut.serde.util.CustomizableSerializer;
 import jakarta.inject.Singleton;
 
 /**
  * Default deserializer for custom converters.
  *
  * @author radovanradic
+ * @author Denis Stepanov
  * @since 3.9.0
  */
+@Internal
 @Singleton
-final class DefaultCustomConverterSerializer implements CustomConverterSerializer {
+final class DefaultCustomConverterSerializer implements CustomConverterSerializer, CustomizableSerializer<Object> {
 
     private final AttributeConverterRegistry attributeConverterRegistry;
 
@@ -60,11 +63,6 @@ final class DefaultCustomConverterSerializer implements CustomConverterSerialize
             }
             serializer.serialize(encoder, context, convertedType, converted);
         };
-    }
-
-    @Override
-    public void serialize(@NonNull Encoder encoder, @NonNull EncoderContext context, @NonNull Argument<?> type, @NonNull Object value) {
-        throw new IllegalStateException("Create specific call is required!");
     }
 
 }
