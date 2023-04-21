@@ -1,11 +1,13 @@
 
 package example;
 
+import io.micronaut.configuration.hibernate.jpa.proxy.GenerateProxy;
 import org.hibernate.annotations.BatchSize;
 
 import jakarta.persistence.*;
 
 @Entity
+@GenerateProxy
 @BatchSize(size = 10)
 public class Manufacturer {
     @Id

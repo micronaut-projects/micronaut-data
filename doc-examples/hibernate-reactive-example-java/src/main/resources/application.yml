@@ -3,9 +3,8 @@ jpa:
     reactive: true
     properties:
       hibernate:
+        #physical_naming_strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
         hbm2ddl:
           auto: create-drop
-        connection:
-          url: jdbc:mysql://localhost:3307/my_db
-          username: myUser
-          password: myPassword
+        show_sql: true
+    compileTimeHibernateProxies: true

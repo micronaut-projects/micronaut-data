@@ -1,7 +1,7 @@
 plugins {
     id "java"
     id "io.micronaut.application"
-    id "io.micronaut.build.internal.data-example"
+    id "io.micronaut.build.internal.data-native-example"
 }
 
 application {
@@ -22,8 +22,14 @@ dependencies {
     implementation "io.micronaut.reactor:micronaut-reactor"
     compileOnly mnSerde.micronaut.serde.api
     runtimeOnly "ch.qos.logback:logback-classic"
-    runtimeOnly libs.drivers.vertx.pg
+    runtimeOnly libs.drivers.vertx.mysql
 
-    testImplementation platform(libs.testcontainers.bom)
-    testImplementation libs.testcontainers.postgresql
+    // Testcontainers wait function needs the driver
+    runtimeOnly mnSql.mysql.connector.java
+}
+
+micronaut {
+    testResources {
+        additionalModules.add(HIBERNATE_REACTIVE_MYSQL)
+    }
 }

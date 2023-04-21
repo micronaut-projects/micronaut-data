@@ -9,7 +9,7 @@ import org.junit.jupiter.api.TestInstance;
 
 @MicronautTest(transactional = false)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public class BookClientTest implements PostgresHibernateReactiveProperties {
+public class BookClientTest {
 
     @Inject
     BookClient bookClient;

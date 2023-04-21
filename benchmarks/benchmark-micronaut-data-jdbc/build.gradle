@@ -15,3 +15,9 @@ dependencies {
     runtimeOnly "com.h2database:h2"
     runtimeOnly mn.snakeyaml
 }
+
+graalvmNative {
+    metadataRepository {
+        uri("https://github.com/oracle/graalvm-reachability-metadata/releases/download/0.2.7/graalvm-reachability-metadata-0.2.7.zip")
+    }
+}

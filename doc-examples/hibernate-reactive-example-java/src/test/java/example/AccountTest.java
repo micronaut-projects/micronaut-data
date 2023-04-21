@@ -1,5 +1,6 @@
 package example;
 
+import io.micronaut.context.annotation.Property;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Assertions;
@@ -11,8 +12,10 @@ import java.time.MonthDay;
 import java.util.Base64;
 
 @MicronautTest(transactional = false)
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public class AccountTest implements PostgresHibernateReactiveProperties {
+@Property(name = "jpa.default.properties.hibernate.connection.db-type", value = "mysql")
+@Property(name = "jpa.default.reactive", value = "true")
+@Property(name = "test-resources.containers.mysql.image-name", value = "mysql:8.0.30")
+public class AccountTest {
     @Inject
     AccountRepository accountRepository;
 

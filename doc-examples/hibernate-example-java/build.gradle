@@ -1,7 +1,7 @@
 plugins {
     id "java"
     id "io.micronaut.application"
-    id "io.micronaut.build.internal.data-example"
+    id "io.micronaut.build.internal.data-native-example"
 }
 
 application {
@@ -22,14 +22,12 @@ dependencies {
     compileOnly mnSerde.micronaut.serde.api
     implementation "io.micronaut:micronaut-http-client"
     implementation 'io.micronaut.rxjava2:micronaut-rxjava2'
+    implementation libs.micronaut.sql.jdbc.tomcat
+    implementation mnSql.micronaut.hibernate.jpa
     implementation project(":data-hibernate-jpa")
     implementation project(":data-jdbc")
 
     implementation "io.micronaut.sql:micronaut-jdbc-tomcat"
     runtimeOnly "ch.qos.logback:logback-classic"
     runtimeOnly "com.h2database:h2"
-}
-
-graalvmNative {
-    testSupport = true
 }

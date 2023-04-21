@@ -1,0 +1,21 @@
+plugins {
+    id "io.micronaut.build.internal.data-example"
+    id "io.micronaut.test-resources"
+}
+
+configurations.all {
+    resolutionStrategy.preferProjectModules()
+}
+
+graalvmNative {
+    toolchainDetection = false
+    testSupport = true
+    metadataRepository {
+        enabled = true
+    }
+    binaries {
+        all {
+            buildArgs.add('--verbose')
+        }
+    }
+}

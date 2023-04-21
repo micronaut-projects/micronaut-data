@@ -12,7 +12,7 @@ import java.util.List;
 
 @MicronautTest(transactional = false)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class ProductRepositoryTest implements PostgresHibernateReactiveProperties {
+class ProductRepositoryTest {
 
     @Inject ProductRepository productRepository;
     @Inject ProductManager productManager;
