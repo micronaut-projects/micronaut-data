@@ -13,26 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.cosmos.serde;
+package io.micronaut.data.document.serde.defaults;
 
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.document.serde.OneRelationDeserializer;
-import io.micronaut.serde.Decoder;
+import io.micronaut.serde.Deserializer;
+import io.micronaut.serde.exceptions.SerdeException;
+import io.micronaut.serde.util.CustomizableDeserializer;
 import jakarta.inject.Singleton;
-
-import java.io.IOException;
 
 /**
  * Default {@link io.micronaut.data.document.serde.OneRelationDeserializer} implementation.
  *
  * @author radovanradic
+ * @author Denis Stepanov
  * @since 3.9.0
  */
+@Internal
 @Singleton
-final class DefaultOneRelationDeserializer implements OneRelationDeserializer {
+final class DefaultOneRelationDeserializer implements OneRelationDeserializer, CustomizableDeserializer<Object> {
 
     @Override
-    public Object deserialize(Decoder decoder, DecoderContext context, Argument<? super Object> type) throws IOException {
-        return null;
+    public Deserializer<Object> createSpecific(DecoderContext context, Argument<? super Object> type) throws SerdeException {
+        Deserializer<?> deserializer = context.findDeserializer(type);
+        return (Deserializer<Object>) deserializer.createSpecific(context, type);
     }
+
 }

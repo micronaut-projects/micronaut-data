@@ -26,13 +26,13 @@ dependencies {
     implementation 'io.micronaut.rxjava2:micronaut-rxjava2'
     implementation 'io.micronaut.reactor:micronaut-reactor'
 
-    implementation "io.micronaut:micronaut-http-client"
+    implementation 'io.micronaut:micronaut-jackson-databind'
+    implementation 'io.micronaut.serde:micronaut-serde-jackson'
+
+    implementation 'io.micronaut:micronaut-http-client'
     implementation 'io.micronaut.data:micronaut-data-mongodb'
     implementation libs.mongodb.driver.sync
 
-    compileOnly libs.javax.persistence.api
-    implementation libs.jakarta.persistence.api
-    implementation libs.jakarta.transaction.api
-
     runtimeOnly "ch.qos.logback:logback-classic"
+
 }
