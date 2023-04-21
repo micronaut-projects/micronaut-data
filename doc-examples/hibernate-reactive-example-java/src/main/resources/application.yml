@@ -3,7 +3,7 @@ jpa:
     reactive: true
     properties:
       hibernate:
-        #physical_naming_strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+        physical_naming_strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
         hbm2ddl:
           auto: create-drop
         show_sql: true

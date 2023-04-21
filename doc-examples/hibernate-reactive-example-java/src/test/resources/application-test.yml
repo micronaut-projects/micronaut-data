@@ -1,0 +1,10 @@
+jpa:
+  default:
+    properties:
+      hibernate:
+        connection:
+          db-type: "mysql"
+test-resources:
+  containers:
+    mysql:
+      image-name: "mysql:8.0.30"

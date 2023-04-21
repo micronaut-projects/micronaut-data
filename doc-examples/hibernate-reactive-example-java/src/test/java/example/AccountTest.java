@@ -12,9 +12,6 @@ import java.time.MonthDay;
 import java.util.Base64;
 
 @MicronautTest(transactional = false)
-@Property(name = "jpa.default.properties.hibernate.connection.db-type", value = "mysql")
-@Property(name = "jpa.default.reactive", value = "true")
-@Property(name = "test-resources.containers.mysql.image-name", value = "mysql:8.0.30")
 public class AccountTest {
     @Inject
     AccountRepository accountRepository;
