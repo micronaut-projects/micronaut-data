@@ -17,10 +17,7 @@ package io.micronaut.data.repository;
 
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Blocking;
-import io.micronaut.validation.Validated;
 
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotNull;
 import java.util.List;
 import java.util.Optional;
 
@@ -34,40 +31,37 @@ import java.util.Optional;
  * @param <ID> The ID type
  */
 @Blocking
-@Validated
 public interface CrudRepository<E, ID> extends GenericRepository<E, ID> {
+
     /**
      * Saves the given valid entity, returning a possibly new entity representing the saved state. Note that certain implementations may not be able to detect whether a save or update should be performed and may always perform an insert. The {@link #update(Object)} method can be used in this case to explicitly request an update.
       *
      * @param entity The entity to save. Must not be {@literal null}.
      * @return The saved entity will never be {@literal null}.
-     * @throws jakarta.validation.ConstraintViolationException if the entity is {@literal null} or invalid.
      * @param <S> The generic type
      */
     @NonNull
-    <S extends E> S save(@Valid @NotNull @NonNull S entity);
+    <S extends E> S save(@NonNull S entity);
 
     /**
      * This method issues an explicit update for the given entity. The method differs from {@link #save(Object)} in that an update will be generated regardless if the entity has been saved previously or not. If the entity has no assigned ID then an exception will be thrown.
      *
      * @param entity The entity to save. Must not be {@literal null}.
      * @return The updated entity will never be {@literal null}.
-     * @throws jakarta.validation.ConstraintViolationException if the entity is {@literal null} or invalid.
      * @param <S> The generic type
      */
     @NonNull
-    <S extends E> S update(@Valid @NotNull @NonNull S entity);
+    <S extends E> S update(@NonNull S entity);
 
     /**
      * This method issues an explicit update for the given entities. The method differs from {@link #saveAll(Iterable)} in that an update will be generated regardless if the entity has been saved previously or not. If the entity has no assigned ID then an exception will be thrown.
      *
      * @param entities The entities to update. Must not be {@literal null}.
      * @return The updated entities will never be {@literal null}.
-     * @throws jakarta.validation.ConstraintViolationException if entities is {@literal null} or invalid.
      * @param <S> The generic type
      */
     @NonNull
-    <S extends E> List<S> updateAll(@Valid @NotNull @NonNull Iterable<S> entities);
+    <S extends E> List<S> updateAll(@NonNull Iterable<S> entities);
 
     /**
      * Saves all given entities, possibly returning new instances representing the saved state.
@@ -75,29 +69,26 @@ public interface CrudRepository<E, ID> extends GenericRepository<E, ID> {
      * @param entities The entities to saved. Must not be {@literal null}.
      * @param <S> The generic type
      * @return The saved entities objects. will never be {@literal null}.
-     * @throws jakarta.validation.ConstraintViolationException if the entities are {@literal null}.
      */
     @NonNull
-    <S extends E> List<S> saveAll(@Valid @NotNull @NonNull Iterable<S> entities);
+    <S extends E> List<S> saveAll(@NonNull Iterable<S> entities);
 
     /**
      * Retrieves an entity by its id.
      *
      * @param id The ID of the entity to retrieve. Must not be {@literal null}.
      * @return the entity with the given id or {@literal Optional#empty()} if none found
-     * @throws jakarta.validation.ConstraintViolationException if the id is {@literal null}.
      */
     @NonNull
-    Optional<E> findById(@NotNull @NonNull ID id);
+    Optional<E> findById(@NonNull ID id);
 
     /**
      * Returns whether an entity with the given id exists.
      *
      * @param id must not be {@literal null}.
      * @return {@literal true} if an entity with the given id exists, {@literal false} otherwise.
-     * @throws jakarta.validation.ConstraintViolationException if the id is {@literal null}.
      */
-    boolean existsById(@NotNull @NonNull ID id);
+    boolean existsById(@NonNull ID id);
 
     /**
      * Returns all instances of the type.
@@ -117,25 +108,22 @@ public interface CrudRepository<E, ID> extends GenericRepository<E, ID> {
      * Deletes the entity with the given id.
      *
      * @param id must not be {@literal null}.
-     * @throws jakarta.validation.ConstraintViolationException if the entity is {@literal null}.
      */
-    void deleteById(@NonNull @NotNull ID id);
+    void deleteById(@NonNull ID id);
 
     /**
      * Deletes a given entity.
      *
      * @param entity The entity to delete
-     * @throws jakarta.validation.ConstraintViolationException if the entity is {@literal null}.
      */
-    void delete(@NonNull @NotNull E entity);
+    void delete(@NonNull E entity);
 
     /**
      * Deletes the given entities.
      *
      * @param entities The entities to delete
-     * @throws jakarta.validation.ConstraintViolationException if the entity is {@literal null}.
      */
-    void deleteAll(@NonNull @NotNull Iterable<? extends E> entities);
+    void deleteAll(@NonNull Iterable<? extends E> entities);
 
     /**
      * Deletes all entities managed by the repository.

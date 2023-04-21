@@ -78,7 +78,6 @@ import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.MethodElement;
 import org.reactivestreams.Publisher;
 
-import jakarta.validation.constraints.NotNull;
 import java.lang.reflect.Array;
 import java.lang.reflect.Modifier;
 import java.util.AbstractMap;
@@ -228,7 +227,7 @@ public interface FindersUtils {
     }
 
     static Map.Entry<ClassElement, Class<? extends DataInterceptor>> resolveSyncFindInterceptor(@NonNull MethodMatchContext matchContext,
-                                                                                                @NotNull ClassElement returnType) {
+                                                                                                @NonNull ClassElement returnType) {
         ClassElement firstTypeArgument = returnType.getFirstTypeArgument().orElse(null);
         if (isPage(matchContext, returnType)) {
             return typeAndInterceptorEntry(firstTypeArgument, FindPageInterceptor.class);

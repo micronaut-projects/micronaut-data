@@ -217,7 +217,7 @@ public class HibernateJpaOperations extends AbstractHibernateOperations<Session,
     @NonNull
     @Override
     public <T> T load(@NonNull Class<T> type, @NonNull Serializable id) {
-        return transactionOperations.executeRead(status -> sessionFactory.getCurrentSession().load(type, id));
+        return transactionOperations.executeRead(status -> sessionFactory.getCurrentSession().getReference(type, id));
     }
 
     @Nullable

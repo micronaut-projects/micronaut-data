@@ -41,7 +41,6 @@ import io.micronaut.data.model.runtime.convert.AttributeConverter;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.mapper.ResultReader;
 
-import jakarta.validation.constraints.NotNull;
 import java.sql.Array;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -730,7 +729,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
             return associations.computeIfAbsent(association, a -> joinAssociation(joinPaths, association));
         }
 
-        public <K> MappingContext<K> associate(MappingContext<K> ctx, @NotNull Object associationId, @NotNull Object entity) {
+        public <K> MappingContext<K> associate(MappingContext<K> ctx, @NonNull Object associationId, @NonNull Object entity) {
             ctx.entity = (K) entity;
             if (manyAssociations == null) {
                 manyAssociations = new LinkedHashMap<>();
