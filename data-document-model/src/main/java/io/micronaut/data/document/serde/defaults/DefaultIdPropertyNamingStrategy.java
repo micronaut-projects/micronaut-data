@@ -13,9 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.cosmos.serde;
+package io.micronaut.data.document.serde.defaults;
 
 import io.micronaut.core.annotation.AnnotatedElement;
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.document.serde.IdPropertyNamingStrategy;
 import jakarta.inject.Singleton;
 
@@ -23,8 +24,10 @@ import jakarta.inject.Singleton;
  * Default implementation for {@link IdPropertyNamingStrategy}.
  *
  * @author radovanradic
+ * @author Denis Stepanov
  * @since 3.9.0
  */
+@Internal
 @Singleton
 final class DefaultIdPropertyNamingStrategy implements IdPropertyNamingStrategy {
     @Override

@@ -1,15 +1,15 @@
 [versions]
 micronaut = "4.0.0-M1"
 micronaut-docs = "2.0.0"
-micronaut-gradle-plugin = "4.0.0-SNAPSHOT"
-micronaut-testresources = "2.0.0-SNAPSHOT"
+micronaut-gradle-plugin = "3.7.7"
+micronaut-testresources = "1.2.5"
 
 micronaut-azure = "5.0.0-M1"
 micronaut-reactor = "3.0.0-M1"
 micronaut-rxjava2 = "2.0.0-M1"
-micronaut-r2dbc = "5.0.0-SNAPSHOT"
+micronaut-r2dbc = "5.0.0-M2"
 micronaut-serde = "2.0.0-M1"
-micronaut-sql = "5.0.0-SNAPSHOT"
+micronaut-sql = "5.0.0-M3"
 micronaut-spring = "5.0.0-M1"
 micronaut-test = "4.0.0-SNAPSHOT"
 micronaut-mongo = "5.0.0-M1"
@@ -30,13 +30,13 @@ hibernate-jpamodelgen-jakarta = "6.0.0.Alpha9"
 
 spring-data = "3.0.4"
 
-mongodb = "4.9.0"
+mongodb = "4.9.1"
 
 vertx = "4.4.1"
 
 # JDBC Drivers
 
-oracle-jdbc-driver = "21.9.0.0"
+oracle-jdbc-driver = "23.2.0.0"
 mariadb-jdbc-driver = "3.1.3"
 mysql-jdbc-driver = "8.0.32"
 postgres-jdbc-driver = "42.6.0"
@@ -47,7 +47,7 @@ mssql-jdbc-driver = "12.2.0.jre11"
 r2dbc = "1.0.0.RELEASE"
 r2dbc-pool = "1.0.0.RELEASE"
 
-oracle-r2dbc-driver = "1.1.0"
+oracle-r2dbc-driver = "1.1.1"
 mysql-r2dbc-driver = "0.8.2.RELEASE"
 h2-r2dbc-driver = "1.0.0.RELEASE"
 mariadb-r2dbc-driver = "1.1.4"
@@ -58,12 +58,12 @@ h2 = "2.1.214"
 
 # Testing and benchmarking
 
-benchmark-spring-data-mongodb = "4.9.0"
+benchmark-spring-data-mongodb = "4.9.1"
 benchmark-spring-data = "2022.0.4"
 spock = "2.2-groovy-4.0"
 cglib = "3.3.0"
 objenesis = "3.3"
-testcontainers = "1.17.6"
+testcontainers = "1.18.0"
 jmh = "1.36"
 jetbrains-annotations = "24.0.1"
 
@@ -106,7 +106,6 @@ jackson-annotations = { module = "com.fasterxml.jackson.core:jackson-annotations
 kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib-jdk8" }
 kotlin-coroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlin-coroutines" }
 kotlin-coroutines-reactor = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-reactor", version.ref = "kotlin-coroutines" }
-kotlin-coroutines-reactive = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-reactive", version.ref = "kotlin-coroutines" }
 
 javax-transaction-api = { module = "javax.transaction:javax.transaction-api", version.ref = "javax-transaction" }
 jakarta-transaction-api = { module = "jakarta.transaction:jakarta.transaction-api", version.ref = "jakarta-transaction" }

@@ -1,0 +1,6 @@
+micronaut:
+  application:
+    name: data-example
+  data:
+    mongodb:
+      create-collections: true
