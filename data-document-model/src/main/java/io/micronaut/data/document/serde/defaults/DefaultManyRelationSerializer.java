@@ -13,27 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.cosmos.serde;
+package io.micronaut.data.document.serde.defaults;
 
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.type.Argument;
-import io.micronaut.data.document.serde.IdSerializer;
+import io.micronaut.data.document.serde.ManyRelationSerializer;
 import io.micronaut.serde.Serializer;
 import io.micronaut.serde.exceptions.SerdeException;
 import io.micronaut.serde.util.CustomizableSerializer;
 import jakarta.inject.Singleton;
 
 /**
- * Default {@link IdSerializer} implementation.
+ * Default {@link ManyRelationSerializer} implementation.
  *
  * @author radovanradic
+ * @author Denis Stepanov
  * @since 3.9.0
  */
+@Internal
 @Singleton
-final class DefaultIdSerializer implements IdSerializer, CustomizableSerializer<Object> {
+final class DefaultManyRelationSerializer implements ManyRelationSerializer, CustomizableSerializer<Object> {
 
     @Override
     public Serializer<Object> createSpecific(EncoderContext context, Argument<?> type) throws SerdeException {
-        Serializer<? super Object> serializer = context.findSerializer(type);
+        Serializer serializer = context.findSerializer(type);
         return serializer.createSpecific(context, type);
     }
+
 }

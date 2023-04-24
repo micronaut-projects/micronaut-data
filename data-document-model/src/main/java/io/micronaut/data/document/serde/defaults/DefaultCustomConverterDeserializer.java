@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.cosmos.serde;
+package io.micronaut.data.document.serde.defaults;
 
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.convert.ConversionContext;
@@ -22,19 +22,20 @@ import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.document.serde.CustomConverterDeserializer;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
 import io.micronaut.data.model.runtime.convert.AttributeConverter;
-import io.micronaut.serde.Decoder;
 import io.micronaut.serde.Deserializer;
 import io.micronaut.serde.exceptions.SerdeException;
+import io.micronaut.serde.util.CustomizableDeserializer;
 import jakarta.inject.Singleton;
 
 /**
  * Default deserializer for custom converters.
  *
  * @author radovanradic
+ * @author Denis Stepanov
  * @since 3.9.0
  */
 @Singleton
-final class DefaultCustomConverterDeserializer implements CustomConverterDeserializer {
+final class DefaultCustomConverterDeserializer implements CustomConverterDeserializer, CustomizableDeserializer<Object> {
 
     private final AttributeConverterRegistry attributeConverterRegistry;
 
@@ -61,8 +62,4 @@ final class DefaultCustomConverterDeserializer implements CustomConverterDeseria
         };
     }
 
-    @Override
-    public Object deserialize(@NonNull Decoder decoder, @NonNull DecoderContext decoderContext, @NonNull Argument<? super Object> type) {
-        throw new IllegalStateException("Create specific call is required!");
-    }
 }

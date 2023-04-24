@@ -32,6 +32,13 @@ configurations {
                 if (details.requested.group == 'io.micronaut.multitenancy') {
                     details.useVersion libs.versions.micronaut.multitenancy.get()
                 }
+                if (details.requested.group == 'io.netty') {
+                    if (details.requested.module.name.startsWith("netty-tcnative")) {
+                        return
+                    }
+                    // TODO: Remove after Netty is not conflicting
+                    details.useVersion '4.1.91.Final'
+                }
             }
         }
     }
