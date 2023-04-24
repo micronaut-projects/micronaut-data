@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 original authors
+ * Copyright 2017-2023 original authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,15 +18,12 @@ package io.micronaut.data.hibernate.reactive
 import io.micronaut.context.ApplicationContext
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.tck.entities.Person
-import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
 import spock.lang.Shared
 import spock.lang.Specification
-import spock.lang.Stepwise
 
-@MicronautTest(transactional = true, packages = "io.micronaut.data.tck.entities")
-@Stepwise
-class CrudRepositorySpec extends Specification implements PostgresHibernateReactiveProperties {
+
+abstract class AbstractCrudRepositorySpec extends Specification {
 
     @Inject
     @Shared
