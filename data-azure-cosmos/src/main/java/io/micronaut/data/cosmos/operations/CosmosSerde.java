@@ -157,7 +157,7 @@ final class CosmosSerde {
             if (!parser.hasCurrentToken()) {
                 parser.nextToken();
             }
-            final Decoder decoder = JacksonDecoder.create(parser, Object.class);
+            final Decoder decoder = JacksonDecoder.create(parser);
             return deserializer.deserialize(decoder, decoderContext, type);
         } catch (IOException e) {
             throw new DataAccessException("Failed to deserialize: " + e.getMessage(), e);
