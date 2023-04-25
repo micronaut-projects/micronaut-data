@@ -1,8 +1,8 @@
 [versions]
 micronaut = "4.0.0-M1"
 micronaut-docs = "2.0.0"
-micronaut-gradle-plugin = "4.0.0-SNAPSHOT"
-micronaut-testresources = "2.0.0-SNAPSHOT"
+micronaut-gradle-plugin = "4.0.0-M1"
+micronaut-testresources = "2.0.0-M1"
 
 micronaut-azure = "5.0.0-M1"
 micronaut-reactor = "3.0.0-M1"
