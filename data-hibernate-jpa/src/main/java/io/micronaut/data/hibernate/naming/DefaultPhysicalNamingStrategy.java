@@ -61,8 +61,8 @@ public final class DefaultPhysicalNamingStrategy implements PhysicalNamingStrate
             return null;
         }
         return new Identifier(
-            NamingStrategy.DEFAULT.mappedName(name.getText()),
-            name.isQuoted()
+                NamingStrategy.DEFAULT.mappedName(name.getText()),
+                name.isQuoted()
         );
     }
 }
