@@ -23,6 +23,8 @@ import org.hibernate.boot.model.naming.PhysicalNamingStrategy;
 import org.hibernate.cfg.AvailableSettings;
 
 import jakarta.inject.Singleton;
+
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -48,9 +50,15 @@ class PhysicalNamingStrategyConfiguration implements BeanCreatedEventListener<Jp
     @Override
     public JpaConfiguration onCreated(BeanCreatedEvent<JpaConfiguration> event) {
         JpaConfiguration jpaConfiguration = event.getBean();
-        jpaConfiguration.getProperties().putIfAbsent(
-                AvailableSettings.PHYSICAL_NAMING_STRATEGY, physicalNamingStrategy
+        Map<String, Object> jpaProperties = jpaConfiguration.getProperties();
+        jpaProperties.putIfAbsent(
+            AvailableSettings.PHYSICAL_NAMING_STRATEGY, physicalNamingStrategy
         );
+        if (jpaProperties.get(AvailableSettings.PHYSICAL_NAMING_STRATEGY) instanceof DefaultPhysicalNamingStrategy) {
+            jpaProperties.putIfAbsent(
+                AvailableSettings.ID_DB_STRUCTURE_NAMING_STRATEGY, "legacy"
+            );
+        }
         return jpaConfiguration;
     }
 }

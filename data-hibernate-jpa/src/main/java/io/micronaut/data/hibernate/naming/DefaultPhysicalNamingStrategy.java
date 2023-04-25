@@ -31,9 +31,6 @@ import jakarta.inject.Singleton;
  */
 @Singleton
 public final class DefaultPhysicalNamingStrategy implements PhysicalNamingStrategy {
-
-    private static final String SEQUENCE_SUFFIX = "_SEQ";
-
     @Override
     public Identifier toPhysicalCatalogName(Identifier name, JdbcEnvironment jdbcEnvironment) {
         return getIdentifier(name);
@@ -46,15 +43,12 @@ public final class DefaultPhysicalNamingStrategy implements PhysicalNamingStrate
 
     @Override
     public Identifier toPhysicalTableName(Identifier name, JdbcEnvironment jdbcEnvironment) {
-        if (isSequence(name)) {
-            return name;
-        }
         return getIdentifier(name);
     }
 
     @Override
     public Identifier toPhysicalSequenceName(Identifier name, JdbcEnvironment jdbcEnvironment) {
-        return toPhysicalTableName(name, jdbcEnvironment);
+        return getIdentifier(name);
     }
 
     @Override
@@ -67,16 +61,8 @@ public final class DefaultPhysicalNamingStrategy implements PhysicalNamingStrate
             return null;
         }
         return new Identifier(
-                NamingStrategy.DEFAULT.mappedName(name.getText()),
-                name.isQuoted()
+            NamingStrategy.DEFAULT.mappedName(name.getText()),
+            name.isQuoted()
         );
-    }
-
-    private boolean isSequence(Identifier identifier) {
-        if (identifier == null) {
-            return false;
-        }
-        String name = identifier.getText();
-        return name != null && name.endsWith(SEQUENCE_SUFFIX);
     }
 }
