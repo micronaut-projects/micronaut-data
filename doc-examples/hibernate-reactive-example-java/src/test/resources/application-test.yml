@@ -2,8 +2,6 @@ jpa:
   default:
     properties:
       hibernate:
-        id:
-          db_structure_naming_strategy: "legacy"
         connection:
           db-type: "mysql"
         show_sql: true
