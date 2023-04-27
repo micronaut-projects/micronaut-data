@@ -1,6 +1,7 @@
 package example;
 
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -32,6 +33,11 @@ class ProductRepositorySpec {
                         apple
                 )
         ));
+    }
+
+    @AfterAll
+    public void cleanup() {
+        productRepository.deleteAll();
     }
 
     @Test
