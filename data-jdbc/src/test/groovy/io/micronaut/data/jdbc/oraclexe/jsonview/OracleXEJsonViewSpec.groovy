@@ -53,7 +53,7 @@ class OracleXEJsonViewSpec extends Specification {
                 (prefix + '.url')               : container.getJdbcUrl(),
                 (prefix + '.username')          : container.getUsername(),
                 (prefix + '.password')          : container.getPassword(),
-                (prefix + '.schema-generate')   : 'CREATE',
+                (prefix + '.schema-generate')   : 'NONE',
                 (prefix + '.dialect')           : Dialect.ORACLE,
                 (prefix + '.packages')          : getClass().package.name
         ] as Map<String, String>
