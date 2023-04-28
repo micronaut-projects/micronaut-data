@@ -1,0 +1,62 @@
+[
+  {
+    "name": "example.Person_",
+    "fields": [
+      {
+        "name": "age"
+      },
+      {
+        "name": "id"
+      },
+      {
+        "name": "longName"
+      },
+      {
+        "name": "name"
+      }
+    ],
+    "condition": {
+      "typeReachable": "io.micronaut.core.reflect.ReflectionUtils"
+    }
+  },
+  {
+    "name": "example.metamodel.Client_",
+    "fields": [
+      {
+        "name": "categoriesCollection"
+      },
+      {
+        "name": "categoriesList"
+      },
+      {
+        "name": "categoriesSet"
+      },
+      {
+        "name": "id"
+      },
+      {
+        "name": "mainCategory"
+      },
+      {
+        "name": "name"
+      }
+    ],
+    "condition": {
+      "typeReachable": "io.micronaut.data.runtime.criteria.metamodel.StaticMetamodelInitializer"
+    }
+  },
+  {
+    "name": "example.metamodel.Category_",
+    "fields": [
+      {
+        "name": "id"
+      },
+      {
+        "name": "name"
+      }
+    ],
+    "condition": {
+      "typeReachable": "io.micronaut.data.runtime.criteria.metamodel.StaticMetamodelInitializer"
+    }
+  }
+]
