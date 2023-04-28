@@ -1,10 +1,6 @@
 micronaut:
   application:
     name: example
-flyway:
-  datasources:
-    default:
-      enabled: true
 
 r2dbc:
   datasources:

@@ -1,8 +1,7 @@
 plugins {
     id "java"
     id "io.micronaut.application"
-    id "io.micronaut.test-resources"
-    id "io.micronaut.build.internal.data-example"
+    id "io.micronaut.build.internal.data-native-example"
 }
 
 application {
@@ -24,7 +23,6 @@ dependencies {
     annotationProcessor("io.micronaut:micronaut-graal")
     annotationProcessor project(":data-processor")
     implementation("io.micronaut.data:micronaut-data-r2dbc")
-    implementation("io.micronaut.flyway:micronaut-flyway")
     implementation("io.micronaut.sql:micronaut-jdbc-hikari")
     implementation mnSerde.micronaut.serde.jackson
 
