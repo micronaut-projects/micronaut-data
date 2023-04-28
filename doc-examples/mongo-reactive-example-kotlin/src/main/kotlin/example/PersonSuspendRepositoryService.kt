@@ -3,8 +3,9 @@ package example
 import com.mongodb.reactivestreams.client.ClientSession
 import io.micronaut.transaction.TransactionExecution
 import io.micronaut.transaction.annotation.TransactionalAdvice
+import io.micronaut.transaction.async.AsyncTransactionOperations
+import io.micronaut.transaction.reactive.ReactiveTransactionStatus
 import io.micronaut.transaction.reactive.ReactorReactiveTransactionOperations
-import io.micronaut.transaction.support.TransactionSynchronizationManager
 import jakarta.inject.Named
 import jakarta.inject.Singleton
 import kotlinx.coroutines.Dispatchers.IO
@@ -19,8 +20,8 @@ import javax.transaction.Transactional
 
 @Singleton
 open class PersonSuspendRepositoryService(
-        private val txManager: ReactorReactiveTransactionOperations<ClientSession>,
-        @Named("custom") private val txCustomManager: ReactorReactiveTransactionOperations<ClientSession>,
+        private val txManager: AsyncTransactionOperations<ClientSession>,
+        @Named("custom") private val txCustomManager: AsyncTransactionOperations<ClientSession>,
         private val parentSuspendRepository: ParentSuspendRepository,
         private val parentSuspendRepositoryForCustomDb: ParentSuspendRepositoryForCustomDb,
         private val parentRepository: ParentRepository,
@@ -51,7 +52,6 @@ open class PersonSuspendRepositoryService(
     open suspend fun saveForCustomDb(p: Parent) {
         parentSuspendRepositoryForCustomDb.save(p)
     }
-
 
     @TransactionalAdvice("custom")
     open suspend fun deleteAllForCustomDb2(): TransactionExecution {
@@ -200,10 +200,8 @@ open class PersonSuspendRepositoryService(
         throw RuntimeException("exception")
     }
 
-    private fun getTxStatus() =
-            txManager.getTransactionStatus(TransactionSynchronizationManager.getResource(ContextView::class.java) as ContextView)
+    private fun getTxStatus() = txManager.findTransactionStatus().orElse(null)
 
-    private fun getCustomTxStatus() =
-            txCustomManager.getTransactionStatus(TransactionSynchronizationManager.getResource(ContextView::class.java) as ContextView)
+    private fun getCustomTxStatus() = txCustomManager.findTransactionStatus().orElse(null)
 
 }

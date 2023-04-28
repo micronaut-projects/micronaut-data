@@ -16,6 +16,8 @@
 package io.micronaut.transaction.sync;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.async.propagation.ReactorPropagation;
+import io.micronaut.core.propagation.PropagatedContext;
 import io.micronaut.transaction.SynchronousTransactionManager;
 import io.micronaut.transaction.TransactionCallback;
 import io.micronaut.transaction.TransactionDefinition;
@@ -23,14 +25,10 @@ import io.micronaut.transaction.TransactionStatus;
 import io.micronaut.transaction.exceptions.TransactionException;
 import io.micronaut.transaction.reactive.ReactiveTransactionStatus;
 import io.micronaut.transaction.reactive.ReactorReactiveTransactionOperations;
-import io.micronaut.transaction.support.TransactionSynchronizationManager;
-import io.micronaut.transaction.support.TransactionSynchronizationManager.TransactionSynchronizationStateOp;
 import org.jetbrains.annotations.NotNull;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
-import reactor.util.context.Context;
-import reactor.util.context.ContextView;
 
 import java.lang.reflect.UndeclaredThrowableException;
 import java.util.concurrent.ExecutorService;
@@ -81,31 +79,17 @@ public final class SynchronousFromReactiveTransactionManager<T> implements Synch
 
     @Override
     public <R> R execute(TransactionDefinition definition, TransactionCallback<T, R> callback) {
-        try (TransactionSynchronizationStateOp op = TransactionSynchronizationManager.withGuardedState()) {
-            TransactionSynchronizationManager.TransactionSynchronizationState state = op.getOrCreateState();
-            Context previousContext = (Context) TransactionSynchronizationManager.unbindResourceIfPossible(ContextView.class);
-            Mono<R> result = reactiveTransactionOperations.withTransactionMono(definition, status -> {
-                return Mono.deferContextual(contextView -> {
-                    try (TransactionSynchronizationStateOp ignore = TransactionSynchronizationManager.withState(state)) {
-                        TransactionSynchronizationManager.bindResource(ContextView.class, contextView);
-                        return Mono.justOrEmpty(callback.apply(new DefaultTransactionStatus<>(status)));
-                    }
-                }).doAfterTerminate(() -> {
-                    try (TransactionSynchronizationStateOp ignore = TransactionSynchronizationManager.withState(state)) {
-                        TransactionSynchronizationManager.unbindResourceIfPossible(ContextView.class);
-                    }
-                }).subscribeOn(scheduler);
-            });
-            if (previousContext != null) {
-                result = result.contextWrite(previousContext);
+        Mono<R> result = reactiveTransactionOperations.withTransactionMono(definition, status -> Mono.deferContextual(contextView -> {
+            try (PropagatedContext.InContext scope = ReactorPropagation.findPropagatedContext(contextView).orElseGet(PropagatedContext::getOrEmpty).propagate()) {
+                return Mono.justOrEmpty(callback.apply(new DefaultTransactionStatus<>(status)));
             }
-            return result.onErrorMap(e -> {
-                if (e instanceof UndeclaredThrowableException) {
-                    return e.getCause();
-                }
-                return e;
-            }).block();
-        }
+        }).subscribeOn(scheduler));
+        return result.onErrorMap(e -> {
+            if (e instanceof UndeclaredThrowableException) {
+                return e.getCause();
+            }
+            return e;
+        }).block();
     }
 
     @Override

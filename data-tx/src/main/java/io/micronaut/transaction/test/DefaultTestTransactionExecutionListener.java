@@ -118,8 +118,7 @@ public class DefaultTestTransactionExecutionListener implements TestExecutionLis
             AnnotatedElement annotatedElement = testContext.getTestMethod();
             if (spockMethodTransactionDefinitionProvider != null) {
                 definition = spockMethodTransactionDefinitionProvider.provide(annotatedElement);
-            } else if (annotatedElement instanceof Method) {
-                Method method = (Method) annotatedElement;
+            } else if (annotatedElement instanceof Method method) {
                 String name = method.getDeclaringClass().getSimpleName() + "." + method.getName();
                 definition = TransactionDefinition.named(name);
             } else {

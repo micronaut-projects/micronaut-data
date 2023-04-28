@@ -1,5 +1,4 @@
 plugins {
-    id "io.micronaut.build.internal.data-kotlin"
     id "io.micronaut.build.internal.data-module"
 }
 
@@ -7,6 +6,7 @@ dependencies {
     annotationProcessor mn.micronaut.inject.java
 
     api libs.javax.transaction.api
+    api projects.dataConnection
 
     implementation mn.micronaut.inject
     implementation mn.micronaut.aop

@@ -37,11 +37,9 @@ package io.micronaut.transaction.exceptions;
  *
  * @author Juergen Hoeller
  * @since 1.1.5
- * @see io.micronaut.transaction.support.ResourceHolderSupport#getTimeToLiveInMillis
  * @see java.sql.Statement#setQueryTimeout
  * @see java.sql.SQLException
  */
-@SuppressWarnings("serial")
 public class TransactionTimedOutException extends TransactionException {
 
     /**

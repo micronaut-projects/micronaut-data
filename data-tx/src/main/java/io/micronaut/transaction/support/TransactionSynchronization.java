@@ -16,6 +16,7 @@
 package io.micronaut.transaction.support;
 
 import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.order.Ordered;
 
 import java.io.Flushable;
 
@@ -32,11 +33,9 @@ import java.io.Flushable;
  *
  * @author Juergen Hoeller
  * @since 02.06.2003
- * @see TransactionSynchronizationManager
- * @see AbstractSynchronousTransactionManager
  * @see org.springframework.jdbc.datasource.DataSourceUtils#CONNECTION_SYNCHRONIZATION_ORDER
  */
-public interface TransactionSynchronization extends Flushable {
+public interface TransactionSynchronization extends Flushable, Ordered {
 
     /**
      * Transaction synchronization status.
@@ -53,15 +52,12 @@ public interface TransactionSynchronization extends Flushable {
     /**
      * Suspend this synchronization.
      * Supposed to unbind resources from TransactionSynchronizationManager if managing any.
-     * @see TransactionSynchronizationManager#unbindResource
      */
     default void suspend() {
     }
 
     /**
      * Resume this synchronization.
-     * Supposed to rebind resources to TransactionSynchronizationManager if managing any.
-     * @see TransactionSynchronizationManager#bindResource
      */
     default void resume() {
     }

@@ -16,6 +16,8 @@
 package io.micronaut.data.runtime.operations;
 
 import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.async.propagation.ReactorPropagation;
+import io.micronaut.core.propagation.PropagatedContext;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.runtime.DeleteBatchOperation;
 import io.micronaut.data.model.runtime.DeleteOperation;
@@ -27,7 +29,6 @@ import io.micronaut.data.model.runtime.UpdateBatchOperation;
 import io.micronaut.data.model.runtime.UpdateOperation;
 import io.micronaut.data.operations.async.AsyncRepositoryOperations;
 import io.micronaut.data.operations.reactive.ReactiveRepositoryOperations;
-import io.micronaut.transaction.support.TransactionSynchronizationManager;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -163,7 +164,7 @@ public class AsyncFromReactiveAsyncRepositoryOperation implements AsyncRepositor
 
     private <T> CompletionStage<Iterable<T>> toIterableCompletionStage(Publisher<T> publisher) {
         return Flux.from(publisher)
-            .contextWrite(TransactionSynchronizationManager.getResourceOrDefault(ContextView.class, Context.empty()))
+            .contextWrite(ctx -> ReactorPropagation.addPropagatedContext(ctx, PropagatedContext.getOrEmpty()))
             .collectList()
             .map(v -> (Iterable<T>) v)
             .toFuture();
@@ -171,7 +172,7 @@ public class AsyncFromReactiveAsyncRepositoryOperation implements AsyncRepositor
 
     private <T> CompletionStage<T> toCompletionStage(Publisher<T> publisher) {
         return Mono.from(publisher)
-            .contextWrite(TransactionSynchronizationManager.getResourceOrDefault(ContextView.class, Context.empty()))
+            .contextWrite(ctx -> ReactorPropagation.addPropagatedContext(ctx, PropagatedContext.getOrEmpty()))
             .toFuture();
     }
 

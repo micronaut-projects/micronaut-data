@@ -1,0 +1,27 @@
+plugins {
+    id "io.micronaut.build.internal.data-module"
+}
+
+dependencies {
+    annotationProcessor mn.micronaut.inject.java
+
+    api libs.javax.transaction.api
+    api projects.dataTx
+    api projects.dataConnectionJdbc
+
+    implementation mn.micronaut.inject
+    implementation mn.micronaut.aop
+
+    compileOnly mnSql.micronaut.jdbc
+
+    testAnnotationProcessor mn.micronaut.inject.java
+    testAnnotationProcessor projects.dataProcessor
+
+    testImplementation projects.dataProcessor
+    testImplementation mn.micronaut.inject.java.test
+    testImplementation mn.jackson.databind
+    testImplementation mnSql.micronaut.jdbc
+
+    testRuntimeOnly mnSql.h2
+    testRuntimeOnly mnSql.micronaut.jdbc.tomcat
+}

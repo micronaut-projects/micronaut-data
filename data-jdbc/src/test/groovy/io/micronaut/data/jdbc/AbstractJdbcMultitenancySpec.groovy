@@ -21,7 +21,7 @@ import io.micronaut.data.jdbc.config.DataJdbcConfiguration
 import io.micronaut.data.jdbc.operations.JdbcSchemaHandler
 import io.micronaut.data.tck.tests.AbstractMultitenancySpec
 import io.micronaut.inject.qualifiers.Qualifiers
-import io.micronaut.transaction.jdbc.DelegatingDataSource
+import io.micronaut.data.connection.jdbc.advice.DelegatingDataSource
 
 import javax.sql.DataSource
 import java.sql.Connection

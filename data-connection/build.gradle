@@ -1,0 +1,14 @@
+
+plugins {
+    id "io.micronaut.build.internal.data-module"
+}
+
+dependencies {
+    annotationProcessor mn.micronaut.inject.java
+    annotationProcessor mn.micronaut.graal
+    annotationProcessor libs.micronaut.docs
+
+//    api projects.dataRuntime
+    implementation mn.reactor
+    implementation mn.micronaut.aop
+}

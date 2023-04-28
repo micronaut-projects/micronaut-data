@@ -16,13 +16,16 @@
 package io.micronaut.transaction;
 
 import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.annotation.Nullable;
+import io.micronaut.transaction.exceptions.TransactionUsageException;
+import io.micronaut.transaction.support.TransactionSynchronization;
 
 import java.io.Flushable;
 
 /**
  * NOTICE: This is a fork of Spring's {@code TransactionStatus} modernizing it
  * to use enums, Slf4j and decoupling from Spring.
- *
+ * <p>
  * Representation of the status of a transaction.
  *
  * <p>Transactional code can use this to retrieve status information,
@@ -33,11 +36,11 @@ import java.io.Flushable;
  * to savepoint management facilities. Note that savepoint management
  * is only available if supported by the underlying transaction manager.
  *
+ * @param <T> The native transaction type
  * @author Juergen Hoeller
- * @since 27.03.2003
  * @see #setRollbackOnly()
  * @see SynchronousTransactionManager#getTransaction
- * @param <T> The native transaction type
+ * @since 27.03.2003
  */
 public interface TransactionStatus<T> extends TransactionExecution, SavepointManager, Flushable {
 
@@ -47,11 +50,12 @@ public interface TransactionStatus<T> extends TransactionExecution, SavepointMan
      * <p>This method is mainly here for diagnostic purposes, alongside
      * {@link #isNewTransaction()}. For programmatic handling of custom
      * savepoints, use the operations provided by {@link SavepointManager}.
+     *
+     * @return Whether a save point is present
      * @see #isNewTransaction()
      * @see #createSavepoint()
      * @see #rollbackToSavepoint(Object)
      * @see #releaseSavepoint(Object)
-     * @return Whether a save point is present
      */
     boolean hasSavepoint();
 
@@ -64,17 +68,32 @@ public interface TransactionStatus<T> extends TransactionExecution, SavepointMan
      * depending on the underlying resource.
      */
     @Override
-    void flush();
+    default void flush() {
+        // Default is no-op
+    }
 
     /**
      * @return The underlying transaction object.
      */
-    @NonNull Object getTransaction();
+    @Nullable
+    Object getTransaction();
 
     /**
      * @return The associated connection.
      */
-    @NonNull T getConnection();
+    @NonNull
+    T getConnection();
 
+    /**
+     * Register a new transaction synchronization for the current state.
+     * <p>Note that synchronizations can implement the
+     * {@link io.micronaut.core.order.Ordered} interface.
+     * They will be executed in an order according to their order value (if any).
+     *
+     * @param synchronization the synchronization object to register
+     */
+    default void registerSynchronization(@NonNull TransactionSynchronization synchronization) {
+        throw new TransactionUsageException("Transaction synchronization is not supported!");
+    }
 }
 

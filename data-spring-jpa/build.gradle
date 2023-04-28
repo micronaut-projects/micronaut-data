@@ -1,5 +1,8 @@
+import io.micronaut.testresources.buildtools.KnownModules
+
 plugins {
     id "io.micronaut.build.internal.data-module"
+    id 'io.micronaut.test-resources'
 }
 
 dependencies {
@@ -26,4 +29,20 @@ dependencies {
         exclude group: 'io.micronaut.data'
     }
     testRuntimeOnly mnSql.micronaut.jdbc.tomcat
+
+    testRuntimeOnly libs.drivers.jdbc.postgresql
+    testResourcesService libs.drivers.jdbc.postgresql
 }
+
+micronaut {
+    // version = libs.versions.micronaut.asProvider().get()
+    version = '4.0.0-SNAPSHOT'
+    testResources {
+        enabled = true
+        inferClasspath = false
+        additionalModules.add(KnownModules.JDBC_POSTGRESQL)
+        clientTimeout = 300
+        version = libs.versions.micronaut.testresources.get()
+    }
+}
+

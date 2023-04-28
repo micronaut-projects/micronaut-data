@@ -44,7 +44,7 @@ import java.util.List;
  * @since 1.0
  */
 @Internal
-public class FindPageSpecificationInterceptor extends AbstractQueryInterceptor<Object, Object> {
+public final class FindPageSpecificationInterceptor extends AbstractQueryInterceptor<Object, Object> {
     private final JpaRepositoryOperations jpaOperations;
 
     /**
@@ -52,7 +52,7 @@ public class FindPageSpecificationInterceptor extends AbstractQueryInterceptor<O
      *
      * @param operations The operations
      */
-    protected FindPageSpecificationInterceptor(@NonNull RepositoryOperations operations) {
+    FindPageSpecificationInterceptor(@NonNull RepositoryOperations operations) {
         super(operations);
         if (operations instanceof JpaRepositoryOperations) {
             this.jpaOperations = (JpaRepositoryOperations) operations;

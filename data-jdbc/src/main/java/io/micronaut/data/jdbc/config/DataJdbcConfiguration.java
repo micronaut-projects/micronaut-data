@@ -53,12 +53,12 @@ public class DataJdbcConfiguration implements Named {
      * If true, {@link io.micronaut.transaction.TransactionOperations} will be used for the operation.
      * This should be false by default in v4 as it adds additional overhead.
      */
-    private boolean transactionPerOperation = true;
+    private boolean transactionPerOperation = false;
 
     /**
      * If true, {@link javax.sql.DataSource#getConnection()} will be used in try-resource block for the operation.
      */
-    private boolean allowConnectionPerOperation;
+    private boolean allowConnectionPerOperation = true;
 
     /**
      * The configuration.

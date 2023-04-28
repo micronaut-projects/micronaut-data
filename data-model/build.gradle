@@ -8,7 +8,6 @@ dependencies {
     annotationProcessor mn.micronaut.graal
     annotationProcessor mnSerde.micronaut.serde.processor
 
-    api projects.dataTx
     api mn.micronaut.inject
     api mn.micronaut.aop
     api mn.micronaut.core.reactive

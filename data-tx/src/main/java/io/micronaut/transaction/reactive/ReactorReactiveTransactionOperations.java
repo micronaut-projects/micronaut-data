@@ -36,16 +36,6 @@ import java.util.function.Function;
 public interface ReactorReactiveTransactionOperations<C> extends ReactiveTransactionOperations<C> {
 
     /**
-     * The prefix of transaction status Reactor context key.
-     */
-    String TRANSACTION_STATUS_KEY_PREFIX = "io.micronaut.tx.status";
-
-    /**
-     * The prefix of transaction definition Reactor context key.
-     */
-    String TRANSACTION_DEFINITION_KEY_PREFIX = "io.micronaut.tx.definition";
-
-    /**
      * Retrieve the transaction status associated to the current transaction manager from the Reactor context.
      *
      * @param contextView The context view
@@ -110,6 +100,7 @@ public interface ReactorReactiveTransactionOperations<C> extends ReactiveTransac
     }
 
     @NonNull
+    @Override
     <T> Flux<T> withTransaction(@NonNull TransactionDefinition definition, @NonNull TransactionalCallback<C, T> handler);
 
     @NonNull
