@@ -1,7 +1,7 @@
 plugins {
     id "java"
     id "io.micronaut.application"
-    id "io.micronaut.build.internal.data-example"
+    id "io.micronaut.build.internal.data-native-example"
 }
 
 application {
