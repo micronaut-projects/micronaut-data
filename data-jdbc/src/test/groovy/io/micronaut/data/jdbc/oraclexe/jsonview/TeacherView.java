@@ -5,7 +5,7 @@ import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.JsonView;
 import io.micronaut.data.annotation.JsonViewColumn;
 
-@JsonView(table = "TEACHER")
+@JsonView(table = "TEACHER", permissions = "UPDATE")
 @Embeddable
 public class TeacherView {
 

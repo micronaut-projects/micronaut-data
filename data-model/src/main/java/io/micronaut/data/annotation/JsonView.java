@@ -52,18 +52,7 @@ public @interface JsonView {
     String table();
 
     /**
-     * @return an indicator telling whether this view is insertable, ie inserting into view will insert data into main table
-     * and joined tables
+     * @return permissions for the table, combination of UPDATE, INSERT, DELETE or NOUPDATE, NOINSERT, NODELETE for the view
      */
-    boolean insertable() default true;
-
-    /**
-     * @return an indicator telling whether this view is updateable
-     */
-    boolean updatable() default true;
-
-    /**
-     * @return an indicator telling whether this view is deletable, ie records from the main table can be deleted by deleting the view data
-     */
-    boolean deletable() default true;
+    String permissions() default "";
 }

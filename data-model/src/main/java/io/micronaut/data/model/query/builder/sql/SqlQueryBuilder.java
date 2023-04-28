@@ -620,47 +620,26 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                 }
             } else {
                 String field = name;
-                boolean updatable = true;
-                boolean check = true;
+                String attributes = null;
                 if (jsonViewColumnAnnotationValue != null) {
                     field = jsonViewColumnAnnotationValue.stringValue("field").orElse(name);
-                    updatable = jsonViewColumnAnnotationValue.getRequiredValue("updatable", Boolean.class);
-                    check = jsonViewColumnAnnotationValue.getRequiredValue("check", Boolean.class);
+                    attributes = jsonViewColumnAnnotationValue.stringValue("attributes").orElse(null);
                 }
                 if (fieldAdded) {
                     sb.append(COMMA).append(LINE_DELIMITER);
                 }
                 sb.append("'").append(name).append("': ").append(sourceTable).append(DOT).append(field);
-                StringBuilder withAttrsSb = new StringBuilder();
-                if (!updatable) {
-                    withAttrsSb.append(" NOUPDATE");
-                }
-                if (!check) {
-                    withAttrsSb.append(" NOCHECK");
-                }
-                if (!withAttrsSb.isEmpty()) {
-                    sb.append(" WITH").append(withAttrsSb);
+                if (StringUtils.isNotEmpty(attributes)) {
+                    sb.append(" WITH ").append(attributes);
                 }
                 fieldAdded = true;
             }
         }
 
         sb.append("} FROM ").append(sourceTable);
-        boolean insertable = jsonViewAnnotationValue.getRequiredValue("insertable", Boolean.class);
-        boolean updatable = jsonViewAnnotationValue.getRequiredValue("updatable", Boolean.class);
-        boolean deletable = jsonViewAnnotationValue.getRequiredValue("deletable", Boolean.class);
-        StringBuilder withAttrsSb = new StringBuilder();
-        if (!insertable) {
-            withAttrsSb.append(" NOINSERT");
-        }
-        if (!updatable) {
-            withAttrsSb.append(" NOUPDATE");
-        }
-        if (!deletable) {
-            withAttrsSb.append(" NODELETE");
-        }
-        if (!withAttrsSb.isEmpty()) {
-            sb.append(" WITH").append(withAttrsSb);
+        String permissions = jsonViewAnnotationValue.stringValue("permissions").orElse(null);
+        if (StringUtils.isNotEmpty(permissions)) {
+            sb.append(" WITH ").append(permissions);
         }
         if (mainTable) {
             sb.append(";");

@@ -11,7 +11,7 @@ import io.micronaut.data.jdbc.annotation.JoinColumn;
 
 import java.util.List;
 
-@JsonView(table = "STUDENT")
+@JsonView(table = "STUDENT", permissions = "UPDATE INSERT DELETE")
 @MappedEntity(value = "STUDENT_SCHEDULE")
 public class StudentView {
     @JsonViewColumn(field = "id")
@@ -19,7 +19,7 @@ public class StudentView {
     @GeneratedValue(GeneratedValue.Type.IDENTITY)
     private Long studentId;
 
-    @JsonViewColumn(field = "name")
+    @JsonViewColumn(field = "name", attributes = "UPDATE")
     private String student;
 
     @JoinColumn(name = "student_id", referencedColumnName = "id")

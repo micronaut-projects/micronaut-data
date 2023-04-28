@@ -44,12 +44,7 @@ public @interface JsonViewColumn {
     String field() default "";
 
     /**
-     * @return whether column is updatable using json view
+     * @return permissions for the table, combination of UPDATE, CHECK or NOUPDATE, NOCHECK for the column
      */
-    boolean updatable() default true;
-
-    /**
-     * @return whether column is used in ETAG calculation
-     */
-    boolean check() default true;
+    String attributes() default "";
 }
