@@ -1,0 +1,12 @@
+[
+  {
+    "condition":{"typeReachable":"org.hibernate.id.enhanced.TableGenerator"},
+    "name":"org.hibernate.id.enhanced.LegacyNamingStrategy",
+    "methods":[{"name":"<init>","parameterTypes":[] }]
+  },
+  {
+    "condition":{"typeReachable":"org.hibernate.internal.log.IncubationLogger"},
+    "name":"org.hibernate.internal.log.IncubationLogger_$logger",
+    "methods":[{"name":"<init>","parameterTypes":["org.jboss.logging.Logger"] }]
+  }
+]

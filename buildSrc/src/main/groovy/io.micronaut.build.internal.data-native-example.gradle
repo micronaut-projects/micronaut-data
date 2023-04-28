@@ -7,15 +7,20 @@ configurations.all {
     resolutionStrategy.preferProjectModules()
 }
 
+tasks.named("check") { task ->
+    def graal = ["jvmci.Compiler", "java.vendor.version", "java.vendor"].any {
+        println "$it ${System.getProperty(it)}"
+        System.getProperty(it)?.toLowerCase(Locale.ENGLISH)?.contains("graal")
+    }
+    if (graal) {
+        task.dependsOn("nativeTest")
+    }
+}
+
 graalvmNative {
     toolchainDetection = false
     testSupport = true
     metadataRepository {
         enabled = true
-    }
-    binaries {
-        all {
-            buildArgs.add('--verbose')
-        }
     }
 }
