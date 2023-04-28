@@ -42,6 +42,7 @@ import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaUpdate;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityFrom;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils;
+import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.SourcePersistentProperty;
 import io.micronaut.data.processor.model.criteria.SourcePersistentEntityCriteriaBuilder;
 import io.micronaut.data.processor.visitors.MatchFailedException;
@@ -161,11 +162,16 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
         if (idParameter != null) {
             methodMatchInfo.addParameterRole(TypeRole.ID, idParameter.stringValue(Parameter.class).orElse(idParameter.getName()));
         }
+        boolean encodeEntityParameters = true;
+        SourcePersistentEntity rootEntity = matchContext.getRootEntity();
+        if (rootEntity != null && rootEntity.isJsonView()) {
+            encodeEntityParameters = false;
+        }
         if (entityParameter != null) {
-            methodMatchInfo.encodeEntityParameters(true);
+            methodMatchInfo.encodeEntityParameters(encodeEntityParameters);
             methodMatchInfo.addParameterRole(TypeRole.ENTITY, entityParameter.getName());
         } else if (entitiesParameter != null) {
-            methodMatchInfo.encodeEntityParameters(true);
+            methodMatchInfo.encodeEntityParameters(encodeEntityParameters);
             methodMatchInfo.addParameterRole(TypeRole.ENTITIES, entitiesParameter.getName());
         }
         return methodMatchInfo;

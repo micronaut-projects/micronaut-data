@@ -16,9 +16,11 @@
 package io.micronaut.data.processor.visitors.finders;
 
 import io.micronaut.context.annotation.Parameter;
+import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.annotation.AutoPopulated;
 import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.JsonView;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.Version;
 import io.micronaut.data.intercept.DataInterceptor;
@@ -114,6 +116,14 @@ public final class UpdateMethodMatcher extends AbstractPatternMethodMatcher {
                                                      PersistentEntityCriteriaUpdate<T> query,
                                                      SourcePersistentEntityCriteriaBuilder cb) {
                 final SourcePersistentEntity rootEntity = matchContext.getRootEntity();
+
+                // for JsonView we don't update all entity fields but all fields at once via JSON update
+                if (rootEntity.isJsonView()) {
+                    AnnotationValue<JsonView> jsonViewAnnotationValue = rootEntity.getAnnotationMetadata().getAnnotation(JsonView.class);
+                    String columnName = jsonViewAnnotationValue.getRequiredValue("column", String.class);
+                    query.set(columnName, cb.parameter(entityParameter));
+                    return;
+                }
 
                 Stream.concat(rootEntity.getPersistentProperties().stream(), Stream.of(rootEntity.getVersion()))
                         .filter(p -> p != null && !((p instanceof Association) && ((Association) p).isForeignKey()) && !p.isGenerated() &&

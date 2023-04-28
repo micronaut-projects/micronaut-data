@@ -145,12 +145,16 @@ public class SaveOneMethodMatcher extends AbstractPrefixPatternMethodMatcher {
                 );
 
                 Map.Entry<ClassElement, Class<? extends DataInterceptor>> e = FindersUtils.pickSaveOneInterceptor(matchContext, matchContext.getReturnType());
+                boolean encodeEntityParameters = true;
+                if (matchContext.getRootEntity() != null && matchContext.getRootEntity().isJsonView()) {
+                    encodeEntityParameters = false;
+                }
                 return new MethodMatchInfo(
                         DataMethod.OperationType.INSERT,
                         e.getKey(),
                         getInterceptorElement(matchContext, e.getValue())
                 )
-                        .encodeEntityParameters(true)
+                        .encodeEntityParameters(encodeEntityParameters)
                         .queryResult(
                                 matchContext.getQueryBuilder().buildInsert(annotationMetadataHierarchy, matchContext.getRootEntity())
                         );

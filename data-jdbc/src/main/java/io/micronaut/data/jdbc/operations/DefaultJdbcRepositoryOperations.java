@@ -97,11 +97,13 @@ import org.slf4j.LoggerFactory;
 import jakarta.annotation.PreDestroy;
 import javax.sql.DataSource;
 import java.io.Serializable;
+import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -418,6 +420,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
 
     private <T, R> Stream<R> findStream(@NonNull PreparedQuery<T, R> pq, Connection connection, boolean closeConnection) {
         SqlPreparedQuery<T, R> preparedQuery = getSqlPreparedQuery(pq);
+        RuntimePersistentEntity<T> persistentEntity = preparedQuery.getPersistentEntity();
         Class<R> resultType = preparedQuery.getResultType();
         AtomicBoolean finished = new AtomicBoolean();
 
@@ -440,7 +443,6 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             Spliterator<R> spliterator;
 
             if (isEntity || dtoProjection) {
-                RuntimePersistentEntity<T> persistentEntity = preparedQuery.getPersistentEntity();
                 SqlResultConsumer sqlMappingConsumer = preparedQuery.hasResultConsumer() ? preparedQuery.getParameterInRole(SqlResultConsumer.ROLE, SqlResultConsumer.class).orElse(null) : null;
                 SqlTypeMapper<ResultSet, R> mapper;
                 if (dtoProjection) {
@@ -519,8 +521,9 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                     }
                 };
             } else {
+                QueryResultInfo queryResultInfo = preparedQuery.getQueryResultInfo();
                 spliterator = new Spliterators.AbstractSpliterator<R>(Long.MAX_VALUE,
-                        Spliterator.ORDERED | Spliterator.IMMUTABLE) {
+                    Spliterator.ORDERED | Spliterator.IMMUTABLE) {
                     @Override
                     public boolean tryAdvance(Consumer<? super R> action) {
                         if (finished.get()) {
@@ -529,16 +532,22 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                         try {
                             boolean hasNext = rs.next();
                             if (hasNext) {
-                                Object v = columnIndexResultSetReader
+                                if (queryResultInfo == null || queryResultInfo.getType() == QueryResult.Type.TABULAR) {
+                                    Object v = columnIndexResultSetReader
                                         .readDynamic(rs, 1, preparedQuery.getResultDataType());
-                                if (resultType.isInstance(v)) {
-                                    //noinspection unchecked
-                                    action.accept((R) v);
-                                } else if (v != null) {
-                                    Object r = columnIndexResultSetReader.convertRequired(v, resultType);
-                                    if (r != null) {
-                                        action.accept((R) r);
+                                    if (resultType.isInstance(v)) {
+                                        //noinspection unchecked
+                                        action.accept((R) v);
+                                    } else if (v != null) {
+                                        Object r = columnIndexResultSetReader.convertRequired(v, resultType);
+                                        if (r != null) {
+                                            action.accept((R) r);
+                                        }
                                     }
+                                } else {
+                                    String column = queryResultInfo.getColumnName();
+                                    JsonDataType jsonDataType = queryResultInfo.getJsonDataType();
+                                    action.accept(mapQueryColumnResult(preparedQuery, rs, column, jsonDataType, persistentEntity, resultType, ResultSet.class, null));
                                 }
                             } else {
                                 closeResultSet(connection, ps, rs, finished, closeConnection);
@@ -1006,7 +1015,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
      */
     private Object getGeneratedIdentity(@NonNull ResultSet generatedKeysResultSet, RuntimePersistentProperty<?> identity, Dialect dialect) {
         if (dialect == Dialect.POSTGRES) {
-            // Postgres returns all fields, not just id so we need to access generated id by the name
+            // Postgres returns all fields, not just id, so we need to access generated id by the name
             return columnNameResultSetReader.readDynamic(generatedKeysResultSet, identity.getPersistedName(), identity.getDataType());
         }
         return columnIndexResultSetReader.readDynamic(generatedKeysResultSet, 1, identity.getDataType());
@@ -1120,6 +1129,11 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             if (insert) {
                 Dialect dialect = storedQuery.getDialect();
                 if (hasGeneratedId && (dialect == Dialect.ORACLE || dialect == Dialect.SQL_SERVER)) {
+                    if (persistentEntity.isJsonView()) {
+                        CallableStatement cstmt = connection.prepareCall(this.storedQuery.getQuery());
+                        cstmt.registerOutParameter(2, Types.NUMERIC);
+                        return cstmt;
+                    }
                     return connection.prepareStatement(this.storedQuery.getQuery(), new String[]{persistentEntity.getIdentity().getPersistedName()});
                 } else {
                     return connection.prepareStatement(this.storedQuery.getQuery(), hasGeneratedId ? Statement.RETURN_GENERATED_KEYS : Statement.NO_GENERATED_KEYS);
@@ -1138,20 +1152,32 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                 storedQuery.bindParameters(new JdbcParameterBinder(ctx.connection, ps, storedQuery), ctx.invocationContext, entity, previousValues);
                 rowsUpdated = ps.executeUpdate();
                 if (hasGeneratedId) {
-                    try (ResultSet generatedKeys = ps.getGeneratedKeys()) {
-                        if (generatedKeys.next()) {
-                            RuntimePersistentProperty<T> identity = persistentEntity.getIdentity();
-                            Object id = getGeneratedIdentity(generatedKeys, identity, storedQuery.getDialect());
-                            BeanProperty<T, Object> property = identity.getProperty();
-                            entity = updateEntityId(property, entity, id);
-                        } else {
-                            throw new DataAccessException("Failed to generate ID for entity: " + entity);
+                    if (persistentEntity.isJsonView() && ps instanceof CallableStatement cstmt) {
+                        Object id = cstmt.getObject(2);
+                        BeanProperty<T, Object> property = persistentEntity.getIdentity().getProperty();
+                        entity = updateEntityId(property, entity, id);
+                    } else {
+                        try (ResultSet generatedKeys = ps.getGeneratedKeys()) {
+                            if (generatedKeys.next()) {
+                                RuntimePersistentProperty<T> identity = persistentEntity.getIdentity();
+                                Object id = getGeneratedIdentity(generatedKeys, identity, storedQuery.getDialect());
+                                BeanProperty<T, Object> property = identity.getProperty();
+                                entity = updateEntityId(property, entity, id);
+                            } else {
+                                throw new DataAccessException("Failed to generate ID for entity: " + entity);
+                            }
                         }
                     }
                 }
                 if (storedQuery.isOptimisticLock()) {
                     checkOptimisticLocking(1, rowsUpdated);
                 }
+            } catch (SQLException e) {
+                Throwable throwable = handleSqlException(e, ctx.dialect);
+                if (throwable instanceof DataAccessException dataAccessException) {
+                    throw dataAccessException;
+                }
+                throw e;
             }
         }
     }
@@ -1187,6 +1213,11 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             if (insert) {
                 Dialect dialect = storedQuery.getDialect();
                 if (hasGeneratedId && (dialect == Dialect.ORACLE || dialect == Dialect.SQL_SERVER)) {
+                    if (persistentEntity.isJsonView()) {
+                        CallableStatement cstmt = connection.prepareCall(this.storedQuery.getQuery());
+                        cstmt.registerOutParameter(2, Types.NUMERIC);
+                        return cstmt;
+                    }
                     return connection.prepareStatement(storedQuery.getQuery(), new String[]{persistentEntity.getIdentity().getPersistedName()});
                 } else {
                     return connection.prepareStatement(storedQuery.getQuery(), hasGeneratedId ? Statement.RETURN_GENERATED_KEYS : Statement.NO_GENERATED_KEYS);

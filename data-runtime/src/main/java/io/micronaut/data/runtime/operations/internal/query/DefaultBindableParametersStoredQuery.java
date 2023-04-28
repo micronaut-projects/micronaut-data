@@ -127,9 +127,13 @@ public class DefaultBindableParametersStoredQuery<E, R> implements BindableParam
                 value = binder.convert(value, persistentProperty);
                 parameterConverter = null;
             } else if (entity != null) {
-                PersistentPropertyPath pp = getRequiredPropertyPath(binding, persistentEntity);
-                value = pp.getPropertyValue(entity);
-                persistentProperty = (RuntimePersistentProperty<Object>) pp.getProperty();
+                if (persistentEntity.isJsonView() && binding.getDataType() == DataType.JSON) {
+                    value = entity;
+                } else {
+                    PersistentPropertyPath pp = getRequiredPropertyPath(binding, persistentEntity);
+                    value = pp.getPropertyValue(entity);
+                    persistentProperty = (RuntimePersistentProperty<Object>) pp.getProperty();
+                }
             } else {
                 int currentIndex = binder.currentIndex();
                 if (currentIndex != -1) {

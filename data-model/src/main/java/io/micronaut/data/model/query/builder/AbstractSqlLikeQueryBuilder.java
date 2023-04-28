@@ -16,6 +16,7 @@
 package io.micronaut.data.model.query.builder;
 
 import io.micronaut.core.annotation.AnnotationMetadata;
+import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
@@ -25,13 +26,16 @@ import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.DataTransformer;
 import io.micronaut.data.annotation.IgnoreWhere;
 import io.micronaut.data.annotation.Join;
+import io.micronaut.data.annotation.JsonView;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.annotation.Where;
 import io.micronaut.data.annotation.repeatable.WhereSpecifications;
 import io.micronaut.data.model.Association;
+import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.Embedded;
+import io.micronaut.data.model.JsonDataType;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentEntityUtils;
 import io.micronaut.data.model.PersistentProperty;
@@ -273,7 +277,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         });
 
         addCriterionHandler(QueryModel.ArrayContains.class, (ctx, criterion) -> {
-           throw new UnsupportedOperationException("ArrayContains is not supported by this implementation.");
+            throw new UnsupportedOperationException("ArrayContains is not supported by this implementation.");
         });
     }
 
@@ -1172,14 +1176,22 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
 
             boolean[] needsTrimming = {false};
             traversePersistentPropertiesForCriteria(propertyPath.getAssociations(), propertyPath.getProperty(), (associations, property) -> {
+                PersistentEntity entity = property.getOwner();
+                AnnotationValue<JsonView> jsonViewAnnotationValue = entity.getAnnotationMetadata().getAnnotation(JsonView.class);
+
                 if (currentAlias != null) {
                     whereClause.append(currentAlias).append(DOT);
                 }
-                String columnName = getMappedName(namingStrategy, associations, property);
-                if (shouldEscape) {
-                    columnName = quote(columnName);
+                if (jsonViewAnnotationValue != null) {
+                    String columnName = jsonViewAnnotationValue.getRequiredValue("column", String.class);
+                    whereClause.append(columnName).append(DOT).append(property.getName());
+                } else {
+                    String columnName = getMappedName(namingStrategy, associations, property);
+                    if (shouldEscape) {
+                        columnName = quote(columnName);
+                    }
+                    whereClause.append(columnName);
                 }
-                whereClause.append(columnName);
 
                 whereClause.append(operator);
                 String writeTransformer = getDataTransformerWriteValue(currentAlias, property).orElse(null);
@@ -1225,7 +1237,13 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         }
         boolean computePropertyPaths = computePropertyPaths();
         if (computePropertyPaths) {
-            sb.append(propertyPath.getColumnName());
+            AnnotationValue<JsonView> jsonViewAnnotationValue = propertyPath.getProperty().getOwner().getAnnotationMetadata().getAnnotation(JsonView.class);
+            if (jsonViewAnnotationValue != null) {
+                String columnName = jsonViewAnnotationValue.getRequiredValue("column", String.class);
+                sb.append(columnName).append(DOT).append(propertyPath.getProperty().getName());
+            } else {
+                sb.append(propertyPath.getColumnName());
+            }
         } else {
             sb.append(propertyPath.getPath());
         }
@@ -1273,8 +1291,46 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         StringBuilder queryString = queryState.getQuery();
         queryString.append(SPACE).append("SET").append(SPACE);
 
-        // keys need to be sorted before query is built
+        PersistentEntity entity = queryState.getEntity();
+        if (entity.isJsonView() && propertiesToUpdate.size() == 1) {
+            // Update JsonView DATA column
+            String name = propertiesToUpdate.keySet().iterator().next();
+            AnnotationValue<JsonView> jsonViewAnnotationValue = entity.getAnnotationMetadata().getAnnotation(JsonView.class);
+            String columnName = jsonViewAnnotationValue.getRequiredValue("column", String.class);
+            if (name.equals(columnName)) {
+                Object value = propertiesToUpdate.get(name);
+                queryString.append(queryState.getRootAlias()).append(DOT).append(columnName).append("=");
+                if (value instanceof BindingParameter) {
+                    int key = 1;
+                    queryState.pushParameter(new QueryParameterBinding() {
+                        @Override
+                        public String getKey() {
+                            return String.valueOf(key);
+                        }
 
+                        @Override
+                        public DataType getDataType() {
+                            return DataType.JSON;
+                        }
+
+                        @Override
+                        public JsonDataType getJsonDataType() {
+                            return JsonDataType.DEFAULT;
+                        }
+
+                        @Override
+                        public int getParameterIndex() {
+                            return -1;
+                        }
+                    });
+                } else {
+                    queryString.append(asLiteral(value));
+                }
+                return;
+            }
+        }
+
+        // keys need to be sorted before query is built
         List<Map.Entry<QueryPropertyPath, Object>> update = propertiesToUpdate.entrySet().stream()
             .map(e -> {
                 QueryPropertyPath propertyPath = findProperty(queryState, e.getKey(), null);
@@ -1522,7 +1578,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             throw new IllegalArgumentException("No properties specified to update");
         }
         PersistentEntity entity = query.getPersistentEntity();
-        QueryState queryState = newQueryState(query, false, isAliasForBatch());
+        QueryState queryState = newQueryState(query, false, isAliasForBatch(entity));
         StringBuilder queryString = queryState.getQuery();
         String tableAlias = queryState.getRootAlias();
         String tableName = getTableName(entity);
@@ -1543,7 +1599,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
     @Override
     public QueryResult buildDelete(@NonNull AnnotationMetadata annotationMetadata, @NonNull QueryModel query) {
         PersistentEntity entity = query.getPersistentEntity();
-        QueryState queryState = newQueryState(query, false, isAliasForBatch());
+        QueryState queryState = newQueryState(query, false, isAliasForBatch(entity));
         StringBuilder queryString = queryState.getQuery();
         String tableAlias = queryState.getRootAlias();
         StringBuilder buffer = appendDeleteClause(queryString);
@@ -1564,9 +1620,10 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
     /**
      * Should aliases be used in batch statements.
      *
+     * @param persistentEntity the persistent entity
      * @return True if they should
      */
-    protected abstract boolean isAliasForBatch();
+    protected abstract boolean isAliasForBatch(PersistentEntity persistentEntity);
 
 
     /**
@@ -1723,8 +1780,8 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
      * @param consumerProperty  The function to invoke on every property
      */
     private void traversePersistentPropertiesForCriteria(List<Association> associations,
-                                              PersistentProperty property,
-                                              BiConsumer<List<Association>, PersistentProperty> consumerProperty) {
+                                                         PersistentProperty property,
+                                                         BiConsumer<List<Association>, PersistentProperty> consumerProperty) {
         PersistentEntityUtils.traversePersistentProperties(associations, property, consumerProperty);
     }
 
@@ -1736,8 +1793,8 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
      * @param consumerProperty  The function to invoke on every property
      */
     protected void traversePersistentProperties(List<Association> associations,
-                                              PersistentProperty property,
-                                              BiConsumer<List<Association>, PersistentProperty> consumerProperty) {
+                                                PersistentProperty property,
+                                                BiConsumer<List<Association>, PersistentProperty> consumerProperty) {
         PersistentEntityUtils.traversePersistentProperties(associations, property, consumerProperty);
     }
 
@@ -2085,6 +2142,17 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             parameterBindings.add(
                 bindingParameter.bind(bindingContext)
             );
+            queryParts.add(query.toString());
+            query.setLength(0);
+        }
+
+        /**
+         * Adds query parameter binding.
+         *
+         * @param parameterBinding the query parameter binding
+         */
+        public void pushParameter(@NotNull QueryParameterBinding parameterBinding) {
+            parameterBindings.add(parameterBinding);
             queryParts.add(query.toString());
             query.setLength(0);
         }

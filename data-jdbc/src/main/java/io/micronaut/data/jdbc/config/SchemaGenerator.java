@@ -94,6 +94,17 @@ public class SchemaGenerator {
                 .filter(i -> !i.getBeanType().getName().contains("$"))
                 .filter(i -> !java.lang.reflect.Modifier.isAbstract(i.getBeanType().getModifiers()))
                 .map(beanIntrospection -> runtimeEntityRegistry.getEntity(beanIntrospection.getBeanType()))
+                .sorted((o1, o2) -> {
+                    boolean jsonView1 = o1.isJsonView();
+                    boolean jsonView2 = o2.isJsonView();
+                    if (jsonView1 && !jsonView2) {
+                        return 1;
+                    }
+                    if (jsonView2 && !jsonView1) {
+                        return -1;
+                    }
+                    return 0;
+                })
                 .toArray(PersistentEntity[]::new);
             if (ArrayUtils.isNotEmpty(entities)) {
                 DataSource dataSource = DelegatingDataSource.unwrapDataSource(beanLocator.getBean(DataSource.class, Qualifiers.byName(name)));

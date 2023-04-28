@@ -95,6 +95,8 @@ import io.micronaut.transaction.support.TransactionUtil;
 import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.ConnectionFactory;
 import io.r2dbc.spi.IsolationLevel;
+import io.r2dbc.spi.Parameters;
+import io.r2dbc.spi.R2dbcType;
 import io.r2dbc.spi.Result;
 import io.r2dbc.spi.Row;
 import io.r2dbc.spi.Statement;
@@ -598,8 +600,14 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             .flatMap(result -> Flux.from(result.map((row, rowMetadata) -> mapper.apply(row))));
     }
 
-    private static <T> Mono<T> executeAndMapEachRowSingle(Statement statement, Function<Row, T> mapper) {
-        return executeAndMapEachRow(statement, mapper).as(DefaultR2dbcRepositoryOperations::toSingleResult);
+    private static <T> Mono<T> executeAndMapEachRowSingle(Statement statement, Dialect dialect, Function<Row, T> mapper) {
+        return executeAndMapEachRow(statement, mapper).onErrorResume(throwable -> {
+            if (throwable.getCause() instanceof SQLException sqlException) {
+                Throwable newThrowable = handleSqlException(sqlException, dialect);
+                return Mono.error(newThrowable);
+            }
+            return Mono.error(throwable);
+        }).as(DefaultR2dbcRepositoryOperations::toSingleResult);
     }
 
     private static Mono<Number> executeAndGetRowsUpdatedSingle(Statement statement, Dialect dialect) {
@@ -765,6 +773,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         @Override
         public <T, R> Flux<R> findAll(@NonNull PreparedQuery<T, R> pq) {
             SqlPreparedQuery<T, R> preparedQuery = getSqlPreparedQuery(pq);
+            RuntimePersistentEntity<T> persistentEntity = preparedQuery.getPersistentEntity();
             return withNewOrExistingTransactionFlux(preparedQuery, false, status -> {
                 Connection connection = status.getConnection();
                 Statement statement = prepareStatement(connection::createStatement, preparedQuery, false, false);
@@ -774,7 +783,6 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                 boolean isEntity = preparedQuery.getResultDataType() == DataType.ENTITY;
                 if (isEntity || dtoProjection) {
                     TypeMapper<Row, R> mapper;
-                    RuntimePersistentEntity<T> persistentEntity = preparedQuery.getPersistentEntity();
                     if (dtoProjection) {
                         QueryResultInfo queryResultInfo = preparedQuery.getQueryResultInfo();
                         if (queryResultInfo == null || queryResultInfo.getType() == QueryResult.Type.TABULAR) {
@@ -827,18 +835,25 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                     return executeAndMapEachRow(statement, row -> mapper.map(row, resultType));
                 }
                 return executeAndMapEachRow(statement, row -> {
-                    Object v = columnIndexResultSetReader.readDynamic(row, 0, preparedQuery.getResultDataType());
-                    if (v == null) {
-                        return Mono.<R>empty();
-                    } else if (resultType.isInstance(v)) {
-                        return Mono.just((R) v);
-                    } else {
-                        Object converted = columnIndexResultSetReader.convertRequired(v, resultType);
-                        if (converted != null) {
-                            return Mono.just((R) converted);
-                        } else {
+                    QueryResultInfo queryResultInfo = preparedQuery.getQueryResultInfo();
+                    if (queryResultInfo == null || queryResultInfo.getType() == QueryResult.Type.TABULAR) {
+                        Object v = columnIndexResultSetReader.readDynamic(row, 0, preparedQuery.getResultDataType());
+                        if (v == null) {
                             return Mono.<R>empty();
+                        } else if (resultType.isInstance(v)) {
+                            return Mono.just((R) v);
+                        } else {
+                            Object converted = columnIndexResultSetReader.convertRequired(v, resultType);
+                            if (converted != null) {
+                                return Mono.just((R) converted);
+                            } else {
+                                return Mono.<R>empty();
+                            }
                         }
+                    } else {
+                        String column = queryResultInfo.getColumnName();
+                        JsonDataType jsonDataType = queryResultInfo.getJsonDataType();
+                        return Mono.just(mapQueryColumnResult(preparedQuery, row, column, jsonDataType, persistentEntity, resultType, Row.class, null));
                     }
                 }).flatMap(m -> m);
             });
@@ -1258,6 +1273,9 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             LOG.debug(storedQuery.getQuery());
             Statement statement = connection.createStatement(storedQuery.getQuery());
             if (hasGeneratedId) {
+                if (persistentEntity.isJsonView()) {
+                    return statement.bind(1, Parameters.out(R2dbcType.NUMERIC));
+                }
                 return statement.returnGeneratedValues(persistentEntity.getIdentity().getPersistedName());
             }
             return statement;
@@ -1286,7 +1304,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                         return Mono.just(d);
                     }
                     RuntimePersistentProperty<T> identity = persistentEntity.getIdentity();
-                    return executeAndMapEachRowSingle(statement, row -> columnIndexResultSetReader.readDynamic(row, 0, identity.getDataType()))
+                    return executeAndMapEachRowSingle(statement, ctx.dialect, row -> columnIndexResultSetReader.readDynamic(row, 0, identity.getDataType()))
                         .map(id -> {
                             BeanProperty<T, Object> property = identity.getProperty();
                             d.entity = updateEntityId(property, d.entity, id);
@@ -1369,12 +1387,17 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             }
             Statement statement;
             if (hasGeneratedId) {
-                statement = ctx.connection.createStatement(storedQuery.getQuery())
-                    .returnGeneratedValues(persistentEntity.getIdentity().getPersistedName());
+                statement = ctx.connection.createStatement(storedQuery.getQuery());
+                if (persistentEntity.isJsonView()) {
+                    statement = statement.bind(1, Parameters.out(R2dbcType.NUMERIC));
+                } else {
+                    statement = statement.returnGeneratedValues(persistentEntity.getIdentity().getPersistedName());
+                }
             } else {
                 statement = ctx.connection.createStatement(storedQuery.getQuery());
             }
             setParameters(statement, storedQuery);
+            Statement finalStatement = statement;
             if (hasGeneratedId) {
                 entities = entities
                     .flatMap(list -> {
@@ -1382,8 +1405,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                         if (notVetoedEntities.isEmpty()) {
                             return Mono.just(notVetoedEntities);
                         }
-                        Mono<List<Object>> ids = executeAndMapEachRow(statement, row
-                            -> columnIndexResultSetReader.readDynamic(row, 0, persistentEntity.getIdentity().getDataType())
+                        Mono<List<Object>> ids = executeAndMapEachRow(finalStatement, row -> columnIndexResultSetReader.readDynamic(row, 0, persistentEntity.getIdentity().getDataType())
                         ).collectList();
 
                         return ids.flatMap(idList -> {
@@ -1409,7 +1431,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                         if (notVetoedEntities.isEmpty()) {
                             return Mono.just(Tuples.of(list, 0L));
                         }
-                        return executeAndGetRowsUpdated(statement)
+                        return executeAndGetRowsUpdated(finalStatement)
                             .map(Number::longValue)
                             .reduce(0L, Long::sum)
                             .map(rowsUpdated -> {

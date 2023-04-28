@@ -80,8 +80,12 @@ public class SaveEntityMethodMatcher extends AbstractPrefixPatternMethodMatcher 
                             mc.getRepositoryClass().getAnnotationMetadata(),
                             mc.getAnnotationMetadata()
                     );
+                    boolean encodeEntityParameters = true;
+                    if (mc.getRootEntity() != null && mc.getRootEntity().isJsonView()) {
+                        encodeEntityParameters = false;
+                    }
                     methodMatchInfo
-                            .encodeEntityParameters(true)
+                            .encodeEntityParameters(encodeEntityParameters)
                             .queryResult(
                                     mc.getQueryBuilder().buildInsert(annotationMetadataHierarchy, mc.getRootEntity())
                             );

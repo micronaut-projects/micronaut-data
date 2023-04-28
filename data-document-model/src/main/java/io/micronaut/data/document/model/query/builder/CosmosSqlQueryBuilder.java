@@ -260,7 +260,7 @@ public final class CosmosSqlQueryBuilder extends SqlQueryBuilder {
     }
 
     @Override
-    protected boolean isAliasForBatch() {
+    protected boolean isAliasForBatch(PersistentEntity persistentEntity) {
         return true;
     }
 

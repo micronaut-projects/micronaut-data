@@ -406,6 +406,17 @@ public interface PersistentEntity extends PersistentElement {
     Optional<NamingStrategy> findNamingStrategy();
 
     /**
+     * Gets an indicator telling whether given persistent entity is sourced from Json View.
+     * Json View is currently supported only by Oracle database.
+     *
+     * @return true if entity source is Json View
+     * @since 4.0.0
+     */
+    default boolean isJsonView() {
+        return false;
+    }
+
+    /**
      * Creates a new persistent entity representation of the given type. The type
      * must be annotated with {@link io.micronaut.core.annotation.Introspected}. This method will create a new instance on demand and does not cache.
      *

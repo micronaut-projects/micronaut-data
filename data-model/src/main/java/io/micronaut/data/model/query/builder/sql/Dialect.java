@@ -66,7 +66,7 @@ public enum Dialect {
     /**
      * Oracle 12c or above.
      */
-    ORACLE(true, true, false, ALL_TYPES),
+    ORACLE(true, true, false, ALL_TYPES, true),
     /**
      * Ansi compliant SQL.
      */
@@ -75,6 +75,8 @@ public enum Dialect {
     private final boolean supportsBatch;
     private final boolean stringUUID;
     private final boolean supportsArrays;
+
+    private final boolean supportsJsonView;
 
     private final EnumSet<Join.Type> joinTypesSupported;
 
@@ -86,10 +88,24 @@ public enum Dialect {
      * @param joinTypesSupported EnumSet of supported join types.
      */
     Dialect(boolean supportsBatch, boolean stringUUID, boolean supportsArrays, EnumSet<Join.Type> joinTypesSupported) {
+        this(supportsBatch, stringUUID, supportsArrays, joinTypesSupported, false);
+    }
+
+    /**
+     * The constructor with all parameters.
+     *
+     * @param supportsBatch If batch is supported
+     * @param stringUUID Does the dialect require a string UUID
+     * @param supportsArrays Does the dialect supports arrays
+     * @param joinTypesSupported EnumSet of supported join types.
+     * @param supportsJsonView Whether Json View is supported
+     */
+    Dialect(boolean supportsBatch, boolean stringUUID, boolean supportsArrays, EnumSet<Join.Type> joinTypesSupported, boolean supportsJsonView) {
         this.supportsBatch = supportsBatch;
         this.stringUUID = stringUUID;
         this.supportsArrays = supportsArrays;
         this.joinTypesSupported = joinTypesSupported;
+        this.supportsJsonView = supportsJsonView;
     }
 
     /**
@@ -143,4 +159,12 @@ public enum Dialect {
         return this.joinTypesSupported.contains(joinType);
     }
 
+    /**
+     * Gets an indicator whether Json View is supported by the database.
+     *
+     * @return true if Json View is supported
+     */
+    public boolean supportsJsonView() {
+        return supportsJsonView;
+    }
 }

@@ -186,7 +186,7 @@ public class JpaQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     }
 
     @Override
-    protected boolean isAliasForBatch() {
+    protected boolean isAliasForBatch(PersistentEntity persistentEntity) {
         return true;
     }
 
