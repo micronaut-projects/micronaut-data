@@ -1293,6 +1293,9 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
 
         PersistentEntity entity = queryState.getEntity();
         if (entity.isJsonView() && propertiesToUpdate.size() == 1) {
+            if (!getDialect().supportsJsonView()) {
+                throw new IllegalArgumentException("Json View is not supported by the dialect " + getDialect());
+            }
             // Update JsonView DATA column
             String name = propertiesToUpdate.keySet().iterator().next();
             AnnotationValue<JsonView> jsonViewAnnotationValue = entity.getAnnotationMetadata().getAnnotation(JsonView.class);

@@ -15,9 +15,28 @@ ALTER TABLE "STUDENT_CLASSES"
     ADD CONSTRAINT fk_class FOREIGN KEY("CLASS_ID")
         REFERENCES "CLASS"("ID");
 
+CREATE OR REPLACE JSON RELATIONAL DUALITY VIEW STUDENT_SCHEDULE AS
+SELECT JSON{'id': STUDENT.id,
+            'name': STUDENT.name WITH UPDATE,
+            'schedule': [SELECT JSON{'id': STUDENT_CLASSES.id,
+                                     'class': (SELECT JSON{'classID': CLASS.id,
+                                                           'teacher': (SELECT JSON{'teachID': TEACHER.id,
+                                                                                    'teacher': TEACHER.name
+                                                                                  } FROM TEACHER WITH UPDATE WHERE CLASS.teacher_id = TEACHER.id
+                                                                        ),
+                                                           'room': CLASS.room,
+                                                           'time': CLASS.time,
+                                                           'name': CLASS.name WITH UPDATE
+                                                           } FROM CLASS WITH UPDATE WHERE STUDENT_CLASSES.class_id = CLASS.id
+                                               )
+                                    } FROM STUDENT_CLASSES WITH INSERT UPDATE DELETE WHERE STUDENT.id = STUDENT_CLASSES.student_id
+                        ]
+            } FROM STUDENT WITH UPDATE INSERT DELETE;
+
+/*
 CREATE OR REPLACE JSON DUALITY VIEW STUDENT_SCHEDULE AS
-SELECT JSON{'student'  : s.name WITH UPDATE,
-    'studentId': s.id,
+SELECT JSON{'name'  : s.name WITH UPDATE,
+    'id': s.id,
     'schedule': [SELECT JSON {'class': (SELECT JSON{
                                                     'name': c.name,
                                                     'classID': c.id,
@@ -28,3 +47,4 @@ SELECT JSON{'student'  : s.name WITH UPDATE,
                                       'id': ssch.id
                                       } FROM student_classes ssch WITH INSERT DELETE WHERE ssch.student_id = s.id]
             } FROM student s WITH INSERT UPDATE DELETE;
+*/

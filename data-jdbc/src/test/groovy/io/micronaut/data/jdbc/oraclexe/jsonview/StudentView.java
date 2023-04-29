@@ -14,13 +14,12 @@ import java.util.List;
 @JsonView(table = "STUDENT", permissions = "UPDATE INSERT DELETE")
 @MappedEntity(value = "STUDENT_SCHEDULE")
 public class StudentView {
-    @JsonViewColumn(field = "id")
     @Id
     @GeneratedValue(GeneratedValue.Type.IDENTITY)
-    private Long studentId;
+    private Long id;
 
-    @JsonViewColumn(field = "name", attributes = "UPDATE")
-    private String student;
+    @JsonViewColumn(attributes = "UPDATE")
+    private String name;
 
     @JoinColumn(name = "student_id", referencedColumnName = "id")
     @Relation(Relation.Kind.ONE_TO_MANY)
@@ -28,20 +27,20 @@ public class StudentView {
     @JsonProperty("_metadata")
     private Metadata metadata;
 
-    public Long getStudentId() {
-        return studentId;
+    public Long getId() {
+        return id;
     }
 
-    public void setStudentId(Long studentId) {
-        this.studentId = studentId;
+    public void setId(Long id) {
+        this.id = id;
     }
 
-    public String getStudent() {
-        return student;
+    public String getName() {
+        return name;
     }
 
-    public void setStudent(String student) {
-        this.student = student;
+    public void setName(String name) {
+        this.name = name;
     }
 
     public List<StudentScheduleView> getSchedule() {

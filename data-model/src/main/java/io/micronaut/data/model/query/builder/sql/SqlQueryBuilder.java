@@ -1022,6 +1022,9 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
 
     private boolean canUseWildcardForSelect(PersistentEntity entity) {
         if (entity.isJsonView()) {
+            if (!getDialect().supportsJsonView()) {
+                throw new IllegalArgumentException("Json View is not supported by the dialect " + getDialect());
+            }
             return true;
         }
         return Stream.concat(Stream.of(entity.getIdentity()), entity.getPersistentProperties().stream())
@@ -1080,6 +1083,9 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         List<QueryParameterBinding> parameterBindings = new ArrayList<>();
 
         if (entity.isJsonView()) {
+            if (!getDialect().supportsJsonView()) {
+                throw new IllegalArgumentException("Json View is not supported by the dialect " + getDialect());
+            }
             AnnotationValue<JsonView> jsonViewAnnotationValue = entity.getAnnotationMetadata().getAnnotation(JsonView.class);
             String columnName = jsonViewAnnotationValue.getRequiredValue("column", String.class);
             int key = 1;
@@ -1839,6 +1845,9 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     @Override
     protected boolean isAliasForBatch(PersistentEntity persistentEntity) {
         if (persistentEntity.isJsonView()) {
+            if (!getDialect().supportsJsonView()) {
+                throw new IllegalArgumentException("Json View is not supported by the dialect " + getDialect());
+            }
             return true;
         }
         return false;

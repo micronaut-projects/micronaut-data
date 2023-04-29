@@ -54,6 +54,7 @@ class OracleXEJsonViewSpec extends Specification {
                 (prefix + '.url')               : container.getJdbcUrl(),
                 (prefix + '.username')          : container.getUsername(),
                 (prefix + '.password')          : container.getPassword(),
+                // Cannot create JSON view during schema creation, works via init script
                 (prefix + '.schema-generate')   : 'NONE',
                 (prefix + '.dialect')           : Dialect.ORACLE,
                 (prefix + '.packages')          : getClass().package.name
@@ -91,15 +92,36 @@ class OracleXEJsonViewSpec extends Specification {
      */
     def "find and update"() {
         when:
+        def all = studentViewRepository.findAll()
+        then:
+        all.size() == 3
+
+        when:
+        for (def student : all) {
+            if (student.name != 'Denis') {
+                student.name = student.name + '_'
+            }
+        }
+        studentViewRepository.updateAll(all)
+        def optJoshStudentView = studentViewRepository.findByName("Josh_")
+        def optFredStudentView = studentViewRepository.findByName("Fred_")
+        then:
+        noExceptionThrown()
+        optFredStudentView.present
+        optJoshStudentView.present
+
+        when:
         def studentName = "Denis"
-        def optDenisStudentView = studentViewRepository.findByStudent(studentName)
+        def optDenisStudentView = studentViewRepository.findByName(studentName)
         def found = optDenisStudentView.present
         then:
         found
+        studentViewRepository.existsById(optDenisStudentView.get().id)
+        studentViewRepository.count() > 0
 
         when:"Do the view update by changing class schedule times"
         def denisStudentView = optDenisStudentView.get()
-        def student = studentRepository.findByName(denisStudentView.getStudent()).get()
+        def student = studentRepository.findByName(denisStudentView.getName()).get()
         def classSchedule = new HashMap<>()
         for (def clazz : student.getClasses()) {
             // Keep here to verify update
@@ -110,8 +132,8 @@ class OracleXEJsonViewSpec extends Specification {
             // Schedule one hour later
             schedule.getClazz().setTime(schedule.getClazz().getTime().plusHours(1))
         }
-        studentViewRepository.updateByStudent(denisStudentView, denisStudentView.getStudent())
-        student = studentRepository.findByName(denisStudentView.getStudent()).get()
+        studentViewRepository.updateByName(denisStudentView, denisStudentView.getName())
+        student = studentRepository.findByName(denisStudentView.getName()).get()
         then:"Validate times are scheduled one hour later"
         for (def clazz : student.getClasses()) {
             def newClassTime = clazz.getTime()
@@ -121,7 +143,7 @@ class OracleXEJsonViewSpec extends Specification {
 
         when:"Find non existing record"
         def randomName = UUID.randomUUID().toString()
-        def optUnexpectedStudent = studentViewRepository.findByStudent(randomName)
+        def optUnexpectedStudent = studentViewRepository.findByName(randomName)
         then:"Expected not found"
         !optUnexpectedStudent.present
     }
@@ -129,7 +151,7 @@ class OracleXEJsonViewSpec extends Specification {
     def "find and update partial"() {
         when:
         def studentName = "Josh"
-        def optJoshStudentView = studentViewRepository.findByStudent(studentName)
+        def optJoshStudentView = studentViewRepository.findByName(studentName)
         then:
         optJoshStudentView.present
 
@@ -141,7 +163,7 @@ class OracleXEJsonViewSpec extends Specification {
         !studentRepository.findByName(studentName).present
 
         when:"Try to trigger optimistic lock exception with invalid ETAG"
-        def newJoshStudentView = studentViewRepository.findByStudent(newStudentName).get()
+        def newJoshStudentView = studentViewRepository.findByName(newStudentName).get()
         newJoshStudentView.getMetadata().setEtag(UUID.randomUUID().toString())
         studentViewRepository.update(newJoshStudentView)
         then:
@@ -151,8 +173,13 @@ class OracleXEJsonViewSpec extends Specification {
     def "insert new"() {
         when:"Test inserting into the view"
         def ivoneStudentView = new StudentView()
-        def studentName = "Ivone"
-        ivoneStudentView.setStudent(studentName)
+        def ivoneStudentName = "Ivone"
+        ivoneStudentView.setName(ivoneStudentName)
+
+        def peterStudentView = new StudentView()
+        def peterStudentName = "Peter"
+        peterStudentView.setName(peterStudentName)
+
         def newStudentScheduleView = new StudentScheduleView()
 
         def teacherName = "Mrs. Anna"
@@ -174,12 +201,16 @@ class OracleXEJsonViewSpec extends Specification {
 
         newStudentScheduleView.setClazz(studentScheduleClassView)
         ivoneStudentView.setSchedule(List.of(newStudentScheduleView))
-        studentViewRepository.save(ivoneStudentView)
+        peterStudentView.setSchedule(List.of(newStudentScheduleView))
+        ivoneStudentView = studentViewRepository.save(ivoneStudentView)
+        studentViewRepository.saveAll(Arrays.asList(peterStudentView))
 
-        def optIvoneStudentView = studentViewRepository.findByStudent(studentName)
+        def optIvoneStudentView = studentViewRepository.findByName(ivoneStudentName)
+        def optPeterStudentView = studentViewRepository.findById(peterStudentView.id)
         def clazz = classRepository.findByName(className)
 
         then:
+        optPeterStudentView.present
         def found = optIvoneStudentView.isPresent()
         // And just to validate that saved local time is + 30 minutes from initial class time
         def studentClassTime = optIvoneStudentView.get().getSchedule().get(0).getClazz().getTime()
@@ -187,18 +218,24 @@ class OracleXEJsonViewSpec extends Specification {
         // And also in class table itself
         def updatedClassTime = clazz.getTime()
         classTime.plusMinutes(30) == updatedClassTime
+
+        when:
+        studentViewRepository.deleteAll()
+        def count = studentViewRepository.count()
+        then:
+        count == 0
     }
 
     def "delete record"() {
         when:
         def studentName = "Denis"
-        def optionalStudentView = studentViewRepository.findByStudent(studentName)
+        def optionalStudentView = studentViewRepository.findByName(studentName)
         then:
         optionalStudentView.present
 
         when:
-        studentViewRepository.deleteById(optionalStudentView.get().studentId)
-        optionalStudentView = studentViewRepository.findByStudent(studentName)
+        studentViewRepository.deleteById(optionalStudentView.get().id)
+        optionalStudentView = studentViewRepository.findByName(studentName)
         then:
         !optionalStudentView.present
 
@@ -206,6 +243,28 @@ class OracleXEJsonViewSpec extends Specification {
         def optionalStudent = studentRepository.findByName(studentName)
         then:
         !optionalStudent.present
+
+        when:
+        optionalStudentView = studentViewRepository.findByName("Josh")
+        def count = studentViewRepository.count()
+        then:
+        optionalStudentView.present
+        count > 0
+        when:
+        studentViewRepository.deleteAll(Arrays.asList(optionalStudentView.get()))
+        optionalStudentView = studentViewRepository.findByName("Josh")
+        then:
+        !optionalStudentView.present
+
+        when:
+        def optFredStudentView = studentViewRepository.findByName("Fred")
+        studentViewRepository.delete(optFredStudentView.get())
+        optFredStudentView = studentViewRepository.findByName("Fred")
+        count = studentViewRepository.count()
+        then:
+        // After deleted should not be present
+        !optFredStudentView.present
+        count == 0
     }
 
     static OracleContainer createContainer() {
