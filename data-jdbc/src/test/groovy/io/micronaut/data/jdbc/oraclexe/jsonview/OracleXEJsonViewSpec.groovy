@@ -268,7 +268,7 @@ class OracleXEJsonViewSpec extends Specification {
     }
 
     static OracleContainer createContainer() {
-        return new OracleContainer(DockerImageName.parse("gvenzl/oracle-free:latest-faststart").asCompatibleSubstituteFor("gvenzl/oracle-xe"))
+        return new OracleContainer(DockerImageName.parse("gvenzl/oracle-free:slim-faststart").asCompatibleSubstituteFor("gvenzl/oracle-xe"))
                 .withDatabaseName("test").withInitScript("./oracle-json-view-init.sql")
     }
 }
