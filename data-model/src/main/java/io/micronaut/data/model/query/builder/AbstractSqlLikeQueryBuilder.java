@@ -1095,12 +1095,22 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             StringBuilder buff = queryState.getQuery();
             buff.append(ORDER_BY_CLAUSE);
             Iterator<Sort.Order> i = orders.iterator();
+
+            AnnotationValue<JsonView> jsonViewAnnotationValue = queryState.getEntity().getAnnotationMetadata().getAnnotation(JsonView.class);
+            String jsonViewColumnName = null;
+            if (jsonViewAnnotationValue != null) {
+                jsonViewColumnName = jsonViewAnnotationValue.getRequiredValue("column", String.class);
+            }
+
             while (i.hasNext()) {
                 Sort.Order order = i.next();
                 QueryPropertyPath propertyPath = findProperty(queryState, order.getProperty(), Sort.Order.class);
                 String currentAlias = propertyPath.getTableAlias();
                 if (currentAlias != null) {
                     buff.append(currentAlias).append(DOT);
+                }
+                if (jsonViewColumnName != null) {
+                    buff.append(jsonViewColumnName).append(DOT);
                 }
                 if (computePropertyPaths()) {
                     buff.append(propertyPath.getColumnName()).append(SPACE).append(order.getDirection().toString());
@@ -1183,6 +1193,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                     whereClause.append(currentAlias).append(DOT);
                 }
                 if (jsonViewAnnotationValue != null) {
+                    checkDialectSupportsJsonView();
                     String columnName = jsonViewAnnotationValue.getRequiredValue("column", String.class);
                     whereClause.append(columnName).append(DOT).append(property.getName());
                 } else {
@@ -1239,6 +1250,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         if (computePropertyPaths) {
             AnnotationValue<JsonView> jsonViewAnnotationValue = propertyPath.getProperty().getOwner().getAnnotationMetadata().getAnnotation(JsonView.class);
             if (jsonViewAnnotationValue != null) {
+                checkDialectSupportsJsonView();
                 String columnName = jsonViewAnnotationValue.getRequiredValue("column", String.class);
                 sb.append(columnName).append(DOT).append(propertyPath.getProperty().getName());
             } else {
@@ -1293,9 +1305,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
 
         PersistentEntity entity = queryState.getEntity();
         if (entity.isJsonView() && propertiesToUpdate.size() == 1) {
-            if (!getDialect().supportsJsonView()) {
-                throw new IllegalArgumentException("Json View is not supported by the dialect " + getDialect());
-            }
+            checkDialectSupportsJsonView();
             // Update JsonView DATA column
             String name = propertiesToUpdate.keySet().iterator().next();
             AnnotationValue<JsonView> jsonViewAnnotationValue = entity.getAnnotationMetadata().getAnnotation(JsonView.class);
@@ -1665,6 +1675,13 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
 
         StringBuilder buff = new StringBuilder(ORDER_BY_CLAUSE);
         Iterator<Sort.Order> i = orders.iterator();
+
+        AnnotationValue<JsonView> jsonViewAnnotationValue = entity.getAnnotationMetadata().getAnnotation(JsonView.class);
+        String jsonViewColumnName = null;
+        if (jsonViewAnnotationValue != null) {
+            jsonViewColumnName = jsonViewAnnotationValue.getRequiredValue("column", String.class);
+        }
+
         while (i.hasNext()) {
             Sort.Order order = i.next();
             String property = order.getProperty();
@@ -1702,6 +1719,11 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                 }
             }
             buff.append(DOT);
+
+            if (jsonViewColumnName != null) {
+                buff.append(jsonViewColumnName).append(DOT);
+            }
+
             if (!computePropertyPaths()) {
                 buff.append(path.getProperty().getName());
             } else {
@@ -1887,6 +1909,16 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
      */
     protected final String getColumnAlias(PersistentProperty property) {
         return property.getAnnotationMetadata().stringValue(MappedProperty.class, MappedProperty.ALIAS).orElse("");
+    }
+
+    /**
+     * If and when JsonView annotation is used for the repository method but dialect does not support JsonView
+     * this will throw {@link IllegalArgumentException}.
+     */
+    private void checkDialectSupportsJsonView() {
+        if (!getDialect().supportsJsonView()) {
+            throw new IllegalArgumentException("Json View is not supported by the dialect " + getDialect());
+        }
     }
 
     /**

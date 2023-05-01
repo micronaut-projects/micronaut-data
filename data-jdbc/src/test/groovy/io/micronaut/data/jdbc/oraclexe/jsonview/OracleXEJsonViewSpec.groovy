@@ -1,7 +1,10 @@
 package io.micronaut.data.jdbc.oraclexe.jsonview
 
 import io.micronaut.context.ApplicationContext
+import io.micronaut.core.annotation.Order
 import io.micronaut.data.exceptions.OptimisticLockException
+import io.micronaut.data.model.Pageable
+import io.micronaut.data.model.Sort
 import io.micronaut.data.model.query.builder.sql.Dialect
 import org.testcontainers.containers.OracleContainer
 import org.testcontainers.utility.DockerImageName
@@ -95,6 +98,23 @@ class OracleXEJsonViewSpec extends Specification {
         def all = studentViewRepository.findAll()
         then:
         all.size() == 3
+
+        when:
+        def allSorted = studentViewRepository.findAll(Sort.of(Sort.Order.asc("name")))
+        then:
+        allSorted.size() == 3
+        allSorted[0].name == "Denis"
+        allSorted[1].name == "Fred"
+        allSorted[2].name == "Josh"
+
+        when:
+        def allPages = studentViewRepository.findAll(Pageable.from(0, 2, Sort.of(Sort.Order.desc("name"))))
+        then:
+        allPages.totalPages == 2
+        allPages.totalSize == 3
+        allPages.content.size() == 2
+        allPages.content[0].name == "Josh"
+        allPages.content[1].name == "Fred"
 
         when:
         for (def student : all) {

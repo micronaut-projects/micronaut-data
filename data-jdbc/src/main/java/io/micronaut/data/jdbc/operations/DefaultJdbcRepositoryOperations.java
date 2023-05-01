@@ -324,7 +324,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                             }
                         };
                         QueryResultInfo queryResultInfo = preparedQuery.getQueryResultInfo();
-                        if (queryResultInfo == null || queryResultInfo.getType() == QueryResult.Type.TABULAR) {
+                        if (preparedQuery.isCount() || queryResultInfo == null || queryResultInfo.getType() == QueryResult.Type.TABULAR) {
                             final Set<JoinPath> joinFetchPaths = preparedQuery.getJoinFetchPaths();
                             SqlResultEntityTypeMapper<ResultSet, R> mapper = new SqlResultEntityTypeMapper<>(
                                 resultPersistentEntity,
@@ -353,7 +353,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                     } else if (rs.next()) {
                         if (preparedQuery.isDtoProjection()) {
                             QueryResultInfo queryResultInfo = preparedQuery.getQueryResultInfo();
-                            if (queryResultInfo == null || queryResultInfo.getType() == QueryResult.Type.TABULAR) {
+                            if (preparedQuery.isCount() || queryResultInfo == null || queryResultInfo.getType() == QueryResult.Type.TABULAR) {
                                 boolean isRawQuery = preparedQuery.isRawQuery();
                                 TypeMapper<ResultSet, R> introspectedDataMapper = new SqlDTOMapper<>(
                                     persistentEntity,
@@ -370,7 +370,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                             }
                         } else {
                             QueryResultInfo queryResultInfo = preparedQuery.getQueryResultInfo();
-                            if (queryResultInfo == null || queryResultInfo.getType() == QueryResult.Type.TABULAR) {
+                            if (preparedQuery.isCount() || queryResultInfo == null || queryResultInfo.getType() == QueryResult.Type.TABULAR) {
                                 Object v = columnIndexResultSetReader.readDynamic(rs, 1, preparedQuery.getResultDataType());
                                 if (v == null) {
                                     return null;
@@ -447,7 +447,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                 SqlTypeMapper<ResultSet, R> mapper;
                 if (dtoProjection) {
                     QueryResultInfo queryResultInfo = preparedQuery.getQueryResultInfo();
-                    if (queryResultInfo == null || queryResultInfo.getType() == QueryResult.Type.TABULAR) {
+                    if (preparedQuery.isCount() || queryResultInfo == null || queryResultInfo.getType() == QueryResult.Type.TABULAR) {
                         boolean isRawQuery = preparedQuery.isRawQuery();
                         mapper = new SqlDTOMapper<>(
                             persistentEntity,
@@ -470,7 +470,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                         }
                     };
                     QueryResultInfo queryResultInfo = preparedQuery.getQueryResultInfo();
-                    if (queryResultInfo == null || queryResultInfo.getType() == QueryResult.Type.TABULAR) {
+                    if (preparedQuery.isCount() || queryResultInfo == null || queryResultInfo.getType() == QueryResult.Type.TABULAR) {
                         Set<JoinPath> joinFetchPaths = preparedQuery.getJoinFetchPaths();
                         SqlResultEntityTypeMapper<ResultSet, R> entityTypeMapper = new SqlResultEntityTypeMapper<>(
                             getEntity(resultType),
@@ -530,9 +530,10 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                             return false;
                         }
                         try {
+
                             boolean hasNext = rs.next();
                             if (hasNext) {
-                                if (queryResultInfo == null || queryResultInfo.getType() == QueryResult.Type.TABULAR) {
+                                if (preparedQuery.isCount() || queryResultInfo == null || queryResultInfo.getType() == QueryResult.Type.TABULAR) {
                                     Object v = columnIndexResultSetReader
                                         .readDynamic(rs, 1, preparedQuery.getResultDataType());
                                     if (resultType.isInstance(v)) {

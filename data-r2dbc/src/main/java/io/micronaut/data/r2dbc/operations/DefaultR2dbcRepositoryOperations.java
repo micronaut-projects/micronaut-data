@@ -95,8 +95,6 @@ import io.micronaut.transaction.support.TransactionUtil;
 import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.ConnectionFactory;
 import io.r2dbc.spi.IsolationLevel;
-import io.r2dbc.spi.Parameters;
-import io.r2dbc.spi.R2dbcType;
 import io.r2dbc.spi.Result;
 import io.r2dbc.spi.Row;
 import io.r2dbc.spi.Statement;
@@ -710,7 +708,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                         }
                     };
                     QueryResultInfo queryResultInfo = preparedQuery.getQueryResultInfo();
-                    if (queryResultInfo != null && queryResultInfo.getType() != QueryResult.Type.TABULAR) {
+                    if (!preparedQuery.isCount() && queryResultInfo != null && queryResultInfo.getType() != QueryResult.Type.TABULAR) {
                         SqlTypeMapper<Row, R> queryResultMapper = createQueryResultMapper(preparedQuery, queryResultInfo.getColumnName(), queryResultInfo.getJsonDataType(),
                             Row.class, persistentEntity, loadListener);
                         return executeAndMapEachRow(statement, row -> queryResultMapper.map(row, resultType));
@@ -734,7 +732,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                     boolean isRawQuery = preparedQuery.isRawQuery();
                     TypeMapper<Row, R> mapper;
                     QueryResultInfo queryResultInfo = preparedQuery.getQueryResultInfo();
-                    if (queryResultInfo == null || queryResultInfo.getType() == QueryResult.Type.TABULAR) {
+                    if (preparedQuery.isCount() || queryResultInfo == null || queryResultInfo.getType() == QueryResult.Type.TABULAR) {
                         mapper = new SqlDTOMapper<>(
                             persistentEntity,
                             isRawQuery ? getEntity(preparedQuery.getResultType()) : persistentEntity,
@@ -751,7 +749,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                 }
                 return executeAndMapEachRow(statement, row -> {
                     QueryResultInfo queryResultInfo = preparedQuery.getQueryResultInfo();
-                    if (queryResultInfo == null || queryResultInfo.getType() == QueryResult.Type.TABULAR) {
+                    if (preparedQuery.isCount() || queryResultInfo == null || queryResultInfo.getType() == QueryResult.Type.TABULAR) {
                         Object v = columnIndexResultSetReader.readDynamic(row, 0, preparedQuery.getResultDataType());
                         if (v == null) {
                             return Flux.<R>empty();
@@ -785,7 +783,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                     TypeMapper<Row, R> mapper;
                     if (dtoProjection) {
                         QueryResultInfo queryResultInfo = preparedQuery.getQueryResultInfo();
-                        if (queryResultInfo == null || queryResultInfo.getType() == QueryResult.Type.TABULAR) {
+                        if (preparedQuery.isCount() || queryResultInfo == null || queryResultInfo.getType() == QueryResult.Type.TABULAR) {
                             boolean isRawQuery = preparedQuery.isRawQuery();
                             mapper = new SqlDTOMapper<>(
                                 persistentEntity,
@@ -807,7 +805,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                             }
                         };
                         QueryResultInfo queryResultInfo = preparedQuery.getQueryResultInfo();
-                        if (queryResultInfo == null || queryResultInfo.getType() == QueryResult.Type.TABULAR) {
+                        if (preparedQuery.isCount() || queryResultInfo == null || queryResultInfo.getType() == QueryResult.Type.TABULAR) {
                             Set<JoinPath> joinFetchPaths = preparedQuery.getJoinFetchPaths();
                             SqlResultEntityTypeMapper<Row, R> entityTypeMapper = new SqlResultEntityTypeMapper<>(
                                 getEntity(resultType),
@@ -836,7 +834,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                 }
                 return executeAndMapEachRow(statement, row -> {
                     QueryResultInfo queryResultInfo = preparedQuery.getQueryResultInfo();
-                    if (queryResultInfo == null || queryResultInfo.getType() == QueryResult.Type.TABULAR) {
+                    if (preparedQuery.isCount() || queryResultInfo == null || queryResultInfo.getType() == QueryResult.Type.TABULAR) {
                         Object v = columnIndexResultSetReader.readDynamic(row, 0, preparedQuery.getResultDataType());
                         if (v == null) {
                             return Mono.<R>empty();
@@ -1273,9 +1271,6 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             LOG.debug(storedQuery.getQuery());
             Statement statement = connection.createStatement(storedQuery.getQuery());
             if (hasGeneratedId) {
-                if (persistentEntity.isJsonView()) {
-                    return statement.bind(1, Parameters.out(R2dbcType.NUMERIC));
-                }
                 return statement.returnGeneratedValues(persistentEntity.getIdentity().getPersistedName());
             }
             return statement;
@@ -1387,17 +1382,12 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             }
             Statement statement;
             if (hasGeneratedId) {
-                statement = ctx.connection.createStatement(storedQuery.getQuery());
-                if (persistentEntity.isJsonView()) {
-                    statement = statement.bind(1, Parameters.out(R2dbcType.NUMERIC));
-                } else {
-                    statement = statement.returnGeneratedValues(persistentEntity.getIdentity().getPersistedName());
-                }
+                statement = ctx.connection.createStatement(storedQuery.getQuery())
+                    .returnGeneratedValues(persistentEntity.getIdentity().getPersistedName());
             } else {
                 statement = ctx.connection.createStatement(storedQuery.getQuery());
             }
             setParameters(statement, storedQuery);
-            Statement finalStatement = statement;
             if (hasGeneratedId) {
                 entities = entities
                     .flatMap(list -> {
@@ -1405,7 +1395,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                         if (notVetoedEntities.isEmpty()) {
                             return Mono.just(notVetoedEntities);
                         }
-                        Mono<List<Object>> ids = executeAndMapEachRow(finalStatement, row -> columnIndexResultSetReader.readDynamic(row, 0, persistentEntity.getIdentity().getDataType())
+                        Mono<List<Object>> ids = executeAndMapEachRow(statement, row -> columnIndexResultSetReader.readDynamic(row, 0, persistentEntity.getIdentity().getDataType())
                         ).collectList();
 
                         return ids.flatMap(idList -> {
@@ -1431,7 +1421,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                         if (notVetoedEntities.isEmpty()) {
                             return Mono.just(Tuples.of(list, 0L));
                         }
-                        return executeAndGetRowsUpdated(finalStatement)
+                        return executeAndGetRowsUpdated(statement)
                             .map(Number::longValue)
                             .reduce(0L, Long::sum)
                             .map(rowsUpdated -> {

@@ -40,11 +40,12 @@ public interface StoredQueryResolver {
      * @param context     The method context
      * @param entityClass The entity type
      * @param resultType  The result type
+     * @param isCount     Whether query is count query
      * @param <E>         The entity type
      * @param <R>         The result type
      * @return The prepared query
      */
-    <E, R> StoredQuery<E, R> resolveQuery(MethodInvocationContext<?, ?> context, Class<E> entityClass, Class<R> resultType);
+    <E, R> StoredQuery<E, R> resolveQuery(MethodInvocationContext<?, ?> context, Class<E> entityClass, Class<R> resultType, boolean isCount);
 
     /**
      * Stored count query resolved from the method context.
