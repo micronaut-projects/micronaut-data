@@ -581,6 +581,17 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
     }
 
     /**
+     * Return an indicator telling whether prepared query result is tabular (or else json).
+     *
+     * @param preparedQuery the prepared query
+     * @param queryResultInfo the query result info, if not null will hold info about result type
+     * @return true if results are tabular (default)
+     */
+    protected boolean isTabularResult(PreparedQuery<?, ?> preparedQuery, QueryResultInfo queryResultInfo) {
+        return preparedQuery.isCount() || queryResultInfo == null || queryResultInfo.getType() == io.micronaut.data.annotation.QueryResult.Type.TABULAR;
+    }
+
+    /**
      * Creates {@link JsonQueryResultMapper} for JSON deserialization.
      *
      * @param sqlPreparedQuery the SQL prepared query

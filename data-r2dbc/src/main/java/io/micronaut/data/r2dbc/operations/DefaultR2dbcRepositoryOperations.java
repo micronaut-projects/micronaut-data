@@ -30,7 +30,6 @@ import io.micronaut.core.convert.ArgumentConversionContext;
 import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.type.Argument;
-import io.micronaut.data.annotation.QueryResult;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.exceptions.NonUniqueResultException;
 import io.micronaut.data.model.DataType;
@@ -708,7 +707,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                         }
                     };
                     QueryResultInfo queryResultInfo = preparedQuery.getQueryResultInfo();
-                    if (!preparedQuery.isCount() && queryResultInfo != null && queryResultInfo.getType() != QueryResult.Type.TABULAR) {
+                    if (!isTabularResult(preparedQuery, queryResultInfo)) {
                         SqlTypeMapper<Row, R> queryResultMapper = createQueryResultMapper(preparedQuery, queryResultInfo.getColumnName(), queryResultInfo.getJsonDataType(),
                             Row.class, persistentEntity, loadListener);
                         return executeAndMapEachRow(statement, row -> queryResultMapper.map(row, resultType));
@@ -732,7 +731,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                     boolean isRawQuery = preparedQuery.isRawQuery();
                     TypeMapper<Row, R> mapper;
                     QueryResultInfo queryResultInfo = preparedQuery.getQueryResultInfo();
-                    if (preparedQuery.isCount() || queryResultInfo == null || queryResultInfo.getType() == QueryResult.Type.TABULAR) {
+                    if (isTabularResult(preparedQuery, queryResultInfo)) {
                         mapper = new SqlDTOMapper<>(
                             persistentEntity,
                             isRawQuery ? getEntity(preparedQuery.getResultType()) : persistentEntity,
@@ -749,7 +748,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                 }
                 return executeAndMapEachRow(statement, row -> {
                     QueryResultInfo queryResultInfo = preparedQuery.getQueryResultInfo();
-                    if (preparedQuery.isCount() || queryResultInfo == null || queryResultInfo.getType() == QueryResult.Type.TABULAR) {
+                    if (isTabularResult(preparedQuery, queryResultInfo)) {
                         Object v = columnIndexResultSetReader.readDynamic(row, 0, preparedQuery.getResultDataType());
                         if (v == null) {
                             return Flux.<R>empty();
@@ -783,7 +782,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                     TypeMapper<Row, R> mapper;
                     if (dtoProjection) {
                         QueryResultInfo queryResultInfo = preparedQuery.getQueryResultInfo();
-                        if (preparedQuery.isCount() || queryResultInfo == null || queryResultInfo.getType() == QueryResult.Type.TABULAR) {
+                        if (isTabularResult(preparedQuery, queryResultInfo)) {
                             boolean isRawQuery = preparedQuery.isRawQuery();
                             mapper = new SqlDTOMapper<>(
                                 persistentEntity,
@@ -805,7 +804,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                             }
                         };
                         QueryResultInfo queryResultInfo = preparedQuery.getQueryResultInfo();
-                        if (preparedQuery.isCount() || queryResultInfo == null || queryResultInfo.getType() == QueryResult.Type.TABULAR) {
+                        if (isTabularResult(preparedQuery, queryResultInfo)) {
                             Set<JoinPath> joinFetchPaths = preparedQuery.getJoinFetchPaths();
                             SqlResultEntityTypeMapper<Row, R> entityTypeMapper = new SqlResultEntityTypeMapper<>(
                                 getEntity(resultType),
@@ -834,7 +833,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                 }
                 return executeAndMapEachRow(statement, row -> {
                     QueryResultInfo queryResultInfo = preparedQuery.getQueryResultInfo();
-                    if (preparedQuery.isCount() || queryResultInfo == null || queryResultInfo.getType() == QueryResult.Type.TABULAR) {
+                    if (isTabularResult(preparedQuery, queryResultInfo)) {
                         Object v = columnIndexResultSetReader.readDynamic(row, 0, preparedQuery.getResultDataType());
                         if (v == null) {
                             return Mono.<R>empty();

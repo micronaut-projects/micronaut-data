@@ -28,7 +28,6 @@ import io.micronaut.core.convert.ArgumentConversionContext;
 import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArgumentUtils;
-import io.micronaut.data.annotation.QueryResult;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.jdbc.config.DataJdbcConfiguration;
 import io.micronaut.data.jdbc.convert.JdbcConversionContext;
@@ -324,7 +323,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                             }
                         };
                         QueryResultInfo queryResultInfo = preparedQuery.getQueryResultInfo();
-                        if (preparedQuery.isCount() || queryResultInfo == null || queryResultInfo.getType() == QueryResult.Type.TABULAR) {
+                        if (isTabularResult(preparedQuery, queryResultInfo)) {
                             final Set<JoinPath> joinFetchPaths = preparedQuery.getJoinFetchPaths();
                             SqlResultEntityTypeMapper<ResultSet, R> mapper = new SqlResultEntityTypeMapper<>(
                                 resultPersistentEntity,
@@ -353,7 +352,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                     } else if (rs.next()) {
                         if (preparedQuery.isDtoProjection()) {
                             QueryResultInfo queryResultInfo = preparedQuery.getQueryResultInfo();
-                            if (preparedQuery.isCount() || queryResultInfo == null || queryResultInfo.getType() == QueryResult.Type.TABULAR) {
+                            if (isTabularResult(preparedQuery, queryResultInfo)) {
                                 boolean isRawQuery = preparedQuery.isRawQuery();
                                 TypeMapper<ResultSet, R> introspectedDataMapper = new SqlDTOMapper<>(
                                     persistentEntity,
@@ -370,7 +369,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                             }
                         } else {
                             QueryResultInfo queryResultInfo = preparedQuery.getQueryResultInfo();
-                            if (preparedQuery.isCount() || queryResultInfo == null || queryResultInfo.getType() == QueryResult.Type.TABULAR) {
+                            if (isTabularResult(preparedQuery, queryResultInfo)) {
                                 Object v = columnIndexResultSetReader.readDynamic(rs, 1, preparedQuery.getResultDataType());
                                 if (v == null) {
                                     return null;
@@ -447,7 +446,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                 SqlTypeMapper<ResultSet, R> mapper;
                 if (dtoProjection) {
                     QueryResultInfo queryResultInfo = preparedQuery.getQueryResultInfo();
-                    if (preparedQuery.isCount() || queryResultInfo == null || queryResultInfo.getType() == QueryResult.Type.TABULAR) {
+                    if (isTabularResult(preparedQuery, queryResultInfo)) {
                         boolean isRawQuery = preparedQuery.isRawQuery();
                         mapper = new SqlDTOMapper<>(
                             persistentEntity,
@@ -470,7 +469,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                         }
                     };
                     QueryResultInfo queryResultInfo = preparedQuery.getQueryResultInfo();
-                    if (preparedQuery.isCount() || queryResultInfo == null || queryResultInfo.getType() == QueryResult.Type.TABULAR) {
+                    if (isTabularResult(preparedQuery, queryResultInfo)) {
                         Set<JoinPath> joinFetchPaths = preparedQuery.getJoinFetchPaths();
                         SqlResultEntityTypeMapper<ResultSet, R> entityTypeMapper = new SqlResultEntityTypeMapper<>(
                             getEntity(resultType),
@@ -533,7 +532,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
 
                             boolean hasNext = rs.next();
                             if (hasNext) {
-                                if (preparedQuery.isCount() || queryResultInfo == null || queryResultInfo.getType() == QueryResult.Type.TABULAR) {
+                                if (isTabularResult(preparedQuery, queryResultInfo)) {
                                     Object v = columnIndexResultSetReader
                                         .readDynamic(rs, 1, preparedQuery.getResultDataType());
                                     if (resultType.isInstance(v)) {
