@@ -6,7 +6,7 @@ import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.Relation;
 
-@MappedEntity("STUDENT_CLASSES")
+@MappedEntity("TBL_STUDENT_CLASSES")
 public class StudentClass {
     @Id
     @GeneratedValue(GeneratedValue.Type.IDENTITY)

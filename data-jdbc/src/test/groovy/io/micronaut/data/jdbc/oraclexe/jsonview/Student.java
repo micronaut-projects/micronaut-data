@@ -9,13 +9,13 @@ import io.micronaut.data.jdbc.annotation.JoinTable;
 import java.util.Collections;
 import java.util.List;
 
-@MappedEntity
+@MappedEntity("TBL_STUDENT")
 public class Student {
     @Id
     @GeneratedValue(GeneratedValue.Type.IDENTITY)
     private Long id;
     private String name;
-    @JoinTable(name = "STUDENT_CLASSES")
+    @JoinTable(name = "TBL_STUDENT_CLASSES")
     @Relation(Relation.Kind.MANY_TO_MANY)
     private List<Class> classes;
 

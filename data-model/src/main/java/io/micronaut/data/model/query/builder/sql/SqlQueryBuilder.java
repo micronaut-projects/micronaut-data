@@ -335,9 +335,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         }
 
         if (entity.isJsonView()) {
-            if (!dialect().supportsJsonView()) {
-                throw new IllegalArgumentException("Json View is not supported by the dialect " + this.dialect);
-            }
+            checkDialectSupportsJsonView(entity);
             AnnotationValue<JsonView> jsonViewAnnotationValue = entity.getAnnotation(JsonView.class);
             String viewName = getUnescapedTableName(entity);
             List<PersistentProperty> persistentProperties = new ArrayList<>(entity.getPersistentProperties());

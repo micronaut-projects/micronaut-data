@@ -1193,7 +1193,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                     whereClause.append(currentAlias).append(DOT);
                 }
                 if (jsonViewAnnotationValue != null) {
-                    checkDialectSupportsJsonView();
+                    checkDialectSupportsJsonView(entity);
                     String columnName = jsonViewAnnotationValue.getRequiredValue("column", String.class);
                     whereClause.append(columnName).append(DOT).append(property.getName());
                 } else {
@@ -1248,9 +1248,10 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         }
         boolean computePropertyPaths = computePropertyPaths();
         if (computePropertyPaths) {
-            AnnotationValue<JsonView> jsonViewAnnotationValue = propertyPath.getProperty().getOwner().getAnnotationMetadata().getAnnotation(JsonView.class);
+            PersistentEntity entity = propertyPath.getProperty().getOwner();
+            AnnotationValue<JsonView> jsonViewAnnotationValue = entity.getAnnotationMetadata().getAnnotation(JsonView.class);
             if (jsonViewAnnotationValue != null) {
-                checkDialectSupportsJsonView();
+                checkDialectSupportsJsonView(entity);
                 String columnName = jsonViewAnnotationValue.getRequiredValue("column", String.class);
                 sb.append(columnName).append(DOT).append(propertyPath.getProperty().getName());
             } else {
@@ -1305,7 +1306,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
 
         PersistentEntity entity = queryState.getEntity();
         if (entity.isJsonView() && propertiesToUpdate.size() == 1) {
-            checkDialectSupportsJsonView();
+            checkDialectSupportsJsonView(entity);
             // Update JsonView DATA column
             String name = propertiesToUpdate.keySet().iterator().next();
             AnnotationValue<JsonView> jsonViewAnnotationValue = entity.getAnnotationMetadata().getAnnotation(JsonView.class);
@@ -1914,10 +1915,12 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
     /**
      * If and when JsonView annotation is used for the repository method but dialect does not support JsonView
      * this will throw {@link IllegalArgumentException}.
+     *
+     * @param entity the persistent entity
      */
-    private void checkDialectSupportsJsonView() {
+    protected void checkDialectSupportsJsonView(PersistentEntity entity) {
         if (!getDialect().supportsJsonView()) {
-            throw new IllegalArgumentException("Json View is not supported by the dialect " + getDialect());
+            throw new IllegalArgumentException("Json View for entity " + entity.getSimpleName() + " is not supported by the dialect " + getDialect());
         }
     }
 

@@ -7,7 +7,7 @@ import io.micronaut.data.annotation.JsonViewColumn;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.jdbc.annotation.JoinColumn;
 
-@JsonView(table = "STUDENT_CLASSES", permissions = "INSERT UPDATE DELETE")
+@JsonView(table = "TBL_STUDENT_CLASSES", permissions = "INSERT UPDATE DELETE")
 public class StudentScheduleView {
     @Id
     private Long id;

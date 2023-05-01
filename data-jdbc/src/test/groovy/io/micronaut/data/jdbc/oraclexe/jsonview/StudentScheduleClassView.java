@@ -9,7 +9,7 @@ import io.micronaut.data.jdbc.annotation.JoinColumn;
 
 import java.time.LocalTime;
 
-@JsonView(table = "CLASS", permissions = "UPDATE")
+@JsonView(table = "TBL_CLASS", permissions = "UPDATE")
 @Embeddable
 public class StudentScheduleClassView {
 

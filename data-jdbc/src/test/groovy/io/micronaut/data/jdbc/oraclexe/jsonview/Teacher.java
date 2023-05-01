@@ -5,7 +5,7 @@ import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
 import jakarta.validation.constraints.NotNull;
 
-@MappedEntity
+@MappedEntity("TBL_TEACHER")
 public class Teacher {
     @Id
     @GeneratedValue(GeneratedValue.Type.IDENTITY)

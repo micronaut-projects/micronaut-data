@@ -1,7 +1,6 @@
 package io.micronaut.data.jdbc.oraclexe.jsonview
 
 import io.micronaut.context.ApplicationContext
-import io.micronaut.core.annotation.Order
 import io.micronaut.data.exceptions.OptimisticLockException
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
@@ -222,7 +221,7 @@ class OracleXEJsonViewSpec extends Specification {
         newStudentScheduleView.setClazz(studentScheduleClassView)
         ivoneStudentView.setSchedule(List.of(newStudentScheduleView))
         peterStudentView.setSchedule(List.of(newStudentScheduleView))
-        ivoneStudentView = studentViewRepository.save(ivoneStudentView)
+        studentViewRepository.save(ivoneStudentView)
         studentViewRepository.saveAll(Arrays.asList(peterStudentView))
 
         def optIvoneStudentView = studentViewRepository.findByName(ivoneStudentName)
@@ -231,7 +230,7 @@ class OracleXEJsonViewSpec extends Specification {
 
         then:
         optPeterStudentView.present
-        def found = optIvoneStudentView.isPresent()
+        optIvoneStudentView.isPresent()
         // And just to validate that saved local time is + 30 minutes from initial class time
         def studentClassTime = optIvoneStudentView.get().getSchedule().get(0).getClazz().getTime()
         classTime.plusMinutes(30) == studentClassTime

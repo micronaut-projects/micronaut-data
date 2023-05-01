@@ -16,9 +16,9 @@ public interface StudentViewRepository extends PageableRepository<StudentView, L
 
     Optional<StudentView> findByName(String name);
 
-    @Query("UPDATE STUDENT_SCHEDULE ss SET ss.data = :data WHERE ss.DATA.name = :name")
+    @Query("UPDATE STUDENT_VIEW ss SET ss.data = :data WHERE ss.DATA.name = :name")
     void updateByName(@TypeDef(type = DataType.JSON) StudentView data, String name);
 
-    @Query("UPDATE STUDENT_SCHEDULE ss SET ss.DATA = json_transform(DATA, SET '$.name' = :newName) WHERE ss.DATA.name = :oldName")
+    @Query("UPDATE STUDENT_VIEW ss SET ss.DATA = json_transform(DATA, SET '$.name' = :newName) WHERE ss.DATA.name = :oldName")
     void updateName(String oldName, String newName);
 }
