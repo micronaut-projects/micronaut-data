@@ -753,6 +753,11 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         boolean escape = propertyPath.shouldEscape();
         NamingStrategy namingStrategy = propertyPath.getNamingStrategy();
         boolean[] needsTrimming = {false};
+        PersistentEntity entity = propertyPath.getProperty().getOwner();
+        if (entity.isJsonView()) {
+            throw new IllegalArgumentException("Property " + propertyPath.getProperty().getName() + " projection in entity " + entity.getSimpleName()
+                + " not supported for JsonView and dialect " + getDialect());
+        }
         traversePersistentProperties(propertyPath.getAssociations(), propertyPath.getProperty(), (associations, property) -> {
             String columnName = getMappedName(namingStrategy, associations, property);
             if (escape) {
@@ -881,6 +886,10 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         PersistentPropertyPath propertyPath = entity.getPropertyPath(propertyProjection.getPropertyName());
         if (propertyPath == null) {
             throw new IllegalArgumentException("Cannot project on non-existent property: " + propertyProjection.getPropertyName());
+        }
+        if (entity.isJsonView()) {
+            throw new IllegalArgumentException("Function " + functionName + " projection for property " + propertyPath.getProperty().getName() + " in entity " + entity.getSimpleName()
+                + " not supported for JsonView and dialect " + getDialect());
         }
         String columnName;
         if (computePropertyPaths()) {
