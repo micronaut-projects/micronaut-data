@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 package io.micronaut.data.annotation;
+import io.micronaut.core.annotation.Experimental;
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.serde.annotation.Serdeable;
 
@@ -34,6 +35,7 @@ import java.lang.annotation.Target;
 @Serdeable
 @Introspected
 @Documented
+@Experimental
 public @interface JsonView {
 
     String DEFAULT_COLUMN_NAME = "DATA";
@@ -50,9 +52,4 @@ public @interface JsonView {
      * @return the main table for the view, other tables can be joined via embedded mappings
      */
     String table();
-
-    /**
-     * @return permissions for the table, combination of UPDATE, INSERT, DELETE or NOUPDATE, NOINSERT, NODELETE for the view
-     */
-    String permissions() default "";
 }

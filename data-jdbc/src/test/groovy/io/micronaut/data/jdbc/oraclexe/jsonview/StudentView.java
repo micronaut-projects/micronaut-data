@@ -4,21 +4,19 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.JsonView;
-import io.micronaut.data.annotation.JsonViewColumn;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.jdbc.annotation.JoinColumn;
 
 import java.util.List;
 
-@JsonView(table = "TBL_STUDENT", permissions = "UPDATE INSERT DELETE")
+@JsonView(table = "TBL_STUDENT")
 @MappedEntity(value = "STUDENT_VIEW")
 public class StudentView {
     @Id
     @GeneratedValue(GeneratedValue.Type.IDENTITY)
     private Long id;
 
-    @JsonViewColumn(attributes = "UPDATE")
     private String name;
 
     @JoinColumn(name = "student_id", referencedColumnName = "id")

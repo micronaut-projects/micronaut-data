@@ -39,19 +39,12 @@ abstract class AbstractMultitenancySpec extends Specification {
 
     abstract Map<String, String> getExtraProperties()
 
-    List<String> packages() {
-        def currentClassPackage = getClass().package.name
-        return Arrays.asList(currentClassPackage, "io.micronaut.data.tck.entities", "io.micronaut.data.tck.jdbc.entities")
-    }
-
     Map<String, String> getDataSourceProperties() {
         return [:]
     }
 
     Map<String, String> getDataSourceProperties(String dataSourceName) {
-        def props = getDataSourceProperties().collectEntries { [sourcePrefix() + '.' + dataSourceName + '.' + it.key, it.value] };
-        props.put(sourcePrefix() + '.' + dataSourceName + '.packages', packages())
-        return props
+        return getDataSourceProperties().collectEntries { [sourcePrefix() + '.' + dataSourceName + '.' + it.key, it.value] }
     }
 
     boolean supportsSchemaMultitenancy() {

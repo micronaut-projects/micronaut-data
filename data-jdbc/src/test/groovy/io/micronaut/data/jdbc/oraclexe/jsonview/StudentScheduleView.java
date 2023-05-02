@@ -3,17 +3,15 @@ package io.micronaut.data.jdbc.oraclexe.jsonview;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.JsonView;
-import io.micronaut.data.annotation.JsonViewColumn;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.jdbc.annotation.JoinColumn;
 
-@JsonView(table = "TBL_STUDENT_CLASSES", permissions = "INSERT UPDATE DELETE")
+@JsonView(table = "TBL_STUDENT_CLASSES")
 public class StudentScheduleView {
     @Id
     private Long id;
 
     @JsonProperty("class")
-    @JsonViewColumn(name = "class")
     @Relation(Relation.Kind.ONE_TO_ONE)
     @JoinColumn(referencedColumnName = "class_id", name = "id")
     private StudentScheduleClassView clazz;

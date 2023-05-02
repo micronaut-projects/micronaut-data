@@ -31,7 +31,6 @@ import io.micronaut.data.annotation.Index;
 import io.micronaut.data.annotation.Indexes;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.annotation.JsonView;
-import io.micronaut.data.annotation.JsonViewColumn;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.annotation.Repository;
@@ -52,8 +51,6 @@ import io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder;
 import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.QueryParameterBinding;
 import io.micronaut.data.model.query.builder.QueryResult;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
@@ -108,10 +105,6 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     private static final String SEQ_SUFFIX = "_seq";
     private static final String INSERT_INTO = "INSERT INTO ";
     private static final String JDBC_REPO_ANNOTATION = "io.micronaut.data.jdbc.annotation.JdbcRepository";
-    private static final String LINE_DELIMITER = "\n";
-    private static final String JSON_VIEW_METADATA_FIELD = "metadata";
-
-    private static final Logger LOG = LoggerFactory.getLogger(SqlQueryBuilder.class);
 
     private final Dialect dialect;
     private final Map<Dialect, DialectConfig> perDialectConfig = new HashMap<>(3);
@@ -234,7 +227,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     public @NonNull
     String buildBatchDropTableStatement(@NonNull PersistentEntity... entities) {
         return Arrays.stream(entities).flatMap(entity -> Stream.of(buildDropTableStatements(entity)))
-            .collect(Collectors.joining(LINE_DELIMITER));
+            .collect(Collectors.joining("\n"));
     }
 
 
@@ -323,7 +316,11 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     public @NonNull
     String[] buildCreateTableStatements(@NonNull PersistentEntity entity) {
         ArgumentUtils.requireNonNull("entity", entity);
+        final String unescapedTableName = getUnescapedTableName(entity);
+        String tableName = getTableName(entity);
         boolean escape = shouldEscape(entity);
+
+        PersistentProperty identity = entity.getIdentity();
 
         List<String> createStatements = new ArrayList<>();
         String schema = getSchemaName(entity);
@@ -333,24 +330,6 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
             }
             createStatements.add("CREATE SCHEMA " + schema + ";");
         }
-
-        if (entity.isJsonView()) {
-            checkDialectSupportsJsonView(entity);
-            AnnotationValue<JsonView> jsonViewAnnotationValue = entity.getAnnotation(JsonView.class);
-            String viewName = getUnescapedTableName(entity);
-            List<PersistentProperty> persistentProperties = new ArrayList<>(entity.getPersistentProperties());
-            PersistentProperty identity = entity.getIdentity();
-            if (identity != null) {
-                persistentProperties.add(0, identity);
-            }
-            String script = buildCreateJsonViewStatement(jsonViewAnnotationValue, viewName, persistentProperties, true);
-            createStatements.add(script);
-            return createStatements.toArray(new String[0]);
-        }
-
-        final String unescapedTableName = getUnescapedTableName(entity);
-        String tableName = getTableName(entity);
-        PersistentProperty identity = entity.getIdentity();
 
         Collection<Association> foreignKeyAssociations = getJoinTableAssociations(entity);
 
@@ -534,116 +513,6 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         createStatements.add(builder.toString());
         addIndexes(entity, tableName, createStatements);
         return createStatements.toArray(new String[0]);
-    }
-
-    /**
-     * Builds Json View creation statement.
-     *
-     * @param jsonViewAnnotationValue the json view annotation value
-     * @param viewName the view name
-     * @param mainTable an indicator telling whether creating view for the main table (or else sub views)
-     * @return the statement for creating Json View
-     */
-    private String buildCreateJsonViewStatement(AnnotationValue<JsonView> jsonViewAnnotationValue, String viewName,
-                                                Collection<? extends PersistentProperty> persistentProperties, boolean mainTable) {
-        // The source table for the view
-        String sourceTable = jsonViewAnnotationValue.getRequiredValue("table", String.class);
-
-        StringBuilder sb = new StringBuilder();
-        if (mainTable) {
-            sb.append("CREATE OR REPLACE JSON RELATIONAL DUALITY VIEW ");
-            sb.append(viewName).append(AS_CLAUSE).append(LINE_DELIMITER);
-        }
-        sb.append("SELECT JSON{").append(LINE_DELIMITER);
-        boolean fieldAdded = false;
-        for (PersistentProperty property : persistentProperties) {
-            String name = property.getName();
-            if (JSON_VIEW_METADATA_FIELD.equals(name)) {
-                // skip metadata field
-                continue;
-            }
-            AnnotationValue<JsonViewColumn> jsonViewColumnAnnotationValue = property.getAnnotation(JsonViewColumn.class);
-            if (jsonViewColumnAnnotationValue != null) {
-                name = jsonViewColumnAnnotationValue.stringValue("name").orElse(name);
-            }
-            if (property instanceof Association association) {
-                // This is nested property (or collection) with other view
-                PersistentEntity associatedEntity = association.getAssociatedEntity();
-                if (!associatedEntity.isJsonView()) {
-                    continue;
-                }
-                AnnotationValue<JsonView> associatedEntityJsonAnnotationValue = associatedEntity.getAnnotation(JsonView.class);
-                boolean isCollection = property.isAssignable(Collection.class);
-
-                if (fieldAdded) {
-                    sb.append(COMMA).append(LINE_DELIMITER);
-                }
-
-                sb.append("'").append(name).append("': ");
-                if (isCollection) {
-                    sb.append("[");
-                } else {
-                    sb.append("(");
-                }
-
-                String associatedEntityTable = associatedEntityJsonAnnotationValue.getRequiredValue("table", String.class);
-                List<PersistentProperty> associatedEntityPersistentProperties = new ArrayList<>(associatedEntity.getPersistentProperties());
-                PersistentProperty identity = associatedEntity.getIdentity();
-                if (identity != null) {
-                    associatedEntityPersistentProperties.add(0, identity);
-                }
-                String associatedEntityViewScript = buildCreateJsonViewStatement(associatedEntityJsonAnnotationValue, null,
-                    associatedEntityPersistentProperties, false);
-                sb.append(associatedEntityViewScript);
-
-                AnnotationValue<Annotation> joinColumnsHolder = property.getAnnotationMetadata().getAnnotation(ANN_JOIN_COLUMNS);
-                if (joinColumnsHolder != null) {
-                    for (AnnotationValue<Annotation> joinColumnAnnotationValue : joinColumnsHolder.getAnnotations("value")) {
-                        String referencedColumnName = joinColumnAnnotationValue.stringValue("referencedColumnName").orElse(null);
-                        String columnName = joinColumnAnnotationValue.stringValue("name").orElse(null);
-                        if (referencedColumnName != null && columnName != null) {
-                            sb.append(WHERE_CLAUSE).append(sourceTable).append(DOT).append(referencedColumnName)
-                                .append(EQUALS)
-                                .append(associatedEntityTable).append(DOT).append(columnName);
-                        }
-                    }
-                } else {
-                    LOG.warn("JoinColumn annotation not declared on JsonView [{}] field [{}]", associatedEntityTable, property.getName());
-                }
-
-                if (isCollection) {
-                    sb.append("]");
-                } else {
-                    sb.append(")");
-                }
-            } else {
-                String field = name;
-                String attributes = null;
-                if (jsonViewColumnAnnotationValue != null) {
-                    field = jsonViewColumnAnnotationValue.stringValue("field").orElse(name);
-                    attributes = jsonViewColumnAnnotationValue.stringValue("attributes").orElse(null);
-                }
-                if (fieldAdded) {
-                    sb.append(COMMA).append(LINE_DELIMITER);
-                }
-                sb.append("'").append(name).append("': ").append(sourceTable).append(DOT).append(field);
-                if (StringUtils.isNotEmpty(attributes)) {
-                    sb.append(" WITH ").append(attributes);
-                }
-                fieldAdded = true;
-            }
-        }
-
-        sb.append("} FROM ").append(sourceTable);
-        String permissions = jsonViewAnnotationValue.stringValue("permissions").orElse(null);
-        if (StringUtils.isNotEmpty(permissions)) {
-            sb.append(" WITH ").append(permissions);
-        }
-        if (mainTable) {
-            sb.append(";");
-        }
-
-        return sb.toString();
     }
 
     private void addIndexes(PersistentEntity entity, String tableName, List<String> createStatements) {

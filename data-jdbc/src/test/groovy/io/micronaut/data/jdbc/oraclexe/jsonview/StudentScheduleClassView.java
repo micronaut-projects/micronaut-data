@@ -3,21 +3,18 @@ package io.micronaut.data.jdbc.oraclexe.jsonview;
 import io.micronaut.data.annotation.Embeddable;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.JsonView;
-import io.micronaut.data.annotation.JsonViewColumn;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.jdbc.annotation.JoinColumn;
 
 import java.time.LocalTime;
 
-@JsonView(table = "TBL_CLASS", permissions = "UPDATE")
+@JsonView(table = "TBL_CLASS")
 @Embeddable
 public class StudentScheduleClassView {
 
     @Id
-    @JsonViewColumn(field = "id")
     private Long classID;
 
-    @JsonViewColumn(attributes = "UPDATE")
     private String name;
 
     @JoinColumn(name = "id", referencedColumnName = "teacher_id")
