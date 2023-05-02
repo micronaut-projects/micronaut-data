@@ -4,16 +4,15 @@ import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.JsonView;
 import io.micronaut.data.annotation.MappedEntity;
 
-@MappedEntity(value = "USR_VIEW", alias = "uv")
-@JsonView(table = "USR")
-public class UsrView {
+@MappedEntity(value = "TBL_CONTACT", alias = "c")
+public class Contact {
     @Id
-    private Long usrId;
+    private Long id;
     private String name;
     private int age;
 
-    public Long getUsrId() { return usrId; }
-    public void setUsrId(Long usrId) { this.usrId = usrId; }
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
     public int getAge() { return age; }

@@ -1,7 +1,7 @@
 package io.micronaut.data.processor.sql
 
 import io.micronaut.data.processor.visitors.AbstractDataSpec
-import io.micronaut.data.tck.entities.UsrView
+import io.micronaut.data.tck.entities.ContactView
 
 import static io.micronaut.data.processor.visitors.TestUtils.getQuery
 
@@ -9,81 +9,69 @@ class JsonViewSpec extends AbstractDataSpec {
 
     void "test JsonView repository"() {
         given:
-        def repository = buildRepository('test.UsrViewRepository', """
+        def repository = buildRepository('test.ContactViewRepository', """
 import io.micronaut.data.annotation.QueryResult;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
-import io.micronaut.data.repository.GenericRepository;
-import io.micronaut.data.tck.entities.UsrView;
+import io.micronaut.data.repository.CrudRepository;import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.ContactView;
 import java.util.Optional;
 @JdbcRepository(dialect = Dialect.ORACLE)
-interface UsrViewRepository extends GenericRepository<UsrView, Long> {
+@QueryResult(type = QueryResult.Type.JSON)
+interface ContactViewRepository extends CrudRepository<ContactView, Long> {
 
-    @QueryResult(type = QueryResult.Type.JSON)
-    Optional<UsrView> findByUsrId(Long usrId);
-
-    void insertUsrView(@TypeDef(type = DataType.JSON) UsrView usrView);
-
-    Long updateUsrView(@Id Long usrId, String name);
-
-    void update(@TypeDef(type = DataType.JSON) UsrView data);
-
-    int deleteByUsrId(Long usrId);
-
-    int delete(UsrView usrView);
-
-    void deleteAll(Iterable<UsrView> entities);
-
-    void deleteAll();
+    Long updateContactView(@Id Long id, String name);
 }
 """)
 
-        def findByUsrIdQuery = getQuery(repository.getRequiredMethod("findByUsrId", Long))
-        def insertUsrViewQuery = getQuery(repository.getRequiredMethod("insertUsrView", UsrView))
-        def updateQuery = getQuery(repository.getRequiredMethod("update", UsrView))
-        def deleteByUsrIdQuery = getQuery(repository.getRequiredMethod("deleteByUsrId", Long))
-        def deleteQuery = getQuery(repository.getRequiredMethod("delete", UsrView))
+        def findByIdQuery = getQuery(repository.getRequiredMethod("findById", Long))
+        def saveQuery = getQuery(repository.getRequiredMethod("save", ContactView))
+        def updateQuery = getQuery(repository.getRequiredMethod("update", ContactView))
+        def updateContactViewQuery = getQuery(repository.getRequiredMethod("updateContactView", Long, String))
+        def deleteByIdQuery = getQuery(repository.getRequiredMethod("deleteById", Long))
+        def deleteQuery = getQuery(repository.getRequiredMethod("delete", ContactView))
         def deleteAllQuery = getQuery(repository.getRequiredMethod("deleteAll"))
-        def deleteAllIterableQuery = getQuery(repository.getRequiredMethod("deleteAll", Iterable<UsrView>))
+        def deleteAllIterableQuery = getQuery(repository.getRequiredMethod("deleteAll", Iterable<ContactView>))
 
         expect:
-        findByUsrIdQuery == 'SELECT uv.* FROM "USR_VIEW" uv WHERE (uv.DATA.usrId = ?)'
-        insertUsrViewQuery == 'INSERT INTO "USR_VIEW" VALUES (?)'
-        updateQuery == 'UPDATE "USR_VIEW" uv SET uv.DATA=? WHERE (uv.DATA.usrId = ?)'
-        deleteByUsrIdQuery == 'DELETE  FROM "USR_VIEW"  uv WHERE (uv.DATA.usrId = ?)'
-        deleteQuery == 'DELETE  FROM "USR_VIEW"  uv WHERE (uv.DATA.usrId = ?)'
-        deleteAllQuery == 'DELETE  FROM "USR_VIEW"  uv'
-        deleteAllIterableQuery == 'DELETE  FROM "USR_VIEW"  uv WHERE (uv.DATA.usrId IN (?))'
+        findByIdQuery == 'SELECT cv.* FROM CONTACT_VIEW cv WHERE (cv.DATA.id = ?)'
+        saveQuery == 'INSERT INTO CONTACT_VIEW VALUES (?)'
+        updateQuery == 'UPDATE CONTACT_VIEW cv SET cv.DATA=? WHERE (cv.DATA.id = ?)'
+        updateContactViewQuery == 'UPDATE CONTACT_VIEW cv SET cv.name=? WHERE (cv.DATA.id = ?)'
+        deleteByIdQuery == 'DELETE  FROM CONTACT_VIEW  cv WHERE (cv.DATA.id = ?)'
+        deleteQuery == 'DELETE  FROM CONTACT_VIEW  cv WHERE (cv.DATA.id = ?)'
+        deleteAllQuery == 'DELETE  FROM CONTACT_VIEW  cv'
+        deleteAllIterableQuery == 'DELETE  FROM CONTACT_VIEW  cv WHERE (cv.DATA.id IN (?))'
     }
 
     void "test JsonView repository not supported property projection"() {
         when:
-        buildRepository('test.UsrViewRepository', """
+        buildRepository('test.ContactViewRepository', """
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.repository.GenericRepository;
-import io.micronaut.data.tck.entities.UsrView;
+import io.micronaut.data.tck.entities.ContactView;
 @JdbcRepository(dialect = Dialect.ORACLE)
-interface UsrViewRepository extends GenericRepository<UsrView, Long> {
+interface ContactViewRepository extends GenericRepository<ContactView, Long> {
 
-    String findNameByUsrId(Long usrId);
+    String findNameById(Long id);
 }
 """)
 
         then:
         def thrown = thrown(RuntimeException)
-        thrown.message.contains("Property name projection in entity UsrView not supported for JsonView and dialect ORACLE")
+        thrown.message.contains("Property name projection in entity ContactView not supported for JsonView and dialect ORACLE")
     }
 
     void "test JsonView repository not supported max function projection"() {
         when:
-        buildRepository('test.UsrViewRepository', """
+        buildRepository('test.ContactViewRepository', """
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.repository.GenericRepository;
-import io.micronaut.data.tck.entities.UsrView;
+import io.micronaut.data.tck.entities.ContactView;
 @JdbcRepository(dialect = Dialect.ORACLE)
-interface UsrViewRepository extends GenericRepository<UsrView, Long> {
+interface ContactViewRepository extends GenericRepository<ContactView, Long> {
 
     int findMaxAgeByName(String name);
 }
@@ -91,6 +79,6 @@ interface UsrViewRepository extends GenericRepository<UsrView, Long> {
 
         then:
         def thrown = thrown(RuntimeException)
-        thrown.message.contains("Function MAX projection for property age in entity UsrView not supported for JsonView and dialect ORACLE")
+        thrown.message.contains("Function MAX projection for property age in entity ContactView not supported for JsonView and dialect ORACLE")
     }
 }

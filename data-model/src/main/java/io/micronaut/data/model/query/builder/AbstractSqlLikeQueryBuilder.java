@@ -642,7 +642,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
      * @return True if they should be escaped
      */
     protected boolean shouldEscape(@NonNull PersistentEntity entity) {
-        return entity.getAnnotationMetadata().booleanValue(MappedEntity.class, "escape").orElse(true);
+        return entity.getAnnotationMetadata().booleanValue(MappedEntity.class, "escape").orElse(true) && !entity.isJsonView();
     }
 
     /**

@@ -163,6 +163,7 @@ public enum Dialect {
      * Gets an indicator whether Json View is supported by the database.
      *
      * @return true if Json View is supported
+     * @since 4.0.0
      */
     public boolean supportsJsonView() {
         return supportsJsonView;
