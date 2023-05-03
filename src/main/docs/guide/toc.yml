@@ -82,6 +82,7 @@ dbc:
     columnTransformer: Using @ColumnTransformer
     mappedPropertyAlias: Using @MappedProperty alias
     sqlJsonType: JSON Column Support
+    sqlJsonView: JSON VIEW Support
     javaRecords: Support for Java 16 Records
     kotlinData: Support for Kotlin immutable data classes
   dbcDataTypes: Data Types
