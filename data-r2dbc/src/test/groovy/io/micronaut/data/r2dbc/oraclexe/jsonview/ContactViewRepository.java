@@ -1,7 +1,6 @@
 package io.micronaut.data.r2dbc.oraclexe.jsonview;
 
 import io.micronaut.data.annotation.Query;
-import io.micronaut.data.annotation.QueryResult;
 import io.micronaut.data.annotation.TypeDef;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.query.builder.sql.Dialect;
@@ -12,7 +11,6 @@ import io.micronaut.data.tck.entities.ContactView;
 import java.util.Optional;
 
 @R2dbcRepository(dialect = Dialect.ORACLE)
-@QueryResult(type = QueryResult.Type.JSON)
 public interface ContactViewRepository extends PageableRepository<ContactView, Long> {
 
     Optional<ContactView> findByName(String name);

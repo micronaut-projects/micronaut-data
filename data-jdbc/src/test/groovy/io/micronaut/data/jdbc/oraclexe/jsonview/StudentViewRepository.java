@@ -1,7 +1,6 @@
 package io.micronaut.data.jdbc.oraclexe.jsonview;
 
 import io.micronaut.data.annotation.Query;
-import io.micronaut.data.annotation.QueryResult;
 import io.micronaut.data.annotation.TypeDef;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.DataType;
@@ -11,7 +10,6 @@ import io.micronaut.data.repository.PageableRepository;
 import java.util.Optional;
 
 @JdbcRepository(dialect = Dialect.ORACLE)
-@QueryResult(type = QueryResult.Type.JSON)
 public interface StudentViewRepository extends PageableRepository<StudentView, Long> {
 
     Optional<StudentView> findByName(String name);

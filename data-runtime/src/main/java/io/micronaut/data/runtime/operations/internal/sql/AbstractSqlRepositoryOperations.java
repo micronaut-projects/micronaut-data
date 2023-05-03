@@ -536,10 +536,10 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
     protected final <T, R> SqlTypeMapper<RS, R> createQueryResultMapper(SqlPreparedQuery<?, ?> sqlPreparedQuery, String columnName, JsonDataType jsonDataType, Class<RS> resultSetType,
                                                                         RuntimePersistentEntity<T> persistentEntity, BiFunction<RuntimePersistentEntity<Object>, Object, Object> loadListener) {
         QueryResultInfo queryResultInfo = sqlPreparedQuery.getQueryResultInfo();
-        return switch (queryResultInfo.getType()) {
-            case JSON -> createJsonQueryResultMapper(sqlPreparedQuery, columnName, jsonDataType, resultSetType, persistentEntity, loadListener);
-            default -> throw new IllegalStateException("Unexpected query result type: " + queryResultInfo.getType());
-        };
+        if (queryResultInfo != null && queryResultInfo.getType() != io.micronaut.data.annotation.QueryResult.Type.JSON) {
+            throw new IllegalStateException("Unexpected query result type: " + queryResultInfo.getType());
+        }
+        return createJsonQueryResultMapper(sqlPreparedQuery, columnName, jsonDataType, resultSetType, persistentEntity, loadListener);
     }
 
     /**
@@ -581,14 +581,49 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
     }
 
     /**
-     * Return an indicator telling whether prepared query result is tabular (or else json).
+     * Return an indicator telling whether prepared query result produces JSON result.
      *
      * @param preparedQuery the prepared query
      * @param queryResultInfo the query result info, if not null will hold info about result type
-     * @return true if results are tabular (default)
+     * @return true if result is JSON
      */
-    protected boolean isTabularResult(PreparedQuery<?, ?> preparedQuery, QueryResultInfo queryResultInfo) {
-        return preparedQuery.isCount() || queryResultInfo == null || queryResultInfo.getType() == io.micronaut.data.annotation.QueryResult.Type.TABULAR;
+    protected boolean isJsonResult(PreparedQuery<?, ?> preparedQuery, QueryResultInfo queryResultInfo) {
+        if (preparedQuery.isCount()) {
+            return false;
+        }
+        DataType resultDataType = preparedQuery.getResultDataType();
+        if (resultDataType == DataType.JSON || (resultDataType == DataType.ENTITY && getEntity(preparedQuery.getResultType()).isJsonView())) {
+            return true;
+        }
+        return queryResultInfo != null && queryResultInfo.getType() == io.micronaut.data.annotation.QueryResult.Type.JSON;
+    }
+
+    /**
+     * Gets column name for JSON result. If {@link io.micronaut.data.annotation.QueryResult} annotation is present,
+     * takes column value from there, otherwise defaults to 'DATA' column name.
+     *
+     * @param queryResultInfo the query result info from the {@link io.micronaut.data.annotation.QueryResult} annotation, null if annotation not present
+     * @return the JSON column name
+     */
+    protected String getJsonColumn(QueryResultInfo queryResultInfo) {
+        if (queryResultInfo != null) {
+            return queryResultInfo.getColumnName();
+        }
+        return io.micronaut.data.annotation.QueryResult.DEFAULT_COLUMN;
+    }
+
+    /**
+     * Gets JSON data type for JSON result. If {@link io.micronaut.data.annotation.QueryResult} annotation is present,
+     * takes data type value from there, otherwise defaults to {@link JsonDataType#DEFAULT}.
+     *
+     * @param queryResultInfo the query result info from the {@link io.micronaut.data.annotation.QueryResult} annotation, null if annotation not present
+     * @return the JSON data type
+     */
+    protected JsonDataType getJsonDataType(QueryResultInfo queryResultInfo) {
+        if (queryResultInfo != null) {
+            return queryResultInfo.getJsonDataType();
+        }
+        return JsonDataType.DEFAULT;
     }
 
     /**
