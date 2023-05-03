@@ -4,12 +4,10 @@ import io.micronaut.data.annotation.Embeddable;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.jdbc.annotation.JoinColumn;
-import io.micronaut.serde.annotation.Serdeable;
 
 import java.time.LocalTime;
 
 @Embeddable
-@Serdeable
 public class StudentScheduleClassView {
 
     @Id
