@@ -46,10 +46,4 @@ public @interface JsonView {
      * @return the column name (default DATA)
      */
     String column() default DEFAULT_COLUMN_NAME;
-
-    /**
-     * The main table from which view is sourced from.
-     * @return the main table for the view, other tables can be joined via embedded mappings
-     */
-    String table();
 }

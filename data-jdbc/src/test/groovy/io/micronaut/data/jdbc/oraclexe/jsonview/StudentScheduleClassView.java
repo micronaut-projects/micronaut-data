@@ -2,14 +2,14 @@ package io.micronaut.data.jdbc.oraclexe.jsonview;
 
 import io.micronaut.data.annotation.Embeddable;
 import io.micronaut.data.annotation.Id;
-import io.micronaut.data.annotation.JsonView;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.jdbc.annotation.JoinColumn;
+import io.micronaut.serde.annotation.Serdeable;
 
 import java.time.LocalTime;
 
-@JsonView(table = "TBL_CLASS")
 @Embeddable
+@Serdeable
 public class StudentScheduleClassView {
 
     @Id

@@ -3,9 +3,10 @@ package io.micronaut.data.jdbc.oraclexe.jsonview;
 import io.micronaut.data.annotation.Embeddable;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.JsonView;
+import io.micronaut.serde.annotation.Serdeable;
 
-@JsonView(table = "TBL_TEACHER")
 @Embeddable
+@Serdeable
 public class TeacherView {
 
     @Id

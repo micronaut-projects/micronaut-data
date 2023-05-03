@@ -10,7 +10,7 @@ import io.micronaut.data.jdbc.annotation.JoinColumn;
 
 import java.util.List;
 
-@JsonView(table = "TBL_STUDENT")
+@JsonView
 @MappedEntity(value = "STUDENT_VIEW")
 public class StudentView {
     @Id

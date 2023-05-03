@@ -6,7 +6,7 @@ import io.micronaut.data.annotation.JsonView;
 import io.micronaut.data.annotation.MappedEntity;
 
 @MappedEntity(value = "CONTACT_VIEW", alias = "cv")
-@JsonView(table = "TBL_CONTACT")
+@JsonView
 public class ContactView {
     @Id
     private Long id;
