@@ -21,6 +21,10 @@ import java.util.Optional;
 interface ContactViewRepository extends CrudRepository<ContactView, Long> {
 
     Long updateContactView(@Id Long id, String name);
+
+    String findNameById(Long id);
+
+    int findMaxAge();
 }
 """)
 
@@ -32,53 +36,20 @@ interface ContactViewRepository extends CrudRepository<ContactView, Long> {
         def deleteQuery = getQuery(repository.getRequiredMethod("delete", ContactView))
         def deleteAllQuery = getQuery(repository.getRequiredMethod("deleteAll"))
         def deleteAllIterableQuery = getQuery(repository.getRequiredMethod("deleteAll", Iterable<ContactView>))
+        def findNameByIdQuery = getQuery(repository.getRequiredMethod("findNameById", Long))
+        def findMaxAgeQuery = getQuery(repository.getRequiredMethod("findMaxAge"))
 
         expect:
-        findByIdQuery == 'SELECT cv.* FROM CONTACT_VIEW cv WHERE (cv.DATA.id = ?)'
-        saveQuery == 'INSERT INTO CONTACT_VIEW VALUES (?)'
-        updateQuery == 'UPDATE CONTACT_VIEW cv SET cv.DATA=? WHERE (cv.DATA.id = ?)'
-        updateContactViewQuery == 'UPDATE CONTACT_VIEW cv SET cv.name=? WHERE (cv.DATA.id = ?)'
-        deleteByIdQuery == 'DELETE  FROM CONTACT_VIEW  cv WHERE (cv.DATA.id = ?)'
-        deleteQuery == 'DELETE  FROM CONTACT_VIEW  cv WHERE (cv.DATA.id = ?)'
-        deleteAllQuery == 'DELETE  FROM CONTACT_VIEW  cv'
-        deleteAllIterableQuery == 'DELETE  FROM CONTACT_VIEW  cv WHERE (cv.DATA.id IN (?))'
+        findByIdQuery == 'SELECT cv.* FROM "CONTACT_VIEW" cv WHERE (cv.DATA.id = ?)'
+        saveQuery == 'INSERT INTO "CONTACT_VIEW" VALUES (?)'
+        updateQuery == 'UPDATE "CONTACT_VIEW" cv SET cv.DATA=? WHERE (cv.DATA.id = ?)'
+        updateContactViewQuery == 'UPDATE "CONTACT_VIEW" cv SET cv.name=? WHERE (cv.DATA.id = ?)'
+        deleteByIdQuery == 'DELETE  FROM "CONTACT_VIEW"  cv WHERE (cv.DATA.id = ?)'
+        deleteQuery == 'DELETE  FROM "CONTACT_VIEW"  cv WHERE (cv.DATA.id = ?)'
+        deleteAllQuery == 'DELETE  FROM "CONTACT_VIEW"  cv'
+        deleteAllIterableQuery == 'DELETE  FROM "CONTACT_VIEW"  cv WHERE (cv.DATA.id IN (?))'
+        findNameByIdQuery == 'SELECT cv.DATA.name.stringOnly() FROM "CONTACT_VIEW" cv WHERE (cv.DATA.id = ?)'
+        findMaxAgeQuery == 'SELECT MAX(cv.DATA.age.numberOnly()) FROM "CONTACT_VIEW" cv'
     }
 
-    void "test JsonView repository not supported property projection"() {
-        when:
-        buildRepository('test.ContactViewRepository', """
-import io.micronaut.data.jdbc.annotation.JdbcRepository;
-import io.micronaut.data.model.query.builder.sql.Dialect;
-import io.micronaut.data.repository.GenericRepository;
-import io.micronaut.data.tck.entities.ContactView;
-@JdbcRepository(dialect = Dialect.ORACLE)
-interface ContactViewRepository extends GenericRepository<ContactView, Long> {
-
-    String findNameById(Long id);
-}
-""")
-
-        then:
-        def thrown = thrown(RuntimeException)
-        thrown.message.contains("Property name projection in entity ContactView not supported for JsonView and dialect ORACLE")
-    }
-
-    void "test JsonView repository not supported max function projection"() {
-        when:
-        buildRepository('test.ContactViewRepository', """
-import io.micronaut.data.jdbc.annotation.JdbcRepository;
-import io.micronaut.data.model.query.builder.sql.Dialect;
-import io.micronaut.data.repository.GenericRepository;
-import io.micronaut.data.tck.entities.ContactView;
-@JdbcRepository(dialect = Dialect.ORACLE)
-interface ContactViewRepository extends GenericRepository<ContactView, Long> {
-
-    int findMaxAgeByName(String name);
-}
-""")
-
-        then:
-        def thrown = thrown(RuntimeException)
-        thrown.message.contains("Function MAX projection for property age in entity ContactView not supported for JsonView and dialect ORACLE")
-    }
 }

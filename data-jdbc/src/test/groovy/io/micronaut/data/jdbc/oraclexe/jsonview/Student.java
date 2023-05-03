@@ -15,17 +15,21 @@ public class Student {
     @GeneratedValue(GeneratedValue.Type.IDENTITY)
     private Long id;
     private String name;
+
+    private Double averageGrade;
+
     @JoinTable(name = "TBL_STUDENT_CLASSES")
     @Relation(Relation.Kind.MANY_TO_MANY)
     private List<Class> classes;
 
-    public Student(String name) {
-        this(null, name, Collections.emptyList());
+    public Student(String name, Double averageGrade) {
+        this(null, name, averageGrade, Collections.emptyList());
     }
 
-    public Student(Long id, String name, List<Class> classes) {
+    public Student(Long id, String name, Double averageGrade, List<Class> classes) {
         this.id = id;
         this.name = name;
+        this.averageGrade = averageGrade;
         this.classes = classes;
     }
 
@@ -39,6 +43,14 @@ public class Student {
 
     public String getName() {
         return name;
+    }
+
+    public Double getAverageGrade() {
+        return averageGrade;
+    }
+
+    public void setAverageGrade(Double averageGrade) {
+        this.averageGrade = averageGrade;
     }
 
     public void setName(String name) {

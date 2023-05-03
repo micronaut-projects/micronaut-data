@@ -19,6 +19,8 @@ public class StudentView {
 
     private String name;
 
+    private Double averageGrade;
+
     @JoinColumn(name = "student_id", referencedColumnName = "id")
     @Relation(Relation.Kind.ONE_TO_MANY)
     private List<StudentScheduleView> schedule;
@@ -39,6 +41,14 @@ public class StudentView {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public Double getAverageGrade() {
+        return averageGrade;
+    }
+
+    public void setAverageGrade(Double averageGrade) {
+        this.averageGrade = averageGrade;
     }
 
     public List<StudentScheduleView> getSchedule() {

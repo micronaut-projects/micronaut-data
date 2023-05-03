@@ -74,9 +74,9 @@ class OracleXEJsonViewSpec extends Specification {
         Teacher teacherAnna = teacherRepository.save(new Teacher("Mrs. Anna"))
         Teacher teacherJeff = teacherRepository.save(new Teacher("Mr. Jeff"))
 
-        Student denis = studentRepository.save(new Student("Denis"))
-        Student josh = studentRepository.save(new Student("Josh"))
-        Student fred = studentRepository.save(new Student("Fred"))
+        Student denis = studentRepository.save(new Student("Denis", 8.5))
+        Student josh = studentRepository.save(new Student("Josh", 9.1))
+        Student fred = studentRepository.save(new Student("Fred", 7.6))
 
         Class math = classRepository.save(new Class("Math", "A101", LocalTime.of(10, 00), teacherAnna))
         Class english = classRepository.save(new Class("English", "A102", LocalTime.of(11, 00), teacherJeff))
@@ -97,8 +97,19 @@ class OracleXEJsonViewSpec extends Specification {
     def "find and update"() {
         when:
         def all = studentViewRepository.findAll()
+        def first = all[0]
         then:
         all.size() == 3
+
+        when:
+        def name = studentViewRepository.findNameById(first.id)
+        then:
+        name == first.name
+
+        when:
+        def maxAvgGrade = studentViewRepository.findMaxAverageGrade()
+        then:
+        maxAvgGrade > 9
 
         when:
         def allSorted = studentViewRepository.findAll(Sort.of(Sort.Order.asc("name")))

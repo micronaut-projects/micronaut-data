@@ -15,7 +15,6 @@ performed against json view mapped entities.
 
 Limitations
 
-* Currently projections are not supported for json views.
 * Updates against single fields need to be implemented using custom queries due to potential complex relations between relations in json view. Example:
 
 [source,java]

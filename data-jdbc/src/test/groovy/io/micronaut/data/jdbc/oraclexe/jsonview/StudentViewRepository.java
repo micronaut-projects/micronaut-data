@@ -19,4 +19,8 @@ public interface StudentViewRepository extends PageableRepository<StudentView, L
 
     @Query("UPDATE STUDENT_VIEW ss SET ss.DATA = json_transform(DATA, SET '$.name' = :newName) WHERE ss.DATA.name = :oldName")
     void updateName(String oldName, String newName);
+
+    Double findMaxAverageGrade();
+
+    String findNameById(Long id);
 }

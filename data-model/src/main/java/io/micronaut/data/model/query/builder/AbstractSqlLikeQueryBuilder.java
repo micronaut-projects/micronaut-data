@@ -642,7 +642,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
      * @return True if they should be escaped
      */
     protected boolean shouldEscape(@NonNull PersistentEntity entity) {
-        return entity.getAnnotationMetadata().booleanValue(MappedEntity.class, "escape").orElse(true) && !entity.isJsonView();
+        return entity.getAnnotationMetadata().booleanValue(MappedEntity.class, "escape").orElse(true);
     }
 
     /**
@@ -754,16 +754,35 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         NamingStrategy namingStrategy = propertyPath.getNamingStrategy();
         boolean[] needsTrimming = {false};
         PersistentEntity entity = propertyPath.getProperty().getOwner();
-        if (entity.isJsonView()) {
-            throw new IllegalArgumentException("Property " + propertyPath.getProperty().getName() + " projection in entity " + entity.getSimpleName()
-                + " not supported for JsonView and dialect " + getDialect());
+        boolean jsonView = entity.isJsonView();
+        String jsonViewColumn = null;
+        AnnotationValue<JsonView> jsonViewAnnotationValue = entity.getAnnotation(JsonView.class);
+        if (jsonViewAnnotationValue != null) {
+            jsonViewColumn = jsonViewAnnotationValue.getRequiredValue("column", String.class);
         }
+        String finalJsonViewColumn = jsonViewColumn;
         traversePersistentProperties(propertyPath.getAssociations(), propertyPath.getProperty(), (associations, property) -> {
-            String columnName = getMappedName(namingStrategy, associations, property);
-            if (escape) {
-                columnName = quote(columnName);
+            String columnName;
+            if (jsonView) {
+                columnName = property.getName();
+            } else {
+                columnName = getMappedName(namingStrategy, associations, property);
+                if (escape) {
+                    columnName = quote(columnName);
+                }
             }
-            sb.append(tableAlias).append(DOT).append(columnName);
+            sb.append(tableAlias).append(DOT);
+            if (finalJsonViewColumn != null) {
+                sb.append(finalJsonViewColumn).append(DOT);
+            }
+            sb.append(columnName);
+            if (jsonView) {
+                if (property.getDataType() == DataType.STRING) {
+                    sb.append(".stringOnly()");
+                } else if (property.getDataType().isNumeric()) {
+                    sb.append(".numberOnly()");
+                }
+            }
             String columnAlias = getColumnAlias(property);
             if (StringUtils.isNotEmpty(columnAlias)) {
                 sb.append(AS_CLAUSE).append(columnAlias);
@@ -887,12 +906,9 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         if (propertyPath == null) {
             throw new IllegalArgumentException("Cannot project on non-existent property: " + propertyProjection.getPropertyName());
         }
-        if (entity.isJsonView()) {
-            throw new IllegalArgumentException("Function " + functionName + " projection for property " + propertyPath.getProperty().getName() + " in entity " + entity.getSimpleName()
-                + " not supported for JsonView and dialect " + getDialect());
-        }
+        boolean jsonView = entity.isJsonView();
         String columnName;
-        if (computePropertyPaths()) {
+        if (computePropertyPaths() && !jsonView) {
             columnName = getMappedName(getNamingStrategy(entity), propertyPath.getAssociations(), propertyPath.getProperty());
             if (shouldEscape(entity)) {
                 columnName = quote(columnName);
@@ -900,12 +916,29 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         } else {
             columnName = propertyPath.getPath();
         }
+        String jsonViewColumn = null;
+        AnnotationValue<JsonView> jsonViewAnnotationValue = entity.getAnnotation(JsonView.class);
+        if (jsonViewAnnotationValue != null) {
+            jsonViewColumn = jsonViewAnnotationValue.getRequiredValue("column", String.class);
+        }
+
         queryString.append(functionName)
             .append(OPEN_BRACKET)
             .append(tableAlias)
-            .append(DOT)
-            .append(columnName)
-            .append(CLOSE_BRACKET);
+            .append(DOT);
+        if (jsonViewColumn != null) {
+            queryString.append(jsonViewColumn).append(DOT);
+        }
+        queryString.append(columnName);
+        if (jsonViewColumn != null) {
+            DataType dataType = propertyPath.getProperty().getDataType();
+            if (dataType.isNumeric()) {
+                queryString.append(".numberOnly()");
+            } else if (dataType == DataType.STRING) {
+                queryString.append(".stringOnly()");
+            }
+        }
+        queryString.append(CLOSE_BRACKET);
     }
 
     /**
@@ -1395,9 +1428,14 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                         if (tableAlias != null) {
                             queryString.append(tableAlias).append(DOT);
                         }
-                        String columnName = getMappedName(namingStrategy, associations, property);
-                        if (queryState.escape) {
-                            columnName = quote(columnName);
+                        String columnName;
+                        if (entity.isJsonView()) {
+                            columnName = property.getName();
+                        } else {
+                            columnName = getMappedName(namingStrategy, associations, property);
+                            if (queryState.escape) {
+                                columnName = quote(columnName);
+                            }
                         }
                         queryString.append(columnName).append('=');
                         appendUpdateSetParameter(queryString, tableAlias, property, () -> {
