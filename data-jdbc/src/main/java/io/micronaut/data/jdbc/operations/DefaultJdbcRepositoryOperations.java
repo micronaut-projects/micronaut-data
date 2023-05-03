@@ -90,8 +90,6 @@ import io.micronaut.transaction.TransactionOperations;
 import io.micronaut.transaction.jdbc.DataSourceUtils;
 import io.micronaut.transaction.jdbc.DelegatingDataSource;
 import jakarta.inject.Named;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import jakarta.annotation.PreDestroy;
 import javax.sql.DataSource;
@@ -141,7 +139,6 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         ReactiveCapableRepository,
         AutoCloseable,
         SyncCascadeOperations.SyncCascadeOperationsHelper<DefaultJdbcRepositoryOperations.JdbcOperationContext> {
-    private static final Logger LOG = LoggerFactory.getLogger(DefaultJdbcRepositoryOperations.class);
     private final TransactionOperations<Connection> transactionOperations;
     private final DataSource dataSource;
     private final DataSource unwrapedDataSource;
@@ -1130,6 +1127,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                 Dialect dialect = storedQuery.getDialect();
                 if (hasGeneratedId && (dialect == Dialect.ORACLE || dialect == Dialect.SQL_SERVER)) {
                     if (persistentEntity.isJsonView()) {
+                        // This is being closed in try with resources from where it is being called
+                        @SuppressWarnings({"java:S2095"})
                         CallableStatement cstmt = connection.prepareCall(this.storedQuery.getQuery());
                         cstmt.registerOutParameter(2, Types.NUMERIC);
                         return cstmt;
@@ -1214,6 +1213,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                 Dialect dialect = storedQuery.getDialect();
                 if (hasGeneratedId && (dialect == Dialect.ORACLE || dialect == Dialect.SQL_SERVER)) {
                     if (persistentEntity.isJsonView()) {
+                        // This is being closed in try with resources from where it is being called
+                        @SuppressWarnings({"java:S2095"})
                         CallableStatement cstmt = connection.prepareCall(this.storedQuery.getQuery());
                         cstmt.registerOutParameter(2, Types.NUMERIC);
                         return cstmt;

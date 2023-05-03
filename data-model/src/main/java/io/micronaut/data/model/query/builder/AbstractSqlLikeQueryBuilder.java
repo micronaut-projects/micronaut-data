@@ -777,11 +777,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             }
             sb.append(columnName);
             if (jsonView) {
-                if (property.getDataType() == DataType.STRING) {
-                    sb.append(".stringOnly()");
-                } else if (property.getDataType().isNumeric()) {
-                    sb.append(".numberOnly()");
-                }
+                appendJsonProjection(sb, property.getDataType());
             }
             String columnAlias = getColumnAlias(property);
             if (StringUtils.isNotEmpty(columnAlias)) {
@@ -932,13 +928,25 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         queryString.append(columnName);
         if (jsonViewColumn != null) {
             DataType dataType = propertyPath.getProperty().getDataType();
-            if (dataType.isNumeric()) {
-                queryString.append(".numberOnly()");
-            } else if (dataType == DataType.STRING) {
-                queryString.append(".stringOnly()");
-            }
+            appendJsonProjection(queryString, dataType);
         }
         queryString.append(CLOSE_BRACKET);
+    }
+
+    /**
+     * Appends value projection for JSON View field.
+     *
+     * @param sb the string builder
+     * @param dataType the property data type
+     */
+    private void appendJsonProjection(StringBuilder sb, DataType dataType) {
+        if (dataType == DataType.STRING) {
+            sb.append(".stringOnly()");
+        } else if (dataType == DataType.BOOLEAN) {
+            sb.append(".booleanOnly()");
+        } else if (dataType.isNumeric()) {
+            sb.append(".numberOnly()");
+        }
     }
 
     /**
