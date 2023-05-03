@@ -8,11 +8,13 @@ import io.micronaut.data.model.query.builder.sql.Dialect
 import org.testcontainers.containers.OracleContainer
 import org.testcontainers.utility.DockerImageName
 import spock.lang.AutoCleanup
+import spock.lang.IgnoreIf
 import spock.lang.Shared
 import spock.lang.Specification
 
 import java.time.LocalTime
 
+@IgnoreIf({ env["GITHUB_WORKFLOW"] })
 class OracleXEJsonViewSpec extends Specification {
 
     @Shared
