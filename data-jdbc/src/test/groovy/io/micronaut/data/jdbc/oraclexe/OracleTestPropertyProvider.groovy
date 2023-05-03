@@ -27,6 +27,6 @@ trait OracleTestPropertyProvider implements SharedTestResourcesDatabaseTestPrope
 
     @Override
     int sharedSpecsCount() {
-        return 5
+        return 6
     }
 }
