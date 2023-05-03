@@ -29,7 +29,6 @@ import io.micronaut.inject.visitor.VisitorContext;
 import java.lang.annotation.Annotation;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * Maps JPA's {@code Table} annotation to {@link MappedEntity}.
