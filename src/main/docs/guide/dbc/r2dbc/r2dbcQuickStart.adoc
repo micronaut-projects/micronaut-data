@@ -57,7 +57,8 @@ Now define a SQL script that creates your initial schema in `src/main/resources/
 .Example `V1__create-schema.sql`
 [source,sql]
 ----
-include::doc-examples/r2dbc-example-java/src/main/resources/db/migration/V1__create-schema.sql[]
+CREATE TABLE book(id SERIAL NOT NULL PRIMARY KEY, title VARCHAR(255), pages INT, author_id BIGINT NOT NULL);
+CREATE TABLE author(id SERIAL NOT NULL PRIMARY KEY, name VARCHAR(255));
 ----
 
 You can now configure your application to connect to the database using the application configuration file under `src/main/resources`:
