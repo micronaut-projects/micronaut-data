@@ -942,11 +942,14 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
      */
     private void appendJsonProjection(StringBuilder sb, DataType dataType) {
         if (dataType == DataType.STRING) {
-            sb.append(".stringOnly()");
-        } else if (dataType == DataType.BOOLEAN) {
-            sb.append(".booleanOnly()");
-        } else if (dataType.isNumeric()) {
-            sb.append(".numberOnly()");
+            sb.append(".string()");
+        } else if (dataType.isNumeric() || dataType == DataType.BOOLEAN) {
+            // Boolean is represented as number in Oracle (which only supports json view)
+            sb.append(".number()");
+        } else if (dataType == DataType.TIMESTAMP) {
+            sb.append(".timestamp()");
+        } else if (dataType == DataType.DATE) {
+            sb.append(".date()");
         }
     }
 

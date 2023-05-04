@@ -7,6 +7,7 @@ import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.repository.PageableRepository;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 @JdbcRepository(dialect = Dialect.ORACLE)
@@ -23,4 +24,8 @@ public interface StudentViewRepository extends PageableRepository<StudentView, L
     Double findMaxAverageGrade();
 
     String findNameById(Long id);
+
+    Optional<LocalDateTime> findStartDateTimeById(Long id);
+
+    boolean findActiveById(Long id);
 }

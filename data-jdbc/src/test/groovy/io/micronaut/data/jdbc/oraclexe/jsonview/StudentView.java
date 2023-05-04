@@ -7,6 +7,7 @@ import io.micronaut.data.annotation.JsonView;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.Relation;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @JsonView
@@ -19,6 +20,10 @@ public class StudentView {
     private String name;
 
     private Double averageGrade;
+
+    private LocalDateTime startDateTime;
+
+    private boolean active;
 
     @Relation(Relation.Kind.ONE_TO_MANY)
     private List<StudentScheduleView> schedule;
@@ -47,6 +52,22 @@ public class StudentView {
 
     public void setAverageGrade(Double averageGrade) {
         this.averageGrade = averageGrade;
+    }
+
+    public LocalDateTime getStartDateTime() {
+        return startDateTime;
+    }
+
+    public void setStartDateTime(LocalDateTime startDateTime) {
+        this.startDateTime = startDateTime;
+    }
+
+    public boolean isActive() {
+        return active;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
     }
 
     public List<StudentScheduleView> getSchedule() {

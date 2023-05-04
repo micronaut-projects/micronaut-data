@@ -6,6 +6,7 @@ import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.jdbc.annotation.JoinTable;
 
+import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 
@@ -15,21 +16,26 @@ public class Student {
     @GeneratedValue(GeneratedValue.Type.IDENTITY)
     private Long id;
     private String name;
-
     private Double averageGrade;
+
+    private LocalDateTime startDateTime;
+
+    private boolean active;
 
     @JoinTable(name = "TBL_STUDENT_CLASSES")
     @Relation(Relation.Kind.MANY_TO_MANY)
     private List<Class> classes;
 
-    public Student(String name, Double averageGrade) {
-        this(null, name, averageGrade, Collections.emptyList());
+    public Student(String name, Double averageGrade, LocalDateTime startDateTime) {
+        this(null, name, averageGrade, startDateTime, true, Collections.emptyList());
     }
 
-    public Student(Long id, String name, Double averageGrade, List<Class> classes) {
+    public Student(Long id, String name, Double averageGrade, LocalDateTime startDateTime, boolean active, List<Class> classes) {
         this.id = id;
         this.name = name;
         this.averageGrade = averageGrade;
+        this.startDateTime = startDateTime;
+        this.active = active;
         this.classes = classes;
     }
 
@@ -51,6 +57,22 @@ public class Student {
 
     public void setAverageGrade(Double averageGrade) {
         this.averageGrade = averageGrade;
+    }
+
+    public LocalDateTime getStartDateTime() {
+        return startDateTime;
+    }
+
+    public void setStartDateTime(LocalDateTime startDateTime) {
+        this.startDateTime = startDateTime;
+    }
+
+    public boolean isActive() {
+        return active;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
     }
 
     public void setName(String name) {

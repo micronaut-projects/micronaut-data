@@ -12,6 +12,7 @@ import spock.lang.IgnoreIf
 import spock.lang.Shared
 import spock.lang.Specification
 
+import java.time.LocalDateTime
 import java.time.LocalTime
 
 @IgnoreIf({ env["GITHUB_WORKFLOW"] })
@@ -74,9 +75,10 @@ class OracleXEJsonViewSpec extends Specification {
         Teacher teacherAnna = teacherRepository.save(new Teacher("Mrs. Anna"))
         Teacher teacherJeff = teacherRepository.save(new Teacher("Mr. Jeff"))
 
-        Student denis = studentRepository.save(new Student("Denis", 8.5))
-        Student josh = studentRepository.save(new Student("Josh", 9.1))
-        Student fred = studentRepository.save(new Student("Fred", 7.6))
+        def startDateTime = LocalDateTime.now()
+        Student denis = studentRepository.save(new Student("Denis", 8.5, startDateTime.minusDays(1)))
+        Student josh = studentRepository.save(new Student("Josh", 9.1, startDateTime))
+        Student fred = studentRepository.save(new Student("Fred", 7.6, startDateTime.plusDays(2)))
 
         Class math = classRepository.save(new Class("Math", "A101", LocalTime.of(10, 00), teacherAnna))
         Class english = classRepository.save(new Class("English", "A102", LocalTime.of(11, 00), teacherJeff))
@@ -107,9 +109,20 @@ class OracleXEJsonViewSpec extends Specification {
         name == first.name
 
         when:
+        def active = studentViewRepository.findActiveById(first.id)
+        then:
+        active
+
+        when:
         def maxAvgGrade = studentViewRepository.findMaxAverageGrade()
         then:
         maxAvgGrade > 9
+
+        when:
+        def optStartDateTime = studentViewRepository.findStartDateTimeById(first.id)
+        then:
+        optStartDateTime.present
+        optStartDateTime.get().isAfter(LocalDateTime.now().minusMonths(1))
 
         when:
         def allSorted = studentViewRepository.findAll(Sort.of(Sort.Order.asc("name")))

@@ -13,6 +13,7 @@ import spock.lang.Shared
 import spock.lang.Specification
 
 import java.time.Duration
+import java.time.LocalDateTime
 
 @IgnoreIf({ env["GITHUB_WORKFLOW"] })
 class OracleXEJsonViewSpec extends Specification {
@@ -63,6 +64,7 @@ class OracleXEJsonViewSpec extends Specification {
         contact.id = id
         contact.name = "Contact" + id
         contact.age = 25
+        contact.startDateTime = LocalDateTime.now().minusMonths(10)
         contactRepository.save(contact)
         def optContactView = contactViewRepository.findById(id)
         then:
