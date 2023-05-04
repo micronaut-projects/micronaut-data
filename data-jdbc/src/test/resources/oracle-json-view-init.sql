@@ -24,7 +24,7 @@ ALTER TABLE "TBL_STUDENT"
 CREATE OR REPLACE JSON RELATIONAL DUALITY VIEW STUDENT_VIEW AS
 SELECT JSON{'id': TBL_STUDENT.id,
             'name': TBL_STUDENT.name WITH UPDATE,
-            'averageGrade': TBL_STUDENT.AVERAGE_GRADE,
+            'averageGrade': TBL_STUDENT.AVERAGE_GRADE WITH UPDATE,
             'startDateTime': TBL_STUDENT.START_DATE_TIME,
             'active': TBL_STUDENT.ACTIVE,
             'address': (SELECT JSON{'addressID': TBL_ADDRESS.id,

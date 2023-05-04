@@ -24,6 +24,8 @@ public interface StudentViewRepository extends PageableRepository<StudentView, L
 
     void updateName(@Id Long id, String name);
 
+    void updateAverageGradeAndName(@Id Long id, Double averageGrade, String name);
+
     Double findMaxAverageGrade();
 
     String findNameById(Long id);

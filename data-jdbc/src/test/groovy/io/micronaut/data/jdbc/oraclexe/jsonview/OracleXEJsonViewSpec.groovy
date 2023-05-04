@@ -221,11 +221,12 @@ class OracleXEJsonViewSpec extends Specification {
 
         when:"Test updating using query builder"
         newStudentName = "New Josh - Update"
-        studentViewRepository.updateName(optJoshStudentView.get().id, newStudentName)
+        studentViewRepository.updateAverageGradeAndName(optJoshStudentView.get().id, 6.2, newStudentName)
         def optStudentView = studentViewRepository.findById(optJoshStudentView.get().id)
         then:
         optStudentView.present
         optStudentView.get().name == newStudentName
+        optStudentView.get().averageGrade == 6.2
 
         when:"Try to trigger optimistic lock exception with invalid ETAG"
         def newJoshStudentView = studentViewRepository.findByName(newStudentName).get()
