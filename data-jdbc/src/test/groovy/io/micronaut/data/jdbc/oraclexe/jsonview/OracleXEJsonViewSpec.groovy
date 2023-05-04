@@ -8,8 +8,6 @@ import io.micronaut.data.model.query.builder.sql.Dialect
 import org.testcontainers.containers.OracleContainer
 import org.testcontainers.utility.DockerImageName
 import spock.lang.AutoCleanup
-import spock.lang.IgnoreIf
-import spock.lang.Shared
 import spock.lang.Specification
 
 import java.time.LocalDateTime
@@ -18,12 +16,10 @@ import java.time.LocalTime
 //@IgnoreIf({ env["GITHUB_WORKFLOW"] })
 class OracleXEJsonViewSpec extends Specification {
 
-    @Shared
     @AutoCleanup("stop")
     OracleContainer container = createContainer()
 
     @AutoCleanup
-    @Shared
     ApplicationContext context = ApplicationContext.run(getProperties())
 
     StudentClassRepository getStudentClassRepository() {
@@ -56,10 +52,7 @@ class OracleXEJsonViewSpec extends Specification {
         }
         container.start()
         def prefix = 'datasources.default'
-        def dbType = 'oracle'
         return [
-                'micronaut.test.resources.scope': dbType,
-                (prefix + '.db-type')           : dbType,
                 (prefix + '.url')               : container.getJdbcUrl(),
                 (prefix + '.username')          : container.getUsername(),
                 (prefix + '.password')          : container.getPassword(),

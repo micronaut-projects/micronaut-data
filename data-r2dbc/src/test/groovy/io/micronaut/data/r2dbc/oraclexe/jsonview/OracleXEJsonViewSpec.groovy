@@ -8,22 +8,18 @@ import io.micronaut.data.tck.entities.ContactView
 import org.testcontainers.containers.OracleContainer
 import org.testcontainers.utility.DockerImageName
 import spock.lang.AutoCleanup
-import spock.lang.IgnoreIf
-import spock.lang.Shared
 import spock.lang.Specification
 
 import java.time.Duration
 import java.time.LocalDateTime
 
-@IgnoreIf({ env["GITHUB_WORKFLOW"] })
+//@IgnoreIf({ env["GITHUB_WORKFLOW"] })
 class OracleXEJsonViewSpec extends Specification {
 
-    @Shared
     @AutoCleanup("stop")
     OracleContainer container = createContainer()
 
     @AutoCleanup
-    @Shared
     ApplicationContext context = ApplicationContext.run(getProperties())
 
     OracleXEContactRepository getContactRepository() {
@@ -42,8 +38,6 @@ class OracleXEJsonViewSpec extends Specification {
         def prefix = 'r2dbc.datasources.default'
         def dbType = 'oracle'
         return [
-                'micronaut.test.resources.scope': dbType,
-                (prefix + '.db-type')           : dbType,
                 (prefix + '.url')               : "r2dbc:${dbType}://${container.getHost()}:${container.getFirstMappedPort()}/test",
                 (prefix + '.username')          : container.getUsername(),
                 (prefix + '.password')          : container.getPassword(),
