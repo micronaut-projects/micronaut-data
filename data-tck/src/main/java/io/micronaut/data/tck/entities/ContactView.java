@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.JsonView;
 import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.Relation;
 
 import java.time.LocalDateTime;
 
@@ -16,6 +17,9 @@ public class ContactView {
     private int age;
     private LocalDateTime startDateTime;
     private boolean active;
+
+    @Relation(Relation.Kind.EMBEDDED)
+    private Address address;
     @JsonProperty("_metadata")
     private Metadata metadata;
 
@@ -40,6 +44,14 @@ public class ContactView {
 
     public void setActive(boolean active) {
         this.active = active;
+    }
+
+    public Address getAddress() {
+        return address;
+    }
+
+    public void setAddress(Address address) {
+        this.address = address;
     }
 
     public Metadata getMetadata() {

@@ -27,6 +27,10 @@ public class StudentView {
 
     @Relation(Relation.Kind.ONE_TO_MANY)
     private List<StudentScheduleView> schedule;
+
+    @Relation(Relation.Kind.EMBEDDED)
+    private AddressView address;
+
     @JsonProperty("_metadata")
     private Metadata metadata;
 
@@ -76,6 +80,14 @@ public class StudentView {
 
     public void setSchedule(List<StudentScheduleView> schedule) {
         this.schedule = schedule;
+    }
+
+    public AddressView getAddress() {
+        return address;
+    }
+
+    public void setAddress(AddressView address) {
+        this.address = address;
     }
 
     public Metadata getMetadata() {

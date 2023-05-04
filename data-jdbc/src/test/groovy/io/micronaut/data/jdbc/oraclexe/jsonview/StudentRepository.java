@@ -11,5 +11,6 @@ import java.util.Optional;
 public interface StudentRepository extends PageableRepository<Student, Long> {
 
     @Join("classes")
+    @Join("address")
     Optional<Student> findByName(String name);
 }

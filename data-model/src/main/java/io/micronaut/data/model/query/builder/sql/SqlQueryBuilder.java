@@ -796,7 +796,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                     // so we need to retrieve it
                     traversePersistentProperties(associatedEntity, includeIdentity, true, (propertyAssociations, prop) -> {
                         String columnName;
-                        if (computePropertyPaths()) {
+                        if (computePropertyPaths() && !queryState.getEntity().isJsonView()) {
                             columnName = getMappedName(namingStrategy, propertyAssociations, prop);
                         } else {
                             columnName = asPath(propertyAssociations, prop);

@@ -22,6 +22,12 @@ import java.util.Optional;
 @QueryResult(type = QueryResult.Type.JSON)
 interface ContactViewRepository extends CrudRepository<ContactView, Long> {
 
+    Iterable<ContactView> findAllOrderByAddressZipCodeDesc();
+
+    String findAddressStreetById(Long id);
+
+    Optional<ContactView> findByAddressStreet(String street);
+
     Optional<LocalDateTime> findStartDateTimeById(Long id);
 
     Long updateContactView(@Id Long id, String name);
@@ -33,6 +39,7 @@ interface ContactViewRepository extends CrudRepository<ContactView, Long> {
     boolean findActiveByName(String name);
 
     List<ContactView> findAllOrderByStartDateTime();
+
 }
 """)
 
@@ -49,6 +56,9 @@ interface ContactViewRepository extends CrudRepository<ContactView, Long> {
         def findMaxAgeQuery = getQuery(repository.getRequiredMethod("findMaxAge"))
         def findActiveByNameQuery = getQuery(repository.getRequiredMethod("findActiveByName", String))
         def findAllOrderByStartDateTimeQuery = getQuery(repository.getRequiredMethod("findAllOrderByStartDateTime"))
+        def findByAddressStreetQuery = getQuery(repository.getRequiredMethod("findByAddressStreet", String))
+        def findAddressStreetByIdQuery = getQuery(repository.getRequiredMethod("findAddressStreetById", Long))
+        def findAllOrderByAddressZipCodeDescQuery = getQuery(repository.getRequiredMethod("findAllOrderByAddressZipCodeDesc"))
 
         expect:
         findStartDateTimeByIdQuery == 'SELECT cv.DATA.startDateTime.timestamp() FROM "CONTACT_VIEW" cv WHERE (cv.DATA.id = ?)'
@@ -64,6 +74,9 @@ interface ContactViewRepository extends CrudRepository<ContactView, Long> {
         findMaxAgeQuery == 'SELECT MAX(cv.DATA.age.number()) FROM "CONTACT_VIEW" cv'
         findActiveByNameQuery == 'SELECT cv.DATA.active.number() FROM "CONTACT_VIEW" cv WHERE (cv.DATA.name = ?)'
         findAllOrderByStartDateTimeQuery == 'SELECT cv.* FROM "CONTACT_VIEW" cv ORDER BY cv.DATA.startDateTime ASC'
+        findByAddressStreetQuery == 'SELECT cv.* FROM "CONTACT_VIEW" cv WHERE (cv.DATA.address.street = ?)'
+        findAddressStreetByIdQuery == 'SELECT cv.DATA.address.street.string() FROM "CONTACT_VIEW" cv WHERE (cv.DATA.id = ?)'
+        findAllOrderByAddressZipCodeDescQuery == 'SELECT cv.* FROM "CONTACT_VIEW" cv ORDER BY cv.DATA.address.zipCode DESC'
     }
 
 }

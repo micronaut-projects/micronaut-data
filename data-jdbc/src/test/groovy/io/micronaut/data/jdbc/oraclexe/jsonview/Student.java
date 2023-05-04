@@ -5,6 +5,7 @@ import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.jdbc.annotation.JoinTable;
+import org.testcontainers.shaded.com.github.dockerjava.core.dockerfile.DockerfileStatement;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
@@ -26,16 +27,20 @@ public class Student {
     @Relation(Relation.Kind.MANY_TO_MANY)
     private List<Class> classes;
 
-    public Student(String name, Double averageGrade, LocalDateTime startDateTime) {
-        this(null, name, averageGrade, startDateTime, true, Collections.emptyList());
+    @Relation(Relation.Kind.MANY_TO_ONE)
+    private Address address;
+
+    public Student(String name, Double averageGrade, LocalDateTime startDateTime, Address address) {
+        this(null, name, averageGrade, startDateTime, true, address, Collections.emptyList());
     }
 
-    public Student(Long id, String name, Double averageGrade, LocalDateTime startDateTime, boolean active, List<Class> classes) {
+    public Student(Long id, String name, Double averageGrade, LocalDateTime startDateTime, boolean active, Address address, List<Class> classes) {
         this.id = id;
         this.name = name;
         this.averageGrade = averageGrade;
         this.startDateTime = startDateTime;
         this.active = active;
+        this.address = address;
         this.classes = classes;
     }
 
@@ -85,5 +90,13 @@ public class Student {
 
     public void setClasses(List<Class> classes) {
         this.classes = classes;
+    }
+
+    public Address getAddress() {
+        return address;
+    }
+
+    public void setAddress(Address address) {
+        this.address = address;
     }
 }

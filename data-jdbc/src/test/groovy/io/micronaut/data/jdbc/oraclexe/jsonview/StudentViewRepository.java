@@ -28,4 +28,6 @@ public interface StudentViewRepository extends PageableRepository<StudentView, L
     Optional<LocalDateTime> findStartDateTimeById(Long id);
 
     boolean findActiveById(Long id);
+
+    String findAddressStreetById(Long id);
 }

@@ -38,6 +38,10 @@ class OracleXEJsonViewSpec extends Specification {
         return context.getBean(TeacherRepository)
     }
 
+    AddressRepository getAddressRepository() {
+        return context.getBean(AddressRepository)
+    }
+
     StudentRepository getStudentRepository() {
         return context.getBean(StudentRepository)
     }
@@ -75,10 +79,13 @@ class OracleXEJsonViewSpec extends Specification {
         Teacher teacherAnna = teacherRepository.save(new Teacher("Mrs. Anna"))
         Teacher teacherJeff = teacherRepository.save(new Teacher("Mr. Jeff"))
 
+        Address address1 = addressRepository.save(new Address("Main Street", "City1"))
+        Address address2 = addressRepository.save(new Address("New Street", "City1"))
+
         def startDateTime = LocalDateTime.now()
-        Student denis = studentRepository.save(new Student("Denis", 8.5, startDateTime.minusDays(1)))
-        Student josh = studentRepository.save(new Student("Josh", 9.1, startDateTime))
-        Student fred = studentRepository.save(new Student("Fred", 7.6, startDateTime.plusDays(2)))
+        Student denis = studentRepository.save(new Student("Denis", 8.5, startDateTime.minusDays(1), address1))
+        Student josh = studentRepository.save(new Student("Josh", 9.1, startDateTime, address1))
+        Student fred = studentRepository.save(new Student("Fred", 7.6, startDateTime.plusDays(2), address2))
 
         Class math = classRepository.save(new Class("Math", "A101", LocalTime.of(10, 00), teacherAnna))
         Class english = classRepository.save(new Class("English", "A102", LocalTime.of(11, 00), teacherJeff))
@@ -123,6 +130,11 @@ class OracleXEJsonViewSpec extends Specification {
         then:
         optStartDateTime.present
         optStartDateTime.get().isAfter(LocalDateTime.now().minusMonths(1))
+
+        when:
+        def street = studentViewRepository.findAddressStreetById(first.id)
+        then:
+        street == first.address.street
 
         when:
         def allSorted = studentViewRepository.findAll(Sort.of(Sort.Order.asc("name")))
@@ -244,8 +256,13 @@ class OracleXEJsonViewSpec extends Specification {
         studentScheduleClassView.setRoom(classMath.getRoom())
         studentScheduleClassView.setTeacher(teacherView)
 
+        def address = addressRepository.save(new Address("My Street", "My City"))
+        def addressView = AddressView.fromAddress(address)
+
         newStudentScheduleView.setClazz(studentScheduleClassView)
+        ivoneStudentView.setAddress(addressView)
         ivoneStudentView.setSchedule(List.of(newStudentScheduleView))
+        peterStudentView.setAddress(addressView)
         peterStudentView.setSchedule(List.of(newStudentScheduleView))
         studentViewRepository.save(ivoneStudentView)
         studentViewRepository.saveAll(Arrays.asList(peterStudentView))
