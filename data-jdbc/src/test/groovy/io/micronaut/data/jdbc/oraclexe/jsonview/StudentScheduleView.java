@@ -3,7 +3,6 @@ package io.micronaut.data.jdbc.oraclexe.jsonview;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Relation;
-import io.micronaut.data.jdbc.annotation.JoinColumn;
 import io.micronaut.serde.annotation.Serdeable;
 
 @Serdeable
@@ -13,7 +12,6 @@ public class StudentScheduleView {
 
     @JsonProperty("class")
     @Relation(Relation.Kind.ONE_TO_ONE)
-    @JoinColumn(referencedColumnName = "class_id", name = "id")
     private StudentScheduleClassView clazz;
 
     public Long getId() {

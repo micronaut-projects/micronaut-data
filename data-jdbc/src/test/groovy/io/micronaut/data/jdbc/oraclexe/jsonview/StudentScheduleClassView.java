@@ -3,7 +3,6 @@ package io.micronaut.data.jdbc.oraclexe.jsonview;
 import io.micronaut.data.annotation.Embeddable;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Relation;
-import io.micronaut.data.jdbc.annotation.JoinColumn;
 
 import java.time.LocalTime;
 
@@ -15,7 +14,6 @@ public class StudentScheduleClassView {
 
     private String name;
 
-    @JoinColumn(name = "id", referencedColumnName = "teacher_id")
     @Relation(Relation.Kind.ONE_TO_ONE)
     private TeacherView teacher;
 
