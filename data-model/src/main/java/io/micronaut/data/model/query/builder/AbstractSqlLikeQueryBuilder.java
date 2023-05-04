@@ -1166,7 +1166,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                 if (jsonViewColumnName != null) {
                     buff.append(jsonViewColumnName).append(DOT);
                 }
-                if (computePropertyPaths()) {
+                if (computePropertyPaths() && jsonViewColumnName == null) {
                     buff.append(propertyPath.getColumnName()).append(SPACE).append(order.getDirection().toString());
                 } else {
                     buff.append(propertyPath.getPath()).append(SPACE).append(order.getDirection().toString());

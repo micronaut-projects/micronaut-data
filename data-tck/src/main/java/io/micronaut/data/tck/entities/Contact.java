@@ -1,7 +1,6 @@
 package io.micronaut.data.tck.entities;
 
 import io.micronaut.data.annotation.Id;
-import io.micronaut.data.annotation.JsonView;
 import io.micronaut.data.annotation.MappedEntity;
 
 import java.time.LocalDateTime;

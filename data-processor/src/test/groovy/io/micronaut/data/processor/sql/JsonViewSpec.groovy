@@ -31,6 +31,8 @@ interface ContactViewRepository extends CrudRepository<ContactView, Long> {
     int findMaxAge();
 
     boolean findActiveByName(String name);
+
+    List<ContactView> findAllOrderByStartDateTime();
 }
 """)
 
@@ -46,6 +48,7 @@ interface ContactViewRepository extends CrudRepository<ContactView, Long> {
         def findNameByIdQuery = getQuery(repository.getRequiredMethod("findNameById", Long))
         def findMaxAgeQuery = getQuery(repository.getRequiredMethod("findMaxAge"))
         def findActiveByNameQuery = getQuery(repository.getRequiredMethod("findActiveByName", String))
+        def findAllOrderByStartDateTimeQuery = getQuery(repository.getRequiredMethod("findAllOrderByStartDateTime"))
 
         expect:
         findStartDateTimeByIdQuery == 'SELECT cv.DATA.startDateTime.timestamp() FROM "CONTACT_VIEW" cv WHERE (cv.DATA.id = ?)'
@@ -60,6 +63,7 @@ interface ContactViewRepository extends CrudRepository<ContactView, Long> {
         findNameByIdQuery == 'SELECT cv.DATA.name.string() FROM "CONTACT_VIEW" cv WHERE (cv.DATA.id = ?)'
         findMaxAgeQuery == 'SELECT MAX(cv.DATA.age.number()) FROM "CONTACT_VIEW" cv'
         findActiveByNameQuery == 'SELECT cv.DATA.active.number() FROM "CONTACT_VIEW" cv WHERE (cv.DATA.name = ?)'
+        findAllOrderByStartDateTimeQuery == 'SELECT cv.* FROM "CONTACT_VIEW" cv ORDER BY cv.DATA.startDateTime ASC'
     }
 
 }
