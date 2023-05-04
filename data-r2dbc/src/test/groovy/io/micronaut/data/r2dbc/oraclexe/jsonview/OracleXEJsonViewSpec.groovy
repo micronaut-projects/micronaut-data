@@ -8,6 +8,7 @@ import io.micronaut.data.tck.entities.ContactView
 import org.testcontainers.containers.OracleContainer
 import org.testcontainers.utility.DockerImageName
 import spock.lang.AutoCleanup
+import spock.lang.Shared
 import spock.lang.Specification
 
 import java.time.Duration
@@ -17,9 +18,11 @@ import java.time.LocalDateTime
 class OracleXEJsonViewSpec extends Specification {
 
     @AutoCleanup("stop")
+    @Shared
     OracleContainer container = createContainer()
 
     @AutoCleanup
+    @Shared
     ApplicationContext context = ApplicationContext.run(getProperties())
 
     OracleXEContactRepository getContactRepository() {
