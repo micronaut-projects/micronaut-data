@@ -118,6 +118,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
     protected static final String NOT_EQUALS = " != ";
     protected static final String ALIAS_REPLACE = "@.";
     protected static final String ALIAS_REPLACE_QUOTED = "@\\.";
+    protected static final String JSON_COLUMN = "column";
     protected final Map<Class, CriterionHandler> queryHandlers = new HashMap<>(30);
 
     {
@@ -758,7 +759,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         String jsonViewColumn = null;
         AnnotationValue<JsonView> jsonViewAnnotationValue = entity.getAnnotation(JsonView.class);
         if (jsonViewAnnotationValue != null) {
-            jsonViewColumn = jsonViewAnnotationValue.getRequiredValue("column", String.class);
+            jsonViewColumn = jsonViewAnnotationValue.getRequiredValue(JSON_COLUMN, String.class);
         }
         String finalJsonViewColumn = jsonViewColumn;
         traversePersistentProperties(propertyPath.getAssociations(), propertyPath.getProperty(), (associations, property) -> {
@@ -915,7 +916,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         String jsonViewColumn = null;
         AnnotationValue<JsonView> jsonViewAnnotationValue = entity.getAnnotation(JsonView.class);
         if (jsonViewAnnotationValue != null) {
-            jsonViewColumn = jsonViewAnnotationValue.getRequiredValue("column", String.class);
+            jsonViewColumn = jsonViewAnnotationValue.getRequiredValue(JSON_COLUMN, String.class);
         }
 
         queryString.append(functionName)
@@ -1149,7 +1150,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             AnnotationValue<JsonView> jsonViewAnnotationValue = queryState.getEntity().getAnnotationMetadata().getAnnotation(JsonView.class);
             String jsonViewColumnName = null;
             if (jsonViewAnnotationValue != null) {
-                jsonViewColumnName = jsonViewAnnotationValue.getRequiredValue("column", String.class);
+                jsonViewColumnName = jsonViewAnnotationValue.getRequiredValue(JSON_COLUMN, String.class);
             }
 
             while (i.hasNext()) {
@@ -1244,7 +1245,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                 }
                 if (jsonViewAnnotationValue != null) {
                     checkDialectSupportsJsonView(entity);
-                    String columnName = jsonViewAnnotationValue.getRequiredValue("column", String.class);
+                    String columnName = jsonViewAnnotationValue.getRequiredValue(JSON_COLUMN, String.class);
                     whereClause.append(columnName).append(DOT).append(property.getName());
                 } else {
                     String columnName = getMappedName(namingStrategy, associations, property);
@@ -1302,7 +1303,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             AnnotationValue<JsonView> jsonViewAnnotationValue = entity.getAnnotationMetadata().getAnnotation(JsonView.class);
             if (jsonViewAnnotationValue != null) {
                 checkDialectSupportsJsonView(entity);
-                String columnName = jsonViewAnnotationValue.getRequiredValue("column", String.class);
+                String columnName = jsonViewAnnotationValue.getRequiredValue(JSON_COLUMN, String.class);
                 sb.append(columnName).append(DOT).append(propertyPath.getProperty().getName());
             } else {
                 sb.append(propertyPath.getColumnName());
@@ -1360,7 +1361,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             // Update JsonView DATA column
             String name = propertiesToUpdate.keySet().iterator().next();
             AnnotationValue<JsonView> jsonViewAnnotationValue = entity.getAnnotationMetadata().getAnnotation(JsonView.class);
-            String columnName = jsonViewAnnotationValue.getRequiredValue("column", String.class);
+            String columnName = jsonViewAnnotationValue.getRequiredValue(JSON_COLUMN, String.class);
             if (name.equals(columnName)) {
                 Object value = propertiesToUpdate.get(name);
                 queryString.append(queryState.getRootAlias()).append(DOT).append(columnName).append("=");
@@ -1735,7 +1736,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         AnnotationValue<JsonView> jsonViewAnnotationValue = entity.getAnnotationMetadata().getAnnotation(JsonView.class);
         String jsonViewColumnName = null;
         if (jsonViewAnnotationValue != null) {
-            jsonViewColumnName = jsonViewAnnotationValue.getRequiredValue("column", String.class);
+            jsonViewColumnName = jsonViewAnnotationValue.getRequiredValue(JSON_COLUMN, String.class);
         }
 
         while (i.hasNext()) {
