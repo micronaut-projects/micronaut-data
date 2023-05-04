@@ -15,13 +15,5 @@ performed against json view mapped entities.
 
 Limitations
 
-* Updates against single fields need to be implemented using custom queries due to potential complex relations between relations in json view. Example:
-
-[source,java]
-----
-@Query("UPDATE STUDENT_VIEW ss SET ss.DATA = json_transform(DATA, SET '$.name' = :newName) WHERE ss.DATA.name = :oldName")
-void updateName(String oldName, String newName);
-----
-
 * R2dbc is not able to retrieve generated values for ids.
 * During schema creation, json view mapped entities are skipped and it is expected for users to create them manually or via migration scripts.

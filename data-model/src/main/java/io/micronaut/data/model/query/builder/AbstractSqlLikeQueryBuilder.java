@@ -1352,10 +1352,10 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             checkDialectSupportsJsonView(entity);
             // Update JsonView DATA column
             String name = propertiesToUpdate.keySet().iterator().next();
-            String jsonViewColumnNAme = getJsonViewColumn(entity);
-            if (name.equals(jsonViewColumnNAme)) {
+            String jsonViewColumnName = getJsonViewColumn(entity);
+            if (name.equals(jsonViewColumnName)) {
                 Object value = propertiesToUpdate.get(name);
-                queryString.append(queryState.getRootAlias()).append(DOT).append(jsonViewColumnNAme).append("=");
+                queryString.append(queryState.getRootAlias()).append(DOT).append(jsonViewColumnName).append("=");
                 if (value instanceof BindingParameter) {
                     int key = 1;
                     queryState.pushParameter(new QueryParameterBinding() {
@@ -1399,15 +1399,23 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             .collect(Collectors.toList());
 
         boolean[] needsTrimming = {false};
-        if (!computePropertyPaths()) {
+        if (!computePropertyPaths() || entity.isJsonView()) {
+            String jsonViewColumnName = getJsonViewColumn(entity);
+            if (jsonViewColumnName != null) {
+                queryString.append(queryState.getRootAlias()).append(DOT).append(jsonViewColumnName).append("= json_transform(").append(jsonViewColumnName);
+            }
             for (Map.Entry<QueryPropertyPath, Object> entry : update) {
                 QueryPropertyPath propertyPath = entry.getKey();
                 PersistentProperty prop = propertyPath.getProperty();
                 String tableAlias = propertyPath.getTableAlias();
-                if (tableAlias != null) {
-                    queryString.append(tableAlias).append(DOT);
+                if (jsonViewColumnName != null) {
+                    queryString.append(", SET '$.").append(propertyPath.getPath()).append("' = ");
+                } else {
+                    if (tableAlias != null) {
+                        queryString.append(tableAlias).append(DOT);
+                    }
+                    queryString.append(propertyPath.getPath()).append('=');
                 }
-                queryString.append(propertyPath.getPath()).append('=');
                 if (entry.getValue() instanceof BindingParameter) {
                     appendUpdateSetParameter(queryString, tableAlias, prop, () -> {
                         queryState.pushParameter((BindingParameter) entry.getValue(), newBindingContext(propertyPath.propertyPath));
@@ -1415,8 +1423,13 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                 } else {
                     queryString.append(asLiteral(entry.getValue()));
                 }
-                queryString.append(COMMA);
-                needsTrimming[0] = true;
+                if (jsonViewColumnName == null) {
+                    queryString.append(COMMA);
+                    needsTrimming[0] = true;
+                }
+            }
+            if (jsonViewColumnName != null) {
+                queryString.append(CLOSE_BRACKET);
             }
         } else {
             NamingStrategy namingStrategy = getNamingStrategy(queryState.getEntity());

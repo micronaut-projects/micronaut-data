@@ -15,7 +15,7 @@ import spock.lang.Specification
 import java.time.LocalDateTime
 import java.time.LocalTime
 
-@IgnoreIf({ env["GITHUB_WORKFLOW"] })
+//@IgnoreIf({ env["GITHUB_WORKFLOW"] })
 class OracleXEJsonViewSpec extends Specification {
 
     @Shared
@@ -212,12 +212,20 @@ class OracleXEJsonViewSpec extends Specification {
         then:
         optJoshStudentView.present
 
-        when:"Test updating single field"
+        when:"Test updating single field using custom query"
         // Let's rename the student
         def newStudentName = "New Josh"
         studentViewRepository.updateName(studentName, newStudentName)
         then:
         !studentRepository.findByName(studentName).present
+
+        when:"Test updating using query builder"
+        newStudentName = "New Josh - Update"
+        studentViewRepository.updateName(optJoshStudentView.get().id, newStudentName)
+        def optStudentView = studentViewRepository.findById(optJoshStudentView.get().id)
+        then:
+        optStudentView.present
+        optStudentView.get().name == newStudentName
 
         when:"Try to trigger optimistic lock exception with invalid ETAG"
         def newJoshStudentView = studentViewRepository.findByName(newStudentName).get()

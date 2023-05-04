@@ -10,6 +10,7 @@ class JsonViewSpec extends AbstractDataSpec {
     void "test JsonView repository"() {
         given:
         def repository = buildRepository('test.ContactViewRepository', """
+import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.QueryResult;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
@@ -22,6 +23,10 @@ import java.util.Optional;
 @QueryResult(type = QueryResult.Type.JSON)
 interface ContactViewRepository extends CrudRepository<ContactView, Long> {
 
+    void updateByAddressStreet(String street, String name);
+
+    void updateAgeAndName(@Id Long id, int age, String name);
+
     Iterable<ContactView> findAllOrderByAddressZipCodeDesc();
 
     String findAddressStreetById(Long id);
@@ -29,8 +34,6 @@ interface ContactViewRepository extends CrudRepository<ContactView, Long> {
     Optional<ContactView> findByAddressStreet(String street);
 
     Optional<LocalDateTime> findStartDateTimeById(Long id);
-
-    Long updateContactView(@Id Long id, String name);
 
     String findNameById(Long id);
 
@@ -47,7 +50,8 @@ interface ContactViewRepository extends CrudRepository<ContactView, Long> {
         def findByIdQuery = getQuery(repository.getRequiredMethod("findById", Long))
         def saveQuery = getQuery(repository.getRequiredMethod("save", ContactView))
         def updateQuery = getQuery(repository.getRequiredMethod("update", ContactView))
-        def updateContactViewQuery = getQuery(repository.getRequiredMethod("updateContactView", Long, String))
+        def updateAgeAndNameQuery = getQuery(repository.getRequiredMethod("updateAgeAndName", Long, int, String))
+        def updateByAddressStreetQuery = getQuery(repository.getRequiredMethod("updateByAddressStreet", String, String))
         def deleteByIdQuery = getQuery(repository.getRequiredMethod("deleteById", Long))
         def deleteQuery = getQuery(repository.getRequiredMethod("delete", ContactView))
         def deleteAllQuery = getQuery(repository.getRequiredMethod("deleteAll"))
@@ -65,7 +69,8 @@ interface ContactViewRepository extends CrudRepository<ContactView, Long> {
         findByIdQuery == 'SELECT cv.* FROM "CONTACT_VIEW" cv WHERE (cv.DATA.id = ?)'
         saveQuery == 'INSERT INTO "CONTACT_VIEW" VALUES (?)'
         updateQuery == 'UPDATE "CONTACT_VIEW" cv SET cv.DATA=? WHERE (cv.DATA.id = ?)'
-        updateContactViewQuery == 'UPDATE "CONTACT_VIEW" cv SET cv.name=? WHERE (cv.DATA.id = ?)'
+        updateAgeAndNameQuery == 'UPDATE "CONTACT_VIEW" cv SET cv.DATA= json_transform(DATA, SET \'$.age\' = ?, SET \'$.name\' = ?) WHERE (cv.DATA.id = ?)'
+        updateByAddressStreetQuery == 'UPDATE "CONTACT_VIEW" cv SET cv.DATA= json_transform(DATA, SET \'$.name\' = ?) WHERE (cv.DATA.address.street = ?)'
         deleteByIdQuery == 'DELETE  FROM "CONTACT_VIEW"  cv WHERE (cv.DATA.id = ?)'
         deleteQuery == 'DELETE  FROM "CONTACT_VIEW"  cv WHERE (cv.DATA.id = ?)'
         deleteAllQuery == 'DELETE  FROM "CONTACT_VIEW"  cv'

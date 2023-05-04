@@ -1,5 +1,6 @@
 package io.micronaut.data.jdbc.oraclexe.jsonview;
 
+import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.TypeDef;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
@@ -20,6 +21,8 @@ public interface StudentViewRepository extends PageableRepository<StudentView, L
 
     @Query("UPDATE STUDENT_VIEW ss SET ss.DATA = json_transform(DATA, SET '$.name' = :newName) WHERE ss.DATA.name = :oldName")
     void updateName(String oldName, String newName);
+
+    void updateName(@Id Long id, String name);
 
     Double findMaxAverageGrade();
 
