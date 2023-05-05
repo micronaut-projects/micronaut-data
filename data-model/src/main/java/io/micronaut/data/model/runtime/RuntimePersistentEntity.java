@@ -380,4 +380,5 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity impleme
         }
         return this.hasAutoPopulatedProperties;
     }
+
 }
