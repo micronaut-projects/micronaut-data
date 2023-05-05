@@ -5,6 +5,7 @@ import io.micronaut.data.exceptions.OptimisticLockException
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
 import io.micronaut.data.model.query.builder.sql.Dialect
+import io.micronaut.test.support.TestPropertyProvider
 import org.testcontainers.containers.OracleContainer
 import org.testcontainers.utility.DockerImageName
 import spock.lang.AutoCleanup
@@ -15,7 +16,7 @@ import java.time.LocalDateTime
 import java.time.LocalTime
 
 //@IgnoreIf({ env["GITHUB_WORKFLOW"] })
-class OracleXEJsonViewSpec extends Specification {
+class OracleJdbcJsonViewSpec extends Specification implements TestPropertyProvider {
 
     @AutoCleanup("stop")
     @Shared
@@ -23,7 +24,7 @@ class OracleXEJsonViewSpec extends Specification {
 
     @AutoCleanup
     @Shared
-    ApplicationContext context = ApplicationContext.run(getProperties())
+    ApplicationContext context = ApplicationContext.run(properties)
 
     StudentClassRepository getStudentClassRepository() {
         return context.getBean(StudentClassRepository)
@@ -49,6 +50,7 @@ class OracleXEJsonViewSpec extends Specification {
         return context.getBean(StudentViewRepository)
     }
 
+    @Override
     Map<String, String> getProperties() {
         if (container == null) {
             container = createContainer()
@@ -335,7 +337,7 @@ class OracleXEJsonViewSpec extends Specification {
     }
 
     static OracleContainer createContainer() {
-        return new OracleContainer(DockerImageName.parse("gvenzl/oracle-free:slim-faststart").asCompatibleSubstituteFor("gvenzl/oracle-xe"))
+        return new OracleContainer(DockerImageName.parse("gvenzl/oracle-free:latest-faststart").asCompatibleSubstituteFor("gvenzl/oracle-xe"))
                 .withDatabaseName("test").withInitScript("./oracle-json-view-init.sql")
     }
 }
