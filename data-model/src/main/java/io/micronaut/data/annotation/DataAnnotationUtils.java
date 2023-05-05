@@ -17,6 +17,7 @@ package io.micronaut.data.annotation;
 
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 
 /**
@@ -25,6 +26,7 @@ import io.micronaut.core.annotation.NonNull;
  * @author radovanradic
  * @since 4.0.0
  */
+@Internal
 public final class DataAnnotationUtils {
 
     private DataAnnotationUtils() {
