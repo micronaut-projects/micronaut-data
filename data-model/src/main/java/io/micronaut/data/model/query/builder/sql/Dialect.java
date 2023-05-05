@@ -76,7 +76,7 @@ public enum Dialect {
     private final boolean stringUUID;
     private final boolean supportsArrays;
 
-    private final boolean supportsJsonView;
+    private final boolean supportsJsonEntity;
 
     private final EnumSet<Join.Type> joinTypesSupported;
 
@@ -98,14 +98,14 @@ public enum Dialect {
      * @param stringUUID Does the dialect require a string UUID
      * @param supportsArrays Does the dialect supports arrays
      * @param joinTypesSupported EnumSet of supported join types.
-     * @param supportsJsonView Whether Json View is supported
+     * @param supportsJsonEntity Whether JSON entity is supported
      */
-    Dialect(boolean supportsBatch, boolean stringUUID, boolean supportsArrays, EnumSet<Join.Type> joinTypesSupported, boolean supportsJsonView) {
+    Dialect(boolean supportsBatch, boolean stringUUID, boolean supportsArrays, EnumSet<Join.Type> joinTypesSupported, boolean supportsJsonEntity) {
         this.supportsBatch = supportsBatch;
         this.stringUUID = stringUUID;
         this.supportsArrays = supportsArrays;
         this.joinTypesSupported = joinTypesSupported;
-        this.supportsJsonView = supportsJsonView;
+        this.supportsJsonEntity = supportsJsonEntity;
     }
 
     /**
@@ -160,12 +160,12 @@ public enum Dialect {
     }
 
     /**
-     * Gets an indicator whether Json View is supported by the database.
+     * Gets an indicator whether JSON entity is supported by the database.
      *
-     * @return true if Json View is supported
+     * @return true if JSON entity is supported
      * @since 4.0.0
      */
-    public boolean supportsJsonView() {
-        return supportsJsonView;
+    public boolean supportsJsonEntity() {
+        return supportsJsonEntity;
     }
 }

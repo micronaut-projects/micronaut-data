@@ -22,7 +22,6 @@ import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.data.annotation.Id;
-import io.micronaut.data.annotation.JsonView;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.annotation.Transient;
 import io.micronaut.data.annotation.Version;
@@ -58,7 +57,6 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity impleme
     private List<RuntimePersistentProperty<T>> persistentPropertiesValues;
 
     private EnumSet<Relation.Cascade> cascadedTypes;
-    private final boolean jsonView;
 
     /**
      * Default constructor.
@@ -129,7 +127,6 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity impleme
             this.constructorArguments[i] = prop;
         }
         this.aliasName = super.getAliasName();
-        this.jsonView = getAnnotationMetadata().hasAnnotation(JsonView.class);
     }
 
     private static EnumSet<Relation.Cascade> cascades(RuntimePersistentEntity<?> persistentEntity) {
@@ -382,10 +379,5 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity impleme
                     .anyMatch(PersistentProperty::isAutoPopulated);
         }
         return this.hasAutoPopulatedProperties;
-    }
-
-    @Override
-    public boolean isJsonView() {
-        return jsonView;
     }
 }

@@ -22,6 +22,8 @@ import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.annotation.AutoPopulated;
+import io.micronaut.data.annotation.DataAnnotationUtils;
+import io.micronaut.data.annotation.EntityRepresentation;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.exceptions.DataAccessException;
@@ -591,11 +593,24 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
         if (preparedQuery.isCount()) {
             return false;
         }
-        DataType resultDataType = preparedQuery.getResultDataType();
-        if (resultDataType == DataType.JSON || (resultDataType == DataType.ENTITY && getEntity(preparedQuery.getResultType()).isJsonView())) {
+        if (queryResultInfo != null && queryResultInfo.getType() == io.micronaut.data.annotation.QueryResult.Type.JSON) {
             return true;
         }
-        return queryResultInfo != null && queryResultInfo.getType() == io.micronaut.data.annotation.QueryResult.Type.JSON;
+        DataType resultDataType = preparedQuery.getResultDataType();
+        if (resultDataType == DataType.JSON || (resultDataType == DataType.ENTITY && isJsonEntity(preparedQuery))) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Gets an indicator telling whether stored query is annotated with {@link EntityRepresentation} annotation with type JSON.
+     *
+     * @param storedQuery the stored query
+     * @return true if stored query is handling JSON entity representation
+     */
+    protected boolean isJsonEntity(StoredQuery<?, ?> storedQuery) {
+        return DataAnnotationUtils.hasJsonEntityRepresentationAnnotation(storedQuery.getAnnotationMetadata());
     }
 
     /**

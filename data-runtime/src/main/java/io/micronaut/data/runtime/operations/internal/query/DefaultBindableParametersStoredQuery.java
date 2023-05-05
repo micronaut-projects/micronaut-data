@@ -21,6 +21,7 @@ import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.beans.BeanWrapper;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.CollectionUtils;
+import io.micronaut.data.annotation.DataAnnotationUtils;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.JsonDataType;
 import io.micronaut.data.model.PersistentPropertyPath;
@@ -127,7 +128,7 @@ public class DefaultBindableParametersStoredQuery<E, R> implements BindableParam
                 value = binder.convert(value, persistentProperty);
                 parameterConverter = null;
             } else if (entity != null) {
-                if (persistentEntity.isJsonView() && binding.getDataType() == DataType.JSON) {
+                if (DataAnnotationUtils.hasJsonEntityRepresentationAnnotation(this.getAnnotationMetadata()) && binding.getDataType() == DataType.JSON) {
                     value = entity;
                 } else {
                     PersistentPropertyPath pp = getRequiredPropertyPath(binding, persistentEntity);

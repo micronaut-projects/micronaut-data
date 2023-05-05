@@ -31,11 +31,12 @@ import java.lang.annotation.Target;
  * @since 4.0.0
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.ANNOTATION_TYPE, ElementType.TYPE, ElementType.FIELD})
+@Target({ElementType.TYPE_USE, ElementType.ANNOTATION_TYPE, ElementType.TYPE, ElementType.FIELD})
 @Serdeable
 @Introspected
 @Documented
 @Experimental
+@EntityRepresentation(type = EntityRepresentation.Type.COLUMN)
 public @interface JsonView {
 
     String DEFAULT_COLUMN_NAME = "DATA";

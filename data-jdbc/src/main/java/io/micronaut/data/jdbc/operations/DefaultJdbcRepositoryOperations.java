@@ -1126,12 +1126,12 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             if (insert) {
                 Dialect dialect = storedQuery.getDialect();
                 if (hasGeneratedId && (dialect == Dialect.ORACLE || dialect == Dialect.SQL_SERVER)) {
-                    if (persistentEntity.isJsonView()) {
+                    if (isJsonEntity(storedQuery)) {
                         // This is being closed in try with resources from where it is being called
                         @SuppressWarnings({"java:S2095"})
-                        CallableStatement cstmt = connection.prepareCall(this.storedQuery.getQuery());
-                        cstmt.registerOutParameter(2, Types.NUMERIC);
-                        return cstmt;
+                        CallableStatement callableStatement = connection.prepareCall(this.storedQuery.getQuery());
+                        callableStatement.registerOutParameter(2, Types.NUMERIC);
+                        return callableStatement;
                     }
                     return connection.prepareStatement(this.storedQuery.getQuery(), new String[]{persistentEntity.getIdentity().getPersistedName()});
                 } else {
@@ -1151,8 +1151,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                 storedQuery.bindParameters(new JdbcParameterBinder(ctx.connection, ps, storedQuery), ctx.invocationContext, entity, previousValues);
                 rowsUpdated = ps.executeUpdate();
                 if (hasGeneratedId) {
-                    if (persistentEntity.isJsonView() && ps instanceof CallableStatement cstmt) {
-                        Object id = cstmt.getObject(2);
+                    if (isJsonEntity(storedQuery) && ps instanceof CallableStatement callableStatement) {
+                        Object id = callableStatement.getObject(2);
                         BeanProperty<T, Object> property = persistentEntity.getIdentity().getProperty();
                         entity = updateEntityId(property, entity, id);
                     } else {
@@ -1212,7 +1212,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             if (insert) {
                 Dialect dialect = storedQuery.getDialect();
                 if (hasGeneratedId && (dialect == Dialect.ORACLE || dialect == Dialect.SQL_SERVER)) {
-                    if (persistentEntity.isJsonView()) {
+                    if (isJsonEntity(storedQuery)) {
                         // This is being closed in try with resources from where it is being called
                         @SuppressWarnings({"java:S2095"})
                         CallableStatement cstmt = connection.prepareCall(this.storedQuery.getQuery());

@@ -28,6 +28,7 @@ import io.micronaut.core.order.OrderUtil;
 import io.micronaut.core.reflect.ClassUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
+import io.micronaut.data.annotation.EntityRepresentation;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.Repository;
@@ -36,6 +37,7 @@ import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.intercept.annotation.DataMethodQueryParameter;
 import io.micronaut.data.model.DataType;
+import io.micronaut.data.model.JsonDataType;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.PersistentEntity;
@@ -73,6 +75,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -241,6 +244,9 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
 
             try {
                 SourcePersistentEntity entity = resolvePersistentEntity(element, parametersInRole);
+
+                annotateEntityRepresentation(element, genericReturnType, entity);
+
                 MethodMatchContext methodMatchContext = new MethodMatchContext(
                         queryEncoder,
                         currentRepository,
@@ -587,4 +593,33 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
         return null;
     }
 
+    private void annotateEntityRepresentation(MethodElement methodElement, ClassElement genericReturnType, SourcePersistentEntity entity) {
+        AnnotationValue<EntityRepresentation> entityRepresentationAnnotationValue = entity.getAnnotation(EntityRepresentation.class);
+        if (entityRepresentationAnnotationValue != null) {
+            methodElement.annotate(entityRepresentationAnnotationValue);
+            ClassElement entityClassElement = entity.getClassElement();
+            if (entityClassElement.equals(genericReturnType)) {
+                annotateQueryResult(methodElement, entityRepresentationAnnotationValue);
+            } else {
+                Optional<ClassElement> firstTypeArgument = genericReturnType.getFirstTypeArgument();
+                if (firstTypeArgument.isPresent() && firstTypeArgument.get().equals(entityClassElement)) {
+                    annotateQueryResult(methodElement, entityRepresentationAnnotationValue);
+                }
+            }
+        }
+
+    }
+
+    private void annotateQueryResult(MethodElement methodElement, AnnotationValue<EntityRepresentation> entityRepresentationAnnotationValue) {
+        EntityRepresentation.Type type = entityRepresentationAnnotationValue.getRequiredValue("type", EntityRepresentation.Type.class);
+        io.micronaut.data.annotation.QueryResult.Type queryResultType = type == EntityRepresentation.Type.TABULAR ? io.micronaut.data.annotation.QueryResult.Type.TABULAR : io.micronaut.data.annotation.QueryResult.Type.JSON;
+        JsonDataType jsonDataType = JsonDataType.DEFAULT;
+        String column = entityRepresentationAnnotationValue.getRequiredValue("column", String.class);
+        methodElement.annotate(io.micronaut.data.annotation.QueryResult.class, builder -> {
+            builder
+                .member("type", queryResultType)
+                .member("jsonDataType", jsonDataType)
+                .member("column", column);
+        });
+    }
 }

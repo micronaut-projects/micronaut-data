@@ -48,8 +48,6 @@ public class SourcePersistentEntity extends AbstractPersistentEntity implements 
     private List<String> allPersistentPropertiesNames;
     private List<SourcePersistentProperty> persistentPropertiesValues;
 
-    private final boolean jsonView;
-
     /**
      * Default constructor.
      * @param classElement The class element
@@ -107,7 +105,6 @@ public class SourcePersistentEntity extends AbstractPersistentEntity implements 
         }
         this.ids = ids.stream().toArray(SourcePersistentProperty[]::new);
         this.version = version;
-        this.jsonView = hasAnnotation(JsonView.class);
     }
 
     @NonNull
@@ -248,11 +245,6 @@ public class SourcePersistentEntity extends AbstractPersistentEntity implements 
 
     private boolean isEmbedded(PropertyElement bp) {
         return bp.enumValue(Relation.class, Relation.Kind.class).orElse(null) == Relation.Kind.EMBEDDED;
-    }
-
-    @Override
-    public boolean isJsonView() {
-        return this.jsonView;
     }
 
     @Override

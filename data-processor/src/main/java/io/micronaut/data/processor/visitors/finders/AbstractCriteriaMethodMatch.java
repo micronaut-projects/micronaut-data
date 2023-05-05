@@ -23,6 +23,7 @@ import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.naming.NameUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
+import io.micronaut.data.annotation.DataAnnotationUtils;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.annotation.QueryHint;
@@ -42,7 +43,6 @@ import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaUpdate;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityFrom;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils;
-import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.SourcePersistentProperty;
 import io.micronaut.data.processor.model.criteria.SourcePersistentEntityCriteriaBuilder;
 import io.micronaut.data.processor.visitors.MatchFailedException;
@@ -162,11 +162,7 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
         if (idParameter != null) {
             methodMatchInfo.addParameterRole(TypeRole.ID, idParameter.stringValue(Parameter.class).orElse(idParameter.getName()));
         }
-        boolean encodeEntityParameters = true;
-        SourcePersistentEntity rootEntity = matchContext.getRootEntity();
-        if (rootEntity != null && rootEntity.isJsonView()) {
-            encodeEntityParameters = false;
-        }
+        boolean encodeEntityParameters = !DataAnnotationUtils.hasJsonEntityRepresentationAnnotation(matchContext.getAnnotationMetadata());
         if (entityParameter != null) {
             methodMatchInfo.encodeEntityParameters(encodeEntityParameters);
             methodMatchInfo.addParameterRole(TypeRole.ENTITY, entityParameter.getName());

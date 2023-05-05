@@ -26,11 +26,12 @@ import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
+import io.micronaut.data.annotation.DataAnnotationUtils;
+import io.micronaut.data.annotation.EntityRepresentation;
 import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Index;
 import io.micronaut.data.annotation.Indexes;
 import io.micronaut.data.annotation.Join;
-import io.micronaut.data.annotation.JsonView;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.annotation.Repository;
@@ -753,9 +754,9 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     }
 
     @Override
-    protected void selectAllColumns(QueryState queryState, StringBuilder queryBuffer) {
+    protected void selectAllColumns(AnnotationMetadata annotationMetadata, QueryState queryState, StringBuilder queryBuffer) {
         PersistentEntity entity = queryState.getEntity();
-        selectAllColumns(entity, queryState.getRootAlias(), queryBuffer);
+        selectAllColumns(annotationMetadata, entity, queryState.getRootAlias(), queryBuffer);
 
         QueryModel queryModel = queryState.getQueryModel();
 
@@ -796,7 +797,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                     // so we need to retrieve it
                     traversePersistentProperties(associatedEntity, includeIdentity, true, (propertyAssociations, prop) -> {
                         String columnName;
-                        if (computePropertyPaths() && !queryState.getEntity().isJsonView()) {
+                        if (computePropertyPaths()) {
                             columnName = getMappedName(namingStrategy, propertyAssociations, prop);
                         } else {
                             columnName = asPath(propertyAssociations, prop);
@@ -824,13 +825,14 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     /**
      * Selects all columns for the given entity and alias.
      *
-     * @param entity The entity
-     * @param alias  The alias
-     * @param sb     The builder to add the columns
+     * @param annotationMetadata The annotation metadata
+     * @param entity             The entity
+     * @param alias              The alias
+     * @param sb                 The builder to add the columns
      */
     @Override
-    public void selectAllColumns(PersistentEntity entity, String alias, StringBuilder sb) {
-        if (canUseWildcardForSelect(entity)) {
+    public void selectAllColumns(AnnotationMetadata annotationMetadata, PersistentEntity entity, String alias, StringBuilder sb) {
+        if (canUseWildcardForSelect(annotationMetadata, entity)) {
             selectAllColumns(sb, alias);
             return;
         }
@@ -887,9 +889,9 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         return column;
     }
 
-    private boolean canUseWildcardForSelect(PersistentEntity entity) {
-        if (entity.isJsonView()) {
-            checkDialectSupportsJsonView(entity);
+    private boolean canUseWildcardForSelect(AnnotationMetadata annotationMetadata, PersistentEntity entity) {
+        if (DataAnnotationUtils.hasJsonEntityRepresentationAnnotation(annotationMetadata)) {
+            checkDialectSupportsJsonEntity(entity);
             return true;
         }
         return Stream.concat(Stream.of(entity.getIdentity()), entity.getPersistentProperties().stream())
@@ -947,10 +949,10 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         String builder;
         List<QueryParameterBinding> parameterBindings = new ArrayList<>();
 
-        if (entity.isJsonView()) {
-            checkDialectSupportsJsonView(entity);
-            AnnotationValue<JsonView> jsonViewAnnotationValue = entity.getAnnotationMetadata().getAnnotation(JsonView.class);
-            String columnName = jsonViewAnnotationValue.getRequiredValue("column", String.class);
+        if (DataAnnotationUtils.hasJsonEntityRepresentationAnnotation(repositoryMetadata)) {
+            checkDialectSupportsJsonEntity(entity);
+            AnnotationValue<EntityRepresentation> entityRepresentationAnnotationValue = entity.getAnnotationMetadata().getAnnotation(EntityRepresentation.class);
+            String columnName = entityRepresentationAnnotationValue.getRequiredValue("column", String.class);
             int key = 1;
             builder = INSERT_INTO + getTableName(entity) +
                 " VALUES (" + formatParameter(key) + ")";
@@ -1706,9 +1708,9 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     }
 
     @Override
-    protected boolean isAliasForBatch(PersistentEntity persistentEntity) {
-        if (persistentEntity.isJsonView()) {
-            checkDialectSupportsJsonView(persistentEntity);
+    protected boolean isAliasForBatch(PersistentEntity persistentEntity, AnnotationMetadata annotationMetadata) {
+        if (DataAnnotationUtils.hasJsonEntityRepresentationAnnotation(annotationMetadata)) {
+            checkDialectSupportsJsonEntity(persistentEntity);
             return true;
         }
         return false;

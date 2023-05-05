@@ -132,6 +132,7 @@ public final class CosmosSqlQueryBuilder extends SqlQueryBuilder {
         PersistentEntity entity = queryState.getEntity();
         List<QueryModel.Projection> projections = query.getProjections();
         buildSelect(
+            annotationMetadata,
             queryState,
             select,
             projections,
@@ -160,7 +161,7 @@ public final class CosmosSqlQueryBuilder extends SqlQueryBuilder {
             buildWhereClause(annotationMetadata, criteria, queryState);
         }
 
-        appendOrder(query, queryState);
+        appendOrder(annotationMetadata, query, queryState);
         appendForUpdate(QueryPosition.END_OF_QUERY, query, queryState.getQuery());
 
         return QueryResult.of(
@@ -236,7 +237,7 @@ public final class CosmosSqlQueryBuilder extends SqlQueryBuilder {
     }
 
     @Override
-    protected void selectAllColumns(QueryState queryState, StringBuilder queryBuffer) {
+    protected void selectAllColumns(AnnotationMetadata annotationMetadata, QueryState queryState, StringBuilder queryBuffer) {
         queryBuffer.append(DISTINCT).append(SPACE).append(VALUE).append(queryState.getRootAlias());
     }
 
@@ -260,7 +261,7 @@ public final class CosmosSqlQueryBuilder extends SqlQueryBuilder {
     }
 
     @Override
-    protected boolean isAliasForBatch(PersistentEntity persistentEntity) {
+    protected boolean isAliasForBatch(PersistentEntity persistentEntity, AnnotationMetadata annotationMetadata) {
         return true;
     }
 
@@ -349,45 +350,45 @@ public final class CosmosSqlQueryBuilder extends SqlQueryBuilder {
     private void initializeCriteriaHandlers() {
         addCriterionHandler(QueryModel.IsNull.class, (ctx, criterion) -> {
             ctx.query().append(NOT).append(SPACE).append(IS_DEFINED).append(OPEN_BRACKET);
-            appendPropertyRef(ctx.query(), ctx.getPersistentEntity(), ctx.getRequiredProperty(criterion));
+            appendPropertyRef(ctx.query(), ctx.getAnnotationMetadata(), ctx.getRequiredProperty(criterion));
             ctx.query().append(CLOSE_BRACKET).append(SPACE).append(OR).append(SPACE);
             ctx.query().append(IS_NULL).append(OPEN_BRACKET);
-            appendPropertyRef(ctx.query(), ctx.getPersistentEntity(), ctx.getRequiredProperty(criterion));
+            appendPropertyRef(ctx.query(), ctx.getAnnotationMetadata(), ctx.getRequiredProperty(criterion));
             ctx.query().append(CLOSE_BRACKET);
         });
         addCriterionHandler(QueryModel.IsNotNull.class, (ctx, criterion) -> {
             ctx.query().append(IS_DEFINED).append(OPEN_BRACKET);
-            appendPropertyRef(ctx.query(), ctx.getPersistentEntity(), ctx.getRequiredProperty(criterion));
+            appendPropertyRef(ctx.query(), ctx.getAnnotationMetadata(), ctx.getRequiredProperty(criterion));
             ctx.query().append(CLOSE_BRACKET).append(SPACE).append(AND).append(SPACE);
             ctx.query().append(NOT).append(SPACE).append(IS_NULL).append(OPEN_BRACKET);
-            appendPropertyRef(ctx.query(), ctx.getPersistentEntity(), ctx.getRequiredProperty(criterion));
+            appendPropertyRef(ctx.query(), ctx.getAnnotationMetadata(), ctx.getRequiredProperty(criterion));
             ctx.query().append(CLOSE_BRACKET);
         });
         addCriterionHandler(QueryModel.IsEmpty.class, (ctx, criterion) -> {
             ctx.query().append(NOT).append(SPACE).append(IS_DEFINED).append(OPEN_BRACKET);
-            appendPropertyRef(ctx.query(), ctx.getPersistentEntity(), ctx.getRequiredProperty(criterion));
+            appendPropertyRef(ctx.query(), ctx.getAnnotationMetadata(), ctx.getRequiredProperty(criterion));
             ctx.query().append(CLOSE_BRACKET).append(SPACE).append(OR).append(SPACE);
             ctx.query().append(IS_NULL).append(OPEN_BRACKET);
-            appendPropertyRef(ctx.query(), ctx.getPersistentEntity(), ctx.getRequiredProperty(criterion));
+            appendPropertyRef(ctx.query(), ctx.getAnnotationMetadata(), ctx.getRequiredProperty(criterion));
             ctx.query().append(CLOSE_BRACKET).append(SPACE).append(OR).append(SPACE);
-            appendPropertyRef(ctx.query(), ctx.getPersistentEntity(), ctx.getRequiredProperty(criterion));
+            appendPropertyRef(ctx.query(), ctx.getAnnotationMetadata(), ctx.getRequiredProperty(criterion));
             ctx.query().append(EQUALS).append("''");
         });
         addCriterionHandler(QueryModel.IsNotEmpty.class, (ctx, criterion) -> {
             ctx.query().append(IS_DEFINED).append(OPEN_BRACKET);
-            appendPropertyRef(ctx.query(), ctx.getPersistentEntity(), ctx.getRequiredProperty(criterion));
+            appendPropertyRef(ctx.query(), ctx.getAnnotationMetadata(), ctx.getRequiredProperty(criterion));
             ctx.query().append(CLOSE_BRACKET).append(SPACE).append(AND).append(SPACE);
             ctx.query().append(NOT).append(SPACE).append(IS_NULL).append(OPEN_BRACKET);
-            appendPropertyRef(ctx.query(), ctx.getPersistentEntity(), ctx.getRequiredProperty(criterion));
+            appendPropertyRef(ctx.query(), ctx.getAnnotationMetadata(), ctx.getRequiredProperty(criterion));
             ctx.query().append(CLOSE_BRACKET).append(SPACE).append(AND).append(SPACE);
-            appendPropertyRef(ctx.query(), ctx.getPersistentEntity(), ctx.getRequiredProperty(criterion));
+            appendPropertyRef(ctx.query(), ctx.getAnnotationMetadata(), ctx.getRequiredProperty(criterion));
             ctx.query().append(NOT_EQUALS).append("''");
         });
         addCriterionHandler(QueryModel.ArrayContains.class, (ctx, criterion) -> {
             QueryPropertyPath propertyPath = ctx.getRequiredProperty(criterion.getProperty(), QueryModel.ArrayContains.class);
             StringBuilder whereClause = ctx.query();
             whereClause.append(ARRAY_CONTAINS).append(OPEN_BRACKET);
-            appendPropertyRef(whereClause, ctx.getPersistentEntity(), propertyPath);
+            appendPropertyRef(whereClause, ctx.getAnnotationMetadata(), propertyPath);
             whereClause.append(COMMA);
             Object value = criterion.getValue();
             if (value instanceof BindingParameter) {

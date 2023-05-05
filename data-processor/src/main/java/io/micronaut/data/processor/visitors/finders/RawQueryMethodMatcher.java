@@ -18,6 +18,7 @@ package io.micronaut.data.processor.visitors.finders;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.annotation.NonNull;
+import io.micronaut.data.annotation.DataAnnotationUtils;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.RepositoryConfiguration;
@@ -217,8 +218,7 @@ public class RawQueryMethodMatcher implements MethodMatcher {
         QueryResult countQueryResult = cq == null ? null : getQueryResult(matchContext, cq, parameters, namedParameters, entityParam, persistentEntity);
         boolean encodeEntityParameters = persistentEntity != null || operationType == DataMethod.OperationType.INSERT;
         if (encodeEntityParameters) {
-            SourcePersistentEntity rootEntity = matchContext.getRootEntity();
-            if (operationType == DataMethod.OperationType.INSERT && rootEntity != null && rootEntity.isJsonView()) {
+            if (operationType == DataMethod.OperationType.INSERT && DataAnnotationUtils.hasJsonEntityRepresentationAnnotation(matchContext.getAnnotationMetadata())) {
                 encodeEntityParameters = false;
             }
         }
