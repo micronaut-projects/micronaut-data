@@ -245,7 +245,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
             try {
                 SourcePersistentEntity entity = resolvePersistentEntity(element, parametersInRole);
 
-                annotateEntityRepresentation(element, genericReturnType, entity);
+                annotateEntityRepresentationIfPresent(element, genericReturnType, entity);
 
                 MethodMatchContext methodMatchContext = new MethodMatchContext(
                         queryEncoder,
@@ -593,7 +593,14 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
         return null;
     }
 
-    private void annotateEntityRepresentation(MethodElement methodElement, ClassElement genericReturnType, SourcePersistentEntity entity) {
+    /**
+     * Annotates method element with {@link EntityRepresentation} if an entity is marked with it.
+     *
+     * @param methodElement the method element
+     * @param genericReturnType the generic return type for the method
+     * @param entity the source persistent entity
+     */
+    private void annotateEntityRepresentationIfPresent(MethodElement methodElement, ClassElement genericReturnType, SourcePersistentEntity entity) {
         AnnotationValue<EntityRepresentation> entityRepresentationAnnotationValue = entity.getAnnotation(EntityRepresentation.class);
         if (entityRepresentationAnnotationValue != null) {
             methodElement.annotate(entityRepresentationAnnotationValue);
@@ -610,6 +617,12 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
 
     }
 
+    /**
+     * Annotates method with {@link io.micronaut.data.annotation.QueryResult} if it was marked with {@link EntityRepresentation} annotation.
+     *
+     * @param methodElement the method element
+     * @param entityRepresentationAnnotationValue annotation value with {@link EntityRepresentation} annotation
+     */
     private void annotateQueryResult(MethodElement methodElement, AnnotationValue<EntityRepresentation> entityRepresentationAnnotationValue) {
         EntityRepresentation.Type type = entityRepresentationAnnotationValue.getRequiredValue("type", EntityRepresentation.Type.class);
         io.micronaut.data.annotation.QueryResult.Type queryResultType = type == EntityRepresentation.Type.TABULAR ? io.micronaut.data.annotation.QueryResult.Type.TABULAR : io.micronaut.data.annotation.QueryResult.Type.JSON;
