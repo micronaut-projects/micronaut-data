@@ -61,7 +61,6 @@ tasks.register("testExamples") {
 
 project.afterEvaluate {
     nativeCompile.enabled = false
-    testNativeImage.enabled = false
 }
 
 dependencies {
