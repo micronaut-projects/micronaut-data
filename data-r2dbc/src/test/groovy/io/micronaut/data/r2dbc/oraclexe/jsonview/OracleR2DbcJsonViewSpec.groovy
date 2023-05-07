@@ -96,6 +96,23 @@ class OracleR2DbcJsonViewSpec extends Specification implements TestPropertyProvi
         optContact.present
         contactView.name == optContact.get().name
 
+        when:"Find by name"
+        optContactView = contactViewRepository.findByName(contactView.name)
+        then:"Returns result"
+        optContactView.present
+
+        when:"Update using auto generated query"
+        def startDateTime = LocalDateTime.now()
+        contactViewRepository.updateAgeAndStartDateTime(contactView.id, 31, startDateTime)
+        optContactView = contactViewRepository.findById(contactView.id)
+        def updatedContactView = optContactView.get()
+        then:
+        updatedContactView
+        updatedContactView.id == contactView.id
+        updatedContactView.age == 31
+        updatedContactView.name == contactView.name
+        updatedContactView.startDateTime == startDateTime
+
         when:"Test optimistic locking"
         contactView = contactViewRepository.findById(id).get()
         contactView.metadata.etag = UUID.randomUUID().toString()

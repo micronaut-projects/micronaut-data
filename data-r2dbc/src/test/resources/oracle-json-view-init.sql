@@ -11,6 +11,6 @@ CREATE OR REPLACE JSON RELATIONAL DUALITY VIEW CONTACT_VIEW AS
 SELECT JSON{'id': c.id,
             'name': c.name WITH UPDATE,
             'age': c.age,
-            'startDateTime': c.start_date_time,
-            'active': c.active
+            'startDateTime': c.start_date_time WITH UPDATE,
+            'active': c.active WITH UPDATE
             } FROM TBL_CONTACT c WITH UPDATE INSERT DELETE;

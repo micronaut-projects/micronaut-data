@@ -28,6 +28,7 @@ import io.micronaut.core.order.OrderUtil;
 import io.micronaut.core.reflect.ClassUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
+import io.micronaut.data.annotation.DataAnnotationUtils;
 import io.micronaut.data.annotation.EntityRepresentation;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.annotation.Query;
@@ -75,7 +76,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -199,6 +199,10 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                         typeRoles.put(ce.getName(), TypeRole.SORT)
                 );
             }
+
+            // Annotate repository with EntityRepresentation if present on entity class
+            annotateEntityRepresentationIfPresent(element);
+
             if (queryEncoder == null) {
                 context.fail("QueryEncoder not present on annotation processor path", element);
                 failing = true;
@@ -244,9 +248,6 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
 
             try {
                 SourcePersistentEntity entity = resolvePersistentEntity(element, parametersInRole);
-
-                annotateEntityRepresentationIfPresent(element, genericReturnType, entity);
-
                 MethodMatchContext methodMatchContext = new MethodMatchContext(
                         queryEncoder,
                         currentRepository,
@@ -378,6 +379,8 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
         if (runtimeInterceptor == null) {
             throw new MatchFailedException("Unable to implement Repository method: " + currentRepository.getSimpleName() + "." + element.getName() + "(..). No possible runtime implementations found.", element);
         }
+
+        annotateQueryResultIfApplicable(element, methodInfo, entity);
 
         boolean finalEncodeEntityParameters = encodeEntityParameters;
         List<QueryParameterBinding> finalParameterBinding = parameterBinding;
@@ -594,45 +597,43 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
     }
 
     /**
-     * Annotates method element with {@link EntityRepresentation} if an entity is marked with it.
+     * Annotates repository element with {@link EntityRepresentation} if an entity is marked with it.
      *
-     * @param methodElement the method element
-     * @param genericReturnType the generic return type for the method
-     * @param entity the source persistent entity
+     * @param classElement the repository class element
      */
-    private void annotateEntityRepresentationIfPresent(MethodElement methodElement, ClassElement genericReturnType, SourcePersistentEntity entity) {
-        AnnotationValue<EntityRepresentation> entityRepresentationAnnotationValue = entity.getAnnotation(EntityRepresentation.class);
-        if (entityRepresentationAnnotationValue != null) {
-            methodElement.annotate(entityRepresentationAnnotationValue);
-            ClassElement entityClassElement = entity.getClassElement();
-            if (entityClassElement.equals(genericReturnType)) {
-                annotateQueryResult(methodElement, entityRepresentationAnnotationValue);
-            } else {
-                Optional<ClassElement> firstTypeArgument = genericReturnType.getFirstTypeArgument();
-                if (firstTypeArgument.isPresent() && firstTypeArgument.get().equals(entityClassElement)) {
-                    annotateQueryResult(methodElement, entityRepresentationAnnotationValue);
-                }
+    private void annotateEntityRepresentationIfPresent(ClassElement classElement) {
+        SourcePersistentEntity entity = resolveEntityForCurrentClass();
+        if (entity != null) {
+            AnnotationValue<EntityRepresentation> entityRepresentationAnnotationValue = entity.getAnnotation(EntityRepresentation.class);
+            if (entityRepresentationAnnotationValue != null) {
+                classElement.annotate(entityRepresentationAnnotationValue);
             }
         }
-
     }
 
     /**
-     * Annotates method with {@link io.micronaut.data.annotation.QueryResult} if it was marked with {@link EntityRepresentation} annotation.
+     * Annotates method element with {@link io.micronaut.data.annotation.QueryResult} if root entity is {@link EntityRepresentation} of JSON type
+     * and method is {@link io.micronaut.data.intercept.annotation.DataMethod.OperationType#QUERY}.
      *
-     * @param methodElement the method element
-     * @param entityRepresentationAnnotationValue annotation value with {@link EntityRepresentation} annotation
+     * @param element the method element
+     * @param methodInfo the method match info
+     * @param entity the root entity
      */
-    private void annotateQueryResult(MethodElement methodElement, AnnotationValue<EntityRepresentation> entityRepresentationAnnotationValue) {
-        EntityRepresentation.Type type = entityRepresentationAnnotationValue.getRequiredValue("type", EntityRepresentation.Type.class);
-        io.micronaut.data.annotation.QueryResult.Type queryResultType = type == EntityRepresentation.Type.TABULAR ? io.micronaut.data.annotation.QueryResult.Type.TABULAR : io.micronaut.data.annotation.QueryResult.Type.JSON;
-        JsonDataType jsonDataType = JsonDataType.DEFAULT;
-        String column = entityRepresentationAnnotationValue.getRequiredValue("column", String.class);
-        methodElement.annotate(io.micronaut.data.annotation.QueryResult.class, builder -> {
-            builder
-                .member("type", queryResultType)
-                .member("jsonDataType", jsonDataType)
-                .member("column", column);
-        });
+    private void annotateQueryResultIfApplicable(MethodElement element, MethodMatchInfo methodInfo, SourcePersistentEntity entity) {
+        if (methodInfo.getOperationType() == DataMethod.OperationType.QUERY && methodInfo.getResultType().equals(entity.getType())) {
+            AnnotationValue<EntityRepresentation> entityRepresentationAnnotationValue = entity.getAnnotation(EntityRepresentation.class);
+            if (entityRepresentationAnnotationValue != null) {
+                EntityRepresentation.Type type = entityRepresentationAnnotationValue.getRequiredValue("type", EntityRepresentation.Type.class);
+                String column = entityRepresentationAnnotationValue.getRequiredValue("column", String.class);
+                JsonDataType jsonDataType = JsonDataType.DEFAULT;
+                io.micronaut.data.annotation.QueryResult.Type queryResultType = type == EntityRepresentation.Type.TABULAR ? io.micronaut.data.annotation.QueryResult.Type.TABULAR : io.micronaut.data.annotation.QueryResult.Type.JSON;
+                element.annotate(io.micronaut.data.annotation.QueryResult.class, builder -> {
+                    builder
+                        .member("type", queryResultType)
+                        .member("jsonDataType", jsonDataType)
+                        .member("column", column);
+                });
+            }
+        }
     }
 }

@@ -21,7 +21,7 @@ import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.reflect.ClassUtils;
 import io.micronaut.core.reflect.ReflectionUtils;
-import io.micronaut.data.annotation.JsonView;
+import io.micronaut.data.annotation.DataAnnotationUtils;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.TypeDef;
 import io.micronaut.data.model.DataType;
@@ -361,9 +361,11 @@ public class TypeUtils {
         ClassElement genericType = parameter.getGenericType();
         Objects.requireNonNull(genericType);
         if (TypeUtils.isEntityContainerType(genericType) || genericType.hasStereotype(MappedEntity.class)) {
-            if (genericType.hasStereotype(JsonView.class)) {
+
+            if (DataAnnotationUtils.hasJsonEntityRepresentationAnnotation(genericType)) {
                 return Optional.of(DataType.JSON);
             }
+
             return Optional.of(DataType.ENTITY);
         }
         return parameter.enumValue(TypeDef.class, "type", DataType.class);
@@ -417,9 +419,6 @@ public class TypeUtils {
             }
 
             if (type.hasStereotype(MappedEntity.class)) {
-                if (type.hasStereotype(JsonView.class)) {
-                    return DataType.JSON;
-                }
                 return DataType.ENTITY;
             }
 
