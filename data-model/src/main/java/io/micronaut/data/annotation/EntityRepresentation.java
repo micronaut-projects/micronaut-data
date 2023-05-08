@@ -31,7 +31,7 @@ import java.lang.annotation.Target;
  * @author radovanradic
  * @since 4.0.0
  */
-@Retention(RetentionPolicy.RUNTIME)
+@Retention(RetentionPolicy.SOURCE)
 @Target({ElementType.TYPE, ElementType.METHOD})
 @Documented
 @Inherited

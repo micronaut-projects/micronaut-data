@@ -606,7 +606,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
      * @return true if entity being inserted is JSON entity representation with auto generated numeric id
      */
     protected final boolean isJsonEntityGeneratedId(StoredQuery<?, ?> storedQuery, PersistentEntity persistentEntity) {
-        if (!DataAnnotationUtils.hasJsonEntityRepresentationAnnotation(storedQuery.getAnnotationMetadata())) {
+        if (!storedQuery.isJsonEntity()) {
             return false;
         }
         PersistentProperty identity = persistentEntity.getIdentity();
