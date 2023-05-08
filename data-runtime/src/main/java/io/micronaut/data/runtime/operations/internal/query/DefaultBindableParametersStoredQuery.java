@@ -21,7 +21,6 @@ import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.beans.BeanWrapper;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.CollectionUtils;
-import io.micronaut.data.annotation.DataAnnotationUtils;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.JsonDataType;
 import io.micronaut.data.model.PersistentPropertyPath;
