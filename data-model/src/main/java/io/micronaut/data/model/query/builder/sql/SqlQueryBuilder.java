@@ -26,7 +26,6 @@ import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
-import io.micronaut.data.annotation.DataAnnotationUtils;
 import io.micronaut.data.annotation.EntityRepresentation;
 import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Index;
@@ -890,8 +889,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     }
 
     private boolean canUseWildcardForSelect(AnnotationMetadata annotationMetadata, PersistentEntity entity) {
-        if (DataAnnotationUtils.hasJsonEntityRepresentationAnnotation(annotationMetadata)) {
-            checkDialectSupportsJsonEntity(entity);
+        if (isJsonEntity(annotationMetadata, entity)) {
             return true;
         }
         return Stream.concat(Stream.of(entity.getIdentity()), entity.getPersistentProperties().stream())
@@ -949,8 +947,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         String builder;
         List<QueryParameterBinding> parameterBindings = new ArrayList<>();
 
-        if (DataAnnotationUtils.hasJsonEntityRepresentationAnnotation(repositoryMetadata)) {
-            checkDialectSupportsJsonEntity(entity);
+        if (isJsonEntity(repositoryMetadata, entity)) {
             AnnotationValue<EntityRepresentation> entityRepresentationAnnotationValue = entity.getAnnotationMetadata().getAnnotation(EntityRepresentation.class);
             String columnName = entityRepresentationAnnotationValue.getRequiredValue("column", String.class);
             int key = 1;
@@ -1709,11 +1706,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
 
     @Override
     protected boolean isAliasForBatch(PersistentEntity persistentEntity, AnnotationMetadata annotationMetadata) {
-        if (DataAnnotationUtils.hasJsonEntityRepresentationAnnotation(annotationMetadata)) {
-            checkDialectSupportsJsonEntity(persistentEntity);
-            return true;
-        }
-        return false;
+        return isJsonEntity(annotationMetadata, persistentEntity);
     }
 
     @Override

@@ -11,7 +11,6 @@ class JsonViewSpec extends AbstractDataSpec {
         given:
         def repository = buildRepository('test.ContactViewRepository', """
 import io.micronaut.data.annotation.Id;
-import io.micronaut.data.annotation.QueryResult;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.repository.CrudRepository;
@@ -20,7 +19,6 @@ import io.micronaut.data.tck.entities.ContactView;
 import java.time.LocalDateTime;
 import java.util.Optional;
 @JdbcRepository(dialect = Dialect.ORACLE)
-@QueryResult(type = QueryResult.Type.JSON)
 interface ContactViewRepository extends CrudRepository<ContactView, Long> {
 
     void updateByAddressStreet(String street, String name);
@@ -84,4 +82,20 @@ interface ContactViewRepository extends CrudRepository<ContactView, Long> {
         findAllOrderByAddressZipCodeDescQuery == 'SELECT cv.* FROM "CONTACT_VIEW" cv ORDER BY cv.DATA.address.zipCode DESC'
     }
 
+    void "test JsonView repository with unsupported dialect"() {
+        when:
+        buildRepository('test.MySqlContactViewRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.CrudRepository;
+import io.micronaut.data.tck.entities.ContactView;
+@JdbcRepository(dialect = Dialect.MYSQL)
+interface MySqlContactViewRepository extends CrudRepository<ContactView, Long> {
+}
+""")
+
+        then:
+        def exception = thrown(RuntimeException)
+        exception.message.contains('not supported by the dialect MYSQL')
+    }
 }
