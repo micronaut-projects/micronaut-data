@@ -77,6 +77,9 @@ public @interface EntityRepresentation {
         COLUMN
     }
 
+    /**
+     * The column type. Support only JSON for now.
+     */
     enum ColumnType {
         /**
          * JSON entity representation in a column.

@@ -591,10 +591,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
         if (preparedQuery.isCount()) {
             return false;
         }
-        if (queryResultInfo != null && queryResultInfo.getType() == io.micronaut.data.annotation.QueryResult.Type.JSON) {
-            return true;
-        }
-        return false;
+        return queryResultInfo != null && queryResultInfo.getType() == io.micronaut.data.annotation.QueryResult.Type.JSON;
     }
 
     /**

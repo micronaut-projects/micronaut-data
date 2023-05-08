@@ -217,10 +217,10 @@ public class RawQueryMethodMatcher implements MethodMatcher {
                 .orElse(null);
         QueryResult countQueryResult = cq == null ? null : getQueryResult(matchContext, cq, parameters, namedParameters, entityParam, persistentEntity);
         boolean encodeEntityParameters = persistentEntity != null || operationType == DataMethod.OperationType.INSERT;
-        if (encodeEntityParameters) {
-            if (operationType == DataMethod.OperationType.INSERT && DataAnnotationUtils.hasJsonEntityRepresentationAnnotation(matchContext.getAnnotationMetadata())) {
+        if (encodeEntityParameters && (operationType == DataMethod.OperationType.INSERT &&
+            DataAnnotationUtils.hasJsonEntityRepresentationAnnotation(matchContext.getAnnotationMetadata()))) {
                 encodeEntityParameters = false;
-            }
+
         }
         methodMatchInfo
                 .isRawQuery(true)

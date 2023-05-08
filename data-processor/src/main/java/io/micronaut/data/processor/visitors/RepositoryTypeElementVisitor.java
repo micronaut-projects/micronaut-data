@@ -28,7 +28,6 @@ import io.micronaut.core.order.OrderUtil;
 import io.micronaut.core.reflect.ClassUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
-import io.micronaut.data.annotation.DataAnnotationUtils;
 import io.micronaut.data.annotation.EntityRepresentation;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.annotation.Query;
@@ -627,12 +626,10 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                 String column = entityRepresentationAnnotationValue.getRequiredValue("column", String.class);
                 JsonDataType jsonDataType = JsonDataType.DEFAULT;
                 io.micronaut.data.annotation.QueryResult.Type queryResultType = type == EntityRepresentation.Type.TABULAR ? io.micronaut.data.annotation.QueryResult.Type.TABULAR : io.micronaut.data.annotation.QueryResult.Type.JSON;
-                element.annotate(io.micronaut.data.annotation.QueryResult.class, builder -> {
-                    builder
-                        .member("type", queryResultType)
-                        .member("jsonDataType", jsonDataType)
-                        .member("column", column);
-                });
+                element.annotate(io.micronaut.data.annotation.QueryResult.class, builder -> builder
+                    .member("type", queryResultType)
+                    .member("jsonDataType", jsonDataType)
+                    .member("column", column));
             }
         }
     }
