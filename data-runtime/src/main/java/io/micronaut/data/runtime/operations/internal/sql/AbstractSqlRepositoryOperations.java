@@ -23,7 +23,6 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.annotation.AutoPopulated;
 import io.micronaut.data.annotation.DataAnnotationUtils;
-import io.micronaut.data.annotation.EntityRepresentation;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.exceptions.DataAccessException;
@@ -589,28 +588,32 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
      * @param queryResultInfo the query result info, if not null will hold info about result type
      * @return true if result is JSON
      */
-    protected boolean isJsonResult(PreparedQuery<?, ?> preparedQuery, QueryResultInfo queryResultInfo) {
+    protected final boolean isJsonResult(PreparedQuery<?, ?> preparedQuery, QueryResultInfo queryResultInfo) {
         if (preparedQuery.isCount()) {
             return false;
         }
         if (queryResultInfo != null && queryResultInfo.getType() == io.micronaut.data.annotation.QueryResult.Type.JSON) {
             return true;
         }
-        DataType resultDataType = preparedQuery.getResultDataType();
-        if (resultDataType == DataType.JSON || (resultDataType == DataType.ENTITY && isJsonEntity(preparedQuery))) {
-            return true;
-        }
         return false;
     }
 
     /**
-     * Gets an indicator telling whether stored query is annotated with {@link EntityRepresentation} annotation with type JSON.
+     * Inserting JSON entity representation (like Oracle Json View) can generate new id, and we support retrieval only numeric auto generated ids.
      *
      * @param storedQuery the stored query
-     * @return true if stored query is handling JSON entity representation
+     * @param persistentEntity the persistent entity
+     * @return true if entity being inserted is JSON entity representation with auto generated numeric id
      */
-    protected boolean isJsonEntity(StoredQuery<?, ?> storedQuery) {
-        return DataAnnotationUtils.hasJsonEntityRepresentationAnnotation(storedQuery.getAnnotationMetadata());
+    protected final boolean isJsonEntityGeneratedId(StoredQuery<?, ?> storedQuery, PersistentEntity persistentEntity) {
+        if (!DataAnnotationUtils.hasJsonEntityRepresentationAnnotation(storedQuery.getAnnotationMetadata())) {
+            return false;
+        }
+        PersistentProperty identity = persistentEntity.getIdentity();
+        if (identity == null) {
+            return false;
+        }
+        return identity.getDataType().isNumeric();
     }
 
     /**
@@ -620,7 +623,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
      * @param queryResultInfo the query result info from the {@link io.micronaut.data.annotation.QueryResult} annotation, null if annotation not present
      * @return the JSON column name
      */
-    protected String getJsonColumn(QueryResultInfo queryResultInfo) {
+    protected final String getJsonColumn(QueryResultInfo queryResultInfo) {
         if (queryResultInfo != null) {
             return queryResultInfo.getColumnName();
         }
@@ -634,7 +637,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
      * @param queryResultInfo the query result info from the {@link io.micronaut.data.annotation.QueryResult} annotation, null if annotation not present
      * @return the JSON data type
      */
-    protected JsonDataType getJsonDataType(QueryResultInfo queryResultInfo) {
+    protected final JsonDataType getJsonDataType(QueryResultInfo queryResultInfo) {
         if (queryResultInfo != null) {
             return queryResultInfo.getJsonDataType();
         }
