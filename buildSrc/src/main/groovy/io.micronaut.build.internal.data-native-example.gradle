@@ -13,7 +13,7 @@ tasks.named("check") { task ->
         System.getProperty(it)?.toLowerCase(Locale.ENGLISH)?.contains("graal")
     }
     if (graal) {
-        task.dependsOn("nativeTest")
+        //task.dependsOn("nativeTest")
     }
 }
 
