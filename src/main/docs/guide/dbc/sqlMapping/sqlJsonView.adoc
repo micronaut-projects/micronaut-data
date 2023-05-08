@@ -2,8 +2,7 @@ Since Micronaut Data 4.0 and Oracle23c database, an entity can be mapped to an J
 
 [source,java]
 ----
-@MappedEntity(value = "CONTACT_VIEW")
-@JsonView
+@JsonView("CONTACT_VIEW")
 public class ContactView
 ----
 

@@ -31,12 +31,11 @@ import java.lang.annotation.Target;
  * @since 4.0.0
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.TYPE_USE, ElementType.ANNOTATION_TYPE, ElementType.TYPE, ElementType.FIELD})
+@Target({ElementType.ANNOTATION_TYPE, ElementType.TYPE, ElementType.FIELD})
 @Serdeable
 @Introspected
 @Documented
 @Experimental
-@EntityRepresentation(type = EntityRepresentation.Type.COLUMN)
 public @interface JsonView {
 
     String DEFAULT_COLUMN_NAME = "DATA";
@@ -47,4 +46,23 @@ public @interface JsonView {
      * @return the column name (default DATA)
      */
     String column() default DEFAULT_COLUMN_NAME;
+
+    /**
+     * The Json View name in the database.
+     *
+     * @return the json view
+     */
+    String value() default "";
+
+    /**
+     * Only applies to supported databases.
+     *
+     * @return the schema to use for the query
+     */
+    String schema() default "";
+
+    /**
+     * @return The view alias to use for the query
+     */
+    String alias() default "";
 }

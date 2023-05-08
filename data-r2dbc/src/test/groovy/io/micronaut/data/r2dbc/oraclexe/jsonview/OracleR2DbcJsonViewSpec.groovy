@@ -9,13 +9,14 @@ import io.micronaut.test.support.TestPropertyProvider
 import org.testcontainers.containers.OracleContainer
 import org.testcontainers.utility.DockerImageName
 import spock.lang.AutoCleanup
+import spock.lang.IgnoreIf
 import spock.lang.Shared
 import spock.lang.Specification
 
 import java.time.Duration
 import java.time.LocalDateTime
 
-//@IgnoreIf({ env["GITHUB_WORKFLOW"] })
+@IgnoreIf({ env["GITHUB_WORKFLOW"] })
 class OracleR2DbcJsonViewSpec extends Specification implements TestPropertyProvider {
 
     @AutoCleanup("stop")

@@ -3,13 +3,11 @@ package io.micronaut.data.tck.entities;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.JsonView;
-import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.Relation;
 
 import java.time.LocalDateTime;
 
-@MappedEntity(value = "CONTACT_VIEW", alias = "cv")
-@JsonView
+@JsonView(value = "CONTACT_VIEW", alias = "cv")
 public class ContactView {
     @Id
     private Long id;
