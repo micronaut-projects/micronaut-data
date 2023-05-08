@@ -1,6 +1,20 @@
 plugins {
-    id "io.micronaut.build.internal.data-example"
     id "io.micronaut.test-resources"
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
+
+tasks.register("testExamples") {
+    dependsOn "test"
+}
+
+dependencies {
+    testRuntimeOnly mnSerde.micronaut.serde.jackson
+    runtimeOnly mn.snakeyaml
 }
 
 configurations.all {
@@ -13,6 +27,7 @@ tasks.named("check") { task ->
         System.getProperty(it)?.toLowerCase(Locale.ENGLISH)?.contains("graal")
     }
     if (graal) {
+        // Disabled since there are separate workflows for native tests
         //task.dependsOn("nativeTest")
     }
 }
