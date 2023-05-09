@@ -22,6 +22,9 @@ public class MariaDbInit implements BeanCreatedEventListener<BasicJdbcConfigurat
             return configuration;
         }
 
+        // fix for https://jira.mariadb.org/browse/CONJ-1038 (using 3.1.3 driver version)
+        configuration.setUrl(configuration.getUrl() + "?useBulkStmts=false");
+
         final Properties info = new Properties();
         info.put("user", "root");
         info.put("password", "test");
