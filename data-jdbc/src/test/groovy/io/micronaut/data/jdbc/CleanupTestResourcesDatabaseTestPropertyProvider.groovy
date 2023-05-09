@@ -1,29 +1,9 @@
 package io.micronaut.data.jdbc
 
-import io.micronaut.test.support.TestPropertyProvider
-import io.micronaut.testresources.client.TestResourcesClient
-import io.micronaut.testresources.client.TestResourcesClientFactory
+import io.micronaut.test.extensions.junit5.annotation.ScopeNamingStrategy
+import io.micronaut.test.extensions.junit5.annotation.TestResourcesScope
 
-import java.lang.reflect.Method
-
-trait CleanupTestResourcesDatabaseTestPropertyProvider implements TestPropertyProvider {
-
-    @Override
-    Map<String, String> getProperties() {
-        return ['micronaut.test.resources.scope': getClass().getSimpleName()]
-    }
-
-    def cleanupSpec() {
-        URL config = CleanupTestResourcesDatabaseTestPropertyProvider.class.getResource("/test-resources.properties")
-        try {
-            Method m = TestResourcesClientFactory.class.getDeclaredMethod("configuredAt", URL.class)
-            m.setAccessible(true)
-            TestResourcesClient testResourcesClient = (TestResourcesClient) m.invoke(null, config)
-            testResourcesClient.closeScope(getClass().getSimpleName())
-        } catch (Exception e) {
-            // Ignore
-        }
-    }
+@TestResourcesScope(namingStrategy = ScopeNamingStrategy.TestClassName)
+interface CleanupTestResourcesDatabaseTestPropertyProvider {
 
 }
-

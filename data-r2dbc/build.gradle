@@ -83,7 +83,7 @@ dependencies {
     testResourcesService libs.drivers.jdbc.postgresql
     testResourcesService libs.drivers.jdbc.mssql
 
-    testImplementation libs.micronaut.testresources.client
+    testImplementation mnTestResources.micronaut.test.resources.extensions.junit.platform
     testImplementation mnSerde.micronaut.serde.support
     testRuntimeOnly mn.snakeyaml
     testRuntimeOnly mnSerde.micronaut.serde.oracle.jdbc.json

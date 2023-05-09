@@ -15,18 +15,15 @@
  */
 package io.micronaut.data.jdbc.postgres
 
-import io.micronaut.data.jdbc.SharedTestResourcesDatabaseTestPropertyProvider
+
+import io.micronaut.data.jdbc.TestResourcesDatabaseTestPropertyProvider
 import io.micronaut.data.model.query.builder.sql.Dialect
 
-trait PostgresTestPropertyProvider implements SharedTestResourcesDatabaseTestPropertyProvider {
+trait PostgresTestPropertyProvider implements TestResourcesDatabaseTestPropertyProvider {
 
     @Override
     Dialect dialect() {
         Dialect.POSTGRES
     }
 
-    @Override
-    int sharedSpecsCount() {
-        return 13
-    }
 }

@@ -21,11 +21,6 @@ class SampleHttpSpec extends Specification implements PostgresTestPropertyProvid
     @Inject
     ApplicationContext context
 
-    @Override
-    ApplicationContext getApplicationContext() {
-        return context
-    }
-
     @Test
     void testWriteRead() {
         when:
