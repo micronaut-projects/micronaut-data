@@ -1,0 +1,15 @@
+name: GraalVM Dev CI
+on:
+  schedule:
+    - cron: "0 1 * * 1-5" # Mon-Fri at 1am UTC
+jobs:
+  call-graalvm-base:
+    strategy:
+      matrix:
+        graalvm: [ 'dev' ]
+        java: [ '17' ]
+    uses: ./.github/workflows/graalvm-base.yml
+    with:
+      graalvm: ${{ matrix.graalvm }}
+      java: ${{ matrix.java }}
+    secrets: inherit
