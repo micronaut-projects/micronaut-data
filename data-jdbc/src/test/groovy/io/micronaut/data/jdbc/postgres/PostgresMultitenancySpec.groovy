@@ -2,7 +2,9 @@ package io.micronaut.data.jdbc.postgres
 
 import io.micronaut.data.jdbc.AbstractJdbcMultitenancySpec
 import io.micronaut.data.jdbc.CleanupTestResourcesDatabaseTestPropertyProvider
+import io.micronaut.test.extensions.junit5.annotation.TestResourcesScope
 
+@TestResourcesScope("multitenancy-postgres")
 class PostgresMultitenancySpec extends AbstractJdbcMultitenancySpec implements CleanupTestResourcesDatabaseTestPropertyProvider {
 
     @Override

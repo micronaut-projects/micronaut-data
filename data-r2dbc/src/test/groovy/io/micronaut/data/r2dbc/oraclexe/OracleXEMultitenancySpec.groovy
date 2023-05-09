@@ -2,8 +2,9 @@ package io.micronaut.data.r2dbc.oraclexe
 
 import io.micronaut.data.r2dbc.AbstractR2dbcMultitenancySpec
 import io.micronaut.data.r2dbc.CleanupTestResourcesDatabaseTestPropertyProvider
-import spock.lang.IgnoreIf
+import io.micronaut.test.extensions.junit5.annotation.TestResourcesScope
 
+@TestResourcesScope("multitenancy-r2-oracle")
 class OracleXEMultitenancySpec extends AbstractR2dbcMultitenancySpec implements CleanupTestResourcesDatabaseTestPropertyProvider {
 
     @Override
