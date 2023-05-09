@@ -24,5 +24,4 @@ tasks.named("jmh") {
 
 project.afterEvaluate {
     nativeCompile.enabled = false
-    testNativeImage.enabled = false
 }

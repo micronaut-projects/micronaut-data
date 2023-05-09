@@ -42,6 +42,10 @@ abstract class AbstractJoinSpec extends Specification {
 
     abstract ProductDtoRepository getProductDtoRepository()
 
+    ApplicationContext getApplicationContext() {
+        return context
+    }
+
     def cleanup() {
         productRepository?.deleteAll()
         categoryRepository?.deleteAll()

@@ -109,6 +109,10 @@ abstract class AbstractRepositorySpec extends Specification {
     @Shared
     Optional<SynchronousTransactionManager<Connection>> transactionManager = context.findBean(SynchronousTransactionManager)
 
+    ApplicationContext getApplicationContext() {
+        return context
+    }
+
     boolean isOracle() {
         return false
     }

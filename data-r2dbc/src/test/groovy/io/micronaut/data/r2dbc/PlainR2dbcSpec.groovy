@@ -37,6 +37,10 @@ abstract class PlainR2dbcSpec extends Specification {
 
     ReactiveTransactionOperations<Connection> reactiveTransactionOperations = context.getBean(ReactiveTransactionOperations)
 
+    ApplicationContext getApplicationContext() {
+        return context
+    }
+
     protected abstract AuthorRepository getAuthorRepository()
 
     protected String getInsertQuery() {

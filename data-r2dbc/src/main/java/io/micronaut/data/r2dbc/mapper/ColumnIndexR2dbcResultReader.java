@@ -23,6 +23,7 @@ import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.mapper.ResultReader;
+import io.r2dbc.spi.R2dbcTransientResourceException;
 import io.r2dbc.spi.Row;
 
 import java.math.BigDecimal;
@@ -229,7 +230,8 @@ public class ColumnIndexR2dbcResultReader implements ResultReader<Row, Integer> 
     public <T> T getRequiredValue(Row resultSet, Integer name, Class<T> type) throws DataAccessException {
         try {
             return resultSet.get(name, type);
-        } catch (IllegalArgumentException | ConversionErrorException e) {
+        } catch (IllegalArgumentException | ConversionErrorException |
+                 R2dbcTransientResourceException e) {
             try {
                 return conversionService.convertRequired(resultSet.get(name), type);
             } catch (Exception exception) {

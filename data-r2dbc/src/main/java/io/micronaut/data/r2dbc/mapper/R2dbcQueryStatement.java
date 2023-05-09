@@ -67,14 +67,12 @@ public class R2dbcQueryStatement implements QueryStatement<Statement, Integer> {
                     statement.bindNull(index, UUID.class);
                     break;
                 case STRING:
+                case CHARACTER:
                 case JSON:
                     statement.bindNull(index, String.class);
                     break;
                 case BYTE:
                     statement.bindNull(index, Byte.class);
-                break;
-                case CHARACTER:
-                    statement.bindNull(index, Character.class);
                 break;
                 case INTEGER:
                     statement.bindNull(index, Integer.class);
