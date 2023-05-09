@@ -32,6 +32,10 @@ abstract class AbstractArraysSpec extends Specification {
     @Shared
     ApplicationContext context = ApplicationContext.run(properties)
 
+    ApplicationContext getApplicationContext() {
+        return context
+    }
+
     def "should insert and update an entity with arrays"() {
         given:
             ArraysEntity entity = new ArraysEntity()
