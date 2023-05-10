@@ -1,6 +1,4 @@
 plugins {
-    id "java"
-    id "io.micronaut.application"
     id "io.micronaut.build.internal.data-native-example"
 }
 
@@ -30,5 +28,6 @@ dependencies {
 micronaut {
     testResources {
         additionalModules.add(HIBERNATE_REACTIVE_MYSQL)
+        version = libs.versions.micronaut.testresources.get()
     }
 }
