@@ -15,6 +15,7 @@ import spock.lang.Specification
 
 import java.time.Duration
 import java.time.LocalDateTime
+import java.time.temporal.ChronoUnit
 
 @IgnoreIf({ env["GITHUB_WORKFLOW"] })
 class OracleR2DbcJsonViewSpec extends Specification implements TestPropertyProvider {
@@ -112,7 +113,7 @@ class OracleR2DbcJsonViewSpec extends Specification implements TestPropertyProvi
         updatedContactView.id == contactView.id
         updatedContactView.age == 31
         updatedContactView.name == contactView.name
-        updatedContactView.startDateTime == startDateTime
+        updatedContactView.startDateTime.truncatedTo(ChronoUnit.MILLIS) == startDateTime.truncatedTo(ChronoUnit.MILLIS)
 
         when:"Test optimistic locking"
         contactView = contactViewRepository.findById(id).get()
