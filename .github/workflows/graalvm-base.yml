@@ -54,9 +54,9 @@ jobs:
       - name: "🛠 Build with Gradle"
         id: gradle
         run: |
-          if ./gradlew tasks --no-daemon --all | grep -w "nativeTest"
+          if ./gradlew tasks --no-daemon --all | grep -w "nativeTestDocExample"
           then
-            ./gradlew nativeTest --no-daemon --continue
+            ./gradlew nativeTestDocExample --no-daemon --continue
           fi
 
       - name: "📊 Publish Test Report"

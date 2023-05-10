@@ -32,6 +32,10 @@ tasks.named("check") { task ->
     }
 }
 
+tasks.register("nativeTestDocExample") {
+    dependsOn "nativeTest"
+}
+
 graalvmNative {
     toolchainDetection = false
     testSupport = true
