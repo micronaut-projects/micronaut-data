@@ -203,4 +203,15 @@ public enum DataType {
             return CLASS_DATA_TYPE_MAP.getOrDefault(wrapper, DataType.OBJECT);
         }
     }
+
+    /**
+     * Gets an indicator telling whether data type is numeric.
+     * @return true if data type is numeric
+     */
+    public boolean isNumeric() {
+        return switch (this) {
+            case BYTE, BIGDECIMAL, LONG, DOUBLE, FLOAT, INTEGER, SHORT -> true;
+            default -> false;
+        };
+    }
 }

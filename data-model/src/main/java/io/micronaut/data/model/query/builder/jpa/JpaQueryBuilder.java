@@ -163,12 +163,12 @@ public class JpaQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     }
 
     @Override
-    protected void selectAllColumns(QueryState queryState, StringBuilder queryBuffer) {
+    protected void selectAllColumns(AnnotationMetadata annotationMetadata, QueryState queryState, StringBuilder queryBuffer) {
         queryBuffer.append(queryState.getRootAlias());
     }
 
     @Override
-    protected void selectAllColumns(PersistentEntity entity, String alias, StringBuilder queryBuffer) {
+    protected void selectAllColumns(AnnotationMetadata annotationMetadata, PersistentEntity entity, String alias, StringBuilder queryBuffer) {
         queryBuffer.append(alias);
     }
 
@@ -186,7 +186,7 @@ public class JpaQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     }
 
     @Override
-    protected boolean isAliasForBatch() {
+    protected boolean isAliasForBatch(PersistentEntity persistentEntity, AnnotationMetadata annotationMetadata) {
         return true;
     }
 

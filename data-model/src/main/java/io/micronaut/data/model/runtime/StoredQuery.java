@@ -288,4 +288,12 @@ public interface StoredQuery<E, R> extends Named, StoredDataOperation<R> {
      * @return true if it is raw query
      */
     boolean isRawQuery();
+
+    /**
+     * @return an indicator telling whether query is handling entities with JSON representation (like Oracle Json View)
+     * @since 4.0.0
+     */
+    default boolean isJsonEntity() {
+        return false;
+    }
 }
