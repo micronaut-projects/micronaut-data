@@ -22,6 +22,7 @@ import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.beans.BeanIntrospector;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
+import io.micronaut.data.annotation.JsonView;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.query.builder.sql.Dialect;
@@ -90,6 +91,7 @@ public class R2dbcSchemaGenerator {
                         // filter out inner / internal / abstract(MappedSuperClass) classes
                         .filter(i -> !i.getBeanType().getName().contains("$"))
                         .filter(i -> !java.lang.reflect.Modifier.isAbstract(i.getBeanType().getModifiers()))
+                        .filter(i -> !i.hasAnnotation(JsonView.class))
                         .map(e -> runtimeEntityRegistry.getEntity(e.getBeanType())).toArray(PersistentEntity[]::new);
                 if (ArrayUtils.isNotEmpty(entities)) {
                     SqlQueryBuilder builder = new SqlQueryBuilder(configuration.getDialect());

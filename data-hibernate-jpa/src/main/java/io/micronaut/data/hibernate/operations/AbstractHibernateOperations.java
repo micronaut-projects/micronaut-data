@@ -300,7 +300,7 @@ public abstract class AbstractHibernateOperations<S, Q> implements HintsCapableR
         if (pageable != Pageable.UNPAGED) {
             Sort sort = pageable.getSort();
             if (sort.isSorted()) {
-                queryStr += QUERY_BUILDER.buildOrderBy(queryStr, getEntity(preparedQuery.getRootEntity()), sort).getQuery();
+                queryStr += QUERY_BUILDER.buildOrderBy(queryStr, getEntity(preparedQuery.getRootEntity()), AnnotationMetadata.EMPTY_METADATA, sort).getQuery();
             }
         }
         collectResults(session, queryStr, preparedQuery, collector);
