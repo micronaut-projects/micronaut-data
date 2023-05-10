@@ -7,6 +7,7 @@ import example.domain.view.StudentView;
 import example.domain.view.UsrView;
 import example.repository.StudentViewRepository;
 import example.repository.UsrRepository;
+import example.repository.UsrViewRepository;
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Get;
 import io.micronaut.scheduling.TaskExecutors;
@@ -31,10 +32,13 @@ public class StudentController {
 
     private final StudentViewRepository studentViewRepository;
     private final UsrRepository usrRepository;
+    private final UsrViewRepository usrViewRepository;
 
-    public StudentController(StudentViewRepository studentViewRepository, UsrRepository usrRepository) {
+    public StudentController(StudentViewRepository studentViewRepository, UsrRepository usrRepository,
+                             UsrViewRepository usrViewRepository) {
         this.studentViewRepository = studentViewRepository;
         this.usrRepository = usrRepository;
+        this.usrViewRepository = usrViewRepository;
     }
 
     @Get("/{id}")
@@ -55,14 +59,14 @@ public class StudentController {
 
     @Get("/user_view/{id}")
     public Mono<UsrView> userView(Long id) {
-        Optional<UsrView> optUserView = usrRepository.findByUsrId(id);
+        Optional<UsrView> optUserView = usrViewRepository.findById(id);
         if (optUserView.isPresent()) {
             UsrView usrView = optUserView.get();
             try {
                 usrView.setName("User123");
                 // Make update fail due to different etag
                 // usrView.setMetadata(Metadata.of("TEST", usrView.getMetadata().getAsof()));
-                usrRepository.update(usrView, usrView.getUsrId());
+                usrViewRepository.update(usrView);
 
                 // Create new one on the fly
                 boolean insertNew = id == 2;
@@ -71,10 +75,10 @@ public class StudentController {
                     UsrView newUsrView = new UsrView(newId, "New User " + newId, Period.of(1, 2, 0), Duration.ofDays(1), 9.9999,
                         "memo123".getBytes(Charset.defaultCharset()), null, LocalDateTime.now(),
                         LocalDate.now()/*, OffsetDateTime.now()*/);
-                    usrRepository.insert(newUsrView);
+                    usrViewRepository.save(newUsrView);
                 }
 
-                optUserView = usrRepository.findByUsrId(id);
+                optUserView = usrViewRepository.findById(id);
                 usrView = optUserView.get();
                 return Mono.just(usrView);
             } catch (Exception e) {
@@ -88,12 +92,12 @@ public class StudentController {
                 "memo123".getBytes(Charset.defaultCharset()), null, LocalDateTime.now(),
                 LocalDate.now()/*, OffsetDateTime.now()*/);
             try {
-                usrRepository.insert(newUsrView);
+                usrViewRepository.save(newUsrView);
             } catch (Exception e) {
                 LOG.error("Insert failed", e);
                 return Mono.empty();
             }
-            optUserView = usrRepository.findByUsrId(newId);
+            optUserView = usrViewRepository.findById(newId);
             return optUserView.isPresent() ? Mono.just(optUserView.get()) : Mono.empty();
         }
     }

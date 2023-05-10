@@ -64,7 +64,7 @@ public class StudentController {
 
     @Get("/user_view/{id}")
     public Optional<UsrView> userView(Long id) {
-        Optional<UsrView> optUserView = usrViewRepository.findUsrViewByUsrId(id);
+        Optional<UsrView> optUserView = usrViewRepository.findById(id);
         if (optUserView.isPresent()) {
             UsrView usrView = optUserView.get();
             try {
@@ -74,7 +74,7 @@ public class StudentController {
                 }
                 // Make update fail due to different etag
                 // usrView.setMetadata(Metadata.of("TEST", usrView.getMetadata().getAsof()));
-                usrViewRepository.updateUsrView(usrView, usrView.getUsrId());
+                usrViewRepository.update(usrView);
 
                 // Create new one on the fly
                 boolean insertNew = id == 2;
@@ -83,10 +83,10 @@ public class StudentController {
                     UsrView newUsrView = new UsrView(newId, "New User " + newId, Period.of(1, 2, 0), Duration.ofDays(1), 9.9999,
                         "memo123".getBytes(Charset.defaultCharset()), null, LocalDateTime.now(),
                         LocalDate.now()/*, OffsetDateTime.now()*/);
-                    usrViewRepository.insertUsrView(newUsrView);
+                    usrViewRepository.save(newUsrView);
                 }
 
-                optUserView = usrViewRepository.findUsrViewByUsrId(id);
+                optUserView = usrViewRepository.findById(id);
                 usrView = optUserView.get();
                 return Optional.of(usrView);
             } catch (Exception e) {
@@ -100,12 +100,12 @@ public class StudentController {
                 "memo123".getBytes(Charset.defaultCharset()), null, LocalDateTime.now(),
                 LocalDate.now()/*, OffsetDateTime.now()*/);
             try {
-                usrViewRepository.insertUsrView(newUsrView);
+                usrViewRepository.save(newUsrView);
             } catch (Exception e) {
                 LOG.error("Insert failed", e);
                 return Optional.empty();
             }
-            optUserView = usrViewRepository.findUsrViewByUsrId(newId);
+            optUserView = usrViewRepository.findById(newId);
             return optUserView;
         }
     }

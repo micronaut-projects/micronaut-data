@@ -1,6 +1,5 @@
 package example;
 
-import example.domain.UsrDto;
 import example.domain.view.StudentView;
 import example.domain.view.UsrView;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;

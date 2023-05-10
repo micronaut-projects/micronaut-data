@@ -3,13 +3,11 @@ package example.domain.view;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import example.domain.Metadata;
 import io.micronaut.data.annotation.Id;
-import io.micronaut.data.annotation.MappedEntity;
-import io.micronaut.serde.annotation.Serdeable;
+import io.micronaut.data.annotation.JsonView;
 
 import java.util.List;
 
-@Serdeable
-@MappedEntity
+@JsonView("STUDENT_SCHEDULE")
 public record StudentView (
     @Id
     Long studentId,

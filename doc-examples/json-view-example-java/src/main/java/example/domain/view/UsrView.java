@@ -3,6 +3,8 @@ package example.domain.view;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import example.domain.Metadata;
 import io.micronaut.core.annotation.Nullable;
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.JsonView;
 import io.micronaut.serde.annotation.Serdeable;
 
 import java.time.Duration;
@@ -10,8 +12,9 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.Period;
 
-@Serdeable
+@JsonView
 public class UsrView {
+    @Id
     private Long usrId;
     private String name;
 
