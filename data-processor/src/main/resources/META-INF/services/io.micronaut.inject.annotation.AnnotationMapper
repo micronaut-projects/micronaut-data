@@ -1,5 +1,4 @@
 io.micronaut.data.processor.mappers.MappedEntityMapper
-io.micronaut.data.processor.mappers.JsonViewMapper
 io.micronaut.data.processor.mappers.jta.JtaTransactionalMapper
 io.micronaut.data.processor.mappers.jta.JakartaTransactionalMapper
 io.micronaut.data.processor.mappers.jpa.jx.EntityAnnotationMapper

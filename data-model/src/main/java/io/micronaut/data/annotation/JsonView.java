@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 package io.micronaut.data.annotation;
+import io.micronaut.context.annotation.AliasFor;
 import io.micronaut.core.annotation.Experimental;
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.serde.annotation.Serdeable;
@@ -36,6 +37,8 @@ import java.lang.annotation.Target;
 @Introspected
 @Documented
 @Experimental
+@MappedEntity
+@EntityRepresentation(type = EntityRepresentation.Type.COLUMN, columnType = EntityRepresentation.ColumnType.JSON)
 public @interface JsonView {
 
     String DEFAULT_COLUMN_NAME = "DATA";
@@ -45,6 +48,7 @@ public @interface JsonView {
      *
      * @return the column name (default DATA)
      */
+    @AliasFor(annotation = EntityRepresentation.class, member = "column")
     String column() default DEFAULT_COLUMN_NAME;
 
     /**
@@ -52,6 +56,7 @@ public @interface JsonView {
      *
      * @return the json view
      */
+    @AliasFor(annotation = MappedEntity.class, member = "value")
     String value() default "";
 
     /**
@@ -59,10 +64,12 @@ public @interface JsonView {
      *
      * @return the schema to use for the query
      */
+    @AliasFor(annotation = MappedEntity.class, member = "schema")
     String schema() default "";
 
     /**
      * @return The view alias to use for the query
      */
+    @AliasFor(annotation = MappedEntity.class, member = "alias")
     String alias() default "";
 }
