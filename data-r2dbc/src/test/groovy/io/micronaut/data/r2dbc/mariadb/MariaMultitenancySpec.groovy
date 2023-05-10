@@ -3,7 +3,9 @@ package io.micronaut.data.r2dbc.mariadb
 import io.micronaut.data.r2dbc.AbstractR2dbcMultitenancySpec
 import io.micronaut.data.r2dbc.CleanupTestResourcesDatabaseTestPropertyProvider
 import io.micronaut.data.r2dbc.mysql.MySqlBookRepository
+import io.micronaut.test.extensions.junit5.annotation.TestResourcesScope
 
+@TestResourcesScope("multitenancy-r2-mariadb")
 class MariaMultitenancySpec extends AbstractR2dbcMultitenancySpec implements CleanupTestResourcesDatabaseTestPropertyProvider {
 
     @Override

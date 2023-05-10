@@ -63,18 +63,17 @@ dependencies {
     testResourcesService libs.drivers.jdbc.postgresql
     testResourcesService libs.drivers.jdbc.mssql
 
-    testImplementation libs.micronaut.testresources.client
-
     // Needed for H2EagerContextSpec
     testImplementation("org.jetbrains.kotlin:kotlin-reflect:1.8.21")
     testImplementation mnSerde.micronaut.serde.support
+
+    testImplementation mnTestResources.micronaut.test.resources.extensions.junit.platform
 
     testRuntimeOnly mnSerde.micronaut.serde.oracle.jdbc.json
 }
 
 micronaut {
-    // version = libs.versions.micronaut.asProvider().get()
-    version = '4.0.0-SNAPSHOT'
+    version libs.versions.micronaut.platform.get()
     testResources {
         enabled = true
         inferClasspath = false
@@ -101,6 +100,10 @@ tasks.withType(Test).configureEach {
         mustRunAfter ":data-mongodb:test"
         mustRunAfter ":data-azure-cosmos:test"
     }
+}
+
+tasks.named("internalStartTestResourcesService") {
+    //debugServer = true
 }
 
 micronautBuild {

@@ -83,15 +83,14 @@ dependencies {
     testResourcesService libs.drivers.jdbc.postgresql
     testResourcesService libs.drivers.jdbc.mssql
 
-    testImplementation libs.micronaut.testresources.client
+    testImplementation mnTestResources.micronaut.test.resources.extensions.junit.platform
     testImplementation mnSerde.micronaut.serde.support
     testRuntimeOnly mn.snakeyaml
     testRuntimeOnly mnSerde.micronaut.serde.oracle.jdbc.json
 }
 
 micronaut {
-    // version = libs.versions.micronaut.asProvider().get()
-    version = '4.0.0-SNAPSHOT'
+    version libs.versions.micronaut.platform.get()
     testResources {
         enabled = true
         inferClasspath = false
