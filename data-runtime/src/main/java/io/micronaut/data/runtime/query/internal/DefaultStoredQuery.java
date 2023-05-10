@@ -77,6 +77,7 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
     private Set<JoinPath> joinFetchPaths = null;
     private final List<StoredQueryParameter> queryParameters;
     private final boolean rawQuery;
+    private final boolean jsonEntity;
 
     /**
      * The default constructor.
@@ -189,6 +190,7 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
             }
             this.queryParameters = queryParameters;
         }
+        this.jsonEntity = DataAnnotationUtils.hasJsonEntityRepresentationAnnotation(annotationMetadata);
     }
 
     @Override
@@ -349,6 +351,11 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
     @Override
     public boolean isRawQuery() {
         return this.rawQuery;
+    }
+
+    @Override
+    public boolean isJsonEntity() {
+        return jsonEntity;
     }
 
     @Override

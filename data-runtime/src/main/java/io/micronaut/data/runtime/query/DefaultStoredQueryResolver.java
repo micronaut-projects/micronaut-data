@@ -19,6 +19,7 @@ import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.type.Argument;
+import io.micronaut.data.annotation.DataAnnotationUtils;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.RepositoryConfiguration;
 import io.micronaut.data.intercept.annotation.DataMethod;
@@ -42,7 +43,7 @@ import java.util.List;
 public abstract class DefaultStoredQueryResolver implements StoredQueryResolver {
 
     @Override
-    public <E, R> StoredQuery<E, R> resolveQuery(MethodInvocationContext<?, ?> context, Class<E> entityClass, Class<R> resultType) {
+    public <E, R> StoredQuery<E, R> resolveQuery(MethodInvocationContext<?, ?> context, Class<E> entityClass, Class<R> resultType, boolean isCount) {
         if (resultType == null) {
             //noinspection unchecked
             resultType = (Class<R>) context.classValue(DataMethod.NAME, DataMethod.META_MEMBER_RESULT_TYPE)
@@ -56,7 +57,7 @@ public abstract class DefaultStoredQueryResolver implements StoredQueryResolver 
                 resultType,
                 entityClass,
                 query,
-                false,
+                isCount,
                 getHintsCapableRepository()
         );
     }
@@ -93,6 +94,7 @@ public abstract class DefaultStoredQueryResolver implements StoredQueryResolver 
         }
         String[] finalQueryParts = queryParts;
         boolean rawQuery = annotationMetadata.stringValue(Query.class, DataMethod.META_MEMBER_RAW_QUERY).isPresent();
+        boolean jsonEntity = DataAnnotationUtils.hasJsonEntityRepresentationAnnotation(annotationMetadata);
         return new StoredQuery<E, QR>() {
             @Override
             public Class<E> getRootEntity() {
@@ -158,6 +160,11 @@ public abstract class DefaultStoredQueryResolver implements StoredQueryResolver 
             @Override
             public boolean isRawQuery() {
                 return rawQuery;
+            }
+
+            @Override
+            public boolean isJsonEntity() {
+                return jsonEntity;
             }
 
             @Override

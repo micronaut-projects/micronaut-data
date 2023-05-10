@@ -25,6 +25,7 @@ import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.mapper.ResultReader;
 import io.r2dbc.spi.Blob;
 import io.r2dbc.spi.Clob;
+import io.r2dbc.spi.R2dbcTransientResourceException;
 import io.r2dbc.spi.Row;
 import reactor.core.publisher.Mono;
 
@@ -290,7 +291,8 @@ public class ColumnNameR2dbcResultReader implements ResultReader<Row, String> {
     public <T> T getRequiredValue(Row resultSet, String name, Class<T> type) throws DataAccessException {
         try {
             return resultSet.get(name, type);
-        } catch (IllegalArgumentException | ConversionErrorException e) {
+        } catch (IllegalArgumentException | ConversionErrorException |
+                 R2dbcTransientResourceException e) {
             try {
                 return conversionService.convertRequired(resultSet.get(name), type);
             } catch (Exception exception) {

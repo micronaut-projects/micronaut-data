@@ -1,14 +1,17 @@
 package io.micronaut.data.jdbc.mysql
 
+import io.micronaut.data.jdbc.CleanupTestResourcesDatabaseTestPropertyProvider
 import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.model.query.builder.sql.Dialect
-import io.micronaut.data.tck.repositories.*
+import io.micronaut.data.tck.repositories.AuthorJoinTypeRepositories
+import io.micronaut.data.tck.repositories.AuthorRepository
+import io.micronaut.data.tck.repositories.BookRepository
 import io.micronaut.data.tck.tests.AbstractJoinFetchSpec
 
 /**
  * Abstract Spec class used for DBs using mysql dialect (MySql, MariaDB)
  */
-abstract class MySqlDialectJoinFetchSpec extends AbstractJoinFetchSpec {
+abstract class MySqlDialectJoinFetchSpec extends AbstractJoinFetchSpec implements CleanupTestResourcesDatabaseTestPropertyProvider {
 
     boolean outerJoinSupported = false
 
