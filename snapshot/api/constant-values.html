@@ -71,6 +71,28 @@ loadScripts(document, 'script');</script>
 </div>
 </li>
 <li>
+<div class="caption"><span>io.micronaut.data.annotation.<a href="io/micronaut/data/annotation/EntityRepresentation.html" title="annotation interface in io.micronaut.data.annotation">EntityRepresentation</a></span></div>
+<div class="summary-table three-column-summary">
+<div class="table-header col-first">Modifier and Type</div>
+<div class="table-header col-second">Constant Field</div>
+<div class="table-header col-last">Value</div>
+<div class="col-first even-row-color"><code id="io.micronaut.data.annotation.EntityRepresentation.DEFAULT_COLUMN">public&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color"><code><a href="io/micronaut/data/annotation/EntityRepresentation.html#DEFAULT_COLUMN">DEFAULT_COLUMN</a></code></div>
+<div class="col-last even-row-color"><code>"DATA"</code></div>
+</div>
+</li>
+<li>
+<div class="caption"><span>io.micronaut.data.annotation.<a href="io/micronaut/data/annotation/JsonView.html" title="annotation interface in io.micronaut.data.annotation">JsonView</a></span></div>
+<div class="summary-table three-column-summary">
+<div class="table-header col-first">Modifier and Type</div>
+<div class="table-header col-second">Constant Field</div>
+<div class="table-header col-last">Value</div>
+<div class="col-first even-row-color"><code id="io.micronaut.data.annotation.JsonView.DEFAULT_COLUMN_NAME">public&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color"><code><a href="io/micronaut/data/annotation/JsonView.html#DEFAULT_COLUMN_NAME">DEFAULT_COLUMN_NAME</a></code></div>
+<div class="col-last even-row-color"><code>"DATA"</code></div>
+</div>
+</li>
+<li>
 <div class="caption"><span>io.micronaut.data.annotation.<a href="io/micronaut/data/annotation/MappedProperty.html" title="annotation interface in io.micronaut.data.annotation">MappedProperty</a></span></div>
 <div class="summary-table three-column-summary">
 <div class="table-header col-first">Modifier and Type</div>
@@ -542,54 +564,57 @@ loadScripts(document, 'script');</script>
 <div class="col-first odd-row-color"><code id="io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder.IS_NULL">protected&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
 <div class="col-second odd-row-color"><code><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#IS_NULL">IS_NULL</a></code></div>
 <div class="col-last odd-row-color"><code>" IS NULL"</code></div>
-<div class="col-first even-row-color"><code id="io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder.LESS_THAN">protected&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color"><code><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#LESS_THAN">LESS_THAN</a></code></div>
-<div class="col-last even-row-color"><code>" &lt; "</code></div>
-<div class="col-first odd-row-color"><code id="io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder.LESS_THAN_OR_EQUALS">protected&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second odd-row-color"><code><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#LESS_THAN_OR_EQUALS">LESS_THAN_OR_EQUALS</a></code></div>
-<div class="col-last odd-row-color"><code>" &lt;= "</code></div>
-<div class="col-first even-row-color"><code id="io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder.LOGICAL_AND">protected&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color"><code><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#LOGICAL_AND">LOGICAL_AND</a></code></div>
-<div class="col-last even-row-color"><code>" AND "</code></div>
-<div class="col-first odd-row-color"><code id="io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder.LOGICAL_OR">protected&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second odd-row-color"><code><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#LOGICAL_OR">LOGICAL_OR</a></code></div>
-<div class="col-last odd-row-color"><code>" OR "</code></div>
-<div class="col-first even-row-color"><code id="io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder.MAX">protected&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color"><code><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#MAX">MAX</a></code></div>
-<div class="col-last even-row-color"><code>"MAX"</code></div>
-<div class="col-first odd-row-color"><code id="io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder.MIN">protected&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second odd-row-color"><code><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#MIN">MIN</a></code></div>
-<div class="col-last odd-row-color"><code>"MIN"</code></div>
-<div class="col-first even-row-color"><code id="io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder.NOT">protected&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color"><code><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#NOT">NOT</a></code></div>
-<div class="col-last even-row-color"><code>"NOT"</code></div>
-<div class="col-first odd-row-color"><code id="io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder.NOT_EQUALS">protected&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second odd-row-color"><code><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#NOT_EQUALS">NOT_EQUALS</a></code></div>
-<div class="col-last odd-row-color"><code>" != "</code></div>
-<div class="col-first even-row-color"><code id="io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder.OPEN_BRACKET">protected&nbsp;static&nbsp;final&nbsp;char</code></div>
-<div class="col-second even-row-color"><code><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#OPEN_BRACKET">OPEN_BRACKET</a></code></div>
-<div class="col-last even-row-color"><code>'('</code></div>
-<div class="col-first odd-row-color"><code id="io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder.OR">protected&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second odd-row-color"><code><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#OR">OR</a></code></div>
-<div class="col-last odd-row-color"><code>"OR"</code></div>
-<div class="col-first even-row-color"><code id="io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder.ORDER_BY_CLAUSE">public&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color"><code><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#ORDER_BY_CLAUSE">ORDER_BY_CLAUSE</a></code></div>
-<div class="col-last even-row-color"><code>" ORDER BY "</code></div>
-<div class="col-first odd-row-color"><code id="io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder.SELECT_CLAUSE">protected&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second odd-row-color"><code><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#SELECT_CLAUSE">SELECT_CLAUSE</a></code></div>
-<div class="col-last odd-row-color"><code>"SELECT "</code></div>
-<div class="col-first even-row-color"><code id="io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder.SPACE">protected&nbsp;static&nbsp;final&nbsp;char</code></div>
-<div class="col-second even-row-color"><code><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#SPACE">SPACE</a></code></div>
-<div class="col-last even-row-color"><code>' '</code></div>
-<div class="col-first odd-row-color"><code id="io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder.SUM">protected&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second odd-row-color"><code><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#SUM">SUM</a></code></div>
-<div class="col-last odd-row-color"><code>"SUM"</code></div>
-<div class="col-first even-row-color"><code id="io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder.UPDATE_CLAUSE">protected&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color"><code><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#UPDATE_CLAUSE">UPDATE_CLAUSE</a></code></div>
-<div class="col-last even-row-color"><code>"UPDATE "</code></div>
-<div class="col-first odd-row-color"><code id="io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder.WHERE_CLAUSE">protected&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second odd-row-color"><code><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#WHERE_CLAUSE">WHERE_CLAUSE</a></code></div>
-<div class="col-last odd-row-color"><code>" WHERE "</code></div>
+<div class="col-first even-row-color"><code id="io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder.JSON_COLUMN">protected&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color"><code><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#JSON_COLUMN">JSON_COLUMN</a></code></div>
+<div class="col-last even-row-color"><code>"column"</code></div>
+<div class="col-first odd-row-color"><code id="io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder.LESS_THAN">protected&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color"><code><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#LESS_THAN">LESS_THAN</a></code></div>
+<div class="col-last odd-row-color"><code>" &lt; "</code></div>
+<div class="col-first even-row-color"><code id="io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder.LESS_THAN_OR_EQUALS">protected&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color"><code><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#LESS_THAN_OR_EQUALS">LESS_THAN_OR_EQUALS</a></code></div>
+<div class="col-last even-row-color"><code>" &lt;= "</code></div>
+<div class="col-first odd-row-color"><code id="io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder.LOGICAL_AND">protected&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color"><code><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#LOGICAL_AND">LOGICAL_AND</a></code></div>
+<div class="col-last odd-row-color"><code>" AND "</code></div>
+<div class="col-first even-row-color"><code id="io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder.LOGICAL_OR">protected&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color"><code><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#LOGICAL_OR">LOGICAL_OR</a></code></div>
+<div class="col-last even-row-color"><code>" OR "</code></div>
+<div class="col-first odd-row-color"><code id="io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder.MAX">protected&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color"><code><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#MAX">MAX</a></code></div>
+<div class="col-last odd-row-color"><code>"MAX"</code></div>
+<div class="col-first even-row-color"><code id="io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder.MIN">protected&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color"><code><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#MIN">MIN</a></code></div>
+<div class="col-last even-row-color"><code>"MIN"</code></div>
+<div class="col-first odd-row-color"><code id="io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder.NOT">protected&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color"><code><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#NOT">NOT</a></code></div>
+<div class="col-last odd-row-color"><code>"NOT"</code></div>
+<div class="col-first even-row-color"><code id="io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder.NOT_EQUALS">protected&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color"><code><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#NOT_EQUALS">NOT_EQUALS</a></code></div>
+<div class="col-last even-row-color"><code>" != "</code></div>
+<div class="col-first odd-row-color"><code id="io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder.OPEN_BRACKET">protected&nbsp;static&nbsp;final&nbsp;char</code></div>
+<div class="col-second odd-row-color"><code><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#OPEN_BRACKET">OPEN_BRACKET</a></code></div>
+<div class="col-last odd-row-color"><code>'('</code></div>
+<div class="col-first even-row-color"><code id="io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder.OR">protected&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color"><code><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#OR">OR</a></code></div>
+<div class="col-last even-row-color"><code>"OR"</code></div>
+<div class="col-first odd-row-color"><code id="io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder.ORDER_BY_CLAUSE">public&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color"><code><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#ORDER_BY_CLAUSE">ORDER_BY_CLAUSE</a></code></div>
+<div class="col-last odd-row-color"><code>" ORDER BY "</code></div>
+<div class="col-first even-row-color"><code id="io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder.SELECT_CLAUSE">protected&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color"><code><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#SELECT_CLAUSE">SELECT_CLAUSE</a></code></div>
+<div class="col-last even-row-color"><code>"SELECT "</code></div>
+<div class="col-first odd-row-color"><code id="io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder.SPACE">protected&nbsp;static&nbsp;final&nbsp;char</code></div>
+<div class="col-second odd-row-color"><code><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#SPACE">SPACE</a></code></div>
+<div class="col-last odd-row-color"><code>' '</code></div>
+<div class="col-first even-row-color"><code id="io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder.SUM">protected&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color"><code><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#SUM">SUM</a></code></div>
+<div class="col-last even-row-color"><code>"SUM"</code></div>
+<div class="col-first odd-row-color"><code id="io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder.UPDATE_CLAUSE">protected&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color"><code><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#UPDATE_CLAUSE">UPDATE_CLAUSE</a></code></div>
+<div class="col-last odd-row-color"><code>"UPDATE "</code></div>
+<div class="col-first even-row-color"><code id="io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder.WHERE_CLAUSE">protected&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color"><code><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#WHERE_CLAUSE">WHERE_CLAUSE</a></code></div>
+<div class="col-last even-row-color"><code>" WHERE "</code></div>
 </div>
 </li>
 </ul>

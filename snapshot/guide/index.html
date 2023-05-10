@@ -231,9 +231,11 @@
         
         <div class="toc-item" style="margin-left:20px" id="toc-item-sqlJsonType"><a href="#sqlJsonType"><strong>6.5.11</strong><span>JSON Column Support</span></a></div>
         
-        <div class="toc-item" style="margin-left:20px" id="toc-item-javaRecords"><a href="#javaRecords"><strong>6.5.12</strong><span>Support for Java 16 Records</span></a></div>
+        <div class="toc-item" style="margin-left:20px" id="toc-item-sqlJsonView"><a href="#sqlJsonView"><strong>6.5.12</strong><span>JSON View</span></a></div>
         
-        <div class="toc-item" style="margin-left:20px" id="toc-item-kotlinData"><a href="#kotlinData"><strong>6.5.13</strong><span>Support for Kotlin immutable data classes</span></a></div>
+        <div class="toc-item" style="margin-left:20px" id="toc-item-javaRecords"><a href="#javaRecords"><strong>6.5.13</strong><span>Support for Java 16 Records</span></a></div>
+        
+        <div class="toc-item" style="margin-left:20px" id="toc-item-kotlinData"><a href="#kotlinData"><strong>6.5.14</strong><span>Support for Kotlin immutable data classes</span></a></div>
         
         <div class="toc-item" style="margin-left:10px" id="toc-item-dbcDataTypes"><a href="#dbcDataTypes"><strong>6.6</strong><span>Data Types</span></a></div>
         
@@ -7257,7 +7259,6 @@ Most of the database migration tools use JDBC driver to make DB changes. Therefo
 <div class="listingblock multi-language-sample">
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-properties hljs" data-lang="properties">micronaut.application.name=example
-flyway.datasources.default.enabled=true
 r2dbc.datasources.default.db-type=postgresql
 r2dbc.datasources.default.schema-generate=CREATE_DROP
 r2dbc.datasources.default.dialect=POSTGRES
@@ -7271,10 +7272,6 @@ datasources.default.dialect=POSTGRES</code></pre>
 <pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">micronaut:
   application:
     name: example
-flyway:
-  datasources:
-    default:
-      enabled: true
 
 r2dbc:
   datasources:
@@ -7294,10 +7291,6 @@ datasources:
 <pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="toml">[micronaut]
   [micronaut.application]
     name="example"
-[flyway]
-  [flyway.datasources]
-    [flyway.datasources.default]
-      enabled=true
 [r2dbc]
   [r2dbc.datasources]
     [r2dbc.datasources.default]
@@ -7316,13 +7309,6 @@ datasources:
 <pre class="highlightjs highlight"><code class="language-groovy-config hljs" data-lang="groovy-config">micronaut {
   application {
     name = "example"
-  }
-}
-flyway {
-  datasources {
-    'default' {
-      enabled = true
-    }
   }
 }
 r2dbc {
@@ -7351,13 +7337,6 @@ datasources {
       name = "example"
     }
   }
-  flyway {
-    datasources {
-      default {
-        enabled = true
-      }
-    }
-  }
   r2dbc {
     datasources {
       default {
@@ -7383,13 +7362,6 @@ datasources {
   "micronaut": {
     "application": {
       "name": "example"
-    }
-  },
-  "flyway": {
-    "datasources": {
-      "default": {
-        "enabled": true
-      }
     }
   },
   "r2dbc": {
@@ -10160,7 +10132,47 @@ To allow JSON to be serialized and deserialized in entity properties you must ha
 </table>
 </div>
 
-<h2 id="javaRecords"><a class="anchor" href="#javaRecords"></a>6.5.12 Support for Java 16 Records</h2>
+<h2 id="sqlJsonView"><a class="anchor" href="#sqlJsonView"></a>6.5.12 JSON View</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/dbc/sqlMapping/sqlJsonView.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>Since Micronaut Data 4.0 and Oracle23c database, an entity can be mapped to an JSON VIEW as follows:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@JsonView("CONTACT_VIEW")
+public class ContactView</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>where "CONTACT_VIEW" is actual name of duality json view object in the database. It is currently supported only by the Oracle database, since version 23c.
+More about Oracle JSON VIEW can be read here <a href="https://docs.oracle.com/en/database/oracle/oracle-database/23/jsnvu/overview-json-relational-duality-views.html" class="bare">https://docs.oracle.com/en/database/oracle/oracle-database/23/jsnvu/overview-json-relational-duality-views.html</a>.</p>
+</div>
+<div class="paragraph">
+<p>Essentially, json view will be treated like mapped entity and will return JSON structure from the database and be mapped to java entity. All CRUD operations can be
+performed against json view mapped entities.</p>
+</div>
+<div class="paragraph">
+<p>Limitations</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>R2dbc is not able to retrieve generated values for ids.</p>
+</li>
+<li>
+<p>During schema creation, json view mapped entities are skipped and it is expected for users to create them manually or via migration scripts.</p>
+</li>
+</ul>
+</div>
+
+<h2 id="javaRecords"><a class="anchor" href="#javaRecords"></a>6.5.13 Support for Java 16 Records</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/dbc/javaRecords.adoc"'>
@@ -10217,7 +10229,7 @@ book = bookRepository.save(book);</code></pre>
 <p>It is important to note that the returned instance is not the same as the instance passed to the <code>save</code> method. When a write operation is performed Micronaut Data will use a copy-constructor approach to populate the database identifier and return a new instance from the <code>save</code> method.</p>
 </div>
 
-<h2 id="kotlinData"><a class="anchor" href="#kotlinData"></a>6.5.13 Support for Kotlin immutable data classes</h2>
+<h2 id="kotlinData"><a class="anchor" href="#kotlinData"></a>6.5.14 Support for Kotlin immutable data classes</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/dbc/kotlinData.adoc"'>

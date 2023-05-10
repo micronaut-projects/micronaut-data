@@ -227,6 +227,16 @@ R&gt;&nbsp;<a href="../../../../model/runtime/PreparedQuery.html" title="interfa
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Decorate prepared query.</div>
 </div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getJsonColumn(io.micronaut.data.model.runtime.QueryResultInfo)" class="member-name-link">getJsonColumn</a><wbr>(<a href="../../../../model/runtime/QueryResultInfo.html" title="class in io.micronaut.data.model.runtime">QueryResultInfo</a>&nbsp;queryResultInfo)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Gets column name for JSON result.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final <a href="../../../../model/JsonDataType.html" title="enum class in io.micronaut.data.model">JsonDataType</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getJsonDataType(io.micronaut.data.model.runtime.QueryResultInfo)" class="member-name-link">getJsonDataType</a><wbr>(<a href="../../../../model/runtime/QueryResultInfo.html" title="class in io.micronaut.data.model.runtime">QueryResultInfo</a>&nbsp;queryResultInfo)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Gets JSON data type for JSON result.</div>
+</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final &lt;E,<wbr>
 R&gt;&nbsp;<a href="SqlPreparedQuery.html" title="interface in io.micronaut.data.runtime.operations.internal.sql">SqlPreparedQuery</a>&lt;E,<wbr>R&gt;</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getSqlPreparedQuery(io.micronaut.data.model.runtime.PreparedQuery)" class="member-name-link">getSqlPreparedQuery</a><wbr>(<a href="../../../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;E,<wbr>R&gt;&nbsp;preparedQuery)</code></div>
@@ -240,6 +250,18 @@ R&gt;&nbsp;<a href="SqlStoredQuery.html" title="interface in io.micronaut.data.r
  <a href="../../../../model/query/builder/sql/Dialect.html" title="enum class in io.micronaut.data.model.query.builder.sql">Dialect</a>&nbsp;dialect)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
 <div class="block">Handles SQL exception, used in context of update but could be used elsewhere.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final boolean</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isJsonEntityGeneratedId(io.micronaut.data.model.runtime.StoredQuery,io.micronaut.data.model.PersistentEntity)" class="member-name-link">isJsonEntityGeneratedId</a><wbr>(<a href="../../../../model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;?,<wbr>?&gt;&nbsp;storedQuery,
+ <a href="../../../../model/PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;persistentEntity)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Inserting JSON entity representation (like Oracle Json View) can generate new id, and we support retrieval only numeric auto generated ids.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final boolean</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isJsonResult(io.micronaut.data.model.runtime.PreparedQuery,io.micronaut.data.model.runtime.QueryResultInfo)" class="member-name-link">isJsonResult</a><wbr>(<a href="../../../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;?,<wbr>?&gt;&nbsp;preparedQuery,
+ <a href="../../../../model/runtime/QueryResultInfo.html" title="class in io.micronaut.data.model.runtime">QueryResultInfo</a>&nbsp;queryResultInfo)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Return an indicator telling whether prepared query result produces JSON result.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected boolean</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isSupportsBatchDelete(io.micronaut.data.model.PersistentEntity,io.micronaut.data.model.query.builder.sql.Dialect)" class="member-name-link">isSupportsBatchDelete</a><wbr>(<a href="../../../../model/PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;persistentEntity,
@@ -759,6 +781,64 @@ T&gt;</span>&nbsp;<span class="return-type">R</span>&nbsp;<span class="element-n
 <dt>Returns:</dt>
 <dd>custom exception based on <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.sql/java/sql/SQLException.html" title="class or interface in java.sql" class="external-link"><code>SQLException</code></a> that was thrown or that same
  exception if nothing specific was about it</dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="isJsonResult(io.micronaut.data.model.runtime.PreparedQuery,io.micronaut.data.model.runtime.QueryResultInfo)">
+<h3>isJsonResult</h3>
+<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">isJsonResult</span><wbr><span class="parameters">(<a href="../../../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;?,<wbr>?&gt;&nbsp;preparedQuery,
+ <a href="../../../../model/runtime/QueryResultInfo.html" title="class in io.micronaut.data.model.runtime">QueryResultInfo</a>&nbsp;queryResultInfo)</span></div>
+<div class="block">Return an indicator telling whether prepared query result produces JSON result.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>preparedQuery</code> - the prepared query</dd>
+<dd><code>queryResultInfo</code> - the query result info, if not null will hold info about result type</dd>
+<dt>Returns:</dt>
+<dd>true if result is JSON</dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="isJsonEntityGeneratedId(io.micronaut.data.model.runtime.StoredQuery,io.micronaut.data.model.PersistentEntity)">
+<h3>isJsonEntityGeneratedId</h3>
+<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">isJsonEntityGeneratedId</span><wbr><span class="parameters">(<a href="../../../../model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;?,<wbr>?&gt;&nbsp;storedQuery,
+ <a href="../../../../model/PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;persistentEntity)</span></div>
+<div class="block">Inserting JSON entity representation (like Oracle Json View) can generate new id, and we support retrieval only numeric auto generated ids.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>storedQuery</code> - the stored query</dd>
+<dd><code>persistentEntity</code> - the persistent entity</dd>
+<dt>Returns:</dt>
+<dd>true if entity being inserted is JSON entity representation with auto generated numeric id</dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="getJsonColumn(io.micronaut.data.model.runtime.QueryResultInfo)">
+<h3>getJsonColumn</h3>
+<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">getJsonColumn</span><wbr><span class="parameters">(<a href="../../../../model/runtime/QueryResultInfo.html" title="class in io.micronaut.data.model.runtime">QueryResultInfo</a>&nbsp;queryResultInfo)</span></div>
+<div class="block">Gets column name for JSON result. If <a href="../../../../annotation/QueryResult.html" title="annotation interface in io.micronaut.data.annotation"><code>QueryResult</code></a> annotation is present,
+ takes column value from there, otherwise defaults to 'DATA' column name.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>queryResultInfo</code> - the query result info from the <a href="../../../../annotation/QueryResult.html" title="annotation interface in io.micronaut.data.annotation"><code>QueryResult</code></a> annotation, null if annotation not present</dd>
+<dt>Returns:</dt>
+<dd>the JSON column name</dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="getJsonDataType(io.micronaut.data.model.runtime.QueryResultInfo)">
+<h3>getJsonDataType</h3>
+<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type"><a href="../../../../model/JsonDataType.html" title="enum class in io.micronaut.data.model">JsonDataType</a></span>&nbsp;<span class="element-name">getJsonDataType</span><wbr><span class="parameters">(<a href="../../../../model/runtime/QueryResultInfo.html" title="class in io.micronaut.data.model.runtime">QueryResultInfo</a>&nbsp;queryResultInfo)</span></div>
+<div class="block">Gets JSON data type for JSON result. If <a href="../../../../annotation/QueryResult.html" title="annotation interface in io.micronaut.data.annotation"><code>QueryResult</code></a> annotation is present,
+ takes data type value from there, otherwise defaults to <a href="../../../../model/JsonDataType.html#DEFAULT"><code>JsonDataType.DEFAULT</code></a>.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>queryResultInfo</code> - the query result info from the <a href="../../../../annotation/QueryResult.html" title="annotation interface in io.micronaut.data.annotation"><code>QueryResult</code></a> annotation, null if annotation not present</dd>
+<dt>Returns:</dt>
+<dd>the JSON data type</dd>
 </dl>
 </section>
 </li>

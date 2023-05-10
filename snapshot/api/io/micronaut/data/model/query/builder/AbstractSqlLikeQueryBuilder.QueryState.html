@@ -172,11 +172,16 @@ loadScripts(document, 'script');</script>
  <a href="../BindingParameter.BindingContext.html" title="interface in io.micronaut.data.model.query">BindingParameter.BindingContext</a>&nbsp;bindingContext)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setJoinPaths(java.util.List)" class="member-name-link">setJoinPaths</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../JoinPath.html" title="class in io.micronaut.data.model.query">JoinPath</a>&gt;&nbsp;joinPaths)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#shouldEscape()" class="member-name-link">shouldEscape</a>()</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#pushParameter(io.micronaut.data.model.query.builder.QueryParameterBinding)" class="member-name-link">pushParameter</a><wbr>(@NotNull <a href="QueryParameterBinding.html" title="interface in io.micronaut.data.model.query.builder">QueryParameterBinding</a>&nbsp;parameterBinding)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Adds query parameter binding.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setJoinPaths(java.util.List)" class="member-name-link">setJoinPaths</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../JoinPath.html" title="class in io.micronaut.data.model.query">JoinPath</a>&gt;&nbsp;joinPaths)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#shouldEscape()" class="member-name-link">shouldEscape</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 </div>
 </div>
 </div>
@@ -368,6 +373,18 @@ loadScripts(document, 'script');</script>
  @NotNull <a href="../BindingParameter.html" title="interface in io.micronaut.data.model.query">BindingParameter</a>&nbsp;bindingParameter,
  @NotNull
  <a href="../BindingParameter.BindingContext.html" title="interface in io.micronaut.data.model.query">BindingParameter.BindingContext</a>&nbsp;bindingContext)</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="pushParameter(io.micronaut.data.model.query.builder.QueryParameterBinding)">
+<h3>pushParameter</h3>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">pushParameter</span><wbr><span class="parameters">(@NotNull
+ @NotNull <a href="QueryParameterBinding.html" title="interface in io.micronaut.data.model.query.builder">QueryParameterBinding</a>&nbsp;parameterBinding)</span></div>
+<div class="block">Adds query parameter binding.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>parameterBinding</code> - the query parameter binding</dd>
+</dl>
 </section>
 </li>
 <li>
