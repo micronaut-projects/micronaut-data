@@ -113,6 +113,7 @@ class OracleR2DbcJsonViewSpec extends Specification implements TestPropertyProvi
         updatedContactView.id == contactView.id
         updatedContactView.age == 31
         updatedContactView.name == contactView.name
+        // Compare milliseconds
         updatedContactView.startDateTime.truncatedTo(ChronoUnit.MILLIS) == startDateTime.truncatedTo(ChronoUnit.MILLIS)
 
         when:"Test optimistic locking"
