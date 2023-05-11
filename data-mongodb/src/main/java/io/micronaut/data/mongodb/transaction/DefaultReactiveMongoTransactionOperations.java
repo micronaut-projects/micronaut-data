@@ -42,6 +42,7 @@ import reactor.util.context.Context;
 import reactor.util.context.ContextView;
 
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * The reactive MongoDB trasactions operations implementation.
@@ -71,8 +72,16 @@ final class DefaultReactiveMongoTransactionOperations implements ReactorReactive
     }
 
     @Override
+    public Optional<ReactiveTransactionStatus<ClientSession>> findTransactionStatus(ContextView contextView) {
+        return ReactorPropagation.findAllContextElements(contextView, MongoTransactionPropagatedContext.class)
+            .filter(e -> e.transactionOperations == this)
+            .map(MongoTransactionPropagatedContext::status)
+            .findFirst();
+    }
+
+    @Override
     public ReactiveTransactionStatus<ClientSession> getTransactionStatus(ContextView contextView) {
-        return findTxStatus(contextView);
+        return findTransactionStatus(contextView).orElse(null);
     }
 
     @Override
@@ -206,15 +215,6 @@ final class DefaultReactiveMongoTransactionOperations implements ReactorReactive
             context,
             new MongoTransactionPropagatedContext(this, status)
         );
-    }
-
-    @Nullable
-    private ReactiveTransactionStatus<ClientSession> findTxStatus(@NonNull ContextView contextView) {
-        return ReactorPropagation.findAllContextElements(contextView, MongoTransactionPropagatedContext.class)
-            .filter(e -> e.transactionOperations == this)
-            .map(MongoTransactionPropagatedContext::status)
-            .findFirst()
-            .orElse(null);
     }
 
     private record MongoTransactionPropagatedContext(

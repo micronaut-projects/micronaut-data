@@ -96,7 +96,7 @@ import java.util.stream.Collectors;
 @RequiresReactiveMongo
 @EachBean(MongoClient.class)
 @Internal
-final class DefaultReactiveMongoRepositoryOperations extends AbstractMongoRepositoryOperations<MongoDatabase>
+public final class DefaultReactiveMongoRepositoryOperations extends AbstractMongoRepositoryOperations<MongoDatabase>
     implements MongoReactorRepositoryOperations,
     ReactorReactiveRepositoryOperations,
     ReactiveCascadeOperations.ReactiveCascadeOperationsHelper<DefaultReactiveMongoRepositoryOperations.MongoOperationContext> {
@@ -688,12 +688,12 @@ final class DefaultReactiveMongoRepositoryOperations extends AbstractMongoReposi
 
     @Override
     public <T> Mono<T> withClientSession(Function<ClientSession, Mono<T>> function) {
-        return connectionOperations.withConnectionMono(function);
+        return connectionOperations.withConnectionMono(status -> function.apply(status.getConnection()));
     }
 
     @Override
     public <T> Flux<T> withClientSessionMany(Function<ClientSession, Flux<T>> function) {
-        return connectionOperations.withConnectionFlux(function);
+        return connectionOperations.withConnectionFlux(status -> function.apply(status.getConnection()));
     }
 
     private <T> MongoReactiveEntityOperation<T> createMongoInsertOneOperation(MongoOperationContext ctx, RuntimePersistentEntity<T> persistentEntity, T entity) {
