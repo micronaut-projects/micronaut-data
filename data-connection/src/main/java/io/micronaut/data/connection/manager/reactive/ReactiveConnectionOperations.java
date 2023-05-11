@@ -17,6 +17,7 @@ package io.micronaut.data.connection.manager.reactive;
 
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.connection.manager.ConnectionDefinition;
+import io.micronaut.data.connection.manager.synchronous.ConnectionStatus;
 import org.reactivestreams.Publisher;
 
 import java.util.function.Function;
@@ -39,7 +40,7 @@ public interface ReactiveConnectionOperations<C> {
      * @return A publisher that emits the result type
      */
     @NonNull
-    <T> Publisher<T> withConnection(@NonNull ConnectionDefinition definition, @NonNull Function<C, Publisher<T>> handler);
+    <T> Publisher<T> withConnection(@NonNull ConnectionDefinition definition, @NonNull Function<ConnectionStatus<C>, Publisher<T>> handler);
 
     /**
      * Execute the given handler with a new connection.
@@ -48,7 +49,7 @@ public interface ReactiveConnectionOperations<C> {
      * @param <T>     The emitted type
      * @return A publisher that emits the result type
      */
-    default @NonNull <T> Publisher<T> withConnection(@NonNull Function<C, Publisher<T>> handler) {
+    default @NonNull <T> Publisher<T> withConnection(@NonNull Function<ConnectionStatus<C>, Publisher<T>> handler) {
         return withConnection(ConnectionDefinition.DEFAULT, handler);
     }
 

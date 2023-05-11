@@ -2,7 +2,6 @@ package io.micronaut.data.connection.support;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.order.OrderUtil;
 import io.micronaut.core.propagation.PropagatedContext;
 import io.micronaut.core.propagation.PropagatedContextElement;
 import io.micronaut.data.connection.exceptions.ConnectionException;
@@ -15,11 +14,7 @@ import io.micronaut.data.connection.manager.synchronous.SynchronousConnectionMan
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.ListIterator;
 import java.util.Optional;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -83,7 +78,7 @@ public abstract class AbstractConnectionOperations<C> implements ConnectionOpera
     }
 
     private <R> R withExistingConnectionInternal(@NonNull ConnectionPropagatedContextElement<C> existingContextElement, @NonNull Function<ConnectionStatus<C>, R> callback) {
-        ConnectionStatusImpl<C> status = new ConnectionStatusImpl<>(
+        DefaultConnectionStatus<C> status = new DefaultConnectionStatus<>(
             existingContextElement.status.getConnection(),
             existingContextElement.status.getDefinition(),
             false);
@@ -102,7 +97,7 @@ public abstract class AbstractConnectionOperations<C> implements ConnectionOpera
     private <R> R executeWithNewConnection(@NonNull ConnectionDefinition definition,
                                            @NonNull Function<ConnectionStatus<C>, R> callback) {
         C connection = openConnection(definition);
-        ConnectionStatusImpl<C> status = new ConnectionStatusImpl<>(connection, definition, true);
+        DefaultConnectionStatus<C> status = new DefaultConnectionStatus<>(connection, definition, true);
         try (PropagatedContext.InContext ignore = PropagatedContext.getOrEmpty()
             .plus(new ConnectionPropagatedContextElement<>(this, status))
             .propagate()) {
@@ -143,14 +138,14 @@ public abstract class AbstractConnectionOperations<C> implements ConnectionOpera
 
     @Override
     public void complete(@NonNull ConnectionStatus<C> status) {
-        ConnectionStatusImpl<C> connectionStatus = (ConnectionStatusImpl<C>) status;
+        DefaultConnectionStatus<C> connectionStatus = (DefaultConnectionStatus<C>) status;
         try {
             connectionStatus.complete();
         } finally {
             try {
                 connectionStatus.beforeClosed();
             } finally {
-                if (connectionStatus.isNew) {
+                if (connectionStatus.isNew()) {
                     closeConnection(status);
                 }
                 connectionStatus.afterClosed();
@@ -158,9 +153,9 @@ public abstract class AbstractConnectionOperations<C> implements ConnectionOpera
         }
     }
 
-    private ConnectionStatusImpl<C> openNewConnectionInternal(@NonNull ConnectionDefinition definition) {
+    private DefaultConnectionStatus<C> openNewConnectionInternal(@NonNull ConnectionDefinition definition) {
         C connection = openConnection(definition);
-        ConnectionStatusImpl<C> status = new ConnectionStatusImpl<>(connection, definition, true);
+        DefaultConnectionStatus<C> status = new DefaultConnectionStatus<>(connection, definition, true);
         PropagatedContext propagatedContext = PropagatedContext.getOrEmpty().plus(new ConnectionPropagatedContextElement<>(this, status));
         PropagatedContext.InContext scope = propagatedContext.propagate();
         status.registerSynchronization(new ConnectionSynchronization() {
@@ -172,8 +167,8 @@ public abstract class AbstractConnectionOperations<C> implements ConnectionOpera
         return status;
     }
 
-    private ConnectionStatusImpl<C> reuseExistingConnectionInternal(@NonNull ConnectionPropagatedContextElement<C> existingContextElement) {
-        ConnectionStatusImpl<C> status = new ConnectionStatusImpl<>(
+    private DefaultConnectionStatus<C> reuseExistingConnectionInternal(@NonNull ConnectionPropagatedContextElement<C> existingContextElement) {
+        DefaultConnectionStatus<C> status = new DefaultConnectionStatus<>(
             existingContextElement.status.getConnection(),
             existingContextElement.status.getDefinition(),
             false);
@@ -190,10 +185,10 @@ public abstract class AbstractConnectionOperations<C> implements ConnectionOpera
         return status;
     }
 
-    private ConnectionStatusImpl<C> suspendOpenConnection(ConnectionPropagatedContextElement<C> existingConnectionContextElement,
-                                                          @NonNull Supplier<ConnectionStatusImpl<C>> newStatusSupplier) {
+    private DefaultConnectionStatus<C> suspendOpenConnection(ConnectionPropagatedContextElement<C> existingConnectionContextElement,
+                                                             @NonNull Supplier<DefaultConnectionStatus<C>> newStatusSupplier) {
         PropagatedContext.InContext scope = PropagatedContext.getOrEmpty().minus(existingConnectionContextElement).propagate();
-        ConnectionStatusImpl<C> newStatus = newStatusSupplier.get();
+        DefaultConnectionStatus<C> newStatus = newStatusSupplier.get();
         newStatus.registerSynchronization(new ConnectionSynchronization() {
             @Override
             public void executionComplete() {
@@ -203,70 +198,6 @@ public abstract class AbstractConnectionOperations<C> implements ConnectionOpera
         return newStatus;
     }
 
-
-    private static final class ConnectionStatusImpl<C> implements ConnectionStatus<C> {
-
-        private final C connection;
-        private final ConnectionDefinition definition;
-        private final boolean isNew;
-
-        private List<ConnectionSynchronization> connectionSynchronizations;
-
-        private ConnectionStatusImpl(C connection, ConnectionDefinition definition, boolean isNew) {
-            this.connection = connection;
-            this.definition = definition;
-            this.isNew = isNew;
-        }
-
-        @Override
-        public boolean isNew() {
-            return isNew;
-        }
-
-        @Override
-        public C getConnection() {
-            return connection;
-        }
-
-        @Override
-        public ConnectionDefinition getDefinition() {
-            return definition;
-        }
-
-        @Override
-        public void registerSynchronization(ConnectionSynchronization synchronization) {
-            if (connectionSynchronizations == null) {
-                connectionSynchronizations = new ArrayList<>(5);
-            }
-            OrderUtil.sort(connectionSynchronizations);
-            connectionSynchronizations.add(synchronization);
-        }
-
-        private void forEachSynchronizations(Consumer<ConnectionSynchronization> consumer) {
-            if (connectionSynchronizations != null) {
-                ListIterator<ConnectionSynchronization> listIterator = connectionSynchronizations.listIterator(connectionSynchronizations.size());
-                while (listIterator.hasPrevious()) {
-                    consumer.accept(listIterator.previous());
-                }
-            }
-        }
-
-        private void complete() {
-            forEachSynchronizations(ConnectionSynchronization::executionComplete);
-        }
-
-        private void beforeClosed() {
-            if (isNew) {
-                forEachSynchronizations(ConnectionSynchronization::beforeClosed);
-            }
-        }
-
-        private void afterClosed() {
-            if (isNew) {
-                forEachSynchronizations(ConnectionSynchronization::afterClosed);
-            }
-        }
-    }
 
     private record ConnectionPropagatedContextElement<C>(
         ConnectionOperations<C> connectionOperations,

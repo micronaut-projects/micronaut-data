@@ -107,7 +107,8 @@ final class DefaultReactiveMongoTransactionOperations implements ReactorReactive
                 if (propagationBehavior == TransactionDefinition.Propagation.MANDATORY) {
                     return Flux.error(new NoTransactionException("Expected an existing transaction, but none was found in the Reactive context."));
                 }
-                return connectionOperations.withConnectionFlux(definition.getConnectionDefinition(), clientSession -> {
+                return connectionOperations.withConnectionFlux(definition.getConnectionDefinition(), connectionStatus -> {
+                    ClientSession clientSession = connectionStatus.getConnection();
                     if (LOG.isDebugEnabled()) {
                         LOG.debug("Transaction Begin for MongoDB configuration: {}", serverName);
                     }
@@ -200,7 +201,7 @@ final class DefaultReactiveMongoTransactionOperations implements ReactorReactive
     }
 
     @NonNull
-    private Context addTxStatus(@NonNull Context context, @NonNull ReactiveTransactionStatus status) {
+    private Context addTxStatus(@NonNull Context context, @NonNull ReactiveTransactionStatus<ClientSession> status) {
         return ReactorPropagation.addContextElement(
             context,
             new MongoTransactionPropagatedContext(this, status)

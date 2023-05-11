@@ -23,6 +23,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.util.context.ContextView;
 
+import java.util.Optional;
 import java.util.function.Function;
 
 /**
@@ -41,8 +42,18 @@ public interface ReactorReactiveTransactionOperations<C> extends ReactiveTransac
      * @param contextView The context view
      * @return the key
      */
+    Optional<ReactiveTransactionStatus<C>> findTransactionStatus(@NonNull ContextView contextView);
+
+    /**
+     * Retrieve the transaction status associated to the current transaction manager from the Reactor context.
+     *
+     * @param contextView The context view
+     * @return the key
+     */
     @Nullable
-    ReactiveTransactionStatus<C> getTransactionStatus(@NonNull ContextView contextView);
+    default ReactiveTransactionStatus<C> getTransactionStatus(@NonNull ContextView contextView) {
+        return findTransactionStatus(contextView).orElse(null);
+    }
 
     /**
      * Retrieve the transaction definition associated to the current transaction from the Reactor context.

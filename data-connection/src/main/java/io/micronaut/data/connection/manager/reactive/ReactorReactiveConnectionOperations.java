@@ -17,11 +17,15 @@ package io.micronaut.data.connection.manager.reactive;
 
 import io.micronaut.core.annotation.Experimental;
 import io.micronaut.core.annotation.NonNull;
+import io.micronaut.data.connection.exceptions.NoConnectionException;
 import io.micronaut.data.connection.manager.ConnectionDefinition;
+import io.micronaut.data.connection.manager.synchronous.ConnectionStatus;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.util.context.ContextView;
 
+import java.util.Optional;
 import java.util.function.Function;
 
 /**
@@ -35,6 +39,23 @@ import java.util.function.Function;
 public interface ReactorReactiveConnectionOperations<C> extends ReactiveConnectionOperations<C> {
 
     /**
+     * Obtains the current required connection.
+     *
+     * @return The connection or exception if the connection doesn't exist
+     */
+    @NonNull
+    default ConnectionStatus<C> getConnectionStatus(ContextView contextView) {
+        return findConnectionStatus(contextView).orElseThrow(NoConnectionException::new);
+    }
+
+    /**
+     * Obtains the current connection.
+     *
+     * @return The optional connection
+     */
+    Optional<ConnectionStatus<C>> findConnectionStatus(ContextView contextView);
+
+    /**
      * Execute the given handler with a new transaction.
      *
      * @param definition The definition
@@ -43,7 +64,7 @@ public interface ReactorReactiveConnectionOperations<C> extends ReactiveConnecti
      * @return A publisher that emits the result type
      */
     @NonNull
-    default <T> Flux<T> withConnectionFlux(@NonNull ConnectionDefinition definition, @NonNull Function<C, Flux<T>> handler) {
+    default <T> Flux<T> withConnectionFlux(@NonNull ConnectionDefinition definition, @NonNull Function<ConnectionStatus<C>, Flux<T>> handler) {
         return Flux.from(
             withConnection(definition, handler::apply)
         );
@@ -57,7 +78,7 @@ public interface ReactorReactiveConnectionOperations<C> extends ReactiveConnecti
      * @return A publisher that emits the result type
      */
     @NonNull
-    default <T> Flux<T> withConnectionFlux(@NonNull Function<C, Flux<T>> handler) {
+    default <T> Flux<T> withConnectionFlux(@NonNull Function<ConnectionStatus<C>, Flux<T>> handler) {
         return withConnectionFlux(ConnectionDefinition.DEFAULT, handler);
     }
 
@@ -70,7 +91,7 @@ public interface ReactorReactiveConnectionOperations<C> extends ReactiveConnecti
      * @return A publisher that emits the result type
      */
     @NonNull
-    default <T> Mono<T> withConnectionMono(@NonNull ConnectionDefinition definition, @NonNull Function<C, Mono<T>> handler) {
+    default <T> Mono<T> withConnectionMono(@NonNull ConnectionDefinition definition, @NonNull Function<ConnectionStatus<C>, Mono<T>> handler) {
         return Mono.from(
             withConnection(definition, handler::apply)
         );
@@ -83,13 +104,13 @@ public interface ReactorReactiveConnectionOperations<C> extends ReactiveConnecti
      * @param <T>     The emitted type
      * @return A publisher that emits the result type
      */
-    default <T> Mono<T> withConnectionMono(@NonNull Function<C, Mono<T>> handler) {
+    default <T> Mono<T> withConnectionMono(@NonNull Function<ConnectionStatus<C>, Mono<T>> handler) {
         return withConnectionMono(ConnectionDefinition.DEFAULT, handler);
     }
 
     @NonNull
     @Override
-    default <T> Publisher<T> withConnection(@NonNull ConnectionDefinition definition, @NonNull Function<C, Publisher<T>> handler) {
+    default <T> Publisher<T> withConnection(@NonNull ConnectionDefinition definition, @NonNull Function<ConnectionStatus<C>, Publisher<T>> handler) {
         return withConnectionFlux(definition, connection -> Flux.from(handler.apply(connection)));
     }
 }
