@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.mongodb.operations;
+package io.micronaut.data.mongodb.transaction;
 
 import com.mongodb.reactivestreams.client.ClientSession;
 import com.mongodb.reactivestreams.client.MongoClient;
@@ -52,7 +52,7 @@ import java.util.Objects;
 @RequiresReactiveMongo
 @EachBean(MongoClient.class)
 @Internal
-public class DefaultReactiveMongoTransactionOperations implements ReactorReactiveTransactionOperations<ClientSession> {
+final class DefaultReactiveMongoTransactionOperations implements ReactorReactiveTransactionOperations<ClientSession> {
 
     private static final Logger LOG = LoggerFactory.getLogger(DefaultReactiveMongoTransactionOperations.class);
     private final String serverName;

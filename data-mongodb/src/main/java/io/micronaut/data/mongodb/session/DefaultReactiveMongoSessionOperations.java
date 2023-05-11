@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.mongodb.operations;
+package io.micronaut.data.mongodb.session;
 
 import com.mongodb.reactivestreams.client.ClientSession;
 import com.mongodb.reactivestreams.client.MongoClient;
@@ -48,20 +48,16 @@ import java.util.function.Function;
 @RequiresReactiveMongo
 @EachBean(MongoClient.class)
 @Internal
-public class DefaultReactiveMongoConnectionOperations implements ReactorReactiveConnectionOperations<ClientSession> {
+final class DefaultReactiveMongoSessionOperations implements ReactorReactiveConnectionOperations<ClientSession> {
 
-    private static final Logger LOG = LoggerFactory.getLogger(DefaultReactiveMongoConnectionOperations.class);
+    private static final Logger LOG = LoggerFactory.getLogger(DefaultReactiveMongoSessionOperations.class);
 
     private final String serverName;
     private final MongoClient mongoClient;
 
-    public DefaultReactiveMongoConnectionOperations(@Parameter String serverName, MongoClient mongoClient) {
+    DefaultReactiveMongoSessionOperations(@Parameter String serverName, MongoClient mongoClient) {
         this.mongoClient = mongoClient;
         this.serverName = serverName;
-        String name = serverName;
-        if (name == null) {
-            name = "default";
-        }
     }
 
     @NonNull

@@ -66,14 +66,12 @@ import io.micronaut.data.runtime.operations.internal.AbstractReactiveEntityOpera
 import io.micronaut.data.runtime.operations.internal.OperationContext;
 import io.micronaut.data.runtime.operations.internal.ReactiveCascadeOperations;
 import io.micronaut.inject.qualifiers.Qualifiers;
-import io.micronaut.transaction.reactive.ReactiveTransactionOperations;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
 import org.bson.BsonValue;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
@@ -98,7 +96,7 @@ import java.util.stream.Collectors;
 @RequiresReactiveMongo
 @EachBean(MongoClient.class)
 @Internal
-public class DefaultReactiveMongoRepositoryOperations extends AbstractMongoRepositoryOperations<MongoDatabase>
+final class DefaultReactiveMongoRepositoryOperations extends AbstractMongoRepositoryOperations<MongoDatabase>
     implements MongoReactorRepositoryOperations,
     ReactorReactiveRepositoryOperations,
     ReactiveCascadeOperations.ReactiveCascadeOperationsHelper<DefaultReactiveMongoRepositoryOperations.MongoOperationContext> {
@@ -120,7 +118,6 @@ public class DefaultReactiveMongoRepositoryOperations extends AbstractMongoRepos
      * @param mongoClient                The reactive mongo client
      * @param collectionNameProvider     The collection name provider
      * @param connectionOperations       The connection operations
-     * @param transactionOperations      The transaction operataions
      */
     DefaultReactiveMongoRepositoryOperations(@Parameter String serverName,
                                              BeanContext beanContext,
