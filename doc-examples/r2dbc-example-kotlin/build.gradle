@@ -35,8 +35,8 @@ dependencies {
     implementation "org.flywaydb:flyway-mysql"
     implementation libs.jakarta.persistence.api
 
-    runtimeOnly libs.drivers.r2dbc.mariadb
-    runtimeOnly libs.drivers.jdbc.mariadb
+    runtimeOnly mnR2dbc.r2dbc.mariadb
+    runtimeOnly mnSql.mariadb.java.client
 
     testImplementation "io.micronaut:micronaut-http-client"
     compileOnly mnSerde.micronaut.serde.api
