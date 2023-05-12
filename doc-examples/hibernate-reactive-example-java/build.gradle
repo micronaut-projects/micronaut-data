@@ -22,7 +22,7 @@ dependencies {
     runtimeOnly libs.drivers.vertx.mysql
 
     // Testcontainers wait function needs the driver
-    runtimeOnly libs.drivers.jdbc.mysql
+    runtimeOnly mnSql.mysql.connector.java
 }
 
 micronaut {
