@@ -35,6 +35,7 @@ tasks.withType(Test).configureEach {
 }
 
 configurations.all {
+    resolutionStrategy.preferProjectModules()
     resolutionStrategy.dependencySubstitution {
         rootProject.subprojects.each { p ->
             if (!p.name.startsWith('test-')) {
