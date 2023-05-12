@@ -1,7 +1,6 @@
 plugins {
-    id "java"
-    id "io.micronaut.application"
-    id "io.micronaut.build.internal.data-example"
+
+    id "io.micronaut.build.internal.data-native-example"
 }
 
 application {
@@ -23,4 +22,10 @@ dependencies {
     implementation "io.micronaut.sql:micronaut-jdbc-tomcat"
     runtimeOnly "ch.qos.logback:logback-classic"
     runtimeOnly "com.h2database:h2"
+}
+
+graalvmNative {
+    metadataRepository {
+        uri("https://github.com/oracle/graalvm-reachability-metadata/releases/download/0.3.0/graalvm-reachability-metadata-0.3.0.zip")
+    }
 }

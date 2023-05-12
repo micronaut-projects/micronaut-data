@@ -8,9 +8,9 @@ micronaut-testresources = "2.0.0-M5"
 micronaut-azure = "5.0.0-M2"
 micronaut-reactor = "3.0.0-M1"
 micronaut-rxjava2 = "2.0.0-M1"
-micronaut-r2dbc = "5.0.0-M2"
+micronaut-r2dbc = "5.0.0-M3"
 micronaut-serde = "2.0.0-M3"
-micronaut-sql = "5.0.0-M3"
+micronaut-sql = "5.0.0-M4"
 micronaut-spring = "5.0.0-M1"
 micronaut-test = "4.0.0-M3"
 micronaut-mongo = "5.0.0-M1"
@@ -84,6 +84,7 @@ kotlin-coroutines = "1.7.0"
 [libraries]
 
 micronaut-testresources-client = { module = 'io.micronaut.testresources:micronaut-test-resources-client', version.ref = "micronaut-testresources" }
+micronaut-testresources-extensions-junit-platform = { module = 'io.micronaut.testresources:micronaut-test-resources-extensions-junit-platform', version.ref = "micronaut-testresources" }
 
 reactor = { module = 'io.projectreactor:reactor-core' }
 
@@ -108,6 +109,7 @@ jackson-annotations = { module = "com.fasterxml.jackson.core:jackson-annotations
 kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib-jdk8" }
 kotlin-coroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlin-coroutines" }
 kotlin-coroutines-reactor = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-reactor", version.ref = "kotlin-coroutines" }
+kotlin-coroutines-reactive = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-reactive", version.ref = "kotlin-coroutines" }
 
 javax-transaction-api = { module = "javax.transaction:javax.transaction-api", version.ref = "javax-transaction" }
 jakarta-transaction-api = { module = "jakarta.transaction:jakarta.transaction-api", version.ref = "jakarta-transaction" }
