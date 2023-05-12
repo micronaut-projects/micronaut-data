@@ -21,7 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @MicronautTest
-class BookRepositorySpec extends AbstractMongoSpec {
+class BookRepositorySpec {
 
     // tag::inject[]
 	@Inject BookRepository bookRepository;
