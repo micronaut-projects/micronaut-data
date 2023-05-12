@@ -18,9 +18,9 @@ jobs:
         java: [ '17' ]
     steps:
       - uses: actions/checkout@v3
-      - name: Run Native Tests
-        uses: micronaut-projects/github-actions/graalvm-native-tests@master
-        id: native-tests
+      - name: Pre-Build Steps
+        uses: micronaut-projects/github-actions/graalvm/pre-build@graalvm-native-tests-2
+        id: pre-build
         with:
           graalvm: ${{ matrix.graalvm }}
           java: ${{ matrix.java }}
@@ -28,7 +28,17 @@ jobs:
           GRADLE_ENTERPRISE_ACCESS_KEY: ${{ secrets.GRADLE_ENTERPRISE_ACCESS_KEY }}
           GRADLE_ENTERPRISE_CACHE_USERNAME: ${{ secrets.GRADLE_ENTERPRISE_CACHE_USERNAME }}
           GRADLE_ENTERPRISE_CACHE_PASSWORD: ${{ secrets.GRADLE_ENTERPRISE_CACHE_PASSWORD }}
+      - name: Build Steps
+        uses: micronaut-projects/github-actions/graalvm/build@graalvm-native-tests-2
+        id: build
+        env:
+          GRADLE_ENTERPRISE_ACCESS_KEY: ${{ secrets.GRADLE_ENTERPRISE_ACCESS_KEY }}
+          GRADLE_ENTERPRISE_CACHE_USERNAME: ${{ secrets.GRADLE_ENTERPRISE_CACHE_USERNAME }}
+          GRADLE_ENTERPRISE_CACHE_PASSWORD: ${{ secrets.GRADLE_ENTERPRISE_CACHE_PASSWORD }}
           GH_TOKEN_PUBLIC_REPOS_READONLY: ${{ secrets.GH_TOKEN_PUBLIC_REPOS_READONLY }}
           GH_USERNAME: ${{ secrets.GH_USERNAME }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
+      - name: Post-Build Steps
+        uses: micronaut-projects/github-actions/graalvm/post-build@graalvm-native-tests-2
+        id: post-build
+        with:
+          java: ${{ matrix.java }}
