@@ -323,7 +323,7 @@
         <h1>Micronaut Data</h1>
         <p></p>
         <p>Data Repository Support for Micronaut</p>
-        <p><strong>Version:</strong> <select style='max-width: 200px' onChange='window.document.location.href=this.options[this.selectedIndex].value;'><option selected='selected' value='https://micronaut-projects.github.io/micronaut-data/snapshot/guide/index.html'>SNAPSHOT</option><option value='https://micronaut-projects.github.io/micronaut-data/latest/guide/index.html'>LATEST</option></select> </p>
+        <p><strong>Version:</strong> <select style='max-width: 200px' onChange='window.document.location.href=this.options[this.selectedIndex].value;'><option value='https://micronaut-projects.github.io/micronaut-data/snapshot/guide/index.html'>SNAPSHOT</option><option value='https://micronaut-projects.github.io/micronaut-data/latest/guide/index.html'>LATEST</option></select> </p>
     </div>
     
 <h1 id="introduction"><a class="anchor" href="#introduction"></a>1 Introduction</h1>
@@ -4839,11 +4839,13 @@ data class Product(
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">package example;
 
+import io.micronaut.configuration.hibernate.jpa.proxy.GenerateProxy;
 import org.hibernate.annotations.BatchSize;
 
 import jakarta.persistence.*;
 
 @Entity
+@GenerateProxy
 @BatchSize(size = 10)
 public class Manufacturer {
     @Id
@@ -5393,6 +5395,7 @@ Hibernate Reactive in Micronaut Data requires Hibernate 6
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-properties hljs" data-lang="properties">jpa.default.reactive=true
 jpa.default.properties.hibernate.hbm2ddl.auto=create-drop
+jpa.default.properties.hibernate.show_sql=true
 jpa.default.properties.hibernate.connection.url=jdbc:mysql://localhost:3307/my_db
 jpa.default.properties.hibernate.connection.username=myUser
 jpa.default.properties.hibernate.connection.password=myPassword</code></pre>
@@ -5407,6 +5410,7 @@ jpa.default.properties.hibernate.connection.password=myPassword</code></pre>
       hibernate:
         hbm2ddl:
           auto: create-drop
+        show_sql: true
         connection:
           url: jdbc:mysql://localhost:3307/my_db
           username: myUser
@@ -5422,6 +5426,7 @@ jpa.default.properties.hibernate.connection.password=myPassword</code></pre>
       [jpa.default.properties.hibernate]
         [jpa.default.properties.hibernate.hbm2ddl]
           auto="create-drop"
+        show_sql=true
         [jpa.default.properties.hibernate.connection]
           url="jdbc:mysql://localhost:3307/my_db"
           username="myUser"
@@ -5438,6 +5443,7 @@ jpa.default.properties.hibernate.connection.password=myPassword</code></pre>
         hbm2ddl {
           auto = "create-drop"
         }
+        show_sql = true
         connection {
           url = "jdbc:mysql://localhost:3307/my_db"
           username = "myUser"
@@ -5460,6 +5466,7 @@ jpa.default.properties.hibernate.connection.password=myPassword</code></pre>
           hbm2ddl {
             auto = "create-drop"
           }
+          show_sql = true
           connection {
             url = "jdbc:mysql://localhost:3307/my_db"
             username = "myUser"
@@ -5483,6 +5490,7 @@ jpa.default.properties.hibernate.connection.password=myPassword</code></pre>
           "hbm2ddl": {
             "auto": "create-drop"
           },
+          "show_sql": true,
           "connection": {
             "url": "jdbc:mysql://localhost:3307/my_db",
             "username": "myUser",
@@ -16014,7 +16022,7 @@ You can add additional method candidates by creating a library that depends on <
 <p>        <div class="listingblock multi-language-sample">
 <div class="title"></div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">implementation(<span class="hljs-string">"io.micronaut.data:micronaut-data-spring:4.0.0-SNAPSHOT")</span></code></pre>
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">implementation(<span class="hljs-string">"io.micronaut.data:micronaut-data-spring:4.0.0-M4")</span></code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -16022,7 +16030,7 @@ You can add additional method candidates by creating a library that depends on <
 <pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="maven">&lt;dependency&gt;
     &lt;groupId&gt;io.micronaut.data&lt;/groupId&gt;
     &lt;artifactId&gt;micronaut-data-spring&lt;/artifactId&gt;
-    &lt;version&gt;4.0.0-SNAPSHOT&lt;/version&gt;
+    &lt;version&gt;4.0.0-M4&lt;/version&gt;
 &lt;/dependency&gt;</code></pre>
 </div>
 </div></p>
@@ -16087,7 +16095,7 @@ You can add additional method candidates by creating a library that depends on <
 <p>        <div class="listingblock multi-language-sample">
 <div class="title"></div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">implementation(<span class="hljs-string">"io.micronaut.data:micronaut-data-spring-jpa:4.0.0-SNAPSHOT")</span></code></pre>
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">implementation(<span class="hljs-string">"io.micronaut.data:micronaut-data-spring-jpa:4.0.0-M4")</span></code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -16095,7 +16103,7 @@ You can add additional method candidates by creating a library that depends on <
 <pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="maven">&lt;dependency&gt;
     &lt;groupId&gt;io.micronaut.data&lt;/groupId&gt;
     &lt;artifactId&gt;micronaut-data-spring-jpa&lt;/artifactId&gt;
-    &lt;version&gt;4.0.0-SNAPSHOT&lt;/version&gt;
+    &lt;version&gt;4.0.0-M4&lt;/version&gt;
 &lt;/dependency&gt;</code></pre>
 </div>
 </div></p>
