@@ -1,6 +1,6 @@
 plugins {
     id "java"
-    id "io.micronaut.application"
+    id "io.micronaut.minimal.application"
     id "io.micronaut.build.internal.data-benchmark"
 }
 
@@ -20,8 +20,4 @@ dependencies {
 
 tasks.named("jmh") {
     testRuntimeClasspath.setFrom() // clear test runtime classpath
-}
-
-graalvmNative {
-    testSupport = false
 }

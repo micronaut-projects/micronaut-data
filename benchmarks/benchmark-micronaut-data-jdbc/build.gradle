@@ -1,5 +1,4 @@
 plugins {
-    id "io.micronaut.application"
     id "io.micronaut.build.internal.data-micronaut-benchmark"
 }
 
@@ -14,10 +13,4 @@ dependencies {
     implementation "io.micronaut.sql:micronaut-jdbc-hikari"
     runtimeOnly "com.h2database:h2"
     runtimeOnly mn.snakeyaml
-}
-
-graalvmNative {
-    metadataRepository {
-        uri("https://github.com/oracle/graalvm-reachability-metadata/releases/download/0.3.0/graalvm-reachability-metadata-0.3.0.zip")
-    }
 }

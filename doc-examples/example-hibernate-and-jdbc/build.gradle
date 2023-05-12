@@ -23,3 +23,9 @@ dependencies {
     runtimeOnly "ch.qos.logback:logback-classic"
     runtimeOnly "com.h2database:h2"
 }
+
+graalvmNative {
+    metadataRepository {
+        uri("https://github.com/oracle/graalvm-reachability-metadata/releases/download/0.3.0/graalvm-reachability-metadata-0.3.0.zip")
+    }
+}
