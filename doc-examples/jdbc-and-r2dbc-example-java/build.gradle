@@ -25,6 +25,5 @@ dependencies {
     implementation libs.javax.transaction.api
     runtimeOnly "ch.qos.logback:logback-classic"
     runtimeOnly mnSql.h2
-    runtimeOnly libs.drivers.r2dbc.h2
-
+    runtimeOnly mnR2dbc.r2dbc.h2
 }
