@@ -24,6 +24,7 @@ import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.beans.BeanIntrospector;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
+import io.micronaut.data.annotation.JsonView;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.jdbc.operations.JdbcSchemaHandler;
@@ -38,6 +39,7 @@ import io.micronaut.transaction.jdbc.DelegatingDataSource;
 
 import jakarta.annotation.PostConstruct;
 import javax.sql.DataSource;
+import java.lang.reflect.Modifier;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -92,7 +94,8 @@ public class SchemaGenerator {
             PersistentEntity[] entities = introspections.stream()
                 // filter out inner / internal / abstract(MappedSuperClass) classes
                 .filter(i -> !i.getBeanType().getName().contains("$"))
-                .filter(i -> !java.lang.reflect.Modifier.isAbstract(i.getBeanType().getModifiers()))
+                .filter(i -> !Modifier.isAbstract(i.getBeanType().getModifiers()))
+                .filter(i -> !i.hasAnnotation(JsonView.class))
                 .map(beanIntrospection -> runtimeEntityRegistry.getEntity(beanIntrospection.getBeanType()))
                 .toArray(PersistentEntity[]::new);
             if (ArrayUtils.isNotEmpty(entities)) {

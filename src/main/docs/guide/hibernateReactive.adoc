@@ -32,7 +32,18 @@ And configure it based on https://micronaut-projects.github.io/micronaut-sql/lat
 
 [configuration]
 ----
-include::doc-examples/hibernate-reactive-example-java/src/main/resources/application.yml[]
+jpa:
+  default:
+    reactive: true
+    properties:
+      hibernate:
+        hbm2ddl:
+          auto: create-drop
+        show_sql: true
+        connection:
+          url: jdbc:mysql://localhost:3307/my_db
+          username: myUser
+          password: myPassword
 ----
 
 Hibernate reactive is non-blocking that repository interfaces and classes you define extend one of the reactive repositories:

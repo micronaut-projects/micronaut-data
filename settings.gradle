@@ -6,7 +6,7 @@ pluginManagement {
 }
 
 plugins {
-    id 'io.micronaut.build.shared.settings' version '6.3.5'
+    id 'io.micronaut.build.shared.settings' version '6.4.4'
 }
 
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
@@ -30,6 +30,7 @@ micronautBuild {
     importMicronautCatalog("micronaut-sql")
     importMicronautCatalog("micronaut-kotlin")
     importMicronautCatalog("micronaut-multitenancy")
+    importMicronautCatalog("micronaut-testresources")
     importMicronautCatalog("micronaut-validation")
 }
 
@@ -94,6 +95,7 @@ include 'doc-examples:mongo-example-groovy'
 include 'doc-examples:mongo-example-kotlin'
 include 'doc-examples:mongo-reactive-example-kotlin'
 include 'doc-examples:mongo-example-records-java'
+include 'doc-examples:mongo-jackson-example-java'
 
 include 'doc-examples:mongo-multitenancy-database-example-java'
 include 'doc-examples:mongo-multitenancy-datasource-example-java'

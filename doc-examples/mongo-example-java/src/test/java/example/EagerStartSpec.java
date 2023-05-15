@@ -1,5 +1,6 @@
 package example;
 
+import io.micronaut.core.annotation.ReflectiveAccess;
 import io.micronaut.runtime.Micronaut;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
@@ -32,6 +33,7 @@ class EagerStartSpec {
         assertNotNull(book);
     }
 
+    @ReflectiveAccess
     public static class MyApplicationContextBuilder extends Micronaut {
 
         {

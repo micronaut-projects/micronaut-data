@@ -33,6 +33,10 @@ abstract class AbstractManualSchemaSpec extends Specification {
 
     ConnectionFactory connectionFactory = context.getBean(ConnectionFactory)
 
+    ApplicationContext getApplicationContext() {
+        return context
+    }
+
     abstract PatientRepository getPatientRepository()
 
     List<String> createStatements() {

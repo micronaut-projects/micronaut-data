@@ -2,7 +2,9 @@ package io.micronaut.data.r2dbc.mysql
 
 import io.micronaut.data.r2dbc.AbstractR2dbcMultitenancySpec
 import io.micronaut.data.r2dbc.CleanupTestResourcesDatabaseTestPropertyProvider
+import io.micronaut.test.extensions.junit5.annotation.TestResourcesScope
 
+@TestResourcesScope("multitenancy-r2-mysql")
 class MySqlMultitenancySpec extends AbstractR2dbcMultitenancySpec implements CleanupTestResourcesDatabaseTestPropertyProvider {
 
     @Override

@@ -50,6 +50,10 @@ abstract class AbstractReactiveRepositorySpec extends Specification {
     abstract PersonReactiveRepository getPersonRepository()
     abstract StudentReactiveRepository getStudentRepository()
 
+    ApplicationContext getApplicationContext() {
+        return context
+    }
+
     void init() {
     }
 

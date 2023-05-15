@@ -1,10 +1,9 @@
 package io.micronaut.data.r2dbc.mariadb
 
 import io.micronaut.data.model.query.builder.sql.Dialect
-import io.micronaut.data.r2dbc.SharedTestResourcesDatabaseTestPropertyProvider
 import io.micronaut.data.r2dbc.TestResourcesDatabaseTestPropertyProvider
 
-trait MariaDbTestPropertyProvider implements SharedTestResourcesDatabaseTestPropertyProvider {
+trait MariaDbTestPropertyProvider implements TestResourcesDatabaseTestPropertyProvider {
 
     @Override
     Dialect dialect() {
@@ -16,10 +15,6 @@ trait MariaDbTestPropertyProvider implements SharedTestResourcesDatabaseTestProp
         return "mariadb"
     }
 
-    @Override
-    int sharedSpecsCount() {
-        return 10
-    }
 
     Map<String, String> getDataSourceProperties(String dataSourceName) {
         return super.getDataSourceProperties(dataSourceName) + ["test-resources.containers.mysql.image-name": "mariadb:10.6"]

@@ -2,7 +2,6 @@ plugins {
     id "org.jetbrains.kotlin.jvm"
     id "org.jetbrains.kotlin.kapt"
     id "org.jetbrains.kotlin.plugin.allopen"
-    id "io.micronaut.application"
     id "io.micronaut.build.internal.data-kotlin-example"
 }
 
@@ -11,8 +10,7 @@ application {
 }
 
 micronaut {
-    // version = libs.versions.micronaut.asProvider().get()
-    version = '4.0.0-SNAPSHOT'
+    version libs.versions.micronaut.platform.get()
     runtime "netty"
     testRuntime "junit5"
 }
@@ -30,12 +28,12 @@ dependencies {
     implementation "io.micronaut.sql:micronaut-jdbc-tomcat"
     implementation libs.jakarta.persistence.api
     implementation libs.javax.transaction.api
-    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core"
-    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-reactive"
+    implementation libs.kotlin.coroutines
+    implementation libs.kotlin.coroutines.reactive
 
     runtimeOnly "ch.qos.logback:logback-classic"
     runtimeOnly "com.h2database:h2"
 
-    testImplementation "io.micronaut.test:micronaut-test-kotest"
+    testImplementation "io.micronaut.test:micronaut-test-kotest5"
 
 }

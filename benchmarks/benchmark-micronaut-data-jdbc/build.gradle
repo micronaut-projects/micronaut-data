@@ -1,5 +1,4 @@
 plugins {
-    id "io.micronaut.application"
     id "io.micronaut.build.internal.data-micronaut-benchmark"
 }
 

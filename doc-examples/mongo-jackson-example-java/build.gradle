@@ -1,0 +1,34 @@
+plugins {
+    id "io.micronaut.build.internal.data-native-example"
+}
+
+application {
+    mainClass = "example.Application"
+}
+
+micronaut {
+    version libs.versions.micronaut.platform.get()
+    runtime "netty"
+    testRuntime "junit5"
+    testResources {
+        clientTimeout = 300
+        version = libs.versions.micronaut.testresources.get()
+    }
+}
+
+dependencies {
+    annotationProcessor projects.dataDocumentProcessor
+
+    implementation 'io.micronaut.rxjava2:micronaut-rxjava2'
+    implementation 'io.micronaut.reactor:micronaut-reactor'
+
+    implementation 'io.micronaut:micronaut-jackson-databind'
+    implementation 'io.micronaut.serde:micronaut-serde-jackson'
+
+    implementation 'io.micronaut:micronaut-http-client'
+    implementation 'io.micronaut.data:micronaut-data-mongodb'
+    implementation libs.mongodb.driver.sync
+
+    runtimeOnly "ch.qos.logback:logback-classic"
+
+}

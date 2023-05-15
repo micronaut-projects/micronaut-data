@@ -174,4 +174,9 @@ public interface DelegateStoredQuery<E, R> extends StoredQuery<E, R> {
     default boolean isRawQuery() {
         return getStoredQueryDelegate().isRawQuery();
     }
+
+    @Override
+    default boolean isJsonEntity() {
+        return getStoredQueryDelegate().isJsonEntity();
+    }
 }

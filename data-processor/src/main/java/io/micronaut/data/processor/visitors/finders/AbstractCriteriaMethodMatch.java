@@ -23,6 +23,7 @@ import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.naming.NameUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
+import io.micronaut.data.annotation.DataAnnotationUtils;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.annotation.QueryHint;
@@ -161,11 +162,12 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
         if (idParameter != null) {
             methodMatchInfo.addParameterRole(TypeRole.ID, idParameter.stringValue(Parameter.class).orElse(idParameter.getName()));
         }
+        boolean encodeEntityParameters = !DataAnnotationUtils.hasJsonEntityRepresentationAnnotation(matchContext.getAnnotationMetadata());
         if (entityParameter != null) {
-            methodMatchInfo.encodeEntityParameters(true);
+            methodMatchInfo.encodeEntityParameters(encodeEntityParameters);
             methodMatchInfo.addParameterRole(TypeRole.ENTITY, entityParameter.getName());
         } else if (entitiesParameter != null) {
-            methodMatchInfo.encodeEntityParameters(true);
+            methodMatchInfo.encodeEntityParameters(encodeEntityParameters);
             methodMatchInfo.addParameterRole(TypeRole.ENTITIES, entitiesParameter.getName());
         }
         return methodMatchInfo;

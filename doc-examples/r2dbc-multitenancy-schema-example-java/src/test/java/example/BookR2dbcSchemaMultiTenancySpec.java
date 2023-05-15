@@ -6,10 +6,13 @@ import io.micronaut.http.annotation.Header;
 import io.micronaut.http.client.annotation.Client;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import io.r2dbc.spi.ConnectionFactory;
+import io.r2dbc.spi.Result;
 import jakarta.inject.Inject;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.sql.SQLException;
@@ -43,6 +46,12 @@ class BookR2dbcSchemaMultiTenancySpec {
         barBookClient.deleteAll();
     }
 
+    @AfterAll
+    public void deleteSchema() {
+        deleteSchema("foo");
+        deleteSchema("bar");
+    }
+
     @Test
     void testRest() throws SQLException {
         // When: A book created in FOO tenant
@@ -70,6 +79,14 @@ class BookR2dbcSchemaMultiTenancySpec {
         fooBookClient.deleteAll();
         // Then: BARs aren deletes
         assertEquals(0, fooBookClient.findAll().size());
+    }
+
+    private void deleteSchema(String schemaName) {
+        Mono.from(cf.create())
+            .flatMap(c -> Flux.from(c.createStatement("DROP SCHEMA " + schemaName + ";").execute())
+                .flatMap(Result::getRowsUpdated)
+                .then())
+            .block();
     }
 
     protected long getSchemaBooksCount(String schemaName) {

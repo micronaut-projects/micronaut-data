@@ -1,6 +1,5 @@
 plugins {
     id "groovy"
-    id "io.micronaut.application"
     id "io.micronaut.test-resources"
     id "io.micronaut.build.internal.data-example"
 }
@@ -10,8 +9,7 @@ application {
 }
 
 micronaut {
-    // version = libs.versions.micronaut.asProvider().get()
-    version = '4.0.0-SNAPSHOT'
+    version libs.versions.micronaut.platform.get()
     runtime "netty"
     testRuntime "spock"
     testResources {
@@ -23,7 +21,6 @@ micronaut {
 dependencies {
     compileOnly project(":data-processor")
     implementation('io.micronaut.data:micronaut-data-r2dbc')
-    implementation("io.micronaut.flyway:micronaut-flyway")
     implementation("io.micronaut.sql:micronaut-jdbc-hikari")
 
     runtimeOnly libs.drivers.r2dbc.postgresql

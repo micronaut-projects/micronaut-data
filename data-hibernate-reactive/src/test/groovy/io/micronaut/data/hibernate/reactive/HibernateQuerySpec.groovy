@@ -162,7 +162,6 @@ class HibernateQuerySpec extends Specification implements PostgresHibernateReact
         author == null
     }
 
-    @PendingFeature(reason = "join books collection not returning all items with EntityGraph")
     void "author find by id with EntityGraph"() {
         when:
         def author = authorRepository.searchByName("Stephen King").block()
@@ -174,7 +173,6 @@ class HibernateQuerySpec extends Specification implements PostgresHibernateReact
         author.books[1].pages.size() == 0
     }
 
-    @PendingFeature(reason = "join books collection not returning all items with EntityGraph")
     void "Rating find by id with named EntityGraph"() {
         setup:
         Book book = bookRepository.findByTitle("The Power of the Dog").block()

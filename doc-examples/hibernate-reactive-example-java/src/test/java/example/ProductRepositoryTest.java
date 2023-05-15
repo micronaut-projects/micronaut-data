@@ -12,7 +12,7 @@ import java.util.List;
 
 @MicronautTest(transactional = false)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class ProductRepositoryTest implements PostgresHibernateReactiveProperties {
+class ProductRepositoryTest {
 
     @Inject ProductRepository productRepository;
     @Inject ProductManager productManager;
@@ -51,21 +51,6 @@ class ProductRepositoryTest implements PostgresHibernateReactiveProperties {
         Assertions.assertEquals(
                 watch.getName(),
                 productManager.find("Watch").block().getName()
-        );
-    }
-
-    @Test
-    void testFindCaseInsensitive() {
-        long totalCaseInsensitive = productRepository.findByName("macbook", true, false).collectList().block().size();
-        long totalCaseSensitive = productRepository.findByName("macbook", false, false).collectList().block().size();
-
-        Assertions.assertEquals(
-                1,
-                totalCaseInsensitive
-        );
-        Assertions.assertEquals(
-                0,
-                totalCaseSensitive
         );
     }
 }
