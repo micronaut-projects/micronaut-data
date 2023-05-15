@@ -4,15 +4,13 @@ import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
 
 import java.nio.charset.StandardCharsets;
 import java.time.MonthDay;
 import java.util.Base64;
 
 @MicronautTest(transactional = false)
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public class AccountTest implements PostgresHibernateReactiveProperties {
+public class AccountTest {
     @Inject
     AccountRepository accountRepository;
 
