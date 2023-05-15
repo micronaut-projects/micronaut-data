@@ -5,6 +5,7 @@ import jakarta.inject.Inject
 import org.bson.types.ObjectId
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 
@@ -21,6 +22,7 @@ class SaleRepositorySpec : AbstractMongoSpec() {
     @Inject
     lateinit var manufacturerRepository: ManufacturerRepository
 
+    @Disabled // Enable after https://github.com/micronaut-projects/micronaut-core/pull/9235
     @Test
     fun testReadWriteCustomType() {
         val apple = manufacturerRepository.save("Apple")
