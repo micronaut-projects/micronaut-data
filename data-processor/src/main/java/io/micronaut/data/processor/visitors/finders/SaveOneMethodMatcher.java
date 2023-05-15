@@ -20,6 +20,7 @@ import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.reflect.ClassUtils;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
+import io.micronaut.data.annotation.DataAnnotationUtils;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.intercept.DataInterceptor;
 import io.micronaut.data.intercept.annotation.DataMethod;
@@ -145,12 +146,13 @@ public class SaveOneMethodMatcher extends AbstractPrefixPatternMethodMatcher {
                 );
 
                 Map.Entry<ClassElement, Class<? extends DataInterceptor>> e = FindersUtils.pickSaveOneInterceptor(matchContext, matchContext.getReturnType());
+                boolean encodeEntityParameters = !DataAnnotationUtils.hasJsonEntityRepresentationAnnotation(matchContext.getAnnotationMetadata());
                 return new MethodMatchInfo(
                         DataMethod.OperationType.INSERT,
                         e.getKey(),
                         getInterceptorElement(matchContext, e.getValue())
                 )
-                        .encodeEntityParameters(true)
+                        .encodeEntityParameters(encodeEntityParameters)
                         .queryResult(
                                 matchContext.getQueryBuilder().buildInsert(annotationMetadataHierarchy, matchContext.getRootEntity())
                         );

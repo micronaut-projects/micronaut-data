@@ -1,7 +1,5 @@
 plugins {
-    id "java"
-    id "io.micronaut.application"
-    id "io.micronaut.build.internal.data-example"
+    id "io.micronaut.build.internal.data-native-example"
 }
 
 application {
@@ -9,8 +7,7 @@ application {
 }
 
 micronaut {
-    // version = libs.versions.micronaut.asProvider().get()
-    version = '4.0.0-SNAPSHOT'
+    version libs.versions.micronaut.platform.get()
     runtime "netty"
     testRuntime "junit5"
 }

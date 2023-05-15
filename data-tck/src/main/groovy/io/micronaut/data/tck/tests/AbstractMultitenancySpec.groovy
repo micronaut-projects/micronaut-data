@@ -31,6 +31,7 @@ import io.micronaut.http.client.annotation.Client
 import io.micronaut.runtime.server.EmbeddedServer
 import io.micronaut.scheduling.TaskExecutors
 import io.micronaut.scheduling.annotation.ExecuteOn
+import io.micronaut.test.support.TestPropertyProviderFactory
 import spock.lang.Specification
 
 import java.util.stream.Collectors
@@ -58,7 +59,7 @@ abstract class AbstractMultitenancySpec extends Specification {
             return
         }
         setup:
-            EmbeddedServer embeddedServer = ApplicationContext.run(EmbeddedServer, properties + getExtraProperties() + getDataSourceProperties('default') + [
+            EmbeddedServer embeddedServer = ApplicationContext.run(EmbeddedServer, commonProperties + getDataSourceProperties('default') + [
                     'spec.name'                                               : 'multitenancy',
                     'micronaut.data.multi-tenancy.mode'                       : 'SCHEMA',
                     'micronaut.multitenancy.tenantresolver.httpheader.enabled': 'true',
@@ -100,10 +101,19 @@ abstract class AbstractMultitenancySpec extends Specification {
             embeddedServer?.stop()
     }
 
+    private Map<String, String> getCommonProperties() {
+        def dynamicProperties = properties + extraProperties
+        ServiceLoader.load(TestPropertyProviderFactory).stream()
+                .forEach {
+                    dynamicProperties.putAll(it.get().create([:], this.class).get())
+                }
+        dynamicProperties
+    }
+
     def "test datasource multitenancy"() {
         setup:
             Map<String, String> dataSourceProperties = getDataSourceProperties('foo') + getDataSourceProperties('bar')
-            EmbeddedServer embeddedServer = ApplicationContext.run(EmbeddedServer, properties + getExtraProperties() + dataSourceProperties + [
+            EmbeddedServer embeddedServer = ApplicationContext.run(EmbeddedServer, commonProperties + dataSourceProperties + [
                     'spec.name'                                               : 'multitenancy',
                     'micronaut.data.multi-tenancy.mode'                       : 'DATASOURCE',
                     'micronaut.multitenancy.tenantresolver.httpheader.enabled': 'true'

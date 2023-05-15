@@ -1,8 +1,5 @@
 plugins {
-    id "java"
-    id "io.micronaut.build.internal.data-example"
-    id "io.micronaut.application"
-    id 'io.micronaut.test-resources'
+    id "io.micronaut.build.internal.data-native-example"
 }
 
 application {
@@ -10,8 +7,7 @@ application {
 }
 
 micronaut {
-    // version = libs.versions.micronaut.asProvider().get()
-    version = '4.0.0-SNAPSHOT'
+    version libs.versions.micronaut.platform.get()
     runtime "netty"
     testRuntime "junit5"
     testResources {
@@ -35,7 +31,4 @@ dependencies {
     implementation libs.jakarta.transaction.api
 
     runtimeOnly "ch.qos.logback:logback-classic"
-
-    // Needed for EagerStartSpec
-    testImplementation("org.jetbrains.kotlin:kotlin-reflect:1.8.20")
 }

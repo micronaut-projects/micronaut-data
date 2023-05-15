@@ -1,5 +1,6 @@
 package io.micronaut.data.r2dbc.postgres.http
 
+import io.micronaut.context.ApplicationContext
 import io.micronaut.data.r2dbc.postgres.PostgresTestPropertyProvider
 import io.micronaut.http.HttpRequest
 import io.micronaut.http.HttpResponse
@@ -16,6 +17,9 @@ class SampleHttpSpec extends Specification implements PostgresTestPropertyProvid
     @Inject
     @Client("/")
     HttpClient client
+
+    @Inject
+    ApplicationContext context
 
     @Test
     void testWriteRead() {

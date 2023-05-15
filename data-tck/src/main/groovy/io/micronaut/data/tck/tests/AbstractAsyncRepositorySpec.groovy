@@ -48,6 +48,10 @@ abstract class AbstractAsyncRepositorySpec extends Specification {
 
     abstract PersonAsyncRepository getPersonRepository()
 
+    ApplicationContext getApplicationContext() {
+        return context
+    }
+
     void init() {
     }
 
@@ -668,6 +672,6 @@ abstract class AbstractAsyncRepositorySpec extends Specification {
             }
             throw e
         }
-        
+
     }
 }

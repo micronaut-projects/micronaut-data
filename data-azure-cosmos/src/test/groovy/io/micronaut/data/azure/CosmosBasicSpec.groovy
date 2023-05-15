@@ -605,7 +605,7 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
                 if (!parser.hasCurrentToken()) {
                     parser.nextToken()
                 }
-                final Decoder decoder = JacksonDecoder.create(parser, Object)
+                final Decoder decoder = JacksonDecoder.create(parser)
                 Deserializer.DecoderContext decoderContext = registry.newDecoderContext(null)
                 Deserializer<XBook> typeDeserializer = registry.findDeserializer(type)
                 Deserializer<XBook> deserializer = typeDeserializer.createSpecific(decoderContext, type)

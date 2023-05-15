@@ -12,6 +12,7 @@ dependencies {
 
 	testImplementation mnReactor.micronaut.reactor
 	testImplementation mn.micronaut.inject.groovy
+    testImplementation mn.micronaut.inject.groovy.test
 	testImplementation mn.micronaut.inject.java.test
 	testImplementation libs.javax.persistence.api
 	testImplementation libs.javax.transaction.api

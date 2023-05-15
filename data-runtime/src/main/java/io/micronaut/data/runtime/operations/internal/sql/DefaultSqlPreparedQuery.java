@@ -164,11 +164,11 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
             StringBuilder added = new StringBuilder();
             Sort sort = pageable.getSort();
             if (sort.isSorted()) {
-                added.append(queryBuilder.buildOrderBy(persistentEntity, sort).getQuery());
+                added.append(queryBuilder.buildOrderBy("", persistentEntity, sqlStoredQuery.getAnnotationMetadata(), sort).getQuery());
             } else if (isSqlServerWithoutOrderBy(query, sqlStoredQuery.getDialect())) {
                 // SQL server requires order by
                 sort = sortById(persistentEntity);
-                added.append(queryBuilder.buildOrderBy(persistentEntity, sort).getQuery());
+                added.append(queryBuilder.buildOrderBy("", persistentEntity, sqlStoredQuery.getAnnotationMetadata(), sort).getQuery());
             }
             if (isSingleResult && pageable.getOffset() > 0) {
                 pageable = Pageable.from(pageable.getNumber(), 1);

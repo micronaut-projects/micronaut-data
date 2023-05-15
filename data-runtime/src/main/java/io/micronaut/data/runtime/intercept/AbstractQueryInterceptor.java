@@ -275,7 +275,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
                 resultType = (Class<RT>) context.classValue(DataMethod.NAME, DataMethod.META_MEMBER_RESULT_TYPE)
                         .orElse(rootEntity);
             }
-            storedQuery = storedQueryResolver.resolveQuery(context, rootEntity, resultType);
+            storedQuery = storedQueryResolver.resolveQuery(context, rootEntity, resultType, isCount);
             storedQuery = storedQueryDecorator.decorate(context, storedQuery);
             queries.put(methodKey, storedQuery);
         }
