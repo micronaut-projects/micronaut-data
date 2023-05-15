@@ -18,7 +18,7 @@ micronaut-kotlin = "4.0.0-M1"
 micronaut-multitenancy = "5.0.0-M1"
 micronaut-validation = "4.0.0-M2"
 
-groovy = "4.0.11"
+groovy = "4.0.12"
 
 javax-persistence = "2.2"
 jakarta-persistence = "3.1.0"
@@ -29,11 +29,11 @@ jakarta-transaction = "2.0.1"
 hibernate = "6.2.0.Final"
 hibernate-jpamodelgen-jakarta = "6.0.0.Alpha9"
 
-spring-data = "3.0.5"
+spring-data = "3.1.0"
 
 mongodb = "4.9.1"
 
-vertx = "4.4.1"
+vertx = "4.4.2"
 
 # JDBC Drivers
 
@@ -60,11 +60,11 @@ h2 = "2.1.214"
 # Testing and benchmarking
 
 benchmark-spring-data-mongodb = "4.9.1"
-benchmark-spring-data = "2022.0.5"
+benchmark-spring-data = "2023.0.0"
 spock = "2.2-groovy-4.0"
 cglib = "3.3.0"
 objenesis = "3.3"
-testcontainers = "1.18.0"
+testcontainers = "1.18.1"
 jmh = "1.36"
 jetbrains-annotations = "24.0.1"
 
@@ -78,7 +78,7 @@ shadow-gradle-plugin = "8.0.0"
 
 # Dependency versions which are found in the platform BOM
 # meaning that they should be extracted into their own BOM
-kotlin-coroutines = "1.7.0"
+kotlin-coroutines = "1.7.1"
 
 
 [libraries]

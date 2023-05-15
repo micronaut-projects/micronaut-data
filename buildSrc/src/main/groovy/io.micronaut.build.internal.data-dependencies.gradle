@@ -11,7 +11,7 @@ configurations {
         resolutionStrategy {
             dependencySubstitution {
                 substitute(module("org.codehaus.groovy:groovy"))
-                        .using(module("org.apache.groovy:groovy:4.0.11"))
+                        .using(module("org.apache.groovy:groovy:4.0.12"))
             }
             eachDependency { DependencyResolveDetails details ->
                 if (details.requested.name == 'groovy-all') {
