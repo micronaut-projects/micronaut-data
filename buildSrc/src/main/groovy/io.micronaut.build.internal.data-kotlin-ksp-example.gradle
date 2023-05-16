@@ -5,14 +5,26 @@ plugins {
     id "io.micronaut.build.internal.data-kotlin"
 }
 
+micronaut {
+    runtime "netty"
+    testRuntime "junit5"
+    version libs.versions.micronaut.platform.get()
+}
+
 compileKotlin {
     kotlinOptions {
+        jvmTarget = "17"
         freeCompilerArgs = ["-Xjvm-default=all"]
     }
 }
 
 compileTestKotlin {
     kotlinOptions {
+        jvmTarget = "17"
         freeCompilerArgs = ["-Xjvm-default=all"]
     }
+}
+
+configurations.all {
+    resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
 }

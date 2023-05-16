@@ -8,27 +8,6 @@ application {
     mainClass = "example.ApplicationKt"
 }
 
-micronaut {
-    version = '4.0.0-SNAPSHOT'
-    runtime "netty"
-    testRuntime "junit5"
-}
-
-configurations.all {
-    resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
-}
-
-//kotlin {
-//    kotlinDaemonJvmArgs = ['-Xdebug', '-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5005']
-//}
-
-tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
-    kotlinOptions {
-        jvmTarget = "17"
-        freeCompilerArgs = ['-Xjvm-default=all']
-    }
-}
-
 dependencies {
     ksp projects.dataDocumentProcessor
     implementation 'io.micronaut.rxjava2:micronaut-rxjava2'
