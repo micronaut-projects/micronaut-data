@@ -40,6 +40,6 @@ dependencies {
     testImplementation libs.testcontainers.postgresql
 
     testRuntimeOnly mnSql.h2
-    testRuntimeOnly libs.drivers.jdbc.postgresql
+    testRuntimeOnly mnSql.postgresql
     testRuntimeOnly mnSql.micronaut.jdbc.tomcat
 }

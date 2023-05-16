@@ -23,8 +23,8 @@ dependencies {
     implementation("io.micronaut.sql:micronaut-jdbc-hikari")
     implementation mnSerde.micronaut.serde.jackson
 
-    runtimeOnly libs.drivers.r2dbc.postgresql
-    runtimeOnly libs.drivers.jdbc.postgresql
+    runtimeOnly mnR2dbc.r2dbc.postgresql
+    runtimeOnly mnSql.postgresql
     runtimeOnly mn.snakeyaml
     testRuntimeOnly mnSerde.micronaut.serde.jackson
 

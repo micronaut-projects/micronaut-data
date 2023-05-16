@@ -20,8 +20,8 @@ dependencies {
     implementation projects.dataHibernateReactive
     runtimeOnly "ch.qos.logback:logback-classic"
     runtimeOnly libs.drivers.vertx.pg
-    runtimeOnly "io.micronaut.sql:micronaut-jdbc-tomcat"
-    runtimeOnly libs.drivers.jdbc.postgresql
+    runtimeOnly mnSql.micronaut.jdbc.tomcat
+    runtimeOnly mnSql.postgresql
 
     testImplementation platform(libs.testcontainers.bom)
     testImplementation libs.testcontainers.postgresql

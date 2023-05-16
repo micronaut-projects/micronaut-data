@@ -30,5 +30,5 @@ dependencies {
     testRuntimeOnly libs.drivers.vertx.mysql
 
     // Testcontainers wait function needs the driver
-    testImplementation libs.drivers.jdbc.mysql
+    testImplementation mnSql.mysql.connector.java
 }

@@ -37,25 +37,8 @@ vertx = "4.4.2"
 
 # JDBC Drivers
 
+# Need to leave it here because micronaut-sql uses older version. When it's upgraded there then we can remove this declaration here
 oracle-jdbc-driver = "23.2.0.0"
-mariadb-jdbc-driver = "3.1.4"
-mysql-jdbc-driver = "8.0.33"
-postgres-jdbc-driver = "42.6.0"
-mssql-jdbc-driver = "12.2.0.jre11"
-
-# R2DBC Drivers
-
-r2dbc = "1.0.0.RELEASE"
-r2dbc-pool = "1.0.0.RELEASE"
-
-oracle-r2dbc-driver = "1.1.1"
-mysql-r2dbc-driver = "0.8.2.RELEASE"
-h2-r2dbc-driver = "1.0.0.RELEASE"
-mariadb-r2dbc-driver = "1.1.4"
-postgresql-r2dbc-driver = "1.0.1.RELEASE"
-mssql-r2dbc-driver = "1.0.0.RELEASE"
-
-h2 = "2.1.214"
 
 # Testing and benchmarking
 
@@ -158,27 +141,11 @@ drivers-vertx-mysql = { module = "io.vertx:vertx-mysql-client", version.ref = "v
 micronaut-sql-jdbc-tomcat = { module = "io.micronaut.sql:micronaut-jdbc-tomcat", version.ref = "micronaut-sql" }
 micronaut-sql-jdbc = { module = "io.micronaut.sql:micronaut-jdbc", version.ref = "micronaut-sql" }
 
-h2 = { module = "com.h2database:h2", version.ref = "h2" }
-
 drivers-jdbc-oracle = { module = "com.oracle.database.jdbc:ojdbc8", version.ref = "oracle-jdbc-driver" }
-drivers-jdbc-mariadb = { module = "org.mariadb.jdbc:mariadb-java-client", version.ref = "mariadb-jdbc-driver" }
-drivers-jdbc-mysql = { module = "mysql:mysql-connector-java", version.ref = "mysql-jdbc-driver" }
-drivers-jdbc-postgresql = { module = "org.postgresql:postgresql", version.ref = "postgres-jdbc-driver" }
-drivers-jdbc-mssql = { module = "com.microsoft.sqlserver:mssql-jdbc", version.ref = "mssql-jdbc-driver" }
 
 # R2DBC
 
-r2dbc-spi = { module = "io.r2dbc:r2dbc-spi", version.ref = "r2dbc" }
-r2dbc-pool = { module = "io.r2dbc:r2dbc-pool", version.ref = "r2dbc-pool" }
-
 micronaut-r2dbc = { module = "io.micronaut.r2dbc:micronaut-r2dbc-bom", version.ref = "micronaut-r2dbc" }
-
-drivers-r2dbc-h2 = { module = "io.r2dbc:r2dbc-h2", version.ref = "h2-r2dbc-driver" }
-drivers-r2dbc-oracle = { module = "com.oracle.database.r2dbc:oracle-r2dbc", version.ref = "oracle-r2dbc-driver" }
-drivers-r2dbc-mariadb = { module = "org.mariadb:r2dbc-mariadb", version.ref = "mariadb-r2dbc-driver" }
-drivers-r2dbc-mysql = { module = "dev.miku:r2dbc-mysql", version.ref = "mysql-r2dbc-driver" }
-drivers-r2dbc-mssql = { module = "io.r2dbc:r2dbc-mssql", version.ref = "mssql-r2dbc-driver" }
-drivers-r2dbc-postgresql = { module = "org.postgresql:r2dbc-postgresql", version.ref = "postgresql-r2dbc-driver" }
 
 # TESTCONTAINERS
 
