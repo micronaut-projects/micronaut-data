@@ -3,7 +3,7 @@ plugins {
 }
 
 micronaut {
-    version libs.versions.micronaut.platform.get()
+    libs.versions.micronaut.platform.get()
 }
 
 dependencies {

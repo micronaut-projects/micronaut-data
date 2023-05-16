@@ -4,9 +4,9 @@ plugins {
 }
 
 micronaut {
-    version = libs.versions.micronaut.platform.get()
+    libs.versions.micronaut.platform.get()
     testResources {
-        enabled = true
+        enabled = false
         inferClasspath = false
         version = libs.versions.micronaut.testresources.get()
     }
