@@ -1,5 +1,5 @@
 plugins {
-    id "io.micronaut.application"
+    id "io.micronaut.minimal.application"
 //    id "io.micronaut.test-resources" Integrate after https://github.com/micronaut-projects/micronaut-test-resources/issues/142
     id "io.micronaut.build.internal.data-kotlin-ksp-example"
 }
