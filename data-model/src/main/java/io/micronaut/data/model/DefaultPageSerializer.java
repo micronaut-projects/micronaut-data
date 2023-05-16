@@ -32,10 +32,10 @@ import java.util.List;
  */
 @Prototype
 @Internal
-final class DefaultPageSerializer implements Serializer<DefaultPage<Object>> {
+final class DefaultPageSerializer implements Serializer<Page<Object>> {
 
     @Override
-    public void serialize(Encoder encoder, EncoderContext context, Argument<? extends DefaultPage<Object>> type, DefaultPage<Object> page) throws IOException {
+    public void serialize(Encoder encoder, EncoderContext context, Argument<? extends Page<Object>> type, Page<Object> page) throws IOException {
         Encoder e = encoder.encodeObject(type);
 
         e.encodeKey("content");
