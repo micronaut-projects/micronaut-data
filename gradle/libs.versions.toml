@@ -1,9 +1,9 @@
 [versions]
 micronaut = "4.0.0-M3"
-micronaut-platform = "4.0.0-M2"
+micronaut-platform = "4.0.0-SNAPSHOT"
 micronaut-docs = "2.0.0"
-micronaut-gradle-plugin = "4.0.0-M2"
-micronaut-testresources = "2.0.0-M5"
+micronaut-gradle-plugin = "4.0.0-M3"
+micronaut-testresources = "2.0.0-M7"
 
 micronaut-azure = "5.0.0-M2"
 micronaut-reactor = "3.0.0-M1"
@@ -16,7 +16,7 @@ micronaut-test = "4.0.0-M3"
 micronaut-mongo = "5.0.0-M1"
 micronaut-kotlin = "4.0.0-M1"
 micronaut-multitenancy = "5.0.0-M1"
-micronaut-validation = "4.0.0-M2"
+micronaut-validation = "4.0.0-M7"
 
 groovy = "4.0.12"
 
