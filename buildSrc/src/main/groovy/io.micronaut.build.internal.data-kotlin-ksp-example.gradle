@@ -1,6 +1,5 @@
 plugins {
     id 'com.google.devtools.ksp'
-    id "io.micronaut.application"
     id "io.micronaut.build.internal.data-example"
     id "io.micronaut.build.internal.data-kotlin"
 }
