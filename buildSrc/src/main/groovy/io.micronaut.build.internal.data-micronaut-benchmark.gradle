@@ -4,6 +4,10 @@ plugins {
     id "io.micronaut.build.internal.data-benchmark"
 }
 
+micronaut {
+    version libs.versions.micronaut.platform.get()
+}
+
 dependencies {
     annotationProcessor projects.dataProcessor
     annotationProcessor "io.micronaut:micronaut-inject-java"

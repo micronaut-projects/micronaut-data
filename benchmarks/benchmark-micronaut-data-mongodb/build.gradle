@@ -2,10 +2,6 @@ plugins {
     id "io.micronaut.build.internal.data-micronaut-benchmark"
 }
 
-micronaut {
-    version libs.versions.micronaut.platform.get()
-}
-
 dependencies {
     annotationProcessor projects.dataDocumentProcessor
     implementation projects.dataMongodb
