@@ -26,8 +26,8 @@ dependencies {
     testImplementation libs.testcontainers.postgresql
     testImplementation libs.testcontainers.mysql
 
-    testRuntimeOnly libs.drivers.vertx.pg
-    testRuntimeOnly libs.drivers.vertx.mysql
+    testRuntimeOnly mnSql.vertx.pg.client
+    testRuntimeOnly mnSql.vertx.mysql.client
 
     // Testcontainers wait function needs the driver
     testImplementation mnSql.mysql.connector.java
