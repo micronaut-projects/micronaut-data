@@ -33,8 +33,6 @@ spring-data = "3.1.0"
 
 mongodb = "4.9.1"
 
-vertx = "4.4.2"
-
 # JDBC Drivers
 
 # Need to leave it here because micronaut-sql uses older version. When it's upgraded there then we can remove this declaration here
