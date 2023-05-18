@@ -26,7 +26,7 @@ dependencies {
     implementation mnKotlin.micronaut.kotlin.runtime
 
     runtimeOnly "ch.qos.logback:logback-classic"
-    runtimeOnly libs.drivers.vertx.pg
+    runtimeOnly mnSql.vertx.pg.client
 
     testImplementation platform(libs.testcontainers.bom)
     testImplementation libs.testcontainers.postgresql

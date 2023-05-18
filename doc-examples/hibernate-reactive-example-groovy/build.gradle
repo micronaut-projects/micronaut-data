@@ -19,7 +19,7 @@ dependencies {
     implementation projects.dataHibernateReactive
     implementation "io.micronaut.reactor:micronaut-reactor"
     runtimeOnly "ch.qos.logback:logback-classic"
-    runtimeOnly libs.drivers.vertx.pg
+    runtimeOnly mnSql.vertx.pg.client
 
     testImplementation platform(libs.testcontainers.bom)
     testImplementation libs.testcontainers.postgresql

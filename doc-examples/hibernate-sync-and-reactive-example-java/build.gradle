@@ -19,7 +19,7 @@ dependencies {
     implementation "io.micronaut:micronaut-http-client"
     implementation projects.dataHibernateReactive
     runtimeOnly "ch.qos.logback:logback-classic"
-    runtimeOnly libs.drivers.vertx.pg
+    runtimeOnly mnSql.vertx.pg.client
     runtimeOnly mnSql.micronaut.jdbc.tomcat
     runtimeOnly mnSql.postgresql
 
