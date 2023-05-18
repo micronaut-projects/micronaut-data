@@ -86,7 +86,7 @@ public class ReactiveFindPageSpecificationInterceptor extends AbstractSpecificat
                     .map(resultList -> Page.of(resultList, pageable, resultList.size()));
             }
             return Mono.fromCompletionStage(() -> {
-                Stage.Query<Object> q = session.createQuery(query);
+                Stage.SelectionQuery<Object> q = session.createQuery(query);
                 q.setFirstResult((int) pageable.getOffset());
                 q.setMaxResults(pageable.getSize());
                 return q.getResultList();

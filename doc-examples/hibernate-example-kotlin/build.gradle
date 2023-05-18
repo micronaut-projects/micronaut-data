@@ -25,5 +25,4 @@ dependencies {
     runtimeOnly "ch.qos.logback:logback-classic"
     runtimeOnly "com.h2database:h2"
     implementation libs.kotlin.coroutines
-    implementation libs.kotlin.coroutines.reactive
 }
