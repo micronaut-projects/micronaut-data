@@ -19,7 +19,7 @@ dependencies {
     implementation "io.micronaut.reactor:micronaut-reactor"
     compileOnly mnSerde.micronaut.serde.api
     runtimeOnly "ch.qos.logback:logback-classic"
-    runtimeOnly libs.drivers.vertx.mysql
+    runtimeOnly mnSql.vertx.mysql.client
 
     // Testcontainers wait function needs the driver
     runtimeOnly mnSql.mysql.connector.java
