@@ -55,4 +55,3 @@ dependencies {
 
     testCompileOnly mn.micronaut.inject.groovy
 }
-
