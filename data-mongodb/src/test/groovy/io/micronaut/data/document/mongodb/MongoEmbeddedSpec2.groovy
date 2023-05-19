@@ -13,11 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package example
-
-import io.micronaut.core.annotation.Introspected
-
-// Keep example package for testing non micronaut package
+package example // Keep example package for testing non micronaut package
 
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.data.annotation.Embeddable
@@ -119,7 +115,6 @@ class Restaurant2 {
 }
 
 @Embeddable
-@Introspected
 class Address2 {
     final String street
     final String zipCode

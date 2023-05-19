@@ -2,7 +2,6 @@ package io.micronaut.data.document.mongodb
 
 import groovy.transform.EqualsAndHashCode
 import io.micronaut.context.ApplicationContext
-import io.micronaut.core.annotation.Introspected
 import io.micronaut.data.annotation.Embeddable
 import io.micronaut.data.annotation.EmbeddedId
 import io.micronaut.data.annotation.GeneratedValue
@@ -248,7 +247,6 @@ class CourseRatingCompositeKey {
 
 @EqualsAndHashCode
 @Embeddable
-@Introspected
 class CourseRatingKey {
 //    @MappedProperty("xyz_student_id")
     @Relation(Relation.Kind.MANY_TO_ONE)
