@@ -26,6 +26,6 @@ dependencies {
 
 graalvmNative {
     metadataRepository {
-        uri("https://github.com/oracle/graalvm-reachability-metadata/releases/download/0.3.0/graalvm-reachability-metadata-0.3.0.zip")
+        version = "0.3.1"
     }
 }
