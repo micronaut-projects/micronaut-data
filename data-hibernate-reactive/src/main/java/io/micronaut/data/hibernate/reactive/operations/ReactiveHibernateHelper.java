@@ -51,7 +51,7 @@ final class ReactiveHibernateHelper {
         return monoFromCompletionStage(() -> session.find(entityClass, id));
     }
 
-    <T> Flux<T> list(Stage.Query<T> query) {
+    <T> Flux<T> list(Stage.SelectionQuery<T> query) {
         return monoFromCompletionStage(query::getResultList).flatMapMany(Flux::fromIterable);
     }
 
@@ -91,7 +91,7 @@ final class ReactiveHibernateHelper {
         return monoFromCompletionStage(session::flush);
     }
 
-    <T> Mono<T> singleResult(Stage.Query<T> query) {
+    <T> Mono<T> singleResult(Stage.SelectionQuery<T> query) {
         return monoFromCompletionStage(query::getSingleResult);
     }
 

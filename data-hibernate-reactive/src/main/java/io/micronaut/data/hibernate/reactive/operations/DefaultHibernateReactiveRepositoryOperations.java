@@ -72,7 +72,7 @@ import java.util.function.Function;
  * @since 3.5.0
  */
 @Internal
-final class DefaultHibernateReactiveRepositoryOperations extends AbstractHibernateOperations<Stage.Session, Stage.Query<?>>
+final class DefaultHibernateReactiveRepositoryOperations extends AbstractHibernateOperations<Stage.Session, Stage.AbstractQuery, Stage.SelectionQuery<?>>
         implements HibernateReactorRepositoryOperations, ReactorReactiveTransactionOperations<Stage.Session> {
 
     private static final Logger LOG = LoggerFactory.getLogger(DefaultHibernateReactiveRepositoryOperations.class);
@@ -118,45 +118,41 @@ final class DefaultHibernateReactiveRepositoryOperations extends AbstractHiberna
     }
 
     @Override
-    protected void setParameter(Stage.Query<?> query, String parameterName, Object value) {
+    protected void setParameter(Stage.AbstractQuery query, String parameterName, Object value) {
         query.setParameter(parameterName, value);
     }
 
     @Override
-    protected void setParameter(Stage.Query<?> query, String parameterName, Object value, Argument argument) {
-        if (value == null) {
-            query.setParameter(parameterName, null, argument.getType());
-        } else {
-            query.setParameter(parameterName, value);
-        }
+    protected void setParameter(Stage.AbstractQuery query, String parameterName, Object value, Argument argument) {
+        query.setParameter(parameterName, value);
     }
 
     @Override
-    protected void setParameterList(Stage.Query<?> query, String parameterName, Collection<Object> value) {
-        query.setParameterList(parameterName, value);
+    protected void setParameterList(Stage.AbstractQuery query, String parameterName, Collection<Object> value) {
+        query.setParameter(parameterName, value);
     }
 
     @Override
-    protected void setParameterList(Stage.Query<?> query, String parameterName, Collection<Object> value, Argument argument) {
-        query.setParameterList(parameterName, value, argument.getType());
+    protected void setParameterList(Stage.AbstractQuery query, String parameterName, Collection<Object> value, Argument argument) {
+        query.setParameter(parameterName, value);
     }
 
     @Override
-    protected void setHint(Stage.Query<?> query, String hintName, Object value) {
-        if (value instanceof EntityGraph) {
-            query.setHint(hintName, value);
+    protected void setHint(Stage.SelectionQuery<?> query, String hintName, Object value) {
+        if (value instanceof EntityGraph plan) {
+            query.setPlan(plan);
             return;
         }
         throw new IllegalStateException("Unrecognized parameter: " + hintName + " with value: " + value);
     }
 
     @Override
-    protected void setMaxResults(Stage.Query<?> query, int max) {
+    protected void setMaxResults(Stage.SelectionQuery<?> query, int max) {
         query.setMaxResults(max);
     }
 
     @Override
-    protected void setOffset(Stage.Query<?> query, int offset) {
+    protected void setOffset(Stage.SelectionQuery<?> query, int offset) {
         query.setFirstResult(offset);
     }
 
@@ -201,7 +197,7 @@ final class DefaultHibernateReactiveRepositoryOperations extends AbstractHiberna
     }
 
     @Override
-    protected Stage.Query<?> createNativeQuery(Stage.Session session, String query, Class<?> resultType) {
+    protected Stage.SelectionQuery<?> createNativeQuery(Stage.Session session, String query, Class<?> resultType) {
         if (resultType == null) {
             return session.createNativeQuery(query);
         }
@@ -209,7 +205,7 @@ final class DefaultHibernateReactiveRepositoryOperations extends AbstractHiberna
     }
 
     @Override
-    protected Stage.Query<?> createQuery(Stage.Session session, String query, Class<?> resultType) {
+    protected Stage.SelectionQuery<?> createQuery(Stage.Session session, String query, Class<?> resultType) {
         if (resultType == null) {
             return session.createQuery(query);
         }
@@ -217,7 +213,7 @@ final class DefaultHibernateReactiveRepositoryOperations extends AbstractHiberna
     }
 
     @Override
-    protected Stage.Query<?> createQuery(Stage.Session session, CriteriaQuery<?> criteriaQuery) {
+    protected Stage.SelectionQuery<?> createQuery(Stage.Session session, CriteriaQuery<?> criteriaQuery) {
         return session.createQuery(criteriaQuery);
     }
 
@@ -537,13 +533,13 @@ final class DefaultHibernateReactiveRepositoryOperations extends AbstractHiberna
         private Flux<R> result;
 
         @Override
-        protected void collectTuple(Stage.Query<?> query, Function<Tuple, R> fn) {
+        protected void collectTuple(Stage.SelectionQuery<?> query, Function<Tuple, R> fn) {
             Flux<Tuple> tuples = (Flux<Tuple>) helper.list(query);
             result = tuples.map(fn);
         }
 
         @Override
-        protected void collect(Stage.Query<?> query) {
+        protected void collect(Stage.SelectionQuery<?> query) {
             result = (Flux<R>) helper.list(query);
         }
     }
@@ -553,12 +549,12 @@ final class DefaultHibernateReactiveRepositoryOperations extends AbstractHiberna
         private Mono<R> result;
 
         @Override
-        protected void collectTuple(Stage.Query<?> query, Function<Tuple, R> fn) {
+        protected void collectTuple(Stage.SelectionQuery<?> query, Function<Tuple, R> fn) {
             result = ((Mono<Tuple>) helper.singleResult(query)).map(fn);
         }
 
         @Override
-        protected void collect(Stage.Query<?> query) {
+        protected void collect(Stage.SelectionQuery<?> query) {
             result = (Mono<R>) helper.singleResult(query);
         }
 
@@ -574,16 +570,16 @@ final class DefaultHibernateReactiveRepositoryOperations extends AbstractHiberna
         }
 
         @Override
-        protected void collectTuple(Stage.Query<?> query, Function<Tuple, R> fn) {
-            result = getFirst((Stage.Query<Tuple>) query).map(fn);
+        protected void collectTuple(Stage.SelectionQuery<?> query, Function<Tuple, R> fn) {
+            result = getFirst((Stage.SelectionQuery<Tuple>) query).map(fn);
         }
 
         @Override
-        protected void collect(Stage.Query<?> query) {
-            result = getFirst((Stage.Query<R>) query);
+        protected void collect(Stage.SelectionQuery<?> query) {
+            result = getFirst((Stage.SelectionQuery<R>) query);
         }
 
-        private <T> Mono<T> getFirst(Stage.Query<T> q) {
+        private <T> Mono<T> getFirst(Stage.SelectionQuery<T> q) {
             if (limitOne) {
                 q.setMaxResults(1);
             }
