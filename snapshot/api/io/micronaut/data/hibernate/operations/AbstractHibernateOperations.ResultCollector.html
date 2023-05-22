@@ -81,7 +81,7 @@ loadScripts(document, 'script');</script>
 </dl>
 <dl class="notes">
 <dt>Enclosing class:</dt>
-<dd><a href="AbstractHibernateOperations.html" title="class in io.micronaut.data.hibernate.operations">AbstractHibernateOperations</a>&lt;<a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">S</a>,<wbr><a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">Q</a>&gt;</dd>
+<dd><a href="AbstractHibernateOperations.html" title="class in io.micronaut.data.hibernate.operations">AbstractHibernateOperations</a>&lt;<a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">S</a>,<wbr><a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">Q</a>,<wbr><a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">P</a> extends <a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">Q</a>&gt;</dd>
 </dl>
 <hr>
 <div class="type-signature"><span class="modifiers">protected abstract class </span><span class="element-name type-name-label">AbstractHibernateOperations.ResultCollector&lt;R&gt;</span>
@@ -123,12 +123,12 @@ loadScripts(document, 'script');</script>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>protected abstract void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#collect(Q)" class="member-name-link">collect</a><wbr>(<a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">Q</a>&nbsp;query)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#collect(P)" class="member-name-link">collect</a><wbr>(<a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">P</a>&nbsp;query)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Collect a value from the query.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>protected abstract void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#collectTuple(Q,java.util.function.Function)" class="member-name-link">collectTuple</a><wbr>(<a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">Q</a>&nbsp;query,
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#collectTuple(P,java.util.function.Function)" class="member-name-link">collectTuple</a><wbr>(<a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">P</a>&nbsp;query,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/function/Function.html" title="class or interface in java.util.function" class="external-link">Function</a>&lt;jakarta.persistence.Tuple,<wbr><a href="AbstractHibernateOperations.ResultCollector.html" title="type parameter in AbstractHibernateOperations.ResultCollector">R</a>&gt;&nbsp;fn)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Collect a tuple from the query and remap it.</div>
@@ -165,9 +165,9 @@ loadScripts(document, 'script');</script>
 <h2>Method Details</h2>
 <ul class="member-list">
 <li>
-<section class="detail" id="collectTuple(Q,java.util.function.Function)">
+<section class="detail" id="collectTuple(P,java.util.function.Function)">
 <h3 id="collectTuple(java.lang.Object,java.util.function.Function)">collectTuple</h3>
-<div class="member-signature"><span class="modifiers">protected abstract</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">collectTuple</span><wbr><span class="parameters">(<a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">Q</a>&nbsp;query,
+<div class="member-signature"><span class="modifiers">protected abstract</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">collectTuple</span><wbr><span class="parameters">(<a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">P</a>&nbsp;query,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/function/Function.html" title="class or interface in java.util.function" class="external-link">Function</a>&lt;jakarta.persistence.Tuple,<wbr><a href="AbstractHibernateOperations.ResultCollector.html" title="type parameter in AbstractHibernateOperations.ResultCollector">R</a>&gt;&nbsp;fn)</span></div>
 <div class="block">Collect a tuple from the query and remap it.</div>
 <dl class="notes">
@@ -178,9 +178,9 @@ loadScripts(document, 'script');</script>
 </section>
 </li>
 <li>
-<section class="detail" id="collect(Q)">
+<section class="detail" id="collect(P)">
 <h3 id="collect(java.lang.Object)">collect</h3>
-<div class="member-signature"><span class="modifiers">protected abstract</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">collect</span><wbr><span class="parameters">(<a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">Q</a>&nbsp;query)</span></div>
+<div class="member-signature"><span class="modifiers">protected abstract</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">collect</span><wbr><span class="parameters">(<a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">P</a>&nbsp;query)</span></div>
 <div class="block">Collect a value from the query.</div>
 <dl class="notes">
 <dt>Parameters:</dt>

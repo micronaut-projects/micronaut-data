@@ -69,16 +69,17 @@ loadScripts(document, 'script');</script>
 <!-- ======== START OF CLASS DATA ======== -->
 <div class="header">
 <div class="sub-title"><span class="package-label-in-type">Package</span>&nbsp;<a href="package-summary.html">io.micronaut.data.hibernate.operations</a></div>
-<h1 title="Class AbstractHibernateOperations" class="title">Class AbstractHibernateOperations&lt;S,<wbr>Q&gt;</h1>
+<h1 title="Class AbstractHibernateOperations" class="title">Class AbstractHibernateOperations&lt;S,<wbr>Q,<wbr>P extends Q&gt;</h1>
 </div>
 <div class="inheritance" title="Inheritance Tree"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">java.lang.Object</a>
-<div class="inheritance">io.micronaut.data.hibernate.operations.AbstractHibernateOperations&lt;S,<wbr>Q&gt;</div>
+<div class="inheritance">io.micronaut.data.hibernate.operations.AbstractHibernateOperations&lt;S,<wbr>Q,<wbr>P&gt;</div>
 </div>
 <section class="class-description" id="class-description">
 <dl class="notes">
 <dt>Type Parameters:</dt>
 <dd><code>S</code> - The session type</dd>
 <dd><code>Q</code> - The query type</dd>
+<dd><code>P</code> - The selection query</dd>
 </dl>
 <dl class="notes">
 <dt>All Implemented Interfaces:</dt>
@@ -90,7 +91,7 @@ loadScripts(document, 'script');</script>
 </dl>
 <hr>
 <div class="type-signature"><span class="annotations">@Internal
-</span><span class="modifiers">public abstract class </span><span class="element-name type-name-label">AbstractHibernateOperations&lt;S,<wbr>Q&gt;</span>
+</span><span class="modifiers">public abstract class </span><span class="element-name type-name-label">AbstractHibernateOperations&lt;S,<wbr>Q,<wbr>P extends Q&gt;</span>
 <span class="extends-implements">extends <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>
 implements <a href="../../operations/HintsCapableRepository.html" title="interface in io.micronaut.data.operations">HintsCapableRepository</a>, <a href="../../runtime/query/PreparedQueryDecorator.html" title="interface in io.micronaut.data.runtime.query">PreparedQueryDecorator</a>, <a href="../../runtime/query/StoredQueryDecorator.html" title="interface in io.micronaut.data.runtime.query">StoredQueryDecorator</a></span></div>
 <div class="block">Abstract Hibernate operations shared between the synchronous and the reactive implementations.</div>
@@ -179,19 +180,19 @@ R&gt;&nbsp;void</code></div>
  <a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">S</a>&nbsp;session,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;R&gt;&nbsp;entity,
  <a href="../../model/Pageable.html" title="interface in io.micronaut.data.model">Pageable</a>&nbsp;pageable,
- <a href="AbstractHibernateOperations.html" title="class in io.micronaut.data.hibernate.operations">AbstractHibernateOperations</a>&lt;<a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">S</a>,<wbr><a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">Q</a>&gt;.<a href="AbstractHibernateOperations.ResultCollector.html" title="class in io.micronaut.data.hibernate.operations">ResultCollector</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&gt;&nbsp;resultCollector)</code></div>
+ <a href="AbstractHibernateOperations.html" title="class in io.micronaut.data.hibernate.operations">AbstractHibernateOperations</a>&lt;<a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">S</a>,<wbr><a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">Q</a>,<wbr><a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">P</a>&gt;.<a href="AbstractHibernateOperations.ResultCollector.html" title="class in io.micronaut.data.hibernate.operations">ResultCollector</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&gt;&nbsp;resultCollector)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;R&gt;&nbsp;void</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#collectFindAll(S,io.micronaut.data.model.runtime.PreparedQuery,io.micronaut.data.hibernate.operations.AbstractHibernateOperations.ResultCollector)" class="member-name-link">collectFindAll</a><wbr>(<a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">S</a>&nbsp;session,
  <a href="../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;?,<wbr>R&gt;&nbsp;preparedQuery,
- <a href="AbstractHibernateOperations.html" title="class in io.micronaut.data.hibernate.operations">AbstractHibernateOperations</a>&lt;<a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">S</a>,<wbr><a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">Q</a>&gt;.<a href="AbstractHibernateOperations.ResultCollector.html" title="class in io.micronaut.data.hibernate.operations">ResultCollector</a>&lt;R&gt;&nbsp;collector)</code></div>
+ <a href="AbstractHibernateOperations.html" title="class in io.micronaut.data.hibernate.operations">AbstractHibernateOperations</a>&lt;<a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">S</a>,<wbr><a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">Q</a>,<wbr><a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">P</a>&gt;.<a href="AbstractHibernateOperations.ResultCollector.html" title="class in io.micronaut.data.hibernate.operations">ResultCollector</a>&lt;R&gt;&nbsp;collector)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Collect all results.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;R&gt;&nbsp;void</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#collectFindOne(S,io.micronaut.data.model.runtime.PreparedQuery,io.micronaut.data.hibernate.operations.AbstractHibernateOperations.ResultCollector)" class="member-name-link">collectFindOne</a><wbr>(<a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">S</a>&nbsp;session,
  <a href="../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;?,<wbr>R&gt;&nbsp;preparedQuery,
- <a href="AbstractHibernateOperations.html" title="class in io.micronaut.data.hibernate.operations">AbstractHibernateOperations</a>&lt;<a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">S</a>,<wbr><a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">Q</a>&gt;.<a href="AbstractHibernateOperations.ResultCollector.html" title="class in io.micronaut.data.hibernate.operations">ResultCollector</a>&lt;R&gt;&nbsp;collector)</code></div>
+ <a href="AbstractHibernateOperations.html" title="class in io.micronaut.data.hibernate.operations">AbstractHibernateOperations</a>&lt;<a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">S</a>,<wbr><a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">Q</a>,<wbr><a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">P</a>&gt;.<a href="AbstractHibernateOperations.ResultCollector.html" title="class in io.micronaut.data.hibernate.operations">ResultCollector</a>&lt;R&gt;&nbsp;collector)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Collect one result.</div>
 </div>
@@ -199,7 +200,7 @@ R&gt;&nbsp;void</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#collectPagedResults(jakarta.persistence.criteria.CriteriaBuilder,S,io.micronaut.data.model.runtime.PagedQuery,io.micronaut.data.hibernate.operations.AbstractHibernateOperations.ResultCollector)" class="member-name-link">collectPagedResults</a><wbr>(jakarta.persistence.criteria.CriteriaBuilder&nbsp;criteriaBuilder,
  <a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">S</a>&nbsp;session,
  <a href="../../model/runtime/PagedQuery.html" title="interface in io.micronaut.data.model.runtime">PagedQuery</a>&lt;T&gt;&nbsp;pagedQuery,
- <a href="AbstractHibernateOperations.html" title="class in io.micronaut.data.hibernate.operations">AbstractHibernateOperations</a>&lt;<a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">S</a>,<wbr><a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">Q</a>&gt;.<a href="AbstractHibernateOperations.ResultCollector.html" title="class in io.micronaut.data.hibernate.operations">ResultCollector</a>&lt;T&gt;&nbsp;resultCollector)</code></div>
+ <a href="AbstractHibernateOperations.html" title="class in io.micronaut.data.hibernate.operations">AbstractHibernateOperations</a>&lt;<a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">S</a>,<wbr><a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">Q</a>,<wbr><a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">P</a>&gt;.<a href="AbstractHibernateOperations.ResultCollector.html" title="class in io.micronaut.data.hibernate.operations">ResultCollector</a>&lt;T&gt;&nbsp;resultCollector)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>protected abstract &lt;T&gt;&nbsp;jakarta.persistence.EntityGraph&lt;T&gt;</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#createEntityGraph(S,java.lang.Class)" class="member-name-link">createEntityGraph</a><wbr>(<a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">S</a>&nbsp;session,
@@ -207,20 +208,20 @@ R&gt;&nbsp;void</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Creates an entity graph.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>protected abstract <a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">Q</a></code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>protected abstract <a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">P</a></code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#createNativeQuery(S,java.lang.String,java.lang.Class)" class="member-name-link">createNativeQuery</a><wbr>(<a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">S</a>&nbsp;session,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;query,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;?&gt;&nbsp;resultType)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Create a new native query.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>protected abstract <a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">Q</a></code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>protected abstract <a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">P</a></code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#createQuery(S,jakarta.persistence.criteria.CriteriaQuery)" class="member-name-link">createQuery</a><wbr>(<a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">S</a>&nbsp;session,
  jakarta.persistence.criteria.CriteriaQuery&lt;?&gt;&nbsp;criteriaQuery)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Create a native query.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>protected abstract <a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">Q</a></code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>protected abstract <a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">P</a></code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#createQuery(S,java.lang.String,java.lang.Class)" class="member-name-link">createQuery</a><wbr>(<a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">S</a>&nbsp;session,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;query,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;?&gt;&nbsp;resultType)</code></div>
@@ -270,20 +271,20 @@ R&gt;&nbsp;<a href="../../model/runtime/StoredQuery.html" title="interface in io
 <div class="block">Obtain any custom query hints for this method and repository implementation.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>protected abstract void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#setHint(Q,java.lang.String,java.lang.Object)" class="member-name-link">setHint</a><wbr>(<a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">Q</a>&nbsp;query,
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#setHint(P,java.lang.String,java.lang.Object)" class="member-name-link">setHint</a><wbr>(<a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">P</a>&nbsp;query,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;hintName,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;value)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Sets a hint.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>protected abstract void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#setMaxResults(Q,int)" class="member-name-link">setMaxResults</a><wbr>(<a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">Q</a>&nbsp;query,
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#setMaxResults(P,int)" class="member-name-link">setMaxResults</a><wbr>(<a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">P</a>&nbsp;query,
  int&nbsp;max)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Sets the max results value.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>protected abstract void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#setOffset(Q,int)" class="member-name-link">setOffset</a><wbr>(<a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">Q</a>&nbsp;query,
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#setOffset(P,int)" class="member-name-link">setOffset</a><wbr>(<a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">P</a>&nbsp;query,
  int&nbsp;offset)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Sets the offset value.</div>
@@ -536,9 +537,9 @@ R&gt;</span>&nbsp;<span class="return-type"><a href="../../model/runtime/StoredQ
 </section>
 </li>
 <li>
-<section class="detail" id="setHint(Q,java.lang.String,java.lang.Object)">
+<section class="detail" id="setHint(P,java.lang.String,java.lang.Object)">
 <h3 id="setHint(java.lang.Object,java.lang.String,java.lang.Object)">setHint</h3>
-<div class="member-signature"><span class="modifiers">protected abstract</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">setHint</span><wbr><span class="parameters">(<a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">Q</a>&nbsp;query,
+<div class="member-signature"><span class="modifiers">protected abstract</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">setHint</span><wbr><span class="parameters">(<a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">P</a>&nbsp;query,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;hintName,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;value)</span></div>
 <div class="block">Sets a hint.</div>
@@ -551,9 +552,9 @@ R&gt;</span>&nbsp;<span class="return-type"><a href="../../model/runtime/StoredQ
 </section>
 </li>
 <li>
-<section class="detail" id="setMaxResults(Q,int)">
+<section class="detail" id="setMaxResults(P,int)">
 <h3 id="setMaxResults(java.lang.Object,int)">setMaxResults</h3>
-<div class="member-signature"><span class="modifiers">protected abstract</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">setMaxResults</span><wbr><span class="parameters">(<a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">Q</a>&nbsp;query,
+<div class="member-signature"><span class="modifiers">protected abstract</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">setMaxResults</span><wbr><span class="parameters">(<a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">P</a>&nbsp;query,
  int&nbsp;max)</span></div>
 <div class="block">Sets the max results value.</div>
 <dl class="notes">
@@ -564,9 +565,9 @@ R&gt;</span>&nbsp;<span class="return-type"><a href="../../model/runtime/StoredQ
 </section>
 </li>
 <li>
-<section class="detail" id="setOffset(Q,int)">
+<section class="detail" id="setOffset(P,int)">
 <h3 id="setOffset(java.lang.Object,int)">setOffset</h3>
-<div class="member-signature"><span class="modifiers">protected abstract</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">setOffset</span><wbr><span class="parameters">(<a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">Q</a>&nbsp;query,
+<div class="member-signature"><span class="modifiers">protected abstract</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">setOffset</span><wbr><span class="parameters">(<a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">P</a>&nbsp;query,
  int&nbsp;offset)</span></div>
 <div class="block">Sets the offset value.</div>
 <dl class="notes">
@@ -617,7 +618,7 @@ R&gt;</span>&nbsp;<span class="return-type"><a href="../../model/runtime/StoredQ
 <li>
 <section class="detail" id="createQuery(S,java.lang.String,java.lang.Class)">
 <h3 id="createQuery(java.lang.Object,java.lang.String,java.lang.Class)">createQuery</h3>
-<div class="member-signature"><span class="modifiers">protected abstract</span>&nbsp;<span class="return-type"><a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">Q</a></span>&nbsp;<span class="element-name">createQuery</span><wbr><span class="parameters">(<a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">S</a>&nbsp;session,
+<div class="member-signature"><span class="modifiers">protected abstract</span>&nbsp;<span class="return-type"><a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">P</a></span>&nbsp;<span class="element-name">createQuery</span><wbr><span class="parameters">(<a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">S</a>&nbsp;session,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;query,
  @Nullable
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;?&gt;&nbsp;resultType)</span></div>
@@ -635,7 +636,7 @@ R&gt;</span>&nbsp;<span class="return-type"><a href="../../model/runtime/StoredQ
 <li>
 <section class="detail" id="createNativeQuery(S,java.lang.String,java.lang.Class)">
 <h3 id="createNativeQuery(java.lang.Object,java.lang.String,java.lang.Class)">createNativeQuery</h3>
-<div class="member-signature"><span class="modifiers">protected abstract</span>&nbsp;<span class="return-type"><a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">Q</a></span>&nbsp;<span class="element-name">createNativeQuery</span><wbr><span class="parameters">(<a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">S</a>&nbsp;session,
+<div class="member-signature"><span class="modifiers">protected abstract</span>&nbsp;<span class="return-type"><a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">P</a></span>&nbsp;<span class="element-name">createNativeQuery</span><wbr><span class="parameters">(<a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">S</a>&nbsp;session,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;query,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;?&gt;&nbsp;resultType)</span></div>
 <div class="block">Create a new native query.</div>
@@ -652,7 +653,7 @@ R&gt;</span>&nbsp;<span class="return-type"><a href="../../model/runtime/StoredQ
 <li>
 <section class="detail" id="createQuery(S,jakarta.persistence.criteria.CriteriaQuery)">
 <h3 id="createQuery(java.lang.Object,jakarta.persistence.criteria.CriteriaQuery)">createQuery</h3>
-<div class="member-signature"><span class="modifiers">protected abstract</span>&nbsp;<span class="return-type"><a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">Q</a></span>&nbsp;<span class="element-name">createQuery</span><wbr><span class="parameters">(<a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">S</a>&nbsp;session,
+<div class="member-signature"><span class="modifiers">protected abstract</span>&nbsp;<span class="return-type"><a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">P</a></span>&nbsp;<span class="element-name">createQuery</span><wbr><span class="parameters">(<a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">S</a>&nbsp;session,
  jakarta.persistence.criteria.CriteriaQuery&lt;?&gt;&nbsp;criteriaQuery)</span></div>
 <div class="block">Create a native query.</div>
 <dl class="notes">
@@ -669,7 +670,7 @@ R&gt;</span>&nbsp;<span class="return-type"><a href="../../model/runtime/StoredQ
 <h3 id="collectFindOne(java.lang.Object,io.micronaut.data.model.runtime.PreparedQuery,io.micronaut.data.hibernate.operations.AbstractHibernateOperations.ResultCollector)">collectFindOne</h3>
 <div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="type-parameters">&lt;R&gt;</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">collectFindOne</span><wbr><span class="parameters">(<a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">S</a>&nbsp;session,
  <a href="../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;?,<wbr>R&gt;&nbsp;preparedQuery,
- <a href="AbstractHibernateOperations.html" title="class in io.micronaut.data.hibernate.operations">AbstractHibernateOperations</a>&lt;<a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">S</a>,<wbr><a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">Q</a>&gt;.<a href="AbstractHibernateOperations.ResultCollector.html" title="class in io.micronaut.data.hibernate.operations">ResultCollector</a>&lt;R&gt;&nbsp;collector)</span></div>
+ <a href="AbstractHibernateOperations.html" title="class in io.micronaut.data.hibernate.operations">AbstractHibernateOperations</a>&lt;<a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">S</a>,<wbr><a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">Q</a>,<wbr><a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">P</a>&gt;.<a href="AbstractHibernateOperations.ResultCollector.html" title="class in io.micronaut.data.hibernate.operations">ResultCollector</a>&lt;R&gt;&nbsp;collector)</span></div>
 <div class="block">Collect one result.</div>
 <dl class="notes">
 <dt>Type Parameters:</dt>
@@ -686,7 +687,7 @@ R&gt;</span>&nbsp;<span class="return-type"><a href="../../model/runtime/StoredQ
 <h3 id="collectFindAll(java.lang.Object,io.micronaut.data.model.runtime.PreparedQuery,io.micronaut.data.hibernate.operations.AbstractHibernateOperations.ResultCollector)">collectFindAll</h3>
 <div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="type-parameters">&lt;R&gt;</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">collectFindAll</span><wbr><span class="parameters">(<a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">S</a>&nbsp;session,
  <a href="../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;?,<wbr>R&gt;&nbsp;preparedQuery,
- <a href="AbstractHibernateOperations.html" title="class in io.micronaut.data.hibernate.operations">AbstractHibernateOperations</a>&lt;<a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">S</a>,<wbr><a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">Q</a>&gt;.<a href="AbstractHibernateOperations.ResultCollector.html" title="class in io.micronaut.data.hibernate.operations">ResultCollector</a>&lt;R&gt;&nbsp;collector)</span></div>
+ <a href="AbstractHibernateOperations.html" title="class in io.micronaut.data.hibernate.operations">AbstractHibernateOperations</a>&lt;<a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">S</a>,<wbr><a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">Q</a>,<wbr><a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">P</a>&gt;.<a href="AbstractHibernateOperations.ResultCollector.html" title="class in io.micronaut.data.hibernate.operations">ResultCollector</a>&lt;R&gt;&nbsp;collector)</span></div>
 <div class="block">Collect all results.</div>
 <dl class="notes">
 <dt>Type Parameters:</dt>
@@ -735,7 +736,7 @@ R&gt;</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="elemen
 <div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">collectPagedResults</span><wbr><span class="parameters">(jakarta.persistence.criteria.CriteriaBuilder&nbsp;criteriaBuilder,
  <a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">S</a>&nbsp;session,
  <a href="../../model/runtime/PagedQuery.html" title="interface in io.micronaut.data.model.runtime">PagedQuery</a>&lt;T&gt;&nbsp;pagedQuery,
- <a href="AbstractHibernateOperations.html" title="class in io.micronaut.data.hibernate.operations">AbstractHibernateOperations</a>&lt;<a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">S</a>,<wbr><a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">Q</a>&gt;.<a href="AbstractHibernateOperations.ResultCollector.html" title="class in io.micronaut.data.hibernate.operations">ResultCollector</a>&lt;T&gt;&nbsp;resultCollector)</span></div>
+ <a href="AbstractHibernateOperations.html" title="class in io.micronaut.data.hibernate.operations">AbstractHibernateOperations</a>&lt;<a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">S</a>,<wbr><a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">Q</a>,<wbr><a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">P</a>&gt;.<a href="AbstractHibernateOperations.ResultCollector.html" title="class in io.micronaut.data.hibernate.operations">ResultCollector</a>&lt;T&gt;&nbsp;resultCollector)</span></div>
 </section>
 </li>
 <li>
@@ -746,7 +747,7 @@ R&gt;</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="elemen
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;R&gt;&nbsp;entity,
  @Nullable
  <a href="../../model/Pageable.html" title="interface in io.micronaut.data.model">Pageable</a>&nbsp;pageable,
- <a href="AbstractHibernateOperations.html" title="class in io.micronaut.data.hibernate.operations">AbstractHibernateOperations</a>&lt;<a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">S</a>,<wbr><a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">Q</a>&gt;.<a href="AbstractHibernateOperations.ResultCollector.html" title="class in io.micronaut.data.hibernate.operations">ResultCollector</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&gt;&nbsp;resultCollector)</span></div>
+ <a href="AbstractHibernateOperations.html" title="class in io.micronaut.data.hibernate.operations">AbstractHibernateOperations</a>&lt;<a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">S</a>,<wbr><a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">Q</a>,<wbr><a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">P</a>&gt;.<a href="AbstractHibernateOperations.ResultCollector.html" title="class in io.micronaut.data.hibernate.operations">ResultCollector</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&gt;&nbsp;resultCollector)</span></div>
 </section>
 </li>
 </ul>

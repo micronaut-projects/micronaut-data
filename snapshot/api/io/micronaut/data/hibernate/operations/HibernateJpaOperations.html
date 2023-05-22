@@ -72,7 +72,7 @@ loadScripts(document, 'script');</script>
 <h1 title="Class HibernateJpaOperations" class="title">Class HibernateJpaOperations</h1>
 </div>
 <div class="inheritance" title="Inheritance Tree"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">java.lang.Object</a>
-<div class="inheritance"><a href="AbstractHibernateOperations.html" title="class in io.micronaut.data.hibernate.operations">io.micronaut.data.hibernate.operations.AbstractHibernateOperations</a>&lt;org.hibernate.Session,<wbr>jakarta.persistence.Query&gt;
+<div class="inheritance"><a href="AbstractHibernateOperations.html" title="class in io.micronaut.data.hibernate.operations">io.micronaut.data.hibernate.operations.AbstractHibernateOperations</a>&lt;org.hibernate.Session,<wbr>jakarta.persistence.Query,<wbr>jakarta.persistence.Query&gt;
 <div class="inheritance">io.micronaut.data.hibernate.operations.HibernateJpaOperations</div>
 </div>
 </div>
@@ -84,7 +84,7 @@ loadScripts(document, 'script');</script>
 <hr>
 <div class="type-signature"><span class="annotations">@EachBean(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.sql/javax/sql/DataSource.html" title="class or interface in javax.sql" class="external-link">javax.sql.DataSource.class</a>)
 </span><span class="modifiers">public class </span><span class="element-name type-name-label">HibernateJpaOperations</span>
-<span class="extends-implements">extends <a href="AbstractHibernateOperations.html" title="class in io.micronaut.data.hibernate.operations">AbstractHibernateOperations</a>&lt;org.hibernate.Session,<wbr>jakarta.persistence.Query&gt;
+<span class="extends-implements">extends <a href="AbstractHibernateOperations.html" title="class in io.micronaut.data.hibernate.operations">AbstractHibernateOperations</a>&lt;org.hibernate.Session,<wbr>jakarta.persistence.Query,<wbr>jakarta.persistence.Query&gt;
 implements <a href="../../jpa/operations/JpaRepositoryOperations.html" title="interface in io.micronaut.data.jpa.operations">JpaRepositoryOperations</a>, <a href="../../operations/async/AsyncCapableRepository.html" title="interface in io.micronaut.data.operations.async">AsyncCapableRepository</a>, <a href="../../operations/reactive/ReactiveCapableRepository.html" title="interface in io.micronaut.data.operations.reactive">ReactiveCapableRepository</a></span></div>
 <div class="block">Implementation of the <a href="../../jpa/operations/JpaRepositoryOperations.html" title="interface in io.micronaut.data.jpa.operations"><code>JpaRepositoryOperations</code></a> interface for Hibernate.</div>
 <dl class="notes">
@@ -412,7 +412,7 @@ R&gt;&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base
 <dt>Specified by:</dt>
 <dd><code><a href="../../operations/RepositoryOperations.html#getEntity(java.lang.Class)">getEntity</a></code>&nbsp;in interface&nbsp;<code><a href="../../operations/RepositoryOperations.html" title="interface in io.micronaut.data.operations">RepositoryOperations</a></code></dd>
 <dt>Specified by:</dt>
-<dd><code><a href="AbstractHibernateOperations.html#getEntity(java.lang.Class)">getEntity</a></code>&nbsp;in class&nbsp;<code><a href="AbstractHibernateOperations.html" title="class in io.micronaut.data.hibernate.operations">AbstractHibernateOperations</a>&lt;org.hibernate.Session,<wbr>jakarta.persistence.Query&gt;</code></dd>
+<dd><code><a href="AbstractHibernateOperations.html#getEntity(java.lang.Class)">getEntity</a></code>&nbsp;in class&nbsp;<code><a href="AbstractHibernateOperations.html" title="class in io.micronaut.data.hibernate.operations">AbstractHibernateOperations</a>&lt;org.hibernate.Session,<wbr>jakarta.persistence.Query,<wbr>jakarta.persistence.Query&gt;</code></dd>
 <dt>Type Parameters:</dt>
 <dd><code>T</code> - The entity type</dd>
 <dt>Parameters:</dt>
@@ -430,7 +430,7 @@ R&gt;&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base
 <dt>Specified by:</dt>
 <dd><code>getApplicationContext</code>&nbsp;in interface&nbsp;<code>io.micronaut.context.ApplicationContextProvider</code></dd>
 <dt>Overrides:</dt>
-<dd><code><a href="AbstractHibernateOperations.html#getApplicationContext()">getApplicationContext</a></code>&nbsp;in class&nbsp;<code><a href="AbstractHibernateOperations.html" title="class in io.micronaut.data.hibernate.operations">AbstractHibernateOperations</a>&lt;org.hibernate.Session,<wbr>jakarta.persistence.Query&gt;</code></dd>
+<dd><code><a href="AbstractHibernateOperations.html#getApplicationContext()">getApplicationContext</a></code>&nbsp;in class&nbsp;<code><a href="AbstractHibernateOperations.html" title="class in io.micronaut.data.hibernate.operations">AbstractHibernateOperations</a>&lt;org.hibernate.Session,<wbr>jakarta.persistence.Query,<wbr>jakarta.persistence.Query&gt;</code></dd>
 <dt>Returns:</dt>
 <dd>The application context</dd>
 </dl>
@@ -444,7 +444,7 @@ R&gt;&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base
 <dt>Specified by:</dt>
 <dd><code>getConversionService</code>&nbsp;in interface&nbsp;<code>io.micronaut.core.convert.ConversionServiceProvider</code></dd>
 <dt>Overrides:</dt>
-<dd><code><a href="AbstractHibernateOperations.html#getConversionService()">getConversionService</a></code>&nbsp;in class&nbsp;<code><a href="AbstractHibernateOperations.html" title="class in io.micronaut.data.hibernate.operations">AbstractHibernateOperations</a>&lt;org.hibernate.Session,<wbr>jakarta.persistence.Query&gt;</code></dd>
+<dd><code><a href="AbstractHibernateOperations.html#getConversionService()">getConversionService</a></code>&nbsp;in class&nbsp;<code><a href="AbstractHibernateOperations.html" title="class in io.micronaut.data.hibernate.operations">AbstractHibernateOperations</a>&lt;org.hibernate.Session,<wbr>jakarta.persistence.Query,<wbr>jakarta.persistence.Query&gt;</code></dd>
 <dt>Returns:</dt>
 <dd>The conversion service</dd>
 </dl>
@@ -460,7 +460,7 @@ R&gt;&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base
 <div class="block">Sets a parameter into query.</div>
 <dl class="notes">
 <dt>Specified by:</dt>
-<dd><code><a href="AbstractHibernateOperations.html#setParameter(Q,java.lang.String,java.lang.Object)">setParameter</a></code>&nbsp;in class&nbsp;<code><a href="AbstractHibernateOperations.html" title="class in io.micronaut.data.hibernate.operations">AbstractHibernateOperations</a>&lt;org.hibernate.Session,<wbr>jakarta.persistence.Query&gt;</code></dd>
+<dd><code><a href="AbstractHibernateOperations.html#setParameter(Q,java.lang.String,java.lang.Object)">setParameter</a></code>&nbsp;in class&nbsp;<code><a href="AbstractHibernateOperations.html" title="class in io.micronaut.data.hibernate.operations">AbstractHibernateOperations</a>&lt;org.hibernate.Session,<wbr>jakarta.persistence.Query,<wbr>jakarta.persistence.Query&gt;</code></dd>
 <dt>Parameters:</dt>
 <dd><code>query</code> - The query</dd>
 <dd><code>parameterName</code> - The parameter name</dd>
@@ -479,7 +479,7 @@ R&gt;&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base
 <div class="block">Sets parameter into query.</div>
 <dl class="notes">
 <dt>Specified by:</dt>
-<dd><code><a href="AbstractHibernateOperations.html#setParameter(Q,java.lang.String,java.lang.Object,io.micronaut.core.type.Argument)">setParameter</a></code>&nbsp;in class&nbsp;<code><a href="AbstractHibernateOperations.html" title="class in io.micronaut.data.hibernate.operations">AbstractHibernateOperations</a>&lt;org.hibernate.Session,<wbr>jakarta.persistence.Query&gt;</code></dd>
+<dd><code><a href="AbstractHibernateOperations.html#setParameter(Q,java.lang.String,java.lang.Object,io.micronaut.core.type.Argument)">setParameter</a></code>&nbsp;in class&nbsp;<code><a href="AbstractHibernateOperations.html" title="class in io.micronaut.data.hibernate.operations">AbstractHibernateOperations</a>&lt;org.hibernate.Session,<wbr>jakarta.persistence.Query,<wbr>jakarta.persistence.Query&gt;</code></dd>
 <dt>Parameters:</dt>
 <dd><code>query</code> - The query</dd>
 <dd><code>parameterName</code> - The parameter name</dd>
@@ -498,7 +498,7 @@ R&gt;&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base
 <div class="block">Sets a list parameter into query.</div>
 <dl class="notes">
 <dt>Specified by:</dt>
-<dd><code><a href="AbstractHibernateOperations.html#setParameterList(Q,java.lang.String,java.util.Collection)">setParameterList</a></code>&nbsp;in class&nbsp;<code><a href="AbstractHibernateOperations.html" title="class in io.micronaut.data.hibernate.operations">AbstractHibernateOperations</a>&lt;org.hibernate.Session,<wbr>jakarta.persistence.Query&gt;</code></dd>
+<dd><code><a href="AbstractHibernateOperations.html#setParameterList(Q,java.lang.String,java.util.Collection)">setParameterList</a></code>&nbsp;in class&nbsp;<code><a href="AbstractHibernateOperations.html" title="class in io.micronaut.data.hibernate.operations">AbstractHibernateOperations</a>&lt;org.hibernate.Session,<wbr>jakarta.persistence.Query,<wbr>jakarta.persistence.Query&gt;</code></dd>
 <dt>Parameters:</dt>
 <dd><code>query</code> - The query</dd>
 <dd><code>parameterName</code> - The parameter name</dd>
@@ -517,7 +517,7 @@ R&gt;&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base
 <div class="block">Sets a list parameter into query.</div>
 <dl class="notes">
 <dt>Specified by:</dt>
-<dd><code><a href="AbstractHibernateOperations.html#setParameterList(Q,java.lang.String,java.util.Collection,io.micronaut.core.type.Argument)">setParameterList</a></code>&nbsp;in class&nbsp;<code><a href="AbstractHibernateOperations.html" title="class in io.micronaut.data.hibernate.operations">AbstractHibernateOperations</a>&lt;org.hibernate.Session,<wbr>jakarta.persistence.Query&gt;</code></dd>
+<dd><code><a href="AbstractHibernateOperations.html#setParameterList(Q,java.lang.String,java.util.Collection,io.micronaut.core.type.Argument)">setParameterList</a></code>&nbsp;in class&nbsp;<code><a href="AbstractHibernateOperations.html" title="class in io.micronaut.data.hibernate.operations">AbstractHibernateOperations</a>&lt;org.hibernate.Session,<wbr>jakarta.persistence.Query,<wbr>jakarta.persistence.Query&gt;</code></dd>
 <dt>Parameters:</dt>
 <dd><code>query</code> - The query</dd>
 <dd><code>parameterName</code> - The parameter name</dd>
@@ -532,11 +532,11 @@ R&gt;&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base
 <div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">setHint</span><wbr><span class="parameters">(jakarta.persistence.Query&nbsp;query,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;hintName,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;value)</span></div>
-<div class="block"><span class="descfrm-type-label">Description copied from class:&nbsp;<code><a href="AbstractHibernateOperations.html#setHint(Q,java.lang.String,java.lang.Object)">AbstractHibernateOperations</a></code></span></div>
+<div class="block"><span class="descfrm-type-label">Description copied from class:&nbsp;<code><a href="AbstractHibernateOperations.html#setHint(P,java.lang.String,java.lang.Object)">AbstractHibernateOperations</a></code></span></div>
 <div class="block">Sets a hint.</div>
 <dl class="notes">
 <dt>Specified by:</dt>
-<dd><code><a href="AbstractHibernateOperations.html#setHint(Q,java.lang.String,java.lang.Object)">setHint</a></code>&nbsp;in class&nbsp;<code><a href="AbstractHibernateOperations.html" title="class in io.micronaut.data.hibernate.operations">AbstractHibernateOperations</a>&lt;org.hibernate.Session,<wbr>jakarta.persistence.Query&gt;</code></dd>
+<dd><code><a href="AbstractHibernateOperations.html#setHint(P,java.lang.String,java.lang.Object)">setHint</a></code>&nbsp;in class&nbsp;<code><a href="AbstractHibernateOperations.html" title="class in io.micronaut.data.hibernate.operations">AbstractHibernateOperations</a>&lt;org.hibernate.Session,<wbr>jakarta.persistence.Query,<wbr>jakarta.persistence.Query&gt;</code></dd>
 <dt>Parameters:</dt>
 <dd><code>query</code> - The query</dd>
 <dd><code>hintName</code> - The hint name</dd>
@@ -554,7 +554,7 @@ R&gt;&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base
 <div class="block">Gets an entity graph.</div>
 <dl class="notes">
 <dt>Specified by:</dt>
-<dd><code><a href="AbstractHibernateOperations.html#getEntityGraph(S,java.lang.Class,java.lang.String)">getEntityGraph</a></code>&nbsp;in class&nbsp;<code><a href="AbstractHibernateOperations.html" title="class in io.micronaut.data.hibernate.operations">AbstractHibernateOperations</a>&lt;org.hibernate.Session,<wbr>jakarta.persistence.Query&gt;</code></dd>
+<dd><code><a href="AbstractHibernateOperations.html#getEntityGraph(S,java.lang.Class,java.lang.String)">getEntityGraph</a></code>&nbsp;in class&nbsp;<code><a href="AbstractHibernateOperations.html" title="class in io.micronaut.data.hibernate.operations">AbstractHibernateOperations</a>&lt;org.hibernate.Session,<wbr>jakarta.persistence.Query,<wbr>jakarta.persistence.Query&gt;</code></dd>
 <dt>Type Parameters:</dt>
 <dd><code>T</code> - The entity type</dd>
 <dt>Parameters:</dt>
@@ -575,7 +575,7 @@ R&gt;&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base
 <div class="block">Creates an entity graph.</div>
 <dl class="notes">
 <dt>Specified by:</dt>
-<dd><code><a href="AbstractHibernateOperations.html#createEntityGraph(S,java.lang.Class)">createEntityGraph</a></code>&nbsp;in class&nbsp;<code><a href="AbstractHibernateOperations.html" title="class in io.micronaut.data.hibernate.operations">AbstractHibernateOperations</a>&lt;org.hibernate.Session,<wbr>jakarta.persistence.Query&gt;</code></dd>
+<dd><code><a href="AbstractHibernateOperations.html#createEntityGraph(S,java.lang.Class)">createEntityGraph</a></code>&nbsp;in class&nbsp;<code><a href="AbstractHibernateOperations.html" title="class in io.micronaut.data.hibernate.operations">AbstractHibernateOperations</a>&lt;org.hibernate.Session,<wbr>jakarta.persistence.Query,<wbr>jakarta.persistence.Query&gt;</code></dd>
 <dt>Type Parameters:</dt>
 <dd><code>T</code> - The entityType</dd>
 <dt>Parameters:</dt>
@@ -596,7 +596,7 @@ R&gt;&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base
 <div class="block">Create a new query.</div>
 <dl class="notes">
 <dt>Specified by:</dt>
-<dd><code><a href="AbstractHibernateOperations.html#createQuery(S,java.lang.String,java.lang.Class)">createQuery</a></code>&nbsp;in class&nbsp;<code><a href="AbstractHibernateOperations.html" title="class in io.micronaut.data.hibernate.operations">AbstractHibernateOperations</a>&lt;org.hibernate.Session,<wbr>jakarta.persistence.Query&gt;</code></dd>
+<dd><code><a href="AbstractHibernateOperations.html#createQuery(S,java.lang.String,java.lang.Class)">createQuery</a></code>&nbsp;in class&nbsp;<code><a href="AbstractHibernateOperations.html" title="class in io.micronaut.data.hibernate.operations">AbstractHibernateOperations</a>&lt;org.hibernate.Session,<wbr>jakarta.persistence.Query,<wbr>jakarta.persistence.Query&gt;</code></dd>
 <dt>Parameters:</dt>
 <dd><code>session</code> - The session</dd>
 <dd><code>query</code> - The query</dd>
@@ -616,7 +616,7 @@ R&gt;&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base
 <div class="block">Create a new native query.</div>
 <dl class="notes">
 <dt>Specified by:</dt>
-<dd><code><a href="AbstractHibernateOperations.html#createNativeQuery(S,java.lang.String,java.lang.Class)">createNativeQuery</a></code>&nbsp;in class&nbsp;<code><a href="AbstractHibernateOperations.html" title="class in io.micronaut.data.hibernate.operations">AbstractHibernateOperations</a>&lt;org.hibernate.Session,<wbr>jakarta.persistence.Query&gt;</code></dd>
+<dd><code><a href="AbstractHibernateOperations.html#createNativeQuery(S,java.lang.String,java.lang.Class)">createNativeQuery</a></code>&nbsp;in class&nbsp;<code><a href="AbstractHibernateOperations.html" title="class in io.micronaut.data.hibernate.operations">AbstractHibernateOperations</a>&lt;org.hibernate.Session,<wbr>jakarta.persistence.Query,<wbr>jakarta.persistence.Query&gt;</code></dd>
 <dt>Parameters:</dt>
 <dd><code>session</code> - The session</dd>
 <dd><code>query</code> - The query</dd>
@@ -635,7 +635,7 @@ R&gt;&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base
 <div class="block">Create a native query.</div>
 <dl class="notes">
 <dt>Specified by:</dt>
-<dd><code><a href="AbstractHibernateOperations.html#createQuery(S,jakarta.persistence.criteria.CriteriaQuery)">createQuery</a></code>&nbsp;in class&nbsp;<code><a href="AbstractHibernateOperations.html" title="class in io.micronaut.data.hibernate.operations">AbstractHibernateOperations</a>&lt;org.hibernate.Session,<wbr>jakarta.persistence.Query&gt;</code></dd>
+<dd><code><a href="AbstractHibernateOperations.html#createQuery(S,jakarta.persistence.criteria.CriteriaQuery)">createQuery</a></code>&nbsp;in class&nbsp;<code><a href="AbstractHibernateOperations.html" title="class in io.micronaut.data.hibernate.operations">AbstractHibernateOperations</a>&lt;org.hibernate.Session,<wbr>jakarta.persistence.Query,<wbr>jakarta.persistence.Query&gt;</code></dd>
 <dt>Parameters:</dt>
 <dd><code>session</code> - The session</dd>
 <dd><code>criteriaQuery</code> - The criteriaQuery</dd>
@@ -649,11 +649,11 @@ R&gt;&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base
 <h3>setOffset</h3>
 <div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">setOffset</span><wbr><span class="parameters">(jakarta.persistence.Query&nbsp;query,
  int&nbsp;offset)</span></div>
-<div class="block"><span class="descfrm-type-label">Description copied from class:&nbsp;<code><a href="AbstractHibernateOperations.html#setOffset(Q,int)">AbstractHibernateOperations</a></code></span></div>
+<div class="block"><span class="descfrm-type-label">Description copied from class:&nbsp;<code><a href="AbstractHibernateOperations.html#setOffset(P,int)">AbstractHibernateOperations</a></code></span></div>
 <div class="block">Sets the offset value.</div>
 <dl class="notes">
 <dt>Specified by:</dt>
-<dd><code><a href="AbstractHibernateOperations.html#setOffset(Q,int)">setOffset</a></code>&nbsp;in class&nbsp;<code><a href="AbstractHibernateOperations.html" title="class in io.micronaut.data.hibernate.operations">AbstractHibernateOperations</a>&lt;org.hibernate.Session,<wbr>jakarta.persistence.Query&gt;</code></dd>
+<dd><code><a href="AbstractHibernateOperations.html#setOffset(P,int)">setOffset</a></code>&nbsp;in class&nbsp;<code><a href="AbstractHibernateOperations.html" title="class in io.micronaut.data.hibernate.operations">AbstractHibernateOperations</a>&lt;org.hibernate.Session,<wbr>jakarta.persistence.Query,<wbr>jakarta.persistence.Query&gt;</code></dd>
 <dt>Parameters:</dt>
 <dd><code>query</code> - The query</dd>
 <dd><code>offset</code> - The offset value</dd>
@@ -665,11 +665,11 @@ R&gt;&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base
 <h3>setMaxResults</h3>
 <div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">setMaxResults</span><wbr><span class="parameters">(jakarta.persistence.Query&nbsp;query,
  int&nbsp;max)</span></div>
-<div class="block"><span class="descfrm-type-label">Description copied from class:&nbsp;<code><a href="AbstractHibernateOperations.html#setMaxResults(Q,int)">AbstractHibernateOperations</a></code></span></div>
+<div class="block"><span class="descfrm-type-label">Description copied from class:&nbsp;<code><a href="AbstractHibernateOperations.html#setMaxResults(P,int)">AbstractHibernateOperations</a></code></span></div>
 <div class="block">Sets the max results value.</div>
 <dl class="notes">
 <dt>Specified by:</dt>
-<dd><code><a href="AbstractHibernateOperations.html#setMaxResults(Q,int)">setMaxResults</a></code>&nbsp;in class&nbsp;<code><a href="AbstractHibernateOperations.html" title="class in io.micronaut.data.hibernate.operations">AbstractHibernateOperations</a>&lt;org.hibernate.Session,<wbr>jakarta.persistence.Query&gt;</code></dd>
+<dd><code><a href="AbstractHibernateOperations.html#setMaxResults(P,int)">setMaxResults</a></code>&nbsp;in class&nbsp;<code><a href="AbstractHibernateOperations.html" title="class in io.micronaut.data.hibernate.operations">AbstractHibernateOperations</a>&lt;org.hibernate.Session,<wbr>jakarta.persistence.Query,<wbr>jakarta.persistence.Query&gt;</code></dd>
 <dt>Parameters:</dt>
 <dd><code>query</code> - The query</dd>
 <dd><code>max</code> - The max value</dd>
@@ -688,7 +688,7 @@ R&gt;&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base
 <dt>Specified by:</dt>
 <dd><code><a href="../../operations/HintsCapableRepository.html#getQueryHints(io.micronaut.data.model.runtime.StoredQuery)">getQueryHints</a></code>&nbsp;in interface&nbsp;<code><a href="../../operations/HintsCapableRepository.html" title="interface in io.micronaut.data.operations">HintsCapableRepository</a></code></dd>
 <dt>Overrides:</dt>
-<dd><code><a href="AbstractHibernateOperations.html#getQueryHints(io.micronaut.data.model.runtime.StoredQuery)">getQueryHints</a></code>&nbsp;in class&nbsp;<code><a href="AbstractHibernateOperations.html" title="class in io.micronaut.data.hibernate.operations">AbstractHibernateOperations</a>&lt;org.hibernate.Session,<wbr>jakarta.persistence.Query&gt;</code></dd>
+<dd><code><a href="AbstractHibernateOperations.html#getQueryHints(io.micronaut.data.model.runtime.StoredQuery)">getQueryHints</a></code>&nbsp;in class&nbsp;<code><a href="AbstractHibernateOperations.html" title="class in io.micronaut.data.hibernate.operations">AbstractHibernateOperations</a>&lt;org.hibernate.Session,<wbr>jakarta.persistence.Query,<wbr>jakarta.persistence.Query&gt;</code></dd>
 <dt>Parameters:</dt>
 <dd><code>storedQuery</code> - The stored query</dd>
 <dt>Returns:</dt>
