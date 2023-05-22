@@ -85,7 +85,7 @@ import java.util.stream.Stream;
  */
 @EachBean(DataSource.class)
 @TypeHint(HibernatePresenceCondition.class)
-public class HibernateJpaOperations extends AbstractHibernateOperations<Session, Query>
+public class HibernateJpaOperations extends AbstractHibernateOperations<Session, Query, Query>
     implements JpaRepositoryOperations, AsyncCapableRepository, ReactiveCapableRepository {
 
     private final SessionFactory sessionFactory;
