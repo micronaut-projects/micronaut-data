@@ -39,7 +39,7 @@ public class SampleController {
                 .map(s -> HttpResponse.created(URI.create("/samples/" + s.getId())));
     }
 
-    @Get(uri = "/{id}", produces = { MediaType.APPLICATION_JSON_STREAM, MediaType.APPLICATION_JSON })
+    @Get(uri = "/{id}", produces = { MediaType.APPLICATION_JSON })
     public Mono<SampleEntity> getById(Long id) {
         LOGGER.debug("Retrieving sample with id '{}'", id);
         return sampleService.findById(id).doOnSuccess(s -> LOGGER.info("Returned {}", s));

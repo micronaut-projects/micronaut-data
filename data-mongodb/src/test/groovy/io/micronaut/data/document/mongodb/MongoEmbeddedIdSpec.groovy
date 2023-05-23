@@ -15,7 +15,6 @@
  */
 package io.micronaut.data.document.mongodb
 
-import io.micronaut.core.annotation.Introspected
 import io.micronaut.data.annotation.Embeddable
 import io.micronaut.data.annotation.EmbeddedId
 import io.micronaut.data.annotation.Id
@@ -191,7 +190,6 @@ class Item {
     }
 }
 
-@Introspected
 @Embeddable
 class ItemGroupId {
 

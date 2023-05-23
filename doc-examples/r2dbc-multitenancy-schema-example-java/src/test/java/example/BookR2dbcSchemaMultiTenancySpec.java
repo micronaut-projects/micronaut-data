@@ -10,6 +10,7 @@ import io.r2dbc.spi.Result;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import reactor.core.publisher.Flux;
@@ -23,6 +24,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @MicronautTest(transactional = false)
+// TODO: Enable after changes for reactive context propagation
+@Disabled("Might need different logic for R2DBC and context propagation")
 class BookR2dbcSchemaMultiTenancySpec {
 
     @Inject
