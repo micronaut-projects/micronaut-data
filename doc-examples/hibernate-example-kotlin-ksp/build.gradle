@@ -1,0 +1,28 @@
+plugins {
+    id "io.micronaut.build.internal.data-kotlin-ksp-example"
+}
+
+application {
+    mainClass = "example.ApplicationKt"
+}
+
+dependencies {
+    micronautBoms(platform("io.micronaut:micronaut-core-bom:4.0.0-M5"))
+    ksp projects.dataProcessor
+    implementation 'io.micronaut.rxjava2:micronaut-rxjava2'
+    implementation 'io.micronaut.reactor:micronaut-reactor'
+
+    implementation "io.micronaut:micronaut-http-client"
+    implementation mnKotlin.micronaut.kotlin.runtime
+
+    implementation project(":data-hibernate-jpa")
+    implementation "io.micronaut.sql:micronaut-jdbc-tomcat"
+
+    implementation libs.jakarta.persistence.api
+    implementation libs.jakarta.transaction.api
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-reactive"
+
+    runtimeOnly "com.h2database:h2"
+    runtimeOnly "ch.qos.logback:logback-classic"
+}
