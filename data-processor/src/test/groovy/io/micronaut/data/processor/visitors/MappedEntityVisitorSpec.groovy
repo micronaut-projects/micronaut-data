@@ -20,10 +20,12 @@ import io.micronaut.data.annotation.Embeddable
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.MappedProperty
 import io.micronaut.data.model.DataType
+import spock.lang.PendingFeature
 import spock.lang.Unroll
 
 class MappedEntityVisitorSpec extends AbstractTypeElementSpec {
 
+    @PendingFeature(reason = "Ignore until fixed root cause by changes in core M4")
     void 'test fail compilation for a bean method that does not meet requirements'() {
         when:
         buildBeanIntrospection('test.BadBean', '''

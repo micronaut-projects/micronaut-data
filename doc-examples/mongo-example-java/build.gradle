@@ -17,6 +17,8 @@ micronaut {
 }
 
 dependencies {
+    micronautBoms(platform("io.micronaut:micronaut-core-bom:$micronautVersion"))
+
     annotationProcessor projects.dataDocumentProcessor
 
     implementation 'io.micronaut.rxjava2:micronaut-rxjava2'
@@ -26,9 +28,8 @@ dependencies {
     implementation 'io.micronaut.data:micronaut-data-mongodb'
     implementation libs.mongodb.driver.sync
 
-    compileOnly libs.javax.persistence.api
     implementation libs.jakarta.persistence.api
     implementation libs.jakarta.transaction.api
 
-    runtimeOnly "ch.qos.logback:logback-classic"
+    runtimeOnly mnLogging.logback.classic
 }
