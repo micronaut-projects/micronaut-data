@@ -30,16 +30,16 @@ dependencies {
         exclude group: "io.micronaut"
     }
 
-    compileOnly mnMongo.micronaut.mongo.sync
-    compileOnly mnMongo.micronaut.mongo.reactive
+    compileOnly mnMongo.mongo.driver
+    compileOnly mnMongo.mongo.reactive
     compileOnly mnReactor.micronaut.reactor
 
     testAnnotationProcessor projects.dataDocumentProcessor
     testAnnotationProcessor mn.micronaut.inject.java
     testAnnotationProcessor libs.jakarta.persistence.api
 
-    testImplementation mnMongo.micronaut.mongo.sync
-    testImplementation mnMongo.micronaut.mongo.reactive
+    testImplementation mnMongo.mongo.driver
+    testImplementation mnMongo.mongo.reactive
     testImplementation projects.dataDocumentProcessor
     testImplementation projects.dataDocumentTck
     testImplementation libs.jakarta.persistence.api

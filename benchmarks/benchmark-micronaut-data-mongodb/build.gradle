@@ -5,7 +5,7 @@ plugins {
 dependencies {
     annotationProcessor projects.dataDocumentProcessor
     implementation projects.dataMongodb
-    implementation mnMongo.micronaut.mongo.sync
+    implementation mnMongo.mongo.driver
     testImplementation platform(libs.testcontainers.bom)
     testImplementation libs.testcontainers.mongodb
     runtimeOnly mn.snakeyaml

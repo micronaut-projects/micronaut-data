@@ -25,7 +25,7 @@ dependencies {
     implementation 'io.micronaut.reactor:micronaut-reactor'
     implementation "io.micronaut:micronaut-http-client"
     implementation 'io.micronaut.data:micronaut-data-mongodb'
-    implementation mnMongo.micronaut.mongo.sync
+    implementation mnMongo.mongo.driver
 
     implementation libs.jakarta.persistence.api
     implementation libs.jakarta.transaction.api
