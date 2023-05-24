@@ -26,8 +26,7 @@ dependencies {
     implementation 'io.micronaut.data:micronaut-data-mongodb'
     implementation mnSerde.micronaut.serde.jackson
 
-//    implementation projects.dataMongodb
-    implementation libs.mongodb.driver.sync
+    implementation mnMongo.micronaut.mongo.sync
 
     compileOnly libs.javax.persistence.api
     implementation libs.jakarta.persistence.api

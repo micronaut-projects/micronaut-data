@@ -4,8 +4,8 @@ plugins {
 
 dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
-	implementation libs.benchmark.spring.data.mongodb.driver.core
-	implementation libs.benchmark.spring.data.mongodb.driver.sync
+	implementation mnMongo.mongo.core
+	implementation mnMongo.micronaut.mongo.sync
 	testImplementation platform(libs.testcontainers.bom)
 	testImplementation libs.testcontainers.mongodb
 }

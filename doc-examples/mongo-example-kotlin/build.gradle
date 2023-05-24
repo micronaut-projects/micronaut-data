@@ -24,14 +24,13 @@ dependencies {
 
     implementation "io.micronaut:micronaut-http-client"
     implementation 'io.micronaut.data:micronaut-data-mongodb'
-    implementation libs.mongodb.driver.sync
+    implementation mnMongo.micronaut.mongo.sync
     implementation mnKotlin.micronaut.kotlin.runtime
 
     compileOnly libs.javax.persistence.api
     implementation libs.jakarta.persistence.api
     implementation libs.jakarta.transaction.api
     implementation libs.kotlin.coroutines
-    implementation libs.kotlin.coroutines.reactive
 
     runtimeOnly "ch.qos.logback:logback-classic"
 

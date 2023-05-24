@@ -1,19 +1,19 @@
 [versions]
-micronaut = "4.0.0-M4"
+micronaut = "4.0.0-M5"
 micronaut-platform = "4.0.0-M2"
 micronaut-docs = "2.0.0"
 micronaut-gradle-plugin = "4.0.0-M3"
-micronaut-testresources = "2.0.0-M7"
+micronaut-testresources = "2.0.0-M8"
 
 micronaut-azure = "5.0.0-M2"
 micronaut-reactor = "3.0.0-M1"
 micronaut-rxjava2 = "2.0.0-M1"
 micronaut-r2dbc = "5.0.0-M5"
-micronaut-serde = "2.0.0-M7"
+micronaut-serde = "2.0.0-M8"
 micronaut-sql = "5.0.0-M6"
 micronaut-spring = "5.0.0-M1"
 micronaut-test = "4.0.0-M3"
-micronaut-mongo = "5.0.0-M1"
+micronaut-mongo = "5.0.0-M2"
 micronaut-kotlin = "4.0.0-M1"
 micronaut-multitenancy = "5.0.0-M2"
 micronaut-validation = "4.0.0-M7"
@@ -32,8 +32,6 @@ hibernate-jpamodelgen-jakarta = "6.0.0.Alpha9"
 
 spring-data = "3.1.0"
 
-mongodb = "4.9.1"
-
 # JDBC Drivers
 
 # Need to leave it here because micronaut-sql uses older version. When it's upgraded there then we can remove this declaration here
@@ -41,7 +39,6 @@ oracle-jdbc-driver = "23.2.0.0"
 
 # Testing and benchmarking
 
-benchmark-spring-data-mongodb = "4.9.1"
 benchmark-spring-data = "2023.0.0"
 spock = "2.2-groovy-4.0"
 cglib = "3.3.0"
@@ -80,6 +77,7 @@ micronaut-multitenancy = { module = 'io.micronaut.multitenancy:micronaut-multite
 micronaut-testresources = { module = 'io.micronaut.testresources:micronaut-test-resources-bom', version.ref = "micronaut-testresources" }
 micronaut-validation = { module = 'io.micronaut.validation:micronaut-validation-bom', version.ref = "micronaut-validation" }
 micronaut-logging = { module = "io.micronaut.logging:micronaut-logging-bom", version.ref = "micronaut-logging" }
+micronaut-mongo = { module = "io.micronaut.mongodb:micronaut-mongo-bom", version.ref = "micronaut-mongo" }
 
 groovy-sql = { module = "org.apache.groovy:groovy-sql" }
 groovy-dateutil = { module = "org.apache.groovy:groovy-dateutil", version.ref = "groovy" }
@@ -108,8 +106,6 @@ jmh-core = { module = "org.openjdk.jmh:jmh-core", version.ref = "jmh" }
 jmh-annprocess = { module = "org.openjdk.jmh:jmh-generator-annprocess", version.ref = "jmh" }
 
 benchmark-spring-data-bom = { module = "org.springframework.data:spring-data-bom", version.ref = "benchmark-spring-data" }
-benchmark-spring-data-mongodb-driver-core = { module = "org.mongodb:mongodb-driver-core", version.ref = "benchmark-spring-data-mongodb" }
-benchmark-spring-data-mongodb-driver-sync = { module = "org.mongodb:mongodb-driver-sync", version.ref = "benchmark-spring-data-mongodb" }
 
 jetbrains-annotations = { module = "org.jetbrains:annotations", version.ref = "jetbrains-annotations" }
 
@@ -160,15 +156,6 @@ testcontainers-azure = { module = "org.testcontainers:azure" }
 # SERDE
 
 micronaut-serde = { module = "io.micronaut.serde:micronaut-serde-bom", version.ref = "micronaut-serde" }
-
-# MONGO
-
-mongodb-driver-core = { module = "org.mongodb:mongodb-driver-core", version.ref = "mongodb" }
-mongodb-driver-sync = { module = "org.mongodb:mongodb-driver-sync", version.ref = "mongodb" }
-mongodb-driver-reactive = { module = "org.mongodb:mongodb-driver-reactivestreams", version.ref = "mongodb" }
-
-micronaut-mongo-reactive = { module = "io.micronaut.mongodb:micronaut-mongo-reactive", version.ref = "micronaut-mongo" }
-micronaut-mongo-sync = { module = "io.micronaut.mongodb:micronaut-mongo-sync", version.ref = "micronaut-mongo" }
 
 # AZURE COSMOS
 

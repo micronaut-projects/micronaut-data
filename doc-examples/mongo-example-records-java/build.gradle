@@ -20,7 +20,7 @@ dependencies {
 
     implementation "io.micronaut:micronaut-http-client"
     implementation 'io.micronaut.data:micronaut-data-mongodb'
-    implementation libs.mongodb.driver.sync
+    implementation mnMongo.micronaut.mongo.sync
 
     compileOnly libs.javax.persistence.api
     implementation libs.jakarta.persistence.api

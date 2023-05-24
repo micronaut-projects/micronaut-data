@@ -21,7 +21,7 @@ dependencies {
     implementation 'io.micronaut.reactor:micronaut-reactor'
     implementation "io.micronaut:micronaut-http-client"
     implementation projects.dataMongodb
-    implementation libs.mongodb.driver.reactive
+    implementation mnMongo.micronaut.mongo.reactive
     implementation mnKotlin.micronaut.kotlin.runtime
 
     compileOnly libs.javax.persistence.api

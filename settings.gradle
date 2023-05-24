@@ -32,6 +32,7 @@ micronautBuild {
     importMicronautCatalog("micronaut-testresources")
     importMicronautCatalog("micronaut-validation")
     importMicronautCatalog("micronaut-logging")
+    importMicronautCatalog("micronaut-mongo")
 }
 
 include 'data-bom'
