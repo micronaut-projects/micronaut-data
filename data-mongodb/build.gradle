@@ -21,25 +21,25 @@ dependencies {
     api projects.dataDocumentModel
     api mnSerde.micronaut.serde.bson
     api mnSerde.micronaut.serde.support
-    api (libs.micronaut.mongo.reactive) {
+    api (mnMongo.micronaut.mongo.reactive) {
         exclude group: "org.mongodb"
         exclude group: "io.micronaut"
     }
-    api (libs.micronaut.mongo.sync) {
+    api (mnMongo.micronaut.mongo.sync) {
         exclude group: "org.mongodb"
         exclude group: "io.micronaut"
     }
 
-    compileOnly libs.mongodb.driver.sync
-    compileOnly libs.mongodb.driver.reactive
+    compileOnly mnMongo.mongo.driver
+    compileOnly mnMongo.mongo.reactive
     compileOnly mnReactor.micronaut.reactor
 
     testAnnotationProcessor projects.dataDocumentProcessor
     testAnnotationProcessor mn.micronaut.inject.java
     testAnnotationProcessor libs.jakarta.persistence.api
 
-    testImplementation libs.mongodb.driver.sync
-    testImplementation libs.mongodb.driver.reactive
+    testImplementation mnMongo.mongo.driver
+    testImplementation mnMongo.mongo.reactive
     testImplementation projects.dataDocumentProcessor
     testImplementation projects.dataDocumentTck
     testImplementation libs.jakarta.persistence.api
