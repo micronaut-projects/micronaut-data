@@ -6,7 +6,7 @@ pluginManagement {
 }
 
 plugins {
-    id 'io.micronaut.build.shared.settings' version '6.4.4'
+    id 'io.micronaut.build.shared.settings' version '6.5.0'
 }
 
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
@@ -32,6 +32,7 @@ micronautBuild {
     importMicronautCatalog("micronaut-testresources")
     importMicronautCatalog("micronaut-validation")
     importMicronautCatalog("micronaut-logging")
+    importMicronautCatalog("micronaut-mongo")
 }
 
 include 'data-bom'
