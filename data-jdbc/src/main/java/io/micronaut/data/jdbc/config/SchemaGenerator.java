@@ -24,7 +24,6 @@ import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.beans.BeanIntrospector;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
-import io.micronaut.data.annotation.JsonView;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.jdbc.operations.JdbcSchemaHandler;
@@ -95,7 +94,6 @@ public class SchemaGenerator {
                 // filter out inner / internal / abstract(MappedSuperClass) classes
                 .filter(i -> !i.getBeanType().getName().contains("$"))
                 .filter(i -> !Modifier.isAbstract(i.getBeanType().getModifiers()))
-                .filter(i -> !i.hasAnnotation(JsonView.class))
                 .map(beanIntrospection -> runtimeEntityRegistry.getEntity(beanIntrospection.getBeanType()))
                 .toArray(PersistentEntity[]::new);
             if (ArrayUtils.isNotEmpty(entities)) {

@@ -49,9 +49,8 @@ class OracleR2DbcJsonViewSpec extends Specification implements TestPropertyProvi
                 (prefix + '.username')          : container.getUsername(),
                 (prefix + '.password')          : container.getPassword(),
                 // Cannot create JSON view during schema creation, works via init script
-                (prefix + '.schema-generate')   : 'NONE',
+                (prefix + '.schema-generate')   : 'CREATE',
                 (prefix + '.dialect')           : Dialect.ORACLE,
-                (prefix + '.packages')          : getClass().package.name,
                 (prefix + '.connectTimeout')    : Duration.ofMinutes(1).toString(),
                 (prefix + '.statementTimeout')  : Duration.ofMinutes(1).toString(),
                 (prefix + '.lockTimeout')       : Duration.ofMinutes(1).toString()

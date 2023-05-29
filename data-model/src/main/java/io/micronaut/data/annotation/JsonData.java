@@ -25,56 +25,37 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * The annotation defining Json Duality View. Currently supported only by Oracle database.
+ * The annotation defining JSON model sourced from the database table.
+ * It defines table from which JSON data is sourced and permissions for the table (INSERT, UPDATE, DELETE,...).
  *
  * @author radovanradic
  * @since 4.0.0
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.ANNOTATION_TYPE, ElementType.TYPE, ElementType.FIELD})
+@Target({ElementType.ANNOTATION_TYPE, ElementType.TYPE})
 @Serdeable
 @Documented
 @Experimental
-@MappedEntity
-@JsonData
-public @interface JsonView {
+@EntityRepresentation(type = EntityRepresentation.Type.COLUMN, columnType = EntityRepresentation.ColumnType.JSON)
+public @interface JsonData {
+
+    String DEFAULT_COLUMN_NAME = "DATA";
 
     /**
-     * The name of the table JSON data is sourced from.
+     * The name of the single column in the view.
      *
-     * @return the table name
+     * @return the column name (default DATA)
      */
-    @AliasFor(annotation = JsonData.class, member = "table")
+    @AliasFor(annotation = EntityRepresentation.class, member = "column")
+    String column() default DEFAULT_COLUMN_NAME;
+
+    /**
+     * @return the table name in the database from where json view is getting the data
+     */
     String table() default "";
 
     /**
-     * The permissions for the JSON data source table.
-     *
-     * @return the permissions
+     * @return permissions for the table, combination of UPDATE, INSERT, DELETE or NOUPDATE, NOINSERT, NODELETE for the view
      */
-    @AliasFor(annotation = JsonData.class, member = "permissions")
     String permissions() default "";
-
-    /**
-     * The Json View name in the database.
-     *
-     * @return the json view
-     */
-    @AliasFor(annotation = MappedEntity.class, member = "value")
-    String value() default "";
-
-    /**
-     * Only applies to supported databases.
-     *
-     * @return the schema to use for the query
-     */
-    @AliasFor(annotation = MappedEntity.class, member = "schema")
-    String schema() default "";
-
-    /**
-     * @return The view alias to use for the query
-     */
-    @AliasFor(annotation = MappedEntity.class, member = "alias")
-    String alias() default "";
-
 }

@@ -63,7 +63,7 @@ class OracleJdbcJsonViewSpec extends Specification implements TestPropertyProvid
                 (prefix + '.username')          : container.getUsername(),
                 (prefix + '.password')          : container.getPassword(),
                 // Cannot create JSON view during schema creation, works via init script
-                (prefix + '.schema-generate')   : 'NONE',
+                (prefix + '.schema-generate')   : 'CREATE',
                 (prefix + '.dialect')           : Dialect.ORACLE,
                 (prefix + '.packages')          : getClass().package.name
         ] as Map<String, String>

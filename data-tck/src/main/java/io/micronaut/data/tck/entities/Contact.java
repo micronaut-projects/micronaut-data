@@ -1,5 +1,6 @@
 package io.micronaut.data.tck.entities;
 
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
 
@@ -12,6 +13,8 @@ public class Contact {
     private String name;
     private int age;
     private boolean active = true;
+
+    @Nullable
     private LocalDateTime startDateTime;
 
     public Long getId() { return id; }

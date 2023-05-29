@@ -4,20 +4,24 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.JsonView;
+import io.micronaut.data.annotation.JsonViewColumn;
 import io.micronaut.data.annotation.Relation;
+import io.micronaut.data.jdbc.annotation.JoinColumn;
 import io.micronaut.data.tck.entities.Metadata;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
-@JsonView
+@JsonView(table = "TBL_STUDENT", permissions = "INSERT UPDATE DELETE")
 public class StudentView {
     @Id
     @GeneratedValue(GeneratedValue.Type.IDENTITY)
     private Long id;
 
+    @JsonViewColumn(permissions = "UPDATE")
     private String name;
 
+    @JsonViewColumn(permissions = "UPDATE")
     private Double averageGrade;
 
     private LocalDateTime startDateTime;
@@ -25,9 +29,11 @@ public class StudentView {
     private boolean active;
 
     @Relation(Relation.Kind.ONE_TO_MANY)
+    @JoinColumn(referencedColumnName = "ID", name = "STUDENT_ID")
     private List<StudentScheduleView> schedule;
 
     @Relation(Relation.Kind.EMBEDDED)
+    @JoinColumn(referencedColumnName = "ADDRESS_ID", name = "ID")
     private AddressView address;
 
     @JsonProperty("_metadata")
