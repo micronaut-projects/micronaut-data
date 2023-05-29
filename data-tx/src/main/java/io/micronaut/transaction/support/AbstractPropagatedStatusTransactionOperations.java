@@ -33,7 +33,7 @@ public abstract class AbstractPropagatedStatusTransactionOperations<T extends Tr
     public final <R> R execute(@NonNull TransactionDefinition definition,
                                @NonNull TransactionCallback<C, R> callback) {
         return doExecute(definition, status -> {
-            try (PropagatedContext.InContext ignore = extendCurrentPropagatedContext(status)
+            try (PropagatedContext.Scope ignore = extendCurrentPropagatedContext(status)
                 .propagate()) {
                 return callback.call(status);
             }

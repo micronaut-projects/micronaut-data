@@ -385,7 +385,7 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
             definition,
             existingTransaction
         );
-        PropagatedContext.InContext scope = extendCurrentPropagatedContext(transactionStatus).propagate();
+        PropagatedContext.Scope scope = extendCurrentPropagatedContext(transactionStatus).propagate();
         transactionStatus.registerSynchronization(new TransactionSynchronization() {
             @Override
             public void afterCompletion(Status status) {
@@ -401,7 +401,7 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
         doSuspend(existingTransaction);
         ConnectionStatus<C> newConnectionStatus = synchronousConnectionManager.getConnection(ConnectionDefinition.REQUIRES_NEW);
         T transactionStatus = createExistingTransactionStatus(newConnectionStatus, definition, existingTransaction);
-        PropagatedContext.InContext scope = extendCurrentPropagatedContext(transactionStatus).propagate();
+        PropagatedContext.Scope scope = extendCurrentPropagatedContext(transactionStatus).propagate();
         transactionStatus.registerSynchronization(new TransactionSynchronization() {
             @Override
             public void afterCompletion(Status status) {
@@ -419,7 +419,7 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
         doSuspend(existingTransaction);
         ConnectionStatus<C> newConnectionStatus = synchronousConnectionManager.getConnection(ConnectionDefinition.REQUIRES_NEW);
         T transactionStatus = createNoTxTransactionStatus(newConnectionStatus, definition);
-        PropagatedContext.InContext scope = extendCurrentPropagatedContext(transactionStatus).propagate();
+        PropagatedContext.Scope scope = extendCurrentPropagatedContext(transactionStatus).propagate();
         transactionStatus.registerSynchronization(new TransactionSynchronization() {
             @Override
             public void afterCompletion(Status status) {
@@ -436,7 +436,7 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
     private T openNewConnectionAndTransaction(TransactionDefinition definition) {
         ConnectionStatus<C> newConnectionStatus = synchronousConnectionManager.getConnection(ConnectionDefinition.REQUIRES_NEW);
         T transactionStatus = createNewTransactionStatus(newConnectionStatus, definition);
-        PropagatedContext.InContext scope = extendCurrentPropagatedContext(transactionStatus).propagate();
+        PropagatedContext.Scope scope = extendCurrentPropagatedContext(transactionStatus).propagate();
         transactionStatus.registerSynchronization(new TransactionSynchronization() {
             @Override
             public void afterCompletion(Status status) {
@@ -451,7 +451,7 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
     @NonNull
     private T withNoTransactionStatus(ConnectionStatus<C> connectionStatus, TransactionDefinition definition) {
         T transactionStatus = createNoTxTransactionStatus(connectionStatus, definition);
-        PropagatedContext.InContext scope = extendCurrentPropagatedContext(transactionStatus).propagate();
+        PropagatedContext.Scope scope = extendCurrentPropagatedContext(transactionStatus).propagate();
         transactionStatus.registerSynchronization(new TransactionSynchronization() {
                                                       @Override
                                                       public void afterCompletion(Status status) {

@@ -31,8 +31,8 @@ dependencies {
     testRuntimeOnly mnSql.h2
     testRuntimeOnly mnSql.micronaut.jdbc.tomcat
 
-    testRuntimeOnly libs.drivers.jdbc.postgresql
-    testResourcesService libs.drivers.jdbc.postgresql
+    testRuntimeOnly mnSql.postgresql
+    testResourcesService mnSql.postgresql
 }
 
 micronaut {

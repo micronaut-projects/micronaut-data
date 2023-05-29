@@ -70,7 +70,7 @@ public abstract class AbstractConnectionOperations<C> implements ConnectionOpera
 
     private <R> R suspend(ConnectionPropagatedContextElement<C> existingConnectionContextElement,
                           @NonNull Supplier<R> callback) {
-        try (PropagatedContext.InContext ignore = PropagatedContext.getOrEmpty()
+        try (PropagatedContext.Scope ignore = PropagatedContext.getOrEmpty()
             .minus(existingConnectionContextElement)
             .propagate()) {
             return callback.get();
@@ -84,7 +84,7 @@ public abstract class AbstractConnectionOperations<C> implements ConnectionOpera
             false);
         try {
             setupConnection(status);
-            try (PropagatedContext.InContext ignore = PropagatedContext.getOrEmpty()
+            try (PropagatedContext.Scope ignore = PropagatedContext.getOrEmpty()
                 .replace(existingContextElement, new ConnectionPropagatedContextElement<>(this, status))
                 .propagate()) {
                 return callback.apply(status);
@@ -98,7 +98,7 @@ public abstract class AbstractConnectionOperations<C> implements ConnectionOpera
                                            @NonNull Function<ConnectionStatus<C>, R> callback) {
         C connection = openConnection(definition);
         DefaultConnectionStatus<C> status = new DefaultConnectionStatus<>(connection, definition, true);
-        try (PropagatedContext.InContext ignore = PropagatedContext.getOrEmpty()
+        try (PropagatedContext.Scope ignore = PropagatedContext.getOrEmpty()
             .plus(new ConnectionPropagatedContextElement<>(this, status))
             .propagate()) {
             setupConnection(status);
@@ -157,7 +157,7 @@ public abstract class AbstractConnectionOperations<C> implements ConnectionOpera
         C connection = openConnection(definition);
         DefaultConnectionStatus<C> status = new DefaultConnectionStatus<>(connection, definition, true);
         PropagatedContext propagatedContext = PropagatedContext.getOrEmpty().plus(new ConnectionPropagatedContextElement<>(this, status));
-        PropagatedContext.InContext scope = propagatedContext.propagate();
+        PropagatedContext.Scope scope = propagatedContext.propagate();
         status.registerSynchronization(new ConnectionSynchronization() {
             @Override
             public void executionComplete() {
@@ -173,7 +173,7 @@ public abstract class AbstractConnectionOperations<C> implements ConnectionOpera
             existingContextElement.status.getDefinition(),
             false);
         setupConnection(status);
-        PropagatedContext.InContext scope = PropagatedContext.getOrEmpty()
+        PropagatedContext.Scope scope = PropagatedContext.getOrEmpty()
             .replace(existingContextElement, new ConnectionPropagatedContextElement<>(this, status))
             .propagate();
         status.registerSynchronization(new ConnectionSynchronization() {
@@ -187,7 +187,7 @@ public abstract class AbstractConnectionOperations<C> implements ConnectionOpera
 
     private DefaultConnectionStatus<C> suspendOpenConnection(ConnectionPropagatedContextElement<C> existingConnectionContextElement,
                                                              @NonNull Supplier<DefaultConnectionStatus<C>> newStatusSupplier) {
-        PropagatedContext.InContext scope = PropagatedContext.getOrEmpty().minus(existingConnectionContextElement).propagate();
+        PropagatedContext.Scope scope = PropagatedContext.getOrEmpty().minus(existingConnectionContextElement).propagate();
         DefaultConnectionStatus<C> newStatus = newStatusSupplier.get();
         newStatus.registerSynchronization(new ConnectionSynchronization() {
             @Override

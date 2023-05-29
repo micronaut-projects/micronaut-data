@@ -80,7 +80,7 @@ public final class SynchronousFromReactiveTransactionManager<T> implements Synch
     @Override
     public <R> R execute(TransactionDefinition definition, TransactionCallback<T, R> callback) {
         Mono<R> result = reactiveTransactionOperations.withTransactionMono(definition, status -> Mono.deferContextual(contextView -> {
-            try (PropagatedContext.InContext scope = ReactorPropagation.findPropagatedContext(contextView).orElseGet(PropagatedContext::getOrEmpty).propagate()) {
+            try (PropagatedContext.Scope scope = ReactorPropagation.findPropagatedContext(contextView).orElseGet(PropagatedContext::getOrEmpty).propagate()) {
                 return Mono.justOrEmpty(callback.apply(new DefaultTransactionStatus<>(status)));
             }
         }).subscribeOn(scheduler));

@@ -34,18 +34,18 @@ dependencies {
     testImplementation mn.micronaut.http.netty
     testRuntimeOnly mnSql.micronaut.jdbc.tomcat
     testRuntimeOnly mnSql.h2
-    testRuntimeOnly libs.drivers.jdbc.mariadb
+    testRuntimeOnly mnSql.mariadb.java.client
     testRuntimeOnly libs.drivers.jdbc.oracle
-    testRuntimeOnly libs.drivers.jdbc.mysql
-    testRuntimeOnly libs.drivers.jdbc.postgresql
-    testRuntimeOnly libs.drivers.jdbc.mssql
+    testRuntimeOnly mnSql.mysql.connector.java
+    testRuntimeOnly mnSql.postgresql
+    testRuntimeOnly mnSql.mssql.jdbc
     testRuntimeOnly mn.snakeyaml
 
-    testResourcesService libs.drivers.jdbc.mariadb
+    testResourcesService mnSql.mariadb.java.client
     testResourcesService libs.drivers.jdbc.oracle
-    testResourcesService libs.drivers.jdbc.mysql
-    testResourcesService libs.drivers.jdbc.postgresql
-    testResourcesService libs.drivers.jdbc.mssql
+    testResourcesService mnSql.mysql.connector.java
+    testResourcesService mnSql.postgresql
+    testResourcesService mnSql.mssql.jdbc
 
     testImplementation libs.micronaut.testresources.client
 

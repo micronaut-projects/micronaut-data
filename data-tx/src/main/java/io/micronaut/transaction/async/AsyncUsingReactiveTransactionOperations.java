@@ -65,7 +65,7 @@ public final class AsyncUsingReactiveTransactionOperations<C> implements AsyncTr
                                                   Function<AsyncTransactionStatus<C>, CompletionStage<T>> handler) {
         Mono<T> result = Mono.fromDirect(reactiveTransactionOperations.withTransaction(definition,
             status -> Mono.deferContextual(contextView -> Mono.fromCompletionStage(() -> {
-                try (PropagatedContext.InContext scope = ReactorPropagation.findPropagatedContext(contextView)
+                try (PropagatedContext.Scope scope = ReactorPropagation.findPropagatedContext(contextView)
                     .orElseGet(PropagatedContext::getOrEmpty)
                     .propagate()) {
                     return handler.apply(new DefaultAsyncTransactionStatus<>(status));

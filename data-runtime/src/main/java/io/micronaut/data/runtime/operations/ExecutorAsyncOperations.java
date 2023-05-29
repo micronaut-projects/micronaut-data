@@ -61,7 +61,7 @@ public class ExecutorAsyncOperations implements AsyncRepositoryOperations {
         CompletableFuture<T> cf = new CompletableFuture<>();
         PropagatedContext propagatedContext = PropagatedContext.getOrEmpty();
         CompletableFuture.supplyAsync(PropagatedContext.wrapCurrent(supplier), executor).whenComplete((value, throwable) -> {
-            try (PropagatedContext.InContext scope = propagatedContext.propagate()) {
+            try (PropagatedContext.Scope scope = propagatedContext.propagate()) {
                 if (throwable != null) {
                     cf.completeExceptionally(throwable);
                 } else {
