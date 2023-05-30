@@ -9,6 +9,7 @@ dependencies {
     annotationProcessor mnValidation.micronaut.validation.processor
     annotationProcessor projects.dataProcessor
 
+    implementation mnValidation.micronaut.validation
     implementation mn.micronaut.http.client
     implementation mn.micronaut.http.server.netty
     implementation projects.dataModel

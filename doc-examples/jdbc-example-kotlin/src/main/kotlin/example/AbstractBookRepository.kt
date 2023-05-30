@@ -13,7 +13,7 @@ import kotlin.streams.toList
 abstract class AbstractBookRepository(private val jdbcOperations: JdbcOperations) : CrudRepository<Book, Long> {
 
     @Transactional
-    fun findByTitle(title: String): List<Book> {
+    open fun findByTitle(title: String): List<Book> {
         val sql = "SELECT * FROM Book AS book WHERE book.title = ?"
         return jdbcOperations.prepareStatement(sql) { statement ->
             statement.setString(1, title)

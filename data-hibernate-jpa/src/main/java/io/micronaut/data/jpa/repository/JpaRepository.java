@@ -24,8 +24,6 @@ import io.micronaut.data.model.Sort;
 import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.data.repository.PageableRepository;
 
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.util.List;
 
@@ -40,7 +38,7 @@ import java.util.List;
 public interface JpaRepository<E, ID> extends CrudRepository<E, ID>, PageableRepository<E, ID> {
     @NonNull
     @Override
-    <S extends E> List<S> saveAll(@NonNull @Valid @NotNull Iterable<S> entities);
+    <S extends E> List<S> saveAll(@NonNull Iterable<S> entities);
 
     @NonNull
     @Override
@@ -57,7 +55,7 @@ public interface JpaRepository<E, ID> extends CrudRepository<E, ID>, PageableRep
      * @return The entity, possibly mutated
      */
     @QueryHint(name = "jakarta.persistence.FlushModeType", value = "AUTO")
-    <S extends E> S saveAndFlush(@NonNull @Valid @NotNull S entity);
+    <S extends E> S saveAndFlush(@NonNull S entity);
 
     /**
      * Adds a flush method.
@@ -72,5 +70,5 @@ public interface JpaRepository<E, ID> extends CrudRepository<E, ID>, PageableRep
      * @return An uninitialized proxy
      */
     @DataMethod(interceptor = LoadInterceptor.class)
-    <S extends E> S load(@NonNull @NotNull Serializable id);
+    <S extends E> S load(@NonNull Serializable id);
 }
