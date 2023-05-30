@@ -1,0 +1,17 @@
+package io.micronaut.data.jdbc.oraclexe.jsonview.repositories;
+
+import io.micronaut.data.annotation.Join;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.jdbc.oraclexe.jsonview.entities.Student;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.PageableRepository;
+
+import java.util.Optional;
+
+@JdbcRepository(dialect = Dialect.ORACLE)
+public interface StudentRepository extends PageableRepository<Student, Long> {
+
+    @Join("classes")
+    @Join("address")
+    Optional<Student> findByName(String name);
+}

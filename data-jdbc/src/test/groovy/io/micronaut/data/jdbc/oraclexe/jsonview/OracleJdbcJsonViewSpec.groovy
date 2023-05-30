@@ -1,73 +1,79 @@
 package io.micronaut.data.jdbc.oraclexe.jsonview
 
-import io.micronaut.context.ApplicationContext
 import io.micronaut.data.exceptions.OptimisticLockException
+import io.micronaut.data.jdbc.oraclexe.jsonview.entities.Address
+import io.micronaut.data.jdbc.oraclexe.jsonview.entities.AddressView
+import io.micronaut.data.jdbc.oraclexe.jsonview.entities.Class
+import io.micronaut.data.jdbc.oraclexe.jsonview.entities.Driver
+import io.micronaut.data.jdbc.oraclexe.jsonview.entities.DriverRaceMap
+import io.micronaut.data.jdbc.oraclexe.jsonview.entities.Race
+import io.micronaut.data.jdbc.oraclexe.jsonview.entities.Student
+import io.micronaut.data.jdbc.oraclexe.jsonview.entities.StudentClass
+import io.micronaut.data.jdbc.oraclexe.jsonview.entities.StudentScheduleView
+import io.micronaut.data.jdbc.oraclexe.jsonview.entities.StudentView
+import io.micronaut.data.jdbc.oraclexe.jsonview.entities.Teacher
+import io.micronaut.data.jdbc.oraclexe.jsonview.entities.TeacherView
+import io.micronaut.data.jdbc.oraclexe.jsonview.entities.Team
+import io.micronaut.data.jdbc.oraclexe.jsonview.repositories.AddressRepository
+import io.micronaut.data.jdbc.oraclexe.jsonview.repositories.ClassRepository
+import io.micronaut.data.jdbc.oraclexe.jsonview.repositories.DriverRaceMapRepository
+import io.micronaut.data.jdbc.oraclexe.jsonview.repositories.DriverRepository
+import io.micronaut.data.jdbc.oraclexe.jsonview.repositories.DriverViewRepository
+import io.micronaut.data.jdbc.oraclexe.jsonview.repositories.RaceRepository
+import io.micronaut.data.jdbc.oraclexe.jsonview.repositories.StudentClassRepository
+import io.micronaut.data.jdbc.oraclexe.jsonview.repositories.StudentRepository
+import io.micronaut.data.jdbc.oraclexe.jsonview.repositories.StudentScheduleClassView
+import io.micronaut.data.jdbc.oraclexe.jsonview.repositories.StudentViewRepository
+import io.micronaut.data.jdbc.oraclexe.jsonview.repositories.TeacherRepository
+import io.micronaut.data.jdbc.oraclexe.jsonview.repositories.TeamRepository
+import io.micronaut.data.jdbc.oraclexe.jsonview.repositories.TeamViewRepository
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
-import io.micronaut.data.model.query.builder.sql.Dialect
-import io.micronaut.test.support.TestPropertyProvider
-import org.testcontainers.containers.OracleContainer
-import org.testcontainers.utility.DockerImageName
-import spock.lang.AutoCleanup
-import spock.lang.IgnoreIf
-import spock.lang.Shared
+import io.micronaut.test.extensions.spock.annotation.MicronautTest
+import jakarta.inject.Inject
 import spock.lang.Specification
 
 import java.time.LocalDateTime
 import java.time.LocalTime
 
-@IgnoreIf({ env["GITHUB_WORKFLOW"] })
-class OracleJdbcJsonViewSpec extends Specification implements TestPropertyProvider {
+@MicronautTest(environments = ["oracle-jsonview"])
+class OracleJdbcJsonViewSpec extends Specification {
 
-    @AutoCleanup("stop")
-    @Shared
-    OracleContainer container = createContainer()
+    @Inject
+    StudentClassRepository studentClassRepository
 
-    @AutoCleanup
-    @Shared
-    ApplicationContext context = ApplicationContext.run(properties)
+    @Inject
+    ClassRepository classRepository
 
-    StudentClassRepository getStudentClassRepository() {
-        return context.getBean(StudentClassRepository)
-    }
+    @Inject
+    TeacherRepository teacherRepository
 
-    ClassRepository getClassRepository() {
-        return context.getBean(ClassRepository)
-    }
+    @Inject
+    AddressRepository addressRepository
 
-    TeacherRepository getTeacherRepository() {
-        return context.getBean(TeacherRepository)
-    }
+    @Inject
+    StudentRepository studentRepository
 
-    AddressRepository getAddressRepository() {
-        return context.getBean(AddressRepository)
-    }
+    @Inject
+    StudentViewRepository studentViewRepository
 
-    StudentRepository getStudentRepository() {
-        return context.getBean(StudentRepository)
-    }
+    @Inject
+    TeamRepository teamRepository
 
-    StudentViewRepository getStudentViewRepository() {
-        return context.getBean(StudentViewRepository)
-    }
+    @Inject
+    DriverRepository driverRepository
 
-    @Override
-    Map<String, String> getProperties() {
-        if (container == null) {
-            container = createContainer()
-        }
-        container.start()
-        def prefix = 'datasources.default'
-        return [
-                (prefix + '.url')               : container.getJdbcUrl(),
-                (prefix + '.username')          : container.getUsername(),
-                (prefix + '.password')          : container.getPassword(),
-                // Cannot create JSON view during schema creation, works via init script
-                (prefix + '.schema-generate')   : 'CREATE',
-                (prefix + '.dialect')           : Dialect.ORACLE,
-                (prefix + '.packages')          : getClass().package.name
-        ] as Map<String, String>
-    }
+    @Inject
+    RaceRepository raceRepository
+
+    @Inject
+    DriverRaceMapRepository driverRaceMapRepository
+
+    @Inject
+    DriverViewRepository driverViewRepository
+
+    @Inject
+    TeamViewRepository teamViewRepository
 
     def setup() {
         studentClassRepository.deleteAll()
@@ -337,8 +343,64 @@ class OracleJdbcJsonViewSpec extends Specification implements TestPropertyProvid
         count == 0
     }
 
-    static OracleContainer createContainer() {
-        return new OracleContainer(DockerImageName.parse("gvenzl/oracle-free:latest-faststart").asCompatibleSubstituteFor("gvenzl/oracle-xe"))
-                .withDatabaseName("test").withInitScript("./oracle-json-view-init.sql")
+    /**
+     * Test finding data using view from records created in source tables
+     */
+    def "save entities and load views"() {
+        when:
+        def team1 = new Team()
+        team1.name = "McLaren"
+        team1.points = 90
+        teamRepository.save(team1)
+        def team2 = new Team()
+        team2.name = "Ferrari"
+        team2.points = 105
+        teamRepository.save(team2)
+        def driver1 = new Driver()
+        driver1.points = 30
+        driver1.name = "Lando Norris"
+        driver1.team = team1
+        driverRepository.save(driver1)
+        def driver2 = new Driver()
+        driver2.points = 20
+        driver2.name = "Oscar Piastri"
+        driver2.team = team1
+        driverRepository.save(driver2)
+        def driver3 = new Driver()
+        driver3.name = "Charles Leclerc"
+        driver3.points = 15
+        driver3.team = team2
+        driverRepository.save(driver3)
+        def race = new Race()
+        race.name = "Bahrain"
+        race.laps = 57
+        race.podium = "some random data"
+        race.raceDate = new Date(2023, 6, 1)
+        raceRepository.save(race)
+        def driverRaceMap1 = new DriverRaceMap()
+        driverRaceMap1.race = race
+        driverRaceMap1.position = 1
+        driverRaceMap1.driver = driver1
+        driverRaceMapRepository.save(driverRaceMap1)
+        def driverRaceMap2 = new DriverRaceMap()
+        driverRaceMap2.race = race
+        driverRaceMap2.position = 2
+        driverRaceMap2.driver = driver2
+        driverRaceMapRepository.save(driverRaceMap2)
+        def driverRaceMap3 = new DriverRaceMap()
+        driverRaceMap3.race = race
+        driverRaceMap3.position = 3
+        driverRaceMap3.driver = driver3
+        driverRaceMapRepository.save(driverRaceMap3)
+
+        def optTeamView1 = teamViewRepository.findById(team1.teamId)
+        def optTeamView2 = teamViewRepository.findById(team2.teamId)
+        def driverView1 = driverViewRepository.findById(driver1.driverId)
+        def driverView3 = driverViewRepository.findById(driver3.driverId)
+        then:
+        optTeamView1.present
+        optTeamView2.present
+        driverView1.present
+        driverView3.present
     }
 }

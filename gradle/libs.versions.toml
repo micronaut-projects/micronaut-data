@@ -18,6 +18,7 @@ micronaut-kotlin = "4.0.0-M3"
 micronaut-multitenancy = "5.0.0-M3"
 micronaut-validation = "4.0.0-M8"
 micronaut-logging = "1.0.0-M2"
+micronaut-flyway = "6.0.0-M3"
 
 groovy = "4.0.12"
 
@@ -78,6 +79,7 @@ micronaut-testresources = { module = 'io.micronaut.testresources:micronaut-test-
 micronaut-validation = { module = 'io.micronaut.validation:micronaut-validation-bom', version.ref = "micronaut-validation" }
 micronaut-logging = { module = "io.micronaut.logging:micronaut-logging-bom", version.ref = "micronaut-logging" }
 micronaut-mongo = { module = "io.micronaut.mongodb:micronaut-mongo-bom", version.ref = "micronaut-mongo" }
+micronaut-flyway = { module = "io.micronaut.flyway:micronaut-flyway", version.ref = "micronaut-flyway" }
 
 groovy-sql = { module = "org.apache.groovy:groovy-sql" }
 groovy-dateutil = { module = "org.apache.groovy:groovy-dateutil", version.ref = "groovy" }
