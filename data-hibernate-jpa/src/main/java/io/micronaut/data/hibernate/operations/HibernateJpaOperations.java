@@ -26,6 +26,7 @@ import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.data.annotation.QueryHint;
+import io.micronaut.data.hibernate.conf.RequiresSyncHibernate;
 import io.micronaut.data.jpa.annotation.EntityGraph;
 import io.micronaut.data.jpa.operations.JpaRepositoryOperations;
 import io.micronaut.data.model.Page;
@@ -82,9 +83,10 @@ import java.util.stream.Stream;
  * @author graemerocher
  * @since 1.0
  */
+@RequiresSyncHibernate
 @EachBean(DataSource.class)
 @TypeHint(HibernatePresenceCondition.class)
-public class HibernateJpaOperations extends AbstractHibernateOperations<Session, Query, Query>
+final class HibernateJpaOperations extends AbstractHibernateOperations<Session, Query, Query>
     implements JpaRepositoryOperations, AsyncCapableRepository, ReactiveCapableRepository {
 
     private final SessionFactory sessionFactory;

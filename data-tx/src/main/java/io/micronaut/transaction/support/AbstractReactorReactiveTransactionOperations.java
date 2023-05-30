@@ -92,7 +92,7 @@ public abstract class AbstractReactorReactiveTransactionOperations<C> implements
     @Override
     @NonNull
     public final <T> Flux<T> withTransaction(@NonNull TransactionDefinition definition,
-                                       @NonNull TransactionalCallback<C, T> handler) {
+                                             @NonNull TransactionalCallback<C, T> handler) {
         Objects.requireNonNull(definition, "Transaction definition cannot be null");
         Objects.requireNonNull(handler, "Callback handler cannot be null");
 
@@ -100,40 +100,71 @@ public abstract class AbstractReactorReactiveTransactionOperations<C> implements
             ReactiveTransactionStatus<C> transactionStatus = getTransactionStatus(contextView);
             TransactionDefinition.Propagation propagationBehavior = definition.getPropagationBehavior();
             if (transactionStatus != null) {
-                // existing transaction, use it
                 if (propagationBehavior == TransactionDefinition.Propagation.NOT_SUPPORTED || propagationBehavior == TransactionDefinition.Propagation.NEVER) {
                     return Flux.error(new TransactionUsageException("Found an existing transaction but propagation behaviour doesn't support it: " + propagationBehavior));
                 }
-                ReactiveTransactionStatus<C> existingTransaction = existingTransaction(transactionStatus, definition);
-                try {
-                    return Flux.from(handler.doInTransaction(existingTransaction))
-                        .contextWrite(ctx -> addTxStatus(ctx, existingTransaction));
-                } catch (Exception e) {
-                    return Flux.error(new TransactionSystemException("Error invoking doInTransaction handler: " + e.getMessage(), e));
+                if (propagationBehavior == TransactionDefinition.Propagation.REQUIRES_NEW) {
+                    return connectionOperations.withConnectionFlux(definition.getConnectionDefinition(), connectionStatus ->
+                        executeTransactionFlux(
+                            new DefaultReactiveTransactionStatus<>(connectionStatus, true, definition),
+                            handler
+                        )
+                    );
                 }
+                ReactiveTransactionStatus<C> newStatus = existingTransaction(transactionStatus, definition);
+                return executeCallbackFlux(newStatus, handler);
             } else {
                 if (propagationBehavior == TransactionDefinition.Propagation.MANDATORY) {
                     return Flux.error(new NoTransactionException("Expected an existing transaction, but none was found in the Reactive context."));
                 }
-                return connectionOperations.withConnectionFlux(definition.getConnectionDefinition(), connectionStatus -> {
-                    Flux<DefaultReactiveTransactionStatus<C>> statusProvider =
-                        Flux.just(beginTransaction(connectionStatus, definition))
-                            .thenMany(Mono.just(new DefaultReactiveTransactionStatus<>(connectionStatus, true, definition)));
-                    return Flux.usingWhen(statusProvider,
-                        status -> {
-                            try {
-                                return Flux.from(handler.doInTransaction(status))
-                                    .contextWrite(context -> addTxStatus(context, status));
-                            } catch (Exception e) {
-                                return Flux.error(new TransactionSystemException("Error invoking doInTransaction handler: " + e.getMessage(), e));
-                            }
-                        },
-                        this::doCommit,
-                        this::doRollback,
-                        this::doCommit);
-                });
+                return connectionOperations.withConnectionFlux(definition.getConnectionDefinition(), connectionStatus ->
+                    executeTransactionFlux(
+                        new DefaultReactiveTransactionStatus<>(connectionStatus, true, definition),
+                        handler
+                    )
+                );
             }
         });
+    }
+
+    /**
+     * Execute the transaction.
+     *
+     * @param txStatus The transaction status
+     * @param handler  The callback
+     * @param <R>      The callback result type
+     * @return The callback result
+     */
+    @NonNull
+    protected <R> Flux<R> executeTransactionFlux(@NonNull DefaultReactiveTransactionStatus<C> txStatus,
+                                                 @NonNull TransactionalCallback<C, R> handler) {
+        return Flux.usingWhen(
+            Flux.just(
+                beginTransaction(txStatus.getConnectionStatus(), txStatus.getTransactionDefinition())
+            ).thenMany(Mono.just(txStatus)),
+            status -> executeCallbackFlux(status, handler),
+            this::doCommit,
+            this::doRollback,
+            this::doCommit);
+    }
+
+    /**
+     * Execute the callback.
+     *
+     * @param status  The transaction status
+     * @param handler The callback
+     * @param <R>     The callback result type
+     * @return The callback result
+     */
+    @NonNull
+    protected <R> Flux<R> executeCallbackFlux(@NonNull ReactiveTransactionStatus<C> status,
+                                              @NonNull TransactionalCallback<C, R> handler) {
+        try {
+            return Flux.from(handler.doInTransaction(status))
+                .contextWrite(context -> addTxStatus(context, status));
+        } catch (Exception e) {
+            return Flux.error(new TransactionSystemException("Error invoking doInTransaction handler: " + e.getMessage(), e));
+        }
     }
 
     private ReactiveTransactionStatus<C> existingTransaction(ReactiveTransactionStatus<C> existing, TransactionDefinition transactionDefinition) {
@@ -229,8 +260,10 @@ public abstract class AbstractReactorReactiveTransactionOperations<C> implements
 
     /**
      * Represents the current reactive transaction status.
+     *
+     * @param <C> The connection type
      */
-    private static final class DefaultReactiveTransactionStatus<C> implements ReactiveTransactionStatus<C> {
+    protected static final class DefaultReactiveTransactionStatus<C> implements ReactiveTransactionStatus<C> {
         private final ConnectionStatus<C> connectionStatus;
         private final boolean isNew;
         private final TransactionDefinition transactionDefinition;

@@ -24,10 +24,13 @@ import io.micronaut.data.connection.manager.reactive.ReactorReactiveConnectionOp
 import io.micronaut.data.connection.manager.synchronous.ConnectionStatus;
 import io.micronaut.data.mongodb.conf.RequiresReactiveMongo;
 import io.micronaut.transaction.TransactionDefinition;
+import io.micronaut.transaction.exceptions.NoTransactionException;
+import io.micronaut.transaction.exceptions.TransactionUsageException;
 import io.micronaut.transaction.support.AbstractReactorReactiveTransactionOperations;
 import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
@@ -60,6 +63,15 @@ final class DefaultReactiveMongoTransactionOperations extends AbstractReactorRea
     protected Publisher<Void> beginTransaction(ConnectionStatus<ClientSession> connectionStatus, TransactionDefinition transactionDefinition) {
         if (LOG.isDebugEnabled()) {
             LOG.debug("Transaction begin for MongoDB connection: {} and configuration {}.", connectionStatus.getConnection(), serverName);
+        }
+        if (transactionDefinition.getPropagationBehavior() == TransactionDefinition.Propagation.MANDATORY) {
+            return Flux.error(new NoTransactionException("Expected an existing transaction, but none was found in the Reactive context."));
+        }
+        if (transactionDefinition.getIsolationLevel() != TransactionDefinition.DEFAULT.getIsolationLevel()) {
+            return Flux.error(new TransactionUsageException("Isolation level not supported"));
+        }
+        if (transactionDefinition.getTimeout() != TransactionDefinition.TIMEOUT_DEFAULT) {
+            return Flux.error(new TransactionUsageException("Timeout not supported"));
         }
         connectionStatus.getConnection().startTransaction();
         return Mono.empty();

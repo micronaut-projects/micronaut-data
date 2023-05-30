@@ -19,6 +19,7 @@ import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.data.hibernate.conf.RequiresSyncHibernate;
 import io.micronaut.transaction.SynchronousTransactionManager;
 import io.micronaut.transaction.async.AsyncTransactionOperations;
 import io.micronaut.transaction.async.AsyncUsingSyncTransactionOperations;
@@ -35,6 +36,7 @@ import javax.sql.DataSource;
 @Factory
 final class HibernateTransactionManagersFactory {
 
+    @RequiresSyncHibernate
     @EachBean(DataSource.class)
     <T> AsyncTransactionOperations<T> buildPrimaryAsyncTransactionOperations(@Parameter SynchronousTransactionManager<T> synchronousTransactionManager) {
         return new AsyncUsingSyncTransactionOperations<>(synchronousTransactionManager);

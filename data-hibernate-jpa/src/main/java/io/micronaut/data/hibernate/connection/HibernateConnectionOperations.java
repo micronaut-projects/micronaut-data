@@ -25,6 +25,7 @@ import io.micronaut.data.connection.jdbc.operations.DataSourceConnectionOperatio
 import io.micronaut.data.connection.manager.ConnectionDefinition;
 import io.micronaut.data.connection.manager.synchronous.ConnectionStatus;
 import io.micronaut.data.connection.support.AbstractConnectionOperations;
+import io.micronaut.data.hibernate.conf.RequiresSyncHibernate;
 import org.hibernate.Interceptor;
 import org.hibernate.Session;
 import org.hibernate.SessionBuilder;
@@ -41,6 +42,7 @@ import java.sql.Connection;
  * @since 4.0.0
  */
 @Internal
+@RequiresSyncHibernate
 @EachBean(DataSource.class)
 @Replaces(DataSourceConnectionOperations.class)
 public final class HibernateConnectionOperations extends AbstractConnectionOperations<Session> implements ContextualConnectionProvider {
