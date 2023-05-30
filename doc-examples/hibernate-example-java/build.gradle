@@ -27,4 +27,5 @@ dependencies {
     implementation "io.micronaut.sql:micronaut-jdbc-tomcat"
     runtimeOnly "ch.qos.logback:logback-classic"
     runtimeOnly "com.h2database:h2"
+    runtimeOnly 'io.micronaut.validation:micronaut-validation'
 }

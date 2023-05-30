@@ -19,10 +19,11 @@ dependencies {
     implementation project(":data-hibernate-jpa")
     implementation "io.micronaut.sql:micronaut-jdbc-tomcat"
     implementation mnKotlin.micronaut.kotlin.runtime
+    implementation 'io.micronaut.validation:micronaut-validation'
+    implementation libs.kotlin.coroutines
 
     kapt "io.micronaut.validation:micronaut-validation"
     kapt project(":data-processor")
     runtimeOnly "ch.qos.logback:logback-classic"
     runtimeOnly "com.h2database:h2"
-    implementation libs.kotlin.coroutines
 }
