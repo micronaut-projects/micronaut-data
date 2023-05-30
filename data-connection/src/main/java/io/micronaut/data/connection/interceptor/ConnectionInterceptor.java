@@ -31,9 +31,12 @@ import io.micronaut.data.connection.manager.ConnectionDefinition;
 import io.micronaut.data.connection.manager.DefaultConnectionDefinition;
 import io.micronaut.data.connection.manager.async.AsyncConnectionOperations;
 import io.micronaut.data.connection.manager.reactive.ReactiveConnectionOperations;
+import io.micronaut.data.connection.manager.reactive.ReactorReactiveConnectionOperations;
 import io.micronaut.data.connection.manager.synchronous.ConnectionOperations;
 import io.micronaut.inject.ExecutableMethod;
 import jakarta.inject.Singleton;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.time.Duration;
 import java.util.Map;
@@ -115,8 +118,15 @@ public final class ConnectionInterceptor implements MethodInterceptor<Object, Ob
             switch (interceptedMethod.resultType()) {
                 case PUBLISHER -> {
                     ReactiveConnectionOperations<?> operations = Objects.requireNonNull(connectionInvocation.reactiveConnectionOperations);
+                    if (connectionInvocation.reactorConnectionOperations != null) {
+                        ReactorReactiveConnectionOperations<?> reactorConnectionOperations = connectionInvocation.reactorConnectionOperations;
+                        if (context.getExecutableMethod().getReturnType().isSingleResult()) {
+                            return reactorConnectionOperations.withConnectionMono(definition, status -> Mono.from(interceptedMethod.interceptResultAsPublisher()));
+                        }
+                        return reactorConnectionOperations.withConnectionFlux(definition, status -> Flux.from(interceptedMethod.interceptResultAsPublisher()));
+                    }
                     return interceptedMethod.handleResult(
-                        operations.withConnection(definition, (status) -> interceptedMethod.interceptResultAsPublisher())
+                        operations.withConnection(definition, status -> interceptedMethod.interceptResultAsPublisher())
                     );
                 }
                 case COMPLETION_STAGE -> {
@@ -157,15 +167,29 @@ public final class ConnectionInterceptor implements MethodInterceptor<Object, Ob
      * Cached invocation associating a method with a definition a connection manager.
      *
      * @param connectionOperations         The connection operations
+     * @param reactorConnectionOperations  The reactor connection operations
      * @param reactiveConnectionOperations The reactive connection operations
      * @param asyncConnectionOperations    The async connection operations
      * @param definition                   The connection definition
      */
     private record ConnectionInvocation(
         @Nullable ConnectionOperations<?> connectionOperations,
+        @Nullable ReactorReactiveConnectionOperations<?> reactorConnectionOperations,
         @Nullable ReactiveConnectionOperations<?> reactiveConnectionOperations,
         @Nullable AsyncConnectionOperations<?> asyncConnectionOperations,
         ConnectionDefinition definition) {
+
+        ConnectionInvocation(
+            @Nullable ConnectionOperations<?> connectionOperations,
+            @Nullable ReactiveConnectionOperations<?> reactiveConnectionOperations,
+            @Nullable AsyncConnectionOperations<?> asyncConnectionOperations, ConnectionDefinition definition) {
+
+            this(connectionOperations,
+                reactiveConnectionOperations instanceof ReactorReactiveConnectionOperations<?> reactorReactiveConnectionOperations ? reactorReactiveConnectionOperations : null,
+                reactiveConnectionOperations,
+                asyncConnectionOperations,
+                definition);
+        }
     }
 
     /**
