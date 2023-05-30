@@ -22,9 +22,6 @@ import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotNull;
-
 /**
  * Interface for CRUD using RxJava 2.
  *
@@ -40,11 +37,10 @@ public interface RxJavaCrudRepository<E, ID> extends GenericRepository<E, ID> {
      *
      * @param entity The entity to save. Must not be {@literal null}.
      * @return The saved entity will never be {@literal null}.
-     * @throws jakarta.validation.ConstraintViolationException if the entity is {@literal null} or invalid.
      * @param <S> The generic type
      */
     @NonNull
-    <S extends E> Single<S> save(@Valid @NotNull @NonNull S entity);
+    <S extends E> Single<S> save(@NonNull S entity);
 
     /**
      * Saves all given entities, possibly returning new instances representing the saved state.
@@ -52,51 +48,46 @@ public interface RxJavaCrudRepository<E, ID> extends GenericRepository<E, ID> {
      * @param entities The entities to saved. Must not be {@literal null}.
      * @param <S> The generic type
      * @return The saved entities objects. will never be {@literal null}.
-     * @throws jakarta.validation.ConstraintViolationException if the entities are {@literal null}.
      */
     @NonNull
-    <S extends E> Flowable<S> saveAll(@Valid @NotNull @NonNull Iterable<S> entities);
+    <S extends E> Flowable<S> saveAll(@NonNull Iterable<S> entities);
 
     /**
      * Retrieves an entity by its id.
      *
      * @param id The ID of the entity to retrieve. Must not be {@literal null}.
      * @return the entity with the given id or {@literal Optional#empty()} if none found
-     * @throws jakarta.validation.ConstraintViolationException if the id is {@literal null}.
      */
     @NonNull
-    Maybe<E> findById(@NotNull @NonNull ID id);
+    Maybe<E> findById(@NonNull ID id);
 
     /**
      * This method issues an explicit update for the given entity. The method differs from {@link #save(Object)} in that an update will be generated regardless if the entity has been saved previously or not. If the entity has no assigned ID then an exception will be thrown.
      *
      * @param entity The entity to update. Must not be {@literal null}.
      * @return The updated entity will never be {@literal null}.
-     * @throws jakarta.validation.ConstraintViolationException if the entity is {@literal null} or invalid.
      * @param <S> The generic type
      */
     @NonNull
-    <S extends E> Single<S> update(@Valid @NotNull @NonNull S entity);
+    <S extends E> Single<S> update(@NonNull S entity);
 
     /**
      * This method issues an explicit update for the given entities. The method differs from {@link #saveAll(Iterable)} in that an update will be generated regardless if the entity has been saved previously or not. If the entity has no assigned ID then an exception will be thrown.
      *
      * @param entities The entities to update. Must not be {@literal null}.
      * @return The updated entities will never be {@literal null}.
-     * @throws jakarta.validation.ConstraintViolationException if entities is {@literal null} or invalid.
      * @param <S> The generic type
      */
     @NonNull
-    <S extends E> Flowable<S> updateAll(@Valid @NotNull @NonNull Iterable<S> entities);
+    <S extends E> Flowable<S> updateAll(@NonNull Iterable<S> entities);
 
     /**
      * Returns whether an entity with the given id exists.
      *
      * @param id must not be {@literal null}.
      * @return {@literal true} if an entity with the given id exists, {@literal false} otherwise.
-     * @throws jakarta.validation.ConstraintViolationException if the id is {@literal null}.
      */
-    @NonNull Single<Boolean> existsById(@NotNull @NonNull ID id);
+    @NonNull Single<Boolean> existsById(@NonNull ID id);
 
     /**
      * Returns all instances of the type.
@@ -117,28 +108,25 @@ public interface RxJavaCrudRepository<E, ID> extends GenericRepository<E, ID> {
      *
      * @param id must not be {@literal null}.
      * @return A future that executes the delete operation
-     * @throws jakarta.validation.ConstraintViolationException if the entity is {@literal null}.
      */
     @NonNull
-    Completable deleteById(@NonNull @NotNull ID id);
+    Completable deleteById(@NonNull ID id);
 
     /**
      * Deletes a given entity.
      *
      * @param entity The entity to delete
      * @return A future that executes the delete operation
-     * @throws jakarta.validation.ConstraintViolationException if the entity is {@literal null}.
      */
-    @NonNull Completable delete(@NonNull @NotNull E entity);
+    @NonNull Completable delete(@NonNull E entity);
 
     /**
      * Deletes the given entities.
      *
      * @param entities The entities to delete
      * @return A future that executes the delete operation
-     * @throws jakarta.validation.ConstraintViolationException if the entity is {@literal null}.
      */
-    @NonNull Completable deleteAll(@NonNull @NotNull Iterable<? extends E> entities);
+    @NonNull Completable deleteAll(@NonNull Iterable<? extends E> entities);
 
     /**
      * Deletes all entities managed by the repository.

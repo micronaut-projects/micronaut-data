@@ -66,4 +66,12 @@ class LoadSpec extends Specification {
         thrown(ConstraintViolationException)
     }
 
+    def "retrieving an entity with null id throws an exception"() {
+        when:
+        childrenRepository.findById(null)
+
+        then:
+        thrown(ConstraintViolationException)
+    }
+
 }

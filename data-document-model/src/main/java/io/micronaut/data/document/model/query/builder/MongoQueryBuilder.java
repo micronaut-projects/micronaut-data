@@ -43,7 +43,6 @@ import io.micronaut.data.model.query.builder.QueryParameterBinding;
 import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.serde.config.annotation.SerdeConfig;
 
-import jakarta.validation.constraints.NotNull;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -1165,7 +1164,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
 
         PersistentPropertyPath getRequiredProperty(String name, Class<?> criterionClazz);
 
-        default int pushParameter(@NotNull BindingParameter bindingParameter, @NotNull BindingParameter.BindingContext bindingContext) {
+        default int pushParameter(@NonNull BindingParameter bindingParameter, @NonNull BindingParameter.BindingContext bindingContext) {
             return getQueryState().pushParameter(bindingParameter, bindingContext);
         }
 
@@ -1244,7 +1243,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
          *
          * @return The parameters
          */
-        public @NotNull Map<String, String> getAdditionalRequiredParameters() {
+        public @NonNull Map<String, String> getAdditionalRequiredParameters() {
             return this.additionalRequiredParameters;
         }
 
@@ -1258,7 +1257,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
         }
 
         @Override
-        public int pushParameter(@NotNull BindingParameter bindingParameter, @NotNull BindingParameter.BindingContext bindingContext) {
+        public int pushParameter(@NonNull BindingParameter bindingParameter, @NonNull BindingParameter.BindingContext bindingContext) {
             int index = position.getAndIncrement();
             bindingContext = bindingContext.index(index);
             parameterBindings.add(
@@ -1270,8 +1269,8 @@ public final class MongoQueryBuilder implements QueryBuilder {
 
     private interface PropertyParameterCreator {
 
-        int pushParameter(@NotNull BindingParameter bindingParameter,
-                          @NotNull BindingParameter.BindingContext bindingContext);
+        int pushParameter(@NonNull BindingParameter bindingParameter,
+                          @NonNull BindingParameter.BindingContext bindingContext);
 
     }
 
