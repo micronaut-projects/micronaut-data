@@ -22,12 +22,9 @@ import io.micronaut.context.Qualifier;
 import io.micronaut.context.annotation.Prototype;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.connection.exceptions.NoConnectionException;
-import io.micronaut.data.connection.jdbc.operations.DataSourceConnectionOperations;
-import io.micronaut.data.connection.manager.synchronous.ConnectionStatus;
 import io.micronaut.inject.ExecutableMethod;
 
 import java.sql.Connection;
-import java.util.Optional;
 
 /**
  * An interceptor that allows injecting a {@link Connection} that acts a proxy to lookup the connection for the current transaction.
@@ -38,7 +35,7 @@ import java.util.Optional;
 @Prototype
 public final class ContextualConnectionInterceptor implements MethodInterceptor<Connection, Object> {
 
-    private final DataSourceConnectionOperations dataSourceConnectionOperations;
+    private final ContextualConnectionProvider connectionProvider;
 
     /**
      * Default constructor.
@@ -47,23 +44,21 @@ public final class ContextualConnectionInterceptor implements MethodInterceptor<
      * @param qualifier   The qualifier
      */
     @Internal
-    ContextualConnectionInterceptor(BeanContext beanContext, Qualifier<DataSourceConnectionOperations> qualifier) {
-        dataSourceConnectionOperations = beanContext.getBean(DataSourceConnectionOperations.class, qualifier);
+    ContextualConnectionInterceptor(BeanContext beanContext, Qualifier<ContextualConnectionProvider> qualifier) {
+        connectionProvider = beanContext.getBean(ContextualConnectionProvider.class, qualifier);
     }
 
     @Override
     public Object intercept(MethodInvocationContext<Connection, Object> context) {
-        Optional<ConnectionStatus<Connection>> connectionStatus = dataSourceConnectionOperations.findConnectionStatus();
-        if (connectionStatus.isEmpty()) {
+        Connection connection = connectionProvider.find();
+        if (connection == null) {
             throw NoConnectionException.notFoundInAdvice();
         }
-        Connection connection = connectionStatus.get().getConnection();
         final ExecutableMethod<Connection, Object> method = context.getExecutableMethod();
         if (method.getName().equals("close")) {
             // Close method is not allowed
             return null;
         }
-
         return method.invoke(connection, context.getParameterValues());
     }
 }

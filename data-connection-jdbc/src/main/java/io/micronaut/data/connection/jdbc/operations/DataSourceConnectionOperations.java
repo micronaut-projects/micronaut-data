@@ -15,55 +15,16 @@
  */
 package io.micronaut.data.connection.jdbc.operations;
 
-import io.micronaut.context.annotation.EachBean;
-import io.micronaut.core.annotation.Internal;
-import io.micronaut.data.connection.exceptions.ConnectionException;
-import io.micronaut.data.connection.jdbc.advice.DelegatingDataSource;
-import io.micronaut.data.connection.jdbc.exceptions.CannotGetJdbcConnectionException;
-import io.micronaut.data.connection.manager.ConnectionDefinition;
-import io.micronaut.data.connection.manager.synchronous.ConnectionStatus;
-import io.micronaut.data.connection.support.AbstractConnectionOperations;
+import io.micronaut.data.connection.manager.synchronous.ConnectionOperations;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
-import java.sql.SQLException;
 
 /**
- * The {@link DataSource} connection operations.
+ * The {@link ConnectionOperations} for {@link DataSource}.
  *
  * @author Denis Stepanov
  * @since 4.0.0
  */
-@Internal
-@EachBean(DataSource.class)
-public final class DataSourceConnectionOperations extends AbstractConnectionOperations<Connection> {
-
-    private final DataSource dataSource;
-
-    DataSourceConnectionOperations(DataSource dataSource) {
-        this.dataSource = DelegatingDataSource.unwrapDataSource(dataSource);
-    }
-
-    @Override
-    protected Connection openConnection(ConnectionDefinition definition) {
-        try {
-            return dataSource.getConnection();
-        } catch (SQLException e) {
-            throw new CannotGetJdbcConnectionException("Failed to obtain JDBC Connection", e);
-        }
-    }
-
-    @Override
-    protected void setupConnection(ConnectionStatus<Connection> connectionStatus) {
-    }
-
-    @Override
-    protected void closeConnection(ConnectionStatus<Connection> connectionStatus) {
-        try {
-            connectionStatus.getConnection().close();
-        } catch (SQLException e) {
-            throw new ConnectionException("Failed to close the connection: " + e.getMessage(), e);
-        }
-    }
-
+public interface DataSourceConnectionOperations extends ConnectionOperations<Connection> {
 }

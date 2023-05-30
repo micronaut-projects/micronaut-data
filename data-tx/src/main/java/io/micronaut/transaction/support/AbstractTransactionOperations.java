@@ -42,6 +42,7 @@ import java.util.function.Supplier;
 
 /**
  * Abstract transaction operations.
+ * Partially based on https://github.com/spring-projects/spring-framework/blob/main/spring-tx/src/main/java/org/springframework/transaction/support/AbstractPlatformTransactionManager.java
  *
  * @param <T> The transaction type
  * @param <C> The connection type
@@ -341,7 +342,7 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
         }
         if (tx.isLocalRollbackOnly()) {
             rollbackInternal(tx);
-            throw new UnexpectedRollbackException("Transaction rolled back because it has been marked as rollback-only");
+            return;
         }
         if (tx.isGlobalRollbackOnly()) {
             rollbackInternal(tx);

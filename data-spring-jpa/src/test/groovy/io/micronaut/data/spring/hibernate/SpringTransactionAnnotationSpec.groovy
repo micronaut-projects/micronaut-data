@@ -55,6 +55,7 @@ class SpringTransactionAnnotationSpec extends Specification {
     @Transactional
     static class BookService {
         @Inject EntityManager entityManager
+        @Inject TransactionOperations<java.sql.Connection> transactionOperations
 
         List<Book> listBooks() {
             entityManager.createQuery("from Book").resultList

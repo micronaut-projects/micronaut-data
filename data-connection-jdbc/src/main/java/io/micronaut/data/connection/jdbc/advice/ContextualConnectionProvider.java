@@ -15,22 +15,24 @@
  */
 package io.micronaut.data.connection.jdbc.advice;
 
-import io.micronaut.context.annotation.EachBean;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.annotation.Nullable;
 
-import javax.sql.DataSource;
 import java.sql.Connection;
 
 /**
- * Allows injecting a {@link Connection} instance as a bean with any methods invoked
- * on the connection being delegated to connection bound to the current context connection.
+ * The provider of {@link Connection} for the advice.
  *
- * <p>If no transaction is </p>
- * @author graemerocher
- * @since 1.0
+ * @author Denis Stepanov
+ * @since 4.0.0
  */
-@EachBean(DataSource.class)
-@ContextualConnectionAdvice
 @Internal
-public interface ContextualConnection extends Connection {
+public interface ContextualConnectionProvider {
+
+    /**
+     * @return optional {@link Connection}
+     */
+    @Nullable
+    Connection find();
+
 }

@@ -1,6 +1,6 @@
 package io.micronaut.data.jdbc.h2;
 
-import io.micronaut.data.connection.jdbc.operations.DataSourceConnectionOperations;
+import io.micronaut.data.connection.jdbc.operations.DataSourceConnectionOperationsImpl;
 import io.micronaut.data.tck.entities.Book;
 import io.micronaut.data.tck.repositories.SimpleBookRepository;
 import jakarta.inject.Singleton;
@@ -14,9 +14,9 @@ import java.sql.Statement;
 @Singleton
 public class H2BookRepository implements SimpleBookRepository {
 
-    private final DataSourceConnectionOperations dataSourceConnectionOperations;
+    private final DataSourceConnectionOperationsImpl dataSourceConnectionOperations;
 
-    public H2BookRepository(DataSourceConnectionOperations dataSourceConnectionOperations) {
+    public H2BookRepository(DataSourceConnectionOperationsImpl dataSourceConnectionOperations) {
         this.dataSourceConnectionOperations = dataSourceConnectionOperations;
     }
 

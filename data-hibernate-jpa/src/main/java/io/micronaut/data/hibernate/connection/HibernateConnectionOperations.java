@@ -20,6 +20,7 @@ import io.micronaut.context.annotation.Parameter;
 import io.micronaut.context.annotation.Replaces;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Nullable;
+import io.micronaut.data.connection.jdbc.advice.ContextualConnectionProvider;
 import io.micronaut.data.connection.jdbc.operations.DataSourceConnectionOperations;
 import io.micronaut.data.connection.manager.ConnectionDefinition;
 import io.micronaut.data.connection.manager.synchronous.ConnectionStatus;
@@ -28,8 +29,10 @@ import org.hibernate.Interceptor;
 import org.hibernate.Session;
 import org.hibernate.SessionBuilder;
 import org.hibernate.SessionFactory;
+import org.hibernate.engine.spi.SessionImplementor;
 
 import javax.sql.DataSource;
+import java.sql.Connection;
 
 /**
  * The Hibernate connection operations.
@@ -40,7 +43,7 @@ import javax.sql.DataSource;
 @Internal
 @EachBean(DataSource.class)
 @Replaces(DataSourceConnectionOperations.class)
-public final class HibernateConnectionOperations extends AbstractConnectionOperations<Session> {
+public final class HibernateConnectionOperations extends AbstractConnectionOperations<Session> implements ContextualConnectionProvider {
 
     private final SessionFactory sessionFactory;
     @Nullable
@@ -68,5 +71,14 @@ public final class HibernateConnectionOperations extends AbstractConnectionOpera
     @Override
     protected void closeConnection(ConnectionStatus<Session> connectionStatus) {
         connectionStatus.getConnection().close();
+    }
+
+    private Connection getConnection(Session session) {
+        return ((SessionImplementor) session).getJdbcCoordinator().getLogicalConnection().getPhysicalConnection();
+    }
+
+    @Override
+    public Connection find() {
+        return findConnectionStatus().map(e -> getConnection(e.getConnection())).orElse(null);
     }
 }

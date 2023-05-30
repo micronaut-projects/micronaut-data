@@ -1,6 +1,6 @@
 package io.micronaut.data.jdbc
 
-import io.micronaut.data.connection.jdbc.operations.DataSourceConnectionOperations
+import io.micronaut.data.connection.jdbc.operations.DataSourceConnectionOperationsImpl
 import io.micronaut.data.tck.tests.AbstractTransactionSpec
 import io.micronaut.transaction.TransactionOperations
 import io.micronaut.transaction.jdbc.DataSourceTransactionManager
@@ -16,7 +16,7 @@ abstract class AbstractJdbcTransactionSpec extends AbstractTransactionSpec {
 
     @Override
     protected Runnable getNoTxCheck() {
-        DataSourceConnectionOperations connectionOperations = context.getBean(DataSourceConnectionOperations)
+        DataSourceConnectionOperationsImpl connectionOperations = context.getBean(DataSourceConnectionOperationsImpl)
         return new Runnable() {
             @Override
             void run() {

@@ -21,6 +21,7 @@ import io.micronaut.data.tck.entities.Book
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import io.micronaut.transaction.TransactionOperations
 import io.micronaut.transaction.interceptor.TransactionalInterceptor
+import org.hibernate.Session
 import spock.lang.Specification
 
 import jakarta.inject.Inject
@@ -34,7 +35,7 @@ class TransactionalAnnotationSpec extends Specification {
 
     @Inject BookService bookService
 
-    @Inject TransactionOperations<java.sql.Connection> transactionOperations
+    @Inject TransactionOperations<Session> transactionOperations
 
     void "test transactional annotation"() {
         when:
@@ -71,6 +72,7 @@ class TransactionalAnnotationSpec extends Specification {
     @Transactional
     static class BookService {
         @Inject EntityManager entityManager
+        @Inject TransactionOperations<Session> transactionOperations
 
         List<Book> listBooks() {
             entityManager.createQuery("from Book").resultList
@@ -87,9 +89,8 @@ class TransactionalAnnotationSpec extends Specification {
         }
 
         void saveAndManualRollback() {
-
             entityManager.persist(new Book(title: "Stuff", totalPages: 500))
-            TransactionalInterceptor.currentTransactionStatus().setRollbackOnly()
+            transactionOperations.findTransactionStatus().get().setRollbackOnly()
         }
 
         void saveAndSuccess() {
