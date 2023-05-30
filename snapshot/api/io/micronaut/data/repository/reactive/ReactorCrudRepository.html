@@ -131,7 +131,7 @@ extends <a href="ReactiveStreamsCrudRepository.html" title="interface in io.micr
 <div class="block">Deletes all entities managed by the repository.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>reactor.core.publisher.Mono&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#deleteAll(java.lang.Iterable)" class="member-name-link">deleteAll</a><wbr>(@NotNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Iterable.html" title="class or interface in java.lang" class="external-link">Iterable</a>&lt;? extends <a href="ReactorCrudRepository.html" title="type parameter in ReactorCrudRepository">E</a>&gt;&nbsp;entities)</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#deleteAll(java.lang.Iterable)" class="member-name-link">deleteAll</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Iterable.html" title="class or interface in java.lang" class="external-link">Iterable</a>&lt;? extends <a href="ReactorCrudRepository.html" title="type parameter in ReactorCrudRepository">E</a>&gt;&nbsp;entities)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Deletes the given entities.</div>
 </div>
@@ -161,7 +161,7 @@ extends <a href="ReactiveStreamsCrudRepository.html" title="interface in io.micr
 <div class="block">Saves the given valid entity, returning a possibly new entity representing the saved state.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>&lt;S extends <a href="ReactorCrudRepository.html" title="type parameter in ReactorCrudRepository">E</a>&gt;<br>reactor.core.publisher.Flux&lt;S&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#saveAll(java.lang.Iterable)" class="member-name-link">saveAll</a><wbr>(@Valid @NotNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Iterable.html" title="class or interface in java.lang" class="external-link">Iterable</a>&lt;S&gt;&nbsp;entities)</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#saveAll(java.lang.Iterable)" class="member-name-link">saveAll</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Iterable.html" title="class or interface in java.lang" class="external-link">Iterable</a>&lt;S&gt;&nbsp;entities)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Saves all given entities, possibly returning new instances representing the saved state.</div>
 </div>
@@ -171,7 +171,7 @@ extends <a href="ReactiveStreamsCrudRepository.html" title="interface in io.micr
 <div class="block">This method issues an explicit update for the given entity.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>&lt;S extends <a href="ReactorCrudRepository.html" title="type parameter in ReactorCrudRepository">E</a>&gt;<br>reactor.core.publisher.Flux&lt;S&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#updateAll(java.lang.Iterable)" class="member-name-link">updateAll</a><wbr>(@Valid @NotNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Iterable.html" title="class or interface in java.lang" class="external-link">Iterable</a>&lt;S&gt;&nbsp;entities)</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#updateAll(java.lang.Iterable)" class="member-name-link">updateAll</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Iterable.html" title="class or interface in java.lang" class="external-link">Iterable</a>&lt;S&gt;&nbsp;entities)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">This method issues an explicit update for the given entities.</div>
 </div>
@@ -193,7 +193,7 @@ extends <a href="ReactiveStreamsCrudRepository.html" title="interface in io.micr
 <section class="detail" id="save(S)">
 <h3 id="save(java.lang.Object)">save</h3>
 <div class="member-signature"><span class="annotations">@NonNull
-</span><span class="type-parameters">&lt;S extends <a href="ReactorCrudRepository.html" title="type parameter in ReactorCrudRepository">E</a>&gt;</span>&nbsp;<span class="return-type">reactor.core.publisher.Mono&lt;S&gt;</span>&nbsp;<span class="element-name">save</span><wbr><span class="parameters">(@NonNull @Valid @NotNull
+</span><span class="type-parameters">&lt;S extends <a href="ReactorCrudRepository.html" title="type parameter in ReactorCrudRepository">E</a>&gt;</span>&nbsp;<span class="return-type">reactor.core.publisher.Mono&lt;S&gt;</span>&nbsp;<span class="element-name">save</span><wbr><span class="parameters">(@NonNull
  S&nbsp;entity)</span></div>
 <div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="ReactiveStreamsCrudRepository.html#save(S)">ReactiveStreamsCrudRepository</a></code></span></div>
 <div class="block">Saves the given valid entity, returning a possibly new entity representing the saved state.</div>
@@ -213,8 +213,8 @@ extends <a href="ReactiveStreamsCrudRepository.html" title="interface in io.micr
 <section class="detail" id="saveAll(java.lang.Iterable)">
 <h3>saveAll</h3>
 <div class="member-signature"><span class="annotations">@NonNull
-</span><span class="type-parameters">&lt;S extends <a href="ReactorCrudRepository.html" title="type parameter in ReactorCrudRepository">E</a>&gt;</span>&nbsp;<span class="return-type">reactor.core.publisher.Flux&lt;S&gt;</span>&nbsp;<span class="element-name">saveAll</span><wbr><span class="parameters">(@NonNull @Valid @NotNull
- @Valid @NotNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Iterable.html" title="class or interface in java.lang" class="external-link">Iterable</a>&lt;S&gt;&nbsp;entities)</span></div>
+</span><span class="type-parameters">&lt;S extends <a href="ReactorCrudRepository.html" title="type parameter in ReactorCrudRepository">E</a>&gt;</span>&nbsp;<span class="return-type">reactor.core.publisher.Flux&lt;S&gt;</span>&nbsp;<span class="element-name">saveAll</span><wbr><span class="parameters">(@NonNull
+ <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Iterable.html" title="class or interface in java.lang" class="external-link">Iterable</a>&lt;S&gt;&nbsp;entities)</span></div>
 <div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="ReactiveStreamsCrudRepository.html#saveAll(java.lang.Iterable)">ReactiveStreamsCrudRepository</a></code></span></div>
 <div class="block">Saves all given entities, possibly returning new instances representing the saved state.</div>
 <dl class="notes">
@@ -233,7 +233,7 @@ extends <a href="ReactiveStreamsCrudRepository.html" title="interface in io.micr
 <section class="detail" id="update(S)">
 <h3 id="update(java.lang.Object)">update</h3>
 <div class="member-signature"><span class="annotations">@NonNull
-</span><span class="type-parameters">&lt;S extends <a href="ReactorCrudRepository.html" title="type parameter in ReactorCrudRepository">E</a>&gt;</span>&nbsp;<span class="return-type">reactor.core.publisher.Mono&lt;S&gt;</span>&nbsp;<span class="element-name">update</span><wbr><span class="parameters">(@NonNull @Valid @NotNull
+</span><span class="type-parameters">&lt;S extends <a href="ReactorCrudRepository.html" title="type parameter in ReactorCrudRepository">E</a>&gt;</span>&nbsp;<span class="return-type">reactor.core.publisher.Mono&lt;S&gt;</span>&nbsp;<span class="element-name">update</span><wbr><span class="parameters">(@NonNull
  S&nbsp;entity)</span></div>
 <div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="ReactiveStreamsCrudRepository.html#update(S)">ReactiveStreamsCrudRepository</a></code></span></div>
 <div class="block">This method issues an explicit update for the given entity. The method differs from <a href="ReactiveStreamsCrudRepository.html#save(S)"><code>ReactiveStreamsCrudRepository.save(Object)</code></a> in that an update will be generated regardless if the entity has been saved previously or not. If the entity has no assigned ID then an exception will be thrown.</div>
@@ -253,8 +253,8 @@ extends <a href="ReactiveStreamsCrudRepository.html" title="interface in io.micr
 <section class="detail" id="updateAll(java.lang.Iterable)">
 <h3>updateAll</h3>
 <div class="member-signature"><span class="annotations">@NonNull
-</span><span class="type-parameters">&lt;S extends <a href="ReactorCrudRepository.html" title="type parameter in ReactorCrudRepository">E</a>&gt;</span>&nbsp;<span class="return-type">reactor.core.publisher.Flux&lt;S&gt;</span>&nbsp;<span class="element-name">updateAll</span><wbr><span class="parameters">(@NonNull @Valid @NotNull
- @Valid @NotNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Iterable.html" title="class or interface in java.lang" class="external-link">Iterable</a>&lt;S&gt;&nbsp;entities)</span></div>
+</span><span class="type-parameters">&lt;S extends <a href="ReactorCrudRepository.html" title="type parameter in ReactorCrudRepository">E</a>&gt;</span>&nbsp;<span class="return-type">reactor.core.publisher.Flux&lt;S&gt;</span>&nbsp;<span class="element-name">updateAll</span><wbr><span class="parameters">(@NonNull
+ <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Iterable.html" title="class or interface in java.lang" class="external-link">Iterable</a>&lt;S&gt;&nbsp;entities)</span></div>
 <div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="ReactiveStreamsCrudRepository.html#updateAll(java.lang.Iterable)">ReactiveStreamsCrudRepository</a></code></span></div>
 <div class="block">This method issues an explicit update for the given entities. The method differs from <a href="ReactiveStreamsCrudRepository.html#saveAll(java.lang.Iterable)"><code>ReactiveStreamsCrudRepository.saveAll(Iterable)</code></a> in that an update will be generated regardless if the entity has been saved previously or not. If the entity has no assigned ID then an exception will be thrown.</div>
 <dl class="notes">
@@ -273,7 +273,7 @@ extends <a href="ReactiveStreamsCrudRepository.html" title="interface in io.micr
 <section class="detail" id="findById(ID)">
 <h3 id="findById(java.lang.Object)">findById</h3>
 <div class="member-signature"><span class="annotations">@NonNull
-</span><span class="return-type">reactor.core.publisher.Mono&lt;<a href="ReactorCrudRepository.html" title="type parameter in ReactorCrudRepository">E</a>&gt;</span>&nbsp;<span class="element-name">findById</span><wbr><span class="parameters">(@NonNull @NotNull
+</span><span class="return-type">reactor.core.publisher.Mono&lt;<a href="ReactorCrudRepository.html" title="type parameter in ReactorCrudRepository">E</a>&gt;</span>&nbsp;<span class="element-name">findById</span><wbr><span class="parameters">(@NonNull
  <a href="ReactorCrudRepository.html" title="type parameter in ReactorCrudRepository">ID</a>&nbsp;id)</span></div>
 <div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="ReactiveStreamsCrudRepository.html#findById(ID)">ReactiveStreamsCrudRepository</a></code></span></div>
 <div class="block">Retrieves an entity by its id.</div>
@@ -291,7 +291,7 @@ extends <a href="ReactiveStreamsCrudRepository.html" title="interface in io.micr
 <section class="detail" id="existsById(ID)">
 <h3 id="existsById(java.lang.Object)">existsById</h3>
 <div class="member-signature"><span class="annotations">@NonNull
-</span><span class="return-type">reactor.core.publisher.Mono&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Boolean.html" title="class or interface in java.lang" class="external-link">Boolean</a>&gt;</span>&nbsp;<span class="element-name">existsById</span><wbr><span class="parameters">(@NonNull @NotNull
+</span><span class="return-type">reactor.core.publisher.Mono&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Boolean.html" title="class or interface in java.lang" class="external-link">Boolean</a>&gt;</span>&nbsp;<span class="element-name">existsById</span><wbr><span class="parameters">(@NonNull
  <a href="ReactorCrudRepository.html" title="type parameter in ReactorCrudRepository">ID</a>&nbsp;id)</span></div>
 <div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="ReactiveStreamsCrudRepository.html#existsById(ID)">ReactiveStreamsCrudRepository</a></code></span></div>
 <div class="block">Returns whether an entity with the given id exists.</div>
@@ -339,7 +339,7 @@ extends <a href="ReactiveStreamsCrudRepository.html" title="interface in io.micr
 <section class="detail" id="deleteById(ID)">
 <h3 id="deleteById(java.lang.Object)">deleteById</h3>
 <div class="member-signature"><span class="annotations">@NonNull
-</span><span class="return-type">reactor.core.publisher.Mono&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&gt;</span>&nbsp;<span class="element-name">deleteById</span><wbr><span class="parameters">(@NonNull @NotNull
+</span><span class="return-type">reactor.core.publisher.Mono&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&gt;</span>&nbsp;<span class="element-name">deleteById</span><wbr><span class="parameters">(@NonNull
  <a href="ReactorCrudRepository.html" title="type parameter in ReactorCrudRepository">ID</a>&nbsp;id)</span></div>
 <div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="ReactiveStreamsCrudRepository.html#deleteById(ID)">ReactiveStreamsCrudRepository</a></code></span></div>
 <div class="block">Deletes the entity with the given id.</div>
@@ -357,7 +357,7 @@ extends <a href="ReactiveStreamsCrudRepository.html" title="interface in io.micr
 <section class="detail" id="delete(E)">
 <h3 id="delete(java.lang.Object)">delete</h3>
 <div class="member-signature"><span class="annotations">@NonNull
-</span><span class="return-type">reactor.core.publisher.Mono&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&gt;</span>&nbsp;<span class="element-name">delete</span><wbr><span class="parameters">(@NonNull @NotNull
+</span><span class="return-type">reactor.core.publisher.Mono&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&gt;</span>&nbsp;<span class="element-name">delete</span><wbr><span class="parameters">(@NonNull
  <a href="ReactorCrudRepository.html" title="type parameter in ReactorCrudRepository">E</a>&nbsp;entity)</span></div>
 <div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="ReactiveStreamsCrudRepository.html#delete(E)">ReactiveStreamsCrudRepository</a></code></span></div>
 <div class="block">Deletes a given entity.</div>
@@ -375,8 +375,8 @@ extends <a href="ReactiveStreamsCrudRepository.html" title="interface in io.micr
 <section class="detail" id="deleteAll(java.lang.Iterable)">
 <h3>deleteAll</h3>
 <div class="member-signature"><span class="annotations">@NonNull
-</span><span class="return-type">reactor.core.publisher.Mono&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&gt;</span>&nbsp;<span class="element-name">deleteAll</span><wbr><span class="parameters">(@NonNull @NotNull
- @NotNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Iterable.html" title="class or interface in java.lang" class="external-link">Iterable</a>&lt;? extends <a href="ReactorCrudRepository.html" title="type parameter in ReactorCrudRepository">E</a>&gt;&nbsp;entities)</span></div>
+</span><span class="return-type">reactor.core.publisher.Mono&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&gt;</span>&nbsp;<span class="element-name">deleteAll</span><wbr><span class="parameters">(@NonNull
+ <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Iterable.html" title="class or interface in java.lang" class="external-link">Iterable</a>&lt;? extends <a href="ReactorCrudRepository.html" title="type parameter in ReactorCrudRepository">E</a>&gt;&nbsp;entities)</span></div>
 <div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="ReactiveStreamsCrudRepository.html#deleteAll(java.lang.Iterable)">ReactiveStreamsCrudRepository</a></code></span></div>
 <div class="block">Deletes the given entities.</div>
 <dl class="notes">

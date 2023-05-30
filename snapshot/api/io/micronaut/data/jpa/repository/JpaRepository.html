@@ -121,12 +121,12 @@ extends <a href="../../repository/CrudRepository.html" title="interface in io.mi
 <div class="block">Adds a flush method.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>&lt;S extends <a href="JpaRepository.html" title="type parameter in JpaRepository">E</a>&gt;<br>S</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#load(java.io.Serializable)" class="member-name-link">load</a><wbr>(@NotNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/Serializable.html" title="class or interface in java.io" class="external-link">Serializable</a>&nbsp;id)</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#load(java.io.Serializable)" class="member-name-link">load</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/Serializable.html" title="class or interface in java.io" class="external-link">Serializable</a>&nbsp;id)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Adds a load method.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>&lt;S extends <a href="JpaRepository.html" title="type parameter in JpaRepository">E</a>&gt;<br><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;S&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#saveAll(java.lang.Iterable)" class="member-name-link">saveAll</a><wbr>(@Valid @NotNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Iterable.html" title="class or interface in java.lang" class="external-link">Iterable</a>&lt;S&gt;&nbsp;entities)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#saveAll(java.lang.Iterable)" class="member-name-link">saveAll</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Iterable.html" title="class or interface in java.lang" class="external-link">Iterable</a>&lt;S&gt;&nbsp;entities)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Saves all given entities, possibly returning new instances representing the saved state.</div>
 </div>
@@ -159,8 +159,8 @@ extends <a href="../../repository/CrudRepository.html" title="interface in io.mi
 <section class="detail" id="saveAll(java.lang.Iterable)">
 <h3>saveAll</h3>
 <div class="member-signature"><span class="annotations">@NonNull
-</span><span class="type-parameters">&lt;S extends <a href="JpaRepository.html" title="type parameter in JpaRepository">E</a>&gt;</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;S&gt;</span>&nbsp;<span class="element-name">saveAll</span><wbr><span class="parameters">(@NonNull @Valid @NotNull
- @Valid @NotNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Iterable.html" title="class or interface in java.lang" class="external-link">Iterable</a>&lt;S&gt;&nbsp;entities)</span></div>
+</span><span class="type-parameters">&lt;S extends <a href="JpaRepository.html" title="type parameter in JpaRepository">E</a>&gt;</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;S&gt;</span>&nbsp;<span class="element-name">saveAll</span><wbr><span class="parameters">(@NonNull
+ <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Iterable.html" title="class or interface in java.lang" class="external-link">Iterable</a>&lt;S&gt;&nbsp;entities)</span></div>
 <div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="../../repository/CrudRepository.html#saveAll(java.lang.Iterable)">CrudRepository</a></code></span></div>
 <div class="block">Saves all given entities, possibly returning new instances representing the saved state.</div>
 <dl class="notes">
@@ -213,7 +213,7 @@ extends <a href="../../repository/CrudRepository.html" title="interface in io.mi
 <h3 id="saveAndFlush(java.lang.Object)">saveAndFlush</h3>
 <div class="member-signature"><span class="annotations"><a href="../../annotation/QueryHint.html" title="annotation interface in io.micronaut.data.annotation">@QueryHint</a>(<a href="../../annotation/QueryHint.html#name()">name</a>="jakarta.persistence.FlushModeType",
            <a href="../../annotation/QueryHint.html#value()">value</a>="AUTO")
-</span><span class="type-parameters">&lt;S extends <a href="JpaRepository.html" title="type parameter in JpaRepository">E</a>&gt;</span>&nbsp;<span class="return-type">S</span>&nbsp;<span class="element-name">saveAndFlush</span><wbr><span class="parameters">(@NonNull @Valid @NotNull
+</span><span class="type-parameters">&lt;S extends <a href="JpaRepository.html" title="type parameter in JpaRepository">E</a>&gt;</span>&nbsp;<span class="return-type">S</span>&nbsp;<span class="element-name">saveAndFlush</span><wbr><span class="parameters">(@NonNull
  S&nbsp;entity)</span></div>
 <div class="block">Save and perform a flush() of any pending operations.</div>
 <dl class="notes">
@@ -236,8 +236,8 @@ extends <a href="../../repository/CrudRepository.html" title="interface in io.mi
 <li>
 <section class="detail" id="load(java.io.Serializable)">
 <h3>load</h3>
-<div class="member-signature"><span class="type-parameters">&lt;S extends <a href="JpaRepository.html" title="type parameter in JpaRepository">E</a>&gt;</span>&nbsp;<span class="return-type">S</span>&nbsp;<span class="element-name">load</span><wbr><span class="parameters">(@NonNull @NotNull
- @NotNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/Serializable.html" title="class or interface in java.io" class="external-link">Serializable</a>&nbsp;id)</span></div>
+<div class="member-signature"><span class="type-parameters">&lt;S extends <a href="JpaRepository.html" title="type parameter in JpaRepository">E</a>&gt;</span>&nbsp;<span class="return-type">S</span>&nbsp;<span class="element-name">load</span><wbr><span class="parameters">(@NonNull
+ <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/Serializable.html" title="class or interface in java.io" class="external-link">Serializable</a>&nbsp;id)</span></div>
 <div class="block">Adds a load method.</div>
 <dl class="notes">
 <dt>Type Parameters:</dt>
