@@ -9,6 +9,8 @@ shared:
   title: Shared Concepts
   repositories:
     title: Repository Interfaces
+  validation:
+    title: Validation
   querying:
     title: Writing Queries
     criteria: Query Criteria
