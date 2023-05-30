@@ -17,11 +17,9 @@ package io.micronaut.transaction.async;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.async.propagation.ReactivePropagation;
 import io.micronaut.core.async.propagation.ReactorPropagation;
 import io.micronaut.core.propagation.PropagatedContext;
 import io.micronaut.transaction.TransactionDefinition;
-import io.micronaut.transaction.TransactionStatus;
 import io.micronaut.transaction.reactive.ReactiveTransactionStatus;
 import io.micronaut.transaction.reactive.ReactorReactiveTransactionOperations;
 import org.reactivestreams.Publisher;
@@ -65,7 +63,7 @@ public final class AsyncUsingReactiveTransactionOperations<C> implements AsyncTr
                                                   Function<AsyncTransactionStatus<C>, CompletionStage<T>> handler) {
         Mono<T> result = Mono.fromDirect(reactiveTransactionOperations.withTransaction(definition,
             status -> Mono.deferContextual(contextView -> Mono.fromCompletionStage(() -> {
-                try (PropagatedContext.Scope scope = ReactorPropagation.findPropagatedContext(contextView)
+                try (PropagatedContext.Scope ignore = ReactorPropagation.findPropagatedContext(contextView)
                     .orElseGet(PropagatedContext::getOrEmpty)
                     .propagate()) {
                     return handler.apply(new DefaultAsyncTransactionStatus<>(status));

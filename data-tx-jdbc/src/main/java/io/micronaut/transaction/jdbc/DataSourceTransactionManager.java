@@ -18,6 +18,7 @@ package io.micronaut.transaction.jdbc;
 import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.context.annotation.Requires;
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.annotation.TypeHint;
@@ -40,10 +41,18 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * The {@link DataSource} transaction manager.
+ * Partially based on https://github.com/spring-projects/spring-framework/blob/main/spring-jdbc/src/main/java/org/springframework/jdbc/datasource/DataSourceTransactionManager.java
+ *
+ * @author Denis Stepanov
+ * @since 4.0.0
+ */
+@Internal
 @EachBean(DataSource.class)
 @Requires(condition = JdbcTransactionManagerCondition.class)
 @TypeHint(DataSourceTransactionManager.class)
-public class DataSourceTransactionManager extends AbstractTransactionOperations<DataSourceTransactionStatus, Connection> {
+public final class DataSourceTransactionManager extends AbstractTransactionOperations<DataSourceTransactionStatus, Connection> {
 
     private final DataSource dataSource;
 
@@ -52,7 +61,9 @@ public class DataSourceTransactionManager extends AbstractTransactionOperations<
     /**
      * Create a new DataSourceTransactionManager instance.
      *
-     * @param dataSource the JDBC DataSource to manage transactions for
+     * @param dataSource                   the JDBC DataSource to manage transactions for
+     * @param connectionOperations         the connection operations
+     * @param synchronousConnectionManager the synchronous connection operations
      */
     public DataSourceTransactionManager(@NonNull DataSource dataSource,
                                         @Parameter ConnectionOperations<Connection> connectionOperations,
@@ -78,7 +89,7 @@ public class DataSourceTransactionManager extends AbstractTransactionOperations<
      * through an explicit statement on the transactional connection:
      * "SET TRANSACTION READ ONLY" as understood by Oracle, MySQL and Postgres.
      * <p>The exact treatment, including any SQL statement executed on the connection,
-     * can be customized through through {@link #prepareTransactionalConnection}.
+     * can be customized through {@link #prepareTransactionalConnection}.
      * <p>This mode of read-only handling goes beyond the {@link Connection#setReadOnly}
      * hint that Spring applies by default. In contrast to that standard JDBC hint,
      * "SET TRANSACTION READ ONLY" enforces an isolation-level-like connection mode
@@ -105,7 +116,6 @@ public class DataSourceTransactionManager extends AbstractTransactionOperations<
     public boolean isEnforceReadOnly() {
         return this.enforceReadOnly;
     }
-
 
     @Override
     protected void doBegin(DataSourceTransactionStatus status) {

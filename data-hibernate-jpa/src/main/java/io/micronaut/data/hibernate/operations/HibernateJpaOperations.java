@@ -64,7 +64,6 @@ import jakarta.persistence.criteria.CriteriaQuery;
 
 import javax.sql.DataSource;
 import java.io.Serializable;
-import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;

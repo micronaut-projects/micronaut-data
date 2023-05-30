@@ -25,7 +25,6 @@ import io.micronaut.data.connection.exceptions.NoConnectionException;
 import io.micronaut.data.connection.manager.synchronous.ConnectionStatus;
 import io.micronaut.data.mongodb.session.MongoConnectionOperations;
 import io.micronaut.inject.ExecutableMethod;
-import io.micronaut.transaction.exceptions.NoTransactionException;
 
 import java.util.Optional;
 

@@ -16,7 +16,6 @@
 package io.micronaut.data.connection.manager.synchronous;
 
 import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.connection.manager.ConnectionDefinition;
 
 /**
@@ -24,6 +23,7 @@ import io.micronaut.data.connection.manager.ConnectionDefinition;
  * The different from {@link ConnectionOperations} is that allows to open a connection and close it later.
  * It's recommended to use {@link ConnectionOperations} is most of the cases.
  *
+ * @param <C> The connection type
  * @author Denis Stepanov
  * @since 4.0.0
  */

@@ -24,12 +24,26 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
 
+/**
+ * JDBC connection utils.
+ *
+ * @author Denis Stepanov
+ * @since 4.0.0
+ */
 @Internal
 public final class JdbcConnectionUtils {
 
     private JdbcConnectionUtils() {
     }
 
+    /**
+     * Apply auto commit value.
+     *
+     * @param logger              The logger
+     * @param connection          The connection
+     * @param autoCommit          The autocommit value
+     * @param onCompleteCallbacks The callback to restore the original value
+     */
     public static void applyAutoCommit(Logger logger,
                                        Connection connection,
                                        boolean autoCommit,
@@ -44,6 +58,14 @@ public final class JdbcConnectionUtils {
         }
     }
 
+    /**
+     * Apply read only value.
+     *
+     * @param logger              The logger
+     * @param connection          The connection
+     * @param isReadOnly          The read only value
+     * @param onCompleteCallbacks The callback to restore the original value
+     */
     public static void applyReadOnly(Logger logger,
                                      Connection connection,
                                      boolean isReadOnly,
@@ -55,6 +77,14 @@ public final class JdbcConnectionUtils {
         }
     }
 
+    /**
+     * Apply TX isolation level.
+     *
+     * @param logger              The logger
+     * @param connection          The connection
+     * @param txIsolationLevel    The TX isolation level
+     * @param onCompleteCallbacks The callback to restore the original value
+     */
     public static void applyTransactionIsolation(Logger logger,
                                                  Connection connection,
                                                  int txIsolationLevel,
@@ -66,6 +96,14 @@ public final class JdbcConnectionUtils {
         }
     }
 
+    /**
+     * Apply holdability.
+     *
+     * @param logger              The logger
+     * @param connection          The connection
+     * @param holdability         The holdability
+     * @param onCompleteCallbacks The callback to restore the original value
+     */
     public static void applyHoldability(Logger logger,
                                         Connection connection,
                                         int holdability,
@@ -155,12 +193,6 @@ public final class JdbcConnectionUtils {
             logger.debug("Cannot change holdability of JDBC Connection [{}]", connection, e);
             throw new ConnectionException("Cannot change holdability of JDBC Connection: " + e.getMessage(), e);
         }
-    }
-
-    public interface ExecutionScope {
-
-        void registerOnCompleted(Runnable runnable);
-
     }
 
 }

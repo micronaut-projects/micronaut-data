@@ -15,7 +15,6 @@
  */
 package io.micronaut.data.jdbc.postgres
 
-import io.micronaut.data.connection.jdbc.JdbcConnectionDefinition
 import io.micronaut.data.jdbc.AbstractJdbcConnectionSpec
 import io.micronaut.data.jdbc.h2.H2BookRepository
 import io.micronaut.data.tck.repositories.SimpleBookRepository
@@ -53,40 +52,6 @@ class PostgresConnectionSpec extends AbstractJdbcConnectionSpec implements Postg
             }
         then:
             bookService.countBooks() == 1
-    }
-
-    void "test read only connection 2"() {
-        when:
-            connectionOperations.execute(JdbcConnectionDefinition.TRANSACTION.readOnly(), { status ->
-                bookService.addBookNoConnection()
-                status.connection.commit()
-            })
-        then:
-            def e = thrown(Exception)
-            e.cause.message == "ERROR: cannot execute INSERT in a read-only transaction"
-    }
-
-    void "test read only connection 3"() {
-        when:
-            connectionOperations.execute(JdbcConnectionDefinition.TRANSACTION.readOnly(), { status ->
-                bookService.addBookNoConnection()
-                // setAutoCommit(true) will commit the changes
-            })
-        then:
-            def e = thrown(Exception)
-            e.cause.message == "ERROR: cannot execute INSERT in a read-only transaction"
-    }
-
-    void "test read only connection 4"() {
-        when:
-            connectionOperations.execute(JdbcConnectionDefinition.TRANSACTION.readOnly(), { status ->
-                connectionOperations.executeWrite {
-                    bookService.addBookNoConnection()
-                }
-            })
-        then:
-            def e = thrown(Exception)
-            e.cause.message == "Cannot change transaction read-only property in the middle of a transaction."
     }
 
 }

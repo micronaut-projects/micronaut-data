@@ -18,11 +18,11 @@ package io.micronaut.data.intercept;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.inject.ExecutableMethod;
 
-import java.util.Objects;
-
 /**
  * Key used to cache results for repository method invocations.
  *
+ * @param repository The repository instance
+ * @param method     The method
  * @author graemerocher
  * @since 1.0
  */

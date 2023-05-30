@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.connection.manager;
 
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 
@@ -22,29 +23,38 @@ import java.time.Duration;
 import java.util.Optional;
 
 /**
- * Default implementation of the {@link ConnectionDefinition} interface,
+ * Default implementation of the {@link ConnectionDefinition} interface.
  *
+ * @param name                The connection name
+ * @param propagationBehavior The propagation behaviour
+ * @param timeout             The timeout
+ * @param readOnlyValue       The read only
  * @author Denis Stepanov
  * @since 4.0.0
  */
+@Internal
 public record DefaultConnectionDefinition(
     @Nullable String name,
     Propagation propagationBehavior,
-    @Nullable TransactionIsolation isolationLevel,
     @Nullable Duration timeout,
-    @Nullable Boolean readOnlyDef
+    Boolean readOnlyValue
 ) implements ConnectionDefinition {
 
     DefaultConnectionDefinition(String name) {
-        this(name, PROPAGATION_DEFAULT, null, null, null);
-    }
-
-    DefaultConnectionDefinition(String name, Boolean readOnly) {
-        this(name, PROPAGATION_DEFAULT, null, null, readOnly);
+        this(name, PROPAGATION_DEFAULT, null, null);
     }
 
     public DefaultConnectionDefinition(Propagation propagationBehaviour) {
-        this(null, propagationBehaviour, null, null, null);
+        this(null, propagationBehaviour, null, null);
+    }
+
+    public DefaultConnectionDefinition(String name, boolean readOnly) {
+        this(name, PROPAGATION_DEFAULT, null, readOnly);
+    }
+
+    @Override
+    public Optional<Boolean> isReadOnly() {
+        return Optional.ofNullable(readOnlyValue);
     }
 
     @NonNull
@@ -55,19 +65,8 @@ public record DefaultConnectionDefinition(
 
     @NonNull
     @Override
-    public Optional<TransactionIsolation> getIsolationLevel() {
-        return Optional.ofNullable(isolationLevel);
-    }
-
-    @NonNull
-    @Override
     public Optional<Duration> getTimeout() {
         return Optional.ofNullable(timeout);
-    }
-
-    @Override
-    public Optional<Boolean> isReadOnly() {
-        return Optional.ofNullable(readOnlyDef);
     }
 
     @Override
@@ -77,17 +76,13 @@ public record DefaultConnectionDefinition(
 
     @Override
     public ConnectionDefinition withPropagation(Propagation propagation) {
-        return new DefaultConnectionDefinition(name, propagation, isolationLevel, timeout, readOnlyDef);
+        return new DefaultConnectionDefinition(name, propagation, timeout, readOnlyValue);
     }
 
     @Override
     public ConnectionDefinition withName(String name) {
-        return new DefaultConnectionDefinition(name, propagationBehavior, isolationLevel, timeout, readOnlyDef);
+        return new DefaultConnectionDefinition(name, propagationBehavior, timeout, readOnlyValue);
     }
 
-    @Override
-    public ConnectionDefinition readOnly() {
-        return new DefaultConnectionDefinition(name, propagationBehavior, isolationLevel, timeout, true);
-    }
 }
 

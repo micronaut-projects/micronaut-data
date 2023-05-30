@@ -23,7 +23,6 @@ import io.micronaut.transaction.TransactionStatus;
 import io.micronaut.transaction.exceptions.TransactionException;
 import io.micronaut.transaction.support.AbstractPropagatedStatusTransactionOperations;
 import io.micronaut.transaction.support.ExceptionUtil;
-import io.micronaut.transaction.support.TransactionSynchronizationAdapter;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
 import org.springframework.transaction.support.TransactionSynchronization;

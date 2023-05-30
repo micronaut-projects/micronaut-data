@@ -18,8 +18,6 @@ package io.micronaut.transaction.async;
 import io.micronaut.core.annotation.Experimental;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.transaction.TransactionDefinition;
-import io.micronaut.transaction.TransactionStatus;
-import io.micronaut.transaction.reactive.ReactiveTransactionStatus;
 
 import java.util.Optional;
 import java.util.concurrent.CompletionStage;

@@ -43,8 +43,7 @@ public final class ContextualAwareDataSource implements BeanCreatedEventListener
      *
      * @param beanLocator The bean locator
      */
-    public ContextualAwareDataSource(
-            BeanLocator beanLocator) {
+    public ContextualAwareDataSource(BeanLocator beanLocator) {
         this.beanLocator = beanLocator;
     }
 

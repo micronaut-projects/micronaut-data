@@ -187,6 +187,5 @@ public interface BlockingReactorRepositoryOperations extends RepositoryOperation
             .toStream();
     }
 
-
 }
 

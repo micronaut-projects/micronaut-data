@@ -62,19 +62,24 @@ public @interface Connection {
     ConnectionDefinition.Propagation propagation() default ConnectionDefinition.Propagation.REQUIRED;
 
     /**
-     * The transaction isolation level.
-     * <p>Defaults to {@link ConnectionDefinition.TransactionIsolation#DEFAULT}.
-     *
-     * @return The isolation level
-     */
-    ConnectionDefinition.TransactionIsolation transactionIsolation() default ConnectionDefinition.TransactionIsolation.DEFAULT;
-
-    /**
      * The timeout for this connection (in seconds).
      * <p>Defaults to the default timeout of the underlying connection system.
      *
      * @return The timeout
      */
     int timeout() default -1;
+
+    /**
+     * {@code true} if the connection is read-only.
+     * <p>Defaults to {@code false}.
+     * <p>This just serves as a hint for the actual connection subsystem;
+     * it will <i>not necessarily</i> cause failure of write access attempts.
+     * A connection manager which cannot interpret the read-only hint will
+     * <i>not</i> throw an exception when asked for a read-only connection
+     * but rather silently ignore the hint.
+     *
+     * @return Whether is read-only connection
+     */
+    boolean readOnly() default false;
 
 }

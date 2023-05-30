@@ -16,7 +16,6 @@
 package io.micronaut.data.spring.jpa.hibernate;
 
 import io.micronaut.context.annotation.EachBean;
-import io.micronaut.context.annotation.Replaces;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.spring.tx.AbstractSpringTransactionOperations;
@@ -133,7 +132,7 @@ public final class SpringHibernateTransactionOperations implements TransactionOp
         }));
     }
 
-    public static final class SpringConnectionTransactionOperations extends AbstractSpringTransactionOperations {
+    private static final class SpringConnectionTransactionOperations extends AbstractSpringTransactionOperations {
 
         private final SessionFactory sessionFactory;
 

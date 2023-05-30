@@ -15,15 +15,42 @@
  */
 package io.micronaut.data.connection.manager.synchronous;
 
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.connection.manager.ConnectionDefinition;
 
+/**
+ * The connection status.
+ *
+ * @param <C> The connection type
+ * @author Denis Stepanov
+ * @since 4.0.0
+ */
 public interface ConnectionStatus<C> {
 
+    /**
+     * A new connection value.
+     * Based on the propagation value the connection manager might decide to reuse the existing connection.
+     * @return true if the connection is new
+     */
     boolean isNew();
 
+    /**
+     * The connection representation.
+     * @return The connection representation
+     */
+    @NonNull
     C getConnection();
 
+    /**
+     * The connection definition.
+     * @return The connection definition
+     */
+    @NonNull
     ConnectionDefinition getDefinition();
 
-    void registerSynchronization(ConnectionSynchronization synchronization);
+    /**
+     * Register connection synchronization.
+     * @param synchronization The synchronization
+     */
+    void registerSynchronization(@NonNull ConnectionSynchronization synchronization);
 }

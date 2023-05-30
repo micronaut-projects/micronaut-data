@@ -220,12 +220,6 @@ final class DefaultR2dbcReactiveTransactionOperations implements R2dbcReactorRea
         );
     }
 
-    private record R2dbcTransactionPropagatedContext(
-        ReactiveTransactionOperations<?> transactionOperations,
-        ReactiveTransactionStatus<Connection> status)
-        implements PropagatedContextElement {
-    }
-
     private IsolationLevel getIsolationLevel(TransactionDefinition definition) {
         return switch (definition.getIsolationLevel()) {
             case READ_COMMITTED -> IsolationLevel.READ_COMMITTED;
@@ -263,6 +257,12 @@ final class DefaultR2dbcReactiveTransactionOperations implements R2dbcReactorRea
                 return existing.isCompleted();
             }
         };
+    }
+
+    private record R2dbcTransactionPropagatedContext(
+        ReactiveTransactionOperations<?> transactionOperations,
+        ReactiveTransactionStatus<Connection> status)
+        implements PropagatedContextElement {
     }
 
     /**

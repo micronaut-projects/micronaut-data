@@ -41,6 +41,7 @@ public interface ReactorReactiveConnectionOperations<C> extends ReactiveConnecti
     /**
      * Obtains the current required connection.
      *
+     * @param contextView The reactor's context view
      * @return The connection or exception if the connection doesn't exist
      */
     @NonNull
@@ -51,6 +52,7 @@ public interface ReactorReactiveConnectionOperations<C> extends ReactiveConnecti
     /**
      * Obtains the current connection.
      *
+     * @param contextView The reactor's context view
      * @return The optional connection
      */
     Optional<ConnectionStatus<C>> findConnectionStatus(ContextView contextView);

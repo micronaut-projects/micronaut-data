@@ -32,13 +32,14 @@ public interface R2dbcReactorReactiveTransactionOperations extends ReactorReacti
 
     /**
      * Execute the given handler with an existing transaction status.
-     * @param status An existing in progress transaction status
+     *
+     * @param status  An existing in progress transaction status
      * @param handler The handler
-     * @param <T> The emitted type
+     * @param <T>     The emitted type
      * @return A publisher that emits the result type
      */
     @NonNull
-    <T> Publisher<T> withTransaction(@NonNull ReactiveTransactionStatus<Connection> status, @NonNull TransactionalCallback<Connection, T> handler);
-
+    <T> Publisher<T> withTransaction(@NonNull ReactiveTransactionStatus<Connection> status,
+                                     @NonNull TransactionalCallback<Connection, T> handler);
 
 }

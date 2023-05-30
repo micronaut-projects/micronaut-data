@@ -23,6 +23,10 @@ import io.micronaut.data.tck.repositories.BookRepository
 import io.micronaut.data.tck.tests.AbstractTransactionSpec
 import io.micronaut.data.tck.tests.TestResourcesDatabaseTestPropertyProvider
 import io.micronaut.transaction.TransactionOperations
+import org.hibernate.resource.transaction.spi.TransactionStatus
+import org.springframework.jdbc.datasource.DataSourceUtils
+
+import java.sql.Connection
 
 class SpringHibernateTransactionSpec extends AbstractTransactionSpec implements TestResourcesDatabaseTestPropertyProvider {
 
@@ -47,8 +51,18 @@ class SpringHibernateTransactionSpec extends AbstractTransactionSpec implements 
     }
 
     @Override
-    protected TransactionOperations getTransactionOperations() {
+    protected SpringHibernateTransactionOperations getTransactionOperations() {
         return context.getBean(SpringHibernateTransactionOperations)
+    }
+
+    @Override
+    protected Runnable getNoTxCheck() {
+        return new Runnable() {
+            @Override
+            void run() {
+                assert getTransactionOperations().getConnection().transaction.status == TransactionStatus.NOT_ACTIVE
+            }
+        }
     }
 
     @Override

@@ -38,7 +38,6 @@ import jakarta.inject.Singleton;
 import java.time.Duration;
 import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -122,18 +121,12 @@ public final class ConnectionInterceptor implements MethodInterceptor<Object, Ob
                 }
                 case COMPLETION_STAGE -> {
                     AsyncConnectionOperations<?> operations = Objects.requireNonNull(connectionInvocation.asyncConnectionOperations);
-//                    boolean isKotlinSuspended = interceptedMethod instanceof KotlinInterceptedMethod;
-                    CompletionStage<?> result;
-//                    if (isKotlinSuspended) {
-//                        KotlinInterceptedMethod kotlinInterceptedMethod = (KotlinInterceptedMethod) interceptedMethod;
-//                        result = operations.withConnection(definition, new KotlinInterceptedMethodAsyncResultSupplier<>(kotlinInterceptedMethod));
-//                    } else {
-                    result = operations.withConnection(definition, status -> interceptedMethod.interceptResultAsCompletionStage());
-//                    }
-                    return interceptedMethod.handleResult(result);
+                    return interceptedMethod.handleResult(
+                        operations.withConnection(definition, status -> interceptedMethod.interceptResultAsCompletionStage())
+                    );
                 }
                 case SYNCHRONOUS -> {
-                    ConnectionOperations<?> operations = Objects.requireNonNull(connectionInvocation.connectionManager);
+                    ConnectionOperations<?> operations = Objects.requireNonNull(connectionInvocation.connectionOperations);
                     return operations.execute(definition, connection -> context.proceed());
                 }
                 default -> {
@@ -155,7 +148,6 @@ public final class ConnectionInterceptor implements MethodInterceptor<Object, Ob
         return new DefaultConnectionDefinition(
             executableMethod.getDeclaringType().getSimpleName() + "." + executableMethod.getMethodName(),
             annotation.enumValue("propagation", ConnectionDefinition.Propagation.class).orElse(ConnectionDefinition.PROPAGATION_DEFAULT),
-            annotation.enumValue("transactionIsolation", ConnectionDefinition.TransactionIsolation.class).orElse(null),
             annotation.longValue("timeout").stream().mapToObj(Duration::ofSeconds).findFirst().orElse(null),
             annotation.booleanValue("readOnly").orElse(null)
         );
@@ -163,15 +155,25 @@ public final class ConnectionInterceptor implements MethodInterceptor<Object, Ob
 
     /**
      * Cached invocation associating a method with a definition a connection manager.
+     *
+     * @param connectionOperations         The connection operations
+     * @param reactiveConnectionOperations The reactive connection operations
+     * @param asyncConnectionOperations    The async connection operations
+     * @param definition                   The connection definition
      */
     private record ConnectionInvocation(
-        @Nullable ConnectionOperations<?> connectionManager,
+        @Nullable ConnectionOperations<?> connectionOperations,
         @Nullable ReactiveConnectionOperations<?> reactiveConnectionOperations,
         @Nullable AsyncConnectionOperations<?> asyncConnectionOperations,
         ConnectionDefinition definition) {
-
     }
 
+    /**
+     * The tenant executable method.
+     *
+     * @param dataSource The datasource name
+     * @param method     The method
+     */
     private record TenantExecutableMethod(String dataSource, ExecutableMethod<?, ?> method) {
     }
 

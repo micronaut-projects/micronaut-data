@@ -1,5 +1,21 @@
+/*
+ * Copyright 2017-2023 original authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.micronaut.transaction.support;
 
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.propagation.PropagatedContext;
@@ -24,6 +40,15 @@ import java.time.Duration;
 import java.util.Optional;
 import java.util.function.Supplier;
 
+/**
+ * Abstract transaction operations.
+ *
+ * @param <T> The transaction type
+ * @param <C> The connection type
+ * @author Denis Stepanov
+ * @since 4.0.0
+ */
+@Internal
 public abstract class AbstractTransactionOperations<T extends InternalTransaction<C>, C>
     extends AbstractPropagatedStatusTransactionOperations<T, C> implements TransactionOperations<C>, SynchronousTransactionManager<C> {
 
@@ -39,16 +64,44 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
         this.synchronousConnectionManager = synchronousConnectionManager;
     }
 
+    /**
+     * Returns connection definition.
+     *
+     * @param transactionDefinition The transaction definition
+     * @return connection definition
+     */
     protected ConnectionDefinition getConnectionDefinition(TransactionDefinition transactionDefinition) {
         return transactionDefinition.getConnectionDefinition();
     }
 
+    /**
+     * Create transaction status without open transaction.
+     *
+     * @param connectionStatus The connection status
+     * @param definition       The transaction definition
+     * @return new transaction status
+     */
     protected abstract T createNoTxTransactionStatus(@NonNull ConnectionStatus<C> connectionStatus,
                                                      @NonNull TransactionDefinition definition);
 
+    /**
+     * Create transaction status with new transaction.
+     *
+     * @param connectionStatus The connection status
+     * @param definition       The transaction definition
+     * @return new transaction status
+     */
     protected abstract T createNewTransactionStatus(@NonNull ConnectionStatus<C> connectionStatus,
                                                     @NonNull TransactionDefinition definition);
 
+    /**
+     * Create transaction status with existing transaction.
+     *
+     * @param connectionStatus    The connection status
+     * @param definition          The transaction definition
+     * @param existingTransaction The existing transaction
+     * @return new transaction status
+     */
     protected abstract T createExistingTransactionStatus(@NonNull ConnectionStatus<C> connectionStatus,
                                                          @NonNull TransactionDefinition definition,
                                                          @NonNull T existingTransaction);
@@ -94,6 +147,8 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
      * <p>This method gets called when the transaction manager has decided to actually
      * start a new transaction. Either there wasn't any transaction before, or the
      * previous transaction has been suspended.
+     *
+     * @param tx The transaction
      */
     protected abstract void doBegin(T tx);
 
@@ -103,6 +158,8 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
      * or the rollback-only flag; this will already have been handled before.
      * Usually, a straight commit will be performed on the transaction object
      * contained in the passed-in status.
+     *
+     * @param tx The transaction
      */
     protected abstract void doCommit(T tx);
 
@@ -111,6 +168,8 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
      * <p>An implementation does not need to check the "new transaction" flag;
      * this will already have been handled before. Usually, a straight rollback
      * will be performed on the transaction object contained in the passed-in status.
+     *
+     * @param tx The transaction
      */
     protected abstract void doRollback(T tx);
 
@@ -181,23 +240,49 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
         };
     }
 
+    /**
+     * Do suspend the transaction.
+     *
+     * @param transaction The transaction
+     */
     protected void doSuspend(T transaction) {
     }
 
+    /**
+     * Do resume the transaction.
+     *
+     * @param transaction The transaction
+     */
     protected void doResume(T transaction) {
     }
 
+    /**
+     * Do suspend the transaction.
+     *
+     * @param transaction The transaction
+     * @param callback    The callback
+     * @param <R>         The result type
+     * @return The callback result
+     */
     protected <R> R suspend(T transaction, Supplier<R> callback) {
         return callback.get();
     }
 
+    /**
+     * Do execute nested transaction.
+     *
+     * @param existingTransaction The transaction
+     * @param callback            The callback
+     * @param <R>                 The result type
+     * @return The callback result
+     */
     protected <R> R nested(T existingTransaction, Supplier<R> callback) {
         throw new TransactionUsageException("Transaction manager: " + getClass().getSimpleName() + " doesn't support nested transactions!");
     }
 
-    protected <R> R executeWithExistingTransaction(TransactionDefinition definition,
-                                                   T existingTransaction,
-                                                   TransactionCallback<C, R> callback) {
+    private <R> R executeWithExistingTransaction(TransactionDefinition definition,
+                                                 T existingTransaction,
+                                                 TransactionCallback<C, R> callback) {
         ConnectionDefinition txConnectionDefinition = txConnectionDefinition(definition);
         return connectionOperations.execute(txConnectionDefinition,
             status -> executeTransactional(
@@ -453,11 +538,11 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
         T transactionStatus = createNoTxTransactionStatus(connectionStatus, definition);
         PropagatedContext.Scope scope = extendCurrentPropagatedContext(transactionStatus).propagate();
         transactionStatus.registerSynchronization(new TransactionSynchronization() {
-                                                      @Override
-                                                      public void afterCompletion(Status status) {
-                                                          scope.close();
-                                                      }
-                                                  });
+            @Override
+            public void afterCompletion(Status status) {
+                scope.close();
+            }
+        });
         begin(transactionStatus);
         return transactionStatus;
     }

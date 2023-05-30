@@ -33,15 +33,38 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+/**
+ * The abstract connection operations.
+ *
+ * @param <C> The connection type
+ * @author Denis Stepanov
+ * @since 4.0.0
+ */
 @Internal
 public abstract class AbstractConnectionOperations<C> implements ConnectionOperations<C>, SynchronousConnectionManager<C> {
 
     protected final Logger logger = LoggerFactory.getLogger(getClass());
 
+    /**
+     * Opens a new connection.
+     *
+     * @param definition The connection definition
+     * @return The connection
+     */
     protected abstract C openConnection(ConnectionDefinition definition);
 
+    /**
+     * Setups the connection after it have been open.
+     *
+     * @param connectionStatus The connection status
+     */
     protected abstract void setupConnection(ConnectionStatus<C> connectionStatus);
 
+    /**
+     * Closed the connection.
+     *
+     * @param connectionStatus The connection status
+     */
     protected abstract void closeConnection(ConnectionStatus<C> connectionStatus);
 
     @Override

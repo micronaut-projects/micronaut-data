@@ -48,6 +48,13 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * The Hibernate transaction manager.
+ * Partially based on https://github.com/spring-projects/spring-framework/blob/main/spring-orm/src/main/java/org/springframework/orm/hibernate5/HibernateTransactionManager.java
+ *
+ * @author Denis Stepanov
+ * @since 4.0.0
+ */
 @EachBean(DataSource.class)
 @Replaces(DataSourceTransactionManager.class)
 @Requires(condition = HibernateTransactionManagerCondition.class)

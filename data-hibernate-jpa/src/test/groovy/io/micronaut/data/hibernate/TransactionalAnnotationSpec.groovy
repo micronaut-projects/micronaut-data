@@ -16,10 +16,11 @@
 package io.micronaut.data.hibernate
 
 import io.micronaut.context.annotation.Property
+import io.micronaut.data.connection.annotation.Connection
 import io.micronaut.data.tck.entities.Book
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
+import io.micronaut.transaction.TransactionOperations
 import io.micronaut.transaction.interceptor.TransactionalInterceptor
-import io.micronaut.transaction.support.TransactionSynchronizationManager
 import spock.lang.Specification
 
 import jakarta.inject.Inject
@@ -33,13 +34,15 @@ class TransactionalAnnotationSpec extends Specification {
 
     @Inject BookService bookService
 
+    @Inject TransactionOperations<java.sql.Connection> transactionOperations
+
     void "test transactional annotation"() {
         when:
         bookService.saveAndSuccess()
 
         then:
         bookService.listBooks().size() == 1
-        !TransactionSynchronizationManager.isSynchronizationActive()
+        transactionOperations.findTransactionStatus().isEmpty()
 
         when:
         bookService.saveAndError()
@@ -47,7 +50,7 @@ class TransactionalAnnotationSpec extends Specification {
         then:
         thrown(RuntimeException)
         bookService.listBooks().size() == 1
-        !TransactionSynchronizationManager.isSynchronizationActive()
+        transactionOperations.findTransactionStatus().isEmpty()
 
         when:
         bookService.saveAndChecked()
@@ -55,14 +58,14 @@ class TransactionalAnnotationSpec extends Specification {
         then:
         thrown(Exception)
         bookService.listBooks().size() == 1
-        !TransactionSynchronizationManager.isSynchronizationActive()
+        transactionOperations.findTransactionStatus().isEmpty()
 
         when:
         bookService.saveAndManualRollback()
 
         then:
         bookService.listBooks().size() == 1
-        !TransactionSynchronizationManager.isSynchronizationActive()
+        transactionOperations.findTransactionStatus().isEmpty()
     }
 
     @Transactional

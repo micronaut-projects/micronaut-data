@@ -19,7 +19,6 @@ import io.micronaut.aop.InterceptPhase;
 import io.micronaut.aop.InterceptedMethod;
 import io.micronaut.aop.MethodInterceptor;
 import io.micronaut.aop.MethodInvocationContext;
-import io.micronaut.aop.kotlin.KotlinInterceptedMethod;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
@@ -36,7 +35,6 @@ import jakarta.inject.Singleton;
 
 import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -153,6 +151,10 @@ public final class TransactionalInterceptor implements MethodInterceptor<Object,
     /**
      * Cached invocation associating a method with a definition a transaction manager.
      *
+     * @param transactionManager The transaction manager
+     * @param reactiveTransactionOperations The reactive transaction manager
+     * @param asyncTransactionOperations The async transaction manager
+     * @param definition The definition
      * @param <C> connection type
      */
     private record TransactionInvocation<C>(@Nullable TransactionOperations<C> transactionManager,

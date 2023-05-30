@@ -26,6 +26,13 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.function.Consumer;
 
+/**
+ * The default connection status.
+ *
+ * @param <C> The connection type
+ * @author Denis Stepanov
+ * @since 4.0.0
+ */
 @Internal
 public final class DefaultConnectionStatus<C> implements ConnectionStatus<C> {
 

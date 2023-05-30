@@ -19,4 +19,5 @@ dependencies {
 	testImplementation libs.jakarta.transaction.api
 	testImplementation libs.spring.data.jpa
 	testImplementation projects.dataTck
+	testImplementation projects.dataTx
 }

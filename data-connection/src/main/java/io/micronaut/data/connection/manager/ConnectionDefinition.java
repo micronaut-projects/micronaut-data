@@ -77,87 +77,31 @@ public interface ConnectionDefinition {
     }
 
     /**
-     * Isolation levels.
-     */
-    enum TransactionIsolation {
-
-        /**
-         * Use the default isolation level of the underlying datastore.
-         */
-        DEFAULT,
-
-        /**
-         * Indicates that dirty reads, non-repeatable reads and phantom reads
-         * can occur.
-         * <p>This level allows a row changed by one transaction to be read by another
-         * transaction before any changes in that row have been committed (a "dirty read").
-         * If any of the changes are rolled back, the second transaction will have
-         * retrieved an invalid row.
-         */
-        READ_UNCOMMITTED,
-
-        /**
-         * Indicates that dirty reads are prevented; non-repeatable reads and
-         * phantom reads can occur.
-         * <p>This level only prohibits a transaction from reading a row
-         * with uncommitted changes in it.
-         */
-        READ_COMMITTED,
-
-        /**
-         * Indicates that dirty reads and non-repeatable reads are prevented;
-         * phantom reads can occur.
-         * <p>This level prohibits a transaction from reading a row with uncommitted changes
-         * in it, and it also prohibits the situation where one transaction reads a row,
-         * a second transaction alters the row, and the first transaction re-reads the row,
-         * getting different values the second time (a "non-repeatable read").
-         */
-        REPEATABLE_READ,
-
-        /**
-         * Indicates that dirty reads, non-repeatable reads and phantom reads
-         * are prevented.
-         * <p>This level includes the prohibitions in {@link TransactionIsolation#REPEATABLE_READ}
-         * and further prohibits the situation where one transaction reads all rows that
-         * satisfy a {@code WHERE} condition, a second transaction inserts a row
-         * that satisfies that {@code WHERE} condition, and the first transaction
-         * re-reads for the same condition, retrieving the additional "phantom" row
-         * in the second read.
-         */
-        SERIALIZABLE;
-
-        /**
-         * Default constructor.
-         */
-        TransactionIsolation() {
-        }
-
-    }
-
-    /**
      * Return the propagation behavior.
+     *
+     * @return The propagation behaviour
      */
     @NonNull
     Propagation getPropagationBehavior();
 
     /**
-     * Return the isolation level.
-     */
-    @NonNull
-    Optional<TransactionIsolation> getIsolationLevel();
-
-    /**
      * Return the connection timeout.
+     *
+     * @return The optional timeout
      */
     Optional<Duration> getTimeout();
 
     /**
      * Return whether this is a read-only connection.
+     *
+     * @return The optional read only
      */
     Optional<Boolean> isReadOnly();
 
     /**
      * Return the name of this connection.
+     *
+     * @return The optional name
      */
     @Nullable
     String getName();
@@ -178,9 +122,6 @@ public interface ConnectionDefinition {
     @NonNull
     ConnectionDefinition withName(String name);
 
-    @NonNull
-    ConnectionDefinition readOnly();
-
     /**
      * Create a new {@link ConnectionDefinition} for the given behaviour.
      *
@@ -200,6 +141,5 @@ public interface ConnectionDefinition {
     static @NonNull ConnectionDefinition named(@NonNull String name) {
         return new DefaultConnectionDefinition(name);
     }
-
 
 }

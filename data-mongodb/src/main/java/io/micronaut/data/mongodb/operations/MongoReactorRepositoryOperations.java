@@ -17,7 +17,6 @@ package io.micronaut.data.mongodb.operations;
 
 import com.mongodb.reactivestreams.client.ClientSession;
 import io.micronaut.core.annotation.Experimental;
-import io.micronaut.transaction.reactive.ReactorReactiveTransactionOperations;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
