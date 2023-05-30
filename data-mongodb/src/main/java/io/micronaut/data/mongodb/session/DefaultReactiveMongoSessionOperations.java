@@ -21,26 +21,13 @@ import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
-import io.micronaut.core.async.propagation.ReactorPropagation;
-import io.micronaut.core.propagation.PropagatedContextElement;
-import io.micronaut.data.connection.exceptions.NoConnectionException;
 import io.micronaut.data.connection.manager.ConnectionDefinition;
-import io.micronaut.data.connection.manager.reactive.ReactiveConnectionOperations;
-import io.micronaut.data.connection.manager.reactive.ReactorReactiveConnectionOperations;
-import io.micronaut.data.connection.manager.synchronous.ConnectionStatus;
-import io.micronaut.data.connection.support.DefaultConnectionStatus;
+import io.micronaut.data.connection.support.AbstractReactorReactiveConnectionOperations;
 import io.micronaut.data.mongodb.conf.RequiresReactiveMongo;
+import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.util.context.Context;
-import reactor.util.context.ContextView;
-
-import java.util.Objects;
-import java.util.Optional;
-import java.util.function.Function;
 
 /**
  * The reactive MongoDB connection operations implementation.
@@ -51,7 +38,8 @@ import java.util.function.Function;
 @RequiresReactiveMongo
 @EachBean(MongoClient.class)
 @Internal
-final class DefaultReactiveMongoSessionOperations implements ReactorReactiveConnectionOperations<ClientSession>, MongoReactorReactiveConnectionOperations {
+final class DefaultReactiveMongoSessionOperations extends AbstractReactorReactiveConnectionOperations<ClientSession>
+    implements MongoReactorReactiveConnectionOperations {
 
     private static final Logger LOG = LoggerFactory.getLogger(DefaultReactiveMongoSessionOperations.class);
 
@@ -64,102 +52,22 @@ final class DefaultReactiveMongoSessionOperations implements ReactorReactiveConn
     }
 
     @Override
-    public Optional<ConnectionStatus<ClientSession>> findConnectionStatus(ContextView contextView) {
-        return ReactorPropagation.findAllContextElements(contextView, ClientSessionPropagatedContext.class)
-            .filter(e -> e.connectionOperations == this)
-            .map(ClientSessionPropagatedContext::status)
-            .findFirst();
+    @NonNull
+    protected Publisher<ClientSession> openConnection(@NonNull ConnectionDefinition definition) {
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Opening Connection for MongoDB configuration: {} and definition: {}", serverName, definition);
+        }
+        return mongoClient.startSession();
     }
 
-    @NonNull
     @Override
-    public <T> Flux<T> withConnectionFlux(@NonNull ConnectionDefinition definition,
-                                          @NonNull Function<ConnectionStatus<ClientSession>, Flux<T>> callback) {
-        Objects.requireNonNull(callback, "Callback cannot be null");
-        return Flux.deferContextual(contextView -> {
-            ClientSession clientSession = findClientSession(contextView);
-            if (clientSession != null) {
-                return switch (definition.getPropagationBehavior()) {
-                    case REQUIRED, MANDATORY -> callback.apply(new DefaultConnectionStatus<>(clientSession, definition, false));
-                    case REQUIRES_NEW -> //                    yield suspend(clientSession, () -> executeWithNewConnection(definition, callback));
-                        callback.apply(new DefaultConnectionStatus<>(clientSession, definition, false));
-                };
-            }
-            return switch (definition.getPropagationBehavior()) {
-                case REQUIRED, REQUIRES_NEW -> Flux.usingWhen(
-                    LOG.isDebugEnabled() ? Flux.from(mongoClient.startSession()).doOnNext(cs -> LOG.debug("Opening Connection for MongoDB configuration: {} and definition: {}", serverName, definition)) : mongoClient.startSession(),
-                    cs -> {
-                        DefaultConnectionStatus<ClientSession> status = new DefaultConnectionStatus<>(cs, definition, true);
-                        return callback.apply(status).contextWrite(ctx -> addClientSession(ctx, status));
-                    },
-                    connection -> {
-                        if (LOG.isDebugEnabled()) {
-                            LOG.debug("Closing Connection for MongoDB configuration: {} and definition: {}", serverName, definition);
-                        }
-                        connection.close();
-                        return Flux.empty();
-                    }
-                );
-                case MANDATORY ->
-                    throw new NoConnectionException("No existing connection found for connection marked with propagation 'mandatory'");
-            };
-        });
-    }
-
     @NonNull
-    @Override
-    public <T> Mono<T> withConnectionMono(@NonNull ConnectionDefinition definition,
-                                          @NonNull Function<ConnectionStatus<ClientSession>, Mono<T>> callback) {
-        Objects.requireNonNull(callback, "Callback cannot be null");
-        return Mono.deferContextual(contextView -> {
-            ClientSession clientSession = findClientSession(contextView);
-            if (clientSession != null) {
-                return switch (definition.getPropagationBehavior()) {
-                    case REQUIRED, MANDATORY -> callback.apply(new DefaultConnectionStatus<>(clientSession, definition, false));
-                    case REQUIRES_NEW -> //                    yield suspend(clientSession, () -> executeWithNewConnection(definition, callback));
-                        callback.apply(new DefaultConnectionStatus<>(clientSession, definition, false));
-                };
-            }
-            return switch (definition.getPropagationBehavior()) {
-                case REQUIRED, REQUIRES_NEW -> Mono.usingWhen(
-                    LOG.isDebugEnabled() ? Mono.from(mongoClient.startSession()).doOnNext(cs -> LOG.debug("Opening Connection for MongoDB configuration: {} and definition: {}", serverName, definition)) : mongoClient.startSession(),
-                    cs -> {
-                        DefaultConnectionStatus<ClientSession> status = new DefaultConnectionStatus<>(cs, definition, true);
-                        return callback.apply(status)
-                            .contextWrite(ctx -> addClientSession(ctx, status));
-                    },
-                    connection -> {
-                        if (LOG.isDebugEnabled()) {
-                            LOG.debug("Closing Connection for MongoDB configuration: {} and definition: {}", serverName, definition);
-                        }
-                        connection.close();
-                        return Mono.empty();
-                    }
-                );
-                case MANDATORY ->
-                    throw new NoConnectionException("No existing connection found for connection marked with propagation 'mandatory'");
-            };
-        });
+    protected Publisher<Void> closeConnection(@NonNull ClientSession connection, @NonNull ConnectionDefinition definition) {
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Closing Connection for MongoDB configuration: {} and definition: {}", serverName, definition);
+        }
+        connection.close();
+        return Mono.empty();
     }
 
-    @NonNull
-    private Context addClientSession(@NonNull Context context, @NonNull ConnectionStatus<ClientSession> status) {
-        return ReactorPropagation.addContextElement(
-            context,
-            new ClientSessionPropagatedContext(this, status)
-        );
-    }
-
-    @Nullable
-    private ClientSession findClientSession(@NonNull ContextView contextView) {
-        return findConnectionStatus(contextView)
-            .map(ConnectionStatus::getConnection)
-            .orElse(null);
-    }
-
-    private record ClientSessionPropagatedContext(
-        ReactiveConnectionOperations<?> connectionOperations,
-        ConnectionStatus<ClientSession> status)
-        implements PropagatedContextElement {
-    }
 }

@@ -45,7 +45,7 @@ public interface ReactorReactiveConnectionOperations<C> extends ReactiveConnecti
      * @return The connection or exception if the connection doesn't exist
      */
     @NonNull
-    default ConnectionStatus<C> getConnectionStatus(ContextView contextView) {
+    default ConnectionStatus<C> getConnectionStatus(@NonNull ContextView contextView) {
         return findConnectionStatus(contextView).orElseThrow(NoConnectionException::new);
     }
 
@@ -55,7 +55,7 @@ public interface ReactorReactiveConnectionOperations<C> extends ReactiveConnecti
      * @param contextView The reactor's context view
      * @return The optional connection
      */
-    Optional<ConnectionStatus<C>> findConnectionStatus(ContextView contextView);
+    Optional<ConnectionStatus<C>> findConnectionStatus(@NonNull ContextView contextView);
 
     /**
      * Execute the given handler with a new transaction.
