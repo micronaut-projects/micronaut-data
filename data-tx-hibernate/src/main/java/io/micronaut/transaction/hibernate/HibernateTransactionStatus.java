@@ -64,10 +64,12 @@ abstract sealed class HibernateTransactionStatus extends AbstractInternalTransac
         return connectionStatus.getConnection();
     }
 
+    @Override
     public ConnectionStatus<Session> getConnectionStatus() {
         return connectionStatus;
     }
 
+    @Override
     public TransactionDefinition getTransactionDefinition() {
         return definition;
     }

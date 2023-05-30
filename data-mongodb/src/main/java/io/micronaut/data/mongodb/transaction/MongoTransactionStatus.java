@@ -35,7 +35,7 @@ abstract sealed class MongoTransactionStatus extends AbstractInternalTransaction
     }
 
     public static MongoTransactionStatus newTx(ConnectionStatus<ClientSession> connectionStatus, TransactionDefinition definition) {
-        return new NewHibernateTransactionStatus(connectionStatus, definition);
+        return new NewMongoTransactionStatus(connectionStatus, definition);
     }
 
     public static MongoTransactionStatus noTx(ConnectionStatus<ClientSession> connectionStatus, TransactionDefinition definition) {
@@ -57,17 +57,19 @@ abstract sealed class MongoTransactionStatus extends AbstractInternalTransaction
         return connectionStatus.getConnection();
     }
 
+    @Override
     public ConnectionStatus<ClientSession> getConnectionStatus() {
         return connectionStatus;
     }
 
+    @Override
     public TransactionDefinition getTransactionDefinition() {
         return definition;
     }
 
-    private static final class NewHibernateTransactionStatus extends MongoTransactionStatus {
+    private static final class NewMongoTransactionStatus extends MongoTransactionStatus {
 
-        public NewHibernateTransactionStatus(ConnectionStatus<ClientSession> connectionStatus, TransactionDefinition definition) {
+        public NewMongoTransactionStatus(ConnectionStatus<ClientSession> connectionStatus, TransactionDefinition definition) {
             super(connectionStatus, definition);
         }
 

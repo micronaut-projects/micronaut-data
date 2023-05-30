@@ -16,6 +16,8 @@
 package io.micronaut.transaction.reactive;
 
 import io.micronaut.core.annotation.NonNull;
+import io.micronaut.data.connection.manager.synchronous.ConnectionStatus;
+import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.TransactionExecution;
 
 /**
@@ -30,5 +32,14 @@ public interface ReactiveTransactionStatus<T> extends TransactionExecution {
     /**
      * @return The current connection.
      */
-    @NonNull T getConnection();
+    default @NonNull T getConnection() {
+        return getConnectionStatus().getConnection();
+    }
+
+    /**
+     * @return The connection status.
+     */
+    @NonNull
+    ConnectionStatus<T> getConnectionStatus();
+
 }

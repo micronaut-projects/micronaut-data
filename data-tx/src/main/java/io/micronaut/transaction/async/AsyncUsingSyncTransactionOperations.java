@@ -101,6 +101,11 @@ public final class AsyncUsingSyncTransactionOperations<C> implements AsyncTransa
         }
 
         @Override
+        public TransactionDefinition getTransactionDefinition() {
+            return status.getTransactionDefinition();
+        }
+
+        @Override
         @NonNull
         public T getConnection() {
             return status.getConnection();

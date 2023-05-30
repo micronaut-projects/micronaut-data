@@ -62,10 +62,12 @@ abstract sealed class DataSourceTransactionStatus extends AbstractInternalTransa
         return connectionStatus.getConnection();
     }
 
+    @Override
     public ConnectionStatus<Connection> getConnectionStatus() {
         return connectionStatus;
     }
 
+    @Override
     public TransactionDefinition getTransactionDefinition() {
         return definition;
     }

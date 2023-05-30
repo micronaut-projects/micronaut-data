@@ -21,6 +21,7 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.async.propagation.ReactorPropagation;
 import io.micronaut.core.propagation.PropagatedContextElement;
+import io.micronaut.data.connection.manager.synchronous.ConnectionStatus;
 import io.micronaut.data.r2dbc.transaction.R2dbcReactorReactiveTransactionOperations;
 import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.exceptions.NoTransactionException;
@@ -110,7 +111,7 @@ final class DefaultR2dbcReactiveTransactionOperations implements R2dbcReactorRea
                 if (propagationBehavior == TransactionDefinition.Propagation.NOT_SUPPORTED || propagationBehavior == TransactionDefinition.Propagation.NEVER) {
                     return Flux.error(new TransactionUsageException("Found an existing transaction but propagation behaviour doesn't support it: " + propagationBehavior));
                 }
-                ReactiveTransactionStatus<Connection> existingTransaction = existingTransaction(transactionStatus);
+                ReactiveTransactionStatus<Connection> existingTransaction = existingTransaction(transactionStatus, definition);
                 try {
                     return Flux.from(handler.doInTransaction(existingTransaction))
                         .contextWrite(ctx -> addTxStatus(ctx, existingTransaction));
@@ -126,7 +127,7 @@ final class DefaultR2dbcReactiveTransactionOperations implements R2dbcReactorRea
                         if (LOG.isDebugEnabled()) {
                             LOG.debug("Transaction: {} begin for dataSource: {}", definition.getName(), dataSourceName);
                         }
-                        DefaultReactiveTransactionStatus status = new DefaultReactiveTransactionStatus(definition, connection, true);
+                        DefaultReactiveTransactionStatus status = new DefaultReactiveTransactionStatus(definition, connectionStatus, true);
                         Mono<Boolean> resourceSupplier;
                         if (definition.getIsolationLevel() != TransactionDefinition.DEFAULT.getIsolationLevel()) {
                             IsolationLevel isolationLevel = getIsolationLevel(definition);
@@ -230,11 +231,16 @@ final class DefaultR2dbcReactiveTransactionOperations implements R2dbcReactorRea
         };
     }
 
-    private ReactiveTransactionStatus<Connection> existingTransaction(ReactiveTransactionStatus<Connection> existing) {
+    private ReactiveTransactionStatus<Connection> existingTransaction(ReactiveTransactionStatus<Connection> existing, TransactionDefinition definition) {
         return new ReactiveTransactionStatus<>() {
             @Override
             public Connection getConnection() {
                 return existing.getConnection();
+            }
+
+            @Override
+            public ConnectionStatus<Connection> getConnectionStatus() {
+                return existing.getConnectionStatus();
             }
 
             @Override
@@ -256,6 +262,11 @@ final class DefaultR2dbcReactiveTransactionOperations implements R2dbcReactorRea
             public boolean isCompleted() {
                 return existing.isCompleted();
             }
+
+            @Override
+            public TransactionDefinition getTransactionDefinition() {
+                return definition;
+            }
         };
     }
 
@@ -270,14 +281,14 @@ final class DefaultR2dbcReactiveTransactionOperations implements R2dbcReactorRea
      */
     private static final class DefaultReactiveTransactionStatus implements ReactiveTransactionStatus<Connection> {
         private final TransactionDefinition definition;
-        private final Connection connection;
+        private final ConnectionStatus<Connection> connectionStatus;
         private final boolean isNew;
         private boolean rollbackOnly;
         private boolean completed;
 
-        public DefaultReactiveTransactionStatus(TransactionDefinition definition, Connection connection, boolean isNew) {
+        public DefaultReactiveTransactionStatus(TransactionDefinition definition, ConnectionStatus<Connection> connectionStatus, boolean isNew) {
             this.definition = definition;
-            this.connection = connection;
+            this.connectionStatus = connectionStatus;
             this.isNew = isNew;
         }
 
@@ -287,7 +298,12 @@ final class DefaultR2dbcReactiveTransactionOperations implements R2dbcReactorRea
 
         @Override
         public Connection getConnection() {
-            return connection;
+            return connectionStatus.getConnection();
+        }
+
+        @Override
+        public ConnectionStatus<Connection> getConnectionStatus() {
+            return connectionStatus;
         }
 
         @Override
@@ -308,6 +324,11 @@ final class DefaultR2dbcReactiveTransactionOperations implements R2dbcReactorRea
         @Override
         public boolean isCompleted() {
             return completed;
+        }
+
+        @Override
+        public TransactionDefinition getTransactionDefinition() {
+            return definition;
         }
     }
 }

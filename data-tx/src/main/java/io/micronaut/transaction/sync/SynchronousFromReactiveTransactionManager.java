@@ -18,6 +18,7 @@ package io.micronaut.transaction.sync;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.async.propagation.ReactorPropagation;
 import io.micronaut.core.propagation.PropagatedContext;
+import io.micronaut.data.connection.manager.synchronous.ConnectionStatus;
 import io.micronaut.transaction.SynchronousTransactionManager;
 import io.micronaut.transaction.TransactionCallback;
 import io.micronaut.transaction.TransactionDefinition;
@@ -152,6 +153,11 @@ public final class SynchronousFromReactiveTransactionManager<T> implements Synch
         }
 
         @Override
+        public TransactionDefinition getTransactionDefinition() {
+            return transactionStatus.getTransactionDefinition();
+        }
+
+        @Override
         public boolean hasSavepoint() {
             throw noSupported();
         }
@@ -169,6 +175,11 @@ public final class SynchronousFromReactiveTransactionManager<T> implements Synch
         @Override
         public K getConnection() {
             throw noSupported();
+        }
+
+        @Override
+        public ConnectionStatus<K> getConnectionStatus() {
+            return transactionStatus.getConnectionStatus();
         }
     }
 }

@@ -132,6 +132,11 @@ public final class AsyncUsingReactiveTransactionOperations<C> implements AsyncTr
         }
 
         @Override
+        public TransactionDefinition getTransactionDefinition() {
+            return status.getTransactionDefinition();
+        }
+
+        @Override
         @NonNull
         public T getConnection() {
             return status.getConnection();

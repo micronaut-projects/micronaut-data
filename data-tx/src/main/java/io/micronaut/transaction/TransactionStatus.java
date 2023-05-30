@@ -17,6 +17,7 @@ package io.micronaut.transaction;
 
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
+import io.micronaut.data.connection.manager.synchronous.ConnectionStatus;
 import io.micronaut.transaction.exceptions.TransactionUsageException;
 import io.micronaut.transaction.support.TransactionSynchronization;
 
@@ -82,7 +83,16 @@ public interface TransactionStatus<T> extends TransactionExecution, SavepointMan
      * @return The associated connection.
      */
     @NonNull
-    T getConnection();
+    default T getConnection() {
+        return getConnectionStatus().getConnection();
+    }
+
+    /**
+     * @return The connection status.
+     * @since 4.0.0
+     */
+    @NonNull
+    ConnectionStatus<T> getConnectionStatus();
 
     /**
      * Register a new transaction synchronization for the current state.
