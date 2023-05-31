@@ -90,6 +90,7 @@ dependencies {
 
     testRuntimeOnly libs.micronaut.flyway
     testRuntimeOnly mnSql.micronaut.jdbc.hikari
+    testRuntimeOnly libs.flyway.oracle
 }
 
 micronaut {
