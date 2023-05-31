@@ -75,7 +75,7 @@ public final class AsyncUsingReactiveTransactionOperations<C> implements AsyncTr
     private static <T> CompletableFuture<T> onCompleteCompleteFuture(Publisher<T> publisher) {
         PropagatedContext propagatedContext = PropagatedContext.getOrEmpty();
         CompletableFuture<T> completableFuture = new CompletableFuture<>();
-        publisher.subscribe(new CoreSubscriber<T>() {
+        publisher.subscribe(new CoreSubscriber<>() {
 
             private T result;
 
@@ -97,12 +97,16 @@ public final class AsyncUsingReactiveTransactionOperations<C> implements AsyncTr
 
             @Override
             public void onError(Throwable t) {
-                completableFuture.completeExceptionally(t);
+                try (PropagatedContext.Scope ignore = propagatedContext.propagate()) {
+                    completableFuture.completeExceptionally(t);
+                }
             }
 
             @Override
             public void onComplete() {
-                completableFuture.complete(result);
+                try (PropagatedContext.Scope ignore = propagatedContext.propagate()) {
+                    completableFuture.complete(result);
+                }
             }
         });
         return completableFuture;

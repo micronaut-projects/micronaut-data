@@ -168,7 +168,7 @@ open class PersonSuspendRepositoryService(
 
     suspend fun suspendCountForCustomDb(): Long {
         val count = parentSuspendRepositoryForCustomDb.count()
-        LoggerFactory.getLogger(this::class.java).info("Stored $count records")
+        LoggerFactory.getLogger(this::class.java).info("Stored custom $count records")
         return count
     }
 
