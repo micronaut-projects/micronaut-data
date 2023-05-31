@@ -122,7 +122,8 @@ abstract sealed class DataSourceTransactionStatus extends AbstractInternalTransa
 
         @Override
         public void setRollbackOnly() {
-            existingTransaction.setRollbackOnly();
+            super.setRollbackOnly();
+            existingTransaction.setGlobalRollbackOnly();
         }
     }
 }

@@ -131,7 +131,8 @@ abstract sealed class HibernateTransactionStatus extends AbstractInternalTransac
 
         @Override
         public void setRollbackOnly() {
-            existingTransaction.setRollbackOnly();
+            super.setRollbackOnly();
+            existingTransaction.setGlobalRollbackOnly();
         }
     }
 }

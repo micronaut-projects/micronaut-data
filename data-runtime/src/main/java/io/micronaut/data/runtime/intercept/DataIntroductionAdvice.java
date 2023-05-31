@@ -23,6 +23,7 @@ import io.micronaut.context.annotation.Prototype;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
+import io.micronaut.core.propagation.PropagatedContext;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.exceptions.EmptyResultException;
 import io.micronaut.data.intercept.DataInterceptor;
@@ -90,20 +91,23 @@ public final class DataIntroductionAdvice implements MethodInterceptor<Object, O
     private Object interceptCompletionStage(MethodInvocationContext<Object, Object> context,
                                             DataInterceptor<Object, Object> dataInterceptor,
                                             RepositoryMethodKey key) {
+        PropagatedContext propagatedContext = PropagatedContext.getOrEmpty();
         CompletionStage<Object> completionStage = (CompletionStage<Object>) dataInterceptor.intercept(key, context);
         CompletableFuture<Object> completableFuture = new CompletableFuture<>();
         completionStage.whenComplete((value, throwable) -> {
-            if (throwable == null) {
-                completableFuture.complete(value);
-            } else {
-                Throwable finalThrowable = throwable;
-                if (finalThrowable instanceof CompletionException) {
-                    finalThrowable = finalThrowable.getCause();
-                }
-                if (finalThrowable instanceof EmptyResultException && context.isSuspend() && context.isNullable()) {
-                    completableFuture.complete(null);
+            try (PropagatedContext.Scope ignore = propagatedContext.propagate()) {
+                if (throwable == null) {
+                    completableFuture.complete(value);
                 } else {
-                    completableFuture.completeExceptionally(finalThrowable);
+                    Throwable finalThrowable = throwable;
+                    if (finalThrowable instanceof CompletionException) {
+                        finalThrowable = finalThrowable.getCause();
+                    }
+                    if (finalThrowable instanceof EmptyResultException && context.isSuspend() && context.isNullable()) {
+                        completableFuture.complete(null);
+                    } else {
+                        completableFuture.completeExceptionally(finalThrowable);
+                    }
                 }
             }
         });

@@ -80,6 +80,11 @@ class SpringHibernateTransactionSpec extends AbstractTransactionSpec implements 
         return false
     }
 
+    @Override
+    boolean supportsModificationInNonTransaction() {
+        return false
+    }
+
     def "test book is not updated if TX has readOnly=true"() {
         given:
             def service = context.getBean(ReadOnlyTest)

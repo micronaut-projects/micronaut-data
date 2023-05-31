@@ -100,7 +100,13 @@ abstract class AbstractTransactionSpec extends Specification implements TestProp
 
     void "test book added in not-supported propagation"() {
         when:
-            bookService.bookAddedInNoSupportedPropagation(getNoTxCheck())
+//            try {
+                bookService.bookAddedInNoSupportedPropagation(getNoTxCheck())
+//            } catch (Exception e) {
+//                if (supportsModificationInNonTransaction()) {
+//                    throw e
+//                }
+//            }
         then:
             if (supportsModificationInNonTransaction()) {
                 assert bookService.countBooksTransactional() == 1
@@ -164,6 +170,34 @@ abstract class AbstractTransactionSpec extends Specification implements TestProp
         then:
             def e = thrown(Exception)
             e.message == "Transaction rolled back because it has been marked as rollback-only"
+    }
+
+    void "test inner transaction marked for rollback"() {
+        when:
+            bookService.innerTransactionMarkedForRollback {
+                getTransactionOperations().findTransactionStatus().get().setRollbackOnly()
+            }
+        then:
+            def e = thrown(Exception)
+            e.message == "Transaction rolled back because it has been marked as rollback-only"
+    }
+
+    void "test transaction marked for rollback"() {
+        when:
+            bookService.saveAndMarkedForRollback {
+                getTransactionOperations().findTransactionStatus().get().setRollbackOnly()
+            }
+        then:
+            bookService.countBooksTransactional() == 0
+    }
+
+    void "test transaction marked for rollback 2"() {
+        when:
+            bookService.saveAndMarkedForRollback2 {
+                getTransactionOperations().findTransactionStatus().get().setRollbackOnly()
+            }
+        then:
+            bookService.countBooksTransactional() == 0
     }
 
     void "test inner requires new transaction with suppressed exception"() {

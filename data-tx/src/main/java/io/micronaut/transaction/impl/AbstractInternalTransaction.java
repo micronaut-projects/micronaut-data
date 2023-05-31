@@ -32,14 +32,19 @@ import java.util.List;
  */
 public abstract class AbstractInternalTransaction<C> implements InternalTransaction<C> {
 
-    private boolean rollbackOnly = false;
+    private boolean manualRollbackOnly = false;
+    private boolean globalRollbackOnly = false;
     private boolean completed = false;
 
     private List<TransactionSynchronization> synchronizations;
 
+    protected void setGlobalRollbackOnly() {
+        globalRollbackOnly = true;
+    }
+
     @Override
     public void setRollbackOnly() {
-        rollbackOnly = true;
+        manualRollbackOnly = true;
     }
 
     @Override
@@ -49,12 +54,12 @@ public abstract class AbstractInternalTransaction<C> implements InternalTransact
 
     @Override
     public boolean isLocalRollbackOnly() {
-        return rollbackOnly;
+        return manualRollbackOnly;
     }
 
     @Override
     public boolean isGlobalRollbackOnly() {
-        return false;
+        return globalRollbackOnly;
     }
 
     @Override

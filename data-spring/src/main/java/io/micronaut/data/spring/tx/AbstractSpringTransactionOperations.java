@@ -17,6 +17,7 @@ package io.micronaut.data.spring.tx;
 
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.util.ArgumentUtils;
+import io.micronaut.data.connection.manager.synchronous.ConnectionStatus;
 import io.micronaut.transaction.TransactionCallback;
 import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.TransactionStatus;
@@ -56,12 +57,12 @@ public abstract class AbstractSpringTransactionOperations
 
     @Override
     public <R> R executeRead(@NonNull TransactionCallback<Connection, R> callback) {
-        return execute(readTransactionTemplate, callback);
+        return execute(readTransactionTemplate, callback, TransactionDefinition.READ_ONLY);
     }
 
     @Override
     public <R> R executeWrite(@NonNull TransactionCallback<Connection, R> callback) {
-        return execute(writeTransactionTemplate, callback);
+        return execute(writeTransactionTemplate, callback, TransactionDefinition.DEFAULT);
     }
 
     @Override
@@ -78,21 +79,24 @@ public abstract class AbstractSpringTransactionOperations
         if (!timeout.isNegative()) {
             def.setTimeout((int) timeout.getSeconds());
         }
-        return execute(new TransactionTemplate(transactionManager, def), callback);
+        return execute(new TransactionTemplate(transactionManager, def), callback, definition);
     }
 
-    private <R> R execute(TransactionTemplate template, TransactionCallback<Connection, R> callback) {
+    private <R> R execute(TransactionTemplate template,
+                          TransactionCallback<Connection, R> callback,
+                          TransactionDefinition transactionDefinition) {
         ArgumentUtils.requireNonNull("callback", callback);
         try {
-            return template.execute(status -> execute(callback, status));
+            return template.execute(status -> execute(callback, status, transactionDefinition));
         } catch (UndeclaredThrowableException e) {
             return ExceptionUtil.sneakyThrow(e.getUndeclaredThrowable());
         }
     }
 
     private <R> R execute(TransactionCallback<Connection, R> callback,
-                          org.springframework.transaction.TransactionStatus status) {
-        SpringTransactionStatus txStatus = new SpringTransactionStatus(status);
+                          org.springframework.transaction.TransactionStatus status,
+                          TransactionDefinition transactionDefinition) {
+        SpringTransactionStatus txStatus = new SpringTransactionStatus(status, transactionDefinition);
         try {
             return callback.call(txStatus);
         } catch (RuntimeException | Error ex) {
@@ -108,9 +112,11 @@ public abstract class AbstractSpringTransactionOperations
     private final class SpringTransactionStatus implements TransactionStatus<Connection> {
 
         private final org.springframework.transaction.TransactionStatus springStatus;
+        private final TransactionDefinition transactionDefinition;
 
-        SpringTransactionStatus(org.springframework.transaction.TransactionStatus springStatus) {
+        SpringTransactionStatus(org.springframework.transaction.TransactionStatus springStatus, TransactionDefinition transactionDefinition) {
             this.springStatus = springStatus;
+            this.transactionDefinition = transactionDefinition;
         }
 
         @Override
@@ -134,6 +140,11 @@ public abstract class AbstractSpringTransactionOperations
         }
 
         @Override
+        public TransactionDefinition getTransactionDefinition() {
+            return transactionDefinition;
+        }
+
+        @Override
         public boolean hasSavepoint() {
             return springStatus.hasSavepoint();
         }
@@ -153,6 +164,11 @@ public abstract class AbstractSpringTransactionOperations
         @Override
         public Connection getConnection() {
             return AbstractSpringTransactionOperations.this.getConnection();
+        }
+
+        @Override
+        public ConnectionStatus<Connection> getConnectionStatus() {
+            throw new IllegalStateException("Connections status not supported for the Spring TX manager!");
         }
 
         @Override

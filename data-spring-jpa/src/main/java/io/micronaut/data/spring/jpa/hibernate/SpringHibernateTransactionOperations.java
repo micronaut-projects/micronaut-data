@@ -18,6 +18,7 @@ package io.micronaut.data.spring.jpa.hibernate;
 import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.data.connection.manager.synchronous.ConnectionStatus;
 import io.micronaut.data.spring.tx.AbstractSpringTransactionOperations;
 import io.micronaut.transaction.TransactionCallback;
 import io.micronaut.transaction.TransactionDefinition;
@@ -44,7 +45,7 @@ import java.util.Optional;
 @Internal
 public final class SpringHibernateTransactionOperations implements TransactionOperations<Session> {
 
-    private final SpringConnectionTransactionOperations transactionOperations;
+    private final SpringJdbcConnectionTransactionOperations transactionOperations;
     private final SessionFactory sessionFactory;
 
     /**
@@ -54,7 +55,7 @@ public final class SpringHibernateTransactionOperations implements TransactionOp
      */
     SpringHibernateTransactionOperations(HibernateTransactionManager hibernateTransactionManager) {
         this.sessionFactory = hibernateTransactionManager.getSessionFactory();
-        this.transactionOperations = new SpringConnectionTransactionOperations(hibernateTransactionManager);
+        this.transactionOperations = new SpringJdbcConnectionTransactionOperations(hibernateTransactionManager);
     }
 
     @Override
@@ -88,6 +89,11 @@ public final class SpringHibernateTransactionOperations implements TransactionOp
             @Override
             public Session getConnection() {
                 return sessionFactory.getCurrentSession();
+            }
+
+            @Override
+            public ConnectionStatus<Session> getConnectionStatus() {
+                throw new IllegalStateException("Connection status is not supported for Spring Hibernate TX manager!");
             }
 
             @Override
@@ -126,13 +132,18 @@ public final class SpringHibernateTransactionOperations implements TransactionOp
             }
 
             @Override
+            public TransactionDefinition getTransactionDefinition() {
+                return definition;
+            }
+
+            @Override
             public void registerSynchronization(TransactionSynchronization synchronization) {
                 status.registerSynchronization(synchronization);
             }
         }));
     }
 
-    private static final class SpringConnectionTransactionOperations extends AbstractSpringTransactionOperations {
+    private static final class SpringJdbcConnectionTransactionOperations extends AbstractSpringTransactionOperations {
 
         private final SessionFactory sessionFactory;
 
@@ -141,7 +152,7 @@ public final class SpringHibernateTransactionOperations implements TransactionOp
          *
          * @param hibernateTransactionManager The hibernate transaction manager.
          */
-        SpringConnectionTransactionOperations(HibernateTransactionManager hibernateTransactionManager) {
+        SpringJdbcConnectionTransactionOperations(HibernateTransactionManager hibernateTransactionManager) {
             super(hibernateTransactionManager);
             this.sessionFactory = hibernateTransactionManager.getSessionFactory();
         }

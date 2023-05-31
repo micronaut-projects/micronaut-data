@@ -114,7 +114,8 @@ abstract sealed class MongoTransactionStatus extends AbstractInternalTransaction
 
         @Override
         public void setRollbackOnly() {
-            existingTransaction.setRollbackOnly();
+            super.setRollbackOnly();
+            existingTransaction.setGlobalRollbackOnly();
         }
     }
 }

@@ -115,6 +115,24 @@ public class TxBookService extends AbstractBookService {
     }
 
     @Transactional
+    public void innerTransactionMarkedForRollback(Runnable markForRollback) {
+        transactionMarkedForRollback(markForRollback);
+        bookRepository.save(newBook("Book1"));
+    }
+
+    @Transactional
+    public void saveAndMarkedForRollback(Runnable markForRollback) {
+        bookRepository.save(newBook("Book1"));
+        markForRollback.run();
+    }
+
+    @Transactional
+    public void saveAndMarkedForRollback2(Runnable markForRollback) {
+        markForRollback.run();
+        bookRepository.save(newBook("Book1"));
+    }
+
+    @Transactional
     public void innerRequiresNewTransactionHasSuppressedException() {
         try {
             transactionRequiresNewFailing();
@@ -143,6 +161,11 @@ public class TxBookService extends AbstractBookService {
     @Transactional
     protected void transactionFailing() {
         throw new IllegalStateException("Big fail!");
+    }
+
+    @Transactional
+    protected void transactionMarkedForRollback(Runnable markForRollback) {
+        markForRollback.run();
     }
 
 }
