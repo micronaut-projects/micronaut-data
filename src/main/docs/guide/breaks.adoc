@@ -1,0 +1,15 @@
+This section documents breaking changes between Micronaut versions
+
+== 4.0.0
+
+===== Repositories validation
+
+Default repository interfaces no longer have Jakarta Validation annotations to validate the entity and the ID.
+To add the validation, annotate the repository's generic type argument with Jakarta Validation annotations:
+
+[source,java]
+----
+@Repository
+public interface BookRepository implements CrudRepository<@jakarta.validation.Valid Book, @jakarta.validation.constraints.NotNull Long> {
+}
+----

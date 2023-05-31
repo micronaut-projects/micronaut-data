@@ -19,8 +19,9 @@ import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.data.tck.entities.Meal;
+import jakarta.validation.Valid;
 
-public interface MealRepository extends CrudRepository<Meal, Long> {
+public interface MealRepository extends CrudRepository<@Valid Meal, Long> {
 
     @Nullable
     @Join("foods")

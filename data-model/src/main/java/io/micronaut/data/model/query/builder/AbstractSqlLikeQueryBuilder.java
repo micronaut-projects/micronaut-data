@@ -51,7 +51,6 @@ import io.micronaut.data.model.query.QueryModel;
 import io.micronaut.data.model.query.QueryParameter;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 
-import jakarta.validation.constraints.NotNull;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -2065,7 +2064,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
 
         QueryPropertyPath getRequiredProperty(String name, Class<?> criterionClazz);
 
-        default void pushParameter(@NotNull BindingParameter bindingParameter, @NotNull BindingParameter.BindingContext bindingContext) {
+        default void pushParameter(@NonNull BindingParameter bindingParameter, @NonNull BindingParameter.BindingContext bindingContext) {
             getQueryState().pushParameter(bindingParameter, bindingContext);
         }
 
@@ -2271,7 +2270,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
          *
          * @return The parameters
          */
-        public @NotNull Map<String, String> getAdditionalRequiredParameters() {
+        public @NonNull Map<String, String> getAdditionalRequiredParameters() {
             return this.additionalRequiredParameters;
         }
 
@@ -2285,7 +2284,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         }
 
         @Override
-        public void pushParameter(@NotNull BindingParameter bindingParameter, @NotNull BindingParameter.BindingContext bindingContext) {
+        public void pushParameter(@NonNull BindingParameter bindingParameter, @NonNull BindingParameter.BindingContext bindingContext) {
             Placeholder placeholder = newParameter();
             bindingContext = bindingContext
                 .index(position.get() + 1)
@@ -2302,7 +2301,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
          *
          * @param parameterBinding the query parameter binding
          */
-        public void pushParameter(@NotNull QueryParameterBinding parameterBinding) {
+        public void pushParameter(@NonNull QueryParameterBinding parameterBinding) {
             parameterBindings.add(parameterBinding);
             queryParts.add(query.toString());
             query.setLength(0);
@@ -2319,8 +2318,8 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
 
     private interface PropertyParameterCreator {
 
-        void pushParameter(@NotNull BindingParameter bindingParameter,
-                           @NotNull BindingParameter.BindingContext bindingContext);
+        void pushParameter(@NonNull BindingParameter bindingParameter,
+                           @NonNull BindingParameter.BindingContext bindingContext);
 
     }
 
@@ -2377,7 +2376,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
          * @param propertyPath The propertyPath
          * @param tableAlias   The tableAlias
          */
-        public QueryPropertyPath(@NotNull PersistentPropertyPath propertyPath, @Nullable String tableAlias) {
+        public QueryPropertyPath(@NonNull PersistentPropertyPath propertyPath, @Nullable String tableAlias) {
             this.propertyPath = propertyPath;
             this.tableAlias = tableAlias;
         }

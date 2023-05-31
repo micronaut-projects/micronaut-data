@@ -1,0 +1,23 @@
+micronaut:
+  http:
+    client:
+      read-timeout: 5m
+flyway:
+  datasources:
+    default:
+      locations:
+        - classpath:oracle-jsonview-migrations
+      enabled: true
+      baseline-version: 0
+      baseline-on-migrate: true
+datasources:
+  default:
+    db-type: oracle
+    dialect: oracle
+    schema-generate: NONE
+test-resources:
+  containers:
+    oracle:
+      image-name: gvenzl/oracle-free:latest-faststart
+      startup-timeout: 600s
+      db-name: test

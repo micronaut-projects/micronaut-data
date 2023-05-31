@@ -1,6 +1,7 @@
 introduction:
   title: Introduction
   whatsNew: What's New?
+  breaks: Breaking Changes
   releaseHistory: Release History
 buildConfig:
   title: Build Configuration
@@ -8,6 +9,8 @@ shared:
   title: Shared Concepts
   repositories:
     title: Repository Interfaces
+  validation:
+    title: Validation
   querying:
     title: Writing Queries
     criteria: Query Criteria

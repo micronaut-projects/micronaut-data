@@ -8,6 +8,7 @@ dependencies {
     annotationProcessor mnValidation.micronaut.validation.processor
 
     implementation projects.dataModel
+    implementation mnValidation.micronaut.validation
     implementation mnTest.micronaut.test.spock
     implementation mnTest.micronaut.test.core
     implementation libs.jakarta.persistence.api
