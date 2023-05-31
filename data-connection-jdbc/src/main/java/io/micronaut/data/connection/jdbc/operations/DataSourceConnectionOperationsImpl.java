@@ -23,11 +23,17 @@ import io.micronaut.data.connection.jdbc.advice.DelegatingDataSource;
 import io.micronaut.data.connection.jdbc.exceptions.CannotGetJdbcConnectionException;
 import io.micronaut.data.connection.manager.ConnectionDefinition;
 import io.micronaut.data.connection.manager.synchronous.ConnectionStatus;
+import io.micronaut.data.connection.manager.synchronous.ConnectionSynchronization;
 import io.micronaut.data.connection.support.AbstractConnectionOperations;
+import io.micronaut.data.connection.support.JdbcConnectionUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * The {@link DataSource} connection operations.
@@ -39,6 +45,7 @@ import java.sql.SQLException;
 @EachBean(DataSource.class)
 public final class DataSourceConnectionOperationsImpl extends AbstractConnectionOperations<Connection> implements DataSourceConnectionOperations, ContextualConnectionProvider {
 
+    private final static Logger LOG = LoggerFactory.getLogger(DataSourceConnectionOperationsImpl.class);
     private final DataSource dataSource;
 
     DataSourceConnectionOperationsImpl(DataSource dataSource) {
@@ -56,6 +63,20 @@ public final class DataSourceConnectionOperationsImpl extends AbstractConnection
 
     @Override
     protected void setupConnection(ConnectionStatus<Connection> connectionStatus) {
+        connectionStatus.getDefinition().isReadOnly().ifPresent(readOnly -> {
+            List<Runnable> onCompleteCallbacks = new ArrayList<>(1);
+            JdbcConnectionUtils.applyReadOnly(LOG, connectionStatus.getConnection(), readOnly, onCompleteCallbacks);
+            if (!onCompleteCallbacks.isEmpty()) {
+                connectionStatus.registerSynchronization(new ConnectionSynchronization() {
+                    @Override
+                    public void executionComplete() {
+                        for (Runnable onCompleteCallback : onCompleteCallbacks) {
+                            onCompleteCallback.run();
+                        }
+                    }
+                });
+            }
+        });
     }
 
     @Override

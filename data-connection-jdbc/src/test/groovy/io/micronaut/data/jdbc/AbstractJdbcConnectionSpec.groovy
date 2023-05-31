@@ -36,7 +36,9 @@ abstract class AbstractJdbcConnectionSpec extends AbstractConnectionSpec {
 
     List<String> createStatements() {
         // We want id on the second column to test scenario getting auto generated id not on the first position
-        return Arrays.asList("CREATE TABLE patient(name VARCHAR(255), id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY, history VARCHAR(1000), doctor_notes VARCHAR(255), appointments JSON)")
+        return Arrays.asList(
+                "CREATE TABLE patient(name VARCHAR(255), id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY, history VARCHAR(1000), doctor_notes VARCHAR(255), appointments JSON)"
+        )
     }
 
     List<String> dropStatements() {

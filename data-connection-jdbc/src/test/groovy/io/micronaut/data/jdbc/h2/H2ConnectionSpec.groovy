@@ -26,13 +26,24 @@ class H2ConnectionSpec extends AbstractJdbcConnectionSpec implements H2TestPrope
         return H2BookRepository.class
     }
 
-    void "test read only tx"() {
+    @Override
+    List<String> createStatements() {
+        return super.createStatements() + ["CREATE TABLE book(title VARCHAR(255), id BIGINT PRIMARY KEY auto_increment, total_pages BIGINT);"]
+    }
+
+    @Override
+    List<String> dropStatements() {
+        return super.dropStatements() + ["DROP TABLE book"]
+    }
+
+    void "test read only connection doesn't work"() {
         when:
             connectionOperations.executeRead {
                 bookService.mandatoryConnection()
             }
         then:
-            bookService.countBooks() == 0
+            bookService.countBooks() == 1
     }
+
 }
 

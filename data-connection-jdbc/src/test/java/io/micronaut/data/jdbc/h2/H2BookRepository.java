@@ -47,13 +47,15 @@ public class H2BookRepository implements SimpleBookRepository {
 
     @Override
     public long count() {
-        try (Statement statement = getConnection().createStatement()) {
-            try (ResultSet resultSet = statement.executeQuery("select count(*) from book;")) {
-                resultSet.next();
-                return resultSet.getLong(1);
+        return dataSourceConnectionOperations.executeRead(status -> {
+            try (Statement statement = status.getConnection().createStatement()) {
+                try (ResultSet resultSet = statement.executeQuery("select count(*) from book;")) {
+                    resultSet.next();
+                    return resultSet.getLong(1);
+                }
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
             }
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
+        });
     }
 }

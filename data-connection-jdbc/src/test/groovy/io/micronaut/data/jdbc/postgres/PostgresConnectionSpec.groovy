@@ -30,8 +30,7 @@ class PostgresConnectionSpec extends AbstractJdbcConnectionSpec implements Postg
     List<String> createStatements() {
         return Arrays.asList(
                 "CREATE TABLE patient(name VARCHAR(255), id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY, history VARCHAR(1000), doctor_notes VARCHAR(255), appointments JSONB);",
-                "CREATE TABLE book(title VARCHAR(255), id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY, total_pages BIGINT);",
-
+                "CREATE TABLE book(title VARCHAR(255), id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY, total_pages BIGINT);"
         )
     }
 
@@ -43,7 +42,7 @@ class PostgresConnectionSpec extends AbstractJdbcConnectionSpec implements Postg
         )
     }
 
-    void "test read only connection 1"() {
+    void "test read only connection"() {
         when:
             connectionOperations.executeRead { status ->
                 assert status.getConnection().isReadOnly()
@@ -51,7 +50,7 @@ class PostgresConnectionSpec extends AbstractJdbcConnectionSpec implements Postg
                 assert status.getConnection().isReadOnly()
             }
         then:
-            bookService.countBooks() == 1
+            bookService.countBooks() == 1 // Read only is just a hint to the driver
     }
 
 }

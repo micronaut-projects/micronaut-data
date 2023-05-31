@@ -62,6 +62,7 @@ public interface ConnectionOperations<C> {
 
     /**
      * Execute a read-only connection within the context of the function.
+     * NOTE: The connection manager might not support the read only connection!
      *
      * @param callback The call back
      * @param <R>      The result
