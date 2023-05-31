@@ -1,11 +1,13 @@
 package io.micronaut.transaction.jdbc
 
 import io.micronaut.context.annotation.Property
+import io.micronaut.data.connection.exceptions.NoConnectionException
 import io.micronaut.jdbc.DataSourceResolver
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import io.micronaut.transaction.SynchronousTransactionManager
 import io.micronaut.transaction.TransactionCallback
 import io.micronaut.transaction.TransactionDefinition
+import io.micronaut.transaction.TransactionOperations
 import io.micronaut.transaction.TransactionStatus
 import io.micronaut.transaction.exceptions.NoTransactionException
 import spock.lang.Issue
@@ -34,11 +36,11 @@ class DataSourceProxySpec extends Specification {
     DataSourceResolver dataSourceResolver
 
     @Inject
-    SynchronousTransactionManager<Connection> transactionManager
+    TransactionOperations<Connection> transactionManager
 
     @Inject
     @Named("other")
-    SynchronousTransactionManager<Connection> otherTransactionManager
+    TransactionOperations<Connection> otherTransactionManager
 
     @Inject
     TestService testService
@@ -116,7 +118,7 @@ class DataSourceProxySpec extends Specification {
         connection.prepareStatement("select 1")
 
         then:
-        thrown NoTransactionException
+        thrown NoConnectionException
 
         when:
         connection = dataSourceResolver.resolve(dataSource).getConnection()

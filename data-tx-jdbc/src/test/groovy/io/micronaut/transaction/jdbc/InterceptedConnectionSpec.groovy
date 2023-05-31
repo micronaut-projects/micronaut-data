@@ -1,6 +1,7 @@
 package io.micronaut.transaction.jdbc
 
 import io.micronaut.context.annotation.Property
+import io.micronaut.data.connection.exceptions.NoConnectionException
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import io.micronaut.transaction.exceptions.NoTransactionException
 import spock.lang.Specification
@@ -20,8 +21,7 @@ class InterceptedConnectionSpec extends Specification {
         connection.prepareStatement("select * from stuff")
 
         then:
-        thrown(NoTransactionException)
+        thrown(NoConnectionException)
     }
-
 
 }
