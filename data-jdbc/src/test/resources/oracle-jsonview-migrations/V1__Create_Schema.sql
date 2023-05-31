@@ -44,19 +44,3 @@ SELECT JSON{'id': TBL_STUDENT.id,
                                     } FROM TBL_STUDENT_CLASSES WITH INSERT UPDATE DELETE WHERE TBL_STUDENT.id = TBL_STUDENT_CLASSES.student_id
                         ]
             } FROM TBL_STUDENT WITH UPDATE INSERT DELETE;
-
-/*
-CREATE OR REPLACE JSON DUALITY VIEW STUDENT_VIEW AS
-SELECT JSON{'name'  : s.name WITH UPDATE,
-    'id': s.id,
-    'schedule': [SELECT JSON {'class': (SELECT JSON{
-                                                    'name': c.name,
-                                                    'classID': c.id,
-                                                    'time': c.time WITH UPDATE,
-                                                    'room': c.room,
-                                                    'teacher': (SELECT JSON{'teachID': t.id, 'teacher': t.name} FROM tbl_teacher t WHERE t.id = c.teacher_id)
-                                                } FROM tbl_class c WITH UPDATE WHERE c.id = ssch.class_id),
-                                      'id': ssch.id
-                                      } FROM tbl_student_classes ssch WITH INSERT DELETE WHERE ssch.student_id = s.id]
-            } FROM tbl_student s WITH INSERT UPDATE DELETE;
-*/

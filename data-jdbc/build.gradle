@@ -70,6 +70,9 @@ dependencies {
     testImplementation mnTestResources.micronaut.test.resources.extensions.junit.platform
 
     testRuntimeOnly mnSerde.micronaut.serde.oracle.jdbc.json
+
+    testRuntimeOnly libs.micronaut.flyway
+    testRuntimeOnly libs.flyway.oracle
 }
 
 micronaut {
