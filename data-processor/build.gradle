@@ -20,4 +20,5 @@ dependencies {
 	testImplementation libs.spring.data.jpa
 	testImplementation projects.dataTck
 	testImplementation projects.dataTx
+	testImplementation projects.dataJdbc
 }
