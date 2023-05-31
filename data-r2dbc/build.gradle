@@ -47,8 +47,8 @@ dependencies {
 
     testImplementation libs.testcontainers.r2dbc
 
+    // oracle
     testImplementation mnR2dbc.r2dbc.oracle
-    testImplementation libs.testcontainers.oracle
 
     // mariadb
     testImplementation mnR2dbc.r2dbc.mariadb
@@ -87,6 +87,9 @@ dependencies {
     testImplementation mnSerde.micronaut.serde.support
     testRuntimeOnly mn.snakeyaml
     testRuntimeOnly mnSerde.micronaut.serde.oracle.jdbc.json
+
+    testRuntimeOnly libs.micronaut.flyway
+    testRuntimeOnly mnSql.micronaut.jdbc.hikari
 }
 
 micronaut {

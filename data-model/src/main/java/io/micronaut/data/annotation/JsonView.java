@@ -16,7 +16,6 @@
 package io.micronaut.data.annotation;
 import io.micronaut.context.annotation.AliasFor;
 import io.micronaut.core.annotation.Experimental;
-import io.micronaut.core.annotation.Introspected;
 import io.micronaut.serde.annotation.Serdeable;
 
 import java.lang.annotation.Documented;
@@ -34,7 +33,6 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.ANNOTATION_TYPE, ElementType.TYPE, ElementType.FIELD})
 @Serdeable
-@Introspected
 @Documented
 @Experimental
 @MappedEntity
