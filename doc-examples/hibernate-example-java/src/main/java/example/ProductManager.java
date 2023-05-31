@@ -1,20 +1,20 @@
 
 package example;
 
-import io.micronaut.transaction.SynchronousTransactionManager;
+import io.micronaut.transaction.TransactionOperations;
 import jakarta.inject.Singleton;
 import jakarta.persistence.EntityManager;
-import java.sql.Connection;
+import org.hibernate.Session;
 
 @Singleton
 public class ProductManager {
 
     private final EntityManager entityManager;
-    private final SynchronousTransactionManager<Connection> transactionManager;
+    private final TransactionOperations<Session> transactionManager;
 
     public ProductManager(
             EntityManager entityManager,
-            SynchronousTransactionManager<Connection> transactionManager) { // <1>
+            TransactionOperations<Session> transactionManager) { // <1>
         this.entityManager = entityManager;
         this.transactionManager = transactionManager;
     }
