@@ -18,7 +18,7 @@ micronaut-kotlin = "4.0.0-M3"
 micronaut-multitenancy = "5.0.0-M3"
 micronaut-validation = "4.0.0-M9"
 micronaut-logging = "1.0.0-M2"
-micronaut-flyway = "6.0.0-M4"
+micronaut-flyway = "6.0.0-M5"
 
 groovy = "4.0.12"
 
