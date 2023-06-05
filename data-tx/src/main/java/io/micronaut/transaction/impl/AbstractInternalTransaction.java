@@ -38,6 +38,9 @@ public abstract class AbstractInternalTransaction<C> implements InternalTransact
 
     private List<TransactionSynchronization> synchronizations;
 
+    /**
+     * Set global rollback only.
+     */
     protected void setGlobalRollbackOnly() {
         globalRollbackOnly = true;
     }

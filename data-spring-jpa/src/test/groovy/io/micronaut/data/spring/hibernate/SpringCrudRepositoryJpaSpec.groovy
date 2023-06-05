@@ -15,23 +15,20 @@
  */
 package io.micronaut.data.spring.hibernate
 
-import io.micronaut.context.annotation.Property
+
 import io.micronaut.data.spring.hibernate.spring.SpringCrudRepository
 import io.micronaut.data.tck.entities.Person
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
+import jakarta.inject.Inject
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
 import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Stepwise
 
-import jakarta.inject.Inject
-
 @MicronautTest(rollback = false, packages = "io.micronaut.data.tck.entities")
-@Property(name = "datasources.default.name", value = "mydb")
-@Property(name = 'jpa.default.properties.hibernate.hbm2ddl.auto', value = 'create-drop')
 @Stepwise
-class SpringCrudRepositoryJpaSpec extends Specification {
+class SpringCrudRepositoryJpaSpec extends Specification implements H2Properties {
     @Inject
     @Shared
     SpringCrudRepository crudRepository

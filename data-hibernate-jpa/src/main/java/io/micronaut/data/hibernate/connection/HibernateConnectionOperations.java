@@ -16,7 +16,6 @@
 package io.micronaut.data.hibernate.connection;
 
 import io.micronaut.context.annotation.EachBean;
-import io.micronaut.context.annotation.Parameter;
 import io.micronaut.context.annotation.Replaces;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Nullable;
@@ -32,7 +31,6 @@ import org.hibernate.SessionBuilder;
 import org.hibernate.SessionFactory;
 import org.hibernate.engine.spi.SessionImplementor;
 
-import javax.sql.DataSource;
 import java.sql.Connection;
 
 /**
@@ -43,7 +41,7 @@ import java.sql.Connection;
  */
 @Internal
 @RequiresSyncHibernate
-@EachBean(DataSource.class)
+@EachBean(SessionFactory.class)
 @Replaces(DataSourceConnectionOperations.class)
 public final class HibernateConnectionOperations extends AbstractConnectionOperations<Session> implements ContextualConnectionProvider {
 
@@ -51,7 +49,7 @@ public final class HibernateConnectionOperations extends AbstractConnectionOpera
     @Nullable
     private final Interceptor entityInterceptor;
 
-    public HibernateConnectionOperations(@Parameter SessionFactory sessionFactory,
+    public HibernateConnectionOperations(SessionFactory sessionFactory,
                                          @Nullable Interceptor entityInterceptor) {
         this.sessionFactory = sessionFactory;
         this.entityInterceptor = entityInterceptor;

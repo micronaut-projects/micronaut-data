@@ -71,6 +71,12 @@ class SpringHibernateTransactionSpec extends AbstractTransactionSpec implements 
     }
 
     @Override
+    boolean supportsNoTxProcessing() {
+        // Spring always tries to flush which fails because there is no transaction
+        return false
+    }
+
+    @Override
     boolean supportsDontRollbackOn() {
         return false
     }

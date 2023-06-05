@@ -40,6 +40,10 @@ abstract class AbstractTransactionSpec extends Specification implements TestProp
         bookService.cleanup()
     }
 
+    boolean supportsNoTxProcessing() {
+        return true
+    }
+
     boolean supportsModificationInNonTransaction() {
         return true
     }
@@ -79,6 +83,9 @@ abstract class AbstractTransactionSpec extends Specification implements TestProp
     }
 
     void "test book added in never propagation"() {
+        if (!supportsNoTxProcessing()) {
+            return
+        }
         when:
             bookService.bookAddedInNeverPropagation(getNoTxCheck())
         then:
@@ -90,6 +97,9 @@ abstract class AbstractTransactionSpec extends Specification implements TestProp
     }
 
     void "test book added in inner never propagation"() {
+        if (!supportsNoTxProcessing()) {
+            return
+        }
         when:
             bookService.bookAddedInInnerNeverPropagation(getNoTxCheck())
         then:
@@ -99,14 +109,11 @@ abstract class AbstractTransactionSpec extends Specification implements TestProp
     }
 
     void "test book added in not-supported propagation"() {
+        if (!supportsNoTxProcessing()) {
+            return
+        }
         when:
-//            try {
-                bookService.bookAddedInNoSupportedPropagation(getNoTxCheck())
-//            } catch (Exception e) {
-//                if (supportsModificationInNonTransaction()) {
-//                    throw e
-//                }
-//            }
+            bookService.bookAddedInNoSupportedPropagation(getNoTxCheck())
         then:
             if (supportsModificationInNonTransaction()) {
                 assert bookService.countBooksTransactional() == 1
@@ -116,6 +123,9 @@ abstract class AbstractTransactionSpec extends Specification implements TestProp
     }
 
     void "test book added in not-supported propagation and failed"() {
+        if (!supportsNoTxProcessing()) {
+            return
+        }
         when:
             bookService.bookAddedInNoSupportedPropagationAndFailed(getNoTxCheck())
         then:
@@ -128,6 +138,9 @@ abstract class AbstractTransactionSpec extends Specification implements TestProp
     }
 
     void "test book added in inner not-supported propagation and failed with exception suppressed"() {
+        if (!supportsNoTxProcessing()) {
+            return
+        }
         when:
             bookService.bookAddedInInnerNoSupportedPropagationFailedAndExceptionSuppressed(getNoTxCheck())
         then:
@@ -139,6 +152,9 @@ abstract class AbstractTransactionSpec extends Specification implements TestProp
     }
 
     void "test book added in inner not-supported propagation"() {
+        if (!supportsNoTxProcessing()) {
+            return
+        }
         when:
             bookService.bookAddedInInnerNoSupportedPropagation(getNoTxCheck())
         then:
@@ -263,6 +279,9 @@ abstract class AbstractTransactionSpec extends Specification implements TestProp
     }
 
     void "test that connections are never exhausted 5"() {
+        if (!supportsNoTxProcessing()) {
+            return
+        }
         when:
             CONNECTIONS.times { bookService.bookAddedInInnerNoSupportedPropagation(getNoTxCheck()) }
         then:
@@ -274,6 +293,9 @@ abstract class AbstractTransactionSpec extends Specification implements TestProp
     }
 
     void "test that connections are never exhausted 6"() {
+        if (!supportsNoTxProcessing()) {
+            return
+        }
         when:
             CONNECTIONS.times { bookService.bookAddedInNeverPropagation(getNoTxCheck()) }
         then:

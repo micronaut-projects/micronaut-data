@@ -1,24 +1,20 @@
 package io.micronaut.data.spring.hibernate
 
-import io.micronaut.context.annotation.Property
+
 import io.micronaut.data.tck.entities.Book
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import io.micronaut.transaction.TransactionOperations
+import jakarta.inject.Inject
+import jakarta.persistence.EntityManager
+import org.hibernate.Session
 import org.springframework.transaction.annotation.Transactional
 import spock.lang.Specification
 
-import jakarta.inject.Inject
-import jakarta.persistence.EntityManager
-
-import java.sql.Connection
-
 @MicronautTest(packages = "io.micronaut.data.tck.entities", transactional = false)
-@Property(name = "datasources.default.name", value = "mydb")
-@Property(name = 'jpa.default.properties.hibernate.hbm2ddl.auto', value = 'create-drop')
-class SpringTransactionAnnotation2Spec extends Specification {
+class SpringTransactionAnnotation2Spec extends Specification implements H2Properties {
 
     @Inject BookService bookService
-    @Inject TransactionOperations<Connection> transactionOperations
+    @Inject TransactionOperations<Session> transactionOperations
 
     void "test transactional annotation"() {
         when:
@@ -55,7 +51,7 @@ class SpringTransactionAnnotation2Spec extends Specification {
     @Transactional
     static class BookService {
         @Inject EntityManager entityManager
-        @Inject TransactionOperations<java.sql.Connection> transactionOperations
+        @Inject TransactionOperations<Session> transactionOperations
 
         List<Book> listBooks() {
             entityManager.createQuery("from Book").resultList

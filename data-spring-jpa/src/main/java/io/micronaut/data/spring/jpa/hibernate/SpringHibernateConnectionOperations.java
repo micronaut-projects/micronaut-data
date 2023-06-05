@@ -13,65 +13,60 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.spring.jdbc;
+package io.micronaut.data.spring.jpa.hibernate;
 
 import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Replaces;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.data.connection.jdbc.operations.DataSourceConnectionOperationsImpl;
 import io.micronaut.data.connection.manager.ConnectionDefinition;
 import io.micronaut.data.connection.manager.synchronous.ConnectionOperations;
 import io.micronaut.data.connection.manager.synchronous.ConnectionStatus;
 import io.micronaut.data.connection.support.DefaultConnectionStatus;
-import org.springframework.jdbc.core.ConnectionCallback;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.datasource.ConnectionHandle;
-import org.springframework.jdbc.datasource.ConnectionHolder;
+import io.micronaut.data.hibernate.connection.HibernateConnectionOperations;
+import org.hibernate.Session;
+import org.hibernate.SessionFactory;
+import org.springframework.orm.hibernate5.HibernateTemplate;
+import org.springframework.orm.hibernate5.SessionHolder;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
-import javax.sql.DataSource;
-import java.sql.Connection;
 import java.util.Optional;
 import java.util.function.Function;
 
 /**
- * Spring JDBC connection operations.
+ * Spring JDBC Hibernate Session operations.
  *
  * @author Denis Stepanov
  * @since 4.0.0
  */
 @Internal
-@EachBean(DataSource.class)
-@Replaces(DataSourceConnectionOperationsImpl.class)
+@EachBean(SessionFactory.class)
+@Replaces(HibernateConnectionOperations.class)
 // TODO: We should avoid using @Replaces, there should be a way to use different data sources with Micronaut and Spring TX
-public final class SpringJdbcConnectionOperations implements ConnectionOperations<Connection> {
+public final class SpringHibernateConnectionOperations implements ConnectionOperations<Session> {
 
-    private final DataSource dataSource;
+    private final SessionFactory sessionFactory;
 
-    public SpringJdbcConnectionOperations(DataSource dataSource) {
-        this.dataSource = dataSource;
+    SpringHibernateConnectionOperations(SessionFactory sessionFactory) {
+        this.sessionFactory = sessionFactory;
     }
 
     @Override
-    public Optional<ConnectionStatus<Connection>> findConnectionStatus() {
-        ConnectionHolder conHolder = (ConnectionHolder) TransactionSynchronizationManager.getResource(dataSource);
-        if (conHolder != null) {
-            ConnectionHandle connectionHandle = conHolder.getConnectionHandle();
-            if (connectionHandle != null) {
-                return Optional.of(createStatus(connectionHandle.getConnection()));
-            }
+    public Optional<ConnectionStatus<Session>> findConnectionStatus() {
+        SessionHolder sessionHolder = (SessionHolder) TransactionSynchronizationManager.getResource(sessionFactory);
+        if (sessionHolder != null && sessionHolder.getEntityManager() != null) {
+            return Optional.of(createStatus(sessionHolder.getSession()));
         }
         return Optional.empty();
     }
 
     @Override
-    public <R> R execute(ConnectionDefinition definition, Function<ConnectionStatus<Connection>, R> callback) {
-        return new JdbcTemplate(dataSource).execute((ConnectionCallback<R>) connection -> callback.apply(createStatus(connection)));
+    public <R> R execute(ConnectionDefinition definition, Function<ConnectionStatus<Session>, R> callback) {
+        return new HibernateTemplate(sessionFactory).execute(session -> callback.apply(createStatus(session)));
     }
 
-    private DefaultConnectionStatus<Connection> createStatus(Connection connection) {
+    private DefaultConnectionStatus<Session> createStatus(Session session) {
         return new DefaultConnectionStatus<>(
-            connection,
+            session,
             ConnectionDefinition.DEFAULT,
             true
         );
