@@ -25,7 +25,8 @@ import org.hibernate.engine.spi.SessionFactoryImplementor;
  * @since 4.0.0
  * @deprecated Replaced by {@link io.micronaut.transaction.hibernate.MicronautSessionContext}
  */
-@Deprecated(since = "4", forRemoval = true)
+// TypeHint doesn't work for deprecated, this should be removed before the release anyway
+//@Deprecated(since = "4", forRemoval = true)
 @TypeHint(MicronautSessionContext.class)
 public final class MicronautSessionContext extends io.micronaut.transaction.hibernate.MicronautSessionContext {
 

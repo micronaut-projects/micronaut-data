@@ -29,6 +29,7 @@ import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.data.connection.manager.synchronous.ConnectionOperations;
+import io.micronaut.data.connection.manager.synchronous.ConnectionStatus;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.jdbc.config.DataJdbcConfiguration;
 import io.micronaut.data.jdbc.convert.JdbcConversionContext;
@@ -759,13 +760,6 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     }
 
     private <I> I executeRead(Function<Connection, I> fn) {
-        if (jdbcConfiguration.isTransactionPerOperation()) {
-            return transactionOperations.executeRead(status -> {
-                Connection connection = status.getConnection();
-                applySchema(connection);
-                return fn.apply(connection);
-            });
-        }
         if (!jdbcConfiguration.isAllowConnectionPerOperation() && connectionOperations.findConnectionStatus().isEmpty()) {
             throw connectionNotFoundAndNewNotAllowed();
         }
@@ -777,13 +771,6 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     }
 
     private <I> I executeWrite(Function<Connection, I> fn) {
-        if (jdbcConfiguration.isTransactionPerOperation()) {
-            return transactionOperations.executeWrite(status -> {
-                Connection connection = status.getConnection();
-                applySchema(connection);
-                return fn.apply(connection);
-            });
-        }
         if (!jdbcConfiguration.isAllowConnectionPerOperation() && connectionOperations.findConnectionStatus().isEmpty()) {
             throw connectionNotFoundAndNewNotAllowed();
         }
@@ -822,12 +809,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     @NonNull
     @Override
     public Connection getConnection() {
-        Connection connection;
-        if (jdbcConfiguration.isTransactionPerOperation() || !jdbcConfiguration.isAllowConnectionPerOperation() || transactionOperations.hasConnection()) {
-            connection = transactionOperations.getConnection();
-        } else {
-            connection = connectionOperations.getConnectionStatus().getConnection();
-        }
+        Connection connection = connectionOperations.getConnectionStatus().getConnection();
         applySchema(connection);
         return connection;
     }
@@ -836,7 +818,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     private ConnectionContext getConnectionCtx() {
         boolean needsToCloseConnection;
         Connection connection;
-        if (jdbcConfiguration.isTransactionPerOperation() || !jdbcConfiguration.isAllowConnectionPerOperation() || transactionOperations.hasConnection()) {
+        if (!jdbcConfiguration.isAllowConnectionPerOperation() || transactionOperations.hasConnection()) {
             connection = transactionOperations.getConnection();
             needsToCloseConnection = false;
         } else {

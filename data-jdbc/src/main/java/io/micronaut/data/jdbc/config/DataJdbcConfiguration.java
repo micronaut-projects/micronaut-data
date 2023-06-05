@@ -50,12 +50,6 @@ public class DataJdbcConfiguration implements Named {
     private List<String> schemaGenerateNames;
 
     /**
-     * If true, {@link io.micronaut.transaction.TransactionOperations} will be used for the operation.
-     * This should be false by default in v4 as it adds additional overhead.
-     */
-    private boolean transactionPerOperation = false;
-
-    /**
      * If true, {@link javax.sql.DataSource#getConnection()} will be used in try-resource block for the operation.
      */
     private boolean allowConnectionPerOperation = true;
@@ -136,20 +130,6 @@ public class DataJdbcConfiguration implements Named {
     @Override
     public String getName() {
         return name;
-    }
-
-    /**
-     * @return true if property is set
-     */
-    public boolean isTransactionPerOperation() {
-        return transactionPerOperation;
-    }
-
-    /**
-     * @param transactionPerOperation The property
-     */
-    public void setTransactionPerOperation(boolean transactionPerOperation) {
-        this.transactionPerOperation = transactionPerOperation;
     }
 
     /**
