@@ -1,5 +1,4 @@
 repositories {
-    mavenLocal()
     mavenCentral()
 }
 
