@@ -27,7 +27,7 @@ public class ProductManager {
     }
 
     Mono<Product> find(String name) {
-        return connectionOperations.withConnectionMono(status -> Mono.fromCompletionStage(status.getConnection().createQuery("from Product p where p.name = :name", Product.class)
+        return transactionOperations.withTransactionMono(status -> Mono.fromCompletionStage(status.getConnection().createQuery("from Product p where p.name = :name", Product.class)
                 .setParameter("name", name)
                 .getSingleResult())
         );

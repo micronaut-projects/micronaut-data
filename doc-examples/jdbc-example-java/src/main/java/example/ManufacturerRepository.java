@@ -10,4 +10,6 @@ public interface ManufacturerRepository extends GenericRepository<Manufacturer, 
     Manufacturer findByName(String name);
 
     Manufacturer save(String name);
+
+    void deleteAll();
 }

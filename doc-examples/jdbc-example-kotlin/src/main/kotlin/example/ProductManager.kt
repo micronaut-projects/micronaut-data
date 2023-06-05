@@ -1,5 +1,6 @@
 package example
 
+import io.micronaut.data.exceptions.EmptyResultException
 import io.micronaut.transaction.TransactionOperations
 import jakarta.inject.Singleton
 import java.sql.Connection
@@ -22,7 +23,7 @@ class ProductManager(
         }
     }
 
-    fun find(name: String): Product? {
+    fun find(name: String): Product {
         return transactionManager.executeRead { status -> // <3>
             status.connection.prepareStatement("select * from product p where p.name = ?").use { ps ->
                     ps.setString(1, name)
@@ -32,7 +33,7 @@ class ProductManager(
                                 rs.getLong("id"), rs.getString("name"), null
                             )
                         }
-                        return@executeRead null
+                        throw EmptyResultException()
                     }
                 }
         }
