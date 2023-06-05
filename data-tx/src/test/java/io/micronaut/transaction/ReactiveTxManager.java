@@ -48,4 +48,10 @@ public class ReactiveTxManager extends AbstractReactorReactiveTransactionOperati
         return Mono.empty();
     }
 
+    @Override
+    protected Publisher<Void> doCancel(DefaultReactiveTransactionStatus<String> connectionStatus) {
+        LOGGER.info("Cancel transaction for connection: {}", connectionStatus.getConnection());
+        transactionsLog.add("CANCEL TX " + connectionStatus.getConnection());
+        return Mono.empty();
+    }
 }

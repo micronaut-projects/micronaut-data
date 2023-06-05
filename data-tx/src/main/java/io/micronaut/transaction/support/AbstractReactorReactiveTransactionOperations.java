@@ -184,7 +184,7 @@ public abstract class AbstractReactorReactiveTransactionOperations<C> implements
             status -> executeCallbackFlux(status, handler),
             this::doCommit,
             this::doRollback,
-            this::doCommit);
+            this::doCancel);
     }
 
     /**
@@ -205,7 +205,7 @@ public abstract class AbstractReactorReactiveTransactionOperations<C> implements
             status -> executeCallbackMono(status, handler),
             this::doCommit,
             this::doRollback,
-            this::doCommit);
+            this::doCancel);
     }
 
     /**
@@ -283,6 +283,17 @@ public abstract class AbstractReactorReactiveTransactionOperations<C> implements
                 return transactionDefinition;
             }
         };
+    }
+
+    /**
+     * Cancels the TX operation.
+     * @param status The TX status
+     * @return the canceling publisher
+     */
+    @NonNull
+    protected Publisher<Void> doCancel(@NonNull DefaultReactiveTransactionStatus<C> status) {
+        // Default behaviour is to commit the TX
+        return doCommit(status);
     }
 
     @NonNull
