@@ -432,7 +432,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
             if (idFieldCount > 1) {
                 generatePkAfterColumns = true;
             } else if (idFieldCount > 0 && !identity.isGenerated()) {
-                // Need to define primary key if id not generated (otherwise done during column definition)
+                // Need to define primary key if id not generated (otherwise defined in column definition)
                 // but can't do if id field is byte array (BLOB) and it expects length for MySQL
                 if (!(dialect == Dialect.MYSQL && ids.get(0).getProperty().getDataType() == DataType.BYTE_ARRAY)) {
                     generatePkAfterColumns = true;
