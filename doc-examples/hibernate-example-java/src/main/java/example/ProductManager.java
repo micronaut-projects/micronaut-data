@@ -12,9 +12,8 @@ public class ProductManager {
     private final EntityManager entityManager;
     private final TransactionOperations<Session> transactionManager;
 
-    public ProductManager(
-            EntityManager entityManager,
-            TransactionOperations<Session> transactionManager) { // <1>
+    public ProductManager(EntityManager entityManager,
+                          TransactionOperations<Session> transactionManager) { // <1>
         this.entityManager = entityManager;
         this.transactionManager = transactionManager;
     }
@@ -29,9 +28,9 @@ public class ProductManager {
 
     Product find(String name) {
         return transactionManager.executeRead(status -> // <3>
-                entityManager.createQuery("from Product p where p.name = :name", Product.class)
-                    .setParameter("name", name)
-                    .getSingleResult()
+            status.getConnection().createQuery("from Product p where p.name = :name", Product.class)
+                .setParameter("name", name)
+                .getSingleResult()
         );
     }
 }

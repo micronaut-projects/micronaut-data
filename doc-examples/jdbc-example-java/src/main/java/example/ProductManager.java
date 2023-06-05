@@ -1,7 +1,7 @@
 
 package example;
 
-import io.micronaut.transaction.SynchronousTransactionManager;
+import io.micronaut.transaction.TransactionOperations;
 import jakarta.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -11,11 +11,10 @@ import java.sql.ResultSet;
 public class ProductManager {
 
     private final Connection connection;
-    private final SynchronousTransactionManager<Connection> transactionManager;
+    private final TransactionOperations<Connection> transactionManager;
 
-    public ProductManager(
-            Connection connection,
-            SynchronousTransactionManager<Connection> transactionManager) { // <1>
+    public ProductManager(Connection connection,
+                          TransactionOperations<Connection> transactionManager) { // <1>
         this.connection = connection;
         this.transactionManager = transactionManager;
     }
@@ -23,8 +22,7 @@ public class ProductManager {
     Product save(String name, Manufacturer manufacturer) {
         return transactionManager.executeWrite(status -> { // <2>
             final Product product = new Product(name, manufacturer);
-            try (PreparedStatement ps =
-                         connection.prepareStatement("insert into product (name, manufacturer_id) values (?, ?)")) {
+            try (PreparedStatement ps = connection.prepareStatement("insert into product (name, manufacturer_id) values (?, ?)")) {
                 ps.setString(1, name);
                 ps.setLong(2, manufacturer.getId());
                 ps.execute();
@@ -35,8 +33,7 @@ public class ProductManager {
 
     Product find(String name) {
         return transactionManager.executeRead(status -> { // <3>
-            try (PreparedStatement ps = connection
-                    .prepareStatement("select * from product p where p.name = ?")) {
+            try (PreparedStatement ps = status.getConnection().prepareStatement("select * from product p where p.name = ?")) {
                 ps.setString(1, name);
                 try (ResultSet rs = ps.executeQuery()) {
                     if (rs.next()) {

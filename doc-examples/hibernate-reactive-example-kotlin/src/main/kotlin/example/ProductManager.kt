@@ -14,7 +14,7 @@ class ProductManager(
 
     fun save(name: String, manufacturer: Manufacturer): Product {
         return transactionManager.executeWrite { // <2>
-            val product = Product(0, name, manufacturer)
+            val product = Product(null, name, manufacturer)
             entityManager.persist(product)
             product
         }
