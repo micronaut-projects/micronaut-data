@@ -1,61 +1,23 @@
 package io.micronaut.data.r2dbc.oraclexe.jsonview
 
-import io.micronaut.context.ApplicationContext
 import io.micronaut.data.exceptions.OptimisticLockException
-import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.tck.entities.Contact
 import io.micronaut.data.tck.entities.ContactView
-import io.micronaut.test.support.TestPropertyProvider
-import org.testcontainers.containers.OracleContainer
-import org.testcontainers.utility.DockerImageName
-import spock.lang.AutoCleanup
-import spock.lang.IgnoreIf
-import spock.lang.Shared
+import io.micronaut.test.extensions.spock.annotation.MicronautTest
+import jakarta.inject.Inject
 import spock.lang.Specification
 
-import java.time.Duration
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
 
-@IgnoreIf({ env["GITHUB_WORKFLOW"] })
-class OracleR2DbcJsonViewSpec extends Specification implements TestPropertyProvider {
+@MicronautTest(environments = ["oracle-jsonview"], transactional = false)
+class OracleR2DbcJsonViewSpec extends Specification {
 
-    @AutoCleanup("stop")
-    @Shared
-    OracleContainer container = createContainer()
+    @Inject
+    OracleXEContactRepository contactRepository
 
-    @AutoCleanup
-    @Shared
-    ApplicationContext context = ApplicationContext.run(properties)
-
-    OracleXEContactRepository getContactRepository() {
-        return context.getBean(OracleXEContactRepository)
-    }
-
-    ContactViewRepository getContactViewRepository() {
-        return context.getBean(ContactViewRepository)
-    }
-
-    @Override
-    Map<String, String> getProperties() {
-        if (container == null) {
-            container = createContainer()
-        }
-        container.start()
-        def prefix = 'r2dbc.datasources.default'
-        def dbType = 'oracle'
-        return [
-                (prefix + '.url')               : "r2dbc:${dbType}://${container.getHost()}:${container.getFirstMappedPort()}/test",
-                (prefix + '.username')          : container.getUsername(),
-                (prefix + '.password')          : container.getPassword(),
-                // Cannot create JSON view during schema creation, works via init script
-                (prefix + '.schema-generate')   : 'CREATE',
-                (prefix + '.dialect')           : Dialect.ORACLE,
-                (prefix + '.connectTimeout')    : Duration.ofMinutes(1).toString(),
-                (prefix + '.statementTimeout')  : Duration.ofMinutes(1).toString(),
-                (prefix + '.lockTimeout')       : Duration.ofMinutes(1).toString()
-        ] as Map<String, String>
-    }
+    @Inject
+    ContactViewRepository contactViewRepository
 
     def "test CRUD"() {
         when:
@@ -128,10 +90,5 @@ class OracleR2DbcJsonViewSpec extends Specification implements TestPropertyProvi
         then:
         !contactRepository.findById(id).present
         !contactViewRepository.findById(id).present
-    }
-
-    static OracleContainer createContainer() {
-        return new OracleContainer(DockerImageName.parse("gvenzl/oracle-free:latest-faststart").asCompatibleSubstituteFor("gvenzl/oracle-xe"))
-                .withDatabaseName("test").withInitScript("./oracle-json-view-init.sql")
     }
 }

@@ -1,24 +1,24 @@
 [versions]
-micronaut = "4.0.0-M5"
+micronaut = "4.0.0-M6"
 micronaut-platform = "4.0.0-M2"
 micronaut-docs = "2.0.0"
 micronaut-gradle-plugin = "4.0.0-M4"
 micronaut-testresources = "2.0.0-M8"
 
-micronaut-azure = "5.0.0-M3"
-micronaut-reactor = "3.0.0-M3"
-micronaut-rxjava2 = "2.0.0-M1"
-micronaut-r2dbc = "5.0.0-M7"
+micronaut-azure = "5.0.0-M4"
+micronaut-reactor = "3.0.0-M4"
+micronaut-rxjava2 = "2.0.0-M3"
+micronaut-r2dbc = "5.0.0-M8"
 micronaut-serde = "2.0.0-M8"
-micronaut-sql = "5.0.0-M7"
-micronaut-spring = "5.0.0-M1"
-micronaut-test = "4.0.0-M4"
-micronaut-mongo = "5.0.0-M2"
-micronaut-kotlin = "4.0.0-M3"
-micronaut-multitenancy = "5.0.0-M3"
-micronaut-validation = "4.0.0-M8"
-micronaut-logging = "1.0.0-M2"
-micronaut-flyway = "6.0.0-M3"
+micronaut-sql = "5.0.0-M8"
+micronaut-spring = "5.0.0-M3"
+micronaut-test = "4.0.0-M6"
+micronaut-mongo = "5.0.0-M3"
+micronaut-kotlin = "4.0.0-M4"
+micronaut-multitenancy = "5.0.0-M4"
+micronaut-validation = "4.0.0-M9"
+micronaut-logging = "1.0.0-M3"
+micronaut-flyway = "6.0.0-M5"
 
 groovy = "4.0.12"
 
@@ -28,7 +28,7 @@ jakarta-javax-persistence = "3.1.0"
 javax-transaction = "1.3"
 jakarta-transaction = "2.0.1"
 
-hibernate = "6.2.3.Final"
+hibernate = "6.2.4.Final"
 hibernate-jpamodelgen-jakarta = "6.0.0.Alpha9"
 
 spring-data = "3.1.0"
@@ -37,6 +37,7 @@ spring-data = "3.1.0"
 
 # Need to leave it here because micronaut-sql uses older version. When it's upgraded there then we can remove this declaration here
 oracle-jdbc-driver = "23.2.0.0"
+oracle-flyway = "9.19.1"
 
 # Testing and benchmarking
 
@@ -44,7 +45,7 @@ benchmark-spring-data = "2023.0.0"
 spock = "2.2-groovy-4.0"
 cglib = "3.3.0"
 objenesis = "3.3"
-testcontainers = "1.18.1"
+testcontainers = "1.18.3"
 jmh = "1.36"
 jetbrains-annotations = "24.0.1"
 
@@ -137,6 +138,7 @@ micronaut-sql-jdbc-tomcat = { module = "io.micronaut.sql:micronaut-jdbc-tomcat",
 micronaut-sql-jdbc = { module = "io.micronaut.sql:micronaut-jdbc", version.ref = "micronaut-sql" }
 
 drivers-jdbc-oracle = { module = "com.oracle.database.jdbc:ojdbc8", version.ref = "oracle-jdbc-driver" }
+flyway-oracle = { module = "org.flywaydb:flyway-database-oracle", version.ref = "oracle-flyway" }
 
 # R2DBC
 
