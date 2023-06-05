@@ -53,9 +53,7 @@ public interface TransactionOperations<T> {
      * @return The transaction status.
      */
     @Experimental
-    default Optional<? extends TransactionStatus<?>> findTransactionStatus() {
-        return Optional.empty();
-    }
+    Optional<? extends TransactionStatus<?>> findTransactionStatus();
 
     /**
      * Execute a transaction within the context of the function.

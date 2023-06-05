@@ -23,7 +23,7 @@ micronaut {
 
 dependencies {
     kapt project(":data-processor")
-    implementation("io.micronaut.data:micronaut-data-r2dbc")
+    implementation projects.dataR2dbc
     implementation("io.micronaut.flyway:micronaut-flyway")
     implementation "io.micronaut.sql:micronaut-jdbc-hikari"
     implementation libs.kotlin.coroutines

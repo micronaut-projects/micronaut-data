@@ -32,6 +32,7 @@ import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
 
 import java.lang.reflect.UndeclaredThrowableException;
+import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 
 /**
@@ -76,6 +77,11 @@ public final class SynchronousFromReactiveTransactionManager<T> implements Synch
     @Override
     public boolean hasConnection() {
         throw noSupported();
+    }
+
+    @Override
+    public Optional<? extends TransactionStatus<?>> findTransactionStatus() {
+        return Optional.empty();
     }
 
     @Override
