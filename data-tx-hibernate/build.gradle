@@ -34,7 +34,6 @@ dependencies {
 
 micronaut {
     version libs.versions.micronaut.platform.get()
-    version = '4.0.0-SNAPSHOT'
     testResources {
         enabled = true
         inferClasspath = false
