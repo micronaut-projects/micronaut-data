@@ -124,8 +124,8 @@ public class DelegatingDataSource implements DataSource {
      * @return The target
      */
     public static @NonNull DataSource unwrapDataSource(@NonNull DataSource dataSource) {
-        while (dataSource instanceof DelegatingDataSource) {
-            dataSource = ((DelegatingDataSource) dataSource).getTargetDataSource();
+        while (dataSource instanceof DelegatingDataSource delegatingDataSource) {
+            dataSource = delegatingDataSource.getTargetDataSource();
         }
         return dataSource;
     }

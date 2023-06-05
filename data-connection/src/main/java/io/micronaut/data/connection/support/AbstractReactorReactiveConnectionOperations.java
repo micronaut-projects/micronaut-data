@@ -38,6 +38,7 @@ import java.util.function.Function;
 /**
  * The reactive MongoDB connection operations implementation.
  *
+ * @param <C> The connection type
  * @author Denis Stepanov
  * @since 4.0.0
  */

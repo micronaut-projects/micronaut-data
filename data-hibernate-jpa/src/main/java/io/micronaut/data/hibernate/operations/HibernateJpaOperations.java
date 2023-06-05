@@ -258,13 +258,11 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
 
     @Override
     public <R> Page<R> findPage(@NonNull PagedQuery<R> pagedQuery) {
-        return executeRead(session -> {
-            return Page.of(
-                findPaged(session, pagedQuery),
-                pagedQuery.getPageable(),
-                countOf(session, pagedQuery, pagedQuery.getPageable())
-            );
-        });
+        return executeRead(session -> Page.of(
+            findPaged(session, pagedQuery),
+            pagedQuery.getPageable(),
+            countOf(session, pagedQuery, pagedQuery.getPageable())
+        ));
     }
 
     @Override

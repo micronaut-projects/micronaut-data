@@ -45,7 +45,7 @@ import java.util.List;
 @EachBean(DataSource.class)
 public final class DataSourceConnectionOperationsImpl extends AbstractConnectionOperations<Connection> implements DataSourceConnectionOperations, ContextualConnectionProvider {
 
-    private final static Logger LOG = LoggerFactory.getLogger(DataSourceConnectionOperationsImpl.class);
+    private static final Logger LOG = LoggerFactory.getLogger(DataSourceConnectionOperationsImpl.class);
     private final DataSource dataSource;
 
     DataSourceConnectionOperationsImpl(DataSource dataSource) {

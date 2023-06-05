@@ -149,7 +149,7 @@ final class DefaultR2dbcReactiveTransactionOperations implements R2dbcReactorRea
                         BiFunction<Boolean, Throwable, Publisher<?>> onException = (b, throwable) -> onException(status, definition, throwable, cancelCallback);
 
                         return Flux.usingWhen(resourceSupplier,
-                            (b) -> {
+                            b -> {
                                 try {
                                     return Flux.from(handler.doInTransaction(status))
                                         .contextWrite(context -> addTxStatus(context, status));
@@ -172,16 +172,16 @@ final class DefaultR2dbcReactiveTransactionOperations implements R2dbcReactorRea
                                    Supplier<Publisher<Void>> cancelConnection) {
         if (LOG.isWarnEnabled()) {
             LOG.warn("Rolling back transaction: {} on error: {} for dataSource {}",
-                status.getDefinition().getName(), throwable.getMessage(), dataSourceName, throwable);
+                status.getTransactionDefinition().getName(), throwable.getMessage(), dataSourceName, throwable);
         }
         if (!definition.rollbackOn(throwable)) {
             return doCommit(status, cancelConnection);
         }
         return rollback(status, cancelConnection)
-            .onErrorResume((rollbackError) -> {
+            .onErrorResume(rollbackError -> {
                 if (rollbackError != throwable && LOG.isWarnEnabled()) {
                     LOG.warn("Error occurred during transaction: {} rollback failed with: {} for dataSource {}",
-                        status.getDefinition().getName(), rollbackError.getMessage(), dataSourceName, rollbackError);
+                        status.getTransactionDefinition().getName(), rollbackError.getMessage(), dataSourceName, rollbackError);
                 }
                 return Mono.error(throwable);
             });
@@ -194,12 +194,12 @@ final class DefaultR2dbcReactiveTransactionOperations implements R2dbcReactorRea
     private Flux<Void> doCommit(DefaultReactiveTransactionStatus status, Supplier<Publisher<Void>> cancelConnection) {
         if (status.isRollbackOnly()) {
             if (LOG.isDebugEnabled()) {
-                LOG.debug("Rolling back transaction: {} for dataSource {}", status.getDefinition().getName(), dataSourceName);
+                LOG.debug("Rolling back transaction: {} for dataSource {}", status.getTransactionDefinition().getName(), dataSourceName);
             }
             return rollback(status, cancelConnection);
         }
         if (LOG.isDebugEnabled()) {
-            LOG.debug("Committing transaction: {} for dataSource {}", status.getDefinition().getName(), dataSourceName);
+            LOG.debug("Committing transaction: {} for dataSource {}", status.getTransactionDefinition().getName(), dataSourceName);
         }
         return Flux.from(status.getConnection().commitTransaction()).as(flux -> finishTx(flux, status, cancelConnection));
 
@@ -290,10 +290,6 @@ final class DefaultR2dbcReactiveTransactionOperations implements R2dbcReactorRea
             this.definition = definition;
             this.connectionStatus = connectionStatus;
             this.isNew = isNew;
-        }
-
-        public TransactionDefinition getDefinition() {
-            return definition;
         }
 
         @Override

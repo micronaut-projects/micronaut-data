@@ -70,7 +70,6 @@ final class DefaultHibernateReactiveSynchronousRepositoryOperations implements B
 
     public DefaultHibernateReactiveSynchronousRepositoryOperations(ApplicationContext applicationContext,
                                                                    SessionFactory sessionFactory,
-                                                                   @Parameter String name,
                                                                    RuntimeEntityRegistry runtimeEntityRegistry,
                                                                    DataConversionService dataConversionService,
                                                                    @Parameter ReactorReactiveConnectionOperations<Stage.Session> connectionOperations,
