@@ -39,6 +39,7 @@ import reactor.util.context.ContextView;
 
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Function;
 
 /**
  * Abstract Reactor transaction operations.
@@ -101,7 +102,7 @@ public abstract class AbstractReactorReactiveTransactionOperations<C> implements
             TransactionDefinition.Propagation propagationBehavior = definition.getPropagationBehavior();
             if (transactionStatus != null) {
                 if (propagationBehavior == TransactionDefinition.Propagation.NOT_SUPPORTED || propagationBehavior == TransactionDefinition.Propagation.NEVER) {
-                    return Flux.error(new TransactionUsageException("Found an existing transaction but propagation behaviour doesn't support it: " + propagationBehavior));
+                    return Flux.error(propagationNotSupported(propagationBehavior));
                 }
                 if (propagationBehavior == TransactionDefinition.Propagation.REQUIRES_NEW) {
                     return connectionOperations.withConnectionFlux(definition.getConnectionDefinition(), connectionStatus ->
@@ -111,19 +112,57 @@ public abstract class AbstractReactorReactiveTransactionOperations<C> implements
                         )
                     );
                 }
-                ReactiveTransactionStatus<C> newStatus = existingTransaction(transactionStatus, definition);
-                return executeCallbackFlux(newStatus, handler);
-            } else {
-                if (propagationBehavior == TransactionDefinition.Propagation.MANDATORY) {
-                    return Flux.error(new NoTransactionException("Expected an existing transaction, but none was found in the Reactive context."));
-                }
-                return connectionOperations.withConnectionFlux(definition.getConnectionDefinition(), connectionStatus ->
-                    executeTransactionFlux(
-                        new DefaultReactiveTransactionStatus<>(connectionStatus, true, definition),
-                        handler
-                    )
+                return executeCallbackFlux(
+                    existingTransaction(transactionStatus, definition),
+                    handler
                 );
             }
+            if (propagationBehavior == TransactionDefinition.Propagation.MANDATORY) {
+                return Flux.error(expectedTransaction());
+            }
+            return connectionOperations.withConnectionFlux(definition.getConnectionDefinition(), connectionStatus ->
+                executeTransactionFlux(
+                    new DefaultReactiveTransactionStatus<>(connectionStatus, true, definition),
+                    handler
+                )
+            );
+        });
+    }
+
+    @Override
+    public <T> Mono<T> withTransactionMono(TransactionDefinition definition, Function<ReactiveTransactionStatus<C>, Mono<T>> handler) {
+        Objects.requireNonNull(definition, "Transaction definition cannot be null");
+        Objects.requireNonNull(handler, "Callback handler cannot be null");
+
+        return Mono.deferContextual(contextView -> {
+            ReactiveTransactionStatus<C> transactionStatus = getTransactionStatus(contextView);
+            TransactionDefinition.Propagation propagationBehavior = definition.getPropagationBehavior();
+            if (transactionStatus != null) {
+                if (propagationBehavior == TransactionDefinition.Propagation.NOT_SUPPORTED || propagationBehavior == TransactionDefinition.Propagation.NEVER) {
+                    return Mono.error(propagationNotSupported(propagationBehavior));
+                }
+                if (propagationBehavior == TransactionDefinition.Propagation.REQUIRES_NEW) {
+                    return connectionOperations.withConnectionMono(definition.getConnectionDefinition(), connectionStatus ->
+                        executeTransactionMono(
+                            new DefaultReactiveTransactionStatus<>(connectionStatus, true, definition),
+                            handler
+                        )
+                    );
+                }
+                return executeCallbackMono(
+                    existingTransaction(transactionStatus, definition),
+                    handler
+                );
+            }
+            if (propagationBehavior == TransactionDefinition.Propagation.MANDATORY) {
+                return Mono.error(expectedTransaction());
+            }
+            return connectionOperations.withConnectionMono(definition.getConnectionDefinition(), connectionStatus ->
+                executeTransactionMono(
+                    new DefaultReactiveTransactionStatus<>(connectionStatus, true, definition),
+                    handler
+                )
+            );
         });
     }
 
@@ -139,10 +178,31 @@ public abstract class AbstractReactorReactiveTransactionOperations<C> implements
     protected <R> Flux<R> executeTransactionFlux(@NonNull DefaultReactiveTransactionStatus<C> txStatus,
                                                  @NonNull TransactionalCallback<C, R> handler) {
         return Flux.usingWhen(
-            Flux.just(
+            Mono.fromDirect(
                 beginTransaction(txStatus.getConnectionStatus(), txStatus.getTransactionDefinition())
             ).thenMany(Mono.just(txStatus)),
             status -> executeCallbackFlux(status, handler),
+            this::doCommit,
+            this::doRollback,
+            this::doCommit);
+    }
+
+    /**
+     * Execute the transaction.
+     *
+     * @param txStatus The transaction status
+     * @param handler  The callback
+     * @param <R>      The callback result type
+     * @return The callback result
+     */
+    @NonNull
+    protected <R> Mono<R> executeTransactionMono(@NonNull DefaultReactiveTransactionStatus<C> txStatus,
+                                                 @NonNull Function<ReactiveTransactionStatus<C>, Mono<R>> handler) {
+        return Mono.usingWhen(
+            Mono.fromDirect(
+                beginTransaction(txStatus.getConnectionStatus(), txStatus.getTransactionDefinition())
+            ).thenReturn(txStatus),
+            status -> executeCallbackMono(status, handler),
             this::doCommit,
             this::doRollback,
             this::doCommit);
@@ -164,6 +224,25 @@ public abstract class AbstractReactorReactiveTransactionOperations<C> implements
                 .contextWrite(context -> addTxStatus(context, status));
         } catch (Exception e) {
             return Flux.error(new TransactionSystemException("Error invoking doInTransaction handler: " + e.getMessage(), e));
+        }
+    }
+
+    /**
+     * Execute the callback.
+     *
+     * @param status  The transaction status
+     * @param handler The callback
+     * @param <R>     The callback result type
+     * @return The callback result
+     */
+    @NonNull
+    protected <R> Mono<R> executeCallbackMono(@NonNull ReactiveTransactionStatus<C> status,
+                                              @NonNull Function<ReactiveTransactionStatus<C>, Mono<R>> handler) {
+        try {
+            return handler.apply(status)
+                .contextWrite(context -> addTxStatus(context, status));
+        } catch (Exception e) {
+            return Mono.error(new TransactionSystemException("Error invoking doInTransaction handler: " + e.getMessage(), e));
         }
     }
 
@@ -250,6 +329,16 @@ public abstract class AbstractReactorReactiveTransactionOperations<C> implements
             context,
             new ReactiveTransactionPropagatedContext<>(this, status)
         );
+    }
+
+    @NonNull
+    private NoTransactionException expectedTransaction() {
+        return new NoTransactionException("Expected an existing transaction, but none was found in the Reactive context.");
+    }
+
+    @NonNull
+    private TransactionUsageException propagationNotSupported(TransactionDefinition.Propagation propagationBehavior) {
+        return new TransactionUsageException("Found an existing transaction but propagation behaviour doesn't support it: " + propagationBehavior);
     }
 
     private record ReactiveTransactionPropagatedContext<C>(

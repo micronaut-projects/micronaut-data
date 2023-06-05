@@ -111,6 +111,10 @@ final class ReactiveHibernateHelper {
             .flatMapIterable(it -> it);
     }
 
+    <T> Mono<T> withTransactionMono(Stage.Session session, Function<Stage.Transaction, Mono<T>> work) {
+        return monoFromCompletionStage(() -> session.withTransaction(tx -> work.apply(tx).publishOn(contextScheduler).toFuture()));
+    }
+
     <T> Mono<T> monoFromCompletionStage(Supplier<CompletionStage<T>> supplier) {
         return Mono.fromCompletionStage(supplier);
     }

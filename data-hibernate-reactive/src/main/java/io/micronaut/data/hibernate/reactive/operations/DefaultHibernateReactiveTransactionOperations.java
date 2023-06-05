@@ -32,6 +32,9 @@ import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+
+import java.util.function.Function;
 
 /**
  * The default Hibernate reactive transaction operations.
@@ -60,6 +63,63 @@ final class DefaultHibernateReactiveTransactionOperations extends AbstractReacto
     @Override
     protected <R> Flux<R> executeTransactionFlux(AbstractReactorReactiveTransactionOperations.DefaultReactiveTransactionStatus<Stage.Session> txStatus,
                                                  TransactionalCallback<Stage.Session, R> handler) {
+        Flux<R> error = validateTransaction(txStatus);
+        if (error != null) {
+            return error;
+        }
+        return helper.withTransactionFlux(txStatus.getConnection(), transaction -> {
+            ReactiveTransactionStatus<Stage.Session> reactiveTransactionStatus = createTxStatus(txStatus, transaction);
+            return executeCallbackFlux(reactiveTransactionStatus, handler);
+        });
+    }
+
+    @Override
+    protected <R> Mono<R> executeTransactionMono(DefaultReactiveTransactionStatus<Stage.Session> txStatus, Function<ReactiveTransactionStatus<Stage.Session>, Mono<R>> handler) {
+        Flux<R> error = validateTransaction(txStatus);
+        if (error != null) {
+            return error.next();
+        }
+        return helper.withTransactionMono(txStatus.getConnection(), transaction -> {
+            ReactiveTransactionStatus<Stage.Session> reactiveTransactionStatus = createTxStatus(txStatus, transaction);
+            return executeCallbackMono(reactiveTransactionStatus, handler);
+        });
+    }
+
+    private ReactiveTransactionStatus<Stage.Session> createTxStatus(DefaultReactiveTransactionStatus<Stage.Session> txStatus, Stage.Transaction transaction) {
+        return new ReactiveTransactionStatus<>() {
+            @Override
+            public ConnectionStatus<Stage.Session> getConnectionStatus() {
+                return txStatus.getConnectionStatus();
+            }
+
+            @Override
+            public boolean isNewTransaction() {
+                return txStatus.isNewTransaction();
+            }
+
+            @Override
+            public void setRollbackOnly() {
+                transaction.markForRollback();
+            }
+
+            @Override
+            public boolean isRollbackOnly() {
+                return transaction.isMarkedForRollback();
+            }
+
+            @Override
+            public boolean isCompleted() {
+                return txStatus.isCompleted();
+            }
+
+            @Override
+            public TransactionDefinition getTransactionDefinition() {
+                return txStatus.getTransactionDefinition();
+            }
+        };
+    }
+
+    private <R> Flux<R> validateTransaction(DefaultReactiveTransactionStatus<Stage.Session> txStatus) {
         if (LOG.isDebugEnabled()) {
             LOG.debug("Transaction execution for Hibernate Reactive connection: {} and configuration {}.", txStatus.getConnection(), serverName);
         }
@@ -73,41 +133,7 @@ final class DefaultHibernateReactiveTransactionOperations extends AbstractReacto
         if (definition.getTimeout() != TransactionDefinition.TIMEOUT_DEFAULT) {
             return Flux.error(new TransactionUsageException("Timeout not supported"));
         }
-
-        return helper.withTransactionFlux(txStatus.getConnection(), transaction -> {
-            ReactiveTransactionStatus<Stage.Session> reactiveTransactionStatus = new ReactiveTransactionStatus<>() {
-                @Override
-                public ConnectionStatus<Stage.Session> getConnectionStatus() {
-                    return txStatus.getConnectionStatus();
-                }
-
-                @Override
-                public boolean isNewTransaction() {
-                    return txStatus.isNewTransaction();
-                }
-
-                @Override
-                public void setRollbackOnly() {
-                    transaction.markForRollback();
-                }
-
-                @Override
-                public boolean isRollbackOnly() {
-                    return transaction.isMarkedForRollback();
-                }
-
-                @Override
-                public boolean isCompleted() {
-                    return txStatus.isCompleted();
-                }
-
-                @Override
-                public TransactionDefinition getTransactionDefinition() {
-                    return txStatus.getTransactionDefinition();
-                }
-            };
-            return executeCallbackFlux(reactiveTransactionStatus, handler);
-        });
+        return null;
     }
 
     @Override

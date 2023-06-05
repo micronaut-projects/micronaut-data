@@ -11,7 +11,6 @@ application {
 }
 
 micronaut {
-    project.ext.micronautVersion
     version libs.versions.micronaut.platform.get()
     runtime "netty"
     testRuntime "junit5"

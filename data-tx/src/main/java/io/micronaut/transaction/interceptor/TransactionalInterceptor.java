@@ -30,8 +30,11 @@ import io.micronaut.transaction.TransactionOperationsRegistry;
 import io.micronaut.transaction.annotation.TransactionalAdvice;
 import io.micronaut.transaction.async.AsyncTransactionOperations;
 import io.micronaut.transaction.reactive.ReactiveTransactionOperations;
+import io.micronaut.transaction.reactive.ReactorReactiveTransactionOperations;
 import io.micronaut.transaction.support.TransactionUtil;
 import jakarta.inject.Singleton;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.util.Map;
 import java.util.Objects;
@@ -112,6 +115,16 @@ public final class TransactionalInterceptor implements MethodInterceptor<Object,
             switch (interceptedMethod.resultType()) {
                 case PUBLISHER -> {
                     ReactiveTransactionOperations<?> reactiveTransactionOperations = Objects.requireNonNull(transactionInvocation.reactiveTransactionOperations);
+                    if (reactiveTransactionOperations instanceof ReactorReactiveTransactionOperations<?> reactorReactiveTransactionOperations) {
+                        if (context.getReturnType().isSingleResult()) {
+                            return interceptedMethod.handleResult(
+                                reactorReactiveTransactionOperations.withTransactionMono(definition, status -> Mono.from(interceptedMethod.interceptResultAsPublisher()))
+                            );
+                        }
+                        return interceptedMethod.handleResult(
+                            reactorReactiveTransactionOperations.withTransactionFlux(definition, status -> Flux.from(interceptedMethod.interceptResultAsPublisher()))
+                        );
+                    }
                     return interceptedMethod.handleResult(
                         reactiveTransactionOperations.withTransaction(definition, (status) -> interceptedMethod.interceptResultAsPublisher())
                     );
@@ -151,11 +164,11 @@ public final class TransactionalInterceptor implements MethodInterceptor<Object,
     /**
      * Cached invocation associating a method with a definition a transaction manager.
      *
-     * @param transactionManager The transaction manager
+     * @param transactionManager            The transaction manager
      * @param reactiveTransactionOperations The reactive transaction manager
-     * @param asyncTransactionOperations The async transaction manager
-     * @param definition The definition
-     * @param <C> connection type
+     * @param asyncTransactionOperations    The async transaction manager
+     * @param definition                    The definition
+     * @param <C>                           connection type
      */
     private record TransactionInvocation<C>(@Nullable TransactionOperations<C> transactionManager,
                                             @Nullable ReactiveTransactionOperations<C> reactiveTransactionOperations,
