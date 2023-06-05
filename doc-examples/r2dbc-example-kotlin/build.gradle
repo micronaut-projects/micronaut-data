@@ -1,3 +1,5 @@
+import io.micronaut.testresources.buildtools.KnownModules
+
 plugins {
     id "org.jetbrains.kotlin.jvm"
     id "org.jetbrains.kotlin.kapt"
@@ -15,6 +17,7 @@ micronaut {
     runtime "netty"
     testRuntime "junit5"
     testResources {
+        additionalModules.add(KnownModules.R2DBC_MARIADB)
         clientTimeout = 300
         version = libs.versions.micronaut.testresources.get()
     }
@@ -38,5 +41,7 @@ dependencies {
 
     testImplementation "io.micronaut:micronaut-http-client"
     compileOnly mnSerde.micronaut.serde.api
+
+    testResourcesService mnSql.mariadb.java.client
 }
 
