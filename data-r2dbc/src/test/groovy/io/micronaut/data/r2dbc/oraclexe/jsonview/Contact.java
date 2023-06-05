@@ -1,4 +1,4 @@
-package io.micronaut.data.tck.entities;
+package io.micronaut.data.r2dbc.oraclexe.jsonview;
 
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.annotation.Id;

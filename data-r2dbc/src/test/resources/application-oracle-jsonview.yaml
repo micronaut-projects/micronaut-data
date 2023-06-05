@@ -20,6 +20,7 @@ r2dbc:
       db-type: oracle
       dialect: ORACLE
       schema-generate: NONE
+      packages: io.micronaut.data.r2dbc.oraclexe.jsonview
 test-resources:
   containers:
     oracle:

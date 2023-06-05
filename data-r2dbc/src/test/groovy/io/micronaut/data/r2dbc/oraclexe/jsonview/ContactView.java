@@ -1,10 +1,10 @@
-package io.micronaut.data.tck.entities;
+package io.micronaut.data.r2dbc.oraclexe.jsonview;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.JsonView;
 import io.micronaut.data.annotation.JsonViewColumn;
-import io.micronaut.data.annotation.Relation;
+import io.micronaut.data.tck.entities.Metadata;
 
 import java.time.LocalDateTime;
 
@@ -19,9 +19,6 @@ public class ContactView {
     private LocalDateTime startDateTime;
     @JsonViewColumn(permissions = "UPDATE")
     private boolean active;
-
-    @Relation(Relation.Kind.EMBEDDED)
-    private Address address;
     @JsonProperty("_metadata")
     private Metadata metadata;
 
@@ -46,14 +43,6 @@ public class ContactView {
 
     public void setActive(boolean active) {
         this.active = active;
-    }
-
-    public Address getAddress() {
-        return address;
-    }
-
-    public void setAddress(Address address) {
-        this.address = address;
     }
 
     public Metadata getMetadata() {

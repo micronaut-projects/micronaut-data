@@ -4,7 +4,6 @@ import io.micronaut.data.annotation.Id;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.r2dbc.annotation.R2dbcRepository;
 import io.micronaut.data.repository.PageableRepository;
-import io.micronaut.data.tck.entities.ContactView;
 
 import java.time.LocalDateTime;
 import java.util.Optional;

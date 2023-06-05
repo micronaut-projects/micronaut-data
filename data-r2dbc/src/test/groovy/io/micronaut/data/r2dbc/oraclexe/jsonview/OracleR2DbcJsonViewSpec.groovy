@@ -1,8 +1,7 @@
 package io.micronaut.data.r2dbc.oraclexe.jsonview
 
 import io.micronaut.data.exceptions.OptimisticLockException
-import io.micronaut.data.tck.entities.Contact
-import io.micronaut.data.tck.entities.ContactView
+
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
 import spock.lang.Specification

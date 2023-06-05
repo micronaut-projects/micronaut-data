@@ -1,7 +1,6 @@
 package io.micronaut.data.processor.sql
 
 import io.micronaut.data.processor.visitors.AbstractDataSpec
-import io.micronaut.data.tck.entities.ContactView
 
 import static io.micronaut.data.processor.visitors.TestUtils.getQuery
 
@@ -10,14 +9,74 @@ class JsonViewSpec extends AbstractDataSpec {
     void "test JsonView repository"() {
         given:
         def repository = buildRepository('test.ContactViewRepository', """
+
 import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.JsonView;
+import io.micronaut.data.annotation.JsonViewColumn;
+import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.repository.CrudRepository;
-import io.micronaut.data.repository.GenericRepository;
-import io.micronaut.data.tck.entities.ContactView;
+import io.micronaut.data.tck.entities.Address;
+import io.micronaut.data.tck.entities.Metadata;
 import java.time.LocalDateTime;
-import java.util.Optional;
+
+@JsonView(value = "CONTACT_VIEW", alias = "cv", table = "TBL_CONTACT", permissions = "INSERT UPDATE DELETE")
+class ContactView {
+    @Id
+    private Long id;
+    @JsonViewColumn(permissions = "UPDATE")
+    private String name;
+    private int age;
+    @JsonViewColumn(permissions = "UPDATE")
+    private LocalDateTime startDateTime;
+    @JsonViewColumn(permissions = "UPDATE")
+    private boolean active;
+
+    @Relation(Relation.Kind.EMBEDDED)
+    private Address address;
+    private Metadata _metadata;
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    public int getAge() { return age; }
+    public void setAge(int age) { this.age = age; }
+
+    public LocalDateTime getStartDateTime() {
+        return startDateTime;
+    }
+
+    public void setStartDateTime(LocalDateTime startDateTime) {
+        this.startDateTime = startDateTime;
+    }
+
+    public boolean isActive() {
+        return active;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
+    }
+
+    public Address getAddress() {
+        return address;
+    }
+
+    public void setAddress(Address address) {
+        this.address = address;
+    }
+
+    public Metadata getMetadata() {
+        return _metadata;
+    }
+
+    public void setMetadata(Metadata _metadata) {
+        this._metadata = _metadata;
+    }
+}
+
 @JdbcRepository(dialect = Dialect.ORACLE)
 interface ContactViewRepository extends CrudRepository<ContactView, Long> {
 
@@ -46,14 +105,14 @@ interface ContactViewRepository extends CrudRepository<ContactView, Long> {
 
         def findStartDateTimeByIdQuery = getQuery(repository.getRequiredMethod("findStartDateTimeById", Long))
         def findByIdQuery = getQuery(repository.getRequiredMethod("findById", Long))
-        def saveQuery = getQuery(repository.getRequiredMethod("save", ContactView))
-        def updateQuery = getQuery(repository.getRequiredMethod("update", ContactView))
+        def saveQuery = getQuery(repository.findPossibleMethods("save").findFirst().get())
+        def updateQuery = getQuery(repository.findPossibleMethods("update").findFirst().get())
         def updateAgeAndNameQuery = getQuery(repository.getRequiredMethod("updateAgeAndName", Long, int, String))
         def updateByAddressStreetQuery = getQuery(repository.getRequiredMethod("updateByAddressStreet", String, String))
         def deleteByIdQuery = getQuery(repository.getRequiredMethod("deleteById", Long))
-        def deleteQuery = getQuery(repository.getRequiredMethod("delete", ContactView))
+        def deleteQuery = getQuery(repository.findPossibleMethods("delete").findFirst().get())
         def deleteAllQuery = getQuery(repository.getRequiredMethod("deleteAll"))
-        def deleteAllIterableQuery = getQuery(repository.getRequiredMethod("deleteAll", Iterable<ContactView>))
+        def deleteAllIterableQuery = getQuery(repository.getRequiredMethod("deleteAll", Iterable))
         def findNameByIdQuery = getQuery(repository.getRequiredMethod("findNameById", Long))
         def findMaxAgeQuery = getQuery(repository.getRequiredMethod("findMaxAge"))
         def findActiveByNameQuery = getQuery(repository.getRequiredMethod("findActiveByName", String))
@@ -88,9 +147,22 @@ interface ContactViewRepository extends CrudRepository<ContactView, Long> {
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.repository.CrudRepository;
-import io.micronaut.data.tck.entities.ContactView;
+
+@JsonView(table = "TBL_USER", permissions = "INSERT UPDATE DELETE")
+class UserView {
+    @Id
+    private Long id;
+    private String name;
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+}
+
 @JdbcRepository(dialect = Dialect.MYSQL)
-interface MySqlContactViewRepository extends CrudRepository<ContactView, Long> {
+interface MySqlUserViewRepository extends CrudRepository<UserView, Long> {
 }
 """)
 
