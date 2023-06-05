@@ -428,8 +428,15 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
             traversePersistentProperties(identity, (associations, property) -> {
                 ids.add(PersistentPropertyPath.of(associations, property, ""));
             });
-            if (ids.size() > 1) {
+            int idFieldCount = ids.size();
+            if (idFieldCount > 1) {
                 generatePkAfterColumns = true;
+            } else if (idFieldCount > 0 && !identity.isGenerated()) {
+                // Need to define primary key if id not generated (otherwise done during column definition)
+                // but can't do if id field is byte array (BLOB) and it expects length for MySQL
+                if (!(dialect == Dialect.MYSQL && ids.get(0).getProperty().getDataType() == DataType.BYTE_ARRAY)) {
+                    generatePkAfterColumns = true;
+                }
             }
             boolean finalGeneratePkAfterColumns = generatePkAfterColumns;
             for (PersistentPropertyPath pp : ids) {

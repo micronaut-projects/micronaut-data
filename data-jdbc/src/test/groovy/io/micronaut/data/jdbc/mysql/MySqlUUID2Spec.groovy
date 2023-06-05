@@ -29,6 +29,11 @@ class MySqlUUID2Spec extends Specification implements MySQLTestPropertyProvider 
     @Shared
     MySqlUuidEntity2Repository repository = applicationContext.getBean(MySqlUuidEntity2Repository)
 
+    @Override
+    List<String> packages() {
+        return [getClass().package.name]
+    }
+
     void 'test insert with UUID'() {
         given:
             def entity = new MySqlUuidEntity2()
