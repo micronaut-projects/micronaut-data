@@ -6,3 +6,12 @@ CREATE TABLE "TBL_CONTACT"
      "ACTIVE" NUMBER(1) DEFAULT 1,
      CONSTRAINT "TBL_CONTACT_PK" PRIMARY KEY ("ID")
 );
+
+CREATE OR REPLACE JSON RELATIONAL DUALITY VIEW CONTACT_VIEW AS
+SELECT JSON{'id': c.id,
+            'name': c.name WITH UPDATE,
+            'age': c.age,
+            'startDateTime': c.start_date_time WITH UPDATE,
+            'active': c.active WITH UPDATE
+            }
+FROM TBL_CONTACT c WITH UPDATE INSERT DELETE;
