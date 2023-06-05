@@ -11,7 +11,7 @@ flyway:
     default:
       locations:
         - classpath:oracle-jsonview-migrations
-      enabled: true
+      enabled: false
       baseline-version: 0
       baseline-on-migrate: true
 r2dbc:
@@ -19,7 +19,7 @@ r2dbc:
     default:
       db-type: oracle
       dialect: ORACLE
-      schema-generate: NONE
+      schema-generate: CREATE
       packages: io.micronaut.data.r2dbc.oraclexe.jsonview
 test-resources:
   containers:
