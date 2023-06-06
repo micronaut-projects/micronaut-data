@@ -28,14 +28,14 @@ import org.springframework.data.jpa.domain.Specification;
  * @since 4.0.0
  */
 @Internal
-public class DeleteSpecificationInterceptor extends io.micronaut.data.jpa.repository.intercept.DeleteSpecificationInterceptor {
+public final class DeleteSpecificationInterceptor extends io.micronaut.data.jpa.repository.intercept.DeleteSpecificationInterceptor {
 
     /**
      * Default constructor.
      *
      * @param operations The operations
      */
-    protected DeleteSpecificationInterceptor(@NonNull RepositoryOperations operations) {
+    DeleteSpecificationInterceptor(@NonNull RepositoryOperations operations) {
         super(operations);
     }
 

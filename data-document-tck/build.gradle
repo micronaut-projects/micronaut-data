@@ -9,6 +9,7 @@ dependencies {
 
     implementation projects.dataModel
     implementation mnValidation.micronaut.validation
+    implementation projects.dataTx
     implementation mnTest.micronaut.test.spock
     implementation mnTest.micronaut.test.core
     implementation libs.jakarta.persistence.api

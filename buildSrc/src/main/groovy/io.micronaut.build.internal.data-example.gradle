@@ -9,15 +9,8 @@ java {
     }
 }
 
-configurations.all {
-    resolutionStrategy.dependencySubstitution { DependencySubstitutions subs ->
-        project.rootProject.subprojects {
-            if (!it.name.startsWith("data") || it.name.startsWith("data-bom")) {
-                return
-            }
-            substitute(module("io.micronaut.data:micronaut-${it.name}")).using(subs.project(it.path))
-        }
-    }
+configurations.configureEach {
+    resolutionStrategy.preferProjectModules()
 }
 
 tasks.withType(JavaCompile).configureEach {

@@ -7,6 +7,11 @@ import io.micronaut.test.extensions.junit5.annotation.TestResourcesScope
 class H2MultitenancySpec extends AbstractR2dbcMultitenancySpec implements H2TestPropertyProvider {
 
     @Override
+    boolean shouldAddDefaultDbProperties() {
+        return false
+    }
+
+    @Override
     Map<String, String> getExtraProperties() {
         return [bookRepositoryClass: H2BookRepository.name]
     }

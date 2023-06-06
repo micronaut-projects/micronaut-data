@@ -17,7 +17,6 @@ package io.micronaut.data.mongodb.operations;
 
 import com.mongodb.reactivestreams.client.ClientSession;
 import io.micronaut.core.annotation.Experimental;
-import io.micronaut.transaction.reactive.ReactorReactiveTransactionOperations;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -27,7 +26,7 @@ import java.util.function.Function;
  * A variation of {@link MongoReactiveRepositoryOperations} with Reactor specific method to execute an operation with the contextual {@link ClientSession}.
  */
 @Experimental
-public interface MongoReactorRepositoryOperations extends MongoReactiveRepositoryOperations, ReactorReactiveTransactionOperations<ClientSession> {
+public interface MongoReactorRepositoryOperations extends MongoReactiveRepositoryOperations {
 
     /**
      * Starts a new session or reuses one from the context.
@@ -36,7 +35,7 @@ public interface MongoReactorRepositoryOperations extends MongoReactiveRepositor
      * @param <T>      The emitted type
      * @return The processed publisher
      */
-    <T> Mono<T> withClientSession(Function<ClientSession, Mono<? extends T>> function);
+    <T> Mono<T> withClientSession(Function<ClientSession, Mono<T>> function);
 
     /**
      * Starts a new session or reuses one from the context.
@@ -45,6 +44,6 @@ public interface MongoReactorRepositoryOperations extends MongoReactiveRepositor
      * @param <T>      The emitted type
      * @return The processed publisher
      */
-    <T> Flux<T> withClientSessionMany(Function<ClientSession, Flux<? extends T>> function);
+    <T> Flux<T> withClientSessionMany(Function<ClientSession, Flux<T>> function);
 
 }

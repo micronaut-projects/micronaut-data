@@ -17,12 +17,11 @@ package io.micronaut.transaction.exceptions;
 
 /**
  * Superclass for exceptions caused by inappropriate usage of
- * a Spring transaction API.
+ * a Micronaut transaction API.
  *
  * @author Rod Johnson
  * @since 22.03.2003
  */
-@SuppressWarnings("serial")
 public class TransactionUsageException extends TransactionException {
 
     /**

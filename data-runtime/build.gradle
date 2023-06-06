@@ -11,6 +11,8 @@ dependencies {
 	annotationProcessor libs.micronaut.docs
 
 	api projects.dataModel
+	api projects.dataTx
+
 	compileOnly mn.micronaut.json.core
 
 	implementation libs.reactor

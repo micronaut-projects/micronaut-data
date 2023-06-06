@@ -19,6 +19,8 @@ dependencies {
 
     api projects.dataRuntime
     api projects.dataDocumentModel
+    api projects.dataConnection
+
     api mnSerde.micronaut.serde.bson
     api mnSerde.micronaut.serde.support
     api (mnMongo.micronaut.mongo.reactive) {

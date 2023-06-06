@@ -28,6 +28,8 @@ import io.micronaut.core.convert.ArgumentConversionContext;
 import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArgumentUtils;
+import io.micronaut.data.connection.annotation.Connectable;
+import io.micronaut.data.connection.ConnectionOperations;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.jdbc.config.DataJdbcConfiguration;
 import io.micronaut.data.jdbc.convert.JdbcConversionContext;
@@ -87,8 +89,7 @@ import io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery;
 import io.micronaut.data.runtime.support.AbstractConversionContext;
 import io.micronaut.json.JsonMapper;
 import io.micronaut.transaction.TransactionOperations;
-import io.micronaut.transaction.jdbc.DataSourceUtils;
-import io.micronaut.transaction.jdbc.DelegatingDataSource;
+import io.micronaut.data.connection.jdbc.advice.DelegatingDataSource;
 import jakarta.inject.Named;
 
 import jakarta.annotation.PreDestroy;
@@ -139,6 +140,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         ReactiveCapableRepository,
         AutoCloseable,
         SyncCascadeOperations.SyncCascadeOperationsHelper<DefaultJdbcRepositoryOperations.JdbcOperationContext> {
+    private final ConnectionOperations<Connection> connectionOperations;
     private final TransactionOperations<Connection> transactionOperations;
     private final DataSource dataSource;
     private final DataSource unwrapedDataSource;
@@ -153,26 +155,28 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     /**
      * Default constructor.
      *
-     * @param dataSourceName                  The data source name
-     * @param jdbcConfiguration               The jdbcConfiguration
-     * @param dataSource                      The datasource
-     * @param transactionOperations           The JDBC operations for the data source
-     * @param executorService                 The executor service
-     * @param beanContext                     The bean context
-     * @param dateTimeProvider                The dateTimeProvider
-     * @param entityRegistry                  The entity registry
-     * @param conversionService               The conversion service
-     * @param attributeConverterRegistry      The attribute converter registry
-     * @param schemaTenantResolver            The schema tenant resolver
-     * @param schemaHandler                   The schema handler
-     * @param jsonMapper                      The JSON mapper
-     * @param sqlJsonColumnMapperProvider     The SQL JSON column mapper provider
+     * @param dataSourceName              The data source name
+     * @param jdbcConfiguration           The jdbcConfiguration
+     * @param dataSource                  The datasource
+     * @param transactionOperations       The JDBC operations for the data source
+     * @param executorService             The executor service
+     * @param beanContext                 The bean context
+     * @param dateTimeProvider            The dateTimeProvider
+     * @param entityRegistry              The entity registry
+     * @param conversionService           The conversion service
+     * @param attributeConverterRegistry  The attribute converter registry
+     * @param schemaTenantResolver        The schema tenant resolver
+     * @param schemaHandler               The schema handler
+     * @param jsonMapper                  The JSON mapper
+     * @param sqlJsonColumnMapperProvider The SQL JSON column mapper provider
+     * @param connectionOperations
      */
     @Internal
     @SuppressWarnings("ParameterNumber")
     protected DefaultJdbcRepositoryOperations(@Parameter String dataSourceName,
                                               @Parameter DataJdbcConfiguration jdbcConfiguration,
                                               DataSource dataSource,
+                                              @Parameter ConnectionOperations<Connection> connectionOperations,
                                               @Parameter TransactionOperations<Connection> transactionOperations,
                                               @Named("io") @Nullable ExecutorService executorService,
                                               BeanContext beanContext,
@@ -199,6 +203,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                 sqlJsonColumnMapperProvider);
         this.schemaTenantResolver = schemaTenantResolver;
         this.schemaHandler = schemaHandler;
+        this.connectionOperations = connectionOperations;
         ArgumentUtils.requireNonNull("dataSource", dataSource);
         ArgumentUtils.requireNonNull("transactionOperations", transactionOperations);
         this.dataSource = dataSource;
@@ -755,45 +760,29 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     }
 
     private <I> I executeRead(Function<Connection, I> fn) {
-        if (jdbcConfiguration.isTransactionPerOperation()) {
-            return transactionOperations.executeRead(status -> {
-                Connection connection = status.getConnection();
-                applySchema(connection);
-                return fn.apply(connection);
-            });
+        if (!jdbcConfiguration.isAllowConnectionPerOperation() && connectionOperations.findConnectionStatus().isEmpty()) {
+            throw connectionNotFoundAndNewNotAllowed();
         }
-        if (!jdbcConfiguration.isAllowConnectionPerOperation() || transactionOperations.hasConnection()) {
-            Connection connection = transactionOperations.getConnection();
+        return connectionOperations.executeRead(status -> {
+            Connection connection = status.getConnection();
             applySchema(connection);
             return fn.apply(connection);
-        }
-        try (Connection connection = unwrapedDataSource.getConnection()) {
-            applySchema(connection);
-            return fn.apply(connection);
-        } catch (SQLException e) {
-            throw new DataAccessException("Cannot get connection: " + e.getMessage(), e);
-        }
+        });
     }
 
     private <I> I executeWrite(Function<Connection, I> fn) {
-        if (jdbcConfiguration.isTransactionPerOperation()) {
-            return transactionOperations.executeWrite(status -> {
-                Connection connection = status.getConnection();
-                applySchema(connection);
-                return fn.apply(connection);
-            });
+        if (!jdbcConfiguration.isAllowConnectionPerOperation() && connectionOperations.findConnectionStatus().isEmpty()) {
+            throw connectionNotFoundAndNewNotAllowed();
         }
-        if (!jdbcConfiguration.isAllowConnectionPerOperation() || transactionOperations.hasConnection()) {
-            Connection connection = transactionOperations.getConnection();
+        return connectionOperations.executeWrite(status -> {
+            Connection connection = status.getConnection();
             applySchema(connection);
             return fn.apply(connection);
-        }
-        try (Connection connection = unwrapedDataSource.getConnection()) {
-            applySchema(connection);
-            return fn.apply(connection);
-        } catch (SQLException e) {
-            throw new DataAccessException("Cannot get connection: " + e.getMessage(), e);
-        }
+        });
+    }
+
+    private DataAccessException connectionNotFoundAndNewNotAllowed() {
+        return new DataAccessException("Connection is required for this operation. Annotate with @" + Connectable.class + ", @Transactional or enable `isAllowConnectionPerOperation`.");
     }
 
     @Override
@@ -820,12 +809,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     @NonNull
     @Override
     public Connection getConnection() {
-        Connection connection;
-        if (jdbcConfiguration.isTransactionPerOperation() || !jdbcConfiguration.isAllowConnectionPerOperation() || transactionOperations.hasConnection()) {
-            connection = transactionOperations.getConnection();
-        } else {
-            connection = DataSourceUtils.getConnection(dataSource, true);
-        }
+        Connection connection = connectionOperations.getConnectionStatus().getConnection();
         applySchema(connection);
         return connection;
     }
@@ -834,11 +818,11 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     private ConnectionContext getConnectionCtx() {
         boolean needsToCloseConnection;
         Connection connection;
-        if (jdbcConfiguration.isTransactionPerOperation() || !jdbcConfiguration.isAllowConnectionPerOperation() || transactionOperations.hasConnection()) {
+        if (!jdbcConfiguration.isAllowConnectionPerOperation() || transactionOperations.hasConnection()) {
             connection = transactionOperations.getConnection();
             needsToCloseConnection = false;
         } else {
-            connection = DataSourceUtils.getConnection(dataSource, true);
+            connection = connectionOperations.getConnectionStatus().getConnection();
             needsToCloseConnection = true;
         }
         applySchema(connection);

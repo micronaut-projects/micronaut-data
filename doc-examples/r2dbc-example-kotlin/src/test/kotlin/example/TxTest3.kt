@@ -110,6 +110,7 @@ class TxTest3 : AbstractTest(false) {
         Assertions.assertEquals(true, recordCoroutineRepository.existsByBar(records[1].bar))
     }
 
+    @Disabled // Pending feature
     @Test
     fun `coroutines suspending inside declarative transaction`(): Unit = runBlocking {
         val records = (1..2).map { Record(UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID()) }

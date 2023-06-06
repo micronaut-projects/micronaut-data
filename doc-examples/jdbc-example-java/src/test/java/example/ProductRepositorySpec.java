@@ -21,6 +21,8 @@ class ProductRepositorySpec {
 
     @BeforeAll
     void setupTest() {
+        productRepository.deleteAll();
+        manufacturerRepository.deleteAll();
         Manufacturer apple = manufacturerRepository.save("Apple");
         productRepository.saveAll(Arrays.asList(
                 new Product(

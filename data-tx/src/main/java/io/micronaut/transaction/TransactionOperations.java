@@ -15,8 +15,11 @@
  */
 package io.micronaut.transaction;
 
+import io.micronaut.core.annotation.Experimental;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Blocking;
+
+import java.util.Optional;
 
 /***
  * Generic transaction operations interface.
@@ -46,6 +49,13 @@ public interface TransactionOperations<T> {
     boolean hasConnection();
 
     /**
+     * Find optional propagated transaction status.
+     * @return The transaction status.
+     */
+    @Experimental
+    Optional<? extends TransactionStatus<?>> findTransactionStatus();
+
+    /**
      * Execute a transaction within the context of the function.
      *
      * @param definition The transaction definition
@@ -62,7 +72,9 @@ public interface TransactionOperations<T> {
      * @param <R> The result
      * @return The result
      */
-    <R> R executeRead(@NonNull TransactionCallback<T, R> callback);
+    default <R> R executeRead(@NonNull TransactionCallback<T, R> callback) {
+        return execute(TransactionDefinition.READ_ONLY, callback);
+    }
 
     /**
      * Execute a default transaction within the context of the function.
@@ -71,5 +83,7 @@ public interface TransactionOperations<T> {
      * @param <R> The result
      * @return The result
      */
-    <R> R executeWrite(@NonNull TransactionCallback<T, R> callback);
+    default <R> R executeWrite(@NonNull TransactionCallback<T, R> callback) {
+        return execute(TransactionDefinition.DEFAULT, callback);
+    }
 }

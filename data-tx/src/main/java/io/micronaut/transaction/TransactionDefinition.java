@@ -18,6 +18,7 @@ package io.micronaut.transaction;
 
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
+import io.micronaut.data.connection.ConnectionDefinition;
 import io.micronaut.transaction.support.DefaultTransactionDefinition;
 
 import java.time.Duration;
@@ -405,6 +406,19 @@ public interface TransactionDefinition {
             }
         }
         return true;
+    }
+
+    /**
+     * In some cases the transaction can require a new connection or alter the existing connection properties.
+     *
+     * @return The connection definition that is required for this transaction.
+     */
+    default ConnectionDefinition getConnectionDefinition() {
+        if (getPropagationBehavior() == Propagation.REQUIRES_NEW) {
+            // In most of the cases REQUIRES_NEW transaction requires new connection to be opened
+            return ConnectionDefinition.DEFAULT.withName(getName()).withPropagation(ConnectionDefinition.Propagation.REQUIRES_NEW);
+        }
+        return ConnectionDefinition.DEFAULT.withName(getName());
     }
 
 }

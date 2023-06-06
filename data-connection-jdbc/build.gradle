@@ -1,0 +1,78 @@
+import io.micronaut.testresources.buildtools.KnownModules
+
+plugins {
+    id "io.micronaut.build.internal.data-module"
+    id 'io.micronaut.test-resources'
+}
+
+dependencies {
+    annotationProcessor mn.micronaut.inject.java
+    annotationProcessor mn.micronaut.graal
+    annotationProcessor libs.micronaut.docs
+
+    api projects.dataConnection
+    implementation mnSql.micronaut.jdbc
+    implementation mn.micronaut.aop
+
+    testAnnotationProcessor mn.micronaut.inject.java
+
+    testImplementation projects.dataRuntime
+    testImplementation projects.dataTck
+
+    testImplementation mnReactor.micronaut.reactor
+
+    testImplementation platform(libs.testcontainers.bom)
+    testImplementation libs.testcontainers.spock
+    testImplementation libs.testcontainers.mysql
+    testImplementation libs.testcontainers.mariadb
+    testImplementation libs.testcontainers.postgresql
+    testImplementation libs.testcontainers.mssqlserver
+    testImplementation libs.testcontainers.oracle
+
+    testCompileOnly mn.micronaut.inject.groovy
+
+    testImplementation mn.micronaut.http.netty
+    testRuntimeOnly mnSql.micronaut.jdbc.tomcat
+    testRuntimeOnly mnSql.h2
+    testRuntimeOnly mnSql.mariadb.java.client
+    testRuntimeOnly libs.drivers.jdbc.oracle
+    testRuntimeOnly mnSql.mysql.connector.java
+    testRuntimeOnly mnSql.postgresql
+    testRuntimeOnly mnSql.mssql.jdbc
+    testRuntimeOnly mn.snakeyaml
+
+    testResourcesService mnSql.mariadb.java.client
+    testResourcesService libs.drivers.jdbc.oracle
+    testResourcesService mnSql.mysql.connector.java
+    testResourcesService mnSql.postgresql
+    testResourcesService mnSql.mssql.jdbc
+
+    testImplementation libs.micronaut.testresources.client
+
+    testRuntimeOnly mnSerde.micronaut.serde.oracle.jdbc.json
+}
+
+micronaut {
+    version libs.versions.micronaut.platform.get()
+    testResources {
+        enabled = true
+        inferClasspath = false
+        additionalModules.add(KnownModules.JDBC_POSTGRESQL)
+        additionalModules.add(KnownModules.JDBC_MYSQL)
+        additionalModules.add(KnownModules.JDBC_MARIADB)
+        additionalModules.add(KnownModules.JDBC_ORACLE_XE)
+        additionalModules.add(KnownModules.JDBC_MSSQL)
+        clientTimeout = 300
+        version = libs.versions.micronaut.testresources.get()
+    }
+}
+
+tasks.withType(Test).configureEach {
+    jvmArgs '-Xmx1024m'
+    systemProperty "oracle.jdbc.timezoneAsRegion", "false"
+
+    if (micronautBuild.environment.githubAction.get()) {
+        // Let some of the checks tests first so the test containers don't eat all the memory
+        mustRunAfter ":data-jdbc:test"
+    }
+}

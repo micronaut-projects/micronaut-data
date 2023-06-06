@@ -20,6 +20,8 @@ import io.micronaut.context.BeanContext
 import io.micronaut.context.annotation.Requires
 import io.micronaut.context.env.Environment
 import io.micronaut.core.annotation.Introspected
+import io.micronaut.data.connection.ConnectionDefinition
+import io.micronaut.data.connection.annotation.Connectable
 import io.micronaut.data.tck.entities.Book
 import io.micronaut.data.tck.repositories.BookRepository
 import io.micronaut.http.annotation.Controller
@@ -34,7 +36,7 @@ import io.micronaut.scheduling.annotation.ExecuteOn
 import io.micronaut.test.support.TestPropertyProviderFactory
 import spock.lang.Specification
 
-import java.util.stream.Collectors
+import javax.transaction.Transactional
 
 abstract class AbstractMultitenancySpec extends Specification {
 
@@ -54,6 +56,8 @@ abstract class AbstractMultitenancySpec extends Specification {
 
     abstract String sourcePrefix();
 
+    abstract long countDataSources(ApplicationContext context);
+
     def "test schema multitenancy"() {
         if (!supportsSchemaMultitenancy()) {
             return
@@ -71,6 +75,7 @@ abstract class AbstractMultitenancySpec extends Specification {
             BarBookClient barBookClient = context.getBean(BarBookClient)
             fooBookClient.deleteAll()
             barBookClient.deleteAll()
+            assert countDataSources(context) == 1
         when: 'A book created in FOO tenant'
             BookDto book = fooBookClient.save("The Stand", 1000)
         then: 'The book exists in FOO tenant'
@@ -123,6 +128,7 @@ abstract class AbstractMultitenancySpec extends Specification {
             BarBookClient barBookClient = context.getBean(BarBookClient)
             fooBookClient.deleteAll()
             barBookClient.deleteAll()
+            assert countDataSources(context) == 2
         when: 'A book created in FOO tenant'
             BookDto book = fooBookClient.save("The Stand", 1000)
         then: 'The book exists in FOO tenant'
@@ -186,11 +192,31 @@ class BookController {
 
     @Get
     List<BookDto> findAll() {
-        return bookRepository.findAll().stream().map(BookDto::new).collect(Collectors.toList())
+        return findAll0()
+    }
+
+    @Connectable
+    protected List<BookDto> findAll0() {
+        findAll1()
+    }
+
+    @Connectable(propagation = ConnectionDefinition.Propagation.MANDATORY)
+    protected List<BookDto> findAll1() {
+        bookRepository.findAll().stream().map(BookDto::new).toList()
     }
 
     @Delete
     void deleteAll() {
+        deleteAll0()
+    }
+
+    @Transactional
+    protected deleteAll0() {
+        deleteAll1()
+    }
+
+    @Transactional(Transactional.TxType.MANDATORY)
+    protected deleteAll1() {
         bookRepository.deleteAll()
     }
 

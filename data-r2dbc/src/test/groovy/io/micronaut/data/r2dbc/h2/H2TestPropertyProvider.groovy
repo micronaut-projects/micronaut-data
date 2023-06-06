@@ -16,7 +16,11 @@ trait H2TestPropertyProvider implements TestPropertyProvider {
     }
 
     Map<String, String> getProperties() {
-        return getH2DataSourceProperties("default")
+        return shouldAddDefaultDbProperties() ? getH2DataSourceProperties("default") : [:]
+    }
+
+    boolean shouldAddDefaultDbProperties() {
+        return true
     }
 
     Map<String, String> getH2DataSourceProperties(String dataSourceName) {

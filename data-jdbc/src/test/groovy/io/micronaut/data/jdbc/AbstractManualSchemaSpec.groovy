@@ -4,7 +4,7 @@ import io.micronaut.context.ApplicationContext
 import io.micronaut.data.tck.entities.Patient
 import io.micronaut.data.tck.repositories.PatientRepository
 import io.micronaut.inject.qualifiers.Qualifiers
-import io.micronaut.transaction.jdbc.DelegatingDataSource
+import io.micronaut.data.connection.jdbc.advice.DelegatingDataSource
 import org.slf4j.LoggerFactory
 import spock.lang.AutoCleanup
 import spock.lang.Shared
