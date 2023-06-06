@@ -50,8 +50,6 @@ public class MappedEntityMapper implements TypedAnnotationMapper<MappedEntity> {
      */
     public static AnnotationValue<Introspected> buildIntrospectionConfiguration() {
         final AnnotationValueBuilder<Introspected> builder = AnnotationValue.builder(Introspected.class)
-                // don't bother with transients properties
-                .member("excludedAnnotations", Transient.class)
                 // following are indexed for fast lookups
                 .member("indexed",
                         AnnotationValue.builder(Introspected.IndexedAnnotation.class)
