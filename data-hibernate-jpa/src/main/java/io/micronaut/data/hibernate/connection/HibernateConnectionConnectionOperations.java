@@ -18,6 +18,7 @@ package io.micronaut.data.hibernate.connection;
 import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Replaces;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.annotation.Order;
 import io.micronaut.data.connection.ConnectionDefinition;
 import io.micronaut.data.connection.ConnectionOperations;
 import io.micronaut.data.connection.ConnectionStatus;
@@ -37,6 +38,7 @@ import java.util.function.Function;
  * @author Denis Stepanov
  * @since 4.0.0
  */
+@Order(200)
 @Internal
 @RequiresSyncHibernate
 @EachBean(HibernateConnectionOperations.class)

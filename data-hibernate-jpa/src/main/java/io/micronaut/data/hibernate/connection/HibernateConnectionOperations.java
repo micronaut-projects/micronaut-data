@@ -18,6 +18,7 @@ package io.micronaut.data.hibernate.connection;
 import io.micronaut.context.annotation.EachBean;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Nullable;
+import io.micronaut.core.annotation.Order;
 import io.micronaut.data.connection.ConnectionDefinition;
 import io.micronaut.data.connection.ConnectionStatus;
 import io.micronaut.data.connection.support.AbstractConnectionOperations;
@@ -33,6 +34,7 @@ import org.hibernate.SessionFactory;
  * @author Denis Stepanov
  * @since 4.0.0
  */
+@Order(100)
 @Internal
 @RequiresSyncHibernate
 @EachBean(SessionFactory.class)

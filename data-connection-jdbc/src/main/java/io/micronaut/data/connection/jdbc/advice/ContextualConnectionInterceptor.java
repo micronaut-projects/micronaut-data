@@ -21,6 +21,7 @@ import io.micronaut.context.BeanContext;
 import io.micronaut.context.Qualifier;
 import io.micronaut.context.annotation.Prototype;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.type.Argument;
 import io.micronaut.data.connection.ConnectionOperations;
 import io.micronaut.data.connection.ConnectionStatus;
 import io.micronaut.data.connection.exceptions.NoConnectionException;
@@ -47,7 +48,7 @@ public final class ContextualConnectionInterceptor implements MethodInterceptor<
      */
     @Internal
     ContextualConnectionInterceptor(BeanContext beanContext, Qualifier<ConnectionOperations> qualifier) {
-        connectionOperations = beanContext.getBean(ConnectionOperations.class, qualifier);
+        connectionOperations = beanContext.getBean(Argument.of(ConnectionOperations.class, Connection.class), qualifier);
     }
 
     @Override
