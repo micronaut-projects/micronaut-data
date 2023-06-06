@@ -120,11 +120,6 @@ abstract sealed class HibernateTransactionStatus extends AbstractInternalTransac
         }
 
         @Override
-        public boolean isReadOnly() {
-            return existingTransaction.isReadOnly();
-        }
-
-        @Override
         public Transaction getTransaction() {
             return existingTransaction.getTransaction();
         }

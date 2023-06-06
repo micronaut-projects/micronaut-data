@@ -122,11 +122,6 @@ abstract sealed class DataSourceTransactionStatus extends AbstractInternalTransa
         }
 
         @Override
-        public boolean isReadOnly() {
-            return existingTransaction.isReadOnly();
-        }
-
-        @Override
         public void setRollbackOnly() {
             super.setRollbackOnly();
             existingTransaction.setGlobalRollbackOnly();

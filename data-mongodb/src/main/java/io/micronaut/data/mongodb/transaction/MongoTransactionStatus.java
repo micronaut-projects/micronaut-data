@@ -108,11 +108,6 @@ abstract sealed class MongoTransactionStatus extends AbstractInternalTransaction
         }
 
         @Override
-        public boolean isReadOnly() {
-            return existingTransaction.isReadOnly();
-        }
-
-        @Override
         public void setRollbackOnly() {
             super.setRollbackOnly();
             existingTransaction.setGlobalRollbackOnly();

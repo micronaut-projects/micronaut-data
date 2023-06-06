@@ -57,15 +57,6 @@ public interface TransactionExecution {
     boolean isRollbackOnly();
 
     /**
-     * Return whether the transaction has been marked as read-only.
-     *
-     * @return Whether the execution has been marked to read-only
-     */
-    default boolean isReadOnly() {
-        return false; // TODO
-    }
-
-    /**
      * Return whether this transaction is completed, that is,
      * whether it has already been committed or rolled back.
      *

@@ -15,7 +15,8 @@
  */
 package io.micronaut.data.connection.annotation;
 
-import io.micronaut.aop.Around;
+import io.micronaut.aop.InterceptorBinding;
+import io.micronaut.aop.InterceptorKind;
 import io.micronaut.context.annotation.AliasFor;
 import io.micronaut.data.connection.ConnectionDefinition;
 
@@ -32,7 +33,7 @@ import java.lang.annotation.Target;
  */
 @Target({ElementType.ANNOTATION_TYPE, ElementType.METHOD, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
-@Around
+@InterceptorBinding(kind = InterceptorKind.AROUND)
 public @interface Connectable {
 
     /**

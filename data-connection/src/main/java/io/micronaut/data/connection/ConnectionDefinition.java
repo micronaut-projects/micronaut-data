@@ -68,12 +68,7 @@ public interface ConnectionDefinition {
         /**
          * Create a new connection.
          */
-        REQUIRES_NEW,
-
-        /**
-         * Do not support a current connection; throw an exception if a current connection exists.
-         */
-//        NEVER
+        REQUIRES_NEW
     }
 
     /**
