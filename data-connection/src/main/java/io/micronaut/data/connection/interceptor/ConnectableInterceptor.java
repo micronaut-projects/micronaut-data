@@ -152,7 +152,7 @@ public final class ConnectableInterceptor implements MethodInterceptor<Object, O
     public static ConnectionDefinition getConnectionDefinition(ExecutableMethod<Object, Object> executableMethod) {
         AnnotationValue<Connectable> annotation = executableMethod.getAnnotation(Connectable.class);
         if (annotation == null) {
-            throw new IllegalStateException("No declared @Connection annotation present");
+            throw new IllegalStateException("No declared @Connectable annotation present");
         }
 
         return new DefaultConnectionDefinition(
