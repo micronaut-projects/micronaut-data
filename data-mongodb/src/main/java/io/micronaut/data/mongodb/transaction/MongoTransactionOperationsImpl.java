@@ -24,21 +24,19 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.connection.ConnectionOperations;
-import io.micronaut.data.connection.ConnectionStatus;
 import io.micronaut.data.connection.SynchronousConnectionManager;
 import io.micronaut.data.mongodb.conf.RequiresSyncMongo;
-import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.exceptions.NoTransactionException;
-import io.micronaut.transaction.support.AbstractTransactionOperations;
+import io.micronaut.transaction.impl.DefaultTransactionStatus;
+import io.micronaut.transaction.support.AbstractDefaultTransactionOperations;
 
-import java.time.Duration;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 @Internal
 @RequiresSyncMongo
 @EachBean(MongoClient.class)
-final class MongoTransactionOperationsImpl extends AbstractTransactionOperations<MongoTransactionStatus, ClientSession> implements MongoTransactionOperations {
+final class MongoTransactionOperationsImpl extends AbstractDefaultTransactionOperations<ClientSession> implements MongoTransactionOperations {
 
     MongoTransactionOperationsImpl(@Parameter ConnectionOperations<ClientSession> connectionOperations,
                                    @Parameter @Nullable SynchronousConnectionManager<ClientSession> synchronousConnectionManager) {
@@ -54,41 +52,20 @@ final class MongoTransactionOperationsImpl extends AbstractTransactionOperations
     }
 
     @Override
-    protected void doBegin(MongoTransactionStatus tx) {
+    protected void doBegin(DefaultTransactionStatus<ClientSession> tx) {
         TransactionOptions.Builder txOptionsBuilder = TransactionOptions.builder();
-        Duration timeout = determineTimeout(tx.getTransactionDefinition());
-        if (timeout != TransactionDefinition.TIMEOUT_DEFAULT) {
-            txOptionsBuilder.maxCommitTime(timeout.toMillis(), TimeUnit.MILLISECONDS);
-        }
+        determineTimeout(tx.getTransactionDefinition()).ifPresent(timeout -> txOptionsBuilder.maxCommitTime(timeout.toMillis(), TimeUnit.MILLISECONDS));
         tx.getConnection().startTransaction(txOptionsBuilder.build());
     }
 
     @Override
-    protected void doCommit(MongoTransactionStatus tx) {
+    protected void doCommit(DefaultTransactionStatus<ClientSession> tx) {
         tx.getConnection().commitTransaction();
     }
 
     @Override
-    protected void doRollback(MongoTransactionStatus tx) {
+    protected void doRollback(DefaultTransactionStatus<ClientSession> tx) {
         tx.getConnection().abortTransaction();
     }
 
-    @Override
-    protected MongoTransactionStatus createNoTxTransactionStatus(@NonNull ConnectionStatus<ClientSession> connectionStatus,
-                                                                 @NonNull TransactionDefinition definition) {
-        return MongoTransactionStatus.noTx(connectionStatus, definition);
-    }
-
-    @Override
-    protected MongoTransactionStatus createNewTransactionStatus(@NonNull ConnectionStatus<ClientSession> connectionStatus,
-                                                                @NonNull TransactionDefinition definition) {
-        return MongoTransactionStatus.newTx(connectionStatus, definition);
-    }
-
-    @Override
-    protected MongoTransactionStatus createExistingTransactionStatus(@NonNull ConnectionStatus<ClientSession> connectionStatus,
-                                                                     @NonNull TransactionDefinition definition,
-                                                                     @NonNull MongoTransactionStatus existingTransaction) {
-        return MongoTransactionStatus.existingTx(connectionStatus, existingTransaction);
-    }
 }

@@ -22,15 +22,15 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.annotation.TypeHint;
-import io.micronaut.data.connection.jdbc.advice.DelegatingDataSource;
 import io.micronaut.data.connection.ConnectionOperations;
-import io.micronaut.data.connection.ConnectionStatus;
 import io.micronaut.data.connection.ConnectionSynchronization;
 import io.micronaut.data.connection.SynchronousConnectionManager;
+import io.micronaut.data.connection.jdbc.advice.DelegatingDataSource;
 import io.micronaut.data.connection.support.JdbcConnectionUtils;
 import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.exceptions.TransactionSystemException;
-import io.micronaut.transaction.support.AbstractTransactionOperations;
+import io.micronaut.transaction.impl.DefaultTransactionStatus;
+import io.micronaut.transaction.support.AbstractDefaultTransactionOperations;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
@@ -52,7 +52,7 @@ import java.util.Objects;
 @EachBean(DataSource.class)
 @Requires(condition = JdbcTransactionManagerCondition.class)
 @TypeHint(DataSourceTransactionManager.class)
-public final class DataSourceTransactionManager extends AbstractTransactionOperations<DataSourceTransactionStatus, Connection> {
+public final class DataSourceTransactionManager extends AbstractDefaultTransactionOperations<Connection> {
 
     private final DataSource dataSource;
 
@@ -73,7 +73,6 @@ public final class DataSourceTransactionManager extends AbstractTransactionOpera
         dataSource = DelegatingDataSource.unwrapDataSource(dataSource);
         this.dataSource = dataSource;
     }
-
 
     /**
      * @return Return the JDBC DataSource that this instance manages transactions for.
@@ -118,16 +117,16 @@ public final class DataSourceTransactionManager extends AbstractTransactionOpera
     }
 
     @Override
-    protected void doBegin(DataSourceTransactionStatus status) {
+    protected void doBegin(DefaultTransactionStatus<Connection> status) {
         TransactionDefinition definition = status.getTransactionDefinition();
         Connection connection = status.getConnection();
 
         List<Runnable> onComplete = new ArrayList<>(5);
 
-        JdbcConnectionUtils.applyReadOnly(logger, connection, definition.isReadOnly(), onComplete);
-        if (definition.getIsolationLevel() != TransactionDefinition.Isolation.DEFAULT) {
-            JdbcConnectionUtils.applyTransactionIsolation(logger, connection, definition.getIsolationLevel().getCode(), onComplete);
-        }
+        definition.isReadOnly()
+            .ifPresent(readOnly -> JdbcConnectionUtils.applyReadOnly(logger, connection, readOnly, onComplete));
+        definition.getIsolationLevel()
+            .ifPresent(isolation -> JdbcConnectionUtils.applyTransactionIsolation(logger, connection, isolation.getCode(), onComplete));
         JdbcConnectionUtils.applyAutoCommit(logger, connection, false, onComplete);
 
         //        prepareTransactionalConnection(connection, definition);
@@ -146,7 +145,7 @@ public final class DataSourceTransactionManager extends AbstractTransactionOpera
     }
 
     @Override
-    protected void doCommit(DataSourceTransactionStatus status) {
+    protected void doCommit(DefaultTransactionStatus<Connection> status) {
         Connection connection = status.getConnection();
         if (logger.isDebugEnabled()) {
             logger.debug("Committing JDBC transaction on Connection [{}]", connection);
@@ -159,7 +158,7 @@ public final class DataSourceTransactionManager extends AbstractTransactionOpera
     }
 
     @Override
-    protected void doRollback(DataSourceTransactionStatus status) {
+    protected void doRollback(DefaultTransactionStatus<Connection> status) {
         Connection connection = status.getConnection();
         if (logger.isDebugEnabled()) {
             logger.debug("Rolling back JDBC transaction on Connection [{}]", connection);
@@ -189,7 +188,7 @@ public final class DataSourceTransactionManager extends AbstractTransactionOpera
     protected void prepareTransactionalConnection(Connection con, TransactionDefinition definition)
         throws SQLException {
 
-        if (isEnforceReadOnly() && definition.isReadOnly()) {
+        if (isEnforceReadOnly() && definition.isReadOnly().orElse(false)) {
             try (Statement stmt = con.createStatement()) {
                 stmt.executeUpdate("SET TRANSACTION READ ONLY");
             }
@@ -200,24 +199,5 @@ public final class DataSourceTransactionManager extends AbstractTransactionOpera
     @Override
     public Connection getConnection() {
         return connectionOperations.getConnectionStatus().getConnection();
-    }
-
-    @Override
-    protected DataSourceTransactionStatus createNoTxTransactionStatus(@NonNull ConnectionStatus<Connection> connectionStatus,
-                                                                      @NonNull TransactionDefinition definition) {
-        return DataSourceTransactionStatus.noTx(connectionStatus, definition);
-    }
-
-    @Override
-    protected DataSourceTransactionStatus createNewTransactionStatus(@NonNull ConnectionStatus<Connection> connectionStatus,
-                                                                     @NonNull TransactionDefinition definition) {
-        return DataSourceTransactionStatus.newTx(connectionStatus, definition);
-    }
-
-    @Override
-    protected DataSourceTransactionStatus createExistingTransactionStatus(@NonNull ConnectionStatus<Connection> connectionStatus,
-                                                                          @NonNull TransactionDefinition definition,
-                                                                          @NonNull DataSourceTransactionStatus existingTransaction) {
-        return DataSourceTransactionStatus.existingTx(connectionStatus, existingTransaction);
     }
 }

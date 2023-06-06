@@ -129,7 +129,7 @@ final class DefaultR2dbcReactorTransactionOperations implements R2dbcReactorTran
                         }
                         DefaultReactiveTransactionStatus status = new DefaultReactiveTransactionStatus(definition, connectionStatus, true);
                         Mono<Boolean> resourceSupplier;
-                        if (definition.getIsolationLevel() != TransactionDefinition.DEFAULT.getIsolationLevel()) {
+                        if (definition.getIsolationLevel().isPresent()) {
                             IsolationLevel isolationLevel = getIsolationLevel(definition);
                             if (LOG.isDebugEnabled()) {
                                 LOG.debug("Setting Isolation Level ({}) for transaction: {} for dataSource: {}", isolationLevel, definition.getName(), dataSourceName);
@@ -222,13 +222,13 @@ final class DefaultR2dbcReactorTransactionOperations implements R2dbcReactorTran
     }
 
     private IsolationLevel getIsolationLevel(TransactionDefinition definition) {
-        return switch (definition.getIsolationLevel()) {
+        return definition.getIsolationLevel().map(isolation -> switch (isolation) {
             case READ_COMMITTED -> IsolationLevel.READ_COMMITTED;
             case READ_UNCOMMITTED -> IsolationLevel.READ_UNCOMMITTED;
             case REPEATABLE_READ -> IsolationLevel.REPEATABLE_READ;
             case SERIALIZABLE -> IsolationLevel.SERIALIZABLE;
             default -> null;
-        };
+        }).orElse(null);
     }
 
     private ReactiveTransactionStatus<Connection> existingTransaction(ReactiveTransactionStatus<Connection> existing, TransactionDefinition definition) {
