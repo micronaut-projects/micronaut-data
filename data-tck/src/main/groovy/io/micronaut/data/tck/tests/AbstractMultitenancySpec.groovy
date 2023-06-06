@@ -36,10 +36,7 @@ import io.micronaut.scheduling.annotation.ExecuteOn
 import io.micronaut.test.support.TestPropertyProviderFactory
 import spock.lang.Specification
 
-import javax.sql.DataSource
-import javax.transaction.Transaction
 import javax.transaction.Transactional
-import java.util.stream.Collectors
 
 abstract class AbstractMultitenancySpec extends Specification {
 
@@ -59,6 +56,8 @@ abstract class AbstractMultitenancySpec extends Specification {
 
     abstract String sourcePrefix();
 
+    abstract long countDataSources(ApplicationContext context);
+
     def "test schema multitenancy"() {
         if (!supportsSchemaMultitenancy()) {
             return
@@ -76,7 +75,7 @@ abstract class AbstractMultitenancySpec extends Specification {
             BarBookClient barBookClient = context.getBean(BarBookClient)
             fooBookClient.deleteAll()
             barBookClient.deleteAll()
-            assert context.getBeansOfType(DataSource).size() == 1
+            assert countDataSources(context) == 1
         when: 'A book created in FOO tenant'
             BookDto book = fooBookClient.save("The Stand", 1000)
         then: 'The book exists in FOO tenant'
@@ -129,7 +128,7 @@ abstract class AbstractMultitenancySpec extends Specification {
             BarBookClient barBookClient = context.getBean(BarBookClient)
             fooBookClient.deleteAll()
             barBookClient.deleteAll()
-            assert context.getBeansOfType(DataSource).size() == 2
+            assert countDataSources(context) == 2
         when: 'A book created in FOO tenant'
             BookDto book = fooBookClient.save("The Stand", 1000)
         then: 'The book exists in FOO tenant'

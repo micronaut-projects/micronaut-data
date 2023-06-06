@@ -19,9 +19,9 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.async.propagation.ReactorPropagation;
 import io.micronaut.core.propagation.PropagatedContext;
 import io.micronaut.data.connection.ConnectionStatus;
-import io.micronaut.transaction.SynchronousTransactionManager;
 import io.micronaut.transaction.TransactionCallback;
 import io.micronaut.transaction.TransactionDefinition;
+import io.micronaut.transaction.TransactionOperations;
 import io.micronaut.transaction.TransactionStatus;
 import io.micronaut.transaction.exceptions.TransactionException;
 import io.micronaut.transaction.reactive.ReactiveTransactionStatus;
@@ -36,37 +36,22 @@ import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 
 /**
- * Implementation of the synchronous transaction manager using a reactive transaction manager.
+ * Implementation of the synchronous transaction operations using a reactive transaction operations.
  *
  * @param <T> The connection type
  * @author Denis Stepanov
  * @since 3.5.0
  */
 @Internal
-public final class SynchronousFromReactiveTransactionManager<T> implements SynchronousTransactionManager<T> {
+public final class SynchronousTransactionOperationsFromReactiveTransactionOperations<T> implements TransactionOperations<T> {
 
     private final ReactorReactiveTransactionOperations<T> reactiveTransactionOperations;
     private final Scheduler scheduler;
 
-    public SynchronousFromReactiveTransactionManager(ReactorReactiveTransactionOperations<T> reactiveTransactionOperations,
-                                                     ExecutorService blockingExecutorService) {
+    public SynchronousTransactionOperationsFromReactiveTransactionOperations(ReactorReactiveTransactionOperations<T> reactiveTransactionOperations,
+                                                                             ExecutorService blockingExecutorService) {
         this.reactiveTransactionOperations = reactiveTransactionOperations;
         this.scheduler = Schedulers.fromExecutorService(blockingExecutorService);
-    }
-
-    @Override
-    public TransactionStatus<T> getTransaction(TransactionDefinition definition) throws TransactionException {
-        throw noSupported();
-    }
-
-    @Override
-    public void commit(TransactionStatus<T> status) throws TransactionException {
-        throw noSupported();
-    }
-
-    @Override
-    public void rollback(TransactionStatus<T> status) throws TransactionException {
-        throw noSupported();
     }
 
     @Override
@@ -87,26 +72,16 @@ public final class SynchronousFromReactiveTransactionManager<T> implements Synch
     @Override
     public <R> R execute(TransactionDefinition definition, TransactionCallback<T, R> callback) {
         Mono<R> result = reactiveTransactionOperations.withTransactionMono(definition, status -> Mono.deferContextual(contextView -> {
-            try (PropagatedContext.Scope scope = ReactorPropagation.findPropagatedContext(contextView).orElseGet(PropagatedContext::getOrEmpty).propagate()) {
+            try (PropagatedContext.Scope ignore = ReactorPropagation.findPropagatedContext(contextView).orElseGet(PropagatedContext::getOrEmpty).propagate()) {
                 return Mono.justOrEmpty(callback.apply(new DefaultTransactionStatus<>(status)));
             }
-        }).subscribeOn(scheduler));
+        }).subscribeOn(scheduler)).contextWrite(ctx -> ReactorPropagation.addPropagatedContext(ctx, PropagatedContext.getOrEmpty()));
         return result.onErrorMap(e -> {
             if (e instanceof UndeclaredThrowableException) {
                 return e.getCause();
             }
             return e;
         }).block();
-    }
-
-    @Override
-    public <R> R executeRead(TransactionCallback<T, R> callback) {
-        return execute(TransactionDefinition.READ_ONLY, callback);
-    }
-
-    @Override
-    public <R> R executeWrite(TransactionCallback<T, R> callback) {
-        return execute(TransactionDefinition.DEFAULT, callback);
     }
 
     @NotNull

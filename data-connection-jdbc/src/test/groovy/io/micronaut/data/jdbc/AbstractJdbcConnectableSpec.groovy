@@ -3,7 +3,7 @@ package io.micronaut.data.jdbc
 
 import io.micronaut.data.connection.exceptions.NoConnectionException
 import io.micronaut.data.connection.jdbc.advice.DelegatingDataSource
-import io.micronaut.data.connection.jdbc.operations.DataSourceConnectionOperationsImpl
+import io.micronaut.data.connection.jdbc.operations.DefaultDataSourceConnectionOperations
 import io.micronaut.data.connection.ConnectionOperations
 import io.micronaut.data.connection.SynchronousConnectionManager
 import io.micronaut.data.tck.repositories.SimpleBookRepository
@@ -26,12 +26,12 @@ abstract class AbstractJdbcConnectableSpec extends AbstractConnectableSpec {
 
     @Override
     protected ConnectionOperations<?> getConnectionOperations() {
-        return context.getBean(DataSourceConnectionOperationsImpl.class)
+        return context.getBean(DefaultDataSourceConnectionOperations.class)
     }
 
     @Override
     protected SynchronousConnectionManager<?> getSynchronousConnectionManager() {
-        return context.getBean(DataSourceConnectionOperationsImpl.class)
+        return context.getBean(DefaultDataSourceConnectionOperations.class)
     }
 
     List<String> createStatements() {

@@ -16,7 +16,6 @@
 package io.micronaut.data.mongodb.advice;
 
 import io.micronaut.aop.Introduction;
-import io.micronaut.context.annotation.Type;
 import io.micronaut.core.annotation.Internal;
 
 import java.lang.annotation.Retention;

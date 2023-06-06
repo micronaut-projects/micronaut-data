@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.r2dbc.operations;
+package io.micronaut.data.r2dbc.connection;
 
 import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Parameter;
@@ -29,6 +29,7 @@ import io.micronaut.data.connection.reactive.ReactorConnectionOperations;
 import io.micronaut.data.connection.ConnectionStatus;
 import io.micronaut.data.connection.support.DefaultConnectionStatus;
 import io.micronaut.data.r2dbc.config.DataR2dbcConfiguration;
+import io.micronaut.data.r2dbc.operations.R2dbcSchemaHandler;
 import io.micronaut.data.runtime.multitenancy.SchemaTenantResolver;
 import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.ConnectionFactory;
@@ -54,7 +55,7 @@ import java.util.function.Supplier;
  */
 @EachBean(ConnectionFactory.class)
 @Internal
-final class DefaultR2DbcReactorConnectionOperations implements ReactorConnectionOperations<Connection> {
+public final class DefaultR2DbcReactorConnectionOperations implements ReactorConnectionOperations<Connection> {
 
     private static final Logger LOG = LoggerFactory.getLogger(DefaultR2DbcReactorConnectionOperations.class);
 
@@ -85,7 +86,7 @@ final class DefaultR2DbcReactorConnectionOperations implements ReactorConnection
             .findFirst();
     }
 
-    <T> Flux<T> withConnectionFluxWithCloseCallback(@NonNull ConnectionDefinition definition,
+    public <T> Flux<T> withConnectionFluxWithCloseCallback(@NonNull ConnectionDefinition definition,
                                                     @NonNull BiFunction<ConnectionStatus<Connection>, Supplier<Publisher<Void>>, Publisher<T>> callback) {
         Objects.requireNonNull(callback, "Callback cannot be null");
         return Flux.deferContextual(contextView -> {
@@ -127,7 +128,8 @@ final class DefaultR2DbcReactorConnectionOperations implements ReactorConnection
             if (schemaName != null) {
                 return Mono.fromDirect(schemaHandler.useSchema(status.getConnection(), configuration.getDialect(), schemaName))
                     .thenReturn(status)
-                    .flatMap(handler);
+                    .flatMap(handler)
+                    .contextWrite(ctx -> addConnection(ctx, status));
             }
         }
         return handler.apply(status).contextWrite(ctx -> addConnection(ctx, status));
@@ -139,7 +141,8 @@ final class DefaultR2DbcReactorConnectionOperations implements ReactorConnection
             if (schemaName != null) {
                 return Mono.fromDirect(schemaHandler.useSchema(status.getConnection(), configuration.getDialect(), schemaName))
                     .thenReturn(status)
-                    .flatMapMany(handler);
+                    .flatMapMany(handler)
+                    .contextWrite(ctx -> addConnection(ctx, status));
             }
         }
         return handler.apply(status).contextWrite(ctx -> addConnection(ctx, status));

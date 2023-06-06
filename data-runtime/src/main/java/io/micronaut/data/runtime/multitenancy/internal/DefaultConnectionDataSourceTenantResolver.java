@@ -19,7 +19,6 @@ import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.connection.interceptor.ConnectionDataSourceTenantResolver;
 import io.micronaut.data.runtime.multitenancy.DataSourceTenantResolver;
-import io.micronaut.transaction.interceptor.TransactionDataSourceTenantResolver;
 import jakarta.inject.Singleton;
 
 /**

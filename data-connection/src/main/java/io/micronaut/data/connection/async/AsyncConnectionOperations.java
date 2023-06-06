@@ -17,7 +17,10 @@ package io.micronaut.data.connection.async;
 
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.connection.ConnectionDefinition;
+import io.micronaut.data.connection.ConnectionStatus;
+import io.micronaut.data.connection.exceptions.NoConnectionException;
 
+import java.util.Optional;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
 
@@ -31,6 +34,23 @@ import java.util.function.Function;
 public interface AsyncConnectionOperations<C> {
 
     /**
+     * Obtains the current required connection.
+     *
+     * @return The connection or exception if the connection doesn't exist
+     */
+    @NonNull
+    default ConnectionStatus<C> getConnectionStatus() {
+        return findConnectionStatus().orElseThrow(NoConnectionException::new);
+    }
+
+    /**
+     * Obtains the current connection.
+     *
+     * @return The optional connection
+     */
+    Optional<ConnectionStatus<C>> findConnectionStatus();
+
+    /**
      * Execute the given handler with a new connection.
      *
      * @param definition The definition
@@ -40,7 +60,7 @@ public interface AsyncConnectionOperations<C> {
      */
     @NonNull
     <T> CompletionStage<T> withConnection(@NonNull ConnectionDefinition definition,
-                                          @NonNull Function<C, CompletionStage<T>> handler);
+                                          @NonNull Function<ConnectionStatus<C>, CompletionStage<T>> handler);
 
     /**
      * Execute the given handler with a new connection.
@@ -49,7 +69,7 @@ public interface AsyncConnectionOperations<C> {
      * @param <T>     The emitted type
      * @return A publisher that emits the result type
      */
-    default @NonNull <T> CompletionStage<T> withConnection(@NonNull Function<C, CompletionStage<T>> handler) {
+    default @NonNull <T> CompletionStage<T> withConnection(@NonNull Function<ConnectionStatus<C>, CompletionStage<T>> handler) {
         return withConnection(ConnectionDefinition.DEFAULT, handler);
     }
 }

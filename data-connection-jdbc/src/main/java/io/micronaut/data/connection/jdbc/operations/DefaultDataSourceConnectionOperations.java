@@ -18,7 +18,6 @@ package io.micronaut.data.connection.jdbc.operations;
 import io.micronaut.context.annotation.EachBean;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.connection.exceptions.ConnectionException;
-import io.micronaut.data.connection.jdbc.advice.ContextualConnectionProvider;
 import io.micronaut.data.connection.jdbc.advice.DelegatingDataSource;
 import io.micronaut.data.connection.jdbc.exceptions.CannotGetJdbcConnectionException;
 import io.micronaut.data.connection.ConnectionDefinition;
@@ -43,12 +42,12 @@ import java.util.List;
  */
 @Internal
 @EachBean(DataSource.class)
-public final class DataSourceConnectionOperationsImpl extends AbstractConnectionOperations<Connection> implements DataSourceConnectionOperations, ContextualConnectionProvider {
+public final class DefaultDataSourceConnectionOperations extends AbstractConnectionOperations<Connection> {
 
-    private static final Logger LOG = LoggerFactory.getLogger(DataSourceConnectionOperationsImpl.class);
+    private static final Logger LOG = LoggerFactory.getLogger(DefaultDataSourceConnectionOperations.class);
     private final DataSource dataSource;
 
-    DataSourceConnectionOperationsImpl(DataSource dataSource) {
+    DefaultDataSourceConnectionOperations(DataSource dataSource) {
         this.dataSource = DelegatingDataSource.unwrapDataSource(dataSource);
     }
 
@@ -88,8 +87,4 @@ public final class DataSourceConnectionOperationsImpl extends AbstractConnection
         }
     }
 
-    @Override
-    public Connection find() {
-        return findConnectionStatus().map(ConnectionStatus::getConnection).orElse(null);
-    }
 }

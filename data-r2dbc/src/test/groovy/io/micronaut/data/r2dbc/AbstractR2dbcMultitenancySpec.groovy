@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.r2dbc
 
-
+import io.micronaut.context.ApplicationContext
 import io.micronaut.context.BeanContext
 import io.micronaut.data.r2dbc.config.DataR2dbcConfiguration
 import io.micronaut.data.r2dbc.operations.R2dbcSchemaHandler
@@ -32,6 +32,11 @@ abstract class AbstractR2dbcMultitenancySpec extends AbstractMultitenancySpec {
     @Override
     String sourcePrefix() {
         return "r2dbc.datasources"
+    }
+
+    @Override
+    long countDataSources(ApplicationContext context) {
+        return context.getBeansOfType(ConnectionFactory).size()
     }
 
     @Override

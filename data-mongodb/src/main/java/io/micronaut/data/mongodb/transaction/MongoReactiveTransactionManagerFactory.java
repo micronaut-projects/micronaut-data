@@ -27,7 +27,7 @@ import io.micronaut.data.mongodb.conf.RequiresReactiveMongo;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.transaction.async.AsyncUsingReactiveTransactionOperations;
 import io.micronaut.transaction.reactive.ReactorReactiveTransactionOperations;
-import io.micronaut.transaction.sync.SynchronousFromReactiveTransactionManager;
+import io.micronaut.transaction.sync.SynchronousTransactionOperationsFromReactiveTransactionOperations;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 
@@ -47,15 +47,15 @@ final class MongoReactiveTransactionManagerFactory {
     @Requires(missingProperty = MongoSettings.MONGODB_SERVERS)
     @Primary
     @Singleton
-    <T> SynchronousFromReactiveTransactionManager<T> buildPrimarySynchronousTransactionManager(@Primary ReactorReactiveTransactionOperations<T> reactiveTransactionOperations,
-                                                                                               @Named(TaskExecutors.IO) ExecutorService executorService) {
-        return new SynchronousFromReactiveTransactionManager<>(reactiveTransactionOperations, executorService);
+    <T> SynchronousTransactionOperationsFromReactiveTransactionOperations<T> buildPrimarySynchronousTransactionManager(@Primary ReactorReactiveTransactionOperations<T> reactiveTransactionOperations,
+                                                                                                                       @Named(TaskExecutors.IO) ExecutorService executorService) {
+        return new SynchronousTransactionOperationsFromReactiveTransactionOperations<>(reactiveTransactionOperations, executorService);
     }
 
     @EachBean(NamedMongoConfiguration.class)
-    <T> SynchronousFromReactiveTransactionManager<T> buildSynchronousTransactionManager(@Parameter ReactorReactiveTransactionOperations<T> reactiveTransactionOperations,
-                                                                                        @Named(TaskExecutors.IO) ExecutorService executorService) {
-        return new SynchronousFromReactiveTransactionManager<>(reactiveTransactionOperations, executorService);
+    <T> SynchronousTransactionOperationsFromReactiveTransactionOperations<T> buildSynchronousTransactionManager(@Parameter ReactorReactiveTransactionOperations<T> reactiveTransactionOperations,
+                                                                                                                @Named(TaskExecutors.IO) ExecutorService executorService) {
+        return new SynchronousTransactionOperationsFromReactiveTransactionOperations<>(reactiveTransactionOperations, executorService);
     }
 
     @Requires(missingProperty = MongoSettings.MONGODB_SERVERS)

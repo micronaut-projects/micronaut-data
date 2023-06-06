@@ -30,7 +30,6 @@ import io.micronaut.test.extensions.AbstractMicronautExtension;
 import io.micronaut.transaction.SynchronousTransactionManager;
 import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.TransactionStatus;
-import io.micronaut.transaction.sync.SynchronousFromReactiveTransactionManager;
 
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Method;
@@ -69,11 +68,6 @@ public class DefaultTestTransactionExecutionListener implements TestExecutionLis
         @Property(name = AbstractMicronautExtension.TEST_TRANSACTION_MODE, defaultValue = "SEPARATE_TRANSACTIONS") TransactionMode transactionMode,
         @Nullable SpockMethodTransactionDefinitionProvider spockMethodTransactionDefinitionProvider) {
         this.spockMethodTransactionDefinitionProvider = spockMethodTransactionDefinitionProvider;
-
-        if (transactionManager instanceof SynchronousFromReactiveTransactionManager) {
-            throw new IllegalStateException("Transaction mode is not supported when the synchronous transaction manager is created using Reactive transaction manager!");
-        }
-
         this.transactionManager = transactionManager;
         this.rollback = rollback;
         this.transactionMode = transactionMode;

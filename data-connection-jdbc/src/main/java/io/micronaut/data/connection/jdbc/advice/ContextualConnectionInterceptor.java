@@ -21,6 +21,8 @@ import io.micronaut.context.BeanContext;
 import io.micronaut.context.Qualifier;
 import io.micronaut.context.annotation.Prototype;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.data.connection.ConnectionOperations;
+import io.micronaut.data.connection.ConnectionStatus;
 import io.micronaut.data.connection.exceptions.NoConnectionException;
 import io.micronaut.inject.ExecutableMethod;
 
@@ -35,7 +37,7 @@ import java.sql.Connection;
 @Prototype
 public final class ContextualConnectionInterceptor implements MethodInterceptor<Connection, Object> {
 
-    private final ContextualConnectionProvider connectionProvider;
+    private final ConnectionOperations<Connection> connectionOperations;
 
     /**
      * Default constructor.
@@ -44,13 +46,13 @@ public final class ContextualConnectionInterceptor implements MethodInterceptor<
      * @param qualifier   The qualifier
      */
     @Internal
-    ContextualConnectionInterceptor(BeanContext beanContext, Qualifier<ContextualConnectionProvider> qualifier) {
-        connectionProvider = beanContext.getBean(ContextualConnectionProvider.class, qualifier);
+    ContextualConnectionInterceptor(BeanContext beanContext, Qualifier<ConnectionOperations> qualifier) {
+        connectionOperations = beanContext.getBean(ConnectionOperations.class, qualifier);
     }
 
     @Override
     public Object intercept(MethodInvocationContext<Connection, Object> context) {
-        Connection connection = connectionProvider.find();
+        Connection connection = connectionOperations.findConnectionStatus().map(ConnectionStatus::getConnection).orElse(null);
         if (connection == null) {
             throw NoConnectionException.notFoundInAdvice();
         }

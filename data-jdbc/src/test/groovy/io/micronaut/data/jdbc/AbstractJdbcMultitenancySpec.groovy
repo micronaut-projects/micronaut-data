@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.jdbc
 
-
+import io.micronaut.context.ApplicationContext
 import io.micronaut.context.BeanContext
 import io.micronaut.data.jdbc.config.DataJdbcConfiguration
 import io.micronaut.data.jdbc.operations.JdbcSchemaHandler
@@ -34,6 +34,11 @@ abstract class AbstractJdbcMultitenancySpec extends AbstractMultitenancySpec {
     @Override
     String sourcePrefix() {
         return "datasources"
+    }
+
+    @Override
+    long countDataSources(ApplicationContext context) {
+        return context.getBeansOfType(DataSource).size()
     }
 
     @Override

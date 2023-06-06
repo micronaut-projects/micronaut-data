@@ -18,7 +18,7 @@ package io.micronaut.data.spring.jdbc;
 import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Replaces;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.data.connection.jdbc.operations.DataSourceConnectionOperationsImpl;
+import io.micronaut.data.connection.jdbc.operations.DefaultDataSourceConnectionOperations;
 import io.micronaut.data.connection.ConnectionDefinition;
 import io.micronaut.data.connection.ConnectionOperations;
 import io.micronaut.data.connection.ConnectionStatus;
@@ -42,7 +42,7 @@ import java.util.function.Function;
  */
 @Internal
 @EachBean(DataSource.class)
-@Replaces(DataSourceConnectionOperationsImpl.class)
+@Replaces(DefaultDataSourceConnectionOperations.class)
 // TODO: We should avoid using @Replaces, there should be a way to use different data sources with Micronaut and Spring TX
 public final class SpringJdbcConnectionOperations implements ConnectionOperations<Connection> {
 
