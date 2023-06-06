@@ -59,7 +59,16 @@ loadScripts(document, 'script');</script>
 <ul>
 <li class="circle">java.lang.<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" class="type-name-link external-link" title="class or interface in java.lang">Object</a>
 <ul>
-<li class="circle">io.micronaut.data.spring.jdbc.<a href="SpringJdbcTransactionOperations.html" class="type-name-link" title="class in io.micronaut.data.spring.jdbc">SpringJdbcTransactionOperations</a> (implements io.micronaut.transaction.<a href="../../../transaction/TransactionOperations.html" title="interface in io.micronaut.transaction">TransactionOperations</a>&lt;T&gt;)</li>
+<li class="circle">io.micronaut.transaction.support.<a href="../../../transaction/support/AbstractPropagatedStatusTransactionOperations.html" class="type-name-link" title="class in io.micronaut.transaction.support">AbstractPropagatedStatusTransactionOperations</a>&lt;T,<wbr>C&gt; (implements io.micronaut.transaction.<a href="../../../transaction/TransactionOperations.html" title="interface in io.micronaut.transaction">TransactionOperations</a>&lt;T&gt;)
+<ul>
+<li class="circle">io.micronaut.data.spring.tx.<a href="../tx/AbstractSpringTransactionOperations.html" class="type-name-link" title="class in io.micronaut.data.spring.tx">AbstractSpringTransactionOperations</a>
+<ul>
+<li class="circle">io.micronaut.data.spring.jdbc.<a href="SpringJdbcTransactionOperations.html" class="type-name-link" title="class in io.micronaut.data.spring.jdbc">SpringJdbcTransactionOperations</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="circle">io.micronaut.data.spring.jdbc.<a href="SpringJdbcConnectionOperations.html" class="type-name-link" title="class in io.micronaut.data.spring.jdbc">SpringJdbcConnectionOperations</a> (implements io.micronaut.data.connection.<a href="../../connection/ConnectionOperations.html" title="interface in io.micronaut.data.connection">ConnectionOperations</a>&lt;C&gt;)</li>
 </ul>
 </li>
 </ul>

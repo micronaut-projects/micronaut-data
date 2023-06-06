@@ -15,11 +15,7 @@
 <script type="text/javascript" src="../../../../script-dir/jquery-ui.min.js"></script>
 </head>
 <body class="package-declaration-page">
-<script type="text/javascript">var evenRowColor = "even-row-color";
-var oddRowColor = "odd-row-color";
-var tableTab = "table-tab";
-var activeTableTab = "active-table-tab";
-var pathtoroot = "../../../../";
+<script type="text/javascript">var pathtoroot = "../../../../";
 loadScripts(document, 'script');</script>
 <noscript>
 <div>JavaScript is disabled on your browser.</div>
@@ -84,60 +80,13 @@ loadScripts(document, 'script');</script>
 </li>
 <li>
 <div id="class-summary">
-<div class="table-tabs" role="tablist" aria-orientation="horizontal"><button id="class-summary-tab0" role="tab" aria-selected="true" aria-controls="class-summary.tabpanel" tabindex="0" onkeydown="switchTab(event)" onclick="show('class-summary', 'class-summary', 2)" class="active-table-tab">All Classes and Interfaces</button><button id="class-summary-tab1" role="tab" aria-selected="false" aria-controls="class-summary.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('class-summary', 'class-summary-tab1', 2)" class="table-tab">Interfaces</button><button id="class-summary-tab2" role="tab" aria-selected="false" aria-controls="class-summary.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('class-summary', 'class-summary-tab2', 2)" class="table-tab">Classes</button></div>
-<div id="class-summary.tabpanel" role="tabpanel">
-<div class="summary-table two-column-summary" aria-labelledby="class-summary-tab0">
+<div class="caption"><span>Classes</span></div>
+<div class="summary-table two-column-summary">
 <div class="table-header col-first">Class</div>
 <div class="table-header col-last">Description</div>
-<div class="col-first even-row-color class-summary class-summary-tab1"><a href="ConnectionHandle.html" title="interface in io.micronaut.transaction.jdbc">ConnectionHandle</a></div>
-<div class="col-last even-row-color class-summary class-summary-tab1">
-<div class="block">Simple interface to be implemented by handles for a JDBC Connection.</div>
-</div>
-<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="ConnectionHolder.html" title="class in io.micronaut.transaction.jdbc">ConnectionHolder</a></div>
-<div class="col-last odd-row-color class-summary class-summary-tab2">
-<div class="block">Resource holder wrapping a JDBC <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.sql/java/sql/Connection.html" title="class or interface in java.sql" class="external-link"><code>Connection</code></a>.</div>
-</div>
 <div class="col-first even-row-color class-summary class-summary-tab2"><a href="DataSourceTransactionManager.html" title="class in io.micronaut.transaction.jdbc">DataSourceTransactionManager</a></div>
 <div class="col-last even-row-color class-summary class-summary-tab2">
-<div class="block">NOTICE: This is a fork of Spring's <code>PlatformTransactionManager</code> modernizing it
- to use enums, Slf4j and decoupling from Spring.</div>
-</div>
-<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="DataSourceUtils.html" title="class in io.micronaut.transaction.jdbc">DataSourceUtils</a></div>
-<div class="col-last odd-row-color class-summary class-summary-tab2">
-<div class="block">Helper class that provides static methods for obtaining JDBC Connections from
- a <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.sql/javax/sql/DataSource.html" title="class or interface in javax.sql" class="external-link"><code>DataSource</code></a>.</div>
-</div>
-<div class="col-first even-row-color class-summary class-summary-tab2"><a href="DelegatingDataSource.html" title="class in io.micronaut.transaction.jdbc">DelegatingDataSource</a></div>
-<div class="col-last even-row-color class-summary class-summary-tab2">
-<div class="block">JDBC <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.sql/javax/sql/DataSource.html" title="class or interface in javax.sql" class="external-link"><code>DataSource</code></a> implementation that delegates all calls
- to a given target <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.sql/javax/sql/DataSource.html" title="class or interface in javax.sql" class="external-link"><code>DataSource</code></a>.</div>
-</div>
-<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="DelegatingDataSourceResolver.html" title="class in io.micronaut.transaction.jdbc">DelegatingDataSourceResolver</a></div>
-<div class="col-last odd-row-color class-summary class-summary-tab2">
-<div class="block">Unwraps transactional data source proxies.</div>
-</div>
-<div class="col-first even-row-color class-summary class-summary-tab2"><a href="JdbcTransactionObjectSupport.html" title="class in io.micronaut.transaction.jdbc">JdbcTransactionObjectSupport</a></div>
-<div class="col-last even-row-color class-summary class-summary-tab2">
-<div class="block">Convenient base class for JDBC-aware transaction objects.</div>
-</div>
-<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="SimpleConnectionHandle.html" title="class in io.micronaut.transaction.jdbc">SimpleConnectionHandle</a></div>
-<div class="col-last odd-row-color class-summary class-summary-tab2">
-<div class="block">Simple implementation of the <a href="ConnectionHandle.html" title="interface in io.micronaut.transaction.jdbc"><code>ConnectionHandle</code></a> interface,
- containing a given JDBC Connection.</div>
-</div>
-<div class="col-first even-row-color class-summary class-summary-tab1"><a href="TransactionalConnection.html" title="interface in io.micronaut.transaction.jdbc">TransactionalConnection</a></div>
-<div class="col-last even-row-color class-summary class-summary-tab1">
-<div class="block">Allows injecting a <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.sql/java/sql/Connection.html" title="class or interface in java.sql" class="external-link"><code>Connection</code></a> instance as a bean with any methods invoked
- on the connection being delegated to connection bound to the current transaction.</div>
-</div>
-<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="TransactionalConnectionInterceptor.html" title="class in io.micronaut.transaction.jdbc">TransactionalConnectionInterceptor</a></div>
-<div class="col-last odd-row-color class-summary class-summary-tab2">
-<div class="block">An interceptor that allows injecting a <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.sql/java/sql/Connection.html" title="class or interface in java.sql" class="external-link"><code>Connection</code></a> that acts a proxy to lookup the connection for the current transaction.</div>
-</div>
-<div class="col-first even-row-color class-summary class-summary-tab2"><a href="TransactionAwareDataSource.html" title="class in io.micronaut.transaction.jdbc">TransactionAwareDataSource</a></div>
-<div class="col-last even-row-color class-summary class-summary-tab2">
-<div class="block">Transaction aware data source implementation.</div>
-</div>
+<div class="block">The <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.sql/javax/sql/DataSource.html" title="class or interface in javax.sql" class="external-link"><code>DataSource</code></a> transaction manager.</div>
 </div>
 </div>
 </div>

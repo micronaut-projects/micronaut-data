@@ -46,13 +46,13 @@ loadScripts(document, 'script');</script>
 <li>Summary:&nbsp;</li>
 <li>Nested&nbsp;|&nbsp;</li>
 <li>Field&nbsp;|&nbsp;</li>
-<li><a href="#constructor-summary">Constr</a>&nbsp;|&nbsp;</li>
+<li>Constr&nbsp;|&nbsp;</li>
 <li><a href="#method-summary">Method</a></li>
 </ul>
 <ul class="sub-nav-list">
 <li>Detail:&nbsp;</li>
 <li>Field&nbsp;|&nbsp;</li>
-<li><a href="#constructor-detail">Constr</a>&nbsp;|&nbsp;</li>
+<li>Constr&nbsp;|&nbsp;</li>
 <li><a href="#method-detail">Method</a></li>
 </ul>
 </div>
@@ -72,7 +72,11 @@ loadScripts(document, 'script');</script>
 <h1 title="Class SpringJdbcTransactionOperations" class="title">Class SpringJdbcTransactionOperations</h1>
 </div>
 <div class="inheritance" title="Inheritance Tree"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">java.lang.Object</a>
+<div class="inheritance"><a href="../../../transaction/support/AbstractPropagatedStatusTransactionOperations.html" title="class in io.micronaut.transaction.support">io.micronaut.transaction.support.AbstractPropagatedStatusTransactionOperations</a>&lt;<a href="../../../transaction/TransactionStatus.html" title="interface in io.micronaut.transaction">TransactionStatus</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.sql/java/sql/Connection.html" title="class or interface in java.sql" class="external-link">Connection</a>&gt;,<wbr><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.sql/java/sql/Connection.html" title="class or interface in java.sql" class="external-link">Connection</a>&gt;
+<div class="inheritance"><a href="../tx/AbstractSpringTransactionOperations.html" title="class in io.micronaut.data.spring.tx">io.micronaut.data.spring.tx.AbstractSpringTransactionOperations</a>
 <div class="inheritance">io.micronaut.data.spring.jdbc.SpringJdbcTransactionOperations</div>
+</div>
+</div>
 </div>
 <section class="class-description" id="class-description">
 <dl class="notes">
@@ -82,10 +86,10 @@ loadScripts(document, 'script');</script>
 <hr>
 <div class="type-signature"><span class="annotations">@EachBean(org.springframework.jdbc.datasource.DataSourceTransactionManager.class)
 @Internal
-@Requires(classes=org.springframework.jdbc.datasource.DataSourceTransactionManager.class)
-</span><span class="modifiers">public class </span><span class="element-name type-name-label">SpringJdbcTransactionOperations</span>
-<span class="extends-implements">extends <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>
-implements <a href="../../../transaction/TransactionOperations.html" title="interface in io.micronaut.transaction">TransactionOperations</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.sql/java/sql/Connection.html" title="class or interface in java.sql" class="external-link">Connection</a>&gt;</span></div>
+@Requires(classes=org.springframework.jdbc.datasource.DataSourceTransactionManager.class,
+          condition=io.micronaut.data.spring.jdbc.SpringJdbcTransactionManagerCondition.class)
+</span><span class="modifiers">public final class </span><span class="element-name type-name-label">SpringJdbcTransactionOperations</span>
+<span class="extends-implements">extends <a href="../tx/AbstractSpringTransactionOperations.html" title="class in io.micronaut.data.spring.tx">AbstractSpringTransactionOperations</a></span></div>
 <div class="block">Default implementation of <a href="../../../transaction/TransactionOperations.html" title="interface in io.micronaut.transaction"><code>TransactionOperations</code></a> that uses Spring managed transactions.</div>
 <dl class="notes">
 <dt>Since:</dt>
@@ -96,23 +100,6 @@ implements <a href="../../../transaction/TransactionOperations.html" title="inte
 </section>
 <section class="summary">
 <ul class="summary-list">
-<!-- ======== CONSTRUCTOR SUMMARY ======== -->
-<li>
-<section class="constructor-summary" id="constructor-summary">
-<h2>Constructor Summary</h2>
-<div class="caption"><span>Constructors</span></div>
-<div class="summary-table three-column-summary">
-<div class="table-header col-first">Modifier</div>
-<div class="table-header col-second">Constructor</div>
-<div class="table-header col-last">Description</div>
-<div class="col-first even-row-color"><code>protected </code></div>
-<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(org.springframework.jdbc.datasource.DataSourceTransactionManager)" class="member-name-link">SpringJdbcTransactionOperations</a><wbr>(org.springframework.jdbc.datasource.DataSourceTransactionManager&nbsp;transactionManager)</code></div>
-<div class="col-last even-row-color">
-<div class="block">Default constructor.</div>
-</div>
-</div>
-</section>
-</li>
 <!-- ========== METHOD SUMMARY =========== -->
 <li>
 <section class="method-summary" id="method-summary">
@@ -124,27 +111,14 @@ implements <a href="../../../transaction/TransactionOperations.html" title="inte
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;R&gt;&nbsp;R</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#execute(io.micronaut.transaction.TransactionDefinition,io.micronaut.transaction.TransactionCallback)" class="member-name-link">execute</a><wbr>(<a href="../../../transaction/TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition,
- <a href="../../../transaction/TransactionCallback.html" title="interface in io.micronaut.transaction">TransactionCallback</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.sql/java/sql/Connection.html" title="class or interface in java.sql" class="external-link">Connection</a>,<wbr>R&gt;&nbsp;callback)</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.sql/java/sql/Connection.html" title="class or interface in java.sql" class="external-link">Connection</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getConnection()" class="member-name-link">getConnection</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Execute a transaction within the context of the function.</div>
-</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;R&gt;&nbsp;R</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#executeRead(io.micronaut.transaction.TransactionCallback)" class="member-name-link">executeRead</a><wbr>(<a href="../../../transaction/TransactionCallback.html" title="interface in io.micronaut.transaction">TransactionCallback</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.sql/java/sql/Connection.html" title="class or interface in java.sql" class="external-link">Connection</a>,<wbr>R&gt;&nbsp;callback)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Execute a read-only transaction within the context of the function.</div>
-</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;R&gt;&nbsp;R</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#executeWrite(io.micronaut.transaction.TransactionCallback)" class="member-name-link">executeWrite</a><wbr>(<a href="../../../transaction/TransactionCallback.html" title="interface in io.micronaut.transaction">TransactionCallback</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.sql/java/sql/Connection.html" title="class or interface in java.sql" class="external-link">Connection</a>,<wbr>R&gt;&nbsp;callback)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Execute a default transaction within the context of the function.</div>
-</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.sql/java/sql/Connection.html" title="class or interface in java.sql" class="external-link">Connection</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getConnection()" class="member-name-link">getConnection</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Obtains the connection for the current transaction.</div>
 </div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.sql/javax/sql/DataSource.html" title="class or interface in javax.sql" class="external-link">DataSource</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getDataSource()" class="member-name-link">getDataSource</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#hasConnection()" class="member-name-link">hasConnection</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
@@ -154,6 +128,12 @@ implements <a href="../../../transaction/TransactionOperations.html" title="inte
 </div>
 </div>
 <div class="inherited-list">
+<h3 id="methods-inherited-from-class-io.micronaut.data.spring.tx.AbstractSpringTransactionOperations">Methods inherited from class&nbsp;io.micronaut.data.spring.tx.<a href="../tx/AbstractSpringTransactionOperations.html" title="class in io.micronaut.data.spring.tx">AbstractSpringTransactionOperations</a></h3>
+<code><a href="../tx/AbstractSpringTransactionOperations.html#doExecute(io.micronaut.transaction.TransactionDefinition,io.micronaut.transaction.TransactionCallback)">doExecute</a>, <a href="../tx/AbstractSpringTransactionOperations.html#executeRead(io.micronaut.transaction.TransactionCallback)">executeRead</a>, <a href="../tx/AbstractSpringTransactionOperations.html#executeWrite(io.micronaut.transaction.TransactionCallback)">executeWrite</a></code></div>
+<div class="inherited-list">
+<h3 id="methods-inherited-from-class-io.micronaut.transaction.support.AbstractPropagatedStatusTransactionOperations">Methods inherited from class&nbsp;io.micronaut.transaction.support.<a href="../../../transaction/support/AbstractPropagatedStatusTransactionOperations.html" title="class in io.micronaut.transaction.support">AbstractPropagatedStatusTransactionOperations</a></h3>
+<code><a href="../../../transaction/support/AbstractPropagatedStatusTransactionOperations.html#execute(io.micronaut.transaction.TransactionDefinition,io.micronaut.transaction.TransactionCallback)">execute</a>, <a href="../../../transaction/support/AbstractPropagatedStatusTransactionOperations.html#extendCurrentPropagatedContext(io.micronaut.transaction.TransactionStatus)">extendCurrentPropagatedContext</a>, <a href="../../../transaction/support/AbstractPropagatedStatusTransactionOperations.html#findTransactionStatus()">findTransactionStatus</a></code></div>
+<div class="inherited-list">
 <h3 id="methods-inherited-from-class-java.lang.Object">Methods inherited from class&nbsp;java.lang.<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></h3>
 <code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#clone()" title="class or interface in java.lang" class="external-link">clone</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#equals(java.lang.Object)" title="class or interface in java.lang" class="external-link">equals</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#finalize()" title="class or interface in java.lang" class="external-link">finalize</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#getClass()" title="class or interface in java.lang" class="external-link">getClass</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#hashCode()" title="class or interface in java.lang" class="external-link">hashCode</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#notify()" title="class or interface in java.lang" class="external-link">notify</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#notifyAll()" title="class or interface in java.lang" class="external-link">notifyAll</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#toString()" title="class or interface in java.lang" class="external-link">toString</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#wait()" title="class or interface in java.lang" class="external-link">wait</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#wait(long)" title="class or interface in java.lang" class="external-link">wait</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#wait(long,int)" title="class or interface in java.lang" class="external-link">wait</a></code></div>
 </section>
@@ -162,88 +142,15 @@ implements <a href="../../../transaction/TransactionOperations.html" title="inte
 </section>
 <section class="details">
 <ul class="details-list">
-<!-- ========= CONSTRUCTOR DETAIL ======== -->
-<li>
-<section class="constructor-details" id="constructor-detail">
-<h2>Constructor Details</h2>
-<ul class="member-list">
-<li>
-<section class="detail" id="&lt;init&gt;(org.springframework.jdbc.datasource.DataSourceTransactionManager)">
-<h3>SpringJdbcTransactionOperations</h3>
-<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="element-name">SpringJdbcTransactionOperations</span><wbr><span class="parameters">(org.springframework.jdbc.datasource.DataSourceTransactionManager&nbsp;transactionManager)</span></div>
-<div class="block">Default constructor.</div>
-<dl class="notes">
-<dt>Parameters:</dt>
-<dd><code>transactionManager</code> - The transaction manager</dd>
-</dl>
-</section>
-</li>
-</ul>
-</section>
-</li>
 <!-- ============ METHOD DETAIL ========== -->
 <li>
 <section class="method-details" id="method-detail">
 <h2>Method Details</h2>
 <ul class="member-list">
 <li>
-<section class="detail" id="executeRead(io.micronaut.transaction.TransactionCallback)">
-<h3>executeRead</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="type-parameters">&lt;R&gt;</span>&nbsp;<span class="return-type">R</span>&nbsp;<span class="element-name">executeRead</span><wbr><span class="parameters">(@NonNull
- <a href="../../../transaction/TransactionCallback.html" title="interface in io.micronaut.transaction">TransactionCallback</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.sql/java/sql/Connection.html" title="class or interface in java.sql" class="external-link">Connection</a>,<wbr>R&gt;&nbsp;callback)</span></div>
-<div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="../../../transaction/TransactionOperations.html#executeRead(io.micronaut.transaction.TransactionCallback)">TransactionOperations</a></code></span></div>
-<div class="block">Execute a read-only transaction within the context of the function.</div>
-<dl class="notes">
-<dt>Specified by:</dt>
-<dd><code><a href="../../../transaction/TransactionOperations.html#executeRead(io.micronaut.transaction.TransactionCallback)">executeRead</a></code>&nbsp;in interface&nbsp;<code><a href="../../../transaction/TransactionOperations.html" title="interface in io.micronaut.transaction">TransactionOperations</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.sql/java/sql/Connection.html" title="class or interface in java.sql" class="external-link">Connection</a>&gt;</code></dd>
-<dt>Type Parameters:</dt>
-<dd><code>R</code> - The result</dd>
-<dt>Parameters:</dt>
-<dd><code>callback</code> - The call back</dd>
-<dt>Returns:</dt>
-<dd>The result</dd>
-</dl>
-</section>
-</li>
-<li>
-<section class="detail" id="executeWrite(io.micronaut.transaction.TransactionCallback)">
-<h3>executeWrite</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="type-parameters">&lt;R&gt;</span>&nbsp;<span class="return-type">R</span>&nbsp;<span class="element-name">executeWrite</span><wbr><span class="parameters">(@NonNull
- <a href="../../../transaction/TransactionCallback.html" title="interface in io.micronaut.transaction">TransactionCallback</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.sql/java/sql/Connection.html" title="class or interface in java.sql" class="external-link">Connection</a>,<wbr>R&gt;&nbsp;callback)</span></div>
-<div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="../../../transaction/TransactionOperations.html#executeWrite(io.micronaut.transaction.TransactionCallback)">TransactionOperations</a></code></span></div>
-<div class="block">Execute a default transaction within the context of the function.</div>
-<dl class="notes">
-<dt>Specified by:</dt>
-<dd><code><a href="../../../transaction/TransactionOperations.html#executeWrite(io.micronaut.transaction.TransactionCallback)">executeWrite</a></code>&nbsp;in interface&nbsp;<code><a href="../../../transaction/TransactionOperations.html" title="interface in io.micronaut.transaction">TransactionOperations</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.sql/java/sql/Connection.html" title="class or interface in java.sql" class="external-link">Connection</a>&gt;</code></dd>
-<dt>Type Parameters:</dt>
-<dd><code>R</code> - The result</dd>
-<dt>Parameters:</dt>
-<dd><code>callback</code> - The call back</dd>
-<dt>Returns:</dt>
-<dd>The result</dd>
-</dl>
-</section>
-</li>
-<li>
-<section class="detail" id="execute(io.micronaut.transaction.TransactionDefinition,io.micronaut.transaction.TransactionCallback)">
-<h3>execute</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="type-parameters">&lt;R&gt;</span>&nbsp;<span class="return-type">R</span>&nbsp;<span class="element-name">execute</span><wbr><span class="parameters">(@NonNull
- <a href="../../../transaction/TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition,
- @NonNull
- <a href="../../../transaction/TransactionCallback.html" title="interface in io.micronaut.transaction">TransactionCallback</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.sql/java/sql/Connection.html" title="class or interface in java.sql" class="external-link">Connection</a>,<wbr>R&gt;&nbsp;callback)</span></div>
-<div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="../../../transaction/TransactionOperations.html#execute(io.micronaut.transaction.TransactionDefinition,io.micronaut.transaction.TransactionCallback)">TransactionOperations</a></code></span></div>
-<div class="block">Execute a transaction within the context of the function.</div>
-<dl class="notes">
-<dt>Specified by:</dt>
-<dd><code><a href="../../../transaction/TransactionOperations.html#execute(io.micronaut.transaction.TransactionDefinition,io.micronaut.transaction.TransactionCallback)">execute</a></code>&nbsp;in interface&nbsp;<code><a href="../../../transaction/TransactionOperations.html" title="interface in io.micronaut.transaction">TransactionOperations</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.sql/java/sql/Connection.html" title="class or interface in java.sql" class="external-link">Connection</a>&gt;</code></dd>
-<dt>Type Parameters:</dt>
-<dd><code>R</code> - The result</dd>
-<dt>Parameters:</dt>
-<dd><code>definition</code> - The transaction definition</dd>
-<dd><code>callback</code> - The call back</dd>
-<dt>Returns:</dt>
-<dd>The result</dd>
-</dl>
+<section class="detail" id="getDataSource()">
+<h3>getDataSource</h3>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.sql/javax/sql/DataSource.html" title="class or interface in javax.sql" class="external-link">DataSource</a></span>&nbsp;<span class="element-name">getDataSource</span>()</div>
 </section>
 </li>
 <li>
@@ -254,8 +161,6 @@ implements <a href="../../../transaction/TransactionOperations.html" title="inte
 <div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="../../../transaction/TransactionOperations.html#getConnection()">TransactionOperations</a></code></span></div>
 <div class="block">Obtains the connection for the current transaction.</div>
 <dl class="notes">
-<dt>Specified by:</dt>
-<dd><code><a href="../../../transaction/TransactionOperations.html#getConnection()">getConnection</a></code>&nbsp;in interface&nbsp;<code><a href="../../../transaction/TransactionOperations.html" title="interface in io.micronaut.transaction">TransactionOperations</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.sql/java/sql/Connection.html" title="class or interface in java.sql" class="external-link">Connection</a>&gt;</code></dd>
 <dt>Returns:</dt>
 <dd>The connection</dd>
 </dl>
@@ -268,8 +173,6 @@ implements <a href="../../../transaction/TransactionOperations.html" title="inte
 <div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="../../../transaction/TransactionOperations.html#hasConnection()">TransactionOperations</a></code></span></div>
 <div class="block">Check if the connection exists.</div>
 <dl class="notes">
-<dt>Specified by:</dt>
-<dd><code><a href="../../../transaction/TransactionOperations.html#hasConnection()">hasConnection</a></code>&nbsp;in interface&nbsp;<code><a href="../../../transaction/TransactionOperations.html" title="interface in io.micronaut.transaction">TransactionOperations</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.sql/java/sql/Connection.html" title="class or interface in java.sql" class="external-link">Connection</a>&gt;</code></dd>
 <dt>Returns:</dt>
 <dd>True if transaction exists</dd>
 </dl>

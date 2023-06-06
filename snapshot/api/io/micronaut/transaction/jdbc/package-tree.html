@@ -59,49 +59,13 @@ loadScripts(document, 'script');</script>
 <ul>
 <li class="circle">java.lang.<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" class="type-name-link external-link" title="class or interface in java.lang">Object</a>
 <ul>
-<li class="circle">io.micronaut.transaction.support.<a href="../support/AbstractSynchronousStateTransactionManager.html" class="type-name-link" title="class in io.micronaut.transaction.support">AbstractSynchronousStateTransactionManager</a>&lt;T&gt; (implements java.io.<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/Serializable.html" title="class or interface in java.io" class="external-link">Serializable</a>)
+<li class="circle">io.micronaut.transaction.support.<a href="../support/AbstractPropagatedStatusTransactionOperations.html" class="type-name-link" title="class in io.micronaut.transaction.support">AbstractPropagatedStatusTransactionOperations</a>&lt;T,<wbr>C&gt; (implements io.micronaut.transaction.<a href="../TransactionOperations.html" title="interface in io.micronaut.transaction">TransactionOperations</a>&lt;T&gt;)
 <ul>
-<li class="circle">io.micronaut.transaction.support.<a href="../support/AbstractSynchronousTransactionManager.html" class="type-name-link" title="class in io.micronaut.transaction.support">AbstractSynchronousTransactionManager</a>&lt;T&gt; (implements java.io.<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/Serializable.html" title="class or interface in java.io" class="external-link">Serializable</a>, io.micronaut.transaction.<a href="../SynchronousTransactionManager.html" title="interface in io.micronaut.transaction">SynchronousTransactionManager</a>&lt;T&gt;)
+<li class="circle">io.micronaut.transaction.support.<a href="../support/AbstractTransactionOperations.html" class="type-name-link" title="class in io.micronaut.transaction.support">AbstractTransactionOperations</a>&lt;T,<wbr>C&gt; (implements io.micronaut.transaction.<a href="../SynchronousTransactionManager.html" title="interface in io.micronaut.transaction">SynchronousTransactionManager</a>&lt;T&gt;, io.micronaut.transaction.<a href="../TransactionOperations.html" title="interface in io.micronaut.transaction">TransactionOperations</a>&lt;T&gt;)
 <ul>
-<li class="circle">io.micronaut.transaction.jdbc.<a href="DataSourceTransactionManager.html" class="type-name-link" title="class in io.micronaut.transaction.jdbc">DataSourceTransactionManager</a> (implements io.micronaut.transaction.support.<a href="../support/ResourceTransactionManager.html" title="interface in io.micronaut.transaction.support">ResourceTransactionManager</a>&lt;R,<wbr>T&gt;)</li>
+<li class="circle">io.micronaut.transaction.jdbc.<a href="DataSourceTransactionManager.html" class="type-name-link" title="class in io.micronaut.transaction.jdbc">DataSourceTransactionManager</a></li>
 </ul>
 </li>
-</ul>
-</li>
-<li class="circle">io.micronaut.transaction.jdbc.<a href="DataSourceUtils.html" class="type-name-link" title="class in io.micronaut.transaction.jdbc">DataSourceUtils</a></li>
-<li class="circle">io.micronaut.transaction.jdbc.<a href="DelegatingDataSource.html" class="type-name-link" title="class in io.micronaut.transaction.jdbc">DelegatingDataSource</a> (implements javax.sql.<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.sql/javax/sql/DataSource.html" title="class or interface in javax.sql" class="external-link">DataSource</a>)</li>
-<li class="circle">io.micronaut.transaction.jdbc.<a href="DelegatingDataSourceResolver.html" class="type-name-link" title="class in io.micronaut.transaction.jdbc">DelegatingDataSourceResolver</a> (implements io.micronaut.jdbc.DataSourceResolver)</li>
-<li class="circle">io.micronaut.transaction.jdbc.<a href="JdbcTransactionObjectSupport.html" class="type-name-link" title="class in io.micronaut.transaction.jdbc">JdbcTransactionObjectSupport</a> (implements io.micronaut.transaction.<a href="../SavepointManager.html" title="interface in io.micronaut.transaction">SavepointManager</a>, io.micronaut.transaction.support.<a href="../support/SmartTransactionObject.html" title="interface in io.micronaut.transaction.support">SmartTransactionObject</a>)</li>
-<li class="circle">io.micronaut.transaction.support.<a href="../support/ResourceHolderSupport.html" class="type-name-link" title="class in io.micronaut.transaction.support">ResourceHolderSupport</a> (implements io.micronaut.transaction.support.<a href="../support/ResourceHolder.html" title="interface in io.micronaut.transaction.support">ResourceHolder</a>)
-<ul>
-<li class="circle">io.micronaut.transaction.jdbc.<a href="ConnectionHolder.html" class="type-name-link" title="class in io.micronaut.transaction.jdbc">ConnectionHolder</a></li>
-</ul>
-</li>
-<li class="circle">io.micronaut.transaction.jdbc.<a href="SimpleConnectionHandle.html" class="type-name-link" title="class in io.micronaut.transaction.jdbc">SimpleConnectionHandle</a> (implements io.micronaut.transaction.jdbc.<a href="ConnectionHandle.html" title="interface in io.micronaut.transaction.jdbc">ConnectionHandle</a>)</li>
-<li class="circle">io.micronaut.transaction.jdbc.<a href="TransactionalConnectionInterceptor.html" class="type-name-link" title="class in io.micronaut.transaction.jdbc">TransactionalConnectionInterceptor</a> (implements io.micronaut.aop.MethodInterceptor&lt;T,<wbr>R&gt;)</li>
-<li class="circle">io.micronaut.transaction.jdbc.<a href="TransactionAwareDataSource.html" class="type-name-link" title="class in io.micronaut.transaction.jdbc">TransactionAwareDataSource</a> (implements io.micronaut.context.event.BeanCreatedEventListener&lt;T&gt;)</li>
-</ul>
-</li>
-</ul>
-</section>
-<section class="hierarchy">
-<h2 title="Interface Hierarchy">Interface Hierarchy</h2>
-<ul>
-<li class="circle">java.lang.<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/AutoCloseable.html" class="type-name-link external-link" title="class or interface in java.lang">AutoCloseable</a>
-<ul>
-<li class="circle">java.sql.<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.sql/java/sql/Connection.html" class="type-name-link external-link" title="class or interface in java.sql">Connection</a> (also extends java.sql.<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.sql/java/sql/Wrapper.html" title="class or interface in java.sql" class="external-link">Wrapper</a>)
-<ul>
-<li class="circle">io.micronaut.transaction.jdbc.<a href="TransactionalConnection.html" class="type-name-link" title="interface in io.micronaut.transaction.jdbc">TransactionalConnection</a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li class="circle">io.micronaut.transaction.jdbc.<a href="ConnectionHandle.html" class="type-name-link" title="interface in io.micronaut.transaction.jdbc">ConnectionHandle</a></li>
-<li class="circle">java.sql.<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.sql/java/sql/Wrapper.html" class="type-name-link external-link" title="class or interface in java.sql">Wrapper</a>
-<ul>
-<li class="circle">java.sql.<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.sql/java/sql/Connection.html" class="type-name-link external-link" title="class or interface in java.sql">Connection</a> (also extends java.lang.<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/AutoCloseable.html" title="class or interface in java.lang" class="external-link">AutoCloseable</a>)
-<ul>
-<li class="circle">io.micronaut.transaction.jdbc.<a href="TransactionalConnection.html" class="type-name-link" title="interface in io.micronaut.transaction.jdbc">TransactionalConnection</a></li>
 </ul>
 </li>
 </ul>

@@ -70,17 +70,16 @@ loadScripts(document, 'script');</script>
 <section class="class-description" id="class-description">
 <dl class="notes">
 <dt>All Known Subinterfaces:</dt>
-<dd><code><a href="../data/mongodb/transaction/MongoSynchronousTransactionManager.html" title="interface in io.micronaut.data.mongodb.transaction">MongoSynchronousTransactionManager</a></code>, <code><a href="support/ResourceTransactionManager.html" title="interface in io.micronaut.transaction.support">ResourceTransactionManager</a>&lt;R,<wbr>T&gt;</code>, <code><a href="SynchronousTransactionManager.html" title="interface in io.micronaut.transaction">SynchronousTransactionManager</a>&lt;T&gt;</code></dd>
+<dd><code><a href="../data/mongodb/transaction/MongoSynchronousTransactionManager.html" title="interface in io.micronaut.data.mongodb.transaction">MongoSynchronousTransactionManager</a></code>, <code><a href="SynchronousTransactionManager.html" title="interface in io.micronaut.transaction">SynchronousTransactionManager</a>&lt;T&gt;</code></dd>
 </dl>
 <dl class="notes">
 <dt>All Known Implementing Classes:</dt>
-<dd><code><a href="support/AbstractSynchronousStateTransactionManager.html" title="class in io.micronaut.transaction.support">AbstractSynchronousStateTransactionManager</a></code>, <code><a href="support/AbstractSynchronousTransactionManager.html" title="class in io.micronaut.transaction.support">AbstractSynchronousTransactionManager</a></code>, <code><a href="jdbc/DataSourceTransactionManager.html" title="class in io.micronaut.transaction.jdbc">DataSourceTransactionManager</a></code>, <code><a href="hibernate6/HibernateTransactionManager.html" title="class in io.micronaut.transaction.hibernate6">HibernateTransactionManager</a></code>, <code><a href="../data/mongodb/transaction/MongoSynchronousTransactionManagerImpl.html" title="class in io.micronaut.data.mongodb.transaction">MongoSynchronousTransactionManagerImpl</a></code>, <code><a href="sync/SynchronousFromReactiveTransactionManager.html" title="class in io.micronaut.transaction.sync">SynchronousFromReactiveTransactionManager</a></code></dd>
+<dd><code><a href="support/AbstractTransactionOperations.html" title="class in io.micronaut.transaction.support">AbstractTransactionOperations</a></code>, <code><a href="jdbc/DataSourceTransactionManager.html" title="class in io.micronaut.transaction.jdbc">DataSourceTransactionManager</a></code>, <code><a href="hibernate/HibernateTransactionManager.html" title="class in io.micronaut.transaction.hibernate">HibernateTransactionManager</a></code></dd>
 </dl>
 <hr>
 <div class="type-signature"><span class="modifiers">public interface </span><span class="element-name type-name-label">TransactionManager</span></div>
 <div class="block">NOTICE: This is a fork of Spring's <code>TransactionManager</code> modernizing it
  to use enums, Slf4j and decoupling from Spring.
-
  Marker interface for transaction manager implementations,
  either traditional or reactive.</div>
 <dl class="notes">

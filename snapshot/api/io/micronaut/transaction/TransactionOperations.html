@@ -78,11 +78,11 @@ loadScripts(document, 'script');</script>
 </dl>
 <dl class="notes">
 <dt>All Known Subinterfaces:</dt>
-<dd><code><a href="../data/mongodb/transaction/MongoSynchronousTransactionManager.html" title="interface in io.micronaut.data.mongodb.transaction">MongoSynchronousTransactionManager</a></code>, <code><a href="support/ResourceTransactionManager.html" title="interface in io.micronaut.transaction.support">ResourceTransactionManager</a>&lt;R,<wbr>T&gt;</code>, <code><a href="SynchronousTransactionManager.html" title="interface in io.micronaut.transaction">SynchronousTransactionManager</a>&lt;T&gt;</code></dd>
+<dd><code><a href="../data/mongodb/transaction/MongoSynchronousTransactionManager.html" title="interface in io.micronaut.data.mongodb.transaction">MongoSynchronousTransactionManager</a></code>, <code><a href="../data/mongodb/transaction/MongoTransactionOperations.html" title="interface in io.micronaut.data.mongodb.transaction">MongoTransactionOperations</a></code>, <code><a href="SynchronousTransactionManager.html" title="interface in io.micronaut.transaction">SynchronousTransactionManager</a>&lt;T&gt;</code></dd>
 </dl>
 <dl class="notes">
 <dt>All Known Implementing Classes:</dt>
-<dd><code><a href="support/AbstractSynchronousTransactionManager.html" title="class in io.micronaut.transaction.support">AbstractSynchronousTransactionManager</a></code>, <code><a href="jdbc/DataSourceTransactionManager.html" title="class in io.micronaut.transaction.jdbc">DataSourceTransactionManager</a></code>, <code><a href="hibernate6/HibernateTransactionManager.html" title="class in io.micronaut.transaction.hibernate6">HibernateTransactionManager</a></code>, <code><a href="../data/mongodb/transaction/MongoSynchronousTransactionManagerImpl.html" title="class in io.micronaut.data.mongodb.transaction">MongoSynchronousTransactionManagerImpl</a></code>, <code><a href="../data/spring/hibernate/SpringHibernateTransactionOperations.html" title="class in io.micronaut.data.spring.hibernate">SpringHibernateTransactionOperations</a></code>, <code><a href="../data/spring/jdbc/SpringJdbcTransactionOperations.html" title="class in io.micronaut.data.spring.jdbc">SpringJdbcTransactionOperations</a></code>, <code><a href="sync/SynchronousFromReactiveTransactionManager.html" title="class in io.micronaut.transaction.sync">SynchronousFromReactiveTransactionManager</a></code></dd>
+<dd><code><a href="support/AbstractPropagatedStatusTransactionOperations.html" title="class in io.micronaut.transaction.support">AbstractPropagatedStatusTransactionOperations</a></code>, <code><a href="../data/spring/tx/AbstractSpringTransactionOperations.html" title="class in io.micronaut.data.spring.tx">AbstractSpringTransactionOperations</a></code>, <code><a href="support/AbstractTransactionOperations.html" title="class in io.micronaut.transaction.support">AbstractTransactionOperations</a></code>, <code><a href="jdbc/DataSourceTransactionManager.html" title="class in io.micronaut.transaction.jdbc">DataSourceTransactionManager</a></code>, <code><a href="hibernate/HibernateTransactionManager.html" title="class in io.micronaut.transaction.hibernate">HibernateTransactionManager</a></code>, <code><a href="../data/spring/jpa/hibernate/SpringHibernateTransactionOperations.html" title="class in io.micronaut.data.spring.jpa.hibernate">SpringHibernateTransactionOperations</a></code>, <code><a href="../data/spring/jdbc/SpringJdbcTransactionOperations.html" title="class in io.micronaut.data.spring.jdbc">SpringJdbcTransactionOperations</a></code>, <code><a href="sync/SynchronousTransactionOperationsFromReactiveTransactionOperations.html" title="class in io.micronaut.transaction.sync">SynchronousTransactionOperationsFromReactiveTransactionOperations</a></code></dd>
 </dl>
 <hr>
 <div class="type-signature"><span class="modifiers">public interface </span><span class="element-name type-name-label">TransactionOperations&lt;T&gt;</span></div>
@@ -101,7 +101,7 @@ loadScripts(document, 'script');</script>
 <section class="method-summary" id="method-summary">
 <h2>Method Summary</h2>
 <div id="method-summary-table">
-<div class="table-tabs" role="tablist" aria-orientation="horizontal"><button id="method-summary-table-tab0" role="tab" aria-selected="true" aria-controls="method-summary-table.tabpanel" tabindex="0" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table', 3)" class="active-table-tab">All Methods</button><button id="method-summary-table-tab2" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab2', 3)" class="table-tab">Instance Methods</button><button id="method-summary-table-tab3" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab3', 3)" class="table-tab">Abstract Methods</button></div>
+<div class="table-tabs" role="tablist" aria-orientation="horizontal"><button id="method-summary-table-tab0" role="tab" aria-selected="true" aria-controls="method-summary-table.tabpanel" tabindex="0" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table', 3)" class="active-table-tab">All Methods</button><button id="method-summary-table-tab2" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab2', 3)" class="table-tab">Instance Methods</button><button id="method-summary-table-tab3" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab3', 3)" class="table-tab">Abstract Methods</button><button id="method-summary-table-tab5" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab5', 3)" class="table-tab">Default Methods</button></div>
 <div id="method-summary-table.tabpanel" role="tabpanel">
 <div class="summary-table three-column-summary" aria-labelledby="method-summary-table-tab0">
 <div class="table-header col-first">Modifier and Type</div>
@@ -113,24 +113,29 @@ loadScripts(document, 'script');</script>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Execute a transaction within the context of the function.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>&lt;R&gt;&nbsp;R</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#executeRead(io.micronaut.transaction.TransactionCallback)" class="member-name-link">executeRead</a><wbr>(<a href="TransactionCallback.html" title="interface in io.micronaut.transaction">TransactionCallback</a>&lt;<a href="TransactionOperations.html" title="type parameter in TransactionOperations">T</a>,<wbr>R&gt;&nbsp;callback)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default &lt;R&gt;&nbsp;R</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#executeRead(io.micronaut.transaction.TransactionCallback)" class="member-name-link">executeRead</a><wbr>(<a href="TransactionCallback.html" title="interface in io.micronaut.transaction">TransactionCallback</a>&lt;<a href="TransactionOperations.html" title="type parameter in TransactionOperations">T</a>,<wbr>R&gt;&nbsp;callback)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
 <div class="block">Execute a read-only transaction within the context of the function.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>&lt;R&gt;&nbsp;R</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#executeWrite(io.micronaut.transaction.TransactionCallback)" class="member-name-link">executeWrite</a><wbr>(<a href="TransactionCallback.html" title="interface in io.micronaut.transaction">TransactionCallback</a>&lt;<a href="TransactionOperations.html" title="type parameter in TransactionOperations">T</a>,<wbr>R&gt;&nbsp;callback)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default &lt;R&gt;&nbsp;R</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#executeWrite(io.micronaut.transaction.TransactionCallback)" class="member-name-link">executeWrite</a><wbr>(<a href="TransactionCallback.html" title="interface in io.micronaut.transaction">TransactionCallback</a>&lt;<a href="TransactionOperations.html" title="type parameter in TransactionOperations">T</a>,<wbr>R&gt;&nbsp;callback)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
 <div class="block">Execute a default transaction within the context of the function.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="TransactionOperations.html" title="type parameter in TransactionOperations">T</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#getConnection()" class="member-name-link">getConnection</a>()</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;? extends <a href="TransactionStatus.html" title="interface in io.micronaut.transaction">TransactionStatus</a>&lt;?&gt;&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#findTransactionStatus()" class="member-name-link">findTransactionStatus</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="block">Find optional propagated transaction status.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="TransactionOperations.html" title="type parameter in TransactionOperations">T</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#getConnection()" class="member-name-link">getConnection</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Obtains the connection for the current transaction.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>boolean</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#hasConnection()" class="member-name-link">hasConnection</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>boolean</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#hasConnection()" class="member-name-link">hasConnection</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Check if the connection exists.</div>
 </div>
 </div>
@@ -176,6 +181,17 @@ loadScripts(document, 'script');</script>
 </section>
 </li>
 <li>
+<section class="detail" id="findTransactionStatus()">
+<h3>findTransactionStatus</h3>
+<div class="member-signature"><span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;? extends <a href="TransactionStatus.html" title="interface in io.micronaut.transaction">TransactionStatus</a>&lt;?&gt;&gt;</span>&nbsp;<span class="element-name">findTransactionStatus</span>()</div>
+<div class="block">Find optional propagated transaction status.</div>
+<dl class="notes">
+<dt>Returns:</dt>
+<dd>The transaction status.</dd>
+</dl>
+</section>
+</li>
+<li>
 <section class="detail" id="execute(io.micronaut.transaction.TransactionDefinition,io.micronaut.transaction.TransactionCallback)">
 <h3>execute</h3>
 <div class="member-signature"><span class="type-parameters">&lt;R&gt;</span>&nbsp;<span class="return-type">R</span>&nbsp;<span class="element-name">execute</span><wbr><span class="parameters">(@NonNull
@@ -197,7 +213,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="executeRead(io.micronaut.transaction.TransactionCallback)">
 <h3>executeRead</h3>
-<div class="member-signature"><span class="type-parameters">&lt;R&gt;</span>&nbsp;<span class="return-type">R</span>&nbsp;<span class="element-name">executeRead</span><wbr><span class="parameters">(@NonNull
+<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="type-parameters">&lt;R&gt;</span>&nbsp;<span class="return-type">R</span>&nbsp;<span class="element-name">executeRead</span><wbr><span class="parameters">(@NonNull
  <a href="TransactionCallback.html" title="interface in io.micronaut.transaction">TransactionCallback</a>&lt;<a href="TransactionOperations.html" title="type parameter in TransactionOperations">T</a>,<wbr>R&gt;&nbsp;callback)</span></div>
 <div class="block">Execute a read-only transaction within the context of the function.</div>
 <dl class="notes">
@@ -213,7 +229,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="executeWrite(io.micronaut.transaction.TransactionCallback)">
 <h3>executeWrite</h3>
-<div class="member-signature"><span class="type-parameters">&lt;R&gt;</span>&nbsp;<span class="return-type">R</span>&nbsp;<span class="element-name">executeWrite</span><wbr><span class="parameters">(@NonNull
+<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="type-parameters">&lt;R&gt;</span>&nbsp;<span class="return-type">R</span>&nbsp;<span class="element-name">executeWrite</span><wbr><span class="parameters">(@NonNull
  <a href="TransactionCallback.html" title="interface in io.micronaut.transaction">TransactionCallback</a>&lt;<a href="TransactionOperations.html" title="type parameter in TransactionOperations">T</a>,<wbr>R&gt;&nbsp;callback)</span></div>
 <div class="block">Execute a default transaction within the context of the function.</div>
 <dl class="notes">

@@ -45,13 +45,13 @@ loadScripts(document, 'script');</script>
 <ul class="sub-nav-list">
 <li>Summary:&nbsp;</li>
 <li><a href="#nested-class-summary">Nested</a>&nbsp;|&nbsp;</li>
-<li><a href="#field-summary">Field</a>&nbsp;|&nbsp;</li>
+<li>Field&nbsp;|&nbsp;</li>
 <li>Constr&nbsp;|&nbsp;</li>
 <li><a href="#method-summary">Method</a></li>
 </ul>
 <ul class="sub-nav-list">
 <li>Detail:&nbsp;</li>
-<li><a href="#field-detail">Field</a>&nbsp;|&nbsp;</li>
+<li>Field&nbsp;|&nbsp;</li>
 <li>Constr&nbsp;|&nbsp;</li>
 <li><a href="#method-detail">Method</a></li>
 </ul>
@@ -82,11 +82,11 @@ loadScripts(document, 'script');</script>
 </dl>
 <dl class="notes">
 <dt>All Known Subinterfaces:</dt>
-<dd><code><a href="../../data/hibernate/reactive/operations/HibernateReactorRepositoryOperations.html" title="interface in io.micronaut.data.hibernate.reactive.operations">HibernateReactorRepositoryOperations</a></code>, <code><a href="../../data/mongodb/operations/MongoReactorRepositoryOperations.html" title="interface in io.micronaut.data.mongodb.operations">MongoReactorRepositoryOperations</a></code></dd>
+<dd><code><a href="../../data/r2dbc/transaction/R2dbcReactorTransactionOperations.html" title="interface in io.micronaut.data.r2dbc.transaction">R2dbcReactorTransactionOperations</a></code></dd>
 </dl>
 <dl class="notes">
 <dt>All Known Implementing Classes:</dt>
-<dd><code><a href="../../data/mongodb/operations/DefaultReactiveMongoRepositoryOperations.html" title="class in io.micronaut.data.mongodb.operations">DefaultReactiveMongoRepositoryOperations</a></code></dd>
+<dd><code><a href="../support/AbstractReactorTransactionOperations.html" title="class in io.micronaut.transaction.support">AbstractReactorTransactionOperations</a></code></dd>
 </dl>
 <hr>
 <div class="type-signature"><span class="modifiers">public interface </span><span class="element-name type-name-label">ReactorReactiveTransactionOperations&lt;C&gt;</span><span class="extends-implements">
@@ -110,28 +110,6 @@ extends <a href="ReactiveTransactionOperations.html" title="interface in io.micr
 <code><a href="ReactiveTransactionOperations.TransactionalCallback.html" title="interface in io.micronaut.transaction.reactive">ReactiveTransactionOperations.TransactionalCallback</a>&lt;<a href="ReactiveTransactionOperations.TransactionalCallback.html" title="type parameter in ReactiveTransactionOperations.TransactionalCallback">C</a>,<wbr><a href="ReactiveTransactionOperations.TransactionalCallback.html" title="type parameter in ReactiveTransactionOperations.TransactionalCallback">T</a>&gt;</code></div>
 </section>
 </li>
-<!-- =========== FIELD SUMMARY =========== -->
-<li>
-<section class="field-summary" id="field-summary">
-<h2>Field Summary</h2>
-<div class="caption"><span>Fields</span></div>
-<div class="summary-table three-column-summary">
-<div class="table-header col-first">Modifier and Type</div>
-<div class="table-header col-second">Field</div>
-<div class="table-header col-last">Description</div>
-<div class="col-first even-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color"><code><a href="#TRANSACTION_DEFINITION_KEY_PREFIX" class="member-name-link">TRANSACTION_DEFINITION_KEY_PREFIX</a></code></div>
-<div class="col-last even-row-color">
-<div class="block">The prefix of transaction definition Reactor context key.</div>
-</div>
-<div class="col-first odd-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second odd-row-color"><code><a href="#TRANSACTION_STATUS_KEY_PREFIX" class="member-name-link">TRANSACTION_STATUS_KEY_PREFIX</a></code></div>
-<div class="col-last odd-row-color">
-<div class="block">The prefix of transaction status Reactor context key.</div>
-</div>
-</div>
-</section>
-</li>
 <!-- ========== METHOD SUMMARY =========== -->
 <li>
 <section class="method-summary" id="method-summary">
@@ -143,47 +121,52 @@ extends <a href="ReactiveTransactionOperations.html" title="interface in io.micr
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#getTransactionDefinition(reactor.util.context.ContextView)" class="member-name-link">getTransactionDefinition</a><wbr>(reactor.util.context.ContextView&nbsp;contextView)</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="ReactiveTransactionStatus.html" title="interface in io.micronaut.transaction.reactive">ReactiveTransactionStatus</a>&lt;<a href="ReactorReactiveTransactionOperations.html" title="type parameter in ReactorReactiveTransactionOperations">C</a>&gt;&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#findTransactionStatus(reactor.util.context.ContextView)" class="member-name-link">findTransactionStatus</a><wbr>(reactor.util.context.ContextView&nbsp;contextView)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
-<div class="block">Retrieve the transaction definition associated to the current transaction from the Reactor context.</div>
-</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="ReactiveTransactionStatus.html" title="interface in io.micronaut.transaction.reactive">ReactiveTransactionStatus</a>&lt;<a href="ReactorReactiveTransactionOperations.html" title="type parameter in ReactorReactiveTransactionOperations">C</a>&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#getTransactionStatus(reactor.util.context.ContextView)" class="member-name-link">getTransactionStatus</a><wbr>(reactor.util.context.ContextView&nbsp;contextView)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Retrieve the transaction status associated to the current transaction manager from the Reactor context.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default &lt;T&gt;&nbsp;reactor.core.publisher.Flux&lt;T&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#withTransaction(io.micronaut.transaction.reactive.ReactiveTransactionOperations.TransactionalCallback)" class="member-name-link">withTransaction</a><wbr>(<a href="ReactiveTransactionOperations.TransactionalCallback.html" title="interface in io.micronaut.transaction.reactive">ReactiveTransactionOperations.TransactionalCallback</a>&lt;<a href="ReactorReactiveTransactionOperations.html" title="type parameter in ReactorReactiveTransactionOperations">C</a>,<wbr>T&gt;&nbsp;handler)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
-<div class="block">Execute the given handler with a new transaction.</div>
-</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>&lt;T&gt;&nbsp;reactor.core.publisher.Flux&lt;T&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#withTransaction(io.micronaut.transaction.TransactionDefinition,io.micronaut.transaction.reactive.ReactiveTransactionOperations.TransactionalCallback)" class="member-name-link">withTransaction</a><wbr>(<a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition,
- <a href="ReactiveTransactionOperations.TransactionalCallback.html" title="interface in io.micronaut.transaction.reactive">ReactiveTransactionOperations.TransactionalCallback</a>&lt;<a href="ReactorReactiveTransactionOperations.html" title="type parameter in ReactorReactiveTransactionOperations">C</a>,<wbr>T&gt;&nbsp;handler)</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#getTransactionDefinition(reactor.util.context.ContextView)" class="member-name-link">getTransactionDefinition</a><wbr>(reactor.util.context.ContextView&nbsp;contextView)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
-<div class="block">Execute the given handler with a new transaction.</div>
+<div class="block">Retrieve the transaction definition associated to the current transaction from the Reactor context.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default &lt;T&gt;&nbsp;reactor.core.publisher.Flux&lt;T&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#withTransactionFlux(io.micronaut.transaction.TransactionDefinition,java.util.function.Function)" class="member-name-link">withTransactionFlux</a><wbr>(<a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition,
- <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/function/Function.html" title="class or interface in java.util.function" class="external-link">Function</a>&lt;<a href="ReactiveTransactionStatus.html" title="interface in io.micronaut.transaction.reactive">ReactiveTransactionStatus</a>&lt;<a href="ReactorReactiveTransactionOperations.html" title="type parameter in ReactorReactiveTransactionOperations">C</a>&gt;,<wbr>reactor.core.publisher.Flux&lt;T&gt;&gt;&nbsp;handler)</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default <a href="ReactiveTransactionStatus.html" title="interface in io.micronaut.transaction.reactive">ReactiveTransactionStatus</a>&lt;<a href="ReactorReactiveTransactionOperations.html" title="type parameter in ReactorReactiveTransactionOperations">C</a>&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#getTransactionStatus(reactor.util.context.ContextView)" class="member-name-link">getTransactionStatus</a><wbr>(reactor.util.context.ContextView&nbsp;contextView)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
-<div class="block">Execute the given handler with a new transaction.</div>
+<div class="block">Retrieve the transaction status associated to the current transaction manager from the Reactor context.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default &lt;T&gt;&nbsp;reactor.core.publisher.Flux&lt;T&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#withTransactionFlux(java.util.function.Function)" class="member-name-link">withTransactionFlux</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/function/Function.html" title="class or interface in java.util.function" class="external-link">Function</a>&lt;<a href="ReactiveTransactionStatus.html" title="interface in io.micronaut.transaction.reactive">ReactiveTransactionStatus</a>&lt;<a href="ReactorReactiveTransactionOperations.html" title="type parameter in ReactorReactiveTransactionOperations">C</a>&gt;,<wbr>reactor.core.publisher.Flux&lt;T&gt;&gt;&nbsp;handler)</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#withTransaction(io.micronaut.transaction.reactive.ReactiveTransactionOperations.TransactionalCallback)" class="member-name-link">withTransaction</a><wbr>(<a href="ReactiveTransactionOperations.TransactionalCallback.html" title="interface in io.micronaut.transaction.reactive">ReactiveTransactionOperations.TransactionalCallback</a>&lt;<a href="ReactorReactiveTransactionOperations.html" title="type parameter in ReactorReactiveTransactionOperations">C</a>,<wbr>T&gt;&nbsp;handler)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
 <div class="block">Execute the given handler with a new transaction.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default &lt;T&gt;&nbsp;reactor.core.publisher.Mono&lt;T&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#withTransactionMono(io.micronaut.transaction.TransactionDefinition,java.util.function.Function)" class="member-name-link">withTransactionMono</a><wbr>(<a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition,
- <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/function/Function.html" title="class or interface in java.util.function" class="external-link">Function</a>&lt;<a href="ReactiveTransactionStatus.html" title="interface in io.micronaut.transaction.reactive">ReactiveTransactionStatus</a>&lt;<a href="ReactorReactiveTransactionOperations.html" title="type parameter in ReactorReactiveTransactionOperations">C</a>&gt;,<wbr>reactor.core.publisher.Mono&lt;T&gt;&gt;&nbsp;handler)</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>&lt;T&gt;&nbsp;reactor.core.publisher.Flux&lt;T&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#withTransaction(io.micronaut.transaction.TransactionDefinition,io.micronaut.transaction.reactive.ReactiveTransactionOperations.TransactionalCallback)" class="member-name-link">withTransaction</a><wbr>(<a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition,
+ <a href="ReactiveTransactionOperations.TransactionalCallback.html" title="interface in io.micronaut.transaction.reactive">ReactiveTransactionOperations.TransactionalCallback</a>&lt;<a href="ReactorReactiveTransactionOperations.html" title="type parameter in ReactorReactiveTransactionOperations">C</a>,<wbr>T&gt;&nbsp;handler)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="block">Execute the given handler with a new transaction.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default &lt;T&gt;&nbsp;reactor.core.publisher.Flux&lt;T&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#withTransactionFlux(io.micronaut.transaction.TransactionDefinition,java.util.function.Function)" class="member-name-link">withTransactionFlux</a><wbr>(<a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition,
+ <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/function/Function.html" title="class or interface in java.util.function" class="external-link">Function</a>&lt;<a href="ReactiveTransactionStatus.html" title="interface in io.micronaut.transaction.reactive">ReactiveTransactionStatus</a>&lt;<a href="ReactorReactiveTransactionOperations.html" title="type parameter in ReactorReactiveTransactionOperations">C</a>&gt;,<wbr>reactor.core.publisher.Flux&lt;T&gt;&gt;&nbsp;handler)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
+<div class="block">Execute the given handler with a new transaction.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default &lt;T&gt;&nbsp;reactor.core.publisher.Flux&lt;T&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#withTransactionFlux(java.util.function.Function)" class="member-name-link">withTransactionFlux</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/function/Function.html" title="class or interface in java.util.function" class="external-link">Function</a>&lt;<a href="ReactiveTransactionStatus.html" title="interface in io.micronaut.transaction.reactive">ReactiveTransactionStatus</a>&lt;<a href="ReactorReactiveTransactionOperations.html" title="type parameter in ReactorReactiveTransactionOperations">C</a>&gt;,<wbr>reactor.core.publisher.Flux&lt;T&gt;&gt;&nbsp;handler)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
 <div class="block">Execute the given handler with a new transaction.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default &lt;T&gt;&nbsp;reactor.core.publisher.Mono&lt;T&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#withTransactionMono(java.util.function.Function)" class="member-name-link">withTransactionMono</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/function/Function.html" title="class or interface in java.util.function" class="external-link">Function</a>&lt;<a href="ReactiveTransactionStatus.html" title="interface in io.micronaut.transaction.reactive">ReactiveTransactionStatus</a>&lt;<a href="ReactorReactiveTransactionOperations.html" title="type parameter in ReactorReactiveTransactionOperations">C</a>&gt;,<wbr>reactor.core.publisher.Mono&lt;T&gt;&gt;&nbsp;handler)</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#withTransactionMono(io.micronaut.transaction.TransactionDefinition,java.util.function.Function)" class="member-name-link">withTransactionMono</a><wbr>(<a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition,
+ <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/function/Function.html" title="class or interface in java.util.function" class="external-link">Function</a>&lt;<a href="ReactiveTransactionStatus.html" title="interface in io.micronaut.transaction.reactive">ReactiveTransactionStatus</a>&lt;<a href="ReactorReactiveTransactionOperations.html" title="type parameter in ReactorReactiveTransactionOperations">C</a>&gt;,<wbr>reactor.core.publisher.Mono&lt;T&gt;&gt;&nbsp;handler)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
+<div class="block">Execute the given handler with a new transaction.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default &lt;T&gt;&nbsp;reactor.core.publisher.Mono&lt;T&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#withTransactionMono(java.util.function.Function)" class="member-name-link">withTransactionMono</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/function/Function.html" title="class or interface in java.util.function" class="external-link">Function</a>&lt;<a href="ReactiveTransactionStatus.html" title="interface in io.micronaut.transaction.reactive">ReactiveTransactionStatus</a>&lt;<a href="ReactorReactiveTransactionOperations.html" title="type parameter in ReactorReactiveTransactionOperations">C</a>&gt;,<wbr>reactor.core.publisher.Mono&lt;T&gt;&gt;&nbsp;handler)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
 <div class="block">Execute the given handler with a new transaction.</div>
 </div>
 </div>
@@ -195,54 +178,30 @@ extends <a href="ReactiveTransactionOperations.html" title="interface in io.micr
 </section>
 <section class="details">
 <ul class="details-list">
-<!-- ============ FIELD DETAIL =========== -->
-<li>
-<section class="field-details" id="field-detail">
-<h2>Field Details</h2>
-<ul class="member-list">
-<li>
-<section class="detail" id="TRANSACTION_STATUS_KEY_PREFIX">
-<h3>TRANSACTION_STATUS_KEY_PREFIX</h3>
-<div class="member-signature"><span class="modifiers">static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">TRANSACTION_STATUS_KEY_PREFIX</span></div>
-<div class="block">The prefix of transaction status Reactor context key.</div>
-<dl class="notes">
-<dt>See Also:</dt>
-<dd>
-<ul class="see-list">
-<li><a href="../../../../constant-values.html#io.micronaut.transaction.reactive.ReactorReactiveTransactionOperations.TRANSACTION_STATUS_KEY_PREFIX">Constant Field Values</a></li>
-</ul>
-</dd>
-</dl>
-</section>
-</li>
-<li>
-<section class="detail" id="TRANSACTION_DEFINITION_KEY_PREFIX">
-<h3>TRANSACTION_DEFINITION_KEY_PREFIX</h3>
-<div class="member-signature"><span class="modifiers">static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">TRANSACTION_DEFINITION_KEY_PREFIX</span></div>
-<div class="block">The prefix of transaction definition Reactor context key.</div>
-<dl class="notes">
-<dt>See Also:</dt>
-<dd>
-<ul class="see-list">
-<li><a href="../../../../constant-values.html#io.micronaut.transaction.reactive.ReactorReactiveTransactionOperations.TRANSACTION_DEFINITION_KEY_PREFIX">Constant Field Values</a></li>
-</ul>
-</dd>
-</dl>
-</section>
-</li>
-</ul>
-</section>
-</li>
 <!-- ============ METHOD DETAIL ========== -->
 <li>
 <section class="method-details" id="method-detail">
 <h2>Method Details</h2>
 <ul class="member-list">
 <li>
+<section class="detail" id="findTransactionStatus(reactor.util.context.ContextView)">
+<h3>findTransactionStatus</h3>
+<div class="member-signature"><span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="ReactiveTransactionStatus.html" title="interface in io.micronaut.transaction.reactive">ReactiveTransactionStatus</a>&lt;<a href="ReactorReactiveTransactionOperations.html" title="type parameter in ReactorReactiveTransactionOperations">C</a>&gt;&gt;</span>&nbsp;<span class="element-name">findTransactionStatus</span><wbr><span class="parameters">(@NonNull
+ reactor.util.context.ContextView&nbsp;contextView)</span></div>
+<div class="block">Retrieve the transaction status associated to the current transaction manager from the Reactor context.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>contextView</code> - The context view</dd>
+<dt>Returns:</dt>
+<dd>the key</dd>
+</dl>
+</section>
+</li>
+<li>
 <section class="detail" id="getTransactionStatus(reactor.util.context.ContextView)">
 <h3>getTransactionStatus</h3>
 <div class="member-signature"><span class="annotations">@Nullable
-</span><span class="return-type"><a href="ReactiveTransactionStatus.html" title="interface in io.micronaut.transaction.reactive">ReactiveTransactionStatus</a>&lt;<a href="ReactorReactiveTransactionOperations.html" title="type parameter in ReactorReactiveTransactionOperations">C</a>&gt;</span>&nbsp;<span class="element-name">getTransactionStatus</span><wbr><span class="parameters">(@NonNull
+</span><span class="modifiers">default</span>&nbsp;<span class="return-type"><a href="ReactiveTransactionStatus.html" title="interface in io.micronaut.transaction.reactive">ReactiveTransactionStatus</a>&lt;<a href="ReactorReactiveTransactionOperations.html" title="type parameter in ReactorReactiveTransactionOperations">C</a>&gt;</span>&nbsp;<span class="element-name">getTransactionStatus</span><wbr><span class="parameters">(@NonNull
  reactor.util.context.ContextView&nbsp;contextView)</span></div>
 <div class="block">Retrieve the transaction status associated to the current transaction manager from the Reactor context.</div>
 <dl class="notes">

@@ -15,11 +15,7 @@
 <script type="text/javascript" src="../../../../script-dir/jquery-ui.min.js"></script>
 </head>
 <body class="class-declaration-page">
-<script type="text/javascript">var evenRowColor = "even-row-color";
-var oddRowColor = "odd-row-color";
-var tableTab = "table-tab";
-var activeTableTab = "active-table-tab";
-var pathtoroot = "../../../../";
+<script type="text/javascript">var pathtoroot = "../../../../";
 loadScripts(document, 'script');</script>
 <noscript>
 <div>JavaScript is disabled on your browser.</div>
@@ -53,7 +49,7 @@ loadScripts(document, 'script');</script>
 <li>Detail:&nbsp;</li>
 <li>Field&nbsp;|&nbsp;</li>
 <li><a href="#constructor-detail">Constr</a>&nbsp;|&nbsp;</li>
-<li><a href="#method-detail">Method</a></li>
+<li>Method</li>
 </ul>
 </div>
 <div class="nav-list-search"><label for="search-input">SEARCH:</label>
@@ -72,7 +68,9 @@ loadScripts(document, 'script');</script>
 <h1 title="Class MicronautSessionContext" class="title">Class MicronautSessionContext</h1>
 </div>
 <div class="inheritance" title="Inheritance Tree"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">java.lang.Object</a>
+<div class="inheritance"><a href="../hibernate/MicronautSessionContext.html" title="class in io.micronaut.transaction.hibernate">io.micronaut.transaction.hibernate.MicronautSessionContext</a>
 <div class="inheritance">io.micronaut.transaction.hibernate6.MicronautSessionContext</div>
+</div>
 </div>
 <section class="class-description" id="class-description">
 <dl class="notes">
@@ -81,20 +79,16 @@ loadScripts(document, 'script');</script>
 </dl>
 <hr>
 <div class="type-signature"><span class="modifiers">public final class </span><span class="element-name type-name-label">MicronautSessionContext</span>
-<span class="extends-implements">extends <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>
-implements org.hibernate.context.spi.CurrentSessionContext</span></div>
-<div class="block">Implementation of Hibernate 3.1's <code>CurrentSessionContext</code> interface
- that delegates to <a href="SessionFactoryUtils.html" title="class in io.micronaut.transaction.hibernate6"><code>SessionFactoryUtils</code></a> for providing a
-  current <code>Session</code>.
-
- <p>This CurrentSessionContext implementation can also be specified in custom
- SessionFactory setup through the "hibernate.current_session_context_class"
- property, with the fully qualified name of this class as value.</div>
+<span class="extends-implements">extends <a href="../hibernate/MicronautSessionContext.html" title="class in io.micronaut.transaction.hibernate">MicronautSessionContext</a></span></div>
+<div class="deprecation-block"><span class="deprecated-label">Deprecated.</span>
+<div class="deprecation-comment">Replaced by <a href="../hibernate/MicronautSessionContext.html" title="class in io.micronaut.transaction.hibernate"><code>MicronautSessionContext</code></a></div>
+</div>
+<div class="block">The class name should be corrected in SQL module and this file should be deleted.</div>
 <dl class="notes">
 <dt>Since:</dt>
-<dd>4.2</dd>
+<dd>4.0.0</dd>
 <dt>Author:</dt>
-<dd>Juergen Hoeller, graemerocher</dd>
+<dd>Denis Stepanov</dd>
 <dt>See Also:</dt>
 <dd>
 <ul class="see-list">
@@ -115,6 +109,7 @@ implements org.hibernate.context.spi.CurrentSessionContext</span></div>
 <div class="table-header col-last">Description</div>
 <div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(org.hibernate.engine.spi.SessionFactoryImplementor)" class="member-name-link">MicronautSessionContext</a><wbr>(org.hibernate.engine.spi.SessionFactoryImplementor&nbsp;sessionFactory)</code></div>
 <div class="col-last even-row-color">
+<div class="block"><span class="deprecated-label">Deprecated.</span></div>
 <div class="block">Create a new SpringSessionContext for the given Hibernate SessionFactory.</div>
 </div>
 </div>
@@ -124,21 +119,9 @@ implements org.hibernate.context.spi.CurrentSessionContext</span></div>
 <li>
 <section class="method-summary" id="method-summary">
 <h2>Method Summary</h2>
-<div id="method-summary-table">
-<div class="table-tabs" role="tablist" aria-orientation="horizontal"><button id="method-summary-table-tab0" role="tab" aria-selected="true" aria-controls="method-summary-table.tabpanel" tabindex="0" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table', 3)" class="active-table-tab">All Methods</button><button id="method-summary-table-tab2" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab2', 3)" class="table-tab">Instance Methods</button><button id="method-summary-table-tab4" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab4', 3)" class="table-tab">Concrete Methods</button></div>
-<div id="method-summary-table.tabpanel" role="tabpanel">
-<div class="summary-table three-column-summary" aria-labelledby="method-summary-table-tab0">
-<div class="table-header col-first">Modifier and Type</div>
-<div class="table-header col-second">Method</div>
-<div class="table-header col-last">Description</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>org.hibernate.Session</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#currentSession()" class="member-name-link">currentSession</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Retrieve the Spring-managed Session for the current thread, if any.</div>
-</div>
-</div>
-</div>
-</div>
+<div class="inherited-list">
+<h3 id="methods-inherited-from-class-io.micronaut.transaction.hibernate.MicronautSessionContext">Methods inherited from class&nbsp;io.micronaut.transaction.hibernate.<a href="../hibernate/MicronautSessionContext.html" title="class in io.micronaut.transaction.hibernate">MicronautSessionContext</a></h3>
+<code><a href="../hibernate/MicronautSessionContext.html#currentSession()">currentSession</a></code></div>
 <div class="inherited-list">
 <h3 id="methods-inherited-from-class-java.lang.Object">Methods inherited from class&nbsp;java.lang.<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></h3>
 <code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#clone()" title="class or interface in java.lang" class="external-link">clone</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#equals(java.lang.Object)" title="class or interface in java.lang" class="external-link">equals</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#finalize()" title="class or interface in java.lang" class="external-link">finalize</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#getClass()" title="class or interface in java.lang" class="external-link">getClass</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#hashCode()" title="class or interface in java.lang" class="external-link">hashCode</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#notify()" title="class or interface in java.lang" class="external-link">notify</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#notifyAll()" title="class or interface in java.lang" class="external-link">notifyAll</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#toString()" title="class or interface in java.lang" class="external-link">toString</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#wait()" title="class or interface in java.lang" class="external-link">wait</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#wait(long)" title="class or interface in java.lang" class="external-link">wait</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#wait(long,int)" title="class or interface in java.lang" class="external-link">wait</a></code></div>
@@ -157,32 +140,11 @@ implements org.hibernate.context.spi.CurrentSessionContext</span></div>
 <section class="detail" id="&lt;init&gt;(org.hibernate.engine.spi.SessionFactoryImplementor)">
 <h3>MicronautSessionContext</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name">MicronautSessionContext</span><wbr><span class="parameters">(org.hibernate.engine.spi.SessionFactoryImplementor&nbsp;sessionFactory)</span></div>
+<div class="deprecation-block"><span class="deprecated-label">Deprecated.</span></div>
 <div class="block">Create a new SpringSessionContext for the given Hibernate SessionFactory.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
 <dd><code>sessionFactory</code> - the SessionFactory to provide current Sessions for</dd>
-</dl>
-</section>
-</li>
-</ul>
-</section>
-</li>
-<!-- ============ METHOD DETAIL ========== -->
-<li>
-<section class="method-details" id="method-detail">
-<h2>Method Details</h2>
-<ul class="member-list">
-<li>
-<section class="detail" id="currentSession()">
-<h3>currentSession</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">org.hibernate.Session</span>&nbsp;<span class="element-name">currentSession</span>()
-                                     throws <span class="exceptions">org.hibernate.HibernateException</span></div>
-<div class="block">Retrieve the Spring-managed Session for the current thread, if any.</div>
-<dl class="notes">
-<dt>Specified by:</dt>
-<dd><code>currentSession</code>&nbsp;in interface&nbsp;<code>org.hibernate.context.spi.CurrentSessionContext</code></dd>
-<dt>Throws:</dt>
-<dd><code>org.hibernate.HibernateException</code></dd>
 </dl>
 </section>
 </li>

@@ -44,7 +44,7 @@ loadScripts(document, 'script');</script>
 <div>
 <ul class="sub-nav-list">
 <li>Summary:&nbsp;</li>
-<li><a href="#nested-class-summary">Nested</a>&nbsp;|&nbsp;</li>
+<li>Nested&nbsp;|&nbsp;</li>
 <li>Field&nbsp;|&nbsp;</li>
 <li>Constr&nbsp;|&nbsp;</li>
 <li><a href="#method-summary">Method</a></li>
@@ -72,13 +72,8 @@ loadScripts(document, 'script');</script>
 <h1 title="Interface R2dbcOperations" class="title">Interface R2dbcOperations</h1>
 </div>
 <section class="class-description" id="class-description">
-<dl class="notes">
-<dt>All Superinterfaces:</dt>
-<dd><code><a href="../../../transaction/reactive/ReactiveTransactionOperations.html" title="interface in io.micronaut.transaction.reactive">ReactiveTransactionOperations</a>&lt;io.r2dbc.spi.Connection&gt;</code></dd>
-</dl>
 <hr>
-<div class="type-signature"><span class="modifiers">public interface </span><span class="element-name type-name-label">R2dbcOperations</span><span class="extends-implements">
-extends <a href="../../../transaction/reactive/ReactiveTransactionOperations.html" title="interface in io.micronaut.transaction.reactive">ReactiveTransactionOperations</a>&lt;io.r2dbc.spi.Connection&gt;</span></div>
+<div class="type-signature"><span class="modifiers">public interface </span><span class="element-name type-name-label">R2dbcOperations</span></div>
 <div class="block">Operations for R2DBC.</div>
 <dl class="notes">
 <dt>Since:</dt>
@@ -89,15 +84,6 @@ extends <a href="../../../transaction/reactive/ReactiveTransactionOperations.htm
 </section>
 <section class="summary">
 <ul class="summary-list">
-<!-- ======== NESTED CLASS SUMMARY ======== -->
-<li>
-<section class="nested-class-summary" id="nested-class-summary">
-<h2>Nested Class Summary</h2>
-<div class="inherited-list">
-<h2 id="nested-classes-inherited-from-class-io.micronaut.transaction.reactive.ReactiveTransactionOperations">Nested classes/interfaces inherited from interface&nbsp;io.micronaut.transaction.reactive.<a href="../../../transaction/reactive/ReactiveTransactionOperations.html" title="interface in io.micronaut.transaction.reactive">ReactiveTransactionOperations</a></h2>
-<code><a href="../../../transaction/reactive/ReactiveTransactionOperations.TransactionalCallback.html" title="interface in io.micronaut.transaction.reactive">ReactiveTransactionOperations.TransactionalCallback</a>&lt;<a href="../../../transaction/reactive/ReactiveTransactionOperations.TransactionalCallback.html" title="type parameter in ReactiveTransactionOperations.TransactionalCallback">C</a>,<wbr><a href="../../../transaction/reactive/ReactiveTransactionOperations.TransactionalCallback.html" title="type parameter in ReactiveTransactionOperations.TransactionalCallback">T</a>&gt;</code></div>
-</section>
-</li>
 <!-- ========== METHOD SUMMARY =========== -->
 <li>
 <section class="method-summary" id="method-summary">
@@ -120,17 +106,19 @@ extends <a href="../../../transaction/reactive/ReactiveTransactionOperations.htm
 <div class="block">Execute the given handler with a new connection.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>&lt;T&gt;&nbsp;org.reactivestreams.Publisher&lt;T&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#withTransaction(io.micronaut.transaction.reactive.ReactiveTransactionStatus,io.micronaut.transaction.reactive.ReactiveTransactionOperations.TransactionalCallback)" class="member-name-link">withTransaction</a><wbr>(<a href="../../../transaction/reactive/ReactiveTransactionStatus.html" title="interface in io.micronaut.transaction.reactive">ReactiveTransactionStatus</a>&lt;io.r2dbc.spi.Connection&gt;&nbsp;status,
- <a href="../../../transaction/reactive/ReactiveTransactionOperations.TransactionalCallback.html" title="interface in io.micronaut.transaction.reactive">ReactiveTransactionOperations.TransactionalCallback</a>&lt;io.r2dbc.spi.Connection,<wbr>T&gt;&nbsp;handler)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#withTransaction(io.micronaut.transaction.reactive.ReactiveTransactionOperations.TransactionalCallback)" class="member-name-link">withTransaction</a><wbr>(<a href="../../../transaction/reactive/ReactiveTransactionOperations.TransactionalCallback.html" title="interface in io.micronaut.transaction.reactive">ReactiveTransactionOperations.TransactionalCallback</a>&lt;io.r2dbc.spi.Connection,<wbr>T&gt;&nbsp;handler)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="block">Execute the given handler with an existing transaction status.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>&lt;T&gt;&nbsp;org.reactivestreams.Publisher&lt;T&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#withTransaction(io.micronaut.transaction.reactive.ReactiveTransactionStatus,io.micronaut.transaction.reactive.ReactiveTransactionOperations.TransactionalCallback)" class="member-name-link">withTransaction</a><wbr>(<a href="../../../transaction/reactive/ReactiveTransactionStatus.html" title="interface in io.micronaut.transaction.reactive">ReactiveTransactionStatus</a>&lt;io.r2dbc.spi.Connection&gt;&nbsp;status,
+ <a href="../../../transaction/reactive/ReactiveTransactionOperations.TransactionalCallback.html" title="interface in io.micronaut.transaction.reactive">ReactiveTransactionOperations.TransactionalCallback</a>&lt;io.r2dbc.spi.Connection,<wbr>T&gt;&nbsp;handler)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Execute the given handler with an existing transaction status.</div>
 </div>
 </div>
 </div>
 </div>
-<div class="inherited-list">
-<h3 id="methods-inherited-from-class-io.micronaut.transaction.reactive.ReactiveTransactionOperations">Methods inherited from interface&nbsp;io.micronaut.transaction.reactive.<a href="../../../transaction/reactive/ReactiveTransactionOperations.html" title="interface in io.micronaut.transaction.reactive">ReactiveTransactionOperations</a></h3>
-<code><a href="../../../transaction/reactive/ReactiveTransactionOperations.html#withTransaction(io.micronaut.transaction.reactive.ReactiveTransactionOperations.TransactionalCallback)">withTransaction</a>, <a href="../../../transaction/reactive/ReactiveTransactionOperations.html#withTransaction(io.micronaut.transaction.TransactionDefinition,io.micronaut.transaction.reactive.ReactiveTransactionOperations.TransactionalCallback)">withTransaction</a></code></div>
 </section>
 </li>
 </ul>
@@ -168,6 +156,23 @@ extends <a href="../../../transaction/reactive/ReactiveTransactionOperations.htm
 <dd><code>T</code> - The emitted type</dd>
 <dt>Parameters:</dt>
 <dd><code>status</code> - An existing in progress transaction status</dd>
+<dd><code>handler</code> - The handler</dd>
+<dt>Returns:</dt>
+<dd>A publisher that emits the result type</dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="withTransaction(io.micronaut.transaction.reactive.ReactiveTransactionOperations.TransactionalCallback)">
+<h3>withTransaction</h3>
+<div class="member-signature"><span class="annotations">@NonNull
+</span><span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type">org.reactivestreams.Publisher&lt;T&gt;</span>&nbsp;<span class="element-name">withTransaction</span><wbr><span class="parameters">(@NonNull
+ <a href="../../../transaction/reactive/ReactiveTransactionOperations.TransactionalCallback.html" title="interface in io.micronaut.transaction.reactive">ReactiveTransactionOperations.TransactionalCallback</a>&lt;io.r2dbc.spi.Connection,<wbr>T&gt;&nbsp;handler)</span></div>
+<div class="block">Execute the given handler with an existing transaction status.</div>
+<dl class="notes">
+<dt>Type Parameters:</dt>
+<dd><code>T</code> - The emitted type</dd>
+<dt>Parameters:</dt>
 <dd><code>handler</code> - The handler</dd>
 <dt>Returns:</dt>
 <dd>A publisher that emits the result type</dd>

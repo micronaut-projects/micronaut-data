@@ -52,6 +52,7 @@ loadScripts(document, 'script');</script>
 <h2 title="Contents">Contents</h2>
 <ul>
 <li><a href="#interface">Interfaces</a></li>
+<li><a href="#class">Classes</a></li>
 <li><a href="#field">Fields</a></li>
 <li><a href="#method">Methods</a></li>
 <li><a href="#constructor">Constructors</a></li>
@@ -75,6 +76,21 @@ loadScripts(document, 'script');</script>
 </ul>
 <ul class="block-list">
 <li>
+<div id="class">
+<div class="caption"><span>Deprecated Classes</span></div>
+<div class="summary-table two-column-summary">
+<div class="table-header col-first">Class</div>
+<div class="table-header col-last">Description</div>
+<div class="col-summary-item-name even-row-color"><a href="io/micronaut/transaction/hibernate6/MicronautSessionContext.html" title="class in io.micronaut.transaction.hibernate6">io.micronaut.transaction.hibernate6.MicronautSessionContext</a></div>
+<div class="col-last even-row-color">
+<div class="deprecation-comment">Replaced by <a href="io/micronaut/transaction/hibernate/MicronautSessionContext.html" title="class in io.micronaut.transaction.hibernate"><code>MicronautSessionContext</code></a></div>
+</div>
+</div>
+</div>
+</li>
+</ul>
+<ul class="block-list">
+<li>
 <div id="field">
 <div class="caption"><span>Deprecated Fields</span></div>
 <div class="summary-table two-column-summary">
@@ -83,14 +99,6 @@ loadScripts(document, 'script');</script>
 <div class="col-summary-item-name even-row-color"><a href="io/micronaut/data/r2dbc/annotation/R2dbcRepository.html#PARAMETER_TX_STATUS">io.micronaut.data.r2dbc.annotation.R2dbcRepository.PARAMETER_TX_STATUS</a></div>
 <div class="col-last even-row-color">
 <div class="deprecation-comment">Transaction status key needs to be created using the data source name to allow propagating of multiple data source transactions</div>
-</div>
-<div class="col-summary-item-name odd-row-color"><a href="io/micronaut/transaction/reactive/ReactiveTransactionStatus.html#ATTRIBUTE">io.micronaut.transaction.reactive.ReactiveTransactionStatus.ATTRIBUTE</a></div>
-<div class="col-last odd-row-color">
-<div class="deprecation-comment">The key cannot be constant in multi-tx environments. Replaced with <a href="io/micronaut/transaction/reactive/ReactorReactiveTransactionOperations.html#getTransactionStatus(reactor.util.context.ContextView)"><code>ReactorReactiveTransactionOperations.getTransactionStatus(reactor.util.context.ContextView)</code></a>.</div>
-</div>
-<div class="col-summary-item-name even-row-color"><a href="io/micronaut/transaction/reactive/ReactiveTransactionStatus.html#STATUS">io.micronaut.transaction.reactive.ReactiveTransactionStatus.STATUS</a></div>
-<div class="col-last even-row-color">
-<div class="deprecation-comment">The key cannot be constant in multi-tx environments. Replaced with <a href="io/micronaut/transaction/reactive/ReactorReactiveTransactionOperations.html#getTransactionDefinition(reactor.util.context.ContextView)"><code>ReactorReactiveTransactionOperations.getTransactionDefinition(reactor.util.context.ContextView)</code></a>.</div>
 </div>
 </div>
 </div>
@@ -130,14 +138,6 @@ loadScripts(document, 'script');</script>
 <div class="col-summary-item-name even-row-color"><a href="io/micronaut/data/processor/visitors/MatchContext.html#getReturnType()">io.micronaut.data.processor.visitors.MatchContext.getReturnType()</a></div>
 <div class="col-last even-row-color">
 <div class="deprecation-comment">Use <a href="io/micronaut/data/processor/visitors/MatchContext.html#getMethodElement()"><code>MatchContext.getMethodElement()</code></a> and <a href="io/micronaut/data/processor/visitors/MatchContext.html#getReturnType()"><code>MatchContext.getReturnType()</code></a>.</div>
-</div>
-<div class="col-summary-item-name odd-row-color"><a href="io/micronaut/transaction/support/TransactionSynchronizationManager.html#isSynchronizationActive()">io.micronaut.transaction.support.TransactionSynchronizationManager.isSynchronizationActive()</a></div>
-<div class="col-last odd-row-color">
-<div class="deprecation-comment">use <a href="io/micronaut/transaction/support/TransactionSynchronizationManager.html#getSynchronousTransactionState(java.lang.Object)"><code>TransactionSynchronizationManager.getSynchronousTransactionState(Object)</code></a></div>
-</div>
-<div class="col-summary-item-name even-row-color"><a href="io/micronaut/transaction/support/TransactionSynchronizationManager.html#registerSynchronization(io.micronaut.transaction.support.TransactionSynchronization)">io.micronaut.transaction.support.TransactionSynchronizationManager.registerSynchronization<wbr>(TransactionSynchronization)</a></div>
-<div class="col-last even-row-color">
-<div class="deprecation-comment">use <a href="io/micronaut/transaction/support/TransactionSynchronizationManager.html#getSynchronousTransactionState(java.lang.Object)"><code>TransactionSynchronizationManager.getSynchronousTransactionState(Object)</code></a></div>
 </div>
 </div>
 </div>

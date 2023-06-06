@@ -74,11 +74,11 @@ loadScripts(document, 'script');</script>
 <section class="class-description" id="class-description">
 <dl class="notes">
 <dt>All Known Subinterfaces:</dt>
-<dd><code><a href="async/AsyncTransactionStatus.html" title="interface in io.micronaut.transaction.async">AsyncTransactionStatus</a>&lt;T&gt;</code>, <code><a href="reactive/ReactiveTransactionStatus.html" title="interface in io.micronaut.transaction.reactive">ReactiveTransactionStatus</a>&lt;T&gt;</code>, <code><a href="TransactionStatus.html" title="interface in io.micronaut.transaction">TransactionStatus</a>&lt;T&gt;</code></dd>
+<dd><code><a href="async/AsyncTransactionStatus.html" title="interface in io.micronaut.transaction.async">AsyncTransactionStatus</a>&lt;T&gt;</code>, <code><a href="impl/InternalTransaction.html" title="interface in io.micronaut.transaction.impl">InternalTransaction</a>&lt;T&gt;</code>, <code><a href="reactive/ReactiveTransactionStatus.html" title="interface in io.micronaut.transaction.reactive">ReactiveTransactionStatus</a>&lt;T&gt;</code>, <code><a href="TransactionStatus.html" title="interface in io.micronaut.transaction">TransactionStatus</a>&lt;T&gt;</code></dd>
 </dl>
 <dl class="notes">
 <dt>All Known Implementing Classes:</dt>
-<dd><code><a href="support/AbstractTransactionStatus.html" title="class in io.micronaut.transaction.support">AbstractTransactionStatus</a></code>, <code><a href="support/DefaultTransactionStatus.html" title="class in io.micronaut.transaction.support">DefaultTransactionStatus</a></code></dd>
+<dd><code><a href="impl/AbstractInternalTransaction.html" title="class in io.micronaut.transaction.impl">AbstractInternalTransaction</a></code>, <code><a href="support/AbstractReactorTransactionOperations.DefaultReactiveTransactionStatus.html" title="class in io.micronaut.transaction.support">AbstractReactorTransactionOperations.DefaultReactiveTransactionStatus</a></code></dd>
 </dl>
 <hr>
 <div class="type-signature"><span class="modifiers">public interface </span><span class="element-name type-name-label">TransactionExecution</span></div>
@@ -108,28 +108,33 @@ loadScripts(document, 'script');</script>
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>boolean</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#isCompleted()" class="member-name-link">isCompleted</a>()</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#getTransactionDefinition()" class="member-name-link">getTransactionDefinition</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="block">The transaction definition.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>boolean</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#isCompleted()" class="member-name-link">isCompleted</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Return whether this transaction is completed, that is,
  whether it has already been committed or rolled back.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>boolean</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#isNewTransaction()" class="member-name-link">isNewTransaction</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>boolean</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#isNewTransaction()" class="member-name-link">isNewTransaction</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Return whether the present transaction is new; otherwise participating
  in an existing transaction, or potentially not running in an actual
  transaction in the first place.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>boolean</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#isRollbackOnly()" class="member-name-link">isRollbackOnly</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>boolean</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#isRollbackOnly()" class="member-name-link">isRollbackOnly</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Return whether the transaction has been marked as rollback-only
  (either by the application or by the transaction infrastructure).</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#setRollbackOnly()" class="member-name-link">setRollbackOnly</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>void</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#setRollbackOnly()" class="member-name-link">setRollbackOnly</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Set the transaction rollback-only.</div>
 </div>
 </div>
@@ -189,6 +194,20 @@ loadScripts(document, 'script');</script>
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>Whether the execution has completed</dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="getTransactionDefinition()">
+<h3>getTransactionDefinition</h3>
+<div class="member-signature"><span class="annotations">@NonNull
+</span><span class="return-type"><a href="TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a></span>&nbsp;<span class="element-name">getTransactionDefinition</span>()</div>
+<div class="block">The transaction definition.</div>
+<dl class="notes">
+<dt>Returns:</dt>
+<dd>the transaction definition</dd>
+<dt>Since:</dt>
+<dd>4.0.0</dd>
 </dl>
 </section>
 </li>

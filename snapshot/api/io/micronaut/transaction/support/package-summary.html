@@ -87,75 +87,35 @@ loadScripts(document, 'script');</script>
 <div class="summary-table two-column-summary" aria-labelledby="class-summary-tab0">
 <div class="table-header col-first">Class</div>
 <div class="table-header col-last">Description</div>
-<div class="col-first even-row-color class-summary class-summary-tab2"><a href="AbstractSynchronousStateTransactionManager.html" title="class in io.micronaut.transaction.support">AbstractSynchronousStateTransactionManager</a>&lt;T&gt;</div>
+<div class="col-first even-row-color class-summary class-summary-tab2"><a href="AbstractDataSourceTransactionManagerCondition.html" title="class in io.micronaut.transaction.support">AbstractDataSourceTransactionManagerCondition</a></div>
 <div class="col-last even-row-color class-summary class-summary-tab2">
-<div class="block">NOTICE: This is a fork of Spring's <code>AbstractPlatformTransactionManager</code> modernizing it
- to use enums, Slf4j and decoupling from Spring.</div>
+<div class="block">Abstract transaction manager condition.</div>
 </div>
-<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="AbstractSynchronousStateTransactionManager.SuspendedResourcesHolder.html" title="class in io.micronaut.transaction.support">AbstractSynchronousStateTransactionManager.SuspendedResourcesHolder</a></div>
+<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="AbstractPropagatedStatusTransactionOperations.html" title="class in io.micronaut.transaction.support">AbstractPropagatedStatusTransactionOperations</a>&lt;T extends <a href="../TransactionStatus.html" title="interface in io.micronaut.transaction">TransactionStatus</a>&lt;C&gt;,<wbr>C&gt;</div>
 <div class="col-last odd-row-color class-summary class-summary-tab2">
-<div class="block">Holder for suspended resources.</div>
+<div class="block">Abstract transaction oeprations that propagates the status in the propagated context.</div>
 </div>
-<div class="col-first even-row-color class-summary class-summary-tab2"><a href="AbstractSynchronousTransactionManager.html" title="class in io.micronaut.transaction.support">AbstractSynchronousTransactionManager</a>&lt;T&gt;</div>
+<div class="col-first even-row-color class-summary class-summary-tab2"><a href="AbstractReactorTransactionOperations.html" title="class in io.micronaut.transaction.support">AbstractReactorTransactionOperations</a>&lt;C&gt;</div>
 <div class="col-last even-row-color class-summary class-summary-tab2">
-<div class="block">NOTICE: This is a fork of Spring's <code>AbstractPlatformTransactionManager</code> modernizing it
- to use enums, Slf4j and decoupling from Spring.</div>
+<div class="block">Abstract Reactor transaction operations.</div>
 </div>
-<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="AbstractSynchronousTransactionManager.SuspendedResourcesHolder.html" title="class in io.micronaut.transaction.support">AbstractSynchronousTransactionManager.SuspendedResourcesHolder</a></div>
+<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="AbstractReactorTransactionOperations.DefaultReactiveTransactionStatus.html" title="class in io.micronaut.transaction.support">AbstractReactorTransactionOperations.DefaultReactiveTransactionStatus</a>&lt;C&gt;</div>
 <div class="col-last odd-row-color class-summary class-summary-tab2">
-<div class="block">Holder for suspended resources.</div>
+<div class="block">Represents the current reactive transaction status.</div>
 </div>
-<div class="col-first even-row-color class-summary class-summary-tab2"><a href="AbstractTransactionStatus.html" title="class in io.micronaut.transaction.support">AbstractTransactionStatus</a>&lt;T&gt;</div>
+<div class="col-first even-row-color class-summary class-summary-tab2"><a href="AbstractTransactionOperations.html" title="class in io.micronaut.transaction.support">AbstractTransactionOperations</a>&lt;T extends <a href="../impl/InternalTransaction.html" title="interface in io.micronaut.transaction.impl">InternalTransaction</a>&lt;C&gt;,<wbr>C&gt;</div>
 <div class="col-last even-row-color class-summary class-summary-tab2">
-<div class="block">Abstract base implementation of the
- <a href="../TransactionStatus.html" title="interface in io.micronaut.transaction"><code>TransactionStatus</code></a> interface.</div>
+<div class="block">Abstract transaction operations.</div>
 </div>
-<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="DefaultSynchronousTransactionState.html" title="class in io.micronaut.transaction.support">DefaultSynchronousTransactionState</a></div>
+<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="DefaultTransactionDefinition.html" title="class in io.micronaut.transaction.support">DefaultTransactionDefinition</a></div>
 <div class="col-last odd-row-color class-summary class-summary-tab2">
-<div class="block">Default implementation of <a href="SynchronousTransactionState.html" title="interface in io.micronaut.transaction.support"><code>SynchronousTransactionState</code></a>.</div>
-</div>
-<div class="col-first even-row-color class-summary class-summary-tab2"><a href="DefaultTransactionDefinition.html" title="class in io.micronaut.transaction.support">DefaultTransactionDefinition</a></div>
-<div class="col-last even-row-color class-summary class-summary-tab2">
 <div class="block">Default implementation of the <a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction"><code>TransactionDefinition</code></a> interface,
  offering bean-style configuration and sensible default values
  (PROPAGATION_REQUIRED, ISOLATION_DEFAULT, TIMEOUT_DEFAULT, readOnly=false).</div>
 </div>
-<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="DefaultTransactionStatus.html" title="class in io.micronaut.transaction.support">DefaultTransactionStatus</a>&lt;T&gt;</div>
-<div class="col-last odd-row-color class-summary class-summary-tab2">
-<div class="block">Default implementation of the <a href="../TransactionStatus.html" title="interface in io.micronaut.transaction"><code>TransactionStatus</code></a>
- interface, used by <a href="AbstractSynchronousTransactionManager.html" title="class in io.micronaut.transaction.support"><code>AbstractSynchronousTransactionManager</code></a>.</div>
-</div>
 <div class="col-first even-row-color class-summary class-summary-tab2"><a href="ExceptionUtil.html" title="class in io.micronaut.transaction.support">ExceptionUtil</a></div>
 <div class="col-last even-row-color class-summary class-summary-tab2">
 <div class="block">Exception utils.</div>
-</div>
-<div class="col-first odd-row-color class-summary class-summary-tab1"><a href="ResourceHolder.html" title="interface in io.micronaut.transaction.support">ResourceHolder</a></div>
-<div class="col-last odd-row-color class-summary class-summary-tab1">
-<div class="block">Generic interface to be implemented by resource holders.</div>
-</div>
-<div class="col-first even-row-color class-summary class-summary-tab2"><a href="ResourceHolderSupport.html" title="class in io.micronaut.transaction.support">ResourceHolderSupport</a></div>
-<div class="col-last even-row-color class-summary class-summary-tab2">
-<div class="block">Convenient base class for resource holders.</div>
-</div>
-<div class="col-first odd-row-color class-summary class-summary-tab1"><a href="ResourceTransactionManager.html" title="interface in io.micronaut.transaction.support">ResourceTransactionManager</a>&lt;R,<wbr>T&gt;</div>
-<div class="col-last odd-row-color class-summary class-summary-tab1">
-<div class="block">Extension of the <a href="../SynchronousTransactionManager.html" title="interface in io.micronaut.transaction"><code>SynchronousTransactionManager</code></a>
- interface, indicating a native resource transaction manager, operating on a single
- target resource.</div>
-</div>
-<div class="col-first even-row-color class-summary class-summary-tab1"><a href="SmartTransactionObject.html" title="interface in io.micronaut.transaction.support">SmartTransactionObject</a></div>
-<div class="col-last even-row-color class-summary class-summary-tab1">
-<div class="block">Interface to be implemented by transaction objects that are able to
- return an internal rollback-only marker, typically from a another
- transaction that has participated and marked it as rollback-only.</div>
-</div>
-<div class="col-first odd-row-color class-summary class-summary-tab1"><a href="SynchronousTransactionState.html" title="interface in io.micronaut.transaction.support">SynchronousTransactionState</a></div>
-<div class="col-last odd-row-color class-summary class-summary-tab1">
-<div class="block">The synchronous transaction state.</div>
-</div>
-<div class="col-first even-row-color class-summary class-summary-tab1"><a href="TransactionStateOperations.html" title="interface in io.micronaut.transaction.support">TransactionStateOperations</a>&lt;T,<wbr>S extends <a href="../TransactionState.html" title="interface in io.micronaut.transaction">TransactionState</a>&gt;</div>
-<div class="col-last even-row-color class-summary class-summary-tab1">
-<div class="block">Generic transaction state operations interface.</div>
 </div>
 <div class="col-first odd-row-color class-summary class-summary-tab1"><a href="TransactionSynchronization.html" title="interface in io.micronaut.transaction.support">TransactionSynchronization</a></div>
 <div class="col-last odd-row-color class-summary class-summary-tab1">
@@ -165,30 +125,8 @@ loadScripts(document, 'script');</script>
 <div class="col-last even-row-color class-summary class-summary-tab3">
 <div class="block">Transaction synchronization status.</div>
 </div>
-<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="TransactionSynchronizationAdapter.html" title="class in io.micronaut.transaction.support">TransactionSynchronizationAdapter</a></div>
+<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="TransactionUtil.html" title="class in io.micronaut.transaction.support">TransactionUtil</a></div>
 <div class="col-last odd-row-color class-summary class-summary-tab2">
-<div class="block">Simple <a href="TransactionSynchronization.html" title="interface in io.micronaut.transaction.support"><code>TransactionSynchronization</code></a> adapter containing empty
- method implementations, for easier overriding of single methods.</div>
-</div>
-<div class="col-first even-row-color class-summary class-summary-tab2"><a href="TransactionSynchronizationManager.html" title="class in io.micronaut.transaction.support">TransactionSynchronizationManager</a></div>
-<div class="col-last even-row-color class-summary class-summary-tab2">
-<div class="block">Central delegate that manages resources and transaction synchronizations per thread.</div>
-</div>
-<div class="col-first odd-row-color class-summary class-summary-tab1"><a href="TransactionSynchronizationManager.TransactionSynchronizationState.html" title="interface in io.micronaut.transaction.support">TransactionSynchronizationManager.TransactionSynchronizationState</a></div>
-<div class="col-last odd-row-color class-summary class-summary-tab1">
-<div class="block">The synchronization state.</div>
-</div>
-<div class="col-first even-row-color class-summary class-summary-tab1"><a href="TransactionSynchronizationManager.TransactionSynchronizationStateOp.html" title="interface in io.micronaut.transaction.support">TransactionSynchronizationManager.TransactionSynchronizationStateOp</a></div>
-<div class="col-last even-row-color class-summary class-summary-tab1">
-<div class="block">The transaction synchronization state autocloseable operation.</div>
-</div>
-<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="TransactionSynchronizationUtils.html" title="class in io.micronaut.transaction.support">TransactionSynchronizationUtils</a></div>
-<div class="col-last odd-row-color class-summary class-summary-tab2">
-<div class="block">Utility methods for triggering specific <a href="TransactionSynchronization.html" title="interface in io.micronaut.transaction.support"><code>TransactionSynchronization</code></a>
- callback methods on all currently registered synchronizations.</div>
-</div>
-<div class="col-first even-row-color class-summary class-summary-tab2"><a href="TransactionUtil.html" title="class in io.micronaut.transaction.support">TransactionUtil</a></div>
-<div class="col-last even-row-color class-summary class-summary-tab2">
 <div class="block">Transaction utils.</div>
 </div>
 </div>

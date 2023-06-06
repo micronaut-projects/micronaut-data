@@ -703,6 +703,25 @@ public interface BookRepository implements CrudRepository&lt;@jakarta.validation
 </div>
 </div>
 </div>
+<div class="sect4">
+<h5 id="_hibernate_transaction_manager">Hibernate transaction manager</h5>
+<div class="paragraph">
+<p>The signature of the Hibernate transaction manager has changed to include <code>org.hibernate.Session</code> instead of a data source connection:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@Inject
+public TransactionOperations&lt;org.hibernate.Session&gt; hibernateTransactionOperations;</code></pre>
+</div>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_transaction_manager">Transaction manager</h5>
+<div class="paragraph">
+<p>Micronaut 4 comes with a rewritten transaction propagation and management. It replaces the previous implementation forked form Spring Framework.
+The new implementation has a newly added connection management, allowing to share a connection between multiple repositories and services without an open transaction. The are new method supporting extracting the current transaction status <code>TransactionOperations#findTransactionStatus</code>. The <code>TransactionStatus</code> now includes information about the connection and the transaction definition.</p>
+</div>
+</div>
 </div>
 </div>
 
@@ -3164,7 +3183,22 @@ class BookListeners {
 
 
 <div class="paragraph">
-<p>Micronaut Data will automatically manage transactions for you. You can simply declare a method as transactional with the <code>javax.transaction.Transactional</code> annotation.</p>
+<p>Micronaut Data will automatically manage transactions for you. You can simply declare a method as transactional with the <code>jakarta.transaction.Transactional</code> annotation.</p>
+</div>
+<div class="paragraph">
+<p>Micronaut Data maps the declared transaction annotation to the correct underlying semantics and compilation time.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+Starting Micronaut Data 4 repositories are no longer executed using a new transaction and will create a new connection if none is present.
+</td>
+</tr>
+</table>
 </div>
 <div class="admonitionblock tip">
 <table>
@@ -3178,12 +3212,6 @@ If you prefer Spring-managed transactions for Hibernate or JDBC you can add the 
 </tr>
 </table>
 </div>
-<div class="paragraph">
-<p>Micronaut Data maps the declared transaction annotation to the correct underlying semantics and compilation time.</p>
-</div>
-<div class="paragraph">
-<p>Micronaut Data will also automatically apply read-only transactional semantics to query methods and write transaction semantics to write operations.</p>
-</div>
 
 <h2 id="programmaticTransactions"><a class="anchor" href="#programmaticTransactions"></a>3.5.1 Programmatic Transactions</h2>
 
@@ -3195,7 +3223,7 @@ If you prefer Spring-managed transactions for Hibernate or JDBC you can add the 
 
 
 <div class="paragraph">
-<p>You can use the <a href="../api/io/micronaut/transaction/SynchronousTransactionManager.html">SynchronousTransactionManager</a> API to perform programmatic transactions.</p>
+<p>You can use the <a href="../api/io/micronaut/transaction/TransactionOperations.html">TransactionOperations</a> API to perform programmatic transactions.</p>
 </div>
 <div class="paragraph">
 <p>The following demonstrates an example:</p>
@@ -3204,20 +3232,19 @@ If you prefer Spring-managed transactions for Hibernate or JDBC you can add the 
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">package example;
 
-import io.micronaut.transaction.SynchronousTransactionManager;
+import io.micronaut.transaction.TransactionOperations;
 import jakarta.inject.Singleton;
 import jakarta.persistence.EntityManager;
-import java.sql.Connection;
+import org.hibernate.Session;
 
 @Singleton
 public class ProductManager {
 
     private final EntityManager entityManager;
-    private final SynchronousTransactionManager&lt;Connection&gt; transactionManager;
+    private final TransactionOperations&lt;Session&gt; transactionManager;
 
-    public ProductManager(
-            EntityManager entityManager,
-            SynchronousTransactionManager&lt;Connection&gt; transactionManager) { // <b class="conum">(1)</b>
+    public ProductManager(EntityManager entityManager,
+                          TransactionOperations&lt;Session&gt; transactionManager) { // <b class="conum">(1)</b>
         this.entityManager = entityManager;
         this.transactionManager = transactionManager;
     }
@@ -3232,9 +3259,9 @@ public class ProductManager {
 
     Product find(String name) {
         return transactionManager.executeRead(status -&gt; // <b class="conum">(3)</b>
-                entityManager.createQuery("from Product p where p.name = :name", Product.class)
-                    .setParameter("name", name)
-                    .getSingleResult()
+            status.getConnection().createQuery("from Product p where p.name = :name", Product.class)
+                .setParameter("name", name)
+                .getSingleResult()
         );
     }
 }</code></pre>
@@ -3244,35 +3271,34 @@ public class ProductManager {
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">package example
 
-import io.micronaut.transaction.SynchronousTransactionManager
+import io.micronaut.transaction.TransactionOperations
 import jakarta.inject.Singleton
 import jakarta.persistence.EntityManager
-import java.sql.Connection
+import org.hibernate.Session
 
 @Singleton
 class ProductManager {
 
     private final EntityManager entityManager
-    private final SynchronousTransactionManager&lt;Connection&gt; transactionManager
+    private final TransactionOperations&lt;Session&gt; transactionManager
 
-    ProductManager(
-            EntityManager entityManager,
-            SynchronousTransactionManager&lt;Connection&gt; transactionManager) { // <b class="conum">(1)</b>
+    ProductManager(EntityManager entityManager,
+                   TransactionOperations&lt;Session&gt; transactionManager) { // <b class="conum">(1)</b>
         this.entityManager = entityManager
         this.transactionManager = transactionManager
     }
 
     Product save(String name, Manufacturer manufacturer) {
         return transactionManager.executeWrite { // <b class="conum">(2)</b>
-            final product = new Product(name, manufacturer)
+            Product product = new Product(name, manufacturer)
             entityManager.persist(product)
             return product
         }
     }
 
     Product find(String name) {
-        return transactionManager.executeRead { // <b class="conum">(3)</b>
-            entityManager.createQuery("from Product p where p.name = :name", Product)
+        return transactionManager.executeRead { status -&gt; // <b class="conum">(3)</b>
+            status.getConnection().createQuery("from Product p where p.name = :name", Product)
                     .setParameter("name", name)
                     .singleResult
         }
@@ -3284,30 +3310,30 @@ class ProductManager {
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">package example
 
-import io.micronaut.transaction.SynchronousTransactionManager
-import java.sql.Connection
+import io.micronaut.transaction.TransactionOperations
 import jakarta.inject.Singleton
 import jakarta.persistence.EntityManager
+import org.hibernate.Session
 
 @Singleton
 class ProductManager(
-        private val entityManager: EntityManager,
-        private val transactionManager: SynchronousTransactionManager&lt;Connection&gt;) // <b class="conum">(1)</b>
-{
+    private val entityManager: EntityManager,
+    private val transactionManager: TransactionOperations&lt;Session&gt; // <b class="conum">(1)</b>
+) {
 
     fun save(name: String, manufacturer: Manufacturer): Product {
         return transactionManager.executeWrite { // <b class="conum">(2)</b>
-            val product = Product(0, name, manufacturer)
+            val product = Product(null, name, manufacturer)
             entityManager.persist(product)
             product
         }
     }
 
     fun find(name: String): Product {
-        return transactionManager.executeRead {  // <b class="conum">(3)</b>
-            entityManager.createQuery("from Product p where p.name = :name", Product::class.java)
-                    .setParameter("name", name)
-                    .singleResult
+        return transactionManager.executeRead { status -&gt;  // <b class="conum">(3)</b>
+            status.connection.createQuery("from Product p where p.name = :name", Product::class.java)
+                .setParameter("name", name)
+                .singleResult
         }
     }
 }</code></pre>
@@ -3317,7 +3343,7 @@ class ProductManager(
 <table>
 <tr>
 <td><i class="conum" data-value="1"></i><b>1</b></td>
-<td>The constructor is injected with the <a href="../api/io/micronaut/transaction/SynchronousTransactionManager.html">SynchronousTransactionManager</a> and a transaction-aware <code>EntityManager</code></td>
+<td>The constructor is injected with the <a href="../api/io/micronaut/transaction/TransactionOperations.html">TransactionOperations</a> and a session-aware <code>EntityManager</code></td>
 </tr>
 <tr>
 <td><i class="conum" data-value="2"></i><b>2</b></td>
@@ -3325,12 +3351,12 @@ class ProductManager(
 </tr>
 <tr>
 <td><i class="conum" data-value="3"></i><b>3</b></td>
-<td>The <code>find</code> method uses the <code>executeRead</code> method to execute a read-only transaction within the context of the passed lambda.</td>
+<td>The <code>find</code> method uses the <code>executeRead</code> method to execute a read-only transaction within the context of the passed lambda. This example is accessing the session using the status provided by the transaction manager.</td>
 </tr>
 </table>
 </div>
 <div class="paragraph">
-<p>Note that if you are using Micronaut Data JDBC then instead of an <code>EntityManager</code> you should inject a transaction-aware JDBC <code>Connection</code> object.</p>
+<p>Note that if you are using Micronaut Data JDBC then instead of an <code>EntityManager</code> you should inject a contextual-connection-aware JDBC <code>Connection</code> object.</p>
 </div>
 <div class="paragraph">
 <p>The following presents an example:</p>
@@ -3339,7 +3365,7 @@ class ProductManager(
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">package example;
 
-import io.micronaut.transaction.SynchronousTransactionManager;
+import io.micronaut.transaction.TransactionOperations;
 import jakarta.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -3349,11 +3375,10 @@ import java.sql.ResultSet;
 public class ProductManager {
 
     private final Connection connection;
-    private final SynchronousTransactionManager&lt;Connection&gt; transactionManager;
+    private final TransactionOperations&lt;Connection&gt; transactionManager;
 
-    public ProductManager(
-            Connection connection,
-            SynchronousTransactionManager&lt;Connection&gt; transactionManager) { // <b class="conum">(1)</b>
+    public ProductManager(Connection connection,
+                          TransactionOperations&lt;Connection&gt; transactionManager) { // <b class="conum">(1)</b>
         this.connection = connection;
         this.transactionManager = transactionManager;
     }
@@ -3361,8 +3386,7 @@ public class ProductManager {
     Product save(String name, Manufacturer manufacturer) {
         return transactionManager.executeWrite(status -&gt; { // <b class="conum">(2)</b>
             final Product product = new Product(name, manufacturer);
-            try (PreparedStatement ps =
-                         connection.prepareStatement("insert into product (name, manufacturer_id) values (?, ?)")) {
+            try (PreparedStatement ps = connection.prepareStatement("insert into product (name, manufacturer_id) values (?, ?)")) {
                 ps.setString(1, name);
                 ps.setLong(2, manufacturer.getId());
                 ps.execute();
@@ -3373,8 +3397,7 @@ public class ProductManager {
 
     Product find(String name) {
         return transactionManager.executeRead(status -&gt; { // <b class="conum">(3)</b>
-            try (PreparedStatement ps = connection
-                    .prepareStatement("select * from product p where p.name = ?")) {
+            try (PreparedStatement ps = status.getConnection().prepareStatement("select * from product p where p.name = ?")) {
                 ps.setString(1, name);
                 try (ResultSet rs = ps.executeQuery()) {
                     if (rs.next()) {
@@ -3392,8 +3415,9 @@ public class ProductManager {
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">package example
 
-import io.micronaut.transaction.SynchronousTransactionManager
+import io.micronaut.transaction.TransactionOperations
 import jakarta.inject.Singleton
+
 import java.sql.Connection
 import java.sql.PreparedStatement
 import java.sql.ResultSet
@@ -3402,11 +3426,10 @@ import java.sql.ResultSet
 class ProductManager {
 
     private final Connection connection
-    private final SynchronousTransactionManager&lt;Connection&gt; transactionManager
+    private final TransactionOperations&lt;Connection&gt; transactionManager
 
-    ProductManager(
-            Connection connection,
-            SynchronousTransactionManager&lt;Connection&gt; transactionManager) { // <b class="conum">(1)</b>
+    ProductManager(Connection connection,
+                   TransactionOperations&lt;Connection&gt; transactionManager) { // <b class="conum">(1)</b>
         this.connection = connection
         this.transactionManager = transactionManager
     }
@@ -3415,27 +3438,26 @@ class ProductManager {
         return transactionManager.executeWrite { // <b class="conum">(2)</b>
             final Product product = new Product(name, manufacturer)
             connection.prepareStatement("insert into product (name, manufacturer_id) values (?, ?)")
-                .withCloseable { PreparedStatement ps -&gt;
-                    ps.setString(1, name)
-                    ps.setLong(2, manufacturer.getId())
-                    ps.execute()
-                }
+                    .withCloseable { PreparedStatement ps -&gt;
+                        ps.setString(1, name)
+                        ps.setLong(2, manufacturer.getId())
+                        ps.execute()
+                    }
             return product
         }
     }
 
     Product find(String name) {
-        return transactionManager.executeRead{ // <b class="conum">(3)</b>
-            connection
-                .prepareStatement("select * from product p where p.name = ?").withCloseable {
-                    PreparedStatement ps -&gt;
-                ps.setString(1, name)
-                ps.executeQuery().withCloseable { ResultSet rs -&gt;
-                    if (rs.next()) {
-                        return new Product(rs.getString("name"), null)
+        return transactionManager.executeRead { status -&gt; // <b class="conum">(3)</b>
+            status.getConnection().prepareStatement("select * from product p where p.name = ?").withCloseable {
+                PreparedStatement ps -&gt;
+                    ps.setString(1, name)
+                    ps.executeQuery().withCloseable { ResultSet rs -&gt;
+                        if (rs.next()) {
+                            return new Product(rs.getString("name"), null)
+                        }
+                        return null
                     }
-                    return null
-                }
             }
         }
     }
@@ -3446,15 +3468,16 @@ class ProductManager {
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">package example
 
-import io.micronaut.transaction.SynchronousTransactionManager
-import java.sql.Connection
+import io.micronaut.data.exceptions.EmptyResultException
+import io.micronaut.transaction.TransactionOperations
 import jakarta.inject.Singleton
+import java.sql.Connection
 
 @Singleton
 class ProductManager(
-        private val connection: Connection,
-        private val transactionManager: SynchronousTransactionManager&lt;Connection&gt;) // <b class="conum">(1)</b>
-{
+    private val connection: Connection,
+    private val transactionManager: TransactionOperations&lt;Connection&gt; // <b class="conum">(1)</b>
+) {
 
     fun save(name: String, manufacturer: Manufacturer): Product {
         return transactionManager.executeWrite { // <b class="conum">(2)</b>
@@ -3468,21 +3491,19 @@ class ProductManager(
         }
     }
 
-    fun find(name: String): Product? {
-        return transactionManager.executeRead { // <b class="conum">(3)</b>
-            connection
-                    .prepareStatement("select * from product p where p.name = ?").use { ps -&gt;
-                        ps.setString(1, name)
-                        ps.executeQuery().use { rs -&gt;
-                            if (rs.next()) {
-                                return@executeRead Product(
-                                        rs.getLong("id"),
-                                        rs.getString("name"),
-                                        null)
-                            }
-                            return@executeRead null
+    fun find(name: String): Product {
+        return transactionManager.executeRead { status -&gt; // <b class="conum">(3)</b>
+            status.connection.prepareStatement("select * from product p where p.name = ?").use { ps -&gt;
+                    ps.setString(1, name)
+                    ps.executeQuery().use { rs -&gt;
+                        if (rs.next()) {
+                            return@executeRead Product(
+                                rs.getLong("id"), rs.getString("name"), null
+                            )
                         }
+                        throw EmptyResultException()
                     }
+                }
         }
     }
 }</code></pre>
@@ -3492,7 +3513,7 @@ class ProductManager(
 <table>
 <tr>
 <td><i class="conum" data-value="1"></i><b>1</b></td>
-<td>The constructor is injected with the <a href="../api/io/micronaut/transaction/SynchronousTransactionManager.html">SynchronousTransactionManager</a> and a transaction-aware <code>Connection</code></td>
+<td>The constructor is injected with the <a href="../api/io/micronaut/transaction/TransactionOperations.html">TransactionOperations</a> and a contextual-connection-aware <code>Connection</code></td>
 </tr>
 <tr>
 <td><i class="conum" data-value="2"></i><b>2</b></td>
@@ -3500,7 +3521,7 @@ class ProductManager(
 </tr>
 <tr>
 <td><i class="conum" data-value="3"></i><b>3</b></td>
-<td>The <code>find</code> method uses the <code>executeRead</code> method to execute a read-only transaction within the context of the passed lambda.</td>
+<td>The <code>find</code> method uses the <code>executeRead</code> method to execute a read-only transaction within the context of the passed lambda. This example is accessing the connection using the status provided by the transaction manager.</td>
 </tr>
 </table>
 </div>

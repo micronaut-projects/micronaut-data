@@ -79,15 +79,15 @@ loadScripts(document, 'script');</script>
 <section class="class-description" id="class-description">
 <dl class="notes">
 <dt>All Implemented Interfaces:</dt>
-<dd><code>io.micronaut.context.ApplicationContextProvider</code>, <code>io.micronaut.core.convert.ConversionServiceProvider</code>, <code><a href="MongoReactiveRepositoryOperations.html" title="interface in io.micronaut.data.mongodb.operations">MongoReactiveRepositoryOperations</a></code>, <code><a href="MongoReactorRepositoryOperations.html" title="interface in io.micronaut.data.mongodb.operations">MongoReactorRepositoryOperations</a></code>, <code><a href="../../operations/HintsCapableRepository.html" title="interface in io.micronaut.data.operations">HintsCapableRepository</a></code>, <code><a href="../../operations/reactive/ReactiveRepositoryOperations.html" title="interface in io.micronaut.data.operations.reactive">ReactiveRepositoryOperations</a></code>, <code><a href="../../operations/reactive/ReactorReactiveRepositoryOperations.html" title="interface in io.micronaut.data.operations.reactive">ReactorReactiveRepositoryOperations</a></code>, <code><a href="../../runtime/operations/internal/ReactiveCascadeOperations.ReactiveCascadeOperationsHelper.html" title="interface in io.micronaut.data.runtime.operations.internal">ReactiveCascadeOperations.ReactiveCascadeOperationsHelper</a>&lt;<a href="DefaultReactiveMongoRepositoryOperations.MongoOperationContext.html" title="class in io.micronaut.data.mongodb.operations">DefaultReactiveMongoRepositoryOperations.MongoOperationContext</a>&gt;</code>, <code><a href="../../runtime/query/MethodContextAwareStoredQueryDecorator.html" title="interface in io.micronaut.data.runtime.query">MethodContextAwareStoredQueryDecorator</a></code>, <code><a href="../../runtime/query/PreparedQueryDecorator.html" title="interface in io.micronaut.data.runtime.query">PreparedQueryDecorator</a></code>, <code><a href="../../../transaction/reactive/ReactiveTransactionOperations.html" title="interface in io.micronaut.transaction.reactive">ReactiveTransactionOperations</a>&lt;com.mongodb.reactivestreams.client.ClientSession&gt;</code>, <code><a href="../../../transaction/reactive/ReactorReactiveTransactionOperations.html" title="interface in io.micronaut.transaction.reactive">ReactorReactiveTransactionOperations</a>&lt;com.mongodb.reactivestreams.client.ClientSession&gt;</code></dd>
+<dd><code>io.micronaut.context.ApplicationContextProvider</code>, <code>io.micronaut.core.convert.ConversionServiceProvider</code>, <code><a href="MongoReactiveRepositoryOperations.html" title="interface in io.micronaut.data.mongodb.operations">MongoReactiveRepositoryOperations</a></code>, <code><a href="MongoReactorRepositoryOperations.html" title="interface in io.micronaut.data.mongodb.operations">MongoReactorRepositoryOperations</a></code>, <code><a href="../../operations/HintsCapableRepository.html" title="interface in io.micronaut.data.operations">HintsCapableRepository</a></code>, <code><a href="../../operations/reactive/ReactiveRepositoryOperations.html" title="interface in io.micronaut.data.operations.reactive">ReactiveRepositoryOperations</a></code>, <code><a href="../../operations/reactive/ReactorReactiveRepositoryOperations.html" title="interface in io.micronaut.data.operations.reactive">ReactorReactiveRepositoryOperations</a></code>, <code><a href="../../runtime/operations/internal/ReactiveCascadeOperations.ReactiveCascadeOperationsHelper.html" title="interface in io.micronaut.data.runtime.operations.internal">ReactiveCascadeOperations.ReactiveCascadeOperationsHelper</a>&lt;<a href="DefaultReactiveMongoRepositoryOperations.MongoOperationContext.html" title="class in io.micronaut.data.mongodb.operations">DefaultReactiveMongoRepositoryOperations.MongoOperationContext</a>&gt;</code>, <code><a href="../../runtime/query/MethodContextAwareStoredQueryDecorator.html" title="interface in io.micronaut.data.runtime.query">MethodContextAwareStoredQueryDecorator</a></code>, <code><a href="../../runtime/query/PreparedQueryDecorator.html" title="interface in io.micronaut.data.runtime.query">PreparedQueryDecorator</a></code></dd>
 </dl>
 <hr>
 <div class="type-signature"><span class="annotations"><a href="../conf/RequiresReactiveMongo.html" title="annotation interface in io.micronaut.data.mongodb.conf">@RequiresReactiveMongo</a>
 @EachBean(com.mongodb.reactivestreams.client.MongoClient.class)
 @Internal
-</span><span class="modifiers">public class </span><span class="element-name type-name-label">DefaultReactiveMongoRepositoryOperations</span>
+</span><span class="modifiers">public final class </span><span class="element-name type-name-label">DefaultReactiveMongoRepositoryOperations</span>
 <span class="extends-implements">extends <a href="../../runtime/operations/internal/AbstractRepositoryOperations.html" title="class in io.micronaut.data.runtime.operations.internal">AbstractRepositoryOperations</a>
-implements <a href="MongoReactorRepositoryOperations.html" title="interface in io.micronaut.data.mongodb.operations">MongoReactorRepositoryOperations</a>, <a href="../../operations/reactive/ReactorReactiveRepositoryOperations.html" title="interface in io.micronaut.data.operations.reactive">ReactorReactiveRepositoryOperations</a>, <a href="../../runtime/operations/internal/ReactiveCascadeOperations.ReactiveCascadeOperationsHelper.html" title="interface in io.micronaut.data.runtime.operations.internal">ReactiveCascadeOperations.ReactiveCascadeOperationsHelper</a>&lt;<a href="DefaultReactiveMongoRepositoryOperations.MongoOperationContext.html" title="class in io.micronaut.data.mongodb.operations">DefaultReactiveMongoRepositoryOperations.MongoOperationContext</a>&gt;, <a href="../../../transaction/reactive/ReactorReactiveTransactionOperations.html" title="interface in io.micronaut.transaction.reactive">ReactorReactiveTransactionOperations</a>&lt;com.mongodb.reactivestreams.client.ClientSession&gt;</span></div>
+implements <a href="MongoReactorRepositoryOperations.html" title="interface in io.micronaut.data.mongodb.operations">MongoReactorRepositoryOperations</a>, <a href="../../operations/reactive/ReactorReactiveRepositoryOperations.html" title="interface in io.micronaut.data.operations.reactive">ReactorReactiveRepositoryOperations</a>, <a href="../../runtime/operations/internal/ReactiveCascadeOperations.ReactiveCascadeOperationsHelper.html" title="interface in io.micronaut.data.runtime.operations.internal">ReactiveCascadeOperations.ReactiveCascadeOperationsHelper</a>&lt;<a href="DefaultReactiveMongoRepositoryOperations.MongoOperationContext.html" title="class in io.micronaut.data.mongodb.operations">DefaultReactiveMongoRepositoryOperations.MongoOperationContext</a>&gt;</span></div>
 <div class="block">The reactive MongoDB repository operations implementation.</div>
 <dl class="notes">
 <dt>Since:</dt>
@@ -107,13 +107,10 @@ implements <a href="MongoReactorRepositoryOperations.html" title="interface in i
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Class</div>
 <div class="table-header col-last">Description</div>
-<div class="col-first even-row-color"><code>protected static class&nbsp;</code></div>
+<div class="col-first even-row-color"><code>protected static final class&nbsp;</code></div>
 <div class="col-second even-row-color"><code><a href="DefaultReactiveMongoRepositoryOperations.MongoOperationContext.html" class="type-name-link" title="class in io.micronaut.data.mongodb.operations">DefaultReactiveMongoRepositoryOperations.MongoOperationContext</a></code></div>
 <div class="col-last even-row-color">&nbsp;</div>
 </div>
-<div class="inherited-list">
-<h2 id="nested-classes-inherited-from-class-io.micronaut.transaction.reactive.ReactiveTransactionOperations">Nested classes/interfaces inherited from interface&nbsp;io.micronaut.transaction.reactive.<a href="../../../transaction/reactive/ReactiveTransactionOperations.html" title="interface in io.micronaut.transaction.reactive">ReactiveTransactionOperations</a></h2>
-<code><a href="../../../transaction/reactive/ReactiveTransactionOperations.TransactionalCallback.html" title="interface in io.micronaut.transaction.reactive">ReactiveTransactionOperations.TransactionalCallback</a>&lt;<a href="../../../transaction/reactive/ReactiveTransactionOperations.TransactionalCallback.html" title="type parameter in ReactiveTransactionOperations.TransactionalCallback">C</a>,<wbr><a href="../../../transaction/reactive/ReactiveTransactionOperations.TransactionalCallback.html" title="type parameter in ReactiveTransactionOperations.TransactionalCallback">T</a>&gt;</code></div>
 </section>
 </li>
 <!-- =========== FIELD SUMMARY =========== -->
@@ -138,9 +135,6 @@ implements <a href="MongoReactorRepositoryOperations.html" title="interface in i
 <div class="inherited-list">
 <h3 id="fields-inherited-from-class-io.micronaut.data.runtime.operations.internal.AbstractRepositoryOperations">Fields inherited from class&nbsp;io.micronaut.data.runtime.operations.internal.<a href="../../runtime/operations/internal/AbstractRepositoryOperations.html" title="class in io.micronaut.data.runtime.operations.internal">AbstractRepositoryOperations</a></h3>
 <code><a href="../../runtime/operations/internal/AbstractRepositoryOperations.html#attributeConverterRegistry">attributeConverterRegistry</a>, <a href="../../runtime/operations/internal/AbstractRepositoryOperations.html#conversionService">conversionService</a>, <a href="../../runtime/operations/internal/AbstractRepositoryOperations.html#dateTimeProvider">dateTimeProvider</a>, <a href="../../runtime/operations/internal/AbstractRepositoryOperations.html#entityEventRegistry">entityEventRegistry</a>, <a href="../../runtime/operations/internal/AbstractRepositoryOperations.html#runtimeEntityRegistry">runtimeEntityRegistry</a></code></div>
-<div class="inherited-list">
-<h3 id="fields-inherited-from-class-io.micronaut.transaction.reactive.ReactorReactiveTransactionOperations">Fields inherited from interface&nbsp;io.micronaut.transaction.reactive.<a href="../../../transaction/reactive/ReactorReactiveTransactionOperations.html" title="interface in io.micronaut.transaction.reactive">ReactorReactiveTransactionOperations</a></h3>
-<code><a href="../../../transaction/reactive/ReactorReactiveTransactionOperations.html#TRANSACTION_DEFINITION_KEY_PREFIX">TRANSACTION_DEFINITION_KEY_PREFIX</a>, <a href="../../../transaction/reactive/ReactorReactiveTransactionOperations.html#TRANSACTION_STATUS_KEY_PREFIX">TRANSACTION_STATUS_KEY_PREFIX</a></code></div>
 </section>
 </li>
 <!-- ========== METHOD SUMMARY =========== -->
@@ -282,16 +276,6 @@ R&gt;&nbsp;<a href="MongoStoredQuery.html" title="interface in io.micronaut.data
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final com.mongodb.client.model.ReplaceOptions</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getReplaceOptions(io.micronaut.core.annotation.AnnotationMetadata)" class="member-name-link">getReplaceOptions</a><wbr>(io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../../../transaction/TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getTransactionDefinition(reactor.util.context.ContextView)" class="member-name-link">getTransactionDefinition</a><wbr>(reactor.util.context.ContextView&nbsp;contextView)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Retrieve the transaction definition associated to the current transaction from the Reactor context.</div>
-</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../../../transaction/reactive/ReactiveTransactionStatus.html" title="interface in io.micronaut.transaction.reactive">ReactiveTransactionStatus</a>&lt;com.mongodb.reactivestreams.client.ClientSession&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getTransactionStatus(reactor.util.context.ContextView)" class="member-name-link">getTransactionStatus</a><wbr>(reactor.util.context.ContextView&nbsp;contextView)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Retrieve the transaction status associated to the current transaction manager from the Reactor context.</div>
-</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected void</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#logAggregate(io.micronaut.data.mongodb.operations.MongoAggregation)" class="member-name-link">logAggregate</a><wbr>(<a href="MongoAggregation.html" title="class in io.micronaut.data.mongodb.operations">MongoAggregation</a>&nbsp;aggregation)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
@@ -362,20 +346,14 @@ R&gt;&nbsp;<a href="MongoStoredQuery.html" title="interface in io.micronaut.data
 <div class="block">Update one entity during cascade.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;reactor.core.publisher.Mono&lt;T&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#withClientSession(java.util.function.Function)" class="member-name-link">withClientSession</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/function/Function.html" title="class or interface in java.util.function" class="external-link">Function</a>&lt;com.mongodb.reactivestreams.client.ClientSession,<wbr>reactor.core.publisher.Mono&lt;? extends T&gt;&gt;&nbsp;function)</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#withClientSession(java.util.function.Function)" class="member-name-link">withClientSession</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/function/Function.html" title="class or interface in java.util.function" class="external-link">Function</a>&lt;com.mongodb.reactivestreams.client.ClientSession,<wbr>reactor.core.publisher.Mono&lt;T&gt;&gt;&nbsp;function)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Starts a new session or reuses one from the context.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;reactor.core.publisher.Flux&lt;T&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#withClientSessionMany(java.util.function.Function)" class="member-name-link">withClientSessionMany</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/function/Function.html" title="class or interface in java.util.function" class="external-link">Function</a>&lt;com.mongodb.reactivestreams.client.ClientSession,<wbr>reactor.core.publisher.Flux&lt;? extends T&gt;&gt;&nbsp;function)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#withClientSessionMany(java.util.function.Function)" class="member-name-link">withClientSessionMany</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/function/Function.html" title="class or interface in java.util.function" class="external-link">Function</a>&lt;com.mongodb.reactivestreams.client.ClientSession,<wbr>reactor.core.publisher.Flux&lt;T&gt;&gt;&nbsp;function)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Starts a new session or reuses one from the context.</div>
-</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;reactor.core.publisher.Flux&lt;T&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#withTransaction(io.micronaut.transaction.TransactionDefinition,io.micronaut.transaction.reactive.ReactiveTransactionOperations.TransactionalCallback)" class="member-name-link">withTransaction</a><wbr>(<a href="../../../transaction/TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition,
- <a href="../../../transaction/reactive/ReactiveTransactionOperations.TransactionalCallback.html" title="interface in io.micronaut.transaction.reactive">ReactiveTransactionOperations.TransactionalCallback</a>&lt;com.mongodb.reactivestreams.client.ClientSession,<wbr>T&gt;&nbsp;handler)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Execute the given handler with a new transaction.</div>
 </div>
 </div>
 </div>
@@ -395,9 +373,6 @@ R&gt;&nbsp;<a href="MongoStoredQuery.html" title="interface in io.micronaut.data
 <div class="inherited-list">
 <h3 id="methods-inherited-from-class-io.micronaut.data.runtime.operations.internal.ReactiveCascadeOperations.ReactiveCascadeOperationsHelper">Methods inherited from interface&nbsp;io.micronaut.data.runtime.operations.internal.<a href="../../runtime/operations/internal/ReactiveCascadeOperations.ReactiveCascadeOperationsHelper.html" title="interface in io.micronaut.data.runtime.operations.internal">ReactiveCascadeOperations.ReactiveCascadeOperationsHelper</a></h3>
 <code><a href="../../runtime/operations/internal/ReactiveCascadeOperations.ReactiveCascadeOperationsHelper.html#isSupportsBatchDelete(Ctx,io.micronaut.data.model.runtime.RuntimePersistentEntity)">isSupportsBatchDelete</a>, <a href="../../runtime/operations/internal/ReactiveCascadeOperations.ReactiveCascadeOperationsHelper.html#isSupportsBatchInsert(Ctx,io.micronaut.data.model.runtime.RuntimePersistentEntity)">isSupportsBatchInsert</a>, <a href="../../runtime/operations/internal/ReactiveCascadeOperations.ReactiveCascadeOperationsHelper.html#isSupportsBatchUpdate(Ctx,io.micronaut.data.model.runtime.RuntimePersistentEntity)">isSupportsBatchUpdate</a></code></div>
-<div class="inherited-list">
-<h3 id="methods-inherited-from-class-io.micronaut.transaction.reactive.ReactorReactiveTransactionOperations">Methods inherited from interface&nbsp;io.micronaut.transaction.reactive.<a href="../../../transaction/reactive/ReactorReactiveTransactionOperations.html" title="interface in io.micronaut.transaction.reactive">ReactorReactiveTransactionOperations</a></h3>
-<code><a href="../../../transaction/reactive/ReactorReactiveTransactionOperations.html#withTransaction(io.micronaut.transaction.reactive.ReactiveTransactionOperations.TransactionalCallback)">withTransaction</a>, <a href="../../../transaction/reactive/ReactorReactiveTransactionOperations.html#withTransactionFlux(io.micronaut.transaction.TransactionDefinition,java.util.function.Function)">withTransactionFlux</a>, <a href="../../../transaction/reactive/ReactorReactiveTransactionOperations.html#withTransactionFlux(java.util.function.Function)">withTransactionFlux</a>, <a href="../../../transaction/reactive/ReactorReactiveTransactionOperations.html#withTransactionMono(io.micronaut.transaction.TransactionDefinition,java.util.function.Function)">withTransactionMono</a>, <a href="../../../transaction/reactive/ReactorReactiveTransactionOperations.html#withTransactionMono(java.util.function.Function)">withTransactionMono</a></code></div>
 </section>
 </li>
 </ul>
@@ -921,7 +896,7 @@ R&gt;</span>&nbsp;<span class="return-type">reactor.core.publisher.Mono&lt;R&gt;
 <li>
 <section class="detail" id="withClientSession(java.util.function.Function)">
 <h3>withClientSession</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type">reactor.core.publisher.Mono&lt;T&gt;</span>&nbsp;<span class="element-name">withClientSession</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/function/Function.html" title="class or interface in java.util.function" class="external-link">Function</a>&lt;com.mongodb.reactivestreams.client.ClientSession,<wbr>reactor.core.publisher.Mono&lt;? extends T&gt;&gt;&nbsp;function)</span></div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type">reactor.core.publisher.Mono&lt;T&gt;</span>&nbsp;<span class="element-name">withClientSession</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/function/Function.html" title="class or interface in java.util.function" class="external-link">Function</a>&lt;com.mongodb.reactivestreams.client.ClientSession,<wbr>reactor.core.publisher.Mono&lt;T&gt;&gt;&nbsp;function)</span></div>
 <div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="MongoReactorRepositoryOperations.html#withClientSession(java.util.function.Function)">MongoReactorRepositoryOperations</a></code></span></div>
 <div class="block">Starts a new session or reuses one from the context.</div>
 <dl class="notes">
@@ -939,7 +914,7 @@ R&gt;</span>&nbsp;<span class="return-type">reactor.core.publisher.Mono&lt;R&gt;
 <li>
 <section class="detail" id="withClientSessionMany(java.util.function.Function)">
 <h3>withClientSessionMany</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type">reactor.core.publisher.Flux&lt;T&gt;</span>&nbsp;<span class="element-name">withClientSessionMany</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/function/Function.html" title="class or interface in java.util.function" class="external-link">Function</a>&lt;com.mongodb.reactivestreams.client.ClientSession,<wbr>reactor.core.publisher.Flux&lt;? extends T&gt;&gt;&nbsp;function)</span></div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type">reactor.core.publisher.Flux&lt;T&gt;</span>&nbsp;<span class="element-name">withClientSessionMany</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/function/Function.html" title="class or interface in java.util.function" class="external-link">Function</a>&lt;com.mongodb.reactivestreams.client.ClientSession,<wbr>reactor.core.publisher.Flux&lt;T&gt;&gt;&nbsp;function)</span></div>
 <div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="MongoReactorRepositoryOperations.html#withClientSessionMany(java.util.function.Function)">MongoReactorRepositoryOperations</a></code></span></div>
 <div class="block">Starts a new session or reuses one from the context.</div>
 <dl class="notes">
@@ -951,63 +926,6 @@ R&gt;</span>&nbsp;<span class="return-type">reactor.core.publisher.Mono&lt;R&gt;
 <dd><code>function</code> - The function</dd>
 <dt>Returns:</dt>
 <dd>The processed publisher</dd>
-</dl>
-</section>
-</li>
-<li>
-<section class="detail" id="getTransactionStatus(reactor.util.context.ContextView)">
-<h3>getTransactionStatus</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="../../../transaction/reactive/ReactiveTransactionStatus.html" title="interface in io.micronaut.transaction.reactive">ReactiveTransactionStatus</a>&lt;com.mongodb.reactivestreams.client.ClientSession&gt;</span>&nbsp;<span class="element-name">getTransactionStatus</span><wbr><span class="parameters">(reactor.util.context.ContextView&nbsp;contextView)</span></div>
-<div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="../../../transaction/reactive/ReactorReactiveTransactionOperations.html#getTransactionStatus(reactor.util.context.ContextView)">ReactorReactiveTransactionOperations</a></code></span></div>
-<div class="block">Retrieve the transaction status associated to the current transaction manager from the Reactor context.</div>
-<dl class="notes">
-<dt>Specified by:</dt>
-<dd><code><a href="../../../transaction/reactive/ReactorReactiveTransactionOperations.html#getTransactionStatus(reactor.util.context.ContextView)">getTransactionStatus</a></code>&nbsp;in interface&nbsp;<code><a href="../../../transaction/reactive/ReactorReactiveTransactionOperations.html" title="interface in io.micronaut.transaction.reactive">ReactorReactiveTransactionOperations</a>&lt;com.mongodb.reactivestreams.client.ClientSession&gt;</code></dd>
-<dt>Parameters:</dt>
-<dd><code>contextView</code> - The context view</dd>
-<dt>Returns:</dt>
-<dd>the key</dd>
-</dl>
-</section>
-</li>
-<li>
-<section class="detail" id="getTransactionDefinition(reactor.util.context.ContextView)">
-<h3>getTransactionDefinition</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="../../../transaction/TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a></span>&nbsp;<span class="element-name">getTransactionDefinition</span><wbr><span class="parameters">(reactor.util.context.ContextView&nbsp;contextView)</span></div>
-<div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="../../../transaction/reactive/ReactorReactiveTransactionOperations.html#getTransactionDefinition(reactor.util.context.ContextView)">ReactorReactiveTransactionOperations</a></code></span></div>
-<div class="block">Retrieve the transaction definition associated to the current transaction from the Reactor context.</div>
-<dl class="notes">
-<dt>Specified by:</dt>
-<dd><code><a href="../../../transaction/reactive/ReactorReactiveTransactionOperations.html#getTransactionDefinition(reactor.util.context.ContextView)">getTransactionDefinition</a></code>&nbsp;in interface&nbsp;<code><a href="../../../transaction/reactive/ReactorReactiveTransactionOperations.html" title="interface in io.micronaut.transaction.reactive">ReactorReactiveTransactionOperations</a>&lt;com.mongodb.reactivestreams.client.ClientSession&gt;</code></dd>
-<dt>Parameters:</dt>
-<dd><code>contextView</code> - The context view</dd>
-<dt>Returns:</dt>
-<dd>the key</dd>
-</dl>
-</section>
-</li>
-<li>
-<section class="detail" id="withTransaction(io.micronaut.transaction.TransactionDefinition,io.micronaut.transaction.reactive.ReactiveTransactionOperations.TransactionalCallback)">
-<h3>withTransaction</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">public</span>&nbsp;<span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type">reactor.core.publisher.Flux&lt;T&gt;</span>&nbsp;<span class="element-name">withTransaction</span><wbr><span class="parameters">(@NonNull
- <a href="../../../transaction/TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition,
- @NonNull
- <a href="../../../transaction/reactive/ReactiveTransactionOperations.TransactionalCallback.html" title="interface in io.micronaut.transaction.reactive">ReactiveTransactionOperations.TransactionalCallback</a>&lt;com.mongodb.reactivestreams.client.ClientSession,<wbr>T&gt;&nbsp;handler)</span></div>
-<div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="../../../transaction/reactive/ReactiveTransactionOperations.html#withTransaction(io.micronaut.transaction.TransactionDefinition,io.micronaut.transaction.reactive.ReactiveTransactionOperations.TransactionalCallback)">ReactiveTransactionOperations</a></code></span></div>
-<div class="block">Execute the given handler with a new transaction.</div>
-<dl class="notes">
-<dt>Specified by:</dt>
-<dd><code><a href="../../../transaction/reactive/ReactiveTransactionOperations.html#withTransaction(io.micronaut.transaction.TransactionDefinition,io.micronaut.transaction.reactive.ReactiveTransactionOperations.TransactionalCallback)">withTransaction</a></code>&nbsp;in interface&nbsp;<code><a href="../../../transaction/reactive/ReactiveTransactionOperations.html" title="interface in io.micronaut.transaction.reactive">ReactiveTransactionOperations</a>&lt;com.mongodb.reactivestreams.client.ClientSession&gt;</code></dd>
-<dt>Specified by:</dt>
-<dd><code><a href="../../../transaction/reactive/ReactorReactiveTransactionOperations.html#withTransaction(io.micronaut.transaction.TransactionDefinition,io.micronaut.transaction.reactive.ReactiveTransactionOperations.TransactionalCallback)">withTransaction</a></code>&nbsp;in interface&nbsp;<code><a href="../../../transaction/reactive/ReactorReactiveTransactionOperations.html" title="interface in io.micronaut.transaction.reactive">ReactorReactiveTransactionOperations</a>&lt;com.mongodb.reactivestreams.client.ClientSession&gt;</code></dd>
-<dt>Type Parameters:</dt>
-<dd><code>T</code> - The emitted type</dd>
-<dt>Parameters:</dt>
-<dd><code>definition</code> - The definition</dd>
-<dd><code>handler</code> - The handler</dd>
-<dt>Returns:</dt>
-<dd>A publisher that emits the result type</dd>
 </dl>
 </section>
 </li>

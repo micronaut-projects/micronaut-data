@@ -45,7 +45,7 @@ loadScripts(document, 'script');</script>
 <ul class="sub-nav-list">
 <li>Summary:&nbsp;</li>
 <li><a href="#nested-class-summary">Nested</a>&nbsp;|&nbsp;</li>
-<li>Field&nbsp;|&nbsp;</li>
+<li><a href="#field-summary">Field</a>&nbsp;|&nbsp;</li>
 <li>Constr&nbsp;|&nbsp;</li>
 <li><a href="#method-summary">Method</a></li>
 </ul>
@@ -74,15 +74,11 @@ loadScripts(document, 'script');</script>
 <section class="class-description" id="class-description">
 <dl class="notes">
 <dt>All Superinterfaces:</dt>
-<dd><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/Flushable.html" title="class or interface in java.io" class="external-link">Flushable</a></code></dd>
-</dl>
-<dl class="notes">
-<dt>All Known Implementing Classes:</dt>
-<dd><code><a href="../hibernate6/FlushSynchronization.html" title="class in io.micronaut.transaction.hibernate6">FlushSynchronization</a></code>, <code><a href="../hibernate6/SessionSynchronization.html" title="class in io.micronaut.transaction.hibernate6">SessionSynchronization</a></code>, <code><a href="TransactionSynchronizationAdapter.html" title="class in io.micronaut.transaction.support">TransactionSynchronizationAdapter</a></code></dd>
+<dd><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/Flushable.html" title="class or interface in java.io" class="external-link">Flushable</a></code>, <code>io.micronaut.core.order.Ordered</code></dd>
 </dl>
 <hr>
 <div class="type-signature"><span class="modifiers">public interface </span><span class="element-name type-name-label">TransactionSynchronization</span><span class="extends-implements">
-extends <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/Flushable.html" title="class or interface in java.io" class="external-link">Flushable</a></span></div>
+extends <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/Flushable.html" title="class or interface in java.io" class="external-link">Flushable</a>, io.micronaut.core.order.Ordered</span></div>
 <div class="block">Interface for transaction synchronization callbacks.
  Supported by AbstractPlatformTransactionManager.
 
@@ -100,8 +96,6 @@ extends <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/ja
 <dt>See Also:</dt>
 <dd>
 <ul class="see-list-long">
-<li><a href="TransactionSynchronizationManager.html" title="class in io.micronaut.transaction.support"><code>TransactionSynchronizationManager</code></a></li>
-<li><a href="AbstractSynchronousTransactionManager.html" title="class in io.micronaut.transaction.support"><code>AbstractSynchronousTransactionManager</code></a></li>
 <li><code>DataSourceUtils.CONNECTION_SYNCHRONIZATION_ORDER</code></li>
 </ul>
 </dd>
@@ -124,6 +118,15 @@ extends <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/ja
 <div class="block">Transaction synchronization status.</div>
 </div>
 </div>
+</section>
+</li>
+<!-- =========== FIELD SUMMARY =========== -->
+<li>
+<section class="field-summary" id="field-summary">
+<h2>Field Summary</h2>
+<div class="inherited-list">
+<h3 id="fields-inherited-from-class-io.micronaut.core.order.Ordered">Fields inherited from interface&nbsp;io.micronaut.core.order.Ordered</h3>
+<code>HIGHEST_PRECEDENCE, LOWEST_PRECEDENCE</code></div>
 </section>
 </li>
 <!-- ========== METHOD SUMMARY =========== -->
@@ -176,6 +179,9 @@ extends <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/ja
 </div>
 </div>
 </div>
+<div class="inherited-list">
+<h3 id="methods-inherited-from-class-io.micronaut.core.order.Ordered">Methods inherited from interface&nbsp;io.micronaut.core.order.Ordered</h3>
+<code>getOrder</code></div>
 </section>
 </li>
 </ul>
@@ -193,30 +199,13 @@ extends <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/ja
 <div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">suspend</span>()</div>
 <div class="block">Suspend this synchronization.
  Supposed to unbind resources from TransactionSynchronizationManager if managing any.</div>
-<dl class="notes">
-<dt>See Also:</dt>
-<dd>
-<ul class="see-list-long">
-<li><a href="TransactionSynchronizationManager.html#unbindResource(java.lang.Object)"><code>TransactionSynchronizationManager.unbindResource(java.lang.Object)</code></a></li>
-</ul>
-</dd>
-</dl>
 </section>
 </li>
 <li>
 <section class="detail" id="resume()">
 <h3>resume</h3>
 <div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">resume</span>()</div>
-<div class="block">Resume this synchronization.
- Supposed to rebind resources to TransactionSynchronizationManager if managing any.</div>
-<dl class="notes">
-<dt>See Also:</dt>
-<dd>
-<ul class="see-list-long">
-<li><a href="TransactionSynchronizationManager.html#bindResource(java.lang.Object,java.lang.Object)"><code>TransactionSynchronizationManager.bindResource(java.lang.Object, java.lang.Object)</code></a></li>
-</ul>
-</dd>
-</dl>
+<div class="block">Resume this synchronization.</div>
 </section>
 </li>
 <li>

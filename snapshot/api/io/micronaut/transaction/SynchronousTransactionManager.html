@@ -82,11 +82,11 @@ loadScripts(document, 'script');</script>
 </dl>
 <dl class="notes">
 <dt>All Known Subinterfaces:</dt>
-<dd><code><a href="../data/mongodb/transaction/MongoSynchronousTransactionManager.html" title="interface in io.micronaut.data.mongodb.transaction">MongoSynchronousTransactionManager</a></code>, <code><a href="support/ResourceTransactionManager.html" title="interface in io.micronaut.transaction.support">ResourceTransactionManager</a>&lt;R,<wbr>T&gt;</code></dd>
+<dd><code><a href="../data/mongodb/transaction/MongoSynchronousTransactionManager.html" title="interface in io.micronaut.data.mongodb.transaction">MongoSynchronousTransactionManager</a></code></dd>
 </dl>
 <dl class="notes">
 <dt>All Known Implementing Classes:</dt>
-<dd><code><a href="support/AbstractSynchronousTransactionManager.html" title="class in io.micronaut.transaction.support">AbstractSynchronousTransactionManager</a></code>, <code><a href="jdbc/DataSourceTransactionManager.html" title="class in io.micronaut.transaction.jdbc">DataSourceTransactionManager</a></code>, <code><a href="hibernate6/HibernateTransactionManager.html" title="class in io.micronaut.transaction.hibernate6">HibernateTransactionManager</a></code>, <code><a href="../data/mongodb/transaction/MongoSynchronousTransactionManagerImpl.html" title="class in io.micronaut.data.mongodb.transaction">MongoSynchronousTransactionManagerImpl</a></code>, <code><a href="sync/SynchronousFromReactiveTransactionManager.html" title="class in io.micronaut.transaction.sync">SynchronousFromReactiveTransactionManager</a></code></dd>
+<dd><code><a href="support/AbstractTransactionOperations.html" title="class in io.micronaut.transaction.support">AbstractTransactionOperations</a></code>, <code><a href="jdbc/DataSourceTransactionManager.html" title="class in io.micronaut.transaction.jdbc">DataSourceTransactionManager</a></code>, <code><a href="hibernate/HibernateTransactionManager.html" title="class in io.micronaut.transaction.hibernate">HibernateTransactionManager</a></code></dd>
 </dl>
 <hr>
 <div class="type-signature"><span class="modifiers">public interface </span><span class="element-name type-name-label">SynchronousTransactionManager&lt;T&gt;</span><span class="extends-implements">
@@ -100,7 +100,7 @@ extends <a href="TransactionManager.html" title="interface in io.micronaut.trans
  declarative transaction demarcation through AOP.
 
  <p>For implementors, it is recommended to derive from the provided
- <a href="support/AbstractSynchronousTransactionManager.html" title="class in io.micronaut.transaction.support"><code>AbstractSynchronousTransactionManager</code></a>
+ <code>io.micronaut.transaction.support.AbstractSynchronousTransactionManager</code>
  class, which pre-implements the defined propagation behavior and takes care
  of transaction synchronization handling. Subclasses have to implement
  template methods for specific states of the underlying transaction,
@@ -146,7 +146,7 @@ extends <a href="TransactionManager.html" title="interface in io.micronaut.trans
 </div>
 <div class="inherited-list">
 <h3 id="methods-inherited-from-class-io.micronaut.transaction.TransactionOperations">Methods inherited from interface&nbsp;io.micronaut.transaction.<a href="TransactionOperations.html" title="interface in io.micronaut.transaction">TransactionOperations</a></h3>
-<code><a href="TransactionOperations.html#execute(io.micronaut.transaction.TransactionDefinition,io.micronaut.transaction.TransactionCallback)">execute</a>, <a href="TransactionOperations.html#executeRead(io.micronaut.transaction.TransactionCallback)">executeRead</a>, <a href="TransactionOperations.html#executeWrite(io.micronaut.transaction.TransactionCallback)">executeWrite</a>, <a href="TransactionOperations.html#getConnection()">getConnection</a>, <a href="TransactionOperations.html#hasConnection()">hasConnection</a></code></div>
+<code><a href="TransactionOperations.html#execute(io.micronaut.transaction.TransactionDefinition,io.micronaut.transaction.TransactionCallback)">execute</a>, <a href="TransactionOperations.html#executeRead(io.micronaut.transaction.TransactionCallback)">executeRead</a>, <a href="TransactionOperations.html#executeWrite(io.micronaut.transaction.TransactionCallback)">executeWrite</a>, <a href="TransactionOperations.html#findTransactionStatus()">findTransactionStatus</a>, <a href="TransactionOperations.html#getConnection()">getConnection</a>, <a href="TransactionOperations.html#hasConnection()">hasConnection</a></code></div>
 </section>
 </li>
 </ul>

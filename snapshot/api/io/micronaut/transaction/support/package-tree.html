@@ -59,25 +59,16 @@ loadScripts(document, 'script');</script>
 <ul>
 <li class="circle">java.lang.<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" class="type-name-link external-link" title="class or interface in java.lang">Object</a>
 <ul>
-<li class="circle">io.micronaut.transaction.support.<a href="AbstractSynchronousStateTransactionManager.html" class="type-name-link" title="class in io.micronaut.transaction.support">AbstractSynchronousStateTransactionManager</a>&lt;T&gt; (implements java.io.<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/Serializable.html" title="class or interface in java.io" class="external-link">Serializable</a>)
+<li class="circle">io.micronaut.transaction.support.<a href="AbstractDataSourceTransactionManagerCondition.html" class="type-name-link" title="class in io.micronaut.transaction.support">AbstractDataSourceTransactionManagerCondition</a> (implements io.micronaut.context.condition.Condition)</li>
+<li class="circle">io.micronaut.transaction.support.<a href="AbstractPropagatedStatusTransactionOperations.html" class="type-name-link" title="class in io.micronaut.transaction.support">AbstractPropagatedStatusTransactionOperations</a>&lt;T,<wbr>C&gt; (implements io.micronaut.transaction.<a href="../TransactionOperations.html" title="interface in io.micronaut.transaction">TransactionOperations</a>&lt;T&gt;)
 <ul>
-<li class="circle">io.micronaut.transaction.support.<a href="AbstractSynchronousTransactionManager.html" class="type-name-link" title="class in io.micronaut.transaction.support">AbstractSynchronousTransactionManager</a>&lt;T&gt; (implements java.io.<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/Serializable.html" title="class or interface in java.io" class="external-link">Serializable</a>, io.micronaut.transaction.<a href="../SynchronousTransactionManager.html" title="interface in io.micronaut.transaction">SynchronousTransactionManager</a>&lt;T&gt;)</li>
+<li class="circle">io.micronaut.transaction.support.<a href="AbstractTransactionOperations.html" class="type-name-link" title="class in io.micronaut.transaction.support">AbstractTransactionOperations</a>&lt;T,<wbr>C&gt; (implements io.micronaut.transaction.<a href="../SynchronousTransactionManager.html" title="interface in io.micronaut.transaction">SynchronousTransactionManager</a>&lt;T&gt;, io.micronaut.transaction.<a href="../TransactionOperations.html" title="interface in io.micronaut.transaction">TransactionOperations</a>&lt;T&gt;)</li>
 </ul>
 </li>
-<li class="circle">io.micronaut.transaction.support.<a href="AbstractSynchronousStateTransactionManager.SuspendedResourcesHolder.html" class="type-name-link" title="class in io.micronaut.transaction.support">AbstractSynchronousStateTransactionManager.SuspendedResourcesHolder</a></li>
-<li class="circle">io.micronaut.transaction.support.<a href="AbstractSynchronousTransactionManager.SuspendedResourcesHolder.html" class="type-name-link" title="class in io.micronaut.transaction.support">AbstractSynchronousTransactionManager.SuspendedResourcesHolder</a></li>
-<li class="circle">io.micronaut.transaction.support.<a href="AbstractTransactionStatus.html" class="type-name-link" title="class in io.micronaut.transaction.support">AbstractTransactionStatus</a>&lt;T&gt; (implements io.micronaut.transaction.<a href="../TransactionStatus.html" title="interface in io.micronaut.transaction">TransactionStatus</a>&lt;T&gt;)
-<ul>
-<li class="circle">io.micronaut.transaction.support.<a href="DefaultTransactionStatus.html" class="type-name-link" title="class in io.micronaut.transaction.support">DefaultTransactionStatus</a>&lt;T&gt;</li>
-</ul>
-</li>
-<li class="circle">io.micronaut.transaction.support.<a href="DefaultSynchronousTransactionState.html" class="type-name-link" title="class in io.micronaut.transaction.support">DefaultSynchronousTransactionState</a> (implements io.micronaut.transaction.support.<a href="SynchronousTransactionState.html" title="interface in io.micronaut.transaction.support">SynchronousTransactionState</a>)</li>
+<li class="circle">io.micronaut.transaction.support.<a href="AbstractReactorTransactionOperations.html" class="type-name-link" title="class in io.micronaut.transaction.support">AbstractReactorTransactionOperations</a>&lt;C&gt; (implements io.micronaut.transaction.reactive.<a href="../reactive/ReactorReactiveTransactionOperations.html" title="interface in io.micronaut.transaction.reactive">ReactorReactiveTransactionOperations</a>&lt;C&gt;)</li>
+<li class="circle">io.micronaut.transaction.support.<a href="AbstractReactorTransactionOperations.DefaultReactiveTransactionStatus.html" class="type-name-link" title="class in io.micronaut.transaction.support">AbstractReactorTransactionOperations.DefaultReactiveTransactionStatus</a>&lt;C&gt; (implements io.micronaut.transaction.reactive.<a href="../reactive/ReactiveTransactionStatus.html" title="interface in io.micronaut.transaction.reactive">ReactiveTransactionStatus</a>&lt;T&gt;)</li>
 <li class="circle">io.micronaut.transaction.support.<a href="DefaultTransactionDefinition.html" class="type-name-link" title="class in io.micronaut.transaction.support">DefaultTransactionDefinition</a> (implements java.io.<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/Serializable.html" title="class or interface in java.io" class="external-link">Serializable</a>, io.micronaut.transaction.<a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>)</li>
 <li class="circle">io.micronaut.transaction.support.<a href="ExceptionUtil.html" class="type-name-link" title="class in io.micronaut.transaction.support">ExceptionUtil</a></li>
-<li class="circle">io.micronaut.transaction.support.<a href="ResourceHolderSupport.html" class="type-name-link" title="class in io.micronaut.transaction.support">ResourceHolderSupport</a> (implements io.micronaut.transaction.support.<a href="ResourceHolder.html" title="interface in io.micronaut.transaction.support">ResourceHolder</a>)</li>
-<li class="circle">io.micronaut.transaction.support.<a href="TransactionSynchronizationAdapter.html" class="type-name-link" title="class in io.micronaut.transaction.support">TransactionSynchronizationAdapter</a> (implements io.micronaut.core.order.Ordered, io.micronaut.transaction.support.<a href="TransactionSynchronization.html" title="interface in io.micronaut.transaction.support">TransactionSynchronization</a>)</li>
-<li class="circle">io.micronaut.transaction.support.<a href="TransactionSynchronizationManager.html" class="type-name-link" title="class in io.micronaut.transaction.support">TransactionSynchronizationManager</a></li>
-<li class="circle">io.micronaut.transaction.support.<a href="TransactionSynchronizationUtils.html" class="type-name-link" title="class in io.micronaut.transaction.support">TransactionSynchronizationUtils</a></li>
 <li class="circle">io.micronaut.transaction.support.<a href="TransactionUtil.html" class="type-name-link" title="class in io.micronaut.transaction.support">TransactionUtil</a></li>
 </ul>
 </li>
@@ -86,43 +77,16 @@ loadScripts(document, 'script');</script>
 <section class="hierarchy">
 <h2 title="Interface Hierarchy">Interface Hierarchy</h2>
 <ul>
-<li class="circle">java.lang.<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/AutoCloseable.html" class="type-name-link external-link" title="class or interface in java.lang">AutoCloseable</a>
-<ul>
-<li class="circle">io.micronaut.transaction.support.<a href="TransactionSynchronizationManager.TransactionSynchronizationStateOp.html" class="type-name-link" title="interface in io.micronaut.transaction.support">TransactionSynchronizationManager.TransactionSynchronizationStateOp</a></li>
-</ul>
-</li>
 <li class="circle">java.io.<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/Flushable.html" class="type-name-link external-link" title="class or interface in java.io">Flushable</a>
 <ul>
-<li class="circle">io.micronaut.transaction.support.<a href="SmartTransactionObject.html" class="type-name-link" title="interface in io.micronaut.transaction.support">SmartTransactionObject</a></li>
-<li class="circle">io.micronaut.transaction.support.<a href="TransactionSynchronization.html" class="type-name-link" title="interface in io.micronaut.transaction.support">TransactionSynchronization</a></li>
+<li class="circle">io.micronaut.transaction.support.<a href="TransactionSynchronization.html" class="type-name-link" title="interface in io.micronaut.transaction.support">TransactionSynchronization</a> (also extends io.micronaut.core.order.Ordered)</li>
 </ul>
 </li>
-<li class="circle">io.micronaut.transaction.support.<a href="ResourceHolder.html" class="type-name-link" title="interface in io.micronaut.transaction.support">ResourceHolder</a></li>
-<li class="circle">io.micronaut.transaction.<a href="../TransactionManager.html" class="type-name-link" title="interface in io.micronaut.transaction">TransactionManager</a>
+<li class="circle">io.micronaut.core.order.Ordered
 <ul>
-<li class="circle">io.micronaut.transaction.<a href="../SynchronousTransactionManager.html" class="type-name-link" title="interface in io.micronaut.transaction">SynchronousTransactionManager</a>&lt;T&gt; (also extends io.micronaut.transaction.<a href="../TransactionOperations.html" title="interface in io.micronaut.transaction">TransactionOperations</a>&lt;T&gt;)
-<ul>
-<li class="circle">io.micronaut.transaction.support.<a href="ResourceTransactionManager.html" class="type-name-link" title="interface in io.micronaut.transaction.support">ResourceTransactionManager</a>&lt;R,<wbr>T&gt;</li>
+<li class="circle">io.micronaut.transaction.support.<a href="TransactionSynchronization.html" class="type-name-link" title="interface in io.micronaut.transaction.support">TransactionSynchronization</a> (also extends java.io.<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/Flushable.html" title="class or interface in java.io" class="external-link">Flushable</a>)</li>
 </ul>
 </li>
-</ul>
-</li>
-<li class="circle">io.micronaut.transaction.<a href="../TransactionOperations.html" class="type-name-link" title="interface in io.micronaut.transaction">TransactionOperations</a>&lt;T&gt;
-<ul>
-<li class="circle">io.micronaut.transaction.<a href="../SynchronousTransactionManager.html" class="type-name-link" title="interface in io.micronaut.transaction">SynchronousTransactionManager</a>&lt;T&gt; (also extends io.micronaut.transaction.<a href="../TransactionManager.html" title="interface in io.micronaut.transaction">TransactionManager</a>)
-<ul>
-<li class="circle">io.micronaut.transaction.support.<a href="ResourceTransactionManager.html" class="type-name-link" title="interface in io.micronaut.transaction.support">ResourceTransactionManager</a>&lt;R,<wbr>T&gt;</li>
-</ul>
-</li>
-</ul>
-</li>
-<li class="circle">io.micronaut.transaction.<a href="../TransactionState.html" class="type-name-link" title="interface in io.micronaut.transaction">TransactionState</a>
-<ul>
-<li class="circle">io.micronaut.transaction.support.<a href="SynchronousTransactionState.html" class="type-name-link" title="interface in io.micronaut.transaction.support">SynchronousTransactionState</a></li>
-</ul>
-</li>
-<li class="circle">io.micronaut.transaction.support.<a href="TransactionStateOperations.html" class="type-name-link" title="interface in io.micronaut.transaction.support">TransactionStateOperations</a>&lt;T,<wbr>S&gt;</li>
-<li class="circle">io.micronaut.transaction.support.<a href="TransactionSynchronizationManager.TransactionSynchronizationState.html" class="type-name-link" title="interface in io.micronaut.transaction.support">TransactionSynchronizationManager.TransactionSynchronizationState</a></li>
 </ul>
 </section>
 <section class="hierarchy">
