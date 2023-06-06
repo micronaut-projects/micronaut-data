@@ -32,8 +32,8 @@ import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.propagation.PropagatedContext;
 import io.micronaut.core.type.Argument;
-import io.micronaut.data.connection.manager.ConnectionDefinition;
-import io.micronaut.data.connection.manager.reactive.ReactorReactiveConnectionOperations;
+import io.micronaut.data.connection.ConnectionDefinition;
+import io.micronaut.data.connection.reactive.ReactorConnectionOperations;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.exceptions.NonUniqueResultException;
 import io.micronaut.data.model.DataType;
@@ -66,7 +66,7 @@ import io.micronaut.data.r2dbc.convert.R2dbcConversionContext;
 import io.micronaut.data.r2dbc.mapper.ColumnIndexR2dbcResultReader;
 import io.micronaut.data.r2dbc.mapper.ColumnNameR2dbcResultReader;
 import io.micronaut.data.r2dbc.mapper.R2dbcQueryStatement;
-import io.micronaut.data.r2dbc.transaction.R2dbcReactorReactiveTransactionOperations;
+import io.micronaut.data.r2dbc.transaction.R2dbcReactorTransactionOperations;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.convert.RuntimePersistentPropertyConversionContext;
 import io.micronaut.data.runtime.date.DateTimeProvider;
@@ -144,8 +144,8 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
     private ExecutorService ioExecutorService;
     private AsyncRepositoryOperations asyncRepositoryOperations;
     private final ReactiveCascadeOperations<R2dbcOperationContext> cascadeOperations;
-    private final R2dbcReactorReactiveTransactionOperations transactionOperations;
-    private final ReactorReactiveConnectionOperations<Connection> connectionOperations;
+    private final R2dbcReactorTransactionOperations transactionOperations;
+    private final ReactorConnectionOperations<Connection> connectionOperations;
     @Nullable
     private final SchemaTenantResolver schemaTenantResolver;
     private final R2dbcSchemaHandler schemaHandler;
@@ -185,8 +185,8 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         @Parameter DataR2dbcConfiguration configuration,
         @Nullable JsonMapper jsonMapper,
         SqlJsonColumnMapperProvider<Row> sqlJsonColumnMapperProvider,
-        @Parameter R2dbcReactorReactiveTransactionOperations transactionOperations,
-        @Parameter ReactorReactiveConnectionOperations<Connection> connectionOperations) {
+        @Parameter R2dbcReactorTransactionOperations transactionOperations,
+        @Parameter ReactorConnectionOperations<Connection> connectionOperations) {
         super(
             dataSourceName,
             new ColumnNameR2dbcResultReader(conversionService),

@@ -21,11 +21,11 @@ import io.micronaut.core.propagation.PropagatedContext;
 import io.micronaut.core.propagation.PropagatedContextElement;
 import io.micronaut.data.connection.exceptions.ConnectionException;
 import io.micronaut.data.connection.exceptions.NoConnectionException;
-import io.micronaut.data.connection.manager.ConnectionDefinition;
-import io.micronaut.data.connection.manager.synchronous.ConnectionOperations;
-import io.micronaut.data.connection.manager.synchronous.ConnectionStatus;
-import io.micronaut.data.connection.manager.synchronous.ConnectionSynchronization;
-import io.micronaut.data.connection.manager.synchronous.SynchronousConnectionManager;
+import io.micronaut.data.connection.ConnectionDefinition;
+import io.micronaut.data.connection.ConnectionOperations;
+import io.micronaut.data.connection.ConnectionStatus;
+import io.micronaut.data.connection.ConnectionSynchronization;
+import io.micronaut.data.connection.SynchronousConnectionManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

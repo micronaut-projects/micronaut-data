@@ -13,22 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.connection.manager.async;
+package io.micronaut.data.connection.reactive;
 
 import io.micronaut.core.annotation.NonNull;
-import io.micronaut.data.connection.manager.ConnectionDefinition;
+import io.micronaut.data.connection.ConnectionDefinition;
+import io.micronaut.data.connection.ConnectionStatus;
+import org.reactivestreams.Publisher;
 
-import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
 
 /**
- * An interface for async connection manager.
+ * An interface fo reactive connection management.
  *
  * @param <C> The connection type
  * @author Denis Stepanov
  * @since 4.0.0
  */
-public interface AsyncConnectionOperations<C> {
+public interface ReactiveStreamsConnectionOperations<C> {
 
     /**
      * Execute the given handler with a new connection.
@@ -39,8 +40,7 @@ public interface AsyncConnectionOperations<C> {
      * @return A publisher that emits the result type
      */
     @NonNull
-    <T> CompletionStage<T> withConnection(@NonNull ConnectionDefinition definition,
-                                          @NonNull Function<C, CompletionStage<T>> handler);
+    <T> Publisher<T> withConnection(@NonNull ConnectionDefinition definition, @NonNull Function<ConnectionStatus<C>, Publisher<T>> handler);
 
     /**
      * Execute the given handler with a new connection.
@@ -49,7 +49,8 @@ public interface AsyncConnectionOperations<C> {
      * @param <T>     The emitted type
      * @return A publisher that emits the result type
      */
-    default @NonNull <T> CompletionStage<T> withConnection(@NonNull Function<C, CompletionStage<T>> handler) {
+    default @NonNull <T> Publisher<T> withConnection(@NonNull Function<ConnectionStatus<C>, Publisher<T>> handler) {
         return withConnection(ConnectionDefinition.DEFAULT, handler);
     }
+
 }

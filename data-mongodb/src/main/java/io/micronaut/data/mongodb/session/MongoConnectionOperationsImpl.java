@@ -19,8 +19,8 @@ import com.mongodb.client.ClientSession;
 import com.mongodb.client.MongoClient;
 import io.micronaut.context.annotation.EachBean;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.data.connection.manager.ConnectionDefinition;
-import io.micronaut.data.connection.manager.synchronous.ConnectionStatus;
+import io.micronaut.data.connection.ConnectionDefinition;
+import io.micronaut.data.connection.ConnectionStatus;
 import io.micronaut.data.connection.support.AbstractConnectionOperations;
 
 @Internal

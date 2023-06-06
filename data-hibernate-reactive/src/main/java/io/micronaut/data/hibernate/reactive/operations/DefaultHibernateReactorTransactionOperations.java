@@ -18,14 +18,14 @@ package io.micronaut.data.hibernate.reactive.operations;
 import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.data.connection.manager.reactive.ReactorReactiveConnectionOperations;
-import io.micronaut.data.connection.manager.synchronous.ConnectionStatus;
+import io.micronaut.data.connection.reactive.ReactorConnectionOperations;
+import io.micronaut.data.connection.ConnectionStatus;
 import io.micronaut.data.hibernate.conf.RequiresReactiveHibernate;
 import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.exceptions.NoTransactionException;
 import io.micronaut.transaction.exceptions.TransactionUsageException;
 import io.micronaut.transaction.reactive.ReactiveTransactionStatus;
-import io.micronaut.transaction.support.AbstractReactorReactiveTransactionOperations;
+import io.micronaut.transaction.support.AbstractReactorTransactionOperations;
 import org.hibernate.SessionFactory;
 import org.hibernate.reactive.stage.Stage;
 import org.reactivestreams.Publisher;
@@ -45,23 +45,23 @@ import java.util.function.Function;
 @RequiresReactiveHibernate
 @EachBean(SessionFactory.class)
 @Internal
-final class DefaultHibernateReactiveTransactionOperations extends AbstractReactorReactiveTransactionOperations<Stage.Session> {
+final class DefaultHibernateReactorTransactionOperations extends AbstractReactorTransactionOperations<Stage.Session> {
 
-    private static final Logger LOG = LoggerFactory.getLogger(DefaultHibernateReactiveTransactionOperations.class);
+    private static final Logger LOG = LoggerFactory.getLogger(DefaultHibernateReactorTransactionOperations.class);
 
     private final ReactiveHibernateHelper helper;
     private final String serverName;
 
-    DefaultHibernateReactiveTransactionOperations(@Parameter String serverName,
-                                                  SessionFactory sessionFactory,
-                                                  @Parameter ReactorReactiveConnectionOperations<Stage.Session> connectionOperations) {
+    DefaultHibernateReactorTransactionOperations(@Parameter String serverName,
+                                                 SessionFactory sessionFactory,
+                                                 @Parameter ReactorConnectionOperations<Stage.Session> connectionOperations) {
         super(connectionOperations);
         this.helper = new ReactiveHibernateHelper(sessionFactory.unwrap(Stage.SessionFactory.class));
         this.serverName = serverName;
     }
 
     @Override
-    protected <R> Flux<R> executeTransactionFlux(AbstractReactorReactiveTransactionOperations.DefaultReactiveTransactionStatus<Stage.Session> txStatus,
+    protected <R> Flux<R> executeTransactionFlux(AbstractReactorTransactionOperations.DefaultReactiveTransactionStatus<Stage.Session> txStatus,
                                                  TransactionalCallback<Stage.Session, R> handler) {
         Flux<R> error = validateTransaction(txStatus);
         if (error != null) {

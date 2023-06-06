@@ -17,7 +17,7 @@ package io.micronaut.transaction;
 
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
-import io.micronaut.data.connection.manager.synchronous.ConnectionStatus;
+import io.micronaut.data.connection.ConnectionStatus;
 import io.micronaut.transaction.exceptions.TransactionUsageException;
 import io.micronaut.transaction.support.TransactionSynchronization;
 

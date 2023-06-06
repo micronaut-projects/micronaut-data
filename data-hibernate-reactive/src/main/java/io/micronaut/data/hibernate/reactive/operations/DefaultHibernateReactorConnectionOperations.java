@@ -18,8 +18,8 @@ package io.micronaut.data.hibernate.reactive.operations;
 import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.data.connection.manager.ConnectionDefinition;
-import io.micronaut.data.connection.support.AbstractReactorReactiveConnectionOperations;
+import io.micronaut.data.connection.ConnectionDefinition;
+import io.micronaut.data.connection.support.AbstractReactorConnectionOperations;
 import io.micronaut.data.hibernate.conf.RequiresReactiveHibernate;
 import org.hibernate.SessionFactory;
 import org.hibernate.reactive.stage.Stage;
@@ -36,14 +36,14 @@ import org.slf4j.LoggerFactory;
 @RequiresReactiveHibernate
 @EachBean(SessionFactory.class)
 @Internal
-final class DefaultHibernateReactiveConnectionOperations extends AbstractReactorReactiveConnectionOperations<Stage.Session> {
+final class DefaultHibernateReactorConnectionOperations extends AbstractReactorConnectionOperations<Stage.Session> {
 
-    private static final Logger LOG = LoggerFactory.getLogger(DefaultHibernateReactiveConnectionOperations.class);
+    private static final Logger LOG = LoggerFactory.getLogger(DefaultHibernateReactorConnectionOperations.class);
 
     private final ReactiveHibernateHelper helper;
     private final String serverName;
 
-    DefaultHibernateReactiveConnectionOperations(@Parameter String serverName, SessionFactory sessionFactory) {
+    DefaultHibernateReactorConnectionOperations(@Parameter String serverName, SessionFactory sessionFactory) {
         this.helper = new ReactiveHibernateHelper(sessionFactory.unwrap(Stage.SessionFactory.class));
         this.serverName = serverName;
     }

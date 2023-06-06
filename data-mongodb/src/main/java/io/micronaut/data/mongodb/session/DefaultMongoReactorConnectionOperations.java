@@ -21,8 +21,8 @@ import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
-import io.micronaut.data.connection.manager.ConnectionDefinition;
-import io.micronaut.data.connection.support.AbstractReactorReactiveConnectionOperations;
+import io.micronaut.data.connection.ConnectionDefinition;
+import io.micronaut.data.connection.support.AbstractReactorConnectionOperations;
 import io.micronaut.data.mongodb.conf.RequiresReactiveMongo;
 import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
@@ -38,15 +38,15 @@ import reactor.core.publisher.Mono;
 @RequiresReactiveMongo
 @EachBean(MongoClient.class)
 @Internal
-final class DefaultReactiveMongoSessionOperations extends AbstractReactorReactiveConnectionOperations<ClientSession>
-    implements MongoReactorReactiveConnectionOperations {
+final class DefaultMongoReactorConnectionOperations extends AbstractReactorConnectionOperations<ClientSession>
+    implements MongoReactorConnectionOperations {
 
-    private static final Logger LOG = LoggerFactory.getLogger(DefaultReactiveMongoSessionOperations.class);
+    private static final Logger LOG = LoggerFactory.getLogger(DefaultMongoReactorConnectionOperations.class);
 
     private final String serverName;
     private final MongoClient mongoClient;
 
-    DefaultReactiveMongoSessionOperations(@Parameter String serverName, MongoClient mongoClient) {
+    DefaultMongoReactorConnectionOperations(@Parameter String serverName, MongoClient mongoClient) {
         this.mongoClient = mongoClient;
         this.serverName = serverName;
     }

@@ -16,7 +16,7 @@
 package io.micronaut.data.mongodb.session;
 
 import com.mongodb.reactivestreams.client.ClientSession;
-import io.micronaut.data.connection.manager.reactive.ReactiveConnectionOperations;
+import io.micronaut.data.connection.reactive.ReactiveStreamsConnectionOperations;
 
 /**
  * Mongo reactive connection operations.
@@ -24,5 +24,5 @@ import io.micronaut.data.connection.manager.reactive.ReactiveConnectionOperation
  * @author Denis Stepanov
  * @since 4.0.0
  */
-public interface MongoReactiveConnectionOperations extends ReactiveConnectionOperations<ClientSession> {
+public interface MongoReactiveStreamsConnectionOperations extends ReactiveStreamsConnectionOperations<ClientSession> {
 }

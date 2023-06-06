@@ -20,13 +20,13 @@ import com.mongodb.reactivestreams.client.MongoClient;
 import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.data.connection.manager.reactive.ReactorReactiveConnectionOperations;
-import io.micronaut.data.connection.manager.synchronous.ConnectionStatus;
+import io.micronaut.data.connection.reactive.ReactorConnectionOperations;
+import io.micronaut.data.connection.ConnectionStatus;
 import io.micronaut.data.mongodb.conf.RequiresReactiveMongo;
 import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.exceptions.NoTransactionException;
 import io.micronaut.transaction.exceptions.TransactionUsageException;
-import io.micronaut.transaction.support.AbstractReactorReactiveTransactionOperations;
+import io.micronaut.transaction.support.AbstractReactorTransactionOperations;
 import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,9 +42,9 @@ import reactor.core.publisher.Mono;
 @RequiresReactiveMongo
 @EachBean(MongoClient.class)
 @Internal
-final class DefaultReactiveMongoTransactionOperations extends AbstractReactorReactiveTransactionOperations<ClientSession> {
+final class DefaultMongoReactorTransactionOperations extends AbstractReactorTransactionOperations<ClientSession> {
 
-    private static final Logger LOG = LoggerFactory.getLogger(DefaultReactiveMongoTransactionOperations.class);
+    private static final Logger LOG = LoggerFactory.getLogger(DefaultMongoReactorTransactionOperations.class);
     private final String serverName;
 
     /**
@@ -53,8 +53,8 @@ final class DefaultReactiveMongoTransactionOperations extends AbstractReactorRea
      * @param serverName           The server name
      * @param connectionOperations The connection operations
      */
-    DefaultReactiveMongoTransactionOperations(@Parameter String serverName,
-                                              @Parameter ReactorReactiveConnectionOperations<ClientSession> connectionOperations) {
+    DefaultMongoReactorTransactionOperations(@Parameter String serverName,
+                                             @Parameter ReactorConnectionOperations<ClientSession> connectionOperations) {
         super(connectionOperations);
         this.serverName = serverName;
     }

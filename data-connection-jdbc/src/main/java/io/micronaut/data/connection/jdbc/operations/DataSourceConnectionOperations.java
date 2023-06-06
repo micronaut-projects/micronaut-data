@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.connection.jdbc.operations;
 
-import io.micronaut.data.connection.manager.synchronous.ConnectionOperations;
+import io.micronaut.data.connection.ConnectionOperations;
 
 import javax.sql.DataSource;
 import java.sql.Connection;

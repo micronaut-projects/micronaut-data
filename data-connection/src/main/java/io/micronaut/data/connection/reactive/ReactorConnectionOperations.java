@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.connection.manager.reactive;
+package io.micronaut.data.connection.reactive;
 
 import io.micronaut.core.annotation.Experimental;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.connection.exceptions.NoConnectionException;
-import io.micronaut.data.connection.manager.ConnectionDefinition;
-import io.micronaut.data.connection.manager.synchronous.ConnectionStatus;
+import io.micronaut.data.connection.ConnectionDefinition;
+import io.micronaut.data.connection.ConnectionStatus;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -29,14 +29,14 @@ import java.util.Optional;
 import java.util.function.Function;
 
 /**
- * Special version of {@link ReactiveConnectionOperations} that is exposing Reactor publishers.
+ * Special version of {@link ReactiveStreamsConnectionOperations} that is exposing Reactor publishers.
  *
  * @param <C> The connection
  * @author Denis Stepanov
  * @since 4.0.0
  */
 @Experimental
-public interface ReactorReactiveConnectionOperations<C> extends ReactiveConnectionOperations<C> {
+public interface ReactorConnectionOperations<C> extends ReactiveStreamsConnectionOperations<C> {
 
     /**
      * Obtains the current required connection.

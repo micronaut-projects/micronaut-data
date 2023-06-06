@@ -28,7 +28,7 @@ import org.reactivestreams.Publisher;
  * @author Denis Stepanov
  * @since 4.0.0
  */
-public interface R2dbcReactorReactiveTransactionOperations extends ReactorReactiveTransactionOperations<Connection> {
+public interface R2dbcReactorTransactionOperations extends ReactorReactiveTransactionOperations<Connection> {
 
     /**
      * Execute the given handler with an existing transaction status.

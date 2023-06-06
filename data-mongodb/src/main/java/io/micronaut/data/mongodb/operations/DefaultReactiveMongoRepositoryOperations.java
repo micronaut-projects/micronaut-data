@@ -35,7 +35,7 @@ import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.beans.BeanProperty;
-import io.micronaut.data.connection.manager.reactive.ReactorReactiveConnectionOperations;
+import io.micronaut.data.connection.reactive.ReactorConnectionOperations;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.PersistentEntity;
@@ -104,7 +104,7 @@ public final class DefaultReactiveMongoRepositoryOperations extends AbstractMong
     private static final Logger QUERY_LOG = DataSettings.QUERY_LOG;
     private final MongoClient mongoClient;
     private final ReactiveCascadeOperations<MongoOperationContext> cascadeOperations;
-    private final ReactorReactiveConnectionOperations<ClientSession> connectionOperations;
+    private final ReactorConnectionOperations<ClientSession> connectionOperations;
 
     /**
      * Default constructor.
@@ -127,7 +127,7 @@ public final class DefaultReactiveMongoRepositoryOperations extends AbstractMong
                                              AttributeConverterRegistry attributeConverterRegistry,
                                              MongoClient mongoClient,
                                              MongoCollectionNameProvider collectionNameProvider,
-                                             @Parameter ReactorReactiveConnectionOperations<ClientSession> connectionOperations) {
+                                             @Parameter ReactorConnectionOperations<ClientSession> connectionOperations) {
         super(dateTimeProvider, runtimeEntityRegistry, conversionService, attributeConverterRegistry, collectionNameProvider,
             beanContext.getBean(MongoDatabaseNameProvider.class, "Primary".equals(serverName) ? null : Qualifiers.byName(serverName))
         );

@@ -21,7 +21,7 @@ package io.micronaut.data.connection.jdbc.exceptions;
  * @author Denis Stepanov
  * @since 4.0.0
  */
-public class CannotGetJdbcConnectionException extends RuntimeException {
+public final class CannotGetJdbcConnectionException extends RuntimeException {
 
     /**
      * Default constructor.

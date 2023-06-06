@@ -18,7 +18,7 @@ package io.micronaut.transaction;
 
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
-import io.micronaut.data.connection.manager.ConnectionDefinition;
+import io.micronaut.data.connection.ConnectionDefinition;
 import io.micronaut.transaction.support.DefaultTransactionDefinition;
 
 import java.time.Duration;

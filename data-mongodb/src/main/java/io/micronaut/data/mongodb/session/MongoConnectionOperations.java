@@ -16,7 +16,7 @@
 package io.micronaut.data.mongodb.session;
 
 import com.mongodb.client.ClientSession;
-import io.micronaut.data.connection.manager.synchronous.ConnectionOperations;
+import io.micronaut.data.connection.ConnectionOperations;
 
 /**
  * Mongo connection operations.

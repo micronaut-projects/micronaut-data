@@ -23,7 +23,7 @@ import io.micronaut.context.annotation.Prototype;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.type.Argument;
-import io.micronaut.data.connection.manager.synchronous.ConnectionOperations;
+import io.micronaut.data.connection.ConnectionOperations;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import org.hibernate.Session;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;

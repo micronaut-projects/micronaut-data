@@ -1,8 +1,8 @@
 package io.micronaut.transaction;
 
-import io.micronaut.data.connection.manager.reactive.ReactorReactiveConnectionOperations;
-import io.micronaut.data.connection.manager.synchronous.ConnectionStatus;
-import io.micronaut.transaction.support.AbstractReactorReactiveTransactionOperations;
+import io.micronaut.data.connection.reactive.ReactorConnectionOperations;
+import io.micronaut.data.connection.ConnectionStatus;
+import io.micronaut.transaction.support.AbstractReactorTransactionOperations;
 import jakarta.inject.Singleton;
 import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
@@ -13,13 +13,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Singleton
-public class ReactiveTxManager extends AbstractReactorReactiveTransactionOperations<String> {
+public class ReactiveTxManager extends AbstractReactorTransactionOperations<String> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ReactiveTxManager.class);
 
     private final List<String> transactionsLog = new ArrayList<>();
 
-    protected ReactiveTxManager(ReactorReactiveConnectionOperations<String> connectionOperations) {
+    protected ReactiveTxManager(ReactorConnectionOperations<String> connectionOperations) {
         super(connectionOperations);
     }
 

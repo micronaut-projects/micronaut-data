@@ -17,7 +17,7 @@ package io.micronaut.data.connection.annotation;
 
 import io.micronaut.aop.Around;
 import io.micronaut.context.annotation.AliasFor;
-import io.micronaut.data.connection.manager.ConnectionDefinition;
+import io.micronaut.data.connection.ConnectionDefinition;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -25,7 +25,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * The annotation is similar to "jakarta.transaction.Transaction", allowing to create a new data source connection.
+ * The annotation is similar to "jakarta.transaction.Transactional", allowing to create a new data source connection.
  *
  * @author Denis Stepanov
  * @since 4.0.0
@@ -33,7 +33,7 @@ import java.lang.annotation.Target;
 @Target({ElementType.ANNOTATION_TYPE, ElementType.METHOD, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @Around
-public @interface Connection {
+public @interface Connectable {
 
     /**
      * Alias for {@link #connectionManager()}.

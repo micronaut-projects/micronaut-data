@@ -17,9 +17,9 @@ package io.micronaut.data.connection.support;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.order.OrderUtil;
-import io.micronaut.data.connection.manager.ConnectionDefinition;
-import io.micronaut.data.connection.manager.synchronous.ConnectionStatus;
-import io.micronaut.data.connection.manager.synchronous.ConnectionSynchronization;
+import io.micronaut.data.connection.ConnectionDefinition;
+import io.micronaut.data.connection.ConnectionStatus;
+import io.micronaut.data.connection.ConnectionSynchronization;
 
 import java.util.ArrayList;
 import java.util.List;

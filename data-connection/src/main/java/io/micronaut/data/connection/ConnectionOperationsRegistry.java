@@ -18,9 +18,8 @@ package io.micronaut.data.connection;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
-import io.micronaut.data.connection.manager.synchronous.ConnectionOperations;
-import io.micronaut.data.connection.manager.async.AsyncConnectionOperations;
-import io.micronaut.data.connection.manager.reactive.ReactiveConnectionOperations;
+import io.micronaut.data.connection.async.AsyncConnectionOperations;
+import io.micronaut.data.connection.reactive.ReactiveStreamsConnectionOperations;
 
 /**
  * The registry of various connection operations managers.
@@ -40,7 +39,7 @@ public interface ConnectionOperationsRegistry {
      * @return the provided instance
      */
     @NonNull
-    <T extends ConnectionOperations<?>> T provideSynchronous(Class<T> connectionManagerType, @Nullable String dataSourceName);
+    <T extends ConnectionOperations<?>> T provideSynchronous(@NonNull Class<T> connectionManagerType, @Nullable String dataSourceName);
 
     /**
      * Provide reactive connection operations.
@@ -51,7 +50,7 @@ public interface ConnectionOperationsRegistry {
      * @return the provided instance
      */
     @NonNull
-    <T extends ReactiveConnectionOperations<?>> T provideReactive(Class<T> connectionManagerType, @Nullable String dataSourceName);
+    <T extends ReactiveStreamsConnectionOperations<?>> T provideReactive(@NonNull Class<T> connectionManagerType, @Nullable String dataSourceName);
 
     /**
      * Provide async connection operations.
@@ -61,6 +60,7 @@ public interface ConnectionOperationsRegistry {
      * @param <T>                   The operations type
      * @return the provided instance
      */
-    <T extends AsyncConnectionOperations<?>> T provideAsync(Class<T> connectionManagerType, @Nullable String dataSourceName);
+    @NonNull
+    <T extends AsyncConnectionOperations<?>> T provideAsync(@NonNull Class<T> connectionManagerType, @Nullable String dataSourceName);
 
 }

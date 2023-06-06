@@ -1,7 +1,7 @@
 
 package example
 
-import io.micronaut.data.hibernate.reactive.operations.HibernateReactorRepositoryOperations
+
 import io.micronaut.transaction.TransactionDefinition
 import io.micronaut.transaction.reactive.ReactorReactiveTransactionOperations
 import jakarta.inject.Singleton

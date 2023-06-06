@@ -4,8 +4,6 @@ import com.mongodb.reactivestreams.client.ClientSession
 import io.micronaut.transaction.TransactionExecution
 import io.micronaut.transaction.annotation.TransactionalAdvice
 import io.micronaut.transaction.async.AsyncTransactionOperations
-import io.micronaut.transaction.reactive.ReactiveTransactionStatus
-import io.micronaut.transaction.reactive.ReactorReactiveTransactionOperations
 import jakarta.inject.Named
 import jakarta.inject.Singleton
 import kotlinx.coroutines.Dispatchers.IO
@@ -13,7 +11,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import org.bson.types.ObjectId
 import org.slf4j.LoggerFactory
-import reactor.util.context.ContextView
 import java.lang.Thread.currentThread
 import java.util.*
 import javax.transaction.Transactional

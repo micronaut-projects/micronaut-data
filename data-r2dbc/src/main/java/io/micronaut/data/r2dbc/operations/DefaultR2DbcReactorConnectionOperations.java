@@ -23,10 +23,10 @@ import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.async.propagation.ReactorPropagation;
 import io.micronaut.core.propagation.PropagatedContextElement;
 import io.micronaut.data.connection.exceptions.NoConnectionException;
-import io.micronaut.data.connection.manager.ConnectionDefinition;
-import io.micronaut.data.connection.manager.reactive.ReactiveConnectionOperations;
-import io.micronaut.data.connection.manager.reactive.ReactorReactiveConnectionOperations;
-import io.micronaut.data.connection.manager.synchronous.ConnectionStatus;
+import io.micronaut.data.connection.ConnectionDefinition;
+import io.micronaut.data.connection.reactive.ReactiveStreamsConnectionOperations;
+import io.micronaut.data.connection.reactive.ReactorConnectionOperations;
+import io.micronaut.data.connection.ConnectionStatus;
 import io.micronaut.data.connection.support.DefaultConnectionStatus;
 import io.micronaut.data.r2dbc.config.DataR2dbcConfiguration;
 import io.micronaut.data.runtime.multitenancy.SchemaTenantResolver;
@@ -54,9 +54,9 @@ import java.util.function.Supplier;
  */
 @EachBean(ConnectionFactory.class)
 @Internal
-final class DefaultReactiveR2dbcConnectionOperations implements ReactorReactiveConnectionOperations<Connection> {
+final class DefaultR2DbcReactorConnectionOperations implements ReactorConnectionOperations<Connection> {
 
-    private static final Logger LOG = LoggerFactory.getLogger(DefaultReactiveR2dbcConnectionOperations.class);
+    private static final Logger LOG = LoggerFactory.getLogger(DefaultR2DbcReactorConnectionOperations.class);
 
     private final String dataSourceName;
     private final ConnectionFactory connectionFactory;
@@ -65,11 +65,11 @@ final class DefaultReactiveR2dbcConnectionOperations implements ReactorReactiveC
     private final SchemaTenantResolver schemaTenantResolver;
     private final R2dbcSchemaHandler schemaHandler;
 
-    DefaultReactiveR2dbcConnectionOperations(@Parameter String dataSourceName,
-                                             @Parameter ConnectionFactory connectionFactory,
-                                             @Parameter DataR2dbcConfiguration configuration,
-                                             @Nullable SchemaTenantResolver schemaTenantResolver,
-                                             R2dbcSchemaHandler schemaHandler) {
+    DefaultR2DbcReactorConnectionOperations(@Parameter String dataSourceName,
+                                            @Parameter ConnectionFactory connectionFactory,
+                                            @Parameter DataR2dbcConfiguration configuration,
+                                            @Nullable SchemaTenantResolver schemaTenantResolver,
+                                            R2dbcSchemaHandler schemaHandler) {
         this.dataSourceName = dataSourceName;
         this.connectionFactory = connectionFactory;
         this.configuration = configuration;
@@ -239,7 +239,7 @@ final class DefaultReactiveR2dbcConnectionOperations implements ReactorReactiveC
     }
 
     private record R2dbcConnectionPropagatedContext(
-        ReactiveConnectionOperations<?> connectionOperations,
+        ReactiveStreamsConnectionOperations<?> connectionOperations,
         ConnectionStatus<Connection> status)
         implements PropagatedContextElement {
     }

@@ -16,13 +16,14 @@
 package io.micronaut.data.mongodb.advice;
 
 import com.mongodb.client.ClientSession;
+import io.micronaut.aop.InterceptorBean;
 import io.micronaut.aop.MethodInterceptor;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.context.annotation.Prototype;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.connection.exceptions.NoConnectionException;
-import io.micronaut.data.connection.manager.synchronous.ConnectionStatus;
+import io.micronaut.data.connection.ConnectionStatus;
 import io.micronaut.data.mongodb.session.MongoConnectionOperations;
 import io.micronaut.inject.ExecutableMethod;
 
@@ -37,6 +38,7 @@ import java.util.Optional;
 @Requires(classes = ClientSession.class, beans = MongoConnectionOperations.class)
 @Prototype
 @Internal
+@InterceptorBean(ContexualClientSessionAdvice.class)
 final class ContexualClientSessionInterceptor implements MethodInterceptor<ClientSession, Object> {
 
     private final MongoConnectionOperations connectionOperations;

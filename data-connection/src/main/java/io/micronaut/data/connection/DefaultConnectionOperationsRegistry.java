@@ -20,9 +20,8 @@ import io.micronaut.context.exceptions.ConfigurationException;
 import io.micronaut.context.exceptions.NoSuchBeanException;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
-import io.micronaut.data.connection.manager.synchronous.ConnectionOperations;
-import io.micronaut.data.connection.manager.async.AsyncConnectionOperations;
-import io.micronaut.data.connection.manager.reactive.ReactiveConnectionOperations;
+import io.micronaut.data.connection.async.AsyncConnectionOperations;
+import io.micronaut.data.connection.reactive.ReactiveStreamsConnectionOperations;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import jakarta.inject.Singleton;
 
@@ -61,7 +60,7 @@ final class DefaultConnectionOperationsRegistry implements ConnectionOperationsR
 
     @NonNull
     @Override
-    public <T extends ReactiveConnectionOperations<?>> T provideReactive(Class<T> connectionOperationsType, String dataSourceName) {
+    public <T extends ReactiveStreamsConnectionOperations<?>> T provideReactive(Class<T> connectionOperationsType, String dataSourceName) {
         if (dataSourceName == null) {
             try {
                 return beanLocator.getBean(connectionOperationsType, null);

@@ -18,7 +18,7 @@ package io.micronaut.data.mongodb.transaction;
 import com.mongodb.client.ClientSession;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
-import io.micronaut.data.connection.manager.synchronous.ConnectionStatus;
+import io.micronaut.data.connection.ConnectionStatus;
 import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.impl.AbstractInternalTransaction;
 import io.micronaut.transaction.impl.InternalTransaction;

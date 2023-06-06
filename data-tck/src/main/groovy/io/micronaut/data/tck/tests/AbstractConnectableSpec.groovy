@@ -1,10 +1,10 @@
 package io.micronaut.data.tck.tests
 
 import io.micronaut.context.ApplicationContext
-import io.micronaut.data.connection.manager.ConnectionDefinition
-import io.micronaut.data.connection.manager.synchronous.ConnectionOperations
-import io.micronaut.data.connection.manager.synchronous.ConnectionSynchronization
-import io.micronaut.data.connection.manager.synchronous.SynchronousConnectionManager
+import io.micronaut.data.connection.ConnectionDefinition
+import io.micronaut.data.connection.ConnectionOperations
+import io.micronaut.data.connection.ConnectionSynchronization
+import io.micronaut.data.connection.SynchronousConnectionManager
 import io.micronaut.data.tck.repositories.SimpleBookRepository
 import io.micronaut.data.tck.services.AbstractBookService
 import io.micronaut.data.tck.services.ConnectionBookService
@@ -15,7 +15,7 @@ import spock.lang.Specification
 import spock.lang.Stepwise
 
 @Stepwise
-abstract class AbstractConnectionSpec extends Specification implements TestPropertyProvider {
+abstract class AbstractConnectableSpec extends Specification implements TestPropertyProvider {
 
     @AutoCleanup
     @Shared

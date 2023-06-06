@@ -16,10 +16,10 @@
 package io.micronaut.data.jdbc.h2
 
 
-import io.micronaut.data.jdbc.AbstractJdbcConnectionSpec
+import io.micronaut.data.jdbc.AbstractJdbcConnectableSpec
 import io.micronaut.data.tck.repositories.SimpleBookRepository
 
-class H2ConnectionSpec extends AbstractJdbcConnectionSpec implements H2TestPropertyProvider {
+class H2ConnectableSpec extends AbstractJdbcConnectableSpec implements H2TestPropertyProvider {
 
     @Override
     Class<? extends SimpleBookRepository> getBookRepositoryClass() {

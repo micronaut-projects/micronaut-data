@@ -21,10 +21,10 @@ import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.async.propagation.ReactorPropagation;
 import io.micronaut.core.propagation.PropagatedContextElement;
 import io.micronaut.data.connection.exceptions.NoConnectionException;
-import io.micronaut.data.connection.manager.ConnectionDefinition;
-import io.micronaut.data.connection.manager.reactive.ReactiveConnectionOperations;
-import io.micronaut.data.connection.manager.reactive.ReactorReactiveConnectionOperations;
-import io.micronaut.data.connection.manager.synchronous.ConnectionStatus;
+import io.micronaut.data.connection.ConnectionDefinition;
+import io.micronaut.data.connection.reactive.ReactiveStreamsConnectionOperations;
+import io.micronaut.data.connection.reactive.ReactorConnectionOperations;
+import io.micronaut.data.connection.ConnectionStatus;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -43,7 +43,7 @@ import java.util.function.Function;
  * @since 4.0.0
  */
 @Internal
-public abstract class AbstractReactorReactiveConnectionOperations<C> implements ReactorReactiveConnectionOperations<C> {
+public abstract class AbstractReactorConnectionOperations<C> implements ReactorConnectionOperations<C> {
 
     /**
      * Open a new connection.
@@ -168,7 +168,7 @@ public abstract class AbstractReactorReactiveConnectionOperations<C> implements 
     }
 
     private record ClientSessionPropagatedContext<C>(
-        ReactiveConnectionOperations<?> connectionOperations,
+        ReactiveStreamsConnectionOperations<?> connectionOperations,
         ConnectionStatus<C> status)
         implements PropagatedContextElement {
     }

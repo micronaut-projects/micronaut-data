@@ -16,7 +16,7 @@
 package io.micronaut.transaction.reactive;
 
 import io.micronaut.core.annotation.NonNull;
-import io.micronaut.data.connection.manager.synchronous.ConnectionStatus;
+import io.micronaut.data.connection.ConnectionStatus;
 import io.micronaut.transaction.TransactionExecution;
 
 /**

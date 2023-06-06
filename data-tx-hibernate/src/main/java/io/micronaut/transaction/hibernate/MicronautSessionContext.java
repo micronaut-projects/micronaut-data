@@ -17,8 +17,8 @@ package io.micronaut.transaction.hibernate;
 
 import io.micronaut.context.BeanProvider;
 import io.micronaut.core.annotation.TypeHint;
-import io.micronaut.data.connection.manager.synchronous.ConnectionOperations;
-import io.micronaut.data.connection.manager.synchronous.ConnectionStatus;
+import io.micronaut.data.connection.ConnectionOperations;
+import io.micronaut.data.connection.ConnectionStatus;
 import org.hibernate.HibernateException;
 import org.hibernate.Session;
 import org.hibernate.context.spi.CurrentSessionContext;

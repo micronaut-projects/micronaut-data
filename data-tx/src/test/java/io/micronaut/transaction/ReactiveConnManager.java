@@ -1,7 +1,7 @@
 package io.micronaut.transaction;
 
-import io.micronaut.data.connection.manager.ConnectionDefinition;
-import io.micronaut.data.connection.support.AbstractReactorReactiveConnectionOperations;
+import io.micronaut.data.connection.ConnectionDefinition;
+import io.micronaut.data.connection.support.AbstractReactorConnectionOperations;
 import jakarta.inject.Singleton;
 import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Singleton
-public class ReactiveConnManager extends AbstractReactorReactiveConnectionOperations<String> {
+public class ReactiveConnManager extends AbstractReactorConnectionOperations<String> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ReactiveTxManager.class);
 

@@ -1,7 +1,7 @@
 
 package example;
 
-import io.micronaut.data.connection.manager.reactive.ReactorReactiveConnectionOperations;
+import io.micronaut.data.connection.reactive.ReactorConnectionOperations;
 import io.micronaut.transaction.reactive.ReactorReactiveTransactionOperations;
 import jakarta.inject.Singleton;
 import org.hibernate.reactive.stage.Stage;
@@ -10,10 +10,10 @@ import reactor.core.publisher.Mono;
 @Singleton
 public class ProductManager {
 
-    private final ReactorReactiveConnectionOperations<Stage.Session> connectionOperations;
+    private final ReactorConnectionOperations<Stage.Session> connectionOperations;
     private final ReactorReactiveTransactionOperations<Stage.Session> transactionOperations;
 
-    public ProductManager(ReactorReactiveConnectionOperations<Stage.Session> connectionOperations,
+    public ProductManager(ReactorConnectionOperations<Stage.Session> connectionOperations,
                           ReactorReactiveTransactionOperations<Stage.Session> transactionOperations) {
         this.connectionOperations = connectionOperations;
         this.transactionOperations = transactionOperations;

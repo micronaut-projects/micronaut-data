@@ -4,16 +4,16 @@ package io.micronaut.data.jdbc
 import io.micronaut.data.connection.exceptions.NoConnectionException
 import io.micronaut.data.connection.jdbc.advice.DelegatingDataSource
 import io.micronaut.data.connection.jdbc.operations.DataSourceConnectionOperationsImpl
-import io.micronaut.data.connection.manager.synchronous.ConnectionOperations
-import io.micronaut.data.connection.manager.synchronous.SynchronousConnectionManager
+import io.micronaut.data.connection.ConnectionOperations
+import io.micronaut.data.connection.SynchronousConnectionManager
 import io.micronaut.data.tck.repositories.SimpleBookRepository
-import io.micronaut.data.tck.tests.AbstractConnectionSpec
+import io.micronaut.data.tck.tests.AbstractConnectableSpec
 import io.micronaut.inject.qualifiers.Qualifiers
 import org.slf4j.LoggerFactory
 
 import javax.sql.DataSource
 
-abstract class AbstractJdbcConnectionSpec extends AbstractConnectionSpec {
+abstract class AbstractJdbcConnectableSpec extends AbstractConnectableSpec {
 
     def LOG = LoggerFactory.getLogger(this.class)
 

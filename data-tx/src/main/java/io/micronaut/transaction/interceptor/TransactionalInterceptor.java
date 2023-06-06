@@ -115,14 +115,14 @@ public final class TransactionalInterceptor implements MethodInterceptor<Object,
             switch (interceptedMethod.resultType()) {
                 case PUBLISHER -> {
                     ReactiveTransactionOperations<?> reactiveTransactionOperations = Objects.requireNonNull(transactionInvocation.reactiveTransactionOperations);
-                    if (reactiveTransactionOperations instanceof ReactorReactiveTransactionOperations<?> reactorReactiveTransactionOperations) {
+                    if (reactiveTransactionOperations instanceof ReactorReactiveTransactionOperations<?> reactorTransactionOperations) {
                         if (context.getReturnType().isSingleResult()) {
                             return interceptedMethod.handleResult(
-                                reactorReactiveTransactionOperations.withTransactionMono(definition, status -> Mono.from(interceptedMethod.interceptResultAsPublisher()))
+                                reactorTransactionOperations.withTransactionMono(definition, status -> Mono.from(interceptedMethod.interceptResultAsPublisher()))
                             );
                         }
                         return interceptedMethod.handleResult(
-                            reactorReactiveTransactionOperations.withTransactionFlux(definition, status -> Flux.from(interceptedMethod.interceptResultAsPublisher()))
+                            reactorTransactionOperations.withTransactionFlux(definition, status -> Flux.from(interceptedMethod.interceptResultAsPublisher()))
                         );
                     }
                     return interceptedMethod.handleResult(

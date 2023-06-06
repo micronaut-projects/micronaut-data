@@ -26,13 +26,13 @@ import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.data.connection.ConnectionOperationsRegistry;
-import io.micronaut.data.connection.annotation.Connection;
-import io.micronaut.data.connection.manager.ConnectionDefinition;
-import io.micronaut.data.connection.manager.DefaultConnectionDefinition;
-import io.micronaut.data.connection.manager.async.AsyncConnectionOperations;
-import io.micronaut.data.connection.manager.reactive.ReactiveConnectionOperations;
-import io.micronaut.data.connection.manager.reactive.ReactorReactiveConnectionOperations;
-import io.micronaut.data.connection.manager.synchronous.ConnectionOperations;
+import io.micronaut.data.connection.annotation.Connectable;
+import io.micronaut.data.connection.ConnectionDefinition;
+import io.micronaut.data.connection.DefaultConnectionDefinition;
+import io.micronaut.data.connection.async.AsyncConnectionOperations;
+import io.micronaut.data.connection.reactive.ReactiveStreamsConnectionOperations;
+import io.micronaut.data.connection.reactive.ReactorConnectionOperations;
+import io.micronaut.data.connection.ConnectionOperations;
 import io.micronaut.inject.ExecutableMethod;
 import jakarta.inject.Singleton;
 import reactor.core.publisher.Flux;
@@ -44,15 +44,15 @@ import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Default {@link Connection} interceptor.
+ * Default {@link Connectable} interceptor.
  *
  * @author Denis stepanov
  * @since 4.0.0
  */
 @Internal
 @Singleton
-@InterceptorBean(Connection.class)
-public final class ConnectionInterceptor implements MethodInterceptor<Object, Object> {
+@InterceptorBean(Connectable.class)
+public final class ConnectableInterceptor implements MethodInterceptor<Object, Object> {
 
     private final Map<TenantExecutableMethod, ConnectionInvocation> connectionInvocationMap = new ConcurrentHashMap<>(30);
 
@@ -69,9 +69,9 @@ public final class ConnectionInterceptor implements MethodInterceptor<Object, Ob
      * @param connectionOperationsRegistry The {@link ConnectionOperationsRegistry}
      * @param conversionService            The conversion service
      */
-    public ConnectionInterceptor(@NonNull ConnectionOperationsRegistry connectionOperationsRegistry,
+    public ConnectableInterceptor(@NonNull ConnectionOperationsRegistry connectionOperationsRegistry,
 //                                 @Nullable TransactionDataSourceTenantResolver tenantResolver,
-                                 ConversionService conversionService) {
+                                  ConversionService conversionService) {
         this.connectionOperationsRegistry = connectionOperationsRegistry;
 //        this.tenantResolver = tenantResolver;
         this.conversionService = conversionService;
@@ -95,12 +95,12 @@ public final class ConnectionInterceptor implements MethodInterceptor<Object, Ob
             ExecutableMethod<Object, Object> executableMethod = context.getExecutableMethod();
             final ConnectionInvocation connectionInvocation = connectionInvocationMap
                 .computeIfAbsent(new TenantExecutableMethod(tenantDataSourceName, executableMethod), ignore -> {
-                    final String dataSource = tenantDataSourceName == null ? executableMethod.stringValue(Connection.class).orElse(null) : tenantDataSourceName;
+                    final String dataSource = tenantDataSourceName == null ? executableMethod.stringValue(Connectable.class).orElse(null) : tenantDataSourceName;
                     final ConnectionDefinition connectionDefinition = getConnectionDefinition(executableMethod);
 
                     switch (interceptedMethod.resultType()) {
                         case PUBLISHER -> {
-                            ReactiveConnectionOperations<?> operations = connectionOperationsRegistry.provideReactive(ReactiveConnectionOperations.class, dataSource);
+                            ReactiveStreamsConnectionOperations<?> operations = connectionOperationsRegistry.provideReactive(ReactiveStreamsConnectionOperations.class, dataSource);
                             return new ConnectionInvocation(null, operations, null, connectionDefinition);
                         }
                         case COMPLETION_STAGE -> {
@@ -117,9 +117,9 @@ public final class ConnectionInterceptor implements MethodInterceptor<Object, Ob
             final ConnectionDefinition definition = connectionInvocation.definition;
             switch (interceptedMethod.resultType()) {
                 case PUBLISHER -> {
-                    ReactiveConnectionOperations<?> operations = Objects.requireNonNull(connectionInvocation.reactiveConnectionOperations);
+                    ReactiveStreamsConnectionOperations<?> operations = Objects.requireNonNull(connectionInvocation.reactiveStreamsConnectionOperations);
                     if (connectionInvocation.reactorConnectionOperations != null) {
-                        ReactorReactiveConnectionOperations<?> reactorConnectionOperations = connectionInvocation.reactorConnectionOperations;
+                        ReactorConnectionOperations<?> reactorConnectionOperations = connectionInvocation.reactorConnectionOperations;
                         if (context.getExecutableMethod().getReturnType().isSingleResult()) {
                             return reactorConnectionOperations.withConnectionMono(definition, status -> Mono.from(interceptedMethod.interceptResultAsPublisher()));
                         }
@@ -150,7 +150,7 @@ public final class ConnectionInterceptor implements MethodInterceptor<Object, Ob
 
     @NonNull
     public static ConnectionDefinition getConnectionDefinition(ExecutableMethod<Object, Object> executableMethod) {
-        AnnotationValue<Connection> annotation = executableMethod.getAnnotation(Connection.class);
+        AnnotationValue<Connectable> annotation = executableMethod.getAnnotation(Connectable.class);
         if (annotation == null) {
             throw new IllegalStateException("No declared @Connection annotation present");
         }
@@ -168,25 +168,25 @@ public final class ConnectionInterceptor implements MethodInterceptor<Object, Ob
      *
      * @param connectionOperations         The connection operations
      * @param reactorConnectionOperations  The reactor connection operations
-     * @param reactiveConnectionOperations The reactive connection operations
+     * @param reactiveStreamsConnectionOperations The reactive connection operations
      * @param asyncConnectionOperations    The async connection operations
      * @param definition                   The connection definition
      */
     private record ConnectionInvocation(
         @Nullable ConnectionOperations<?> connectionOperations,
-        @Nullable ReactorReactiveConnectionOperations<?> reactorConnectionOperations,
-        @Nullable ReactiveConnectionOperations<?> reactiveConnectionOperations,
+        @Nullable ReactorConnectionOperations<?> reactorConnectionOperations,
+        @Nullable ReactiveStreamsConnectionOperations<?> reactiveStreamsConnectionOperations,
         @Nullable AsyncConnectionOperations<?> asyncConnectionOperations,
         ConnectionDefinition definition) {
 
         ConnectionInvocation(
             @Nullable ConnectionOperations<?> connectionOperations,
-            @Nullable ReactiveConnectionOperations<?> reactiveConnectionOperations,
+            @Nullable ReactiveStreamsConnectionOperations<?> reactiveStreamsConnectionOperations,
             @Nullable AsyncConnectionOperations<?> asyncConnectionOperations, ConnectionDefinition definition) {
 
             this(connectionOperations,
-                reactiveConnectionOperations instanceof ReactorReactiveConnectionOperations<?> reactorReactiveConnectionOperations ? reactorReactiveConnectionOperations : null,
-                reactiveConnectionOperations,
+                reactiveStreamsConnectionOperations instanceof ReactorConnectionOperations<?> reactorReactiveConnectionOperations ? reactorReactiveConnectionOperations : null,
+                reactiveStreamsConnectionOperations,
                 asyncConnectionOperations,
                 definition);
         }

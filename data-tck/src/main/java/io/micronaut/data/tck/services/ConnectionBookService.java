@@ -2,11 +2,9 @@ package io.micronaut.data.tck.services;
 
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Requires;
-import io.micronaut.data.connection.annotation.Connection;
-import io.micronaut.data.connection.manager.ConnectionDefinition;
+import io.micronaut.data.connection.annotation.Connectable;
+import io.micronaut.data.connection.ConnectionDefinition;
 import jakarta.inject.Singleton;
-
-import javax.transaction.Transactional;
 
 @Requires(property = AbstractBookService.BOOK_REPOSITORY_CLASS_PROPERTY)
 @Singleton
@@ -20,49 +18,49 @@ public class ConnectionBookService extends AbstractBookService {
         bookRepository.save(newBook("MandatoryBook"));
     }
 
-    @Connection
+    @Connectable
     public void bookAddedInMandatoryConnection() {
         mandatoryConnection();
     }
 
-    @Connection(propagation = ConnectionDefinition.Propagation.MANDATORY)
+    @Connectable(propagation = ConnectionDefinition.Propagation.MANDATORY)
     public void mandatoryConnection() {
         bookRepository.save(newBook("MandatoryBook"));
     }
 
-    @Connection(propagation = ConnectionDefinition.Propagation.MANDATORY)
+    @Connectable(propagation = ConnectionDefinition.Propagation.MANDATORY)
     public void mandatoryConnection(Runnable check) {
         bookRepository.save(newBook("MandatoryBook"));
         check.run();
     }
 
-    @Connection
+    @Connectable
     public void checkInConnection(Runnable runnable) {
         runnable.run();
     }
 
-    @Connection
+    @Connectable
     public void bookIsAddedInConnectionMethod() {
         bookRepository.save(newBook("Toys"));
     }
 
-    @Connection
+    @Connectable
     public void bookIsAddedInAnotherRequiresNewConnection() {
         addBookRequiresNew();
     }
 
-    @Connection
+    @Connectable
     public void bookIsAddedInAnotherRequiresNewConnectionWhichIsFailing() {
         addBookRequiresNewFailing();
     }
 
-    @Connection
+    @Connectable
     public void bookIsAddedAndAnotherRequiresNewConnectionIsFailing() {
         bookRepository.save(newBook("Book1"));
         connectionRequiresNewFailing();
     }
 
-    @Connection
+    @Connectable
     public void innerConnectionHasSuppressedException() {
         try {
             connectionFailing();
@@ -72,7 +70,7 @@ public class ConnectionBookService extends AbstractBookService {
         bookRepository.save(newBook("Book1"));
     }
 
-    @Connection
+    @Connectable
     public void innerRequiresNewConnectionHasSuppressedException() {
         try {
             connectionRequiresNewFailing();
@@ -82,23 +80,23 @@ public class ConnectionBookService extends AbstractBookService {
         bookRepository.save(newBook("Book1"));
     }
 
-    @Connection(propagation = ConnectionDefinition.Propagation.REQUIRES_NEW)
+    @Connectable(propagation = ConnectionDefinition.Propagation.REQUIRES_NEW)
     protected void addBookRequiresNew() {
         bookRepository.save(newBook("Book1"));
     }
 
-    @Connection(propagation = ConnectionDefinition.Propagation.REQUIRES_NEW)
+    @Connectable(propagation = ConnectionDefinition.Propagation.REQUIRES_NEW)
     protected void addBookRequiresNewFailing() {
         bookRepository.save(newBook("Book2"));
         throw new IllegalStateException("Big fail!");
     }
 
-    @Connection(propagation = ConnectionDefinition.Propagation.REQUIRES_NEW)
+    @Connectable(propagation = ConnectionDefinition.Propagation.REQUIRES_NEW)
     protected void connectionRequiresNewFailing() {
         throw new IllegalStateException("Big fail!");
     }
 
-    @Connection
+    @Connectable
     protected void connectionFailing() {
         throw new IllegalStateException("Big fail!");
     }

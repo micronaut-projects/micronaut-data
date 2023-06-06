@@ -32,7 +32,6 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
  */
 @Retention(RUNTIME)
 @Introduction
-@Type(ContexualClientSessionInterceptor.class)
 @Internal
 @interface ContexualClientSessionAdvice {
 }

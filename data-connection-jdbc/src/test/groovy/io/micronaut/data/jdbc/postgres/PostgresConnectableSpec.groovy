@@ -15,11 +15,11 @@
  */
 package io.micronaut.data.jdbc.postgres
 
-import io.micronaut.data.jdbc.AbstractJdbcConnectionSpec
+import io.micronaut.data.jdbc.AbstractJdbcConnectableSpec
 import io.micronaut.data.jdbc.h2.H2BookRepository
 import io.micronaut.data.tck.repositories.SimpleBookRepository
 
-class PostgresConnectionSpec extends AbstractJdbcConnectionSpec implements PostgresTestPropertyProvider {
+class PostgresConnectableSpec extends AbstractJdbcConnectableSpec implements PostgresTestPropertyProvider {
 
     @Override
     Class<? extends SimpleBookRepository> getBookRepositoryClass() {

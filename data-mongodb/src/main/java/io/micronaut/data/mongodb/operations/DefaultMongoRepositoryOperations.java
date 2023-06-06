@@ -42,7 +42,7 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.beans.BeanProperty;
-import io.micronaut.data.connection.manager.ConnectionDefinition;
+import io.micronaut.data.connection.ConnectionDefinition;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;

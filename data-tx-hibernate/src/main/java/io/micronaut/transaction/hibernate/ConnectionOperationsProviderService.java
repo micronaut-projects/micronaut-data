@@ -17,7 +17,7 @@ package io.micronaut.transaction.hibernate;
 
 import io.micronaut.context.BeanProvider;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.data.connection.manager.synchronous.ConnectionOperations;
+import io.micronaut.data.connection.ConnectionOperations;
 import org.hibernate.Session;
 import org.hibernate.service.Service;
 

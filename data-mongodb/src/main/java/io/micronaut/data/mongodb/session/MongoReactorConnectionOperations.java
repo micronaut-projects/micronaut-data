@@ -21,5 +21,5 @@ package io.micronaut.data.mongodb.session;
  * @author Denis Stepanov
  * @since 4.0.0
  */
-public interface MongoReactorReactiveConnectionOperations extends MongoReactiveConnectionOperations {
+public interface MongoReactorConnectionOperations extends MongoReactiveStreamsConnectionOperations {
 }

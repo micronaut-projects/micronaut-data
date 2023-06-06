@@ -16,11 +16,9 @@
 package io.micronaut.data.hibernate
 
 import io.micronaut.context.annotation.Property
-import io.micronaut.data.connection.annotation.Connection
 import io.micronaut.data.tck.entities.Book
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import io.micronaut.transaction.TransactionOperations
-import io.micronaut.transaction.interceptor.TransactionalInterceptor
 import org.hibernate.Session
 import spock.lang.Specification
 

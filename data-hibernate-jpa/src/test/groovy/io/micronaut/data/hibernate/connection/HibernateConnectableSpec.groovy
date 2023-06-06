@@ -16,12 +16,12 @@
 package io.micronaut.data.hibernate.connection
 
 
-import io.micronaut.data.connection.manager.synchronous.ConnectionOperations
-import io.micronaut.data.connection.manager.synchronous.SynchronousConnectionManager
+import io.micronaut.data.connection.ConnectionOperations
+import io.micronaut.data.connection.SynchronousConnectionManager
 import io.micronaut.data.tck.repositories.SimpleBookRepository
-import io.micronaut.data.tck.tests.AbstractConnectionSpec
+import io.micronaut.data.tck.tests.AbstractConnectableSpec
 
-class HibernateConnectionSpec extends AbstractConnectionSpec {
+class HibernateConnectableSpec extends AbstractConnectableSpec {
 
     @Override
     String[] getPackages() {

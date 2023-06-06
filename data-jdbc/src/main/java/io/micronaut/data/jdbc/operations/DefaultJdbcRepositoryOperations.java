@@ -28,7 +28,8 @@ import io.micronaut.core.convert.ArgumentConversionContext;
 import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArgumentUtils;
-import io.micronaut.data.connection.manager.synchronous.ConnectionOperations;
+import io.micronaut.data.connection.annotation.Connectable;
+import io.micronaut.data.connection.ConnectionOperations;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.jdbc.config.DataJdbcConfiguration;
 import io.micronaut.data.jdbc.convert.JdbcConversionContext;
@@ -781,7 +782,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     }
 
     private DataAccessException connectionNotFoundAndNewNotAllowed() {
-        return new DataAccessException("Connection is required for this operation. Annotate with @" + io.micronaut.data.connection.annotation.Connection.class + ", @Transactional or enable `isAllowConnectionPerOperation`.");
+        return new DataAccessException("Connection is required for this operation. Annotate with @" + Connectable.class + ", @Transactional or enable `isAllowConnectionPerOperation`.");
     }
 
     @Override

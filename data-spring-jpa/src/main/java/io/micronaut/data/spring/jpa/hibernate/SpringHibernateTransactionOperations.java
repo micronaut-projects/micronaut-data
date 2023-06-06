@@ -18,7 +18,7 @@ package io.micronaut.data.spring.jpa.hibernate;
 import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.data.connection.manager.synchronous.ConnectionStatus;
+import io.micronaut.data.connection.ConnectionStatus;
 import io.micronaut.data.spring.tx.AbstractSpringTransactionOperations;
 import io.micronaut.transaction.TransactionCallback;
 import io.micronaut.transaction.TransactionDefinition;

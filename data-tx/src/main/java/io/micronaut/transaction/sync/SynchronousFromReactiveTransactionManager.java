@@ -18,7 +18,7 @@ package io.micronaut.transaction.sync;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.async.propagation.ReactorPropagation;
 import io.micronaut.core.propagation.PropagatedContext;
-import io.micronaut.data.connection.manager.synchronous.ConnectionStatus;
+import io.micronaut.data.connection.ConnectionStatus;
 import io.micronaut.transaction.SynchronousTransactionManager;
 import io.micronaut.transaction.TransactionCallback;
 import io.micronaut.transaction.TransactionDefinition;

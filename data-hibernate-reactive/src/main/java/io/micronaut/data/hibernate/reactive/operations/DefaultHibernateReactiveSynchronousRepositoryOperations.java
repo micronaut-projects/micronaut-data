@@ -20,7 +20,7 @@ import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.convert.ConversionService;
-import io.micronaut.data.connection.manager.reactive.ReactorReactiveConnectionOperations;
+import io.micronaut.data.connection.reactive.ReactorConnectionOperations;
 import io.micronaut.data.hibernate.conf.RequiresReactiveHibernate;
 import io.micronaut.data.jpa.operations.JpaRepositoryOperations;
 import io.micronaut.data.model.runtime.PreparedQuery;
@@ -72,7 +72,7 @@ final class DefaultHibernateReactiveSynchronousRepositoryOperations implements B
                                                                    SessionFactory sessionFactory,
                                                                    RuntimeEntityRegistry runtimeEntityRegistry,
                                                                    DataConversionService dataConversionService,
-                                                                   @Parameter ReactorReactiveConnectionOperations<Stage.Session> connectionOperations,
+                                                                   @Parameter ReactorConnectionOperations<Stage.Session> connectionOperations,
                                                                    @Parameter ReactorReactiveTransactionOperations<Stage.Session> transactionOperations) {
         this.applicationContext = applicationContext;
         this.reactiveRepositoryOperations = new DefaultHibernateReactiveRepositoryOperations(sessionFactory,

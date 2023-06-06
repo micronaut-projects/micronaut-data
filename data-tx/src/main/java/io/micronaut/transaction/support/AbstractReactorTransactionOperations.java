@@ -20,8 +20,8 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.async.propagation.ReactorPropagation;
 import io.micronaut.core.propagation.PropagatedContextElement;
-import io.micronaut.data.connection.manager.reactive.ReactorReactiveConnectionOperations;
-import io.micronaut.data.connection.manager.synchronous.ConnectionStatus;
+import io.micronaut.data.connection.reactive.ReactorConnectionOperations;
+import io.micronaut.data.connection.ConnectionStatus;
 import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.exceptions.NoTransactionException;
 import io.micronaut.transaction.exceptions.TransactionSystemException;
@@ -49,13 +49,13 @@ import java.util.function.Function;
  * @since 4.0.0
  */
 @Internal
-public abstract class AbstractReactorReactiveTransactionOperations<C> implements ReactorReactiveTransactionOperations<C> {
+public abstract class AbstractReactorTransactionOperations<C> implements ReactorReactiveTransactionOperations<C> {
 
-    private static final Logger LOG = LoggerFactory.getLogger(AbstractReactorReactiveTransactionOperations.class);
+    private static final Logger LOG = LoggerFactory.getLogger(AbstractReactorTransactionOperations.class);
 
-    private final ReactorReactiveConnectionOperations<C> connectionOperations;
+    private final ReactorConnectionOperations<C> connectionOperations;
 
-    protected AbstractReactorReactiveTransactionOperations(@Parameter ReactorReactiveConnectionOperations<C> connectionOperations) {
+    protected AbstractReactorTransactionOperations(@Parameter ReactorConnectionOperations<C> connectionOperations) {
         this.connectionOperations = connectionOperations;
     }
 

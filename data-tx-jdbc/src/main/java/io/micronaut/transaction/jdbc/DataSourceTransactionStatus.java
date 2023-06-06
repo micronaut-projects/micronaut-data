@@ -17,7 +17,7 @@ package io.micronaut.transaction.jdbc;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
-import io.micronaut.data.connection.manager.synchronous.ConnectionStatus;
+import io.micronaut.data.connection.ConnectionStatus;
 import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.impl.AbstractInternalTransaction;
 import io.micronaut.transaction.impl.InternalTransaction;
@@ -25,6 +25,12 @@ import io.micronaut.transaction.impl.InternalTransaction;
 import java.sql.Connection;
 
 
+/**
+ * Internal connection that uses {@link javax.sql.DataSource} and  {@link Connection}.
+ *
+ * @author Denis Stepanov
+ * @since 4.0.0
+ */
 @Internal
 abstract sealed class DataSourceTransactionStatus extends AbstractInternalTransaction<Connection> implements InternalTransaction<Connection> {
 

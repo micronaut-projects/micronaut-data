@@ -21,8 +21,8 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.async.propagation.ReactorPropagation;
 import io.micronaut.core.propagation.PropagatedContextElement;
-import io.micronaut.data.connection.manager.synchronous.ConnectionStatus;
-import io.micronaut.data.r2dbc.transaction.R2dbcReactorReactiveTransactionOperations;
+import io.micronaut.data.connection.ConnectionStatus;
+import io.micronaut.data.r2dbc.transaction.R2dbcReactorTransactionOperations;
 import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.exceptions.NoTransactionException;
 import io.micronaut.transaction.exceptions.TransactionSystemException;
@@ -55,14 +55,14 @@ import java.util.function.Supplier;
  */
 @EachBean(ConnectionFactory.class)
 @Internal
-final class DefaultR2dbcReactiveTransactionOperations implements R2dbcReactorReactiveTransactionOperations {
+final class DefaultR2dbcReactorTransactionOperations implements R2dbcReactorTransactionOperations {
 
-    private static final Logger LOG = LoggerFactory.getLogger(DefaultR2dbcReactiveTransactionOperations.class);
+    private static final Logger LOG = LoggerFactory.getLogger(DefaultR2dbcReactorTransactionOperations.class);
     private final String dataSourceName;
-    private final DefaultReactiveR2dbcConnectionOperations connectionOperations;
+    private final DefaultR2DbcReactorConnectionOperations connectionOperations;
 
-    DefaultR2dbcReactiveTransactionOperations(@Parameter String dataSourceName,
-                                              @Parameter DefaultReactiveR2dbcConnectionOperations connectionOperations) {
+    DefaultR2dbcReactorTransactionOperations(@Parameter String dataSourceName,
+                                             @Parameter DefaultR2DbcReactorConnectionOperations connectionOperations) {
         this.dataSourceName = dataSourceName;
         this.connectionOperations = connectionOperations;
     }

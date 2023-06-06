@@ -13,12 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.connection.manager.synchronous;
+package io.micronaut.data.connection;
 
 import io.micronaut.core.annotation.Blocking;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.connection.exceptions.NoConnectionException;
-import io.micronaut.data.connection.manager.ConnectionDefinition;
 
 import java.util.Optional;
 import java.util.function.Function;

@@ -1,8 +1,9 @@
 package io.micronaut.data.jdbc;
 
-import io.micronaut.data.connection.manager.ConnectionDefinition;
-import io.micronaut.data.connection.manager.synchronous.ConnectionOperations;
-import io.micronaut.data.connection.manager.synchronous.ConnectionStatus;
+import io.micronaut.data.connection.annotation.Connectable;
+import io.micronaut.data.connection.ConnectionDefinition;
+import io.micronaut.data.connection.ConnectionOperations;
+import io.micronaut.data.connection.ConnectionStatus;
 import jakarta.inject.Singleton;
 
 import java.sql.Connection;
@@ -42,7 +43,7 @@ public class JdbcConnectionService {
         return connectionOperations.executeRead(status -> findIdByPatientName(status.getConnection(), name));
     }
 
-    @io.micronaut.data.connection.annotation.Connection
+    @Connectable
     public Long findIdByPatientNameAdvised(String name) {
         return findIdByPatientName(
             getRequiredConnection(),
@@ -50,7 +51,7 @@ public class JdbcConnectionService {
         );
     }
 
-    @io.micronaut.data.connection.annotation.Connection
+    @Connectable
     public Long findIdByPatientNameAdvisedRequiresNew(String name) {
         return findIdByPatientNameAdvisedRequiresNewWrapped(
             getRequiredConnection(),
@@ -58,17 +59,17 @@ public class JdbcConnectionService {
         );
     }
 
-    @io.micronaut.data.connection.annotation.Connection(propagation = ConnectionDefinition.Propagation.MANDATORY)
+    @Connectable(propagation = ConnectionDefinition.Propagation.MANDATORY)
     public Long findIdByPatientNameAdvisedRequiresMandatory(String name) {
         return findIdByPatientName(getRequiredConnection(), name);
     }
 
-    @io.micronaut.data.connection.annotation.Connection
+    @Connectable
     public Long findIdByPatientNameAdvisedRequiresMandatory2(String name) {
         return findIdByPatientNameAdvisedRequiresMandatory(name);
     }
 
-    @io.micronaut.data.connection.annotation.Connection(propagation = ConnectionDefinition.Propagation.REQUIRES_NEW)
+    @Connectable(propagation = ConnectionDefinition.Propagation.REQUIRES_NEW)
     protected Long findIdByPatientNameAdvisedRequiresNewWrapped(Connection existingConnection, String name) {
         Connection newConnection = getRequiredConnection();
         if (newConnection == existingConnection || newConnection.equals(existingConnection)) {

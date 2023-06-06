@@ -17,7 +17,7 @@ package io.micronaut.data.spring.tx;
 
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.util.ArgumentUtils;
-import io.micronaut.data.connection.manager.synchronous.ConnectionStatus;
+import io.micronaut.data.connection.ConnectionStatus;
 import io.micronaut.transaction.TransactionCallback;
 import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.TransactionStatus;

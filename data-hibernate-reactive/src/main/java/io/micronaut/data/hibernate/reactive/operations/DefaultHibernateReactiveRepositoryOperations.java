@@ -23,7 +23,7 @@ import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.annotation.QueryHint;
-import io.micronaut.data.connection.manager.reactive.ReactorReactiveConnectionOperations;
+import io.micronaut.data.connection.reactive.ReactorConnectionOperations;
 import io.micronaut.data.hibernate.conf.RequiresReactiveHibernate;
 import io.micronaut.data.hibernate.operations.AbstractHibernateOperations;
 import io.micronaut.data.model.Page;
@@ -72,13 +72,13 @@ final class DefaultHibernateReactiveRepositoryOperations extends AbstractHiberna
     private final SessionFactory sessionFactory;
     private final Stage.SessionFactory stageSessionFactory;
     private final ReactiveHibernateHelper helper;
-    private final ReactorReactiveConnectionOperations<Stage.Session> connectionOperations;
+    private final ReactorConnectionOperations<Stage.Session> connectionOperations;
     private final ReactorReactiveTransactionOperations<Stage.Session> transactionOperations;
 
     DefaultHibernateReactiveRepositoryOperations(SessionFactory sessionFactory,
                                                  RuntimeEntityRegistry runtimeEntityRegistry,
                                                  DataConversionService dataConversionService,
-                                                 @Parameter ReactorReactiveConnectionOperations<Stage.Session> connectionOperations,
+                                                 @Parameter ReactorConnectionOperations<Stage.Session> connectionOperations,
                                                  @Parameter ReactorReactiveTransactionOperations<Stage.Session> transactionOperations) {
         super(runtimeEntityRegistry, dataConversionService);
         this.sessionFactory = sessionFactory;
