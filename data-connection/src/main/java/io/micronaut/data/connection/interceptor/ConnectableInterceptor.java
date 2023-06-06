@@ -25,14 +25,14 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.convert.ConversionService;
-import io.micronaut.data.connection.ConnectionOperationsRegistry;
-import io.micronaut.data.connection.annotation.Connectable;
 import io.micronaut.data.connection.ConnectionDefinition;
+import io.micronaut.data.connection.ConnectionOperations;
+import io.micronaut.data.connection.ConnectionOperationsRegistry;
 import io.micronaut.data.connection.DefaultConnectionDefinition;
+import io.micronaut.data.connection.annotation.Connectable;
 import io.micronaut.data.connection.async.AsyncConnectionOperations;
 import io.micronaut.data.connection.reactive.ReactiveStreamsConnectionOperations;
 import io.micronaut.data.connection.reactive.ReactorConnectionOperations;
-import io.micronaut.data.connection.ConnectionOperations;
 import io.micronaut.inject.ExecutableMethod;
 import jakarta.inject.Singleton;
 import reactor.core.publisher.Flux;
@@ -58,8 +58,8 @@ public final class ConnectableInterceptor implements MethodInterceptor<Object, O
 
     @NonNull
     private final ConnectionOperationsRegistry connectionOperationsRegistry;
-//    @Nullable
-//    private final TransactionDataSourceTenantResolver tenantResolver;
+    @Nullable
+    private final ConnectionDataSourceTenantResolver tenantResolver;
 
     private final ConversionService conversionService;
 
@@ -67,13 +67,14 @@ public final class ConnectableInterceptor implements MethodInterceptor<Object, O
      * Default constructor.
      *
      * @param connectionOperationsRegistry The {@link ConnectionOperationsRegistry}
+     * @param tenantResolver               The tenant resolver
      * @param conversionService            The conversion service
      */
-    public ConnectableInterceptor(@NonNull ConnectionOperationsRegistry connectionOperationsRegistry,
-//                                 @Nullable TransactionDataSourceTenantResolver tenantResolver,
-                                  ConversionService conversionService) {
+    ConnectableInterceptor(@NonNull ConnectionOperationsRegistry connectionOperationsRegistry,
+                           @Nullable ConnectionDataSourceTenantResolver tenantResolver,
+                           ConversionService conversionService) {
         this.connectionOperationsRegistry = connectionOperationsRegistry;
-//        this.tenantResolver = tenantResolver;
+        this.tenantResolver = tenantResolver;
         this.conversionService = conversionService;
     }
 
@@ -84,12 +85,12 @@ public final class ConnectableInterceptor implements MethodInterceptor<Object, O
 
     @Override
     public Object intercept(MethodInvocationContext<Object, Object> context) {
-        String tenantDataSourceName = null;
-//        if (tenantResolver != null) {
-//            tenantDataSourceName = tenantResolver.resolveTenantDataSourceName();
-//        } else {
-//            tenantDataSourceName = null;
-//        }
+        String tenantDataSourceName;
+        if (tenantResolver != null) {
+            tenantDataSourceName = tenantResolver.resolveTenantDataSourceName();
+        } else {
+            tenantDataSourceName = null;
+        }
         InterceptedMethod interceptedMethod = InterceptedMethod.of(context, conversionService);
         try {
             ExecutableMethod<Object, Object> executableMethod = context.getExecutableMethod();
@@ -166,11 +167,11 @@ public final class ConnectableInterceptor implements MethodInterceptor<Object, O
     /**
      * Cached invocation associating a method with a definition a connection manager.
      *
-     * @param connectionOperations         The connection operations
-     * @param reactorConnectionOperations  The reactor connection operations
+     * @param connectionOperations                The connection operations
+     * @param reactorConnectionOperations         The reactor connection operations
      * @param reactiveStreamsConnectionOperations The reactive connection operations
-     * @param asyncConnectionOperations    The async connection operations
-     * @param definition                   The connection definition
+     * @param asyncConnectionOperations           The async connection operations
+     * @param definition                          The connection definition
      */
     private record ConnectionInvocation(
         @Nullable ConnectionOperations<?> connectionOperations,
