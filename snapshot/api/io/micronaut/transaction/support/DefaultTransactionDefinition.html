@@ -164,7 +164,7 @@ implements <a href="../TransactionDefinition.html" title="interface in io.micron
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Collection of exception classes that shouldn't cause the rollback.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final <a href="../TransactionDefinition.Isolation.html" title="enum class in io.micronaut.transaction">TransactionDefinition.Isolation</a></code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="../TransactionDefinition.Isolation.html" title="enum class in io.micronaut.transaction">TransactionDefinition.Isolation</a>&gt;</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getIsolationLevel()" class="member-name-link">getIsolationLevel</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Return the isolation level.</div>
@@ -184,7 +184,7 @@ implements <a href="../TransactionDefinition.html" title="interface in io.micron
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Collection of exception classes that should cause the rollback.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/Duration.html" title="class or interface in java.time" class="external-link">Duration</a></code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/Duration.html" title="class or interface in java.time" class="external-link">Duration</a>&gt;</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getTimeout()" class="member-name-link">getTimeout</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Return the transaction timeout.</div>
@@ -194,7 +194,7 @@ implements <a href="../TransactionDefinition.html" title="interface in io.micron
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">This implementation returns <code>toString()</code>'s hash code.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final boolean</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Boolean.html" title="class or interface in java.lang" class="external-link">Boolean</a>&gt;</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isReadOnly()" class="member-name-link">isReadOnly</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Return whether to optimize as a read-only transaction.</div>
@@ -416,7 +416,7 @@ implements <a href="../TransactionDefinition.html" title="interface in io.micron
 <section class="detail" id="getIsolationLevel()">
 <h3>getIsolationLevel</h3>
 <div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">public final</span>&nbsp;<span class="return-type"><a href="../TransactionDefinition.Isolation.html" title="enum class in io.micronaut.transaction">TransactionDefinition.Isolation</a></span>&nbsp;<span class="element-name">getIsolationLevel</span>()</div>
+</span><span class="modifiers">public final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="../TransactionDefinition.Isolation.html" title="enum class in io.micronaut.transaction">TransactionDefinition.Isolation</a>&gt;</span>&nbsp;<span class="element-name">getIsolationLevel</span>()</div>
 <div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="../TransactionDefinition.html#getIsolationLevel()">TransactionDefinition</a></code></span></div>
 <div class="block">Return the isolation level.
  <p>Must return one of the <code>ISOLATION_XXX</code> constants defined on
@@ -473,7 +473,7 @@ implements <a href="../TransactionDefinition.html" title="interface in io.micron
 <section class="detail" id="getTimeout()">
 <h3>getTimeout</h3>
 <div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">public final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/Duration.html" title="class or interface in java.time" class="external-link">Duration</a></span>&nbsp;<span class="element-name">getTimeout</span>()</div>
+</span><span class="modifiers">public final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/Duration.html" title="class or interface in java.time" class="external-link">Duration</a>&gt;</span>&nbsp;<span class="element-name">getTimeout</span>()</div>
 <div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="../TransactionDefinition.html#getTimeout()">TransactionDefinition</a></code></span></div>
 <div class="block">Return the transaction timeout.
  <p>Must return a number of seconds, or <a href="../TransactionDefinition.html#TIMEOUT_DEFAULT"><code>TransactionDefinition.TIMEOUT_DEFAULT</code></a>.
@@ -516,7 +516,7 @@ implements <a href="../TransactionDefinition.html" title="interface in io.micron
 <li>
 <section class="detail" id="isReadOnly()">
 <h3>isReadOnly</h3>
-<div class="member-signature"><span class="modifiers">public final</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">isReadOnly</span>()</div>
+<div class="member-signature"><span class="modifiers">public final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Boolean.html" title="class or interface in java.lang" class="external-link">Boolean</a>&gt;</span>&nbsp;<span class="element-name">isReadOnly</span>()</div>
 <div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="../TransactionDefinition.html#isReadOnly()">TransactionDefinition</a></code></span></div>
 <div class="block">Return whether to optimize as a read-only transaction.
  <p>The read-only flag applies to any transaction context, whether backed
@@ -535,13 +535,6 @@ implements <a href="../TransactionDefinition.html" title="interface in io.micron
 <dt>Returns:</dt>
 <dd><code>true</code> if the transaction is to be optimized as read-only
  (<code>false</code> by default)</dd>
-<dt>See Also:</dt>
-<dd>
-<ul class="see-list-long">
-<li><a href="TransactionSynchronization.html#beforeCommit(boolean)"><code>TransactionSynchronization.beforeCommit(boolean)</code></a></li>
-<li><code>io.micronaut.transaction.support.TransactionSynchronizationManager#isCurrentTransactionReadOnly()</code></li>
-</ul>
-</dd>
 </dl>
 </section>
 </li>
@@ -574,12 +567,6 @@ implements <a href="../TransactionDefinition.html" title="interface in io.micron
 <dd><code><a href="../TransactionDefinition.html#getName()">getName</a></code>&nbsp;in interface&nbsp;<code><a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a></code></dd>
 <dt>Returns:</dt>
 <dd>the name of this transaction (<code>null</code> by default}</dd>
-<dt>See Also:</dt>
-<dd>
-<ul class="see-list-long">
-<li><code>io.micronaut.transaction.support.TransactionSynchronizationManager#getCurrentTransactionName()</code></li>
-</ul>
-</dd>
 </dl>
 </section>
 </li>

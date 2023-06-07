@@ -73,8 +73,10 @@ loadScripts(document, 'script');</script>
 </div>
 <div class="inheritance" title="Inheritance Tree"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">java.lang.Object</a>
 <div class="inheritance"><a href="../support/AbstractPropagatedStatusTransactionOperations.html" title="class in io.micronaut.transaction.support">io.micronaut.transaction.support.AbstractPropagatedStatusTransactionOperations</a>&lt;T,<wbr>C&gt;
-<div class="inheritance"><a href="../support/AbstractTransactionOperations.html" title="class in io.micronaut.transaction.support">io.micronaut.transaction.support.AbstractTransactionOperations</a>&lt;io.micronaut.transaction.hibernate.HibernateTransactionStatus,<wbr>org.hibernate.Session&gt;
+<div class="inheritance"><a href="../support/AbstractTransactionOperations.html" title="class in io.micronaut.transaction.support">io.micronaut.transaction.support.AbstractTransactionOperations</a>&lt;<a href="../impl/DefaultTransactionStatus.html" title="class in io.micronaut.transaction.impl">DefaultTransactionStatus</a>&lt;C&gt;,<wbr>C&gt;
+<div class="inheritance"><a href="../support/AbstractDefaultTransactionOperations.html" title="class in io.micronaut.transaction.support">io.micronaut.transaction.support.AbstractDefaultTransactionOperations</a>&lt;org.hibernate.Session&gt;
 <div class="inheritance">io.micronaut.transaction.hibernate.HibernateTransactionManager</div>
+</div>
 </div>
 </div>
 </div>
@@ -88,7 +90,7 @@ loadScripts(document, 'script');</script>
 @Replaces(<a href="../jdbc/DataSourceTransactionManager.html" title="class in io.micronaut.transaction.jdbc">DataSourceTransactionManager.class</a>)
 @Requires(condition=io.micronaut.transaction.hibernate.HibernateTransactionManagerCondition.class)
 </span><span class="modifiers">public final class </span><span class="element-name type-name-label">HibernateTransactionManager</span>
-<span class="extends-implements">extends <a href="../support/AbstractTransactionOperations.html" title="class in io.micronaut.transaction.support">AbstractTransactionOperations</a>&lt;io.micronaut.transaction.hibernate.HibernateTransactionStatus,<wbr>org.hibernate.Session&gt;</span></div>
+<span class="extends-implements">extends <a href="../support/AbstractDefaultTransactionOperations.html" title="class in io.micronaut.transaction.support">AbstractDefaultTransactionOperations</a>&lt;org.hibernate.Session&gt;</span></div>
 <div class="block">The Hibernate transaction manager.
  Partially based on https://github.com/spring-projects/spring-framework/blob/main/spring-orm/src/main/java/org/springframework/orm/hibernate5/HibernateTransactionManager.java</div>
 <dl class="notes">
@@ -120,54 +122,41 @@ loadScripts(document, 'script');</script>
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected io.micronaut.transaction.hibernate.HibernateTransactionStatus</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#createExistingTransactionStatus(io.micronaut.data.connection.ConnectionStatus,io.micronaut.transaction.TransactionDefinition,io.micronaut.transaction.hibernate.HibernateTransactionStatus)" class="member-name-link">createExistingTransactionStatus</a><wbr>(<a href="../../data/connection/ConnectionStatus.html" title="interface in io.micronaut.data.connection">ConnectionStatus</a>&lt;org.hibernate.Session&gt;&nbsp;connectionStatus,
- <a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition,
- io.micronaut.transaction.hibernate.HibernateTransactionStatus&nbsp;existingTransaction)</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected void</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#doBegin(io.micronaut.transaction.impl.DefaultTransactionStatus)" class="member-name-link">doBegin</a><wbr>(<a href="../impl/DefaultTransactionStatus.html" title="class in io.micronaut.transaction.impl">DefaultTransactionStatus</a>&lt;org.hibernate.Session&gt;&nbsp;txStatus)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Create transaction status with existing transaction.</div>
-</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected io.micronaut.transaction.hibernate.HibernateTransactionStatus</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#createNewTransactionStatus(io.micronaut.data.connection.ConnectionStatus,io.micronaut.transaction.TransactionDefinition)" class="member-name-link">createNewTransactionStatus</a><wbr>(<a href="../../data/connection/ConnectionStatus.html" title="interface in io.micronaut.data.connection">ConnectionStatus</a>&lt;org.hibernate.Session&gt;&nbsp;connectionStatus,
- <a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Create transaction status with new transaction.</div>
-</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected io.micronaut.transaction.hibernate.HibernateTransactionStatus</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#createNoTxTransactionStatus(io.micronaut.data.connection.ConnectionStatus,io.micronaut.transaction.TransactionDefinition)" class="member-name-link">createNoTxTransactionStatus</a><wbr>(<a href="../../data/connection/ConnectionStatus.html" title="interface in io.micronaut.data.connection">ConnectionStatus</a>&lt;org.hibernate.Session&gt;&nbsp;connectionStatus,
- <a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Create transaction status without open transaction.</div>
-</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#doBegin(io.micronaut.transaction.hibernate.HibernateTransactionStatus)" class="member-name-link">doBegin</a><wbr>(io.micronaut.transaction.hibernate.HibernateTransactionStatus&nbsp;txStatus)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Begin a new transaction with semantics according to the given transaction
  definition.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#doCommit(io.micronaut.transaction.hibernate.HibernateTransactionStatus)" class="member-name-link">doCommit</a><wbr>(io.micronaut.transaction.hibernate.HibernateTransactionStatus&nbsp;tx)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected void</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#doCommit(io.micronaut.transaction.impl.DefaultTransactionStatus)" class="member-name-link">doCommit</a><wbr>(<a href="../impl/DefaultTransactionStatus.html" title="class in io.micronaut.transaction.impl">DefaultTransactionStatus</a>&lt;org.hibernate.Session&gt;&nbsp;tx)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Perform an actual commit of the given transaction.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#doRollback(io.micronaut.transaction.hibernate.HibernateTransactionStatus)" class="member-name-link">doRollback</a><wbr>(io.micronaut.transaction.hibernate.HibernateTransactionStatus&nbsp;tx)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected void</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#doRollback(io.micronaut.transaction.impl.DefaultTransactionStatus)" class="member-name-link">doRollback</a><wbr>(<a href="../impl/DefaultTransactionStatus.html" title="class in io.micronaut.transaction.impl">DefaultTransactionStatus</a>&lt;org.hibernate.Session&gt;&nbsp;tx)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Perform an actual rollback of the given transaction.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>org.hibernate.Session</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getConnection()" class="member-name-link">getConnection</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>org.hibernate.Session</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getConnection()" class="member-name-link">getConnection</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Obtains the connection for the current transaction.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#hasConnection()" class="member-name-link">hasConnection</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#hasConnection()" class="member-name-link">hasConnection</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Check if the connection exists.</div>
 </div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/function/Function.html" title="class or interface in java.util.function" class="external-link">Function</a>&lt;<a href="../impl/DefaultTransactionStatus.html" title="class in io.micronaut.transaction.impl">DefaultTransactionStatus</a>&lt;org.hibernate.Session&gt;,<wbr><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#transactionSupplier()" class="member-name-link">transactionSupplier</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 </div>
 </div>
 </div>
+<div class="inherited-list">
+<h3 id="methods-inherited-from-class-io.micronaut.transaction.support.AbstractDefaultTransactionOperations">Methods inherited from class&nbsp;io.micronaut.transaction.support.<a href="../support/AbstractDefaultTransactionOperations.html" title="class in io.micronaut.transaction.support">AbstractDefaultTransactionOperations</a></h3>
+<code><a href="../support/AbstractDefaultTransactionOperations.html#createExistingTransactionStatus(io.micronaut.data.connection.ConnectionStatus,io.micronaut.transaction.TransactionDefinition,io.micronaut.transaction.impl.DefaultTransactionStatus)">createExistingTransactionStatus</a>, <a href="../support/AbstractDefaultTransactionOperations.html#createNewTransactionStatus(io.micronaut.data.connection.ConnectionStatus,io.micronaut.transaction.TransactionDefinition)">createNewTransactionStatus</a>, <a href="../support/AbstractDefaultTransactionOperations.html#createNoTxTransactionStatus(io.micronaut.data.connection.ConnectionStatus,io.micronaut.transaction.TransactionDefinition)">createNoTxTransactionStatus</a></code></div>
 <div class="inherited-list">
 <h3 id="methods-inherited-from-class-io.micronaut.transaction.support.AbstractTransactionOperations">Methods inherited from class&nbsp;io.micronaut.transaction.support.<a href="../support/AbstractTransactionOperations.html" title="class in io.micronaut.transaction.support">AbstractTransactionOperations</a></h3>
 <code><a href="../support/AbstractTransactionOperations.html#commit(io.micronaut.transaction.TransactionStatus)">commit</a>, <a href="../support/AbstractTransactionOperations.html#determineTimeout(io.micronaut.transaction.TransactionDefinition)">determineTimeout</a>, <a href="../support/AbstractTransactionOperations.html#doExecute(io.micronaut.transaction.TransactionDefinition,io.micronaut.transaction.TransactionCallback)">doExecute</a>, <a href="../support/AbstractTransactionOperations.html#doResume(T)">doResume</a>, <a href="../support/AbstractTransactionOperations.html#doSuspend(T)">doSuspend</a>, <a href="../support/AbstractTransactionOperations.html#getConnectionDefinition(io.micronaut.transaction.TransactionDefinition)">getConnectionDefinition</a>, <a href="../support/AbstractTransactionOperations.html#getTransaction(io.micronaut.transaction.TransactionDefinition)">getTransaction</a>, <a href="../support/AbstractTransactionOperations.html#nested(T,java.util.function.Supplier)">nested</a>, <a href="../support/AbstractTransactionOperations.html#rollback(io.micronaut.transaction.TransactionStatus)">rollback</a>, <a href="../support/AbstractTransactionOperations.html#suspend(T,java.util.function.Supplier)">suspend</a></code></div>
@@ -192,9 +181,21 @@ loadScripts(document, 'script');</script>
 <h2>Method Details</h2>
 <ul class="member-list">
 <li>
-<section class="detail" id="doBegin(io.micronaut.transaction.hibernate.HibernateTransactionStatus)">
+<section class="detail" id="transactionSupplier()">
+<h3>transactionSupplier</h3>
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/function/Function.html" title="class or interface in java.util.function" class="external-link">Function</a>&lt;<a href="../impl/DefaultTransactionStatus.html" title="class in io.micronaut.transaction.impl">DefaultTransactionStatus</a>&lt;org.hibernate.Session&gt;,<wbr><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;</span>&nbsp;<span class="element-name">transactionSupplier</span>()</div>
+<dl class="notes">
+<dt>Overrides:</dt>
+<dd><code><a href="../support/AbstractDefaultTransactionOperations.html#transactionSupplier()">transactionSupplier</a></code>&nbsp;in class&nbsp;<code><a href="../support/AbstractDefaultTransactionOperations.html" title="class in io.micronaut.transaction.support">AbstractDefaultTransactionOperations</a>&lt;org.hibernate.Session&gt;</code></dd>
+<dt>Returns:</dt>
+<dd>The transaction object supplier</dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="doBegin(io.micronaut.transaction.impl.DefaultTransactionStatus)">
 <h3>doBegin</h3>
-<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">doBegin</span><wbr><span class="parameters">(io.micronaut.transaction.hibernate.HibernateTransactionStatus&nbsp;txStatus)</span></div>
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">doBegin</span><wbr><span class="parameters">(<a href="../impl/DefaultTransactionStatus.html" title="class in io.micronaut.transaction.impl">DefaultTransactionStatus</a>&lt;org.hibernate.Session&gt;&nbsp;txStatus)</span></div>
 <div class="block"><span class="descfrm-type-label">Description copied from class:&nbsp;<code><a href="../support/AbstractTransactionOperations.html#doBegin(T)">AbstractTransactionOperations</a></code></span></div>
 <div class="block">Begin a new transaction with semantics according to the given transaction
  definition. Does not have to care about applying the propagation behavior,
@@ -204,16 +205,16 @@ loadScripts(document, 'script');</script>
  previous transaction has been suspended.</div>
 <dl class="notes">
 <dt>Specified by:</dt>
-<dd><code><a href="../support/AbstractTransactionOperations.html#doBegin(T)">doBegin</a></code>&nbsp;in class&nbsp;<code><a href="../support/AbstractTransactionOperations.html" title="class in io.micronaut.transaction.support">AbstractTransactionOperations</a>&lt;io.micronaut.transaction.hibernate.HibernateTransactionStatus,<wbr>org.hibernate.Session&gt;</code></dd>
+<dd><code><a href="../support/AbstractTransactionOperations.html#doBegin(T)">doBegin</a></code>&nbsp;in class&nbsp;<code><a href="../support/AbstractTransactionOperations.html" title="class in io.micronaut.transaction.support">AbstractTransactionOperations</a>&lt;<a href="../impl/DefaultTransactionStatus.html" title="class in io.micronaut.transaction.impl">DefaultTransactionStatus</a>&lt;org.hibernate.Session&gt;,<wbr>org.hibernate.Session&gt;</code></dd>
 <dt>Parameters:</dt>
 <dd><code>txStatus</code> - The transaction</dd>
 </dl>
 </section>
 </li>
 <li>
-<section class="detail" id="doCommit(io.micronaut.transaction.hibernate.HibernateTransactionStatus)">
+<section class="detail" id="doCommit(io.micronaut.transaction.impl.DefaultTransactionStatus)">
 <h3>doCommit</h3>
-<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">doCommit</span><wbr><span class="parameters">(io.micronaut.transaction.hibernate.HibernateTransactionStatus&nbsp;tx)</span></div>
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">doCommit</span><wbr><span class="parameters">(<a href="../impl/DefaultTransactionStatus.html" title="class in io.micronaut.transaction.impl">DefaultTransactionStatus</a>&lt;org.hibernate.Session&gt;&nbsp;tx)</span></div>
 <div class="block"><span class="descfrm-type-label">Description copied from class:&nbsp;<code><a href="../support/AbstractTransactionOperations.html#doCommit(T)">AbstractTransactionOperations</a></code></span></div>
 <div class="block">Perform an actual commit of the given transaction.
  <p>An implementation does not need to check the "new transaction" flag
@@ -222,16 +223,16 @@ loadScripts(document, 'script');</script>
  contained in the passed-in status.</div>
 <dl class="notes">
 <dt>Specified by:</dt>
-<dd><code><a href="../support/AbstractTransactionOperations.html#doCommit(T)">doCommit</a></code>&nbsp;in class&nbsp;<code><a href="../support/AbstractTransactionOperations.html" title="class in io.micronaut.transaction.support">AbstractTransactionOperations</a>&lt;io.micronaut.transaction.hibernate.HibernateTransactionStatus,<wbr>org.hibernate.Session&gt;</code></dd>
+<dd><code><a href="../support/AbstractTransactionOperations.html#doCommit(T)">doCommit</a></code>&nbsp;in class&nbsp;<code><a href="../support/AbstractTransactionOperations.html" title="class in io.micronaut.transaction.support">AbstractTransactionOperations</a>&lt;<a href="../impl/DefaultTransactionStatus.html" title="class in io.micronaut.transaction.impl">DefaultTransactionStatus</a>&lt;org.hibernate.Session&gt;,<wbr>org.hibernate.Session&gt;</code></dd>
 <dt>Parameters:</dt>
 <dd><code>tx</code> - The transaction</dd>
 </dl>
 </section>
 </li>
 <li>
-<section class="detail" id="doRollback(io.micronaut.transaction.hibernate.HibernateTransactionStatus)">
+<section class="detail" id="doRollback(io.micronaut.transaction.impl.DefaultTransactionStatus)">
 <h3>doRollback</h3>
-<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">doRollback</span><wbr><span class="parameters">(io.micronaut.transaction.hibernate.HibernateTransactionStatus&nbsp;tx)</span></div>
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">doRollback</span><wbr><span class="parameters">(<a href="../impl/DefaultTransactionStatus.html" title="class in io.micronaut.transaction.impl">DefaultTransactionStatus</a>&lt;org.hibernate.Session&gt;&nbsp;tx)</span></div>
 <div class="block"><span class="descfrm-type-label">Description copied from class:&nbsp;<code><a href="../support/AbstractTransactionOperations.html#doRollback(T)">AbstractTransactionOperations</a></code></span></div>
 <div class="block">Perform an actual rollback of the given transaction.
  <p>An implementation does not need to check the "new transaction" flag;
@@ -239,72 +240,9 @@ loadScripts(document, 'script');</script>
  will be performed on the transaction object contained in the passed-in status.</div>
 <dl class="notes">
 <dt>Specified by:</dt>
-<dd><code><a href="../support/AbstractTransactionOperations.html#doRollback(T)">doRollback</a></code>&nbsp;in class&nbsp;<code><a href="../support/AbstractTransactionOperations.html" title="class in io.micronaut.transaction.support">AbstractTransactionOperations</a>&lt;io.micronaut.transaction.hibernate.HibernateTransactionStatus,<wbr>org.hibernate.Session&gt;</code></dd>
+<dd><code><a href="../support/AbstractTransactionOperations.html#doRollback(T)">doRollback</a></code>&nbsp;in class&nbsp;<code><a href="../support/AbstractTransactionOperations.html" title="class in io.micronaut.transaction.support">AbstractTransactionOperations</a>&lt;<a href="../impl/DefaultTransactionStatus.html" title="class in io.micronaut.transaction.impl">DefaultTransactionStatus</a>&lt;org.hibernate.Session&gt;,<wbr>org.hibernate.Session&gt;</code></dd>
 <dt>Parameters:</dt>
 <dd><code>tx</code> - The transaction</dd>
-</dl>
-</section>
-</li>
-<li>
-<section class="detail" id="createNoTxTransactionStatus(io.micronaut.data.connection.ConnectionStatus,io.micronaut.transaction.TransactionDefinition)">
-<h3>createNoTxTransactionStatus</h3>
-<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">io.micronaut.transaction.hibernate.HibernateTransactionStatus</span>&nbsp;<span class="element-name">createNoTxTransactionStatus</span><wbr><span class="parameters">(@NonNull
- <a href="../../data/connection/ConnectionStatus.html" title="interface in io.micronaut.data.connection">ConnectionStatus</a>&lt;org.hibernate.Session&gt;&nbsp;connectionStatus,
- @NonNull
- <a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition)</span></div>
-<div class="block"><span class="descfrm-type-label">Description copied from class:&nbsp;<code><a href="../support/AbstractTransactionOperations.html#createNoTxTransactionStatus(io.micronaut.data.connection.ConnectionStatus,io.micronaut.transaction.TransactionDefinition)">AbstractTransactionOperations</a></code></span></div>
-<div class="block">Create transaction status without open transaction.</div>
-<dl class="notes">
-<dt>Specified by:</dt>
-<dd><code><a href="../support/AbstractTransactionOperations.html#createNoTxTransactionStatus(io.micronaut.data.connection.ConnectionStatus,io.micronaut.transaction.TransactionDefinition)">createNoTxTransactionStatus</a></code>&nbsp;in class&nbsp;<code><a href="../support/AbstractTransactionOperations.html" title="class in io.micronaut.transaction.support">AbstractTransactionOperations</a>&lt;io.micronaut.transaction.hibernate.HibernateTransactionStatus,<wbr>org.hibernate.Session&gt;</code></dd>
-<dt>Parameters:</dt>
-<dd><code>connectionStatus</code> - The connection status</dd>
-<dd><code>definition</code> - The transaction definition</dd>
-<dt>Returns:</dt>
-<dd>new transaction status</dd>
-</dl>
-</section>
-</li>
-<li>
-<section class="detail" id="createNewTransactionStatus(io.micronaut.data.connection.ConnectionStatus,io.micronaut.transaction.TransactionDefinition)">
-<h3>createNewTransactionStatus</h3>
-<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">io.micronaut.transaction.hibernate.HibernateTransactionStatus</span>&nbsp;<span class="element-name">createNewTransactionStatus</span><wbr><span class="parameters">(@NonNull
- <a href="../../data/connection/ConnectionStatus.html" title="interface in io.micronaut.data.connection">ConnectionStatus</a>&lt;org.hibernate.Session&gt;&nbsp;connectionStatus,
- @NonNull
- <a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition)</span></div>
-<div class="block"><span class="descfrm-type-label">Description copied from class:&nbsp;<code><a href="../support/AbstractTransactionOperations.html#createNewTransactionStatus(io.micronaut.data.connection.ConnectionStatus,io.micronaut.transaction.TransactionDefinition)">AbstractTransactionOperations</a></code></span></div>
-<div class="block">Create transaction status with new transaction.</div>
-<dl class="notes">
-<dt>Specified by:</dt>
-<dd><code><a href="../support/AbstractTransactionOperations.html#createNewTransactionStatus(io.micronaut.data.connection.ConnectionStatus,io.micronaut.transaction.TransactionDefinition)">createNewTransactionStatus</a></code>&nbsp;in class&nbsp;<code><a href="../support/AbstractTransactionOperations.html" title="class in io.micronaut.transaction.support">AbstractTransactionOperations</a>&lt;io.micronaut.transaction.hibernate.HibernateTransactionStatus,<wbr>org.hibernate.Session&gt;</code></dd>
-<dt>Parameters:</dt>
-<dd><code>connectionStatus</code> - The connection status</dd>
-<dd><code>definition</code> - The transaction definition</dd>
-<dt>Returns:</dt>
-<dd>new transaction status</dd>
-</dl>
-</section>
-</li>
-<li>
-<section class="detail" id="createExistingTransactionStatus(io.micronaut.data.connection.ConnectionStatus,io.micronaut.transaction.TransactionDefinition,io.micronaut.transaction.hibernate.HibernateTransactionStatus)">
-<h3>createExistingTransactionStatus</h3>
-<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">io.micronaut.transaction.hibernate.HibernateTransactionStatus</span>&nbsp;<span class="element-name">createExistingTransactionStatus</span><wbr><span class="parameters">(@NonNull
- <a href="../../data/connection/ConnectionStatus.html" title="interface in io.micronaut.data.connection">ConnectionStatus</a>&lt;org.hibernate.Session&gt;&nbsp;connectionStatus,
- @NonNull
- <a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition,
- @NonNull
- io.micronaut.transaction.hibernate.HibernateTransactionStatus&nbsp;existingTransaction)</span></div>
-<div class="block"><span class="descfrm-type-label">Description copied from class:&nbsp;<code><a href="../support/AbstractTransactionOperations.html#createExistingTransactionStatus(io.micronaut.data.connection.ConnectionStatus,io.micronaut.transaction.TransactionDefinition,T)">AbstractTransactionOperations</a></code></span></div>
-<div class="block">Create transaction status with existing transaction.</div>
-<dl class="notes">
-<dt>Specified by:</dt>
-<dd><code><a href="../support/AbstractTransactionOperations.html#createExistingTransactionStatus(io.micronaut.data.connection.ConnectionStatus,io.micronaut.transaction.TransactionDefinition,T)">createExistingTransactionStatus</a></code>&nbsp;in class&nbsp;<code><a href="../support/AbstractTransactionOperations.html" title="class in io.micronaut.transaction.support">AbstractTransactionOperations</a>&lt;io.micronaut.transaction.hibernate.HibernateTransactionStatus,<wbr>org.hibernate.Session&gt;</code></dd>
-<dt>Parameters:</dt>
-<dd><code>connectionStatus</code> - The connection status</dd>
-<dd><code>definition</code> - The transaction definition</dd>
-<dd><code>existingTransaction</code> - The existing transaction</dd>
-<dt>Returns:</dt>
-<dd>new transaction status</dd>
 </dl>
 </section>
 </li>
@@ -332,7 +270,7 @@ loadScripts(document, 'script');</script>
 <dt>Specified by:</dt>
 <dd><code><a href="../TransactionOperations.html#hasConnection()">hasConnection</a></code>&nbsp;in interface&nbsp;<code><a href="../TransactionOperations.html" title="interface in io.micronaut.transaction">TransactionOperations</a>&lt;org.hibernate.Session&gt;</code></dd>
 <dt>Overrides:</dt>
-<dd><code><a href="../support/AbstractTransactionOperations.html#hasConnection()">hasConnection</a></code>&nbsp;in class&nbsp;<code><a href="../support/AbstractTransactionOperations.html" title="class in io.micronaut.transaction.support">AbstractTransactionOperations</a>&lt;io.micronaut.transaction.hibernate.HibernateTransactionStatus,<wbr>org.hibernate.Session&gt;</code></dd>
+<dd><code><a href="../support/AbstractTransactionOperations.html#hasConnection()">hasConnection</a></code>&nbsp;in class&nbsp;<code><a href="../support/AbstractTransactionOperations.html" title="class in io.micronaut.transaction.support">AbstractTransactionOperations</a>&lt;<a href="../impl/DefaultTransactionStatus.html" title="class in io.micronaut.transaction.impl">DefaultTransactionStatus</a>&lt;org.hibernate.Session&gt;,<wbr>org.hibernate.Session&gt;</code></dd>
 <dt>Returns:</dt>
 <dd>True if transaction exists</dd>
 </dl>

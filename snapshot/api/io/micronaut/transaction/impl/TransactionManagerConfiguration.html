@@ -75,10 +75,6 @@ loadScripts(document, 'script');</script>
 <div class="inheritance">io.micronaut.transaction.impl.TransactionManagerConfiguration</div>
 </div>
 <section class="class-description" id="class-description">
-<dl class="notes">
-<dt>Direct Known Subclasses:</dt>
-<dd><code><a href="DataSourceTransactionManagerConfiguration.html" title="class in io.micronaut.transaction.impl">DataSourceTransactionManagerConfiguration</a></code></dd>
-</dl>
 <hr>
 <div class="type-signature"><span class="modifiers">public class </span><span class="element-name type-name-label">TransactionManagerConfiguration</span>
 <span class="extends-implements">extends <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></span></div>
@@ -116,12 +112,12 @@ loadScripts(document, 'script');</script>
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/Duration.html" title="class or interface in java.time" class="external-link">Duration</a></code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/Duration.html" title="class or interface in java.time" class="external-link">Duration</a>&gt;</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#determineTimeout(io.micronaut.transaction.TransactionDefinition)" class="member-name-link">determineTimeout</a><wbr>(<a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Determine the actual timeout to use for the given definition.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/Duration.html" title="class or interface in java.time" class="external-link">Duration</a></code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/Duration.html" title="class or interface in java.time" class="external-link">Duration</a>&gt;</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getDefaultTimeout()" class="member-name-link">getDefaultTimeout</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Return the default timeout that this transaction manager should apply
@@ -247,7 +243,7 @@ loadScripts(document, 'script');</script>
 <section class="detail" id="getDefaultTimeout()">
 <h3>getDefaultTimeout</h3>
 <div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">public final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/Duration.html" title="class or interface in java.time" class="external-link">Duration</a></span>&nbsp;<span class="element-name">getDefaultTimeout</span>()</div>
+</span><span class="modifiers">public final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/Duration.html" title="class or interface in java.time" class="external-link">Duration</a>&gt;</span>&nbsp;<span class="element-name">getDefaultTimeout</span>()</div>
 <div class="block">Return the default timeout that this transaction manager should apply
  if there is no timeout specified at the transaction level, in seconds.
  <p>Returns <code>TransactionDefinition.TIMEOUT_DEFAULT</code> to indicate
@@ -439,7 +435,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="determineTimeout(io.micronaut.transaction.TransactionDefinition)">
 <h3>determineTimeout</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/Duration.html" title="class or interface in java.time" class="external-link">Duration</a></span>&nbsp;<span class="element-name">determineTimeout</span><wbr><span class="parameters">(<a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition)</span></div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/Duration.html" title="class or interface in java.time" class="external-link">Duration</a>&gt;</span>&nbsp;<span class="element-name">determineTimeout</span><wbr><span class="parameters">(<a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition)</span></div>
 <div class="block">Determine the actual timeout to use for the given definition.
  Will fall back to this manager's default timeout if the
  transaction definition doesn't specify a non-default value.</div>

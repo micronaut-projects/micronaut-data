@@ -101,12 +101,6 @@ loadScripts(document, 'script');</script>
 <dd>08.05.2003</dd>
 <dt>Author:</dt>
 <dd>Juergen Hoeller, graemerocher</dd>
-<dt>See Also:</dt>
-<dd>
-<ul class="see-list-long">
-<li><a href="SynchronousTransactionManager.html#getTransaction(io.micronaut.transaction.TransactionDefinition)"><code>SynchronousTransactionManager.getTransaction(TransactionDefinition)</code></a></li>
-</ul>
-</dd>
 </dl>
 </section>
 <section class="summary">
@@ -182,7 +176,7 @@ loadScripts(document, 'script');</script>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
 <div class="block">Collection of exception classes that shouldn't cause the rollback.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default <a href="TransactionDefinition.Isolation.html" title="enum class in io.micronaut.transaction">TransactionDefinition.Isolation</a></code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="TransactionDefinition.Isolation.html" title="enum class in io.micronaut.transaction">TransactionDefinition.Isolation</a>&gt;</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#getIsolationLevel()" class="member-name-link">getIsolationLevel</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
 <div class="block">Return the isolation level.</div>
@@ -202,12 +196,12 @@ loadScripts(document, 'script');</script>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
 <div class="block">Collection of exception classes that should cause the rollback.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/Duration.html" title="class or interface in java.time" class="external-link">Duration</a></code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/Duration.html" title="class or interface in java.time" class="external-link">Duration</a>&gt;</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#getTimeout()" class="member-name-link">getTimeout</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
 <div class="block">Return the transaction timeout.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default boolean</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Boolean.html" title="class or interface in java.lang" class="external-link">Boolean</a>&gt;</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#isReadOnly()" class="member-name-link">isReadOnly</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
 <div class="block">Return whether to optimize as a read-only transaction.</div>
@@ -296,7 +290,7 @@ loadScripts(document, 'script');</script>
 <section class="detail" id="getIsolationLevel()">
 <h3>getIsolationLevel</h3>
 <div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">default</span>&nbsp;<span class="return-type"><a href="TransactionDefinition.Isolation.html" title="enum class in io.micronaut.transaction">TransactionDefinition.Isolation</a></span>&nbsp;<span class="element-name">getIsolationLevel</span>()</div>
+</span><span class="modifiers">default</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="TransactionDefinition.Isolation.html" title="enum class in io.micronaut.transaction">TransactionDefinition.Isolation</a>&gt;</span>&nbsp;<span class="element-name">getIsolationLevel</span>()</div>
 <div class="block">Return the isolation level.
  <p>Must return one of the <code>ISOLATION_XXX</code> constants defined on
  <a href="TransactionDefinition.html" title="interface in io.micronaut.transaction"><code>this interface</code></a>. Those constants are designed
@@ -326,7 +320,7 @@ loadScripts(document, 'script');</script>
 <section class="detail" id="getTimeout()">
 <h3>getTimeout</h3>
 <div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">default</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/Duration.html" title="class or interface in java.time" class="external-link">Duration</a></span>&nbsp;<span class="element-name">getTimeout</span>()</div>
+</span><span class="modifiers">default</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/Duration.html" title="class or interface in java.time" class="external-link">Duration</a>&gt;</span>&nbsp;<span class="element-name">getTimeout</span>()</div>
 <div class="block">Return the transaction timeout.
  <p>Must return a number of seconds, or <a href="#TIMEOUT_DEFAULT"><code>TIMEOUT_DEFAULT</code></a>.
  <p>Exclusively designed for use with <a href="TransactionDefinition.Propagation.html#REQUIRED"><code>TransactionDefinition.Propagation.REQUIRED</code></a> or
@@ -344,7 +338,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="isReadOnly()">
 <h3>isReadOnly</h3>
-<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">isReadOnly</span>()</div>
+<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Boolean.html" title="class or interface in java.lang" class="external-link">Boolean</a>&gt;</span>&nbsp;<span class="element-name">isReadOnly</span>()</div>
 <div class="block">Return whether to optimize as a read-only transaction.
  <p>The read-only flag applies to any transaction context, whether backed
  by an actual resource transaction (<a href="TransactionDefinition.Propagation.html#REQUIRED"><code>TransactionDefinition.Propagation.REQUIRED</code></a>/
@@ -360,13 +354,6 @@ loadScripts(document, 'script');</script>
 <dt>Returns:</dt>
 <dd><code>true</code> if the transaction is to be optimized as read-only
  (<code>false</code> by default)</dd>
-<dt>See Also:</dt>
-<dd>
-<ul class="see-list-long">
-<li><a href="support/TransactionSynchronization.html#beforeCommit(boolean)"><code>TransactionSynchronization.beforeCommit(boolean)</code></a></li>
-<li><code>io.micronaut.transaction.support.TransactionSynchronizationManager#isCurrentTransactionReadOnly()</code></li>
-</ul>
-</dd>
 </dl>
 </section>
 </li>
@@ -383,12 +370,6 @@ loadScripts(document, 'script');</script>
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>the name of this transaction (<code>null</code> by default}</dd>
-<dt>See Also:</dt>
-<dd>
-<ul class="see-list-long">
-<li><code>io.micronaut.transaction.support.TransactionSynchronizationManager#getCurrentTransactionName()</code></li>
-</ul>
-</dd>
 </dl>
 </section>
 </li>

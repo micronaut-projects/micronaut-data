@@ -88,7 +88,7 @@ loadScripts(document, 'script');</script>
 </dl>
 <dl class="notes">
 <dt>Direct Known Subclasses:</dt>
-<dd><code><a href="../jdbc/DataSourceTransactionManager.html" title="class in io.micronaut.transaction.jdbc">DataSourceTransactionManager</a></code>, <code><a href="../hibernate/HibernateTransactionManager.html" title="class in io.micronaut.transaction.hibernate">HibernateTransactionManager</a></code></dd>
+<dd><code><a href="AbstractDefaultTransactionOperations.html" title="class in io.micronaut.transaction.support">AbstractDefaultTransactionOperations</a></code></dd>
 </dl>
 <hr>
 <div class="type-signature"><span class="annotations">@Internal
@@ -176,7 +176,7 @@ implements <a href="../TransactionOperations.html" title="interface in io.micron
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Create transaction status without open transaction.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/Duration.html" title="class or interface in java.time" class="external-link">Duration</a></code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/Duration.html" title="class or interface in java.time" class="external-link">Duration</a>&gt;</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#determineTimeout(io.micronaut.transaction.TransactionDefinition)" class="member-name-link">determineTimeout</a><wbr>(<a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Determine the actual timeout to use for the given definition.</div>
@@ -463,7 +463,7 @@ implements <a href="../TransactionOperations.html" title="interface in io.micron
 <li>
 <section class="detail" id="determineTimeout(io.micronaut.transaction.TransactionDefinition)">
 <h3>determineTimeout</h3>
-<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/Duration.html" title="class or interface in java.time" class="external-link">Duration</a></span>&nbsp;<span class="element-name">determineTimeout</span><wbr><span class="parameters">(<a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition)</span></div>
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/Duration.html" title="class or interface in java.time" class="external-link">Duration</a>&gt;</span>&nbsp;<span class="element-name">determineTimeout</span><wbr><span class="parameters">(<a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition)</span></div>
 <div class="block">Determine the actual timeout to use for the given definition.
  Will fall back to this manager's default timeout if the
  transaction definition doesn't specify a non-default value.</div>
@@ -471,7 +471,7 @@ implements <a href="../TransactionOperations.html" title="interface in io.micron
 <dt>Parameters:</dt>
 <dd><code>definition</code> - the transaction definition</dd>
 <dt>Returns:</dt>
-<dd>the actual timeout to use</dd>
+<dd>the optional timeout to use</dd>
 <dt>See Also:</dt>
 <dd>
 <ul class="see-list-long">
