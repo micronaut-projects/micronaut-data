@@ -558,7 +558,7 @@ interface MyRepository {
     void "test build create embedded"() {
         when:
             QueryBuilder encoder = new SqlQueryBuilder()
-            def statements = encoder.buildCreateTableStatements(entity)
+            def statements = encoder.buildCreateTableStatements(true, entity)
 
         then:
             statements.join("\n") == query
@@ -571,7 +571,7 @@ interface MyRepository {
             ]
             query << [
                     'CREATE TABLE "Shipment1" ("sp_country" VARCHAR(255) NOT NULL,"sp_city" VARCHAR(255) NOT NULL,"field" VARCHAR(255) NOT NULL, PRIMARY KEY("sp_country","sp_city"));',
-                    'CREATE TABLE "uuid_entity" ("uuid" UUID,"name" VARCHAR(255) NOT NULL,"child_id" UUID,"xyz" UUID,"embedded_child_embedded_child2_id" UUID,"nullable_value" UUID, PRIMARY KEY("uuid"));',
+                    'CREATE TABLE "uuid_entity" ("uuid" UUID,"name" VARCHAR(255) NOT NULL,"child_id" UUID,"xyz" UUID,"embedded_child_embedded_child2_id" UUID,"nullable_value" UUID, PRIMARY KEY("uuid"));\nALTER TABLE "uuid_entity" ADD CONSTRAINT FK_hyur1ke83xn0gl849uh7ppeql FOREIGN KEY("child_id") REFERENCES "uuid_child_entity"("uuid");',
                     'CREATE TABLE "user_role_composite" ("id_user_id" BIGINT NOT NULL,"id_role_id" BIGINT NOT NULL, PRIMARY KEY("id_user_id","id_role_id"));'
             ]
     }

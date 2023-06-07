@@ -10,6 +10,10 @@ trait H2TestPropertyProvider implements TestPropertyProvider {
         return SchemaGenerate.CREATE
     }
 
+    boolean handleForeignKeys() {
+        return true
+    }
+
     List<String> packages() {
         def currentClassPackage = getClass().package.name
         return Arrays.asList(currentClassPackage, "io.micronaut.data.tck.entities", "io.micronaut.data.tck.jdbc.entities")
@@ -28,7 +32,7 @@ trait H2TestPropertyProvider implements TestPropertyProvider {
         return [
                 (prefix + '.url')            : "r2dbc:h2:mem:///${dataSourceName};DB_CLOSE_DELAY=10",
                 (prefix + '.schema-generate'): schemaGenerate(),
-                (prefix + '.handle-foreign-keys'): 'true',
+                (prefix + '.handle-foreign-keys'): handleForeignKeys(),
                 (prefix + '.dialect')        : 'h2',
                 (prefix + '.username')       : '',
                 (prefix + '.password')       : '',

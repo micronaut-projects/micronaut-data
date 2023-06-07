@@ -16,6 +16,10 @@ trait TestResourcesDatabaseTestPropertyProvider implements TestPropertyProvider 
         return SchemaGenerate.CREATE
     }
 
+    boolean handleForeignKeys() {
+        return true
+    }
+
     List<String> packages() {
         def currentClassPackage = getClass().package.name
         return Arrays.asList(currentClassPackage, "io.micronaut.data.tck.entities", "io.micronaut.data.tck.jdbc.entities")
@@ -51,7 +55,7 @@ trait TestResourcesDatabaseTestPropertyProvider implements TestPropertyProvider 
         return [
                 (prefix + '.db-type')             : dbType(),
                 (prefix + '.schema-generate')     : schemaGenerate(),
-                (prefix + '.handle-foreign-keys') : 'true',
+                (prefix + '.handle-foreign-keys') : handleForeignKeys(),
                 (prefix + '.dialect')             : dialect(),
                 (prefix + '.packages')            : packages(),
         ] as Map<String, String>
