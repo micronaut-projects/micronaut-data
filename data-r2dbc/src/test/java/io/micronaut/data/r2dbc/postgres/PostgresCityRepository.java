@@ -15,10 +15,17 @@
  */
 package io.micronaut.data.r2dbc.postgres;
 
+import io.micronaut.data.annotation.Query;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.r2dbc.annotation.R2dbcRepository;
 import io.micronaut.data.tck.repositories.CityRepository;
 
+import java.util.List;
+
 @R2dbcRepository(dialect = Dialect.POSTGRES)
 public interface PostgresCityRepository extends CityRepository {
+
+    @Override
+    @Query("DELETE FROM \"countryRegionCity\" WHERE \"cityId\" IN (:cityIds)")
+    void deleteCountryRegionCities(List<Long> cityIds);
 }

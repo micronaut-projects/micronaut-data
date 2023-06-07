@@ -16,6 +16,7 @@
 package io.micronaut.data.tck.repositories;
 
 import io.micronaut.data.annotation.Join;
+import io.micronaut.data.annotation.Query;
 import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.data.tck.entities.City;
 
@@ -31,4 +32,7 @@ public interface CityRepository extends CrudRepository<City, Long> {
     @Join(value = "countryRegion", alias = "cr")
     @Join(value = "countryRegion.country", alias = "c")
     List<City> getByCountryRegionCountryName(String name);
+
+    @Query("DELETE FROM countryRegionCity WHERE cityId IN (:cityIds)")
+    void deleteCountryRegionCities(List<Long> cityIds);
 }

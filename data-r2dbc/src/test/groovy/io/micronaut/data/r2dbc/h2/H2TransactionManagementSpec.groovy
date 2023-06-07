@@ -13,13 +13,16 @@ import jakarta.inject.Inject
 @Stepwise
 class H2TransactionManagementSpec extends Specification implements H2TestPropertyProvider {
 
+    @Shared @Inject H2PetRepository petRepository
     @Shared @Inject H2OwnerRepository ownerRepository
 
     def setup() {
+        Mono.from(petRepository.deleteAll()).block()
         Mono.from(ownerRepository.deleteAll()).block()
     }
 
     def cleanup() {
+        Mono.from(petRepository.deleteAll()).block()
         Mono.from(ownerRepository.deleteAll()).block()
     }
 

@@ -42,6 +42,7 @@ trait H2TestPropertyProvider implements TestPropertyProvider {
         return [
                 (prefix + '.url')            : "jdbc:h2:mem:${dataSourceName};LOCK_TIMEOUT=10000;DB_CLOSE_ON_EXIT=FALSE",
                 (prefix + '.schema-generate'): schemaGenerate(),
+                (prefix + '.handle-foreign-keys'): 'true',
                 (prefix + '.dialect')        : 'h2',
                 (prefix + '.username')       : '',
                 (prefix + '.password')       : '',

@@ -24,7 +24,7 @@ import spock.lang.Shared
 
 class SqlServerPaginationSpec extends AbstractPageSpec implements MSSQLTestPropertyProvider {
 
-    @Shared @AutoCleanup ApplicationContext context
+    @Shared @AutoCleanup ApplicationContext context = ApplicationContext.run(properties)
 
     @Override
     PersonRepository getPersonRepository() {
@@ -34,10 +34,5 @@ class SqlServerPaginationSpec extends AbstractPageSpec implements MSSQLTestPrope
     @Override
     BookRepository getBookRepository() {
         return context.getBean(MSBookRepository)
-    }
-
-    @Override
-    void init() {
-        context = ApplicationContext.run(properties)
     }
 }

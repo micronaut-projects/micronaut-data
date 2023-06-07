@@ -53,10 +53,14 @@ import io.micronaut.data.model.query.builder.QueryParameterBinding;
 import io.micronaut.data.model.query.builder.QueryResult;
 
 import java.lang.annotation.Annotation;
+import java.math.BigInteger;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -88,6 +92,8 @@ import static io.micronaut.data.model.query.builder.sql.SqlQueryBuilderUtils.add
 @SuppressWarnings("FileLength")
 public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements QueryBuilder, SqlQueryConfiguration.DialectConfiguration {
 
+    public static final String ALTER_TABLE = "ALTER TABLE";
+
     /**
      * The start of an IN expression.
      */
@@ -109,7 +115,6 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     private final Dialect dialect;
     private final Map<Dialect, DialectConfig> perDialectConfig = new HashMap<>(3);
     private Pattern positionalParameterPattern;
-
 
     /**
      * Constructor with annotation metadata.
@@ -212,8 +217,26 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     @Experimental
     public @NonNull
     String buildBatchCreateTableStatement(@NonNull PersistentEntity... entities) {
-        return Arrays.stream(entities).flatMap(entity -> Stream.of(buildCreateTableStatements(entity)))
-                .collect(Collectors.joining(System.getProperty("line.separator")));
+        return buildBatchCreateTableStatement(false, entities);
+    }
+
+    /**
+     * Builds a batch create tables statement. Designed for testing and not production usage. For production a
+     * SQL migration tool such as Flyway or Liquibase is recommended.
+     *
+     * @param createForeignKeys whether to create foreign keys when creating tables
+     * @param entities the entities
+     * @return The table
+     */
+    @Experimental
+    public @NonNull
+    String buildBatchCreateTableStatement(boolean createForeignKeys, @NonNull PersistentEntity... entities) {
+        if (createForeignKeys) {
+            return Arrays.stream(entities).flatMap(entity -> Stream.of(buildCreateTableStatements(true, entity)))
+                .sorted(new StatementsComparator(true)).collect(Collectors.joining(System.getProperty("line.separator")));
+        }
+        return Arrays.stream(entities).flatMap(entity -> Stream.of(buildCreateTableStatements(false, entity)))
+            .collect(Collectors.joining(System.getProperty("line.separator")));
     }
 
     /**
@@ -226,10 +249,27 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     @Experimental
     public @NonNull
     String buildBatchDropTableStatement(@NonNull PersistentEntity... entities) {
-        return Arrays.stream(entities).flatMap(entity -> Stream.of(buildDropTableStatements(entity)))
-            .collect(Collectors.joining("\n"));
+        return buildBatchDropTableStatement(false, entities);
     }
 
+    /**
+     * Builds a batch drop tables statement. Designed for testing and not production usage. For production a
+     * SQL migration tool such as Flyway or Liquibase is recommended.
+     *
+     * @param dropForeignKeys whether to drop foreign keys when dropping tables
+     * @param entities the entities
+     * @return The table
+     */
+    @Experimental
+    public @NonNull
+    String buildBatchDropTableStatement(boolean dropForeignKeys, @NonNull PersistentEntity... entities) {
+        if (dropForeignKeys) {
+            return Arrays.stream(entities).flatMap(entity -> Stream.of(buildDropTableStatements(true, entity)))
+                .sorted(new StatementsComparator(false)).collect(Collectors.joining(System.getProperty("line.separator")));
+        }
+        return Arrays.stream(entities).flatMap(entity -> Stream.of(buildDropTableStatements(false, entity)))
+            .collect(Collectors.joining(System.getProperty("line.separator")));
+    }
 
     /**
      * Builds the drop table statement. Designed for testing and not production usage. For production a
@@ -241,6 +281,20 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     @Experimental
     public @NonNull
     String[] buildDropTableStatements(@NonNull PersistentEntity entity) {
+        return buildDropTableStatements(false, entity);
+    }
+
+    /**
+     * Builds the drop table statement. Designed for testing and not production usage. For production a
+     * SQL migration tool such as Flyway or Liquibase is recommended.
+     *
+     * @param dropForeignKeys whether to drop foreign keys when dropping tables
+     * @param entity The entity
+     * @return The tables for the give entity
+     */
+    @Experimental
+    public @NonNull
+    String[] buildDropTableStatements(boolean dropForeignKeys, @NonNull PersistentEntity entity) {
         String tableName = getTableName(entity);
         boolean escape = shouldEscape(entity);
         String sql = "DROP TABLE " + tableName;
@@ -258,7 +312,32 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         }
 
         dropStatements.add(sql);
+
+        if (dropForeignKeys) {
+            List<ForeignKey> foreignKeys = new ArrayList<>();
+            foreignKeys.addAll(getForeignKeys(entity));
+            addForeignKeys(entity, tableName, escape, false, foreignKeys, dropStatements);
+        }
+
         return dropStatements.toArray(new String[0]);
+    }
+
+    private List<ForeignKey> getForeignKeys(PersistentEntity entity) {
+        List<ForeignKey> foreignKeys = new ArrayList<>();
+        for (PersistentProperty prop : entity.getPersistentProperties()) {
+            // Check for foreign key
+            if (prop instanceof Association association) {
+                Relation.Kind kind = association.getKind();
+                // TODO: Any other criteria for FK?
+                if (kind == Relation.Kind.MANY_TO_ONE || (kind == Relation.Kind.ONE_TO_ONE && !association.getAnnotationMetadata().stringValue(Relation.class, "mappedBy").isPresent())) {
+                    String refTableName = getTableName(association.getAssociatedEntity());
+                    String refColumnName = association.getAssociatedEntity().getIdentity().getPersistedName();
+                    String columnName = prop.getPersistedName();
+                    foreignKeys.add(new ForeignKey(columnName, refTableName, refColumnName));
+                }
+            }
+        }
+        return foreignKeys;
     }
 
     /**
@@ -306,7 +385,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     }
 
     /**
-     * Builds the create table statement. Designed for testing and not production usage. For production a
+     * Builds the creation table statement. Designed for testing and not production usage. For production a
      * SQL migration tool such as Flyway or Liquibase is recommended.
      *
      * @param entity The entity
@@ -315,6 +394,20 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     @Experimental
     public @NonNull
     String[] buildCreateTableStatements(@NonNull PersistentEntity entity) {
+        return buildCreateTableStatements(false, entity);
+    }
+
+    /**
+     * Builds the creation table statement. Designed for testing and not production usage. For production a
+     * SQL migration tool such as Flyway or Liquibase is recommended.
+     *
+     * @param createForeignKeys whether to create foreign keys when creating tables
+     * @param entity The entity
+     * @return The tables for the give entity
+     */
+    @Experimental
+    public @NonNull
+    String[] buildCreateTableStatements(boolean createForeignKeys, @NonNull PersistentEntity entity) {
         ArgumentUtils.requireNonNull("entity", entity);
         final String unescapedTableName = getUnescapedTableName(entity);
         String tableName = getTableName(entity);
@@ -422,6 +515,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
 
         List<String> primaryColumnsName = new ArrayList<>();
         List<String> columns = new ArrayList<>();
+        List<ForeignKey> foreignKeys = new ArrayList<>();
 
         if (identity != null) {
             List<PersistentPropertyPath> ids = new ArrayList<>();
@@ -478,6 +572,9 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         for (PersistentProperty prop : entity.getPersistentProperties()) {
             traversePersistentProperties(prop, addColumn);
         }
+        if (createForeignKeys) {
+            foreignKeys.addAll(getForeignKeys(entity));
+        }
 
         StringBuilder builder = new StringBuilder("CREATE TABLE ").append(tableName).append(" (");
         builder.append(String.join(",", columns));
@@ -519,6 +616,9 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         }
         createStatements.add(builder.toString());
         addIndexes(entity, tableName, createStatements);
+        if (createForeignKeys) {
+            addForeignKeys(entity, tableName, escape, true, foreignKeys, createStatements);
+        }
         return createStatements.toArray(new String[0]);
     }
 
@@ -572,6 +672,30 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
             indexBuilder.append(");");
         }
         return indexBuilder.toString();
+    }
+
+    private void addForeignKeys(PersistentEntity entity, String tableName, boolean escape, boolean create,
+                                List<ForeignKey> foreignKeys, List<String> createStatements) {
+        if (CollectionUtils.isEmpty(foreignKeys)) {
+            return;
+        }
+        for (ForeignKey foreignKey : foreignKeys) {
+            String fkIdentity = tableName + DOT + foreignKey.getColumnName() + " references " + foreignKey.getReferencedTable() + DOT + foreignKey.getReferencedColumnName();
+            String fkName = "FK_" + hashedName(fkIdentity);
+            StringBuilder sb = new StringBuilder(ALTER_TABLE).append(SPACE).append(tableName);
+            if (create) {
+                sb.append(" ADD CONSTRAINT ").append(fkName).append(" FOREIGN KEY(");
+                sb.append(escape ? quote(foreignKey.getColumnName()) : foreignKey.getColumnName()).append(") REFERENCES ")
+                    .append(foreignKey.getReferencedTable()).append("(")
+                    .append(escape ? quote(foreignKey.getReferencedColumnName()) : foreignKey.getReferencedColumnName()).append(")");
+            } else {
+                sb.append(" DROP CONSTRAINT ").append(fkName);
+            }
+            if (dialect != Dialect.ORACLE) {
+                sb.append(";");
+            }
+            createStatements.add(sb.toString());
+        }
     }
 
     private String provideColumnList(IndexConfiguration config) {
@@ -1808,6 +1932,29 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         return SqlQueryConfiguration.DialectConfiguration.class;
     }
 
+    /**
+     * Hash a constraint name using MD5. Convert the MD5 digest to base 35
+     * (full alphanumeric), guaranteeing
+     * that the length of the name will always be smaller than the 30
+     * character identifier restriction enforced by a few dialects.
+     *
+     * @param s The name to be hashed.
+     *
+     * @return String The hashed name.
+     */
+    private static String hashedName(String s) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("MD5");
+            md.reset();
+            md.update(s.getBytes());
+            byte[] digest = md.digest();
+            BigInteger bigInt = new BigInteger(1, digest);
+            return bigInt.toString(35);
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException("Unable to generate a hashed name!", e);
+        }
+    }
+
     private static class DialectConfig {
         Boolean escapeQueries;
         String positionalFormatter;
@@ -1826,4 +1973,55 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         }
     }
 
+    private static class ForeignKey {
+        private final String columnName;
+        private final String referencedTable;
+        private final String referencedColumnName;
+
+        public ForeignKey(String columnName, String referencedTable, String referencedColumnName) {
+               this.columnName = columnName;
+               this.referencedTable = referencedTable;
+               this.referencedColumnName = referencedColumnName;
+        }
+
+        public String getColumnName() {
+            return columnName;
+        }
+
+        public String getReferencedTable() {
+            return referencedTable;
+        }
+
+        public String getReferencedColumnName() {
+            return referencedColumnName;
+        }
+    }
+
+    /**
+     * Pushes statements with 'ALTER TABLE' to the bottom or top based on alterTableLowPriority flag. Used to prioritize when there are
+     * foreign key statements.
+     */
+    private static final class StatementsComparator implements Comparator<String> {
+
+        private final boolean alterTableLowPriority;
+
+        public StatementsComparator(boolean alterTableLowPriority) {
+            this.alterTableLowPriority = alterTableLowPriority;
+        }
+
+        @Override
+        public int compare(String o1, String o2) {
+            boolean alterTable1 = o1.startsWith(ALTER_TABLE);
+            boolean alterTable2 = o2.startsWith(ALTER_TABLE);
+            if (alterTable1 && alterTable2) {
+                return 0;
+            } else if (alterTable1) {
+                return alterTableLowPriority ? 1 : -1;
+            } else if (alterTable2) {
+                return alterTableLowPriority ? -1 : 1;
+            } else {
+                return 0;
+            }
+        }
+    }
 }

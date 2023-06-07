@@ -31,7 +31,7 @@ abstract class AbstractPageSpec extends Specification {
 
     abstract BookRepository getBookRepository()
 
-    abstract void init()
+    void init() { }
 
     def setup() {
         init()

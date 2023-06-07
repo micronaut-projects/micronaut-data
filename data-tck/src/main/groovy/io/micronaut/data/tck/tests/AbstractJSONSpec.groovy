@@ -44,8 +44,8 @@ abstract class AbstractJSONSpec extends Specification {
     abstract JsonEntityRepository getJsonEntityRepository();
 
     def cleanup() {
-        saleRepository.deleteAll()
         saleItemRepository.deleteAll()
+        saleRepository.deleteAll()
     }
 
     void "test read and write json"() {

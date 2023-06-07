@@ -28,6 +28,7 @@ trait H2TestPropertyProvider implements TestPropertyProvider {
         return [
                 (prefix + '.url')            : "r2dbc:h2:mem:///${dataSourceName};DB_CLOSE_DELAY=10",
                 (prefix + '.schema-generate'): schemaGenerate(),
+                (prefix + '.handle-foreign-keys'): 'true',
                 (prefix + '.dialect')        : 'h2',
                 (prefix + '.username')       : '',
                 (prefix + '.password')       : '',

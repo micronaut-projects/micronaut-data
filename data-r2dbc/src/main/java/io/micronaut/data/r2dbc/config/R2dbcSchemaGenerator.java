@@ -38,6 +38,8 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import jakarta.annotation.PostConstruct;
+
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -60,7 +62,7 @@ public class R2dbcSchemaGenerator {
      * Default constructor.
      *
      * @param configurations     The configurations.
-     * @param schemaHandler
+     * @param schemaHandler      The schema handler
      */
     public R2dbcSchemaGenerator(List<DataR2dbcConfiguration> configurations, R2dbcSchemaHandler schemaHandler) {
         this.configurations = configurations;
@@ -78,6 +80,7 @@ public class R2dbcSchemaGenerator {
         for (DataR2dbcConfiguration configuration : configurations) {
 
             SchemaGenerate schemaGenerate = configuration.getSchemaGenerate();
+            boolean handleForeignKeys = configuration.isHandleForeignKeys();
             if (schemaGenerate != null && schemaGenerate != SchemaGenerate.NONE) {
                 List<String> packages = configuration.getPackages();
 
@@ -102,7 +105,7 @@ public class R2dbcSchemaGenerator {
                             for (String schemaName : configuration.getSchemaGenerateNames()) {
                                 result = result.then(Mono.from(schemaHandler.createSchema(connection, dialect, schemaName)))
                                     .then(Mono.from(schemaHandler.useSchema(connection, dialect, schemaName)))
-                                    .then(generate(connection, schemaGenerate, entities, builder));
+                                    .then(generate(connection, schemaGenerate, handleForeignKeys, entities, builder));
                             }
                             return result.then(Mono.from(connection.close()));
                         }
@@ -111,7 +114,7 @@ public class R2dbcSchemaGenerator {
                             result = Mono.from(schemaHandler.createSchema(connection, dialect, configuration.getSchemaGenerateName()))
                                 .then(Mono.from(schemaHandler.useSchema(connection, dialect, configuration.getSchemaGenerateName())));
                         }
-                        return result.then(generate(connection, schemaGenerate, entities, builder))
+                        return result.then(generate(connection, schemaGenerate, handleForeignKeys, entities, builder))
                             .then(Mono.from(connection.close()));
                     }).block();
                 }
@@ -119,40 +122,79 @@ public class R2dbcSchemaGenerator {
         }
     }
 
-    private Mono<Void> generate(Connection connection, SchemaGenerate schemaGenerate, PersistentEntity[] entities, SqlQueryBuilder builder) {
+    private Mono<Void> generate(Connection connection, SchemaGenerate schemaGenerate, boolean handleForeignKeys, PersistentEntity[] entities, SqlQueryBuilder builder) {
         List<String> createStatements = Arrays.stream(entities)
-                .flatMap(entity -> Arrays.stream(builder.buildCreateTableStatements(entity)))
-                .collect(Collectors.toList());
+            .flatMap(entity -> Arrays.stream(builder.buildCreateTableStatements(handleForeignKeys, entity)))
+            .collect(Collectors.toList());
+        List<String> createForeignKeyStatements;
+        if (handleForeignKeys) {
+            createForeignKeyStatements = createStatements.stream().filter(s -> s.startsWith(SqlQueryBuilder.ALTER_TABLE)).toList();
+            createStatements.removeAll(createForeignKeyStatements);
+        } else {
+            createForeignKeyStatements = new ArrayList<>();
+        }
         Flux<Void> createTablesFlow = Flux.fromIterable(createStatements)
-                .concatMap(sql -> {
-                    if (DataSettings.QUERY_LOG.isDebugEnabled()) {
-                        DataSettings.QUERY_LOG.debug("Creating Table: \n{}", sql);
-                    }
-                    return execute(connection, sql)
+            .concatMap(sql -> {
+                if (DataSettings.QUERY_LOG.isDebugEnabled()) {
+                    DataSettings.QUERY_LOG.debug("Creating Table: \n{}", sql);
+                }
+                return execute(connection, sql)
+                    .onErrorResume((throwable -> {
+                        if (LOG.isWarnEnabled()) {
+                            LOG.warn("Unable to create table :{}", throwable.getMessage());
+                        }
+                        return Mono.empty();
+                    }));
+            });
+        Flux<Void> createForeignKeysFlow = Flux.fromIterable(createForeignKeyStatements)
+            .concatMap(foreignKeySql -> {
+                if (DataSettings.QUERY_LOG.isDebugEnabled()) {
+                    DataSettings.QUERY_LOG.debug("Creating Foreign Key: \n{}", foreignKeySql);
+                }
+                return execute(connection, foreignKeySql)
+                    .onErrorResume((throwable -> {
+                        if (LOG.isWarnEnabled()) {
+                            LOG.warn("Unable to create foreign key :{}", throwable.getMessage());
+                        }
+                        return Mono.empty();
+                    }));
+            });
+        switch (schemaGenerate) {
+            case CREATE_DROP:
+                List<String> dropStatements = Arrays.stream(entities).flatMap(entity -> Arrays.stream(builder.buildDropTableStatements(handleForeignKeys, entity)))
+                    .collect(Collectors.toList());
+                List<String> dropForeignKeyStatements;
+                if (handleForeignKeys) {
+                    dropForeignKeyStatements = dropStatements.stream().filter(s -> s.startsWith(SqlQueryBuilder.ALTER_TABLE)).toList();
+                    dropStatements.removeAll(dropForeignKeyStatements);
+                } else {
+                    dropForeignKeyStatements = new ArrayList<>();
+                }
+                return Flux.fromIterable(dropForeignKeyStatements)
+                    .concatMap(foreignKeySql -> {
+                        if (DataSettings.QUERY_LOG.isDebugEnabled()) {
+                            DataSettings.QUERY_LOG.debug("Dropping Foreign Key: \n{}", foreignKeySql);
+                        }
+                        return execute(connection, foreignKeySql)
                             .onErrorResume((throwable -> {
                                 if (LOG.isWarnEnabled()) {
-                                    LOG.warn("Unable to create table :{}", throwable.getMessage());
+                                    LOG.warn("Unable to drop foreign key :{}", throwable.getMessage());
                                 }
                                 return Mono.empty();
                             }));
-                });
-        switch (schemaGenerate) {
-            case CREATE_DROP:
-                List<String> dropStatements = Arrays.stream(entities).flatMap(entity -> Arrays.stream(builder.buildDropTableStatements(entity)))
-                                                    .collect(Collectors.toList());
-                return Flux.fromIterable(dropStatements)
-                    .concatMap(sql -> {
-                        if (DataSettings.QUERY_LOG.isDebugEnabled()) {
-                            DataSettings.QUERY_LOG.debug("Dropping Table: \n{}", sql);
-                        }
-                        return execute(connection, sql)
-                            .onErrorResume((throwable -> Mono.empty()));
-                    })
-                    .thenMany(createTablesFlow)
+                    }).concatWith(Flux.fromIterable(dropStatements)
+                        .concatMap(sql -> {
+                            if (DataSettings.QUERY_LOG.isDebugEnabled()) {
+                                DataSettings.QUERY_LOG.debug("Dropping Table: \n{}", sql);
+                            }
+                            return execute(connection, sql)
+                                .onErrorResume((throwable -> Mono.empty()));
+                        }))
+                    .concatWith(createForeignKeysFlow).concatWith(createTablesFlow)
                     .then();
             case CREATE:
             default:
-                return createTablesFlow
+                return createTablesFlow.concatWith(createForeignKeysFlow)
                     .then();
         }
     }

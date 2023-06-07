@@ -22,10 +22,12 @@ import jakarta.inject.Inject
 class H2MultipleDataSourcesSpec extends Specification implements H2TestPropertyProvider {
 
     @Inject OtherRepository otherRepository
+    @Inject H2PetRepository petRepository
     @Inject H2OwnerRepository ownerRepository
 
     void 'test multiple datasources'() {
         when:"An entity is saved in one datasource"
+        Mono.from(petRepository.deleteAll()).block()
         Mono.from(ownerRepository.deleteAll()).block()
         Flux.from(ownerRepository.saveAll([new Owner("Fred"), new Owner("Bob")])).collectList().block()
         Mono.from(otherRepository.saveAll([new Owner("Joe")])).block()

@@ -23,7 +23,8 @@ import spock.lang.AutoCleanup
 import spock.lang.Shared
 
 class PostgresPaginationSpec extends AbstractPageSpec implements PostgresTestPropertyProvider {
-    @Shared @AutoCleanup ApplicationContext context
+
+    @Shared @AutoCleanup ApplicationContext context = ApplicationContext.run(properties)
 
     @Override
     PersonRepository getPersonRepository() {
@@ -33,10 +34,5 @@ class PostgresPaginationSpec extends AbstractPageSpec implements PostgresTestPro
     @Override
     BookRepository getBookRepository() {
         return context.getBean(PostgresBookRepository)
-    }
-
-    @Override
-    void init() {
-        context = ApplicationContext.run(getProperties())
     }
 }

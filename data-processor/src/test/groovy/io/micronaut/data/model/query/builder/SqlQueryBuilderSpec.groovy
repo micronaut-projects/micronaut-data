@@ -586,11 +586,13 @@ interface MyRepository {
         statements[1] == 'CREATE UNIQUE INDEX "idx_shipment_with_index_field_taxcode" ON "shipment_with_index" (field, taxCode);'
 
         when:
-        def productStatements = encoder.buildCreateTableStatements(getRuntimePersistentEntity(Product))
+        def productStatements = encoder.buildCreateTableStatements(true, getRuntimePersistentEntity(Product))
 
         then:
-        productStatements.length == 1
+        productStatements.length == 2
         productStatements[0] == 'CREATE TABLE "product" ("id" BIGINT PRIMARY KEY AUTO_INCREMENT,"name" VARCHAR(255) NOT NULL,"price" DECIMAL NOT NULL,"loooooooooooooooooooooooooooooooooooooooooooooooooooooooong_name" VARCHAR(255),"date_created" TIMESTAMP,"last_updated" TIMESTAMP,"category_id" BIGINT);'
+        productStatements[1].startsWith('ALTER TABLE "product" ADD CONSTRAINT FK_') &&
+            productStatements[1].endsWith('FOREIGN KEY("category_id") REFERENCES "category"("id");')
     }
 
     void "test build create index from field annotation"() {

@@ -168,4 +168,7 @@ public abstract class BookRepository implements PageableRepository<Book, Long>, 
 
     @Join(value = "chapters", type = Join.Type.LEFT_FETCH)
     public abstract List<Book> findAllByChaptersTitleAndTitle(String chapterTitle, String title);
+
+    @Query("DELETE FROM chapter")
+    public abstract void deleteAllChapters();
 }

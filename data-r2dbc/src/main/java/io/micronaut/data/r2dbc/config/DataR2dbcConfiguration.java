@@ -41,6 +41,7 @@ public class DataR2dbcConfiguration implements Named {
 
     private SchemaGenerate schemaGenerate = SchemaGenerate.NONE;
     private boolean batchGenerate = false;
+    private boolean handleForeignKeys = false;
     private Dialect dialect = Dialect.ANSI;
     private List<String> packages = new ArrayList<>(3);
     private final String name;
@@ -110,6 +111,21 @@ public class DataR2dbcConfiguration implements Named {
      */
     public void setBatchGenerate(boolean batchGenerate) {
         this.batchGenerate = batchGenerate;
+    }
+
+    /**
+     * @return an indicator telling whether foreign key constraints should be created when creating schema or dropped when dropping tables
+     */
+    public boolean isHandleForeignKeys() {
+        return handleForeignKeys;
+    }
+
+    /**
+     * Sets flag whether foreign keys should be created/dropped during schema generation/dropping.
+     * @param handleForeignKeys an indicator telling whether foreign key constraints should be created/dropped when creating/dropping schema
+     */
+    public void setHandleForeignKeys(boolean handleForeignKeys) {
+        this.handleForeignKeys = handleForeignKeys;
     }
 
     /**

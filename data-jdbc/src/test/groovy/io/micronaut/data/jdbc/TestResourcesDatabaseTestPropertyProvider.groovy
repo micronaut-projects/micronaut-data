@@ -49,10 +49,11 @@ trait TestResourcesDatabaseTestPropertyProvider implements TestPropertyProvider 
     Map<String, String> getDataSourceProperties(String dataSourceName) {
         def prefix = 'datasources.' + dataSourceName
         return [
-                (prefix + '.db-type')           : dbType(),
-                (prefix + '.schema-generate')   : schemaGenerate(),
-                (prefix + '.dialect')           : dialect(),
-                (prefix + '.packages')          : packages(),
+                (prefix + '.db-type')             : dbType(),
+                (prefix + '.schema-generate')     : schemaGenerate(),
+                (prefix + '.handle-foreign-keys') : 'true',
+                (prefix + '.dialect')             : dialect(),
+                (prefix + '.packages')            : packages(),
         ] as Map<String, String>
     }
 
