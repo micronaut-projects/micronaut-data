@@ -13,7 +13,6 @@ dependencies {
     implementation mn.micronaut.http.client
     implementation mn.micronaut.http.server.netty
     implementation projects.dataModel
-    implementation projects.dataJdbc
     implementation mnRxjava2.rxjava2
     implementation libs.reactor
     implementation mnTest.micronaut.test.spock
@@ -24,6 +23,7 @@ dependencies {
     implementation libs.jakarta.persistence.api
     api libs.jetbrains.annotations
 
+    compileOnly projects.dataJdbc
     compileOnly mn.micronaut.inject.groovy
 
     runtimeOnly libs.cglib

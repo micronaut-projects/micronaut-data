@@ -1,7 +1,7 @@
 
 package example
 
-import io.micronaut.transaction.SynchronousTransactionManager
+import io.micronaut.transaction.TransactionOperations
 import java.sql.Connection
 import jakarta.inject.Singleton
 import jakarta.persistence.EntityManager
@@ -9,12 +9,12 @@ import jakarta.persistence.EntityManager
 @Singleton
 class ProductManager(
         private val entityManager: EntityManager,
-        private val transactionManager: SynchronousTransactionManager<Connection>) // <1>
+        private val transactionManager: TransactionOperations<Connection>) // <1>
 {
 
     fun save(name: String, manufacturer: Manufacturer): Product {
         return transactionManager.executeWrite { // <2>
-            val product = Product(0, name, manufacturer)
+            val product = Product(null, name, manufacturer)
             entityManager.persist(product)
             product
         }

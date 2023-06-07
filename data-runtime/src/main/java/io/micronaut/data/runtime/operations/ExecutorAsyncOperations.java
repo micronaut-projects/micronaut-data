@@ -16,13 +16,13 @@
 package io.micronaut.data.runtime.operations;
 
 import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.propagation.PropagatedContext;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.data.model.runtime.*;
 import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.operations.async.AsyncRepositoryOperations;
 import io.micronaut.data.exceptions.EmptyResultException;
 import io.micronaut.data.model.Page;
-import io.micronaut.transaction.support.TransactionSynchronizationManager;
 
 import java.io.Serializable;
 import java.util.concurrent.CompletableFuture;
@@ -58,8 +58,18 @@ public class ExecutorAsyncOperations implements AsyncRepositoryOperations {
     }
 
     private <T> CompletableFuture<T> supplyAsync(Supplier<T> supplier) {
-        Supplier<T> decoratedTxSupplier = TransactionSynchronizationManager.decorateToPropagateState(supplier);
-        return CompletableFuture.supplyAsync(decoratedTxSupplier, executor);
+        CompletableFuture<T> cf = new CompletableFuture<>();
+        PropagatedContext propagatedContext = PropagatedContext.getOrEmpty();
+        CompletableFuture.supplyAsync(PropagatedContext.wrapCurrent(supplier), executor).whenComplete((value, throwable) -> {
+            try (PropagatedContext.Scope scope = propagatedContext.propagate()) {
+                if (throwable != null) {
+                    cf.completeExceptionally(throwable);
+                } else {
+                    cf.complete(value);
+                }
+            }
+        });
+        return cf;
     }
 
     @Override

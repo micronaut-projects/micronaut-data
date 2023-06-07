@@ -22,11 +22,9 @@ import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.context.annotation.Primary;
 import io.micronaut.context.annotation.Requires;
-import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.mongodb.conf.RequiresSyncMongo;
 import io.micronaut.transaction.SynchronousTransactionManager;
 import io.micronaut.transaction.async.AsyncUsingSyncTransactionOperations;
-import io.micronaut.transaction.interceptor.CoroutineTxHelper;
 import jakarta.inject.Singleton;
 
 /**
@@ -42,15 +40,13 @@ final class SynchronousMongoTransactionManagerFactory {
     @Requires(missingProperty = MongoSettings.MONGODB_SERVERS)
     @Primary
     @Singleton
-    <T> AsyncUsingSyncTransactionOperations<T> buildPrimaryAsyncTransactionOperations(SynchronousTransactionManager<T> synchronousTransactionManager,
-                                                                                      @Nullable CoroutineTxHelper coroutineTxHelper) {
-        return new AsyncUsingSyncTransactionOperations<>(synchronousTransactionManager, coroutineTxHelper);
+    <T> AsyncUsingSyncTransactionOperations<T> buildPrimaryAsyncTransactionOperations(SynchronousTransactionManager<T> synchronousTransactionManager) {
+        return new AsyncUsingSyncTransactionOperations<>(synchronousTransactionManager);
     }
 
     @EachBean(NamedMongoConfiguration.class)
-    <T> AsyncUsingSyncTransactionOperations<T> buildAsyncTransactionOperations(@Parameter SynchronousTransactionManager<T> synchronousTransactionManager,
-                                                                               @Nullable CoroutineTxHelper coroutineTxHelper) {
-        return new AsyncUsingSyncTransactionOperations<>(synchronousTransactionManager, coroutineTxHelper);
+    <T> AsyncUsingSyncTransactionOperations<T> buildAsyncTransactionOperations(@Parameter SynchronousTransactionManager<T> synchronousTransactionManager) {
+        return new AsyncUsingSyncTransactionOperations<>(synchronousTransactionManager);
     }
 
 }

@@ -41,6 +41,7 @@ include 'data-processor'
 include 'data-document-processor'
 include 'data-runtime'
 include 'data-tx'
+include 'data-connection'
 include 'data-document-model'
 
 // Test Compatibility Kit
@@ -49,11 +50,18 @@ include 'data-document-tck'
 
 // implementations
 
+// Hibernate
+
 include 'data-hibernate-jpa'
 include 'data-hibernate-reactive'
-
 include 'data-tx-hibernate'
+
+// JDBC
+
 include 'data-jdbc'
+include 'data-connection-jdbc'
+include 'data-tx-jdbc'
+
 include 'data-r2dbc'
 include 'data-mongodb'
 include 'data-azure-cosmos'

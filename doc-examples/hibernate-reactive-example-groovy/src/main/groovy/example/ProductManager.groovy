@@ -1,16 +1,19 @@
 
 package example
 
-import io.micronaut.data.hibernate.reactive.operations.HibernateReactorRepositoryOperations
+
+import io.micronaut.transaction.TransactionDefinition
+import io.micronaut.transaction.reactive.ReactorReactiveTransactionOperations
 import jakarta.inject.Singleton
+import org.hibernate.reactive.stage.Stage
 import reactor.core.publisher.Mono
 
 @Singleton
 class ProductManager {
 
-    private final HibernateReactorRepositoryOperations operations
+    private final ReactorReactiveTransactionOperations<Stage.Session> operations
 
-    ProductManager(HibernateReactorRepositoryOperations operations) {
+    ProductManager(ReactorReactiveTransactionOperations<Stage.Session> operations) {
         this.operations = operations
     }
 
@@ -22,8 +25,8 @@ class ProductManager {
     }
 
     Mono<Product> find(String name) {
-        return operations.withSession(session ->
-                Mono.fromCompletionStage(session.createQuery("from Product p where p.name = :name", Product.class)
+        return operations.withTransactionMono(TransactionDefinition.READ_ONLY, status ->
+                Mono.fromCompletionStage(status.getConnection().createQuery("from Product p where p.name = :name", Product.class)
                 .setParameter("name", name)
                 .getSingleResult())
         )

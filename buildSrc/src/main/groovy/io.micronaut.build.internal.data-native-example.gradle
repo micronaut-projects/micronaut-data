@@ -19,7 +19,7 @@ dependencies {
     runtimeOnly mn.snakeyaml
 }
 
-configurations.all {
+configurations.configureEach {
     resolutionStrategy.preferProjectModules()
 }
 

@@ -29,8 +29,12 @@ trait H2TestPropertyProvider implements TestPropertyProvider {
         return Arrays.asList(currentClassPackage, "io.micronaut.data.tck.entities", "io.micronaut.data.tck.jdbc.entities")
     }
 
+    boolean shouldAddDefaultDbProperties() {
+        return true
+    }
+
     Map<String, String> getProperties() {
-        return getH2DataSourceProperties("default")
+        return shouldAddDefaultDbProperties()? getH2DataSourceProperties("default") : [:]
     }
 
     Map<String, String> getH2DataSourceProperties(String dataSourceName) {

@@ -11,6 +11,8 @@ dependencies {
     annotationProcessor libs.micronaut.docs
 
     api projects.dataRuntime
+    api projects.dataTxJdbc
+    api projects.dataConnectionJdbc
 
     implementation mn.micronaut.json.core
     compileOnly mnSerde.micronaut.serde.oracle.jdbc.json

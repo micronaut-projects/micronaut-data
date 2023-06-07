@@ -18,25 +18,23 @@ package io.micronaut.data.hibernate.reactive.operations;
 import io.micronaut.core.annotation.Experimental;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.operations.reactive.ReactorReactiveRepositoryOperations;
-import io.micronaut.transaction.reactive.ReactorReactiveTransactionOperations;
+import jakarta.persistence.criteria.CriteriaBuilder;
 import org.hibernate.reactive.stage.Stage;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import jakarta.persistence.criteria.CriteriaBuilder;
 import java.util.function.Function;
 
 /**
  * Hibernate reactive repository operations.
- *
+ * <p>
  * This interface is experimental might change in the future.
  *
  * @author Denis Stepanov
  * @since 3.5.0
  */
 @Experimental
-public interface HibernateReactorRepositoryOperations extends ReactorReactiveRepositoryOperations,
-        ReactorReactiveTransactionOperations<Stage.Session> {
+public interface HibernateReactorRepositoryOperations extends ReactorReactiveRepositoryOperations {
 
     /**
      * Execute with a new or existing session.
@@ -69,6 +67,7 @@ public interface HibernateReactorRepositoryOperations extends ReactorReactiveRep
 
     /**
      * Flush the current session.
+     *
      * @return The operation publisher
      */
     @NonNull

@@ -15,16 +15,15 @@
  */
 package io.micronaut.data.runtime.intercept.async;
 
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.aop.MethodInvocationContext;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.intercept.RepositoryMethodKey;
-import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.intercept.async.FindPageAsyncInterceptor;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.runtime.PreparedQuery;
-import io.micronaut.transaction.support.TransactionSynchronizationManager;
+import io.micronaut.data.operations.RepositoryOperations;
 
 import java.util.List;
 import java.util.concurrent.CompletionStage;
@@ -51,18 +50,12 @@ public class DefaultFindPageAsyncInterceptor extends AbstractConvertCompletionSt
         if (context.hasAnnotation(Query.class)) {
             PreparedQuery<?, ?> preparedQuery = prepareQuery(methodKey, context);
             PreparedQuery<?, Number> countQuery = prepareCountQuery(methodKey, context);
-            TransactionSynchronizationManager.TransactionSynchronizationState state = TransactionSynchronizationManager.getState();
             return asyncDatastoreOperations.findOne(countQuery)
-                .thenCompose(total -> {
-                    try (TransactionSynchronizationManager.TransactionSynchronizationStateOp ignore = TransactionSynchronizationManager.withState(state)) {
-                        return asyncDatastoreOperations.findAll(preparedQuery)
-                            .thenApply(objects -> {
-                                List<Object> resultList = CollectionUtils.iterableToList((Iterable<Object>) objects);
-                                return Page.of(resultList, getPageable(context), total.longValue());
-                            });
-                    }
-                });
-
+                .thenCompose(total -> asyncDatastoreOperations.findAll(preparedQuery)
+                    .thenApply(objects -> {
+                        List<Object> resultList = CollectionUtils.iterableToList((Iterable<Object>) objects);
+                        return Page.of(resultList, getPageable(context), total.longValue());
+                    }));
         }
         return asyncDatastoreOperations.findPage(getPagedQuery(context));
     }

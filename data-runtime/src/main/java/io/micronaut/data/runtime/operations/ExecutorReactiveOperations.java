@@ -18,6 +18,7 @@ package io.micronaut.data.runtime.operations;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.convert.ConversionService;
+import io.micronaut.core.propagation.PropagatedContext;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.data.model.Page;
@@ -32,7 +33,6 @@ import io.micronaut.data.model.runtime.UpdateOperation;
 import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.operations.reactive.ReactiveRepositoryOperations;
 import io.micronaut.data.runtime.convert.DataConversionService;
-import io.micronaut.transaction.support.TransactionSynchronizationManager;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -192,8 +192,7 @@ public class ExecutorReactiveOperations implements ReactiveRepositoryOperations 
     }
 
     private <R> Mono<R> fromCompletableFuture(Supplier<CompletableFuture<R>> futureSupplier) {
-        Supplier<CompletableFuture<R>> decorated = TransactionSynchronizationManager.decorateToPropagateState(futureSupplier);
-        return Mono.fromCompletionStage(decorated);
+        return Mono.fromCompletionStage(PropagatedContext.wrapCurrent(futureSupplier));
     }
 
     /**
@@ -204,7 +203,7 @@ public class ExecutorReactiveOperations implements ReactiveRepositoryOperations 
      * @return The result
      */
     private @Nullable Number convertNumberArgumentIfNecessary(Number number, Argument<?> argument) {
-        Argument<?> firstTypeVar = argument.getFirstTypeVariable().orElse(Argument.of(Long.class));
+        Argument<?> firstTypeVar = argument.getFirstTypeVariable().orElse(Argument.LONG);
         Class<?> type = firstTypeVar.getType();
         if (type == Object.class || type == Void.class) {
             return null;

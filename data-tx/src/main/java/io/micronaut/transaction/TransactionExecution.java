@@ -16,6 +16,7 @@
 package io.micronaut.transaction;
 
 
+import io.micronaut.core.annotation.NonNull;
 
 /**
  * NOTICE: This is a fork of Spring's {@code PlatformTransactionManager} modernizing it
@@ -62,5 +63,13 @@ public interface TransactionExecution {
      * @return Whether the execution has completed
      */
     boolean isCompleted();
+
+    /**
+     * The transaction definition.
+     * @return the transaction definition
+     * @since 4.0.0
+     */
+    @NonNull
+    TransactionDefinition getTransactionDefinition();
 
 }

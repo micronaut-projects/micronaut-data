@@ -26,6 +26,7 @@ import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.data.annotation.QueryHint;
+import io.micronaut.data.hibernate.conf.RequiresSyncHibernate;
 import io.micronaut.data.jpa.annotation.EntityGraph;
 import io.micronaut.data.jpa.operations.JpaRepositoryOperations;
 import io.micronaut.data.model.Page;
@@ -64,7 +65,6 @@ import jakarta.persistence.criteria.CriteriaQuery;
 
 import javax.sql.DataSource;
 import java.io.Serializable;
-import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -83,13 +83,14 @@ import java.util.stream.Stream;
  * @author graemerocher
  * @since 1.0
  */
+@RequiresSyncHibernate
 @EachBean(DataSource.class)
 @TypeHint(HibernatePresenceCondition.class)
-public class HibernateJpaOperations extends AbstractHibernateOperations<Session, Query, Query>
+final class HibernateJpaOperations extends AbstractHibernateOperations<Session, Query, Query>
     implements JpaRepositoryOperations, AsyncCapableRepository, ReactiveCapableRepository {
 
     private final SessionFactory sessionFactory;
-    private final TransactionOperations<Connection> transactionOperations;
+    private final TransactionOperations<Session> transactionOperations;
     private ExecutorAsyncOperations asyncOperations;
     private ExecutorService executorService;
 
@@ -104,7 +105,7 @@ public class HibernateJpaOperations extends AbstractHibernateOperations<Session,
      */
     public HibernateJpaOperations(
         @NonNull @Parameter SessionFactory sessionFactory,
-        @NonNull @Parameter TransactionOperations<Connection> transactionOperations,
+        @NonNull @Parameter TransactionOperations<Session> transactionOperations,
         @Named("io") @Nullable ExecutorService executorService,
         RuntimeEntityRegistry runtimeEntityRegistry,
         DataConversionService dataConversionService) {
@@ -211,24 +212,24 @@ public class HibernateJpaOperations extends AbstractHibernateOperations<Session,
     @Nullable
     @Override
     public <T> T findOne(@NonNull Class<T> type, @NonNull Serializable id) {
-        return transactionOperations.executeRead(status -> sessionFactory.getCurrentSession().byId(type).load(id));
+        return executeRead(session -> session.byId(type).load(id));
     }
 
     @NonNull
     @Override
     public <T> T load(@NonNull Class<T> type, @NonNull Serializable id) {
-        return transactionOperations.executeRead(status -> sessionFactory.getCurrentSession().getReference(type, id));
+        return executeRead(session -> session.getReference(type, id));
     }
 
     @Nullable
     @Override
     public <T, R> R findOne(@NonNull PreparedQuery<T, R> preparedQuery) {
-        return transactionOperations.executeRead(status -> {
+        return executeRead(session -> {
             // limit does not work with native queries and does not produce expected
             // results with EntityGraph annotation and joins
             boolean limitOne = !preparedQuery.isNative() && !hasEntityGraph(preparedQuery.getAnnotationMetadata());
             FirstResultCollector<R> collector = new FirstResultCollector<>(limitOne);
-            collectFindOne(sessionFactory.getCurrentSession(), preparedQuery, collector);
+            collectFindOne(session, preparedQuery, collector);
             return collector.result;
         });
     }
@@ -241,15 +242,15 @@ public class HibernateJpaOperations extends AbstractHibernateOperations<Session,
     @NonNull
     @Override
     public <T> Iterable<T> findAll(@NonNull PagedQuery<T> pagedQuery) {
-        return transactionOperations.executeRead(status -> findPaged(getCurrentSession(), pagedQuery));
+        return executeRead(session -> findPaged(session, pagedQuery));
     }
 
     @NonNull
     @Override
     public <T> Stream<T> findStream(@NonNull PagedQuery<T> pagedQuery) {
-        return transactionOperations.executeRead(status -> {
+        return executeRead(session -> {
             StreamResultCollector<T> collector = new StreamResultCollector<>();
-            collectPagedResults(sessionFactory.getCriteriaBuilder(), getCurrentSession(), pagedQuery, collector);
+            collectPagedResults(sessionFactory.getCriteriaBuilder(), session, pagedQuery, collector);
             return collector.result;
         });
 
@@ -257,19 +258,16 @@ public class HibernateJpaOperations extends AbstractHibernateOperations<Session,
 
     @Override
     public <R> Page<R> findPage(@NonNull PagedQuery<R> pagedQuery) {
-        return transactionOperations.executeRead(status -> {
-            Session session = getCurrentSession();
-            return Page.of(
-                findPaged(session, pagedQuery),
-                pagedQuery.getPageable(),
-                countOf(session, pagedQuery, pagedQuery.getPageable())
-            );
-        });
+        return executeRead(session -> Page.of(
+            findPaged(session, pagedQuery),
+            pagedQuery.getPageable(),
+            countOf(session, pagedQuery, pagedQuery.getPageable())
+        ));
     }
 
     @Override
     public <T> long count(PagedQuery<T> pagedQuery) {
-        return transactionOperations.executeRead(status -> countOf(getCurrentSession(), pagedQuery, null));
+        return executeRead(session -> countOf(session, pagedQuery, null));
     }
 
     private <T> List<T> findPaged(Session session, PagedQuery<T> pagedQuery) {
@@ -287,21 +285,19 @@ public class HibernateJpaOperations extends AbstractHibernateOperations<Session,
     @NonNull
     @Override
     public <T, R> Iterable<R> findAll(@NonNull PreparedQuery<T, R> preparedQuery) {
-        return transactionOperations.executeRead(status -> {
+        return executeRead(session -> {
             ListResultCollector<R> resultCollector = new ListResultCollector<>();
-            collectFindAll(sessionFactory.getCurrentSession(), preparedQuery, resultCollector);
+            collectFindAll(session, preparedQuery, resultCollector);
             return resultCollector.result;
         });
     }
 
     @Override
     public <T> T persist(@NonNull InsertOperation<T> operation) {
-        return transactionOperations.executeWrite(status -> {
+        return executeWrite(session -> {
             T entity = operation.getEntity();
-
-            EntityManager entityManager = sessionFactory.getCurrentSession();
-            entityManager.persist(entity);
-            flushIfNecessary(entityManager, operation.getAnnotationMetadata());
+            session.persist(entity);
+            flushIfNecessary(session, operation.getAnnotationMetadata());
             return entity;
         });
     }
@@ -310,10 +306,9 @@ public class HibernateJpaOperations extends AbstractHibernateOperations<Session,
     @Override
     public <T> T update(@NonNull UpdateOperation<T> operation) {
         StoredQuery<T, ?> storedQuery = operation.getStoredQuery();
-        return transactionOperations.executeWrite(status -> {
-            EntityManager session = sessionFactory.getCurrentSession();
+        return executeWrite(session -> {
             if (storedQuery != null) {
-                executeEntityUpdate(storedQuery, operation.getEntity());
+                executeEntityUpdate(session, storedQuery, operation.getEntity());
                 if (flushIfNecessary(session, operation.getAnnotationMetadata())) {
                     session.remove(operation.getEntity());
                 }
@@ -330,25 +325,24 @@ public class HibernateJpaOperations extends AbstractHibernateOperations<Session,
     @Override
     public <T> Iterable<T> updateAll(@NonNull UpdateBatchOperation<T> operation) {
         StoredQuery<T, ?> storedQuery = operation.getStoredQuery();
-        return transactionOperations.executeWrite(status -> {
-            EntityManager entityManager = sessionFactory.getCurrentSession();
+        return executeWrite(session -> {
             if (storedQuery != null) {
                 for (T entity : operation) {
-                    executeEntityUpdate(storedQuery, entity);
+                    executeEntityUpdate(session, storedQuery, entity);
                 }
-                if (flushIfNecessary(entityManager, operation.getAnnotationMetadata())) {
+                if (flushIfNecessary(session, operation.getAnnotationMetadata())) {
                     for (T entity : operation) {
-                        entityManager.remove(entity);
+                        session.remove(entity);
                     }
                 }
                 return operation;
             }
             List<T> results = new ArrayList<>();
             for (T entity : operation) {
-                T merge = entityManager.merge(entity);
+                T merge = session.merge(entity);
                 results.add(merge);
             }
-            flushIfNecessary(entityManager, operation.getAnnotationMetadata());
+            flushIfNecessary(session, operation.getAnnotationMetadata());
             return results;
         });
     }
@@ -357,13 +351,12 @@ public class HibernateJpaOperations extends AbstractHibernateOperations<Session,
     @NonNull
     @Override
     public <T> Iterable<T> persistAll(@NonNull InsertBatchOperation<T> operation) {
-        return transactionOperations.executeWrite(status -> {
+        return executeWrite(session -> {
             if (operation != null) {
-                EntityManager entityManager = sessionFactory.getCurrentSession();
                 for (T entity : operation) {
-                    entityManager.persist(entity);
+                    session.persist(entity);
                 }
-                flushIfNecessary(entityManager, operation.getAnnotationMetadata());
+                flushIfNecessary(session, operation.getAnnotationMetadata());
                 return operation;
             } else {
                 return Collections.emptyList();
@@ -392,12 +385,12 @@ public class HibernateJpaOperations extends AbstractHibernateOperations<Session,
     @NonNull
     @Override
     public Optional<Number> executeUpdate(@NonNull PreparedQuery<?, Number> preparedQuery) {
-        return transactionOperations.executeWrite(status -> {
+        return executeWrite(session -> {
             String query = preparedQuery.getQuery();
-            Query q = getCurrentSession().createQuery(query);
+            Query q = session.createQuery(query);
             bindParameters(q, preparedQuery);
             int numAffected = q.executeUpdate();
-            flushIfNecessary(sessionFactory.getCurrentSession(), preparedQuery.getAnnotationMetadata(), true);
+            flushIfNecessary(session, preparedQuery.getAnnotationMetadata(), true);
             return Optional.of(numAffected);
         });
     }
@@ -405,10 +398,9 @@ public class HibernateJpaOperations extends AbstractHibernateOperations<Session,
     @Override
     public <T> int delete(@NonNull DeleteOperation<T> operation) {
         StoredQuery<T, ?> storedQuery = operation.getStoredQuery();
-        return transactionOperations.executeWrite(status -> {
-            Session session = getCurrentSession();
+        return executeWrite(session -> {
             if (storedQuery != null) {
-                int numAffected = executeEntityUpdate(storedQuery, operation.getEntity());
+                int numAffected = executeEntityUpdate(session, storedQuery, operation.getEntity());
                 if (flushIfNecessary(session, operation.getAnnotationMetadata())) {
                     session.remove(operation.getEntity());
                 }
@@ -422,12 +414,11 @@ public class HibernateJpaOperations extends AbstractHibernateOperations<Session,
     @Override
     public <T> Optional<Number> deleteAll(@NonNull DeleteBatchOperation<T> operation) {
         StoredQuery<T, ?> storedQuery = operation.getStoredQuery();
-        Integer result = transactionOperations.executeWrite(status -> {
-            Session session = getCurrentSession();
+        Integer result = executeWrite(session -> {
             if (storedQuery != null) {
                 int i = 0;
                 for (T entity : operation) {
-                    i += executeEntityUpdate(storedQuery, entity);
+                    i += executeEntityUpdate(session, storedQuery, entity);
                 }
                 if (flushIfNecessary(session, operation.getAnnotationMetadata())) {
                     for (T entity : operation) {
@@ -446,8 +437,8 @@ public class HibernateJpaOperations extends AbstractHibernateOperations<Session,
         return Optional.ofNullable(result);
     }
 
-    private int executeEntityUpdate(StoredQuery<?, ?> storedQuery, Object entity) {
-        Query query = getCurrentSession().createQuery(storedQuery.getQuery());
+    private int executeEntityUpdate(Session session, StoredQuery<?, ?> storedQuery, Object entity) {
+        Query query = session.createQuery(storedQuery.getQuery());
         for (QueryParameterBinding queryParameterBinding : storedQuery.getQueryBindings()) {
             query.setParameter(queryParameterBinding.getRequiredName(), getParameterValue(queryParameterBinding.getRequiredPropertyPath(), entity));
         }
@@ -457,11 +448,19 @@ public class HibernateJpaOperations extends AbstractHibernateOperations<Session,
     @NonNull
     @Override
     public <T, R> Stream<R> findStream(@NonNull PreparedQuery<T, R> preparedQuery) {
-        return transactionOperations.executeRead(status -> {
+        return executeRead(session -> {
             StreamResultCollector<R> resultCollector = new StreamResultCollector<>();
-            collectFindAll(sessionFactory.getCurrentSession(), preparedQuery, resultCollector);
+            collectFindAll(session, preparedQuery, resultCollector);
             return resultCollector.result;
         });
+    }
+
+    private <R> R executeRead(Function<Session, R> callback) {
+        return transactionOperations.executeRead(status -> callback.apply(getCurrentSession()));
+    }
+
+    private <R> R executeWrite(Function<Session, R> callback) {
+        return transactionOperations.executeWrite(status -> callback.apply(getCurrentSession()));
     }
 
     private Session getCurrentSession() {
@@ -516,8 +515,8 @@ public class HibernateJpaOperations extends AbstractHibernateOperations<Session,
 
     @Override
     public void flush() {
-        transactionOperations.executeWrite(status -> {
-                sessionFactory.getCurrentSession().flush();
+        executeWrite(session -> {
+                session.flush();
                 return null;
             }
         );

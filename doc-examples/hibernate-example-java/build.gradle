@@ -22,7 +22,6 @@ dependencies {
     implementation mnSql.tomcat.jdbc
     implementation mnSql.micronaut.hibernate.jpa
     implementation project(":data-hibernate-jpa")
-    implementation project(":data-jdbc")
 
     implementation "io.micronaut.sql:micronaut-jdbc-tomcat"
     runtimeOnly "ch.qos.logback:logback-classic"
