@@ -92,7 +92,7 @@ loadScripts(document, 'script');</script>
 <div class="type-signature"><span class="modifiers">public abstract class </span><span class="element-name type-name-label">AbstractPropagatedStatusTransactionOperations&lt;T extends <a href="../TransactionStatus.html" title="interface in io.micronaut.transaction">TransactionStatus</a>&lt;C&gt;,<wbr>C&gt;</span>
 <span class="extends-implements">extends <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>
 implements <a href="../TransactionOperations.html" title="interface in io.micronaut.transaction">TransactionOperations</a>&lt;C&gt;</span></div>
-<div class="block">Abstract transaction oeprations that propagates the status in the propagated context.</div>
+<div class="block">Abstract transaction operations that propagates the status in the propagated context.</div>
 <dl class="notes">
 <dt>Since:</dt>
 <dd>4.0.0</dd>
@@ -138,7 +138,7 @@ implements <a href="../TransactionOperations.html" title="interface in io.micron
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Execute a transaction within the context of the function.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected @NotNull io.micronaut.core.propagation.PropagatedContext</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected io.micronaut.core.propagation.PropagatedContext</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#extendCurrentPropagatedContext(io.micronaut.transaction.TransactionStatus)" class="member-name-link">extendCurrentPropagatedContext</a><wbr>(<a href="../TransactionStatus.html" title="interface in io.micronaut.transaction">TransactionStatus</a>&lt;<a href="AbstractPropagatedStatusTransactionOperations.html" title="type parameter in AbstractPropagatedStatusTransactionOperations">C</a>&gt;&nbsp;status)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Extends the propagated context with the transaction status.</div>
@@ -238,8 +238,8 @@ implements <a href="../TransactionOperations.html" title="interface in io.micron
 <li>
 <section class="detail" id="extendCurrentPropagatedContext(io.micronaut.transaction.TransactionStatus)">
 <h3>extendCurrentPropagatedContext</h3>
-<div class="member-signature"><span class="annotations">@NotNull
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">@NotNull io.micronaut.core.propagation.PropagatedContext</span>&nbsp;<span class="element-name">extendCurrentPropagatedContext</span><wbr><span class="parameters">(<a href="../TransactionStatus.html" title="interface in io.micronaut.transaction">TransactionStatus</a>&lt;<a href="AbstractPropagatedStatusTransactionOperations.html" title="type parameter in AbstractPropagatedStatusTransactionOperations">C</a>&gt;&nbsp;status)</span></div>
+<div class="member-signature"><span class="annotations">@NonNull
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">io.micronaut.core.propagation.PropagatedContext</span>&nbsp;<span class="element-name">extendCurrentPropagatedContext</span><wbr><span class="parameters">(<a href="../TransactionStatus.html" title="interface in io.micronaut.transaction">TransactionStatus</a>&lt;<a href="AbstractPropagatedStatusTransactionOperations.html" title="type parameter in AbstractPropagatedStatusTransactionOperations">C</a>&gt;&nbsp;status)</span></div>
 <div class="block">Extends the propagated context with the transaction status.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
