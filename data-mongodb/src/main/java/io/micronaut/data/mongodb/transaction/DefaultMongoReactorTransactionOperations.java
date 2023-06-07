@@ -67,10 +67,10 @@ final class DefaultMongoReactorTransactionOperations extends AbstractReactorTran
         if (transactionDefinition.getPropagationBehavior() == TransactionDefinition.Propagation.MANDATORY) {
             return Flux.error(new NoTransactionException("Expected an existing transaction, but none was found in the Reactive context."));
         }
-        if (transactionDefinition.getIsolationLevel() != TransactionDefinition.DEFAULT.getIsolationLevel()) {
+        if (transactionDefinition.getIsolationLevel().isPresent()) {
             return Flux.error(new TransactionUsageException("Isolation level not supported"));
         }
-        if (transactionDefinition.getTimeout() != TransactionDefinition.TIMEOUT_DEFAULT) {
+        if (transactionDefinition.getTimeout().isPresent()) {
             return Flux.error(new TransactionUsageException("Timeout not supported"));
         }
         connectionStatus.getConnection().startTransaction();

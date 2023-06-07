@@ -71,14 +71,16 @@ public abstract class AbstractSpringTransactionOperations
         ArgumentUtils.requireNonNull("definition", definition);
 
         final DefaultTransactionDefinition def = new DefaultTransactionDefinition();
-        def.setReadOnly(definition.isReadOnly());
-        def.setIsolationLevel(definition.getIsolationLevel().getCode());
+        definition.isReadOnly().ifPresent(def::setReadOnly);
+        def.setIsolationLevel(definition.getIsolationLevel().orElse(TransactionDefinition.Isolation.DEFAULT).getCode());
         def.setPropagationBehavior(definition.getPropagationBehavior().ordinal());
         def.setName(definition.getName());
-        final Duration timeout = definition.getTimeout();
-        if (!timeout.isNegative()) {
-            def.setTimeout((int) timeout.getSeconds());
-        }
+        definition.getTimeout().ifPresent(timeout -> {
+            if (!timeout.isNegative()) {
+                def.setTimeout((int) timeout.getSeconds());
+            }
+        });
+
         return execute(new TransactionTemplate(transactionManager, def), callback, definition);
     }
 
