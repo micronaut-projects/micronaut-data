@@ -46,7 +46,6 @@ public interface AsyncRepositoryOperations {
      * @param id The id
      * @param <T> The generic type
      * @return A completion stage that emits the result
-     * @throws io.micronaut.data.exceptions.EmptyResultException if the result couldn't be retrieved
      */
     @NonNull
     <T> CompletionStage<T> findOne(@NonNull Class<T> type, @NonNull Serializable id);
@@ -67,7 +66,6 @@ public interface AsyncRepositoryOperations {
      * @param <T> The generic resultType
      * @param <R> The result type
      * @return A completion stage that emits the result
-     * @throws io.micronaut.data.exceptions.EmptyResultException if the result couldn't be retrieved
      */
     @NonNull <T, R> CompletionStage<R> findOne(@NonNull PreparedQuery<T, R> preparedQuery);
 
