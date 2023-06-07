@@ -22,12 +22,11 @@ import io.micronaut.transaction.TransactionCallback;
 import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.TransactionOperations;
 import io.micronaut.transaction.TransactionStatus;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.Optional;
 
 /**
- * Abstract transaction oeprations that propagates the status in the propagated context.
+ * Abstract transaction operations that propagates the status in the propagated context.
  *
  * @param <T> The transaction type
  * @param <C> The connection type
@@ -77,7 +76,7 @@ public abstract class AbstractPropagatedStatusTransactionOperations<T extends Tr
      * @param status The transaction status
      * @return new propagated context
      */
-    @NotNull
+    @NonNull
     protected PropagatedContext extendCurrentPropagatedContext(TransactionStatus<C> status) {
         return PropagatedContext.getOrEmpty()
             .plus(new PropagatedTransactionStatusElement<>(AbstractPropagatedStatusTransactionOperations.this, status));

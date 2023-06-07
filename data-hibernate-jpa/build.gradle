@@ -9,7 +9,6 @@ dependencies {
 
     api projects.dataRuntime
     api projects.dataModel
-    api libs.hibernate.core
     api projects.dataTxHibernate
     api projects.dataJpa
 
