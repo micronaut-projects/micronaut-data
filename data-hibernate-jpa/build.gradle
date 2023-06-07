@@ -9,9 +9,9 @@ dependencies {
 
     api projects.dataRuntime
     api projects.dataModel
-    api libs.hibernate.core
     api projects.dataTxHibernate
     api projects.dataJpa
+    api mnSql.hibernate.core
 
     implementation (mnSql.micronaut.hibernate.jpa) {
         exclude group:'io.micronaut', module:'micronaut-spring'

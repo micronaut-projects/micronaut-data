@@ -15,7 +15,7 @@ dependencies {
 
 	compileOnly mn.micronaut.json.core
 
-	implementation libs.reactor
+	implementation mn.reactor
 
 	compileOnly libs.jakarta.persistence.api
 	compileOnly libs.javax.persistence.api
