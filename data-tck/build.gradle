@@ -24,7 +24,4 @@ dependencies {
 
     compileOnly projects.dataJdbc
     compileOnly mn.micronaut.inject.groovy
-
-    runtimeOnly libs.cglib
-    runtimeOnly libs.objenesis
 }

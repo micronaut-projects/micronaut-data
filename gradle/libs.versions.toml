@@ -43,8 +43,6 @@ oracle-flyway = "9.19.3"
 
 benchmark-spring-data = "2023.0.0"
 spock = "2.2-groovy-4.0"
-cglib = "3.3.0"
-objenesis = "3.3"
 testcontainers = "1.18.3"
 jmh = "1.36"
 
@@ -84,9 +82,6 @@ micronaut-sql = { module = "io.micronaut.sql:micronaut-sql-bom", version.ref = "
 micronaut-r2dbc = { module = "io.micronaut.r2dbc:micronaut-r2dbc-bom", version.ref = "micronaut-r2dbc" }
 micronaut-flyway = { module = "io.micronaut.flyway:micronaut-flyway-bom", version.ref = "micronaut-flyway" }
 micronaut-serde = { module = "io.micronaut.serde:micronaut-serde-bom", version.ref = "micronaut-serde" }
-
-cglib = { module = "cglib:cglib-nodep", version.ref = "cglib" }
-objenesis = { module = "org.objenesis:objenesis", version.ref = "objenesis" }
 
 micronaut-docs = { module = "io.micronaut.docs:micronaut-docs-asciidoc-config-props", version.ref = "micronaut-docs" }
 

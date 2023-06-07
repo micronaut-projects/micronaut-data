@@ -88,7 +88,7 @@ dependencies {
     testRuntimeOnly mn.snakeyaml
     testRuntimeOnly mnSerde.micronaut.serde.oracle.jdbc.json
 
-    testRuntimeOnly libs.micronaut.flyway
+    testRuntimeOnly mnFlyway.flyway
     testRuntimeOnly mnSql.micronaut.jdbc.hikari
     testRuntimeOnly libs.flyway.oracle
 }
