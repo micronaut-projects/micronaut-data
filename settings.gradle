@@ -43,6 +43,7 @@ include 'data-runtime'
 include 'data-tx'
 include 'data-connection'
 include 'data-document-model'
+include 'data-jpa'
 
 // Test Compatibility Kit
 include 'data-tck'
