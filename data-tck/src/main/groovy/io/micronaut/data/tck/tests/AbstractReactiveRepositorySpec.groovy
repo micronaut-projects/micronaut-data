@@ -39,6 +39,7 @@ import spock.lang.Stepwise
 
 import java.util.stream.Collectors
 import java.util.stream.IntStream
+import java.util.stream.LongStream
 
 import static io.micronaut.data.repository.jpa.criteria.QuerySpecification.where
 import static io.micronaut.data.tck.repositories.PersonRepository.Specifications.nameEquals
@@ -81,11 +82,13 @@ abstract class AbstractReactiveRepositorySpec extends Specification {
     }
 
     void "test big save all"() {
+        given:
+        long recordsCount = 10_000
         when:
             cleanup()
-            personRepository.saveAll(IntStream.range(0, 10000).mapToObj(i -> new Person(name: "Jeff" + i)).collect(Collectors.toList())).collectList().block()
+            personRepository.saveAll(LongStream.range(0, recordsCount).mapToObj(i -> new Person(name: "Jeff" + i)).toList()).collectList().block()
         then:
-            personRepository.count().block() == 10000
+            personRepository.count().block() == recordsCount
     }
 
     void "test no value"() {

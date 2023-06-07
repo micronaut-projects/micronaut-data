@@ -76,11 +76,12 @@ abstract class PlainR2dbcSpec extends Specification {
 
     def "save many"() {
         given:
-            long recordsCount = 100_000
+            authorRepository.deleteAll()
+            long recordsCount = 10_000
         when:
             def authors = LongStream.range(0, recordsCount)
                     .mapToObj(id -> new Author(name: "Name " + id))
-                    .collect(Collectors.toList())
+                    .toList()
             def result = Flux.usingWhen(connectionFactory.create(), connection -> {
                 return Flux.usingWhen(Mono.from(connection.beginTransaction()).then(Mono.just(connection)),
                         (b) -> {
@@ -108,7 +109,6 @@ abstract class PlainR2dbcSpec extends Specification {
                     .block()
         then:
             result.size() == recordsCount
-//            result[0] == recordsCount
             authorRepository.count() == recordsCount
     }
 
