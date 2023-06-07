@@ -22,14 +22,14 @@ import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.TypeHint;
 import io.micronaut.data.connection.ConnectionOperations;
-import io.micronaut.data.connection.ConnectionStatus;
 import io.micronaut.data.connection.SynchronousConnectionManager;
 import io.micronaut.data.connection.support.JdbcConnectionUtils;
 import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.exceptions.InvalidIsolationLevelException;
 import io.micronaut.transaction.exceptions.TransactionSystemException;
+import io.micronaut.transaction.impl.DefaultTransactionStatus;
 import io.micronaut.transaction.jdbc.DataSourceTransactionManager;
-import io.micronaut.transaction.support.AbstractTransactionOperations;
+import io.micronaut.transaction.support.AbstractDefaultTransactionOperations;
 import io.micronaut.transaction.support.TransactionSynchronization;
 import jakarta.persistence.PersistenceException;
 import org.hibernate.FlushMode;
@@ -42,11 +42,11 @@ import org.hibernate.resource.jdbc.spi.PhysicalConnectionHandlingMode;
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.ResultSet;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Function;
 
 /**
  * The Hibernate transaction manager.
@@ -59,7 +59,7 @@ import java.util.Objects;
 @Replaces(DataSourceTransactionManager.class)
 @Requires(condition = HibernateTransactionManagerCondition.class)
 @TypeHint(HibernateTransactionManager.class)
-public final class HibernateTransactionManager extends AbstractTransactionOperations<HibernateTransactionStatus, Session> {
+public final class HibernateTransactionManager extends AbstractDefaultTransactionOperations<Session> {
 
     private boolean prepareConnection = true;
 
@@ -71,12 +71,18 @@ public final class HibernateTransactionManager extends AbstractTransactionOperat
     }
 
     @Override
-    protected void doBegin(HibernateTransactionStatus txStatus) {
+    protected Function<DefaultTransactionStatus<Session>, Object> transactionSupplier() {
+        return status -> status.getConnection().getTransaction();
+    }
+
+    @Override
+    protected void doBegin(DefaultTransactionStatus<Session> txStatus) {
         Session session = txStatus.getConnection();
         TransactionDefinition definition = txStatus.getTransactionDefinition();
         boolean isNewSession = txStatus.getConnectionStatus().isNew();
 
-        if (definition.isReadOnly() && isNewSession) {
+        boolean isReadOnly = definition.isReadOnly().orElse(false);
+        if (isReadOnly && isNewSession) {
             // Just set to MANUAL in case of a new Session for this transaction.
             session.setFlushMode(FlushMode.MANUAL.toJpaFlushMode());
             // As of 5.1, we're also setting Hibernate's read-only entity mode by default.
@@ -85,8 +91,8 @@ public final class HibernateTransactionManager extends AbstractTransactionOperat
         List<Runnable> onComplete = new ArrayList<>(5);
 
         boolean holdabilityNeeded = allowResultAccessAfterCompletion && !isNewSession;
-        boolean isolationLevelNeeded = definition.getIsolationLevel() != TransactionDefinition.Isolation.DEFAULT;
-        if (holdabilityNeeded || isolationLevelNeeded || definition.isReadOnly()) {
+        boolean isolationLevelNeeded = definition.getIsolationLevel().isPresent();
+        if (holdabilityNeeded || isolationLevelNeeded || definition.isReadOnly().isPresent()) {
             if (prepareConnection && isSameConnectionForEntireSession(session)) {
                 // We're allowed to change the transaction settings of the JDBC Connection.
                 if (logger.isDebugEnabled()) {
@@ -94,10 +100,9 @@ public final class HibernateTransactionManager extends AbstractTransactionOperat
                 }
                 Connection connection = getConnection(session);
 
-                JdbcConnectionUtils.applyReadOnly(logger, connection, definition.isReadOnly(), onComplete);
-                if (definition.getIsolationLevel() != TransactionDefinition.Isolation.DEFAULT) {
-                    JdbcConnectionUtils.applyTransactionIsolation(logger, connection, definition.getIsolationLevel().getCode(), onComplete);
-                }
+                definition.isReadOnly().ifPresent(readOnly -> JdbcConnectionUtils.applyReadOnly(logger, connection, readOnly, onComplete));
+                definition.getIsolationLevel().ifPresent(isolation ->
+                    JdbcConnectionUtils.applyTransactionIsolation(logger, connection, isolation.getCode(), onComplete));
 
                 if (allowResultAccessAfterCompletion && !isNewSession) {
                     JdbcConnectionUtils.applyHoldability(logger, connection, ResultSet.HOLD_CURSORS_OVER_COMMIT, onComplete);
@@ -118,7 +123,7 @@ public final class HibernateTransactionManager extends AbstractTransactionOperat
             }
         }
 
-        if (!definition.isReadOnly() && !isNewSession) {
+        if (!isReadOnly && !isNewSession) {
             // We need AUTO or COMMIT for a non-read-only transaction.
             FlushMode flushMode = session.getHibernateFlushMode();
             if (FlushMode.MANUAL.equals(flushMode)) {
@@ -132,14 +137,13 @@ public final class HibernateTransactionManager extends AbstractTransactionOperat
             }
         }
 
-        // Register transaction timeout.
-        Duration timeout = determineTimeout(definition);
-        if (timeout != TransactionDefinition.TIMEOUT_DEFAULT) {
+        determineTimeout(definition).ifPresent(timeout -> {
+            // Register transaction timeout.
             // Use Hibernate's own transaction timeout mechanism on Hibernate 3.1+
             // Applies to all statements, also to inserts, updates and deletes!
             Transaction hibTx = session.getTransaction();
             hibTx.setTimeout(((int) timeout.toMillis() / 1000));
-        }
+        });
 
         if (!onComplete.isEmpty()) {
             Collections.reverse(onComplete);
@@ -162,8 +166,8 @@ public final class HibernateTransactionManager extends AbstractTransactionOperat
     }
 
     @Override
-    protected void doCommit(HibernateTransactionStatus tx) {
-        Transaction transaction = tx.getTransaction();
+    protected void doCommit(DefaultTransactionStatus<Session> tx) {
+        Transaction transaction = (Transaction) tx.getTransaction();
         Objects.requireNonNull(transaction, "No Hibernate transaction");
 
         if (logger.isDebugEnabled()) {
@@ -173,7 +177,7 @@ public final class HibernateTransactionManager extends AbstractTransactionOperat
         try {
             transaction.commit();
         } catch (org.hibernate.TransactionException ex) {
-            // assumably from commit call to the underlying JDBC connection
+            // assumable from commit call to the underlying JDBC connection
             throw new TransactionSystemException("Could not commit Hibernate transaction", ex);
         } catch (PersistenceException ex) {
             if (ex.getCause() instanceof HibernateException) {
@@ -184,8 +188,8 @@ public final class HibernateTransactionManager extends AbstractTransactionOperat
     }
 
     @Override
-    protected void doRollback(HibernateTransactionStatus tx) {
-        Transaction transaction = tx.getTransaction();
+    protected void doRollback(DefaultTransactionStatus<Session> tx) {
+        Transaction transaction = (Transaction) tx.getTransaction();
         Objects.requireNonNull(transaction, "No Hibernate transaction");
         if (logger.isDebugEnabled()) {
             logger.debug("Rolling back Hibernate transaction on Session [{}]", tx.getConnection());
@@ -202,25 +206,6 @@ public final class HibernateTransactionManager extends AbstractTransactionOperat
                 tx.getConnection().clear();
             }
         }
-    }
-
-    @Override
-    protected HibernateTransactionStatus createNoTxTransactionStatus(@NonNull ConnectionStatus<Session> connectionStatus,
-                                                                     @NonNull TransactionDefinition definition) {
-        return HibernateTransactionStatus.noTx(connectionStatus, TransactionDefinition.DEFAULT);
-    }
-
-    @Override
-    protected HibernateTransactionStatus createNewTransactionStatus(@NonNull ConnectionStatus<Session> connectionStatus,
-                                                                    @NonNull TransactionDefinition definition) {
-        return HibernateTransactionStatus.newTx(connectionStatus, definition);
-    }
-
-    @Override
-    protected HibernateTransactionStatus createExistingTransactionStatus(@NonNull ConnectionStatus<Session> connectionStatus,
-                                                                         @NonNull TransactionDefinition definition,
-                                                                         @NonNull HibernateTransactionStatus existingTransaction) {
-        return HibernateTransactionStatus.existingTx(connectionStatus, existingTransaction);
     }
 
     @Override

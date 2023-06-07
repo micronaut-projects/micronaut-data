@@ -30,7 +30,7 @@ import java.io.Serializable;
 public interface JpaRepositoryOperations extends PrimaryRepositoryOperations {
 
     /**
-     * @return The currrent entity manager
+     * @return The current entity manager
      */
     @NonNull
     EntityManager getCurrentEntityManager();

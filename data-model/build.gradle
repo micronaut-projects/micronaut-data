@@ -12,7 +12,7 @@ dependencies {
     api mn.micronaut.aop
     api mn.micronaut.core.reactive
 
-    implementation libs.reactor
+    implementation mn.reactor
 
     compileOnly libs.jakarta.persistence.api
     compileOnly mnRxjava2.rxjava2

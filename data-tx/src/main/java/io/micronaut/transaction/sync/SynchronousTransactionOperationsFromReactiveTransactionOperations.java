@@ -16,6 +16,7 @@
 package io.micronaut.transaction.sync;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.async.propagation.ReactorPropagation;
 import io.micronaut.core.propagation.PropagatedContext;
 import io.micronaut.data.connection.ConnectionStatus;
@@ -26,7 +27,6 @@ import io.micronaut.transaction.TransactionStatus;
 import io.micronaut.transaction.exceptions.TransactionException;
 import io.micronaut.transaction.reactive.ReactiveTransactionStatus;
 import io.micronaut.transaction.reactive.ReactorReactiveTransactionOperations;
-import org.jetbrains.annotations.NotNull;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
@@ -84,7 +84,7 @@ public final class SynchronousTransactionOperationsFromReactiveTransactionOperat
         }).block();
     }
 
-    @NotNull
+    @NonNull
     private IllegalStateException noSupported() {
         return new IllegalStateException("This synchronous transaction manager is implemented using blocking of the reactive transaction manager " +
             "and only supports 'execute', 'executeRead' and 'executeWrite' methods.");

@@ -25,7 +25,6 @@ import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.propagation.PropagatedContext;
 import io.micronaut.data.annotation.Repository;
-import io.micronaut.data.exceptions.EmptyResultException;
 import io.micronaut.data.intercept.DataInterceptor;
 import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.runtime.convert.DataConversionService;
@@ -103,11 +102,7 @@ public final class DataIntroductionAdvice implements MethodInterceptor<Object, O
                     if (finalThrowable instanceof CompletionException) {
                         finalThrowable = finalThrowable.getCause();
                     }
-                    if (finalThrowable instanceof EmptyResultException && context.isSuspend() && context.isNullable()) {
-                        completableFuture.complete(null);
-                    } else {
-                        completableFuture.completeExceptionally(finalThrowable);
-                    }
+                    completableFuture.completeExceptionally(finalThrowable);
                 }
             }
         });
