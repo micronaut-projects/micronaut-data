@@ -61,7 +61,6 @@ kotlin-coroutines = "1.7.1"
 
 
 [libraries]
-# Core
 micronaut-core = { module = 'io.micronaut:micronaut-core-bom', version.ref = 'micronaut' }
 
 micronaut-testresources-client = { module = 'io.micronaut.testresources:micronaut-test-resources-client', version.ref = "micronaut-testresources" }
