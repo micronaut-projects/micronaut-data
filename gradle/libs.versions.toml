@@ -107,7 +107,6 @@ jakarta-persistence-api2 = { module = "jakarta.persistence:jakarta.persistence-a
 
 # JPA
 
-hibernate-core = { module = "org.hibernate.orm:hibernate-core", version.ref = "hibernate" }
 hibernate-jpamodelgen = { module = "org.hibernate.orm:hibernate-jpamodelgen", version.ref = "hibernate" }
 hibernate-jpamodelgen-jakarta = { module = "org.hibernate.orm:hibernate-jpamodelgen-jakarta", version.ref = "hibernate-jpamodelgen-jakarta" }
 
