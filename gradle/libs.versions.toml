@@ -52,7 +52,7 @@ jetbrains-annotations = "24.0.1"
 # Gradle plugins
 
 ksp-gradle-plugin = "1.8.21-1.0.11"
-kotlin-gradle-plugin = "1.8.21"
+kotlin-gradle-plugin = "1.8.22"
 jmh-gradle-plugin = "0.7.1"
 spring-boot-gradle-plugin = "3.1.0"
 spring-dependency-management-gradle-plugin = "1.1.0"
