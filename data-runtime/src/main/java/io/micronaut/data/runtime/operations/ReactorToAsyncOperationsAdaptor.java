@@ -17,6 +17,8 @@ package io.micronaut.data.runtime.operations;
 
 import io.micronaut.core.annotation.Experimental;
 import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.async.propagation.ReactorPropagation;
+import io.micronaut.core.propagation.PropagatedContext;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.runtime.DeleteBatchOperation;
 import io.micronaut.data.model.runtime.DeleteOperation;
@@ -28,10 +30,8 @@ import io.micronaut.data.model.runtime.UpdateBatchOperation;
 import io.micronaut.data.model.runtime.UpdateOperation;
 import io.micronaut.data.operations.async.AsyncRepositoryOperations;
 import io.micronaut.data.operations.reactive.ReactorReactiveRepositoryOperations;
-import io.micronaut.transaction.support.TransactionSynchronizationManager;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.util.context.ContextView;
 
 import java.io.Serializable;
 import java.util.concurrent.CompletionStage;
@@ -162,20 +162,18 @@ public final class ReactorToAsyncOperationsAdaptor implements AsyncRepositoryOpe
     }
 
     private <T> CompletionStage<Iterable<T>> toCompletionStage(Flux<T> flux) {
-        ContextView contextView = (ContextView) TransactionSynchronizationManager.getResource(ContextView.class);
-        if (contextView != null) {
-            flux = flux.contextWrite(contextView);
-        }
-        return flux.collectList().<Iterable<T>>map(list -> list).toFuture();
+        return flux
+            .contextWrite(ctx -> ReactorPropagation.addPropagatedContext(ctx, PropagatedContext.getOrEmpty()))
+            .collectList()
+            .<Iterable<T>>map(list -> list)
+            .toFuture();
 
     }
 
     private <T> CompletionStage<T> toCompletionStage(Mono<T> mono) {
-        ContextView contextView = (ContextView) TransactionSynchronizationManager.getResource(ContextView.class);
-        if (contextView != null) {
-            mono = mono.contextWrite(contextView);
-        }
-        return mono.toFuture();
+        return mono
+            .contextWrite(ctx -> ReactorPropagation.addPropagatedContext(ctx, PropagatedContext.getOrEmpty()))
+            .toFuture();
     }
 
 }

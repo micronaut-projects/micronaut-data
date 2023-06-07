@@ -41,7 +41,10 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-public abstract class BookRepository implements PageableRepository<Book, Long>, JpaSpecificationExecutor<Book> {
+public abstract class BookRepository implements PageableRepository<Book, Long>, JpaSpecificationExecutor<Book>, SimpleBookRepository {
+
+    @Override
+    public abstract Book save(Book book);
 
     @Join(value = "author", alias = "auth")
     public abstract Book queryByTitle(String title);

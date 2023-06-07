@@ -15,9 +15,11 @@
  */
 package io.micronaut.transaction.async;
 
+import io.micronaut.core.annotation.Experimental;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.transaction.TransactionDefinition;
 
+import java.util.Optional;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
 
@@ -28,6 +30,15 @@ import java.util.function.Function;
  * @since 3.5.0
  */
 public interface AsyncTransactionOperations<C> {
+
+    /**
+     * Find optional propagated transaction status.
+     * @return The transaction status.
+     */
+    @Experimental
+    default Optional<? extends AsyncTransactionStatus<?>> findTransactionStatus() {
+        return Optional.empty();
+    }
 
     /**
      * Execute the given handler with a new transaction.

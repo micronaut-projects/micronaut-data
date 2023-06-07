@@ -16,88 +16,26 @@
 package io.micronaut.transaction.hibernate6;
 
 import io.micronaut.core.annotation.TypeHint;
-import io.micronaut.transaction.jpa.EntityManagerHolder;
-import io.micronaut.transaction.support.SynchronousTransactionState;
-import io.micronaut.transaction.support.TransactionSynchronizationManager;
-import org.hibernate.FlushMode;
-import org.hibernate.HibernateException;
-import org.hibernate.Session;
-import org.hibernate.context.spi.CurrentSessionContext;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 
 /**
- * Implementation of Hibernate 3.1's {@link CurrentSessionContext} interface
- * that delegates to {@link SessionFactoryUtils} for providing a
- *  current {@link Session}.
+ * The class name should be corrected in SQL module and this file should be deleted.
  *
- * <p>This CurrentSessionContext implementation can also be specified in custom
- * SessionFactory setup through the "hibernate.current_session_context_class"
- * property, with the fully qualified name of this class as value.
- *
- * @author Juergen Hoeller
- * @author graemerocher
- * @since 4.2
+ * @author Denis Stepanov
+ * @since 4.0.0
+ * @deprecated Replaced by {@link io.micronaut.transaction.hibernate.MicronautSessionContext}
  */
-@SuppressWarnings("serial")
+// TypeHint doesn't work for deprecated, this should be removed before the release anyway
+//@Deprecated(since = "4", forRemoval = true)
 @TypeHint(MicronautSessionContext.class)
-public final class MicronautSessionContext implements CurrentSessionContext {
-
-    private final SessionFactoryImplementor sessionFactory;
+public final class MicronautSessionContext extends io.micronaut.transaction.hibernate.MicronautSessionContext {
 
     /**
      * Create a new SpringSessionContext for the given Hibernate SessionFactory.
+     *
      * @param sessionFactory the SessionFactory to provide current Sessions for
      */
     public MicronautSessionContext(SessionFactoryImplementor sessionFactory) {
-        this.sessionFactory = sessionFactory;
+        super(sessionFactory);
     }
-
-
-    /**
-     * Retrieve the Spring-managed Session for the current thread, if any.
-     */
-    @Override
-    @SuppressWarnings("deprecation")
-    public Session currentSession() throws HibernateException {
-        Object value = TransactionSynchronizationManager.getResource(this.sessionFactory);
-        if (value instanceof Session session) {
-            return session;
-        } else if (value instanceof SessionHolder sessionHolder) {
-            // HibernateTransactionManager
-            Session session = sessionHolder.getSession();
-            if (!sessionHolder.isSynchronizedWithTransaction()) {
-                SynchronousTransactionState state = TransactionSynchronizationManager.getSynchronousTransactionState(this.sessionFactory);
-                if (state != null && state.isSynchronizationActive()) {
-                    state.registerSynchronization(new SessionSynchronization(sessionHolder, this.sessionFactory, false));
-                    sessionHolder.setSynchronizedWithTransaction(true);
-                    // Switch to FlushMode.AUTO, as we have to assume a thread-bound Session
-                    // with FlushMode.MANUAL, which needs to allow flushing within the transaction.
-                    FlushMode flushMode = session.getHibernateFlushMode();
-                    if (flushMode.equals(FlushMode.MANUAL) && !state.isTransactionReadOnly()) {
-                        session.setFlushMode(FlushMode.AUTO.toJpaFlushMode());
-                        sessionHolder.setPreviousFlushMode(flushMode);
-                    }
-                }
-            }
-            return session;
-        } else if (value instanceof EntityManagerHolder entityManagerHolder) {
-            // JpaTransactionManager
-            return entityManagerHolder.getEntityManager().unwrap(Session.class);
-        }
-
-        SynchronousTransactionState state = TransactionSynchronizationManager.getSynchronousTransactionState(this.sessionFactory);
-        if (state == null || !state.isSynchronizationActive()) {
-            throw new HibernateException("Could not obtain transaction-synchronized Session for current thread");
-        }
-        Session session = this.sessionFactory.openSession();
-        if (state.isTransactionReadOnly()) {
-            session.setFlushMode(FlushMode.MANUAL.toJpaFlushMode());
-        }
-        SessionHolder sessionHolder = new SessionHolder(session);
-        state.registerSynchronization(new SessionSynchronization(sessionHolder, this.sessionFactory, true));
-        TransactionSynchronizationManager.bindResource(this.sessionFactory, sessionHolder);
-        sessionHolder.setSynchronizedWithTransaction(true);
-        return session;
-    }
-
 }

@@ -15,4 +15,9 @@ class H2MultitenancySpec extends AbstractJdbcMultitenancySpec implements H2TestP
     Map<String, String> getDataSourceProperties(String dataSourceName) {
         return getH2DataSourceProperties(dataSourceName)
     }
+
+    @Override
+    boolean shouldAddDefaultDbProperties() {
+        return false
+    }
 }

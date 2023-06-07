@@ -1,5 +1,8 @@
+import io.micronaut.testresources.buildtools.KnownModules
+
 plugins {
     id "io.micronaut.build.internal.data-module"
+    id 'io.micronaut.test-resources'
 }
 
 dependencies {
@@ -8,6 +11,7 @@ dependencies {
 
     api libs.spring.data.commons
 
+    implementation projects.dataConnectionJdbc
     implementation projects.dataRuntime
     implementation mnSpring.spring.jdbc
     implementation mnSpring.micronaut.spring
@@ -16,24 +20,29 @@ dependencies {
     }
 
     compileOnly mn.micronaut.http
-    compileOnly libs.spring.data.jpa
-    compileOnly mnSpring.spring.orm
-    compileOnly (libs.hibernate.core) {
-        exclude group: 'org.jboss.spec.javax.transaction', module: 'jboss-transaction-api_1.2_spec'
-        exclude group: 'org.javassist', module: 'javassist'
-        exclude group: 'org.jboss:jandex', module: 'jar'
-    }
 
     testAnnotationProcessor mn.micronaut.inject.java
     testAnnotationProcessor projects.dataProcessor
 
     testImplementation mn.micronaut.inject.groovy
     testImplementation projects.dataProcessor
-    testImplementation projects.dataSpringJpa
+    testImplementation projects.dataJdbc
     testImplementation projects.dataTck
-    testImplementation libs.spring.data.jpa
 
     testRuntimeOnly mnSql.h2
-    testRuntimeOnly mnSpring.spring.orm
     testRuntimeOnly mnSql.micronaut.jdbc.tomcat
+
+    testRuntimeOnly mnSql.postgresql
+    testResourcesService mnSql.postgresql
+}
+
+micronaut {
+    version libs.versions.micronaut.platform.get()
+    testResources {
+        enabled = true
+        inferClasspath = false
+        additionalModules.add(KnownModules.JDBC_POSTGRESQL)
+        clientTimeout = 300
+        version = libs.versions.micronaut.testresources.get()
+    }
 }

@@ -4,10 +4,8 @@ import io.micronaut.context.annotation.Context;
 import io.micronaut.context.event.BeanCreatedEvent;
 import io.micronaut.context.event.BeanCreatedEventListener;
 import io.micronaut.jdbc.BasicJdbcConfiguration;
-import io.micronaut.transaction.jdbc.DelegatingDataSource;
 import jakarta.inject.Singleton;
 
-import javax.sql.DataSource;
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -24,6 +22,13 @@ public class PostgresDbInit implements BeanCreatedEventListener<BasicJdbcConfigu
         BasicJdbcConfiguration configuration = event.getBean();
         if (!configuration.getConfiguredDriverClassName().toLowerCase(Locale.ROOT).contains("postgres")) {
             return configuration;
+        }
+
+        try {
+            // Rancher local testing delay
+            Thread.sleep(2000);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
         }
 
         final Properties info = new Properties();

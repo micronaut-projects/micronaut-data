@@ -15,10 +15,8 @@ import jakarta.persistence.EntityManager
 import javax.transaction.Transactional
 
 @MicronautTest(transactional = false, packages = "io.micronaut.data.tck.entities")
-@Property(name = "datasources.default.name", value = "mydb")
-@Property(name = 'jpa.default.properties.hibernate.hbm2ddl.auto', value = 'create-drop')
 @Stepwise
-class TransactionAnnotationSpec extends Specification {
+class TransactionAnnotationSpec extends Specification implements H2Properties {
 
     @Inject TestService testService
     @Inject BeanDefinitionRegistry registry

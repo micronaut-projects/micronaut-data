@@ -1,3 +1,5 @@
+import io.micronaut.testresources.buildtools.KnownModules
+
 plugins {
     id "org.jetbrains.kotlin.jvm"
     id "org.jetbrains.kotlin.kapt"
@@ -11,11 +13,11 @@ application {
 }
 
 micronaut {
-    project.ext.micronautVersion
     version libs.versions.micronaut.platform.get()
     runtime "netty"
     testRuntime "junit5"
     testResources {
+        additionalModules.add(KnownModules.R2DBC_MARIADB)
         clientTimeout = 300
         version = libs.versions.micronaut.testresources.get()
     }
@@ -23,7 +25,7 @@ micronaut {
 
 dependencies {
     kapt project(":data-processor")
-    implementation("io.micronaut.data:micronaut-data-r2dbc")
+    implementation projects.dataR2dbc
     implementation("io.micronaut.flyway:micronaut-flyway")
     implementation "io.micronaut.sql:micronaut-jdbc-hikari"
     implementation libs.kotlin.coroutines
@@ -39,5 +41,7 @@ dependencies {
 
     testImplementation "io.micronaut:micronaut-http-client"
     compileOnly mnSerde.micronaut.serde.api
+
+    testResourcesService mnSql.mariadb.java.client
 }
 

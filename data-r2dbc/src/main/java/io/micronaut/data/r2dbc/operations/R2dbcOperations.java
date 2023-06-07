@@ -30,7 +30,7 @@ import java.util.function.Function;
  * @author graemerocher
  * @since 1.0.0
  */
-public interface R2dbcOperations extends ReactiveTransactionOperations<Connection> {
+public interface R2dbcOperations {
     /**
      * Obtains the connection factory.
      * @return The connection factory
@@ -44,7 +44,15 @@ public interface R2dbcOperations extends ReactiveTransactionOperations<Connectio
      * @param <T> The emitted type
      * @return A publisher that emits the result type
      */
-    @NonNull <T> Publisher<T> withTransaction(@NonNull ReactiveTransactionStatus<Connection> status, @NonNull TransactionalCallback<Connection, T> handler);
+    @NonNull <T> Publisher<T> withTransaction(@NonNull ReactiveTransactionStatus<Connection> status, @NonNull ReactiveTransactionOperations.TransactionalCallback<Connection, T> handler);
+
+    /**
+     * Execute the given handler with an existing transaction status.
+     * @param handler The handler
+     * @param <T> The emitted type
+     * @return A publisher that emits the result type
+     */
+    @NonNull <T> Publisher<T> withTransaction(@NonNull ReactiveTransactionOperations.TransactionalCallback<Connection, T> handler);
 
     /**
      * Execute the given handler with a new connection.
