@@ -11,6 +11,7 @@ micronautBuild {
 }
 
 dependencies {
+    micronautBoms(platform("io.micronaut:micronaut-core-bom:$micronautVersion"))
     testRuntimeOnly mnSerde.micronaut.serde.jackson
 }
 

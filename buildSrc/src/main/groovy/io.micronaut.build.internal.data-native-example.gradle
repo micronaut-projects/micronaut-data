@@ -15,6 +15,7 @@ tasks.register("testExamples") {
 }
 
 dependencies {
+    micronautBoms(platform("io.micronaut:micronaut-core-bom:$micronautVersion"))
     testRuntimeOnly mnSerde.micronaut.serde.jackson
     runtimeOnly mn.snakeyaml
 }
