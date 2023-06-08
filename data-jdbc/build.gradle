@@ -66,14 +66,14 @@ dependencies {
     testResourcesService mnSql.mssql.jdbc
 
     // Needed for H2EagerContextSpec
-    testImplementation("org.jetbrains.kotlin:kotlin-reflect:1.8.21")
+    testImplementation("org.jetbrains.kotlin:kotlin-reflect:1.8.22")
     testImplementation mnSerde.micronaut.serde.support
 
     testImplementation mnTestResources.micronaut.test.resources.extensions.junit.platform
 
     testRuntimeOnly mnSerde.micronaut.serde.oracle.jdbc.json
 
-    testRuntimeOnly libs.micronaut.flyway
+    testRuntimeOnly mnFlyway.micronaut.flyway
     testRuntimeOnly libs.flyway.oracle
 }
 

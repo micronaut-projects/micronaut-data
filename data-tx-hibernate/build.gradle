@@ -11,7 +11,7 @@ dependencies {
 
     api projects.dataTx
     api projects.dataTxJdbc
-    api libs.hibernate.core
+    api mnSql.hibernate.core
 
     implementation mn.micronaut.inject
 

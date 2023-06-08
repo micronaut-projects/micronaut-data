@@ -39,7 +39,6 @@ public interface ReactiveRepositoryOperations extends ConversionServiceProvider 
      * @param id The id
      * @param <T> The generic type
      * @return A publisher that emits the result
-     * @throws io.micronaut.data.exceptions.EmptyResultException if the result couldn't be retrieved
      */
     @NonNull
     @SingleResult
@@ -51,6 +50,8 @@ public interface ReactiveRepositoryOperations extends ConversionServiceProvider 
      * @param <T> The declaring type
      * @return True if it exists
      */
+    @NonNull
+    @SingleResult
     <T> Publisher<Boolean> exists(@NonNull PreparedQuery<T, Boolean> preparedQuery);
 
     /**
@@ -60,10 +61,10 @@ public interface ReactiveRepositoryOperations extends ConversionServiceProvider 
      * @param <T> The generic resultType
      * @param <R> The result type
      * @return A publisher that emits the result
-     * @throws io.micronaut.data.exceptions.EmptyResultException if the result couldn't be retrieved
      */
+    @NonNull
     @SingleResult
-    @NonNull <T, R> Publisher<R> findOne(@NonNull PreparedQuery<T, R> preparedQuery);
+    <T, R> Publisher<R> findOne(@NonNull PreparedQuery<T, R> preparedQuery);
 
     /**
      * Find one by ID.
@@ -72,7 +73,6 @@ public interface ReactiveRepositoryOperations extends ConversionServiceProvider 
      * @param id The id
      * @param <T> The generic type
      * @return A publisher that emits zero or one result
-     * @throws io.micronaut.data.exceptions.EmptyResultException if the result couldn't be retrieved
      */
     @NonNull
     @SingleResult
@@ -86,8 +86,9 @@ public interface ReactiveRepositoryOperations extends ConversionServiceProvider 
      * @param <R> The result type
      * @return A publisher that emits the zero or one result
      */
+    @NonNull
     @SingleResult
-    @NonNull <T, R> Publisher<R> findOptional(@NonNull PreparedQuery<T, R> preparedQuery);
+    <T, R> Publisher<R> findOptional(@NonNull PreparedQuery<T, R> preparedQuery);
 
     /**
      * Finds all results for the given query.
@@ -95,7 +96,8 @@ public interface ReactiveRepositoryOperations extends ConversionServiceProvider 
      * @param <T> The generic type
      * @return A publisher that emits the results
      */
-    @NonNull <T> Publisher<T> findAll(PagedQuery<T> pagedQuery);
+    @NonNull
+    <T> Publisher<T> findAll(PagedQuery<T> pagedQuery);
 
     /**
      * Counts all results for the given query.
@@ -103,8 +105,8 @@ public interface ReactiveRepositoryOperations extends ConversionServiceProvider 
      * @param <T> The generic type
      * @return A publisher that emits the count as a long
      */
-    @SingleResult
     @NonNull
+    @SingleResult
     <T> Publisher<Long> count(PagedQuery<T> pagedQuery);
 
     /**
@@ -114,7 +116,8 @@ public interface ReactiveRepositoryOperations extends ConversionServiceProvider 
      * @param <R> The result type
      * @return A publisher that emits an iterable with all results
      */
-    @NonNull <T, R> Publisher<R> findAll(@NonNull PreparedQuery<T, R> preparedQuery);
+    @NonNull
+    <T, R> Publisher<R> findAll(@NonNull PreparedQuery<T, R> preparedQuery);
 
     /**
      * Persist the entity returning a possibly new entity.
@@ -122,8 +125,9 @@ public interface ReactiveRepositoryOperations extends ConversionServiceProvider 
      * @param <T> The generic type
      * @return A publisher that emits the entity
      */
+    @NonNull
     @SingleResult
-    @NonNull <T> Publisher<T> persist(@NonNull InsertOperation<T> operation);
+    <T> Publisher<T> persist(@NonNull InsertOperation<T> operation);
 
     /**
      * Updates the entity returning a possibly new entity.
@@ -131,8 +135,9 @@ public interface ReactiveRepositoryOperations extends ConversionServiceProvider 
      * @param <T> The generic type
      * @return A publisher that emits the entity
      */
+    @NonNull
     @SingleResult
-    @NonNull <T> Publisher<T> update(@NonNull UpdateOperation<T> operation);
+    <T> Publisher<T> update(@NonNull UpdateOperation<T> operation);
 
     /**
      * Updates the entities for the given operation.
@@ -141,9 +146,8 @@ public interface ReactiveRepositoryOperations extends ConversionServiceProvider 
      * @param <T> The generic type
      * @return The updated entities
      */
-    default @NonNull <T> Publisher<T> updateAll(@NonNull UpdateBatchOperation<T> operation) {
-        throw new UnsupportedOperationException("The updateAll is required to be implemented.");
-    }
+    @NonNull
+    <T> Publisher<T> updateAll(@NonNull UpdateBatchOperation<T> operation);
 
     /**
      * Persist all the given entities.
@@ -151,7 +155,8 @@ public interface ReactiveRepositoryOperations extends ConversionServiceProvider 
      * @param <T> The generic type
      * @return The entities, possibly mutated
      */
-    @NonNull <T> Publisher<T> persistAll(@NonNull InsertBatchOperation<T> operation);
+    @NonNull
+    <T> Publisher<T> persistAll(@NonNull InsertBatchOperation<T> operation);
 
     /**
      * Executes an update for the given query and parameter values. If it is possible to
@@ -185,8 +190,8 @@ public interface ReactiveRepositoryOperations extends ConversionServiceProvider 
      * @param <T> The generic type
      * @return A publisher that emits the number of entities deleted
      */
-    @SingleResult
     @NonNull
+    @SingleResult
     <T> Publisher<Number> delete(@NonNull DeleteOperation<T> operation);
 
     /**
@@ -195,8 +200,8 @@ public interface ReactiveRepositoryOperations extends ConversionServiceProvider 
      * @param <T> The generic type
      * @return A publisher that emits the number of entities deleted
      */
-    @SingleResult
     @NonNull
+    @SingleResult
     <T> Publisher<Number> deleteAll(@NonNull DeleteBatchOperation<T> operation);
 
     /**
@@ -205,7 +210,7 @@ public interface ReactiveRepositoryOperations extends ConversionServiceProvider 
      * @param <R> The entity generic type
      * @return The page type
      */
-    @SingleResult
     @NonNull
+    @SingleResult
     <R> Publisher<Page<R>> findPage(@NonNull PagedQuery<R> pagedQuery);
 }

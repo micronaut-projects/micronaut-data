@@ -127,10 +127,10 @@ final class DefaultHibernateReactorTransactionOperations extends AbstractReactor
         if (definition.getPropagationBehavior() == TransactionDefinition.Propagation.MANDATORY) {
             return Flux.error(new NoTransactionException("Expected an existing transaction, but none was found in the Reactive context."));
         }
-        if (definition.getIsolationLevel() != TransactionDefinition.DEFAULT.getIsolationLevel()) {
+        if (definition.getIsolationLevel().isPresent()) {
             return Flux.error(new TransactionUsageException("Isolation level not supported"));
         }
-        if (definition.getTimeout() != TransactionDefinition.TIMEOUT_DEFAULT) {
+        if (definition.getTimeout().isPresent()) {
             return Flux.error(new TransactionUsageException("Timeout not supported"));
         }
         return null;

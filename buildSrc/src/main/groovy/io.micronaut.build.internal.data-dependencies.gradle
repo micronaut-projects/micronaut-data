@@ -2,6 +2,6 @@ repositories {
     mavenCentral()
 }
 
-configurations.configureEach {
-    resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
-}
+//configurations.configureEach {
+//    resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
+//}
