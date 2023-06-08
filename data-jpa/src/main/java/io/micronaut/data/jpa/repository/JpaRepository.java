@@ -20,6 +20,7 @@ import io.micronaut.data.annotation.QueryHint;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.jpa.repository.intercept.FlushInterceptor;
 import io.micronaut.data.jpa.repository.intercept.LoadInterceptor;
+import io.micronaut.data.jpa.repository.intercept.MergeInterceptor;
 import io.micronaut.data.model.Sort;
 import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.data.repository.PageableRepository;
@@ -30,10 +31,10 @@ import java.util.List;
 /**
  * Simple composed repository interface that includes {@link CrudRepository} and {@link PageableRepository}.
  *
- * @param <E> The entity type
+ * @param <E>  The entity type
  * @param <ID> The ID type
- * @since 1.0.0
  * @author graemerocher
+ * @since 1.0.0
  */
 public interface JpaRepository<E, ID> extends CrudRepository<E, ID>, PageableRepository<E, ID> {
     @NonNull
@@ -50,8 +51,9 @@ public interface JpaRepository<E, ID> extends CrudRepository<E, ID>, PageableRep
 
     /**
      * Save and perform a flush() of any pending operations.
+     *
      * @param entity The entity
-     * @param <S> The entity generic type
+     * @param <S>    The entity generic type
      * @return The entity, possibly mutated
      */
     @QueryHint(name = "jakarta.persistence.FlushModeType", value = "AUTO")
@@ -65,10 +67,22 @@ public interface JpaRepository<E, ID> extends CrudRepository<E, ID>, PageableRep
 
     /**
      * Adds a load method.
-     * @param id the entity ID
+     *
+     * @param id  the entity ID
      * @param <S> the entity type
      * @return An uninitialized proxy
      */
     @DataMethod(interceptor = LoadInterceptor.class)
     <S extends E> S load(@NonNull Serializable id);
+
+    /**
+     * Merge the state of the given entity into the
+     * current persistence context.
+     *
+     * @param entity entity instance
+     * @param <S>    The entity type
+     * @return the managed instance that the state was merged to
+     */
+    @DataMethod(interceptor = MergeInterceptor.class)
+    <S extends E> S merge(@NonNull S entity);
 }
