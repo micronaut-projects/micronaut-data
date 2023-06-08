@@ -13,28 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.connection.jdbc;
+package io.micronaut.data.spring.jpa.hibernate;
 
-import io.micronaut.core.annotation.Internal;
-import io.micronaut.data.connection.jdbc.advice.DelegatingDataSource;
-import io.micronaut.jdbc.DataSourceResolver;
+import io.micronaut.configuration.hibernate.jpa.HibernateCurrentSessionContextClassProvider;
 import jakarta.inject.Singleton;
-
-import javax.sql.DataSource;
+import org.hibernate.context.spi.CurrentSessionContext;
+import org.springframework.orm.hibernate5.SpringSessionContext;
 
 /**
- * Unwraps transactional data source proxies.
+ * Spring integration implementation of {@link HibernateCurrentSessionContextClassProvider}.
  *
- * @author Vladimir Kulev
- * @since 1.0.1
+ * @author Denis Stepanov
+ * @since 3.3.2
  */
 @Singleton
-@Internal
-public class DelegatingDataSourceResolver implements DataSourceResolver {
+public class SpringHibernateCurrentSessionContextClassProvider implements HibernateCurrentSessionContextClassProvider {
 
+    /**
+     * @return SpringSessionContext
+     */
     @Override
-    public DataSource resolve(DataSource dataSource) {
-        return DelegatingDataSource.unwrapDataSource(dataSource);
+    public Class<? extends CurrentSessionContext> get() {
+        return SpringSessionContext.class;
     }
 
 }

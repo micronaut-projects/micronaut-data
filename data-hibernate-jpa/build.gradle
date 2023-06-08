@@ -5,7 +5,6 @@ plugins {
 dependencies {
     annotationProcessor mn.micronaut.inject.java
     annotationProcessor mn.micronaut.graal
-    testAnnotationProcessor mnValidation.micronaut.validation.processor
 
     api projects.dataRuntime
     api projects.dataModel
@@ -14,18 +13,13 @@ dependencies {
     api mnSql.hibernate.core
 
     implementation (mnSql.micronaut.hibernate.jpa) {
-        exclude group:'io.micronaut', module:'micronaut-spring'
-        exclude group:'org.springframework', module:'spring-aop'
-        exclude group:'org.springframework', module:'spring-orm'
-        exclude group:'org.springframework', module:'spring-jdbc'
-        exclude group:'org.springframework', module:'spring-expression'
         exclude group:'org.javassist', module:'javassist'
-        exclude group:'io.micronaut.configuration', module:'micronaut-hibernate-validator'
-        exclude group:'io.micronaut.configuration', module:'micronaut-hibernate-jpa-spring'
         exclude group: 'io.micronaut.data'
     }
 
     testAnnotationProcessor mn.micronaut.inject.java
+    testAnnotationProcessor mnValidation.micronaut.validation.processor
+
     testAnnotationProcessor projects.dataProcessor
     testImplementation mnValidation.micronaut.validation
     testImplementation mnValidation.micronaut.validation.processor
