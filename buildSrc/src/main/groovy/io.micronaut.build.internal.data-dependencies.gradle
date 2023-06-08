@@ -5,22 +5,3 @@ repositories {
 //configurations.configureEach {
 //    resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
 //}
-
-configurations {
-    configureEach {
-        resolutionStrategy {
-            eachDependency { DependencyResolveDetails details ->
-                if (details.requested.group == 'io.micronaut') {
-                    if (details.requested.module.name == "micronaut-bom") {
-                        return
-                    }
-                    if (libs.versions.micronaut instanceof org.gradle.api.provider.Provider) {
-                        details.useVersion libs.versions.micronaut.get()
-                    } else {
-                        details.useVersion libs.versions.micronaut.asProvider().get()
-                    }
-                }
-            }
-        }
-    }
-}

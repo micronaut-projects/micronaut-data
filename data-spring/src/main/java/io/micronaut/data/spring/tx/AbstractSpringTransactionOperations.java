@@ -32,7 +32,6 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 import java.lang.reflect.UndeclaredThrowableException;
 import java.sql.Connection;
-import java.time.Duration;
 
 /**
  * Adds Spring Transaction management capability to Micronaut Data.
