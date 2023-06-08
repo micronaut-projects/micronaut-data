@@ -5581,10 +5581,6 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Interceptor for flushing.</div>
 </dd>
-<dt><a href="io/micronaut/data/jpa/repository/intercept/FlushInterceptor.html#%3Cinit%3E(io.micronaut.data.operations.RepositoryOperations)" class="member-name-link">FlushInterceptor(RepositoryOperations)</a> - Constructor for class io.micronaut.data.jpa.repository.intercept.<a href="io/micronaut/data/jpa/repository/intercept/FlushInterceptor.html" title="class in io.micronaut.data.jpa.repository.intercept">FlushInterceptor</a></dt>
-<dd>
-<div class="block">Default constructor.</div>
-</dd>
 <dt><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#formatParameter(int)" class="member-name-link">formatParameter(int)</a> - Method in class io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html" title="class in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder</a></dt>
 <dd>
 <div class="block">Format the parameter at the given index.</div>
@@ -8930,6 +8926,8 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/jpa/repository/intercept/LoadInterceptor.html#intercept(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext)" class="member-name-link">intercept(RepositoryMethodKey, MethodInvocationContext&lt;T, T&gt;)</a> - Method in class io.micronaut.data.jpa.repository.intercept.<a href="io/micronaut/data/jpa/repository/intercept/LoadInterceptor.html" title="class in io.micronaut.data.jpa.repository.intercept">LoadInterceptor</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/jpa/repository/intercept/MergeInterceptor.html#intercept(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext)" class="member-name-link">intercept(RepositoryMethodKey, MethodInvocationContext&lt;T, T&gt;)</a> - Method in class io.micronaut.data.jpa.repository.intercept.<a href="io/micronaut/data/jpa/repository/intercept/MergeInterceptor.html" title="class in io.micronaut.data.jpa.repository.intercept">MergeInterceptor</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/intercept/async/DefaultFindPageAsyncInterceptor.html#interceptCompletionStage(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext)" class="member-name-link">interceptCompletionStage(RepositoryMethodKey, MethodInvocationContext&lt;Object, CompletionStage&lt;Page&lt;Object&gt;&gt;&gt;)</a> - Method in class io.micronaut.data.runtime.intercept.async.<a href="io/micronaut/data/runtime/intercept/async/DefaultFindPageAsyncInterceptor.html" title="class in io.micronaut.data.runtime.intercept.async">DefaultFindPageAsyncInterceptor</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/intercept/async/DefaultFindSliceAsyncInterceptor.html#interceptCompletionStage(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext)" class="member-name-link">interceptCompletionStage(RepositoryMethodKey, MethodInvocationContext&lt;Object, CompletionStage&lt;Slice&lt;Object&gt;&gt;&gt;)</a> - Method in class io.micronaut.data.runtime.intercept.async.<a href="io/micronaut/data/runtime/intercept/async/DefaultFindSliceAsyncInterceptor.html" title="class in io.micronaut.data.runtime.intercept.async">DefaultFindSliceAsyncInterceptor</a></dt>
@@ -10806,10 +10804,6 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Interceptor for Load.</div>
 </dd>
-<dt><a href="io/micronaut/data/jpa/repository/intercept/LoadInterceptor.html#%3Cinit%3E(io.micronaut.data.operations.RepositoryOperations)" class="member-name-link">LoadInterceptor(RepositoryOperations)</a> - Constructor for class io.micronaut.data.jpa.repository.intercept.<a href="io/micronaut/data/jpa/repository/intercept/LoadInterceptor.html" title="class in io.micronaut.data.jpa.repository.intercept">LoadInterceptor</a></dt>
-<dd>
-<div class="block">Default constructor.</div>
-</dd>
 <dt><a href="io/micronaut/data/model/jpa/criteria/impl/AbstractCriteriaBuilder.html#localDate()" class="member-name-link">localDate()</a> - Method in class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/AbstractCriteriaBuilder.html" title="class in io.micronaut.data.model.jpa.criteria.impl">AbstractCriteriaBuilder</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/jpa/criteria/impl/AbstractCriteriaBuilder.html#localDateTime()" class="member-name-link">localDateTime()</a> - Method in class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/AbstractCriteriaBuilder.html" title="class in io.micronaut.data.model.jpa.criteria.impl">AbstractCriteriaBuilder</a></dt>
@@ -11338,6 +11332,19 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/mongodb/operations/options/MongoFindOptions.html#maxTimeMS(java.lang.Long)" class="member-name-link">maxTimeMS(Long)</a> - Method in class io.micronaut.data.mongodb.operations.options.<a href="io/micronaut/data/mongodb/operations/options/MongoFindOptions.html" title="class in io.micronaut.data.mongodb.operations.options">MongoFindOptions</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/jpa/repository/JpaRepository.html#merge(S)" class="member-name-link">merge(S)</a> - Method in interface io.micronaut.data.jpa.repository.<a href="io/micronaut/data/jpa/repository/JpaRepository.html" title="interface in io.micronaut.data.jpa.repository">JpaRepository</a></dt>
+<dd>
+<div class="block">Merge the state of the given entity into the
+ current persistence context.</div>
+</dd>
+<dt><a href="io/micronaut/data/jpa/operations/JpaRepositoryOperations.html#merge(T)" class="member-name-link">merge(T)</a> - Method in interface io.micronaut.data.jpa.operations.<a href="io/micronaut/data/jpa/operations/JpaRepositoryOperations.html" title="interface in io.micronaut.data.jpa.operations">JpaRepositoryOperations</a></dt>
+<dd>
+<div class="block">Merges the entity.</div>
+</dd>
+<dt><a href="io/micronaut/data/jpa/repository/intercept/MergeInterceptor.html" class="type-name-link" title="class in io.micronaut.data.jpa.repository.intercept">MergeInterceptor</a>&lt;<a href="io/micronaut/data/jpa/repository/intercept/MergeInterceptor.html" title="type parameter in MergeInterceptor">T</a>&gt; - Class in <a href="io/micronaut/data/jpa/repository/intercept/package-summary.html">io.micronaut.data.jpa.repository.intercept</a></dt>
+<dd>
+<div class="block">Interceptor for JPA merge operation.</div>
+</dd>
 <dt><a href="io/micronaut/data/intercept/annotation/DataMethodQueryParameter.html#META_MEMBER_AUTO_POPULATED" class="member-name-link">META_MEMBER_AUTO_POPULATED</a> - Static variable in annotation interface io.micronaut.data.intercept.annotation.<a href="io/micronaut/data/intercept/annotation/DataMethodQueryParameter.html" title="annotation interface in io.micronaut.data.intercept.annotation">DataMethodQueryParameter</a></dt>
 <dd>
 <div class="block">The member name that holds the auto-populated value.</div>
