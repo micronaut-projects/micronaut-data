@@ -26,11 +26,17 @@ import io.micronaut.spring.tx.test.SpringTransactionTestExecutionListener;
 import io.micronaut.test.annotation.TransactionMode;
 import io.micronaut.test.context.TestContext;
 import io.micronaut.test.context.TestExecutionListener;
+import io.micronaut.test.context.TestMethodInterceptor;
+import io.micronaut.test.context.TestMethodInvocationContext;
 import io.micronaut.test.extensions.AbstractMicronautExtension;
 import io.micronaut.transaction.SynchronousTransactionManager;
 import io.micronaut.transaction.TransactionDefinition;
+import io.micronaut.transaction.TransactionOperations;
 import io.micronaut.transaction.TransactionStatus;
+import io.micronaut.transaction.support.ExceptionUtil;
+import io.micronaut.transaction.sync.SynchronousTransactionOperationsFromReactiveTransactionOperations;
 
+import java.io.UncheckedIOException;
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Method;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -41,36 +47,63 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author graemerocher
  * @since 1.0.0
  */
-@EachBean(SynchronousTransactionManager.class)
+@EachBean(TransactionOperations.class)
 @Requires(classes = TestExecutionListener.class)
 @Requires(property = AbstractMicronautExtension.TEST_TRANSACTIONAL, value = StringUtils.TRUE, defaultValue = StringUtils.TRUE)
 @Replaces(SpringTransactionTestExecutionListener.class)
 @Internal
-public class DefaultTestTransactionExecutionListener implements TestExecutionListener {
-    private final SynchronousTransactionManager<Object> transactionManager;
+public class DefaultTestTransactionExecutionListener implements TestExecutionListener, TestMethodInterceptor<Object> {
+    @Nullable
+    private final SynchronousTransactionManager<Object> synchronousTransactionManager;
+    private final TransactionOperations<Object> transactionManager;
     private final TransactionMode transactionMode;
     private TransactionStatus<Object> tx;
     private final AtomicInteger counter = new AtomicInteger();
     private final AtomicInteger setupCounter = new AtomicInteger();
     private final boolean rollback;
+    private boolean skipSynchronousTransactionManagerExecution;
     @Nullable
     private final SpockMethodTransactionDefinitionProvider spockMethodTransactionDefinitionProvider;
 
     /**
-     * @param transactionManager                       Spring's {@code PlatformTransactionManager}
+     * @param transactionManager                       The transaction manager
      * @param rollback                                 {@code true} if the transaction should be rollback
      * @param transactionMode                          The transaction mode
      * @param spockMethodTransactionDefinitionProvider The spock method name extractor
      */
     protected DefaultTestTransactionExecutionListener(
-        SynchronousTransactionManager<Object> transactionManager,
+        TransactionOperations<Object> transactionManager,
         @Property(name = AbstractMicronautExtension.TEST_ROLLBACK, defaultValue = "true") boolean rollback,
         @Property(name = AbstractMicronautExtension.TEST_TRANSACTION_MODE, defaultValue = "SEPARATE_TRANSACTIONS") TransactionMode transactionMode,
         @Nullable SpockMethodTransactionDefinitionProvider spockMethodTransactionDefinitionProvider) {
         this.spockMethodTransactionDefinitionProvider = spockMethodTransactionDefinitionProvider;
         this.transactionManager = transactionManager;
+        this.synchronousTransactionManager = transactionManager instanceof SynchronousTransactionManager<Object> syncTx ? syncTx : null;
+        if (transactionMode == TransactionMode.SINGLE_TRANSACTION && transactionManager instanceof SynchronousTransactionOperationsFromReactiveTransactionOperations) {
+            throw new IllegalStateException("Transaction mode SINGLE_TRANSACTION is not supported when the transaction manager doesn't support detached transaction!");
+        }
         this.rollback = rollback;
         this.transactionMode = transactionMode;
+    }
+
+
+    @Override
+    public Object interceptTest(TestMethodInvocationContext<Object> methodInvocationContext) {
+        // Not all testing frameworks supports intercepting the invocation
+        skipSynchronousTransactionManagerExecution = true;
+        try {
+            return transactionManager.execute(TransactionDefinition.DEFAULT, status -> {
+                try {
+                    return TestMethodInterceptor.super.interceptTest(methodInvocationContext);
+                } catch (Throwable e) {
+                    throw new UncheckedException(e);
+                }
+            });
+        } catch (UncheckedException e) {
+            return ExceptionUtil.sneakyThrow(e.getCause());
+        } finally {
+            skipSynchronousTransactionManagerExecution = false;
+        }
     }
 
     @Override
@@ -108,6 +141,13 @@ public class DefaultTestTransactionExecutionListener implements TestExecutionLis
     @Override
     public void beforeTestExecution(TestContext testContext) {
         if (counter.getAndIncrement() == 0) {
+            if (skipSynchronousTransactionManagerExecution) {
+                // Already being executed
+                return;
+            }
+            if (synchronousTransactionManager == null) {
+                throw new IllegalStateException("Transaction manager doesn't support detached transaction and the testing framework doesn't support intercepting the test invocation!");
+            }
             TransactionDefinition definition;
             AnnotatedElement annotatedElement = testContext.getTestMethod();
             if (spockMethodTransactionDefinitionProvider != null) {
@@ -118,17 +158,32 @@ public class DefaultTestTransactionExecutionListener implements TestExecutionLis
             } else {
                 definition = TransactionDefinition.DEFAULT;
             }
-            tx = transactionManager.getTransaction(definition);
+            tx = synchronousTransactionManager.getTransaction(definition);
         }
     }
 
     private void afterTestExecution(boolean rollback) {
         if (counter.decrementAndGet() == 0) {
+            if (skipSynchronousTransactionManagerExecution) {
+                // Already being executed
+                return;
+            }
+            if (synchronousTransactionManager == null) {
+                return;
+            }
             if (rollback) {
-                transactionManager.rollback(tx);
+                synchronousTransactionManager.rollback(tx);
             } else {
-                transactionManager.commit(tx);
+                synchronousTransactionManager.commit(tx);
             }
         }
+    }
+
+    private static class UncheckedException extends RuntimeException {
+
+        UncheckedException(Throwable e) {
+            super(e);
+        }
+
     }
 }
