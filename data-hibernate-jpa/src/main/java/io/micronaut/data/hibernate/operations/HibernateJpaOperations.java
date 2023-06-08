@@ -221,6 +221,11 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
         return executeRead(session -> session.getReference(type, id));
     }
 
+    @Override
+    public <T> T merge(T entity) {
+        return executeWrite(session -> session.merge(entity));
+    }
+
     @Nullable
     @Override
     public <T, R> R findOne(@NonNull PreparedQuery<T, R> preparedQuery) {
