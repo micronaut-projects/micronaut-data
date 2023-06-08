@@ -8,7 +8,6 @@ application {
 }
 
 dependencies {
-    micronautBoms(platform("io.micronaut:micronaut-core-bom:4.0.0-M5"))
     ksp projects.dataProcessor
     implementation 'io.micronaut.rxjava2:micronaut-rxjava2'
     implementation 'io.micronaut.reactor:micronaut-reactor'
