@@ -119,9 +119,9 @@ loadScripts(document, 'script');</script>
 <div class="summary-table two-column-summary">
 <div class="table-header col-first">Constructor</div>
 <div class="table-header col-last">Description</div>
-<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(javax.sql.DataSource,io.micronaut.data.connection.ConnectionOperations,io.micronaut.data.connection.SynchronousConnectionManager)" class="member-name-link">DataSourceTransactionManager</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.sql/javax/sql/DataSource.html" title="class or interface in javax.sql" class="external-link">DataSource</a>&nbsp;dataSource,
+<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(javax.sql.DataSource,io.micronaut.data.connection.ConnectionOperations,io.micronaut.data.connection.SynchronousConnectionManager)" class="member-name-link">DataSourceTransactionManager</a><wbr>(@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.sql/javax/sql/DataSource.html" title="class or interface in javax.sql" class="external-link">DataSource</a>&nbsp;dataSource,
  <a href="../../data/connection/ConnectionOperations.html" title="interface in io.micronaut.data.connection">ConnectionOperations</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.sql/java/sql/Connection.html" title="class or interface in java.sql" class="external-link">Connection</a>&gt;&nbsp;connectionOperations,
- <a href="../../data/connection/SynchronousConnectionManager.html" title="interface in io.micronaut.data.connection">SynchronousConnectionManager</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.sql/java/sql/Connection.html" title="class or interface in java.sql" class="external-link">Connection</a>&gt;&nbsp;synchronousConnectionManager)</code></div>
+ @Nullable <a href="../../data/connection/SynchronousConnectionManager.html" title="interface in io.micronaut.data.connection">SynchronousConnectionManager</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.sql/java/sql/Connection.html" title="class or interface in java.sql" class="external-link">Connection</a>&gt;&nbsp;synchronousConnectionManager)</code></div>
 <div class="col-last even-row-color">
 <div class="block">Create a new DataSourceTransactionManager instance.</div>
 </div>
@@ -155,12 +155,12 @@ loadScripts(document, 'script');</script>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Perform an actual rollback of the given transaction.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.sql/java/sql/Connection.html" title="class or interface in java.sql" class="external-link">Connection</a></code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.sql/java/sql/Connection.html" title="class or interface in java.sql" class="external-link">Connection</a></code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getConnection()" class="member-name-link">getConnection</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Obtains the connection for the current transaction.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.sql/javax/sql/DataSource.html" title="class or interface in javax.sql" class="external-link">DataSource</a></code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.sql/javax/sql/DataSource.html" title="class or interface in javax.sql" class="external-link">DataSource</a></code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getDataSource()" class="member-name-link">getDataSource</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
@@ -213,11 +213,11 @@ loadScripts(document, 'script');</script>
 <section class="detail" id="&lt;init&gt;(javax.sql.DataSource,io.micronaut.data.connection.ConnectionOperations,io.micronaut.data.connection.SynchronousConnectionManager)">
 <h3>DataSourceTransactionManager</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name">DataSourceTransactionManager</span><wbr><span class="parameters">(@NonNull
- <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.sql/javax/sql/DataSource.html" title="class or interface in javax.sql" class="external-link">DataSource</a>&nbsp;dataSource,
+ @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.sql/javax/sql/DataSource.html" title="class or interface in javax.sql" class="external-link">DataSource</a>&nbsp;dataSource,
  @Parameter
  <a href="../../data/connection/ConnectionOperations.html" title="interface in io.micronaut.data.connection">ConnectionOperations</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.sql/java/sql/Connection.html" title="class or interface in java.sql" class="external-link">Connection</a>&gt;&nbsp;connectionOperations,
  @Parameter @Nullable
- <a href="../../data/connection/SynchronousConnectionManager.html" title="interface in io.micronaut.data.connection">SynchronousConnectionManager</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.sql/java/sql/Connection.html" title="class or interface in java.sql" class="external-link">Connection</a>&gt;&nbsp;synchronousConnectionManager)</span></div>
+ @Nullable <a href="../../data/connection/SynchronousConnectionManager.html" title="interface in io.micronaut.data.connection">SynchronousConnectionManager</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.sql/java/sql/Connection.html" title="class or interface in java.sql" class="external-link">Connection</a>&gt;&nbsp;synchronousConnectionManager)</span></div>
 <div class="block">Create a new DataSourceTransactionManager instance.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -239,7 +239,7 @@ loadScripts(document, 'script');</script>
 <section class="detail" id="getDataSource()">
 <h3>getDataSource</h3>
 <div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.sql/javax/sql/DataSource.html" title="class or interface in javax.sql" class="external-link">DataSource</a></span>&nbsp;<span class="element-name">getDataSource</span>()</div>
+</span><span class="modifiers">public</span>&nbsp;<span class="return-type">@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.sql/javax/sql/DataSource.html" title="class or interface in javax.sql" class="external-link">DataSource</a></span>&nbsp;<span class="element-name">getDataSource</span>()</div>
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>Return the JDBC DataSource that this instance manages transactions for.</dd>
@@ -385,7 +385,7 @@ loadScripts(document, 'script');</script>
 <section class="detail" id="getConnection()">
 <h3>getConnection</h3>
 <div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.sql/java/sql/Connection.html" title="class or interface in java.sql" class="external-link">Connection</a></span>&nbsp;<span class="element-name">getConnection</span>()</div>
+</span><span class="modifiers">public</span>&nbsp;<span class="return-type">@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.sql/java/sql/Connection.html" title="class or interface in java.sql" class="external-link">Connection</a></span>&nbsp;<span class="element-name">getConnection</span>()</div>
 <div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="../TransactionOperations.html#getConnection()">TransactionOperations</a></code></span></div>
 <div class="block">Obtains the connection for the current transaction.</div>
 <dl class="notes">

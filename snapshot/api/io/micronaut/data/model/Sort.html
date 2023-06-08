@@ -134,37 +134,37 @@ loadScripts(document, 'script');</script>
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="Sort.Order.html" title="class in io.micronaut.data.model">Sort.Order</a>&gt;</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="Sort.Order.html" title="class in io.micronaut.data.model">Sort.Order</a>&gt;</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#getOrderBy()" class="member-name-link">getOrderBy</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>boolean</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#isSorted()" class="member-name-link">isSorted</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab1"><code>static <a href="Sort.html" title="interface in io.micronaut.data.model">Sort</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab1"><code><a href="#of(io.micronaut.data.model.Sort.Order...)" class="member-name-link">of</a><wbr>(<a href="Sort.Order.html" title="class in io.micronaut.data.model">Sort.Order</a>...&nbsp;orders)</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab1"><code>static @NonNull <a href="Sort.html" title="interface in io.micronaut.data.model">Sort</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab1"><code><a href="#of(java.util.List)" class="member-name-link">of</a><wbr>(@Nullable <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="Sort.Order.html" title="class in io.micronaut.data.model">Sort.Order</a>&gt;&nbsp;orderList)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab1">
-<div class="block">Creates a sort from an array orders.</div>
-</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab1"><code>static <a href="Sort.html" title="interface in io.micronaut.data.model">Sort</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab1"><code><a href="#of(java.util.List)" class="member-name-link">of</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="Sort.Order.html" title="class in io.micronaut.data.model">Sort.Order</a>&gt;&nbsp;orderList)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab1">
 <div class="block">Create a sort from the given list of orders.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="Sort.html" title="interface in io.micronaut.data.model">Sort</a></code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab1"><code>static @NonNull <a href="Sort.html" title="interface in io.micronaut.data.model">Sort</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab1"><code><a href="#of(io.micronaut.data.model.Sort.Order...)" class="member-name-link">of</a><wbr>(<a href="Sort.Order.html" title="class in io.micronaut.data.model">Sort.Order</a>...&nbsp;orders)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab1">
+<div class="block">Creates a sort from an array orders.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>@NonNull <a href="Sort.html" title="interface in io.micronaut.data.model">Sort</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#order(java.lang.String)" class="member-name-link">order</a><wbr>(@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;propertyName)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="block">Orders by the specified property name (defaults to ascending).</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>@NonNull <a href="Sort.html" title="interface in io.micronaut.data.model">Sort</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#order(java.lang.String,io.micronaut.data.model.Sort.Order.Direction)" class="member-name-link">order</a><wbr>(@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;propertyName,
+ <a href="Sort.Order.Direction.html" title="enum class in io.micronaut.data.model">Sort.Order.Direction</a>&nbsp;direction)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="block">Orders by the specified property name and direction.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>@NonNull <a href="Sort.html" title="interface in io.micronaut.data.model">Sort</a></code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#order(io.micronaut.data.model.Sort.Order)" class="member-name-link">order</a><wbr>(<a href="Sort.Order.html" title="class in io.micronaut.data.model">Sort.Order</a>&nbsp;order)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Adds an order object.</div>
-</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="Sort.html" title="interface in io.micronaut.data.model">Sort</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#order(java.lang.String)" class="member-name-link">order</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;propertyName)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
-<div class="block">Orders by the specified property name (defaults to ascending).</div>
-</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="Sort.html" title="interface in io.micronaut.data.model">Sort</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#order(java.lang.String,io.micronaut.data.model.Sort.Order.Direction)" class="member-name-link">order</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;propertyName,
- <a href="Sort.Order.Direction.html" title="enum class in io.micronaut.data.model">Sort.Order.Direction</a>&nbsp;direction)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
-<div class="block">Orders by the specified property name and direction.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab1"><code>static <a href="Sort.html" title="interface in io.micronaut.data.model">Sort</a></code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab1"><code><a href="#unsorted()" class="member-name-link">unsorted</a>()</code></div>
@@ -212,8 +212,8 @@ loadScripts(document, 'script');</script>
 <section class="detail" id="order(java.lang.String)">
 <h3>order</h3>
 <div class="member-signature"><span class="annotations">@NonNull
-</span><span class="return-type"><a href="Sort.html" title="interface in io.micronaut.data.model">Sort</a></span>&nbsp;<span class="element-name">order</span><wbr><span class="parameters">(@NonNull
- <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;propertyName)</span></div>
+</span><span class="return-type">@NonNull <a href="Sort.html" title="interface in io.micronaut.data.model">Sort</a></span>&nbsp;<span class="element-name">order</span><wbr><span class="parameters">(@NonNull
+ @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;propertyName)</span></div>
 <div class="block">Orders by the specified property name (defaults to ascending).</div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -227,7 +227,7 @@ loadScripts(document, 'script');</script>
 <section class="detail" id="order(io.micronaut.data.model.Sort.Order)">
 <h3>order</h3>
 <div class="member-signature"><span class="annotations">@NonNull
-</span><span class="return-type"><a href="Sort.html" title="interface in io.micronaut.data.model">Sort</a></span>&nbsp;<span class="element-name">order</span><wbr><span class="parameters">(@NonNull
+</span><span class="return-type">@NonNull <a href="Sort.html" title="interface in io.micronaut.data.model">Sort</a></span>&nbsp;<span class="element-name">order</span><wbr><span class="parameters">(@NonNull
  <a href="Sort.Order.html" title="class in io.micronaut.data.model">Sort.Order</a>&nbsp;order)</span></div>
 <div class="block">Adds an order object.</div>
 <dl class="notes">
@@ -242,8 +242,8 @@ loadScripts(document, 'script');</script>
 <section class="detail" id="order(java.lang.String,io.micronaut.data.model.Sort.Order.Direction)">
 <h3>order</h3>
 <div class="member-signature"><span class="annotations">@NonNull
-</span><span class="return-type"><a href="Sort.html" title="interface in io.micronaut.data.model">Sort</a></span>&nbsp;<span class="element-name">order</span><wbr><span class="parameters">(@NonNull
- <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;propertyName,
+</span><span class="return-type">@NonNull <a href="Sort.html" title="interface in io.micronaut.data.model">Sort</a></span>&nbsp;<span class="element-name">order</span><wbr><span class="parameters">(@NonNull
+ @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;propertyName,
  @NonNull
  <a href="Sort.Order.Direction.html" title="enum class in io.micronaut.data.model">Sort.Order.Direction</a>&nbsp;direction)</span></div>
 <div class="block">Orders by the specified property name and direction.</div>
@@ -260,7 +260,7 @@ loadScripts(document, 'script');</script>
 <section class="detail" id="getOrderBy()">
 <h3>getOrderBy</h3>
 <div class="member-signature"><span class="annotations">@NonNull
-</span><span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="Sort.Order.html" title="class in io.micronaut.data.model">Sort.Order</a>&gt;</span>&nbsp;<span class="element-name">getOrderBy</span>()</div>
+</span><span class="return-type">@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="Sort.Order.html" title="class in io.micronaut.data.model">Sort.Order</a>&gt;</span>&nbsp;<span class="element-name">getOrderBy</span>()</div>
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>The order definitions for this sort.</dd>
@@ -281,8 +281,8 @@ loadScripts(document, 'script');</script>
 <section class="detail" id="of(java.util.List)">
 <h3>of</h3>
 <div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">static</span>&nbsp;<span class="return-type"><a href="Sort.html" title="interface in io.micronaut.data.model">Sort</a></span>&nbsp;<span class="element-name">of</span><wbr><span class="parameters">(@Nullable
- <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="Sort.Order.html" title="class in io.micronaut.data.model">Sort.Order</a>&gt;&nbsp;orderList)</span></div>
+</span><span class="modifiers">static</span>&nbsp;<span class="return-type">@NonNull <a href="Sort.html" title="interface in io.micronaut.data.model">Sort</a></span>&nbsp;<span class="element-name">of</span><wbr><span class="parameters">(@Nullable
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="Sort.Order.html" title="class in io.micronaut.data.model">Sort.Order</a>&gt;&nbsp;orderList)</span></div>
 <div class="block">Create a sort from the given list of orders.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -296,7 +296,7 @@ loadScripts(document, 'script');</script>
 <section class="detail" id="of(io.micronaut.data.model.Sort.Order...)">
 <h3>of</h3>
 <div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">static</span>&nbsp;<span class="return-type"><a href="Sort.html" title="interface in io.micronaut.data.model">Sort</a></span>&nbsp;<span class="element-name">of</span><wbr><span class="parameters">(<a href="Sort.Order.html" title="class in io.micronaut.data.model">Sort.Order</a>...&nbsp;orders)</span></div>
+</span><span class="modifiers">static</span>&nbsp;<span class="return-type">@NonNull <a href="Sort.html" title="interface in io.micronaut.data.model">Sort</a></span>&nbsp;<span class="element-name">of</span><wbr><span class="parameters">(<a href="Sort.Order.html" title="class in io.micronaut.data.model">Sort.Order</a>...&nbsp;orders)</span></div>
 <div class="block">Creates a sort from an array orders.</div>
 <dl class="notes">
 <dt>Parameters:</dt>

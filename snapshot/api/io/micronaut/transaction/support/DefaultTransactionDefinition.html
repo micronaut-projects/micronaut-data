@@ -131,14 +131,14 @@ implements <a href="../TransactionDefinition.html" title="interface in io.micron
 <div class="col-last even-row-color">
 <div class="block">Create a new DefaultTransactionDefinition, with default settings.</div>
 </div>
-<div class="col-constructor-name odd-row-color"><code><a href="#%3Cinit%3E(io.micronaut.transaction.TransactionDefinition)" class="member-name-link">DefaultTransactionDefinition</a><wbr>(<a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;other)</code></div>
+<div class="col-constructor-name odd-row-color"><code><a href="#%3Cinit%3E(io.micronaut.transaction.TransactionDefinition.Propagation)" class="member-name-link">DefaultTransactionDefinition</a><wbr>(@NonNull <a href="../TransactionDefinition.Propagation.html" title="enum class in io.micronaut.transaction">TransactionDefinition.Propagation</a>&nbsp;propagationBehavior)</code></div>
 <div class="col-last odd-row-color">
-<div class="block">Copy constructor.</div>
-</div>
-<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(io.micronaut.transaction.TransactionDefinition.Propagation)" class="member-name-link">DefaultTransactionDefinition</a><wbr>(<a href="../TransactionDefinition.Propagation.html" title="enum class in io.micronaut.transaction">TransactionDefinition.Propagation</a>&nbsp;propagationBehavior)</code></div>
-<div class="col-last even-row-color">
 <div class="block">Create a new DefaultTransactionDefinition with the given
  propagation behavior.</div>
+</div>
+<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(io.micronaut.transaction.TransactionDefinition)" class="member-name-link">DefaultTransactionDefinition</a><wbr>(<a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;other)</code></div>
+<div class="col-last even-row-color">
+<div class="block">Copy constructor.</div>
 </div>
 </div>
 </section>
@@ -155,7 +155,7 @@ implements <a href="../TransactionDefinition.html" title="interface in io.micron
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#equals(java.lang.Object)" class="member-name-link">equals</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;other)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#equals(java.lang.Object)" class="member-name-link">equals</a><wbr>(@Nullable <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;other)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">This implementation compares the <code>toString()</code> results.</div>
 </div>
@@ -164,17 +164,17 @@ implements <a href="../TransactionDefinition.html" title="interface in io.micron
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Collection of exception classes that shouldn't cause the rollback.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="../TransactionDefinition.Isolation.html" title="enum class in io.micronaut.transaction">TransactionDefinition.Isolation</a>&gt;</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="../TransactionDefinition.Isolation.html" title="enum class in io.micronaut.transaction">TransactionDefinition.Isolation</a>&gt;</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getIsolationLevel()" class="member-name-link">getIsolationLevel</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Return the isolation level.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final @Nullable <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getName()" class="member-name-link">getName</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Return the name of this transaction.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final <a href="../TransactionDefinition.Propagation.html" title="enum class in io.micronaut.transaction">TransactionDefinition.Propagation</a></code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final @NonNull <a href="../TransactionDefinition.Propagation.html" title="enum class in io.micronaut.transaction">TransactionDefinition.Propagation</a></code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getPropagationBehavior()" class="member-name-link">getPropagationBehavior</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Return the propagation behavior.</div>
@@ -184,7 +184,7 @@ implements <a href="../TransactionDefinition.html" title="interface in io.micron
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Collection of exception classes that should cause the rollback.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/Duration.html" title="class or interface in java.time" class="external-link">Duration</a>&gt;</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/Duration.html" title="class or interface in java.time" class="external-link">Duration</a>&gt;</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getTimeout()" class="member-name-link">getTimeout</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Return the transaction timeout.</div>
@@ -200,12 +200,12 @@ implements <a href="../TransactionDefinition.html" title="interface in io.micron
 <div class="block">Return whether to optimize as a read-only transaction.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setDontRollbackOn(java.util.Collection)" class="member-name-link">setDontRollbackOn</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Collection.html" title="class or interface in java.util" class="external-link">Collection</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;? extends <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Throwable.html" title="class or interface in java.lang" class="external-link">Throwable</a>&gt;&gt;&nbsp;dontRollbackOn)</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setDontRollbackOn(java.util.Collection)" class="member-name-link">setDontRollbackOn</a><wbr>(@Nullable <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Collection.html" title="class or interface in java.util" class="external-link">Collection</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;? extends <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Throwable.html" title="class or interface in java.lang" class="external-link">Throwable</a>&gt;&gt;&nbsp;dontRollbackOn)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Set exception classes which shouldn't cause the rollback.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setIsolationLevel(io.micronaut.transaction.TransactionDefinition.Isolation)" class="member-name-link">setIsolationLevel</a><wbr>(<a href="../TransactionDefinition.Isolation.html" title="enum class in io.micronaut.transaction">TransactionDefinition.Isolation</a>&nbsp;isolationLevel)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setIsolationLevel(io.micronaut.transaction.TransactionDefinition.Isolation)" class="member-name-link">setIsolationLevel</a><wbr>(@NonNull <a href="../TransactionDefinition.Isolation.html" title="enum class in io.micronaut.transaction">TransactionDefinition.Isolation</a>&nbsp;isolationLevel)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Set the isolation level.</div>
 </div>
@@ -215,7 +215,7 @@ implements <a href="../TransactionDefinition.html" title="interface in io.micron
 <div class="block">Set the name of this transaction.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setPropagationBehavior(io.micronaut.transaction.TransactionDefinition.Propagation)" class="member-name-link">setPropagationBehavior</a><wbr>(<a href="../TransactionDefinition.Propagation.html" title="enum class in io.micronaut.transaction">TransactionDefinition.Propagation</a>&nbsp;propagationBehavior)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setPropagationBehavior(io.micronaut.transaction.TransactionDefinition.Propagation)" class="member-name-link">setPropagationBehavior</a><wbr>(@NonNull <a href="../TransactionDefinition.Propagation.html" title="enum class in io.micronaut.transaction">TransactionDefinition.Propagation</a>&nbsp;propagationBehavior)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Set the propagation behavior.</div>
 </div>
@@ -225,12 +225,12 @@ implements <a href="../TransactionDefinition.html" title="interface in io.micron
 <div class="block">Set whether to optimize as read-only transaction.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setRollbackOn(java.util.Collection)" class="member-name-link">setRollbackOn</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Collection.html" title="class or interface in java.util" class="external-link">Collection</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;? extends <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Throwable.html" title="class or interface in java.lang" class="external-link">Throwable</a>&gt;&gt;&nbsp;rollbackOn)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setRollbackOn(java.util.Collection)" class="member-name-link">setRollbackOn</a><wbr>(@Nullable <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Collection.html" title="class or interface in java.util" class="external-link">Collection</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;? extends <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Throwable.html" title="class or interface in java.lang" class="external-link">Throwable</a>&gt;&gt;&nbsp;rollbackOn)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Set exception classes which should cause the rollback.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setTimeout(java.time.Duration)" class="member-name-link">setTimeout</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/Duration.html" title="class or interface in java.time" class="external-link">Duration</a>&nbsp;timeout)</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setTimeout(java.time.Duration)" class="member-name-link">setTimeout</a><wbr>(@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/Duration.html" title="class or interface in java.time" class="external-link">Duration</a>&nbsp;timeout)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Set the timeout to apply, as number of seconds.</div>
 </div>
@@ -302,7 +302,7 @@ implements <a href="../TransactionDefinition.html" title="interface in io.micron
 <section class="detail" id="&lt;init&gt;(io.micronaut.transaction.TransactionDefinition.Propagation)">
 <h3>DefaultTransactionDefinition</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name">DefaultTransactionDefinition</span><wbr><span class="parameters">(@NonNull
- <a href="../TransactionDefinition.Propagation.html" title="enum class in io.micronaut.transaction">TransactionDefinition.Propagation</a>&nbsp;propagationBehavior)</span></div>
+ @NonNull <a href="../TransactionDefinition.Propagation.html" title="enum class in io.micronaut.transaction">TransactionDefinition.Propagation</a>&nbsp;propagationBehavior)</span></div>
 <div class="block">Create a new DefaultTransactionDefinition with the given
  propagation behavior. Can be modified through bean property setters.</div>
 <dl class="notes">
@@ -332,7 +332,7 @@ implements <a href="../TransactionDefinition.html" title="interface in io.micron
 <section class="detail" id="setPropagationBehavior(io.micronaut.transaction.TransactionDefinition.Propagation)">
 <h3>setPropagationBehavior</h3>
 <div class="member-signature"><span class="modifiers">public final</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">setPropagationBehavior</span><wbr><span class="parameters">(@NonNull
- <a href="../TransactionDefinition.Propagation.html" title="enum class in io.micronaut.transaction">TransactionDefinition.Propagation</a>&nbsp;propagationBehavior)</span></div>
+ @NonNull <a href="../TransactionDefinition.Propagation.html" title="enum class in io.micronaut.transaction">TransactionDefinition.Propagation</a>&nbsp;propagationBehavior)</span></div>
 <div class="block">Set the propagation behavior. Must be one of the propagation constants
  in the TransactionDefinition interface. Default is PROPAGATION_REQUIRED.
  <p>Exclusively designed for use with <a href="../TransactionDefinition.Propagation.html#REQUIRED"><code>TransactionDefinition.Propagation.REQUIRED</code></a> or
@@ -362,7 +362,7 @@ implements <a href="../TransactionDefinition.html" title="interface in io.micron
 <section class="detail" id="getPropagationBehavior()">
 <h3>getPropagationBehavior</h3>
 <div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">public final</span>&nbsp;<span class="return-type"><a href="../TransactionDefinition.Propagation.html" title="enum class in io.micronaut.transaction">TransactionDefinition.Propagation</a></span>&nbsp;<span class="element-name">getPropagationBehavior</span>()</div>
+</span><span class="modifiers">public final</span>&nbsp;<span class="return-type">@NonNull <a href="../TransactionDefinition.Propagation.html" title="enum class in io.micronaut.transaction">TransactionDefinition.Propagation</a></span>&nbsp;<span class="element-name">getPropagationBehavior</span>()</div>
 <div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="../TransactionDefinition.html#getPropagationBehavior()">TransactionDefinition</a></code></span></div>
 <div class="block">Return the propagation behavior.
  <p>Must return one of the <code>PROPAGATION_XXX</code> constants
@@ -386,7 +386,7 @@ implements <a href="../TransactionDefinition.html" title="interface in io.micron
 <section class="detail" id="setIsolationLevel(io.micronaut.transaction.TransactionDefinition.Isolation)">
 <h3>setIsolationLevel</h3>
 <div class="member-signature"><span class="modifiers">public final</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">setIsolationLevel</span><wbr><span class="parameters">(@NonNull
- <a href="../TransactionDefinition.Isolation.html" title="enum class in io.micronaut.transaction">TransactionDefinition.Isolation</a>&nbsp;isolationLevel)</span></div>
+ @NonNull <a href="../TransactionDefinition.Isolation.html" title="enum class in io.micronaut.transaction">TransactionDefinition.Isolation</a>&nbsp;isolationLevel)</span></div>
 <div class="block">Set the isolation level. Must be one of the isolation constants
  in the TransactionDefinition interface. Default is ISOLATION_DEFAULT.
  <p>Exclusively designed for use with <a href="../TransactionDefinition.Propagation.html#REQUIRED"><code>TransactionDefinition.Propagation.REQUIRED</code></a> or
@@ -416,7 +416,7 @@ implements <a href="../TransactionDefinition.html" title="interface in io.micron
 <section class="detail" id="getIsolationLevel()">
 <h3>getIsolationLevel</h3>
 <div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">public final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="../TransactionDefinition.Isolation.html" title="enum class in io.micronaut.transaction">TransactionDefinition.Isolation</a>&gt;</span>&nbsp;<span class="element-name">getIsolationLevel</span>()</div>
+</span><span class="modifiers">public final</span>&nbsp;<span class="return-type">@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="../TransactionDefinition.Isolation.html" title="enum class in io.micronaut.transaction">TransactionDefinition.Isolation</a>&gt;</span>&nbsp;<span class="element-name">getIsolationLevel</span>()</div>
 <div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="../TransactionDefinition.html#getIsolationLevel()">TransactionDefinition</a></code></span></div>
 <div class="block">Return the isolation level.
  <p>Must return one of the <code>ISOLATION_XXX</code> constants defined on
@@ -449,7 +449,7 @@ implements <a href="../TransactionDefinition.html" title="interface in io.micron
 <section class="detail" id="setTimeout(java.time.Duration)">
 <h3>setTimeout</h3>
 <div class="member-signature"><span class="modifiers">public final</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">setTimeout</span><wbr><span class="parameters">(@NonNull
- <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/Duration.html" title="class or interface in java.time" class="external-link">Duration</a>&nbsp;timeout)</span></div>
+ @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/Duration.html" title="class or interface in java.time" class="external-link">Duration</a>&nbsp;timeout)</span></div>
 <div class="block">Set the timeout to apply, as number of seconds.
  Default is TIMEOUT_DEFAULT (-1).
  <p>Exclusively designed for use with <a href="../TransactionDefinition.Propagation.html#REQUIRED"><code>TransactionDefinition.Propagation.REQUIRED</code></a> or
@@ -473,7 +473,7 @@ implements <a href="../TransactionDefinition.html" title="interface in io.micron
 <section class="detail" id="getTimeout()">
 <h3>getTimeout</h3>
 <div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">public final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/Duration.html" title="class or interface in java.time" class="external-link">Duration</a>&gt;</span>&nbsp;<span class="element-name">getTimeout</span>()</div>
+</span><span class="modifiers">public final</span>&nbsp;<span class="return-type">@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/Duration.html" title="class or interface in java.time" class="external-link">Duration</a>&gt;</span>&nbsp;<span class="element-name">getTimeout</span>()</div>
 <div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="../TransactionDefinition.html#getTimeout()">TransactionDefinition</a></code></span></div>
 <div class="block">Return the transaction timeout.
  <p>Must return a number of seconds, or <a href="../TransactionDefinition.html#TIMEOUT_DEFAULT"><code>TransactionDefinition.TIMEOUT_DEFAULT</code></a>.
@@ -555,7 +555,7 @@ implements <a href="../TransactionDefinition.html" title="interface in io.micron
 <section class="detail" id="getName()">
 <h3>getName</h3>
 <div class="member-signature"><span class="annotations">@Nullable
-</span><span class="modifiers">public final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">getName</span>()</div>
+</span><span class="modifiers">public final</span>&nbsp;<span class="return-type">@Nullable <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">getName</span>()</div>
 <div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="../TransactionDefinition.html#getName()">TransactionDefinition</a></code></span></div>
 <div class="block">Return the name of this transaction. Can be <code>null</code>.
  <p>This will be used as the transaction name to be shown in a
@@ -574,7 +574,7 @@ implements <a href="../TransactionDefinition.html" title="interface in io.micron
 <section class="detail" id="setRollbackOn(java.util.Collection)">
 <h3>setRollbackOn</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">setRollbackOn</span><wbr><span class="parameters">(@Nullable
- <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Collection.html" title="class or interface in java.util" class="external-link">Collection</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;? extends <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Throwable.html" title="class or interface in java.lang" class="external-link">Throwable</a>&gt;&gt;&nbsp;rollbackOn)</span></div>
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Collection.html" title="class or interface in java.util" class="external-link">Collection</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;? extends <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Throwable.html" title="class or interface in java.lang" class="external-link">Throwable</a>&gt;&gt;&nbsp;rollbackOn)</span></div>
 <div class="block">Set exception classes which should cause the rollback. Empty if all should cause it.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -588,7 +588,7 @@ implements <a href="../TransactionDefinition.html" title="interface in io.micron
 <section class="detail" id="setDontRollbackOn(java.util.Collection)">
 <h3>setDontRollbackOn</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">setDontRollbackOn</span><wbr><span class="parameters">(@Nullable
- <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Collection.html" title="class or interface in java.util" class="external-link">Collection</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;? extends <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Throwable.html" title="class or interface in java.lang" class="external-link">Throwable</a>&gt;&gt;&nbsp;dontRollbackOn)</span></div>
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Collection.html" title="class or interface in java.util" class="external-link">Collection</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;? extends <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Throwable.html" title="class or interface in java.lang" class="external-link">Throwable</a>&gt;&gt;&nbsp;dontRollbackOn)</span></div>
 <div class="block">Set exception classes which shouldn't cause the rollback.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -630,7 +630,7 @@ implements <a href="../TransactionDefinition.html" title="interface in io.micron
 <section class="detail" id="equals(java.lang.Object)">
 <h3>equals</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">equals</span><wbr><span class="parameters">(@Nullable
- <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;other)</span></div>
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;other)</span></div>
 <div class="block">This implementation compares the <code>toString()</code> results.</div>
 <dl class="notes">
 <dt>Overrides:</dt>

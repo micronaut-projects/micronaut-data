@@ -116,11 +116,11 @@ implements <a href="../PersistentEntity.html" title="interface in io.micronaut.d
 <div class="summary-table two-column-summary">
 <div class="table-header col-first">Constructor</div>
 <div class="table-header col-last">Description</div>
-<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(io.micronaut.core.beans.BeanIntrospection)" class="member-name-link">RuntimePersistentEntity</a><wbr>(io.micronaut.core.beans.BeanIntrospection&lt;<a href="RuntimePersistentEntity.html" title="type parameter in RuntimePersistentEntity">T</a>&gt;&nbsp;introspection)</code></div>
+<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(io.micronaut.core.beans.BeanIntrospection)" class="member-name-link">RuntimePersistentEntity</a><wbr>(@NonNull io.micronaut.core.beans.BeanIntrospection&lt;<a href="RuntimePersistentEntity.html" title="type parameter in RuntimePersistentEntity">T</a>&gt;&nbsp;introspection)</code></div>
 <div class="col-last even-row-color">
 <div class="block">Default constructor.</div>
 </div>
-<div class="col-constructor-name odd-row-color"><code><a href="#%3Cinit%3E(java.lang.Class)" class="member-name-link">RuntimePersistentEntity</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;<a href="RuntimePersistentEntity.html" title="type parameter in RuntimePersistentEntity">T</a>&gt;&nbsp;type)</code></div>
+<div class="col-constructor-name odd-row-color"><code><a href="#%3Cinit%3E(java.lang.Class)" class="member-name-link">RuntimePersistentEntity</a><wbr>(@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;<a href="RuntimePersistentEntity.html" title="type parameter in RuntimePersistentEntity">T</a>&gt;&nbsp;type)</code></div>
 <div class="col-last odd-row-color">
 <div class="block">Default constructor.</div>
 </div>
@@ -148,15 +148,15 @@ implements <a href="../PersistentEntity.html" title="interface in io.micronaut.d
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Does cascade the update to any of the associations.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getAliasName()" class="member-name-link">getAliasName</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Collection.html" title="class or interface in java.util" class="external-link">Collection</a>&lt;<a href="RuntimeAssociation.html" title="class in io.micronaut.data.model.runtime">RuntimeAssociation</a>&lt;<a href="RuntimePersistentEntity.html" title="type parameter in RuntimePersistentEntity">T</a>&gt;&gt;</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Collection.html" title="class or interface in java.util" class="external-link">Collection</a>&lt;<a href="RuntimeAssociation.html" title="class in io.micronaut.data.model.runtime">RuntimeAssociation</a>&lt;<a href="RuntimePersistentEntity.html" title="type parameter in RuntimePersistentEntity">T</a>&gt;&gt;</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getAssociations()" class="member-name-link">getAssociations</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">A list of the associations for this entity.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="RuntimePersistentProperty.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentProperty</a>&lt;<a href="RuntimePersistentEntity.html" title="type parameter in RuntimePersistentEntity">T</a>&gt;[]</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@Nullable <a href="RuntimePersistentProperty.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentProperty</a>&lt;<a href="RuntimePersistentEntity.html" title="type parameter in RuntimePersistentEntity">T</a>&gt;[]</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getCompositeIdentity()" class="member-name-link">getCompositeIdentity</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">The composite id.</div>
@@ -169,12 +169,12 @@ implements <a href="../PersistentEntity.html" title="interface in io.micronaut.d
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Obtain an entity for the given type.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="RuntimePersistentProperty.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentProperty</a>&lt;<a href="RuntimePersistentEntity.html" title="type parameter in RuntimePersistentEntity">T</a>&gt;</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@Nullable <a href="RuntimePersistentProperty.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentProperty</a>&lt;<a href="RuntimePersistentEntity.html" title="type parameter in RuntimePersistentEntity">T</a>&gt;</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getIdentity()" class="member-name-link">getIdentity</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Returns the identity of the instance.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="RuntimePersistentProperty.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentProperty</a>&lt;<a href="RuntimePersistentEntity.html" title="type parameter in RuntimePersistentEntity">T</a>&gt;</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@Nullable <a href="RuntimePersistentProperty.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentProperty</a>&lt;<a href="RuntimePersistentEntity.html" title="type parameter in RuntimePersistentEntity">T</a>&gt;</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getIdentityByName(java.lang.String)" class="member-name-link">getIdentityByName</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Obtains an identity PersistentProperty instance by name.</div>
@@ -182,32 +182,32 @@ implements <a href="../PersistentEntity.html" title="interface in io.micronaut.d
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>io.micronaut.core.beans.BeanIntrospection&lt;<a href="RuntimePersistentEntity.html" title="type parameter in RuntimePersistentEntity">T</a>&gt;</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getIntrospection()" class="member-name-link">getIntrospection</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getName()" class="member-name-link">getName</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">The entity name including any package prefix.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a></code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@Nullable <a href="../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a></code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getParentEntity()" class="member-name-link">getParentEntity</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Returns the parent entity of this entity.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Collection.html" title="class or interface in java.util" class="external-link">Collection</a>&lt;<a href="RuntimePersistentProperty.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentProperty</a>&lt;<a href="RuntimePersistentEntity.html" title="type parameter in RuntimePersistentEntity">T</a>&gt;&gt;</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Collection.html" title="class or interface in java.util" class="external-link">Collection</a>&lt;<a href="RuntimePersistentProperty.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentProperty</a>&lt;<a href="RuntimePersistentEntity.html" title="type parameter in RuntimePersistentEntity">T</a>&gt;&gt;</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getPersistentProperties()" class="member-name-link">getPersistentProperties</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">A list of properties to be persisted.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getPersistentPropertyNames()" class="member-name-link">getPersistentPropertyNames</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">A list of property names that a persistent.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="RuntimePersistentProperty.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentProperty</a>&lt;<a href="RuntimePersistentEntity.html" title="type parameter in RuntimePersistentEntity">T</a>&gt;</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@Nullable <a href="RuntimePersistentProperty.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentProperty</a>&lt;<a href="RuntimePersistentEntity.html" title="type parameter in RuntimePersistentEntity">T</a>&gt;</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getPropertyByName(java.lang.String)" class="member-name-link">getPropertyByName</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Obtains a PersistentProperty instance by name.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="RuntimePersistentProperty.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentProperty</a>&lt;<a href="RuntimePersistentEntity.html" title="type parameter in RuntimePersistentEntity">T</a>&gt;</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@Nullable <a href="RuntimePersistentProperty.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentProperty</a>&lt;<a href="RuntimePersistentEntity.html" title="type parameter in RuntimePersistentEntity">T</a>&gt;</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getVersion()" class="member-name-link">getVersion</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Returns the version property.</div>
@@ -266,8 +266,8 @@ implements <a href="../PersistentEntity.html" title="interface in io.micronaut.d
 <div class="block">Returns whether the specified entity asserts ownership over this
  entity.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected <a href="convert/AttributeConverter.html" title="interface in io.micronaut.data.model.runtime.convert">AttributeConverter</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#resolveConverter(java.lang.Class)" class="member-name-link">resolveConverter</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;?&gt;&nbsp;converterClass)</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected @NonNull <a href="convert/AttributeConverter.html" title="interface in io.micronaut.data.model.runtime.convert">AttributeConverter</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#resolveConverter(java.lang.Class)" class="member-name-link">resolveConverter</a><wbr>(@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;?&gt;&nbsp;converterClass)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Resolves a converter instance.</div>
 </div>
@@ -310,7 +310,7 @@ implements <a href="../PersistentEntity.html" title="interface in io.micronaut.d
 <section class="detail" id="&lt;init&gt;(java.lang.Class)">
 <h3>RuntimePersistentEntity</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name">RuntimePersistentEntity</span><wbr><span class="parameters">(@NonNull
- <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;<a href="RuntimePersistentEntity.html" title="type parameter in RuntimePersistentEntity">T</a>&gt;&nbsp;type)</span></div>
+ @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;<a href="RuntimePersistentEntity.html" title="type parameter in RuntimePersistentEntity">T</a>&gt;&nbsp;type)</span></div>
 <div class="block">Default constructor.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -322,7 +322,7 @@ implements <a href="../PersistentEntity.html" title="interface in io.micronaut.d
 <section class="detail" id="&lt;init&gt;(io.micronaut.core.beans.BeanIntrospection)">
 <h3>RuntimePersistentEntity</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name">RuntimePersistentEntity</span><wbr><span class="parameters">(@NonNull
- io.micronaut.core.beans.BeanIntrospection&lt;<a href="RuntimePersistentEntity.html" title="type parameter in RuntimePersistentEntity">T</a>&gt;&nbsp;introspection)</span></div>
+ @NonNull io.micronaut.core.beans.BeanIntrospection&lt;<a href="RuntimePersistentEntity.html" title="type parameter in RuntimePersistentEntity">T</a>&gt;&nbsp;introspection)</span></div>
 <div class="block">Default constructor.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -342,8 +342,8 @@ implements <a href="../PersistentEntity.html" title="interface in io.micronaut.d
 <section class="detail" id="resolveConverter(java.lang.Class)">
 <h3>resolveConverter</h3>
 <div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="convert/AttributeConverter.html" title="interface in io.micronaut.data.model.runtime.convert">AttributeConverter</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;</span>&nbsp;<span class="element-name">resolveConverter</span><wbr><span class="parameters">(@NonNull
- <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;?&gt;&nbsp;converterClass)</span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">@NonNull <a href="convert/AttributeConverter.html" title="interface in io.micronaut.data.model.runtime.convert">AttributeConverter</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;</span>&nbsp;<span class="element-name">resolveConverter</span><wbr><span class="parameters">(@NonNull
+ @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;?&gt;&nbsp;converterClass)</span></div>
 <div class="block">Resolves a converter instance.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -466,7 +466,7 @@ implements <a href="../PersistentEntity.html" title="interface in io.micronaut.d
 <section class="detail" id="getAliasName()">
 <h3>getAliasName</h3>
 <div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">getAliasName</span>()</div>
+</span><span class="modifiers">public</span>&nbsp;<span class="return-type">@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">getAliasName</span>()</div>
 <dl class="notes">
 <dt>Specified by:</dt>
 <dd><code><a href="../PersistentEntity.html#getAliasName()">getAliasName</a></code>&nbsp;in interface&nbsp;<code><a href="../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a></code></dd>
@@ -491,7 +491,7 @@ implements <a href="../PersistentEntity.html" title="interface in io.micronaut.d
 <section class="detail" id="getName()">
 <h3>getName</h3>
 <div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">getName</span>()</div>
+</span><span class="modifiers">public</span>&nbsp;<span class="return-type">@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">getName</span>()</div>
 <div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="../PersistentEntity.html#getName()">PersistentEntity</a></code></span></div>
 <div class="block">The entity name including any package prefix.</div>
 <dl class="notes">
@@ -536,7 +536,7 @@ implements <a href="../PersistentEntity.html" title="interface in io.micronaut.d
 <section class="detail" id="getCompositeIdentity()">
 <h3>getCompositeIdentity</h3>
 <div class="member-signature"><span class="annotations">@Nullable
-</span><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="RuntimePersistentProperty.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentProperty</a>&lt;<a href="RuntimePersistentEntity.html" title="type parameter in RuntimePersistentEntity">T</a>&gt;[]</span>&nbsp;<span class="element-name">getCompositeIdentity</span>()</div>
+</span><span class="modifiers">public</span>&nbsp;<span class="return-type">@Nullable <a href="RuntimePersistentProperty.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentProperty</a>&lt;<a href="RuntimePersistentEntity.html" title="type parameter in RuntimePersistentEntity">T</a>&gt;[]</span>&nbsp;<span class="element-name">getCompositeIdentity</span>()</div>
 <div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="../PersistentEntity.html#getCompositeIdentity()">PersistentEntity</a></code></span></div>
 <div class="block">The composite id.</div>
 <dl class="notes">
@@ -551,7 +551,7 @@ implements <a href="../PersistentEntity.html" title="interface in io.micronaut.d
 <section class="detail" id="getIdentity()">
 <h3>getIdentity</h3>
 <div class="member-signature"><span class="annotations">@Nullable
-</span><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="RuntimePersistentProperty.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentProperty</a>&lt;<a href="RuntimePersistentEntity.html" title="type parameter in RuntimePersistentEntity">T</a>&gt;</span>&nbsp;<span class="element-name">getIdentity</span>()</div>
+</span><span class="modifiers">public</span>&nbsp;<span class="return-type">@Nullable <a href="RuntimePersistentProperty.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentProperty</a>&lt;<a href="RuntimePersistentEntity.html" title="type parameter in RuntimePersistentEntity">T</a>&gt;</span>&nbsp;<span class="element-name">getIdentity</span>()</div>
 <div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="../PersistentEntity.html#getIdentity()">PersistentEntity</a></code></span></div>
 <div class="block">Returns the identity of the instance.</div>
 <dl class="notes">
@@ -566,7 +566,7 @@ implements <a href="../PersistentEntity.html" title="interface in io.micronaut.d
 <section class="detail" id="getVersion()">
 <h3>getVersion</h3>
 <div class="member-signature"><span class="annotations">@Nullable
-</span><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="RuntimePersistentProperty.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentProperty</a>&lt;<a href="RuntimePersistentEntity.html" title="type parameter in RuntimePersistentEntity">T</a>&gt;</span>&nbsp;<span class="element-name">getVersion</span>()</div>
+</span><span class="modifiers">public</span>&nbsp;<span class="return-type">@Nullable <a href="RuntimePersistentProperty.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentProperty</a>&lt;<a href="RuntimePersistentEntity.html" title="type parameter in RuntimePersistentEntity">T</a>&gt;</span>&nbsp;<span class="element-name">getVersion</span>()</div>
 <div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="../PersistentEntity.html#getVersion()">PersistentEntity</a></code></span></div>
 <div class="block">Returns the version property.</div>
 <dl class="notes">
@@ -581,7 +581,7 @@ implements <a href="../PersistentEntity.html" title="interface in io.micronaut.d
 <section class="detail" id="getPersistentProperties()">
 <h3>getPersistentProperties</h3>
 <div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Collection.html" title="class or interface in java.util" class="external-link">Collection</a>&lt;<a href="RuntimePersistentProperty.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentProperty</a>&lt;<a href="RuntimePersistentEntity.html" title="type parameter in RuntimePersistentEntity">T</a>&gt;&gt;</span>&nbsp;<span class="element-name">getPersistentProperties</span>()</div>
+</span><span class="modifiers">public</span>&nbsp;<span class="return-type">@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Collection.html" title="class or interface in java.util" class="external-link">Collection</a>&lt;<a href="RuntimePersistentProperty.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentProperty</a>&lt;<a href="RuntimePersistentEntity.html" title="type parameter in RuntimePersistentEntity">T</a>&gt;&gt;</span>&nbsp;<span class="element-name">getPersistentProperties</span>()</div>
 <div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="../PersistentEntity.html#getPersistentProperties()">PersistentEntity</a></code></span></div>
 <div class="block">A list of properties to be persisted.</div>
 <dl class="notes">
@@ -596,7 +596,7 @@ implements <a href="../PersistentEntity.html" title="interface in io.micronaut.d
 <section class="detail" id="getAssociations()">
 <h3>getAssociations</h3>
 <div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Collection.html" title="class or interface in java.util" class="external-link">Collection</a>&lt;<a href="RuntimeAssociation.html" title="class in io.micronaut.data.model.runtime">RuntimeAssociation</a>&lt;<a href="RuntimePersistentEntity.html" title="type parameter in RuntimePersistentEntity">T</a>&gt;&gt;</span>&nbsp;<span class="element-name">getAssociations</span>()</div>
+</span><span class="modifiers">public</span>&nbsp;<span class="return-type">@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Collection.html" title="class or interface in java.util" class="external-link">Collection</a>&lt;<a href="RuntimeAssociation.html" title="class in io.micronaut.data.model.runtime">RuntimeAssociation</a>&lt;<a href="RuntimePersistentEntity.html" title="type parameter in RuntimePersistentEntity">T</a>&gt;&gt;</span>&nbsp;<span class="element-name">getAssociations</span>()</div>
 <div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="../PersistentEntity.html#getAssociations()">PersistentEntity</a></code></span></div>
 <div class="block">A list of the associations for this entity. This is typically
  a subset of the list returned by <a href="../PersistentEntity.html#getPersistentProperties()"><code>PersistentEntity.getPersistentProperties()</code></a></div>
@@ -612,7 +612,7 @@ implements <a href="../PersistentEntity.html" title="interface in io.micronaut.d
 <section class="detail" id="getPropertyByName(java.lang.String)">
 <h3>getPropertyByName</h3>
 <div class="member-signature"><span class="annotations">@Nullable
-</span><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="RuntimePersistentProperty.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentProperty</a>&lt;<a href="RuntimePersistentEntity.html" title="type parameter in RuntimePersistentEntity">T</a>&gt;</span>&nbsp;<span class="element-name">getPropertyByName</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name)</span></div>
+</span><span class="modifiers">public</span>&nbsp;<span class="return-type">@Nullable <a href="RuntimePersistentProperty.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentProperty</a>&lt;<a href="RuntimePersistentEntity.html" title="type parameter in RuntimePersistentEntity">T</a>&gt;</span>&nbsp;<span class="element-name">getPropertyByName</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name)</span></div>
 <div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="../PersistentEntity.html#getPropertyByName(java.lang.String)">PersistentEntity</a></code></span></div>
 <div class="block">Obtains a PersistentProperty instance by name.</div>
 <dl class="notes">
@@ -629,7 +629,7 @@ implements <a href="../PersistentEntity.html" title="interface in io.micronaut.d
 <section class="detail" id="getIdentityByName(java.lang.String)">
 <h3>getIdentityByName</h3>
 <div class="member-signature"><span class="annotations">@Nullable
-</span><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="RuntimePersistentProperty.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentProperty</a>&lt;<a href="RuntimePersistentEntity.html" title="type parameter in RuntimePersistentEntity">T</a>&gt;</span>&nbsp;<span class="element-name">getIdentityByName</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name)</span></div>
+</span><span class="modifiers">public</span>&nbsp;<span class="return-type">@Nullable <a href="RuntimePersistentProperty.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentProperty</a>&lt;<a href="RuntimePersistentEntity.html" title="type parameter in RuntimePersistentEntity">T</a>&gt;</span>&nbsp;<span class="element-name">getIdentityByName</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name)</span></div>
 <div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="../PersistentEntity.html#getIdentityByName(java.lang.String)">PersistentEntity</a></code></span></div>
 <div class="block">Obtains an identity PersistentProperty instance by name.</div>
 <dl class="notes">
@@ -646,7 +646,7 @@ implements <a href="../PersistentEntity.html" title="interface in io.micronaut.d
 <section class="detail" id="getPersistentPropertyNames()">
 <h3>getPersistentPropertyNames</h3>
 <div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span>&nbsp;<span class="element-name">getPersistentPropertyNames</span>()</div>
+</span><span class="modifiers">public</span>&nbsp;<span class="return-type">@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span>&nbsp;<span class="element-name">getPersistentPropertyNames</span>()</div>
 <div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="../PersistentEntity.html#getPersistentPropertyNames()">PersistentEntity</a></code></span></div>
 <div class="block">A list of property names that a persistent.</div>
 <dl class="notes">
@@ -678,7 +678,7 @@ implements <a href="../PersistentEntity.html" title="interface in io.micronaut.d
 <section class="detail" id="getParentEntity()">
 <h3>getParentEntity</h3>
 <div class="member-signature"><span class="annotations">@Nullable
-</span><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a></span>&nbsp;<span class="element-name">getParentEntity</span>()</div>
+</span><span class="modifiers">public</span>&nbsp;<span class="return-type">@Nullable <a href="../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a></span>&nbsp;<span class="element-name">getParentEntity</span>()</div>
 <div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="../PersistentEntity.html#getParentEntity()">PersistentEntity</a></code></span></div>
 <div class="block">Returns the parent entity of this entity.</div>
 <dl class="notes">

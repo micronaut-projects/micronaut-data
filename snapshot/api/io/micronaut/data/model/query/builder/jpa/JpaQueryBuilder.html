@@ -143,7 +143,7 @@ implements <a href="../QueryBuilder.html" title="interface in io.micronaut.data.
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/StringBuilder.html" title="class or interface in java.lang" class="external-link">StringBuilder</a></code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/StringBuilder.html" title="class or interface in java.lang" class="external-link">StringBuilder</a></code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#appendDeleteClause(java.lang.StringBuilder)" class="member-name-link">appendDeleteClause</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/StringBuilder.html" title="class or interface in java.lang" class="external-link">StringBuilder</a>&nbsp;queryString)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Append the delete clause.</div>
@@ -154,7 +154,7 @@ implements <a href="../QueryBuilder.html" title="interface in io.micronaut.data.
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Appends a row count projection to the query string.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../QueryResult.html" title="interface in io.micronaut.data.model.query.builder">QueryResult</a></code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@Nullable <a href="../QueryResult.html" title="interface in io.micronaut.data.model.query.builder">QueryResult</a></code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#buildInsert(io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.PersistentEntity)" class="member-name-link">buildInsert</a><wbr>(io.micronaut.core.annotation.AnnotationMetadata&nbsp;repositoryMetadata,
  <a href="../../../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;entity)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
@@ -170,8 +170,8 @@ implements <a href="../QueryBuilder.html" title="interface in io.micronaut.data.
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Build a join expression for the given alias, association, join type and builder.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../QueryResult.html" title="interface in io.micronaut.data.model.query.builder">QueryResult</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#buildPagination(io.micronaut.data.model.Pageable)" class="member-name-link">buildPagination</a><wbr>(<a href="../../../Pageable.html" title="interface in io.micronaut.data.model">Pageable</a>&nbsp;pageable)</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@NonNull <a href="../QueryResult.html" title="interface in io.micronaut.data.model.query.builder">QueryResult</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#buildPagination(io.micronaut.data.model.Pageable)" class="member-name-link">buildPagination</a><wbr>(@NonNull <a href="../../../Pageable.html" title="interface in io.micronaut.data.model">Pageable</a>&nbsp;pageable)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Encode the pageable.</div>
 </div>
@@ -482,7 +482,7 @@ implements <a href="../QueryBuilder.html" title="interface in io.micronaut.data.
 <section class="detail" id="buildInsert(io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.PersistentEntity)">
 <h3>buildInsert</h3>
 <div class="member-signature"><span class="annotations">@Nullable
-</span><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="../QueryResult.html" title="interface in io.micronaut.data.model.query.builder">QueryResult</a></span>&nbsp;<span class="element-name">buildInsert</span><wbr><span class="parameters">(io.micronaut.core.annotation.AnnotationMetadata&nbsp;repositoryMetadata,
+</span><span class="modifiers">public</span>&nbsp;<span class="return-type">@Nullable <a href="../QueryResult.html" title="interface in io.micronaut.data.model.query.builder">QueryResult</a></span>&nbsp;<span class="element-name">buildInsert</span><wbr><span class="parameters">(io.micronaut.core.annotation.AnnotationMetadata&nbsp;repositoryMetadata,
  <a href="../../../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;entity)</span></div>
 <div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="../QueryBuilder.html#buildInsert(io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.PersistentEntity)">QueryBuilder</a></code></span></div>
 <div class="block">Builds an insert statement for the given entity.</div>
@@ -501,7 +501,7 @@ implements <a href="../QueryBuilder.html" title="interface in io.micronaut.data.
 <section class="detail" id="appendDeleteClause(java.lang.StringBuilder)">
 <h3>appendDeleteClause</h3>
 <div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/StringBuilder.html" title="class or interface in java.lang" class="external-link">StringBuilder</a></span>&nbsp;<span class="element-name">appendDeleteClause</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/StringBuilder.html" title="class or interface in java.lang" class="external-link">StringBuilder</a>&nbsp;queryString)</span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/StringBuilder.html" title="class or interface in java.lang" class="external-link">StringBuilder</a></span>&nbsp;<span class="element-name">appendDeleteClause</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/StringBuilder.html" title="class or interface in java.lang" class="external-link">StringBuilder</a>&nbsp;queryString)</span></div>
 <div class="block"><span class="descfrm-type-label">Description copied from class:&nbsp;<code><a href="../AbstractSqlLikeQueryBuilder.html#appendDeleteClause(java.lang.StringBuilder)">AbstractSqlLikeQueryBuilder</a></code></span></div>
 <div class="block">Append the delete clause.</div>
 <dl class="notes">
@@ -518,8 +518,8 @@ implements <a href="../QueryBuilder.html" title="interface in io.micronaut.data.
 <section class="detail" id="buildPagination(io.micronaut.data.model.Pageable)">
 <h3>buildPagination</h3>
 <div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="../QueryResult.html" title="interface in io.micronaut.data.model.query.builder">QueryResult</a></span>&nbsp;<span class="element-name">buildPagination</span><wbr><span class="parameters">(@NonNull
- <a href="../../../Pageable.html" title="interface in io.micronaut.data.model">Pageable</a>&nbsp;pageable)</span></div>
+</span><span class="modifiers">public</span>&nbsp;<span class="return-type">@NonNull <a href="../QueryResult.html" title="interface in io.micronaut.data.model.query.builder">QueryResult</a></span>&nbsp;<span class="element-name">buildPagination</span><wbr><span class="parameters">(@NonNull
+ @NonNull <a href="../../../Pageable.html" title="interface in io.micronaut.data.model">Pageable</a>&nbsp;pageable)</span></div>
 <div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="../QueryBuilder.html#buildPagination(io.micronaut.data.model.Pageable)">QueryBuilder</a></code></span></div>
 <div class="block">Encode the pageable.</div>
 <dl class="notes">

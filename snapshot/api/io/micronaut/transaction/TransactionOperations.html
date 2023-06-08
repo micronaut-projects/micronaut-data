@@ -108,18 +108,18 @@ loadScripts(document, 'script');</script>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>&lt;R&gt;&nbsp;R</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#execute(io.micronaut.transaction.TransactionDefinition,io.micronaut.transaction.TransactionCallback)" class="member-name-link">execute</a><wbr>(<a href="TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition,
- <a href="TransactionCallback.html" title="interface in io.micronaut.transaction">TransactionCallback</a>&lt;<a href="TransactionOperations.html" title="type parameter in TransactionOperations">T</a>,<wbr>R&gt;&nbsp;callback)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#execute(io.micronaut.transaction.TransactionDefinition,io.micronaut.transaction.TransactionCallback)" class="member-name-link">execute</a><wbr>(@NonNull <a href="TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition,
+ @NonNull <a href="TransactionCallback.html" title="interface in io.micronaut.transaction">TransactionCallback</a>&lt;<a href="TransactionOperations.html" title="type parameter in TransactionOperations">T</a>,<wbr>R&gt;&nbsp;callback)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Execute a transaction within the context of the function.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default &lt;R&gt;&nbsp;R</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#executeRead(io.micronaut.transaction.TransactionCallback)" class="member-name-link">executeRead</a><wbr>(<a href="TransactionCallback.html" title="interface in io.micronaut.transaction">TransactionCallback</a>&lt;<a href="TransactionOperations.html" title="type parameter in TransactionOperations">T</a>,<wbr>R&gt;&nbsp;callback)</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#executeRead(io.micronaut.transaction.TransactionCallback)" class="member-name-link">executeRead</a><wbr>(@NonNull <a href="TransactionCallback.html" title="interface in io.micronaut.transaction">TransactionCallback</a>&lt;<a href="TransactionOperations.html" title="type parameter in TransactionOperations">T</a>,<wbr>R&gt;&nbsp;callback)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
 <div class="block">Execute a read-only transaction within the context of the function.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default &lt;R&gt;&nbsp;R</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#executeWrite(io.micronaut.transaction.TransactionCallback)" class="member-name-link">executeWrite</a><wbr>(<a href="TransactionCallback.html" title="interface in io.micronaut.transaction">TransactionCallback</a>&lt;<a href="TransactionOperations.html" title="type parameter in TransactionOperations">T</a>,<wbr>R&gt;&nbsp;callback)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#executeWrite(io.micronaut.transaction.TransactionCallback)" class="member-name-link">executeWrite</a><wbr>(@NonNull <a href="TransactionCallback.html" title="interface in io.micronaut.transaction">TransactionCallback</a>&lt;<a href="TransactionOperations.html" title="type parameter in TransactionOperations">T</a>,<wbr>R&gt;&nbsp;callback)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
 <div class="block">Execute a default transaction within the context of the function.</div>
 </div>
@@ -195,9 +195,9 @@ loadScripts(document, 'script');</script>
 <section class="detail" id="execute(io.micronaut.transaction.TransactionDefinition,io.micronaut.transaction.TransactionCallback)">
 <h3>execute</h3>
 <div class="member-signature"><span class="type-parameters">&lt;R&gt;</span>&nbsp;<span class="return-type">R</span>&nbsp;<span class="element-name">execute</span><wbr><span class="parameters">(@NonNull
- <a href="TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition,
+ @NonNull <a href="TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition,
  @NonNull
- <a href="TransactionCallback.html" title="interface in io.micronaut.transaction">TransactionCallback</a>&lt;<a href="TransactionOperations.html" title="type parameter in TransactionOperations">T</a>,<wbr>R&gt;&nbsp;callback)</span></div>
+ @NonNull <a href="TransactionCallback.html" title="interface in io.micronaut.transaction">TransactionCallback</a>&lt;<a href="TransactionOperations.html" title="type parameter in TransactionOperations">T</a>,<wbr>R&gt;&nbsp;callback)</span></div>
 <div class="block">Execute a transaction within the context of the function.</div>
 <dl class="notes">
 <dt>Type Parameters:</dt>
@@ -214,7 +214,7 @@ loadScripts(document, 'script');</script>
 <section class="detail" id="executeRead(io.micronaut.transaction.TransactionCallback)">
 <h3>executeRead</h3>
 <div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="type-parameters">&lt;R&gt;</span>&nbsp;<span class="return-type">R</span>&nbsp;<span class="element-name">executeRead</span><wbr><span class="parameters">(@NonNull
- <a href="TransactionCallback.html" title="interface in io.micronaut.transaction">TransactionCallback</a>&lt;<a href="TransactionOperations.html" title="type parameter in TransactionOperations">T</a>,<wbr>R&gt;&nbsp;callback)</span></div>
+ @NonNull <a href="TransactionCallback.html" title="interface in io.micronaut.transaction">TransactionCallback</a>&lt;<a href="TransactionOperations.html" title="type parameter in TransactionOperations">T</a>,<wbr>R&gt;&nbsp;callback)</span></div>
 <div class="block">Execute a read-only transaction within the context of the function.</div>
 <dl class="notes">
 <dt>Type Parameters:</dt>
@@ -230,7 +230,7 @@ loadScripts(document, 'script');</script>
 <section class="detail" id="executeWrite(io.micronaut.transaction.TransactionCallback)">
 <h3>executeWrite</h3>
 <div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="type-parameters">&lt;R&gt;</span>&nbsp;<span class="return-type">R</span>&nbsp;<span class="element-name">executeWrite</span><wbr><span class="parameters">(@NonNull
- <a href="TransactionCallback.html" title="interface in io.micronaut.transaction">TransactionCallback</a>&lt;<a href="TransactionOperations.html" title="type parameter in TransactionOperations">T</a>,<wbr>R&gt;&nbsp;callback)</span></div>
+ @NonNull <a href="TransactionCallback.html" title="interface in io.micronaut.transaction">TransactionCallback</a>&lt;<a href="TransactionOperations.html" title="type parameter in TransactionOperations">T</a>,<wbr>R&gt;&nbsp;callback)</span></div>
 <div class="block">Execute a default transaction within the context of the function.</div>
 <dl class="notes">
 <dt>Type Parameters:</dt>

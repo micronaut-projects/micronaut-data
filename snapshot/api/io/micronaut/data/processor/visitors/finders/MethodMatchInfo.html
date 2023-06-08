@@ -99,8 +99,8 @@ loadScripts(document, 'script');</script>
 <div class="table-header col-first">Constructor</div>
 <div class="table-header col-last">Description</div>
 <div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(io.micronaut.data.intercept.annotation.DataMethod.OperationType,io.micronaut.inject.ast.TypedElement,io.micronaut.inject.ast.ClassElement)" class="member-name-link">MethodMatchInfo</a><wbr>(<a href="../../../intercept/annotation/DataMethod.OperationType.html" title="enum class in io.micronaut.data.intercept.annotation">DataMethod.OperationType</a>&nbsp;operationType,
- io.micronaut.inject.ast.TypedElement&nbsp;resultType,
- io.micronaut.inject.ast.ClassElement&nbsp;interceptor)</code></div>
+ @Nullable io.micronaut.inject.ast.TypedElement&nbsp;resultType,
+ @Nullable io.micronaut.inject.ast.ClassElement&nbsp;interceptor)</code></div>
 <div class="col-last even-row-color">
 <div class="block">Creates a method info.</div>
 </div>
@@ -148,12 +148,12 @@ loadScripts(document, 'script');</script>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../../../model/query/builder/QueryResult.html" title="interface in io.micronaut.data.model.query.builder">QueryResult</a></code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getQueryResult()" class="member-name-link">getQueryResult</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>io.micronaut.inject.ast.TypedElement</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@Nullable io.micronaut.inject.ast.TypedElement</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getResultType()" class="member-name-link">getResultType</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">The computed result type.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>io.micronaut.inject.ast.ClassElement</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@Nullable io.micronaut.inject.ast.ClassElement</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getRuntimeInterceptor()" class="member-name-link">getRuntimeInterceptor</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">The runtime interceptor that will handle the method.</div>
@@ -210,9 +210,9 @@ loadScripts(document, 'script');</script>
 <h3>MethodMatchInfo</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name">MethodMatchInfo</span><wbr><span class="parameters">(<a href="../../../intercept/annotation/DataMethod.OperationType.html" title="enum class in io.micronaut.data.intercept.annotation">DataMethod.OperationType</a>&nbsp;operationType,
  @Nullable
- io.micronaut.inject.ast.TypedElement&nbsp;resultType,
+ @Nullable io.micronaut.inject.ast.TypedElement&nbsp;resultType,
  @Nullable
- io.micronaut.inject.ast.ClassElement&nbsp;interceptor)</span></div>
+ @Nullable io.micronaut.inject.ast.ClassElement&nbsp;interceptor)</span></div>
 <div class="block">Creates a method info.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -307,7 +307,7 @@ loadScripts(document, 'script');</script>
 <section class="detail" id="getResultType()">
 <h3>getResultType</h3>
 <div class="member-signature"><span class="annotations">@Nullable
-</span><span class="modifiers">public</span>&nbsp;<span class="return-type">io.micronaut.inject.ast.TypedElement</span>&nbsp;<span class="element-name">getResultType</span>()</div>
+</span><span class="modifiers">public</span>&nbsp;<span class="return-type">@Nullable io.micronaut.inject.ast.TypedElement</span>&nbsp;<span class="element-name">getResultType</span>()</div>
 <div class="block">The computed result type.</div>
 <dl class="notes">
 <dt>Returns:</dt>
@@ -319,7 +319,7 @@ loadScripts(document, 'script');</script>
 <section class="detail" id="getRuntimeInterceptor()">
 <h3>getRuntimeInterceptor</h3>
 <div class="member-signature"><span class="annotations">@Nullable
-</span><span class="modifiers">public</span>&nbsp;<span class="return-type">io.micronaut.inject.ast.ClassElement</span>&nbsp;<span class="element-name">getRuntimeInterceptor</span>()</div>
+</span><span class="modifiers">public</span>&nbsp;<span class="return-type">@Nullable io.micronaut.inject.ast.ClassElement</span>&nbsp;<span class="element-name">getRuntimeInterceptor</span>()</div>
 <div class="block">The runtime interceptor that will handle the method.</div>
 <dl class="notes">
 <dt>Returns:</dt>

@@ -130,25 +130,25 @@ extends <a href="Sort.html" title="interface in io.micronaut.data.model">Sort</a
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab1"><code>static <a href="Pageable.html" title="interface in io.micronaut.data.model">Pageable</a></code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab1"><code>static @NonNull <a href="Pageable.html" title="interface in io.micronaut.data.model">Pageable</a></code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab1"><code><a href="#from(int)" class="member-name-link">from</a><wbr>(int&nbsp;page)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab1">
 <div class="block">Creates a new <a href="Pageable.html" title="interface in io.micronaut.data.model"><code>Pageable</code></a> at the given offset with a default size of 10.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab1"><code>static <a href="Pageable.html" title="interface in io.micronaut.data.model">Pageable</a></code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab1"><code>static @NonNull <a href="Pageable.html" title="interface in io.micronaut.data.model">Pageable</a></code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab1"><code><a href="#from(int,int)" class="member-name-link">from</a><wbr>(int&nbsp;page,
  int&nbsp;size)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab1">
 <div class="block">Creates a new <a href="Pageable.html" title="interface in io.micronaut.data.model"><code>Pageable</code></a> at the given offset.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab1"><code>static <a href="Pageable.html" title="interface in io.micronaut.data.model">Pageable</a></code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab1"><code>static @NonNull <a href="Pageable.html" title="interface in io.micronaut.data.model">Pageable</a></code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab1"><code><a href="#from(int,int,io.micronaut.data.model.Sort)" class="member-name-link">from</a><wbr>(int&nbsp;page,
  int&nbsp;size,
- <a href="Sort.html" title="interface in io.micronaut.data.model">Sort</a>&nbsp;sort)</code></div>
+ @Nullable <a href="Sort.html" title="interface in io.micronaut.data.model">Sort</a>&nbsp;sort)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab1">
 <div class="block">Creates a new <a href="Pageable.html" title="interface in io.micronaut.data.model"><code>Pageable</code></a> at the given offset.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab1"><code>static <a href="Pageable.html" title="interface in io.micronaut.data.model">Pageable</a></code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab1"><code>static @NonNull <a href="Pageable.html" title="interface in io.micronaut.data.model">Pageable</a></code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab1"><code><a href="#from(io.micronaut.data.model.Sort)" class="member-name-link">from</a><wbr>(<a href="Sort.html" title="interface in io.micronaut.data.model">Sort</a>&nbsp;sort)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab1">
 <div class="block">Creates a new <a href="Pageable.html" title="interface in io.micronaut.data.model"><code>Pageable</code></a> at the given offset.</div>
@@ -161,7 +161,7 @@ extends <a href="Sort.html" title="interface in io.micronaut.data.model">Sort</a
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
 <div class="block">Offset in the requested collection.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="Sort.Order.html" title="class in io.micronaut.data.model">Sort.Order</a>&gt;</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="Sort.Order.html" title="class in io.micronaut.data.model">Sort.Order</a>&gt;</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#getOrderBy()" class="member-name-link">getOrderBy</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>int</code></div>
@@ -169,7 +169,7 @@ extends <a href="Sort.html" title="interface in io.micronaut.data.model">Sort</a
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Maximum size of the page to be returned.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default <a href="Sort.html" title="interface in io.micronaut.data.model">Sort</a></code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default @NonNull <a href="Sort.html" title="interface in io.micronaut.data.model">Sort</a></code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#getSort()" class="member-name-link">getSort</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default boolean</code></div>
@@ -178,29 +178,29 @@ extends <a href="Sort.html" title="interface in io.micronaut.data.model">Sort</a
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default boolean</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#isUnpaged()" class="member-name-link">isUnpaged</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default <a href="Pageable.html" title="interface in io.micronaut.data.model">Pageable</a></code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default @NonNull <a href="Pageable.html" title="interface in io.micronaut.data.model">Pageable</a></code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#next()" class="member-name-link">next</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default <a href="Pageable.html" title="interface in io.micronaut.data.model">Pageable</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#order(io.micronaut.data.model.Sort.Order)" class="member-name-link">order</a><wbr>(<a href="Sort.Order.html" title="class in io.micronaut.data.model">Sort.Order</a>&nbsp;order)</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default @NonNull <a href="Pageable.html" title="interface in io.micronaut.data.model">Pageable</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#order(io.micronaut.data.model.Sort.Order)" class="member-name-link">order</a><wbr>(@NonNull <a href="Sort.Order.html" title="class in io.micronaut.data.model">Sort.Order</a>&nbsp;order)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
 <div class="block">Adds an order object.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default <a href="Pageable.html" title="interface in io.micronaut.data.model">Pageable</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#order(java.lang.String)" class="member-name-link">order</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;propertyName)</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default @NonNull <a href="Pageable.html" title="interface in io.micronaut.data.model">Pageable</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#order(java.lang.String)" class="member-name-link">order</a><wbr>(@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;propertyName)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
 <div class="block">Orders by the specified property name (defaults to ascending).</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default <a href="Pageable.html" title="interface in io.micronaut.data.model">Pageable</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#order(java.lang.String,io.micronaut.data.model.Sort.Order.Direction)" class="member-name-link">order</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;propertyName,
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default @NonNull <a href="Pageable.html" title="interface in io.micronaut.data.model">Pageable</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#order(java.lang.String,io.micronaut.data.model.Sort.Order.Direction)" class="member-name-link">order</a><wbr>(@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;propertyName,
  <a href="Sort.Order.Direction.html" title="enum class in io.micronaut.data.model">Sort.Order.Direction</a>&nbsp;direction)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
 <div class="block">Orders by the specified property name and direction.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default <a href="Pageable.html" title="interface in io.micronaut.data.model">Pageable</a></code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default @NonNull <a href="Pageable.html" title="interface in io.micronaut.data.model">Pageable</a></code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#previous()" class="member-name-link">previous</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab1"><code>static <a href="Pageable.html" title="interface in io.micronaut.data.model">Pageable</a></code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab1"><code>static @NonNull <a href="Pageable.html" title="interface in io.micronaut.data.model">Pageable</a></code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab1"><code><a href="#unpaged()" class="member-name-link">unpaged</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab1">&nbsp;</div>
 </div>
@@ -268,7 +268,7 @@ extends <a href="Sort.html" title="interface in io.micronaut.data.model">Sort</a
 <section class="detail" id="getSort()">
 <h3>getSort</h3>
 <div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">default</span>&nbsp;<span class="return-type"><a href="Sort.html" title="interface in io.micronaut.data.model">Sort</a></span>&nbsp;<span class="element-name">getSort</span>()</div>
+</span><span class="modifiers">default</span>&nbsp;<span class="return-type">@NonNull <a href="Sort.html" title="interface in io.micronaut.data.model">Sort</a></span>&nbsp;<span class="element-name">getSort</span>()</div>
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>The sort definition to use.</dd>
@@ -279,7 +279,7 @@ extends <a href="Sort.html" title="interface in io.micronaut.data.model">Sort</a
 <section class="detail" id="next()">
 <h3>next</h3>
 <div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">default</span>&nbsp;<span class="return-type"><a href="Pageable.html" title="interface in io.micronaut.data.model">Pageable</a></span>&nbsp;<span class="element-name">next</span>()</div>
+</span><span class="modifiers">default</span>&nbsp;<span class="return-type">@NonNull <a href="Pageable.html" title="interface in io.micronaut.data.model">Pageable</a></span>&nbsp;<span class="element-name">next</span>()</div>
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>The next pageable.</dd>
@@ -290,7 +290,7 @@ extends <a href="Sort.html" title="interface in io.micronaut.data.model">Sort</a
 <section class="detail" id="previous()">
 <h3>previous</h3>
 <div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">default</span>&nbsp;<span class="return-type"><a href="Pageable.html" title="interface in io.micronaut.data.model">Pageable</a></span>&nbsp;<span class="element-name">previous</span>()</div>
+</span><span class="modifiers">default</span>&nbsp;<span class="return-type">@NonNull <a href="Pageable.html" title="interface in io.micronaut.data.model">Pageable</a></span>&nbsp;<span class="element-name">previous</span>()</div>
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>The previous pageable</dd>
@@ -311,8 +311,8 @@ extends <a href="Sort.html" title="interface in io.micronaut.data.model">Sort</a
 <section class="detail" id="order(java.lang.String)">
 <h3>order</h3>
 <div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">default</span>&nbsp;<span class="return-type"><a href="Pageable.html" title="interface in io.micronaut.data.model">Pageable</a></span>&nbsp;<span class="element-name">order</span><wbr><span class="parameters">(@NonNull
- <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;propertyName)</span></div>
+</span><span class="modifiers">default</span>&nbsp;<span class="return-type">@NonNull <a href="Pageable.html" title="interface in io.micronaut.data.model">Pageable</a></span>&nbsp;<span class="element-name">order</span><wbr><span class="parameters">(@NonNull
+ @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;propertyName)</span></div>
 <div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="Sort.html#order(java.lang.String)">Sort</a></code></span></div>
 <div class="block">Orders by the specified property name (defaults to ascending).</div>
 <dl class="notes">
@@ -341,8 +341,8 @@ extends <a href="Sort.html" title="interface in io.micronaut.data.model">Sort</a
 <section class="detail" id="order(io.micronaut.data.model.Sort.Order)">
 <h3>order</h3>
 <div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">default</span>&nbsp;<span class="return-type"><a href="Pageable.html" title="interface in io.micronaut.data.model">Pageable</a></span>&nbsp;<span class="element-name">order</span><wbr><span class="parameters">(@NonNull
- <a href="Sort.Order.html" title="class in io.micronaut.data.model">Sort.Order</a>&nbsp;order)</span></div>
+</span><span class="modifiers">default</span>&nbsp;<span class="return-type">@NonNull <a href="Pageable.html" title="interface in io.micronaut.data.model">Pageable</a></span>&nbsp;<span class="element-name">order</span><wbr><span class="parameters">(@NonNull
+ @NonNull <a href="Sort.Order.html" title="class in io.micronaut.data.model">Sort.Order</a>&nbsp;order)</span></div>
 <div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="Sort.html#order(io.micronaut.data.model.Sort.Order)">Sort</a></code></span></div>
 <div class="block">Adds an order object.</div>
 <dl class="notes">
@@ -359,8 +359,8 @@ extends <a href="Sort.html" title="interface in io.micronaut.data.model">Sort</a
 <section class="detail" id="order(java.lang.String,io.micronaut.data.model.Sort.Order.Direction)">
 <h3>order</h3>
 <div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">default</span>&nbsp;<span class="return-type"><a href="Pageable.html" title="interface in io.micronaut.data.model">Pageable</a></span>&nbsp;<span class="element-name">order</span><wbr><span class="parameters">(@NonNull
- <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;propertyName,
+</span><span class="modifiers">default</span>&nbsp;<span class="return-type">@NonNull <a href="Pageable.html" title="interface in io.micronaut.data.model">Pageable</a></span>&nbsp;<span class="element-name">order</span><wbr><span class="parameters">(@NonNull
+ @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;propertyName,
  @NonNull
  <a href="Sort.Order.Direction.html" title="enum class in io.micronaut.data.model">Sort.Order.Direction</a>&nbsp;direction)</span></div>
 <div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="Sort.html#order(java.lang.String,io.micronaut.data.model.Sort.Order.Direction)">Sort</a></code></span></div>
@@ -380,7 +380,7 @@ extends <a href="Sort.html" title="interface in io.micronaut.data.model">Sort</a
 <section class="detail" id="getOrderBy()">
 <h3>getOrderBy</h3>
 <div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">default</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="Sort.Order.html" title="class in io.micronaut.data.model">Sort.Order</a>&gt;</span>&nbsp;<span class="element-name">getOrderBy</span>()</div>
+</span><span class="modifiers">default</span>&nbsp;<span class="return-type">@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="Sort.Order.html" title="class in io.micronaut.data.model">Sort.Order</a>&gt;</span>&nbsp;<span class="element-name">getOrderBy</span>()</div>
 <dl class="notes">
 <dt>Specified by:</dt>
 <dd><code><a href="Sort.html#getOrderBy()">getOrderBy</a></code>&nbsp;in interface&nbsp;<code><a href="Sort.html" title="interface in io.micronaut.data.model">Sort</a></code></dd>
@@ -393,7 +393,7 @@ extends <a href="Sort.html" title="interface in io.micronaut.data.model">Sort</a
 <section class="detail" id="from(int)">
 <h3>from</h3>
 <div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">static</span>&nbsp;<span class="return-type"><a href="Pageable.html" title="interface in io.micronaut.data.model">Pageable</a></span>&nbsp;<span class="element-name">from</span><wbr><span class="parameters">(int&nbsp;page)</span></div>
+</span><span class="modifiers">static</span>&nbsp;<span class="return-type">@NonNull <a href="Pageable.html" title="interface in io.micronaut.data.model">Pageable</a></span>&nbsp;<span class="element-name">from</span><wbr><span class="parameters">(int&nbsp;page)</span></div>
 <div class="block">Creates a new <a href="Pageable.html" title="interface in io.micronaut.data.model"><code>Pageable</code></a> at the given offset with a default size of 10.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -407,7 +407,7 @@ extends <a href="Sort.html" title="interface in io.micronaut.data.model">Sort</a
 <section class="detail" id="from(int,int)">
 <h3>from</h3>
 <div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">static</span>&nbsp;<span class="return-type"><a href="Pageable.html" title="interface in io.micronaut.data.model">Pageable</a></span>&nbsp;<span class="element-name">from</span><wbr><span class="parameters">(int&nbsp;page,
+</span><span class="modifiers">static</span>&nbsp;<span class="return-type">@NonNull <a href="Pageable.html" title="interface in io.micronaut.data.model">Pageable</a></span>&nbsp;<span class="element-name">from</span><wbr><span class="parameters">(int&nbsp;page,
  int&nbsp;size)</span></div>
 <div class="block">Creates a new <a href="Pageable.html" title="interface in io.micronaut.data.model"><code>Pageable</code></a> at the given offset.</div>
 <dl class="notes">
@@ -423,10 +423,10 @@ extends <a href="Sort.html" title="interface in io.micronaut.data.model">Sort</a
 <section class="detail" id="from(int,int,io.micronaut.data.model.Sort)">
 <h3>from</h3>
 <div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">static</span>&nbsp;<span class="return-type"><a href="Pageable.html" title="interface in io.micronaut.data.model">Pageable</a></span>&nbsp;<span class="element-name">from</span><wbr><span class="parameters">(int&nbsp;page,
+</span><span class="modifiers">static</span>&nbsp;<span class="return-type">@NonNull <a href="Pageable.html" title="interface in io.micronaut.data.model">Pageable</a></span>&nbsp;<span class="element-name">from</span><wbr><span class="parameters">(int&nbsp;page,
  int&nbsp;size,
  @Nullable
- <a href="Sort.html" title="interface in io.micronaut.data.model">Sort</a>&nbsp;sort)</span></div>
+ @Nullable <a href="Sort.html" title="interface in io.micronaut.data.model">Sort</a>&nbsp;sort)</span></div>
 <div class="block">Creates a new <a href="Pageable.html" title="interface in io.micronaut.data.model"><code>Pageable</code></a> at the given offset.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -442,7 +442,7 @@ extends <a href="Sort.html" title="interface in io.micronaut.data.model">Sort</a
 <section class="detail" id="from(io.micronaut.data.model.Sort)">
 <h3>from</h3>
 <div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">static</span>&nbsp;<span class="return-type"><a href="Pageable.html" title="interface in io.micronaut.data.model">Pageable</a></span>&nbsp;<span class="element-name">from</span><wbr><span class="parameters">(<a href="Sort.html" title="interface in io.micronaut.data.model">Sort</a>&nbsp;sort)</span></div>
+</span><span class="modifiers">static</span>&nbsp;<span class="return-type">@NonNull <a href="Pageable.html" title="interface in io.micronaut.data.model">Pageable</a></span>&nbsp;<span class="element-name">from</span><wbr><span class="parameters">(<a href="Sort.html" title="interface in io.micronaut.data.model">Sort</a>&nbsp;sort)</span></div>
 <div class="block">Creates a new <a href="Pageable.html" title="interface in io.micronaut.data.model"><code>Pageable</code></a> at the given offset.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -456,7 +456,7 @@ extends <a href="Sort.html" title="interface in io.micronaut.data.model">Sort</a
 <section class="detail" id="unpaged()">
 <h3>unpaged</h3>
 <div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">static</span>&nbsp;<span class="return-type"><a href="Pageable.html" title="interface in io.micronaut.data.model">Pageable</a></span>&nbsp;<span class="element-name">unpaged</span>()</div>
+</span><span class="modifiers">static</span>&nbsp;<span class="return-type">@NonNull <a href="Pageable.html" title="interface in io.micronaut.data.model">Pageable</a></span>&nbsp;<span class="element-name">unpaged</span>()</div>
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>A new instance without paging data.</dd>

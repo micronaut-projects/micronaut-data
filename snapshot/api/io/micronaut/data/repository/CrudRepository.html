@@ -126,7 +126,7 @@ extends <a href="GenericRepository.html" title="interface in io.micronaut.data.r
 <div class="block">Deletes all entities managed by the repository.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#deleteAll(java.lang.Iterable)" class="member-name-link">deleteAll</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Iterable.html" title="class or interface in java.lang" class="external-link">Iterable</a>&lt;? extends <a href="CrudRepository.html" title="type parameter in CrudRepository">E</a>&gt;&nbsp;entities)</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#deleteAll(java.lang.Iterable)" class="member-name-link">deleteAll</a><wbr>(@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Iterable.html" title="class or interface in java.lang" class="external-link">Iterable</a>&lt;? extends <a href="CrudRepository.html" title="type parameter in CrudRepository">E</a>&gt;&nbsp;entities)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Deletes the given entities.</div>
 </div>
@@ -140,12 +140,12 @@ extends <a href="GenericRepository.html" title="interface in io.micronaut.data.r
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Returns whether an entity with the given id exists.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="CrudRepository.html" title="type parameter in CrudRepository">E</a>&gt;</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="CrudRepository.html" title="type parameter in CrudRepository">E</a>&gt;</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#findAll()" class="member-name-link">findAll</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Returns all instances of the type.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="CrudRepository.html" title="type parameter in CrudRepository">E</a>&gt;</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="CrudRepository.html" title="type parameter in CrudRepository">E</a>&gt;</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#findById(ID)" class="member-name-link">findById</a><wbr>(<a href="CrudRepository.html" title="type parameter in CrudRepository">ID</a>&nbsp;id)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Retrieves an entity by its id.</div>
@@ -155,8 +155,8 @@ extends <a href="GenericRepository.html" title="interface in io.micronaut.data.r
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Saves the given valid entity, returning a possibly new entity representing the saved state.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>&lt;S extends <a href="CrudRepository.html" title="type parameter in CrudRepository">E</a>&gt;<br><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;S&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#saveAll(java.lang.Iterable)" class="member-name-link">saveAll</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Iterable.html" title="class or interface in java.lang" class="external-link">Iterable</a>&lt;S&gt;&nbsp;entities)</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>&lt;S extends <a href="CrudRepository.html" title="type parameter in CrudRepository">E</a>&gt;<br>@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;S&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#saveAll(java.lang.Iterable)" class="member-name-link">saveAll</a><wbr>(@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Iterable.html" title="class or interface in java.lang" class="external-link">Iterable</a>&lt;S&gt;&nbsp;entities)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Saves all given entities, possibly returning new instances representing the saved state.</div>
 </div>
@@ -165,8 +165,8 @@ extends <a href="GenericRepository.html" title="interface in io.micronaut.data.r
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">This method issues an explicit update for the given entity.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>&lt;S extends <a href="CrudRepository.html" title="type parameter in CrudRepository">E</a>&gt;<br><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;S&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#updateAll(java.lang.Iterable)" class="member-name-link">updateAll</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Iterable.html" title="class or interface in java.lang" class="external-link">Iterable</a>&lt;S&gt;&nbsp;entities)</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>&lt;S extends <a href="CrudRepository.html" title="type parameter in CrudRepository">E</a>&gt;<br>@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;S&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#updateAll(java.lang.Iterable)" class="member-name-link">updateAll</a><wbr>(@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Iterable.html" title="class or interface in java.lang" class="external-link">Iterable</a>&lt;S&gt;&nbsp;entities)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">This method issues an explicit update for the given entities.</div>
 </div>
@@ -222,8 +222,8 @@ extends <a href="GenericRepository.html" title="interface in io.micronaut.data.r
 <section class="detail" id="updateAll(java.lang.Iterable)">
 <h3>updateAll</h3>
 <div class="member-signature"><span class="annotations">@NonNull
-</span><span class="type-parameters">&lt;S extends <a href="CrudRepository.html" title="type parameter in CrudRepository">E</a>&gt;</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;S&gt;</span>&nbsp;<span class="element-name">updateAll</span><wbr><span class="parameters">(@NonNull
- <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Iterable.html" title="class or interface in java.lang" class="external-link">Iterable</a>&lt;S&gt;&nbsp;entities)</span></div>
+</span><span class="type-parameters">&lt;S extends <a href="CrudRepository.html" title="type parameter in CrudRepository">E</a>&gt;</span>&nbsp;<span class="return-type">@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;S&gt;</span>&nbsp;<span class="element-name">updateAll</span><wbr><span class="parameters">(@NonNull
+ @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Iterable.html" title="class or interface in java.lang" class="external-link">Iterable</a>&lt;S&gt;&nbsp;entities)</span></div>
 <div class="block">This method issues an explicit update for the given entities. The method differs from <a href="#saveAll(java.lang.Iterable)"><code>saveAll(Iterable)</code></a> in that an update will be generated regardless if the entity has been saved previously or not. If the entity has no assigned ID then an exception will be thrown.</div>
 <dl class="notes">
 <dt>Type Parameters:</dt>
@@ -239,8 +239,8 @@ extends <a href="GenericRepository.html" title="interface in io.micronaut.data.r
 <section class="detail" id="saveAll(java.lang.Iterable)">
 <h3>saveAll</h3>
 <div class="member-signature"><span class="annotations">@NonNull
-</span><span class="type-parameters">&lt;S extends <a href="CrudRepository.html" title="type parameter in CrudRepository">E</a>&gt;</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;S&gt;</span>&nbsp;<span class="element-name">saveAll</span><wbr><span class="parameters">(@NonNull
- <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Iterable.html" title="class or interface in java.lang" class="external-link">Iterable</a>&lt;S&gt;&nbsp;entities)</span></div>
+</span><span class="type-parameters">&lt;S extends <a href="CrudRepository.html" title="type parameter in CrudRepository">E</a>&gt;</span>&nbsp;<span class="return-type">@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;S&gt;</span>&nbsp;<span class="element-name">saveAll</span><wbr><span class="parameters">(@NonNull
+ @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Iterable.html" title="class or interface in java.lang" class="external-link">Iterable</a>&lt;S&gt;&nbsp;entities)</span></div>
 <div class="block">Saves all given entities, possibly returning new instances representing the saved state.</div>
 <dl class="notes">
 <dt>Type Parameters:</dt>
@@ -256,7 +256,7 @@ extends <a href="GenericRepository.html" title="interface in io.micronaut.data.r
 <section class="detail" id="findById(ID)">
 <h3 id="findById(java.lang.Object)">findById</h3>
 <div class="member-signature"><span class="annotations">@NonNull
-</span><span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="CrudRepository.html" title="type parameter in CrudRepository">E</a>&gt;</span>&nbsp;<span class="element-name">findById</span><wbr><span class="parameters">(@NonNull
+</span><span class="return-type">@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="CrudRepository.html" title="type parameter in CrudRepository">E</a>&gt;</span>&nbsp;<span class="element-name">findById</span><wbr><span class="parameters">(@NonNull
  <a href="CrudRepository.html" title="type parameter in CrudRepository">ID</a>&nbsp;id)</span></div>
 <div class="block">Retrieves an entity by its id.</div>
 <dl class="notes">
@@ -285,7 +285,7 @@ extends <a href="GenericRepository.html" title="interface in io.micronaut.data.r
 <section class="detail" id="findAll()">
 <h3>findAll</h3>
 <div class="member-signature"><span class="annotations">@NonNull
-</span><span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="CrudRepository.html" title="type parameter in CrudRepository">E</a>&gt;</span>&nbsp;<span class="element-name">findAll</span>()</div>
+</span><span class="return-type">@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="CrudRepository.html" title="type parameter in CrudRepository">E</a>&gt;</span>&nbsp;<span class="element-name">findAll</span>()</div>
 <div class="block">Returns all instances of the type.</div>
 <dl class="notes">
 <dt>Returns:</dt>
@@ -332,7 +332,7 @@ extends <a href="GenericRepository.html" title="interface in io.micronaut.data.r
 <section class="detail" id="deleteAll(java.lang.Iterable)">
 <h3>deleteAll</h3>
 <div class="member-signature"><span class="return-type">void</span>&nbsp;<span class="element-name">deleteAll</span><wbr><span class="parameters">(@NonNull
- <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Iterable.html" title="class or interface in java.lang" class="external-link">Iterable</a>&lt;? extends <a href="CrudRepository.html" title="type parameter in CrudRepository">E</a>&gt;&nbsp;entities)</span></div>
+ @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Iterable.html" title="class or interface in java.lang" class="external-link">Iterable</a>&lt;? extends <a href="CrudRepository.html" title="type parameter in CrudRepository">E</a>&gt;&nbsp;entities)</span></div>
 <div class="block">Deletes the given entities.</div>
 <dl class="notes">
 <dt>Parameters:</dt>

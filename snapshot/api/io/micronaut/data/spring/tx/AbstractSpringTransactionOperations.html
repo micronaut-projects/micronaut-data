@@ -131,12 +131,12 @@ loadScripts(document, 'script');</script>
 <div class="block">Do execute in transaction.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;R&gt;&nbsp;R</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#executeRead(io.micronaut.transaction.TransactionCallback)" class="member-name-link">executeRead</a><wbr>(<a href="../../../transaction/TransactionCallback.html" title="interface in io.micronaut.transaction">TransactionCallback</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.sql/java/sql/Connection.html" title="class or interface in java.sql" class="external-link">Connection</a>,<wbr>R&gt;&nbsp;callback)</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#executeRead(io.micronaut.transaction.TransactionCallback)" class="member-name-link">executeRead</a><wbr>(@NonNull <a href="../../../transaction/TransactionCallback.html" title="interface in io.micronaut.transaction">TransactionCallback</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.sql/java/sql/Connection.html" title="class or interface in java.sql" class="external-link">Connection</a>,<wbr>R&gt;&nbsp;callback)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Execute a read-only transaction within the context of the function.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;R&gt;&nbsp;R</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#executeWrite(io.micronaut.transaction.TransactionCallback)" class="member-name-link">executeWrite</a><wbr>(<a href="../../../transaction/TransactionCallback.html" title="interface in io.micronaut.transaction">TransactionCallback</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.sql/java/sql/Connection.html" title="class or interface in java.sql" class="external-link">Connection</a>,<wbr>R&gt;&nbsp;callback)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#executeWrite(io.micronaut.transaction.TransactionCallback)" class="member-name-link">executeWrite</a><wbr>(@NonNull <a href="../../../transaction/TransactionCallback.html" title="interface in io.micronaut.transaction">TransactionCallback</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.sql/java/sql/Connection.html" title="class or interface in java.sql" class="external-link">Connection</a>,<wbr>R&gt;&nbsp;callback)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Execute a default transaction within the context of the function.</div>
 </div>
@@ -181,7 +181,7 @@ loadScripts(document, 'script');</script>
 <section class="detail" id="executeRead(io.micronaut.transaction.TransactionCallback)">
 <h3>executeRead</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="type-parameters">&lt;R&gt;</span>&nbsp;<span class="return-type">R</span>&nbsp;<span class="element-name">executeRead</span><wbr><span class="parameters">(@NonNull
- <a href="../../../transaction/TransactionCallback.html" title="interface in io.micronaut.transaction">TransactionCallback</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.sql/java/sql/Connection.html" title="class or interface in java.sql" class="external-link">Connection</a>,<wbr>R&gt;&nbsp;callback)</span></div>
+ @NonNull <a href="../../../transaction/TransactionCallback.html" title="interface in io.micronaut.transaction">TransactionCallback</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.sql/java/sql/Connection.html" title="class or interface in java.sql" class="external-link">Connection</a>,<wbr>R&gt;&nbsp;callback)</span></div>
 <div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="../../../transaction/TransactionOperations.html#executeRead(io.micronaut.transaction.TransactionCallback)">TransactionOperations</a></code></span></div>
 <div class="block">Execute a read-only transaction within the context of the function.</div>
 <dl class="notes">
@@ -198,7 +198,7 @@ loadScripts(document, 'script');</script>
 <section class="detail" id="executeWrite(io.micronaut.transaction.TransactionCallback)">
 <h3>executeWrite</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="type-parameters">&lt;R&gt;</span>&nbsp;<span class="return-type">R</span>&nbsp;<span class="element-name">executeWrite</span><wbr><span class="parameters">(@NonNull
- <a href="../../../transaction/TransactionCallback.html" title="interface in io.micronaut.transaction">TransactionCallback</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.sql/java/sql/Connection.html" title="class or interface in java.sql" class="external-link">Connection</a>,<wbr>R&gt;&nbsp;callback)</span></div>
+ @NonNull <a href="../../../transaction/TransactionCallback.html" title="interface in io.micronaut.transaction">TransactionCallback</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.sql/java/sql/Connection.html" title="class or interface in java.sql" class="external-link">Connection</a>,<wbr>R&gt;&nbsp;callback)</span></div>
 <div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="../../../transaction/TransactionOperations.html#executeWrite(io.micronaut.transaction.TransactionCallback)">TransactionOperations</a></code></span></div>
 <div class="block">Execute a default transaction within the context of the function.</div>
 <dl class="notes">

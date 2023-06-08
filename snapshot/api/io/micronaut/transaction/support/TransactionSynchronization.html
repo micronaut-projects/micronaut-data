@@ -146,7 +146,7 @@ extends <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/ja
 <div class="block">Invoked after transaction commit.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#afterCompletion(io.micronaut.transaction.support.TransactionSynchronization.Status)" class="member-name-link">afterCompletion</a><wbr>(<a href="TransactionSynchronization.Status.html" title="enum class in io.micronaut.transaction.support">TransactionSynchronization.Status</a>&nbsp;status)</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#afterCompletion(io.micronaut.transaction.support.TransactionSynchronization.Status)" class="member-name-link">afterCompletion</a><wbr>(@NonNull <a href="TransactionSynchronization.Status.html" title="enum class in io.micronaut.transaction.support">TransactionSynchronization.Status</a>&nbsp;status)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
 <div class="block">Invoked after transaction commit/rollback.</div>
 </div>
@@ -302,7 +302,7 @@ extends <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/ja
 <section class="detail" id="afterCompletion(io.micronaut.transaction.support.TransactionSynchronization.Status)">
 <h3>afterCompletion</h3>
 <div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">afterCompletion</span><wbr><span class="parameters">(@NonNull
- <a href="TransactionSynchronization.Status.html" title="enum class in io.micronaut.transaction.support">TransactionSynchronization.Status</a>&nbsp;status)</span></div>
+ @NonNull <a href="TransactionSynchronization.Status.html" title="enum class in io.micronaut.transaction.support">TransactionSynchronization.Status</a>&nbsp;status)</span></div>
 <div class="block">Invoked after transaction commit/rollback.
  Can perform resource cleanup <i>after</i> transaction completion.
  <p><b>NOTE:</b> The transaction will have been committed or rolled back already,

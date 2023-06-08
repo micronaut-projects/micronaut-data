@@ -122,7 +122,7 @@ extends io.micronaut.core.naming.Named, <a href="StoredDataOperation.html" title
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;?&gt;[]</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;?&gt;[]</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#getArgumentTypes()" class="member-name-link">getArgumentTypes</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
 <div class="block">The argument types to the method that invokes the query.</div>
@@ -132,7 +132,7 @@ extends io.micronaut.core.naming.Named, <a href="StoredDataOperation.html" title
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
 <div class="block">The type of the ID member of the entity.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>[]</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>[]</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#getExpandableQueryParts()" class="member-name-link">getExpandableQueryParts</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">The query to execute.</div>
@@ -152,7 +152,7 @@ extends io.micronaut.core.naming.Named, <a href="StoredDataOperation.html" title
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5 method-summary-table-tab6">
 <div class="block"><span class="deprecated-label">Deprecated.</span></div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5 method-summary-table-tab6"><code>default int[]</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5 method-summary-table-tab6"><code>default @io.micronaut.core.annotation.NonNull int[]</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5 method-summary-table-tab6"><code><a href="#getIndexedParameterBinding()" class="member-name-link">getIndexedParameterBinding</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5 method-summary-table-tab6">
 <div class="block"><span class="deprecated-label">Deprecated.</span></div>
@@ -162,20 +162,20 @@ extends io.micronaut.core.naming.Named, <a href="StoredDataOperation.html" title
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5 method-summary-table-tab6">
 <div class="block"><span class="deprecated-label">Deprecated.</span></div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5 method-summary-table-tab6"><code>default <a href="../DataType.html" title="enum class in io.micronaut.data.model">DataType</a>[]</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5 method-summary-table-tab6"><code>default @NonNull <a href="../DataType.html" title="enum class in io.micronaut.data.model">DataType</a>[]</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5 method-summary-table-tab6"><code><a href="#getIndexedParameterTypes()" class="member-name-link">getIndexedParameterTypes</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5 method-summary-table-tab6">
 <div class="block"><span class="deprecated-label">Deprecated.</span></div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Set.html" title="class or interface in java.util" class="external-link">Set</a>&lt;<a href="../query/JoinPath.html" title="class in io.micronaut.data.model.query">JoinPath</a>&gt;</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Set.html" title="class or interface in java.util" class="external-link">Set</a>&lt;<a href="../query/JoinPath.html" title="class in io.micronaut.data.model.query">JoinPath</a>&gt;</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#getJoinFetchPaths()" class="member-name-link">getJoinFetchPaths</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5 method-summary-table-tab6"><code>default <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5 method-summary-table-tab6"><code>default @Nullable <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5 method-summary-table-tab6"><code><a href="#getLastUpdatedProperty()" class="member-name-link">getLastUpdatedProperty</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5 method-summary-table-tab6">
 <div class="block"><span class="deprecated-label">Deprecated.</span></div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5 method-summary-table-tab6"><code>default <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5 method-summary-table-tab6"><code>default @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5 method-summary-table-tab6"><code><a href="#getParameterBinding()" class="member-name-link">getParameterBinding</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5 method-summary-table-tab6">
 <div class="block"><span class="deprecated-label">Deprecated.</span></div>
@@ -185,7 +185,7 @@ extends io.micronaut.core.naming.Named, <a href="StoredDataOperation.html" title
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5 method-summary-table-tab6">
 <div class="block"><span class="deprecated-label">Deprecated.</span></div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#getQuery()" class="member-name-link">getQuery</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">The query to execute.</div>
@@ -195,25 +195,25 @@ extends io.micronaut.core.naming.Named, <a href="StoredDataOperation.html" title
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">The list of query bindings.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#getQueryHints()" class="member-name-link">getQueryHints</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
 <div class="block">The parameter binding.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>io.micronaut.core.type.Argument&lt;<a href="StoredQuery.html" title="type parameter in StoredQuery">R</a>&gt;</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>@NonNull io.micronaut.core.type.Argument&lt;<a href="StoredQuery.html" title="type parameter in StoredQuery">R</a>&gt;</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#getResultArgument()" class="member-name-link">getResultArgument</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">The query result type.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="../DataType.html" title="enum class in io.micronaut.data.model">DataType</a></code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>@NonNull <a href="../DataType.html" title="enum class in io.micronaut.data.model">DataType</a></code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#getResultDataType()" class="member-name-link">getResultDataType</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;<a href="StoredQuery.html" title="type parameter in StoredQuery">R</a>&gt;</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;<a href="StoredQuery.html" title="type parameter in StoredQuery">R</a>&gt;</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#getResultType()" class="member-name-link">getResultType</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">The query result type.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;<a href="StoredQuery.html" title="type parameter in StoredQuery">E</a>&gt;</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;<a href="StoredQuery.html" title="type parameter in StoredQuery">E</a>&gt;</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#getRootEntity()" class="member-name-link">getRootEntity</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">The root entity type.</div>
@@ -294,7 +294,7 @@ extends io.micronaut.core.naming.Named, <a href="StoredDataOperation.html" title
 <section class="detail" id="getRootEntity()">
 <h3>getRootEntity</h3>
 <div class="member-signature"><span class="annotations">@NonNull
-</span><span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;<a href="StoredQuery.html" title="type parameter in StoredQuery">E</a>&gt;</span>&nbsp;<span class="element-name">getRootEntity</span>()</div>
+</span><span class="return-type">@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;<a href="StoredQuery.html" title="type parameter in StoredQuery">E</a>&gt;</span>&nbsp;<span class="element-name">getRootEntity</span>()</div>
 <div class="block">The root entity type.</div>
 <dl class="notes">
 <dt>Returns:</dt>
@@ -330,7 +330,7 @@ extends io.micronaut.core.naming.Named, <a href="StoredDataOperation.html" title
 <section class="detail" id="getQuery()">
 <h3>getQuery</h3>
 <div class="member-signature"><span class="annotations">@NonNull
-</span><span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">getQuery</span>()</div>
+</span><span class="return-type">@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">getQuery</span>()</div>
 <div class="block">The query to execute.</div>
 <dl class="notes">
 <dt>Returns:</dt>
@@ -342,7 +342,7 @@ extends io.micronaut.core.naming.Named, <a href="StoredDataOperation.html" title
 <section class="detail" id="getExpandableQueryParts()">
 <h3>getExpandableQueryParts</h3>
 <div class="member-signature"><span class="annotations">@NonNull
-</span><span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>[]</span>&nbsp;<span class="element-name">getExpandableQueryParts</span>()</div>
+</span><span class="return-type">@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>[]</span>&nbsp;<span class="element-name">getExpandableQueryParts</span>()</div>
 <div class="block">The query to execute.</div>
 <dl class="notes">
 <dt>Returns:</dt>
@@ -365,7 +365,7 @@ extends io.micronaut.core.naming.Named, <a href="StoredDataOperation.html" title
 <section class="detail" id="getResultType()">
 <h3>getResultType</h3>
 <div class="member-signature"><span class="annotations">@NonNull
-</span><span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;<a href="StoredQuery.html" title="type parameter in StoredQuery">R</a>&gt;</span>&nbsp;<span class="element-name">getResultType</span>()</div>
+</span><span class="return-type">@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;<a href="StoredQuery.html" title="type parameter in StoredQuery">R</a>&gt;</span>&nbsp;<span class="element-name">getResultType</span>()</div>
 <div class="block">The query result type. This may differ from the root entity type returned by <a href="#getRootEntity()"><code>getRootEntity()</code></a>.</div>
 <dl class="notes">
 <dt>Returns:</dt>
@@ -377,7 +377,7 @@ extends io.micronaut.core.naming.Named, <a href="StoredDataOperation.html" title
 <section class="detail" id="getResultArgument()">
 <h3>getResultArgument</h3>
 <div class="member-signature"><span class="annotations">@NonNull
-</span><span class="return-type">io.micronaut.core.type.Argument&lt;<a href="StoredQuery.html" title="type parameter in StoredQuery">R</a>&gt;</span>&nbsp;<span class="element-name">getResultArgument</span>()</div>
+</span><span class="return-type">@NonNull io.micronaut.core.type.Argument&lt;<a href="StoredQuery.html" title="type parameter in StoredQuery">R</a>&gt;</span>&nbsp;<span class="element-name">getResultArgument</span>()</div>
 <div class="block">The query result type. This may differ from the root entity type returned by <a href="#getRootEntity()"><code>getRootEntity()</code></a>.</div>
 <dl class="notes">
 <dt>Specified by:</dt>
@@ -391,7 +391,7 @@ extends io.micronaut.core.naming.Named, <a href="StoredDataOperation.html" title
 <section class="detail" id="getResultDataType()">
 <h3>getResultDataType</h3>
 <div class="member-signature"><span class="annotations">@NonNull
-</span><span class="return-type"><a href="../DataType.html" title="enum class in io.micronaut.data.model">DataType</a></span>&nbsp;<span class="element-name">getResultDataType</span>()</div>
+</span><span class="return-type">@NonNull <a href="../DataType.html" title="enum class in io.micronaut.data.model">DataType</a></span>&nbsp;<span class="element-name">getResultDataType</span>()</div>
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>The result data type.</dd>
@@ -446,7 +446,7 @@ extends io.micronaut.core.naming.Named, <a href="StoredDataOperation.html" title
 <section class="detail" id="getArgumentTypes()">
 <h3>getArgumentTypes</h3>
 <div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">default</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;?&gt;[]</span>&nbsp;<span class="element-name">getArgumentTypes</span>()</div>
+</span><span class="modifiers">default</span>&nbsp;<span class="return-type">@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;?&gt;[]</span>&nbsp;<span class="element-name">getArgumentTypes</span>()</div>
 <div class="block">The argument types to the method that invokes the query.</div>
 <dl class="notes">
 <dt>Returns:</dt>
@@ -459,7 +459,7 @@ extends io.micronaut.core.naming.Named, <a href="StoredDataOperation.html" title
 <h3>getParameterBinding</h3>
 <div class="member-signature"><span class="annotations">@NonNull
 <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Deprecated.html" title="class or interface in java.lang" class="external-link">@Deprecated</a>
-</span><span class="modifiers">default</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span>&nbsp;<span class="element-name">getParameterBinding</span>()</div>
+</span><span class="modifiers">default</span>&nbsp;<span class="return-type">@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span>&nbsp;<span class="element-name">getParameterBinding</span>()</div>
 <div class="deprecation-block"><span class="deprecated-label">Deprecated.</span></div>
 <div class="block">The parameter binding. That is the mapping between named query parameters and parameters of the method.</div>
 <dl class="notes">
@@ -483,7 +483,7 @@ extends io.micronaut.core.naming.Named, <a href="StoredDataOperation.html" title
 <h3>getIndexedParameterTypes</h3>
 <div class="member-signature"><span class="annotations"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Deprecated.html" title="class or interface in java.lang" class="external-link">@Deprecated</a>
 @NonNull
-</span><span class="modifiers">default</span>&nbsp;<span class="return-type"><a href="../DataType.html" title="enum class in io.micronaut.data.model">DataType</a>[]</span>&nbsp;<span class="element-name">getIndexedParameterTypes</span>()</div>
+</span><span class="modifiers">default</span>&nbsp;<span class="return-type">@NonNull <a href="../DataType.html" title="enum class in io.micronaut.data.model">DataType</a>[]</span>&nbsp;<span class="element-name">getIndexedParameterTypes</span>()</div>
 <div class="deprecation-block"><span class="deprecated-label">Deprecated.</span></div>
 <div class="block">The compute time computed parameter data types for the query indices.</div>
 <dl class="notes">
@@ -503,7 +503,7 @@ extends io.micronaut.core.naming.Named, <a href="StoredDataOperation.html" title
 <h3>getIndexedParameterBinding</h3>
 <div class="member-signature"><span class="annotations">@NonNull
 <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Deprecated.html" title="class or interface in java.lang" class="external-link">@Deprecated</a>
-</span><span class="modifiers">default</span>&nbsp;<span class="return-type">int[]</span>&nbsp;<span class="element-name">getIndexedParameterBinding</span>()</div>
+</span><span class="modifiers">default</span>&nbsp;<span class="return-type">@io.micronaut.core.annotation.NonNull int[]</span>&nbsp;<span class="element-name">getIndexedParameterBinding</span>()</div>
 <div class="deprecation-block"><span class="deprecated-label">Deprecated.</span></div>
 <div class="block">The parameter binding. That is the mapping between named query parameters and parameters of the method.</div>
 <dl class="notes">
@@ -546,7 +546,7 @@ extends io.micronaut.core.naming.Named, <a href="StoredDataOperation.html" title
 <section class="detail" id="getQueryHints()">
 <h3>getQueryHints</h3>
 <div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">default</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;</span>&nbsp;<span class="element-name">getQueryHints</span>()</div>
+</span><span class="modifiers">default</span>&nbsp;<span class="return-type">@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;</span>&nbsp;<span class="element-name">getQueryHints</span>()</div>
 <div class="block">The parameter binding. That is the mapping between named query parameters and parameters of the method.</div>
 <dl class="notes">
 <dt>Returns:</dt>
@@ -559,7 +559,7 @@ extends io.micronaut.core.naming.Named, <a href="StoredDataOperation.html" title
 <h3>getLastUpdatedProperty</h3>
 <div class="member-signature"><span class="annotations"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Deprecated.html" title="class or interface in java.lang" class="external-link">@Deprecated</a>
 @Nullable
-</span><span class="modifiers">default</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">getLastUpdatedProperty</span>()</div>
+</span><span class="modifiers">default</span>&nbsp;<span class="return-type">@Nullable <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">getLastUpdatedProperty</span>()</div>
 <div class="deprecation-block"><span class="deprecated-label">Deprecated.</span></div>
 <div class="block">The name of the last updated property on the entity if any.</div>
 <dl class="notes">
@@ -611,7 +611,7 @@ extends io.micronaut.core.naming.Named, <a href="StoredDataOperation.html" title
 <section class="detail" id="getJoinFetchPaths()">
 <h3>getJoinFetchPaths</h3>
 <div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">default</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Set.html" title="class or interface in java.util" class="external-link">Set</a>&lt;<a href="../query/JoinPath.html" title="class in io.micronaut.data.model.query">JoinPath</a>&gt;</span>&nbsp;<span class="element-name">getJoinFetchPaths</span>()</div>
+</span><span class="modifiers">default</span>&nbsp;<span class="return-type">@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Set.html" title="class or interface in java.util" class="external-link">Set</a>&lt;<a href="../query/JoinPath.html" title="class in io.micronaut.data.model.query">JoinPath</a>&gt;</span>&nbsp;<span class="element-name">getJoinFetchPaths</span>()</div>
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>The join paths that require a fetch</dd>

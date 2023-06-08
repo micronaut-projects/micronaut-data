@@ -103,17 +103,17 @@ loadScripts(document, 'script');</script>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab1"><code>static io.micronaut.inject.ast.ClassElement</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab1"><code><a href="#getAsyncType(io.micronaut.inject.ast.MethodElement,io.micronaut.inject.ast.ClassElement)" class="member-name-link">getAsyncType</a><wbr>(io.micronaut.inject.ast.MethodElement&nbsp;methodElement,
- io.micronaut.inject.ast.ClassElement&nbsp;returnType)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab1"><code><a href="#getAsyncType(io.micronaut.inject.ast.MethodElement,io.micronaut.inject.ast.ClassElement)" class="member-name-link">getAsyncType</a><wbr>(@NonNull io.micronaut.inject.ast.MethodElement&nbsp;methodElement,
+ @NonNull io.micronaut.inject.ast.ClassElement&nbsp;returnType)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab1">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab1"><code>static io.micronaut.inject.ast.ClassElement</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab1"><code><a href="#getInterceptorElement(io.micronaut.data.processor.visitors.MethodMatchContext,java.lang.Class)" class="member-name-link">getInterceptorElement</a><wbr>(<a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext,
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab1"><code><a href="#getInterceptorElement(io.micronaut.data.processor.visitors.MethodMatchContext,java.lang.Class)" class="member-name-link">getInterceptorElement</a><wbr>(@NonNull <a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;? extends <a href="../../../intercept/DataInterceptor.html" title="interface in io.micronaut.data.intercept">DataInterceptor</a>&gt;&nbsp;type)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab1">
 <div class="block">Obtain the interceptor element for the given class.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab1"><code>static io.micronaut.inject.ast.ClassElement</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab1"><code><a href="#getInterceptorElement(io.micronaut.data.processor.visitors.MethodMatchContext,java.lang.String)" class="member-name-link">getInterceptorElement</a><wbr>(<a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext,
+<div class="col-second even-row-color method-summary-table method-summary-table-tab1"><code><a href="#getInterceptorElement(io.micronaut.data.processor.visitors.MethodMatchContext,java.lang.String)" class="member-name-link">getInterceptorElement</a><wbr>(@NonNull <a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;type)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab1">
 <div class="block">Obtain the interceptor element for the given class name.</div>
@@ -128,7 +128,7 @@ loadScripts(document, 'script');</script>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab1">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab1"><code>static boolean</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab1"><code><a href="#isFutureType(io.micronaut.inject.ast.MethodElement,io.micronaut.inject.ast.ClassElement)" class="member-name-link">isFutureType</a><wbr>(io.micronaut.inject.ast.MethodElement&nbsp;methodElement,
- io.micronaut.inject.ast.ClassElement&nbsp;type)</code></div>
+ @Nullable io.micronaut.inject.ast.ClassElement&nbsp;type)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab1">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab1"><code>static boolean</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab1"><code><a href="#isOneOfContainers(io.micronaut.inject.ast.ClassElement,java.lang.Class...)" class="member-name-link">isOneOfContainers</a><wbr>(io.micronaut.inject.ast.ClassElement&nbsp;typeArgument,
@@ -142,7 +142,7 @@ loadScripts(document, 'script');</script>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab1"><code><a href="#isReactiveSingleResult(io.micronaut.inject.ast.ClassElement)" class="member-name-link">isReactiveSingleResult</a><wbr>(io.micronaut.inject.ast.ClassElement&nbsp;returnType)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab1">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab1"><code>static boolean</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab1"><code><a href="#isReactiveType(io.micronaut.inject.ast.ClassElement)" class="member-name-link">isReactiveType</a><wbr>(io.micronaut.inject.ast.ClassElement&nbsp;type)</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab1"><code><a href="#isReactiveType(io.micronaut.inject.ast.ClassElement)" class="member-name-link">isReactiveType</a><wbr>(@Nullable io.micronaut.inject.ast.ClassElement&nbsp;type)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab1">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab1"><code>static boolean</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab1"><code><a href="#isSlice(io.micronaut.data.processor.visitors.MethodMatchContext,io.micronaut.inject.ast.ClassElement)" class="member-name-link">isSlice</a><wbr>(<a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;methodMatchContext,
@@ -228,8 +228,8 @@ loadScripts(document, 'script');</script>
  io.micronaut.inject.ast.ClassElement&nbsp;returnType)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab1">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab1"><code>static <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Map.Entry.html" title="class or interface in java.util" class="external-link">Map.Entry</a>&lt;io.micronaut.inject.ast.ClassElement,<wbr><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;? extends <a href="../../../intercept/DataInterceptor.html" title="interface in io.micronaut.data.intercept">DataInterceptor</a>&gt;&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab1"><code><a href="#resolveAsyncFindInterceptor(io.micronaut.data.processor.visitors.MethodMatchContext,io.micronaut.inject.ast.ClassElement)" class="member-name-link">resolveAsyncFindInterceptor</a><wbr>(<a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext,
- io.micronaut.inject.ast.ClassElement&nbsp;asyncType)</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab1"><code><a href="#resolveAsyncFindInterceptor(io.micronaut.data.processor.visitors.MethodMatchContext,io.micronaut.inject.ast.ClassElement)" class="member-name-link">resolveAsyncFindInterceptor</a><wbr>(@NonNull <a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext,
+ @NonNull io.micronaut.inject.ast.ClassElement&nbsp;asyncType)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab1">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab1"><code>static <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Map.Entry.html" title="class or interface in java.util" class="external-link">Map.Entry</a>&lt;io.micronaut.inject.ast.ClassElement,<wbr><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;? extends <a href="../../../intercept/DataInterceptor.html" title="interface in io.micronaut.data.intercept">DataInterceptor</a>&gt;&gt;</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab1"><code><a href="#resolveFindInterceptor(io.micronaut.data.processor.visitors.MethodMatchContext,io.micronaut.inject.ast.ClassElement)" class="member-name-link">resolveFindInterceptor</a><wbr>(<a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext,
@@ -242,13 +242,13 @@ loadScripts(document, 'script');</script>
  <a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab1">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab1"><code>static <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Map.Entry.html" title="class or interface in java.util" class="external-link">Map.Entry</a>&lt;io.micronaut.inject.ast.ClassElement,<wbr><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;? extends <a href="../../../intercept/DataInterceptor.html" title="interface in io.micronaut.data.intercept">DataInterceptor</a>&gt;&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab1"><code><a href="#resolveReactiveFindInterceptor(io.micronaut.data.processor.visitors.MethodMatchContext,io.micronaut.inject.ast.ClassElement,io.micronaut.inject.ast.ClassElement)" class="member-name-link">resolveReactiveFindInterceptor</a><wbr>(<a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext,
- io.micronaut.inject.ast.ClassElement&nbsp;returnType,
- io.micronaut.inject.ast.ClassElement&nbsp;reactiveType)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab1"><code><a href="#resolveReactiveFindInterceptor(io.micronaut.data.processor.visitors.MethodMatchContext,io.micronaut.inject.ast.ClassElement,io.micronaut.inject.ast.ClassElement)" class="member-name-link">resolveReactiveFindInterceptor</a><wbr>(@NonNull <a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext,
+ @NonNull io.micronaut.inject.ast.ClassElement&nbsp;returnType,
+ @NonNull io.micronaut.inject.ast.ClassElement&nbsp;reactiveType)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab1">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab1"><code>static <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Map.Entry.html" title="class or interface in java.util" class="external-link">Map.Entry</a>&lt;io.micronaut.inject.ast.ClassElement,<wbr><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;? extends <a href="../../../intercept/DataInterceptor.html" title="interface in io.micronaut.data.intercept">DataInterceptor</a>&gt;&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab1"><code><a href="#resolveSyncFindInterceptor(io.micronaut.data.processor.visitors.MethodMatchContext,io.micronaut.inject.ast.ClassElement)" class="member-name-link">resolveSyncFindInterceptor</a><wbr>(<a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext,
- io.micronaut.inject.ast.ClassElement&nbsp;returnType)</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab1"><code><a href="#resolveSyncFindInterceptor(io.micronaut.data.processor.visitors.MethodMatchContext,io.micronaut.inject.ast.ClassElement)" class="member-name-link">resolveSyncFindInterceptor</a><wbr>(@NonNull <a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext,
+ @NonNull io.micronaut.inject.ast.ClassElement&nbsp;returnType)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab1">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab1"><code>static <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Map.Entry.html" title="class or interface in java.util" class="external-link">Map.Entry</a>&lt;io.micronaut.inject.ast.ClassElement,<wbr>io.micronaut.inject.ast.ClassElement&gt;</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab1"><code><a href="#typeAndInterceptorEntry(io.micronaut.inject.ast.ClassElement,io.micronaut.inject.ast.ClassElement)" class="member-name-link">typeAndInterceptorEntry</a><wbr>(io.micronaut.inject.ast.ClassElement&nbsp;type,
@@ -347,29 +347,29 @@ loadScripts(document, 'script');</script>
 <section class="detail" id="resolveSyncFindInterceptor(io.micronaut.data.processor.visitors.MethodMatchContext,io.micronaut.inject.ast.ClassElement)">
 <h3>resolveSyncFindInterceptor</h3>
 <div class="member-signature"><span class="modifiers">static</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Map.Entry.html" title="class or interface in java.util" class="external-link">Map.Entry</a>&lt;io.micronaut.inject.ast.ClassElement,<wbr><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;? extends <a href="../../../intercept/DataInterceptor.html" title="interface in io.micronaut.data.intercept">DataInterceptor</a>&gt;&gt;</span>&nbsp;<span class="element-name">resolveSyncFindInterceptor</span><wbr><span class="parameters">(@NonNull
- <a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext,
+ @NonNull <a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext,
  @NonNull
- io.micronaut.inject.ast.ClassElement&nbsp;returnType)</span></div>
+ @NonNull io.micronaut.inject.ast.ClassElement&nbsp;returnType)</span></div>
 </section>
 </li>
 <li>
 <section class="detail" id="resolveReactiveFindInterceptor(io.micronaut.data.processor.visitors.MethodMatchContext,io.micronaut.inject.ast.ClassElement,io.micronaut.inject.ast.ClassElement)">
 <h3>resolveReactiveFindInterceptor</h3>
 <div class="member-signature"><span class="modifiers">static</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Map.Entry.html" title="class or interface in java.util" class="external-link">Map.Entry</a>&lt;io.micronaut.inject.ast.ClassElement,<wbr><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;? extends <a href="../../../intercept/DataInterceptor.html" title="interface in io.micronaut.data.intercept">DataInterceptor</a>&gt;&gt;</span>&nbsp;<span class="element-name">resolveReactiveFindInterceptor</span><wbr><span class="parameters">(@NonNull
- <a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext,
+ @NonNull <a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext,
  @NonNull
- io.micronaut.inject.ast.ClassElement&nbsp;returnType,
+ @NonNull io.micronaut.inject.ast.ClassElement&nbsp;returnType,
  @NonNull
- io.micronaut.inject.ast.ClassElement&nbsp;reactiveType)</span></div>
+ @NonNull io.micronaut.inject.ast.ClassElement&nbsp;reactiveType)</span></div>
 </section>
 </li>
 <li>
 <section class="detail" id="resolveAsyncFindInterceptor(io.micronaut.data.processor.visitors.MethodMatchContext,io.micronaut.inject.ast.ClassElement)">
 <h3>resolveAsyncFindInterceptor</h3>
 <div class="member-signature"><span class="modifiers">static</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Map.Entry.html" title="class or interface in java.util" class="external-link">Map.Entry</a>&lt;io.micronaut.inject.ast.ClassElement,<wbr><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;? extends <a href="../../../intercept/DataInterceptor.html" title="interface in io.micronaut.data.intercept">DataInterceptor</a>&gt;&gt;</span>&nbsp;<span class="element-name">resolveAsyncFindInterceptor</span><wbr><span class="parameters">(@NonNull
- <a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext,
+ @NonNull <a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext,
  @NonNull
- io.micronaut.inject.ast.ClassElement&nbsp;asyncType)</span></div>
+ @NonNull io.micronaut.inject.ast.ClassElement&nbsp;asyncType)</span></div>
 </section>
 </li>
 <li>
@@ -453,9 +453,9 @@ loadScripts(document, 'script');</script>
 <section class="detail" id="getAsyncType(io.micronaut.inject.ast.MethodElement,io.micronaut.inject.ast.ClassElement)">
 <h3>getAsyncType</h3>
 <div class="member-signature"><span class="modifiers">static</span>&nbsp;<span class="return-type">io.micronaut.inject.ast.ClassElement</span>&nbsp;<span class="element-name">getAsyncType</span><wbr><span class="parameters">(@NonNull
- io.micronaut.inject.ast.MethodElement&nbsp;methodElement,
+ @NonNull io.micronaut.inject.ast.MethodElement&nbsp;methodElement,
  @NonNull
- io.micronaut.inject.ast.ClassElement&nbsp;returnType)</span></div>
+ @NonNull io.micronaut.inject.ast.ClassElement&nbsp;returnType)</span></div>
 </section>
 </li>
 <li>
@@ -477,14 +477,14 @@ loadScripts(document, 'script');</script>
 <h3>isFutureType</h3>
 <div class="member-signature"><span class="modifiers">static</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">isFutureType</span><wbr><span class="parameters">(io.micronaut.inject.ast.MethodElement&nbsp;methodElement,
  @Nullable
- io.micronaut.inject.ast.ClassElement&nbsp;type)</span></div>
+ @Nullable io.micronaut.inject.ast.ClassElement&nbsp;type)</span></div>
 </section>
 </li>
 <li>
 <section class="detail" id="isReactiveType(io.micronaut.inject.ast.ClassElement)">
 <h3>isReactiveType</h3>
 <div class="member-signature"><span class="modifiers">static</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">isReactiveType</span><wbr><span class="parameters">(@Nullable
- io.micronaut.inject.ast.ClassElement&nbsp;type)</span></div>
+ @Nullable io.micronaut.inject.ast.ClassElement&nbsp;type)</span></div>
 </section>
 </li>
 <li>
@@ -538,7 +538,7 @@ loadScripts(document, 'script');</script>
 <section class="detail" id="getInterceptorElement(io.micronaut.data.processor.visitors.MethodMatchContext,java.lang.Class)">
 <h3>getInterceptorElement</h3>
 <div class="member-signature"><span class="modifiers">static</span>&nbsp;<span class="return-type">io.micronaut.inject.ast.ClassElement</span>&nbsp;<span class="element-name">getInterceptorElement</span><wbr><span class="parameters">(@NonNull
- <a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext,
+ @NonNull <a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;? extends <a href="../../../intercept/DataInterceptor.html" title="interface in io.micronaut.data.intercept">DataInterceptor</a>&gt;&nbsp;type)</span></div>
 <div class="block">Obtain the interceptor element for the given class.</div>
 <dl class="notes">
@@ -554,7 +554,7 @@ loadScripts(document, 'script');</script>
 <section class="detail" id="getInterceptorElement(io.micronaut.data.processor.visitors.MethodMatchContext,java.lang.String)">
 <h3>getInterceptorElement</h3>
 <div class="member-signature"><span class="modifiers">static</span>&nbsp;<span class="return-type">io.micronaut.inject.ast.ClassElement</span>&nbsp;<span class="element-name">getInterceptorElement</span><wbr><span class="parameters">(@NonNull
- <a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext,
+ @NonNull <a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;type)</span></div>
 <div class="block">Obtain the interceptor element for the given class name.</div>
 <dl class="notes">

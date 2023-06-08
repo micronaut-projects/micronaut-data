@@ -139,10 +139,10 @@ extends <a href="TransactionExecution.html" title="interface in io.micronaut.tra
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default <a href="TransactionStatus.html" title="type parameter in TransactionStatus">T</a></code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#getConnection()" class="member-name-link">getConnection</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="../data/connection/ConnectionStatus.html" title="interface in io.micronaut.data.connection">ConnectionStatus</a>&lt;<a href="TransactionStatus.html" title="type parameter in TransactionStatus">T</a>&gt;</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>@NonNull <a href="../data/connection/ConnectionStatus.html" title="interface in io.micronaut.data.connection">ConnectionStatus</a>&lt;<a href="TransactionStatus.html" title="type parameter in TransactionStatus">T</a>&gt;</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#getConnectionStatus()" class="member-name-link">getConnectionStatus</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>@Nullable <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#getTransaction()" class="member-name-link">getTransaction</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>boolean</code></div>
@@ -152,7 +152,7 @@ extends <a href="TransactionExecution.html" title="interface in io.micronaut.tra
  that is, has been created as nested transaction based on a savepoint.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#registerSynchronization(io.micronaut.transaction.support.TransactionSynchronization)" class="member-name-link">registerSynchronization</a><wbr>(<a href="support/TransactionSynchronization.html" title="interface in io.micronaut.transaction.support">TransactionSynchronization</a>&nbsp;synchronization)</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#registerSynchronization(io.micronaut.transaction.support.TransactionSynchronization)" class="member-name-link">registerSynchronization</a><wbr>(@NonNull <a href="support/TransactionSynchronization.html" title="interface in io.micronaut.transaction.support">TransactionSynchronization</a>&nbsp;synchronization)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
 <div class="block">Register a new transaction synchronization for the current state.</div>
 </div>
@@ -220,7 +220,7 @@ extends <a href="TransactionExecution.html" title="interface in io.micronaut.tra
 <section class="detail" id="getTransaction()">
 <h3>getTransaction</h3>
 <div class="member-signature"><span class="annotations">@Nullable
-</span><span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></span>&nbsp;<span class="element-name">getTransaction</span>()</div>
+</span><span class="return-type">@Nullable <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></span>&nbsp;<span class="element-name">getTransaction</span>()</div>
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>The underlying transaction object.</dd>
@@ -242,7 +242,7 @@ extends <a href="TransactionExecution.html" title="interface in io.micronaut.tra
 <section class="detail" id="getConnectionStatus()">
 <h3>getConnectionStatus</h3>
 <div class="member-signature"><span class="annotations">@NonNull
-</span><span class="return-type"><a href="../data/connection/ConnectionStatus.html" title="interface in io.micronaut.data.connection">ConnectionStatus</a>&lt;<a href="TransactionStatus.html" title="type parameter in TransactionStatus">T</a>&gt;</span>&nbsp;<span class="element-name">getConnectionStatus</span>()</div>
+</span><span class="return-type">@NonNull <a href="../data/connection/ConnectionStatus.html" title="interface in io.micronaut.data.connection">ConnectionStatus</a>&lt;<a href="TransactionStatus.html" title="type parameter in TransactionStatus">T</a>&gt;</span>&nbsp;<span class="element-name">getConnectionStatus</span>()</div>
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>The connection status.</dd>
@@ -255,7 +255,7 @@ extends <a href="TransactionExecution.html" title="interface in io.micronaut.tra
 <section class="detail" id="registerSynchronization(io.micronaut.transaction.support.TransactionSynchronization)">
 <h3>registerSynchronization</h3>
 <div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">registerSynchronization</span><wbr><span class="parameters">(@NonNull
- <a href="support/TransactionSynchronization.html" title="interface in io.micronaut.transaction.support">TransactionSynchronization</a>&nbsp;synchronization)</span></div>
+ @NonNull <a href="support/TransactionSynchronization.html" title="interface in io.micronaut.transaction.support">TransactionSynchronization</a>&nbsp;synchronization)</span></div>
 <div class="block">Register a new transaction synchronization for the current state.
  <p>Note that synchronizations can implement the
  <code>Ordered</code> interface.

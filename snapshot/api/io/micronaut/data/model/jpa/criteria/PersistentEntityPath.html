@@ -112,12 +112,12 @@ extends jakarta.persistence.criteria.Path&lt;T&gt;, <a href="IExpression.html" t
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>&lt;Y&gt;&nbsp;<a href="PersistentPropertyPath.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentPropertyPath</a>&lt;Y&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#get(java.lang.String)" class="member-name-link">get</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;attributeName)</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>&lt;Y&gt;&nbsp;@NonNull <a href="PersistentPropertyPath.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentPropertyPath</a>&lt;Y&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#get(java.lang.String)" class="member-name-link">get</a><wbr>(@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;attributeName)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Get persistent property path.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="../../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a></code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>@NonNull <a href="../../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a></code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#getPersistentEntity()" class="member-name-link">getPersistentEntity</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
 </div>
@@ -150,7 +150,7 @@ extends jakarta.persistence.criteria.Path&lt;T&gt;, <a href="IExpression.html" t
 <section class="detail" id="getPersistentEntity()">
 <h3>getPersistentEntity</h3>
 <div class="member-signature"><span class="annotations">@NonNull
-</span><span class="return-type"><a href="../../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a></span>&nbsp;<span class="element-name">getPersistentEntity</span>()</div>
+</span><span class="return-type">@NonNull <a href="../../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a></span>&nbsp;<span class="element-name">getPersistentEntity</span>()</div>
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>The persistent entity</dd>
@@ -161,8 +161,8 @@ extends jakarta.persistence.criteria.Path&lt;T&gt;, <a href="IExpression.html" t
 <section class="detail" id="get(java.lang.String)">
 <h3>get</h3>
 <div class="member-signature"><span class="annotations">@NonNull
-</span><span class="type-parameters">&lt;Y&gt;</span>&nbsp;<span class="return-type"><a href="PersistentPropertyPath.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentPropertyPath</a>&lt;Y&gt;</span>&nbsp;<span class="element-name">get</span><wbr><span class="parameters">(@NonNull
- <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;attributeName)</span></div>
+</span><span class="type-parameters">&lt;Y&gt;</span>&nbsp;<span class="return-type">@NonNull <a href="PersistentPropertyPath.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentPropertyPath</a>&lt;Y&gt;</span>&nbsp;<span class="element-name">get</span><wbr><span class="parameters">(@NonNull
+ @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;attributeName)</span></div>
 <div class="block">Get persistent property path.</div>
 <dl class="notes">
 <dt>Specified by:</dt>

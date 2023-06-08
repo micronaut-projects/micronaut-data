@@ -120,8 +120,8 @@ extends io.micronaut.core.order.Ordered</span></div>
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="MethodMatchInfo.html" title="class in io.micronaut.data.processor.visitors.finders">MethodMatchInfo</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#buildMatchInfo(io.micronaut.data.processor.visitors.MethodMatchContext)" class="member-name-link">buildMatchInfo</a><wbr>(<a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext)</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>@Nullable <a href="MethodMatchInfo.html" title="class in io.micronaut.data.processor.visitors.finders">MethodMatchInfo</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#buildMatchInfo(io.micronaut.data.processor.visitors.MethodMatchContext)" class="member-name-link">buildMatchInfo</a><wbr>(@NonNull <a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Builds the method info.</div>
 </div>
@@ -129,8 +129,8 @@ extends io.micronaut.core.order.Ordered</span></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#getOrder()" class="member-name-link">getOrder</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>boolean</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#isMethodMatch(io.micronaut.inject.ast.MethodElement,io.micronaut.data.processor.visitors.MatchContext)" class="member-name-link">isMethodMatch</a><wbr>(io.micronaut.inject.ast.MethodElement&nbsp;methodElement,
- <a href="../MatchContext.html" title="class in io.micronaut.data.processor.visitors">MatchContext</a>&nbsp;matchContext)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#isMethodMatch(io.micronaut.inject.ast.MethodElement,io.micronaut.data.processor.visitors.MatchContext)" class="member-name-link">isMethodMatch</a><wbr>(@NonNull io.micronaut.inject.ast.MethodElement&nbsp;methodElement,
+ @NonNull <a href="../MatchContext.html" title="class in io.micronaut.data.processor.visitors">MatchContext</a>&nbsp;matchContext)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Whether the given method name matches this finder.</div>
 </div>
@@ -175,9 +175,9 @@ extends io.micronaut.core.order.Ordered</span></div>
 <section class="detail" id="isMethodMatch(io.micronaut.inject.ast.MethodElement,io.micronaut.data.processor.visitors.MatchContext)">
 <h3>isMethodMatch</h3>
 <div class="member-signature"><span class="return-type">boolean</span>&nbsp;<span class="element-name">isMethodMatch</span><wbr><span class="parameters">(@NonNull
- io.micronaut.inject.ast.MethodElement&nbsp;methodElement,
+ @NonNull io.micronaut.inject.ast.MethodElement&nbsp;methodElement,
  @NonNull
- <a href="../MatchContext.html" title="class in io.micronaut.data.processor.visitors">MatchContext</a>&nbsp;matchContext)</span></div>
+ @NonNull <a href="../MatchContext.html" title="class in io.micronaut.data.processor.visitors">MatchContext</a>&nbsp;matchContext)</span></div>
 <div class="block">Whether the given method name matches this finder.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -202,8 +202,8 @@ extends io.micronaut.core.order.Ordered</span></div>
 <section class="detail" id="buildMatchInfo(io.micronaut.data.processor.visitors.MethodMatchContext)">
 <h3>buildMatchInfo</h3>
 <div class="member-signature"><span class="annotations">@Nullable
-</span><span class="return-type"><a href="MethodMatchInfo.html" title="class in io.micronaut.data.processor.visitors.finders">MethodMatchInfo</a></span>&nbsp;<span class="element-name">buildMatchInfo</span><wbr><span class="parameters">(@NonNull
- <a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext)</span></div>
+</span><span class="return-type">@Nullable <a href="MethodMatchInfo.html" title="class in io.micronaut.data.processor.visitors.finders">MethodMatchInfo</a></span>&nbsp;<span class="element-name">buildMatchInfo</span><wbr><span class="parameters">(@NonNull
+ @NonNull <a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext)</span></div>
 <div class="block">Builds the method info. The method <a href="#isMethodMatch(io.micronaut.inject.ast.MethodElement,io.micronaut.data.processor.visitors.MatchContext)"><code>isMethodMatch(MethodElement, MatchContext)</code></a> should be
  invoked and checked prior to calling this method.</div>
 <dl class="notes">

@@ -106,12 +106,12 @@ loadScripts(document, 'script');</script>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#complete(io.micronaut.data.connection.ConnectionStatus)" class="member-name-link">complete</a><wbr>(<a href="ConnectionStatus.html" title="interface in io.micronaut.data.connection">ConnectionStatus</a>&lt;<a href="SynchronousConnectionManager.html" title="type parameter in SynchronousConnectionManager">C</a>&gt;&nbsp;status)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#complete(io.micronaut.data.connection.ConnectionStatus)" class="member-name-link">complete</a><wbr>(@NonNull <a href="ConnectionStatus.html" title="interface in io.micronaut.data.connection">ConnectionStatus</a>&lt;<a href="SynchronousConnectionManager.html" title="type parameter in SynchronousConnectionManager">C</a>&gt;&nbsp;status)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Completes the connection.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="ConnectionStatus.html" title="interface in io.micronaut.data.connection">ConnectionStatus</a>&lt;<a href="SynchronousConnectionManager.html" title="type parameter in SynchronousConnectionManager">C</a>&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#getConnection(io.micronaut.data.connection.ConnectionDefinition)" class="member-name-link">getConnection</a><wbr>(<a href="ConnectionDefinition.html" title="interface in io.micronaut.data.connection">ConnectionDefinition</a>&nbsp;definition)</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>@NonNull <a href="ConnectionStatus.html" title="interface in io.micronaut.data.connection">ConnectionStatus</a>&lt;<a href="SynchronousConnectionManager.html" title="type parameter in SynchronousConnectionManager">C</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#getConnection(io.micronaut.data.connection.ConnectionDefinition)" class="member-name-link">getConnection</a><wbr>(@NonNull <a href="ConnectionDefinition.html" title="interface in io.micronaut.data.connection">ConnectionDefinition</a>&nbsp;definition)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Opens or reuses the existing connection based on the definition.</div>
 </div>
@@ -133,8 +133,8 @@ loadScripts(document, 'script');</script>
 <section class="detail" id="getConnection(io.micronaut.data.connection.ConnectionDefinition)">
 <h3>getConnection</h3>
 <div class="member-signature"><span class="annotations">@NonNull
-</span><span class="return-type"><a href="ConnectionStatus.html" title="interface in io.micronaut.data.connection">ConnectionStatus</a>&lt;<a href="SynchronousConnectionManager.html" title="type parameter in SynchronousConnectionManager">C</a>&gt;</span>&nbsp;<span class="element-name">getConnection</span><wbr><span class="parameters">(@NonNull
- <a href="ConnectionDefinition.html" title="interface in io.micronaut.data.connection">ConnectionDefinition</a>&nbsp;definition)</span></div>
+</span><span class="return-type">@NonNull <a href="ConnectionStatus.html" title="interface in io.micronaut.data.connection">ConnectionStatus</a>&lt;<a href="SynchronousConnectionManager.html" title="type parameter in SynchronousConnectionManager">C</a>&gt;</span>&nbsp;<span class="element-name">getConnection</span><wbr><span class="parameters">(@NonNull
+ @NonNull <a href="ConnectionDefinition.html" title="interface in io.micronaut.data.connection">ConnectionDefinition</a>&nbsp;definition)</span></div>
 <div class="block">Opens or reuses the existing connection based on the definition.
  It's required to call <a href="#complete(io.micronaut.data.connection.ConnectionStatus)"><code>complete(ConnectionStatus)</code></a> after the connection is not needed anymore.</div>
 <dl class="notes">
@@ -149,7 +149,7 @@ loadScripts(document, 'script');</script>
 <section class="detail" id="complete(io.micronaut.data.connection.ConnectionStatus)">
 <h3>complete</h3>
 <div class="member-signature"><span class="return-type">void</span>&nbsp;<span class="element-name">complete</span><wbr><span class="parameters">(@NonNull
- <a href="ConnectionStatus.html" title="interface in io.micronaut.data.connection">ConnectionStatus</a>&lt;<a href="SynchronousConnectionManager.html" title="type parameter in SynchronousConnectionManager">C</a>&gt;&nbsp;status)</span></div>
+ @NonNull <a href="ConnectionStatus.html" title="interface in io.micronaut.data.connection">ConnectionStatus</a>&lt;<a href="SynchronousConnectionManager.html" title="type parameter in SynchronousConnectionManager">C</a>&gt;&nbsp;status)</span></div>
 <div class="block">Completes the connection. Closes it if the connection was open before.</div>
 <dl class="notes">
 <dt>Parameters:</dt>

@@ -124,7 +124,7 @@ extends <a href="Slice.html" title="interface in io.micronaut.data.model">Slice<
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab1"><code>static &lt;T2&gt;&nbsp;<a href="Page.html" title="interface in io.micronaut.data.model">Page</a>&lt;T2&gt;</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab1"><code>static &lt;T2&gt;&nbsp;@NonNull <a href="Page.html" title="interface in io.micronaut.data.model">Page</a>&lt;T2&gt;</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab1"><code><a href="#empty()" class="member-name-link">empty</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab1">
 <div class="block">Creates an empty page object.</div>
@@ -135,14 +135,14 @@ extends <a href="Slice.html" title="interface in io.micronaut.data.model">Slice<
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>long</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#getTotalSize()" class="member-name-link">getTotalSize</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default &lt;T2&gt;&nbsp;<a href="Page.html" title="interface in io.micronaut.data.model">Page</a>&lt;T2&gt;</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default &lt;T2&gt;&nbsp;@NonNull <a href="Page.html" title="interface in io.micronaut.data.model">Page</a>&lt;T2&gt;</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#map(java.util.function.Function)" class="member-name-link">map</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/function/Function.html" title="class or interface in java.util.function" class="external-link">Function</a>&lt;<a href="Page.html" title="type parameter in Page">T</a>,<wbr>T2&gt;&nbsp;function)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
 <div class="block">Maps the content with the given function.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab1"><code>static &lt;T&gt;&nbsp;<a href="Page.html" title="interface in io.micronaut.data.model">Page</a>&lt;T&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab1"><code><a href="#of(java.util.List,io.micronaut.data.model.Pageable,long)" class="member-name-link">of</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;T&gt;&nbsp;content,
- <a href="Pageable.html" title="interface in io.micronaut.data.model">Pageable</a>&nbsp;pageable,
+<div class="col-first even-row-color method-summary-table method-summary-table-tab1"><code>static &lt;T&gt;&nbsp;@NonNull <a href="Page.html" title="interface in io.micronaut.data.model">Page</a>&lt;T&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab1"><code><a href="#of(java.util.List,io.micronaut.data.model.Pageable,long)" class="member-name-link">of</a><wbr>(@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;T&gt;&nbsp;content,
+ @NonNull <a href="Pageable.html" title="interface in io.micronaut.data.model">Pageable</a>&nbsp;pageable,
  long&nbsp;totalSize)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab1">
 <div class="block">Creates a slice from the given content and pageable.</div>
@@ -205,7 +205,7 @@ extends <a href="Slice.html" title="interface in io.micronaut.data.model">Slice<
 <section class="detail" id="map(java.util.function.Function)">
 <h3>map</h3>
 <div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">default</span>&nbsp;<span class="type-parameters">&lt;T2&gt;</span>&nbsp;<span class="return-type"><a href="Page.html" title="interface in io.micronaut.data.model">Page</a>&lt;T2&gt;</span>&nbsp;<span class="element-name">map</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/function/Function.html" title="class or interface in java.util.function" class="external-link">Function</a>&lt;<a href="Page.html" title="type parameter in Page">T</a>,<wbr>T2&gt;&nbsp;function)</span></div>
+</span><span class="modifiers">default</span>&nbsp;<span class="type-parameters">&lt;T2&gt;</span>&nbsp;<span class="return-type">@NonNull <a href="Page.html" title="interface in io.micronaut.data.model">Page</a>&lt;T2&gt;</span>&nbsp;<span class="element-name">map</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/function/Function.html" title="class or interface in java.util.function" class="external-link">Function</a>&lt;<a href="Page.html" title="type parameter in Page">T</a>,<wbr>T2&gt;&nbsp;function)</span></div>
 <div class="block">Maps the content with the given function.</div>
 <dl class="notes">
 <dt>Specified by:</dt>
@@ -223,10 +223,10 @@ extends <a href="Slice.html" title="interface in io.micronaut.data.model">Slice<
 <section class="detail" id="of(java.util.List,io.micronaut.data.model.Pageable,long)">
 <h3>of</h3>
 <div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">static</span>&nbsp;<span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type"><a href="Page.html" title="interface in io.micronaut.data.model">Page</a>&lt;T&gt;</span>&nbsp;<span class="element-name">of</span><wbr><span class="parameters">(@NonNull
- <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;T&gt;&nbsp;content,
+</span><span class="modifiers">static</span>&nbsp;<span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type">@NonNull <a href="Page.html" title="interface in io.micronaut.data.model">Page</a>&lt;T&gt;</span>&nbsp;<span class="element-name">of</span><wbr><span class="parameters">(@NonNull
+ @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;T&gt;&nbsp;content,
  @NonNull
- <a href="Pageable.html" title="interface in io.micronaut.data.model">Pageable</a>&nbsp;pageable,
+ @NonNull <a href="Pageable.html" title="interface in io.micronaut.data.model">Pageable</a>&nbsp;pageable,
  long&nbsp;totalSize)</span></div>
 <div class="block">Creates a slice from the given content and pageable.</div>
 <dl class="notes">
@@ -245,7 +245,7 @@ extends <a href="Slice.html" title="interface in io.micronaut.data.model">Slice<
 <section class="detail" id="empty()">
 <h3>empty</h3>
 <div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">static</span>&nbsp;<span class="type-parameters">&lt;T2&gt;</span>&nbsp;<span class="return-type"><a href="Page.html" title="interface in io.micronaut.data.model">Page</a>&lt;T2&gt;</span>&nbsp;<span class="element-name">empty</span>()</div>
+</span><span class="modifiers">static</span>&nbsp;<span class="type-parameters">&lt;T2&gt;</span>&nbsp;<span class="return-type">@NonNull <a href="Page.html" title="interface in io.micronaut.data.model">Page</a>&lt;T2&gt;</span>&nbsp;<span class="element-name">empty</span>()</div>
 <div class="block">Creates an empty page object.</div>
 <dl class="notes">
 <dt>Type Parameters:</dt>

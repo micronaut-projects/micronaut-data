@@ -110,7 +110,7 @@ implements io.micronaut.test.context.TestExecutionListener</span></div>
 <div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(io.micronaut.transaction.SynchronousTransactionManager,boolean,io.micronaut.test.annotation.TransactionMode,io.micronaut.transaction.test.SpockMethodTransactionDefinitionProvider)" class="member-name-link">DefaultTestTransactionExecutionListener</a><wbr>(<a href="../SynchronousTransactionManager.html" title="interface in io.micronaut.transaction">SynchronousTransactionManager</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;&nbsp;transactionManager,
  boolean&nbsp;rollback,
  io.micronaut.test.annotation.TransactionMode&nbsp;transactionMode,
- io.micronaut.transaction.test.SpockMethodTransactionDefinitionProvider&nbsp;spockMethodTransactionDefinitionProvider)</code></div>
+ @Nullable io.micronaut.transaction.test.SpockMethodTransactionDefinitionProvider&nbsp;spockMethodTransactionDefinitionProvider)</code></div>
 <div class="col-last even-row-color">&nbsp;</div>
 </div>
 </section>
@@ -173,7 +173,7 @@ implements io.micronaut.test.context.TestExecutionListener</span></div>
  @Property(name="micronaut.test.transaction-mode",defaultValue="SEPARATE_TRANSACTIONS")
  io.micronaut.test.annotation.TransactionMode&nbsp;transactionMode,
  @Nullable
- io.micronaut.transaction.test.SpockMethodTransactionDefinitionProvider&nbsp;spockMethodTransactionDefinitionProvider)</span></div>
+ @Nullable io.micronaut.transaction.test.SpockMethodTransactionDefinitionProvider&nbsp;spockMethodTransactionDefinitionProvider)</span></div>
 <dl class="notes">
 <dt>Parameters:</dt>
 <dd><code>transactionManager</code> - Spring's <code>PlatformTransactionManager</code></dd>

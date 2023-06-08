@@ -155,12 +155,12 @@ loadScripts(document, 'script');</script>
 <div class="block">Some drivers and dialects do not support JDBC batching.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final <a href="../../../DataType.html" title="enum class in io.micronaut.data.model">DataType</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getDataType(io.micronaut.data.model.DataType)" class="member-name-link">getDataType</a><wbr>(<a href="../../../DataType.html" title="enum class in io.micronaut.data.model">DataType</a>&nbsp;type)</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getDataType(io.micronaut.data.model.DataType)" class="member-name-link">getDataType</a><wbr>(@NonNull <a href="../../../DataType.html" title="enum class in io.micronaut.data.model">DataType</a>&nbsp;type)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Returns compatible dialect dataype.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final boolean</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#requiresStringUUID(io.micronaut.data.model.DataType)" class="member-name-link">requiresStringUUID</a><wbr>(<a href="../../../DataType.html" title="enum class in io.micronaut.data.model">DataType</a>&nbsp;type)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#requiresStringUUID(io.micronaut.data.model.DataType)" class="member-name-link">requiresStringUUID</a><wbr>(@NonNull <a href="../../../DataType.html" title="enum class in io.micronaut.data.model">DataType</a>&nbsp;type)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Determines whether the data type requires string based UUIDs.</div>
 </div>
@@ -317,7 +317,7 @@ not permitted.)</div>
 <section class="detail" id="getDataType(io.micronaut.data.model.DataType)">
 <h3>getDataType</h3>
 <div class="member-signature"><span class="modifiers">public final</span>&nbsp;<span class="return-type"><a href="../../../DataType.html" title="enum class in io.micronaut.data.model">DataType</a></span>&nbsp;<span class="element-name">getDataType</span><wbr><span class="parameters">(@NonNull
- <a href="../../../DataType.html" title="enum class in io.micronaut.data.model">DataType</a>&nbsp;type)</span></div>
+ @NonNull <a href="../../../DataType.html" title="enum class in io.micronaut.data.model">DataType</a>&nbsp;type)</span></div>
 <div class="block">Returns compatible dialect dataype.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -333,7 +333,7 @@ not permitted.)</div>
 <section class="detail" id="requiresStringUUID(io.micronaut.data.model.DataType)">
 <h3>requiresStringUUID</h3>
 <div class="member-signature"><span class="modifiers">public final</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">requiresStringUUID</span><wbr><span class="parameters">(@NonNull
- <a href="../../../DataType.html" title="enum class in io.micronaut.data.model">DataType</a>&nbsp;type)</span></div>
+ @NonNull <a href="../../../DataType.html" title="enum class in io.micronaut.data.model">DataType</a>&nbsp;type)</span></div>
 <div class="block">Determines whether the data type requires string based UUIDs.</div>
 <dl class="notes">
 <dt>Parameters:</dt>

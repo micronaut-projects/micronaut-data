@@ -147,13 +147,13 @@ implements <a href="../ConnectionOperations.html" title="interface in io.microna
 <div class="block">Closed the connection.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#complete(io.micronaut.data.connection.ConnectionStatus)" class="member-name-link">complete</a><wbr>(<a href="../ConnectionStatus.html" title="interface in io.micronaut.data.connection">ConnectionStatus</a>&lt;<a href="AbstractConnectionOperations.html" title="type parameter in AbstractConnectionOperations">C</a>&gt;&nbsp;status)</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#complete(io.micronaut.data.connection.ConnectionStatus)" class="member-name-link">complete</a><wbr>(@NonNull <a href="../ConnectionStatus.html" title="interface in io.micronaut.data.connection">ConnectionStatus</a>&lt;<a href="AbstractConnectionOperations.html" title="type parameter in AbstractConnectionOperations">C</a>&gt;&nbsp;status)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Completes the connection.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final &lt;R&gt;&nbsp;R</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#execute(io.micronaut.data.connection.ConnectionDefinition,java.util.function.Function)" class="member-name-link">execute</a><wbr>(<a href="../ConnectionDefinition.html" title="interface in io.micronaut.data.connection">ConnectionDefinition</a>&nbsp;definition,
- <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/function/Function.html" title="class or interface in java.util.function" class="external-link">Function</a>&lt;<a href="../ConnectionStatus.html" title="interface in io.micronaut.data.connection">ConnectionStatus</a>&lt;<a href="AbstractConnectionOperations.html" title="type parameter in AbstractConnectionOperations">C</a>&gt;,<wbr>R&gt;&nbsp;callback)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#execute(io.micronaut.data.connection.ConnectionDefinition,java.util.function.Function)" class="member-name-link">execute</a><wbr>(@NonNull <a href="../ConnectionDefinition.html" title="interface in io.micronaut.data.connection">ConnectionDefinition</a>&nbsp;definition,
+ @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/function/Function.html" title="class or interface in java.util.function" class="external-link">Function</a>&lt;<a href="../ConnectionStatus.html" title="interface in io.micronaut.data.connection">ConnectionStatus</a>&lt;<a href="AbstractConnectionOperations.html" title="type parameter in AbstractConnectionOperations">C</a>&gt;,<wbr>R&gt;&nbsp;callback)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Execute a connection within the context of the function.</div>
 </div>
@@ -162,8 +162,8 @@ implements <a href="../ConnectionOperations.html" title="interface in io.microna
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Obtains the current connection.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../ConnectionStatus.html" title="interface in io.micronaut.data.connection">ConnectionStatus</a>&lt;<a href="AbstractConnectionOperations.html" title="type parameter in AbstractConnectionOperations">C</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getConnection(io.micronaut.data.connection.ConnectionDefinition)" class="member-name-link">getConnection</a><wbr>(<a href="../ConnectionDefinition.html" title="interface in io.micronaut.data.connection">ConnectionDefinition</a>&nbsp;definition)</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@NonNull <a href="../ConnectionStatus.html" title="interface in io.micronaut.data.connection">ConnectionStatus</a>&lt;<a href="AbstractConnectionOperations.html" title="type parameter in AbstractConnectionOperations">C</a>&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getConnection(io.micronaut.data.connection.ConnectionDefinition)" class="member-name-link">getConnection</a><wbr>(@NonNull <a href="../ConnectionDefinition.html" title="interface in io.micronaut.data.connection">ConnectionDefinition</a>&nbsp;definition)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Opens or reuses the existing connection based on the definition.</div>
 </div>
@@ -278,9 +278,9 @@ implements <a href="../ConnectionOperations.html" title="interface in io.microna
 <section class="detail" id="execute(io.micronaut.data.connection.ConnectionDefinition,java.util.function.Function)">
 <h3>execute</h3>
 <div class="member-signature"><span class="modifiers">public final</span>&nbsp;<span class="type-parameters">&lt;R&gt;</span>&nbsp;<span class="return-type">R</span>&nbsp;<span class="element-name">execute</span><wbr><span class="parameters">(@NonNull
- <a href="../ConnectionDefinition.html" title="interface in io.micronaut.data.connection">ConnectionDefinition</a>&nbsp;definition,
+ @NonNull <a href="../ConnectionDefinition.html" title="interface in io.micronaut.data.connection">ConnectionDefinition</a>&nbsp;definition,
  @NonNull
- <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/function/Function.html" title="class or interface in java.util.function" class="external-link">Function</a>&lt;<a href="../ConnectionStatus.html" title="interface in io.micronaut.data.connection">ConnectionStatus</a>&lt;<a href="AbstractConnectionOperations.html" title="type parameter in AbstractConnectionOperations">C</a>&gt;,<wbr>R&gt;&nbsp;callback)</span></div>
+ @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/function/Function.html" title="class or interface in java.util.function" class="external-link">Function</a>&lt;<a href="../ConnectionStatus.html" title="interface in io.micronaut.data.connection">ConnectionStatus</a>&lt;<a href="AbstractConnectionOperations.html" title="type parameter in AbstractConnectionOperations">C</a>&gt;,<wbr>R&gt;&nbsp;callback)</span></div>
 <div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="../ConnectionOperations.html#execute(io.micronaut.data.connection.ConnectionDefinition,java.util.function.Function)">ConnectionOperations</a></code></span></div>
 <div class="block">Execute a connection within the context of the function.</div>
 <dl class="notes">
@@ -300,8 +300,8 @@ implements <a href="../ConnectionOperations.html" title="interface in io.microna
 <section class="detail" id="getConnection(io.micronaut.data.connection.ConnectionDefinition)">
 <h3>getConnection</h3>
 <div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="../ConnectionStatus.html" title="interface in io.micronaut.data.connection">ConnectionStatus</a>&lt;<a href="AbstractConnectionOperations.html" title="type parameter in AbstractConnectionOperations">C</a>&gt;</span>&nbsp;<span class="element-name">getConnection</span><wbr><span class="parameters">(@NonNull
- <a href="../ConnectionDefinition.html" title="interface in io.micronaut.data.connection">ConnectionDefinition</a>&nbsp;definition)</span></div>
+</span><span class="modifiers">public</span>&nbsp;<span class="return-type">@NonNull <a href="../ConnectionStatus.html" title="interface in io.micronaut.data.connection">ConnectionStatus</a>&lt;<a href="AbstractConnectionOperations.html" title="type parameter in AbstractConnectionOperations">C</a>&gt;</span>&nbsp;<span class="element-name">getConnection</span><wbr><span class="parameters">(@NonNull
+ @NonNull <a href="../ConnectionDefinition.html" title="interface in io.micronaut.data.connection">ConnectionDefinition</a>&nbsp;definition)</span></div>
 <div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="../SynchronousConnectionManager.html#getConnection(io.micronaut.data.connection.ConnectionDefinition)">SynchronousConnectionManager</a></code></span></div>
 <div class="block">Opens or reuses the existing connection based on the definition.
  It's required to call <a href="../SynchronousConnectionManager.html#complete(io.micronaut.data.connection.ConnectionStatus)"><code>SynchronousConnectionManager.complete(ConnectionStatus)</code></a> after the connection is not needed anymore.</div>
@@ -319,7 +319,7 @@ implements <a href="../ConnectionOperations.html" title="interface in io.microna
 <section class="detail" id="complete(io.micronaut.data.connection.ConnectionStatus)">
 <h3>complete</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">complete</span><wbr><span class="parameters">(@NonNull
- <a href="../ConnectionStatus.html" title="interface in io.micronaut.data.connection">ConnectionStatus</a>&lt;<a href="AbstractConnectionOperations.html" title="type parameter in AbstractConnectionOperations">C</a>&gt;&nbsp;status)</span></div>
+ @NonNull <a href="../ConnectionStatus.html" title="interface in io.micronaut.data.connection">ConnectionStatus</a>&lt;<a href="AbstractConnectionOperations.html" title="type parameter in AbstractConnectionOperations">C</a>&gt;&nbsp;status)</span></div>
 <div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="../SynchronousConnectionManager.html#complete(io.micronaut.data.connection.ConnectionStatus)">SynchronousConnectionManager</a></code></span></div>
 <div class="block">Completes the connection. Closes it if the connection was open before.</div>
 <dl class="notes">

@@ -140,9 +140,9 @@ implements <a href="../PersistentEntityFrom.html" title="interface in io.microna
 <div class="table-header col-last">Description</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>protected abstract &lt;X,<wbr>
 Y&gt;&nbsp;<a href="../PersistentAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentAssociationPath</a>&lt;X,<wbr>Y&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#createJoinAssociation(io.micronaut.data.model.Association,io.micronaut.data.annotation.Join.Type,java.lang.String)" class="member-name-link">createJoinAssociation</a><wbr>(<a href="../../../Association.html" title="interface in io.micronaut.data.model">Association</a>&nbsp;association,
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#createJoinAssociation(io.micronaut.data.model.Association,io.micronaut.data.annotation.Join.Type,java.lang.String)" class="member-name-link">createJoinAssociation</a><wbr>(@NonNull <a href="../../../Association.html" title="interface in io.micronaut.data.model">Association</a>&nbsp;association,
  <a href="../../../../annotation/Join.Type.html" title="enum class in io.micronaut.data.annotation">Join.Type</a>&nbsp;type,
- <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;alias)</code></div>
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;alias)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;Y&gt;&nbsp;jakarta.persistence.criteria.Fetch&lt;<a href="AbstractPersistentEntityJoinSupport.html" title="type parameter in AbstractPersistentEntityJoinSupport">E</a>,<wbr>Y&gt;</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#fetch(jakarta.persistence.metamodel.PluralAttribute)" class="member-name-link">fetch</a><wbr>(jakarta.persistence.metamodel.PluralAttribute&lt;? super <a href="AbstractPersistentEntityJoinSupport.html" title="type parameter in AbstractPersistentEntityJoinSupport">E</a>,<wbr>?,<wbr>Y&gt;&nbsp;attribute)</code></div>
@@ -381,11 +381,11 @@ Y&gt;&nbsp;<a href="../PersistentEntitySetJoin.html" title="interface in io.micr
 <div class="member-signature"><span class="modifiers">protected abstract</span>&nbsp;<span class="type-parameters">&lt;X,<wbr>
 Y&gt;</span>
 <span class="return-type"><a href="../PersistentAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentAssociationPath</a>&lt;X,<wbr>Y&gt;</span>&nbsp;<span class="element-name">createJoinAssociation</span><wbr><span class="parameters">(@NonNull
- <a href="../../../Association.html" title="interface in io.micronaut.data.model">Association</a>&nbsp;association,
+ @NonNull <a href="../../../Association.html" title="interface in io.micronaut.data.model">Association</a>&nbsp;association,
  @Nullable
  <a href="../../../../annotation/Join.Type.html" title="enum class in io.micronaut.data.annotation">Join.Type</a>&nbsp;type,
  @Nullable
- <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;alias)</span></div>
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;alias)</span></div>
 </section>
 </li>
 <li>

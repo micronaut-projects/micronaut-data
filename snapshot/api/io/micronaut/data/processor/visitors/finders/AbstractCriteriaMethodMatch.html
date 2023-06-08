@@ -106,7 +106,7 @@ implements <a href="MethodMatcher.MethodMatch.html" title="interface in io.micro
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Field</div>
 <div class="table-header col-last">Description</div>
-<div class="col-first even-row-color"><code>protected final <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/regex/Matcher.html" title="class or interface in java.util.regex" class="external-link">Matcher</a></code></div>
+<div class="col-first even-row-color"><code>protected final @Nullable <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/regex/Matcher.html" title="class or interface in java.util.regex" class="external-link">Matcher</a></code></div>
 <div class="col-second even-row-color"><code><a href="#matcher" class="member-name-link">matcher</a></code></div>
 <div class="col-last even-row-color">&nbsp;</div>
 </div>
@@ -146,7 +146,7 @@ implements <a href="MethodMatcher.MethodMatch.html" title="interface in io.micro
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final void</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#applyJoinSpecs(io.micronaut.data.model.jpa.criteria.PersistentEntityRoot,java.util.List)" class="member-name-link">applyJoinSpecs</a><wbr>(<a href="../../../model/jpa/criteria/PersistentEntityRoot.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityRoot</a>&lt;?&gt;&nbsp;root,
- <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;io.micronaut.core.annotation.AnnotationValue&lt;<a href="../../../annotation/Join.html" title="annotation interface in io.micronaut.data.annotation">Join</a>&gt;&gt;&nbsp;joinSpecs)</code></div>
+ @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;io.micronaut.core.annotation.AnnotationValue&lt;<a href="../../../annotation/Join.html" title="annotation interface in io.micronaut.data.annotation">Join</a>&gt;&gt;&nbsp;joinSpecs)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;T&gt;&nbsp;void</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#applyPredicates(java.lang.String,io.micronaut.inject.ast.ParameterElement%5B%5D,io.micronaut.data.model.jpa.criteria.PersistentEntityRoot,io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaDelete,io.micronaut.data.processor.model.criteria.SourcePersistentEntityCriteriaBuilder)" class="member-name-link">applyPredicates</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;querySequence,
@@ -211,10 +211,10 @@ implements <a href="MethodMatcher.MethodMatch.html" title="interface in io.micro
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#findProperty(io.micronaut.data.model.jpa.criteria.PersistentEntityRoot,java.lang.String)" class="member-name-link">findProperty</a><wbr>(<a href="../../../model/jpa/criteria/PersistentEntityRoot.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityRoot</a>&lt;T&gt;&nbsp;root,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;propertyName)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected io.micronaut.inject.ast.ParameterElement</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected @Nullable io.micronaut.inject.ast.ParameterElement</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getEntitiesParameter()" class="member-name-link">getEntitiesParameter</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected io.micronaut.inject.ast.ParameterElement</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected @Nullable io.micronaut.inject.ast.ParameterElement</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getEntityParameter()" class="member-name-link">getEntityParameter</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final io.micronaut.inject.ast.ClassElement</code></div>
@@ -224,15 +224,15 @@ implements <a href="MethodMatcher.MethodMatch.html" title="interface in io.micro
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>protected abstract <a href="../../../intercept/annotation/DataMethod.OperationType.html" title="enum class in io.micronaut.data.intercept.annotation">DataMethod.OperationType</a></code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#getOperationType()" class="member-name-link">getOperationType</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final &lt;T&gt;&nbsp;jakarta.persistence.criteria.Expression&lt;?&gt;</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final &lt;T&gt;&nbsp;@NonNull jakarta.persistence.criteria.Expression&lt;?&gt;</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getProperty(io.micronaut.data.model.jpa.criteria.PersistentEntityRoot,java.lang.String)" class="member-name-link">getProperty</a><wbr>(<a href="../../../model/jpa/criteria/PersistentEntityRoot.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityRoot</a>&lt;T&gt;&nbsp;root,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;propertyName)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final boolean</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#hasNoWhereAndJoinDeclaration(io.micronaut.data.processor.visitors.MethodMatchContext)" class="member-name-link">hasNoWhereAndJoinDeclaration</a><wbr>(<a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#hasNoWhereAndJoinDeclaration(io.micronaut.data.processor.visitors.MethodMatchContext)" class="member-name-link">hasNoWhereAndJoinDeclaration</a><wbr>(@NonNull <a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;io.micronaut.core.annotation.AnnotationValue&lt;<a href="../../../annotation/Join.html" title="annotation interface in io.micronaut.data.annotation">Join</a>&gt;&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#joinSpecsAtMatchContext(io.micronaut.data.processor.visitors.MethodMatchContext,boolean)" class="member-name-link">joinSpecsAtMatchContext</a><wbr>(<a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext,
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;io.micronaut.core.annotation.AnnotationValue&lt;<a href="../../../annotation/Join.html" title="annotation interface in io.micronaut.data.annotation">Join</a>&gt;&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#joinSpecsAtMatchContext(io.micronaut.data.processor.visitors.MethodMatchContext,boolean)" class="member-name-link">joinSpecsAtMatchContext</a><wbr>(@NonNull <a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext,
  boolean&nbsp;isQuery)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Map.Entry.html" title="class or interface in java.util" class="external-link">Map.Entry</a>&lt;io.micronaut.inject.ast.ClassElement,<wbr><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;? extends <a href="../../../intercept/DataInterceptor.html" title="interface in io.micronaut.data.intercept">DataInterceptor</a>&gt;&gt;</code></div>
@@ -262,7 +262,7 @@ implements <a href="MethodMatcher.MethodMatch.html" title="interface in io.micro
 <section class="detail" id="matcher">
 <h3>matcher</h3>
 <div class="member-signature"><span class="annotations">@Nullable
-</span><span class="modifiers">protected final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/regex/Matcher.html" title="class or interface in java.util.regex" class="external-link">Matcher</a></span>&nbsp;<span class="element-name">matcher</span></div>
+</span><span class="modifiers">protected final</span>&nbsp;<span class="return-type">@Nullable <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/regex/Matcher.html" title="class or interface in java.util.regex" class="external-link">Matcher</a></span>&nbsp;<span class="element-name">matcher</span></div>
 </section>
 </li>
 </ul>
@@ -291,7 +291,7 @@ implements <a href="MethodMatcher.MethodMatch.html" title="interface in io.micro
 <section class="detail" id="getEntityParameter()">
 <h3>getEntityParameter</h3>
 <div class="member-signature"><span class="annotations">@Nullable
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">io.micronaut.inject.ast.ParameterElement</span>&nbsp;<span class="element-name">getEntityParameter</span>()</div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">@Nullable io.micronaut.inject.ast.ParameterElement</span>&nbsp;<span class="element-name">getEntityParameter</span>()</div>
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>The entity parameter</dd>
@@ -302,7 +302,7 @@ implements <a href="MethodMatcher.MethodMatch.html" title="interface in io.micro
 <section class="detail" id="getEntitiesParameter()">
 <h3>getEntitiesParameter</h3>
 <div class="member-signature"><span class="annotations">@Nullable
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">io.micronaut.inject.ast.ParameterElement</span>&nbsp;<span class="element-name">getEntitiesParameter</span>()</div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">@Nullable io.micronaut.inject.ast.ParameterElement</span>&nbsp;<span class="element-name">getEntitiesParameter</span>()</div>
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>The entities parameter</dd>
@@ -520,7 +520,7 @@ implements <a href="MethodMatcher.MethodMatch.html" title="interface in io.micro
 <h3>getProperty</h3>
 <div class="member-signature"><span class="annotations">@NonNull
 </span><span class="modifiers">protected final</span>&nbsp;<span class="type-parameters">&lt;T&gt;</span>
-<span class="return-type">jakarta.persistence.criteria.Expression&lt;?&gt;</span>&nbsp;<span class="element-name">getProperty</span><wbr><span class="parameters">(<a href="../../../model/jpa/criteria/PersistentEntityRoot.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityRoot</a>&lt;T&gt;&nbsp;root,
+<span class="return-type">@NonNull jakarta.persistence.criteria.Expression&lt;?&gt;</span>&nbsp;<span class="element-name">getProperty</span><wbr><span class="parameters">(<a href="../../../model/jpa/criteria/PersistentEntityRoot.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityRoot</a>&lt;T&gt;&nbsp;root,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;propertyName)</span></div>
 </section>
 </li>
@@ -537,15 +537,15 @@ implements <a href="MethodMatcher.MethodMatch.html" title="interface in io.micro
 <h3>applyJoinSpecs</h3>
 <div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">applyJoinSpecs</span><wbr><span class="parameters">(<a href="../../../model/jpa/criteria/PersistentEntityRoot.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityRoot</a>&lt;?&gt;&nbsp;root,
  @NonNull
- <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;io.micronaut.core.annotation.AnnotationValue&lt;<a href="../../../annotation/Join.html" title="annotation interface in io.micronaut.data.annotation">Join</a>&gt;&gt;&nbsp;joinSpecs)</span></div>
+ @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;io.micronaut.core.annotation.AnnotationValue&lt;<a href="../../../annotation/Join.html" title="annotation interface in io.micronaut.data.annotation">Join</a>&gt;&gt;&nbsp;joinSpecs)</span></div>
 </section>
 </li>
 <li>
 <section class="detail" id="joinSpecsAtMatchContext(io.micronaut.data.processor.visitors.MethodMatchContext,boolean)">
 <h3>joinSpecsAtMatchContext</h3>
 <div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">protected final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;io.micronaut.core.annotation.AnnotationValue&lt;<a href="../../../annotation/Join.html" title="annotation interface in io.micronaut.data.annotation">Join</a>&gt;&gt;</span>&nbsp;<span class="element-name">joinSpecsAtMatchContext</span><wbr><span class="parameters">(@NonNull
- <a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext,
+</span><span class="modifiers">protected final</span>&nbsp;<span class="return-type">@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;io.micronaut.core.annotation.AnnotationValue&lt;<a href="../../../annotation/Join.html" title="annotation interface in io.micronaut.data.annotation">Join</a>&gt;&gt;</span>&nbsp;<span class="element-name">joinSpecsAtMatchContext</span><wbr><span class="parameters">(@NonNull
+ @NonNull <a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext,
  boolean&nbsp;isQuery)</span></div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -560,7 +560,7 @@ implements <a href="MethodMatcher.MethodMatch.html" title="interface in io.micro
 <section class="detail" id="hasNoWhereAndJoinDeclaration(io.micronaut.data.processor.visitors.MethodMatchContext)">
 <h3>hasNoWhereAndJoinDeclaration</h3>
 <div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">hasNoWhereAndJoinDeclaration</span><wbr><span class="parameters">(@NonNull
- <a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext)</span></div>
+ @NonNull <a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext)</span></div>
 </section>
 </li>
 </ul>

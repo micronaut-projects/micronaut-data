@@ -122,14 +122,14 @@ loadScripts(document, 'script');</script>
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default &lt;T&gt;&nbsp;org.reactivestreams.Publisher&lt;T&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#withTransaction(io.micronaut.transaction.reactive.ReactiveTransactionOperations.TransactionalCallback)" class="member-name-link">withTransaction</a><wbr>(<a href="ReactiveTransactionOperations.TransactionalCallback.html" title="interface in io.micronaut.transaction.reactive">ReactiveTransactionOperations.TransactionalCallback</a>&lt;<a href="ReactiveTransactionOperations.html" title="type parameter in ReactiveTransactionOperations">C</a>,<wbr>T&gt;&nbsp;handler)</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default &lt;T&gt;&nbsp;@NonNull org.reactivestreams.Publisher&lt;T&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#withTransaction(io.micronaut.transaction.reactive.ReactiveTransactionOperations.TransactionalCallback)" class="member-name-link">withTransaction</a><wbr>(@NonNull <a href="ReactiveTransactionOperations.TransactionalCallback.html" title="interface in io.micronaut.transaction.reactive">ReactiveTransactionOperations.TransactionalCallback</a>&lt;<a href="ReactiveTransactionOperations.html" title="type parameter in ReactiveTransactionOperations">C</a>,<wbr>T&gt;&nbsp;handler)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
 <div class="block">Execute the given handler with a new transaction.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>&lt;T&gt;&nbsp;org.reactivestreams.Publisher&lt;T&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#withTransaction(io.micronaut.transaction.TransactionDefinition,io.micronaut.transaction.reactive.ReactiveTransactionOperations.TransactionalCallback)" class="member-name-link">withTransaction</a><wbr>(<a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition,
- <a href="ReactiveTransactionOperations.TransactionalCallback.html" title="interface in io.micronaut.transaction.reactive">ReactiveTransactionOperations.TransactionalCallback</a>&lt;<a href="ReactiveTransactionOperations.html" title="type parameter in ReactiveTransactionOperations">C</a>,<wbr>T&gt;&nbsp;handler)</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>&lt;T&gt;&nbsp;@NonNull org.reactivestreams.Publisher&lt;T&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#withTransaction(io.micronaut.transaction.TransactionDefinition,io.micronaut.transaction.reactive.ReactiveTransactionOperations.TransactionalCallback)" class="member-name-link">withTransaction</a><wbr>(@NonNull <a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition,
+ @NonNull <a href="ReactiveTransactionOperations.TransactionalCallback.html" title="interface in io.micronaut.transaction.reactive">ReactiveTransactionOperations.TransactionalCallback</a>&lt;<a href="ReactiveTransactionOperations.html" title="type parameter in ReactiveTransactionOperations">C</a>,<wbr>T&gt;&nbsp;handler)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Execute the given handler with a new transaction.</div>
 </div>
@@ -151,10 +151,10 @@ loadScripts(document, 'script');</script>
 <section class="detail" id="withTransaction(io.micronaut.transaction.TransactionDefinition,io.micronaut.transaction.reactive.ReactiveTransactionOperations.TransactionalCallback)">
 <h3>withTransaction</h3>
 <div class="member-signature"><span class="annotations">@NonNull
-</span><span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type">org.reactivestreams.Publisher&lt;T&gt;</span>&nbsp;<span class="element-name">withTransaction</span><wbr><span class="parameters">(@NonNull
- <a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition,
+</span><span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type">@NonNull org.reactivestreams.Publisher&lt;T&gt;</span>&nbsp;<span class="element-name">withTransaction</span><wbr><span class="parameters">(@NonNull
+ @NonNull <a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition,
  @NonNull
- <a href="ReactiveTransactionOperations.TransactionalCallback.html" title="interface in io.micronaut.transaction.reactive">ReactiveTransactionOperations.TransactionalCallback</a>&lt;<a href="ReactiveTransactionOperations.html" title="type parameter in ReactiveTransactionOperations">C</a>,<wbr>T&gt;&nbsp;handler)</span></div>
+ @NonNull <a href="ReactiveTransactionOperations.TransactionalCallback.html" title="interface in io.micronaut.transaction.reactive">ReactiveTransactionOperations.TransactionalCallback</a>&lt;<a href="ReactiveTransactionOperations.html" title="type parameter in ReactiveTransactionOperations">C</a>,<wbr>T&gt;&nbsp;handler)</span></div>
 <div class="block">Execute the given handler with a new transaction.</div>
 <dl class="notes">
 <dt>Type Parameters:</dt>
@@ -171,8 +171,9 @@ loadScripts(document, 'script');</script>
 <section class="detail" id="withTransaction(io.micronaut.transaction.reactive.ReactiveTransactionOperations.TransactionalCallback)">
 <h3>withTransaction</h3>
 <div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">default</span>&nbsp;<span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type">org.reactivestreams.Publisher&lt;T&gt;</span>&nbsp;<span class="element-name">withTransaction</span><wbr><span class="parameters">(@NonNull
- <a href="ReactiveTransactionOperations.TransactionalCallback.html" title="interface in io.micronaut.transaction.reactive">ReactiveTransactionOperations.TransactionalCallback</a>&lt;<a href="ReactiveTransactionOperations.html" title="type parameter in ReactiveTransactionOperations">C</a>,<wbr>T&gt;&nbsp;handler)</span></div>
+</span><span class="modifiers">default</span>&nbsp;<span class="type-parameters">&lt;T&gt;</span>
+<span class="return-type">@NonNull org.reactivestreams.Publisher&lt;T&gt;</span>&nbsp;<span class="element-name">withTransaction</span><wbr><span class="parameters">(@NonNull
+ @NonNull <a href="ReactiveTransactionOperations.TransactionalCallback.html" title="interface in io.micronaut.transaction.reactive">ReactiveTransactionOperations.TransactionalCallback</a>&lt;<a href="ReactiveTransactionOperations.html" title="type parameter in ReactiveTransactionOperations">C</a>,<wbr>T&gt;&nbsp;handler)</span></div>
 <div class="block">Execute the given handler with a new transaction.</div>
 <dl class="notes">
 <dt>Type Parameters:</dt>

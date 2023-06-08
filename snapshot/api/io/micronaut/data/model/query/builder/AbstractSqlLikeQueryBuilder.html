@@ -310,7 +310,7 @@ implements <a href="QueryBuilder.html" title="interface in io.micronaut.data.mod
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Appends selection projection for the property which is association.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/StringBuilder.html" title="class or interface in java.lang" class="external-link">StringBuilder</a></code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/StringBuilder.html" title="class or interface in java.lang" class="external-link">StringBuilder</a></code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#appendDeleteClause(java.lang.StringBuilder)" class="member-name-link">appendDeleteClause</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/StringBuilder.html" title="class or interface in java.lang" class="external-link">StringBuilder</a>&nbsp;queryString)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Append the delete clause.</div>
@@ -358,14 +358,14 @@ implements <a href="QueryBuilder.html" title="interface in io.micronaut.data.mod
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Appends the SET=? call to the query string.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#asLiteral(java.lang.Object)" class="member-name-link">asLiteral</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;value)</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#asLiteral(java.lang.Object)" class="member-name-link">asLiteral</a><wbr>(@Nullable <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;value)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Convert the literal value to it's SQL representation.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected void</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#asLiterals(java.lang.StringBuilder,java.lang.Object)" class="member-name-link">asLiterals</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/StringBuilder.html" title="class or interface in java.lang" class="external-link">StringBuilder</a>&nbsp;sb,
- <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;value)</code></div>
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;value)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Appends values as literals to the sql query builder.</div>
 </div>
@@ -376,8 +376,8 @@ implements <a href="QueryBuilder.html" title="interface in io.micronaut.data.mod
 <div class="block">Join associations and property as path.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="QueryResult.html" title="interface in io.micronaut.data.model.query.builder">QueryResult</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#buildDelete(io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.query.QueryModel)" class="member-name-link">buildDelete</a><wbr>(io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
- <a href="../QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;query)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#buildDelete(io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.query.QueryModel)" class="member-name-link">buildDelete</a><wbr>(@NonNull io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
+ @NonNull <a href="../QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;query)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Encode the given query into the encoded query instance.</div>
 </div>
@@ -391,23 +391,23 @@ implements <a href="QueryBuilder.html" title="interface in io.micronaut.data.mod
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Build a join expression for the given alias, association, join type and builder.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="QueryResult.html" title="interface in io.micronaut.data.model.query.builder">QueryResult</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#buildOrderBy(io.micronaut.data.model.PersistentEntity,io.micronaut.data.model.Sort)" class="member-name-link">buildOrderBy</a><wbr>(<a href="../../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;entity,
- <a href="../../Sort.html" title="interface in io.micronaut.data.model">Sort</a>&nbsp;sort)</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@NonNull <a href="QueryResult.html" title="interface in io.micronaut.data.model.query.builder">QueryResult</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#buildOrderBy(io.micronaut.data.model.PersistentEntity,io.micronaut.data.model.Sort)" class="member-name-link">buildOrderBy</a><wbr>(@NonNull <a href="../../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;entity,
+ @NonNull <a href="../../Sort.html" title="interface in io.micronaut.data.model">Sort</a>&nbsp;sort)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Encode the given query into the encoded query instance.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="QueryResult.html" title="interface in io.micronaut.data.model.query.builder">QueryResult</a></code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@NonNull <a href="QueryResult.html" title="interface in io.micronaut.data.model.query.builder">QueryResult</a></code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#buildOrderBy(java.lang.String,io.micronaut.data.model.PersistentEntity,io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.Sort)" class="member-name-link">buildOrderBy</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;query,
- <a href="../../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;entity,
- io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
- <a href="../../Sort.html" title="interface in io.micronaut.data.model">Sort</a>&nbsp;sort)</code></div>
+ @NonNull <a href="../../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;entity,
+ @NonNull io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
+ @NonNull <a href="../../Sort.html" title="interface in io.micronaut.data.model">Sort</a>&nbsp;sort)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Encode the given query into the encoded query instance.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="QueryResult.html" title="interface in io.micronaut.data.model.query.builder">QueryResult</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#buildQuery(io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.query.QueryModel)" class="member-name-link">buildQuery</a><wbr>(io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
- <a href="../QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;query)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#buildQuery(io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.query.QueryModel)" class="member-name-link">buildQuery</a><wbr>(@NonNull io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
+ @NonNull <a href="../QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;query)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Encode the given query for the passed annotation metadata and query.</div>
 </div>
@@ -422,16 +422,16 @@ implements <a href="QueryBuilder.html" title="interface in io.micronaut.data.mod
 <div class="block">Build select statement.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="QueryResult.html" title="interface in io.micronaut.data.model.query.builder">QueryResult</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#buildUpdate(io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.query.QueryModel,java.util.List)" class="member-name-link">buildUpdate</a><wbr>(io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
- <a href="../QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;query,
- <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;propertiesToUpdate)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#buildUpdate(io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.query.QueryModel,java.util.List)" class="member-name-link">buildUpdate</a><wbr>(@NonNull io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
+ @NonNull <a href="../QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;query,
+ @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;propertiesToUpdate)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Encode the given query into the encoded query instance.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="QueryResult.html" title="interface in io.micronaut.data.model.query.builder">QueryResult</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#buildUpdate(io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.query.QueryModel,java.util.Map)" class="member-name-link">buildUpdate</a><wbr>(io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
- <a href="../QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;query,
- <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;&nbsp;propertiesToUpdate)</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#buildUpdate(io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.query.QueryModel,java.util.Map)" class="member-name-link">buildUpdate</a><wbr>(@NonNull io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
+ @NonNull <a href="../QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;query,
+ @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;&nbsp;propertiesToUpdate)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Encode the given query into the encoded query instance.</div>
 </div>
@@ -499,22 +499,22 @@ implements <a href="QueryBuilder.html" title="interface in io.micronaut.data.mod
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Get dialect.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getMappedName(io.micronaut.data.model.naming.NamingStrategy,io.micronaut.data.model.Association)" class="member-name-link">getMappedName</a><wbr>(<a href="../../naming/NamingStrategy.html" title="interface in io.micronaut.data.model.naming">NamingStrategy</a>&nbsp;namingStrategy,
- <a href="../../Association.html" title="interface in io.micronaut.data.model">Association</a>&nbsp;association)</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getMappedName(io.micronaut.data.model.naming.NamingStrategy,io.micronaut.data.model.Association)" class="member-name-link">getMappedName</a><wbr>(@NonNull <a href="../../naming/NamingStrategy.html" title="interface in io.micronaut.data.model.naming">NamingStrategy</a>&nbsp;namingStrategy,
+ @NonNull <a href="../../Association.html" title="interface in io.micronaut.data.model">Association</a>&nbsp;association)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Gets the mapped name from the association using <a href="../../naming/NamingStrategy.html" title="interface in io.micronaut.data.model.naming"><code>NamingStrategy</code></a>.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getMappedName(io.micronaut.data.model.naming.NamingStrategy,io.micronaut.data.model.PersistentProperty)" class="member-name-link">getMappedName</a><wbr>(<a href="../../naming/NamingStrategy.html" title="interface in io.micronaut.data.model.naming">NamingStrategy</a>&nbsp;namingStrategy,
- <a href="../../PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a>&nbsp;property)</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getMappedName(io.micronaut.data.model.naming.NamingStrategy,io.micronaut.data.model.PersistentProperty)" class="member-name-link">getMappedName</a><wbr>(@NonNull <a href="../../naming/NamingStrategy.html" title="interface in io.micronaut.data.model.naming">NamingStrategy</a>&nbsp;namingStrategy,
+ @NonNull <a href="../../PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a>&nbsp;property)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Gets the mapped name from the property using <a href="../../naming/NamingStrategy.html" title="interface in io.micronaut.data.model.naming"><code>NamingStrategy</code></a>.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getMappedName(io.micronaut.data.model.naming.NamingStrategy,java.util.List,io.micronaut.data.model.PersistentProperty)" class="member-name-link">getMappedName</a><wbr>(<a href="../../naming/NamingStrategy.html" title="interface in io.micronaut.data.model.naming">NamingStrategy</a>&nbsp;namingStrategy,
- <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../../Association.html" title="interface in io.micronaut.data.model">Association</a>&gt;&nbsp;associations,
- <a href="../../PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a>&nbsp;property)</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getMappedName(io.micronaut.data.model.naming.NamingStrategy,java.util.List,io.micronaut.data.model.PersistentProperty)" class="member-name-link">getMappedName</a><wbr>(@NonNull <a href="../../naming/NamingStrategy.html" title="interface in io.micronaut.data.model.naming">NamingStrategy</a>&nbsp;namingStrategy,
+ @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../../Association.html" title="interface in io.micronaut.data.model">Association</a>&gt;&nbsp;associations,
+ @NonNull <a href="../../PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a>&nbsp;property)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Gets the mapped name from for the list of associations and property using <a href="../../naming/NamingStrategy.html" title="interface in io.micronaut.data.model.naming"><code>NamingStrategy</code></a>.</div>
 </div>
@@ -528,7 +528,7 @@ implements <a href="QueryBuilder.html" title="interface in io.micronaut.data.mod
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Gets <a href="../../naming/NamingStrategy.html" title="interface in io.micronaut.data.model.naming"><code>NamingStrategy</code></a> for the property path.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getPathOnlyAliasName(io.micronaut.data.model.query.JoinPath)" class="member-name-link">getPathOnlyAliasName</a><wbr>(<a href="../JoinPath.html" title="class in io.micronaut.data.model.query">JoinPath</a>&nbsp;joinPath)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Get the alias name for just the join path.</div>
@@ -573,7 +573,7 @@ implements <a href="QueryBuilder.html" title="interface in io.micronaut.data.mod
 <div class="block">Checks whether <a href="../../../annotation/EntityRepresentation.html" title="annotation interface in io.micronaut.data.annotation"><code>EntityRepresentation</code></a> annotation with JSON type is used for the repository method.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected <a href="../BindingParameter.BindingContext.html" title="interface in io.micronaut.data.model.query">BindingParameter.BindingContext</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#newBindingContext(io.micronaut.data.model.PersistentPropertyPath)" class="member-name-link">newBindingContext</a><wbr>(<a href="../../PersistentPropertyPath.html" title="class in io.micronaut.data.model">PersistentPropertyPath</a>&nbsp;ref)</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#newBindingContext(io.micronaut.data.model.PersistentPropertyPath)" class="member-name-link">newBindingContext</a><wbr>(@Nullable <a href="../../PersistentPropertyPath.html" title="class in io.micronaut.data.model">PersistentPropertyPath</a>&nbsp;ref)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Creates new binding parameter context.</div>
 </div>
@@ -613,10 +613,10 @@ implements <a href="QueryBuilder.html" title="interface in io.micronaut.data.mod
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#selectAllColumnsFromJoinPaths(io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder.QueryState,java.lang.StringBuilder,java.util.Collection,java.util.Map)" class="member-name-link">selectAllColumnsFromJoinPaths</a><wbr>(<a href="AbstractSqlLikeQueryBuilder.QueryState.html" title="class in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder.QueryState</a>&nbsp;queryState,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/StringBuilder.html" title="class or interface in java.lang" class="external-link">StringBuilder</a>&nbsp;queryBuffer,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Collection.html" title="class or interface in java.util" class="external-link">Collection</a>&lt;<a href="../JoinPath.html" title="class in io.micronaut.data.model.query">JoinPath</a>&gt;&nbsp;allPaths,
- <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&lt;<a href="../JoinPath.html" title="class in io.micronaut.data.model.query">JoinPath</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;joinAliasOverride)</code></div>
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&lt;<a href="../JoinPath.html" title="class in io.micronaut.data.model.query">JoinPath</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;joinAliasOverride)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected boolean</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#shouldEscape(io.micronaut.data.model.PersistentEntity)" class="member-name-link">shouldEscape</a><wbr>(<a href="../../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;entity)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#shouldEscape(io.micronaut.data.model.PersistentEntity)" class="member-name-link">shouldEscape</a><wbr>(@NonNull <a href="../../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;entity)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Whether queries should be escaped for the given entity.</div>
 </div>
@@ -1257,7 +1257,7 @@ implements <a href="QueryBuilder.html" title="interface in io.micronaut.data.mod
 <h3>asLiterals</h3>
 <div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">asLiterals</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/StringBuilder.html" title="class or interface in java.lang" class="external-link">StringBuilder</a>&nbsp;sb,
  @Nullable
- <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;value)</span></div>
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;value)</span></div>
 <div class="block">Appends values as literals to the sql query builder.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -1270,8 +1270,8 @@ implements <a href="QueryBuilder.html" title="interface in io.micronaut.data.mod
 <section class="detail" id="asLiteral(java.lang.Object)">
 <h3>asLiteral</h3>
 <div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">asLiteral</span><wbr><span class="parameters">(@Nullable
- <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;value)</span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">asLiteral</span><wbr><span class="parameters">(@Nullable
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;value)</span></div>
 <div class="block">Convert the literal value to it's SQL representation.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -1297,9 +1297,9 @@ implements <a href="QueryBuilder.html" title="interface in io.micronaut.data.mod
 <section class="detail" id="buildQuery(io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.query.QueryModel)">
 <h3>buildQuery</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="QueryResult.html" title="interface in io.micronaut.data.model.query.builder">QueryResult</a></span>&nbsp;<span class="element-name">buildQuery</span><wbr><span class="parameters">(@NonNull
- io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
+ @NonNull io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
  @NonNull
- <a href="../QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;query)</span></div>
+ @NonNull <a href="../QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;query)</span></div>
 <div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="QueryBuilder.html#buildQuery(io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.query.QueryModel)">QueryBuilder</a></code></span></div>
 <div class="block">Encode the given query for the passed annotation metadata and query.</div>
 <dl class="notes">
@@ -1369,7 +1369,7 @@ implements <a href="QueryBuilder.html" title="interface in io.micronaut.data.mod
 <section class="detail" id="getPathOnlyAliasName(io.micronaut.data.model.query.JoinPath)">
 <h3>getPathOnlyAliasName</h3>
 <div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">getPathOnlyAliasName</span><wbr><span class="parameters">(<a href="../JoinPath.html" title="class in io.micronaut.data.model.query">JoinPath</a>&nbsp;joinPath)</span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">getPathOnlyAliasName</span><wbr><span class="parameters">(<a href="../JoinPath.html" title="class in io.micronaut.data.model.query">JoinPath</a>&nbsp;joinPath)</span></div>
 <div class="block">Get the alias name for just the join path.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -1470,14 +1470,14 @@ implements <a href="QueryBuilder.html" title="interface in io.micronaut.data.mod
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/StringBuilder.html" title="class or interface in java.lang" class="external-link">StringBuilder</a>&nbsp;queryBuffer,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Collection.html" title="class or interface in java.util" class="external-link">Collection</a>&lt;<a href="../JoinPath.html" title="class in io.micronaut.data.model.query">JoinPath</a>&gt;&nbsp;allPaths,
  @Nullable
- <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&lt;<a href="../JoinPath.html" title="class in io.micronaut.data.model.query">JoinPath</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;joinAliasOverride)</span></div>
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&lt;<a href="../JoinPath.html" title="class in io.micronaut.data.model.query">JoinPath</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;joinAliasOverride)</span></div>
 </section>
 </li>
 <li>
 <section class="detail" id="shouldEscape(io.micronaut.data.model.PersistentEntity)">
 <h3>shouldEscape</h3>
 <div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">shouldEscape</span><wbr><span class="parameters">(@NonNull
- <a href="../../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;entity)</span></div>
+ @NonNull <a href="../../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;entity)</span></div>
 <div class="block">Whether queries should be escaped for the given entity.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -1583,10 +1583,10 @@ implements <a href="QueryBuilder.html" title="interface in io.micronaut.data.mod
 <section class="detail" id="getMappedName(io.micronaut.data.model.naming.NamingStrategy,io.micronaut.data.model.PersistentProperty)">
 <h3>getMappedName</h3>
 <div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">getMappedName</span><wbr><span class="parameters">(@NonNull
- <a href="../../naming/NamingStrategy.html" title="interface in io.micronaut.data.model.naming">NamingStrategy</a>&nbsp;namingStrategy,
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">getMappedName</span><wbr><span class="parameters">(@NonNull
+ @NonNull <a href="../../naming/NamingStrategy.html" title="interface in io.micronaut.data.model.naming">NamingStrategy</a>&nbsp;namingStrategy,
  @NonNull
- <a href="../../PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a>&nbsp;property)</span></div>
+ @NonNull <a href="../../PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a>&nbsp;property)</span></div>
 <div class="block">Gets the mapped name from the property using <a href="../../naming/NamingStrategy.html" title="interface in io.micronaut.data.model.naming"><code>NamingStrategy</code></a>.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -1601,10 +1601,10 @@ implements <a href="QueryBuilder.html" title="interface in io.micronaut.data.mod
 <section class="detail" id="getMappedName(io.micronaut.data.model.naming.NamingStrategy,io.micronaut.data.model.Association)">
 <h3>getMappedName</h3>
 <div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">getMappedName</span><wbr><span class="parameters">(@NonNull
- <a href="../../naming/NamingStrategy.html" title="interface in io.micronaut.data.model.naming">NamingStrategy</a>&nbsp;namingStrategy,
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">getMappedName</span><wbr><span class="parameters">(@NonNull
+ @NonNull <a href="../../naming/NamingStrategy.html" title="interface in io.micronaut.data.model.naming">NamingStrategy</a>&nbsp;namingStrategy,
  @NonNull
- <a href="../../Association.html" title="interface in io.micronaut.data.model">Association</a>&nbsp;association)</span></div>
+ @NonNull <a href="../../Association.html" title="interface in io.micronaut.data.model">Association</a>&nbsp;association)</span></div>
 <div class="block">Gets the mapped name from the association using <a href="../../naming/NamingStrategy.html" title="interface in io.micronaut.data.model.naming"><code>NamingStrategy</code></a>.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -1619,12 +1619,12 @@ implements <a href="QueryBuilder.html" title="interface in io.micronaut.data.mod
 <section class="detail" id="getMappedName(io.micronaut.data.model.naming.NamingStrategy,java.util.List,io.micronaut.data.model.PersistentProperty)">
 <h3>getMappedName</h3>
 <div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">getMappedName</span><wbr><span class="parameters">(@NonNull
- <a href="../../naming/NamingStrategy.html" title="interface in io.micronaut.data.model.naming">NamingStrategy</a>&nbsp;namingStrategy,
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">getMappedName</span><wbr><span class="parameters">(@NonNull
+ @NonNull <a href="../../naming/NamingStrategy.html" title="interface in io.micronaut.data.model.naming">NamingStrategy</a>&nbsp;namingStrategy,
  @NonNull
- <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../../Association.html" title="interface in io.micronaut.data.model">Association</a>&gt;&nbsp;associations,
+ @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../../Association.html" title="interface in io.micronaut.data.model">Association</a>&gt;&nbsp;associations,
  @NonNull
- <a href="../../PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a>&nbsp;property)</span></div>
+ @NonNull <a href="../../PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a>&nbsp;property)</span></div>
 <div class="block">Gets the mapped name from for the list of associations and property using <a href="../../naming/NamingStrategy.html" title="interface in io.micronaut.data.model.naming"><code>NamingStrategy</code></a>.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -1786,11 +1786,11 @@ implements <a href="QueryBuilder.html" title="interface in io.micronaut.data.mod
 <section class="detail" id="buildUpdate(io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.query.QueryModel,java.util.List)">
 <h3>buildUpdate</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="QueryResult.html" title="interface in io.micronaut.data.model.query.builder">QueryResult</a></span>&nbsp;<span class="element-name">buildUpdate</span><wbr><span class="parameters">(@NonNull
- io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
+ @NonNull io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
  @NonNull
- <a href="../QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;query,
+ @NonNull <a href="../QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;query,
  @NonNull
- <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;propertiesToUpdate)</span></div>
+ @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;propertiesToUpdate)</span></div>
 <div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="QueryBuilder.html#buildUpdate(io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.query.QueryModel,java.util.List)">QueryBuilder</a></code></span></div>
 <div class="block">Encode the given query into the encoded query instance.</div>
 <dl class="notes">
@@ -1809,11 +1809,11 @@ implements <a href="QueryBuilder.html" title="interface in io.micronaut.data.mod
 <section class="detail" id="buildUpdate(io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.query.QueryModel,java.util.Map)">
 <h3>buildUpdate</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="QueryResult.html" title="interface in io.micronaut.data.model.query.builder">QueryResult</a></span>&nbsp;<span class="element-name">buildUpdate</span><wbr><span class="parameters">(@NonNull
- io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
+ @NonNull io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
  @NonNull
- <a href="../QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;query,
+ @NonNull <a href="../QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;query,
  @NonNull
- <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;&nbsp;propertiesToUpdate)</span></div>
+ @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;&nbsp;propertiesToUpdate)</span></div>
 <div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="QueryBuilder.html#buildUpdate(io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.query.QueryModel,java.util.Map)">QueryBuilder</a></code></span></div>
 <div class="block">Encode the given query into the encoded query instance.</div>
 <dl class="notes">
@@ -1832,9 +1832,9 @@ implements <a href="QueryBuilder.html" title="interface in io.micronaut.data.mod
 <section class="detail" id="buildDelete(io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.query.QueryModel)">
 <h3>buildDelete</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="QueryResult.html" title="interface in io.micronaut.data.model.query.builder">QueryResult</a></span>&nbsp;<span class="element-name">buildDelete</span><wbr><span class="parameters">(@NonNull
- io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
+ @NonNull io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
  @NonNull
- <a href="../QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;query)</span></div>
+ @NonNull <a href="../QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;query)</span></div>
 <div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="QueryBuilder.html#buildDelete(io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.query.QueryModel)">QueryBuilder</a></code></span></div>
 <div class="block">Encode the given query into the encoded query instance.</div>
 <dl class="notes">
@@ -1867,7 +1867,7 @@ implements <a href="QueryBuilder.html" title="interface in io.micronaut.data.mod
 <section class="detail" id="appendDeleteClause(java.lang.StringBuilder)">
 <h3>appendDeleteClause</h3>
 <div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/StringBuilder.html" title="class or interface in java.lang" class="external-link">StringBuilder</a></span>&nbsp;<span class="element-name">appendDeleteClause</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/StringBuilder.html" title="class or interface in java.lang" class="external-link">StringBuilder</a>&nbsp;queryString)</span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/StringBuilder.html" title="class or interface in java.lang" class="external-link">StringBuilder</a></span>&nbsp;<span class="element-name">appendDeleteClause</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/StringBuilder.html" title="class or interface in java.lang" class="external-link">StringBuilder</a>&nbsp;queryString)</span></div>
 <div class="block">Append the delete clause.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -1881,10 +1881,10 @@ implements <a href="QueryBuilder.html" title="interface in io.micronaut.data.mod
 <section class="detail" id="buildOrderBy(io.micronaut.data.model.PersistentEntity,io.micronaut.data.model.Sort)">
 <h3>buildOrderBy</h3>
 <div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="QueryResult.html" title="interface in io.micronaut.data.model.query.builder">QueryResult</a></span>&nbsp;<span class="element-name">buildOrderBy</span><wbr><span class="parameters">(@NonNull
- <a href="../../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;entity,
+</span><span class="modifiers">public</span>&nbsp;<span class="return-type">@NonNull <a href="QueryResult.html" title="interface in io.micronaut.data.model.query.builder">QueryResult</a></span>&nbsp;<span class="element-name">buildOrderBy</span><wbr><span class="parameters">(@NonNull
+ @NonNull <a href="../../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;entity,
  @NonNull
- <a href="../../Sort.html" title="interface in io.micronaut.data.model">Sort</a>&nbsp;sort)</span></div>
+ @NonNull <a href="../../Sort.html" title="interface in io.micronaut.data.model">Sort</a>&nbsp;sort)</span></div>
 <div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="QueryBuilder.html#buildOrderBy(io.micronaut.data.model.PersistentEntity,io.micronaut.data.model.Sort)">QueryBuilder</a></code></span></div>
 <div class="block">Encode the given query into the encoded query instance.</div>
 <dl class="notes">
@@ -1902,13 +1902,13 @@ implements <a href="QueryBuilder.html" title="interface in io.micronaut.data.mod
 <section class="detail" id="buildOrderBy(java.lang.String,io.micronaut.data.model.PersistentEntity,io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.Sort)">
 <h3>buildOrderBy</h3>
 <div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="QueryResult.html" title="interface in io.micronaut.data.model.query.builder">QueryResult</a></span>&nbsp;<span class="element-name">buildOrderBy</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;query,
+</span><span class="modifiers">public</span>&nbsp;<span class="return-type">@NonNull <a href="QueryResult.html" title="interface in io.micronaut.data.model.query.builder">QueryResult</a></span>&nbsp;<span class="element-name">buildOrderBy</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;query,
  @NonNull
- <a href="../../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;entity,
+ @NonNull <a href="../../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;entity,
  @NonNull
- io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
+ @NonNull io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
  @NonNull
- <a href="../../Sort.html" title="interface in io.micronaut.data.model">Sort</a>&nbsp;sort)</span></div>
+ @NonNull <a href="../../Sort.html" title="interface in io.micronaut.data.model">Sort</a>&nbsp;sort)</span></div>
 <div class="block">Encode the given query into the encoded query instance.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -1998,7 +1998,7 @@ implements <a href="QueryBuilder.html" title="interface in io.micronaut.data.mod
 <section class="detail" id="newBindingContext(io.micronaut.data.model.PersistentPropertyPath)">
 <h3>newBindingContext</h3>
 <div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="../BindingParameter.BindingContext.html" title="interface in io.micronaut.data.model.query">BindingParameter.BindingContext</a></span>&nbsp;<span class="element-name">newBindingContext</span><wbr><span class="parameters">(@Nullable
- <a href="../../PersistentPropertyPath.html" title="class in io.micronaut.data.model">PersistentPropertyPath</a>&nbsp;ref)</span></div>
+ @Nullable <a href="../../PersistentPropertyPath.html" title="class in io.micronaut.data.model">PersistentPropertyPath</a>&nbsp;ref)</span></div>
 <div class="block">Creates new binding parameter context.</div>
 <dl class="notes">
 <dt>Parameters:</dt>

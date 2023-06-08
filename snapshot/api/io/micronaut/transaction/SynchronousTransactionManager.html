@@ -130,8 +130,8 @@ extends <a href="TransactionManager.html" title="interface in io.micronaut.trans
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Commit the given transaction, with regard to its status.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="TransactionStatus.html" title="interface in io.micronaut.transaction">TransactionStatus</a>&lt;<a href="SynchronousTransactionManager.html" title="type parameter in SynchronousTransactionManager">T</a>&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#getTransaction(io.micronaut.transaction.TransactionDefinition)" class="member-name-link">getTransaction</a><wbr>(<a href="TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition)</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>@NonNull <a href="TransactionStatus.html" title="interface in io.micronaut.transaction">TransactionStatus</a>&lt;<a href="SynchronousTransactionManager.html" title="type parameter in SynchronousTransactionManager">T</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#getTransaction(io.micronaut.transaction.TransactionDefinition)" class="member-name-link">getTransaction</a><wbr>(@Nullable <a href="TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Return a currently active transaction or create a new one, according to
  the specified propagation behavior.</div>
@@ -162,9 +162,9 @@ extends <a href="TransactionManager.html" title="interface in io.micronaut.trans
 <section class="detail" id="getTransaction(io.micronaut.transaction.TransactionDefinition)">
 <h3>getTransaction</h3>
 <div class="member-signature"><span class="annotations">@NonNull
-</span><span class="return-type"><a href="TransactionStatus.html" title="interface in io.micronaut.transaction">TransactionStatus</a>&lt;<a href="SynchronousTransactionManager.html" title="type parameter in SynchronousTransactionManager">T</a>&gt;</span>&nbsp;<span class="element-name">getTransaction</span><wbr><span class="parameters">(@Nullable
- <a href="TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition)</span>
-                             throws <span class="exceptions"><a href="exceptions/TransactionException.html" title="class in io.micronaut.transaction.exceptions">TransactionException</a></span></div>
+</span><span class="return-type">@NonNull <a href="TransactionStatus.html" title="interface in io.micronaut.transaction">TransactionStatus</a>&lt;<a href="SynchronousTransactionManager.html" title="type parameter in SynchronousTransactionManager">T</a>&gt;</span>&nbsp;<span class="element-name">getTransaction</span><wbr><span class="parameters">(@Nullable
+ @Nullable <a href="TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition)</span>
+                                      throws <span class="exceptions"><a href="exceptions/TransactionException.html" title="class in io.micronaut.transaction.exceptions">TransactionException</a></span></div>
 <div class="block">Return a currently active transaction or create a new one, according to
  the specified propagation behavior.
  <p>Note that parameters like isolation level or timeout will only be applied

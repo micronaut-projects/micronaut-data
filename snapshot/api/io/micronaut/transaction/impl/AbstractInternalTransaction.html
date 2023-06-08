@@ -169,7 +169,7 @@ implements <a href="InternalTransaction.html" title="interface in io.micronaut.t
  (either by the application or by the transaction infrastructure).</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#registerSynchronization(io.micronaut.transaction.support.TransactionSynchronization)" class="member-name-link">registerSynchronization</a><wbr>(<a href="../support/TransactionSynchronization.html" title="interface in io.micronaut.transaction.support">TransactionSynchronization</a>&nbsp;synchronization)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#registerSynchronization(io.micronaut.transaction.support.TransactionSynchronization)" class="member-name-link">registerSynchronization</a><wbr>(@NonNull <a href="../support/TransactionSynchronization.html" title="interface in io.micronaut.transaction.support">TransactionSynchronization</a>&nbsp;synchronization)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Register a new transaction synchronization for the current state.</div>
 </div>
@@ -532,7 +532,7 @@ implements <a href="InternalTransaction.html" title="interface in io.micronaut.t
 <section class="detail" id="registerSynchronization(io.micronaut.transaction.support.TransactionSynchronization)">
 <h3>registerSynchronization</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">registerSynchronization</span><wbr><span class="parameters">(@NonNull
- <a href="../support/TransactionSynchronization.html" title="interface in io.micronaut.transaction.support">TransactionSynchronization</a>&nbsp;synchronization)</span></div>
+ @NonNull <a href="../support/TransactionSynchronization.html" title="interface in io.micronaut.transaction.support">TransactionSynchronization</a>&nbsp;synchronization)</span></div>
 <div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="../TransactionStatus.html#registerSynchronization(io.micronaut.transaction.support.TransactionSynchronization)">TransactionStatus</a></code></span></div>
 <div class="block">Register a new transaction synchronization for the current state.
  <p>Note that synchronizations can implement the

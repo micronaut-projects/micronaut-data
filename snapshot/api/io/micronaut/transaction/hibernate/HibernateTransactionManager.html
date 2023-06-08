@@ -138,12 +138,12 @@ loadScripts(document, 'script');</script>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Perform an actual rollback of the given transaction.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>org.hibernate.Session</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@NonNull org.hibernate.Session</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getConnection()" class="member-name-link">getConnection</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Obtains the connection for the current transaction.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@io.micronaut.core.annotation.NonNull boolean</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#hasConnection()" class="member-name-link">hasConnection</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Check if the connection exists.</div>
@@ -250,7 +250,7 @@ loadScripts(document, 'script');</script>
 <section class="detail" id="getConnection()">
 <h3>getConnection</h3>
 <div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">public</span>&nbsp;<span class="return-type">org.hibernate.Session</span>&nbsp;<span class="element-name">getConnection</span>()</div>
+</span><span class="modifiers">public</span>&nbsp;<span class="return-type">@NonNull org.hibernate.Session</span>&nbsp;<span class="element-name">getConnection</span>()</div>
 <div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="../TransactionOperations.html#getConnection()">TransactionOperations</a></code></span></div>
 <div class="block">Obtains the connection for the current transaction.</div>
 <dl class="notes">
@@ -263,7 +263,7 @@ loadScripts(document, 'script');</script>
 <section class="detail" id="hasConnection()">
 <h3>hasConnection</h3>
 <div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">public</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">hasConnection</span>()</div>
+</span><span class="modifiers">public</span>&nbsp;<span class="return-type">@io.micronaut.core.annotation.NonNull boolean</span>&nbsp;<span class="element-name">hasConnection</span>()</div>
 <div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="../TransactionOperations.html#hasConnection()">TransactionOperations</a></code></span></div>
 <div class="block">Check if the connection exists.</div>
 <dl class="notes">

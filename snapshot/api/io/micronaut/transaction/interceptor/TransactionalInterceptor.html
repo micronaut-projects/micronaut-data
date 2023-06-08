@@ -115,8 +115,8 @@ implements io.micronaut.aop.MethodInterceptor&lt;<a href="https://docs.oracle.co
 <div class="summary-table two-column-summary">
 <div class="table-header col-first">Constructor</div>
 <div class="table-header col-last">Description</div>
-<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(io.micronaut.transaction.TransactionOperationsRegistry,io.micronaut.transaction.interceptor.TransactionDataSourceTenantResolver,io.micronaut.core.convert.ConversionService)" class="member-name-link">TransactionalInterceptor</a><wbr>(<a href="../TransactionOperationsRegistry.html" title="interface in io.micronaut.transaction">TransactionOperationsRegistry</a>&nbsp;transactionOperationsRegistry,
- <a href="TransactionDataSourceTenantResolver.html" title="interface in io.micronaut.transaction.interceptor">TransactionDataSourceTenantResolver</a>&nbsp;tenantResolver,
+<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(io.micronaut.transaction.TransactionOperationsRegistry,io.micronaut.transaction.interceptor.TransactionDataSourceTenantResolver,io.micronaut.core.convert.ConversionService)" class="member-name-link">TransactionalInterceptor</a><wbr>(@NonNull <a href="../TransactionOperationsRegistry.html" title="interface in io.micronaut.transaction">TransactionOperationsRegistry</a>&nbsp;transactionOperationsRegistry,
+ @Nullable <a href="TransactionDataSourceTenantResolver.html" title="interface in io.micronaut.transaction.interceptor">TransactionDataSourceTenantResolver</a>&nbsp;tenantResolver,
  io.micronaut.core.convert.ConversionService&nbsp;conversionService)</code></div>
 <div class="col-last even-row-color">
 <div class="block">Default constructor.</div>
@@ -165,9 +165,9 @@ implements io.micronaut.aop.MethodInterceptor&lt;<a href="https://docs.oracle.co
 <section class="detail" id="&lt;init&gt;(io.micronaut.transaction.TransactionOperationsRegistry,io.micronaut.transaction.interceptor.TransactionDataSourceTenantResolver,io.micronaut.core.convert.ConversionService)">
 <h3>TransactionalInterceptor</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name">TransactionalInterceptor</span><wbr><span class="parameters">(@NonNull
- <a href="../TransactionOperationsRegistry.html" title="interface in io.micronaut.transaction">TransactionOperationsRegistry</a>&nbsp;transactionOperationsRegistry,
+ @NonNull <a href="../TransactionOperationsRegistry.html" title="interface in io.micronaut.transaction">TransactionOperationsRegistry</a>&nbsp;transactionOperationsRegistry,
  @Nullable
- <a href="TransactionDataSourceTenantResolver.html" title="interface in io.micronaut.transaction.interceptor">TransactionDataSourceTenantResolver</a>&nbsp;tenantResolver,
+ @Nullable <a href="TransactionDataSourceTenantResolver.html" title="interface in io.micronaut.transaction.interceptor">TransactionDataSourceTenantResolver</a>&nbsp;tenantResolver,
  io.micronaut.core.convert.ConversionService&nbsp;conversionService)</span></div>
 <div class="block">Default constructor.</div>
 <dl class="notes">

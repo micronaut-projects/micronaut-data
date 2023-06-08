@@ -101,17 +101,17 @@ loadScripts(document, 'script');</script>
 <div class="table-header col-last">Description</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>&lt;E,<wbr>
 R&gt;&nbsp;<a href="../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;E,<wbr>R&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#resolveCountQuery(io.micronaut.aop.MethodInvocationContext,io.micronaut.data.model.runtime.StoredQuery,io.micronaut.data.model.Pageable)" class="member-name-link">resolveCountQuery</a><wbr>(io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context,
- <a href="../../model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;E,<wbr>R&gt;&nbsp;storedQuery,
- <a href="../../model/Pageable.html" title="interface in io.micronaut.data.model">Pageable</a>&nbsp;pageable)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#resolveCountQuery(io.micronaut.aop.MethodInvocationContext,io.micronaut.data.model.runtime.StoredQuery,io.micronaut.data.model.Pageable)" class="member-name-link">resolveCountQuery</a><wbr>(@NonNull io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context,
+ @NonNull <a href="../../model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;E,<wbr>R&gt;&nbsp;storedQuery,
+ @Nullable <a href="../../model/Pageable.html" title="interface in io.micronaut.data.model">Pageable</a>&nbsp;pageable)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Prepared count query resolved from the method context.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>&lt;E,<wbr>
 R&gt;&nbsp;<a href="../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;E,<wbr>R&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#resolveQuery(io.micronaut.aop.MethodInvocationContext,io.micronaut.data.model.runtime.StoredQuery,io.micronaut.data.model.Pageable)" class="member-name-link">resolveQuery</a><wbr>(io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context,
- <a href="../../model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;E,<wbr>R&gt;&nbsp;storedQuery,
- <a href="../../model/Pageable.html" title="interface in io.micronaut.data.model">Pageable</a>&nbsp;pageable)</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#resolveQuery(io.micronaut.aop.MethodInvocationContext,io.micronaut.data.model.runtime.StoredQuery,io.micronaut.data.model.Pageable)" class="member-name-link">resolveQuery</a><wbr>(@NonNull io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context,
+ @NonNull <a href="../../model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;E,<wbr>R&gt;&nbsp;storedQuery,
+ @NonNull <a href="../../model/Pageable.html" title="interface in io.micronaut.data.model">Pageable</a>&nbsp;pageable)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Prepared query resolved from the method context.</div>
 </div>
@@ -134,11 +134,11 @@ R&gt;&nbsp;<a href="../../model/runtime/PreparedQuery.html" title="interface in 
 <h3>resolveQuery</h3>
 <div class="member-signature"><span class="type-parameters">&lt;E,<wbr>
 R&gt;</span>&nbsp;<span class="return-type"><a href="../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;E,<wbr>R&gt;</span>&nbsp;<span class="element-name">resolveQuery</span><wbr><span class="parameters">(@NonNull
- io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context,
+ @NonNull io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context,
  @NonNull
- <a href="../../model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;E,<wbr>R&gt;&nbsp;storedQuery,
+ @NonNull <a href="../../model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;E,<wbr>R&gt;&nbsp;storedQuery,
  @NonNull
- <a href="../../model/Pageable.html" title="interface in io.micronaut.data.model">Pageable</a>&nbsp;pageable)</span></div>
+ @NonNull <a href="../../model/Pageable.html" title="interface in io.micronaut.data.model">Pageable</a>&nbsp;pageable)</span></div>
 <div class="block">Prepared query resolved from the method context.</div>
 <dl class="notes">
 <dt>Type Parameters:</dt>
@@ -158,11 +158,11 @@ R&gt;</span>&nbsp;<span class="return-type"><a href="../../model/runtime/Prepare
 <h3>resolveCountQuery</h3>
 <div class="member-signature"><span class="type-parameters">&lt;E,<wbr>
 R&gt;</span>&nbsp;<span class="return-type"><a href="../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;E,<wbr>R&gt;</span>&nbsp;<span class="element-name">resolveCountQuery</span><wbr><span class="parameters">(@NonNull
- io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context,
+ @NonNull io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context,
  @NonNull
- <a href="../../model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;E,<wbr>R&gt;&nbsp;storedQuery,
+ @NonNull <a href="../../model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;E,<wbr>R&gt;&nbsp;storedQuery,
  @Nullable
- <a href="../../model/Pageable.html" title="interface in io.micronaut.data.model">Pageable</a>&nbsp;pageable)</span></div>
+ @Nullable <a href="../../model/Pageable.html" title="interface in io.micronaut.data.model">Pageable</a>&nbsp;pageable)</span></div>
 <div class="block">Prepared count query resolved from the method context.</div>
 <dl class="notes">
 <dt>Type Parameters:</dt>

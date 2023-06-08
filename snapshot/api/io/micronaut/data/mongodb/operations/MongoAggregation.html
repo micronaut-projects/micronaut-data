@@ -96,8 +96,8 @@ loadScripts(document, 'script');</script>
 <div class="summary-table two-column-summary">
 <div class="table-header col-first">Constructor</div>
 <div class="table-header col-last">Description</div>
-<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(java.util.List,io.micronaut.data.mongodb.operations.options.MongoAggregationOptions)" class="member-name-link">MongoAggregation</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;org.bson.conversions.Bson&gt;&nbsp;pipeline,
- <a href="options/MongoAggregationOptions.html" title="class in io.micronaut.data.mongodb.operations.options">MongoAggregationOptions</a>&nbsp;options)</code></div>
+<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(java.util.List,io.micronaut.data.mongodb.operations.options.MongoAggregationOptions)" class="member-name-link">MongoAggregation</a><wbr>(@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;org.bson.conversions.Bson&gt;&nbsp;pipeline,
+ @Nullable <a href="options/MongoAggregationOptions.html" title="class in io.micronaut.data.mongodb.operations.options">MongoAggregationOptions</a>&nbsp;options)</code></div>
 <div class="col-last even-row-color">
 <div class="block">The default constructor.</div>
 </div>
@@ -115,10 +115,10 @@ loadScripts(document, 'script');</script>
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="options/MongoAggregationOptions.html" title="class in io.micronaut.data.mongodb.operations.options">MongoAggregationOptions</a></code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@Nullable <a href="options/MongoAggregationOptions.html" title="class in io.micronaut.data.mongodb.operations.options">MongoAggregationOptions</a></code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getOptions()" class="member-name-link">getOptions</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;org.bson.conversions.Bson&gt;</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;org.bson.conversions.Bson&gt;</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getPipeline()" class="member-name-link">getPipeline</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 </div>
@@ -142,9 +142,9 @@ loadScripts(document, 'script');</script>
 <section class="detail" id="&lt;init&gt;(java.util.List,io.micronaut.data.mongodb.operations.options.MongoAggregationOptions)">
 <h3>MongoAggregation</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name">MongoAggregation</span><wbr><span class="parameters">(@NonNull
- <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;org.bson.conversions.Bson&gt;&nbsp;pipeline,
+ @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;org.bson.conversions.Bson&gt;&nbsp;pipeline,
  @Nullable
- <a href="options/MongoAggregationOptions.html" title="class in io.micronaut.data.mongodb.operations.options">MongoAggregationOptions</a>&nbsp;options)</span></div>
+ @Nullable <a href="options/MongoAggregationOptions.html" title="class in io.micronaut.data.mongodb.operations.options">MongoAggregationOptions</a>&nbsp;options)</span></div>
 <div class="block">The default constructor.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -165,14 +165,14 @@ loadScripts(document, 'script');</script>
 <section class="detail" id="getPipeline()">
 <h3>getPipeline</h3>
 <div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;org.bson.conversions.Bson&gt;</span>&nbsp;<span class="element-name">getPipeline</span>()</div>
+</span><span class="modifiers">public</span>&nbsp;<span class="return-type">@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;org.bson.conversions.Bson&gt;</span>&nbsp;<span class="element-name">getPipeline</span>()</div>
 </section>
 </li>
 <li>
 <section class="detail" id="getOptions()">
 <h3>getOptions</h3>
 <div class="member-signature"><span class="annotations">@Nullable
-</span><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="options/MongoAggregationOptions.html" title="class in io.micronaut.data.mongodb.operations.options">MongoAggregationOptions</a></span>&nbsp;<span class="element-name">getOptions</span>()</div>
+</span><span class="modifiers">public</span>&nbsp;<span class="return-type">@Nullable <a href="options/MongoAggregationOptions.html" title="class in io.micronaut.data.mongodb.operations.options">MongoAggregationOptions</a></span>&nbsp;<span class="element-name">getOptions</span>()</div>
 </section>
 </li>
 </ul>

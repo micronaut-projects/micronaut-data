@@ -109,20 +109,20 @@ implements <a href="BeanIntrospectionMapper.html" title="interface in io.microna
 <div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(io.micronaut.data.model.runtime.RuntimePersistentEntity,io.micronaut.data.model.runtime.RuntimePersistentEntity,io.micronaut.data.runtime.mapper.ResultReader,io.micronaut.data.runtime.mapper.JsonColumnReader,io.micronaut.data.runtime.convert.DataConversionService)" class="member-name-link">DTOMapper</a><wbr>(<a href="../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;<a href="DTOMapper.html" title="type parameter in DTOMapper">T</a>&gt;&nbsp;persistentEntity,
  <a href="../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;?&gt;&nbsp;dtoEntity,
  <a href="ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a>&lt;<a href="DTOMapper.html" title="type parameter in DTOMapper">S</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;resultReader,
- <a href="JsonColumnReader.html" title="interface in io.micronaut.data.runtime.mapper">JsonColumnReader</a>&lt;<a href="DTOMapper.html" title="type parameter in DTOMapper">S</a>&gt;&nbsp;jsonColumnReader,
+ @Nullable <a href="JsonColumnReader.html" title="interface in io.micronaut.data.runtime.mapper">JsonColumnReader</a>&lt;<a href="DTOMapper.html" title="type parameter in DTOMapper">S</a>&gt;&nbsp;jsonColumnReader,
  <a href="../convert/DataConversionService.html" title="interface in io.micronaut.data.runtime.convert">DataConversionService</a>&nbsp;conversionService)</code></div>
 <div class="col-last even-row-color">
 <div class="block">Default constructor.</div>
 </div>
-<div class="col-constructor-name odd-row-color"><code><a href="#%3Cinit%3E(io.micronaut.data.model.runtime.RuntimePersistentEntity,io.micronaut.data.runtime.mapper.ResultReader,io.micronaut.data.runtime.convert.DataConversionService)" class="member-name-link">DTOMapper</a><wbr>(<a href="../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;<a href="DTOMapper.html" title="type parameter in DTOMapper">T</a>&gt;&nbsp;persistentEntity,
+<div class="col-constructor-name odd-row-color"><code><a href="#%3Cinit%3E(io.micronaut.data.model.runtime.RuntimePersistentEntity,io.micronaut.data.runtime.mapper.ResultReader,io.micronaut.data.runtime.mapper.JsonColumnReader,io.micronaut.data.runtime.convert.DataConversionService)" class="member-name-link">DTOMapper</a><wbr>(<a href="../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;<a href="DTOMapper.html" title="type parameter in DTOMapper">T</a>&gt;&nbsp;persistentEntity,
  <a href="ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a>&lt;<a href="DTOMapper.html" title="type parameter in DTOMapper">S</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;resultReader,
+ @Nullable <a href="JsonColumnReader.html" title="interface in io.micronaut.data.runtime.mapper">JsonColumnReader</a>&lt;<a href="DTOMapper.html" title="type parameter in DTOMapper">S</a>&gt;&nbsp;jsonColumnReader,
  <a href="../convert/DataConversionService.html" title="interface in io.micronaut.data.runtime.convert">DataConversionService</a>&nbsp;conversionService)</code></div>
 <div class="col-last odd-row-color">
 <div class="block">Default constructor.</div>
 </div>
-<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(io.micronaut.data.model.runtime.RuntimePersistentEntity,io.micronaut.data.runtime.mapper.ResultReader,io.micronaut.data.runtime.mapper.JsonColumnReader,io.micronaut.data.runtime.convert.DataConversionService)" class="member-name-link">DTOMapper</a><wbr>(<a href="../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;<a href="DTOMapper.html" title="type parameter in DTOMapper">T</a>&gt;&nbsp;persistentEntity,
+<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(io.micronaut.data.model.runtime.RuntimePersistentEntity,io.micronaut.data.runtime.mapper.ResultReader,io.micronaut.data.runtime.convert.DataConversionService)" class="member-name-link">DTOMapper</a><wbr>(<a href="../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;<a href="DTOMapper.html" title="type parameter in DTOMapper">T</a>&gt;&nbsp;persistentEntity,
  <a href="ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a>&lt;<a href="DTOMapper.html" title="type parameter in DTOMapper">S</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;resultReader,
- <a href="JsonColumnReader.html" title="interface in io.micronaut.data.runtime.mapper">JsonColumnReader</a>&lt;<a href="DTOMapper.html" title="type parameter in DTOMapper">S</a>&gt;&nbsp;jsonColumnReader,
  <a href="../convert/DataConversionService.html" title="interface in io.micronaut.data.runtime.convert">DataConversionService</a>&nbsp;conversionService)</code></div>
 <div class="col-last even-row-color">
 <div class="block">Default constructor.</div>
@@ -150,28 +150,28 @@ implements <a href="BeanIntrospectionMapper.html" title="interface in io.microna
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a>&lt;<a href="DTOMapper.html" title="type parameter in DTOMapper">S</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getResultReader()" class="member-name-link">getResultReader</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@Nullable <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#read(S,io.micronaut.core.type.Argument)" class="member-name-link">read</a><wbr>(<a href="DTOMapper.html" title="type parameter in DTOMapper">S</a>&nbsp;object,
- io.micronaut.core.type.Argument&lt;?&gt;&nbsp;argument)</code></div>
+ @NonNull io.micronaut.core.type.Argument&lt;?&gt;&nbsp;argument)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Read a value for the given name from the given object.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@Nullable <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#read(S,io.micronaut.data.model.runtime.RuntimePersistentProperty)" class="member-name-link">read</a><wbr>(<a href="DTOMapper.html" title="type parameter in DTOMapper">S</a>&nbsp;resultSet,
- <a href="../../model/runtime/RuntimePersistentProperty.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentProperty</a>&lt;?&gt;&nbsp;property)</code></div>
+ @NonNull <a href="../../model/runtime/RuntimePersistentProperty.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentProperty</a>&lt;?&gt;&nbsp;property)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Read the given property.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@Nullable <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#read(S,java.lang.String)" class="member-name-link">read</a><wbr>(<a href="DTOMapper.html" title="type parameter in DTOMapper">S</a>&nbsp;object,
- <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name)</code></div>
+ @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Read a value for the given name from the given object.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@Nullable <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#read(S,java.lang.String,io.micronaut.data.model.DataType)" class="member-name-link">read</a><wbr>(<a href="DTOMapper.html" title="type parameter in DTOMapper">S</a>&nbsp;resultSet,
- <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;persistedName,
- <a href="../../model/DataType.html" title="enum class in io.micronaut.data.model">DataType</a>&nbsp;dataType)</code></div>
+ @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;persistedName,
+ @NonNull <a href="../../model/DataType.html" title="enum class in io.micronaut.data.model">DataType</a>&nbsp;dataType)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Read the value from the given result set for the given persisted name and data type.</div>
 </div>
@@ -216,7 +216,7 @@ implements <a href="BeanIntrospectionMapper.html" title="interface in io.microna
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name">DTOMapper</span><wbr><span class="parameters">(<a href="../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;<a href="DTOMapper.html" title="type parameter in DTOMapper">T</a>&gt;&nbsp;persistentEntity,
  <a href="ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a>&lt;<a href="DTOMapper.html" title="type parameter in DTOMapper">S</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;resultReader,
  @Nullable
- <a href="JsonColumnReader.html" title="interface in io.micronaut.data.runtime.mapper">JsonColumnReader</a>&lt;<a href="DTOMapper.html" title="type parameter in DTOMapper">S</a>&gt;&nbsp;jsonColumnReader,
+ @Nullable <a href="JsonColumnReader.html" title="interface in io.micronaut.data.runtime.mapper">JsonColumnReader</a>&lt;<a href="DTOMapper.html" title="type parameter in DTOMapper">S</a>&gt;&nbsp;jsonColumnReader,
  <a href="../convert/DataConversionService.html" title="interface in io.micronaut.data.runtime.convert">DataConversionService</a>&nbsp;conversionService)</span></div>
 <div class="block">Default constructor.</div>
 <dl class="notes">
@@ -235,7 +235,7 @@ implements <a href="BeanIntrospectionMapper.html" title="interface in io.microna
  <a href="../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;?&gt;&nbsp;dtoEntity,
  <a href="ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a>&lt;<a href="DTOMapper.html" title="type parameter in DTOMapper">S</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;resultReader,
  @Nullable
- <a href="JsonColumnReader.html" title="interface in io.micronaut.data.runtime.mapper">JsonColumnReader</a>&lt;<a href="DTOMapper.html" title="type parameter in DTOMapper">S</a>&gt;&nbsp;jsonColumnReader,
+ @Nullable <a href="JsonColumnReader.html" title="interface in io.micronaut.data.runtime.mapper">JsonColumnReader</a>&lt;<a href="DTOMapper.html" title="type parameter in DTOMapper">S</a>&gt;&nbsp;jsonColumnReader,
  <a href="../convert/DataConversionService.html" title="interface in io.micronaut.data.runtime.convert">DataConversionService</a>&nbsp;conversionService)</span></div>
 <div class="block">Default constructor.</div>
 <dl class="notes">
@@ -272,11 +272,11 @@ implements <a href="BeanIntrospectionMapper.html" title="interface in io.microna
 <section class="detail" id="read(S,java.lang.String)">
 <h3 id="read(java.lang.Object,java.lang.String)">read</h3>
 <div class="member-signature"><span class="annotations">@Nullable
-</span><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></span>&nbsp;<span class="element-name">read</span><wbr><span class="parameters">(@NonNull
+</span><span class="modifiers">public</span>&nbsp;<span class="return-type">@Nullable <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></span>&nbsp;<span class="element-name">read</span><wbr><span class="parameters">(@NonNull
  <a href="DTOMapper.html" title="type parameter in DTOMapper">S</a>&nbsp;object,
  @NonNull
- <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name)</span>
-            throws <span class="exceptions">io.micronaut.core.convert.exceptions.ConversionErrorException</span></div>
+ @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name)</span>
+                      throws <span class="exceptions">io.micronaut.core.convert.exceptions.ConversionErrorException</span></div>
 <div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="TypeMapper.html#read(D,java.lang.String)">TypeMapper</a></code></span></div>
 <div class="block">Read a value for the given name from the given object.</div>
 <dl class="notes">
@@ -296,10 +296,10 @@ implements <a href="BeanIntrospectionMapper.html" title="interface in io.microna
 <section class="detail" id="read(S,io.micronaut.core.type.Argument)">
 <h3 id="read(java.lang.Object,io.micronaut.core.type.Argument)">read</h3>
 <div class="member-signature"><span class="annotations">@Nullable
-</span><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></span>&nbsp;<span class="element-name">read</span><wbr><span class="parameters">(@NonNull
+</span><span class="modifiers">public</span>&nbsp;<span class="return-type">@Nullable <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></span>&nbsp;<span class="element-name">read</span><wbr><span class="parameters">(@NonNull
  <a href="DTOMapper.html" title="type parameter in DTOMapper">S</a>&nbsp;object,
  @NonNull
- io.micronaut.core.type.Argument&lt;?&gt;&nbsp;argument)</span></div>
+ @NonNull io.micronaut.core.type.Argument&lt;?&gt;&nbsp;argument)</span></div>
 <div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="TypeMapper.html#read(D,io.micronaut.core.type.Argument)">TypeMapper</a></code></span></div>
 <div class="block">Read a value for the given name from the given object.</div>
 <dl class="notes">
@@ -317,10 +317,10 @@ implements <a href="BeanIntrospectionMapper.html" title="interface in io.microna
 <section class="detail" id="read(S,io.micronaut.data.model.runtime.RuntimePersistentProperty)">
 <h3 id="read(java.lang.Object,io.micronaut.data.model.runtime.RuntimePersistentProperty)">read</h3>
 <div class="member-signature"><span class="annotations">@Nullable
-</span><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></span>&nbsp;<span class="element-name">read</span><wbr><span class="parameters">(@NonNull
+</span><span class="modifiers">public</span>&nbsp;<span class="return-type">@Nullable <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></span>&nbsp;<span class="element-name">read</span><wbr><span class="parameters">(@NonNull
  <a href="DTOMapper.html" title="type parameter in DTOMapper">S</a>&nbsp;resultSet,
  @NonNull
- <a href="../../model/runtime/RuntimePersistentProperty.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentProperty</a>&lt;?&gt;&nbsp;property)</span></div>
+ @NonNull <a href="../../model/runtime/RuntimePersistentProperty.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentProperty</a>&lt;?&gt;&nbsp;property)</span></div>
 <div class="block">Read the given property.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -335,12 +335,12 @@ implements <a href="BeanIntrospectionMapper.html" title="interface in io.microna
 <section class="detail" id="read(S,java.lang.String,io.micronaut.data.model.DataType)">
 <h3 id="read(java.lang.Object,java.lang.String,io.micronaut.data.model.DataType)">read</h3>
 <div class="member-signature"><span class="annotations">@Nullable
-</span><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></span>&nbsp;<span class="element-name">read</span><wbr><span class="parameters">(@NonNull
+</span><span class="modifiers">public</span>&nbsp;<span class="return-type">@Nullable <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></span>&nbsp;<span class="element-name">read</span><wbr><span class="parameters">(@NonNull
  <a href="DTOMapper.html" title="type parameter in DTOMapper">S</a>&nbsp;resultSet,
  @NonNull
- <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;persistedName,
+ @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;persistedName,
  @NonNull
- <a href="../../model/DataType.html" title="enum class in io.micronaut.data.model">DataType</a>&nbsp;dataType)</span></div>
+ @NonNull <a href="../../model/DataType.html" title="enum class in io.micronaut.data.model">DataType</a>&nbsp;dataType)</span></div>
 <div class="block">Read the value from the given result set for the given persisted name and data type.</div>
 <dl class="notes">
 <dt>Parameters:</dt>

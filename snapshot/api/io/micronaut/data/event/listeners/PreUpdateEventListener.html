@@ -117,7 +117,7 @@ extends <a href="../EntityEventListener.html" title="interface in io.micronaut.d
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default boolean</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#preUpdate(io.micronaut.data.event.EntityEventContext)" class="member-name-link">preUpdate</a><wbr>(<a href="../EntityEventContext.html" title="interface in io.micronaut.data.event">EntityEventContext</a>&lt;<a href="PreUpdateEventListener.html" title="type parameter in PreUpdateEventListener">T</a>&gt;&nbsp;context)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#preUpdate(io.micronaut.data.event.EntityEventContext)" class="member-name-link">preUpdate</a><wbr>(@NonNull <a href="../EntityEventContext.html" title="interface in io.micronaut.data.event">EntityEventContext</a>&lt;<a href="PreUpdateEventListener.html" title="type parameter in PreUpdateEventListener">T</a>&gt;&nbsp;context)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
 <div class="block">A pre-update hook.</div>
 </div>
@@ -170,7 +170,7 @@ extends <a href="../EntityEventListener.html" title="interface in io.micronaut.d
 <section class="detail" id="preUpdate(io.micronaut.data.event.EntityEventContext)">
 <h3>preUpdate</h3>
 <div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">preUpdate</span><wbr><span class="parameters">(@NonNull
- <a href="../EntityEventContext.html" title="interface in io.micronaut.data.event">EntityEventContext</a>&lt;<a href="PreUpdateEventListener.html" title="type parameter in PreUpdateEventListener">T</a>&gt;&nbsp;context)</span></div>
+ @NonNull <a href="../EntityEventContext.html" title="interface in io.micronaut.data.event">EntityEventContext</a>&lt;<a href="PreUpdateEventListener.html" title="type parameter in PreUpdateEventListener">T</a>&gt;&nbsp;context)</span></div>
 <div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="../EntityEventListener.html#preUpdate(io.micronaut.data.event.EntityEventContext)">EntityEventListener</a></code></span></div>
 <div class="block">A pre-update hook. Implementors can return false to evict the operation.</div>
 <dl class="notes">

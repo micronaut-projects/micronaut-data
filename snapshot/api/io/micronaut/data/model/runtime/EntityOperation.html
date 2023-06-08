@@ -111,18 +111,18 @@ extends io.micronaut.core.naming.Named, <a href="PreparedDataOperation.html" tit
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>io.micronaut.aop.InvocationContext&lt;?,<wbr>?&gt;</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>@Nullable io.micronaut.aop.InvocationContext&lt;?,<wbr>?&gt;</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#getInvocationContext()" class="member-name-link">getInvocationContext</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;?&gt;</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;?&gt;</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#getRepositoryType()" class="member-name-link">getRepositoryType</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;<a href="EntityOperation.html" title="type parameter in EntityOperation">E</a>&gt;</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;<a href="EntityOperation.html" title="type parameter in EntityOperation">E</a>&gt;</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#getRootEntity()" class="member-name-link">getRootEntity</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">The root entity type.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;<a href="EntityOperation.html" title="type parameter in EntityOperation">E</a>,<wbr>?&gt;</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>@Nullable <a href="StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;<a href="EntityOperation.html" title="type parameter in EntityOperation">E</a>,<wbr>?&gt;</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#getStoredQuery()" class="member-name-link">getStoredQuery</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Possible stored query if exists.</div>
@@ -163,7 +163,7 @@ extends io.micronaut.core.naming.Named, <a href="PreparedDataOperation.html" tit
 <section class="detail" id="getRootEntity()">
 <h3>getRootEntity</h3>
 <div class="member-signature"><span class="annotations">@NonNull
-</span><span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;<a href="EntityOperation.html" title="type parameter in EntityOperation">E</a>&gt;</span>&nbsp;<span class="element-name">getRootEntity</span>()</div>
+</span><span class="return-type">@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;<a href="EntityOperation.html" title="type parameter in EntityOperation">E</a>&gt;</span>&nbsp;<span class="element-name">getRootEntity</span>()</div>
 <div class="block">The root entity type.</div>
 <dl class="notes">
 <dt>Returns:</dt>
@@ -175,7 +175,7 @@ extends io.micronaut.core.naming.Named, <a href="PreparedDataOperation.html" tit
 <section class="detail" id="getRepositoryType()">
 <h3>getRepositoryType</h3>
 <div class="member-signature"><span class="annotations">@NonNull
-</span><span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;?&gt;</span>&nbsp;<span class="element-name">getRepositoryType</span>()</div>
+</span><span class="return-type">@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;?&gt;</span>&nbsp;<span class="element-name">getRepositoryType</span>()</div>
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>The repository type.</dd>
@@ -186,7 +186,7 @@ extends io.micronaut.core.naming.Named, <a href="PreparedDataOperation.html" tit
 <section class="detail" id="getStoredQuery()">
 <h3>getStoredQuery</h3>
 <div class="member-signature"><span class="annotations">@Nullable
-</span><span class="return-type"><a href="StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;<a href="EntityOperation.html" title="type parameter in EntityOperation">E</a>,<wbr>?&gt;</span>&nbsp;<span class="element-name">getStoredQuery</span>()</div>
+</span><span class="return-type">@Nullable <a href="StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;<a href="EntityOperation.html" title="type parameter in EntityOperation">E</a>,<wbr>?&gt;</span>&nbsp;<span class="element-name">getStoredQuery</span>()</div>
 <div class="block">Possible stored query if exists.</div>
 <dl class="notes">
 <dt>Returns:</dt>
@@ -198,7 +198,7 @@ extends io.micronaut.core.naming.Named, <a href="PreparedDataOperation.html" tit
 <section class="detail" id="getInvocationContext()">
 <h3>getInvocationContext</h3>
 <div class="member-signature"><span class="annotations">@Nullable
-</span><span class="return-type">io.micronaut.aop.InvocationContext&lt;?,<wbr>?&gt;</span>&nbsp;<span class="element-name">getInvocationContext</span>()</div>
+</span><span class="return-type">@Nullable io.micronaut.aop.InvocationContext&lt;?,<wbr>?&gt;</span>&nbsp;<span class="element-name">getInvocationContext</span>()</div>
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>The invocation context</dd>
