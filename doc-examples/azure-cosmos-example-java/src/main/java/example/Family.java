@@ -1,10 +1,10 @@
 package example;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.Relation;
+import io.micronaut.data.annotation.Transient;
 import io.micronaut.data.annotation.Version;
 import io.micronaut.data.cosmos.annotation.ETag;
 import io.micronaut.data.cosmos.annotation.PartitionKey;
@@ -42,7 +42,7 @@ public class Family {
     private String documentVersion;
     // end::locking[]
 
-    @JsonIgnore
+    @Transient
     private String comment;
 
     public String getId() {

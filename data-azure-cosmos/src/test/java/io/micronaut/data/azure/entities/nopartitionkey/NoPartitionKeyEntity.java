@@ -1,8 +1,8 @@
 package io.micronaut.data.azure.entities.nopartitionkey;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.Transient;
 import io.micronaut.data.annotation.Version;
 
 import java.util.List;
@@ -26,7 +26,7 @@ public class NoPartitionKeyEntity {
     @Version
     private Long version;
 
-    @JsonIgnore
+    @Transient
     private String comment;
 
     public String getId() {
