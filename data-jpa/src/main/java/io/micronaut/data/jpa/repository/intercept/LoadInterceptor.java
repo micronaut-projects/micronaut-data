@@ -16,6 +16,7 @@
 package io.micronaut.data.jpa.repository.intercept;
 
 import io.micronaut.aop.MethodInvocationContext;
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.intercept.DataInterceptor;
 import io.micronaut.data.intercept.RepositoryMethodKey;
@@ -32,14 +33,15 @@ import java.util.Arrays;
  * @param <T> the entity type
  * @author mitchjust
  */
-@SuppressWarnings("unused")
-public class LoadInterceptor<T> extends AbstractQueryInterceptor<T, T> implements DataInterceptor<T, T> {
+@Internal
+public final class LoadInterceptor<T> extends AbstractQueryInterceptor<T, T> implements DataInterceptor<T, T> {
+
     /**
      * Default constructor.
      *
      * @param operations The operations
      */
-    protected LoadInterceptor(@NonNull RepositoryOperations operations) {
+    LoadInterceptor(@NonNull RepositoryOperations operations) {
         super(operations);
     }
 

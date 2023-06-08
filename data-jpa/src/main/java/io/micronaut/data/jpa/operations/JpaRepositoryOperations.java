@@ -19,6 +19,7 @@ import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.operations.PrimaryRepositoryOperations;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
+
 import java.io.Serializable;
 
 /**
@@ -43,13 +44,25 @@ public interface JpaRepositoryOperations extends PrimaryRepositoryOperations {
 
     /**
      * Create an uninitialized proxy.
+     *
      * @param type the entity type
-     * @param id the entity id
-     * @param <T> the entity type
+     * @param id   the entity id
+     * @param <T>  the entity type
      * @return an uninitialized proxy
      */
     @NonNull
     <T> T load(@NonNull Class<T> type, @NonNull Serializable id);
+
+    /**
+     * Merges the entity.
+     *
+     * @param entity The entity to be merged
+     * @param <T>    The entity type
+     * @return merged entity
+     * @see EntityManager#merge(Object)
+     */
+    @NonNull
+    <T> T merge(@NonNull T entity);
 
     /**
      * Flush the current session.
