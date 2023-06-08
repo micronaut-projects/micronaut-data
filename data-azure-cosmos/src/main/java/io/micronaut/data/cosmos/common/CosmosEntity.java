@@ -15,7 +15,6 @@
  */
 package io.micronaut.data.cosmos.common;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
@@ -23,6 +22,7 @@ import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.util.StringUtils;
+import io.micronaut.data.annotation.Transient;
 import io.micronaut.data.cosmos.annotation.ETag;
 import io.micronaut.data.cosmos.annotation.PartitionKey;
 import io.micronaut.data.cosmos.config.CosmosDatabaseConfiguration;
@@ -118,7 +118,7 @@ public final class CosmosEntity {
         BeanIntrospection<?> beanIntrospection = runtimePersistentEntity.getIntrospection();
         Collection<? extends BeanProperty<?, Object>> beanProperties = beanIntrospection.getBeanProperties();
         for (BeanProperty<?, Object> bp : beanProperties) {
-            if (bp.hasStereotype(JsonIgnore.class)) {
+            if (bp.hasStereotype(Transient.class)) {
                 continue;
             }
             if (bp.hasStereotype(ETag.class)) {
