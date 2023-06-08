@@ -76,6 +76,7 @@ include 'data-spring-jpa'
 include 'doc-examples:hibernate-example-java'
 include 'doc-examples:hibernate-example-groovy'
 include 'doc-examples:hibernate-example-kotlin'
+include 'doc-examples:hibernate-example-kotlin-ksp'
 
 include 'doc-examples:hibernate-reactive-example-java'
 include 'doc-examples:hibernate-reactive-example-kotlin'
