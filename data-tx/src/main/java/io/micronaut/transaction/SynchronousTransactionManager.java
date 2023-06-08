@@ -29,7 +29,7 @@ import io.micronaut.transaction.exceptions.*;
  * declarative transaction demarcation through AOP.
  *
  * <p>For implementors, it is recommended to derive from the provided
- * {@link io.micronaut.transaction.support.AbstractSynchronousTransactionManager}
+ * {@link io.micronaut.transaction.support.AbstractTransactionOperations}
  * class, which pre-implements the defined propagation behavior and takes care
  * of transaction synchronization handling. Subclasses have to implement
  * template methods for specific states of the underlying transaction,

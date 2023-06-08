@@ -37,7 +37,6 @@ spring-data = "3.1.0"
 
 # Need to leave it here because micronaut-sql uses older version. When it's upgraded there then we can remove this declaration here
 oracle-jdbc-driver = "23.2.0.0"
-oracle-flyway = "9.19.3"
 
 # Testing and benchmarking
 
@@ -110,7 +109,6 @@ spring-data-commons = { module = "org.springframework.data:spring-data-commons",
 # JDBC
 
 drivers-jdbc-oracle = { module = "com.oracle.database.jdbc:ojdbc8", version.ref = "oracle-jdbc-driver" }
-flyway-oracle = { module = "org.flywaydb:flyway-database-oracle", version.ref = "oracle-flyway" }
 
 # AZURE COSMOS
 
