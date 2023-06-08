@@ -15,13 +15,13 @@
  */
 package io.micronaut.data.azure.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.micronaut.data.annotation.DateCreated;
 import io.micronaut.data.annotation.DateUpdated;
 import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.MappedProperty;
-import io.micronaut.data.annotation.Transient;
 import io.micronaut.data.annotation.event.PostLoad;
 import io.micronaut.data.annotation.event.PostPersist;
 import io.micronaut.data.annotation.event.PostRemove;
@@ -54,7 +54,7 @@ public class CosmosBook {
         this.totalPages = totalPages;
     }
 
-    @Transient
+    @JsonIgnore
     public int prePersist, postPersist, preUpdate, postUpdate, preRemove, postRemove, postLoad;
 
     @DateCreated
@@ -98,7 +98,7 @@ public class CosmosBook {
         postLoad++;
     }
 
-    @Transient
+    @JsonIgnore
     public void resetEventCounters() {
         prePersist = 0;
         postPersist = 0;

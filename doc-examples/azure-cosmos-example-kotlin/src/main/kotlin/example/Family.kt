@@ -1,7 +1,7 @@
 package example
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import io.micronaut.data.annotation.*
-import io.micronaut.data.annotation.Transient
 import io.micronaut.data.cosmos.annotation.ETag
 import io.micronaut.data.cosmos.annotation.PartitionKey
 import java.util.*
@@ -27,7 +27,7 @@ data class Family(
     var documentVersion: String? = null
     // end::locking[]
 ) {
-    @Transient
+    @JsonIgnore
     var comment: String? = null
 
     override fun toString(): String {

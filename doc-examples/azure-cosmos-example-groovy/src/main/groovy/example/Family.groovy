@@ -1,9 +1,9 @@
 package example
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import io.micronaut.data.annotation.Id
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.Relation
-import io.micronaut.data.annotation.Transient
 import io.micronaut.data.cosmos.annotation.ETag
 import io.micronaut.data.cosmos.annotation.PartitionKey
 
@@ -28,7 +28,7 @@ class Family {
     @ETag
     private String documentVersion
     // end::locking[]
-    @Transient
+    @JsonIgnore
     private String comment
 
     String getId() {
