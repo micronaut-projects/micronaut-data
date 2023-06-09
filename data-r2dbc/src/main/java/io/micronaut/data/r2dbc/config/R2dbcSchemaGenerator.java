@@ -127,17 +127,15 @@ public class R2dbcSchemaGenerator {
         List<TableStatements> tableStatementsList = Arrays.stream(entities)
             .map(entity -> builder.buildCreateTableStatements(handleForeignKeys, entity))
             .collect(Collectors.toList());
-        List<String> createStatements;
+        List<String> createStatements = new ArrayList<>(SqlQueryBuilder.INITIAL_STATEMENT_LIST_SIZE);
         List<String> createForeignKeyStatements;
         if (handleForeignKeys) {
-            createStatements = new ArrayList<>(SqlQueryBuilder.INITIAL_STATEMENT_LIST_SIZE);
             createForeignKeyStatements = new ArrayList<>(SqlQueryBuilder.INITIAL_STATEMENT_LIST_SIZE);
             tableStatementsList.forEach(ts -> {
                 createStatements.addAll(Arrays.asList(ts.getStatements()));
                 createForeignKeyStatements.addAll(Arrays.asList(ts.getForeignKeyStatements()));
             });
         } else {
-            createStatements = new ArrayList<>(SqlQueryBuilder.INITIAL_STATEMENT_LIST_SIZE);
             createForeignKeyStatements = new ArrayList<>();
             tableStatementsList.forEach(ts -> {
                 createStatements.addAll(Arrays.asList(ts.getStatements()));
@@ -173,17 +171,15 @@ public class R2dbcSchemaGenerator {
             case CREATE_DROP:
                 List<TableStatements> dropTableStatementsList = Arrays.stream(entities).map(entity -> builder.buildDropTableStatements(handleForeignKeys, entity))
                     .collect(Collectors.toList());
-                List<String> dropStatements;
+                List<String> dropStatements = new ArrayList<>(SqlQueryBuilder.INITIAL_STATEMENT_LIST_SIZE);
                 List<String> dropForeignKeyStatements;
                 if (handleForeignKeys) {
-                    dropStatements = new ArrayList<>(SqlQueryBuilder.INITIAL_STATEMENT_LIST_SIZE);
                     dropForeignKeyStatements = new ArrayList<>(SqlQueryBuilder.INITIAL_STATEMENT_LIST_SIZE);
-                    tableStatementsList.forEach(ts -> {
+                    dropTableStatementsList.forEach(ts -> {
                         dropStatements.addAll(Arrays.asList(ts.getStatements()));
                         dropForeignKeyStatements.addAll(Arrays.asList(ts.getForeignKeyStatements()));
                     });
                 } else {
-                    dropStatements = new ArrayList<>(SqlQueryBuilder.INITIAL_STATEMENT_LIST_SIZE);
                     dropForeignKeyStatements = new ArrayList<>();
                     tableStatementsList.forEach(ts -> {
                         dropStatements.addAll(Arrays.asList(ts.getStatements()));
@@ -209,7 +205,7 @@ public class R2dbcSchemaGenerator {
                             return execute(connection, sql)
                                 .onErrorResume((throwable -> Mono.empty()));
                         }))
-                    .concatWith(createForeignKeysFlow).concatWith(createTablesFlow)
+                    .concatWith(createTablesFlow).concatWith(createForeignKeysFlow)
                     .then();
             case CREATE:
             default:

@@ -135,7 +135,7 @@ public class SchemaGenerator {
             switch (configuration.getSchemaGenerate()) {
                 case CREATE_DROP:
                     try {
-                        String sql = builder.buildBatchDropTableStatement(entities);
+                        String sql = builder.buildBatchDropTableStatement(handleForeignKeys, entities);
                         if (DataSettings.QUERY_LOG.isDebugEnabled()) {
                             DataSettings.QUERY_LOG.debug("Dropping Tables: \n{}", sql);
                         }
@@ -164,7 +164,7 @@ public class SchemaGenerator {
                 case CREATE_DROP:
                     for (PersistentEntity entity : entities) {
                         try {
-                            String[] statements = builder.buildDropTableStatements(entity).getAllStatements();
+                            String[] statements = builder.buildDropTableStatements(handleForeignKeys, entity).getAllStatements();
                             for (String sql : statements) {
                                 if (DataSettings.QUERY_LOG.isDebugEnabled()) {
                                     DataSettings.QUERY_LOG.debug("Executing DROP statement : \n{}", sql);
@@ -181,7 +181,7 @@ public class SchemaGenerator {
                     }
                 case CREATE:
                     for (PersistentEntity entity : entities) {
-                        String[] sql = builder.buildCreateTableStatements(entity).getStatements();
+                        String[] sql = builder.buildCreateTableStatements(handleForeignKeys, entity).getAllStatements();
                         for (String stmt : sql) {
                             if (DataSettings.QUERY_LOG.isDebugEnabled()) {
                                 DataSettings.QUERY_LOG.debug("Executing CREATE statement: \n{}", stmt);
