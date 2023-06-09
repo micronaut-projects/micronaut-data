@@ -25,6 +25,7 @@ import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.JsonView;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.model.PersistentEntity;
+import io.micronaut.data.model.query.builder.TableStatements;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
@@ -123,15 +124,24 @@ public class R2dbcSchemaGenerator {
     }
 
     private Mono<Void> generate(Connection connection, SchemaGenerate schemaGenerate, boolean handleForeignKeys, PersistentEntity[] entities, SqlQueryBuilder builder) {
-        List<String> createStatements = Arrays.stream(entities)
-            .flatMap(entity -> Arrays.stream(builder.buildCreateTableStatements(handleForeignKeys, entity)))
+        List<TableStatements> tableStatementsList = Arrays.stream(entities)
+            .map(entity -> builder.buildCreateTableStatements(handleForeignKeys, entity))
             .collect(Collectors.toList());
+        List<String> createStatements;
         List<String> createForeignKeyStatements;
         if (handleForeignKeys) {
-            createForeignKeyStatements = createStatements.stream().filter(s -> s.startsWith(SqlQueryBuilder.ALTER_TABLE)).toList();
-            createStatements.removeAll(createForeignKeyStatements);
+            createStatements = new ArrayList<>(SqlQueryBuilder.INITIAL_STATEMENT_LIST_SIZE);
+            createForeignKeyStatements = new ArrayList<>(SqlQueryBuilder.INITIAL_STATEMENT_LIST_SIZE);
+            tableStatementsList.forEach(ts -> {
+                createStatements.addAll(Arrays.asList(ts.getStatements()));
+                createForeignKeyStatements.addAll(Arrays.asList(ts.getForeignKeyStatements()));
+            });
         } else {
+            createStatements = new ArrayList<>(SqlQueryBuilder.INITIAL_STATEMENT_LIST_SIZE);
             createForeignKeyStatements = new ArrayList<>();
+            tableStatementsList.forEach(ts -> {
+                createStatements.addAll(Arrays.asList(ts.getStatements()));
+            });
         }
         Flux<Void> createTablesFlow = Flux.fromIterable(createStatements)
             .concatMap(sql -> {
@@ -161,14 +171,23 @@ public class R2dbcSchemaGenerator {
             });
         switch (schemaGenerate) {
             case CREATE_DROP:
-                List<String> dropStatements = Arrays.stream(entities).flatMap(entity -> Arrays.stream(builder.buildDropTableStatements(handleForeignKeys, entity)))
+                List<TableStatements> dropTableStatementsList = Arrays.stream(entities).map(entity -> builder.buildDropTableStatements(handleForeignKeys, entity))
                     .collect(Collectors.toList());
+                List<String> dropStatements;
                 List<String> dropForeignKeyStatements;
                 if (handleForeignKeys) {
-                    dropForeignKeyStatements = dropStatements.stream().filter(s -> s.startsWith(SqlQueryBuilder.ALTER_TABLE)).toList();
-                    dropStatements.removeAll(dropForeignKeyStatements);
+                    dropStatements = new ArrayList<>(SqlQueryBuilder.INITIAL_STATEMENT_LIST_SIZE);
+                    dropForeignKeyStatements = new ArrayList<>(SqlQueryBuilder.INITIAL_STATEMENT_LIST_SIZE);
+                    tableStatementsList.forEach(ts -> {
+                        dropStatements.addAll(Arrays.asList(ts.getStatements()));
+                        dropForeignKeyStatements.addAll(Arrays.asList(ts.getForeignKeyStatements()));
+                    });
                 } else {
+                    dropStatements = new ArrayList<>(SqlQueryBuilder.INITIAL_STATEMENT_LIST_SIZE);
                     dropForeignKeyStatements = new ArrayList<>();
+                    tableStatementsList.forEach(ts -> {
+                        dropStatements.addAll(Arrays.asList(ts.getStatements()));
+                    });
                 }
                 return Flux.fromIterable(dropForeignKeyStatements)
                     .concatMap(foreignKeySql -> {

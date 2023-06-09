@@ -43,7 +43,6 @@ import java.lang.reflect.Modifier;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -163,50 +162,27 @@ public class SchemaGenerator {
         } else {
             switch (configuration.getSchemaGenerate()) {
                 case CREATE_DROP:
-                    List<String> dropStatements = new ArrayList<>();
                     for (PersistentEntity entity : entities) {
                         try {
-                            String[] statements = builder.buildDropTableStatements(handleForeignKeys, entity);
+                            String[] statements = builder.buildDropTableStatements(entity).getAllStatements();
                             for (String sql : statements) {
-                                if (handleForeignKeys && sql.startsWith(SqlQueryBuilder.ALTER_TABLE)) {
-                                    if (DataSettings.QUERY_LOG.isDebugEnabled()) {
-                                        DataSettings.QUERY_LOG.debug("Dropping Foreign Key: \n{}", sql);
-                                    }
-                                    try (PreparedStatement ps = connection.prepareStatement(sql)) {
-                                        ps.executeUpdate();
-                                    }
-                                } else {
-                                    dropStatements.add(sql);
+                                if (DataSettings.QUERY_LOG.isDebugEnabled()) {
+                                    DataSettings.QUERY_LOG.debug("Executing DROP statement : \n{}", sql);
+                                }
+                                try (PreparedStatement ps = connection.prepareStatement(sql)) {
+                                    ps.executeUpdate();
                                 }
                             }
                         } catch (SQLException e) {
                             if (DataSettings.QUERY_LOG.isTraceEnabled()) {
-                                DataSettings.QUERY_LOG.trace("Drop Foreign Key Unsuccessful: " + e.getMessage());
-                            }
-                        }
-                    }
-                    for (String sql : dropStatements) {
-                        if (DataSettings.QUERY_LOG.isDebugEnabled()) {
-                            DataSettings.QUERY_LOG.debug("Dropping Table: \n{}", sql);
-                        }
-                        try (PreparedStatement ps = connection.prepareStatement(sql)) {
-                            ps.executeUpdate();
-                        } catch (SQLException e) {
-                            if (DataSettings.QUERY_LOG.isTraceEnabled()) {
-                                DataSettings.QUERY_LOG.trace("Drop Unsuccessful: " + e.getMessage());
+                                DataSettings.QUERY_LOG.trace("DROP Statement Unsuccessful: " + e.getMessage());
                             }
                         }
                     }
                 case CREATE:
-                    List<String> foreignKeyStatements = new ArrayList<>();
                     for (PersistentEntity entity : entities) {
-                        String[] sql = builder.buildCreateTableStatements(handleForeignKeys, entity);
+                        String[] sql = builder.buildCreateTableStatements(entity).getStatements();
                         for (String stmt : sql) {
-                            if (handleForeignKeys && stmt.startsWith(SqlQueryBuilder.ALTER_TABLE)) {
-                                foreignKeyStatements.add(stmt);
-                                // Execute at the end
-                                continue;
-                            }
                             if (DataSettings.QUERY_LOG.isDebugEnabled()) {
                                 DataSettings.QUERY_LOG.debug("Executing CREATE statement: \n{}", stmt);
                             }
@@ -220,22 +196,7 @@ public class SchemaGenerator {
                                 }
                             }
                         }
-                    }
-                    if (CollectionUtils.isNotEmpty(foreignKeyStatements)) {
-                        for (String foreignKeyStmt : foreignKeyStatements) {
-                            if (DataSettings.QUERY_LOG.isDebugEnabled()) {
-                                DataSettings.QUERY_LOG.debug("Executing foreign key statement: \n{}", foreignKeyStmt);
-                            }
-                            try {
-                                try (PreparedStatement ps = connection.prepareStatement(foreignKeyStmt)) {
-                                    ps.executeUpdate();
-                                }
-                            } catch (SQLException e) {
-                                if (DataSettings.QUERY_LOG.isWarnEnabled()) {
-                                    DataSettings.QUERY_LOG.warn("Foreign key statement unsuccessful: " + e.getMessage());
-                                }
-                            }
-                        }
+
                     }
                     break;
                 default:

@@ -61,7 +61,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -93,8 +92,6 @@ import static io.micronaut.data.model.query.builder.sql.SqlQueryBuilderUtils.add
 @SuppressWarnings("FileLength")
 public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements QueryBuilder, SqlQueryConfiguration.DialectConfiguration {
 
-    public static final String ALTER_TABLE = "ALTER TABLE";
-
     /**
      * The start of an IN expression.
      */
@@ -104,13 +101,20 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     public static final String SQL_SERVER_FOR_UPDATE_CLAUSE = " WITH (UPDLOCK, ROWLOCK)";
 
     /**
+     * List size for the create/drop statements.
+     */
+    public static final int INITIAL_STATEMENT_LIST_SIZE = 256;
+
+    /**
      * Annotation used to represent join tables.
      */
     private static final String ANN_JOIN_TABLE = "io.micronaut.data.jdbc.annotation.JoinTable";
     private static final String ANN_JOIN_COLUMNS = "io.micronaut.data.jdbc.annotation.JoinColumns";
     private static final String BLANK_SPACE = " ";
+    private static final String LINE_SEPARATOR = System.getProperty("line.separator");
     private static final String SEQ_SUFFIX = "_seq";
     private static final String INSERT_INTO = "INSERT INTO ";
+    private static final String ALTER_TABLE = "ALTER TABLE";
     private static final String JDBC_REPO_ANNOTATION = "io.micronaut.data.jdbc.annotation.JdbcRepository";
 
     private final Dialect dialect;
@@ -233,11 +237,17 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     public @NonNull
     String buildBatchCreateTableStatement(boolean createForeignKeys, @NonNull PersistentEntity... entities) {
         if (createForeignKeys) {
-            return Arrays.stream(entities).flatMap(entity -> Stream.of(buildCreateTableStatements(true, entity)))
-                .sorted(new StatementsComparator(true)).collect(Collectors.joining(System.getProperty("line.separator")));
+            List<String> createTableStatements = new ArrayList<>(INITIAL_STATEMENT_LIST_SIZE);
+            List<String> foreignKeyStatements = new ArrayList<>(INITIAL_STATEMENT_LIST_SIZE);
+            for (PersistentEntity entity : entities) {
+                TableStatements tableStatements = buildCreateTableStatements(true, entity);
+                createTableStatements.addAll(Arrays.asList(tableStatements.getStatements()));
+                foreignKeyStatements.addAll(Arrays.asList(tableStatements.getForeignKeyStatements()));
+            }
+            return Stream.concat(createTableStatements.stream(), foreignKeyStatements.stream()).collect(Collectors.joining(LINE_SEPARATOR));
         }
-        return Arrays.stream(entities).flatMap(entity -> Stream.of(buildCreateTableStatements(false, entity)))
-            .collect(Collectors.joining(System.getProperty("line.separator")));
+        return Arrays.stream(entities).flatMap(entity -> Stream.of(buildCreateTableStatements(false, entity).getStatements()))
+            .collect(Collectors.joining(LINE_SEPARATOR));
     }
 
     /**
@@ -265,11 +275,18 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     public @NonNull
     String buildBatchDropTableStatement(boolean dropForeignKeys, @NonNull PersistentEntity... entities) {
         if (dropForeignKeys) {
-            return Arrays.stream(entities).flatMap(entity -> Stream.of(buildDropTableStatements(true, entity)))
-                .sorted(new StatementsComparator(false)).collect(Collectors.joining(System.getProperty("line.separator")));
+            int initialSize = 256;
+            List<String> createTableStatements = new ArrayList<>(initialSize);
+            List<String> foreignKeyStatements = new ArrayList<>(initialSize);
+            for (PersistentEntity entity : entities) {
+                TableStatements tableStatements = buildDropTableStatements(true, entity);
+                createTableStatements.addAll(Arrays.asList(tableStatements.getStatements()));
+                foreignKeyStatements.addAll(Arrays.asList(tableStatements.getForeignKeyStatements()));
+            }
+            return Stream.concat(foreignKeyStatements.stream(), createTableStatements.stream()).collect(Collectors.joining(LINE_SEPARATOR));
         }
-        return Arrays.stream(entities).flatMap(entity -> Stream.of(buildDropTableStatements(false, entity)))
-            .collect(Collectors.joining(System.getProperty("line.separator")));
+        return Arrays.stream(entities).flatMap(entity -> Stream.of(buildDropTableStatements(false, entity).getStatements()))
+            .collect(Collectors.joining(LINE_SEPARATOR));
     }
 
     /**
@@ -297,7 +314,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     public @NonNull
     TableStatements buildDropTableStatements(boolean dropForeignKeys, @NonNull PersistentEntity entity) {
         String tableName = getTableName(entity);
-        TableStatements tableStatements = new TableStatements(tableName, false);
+        TableStatements tableStatements = new TableStatements(false);
         boolean escape = shouldEscape(entity);
         String sql = "DROP TABLE " + tableName;
         Collection<Association> foreignKeyAssociations = getJoinTableAssociations(entity);
@@ -309,10 +326,10 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                     .orElseGet(() ->
                             getMappedName(namingStrategy, association)
                     );
-            tableStatements.addTableStatement("DROP TABLE " + (escape ? quote(joinTableName) : joinTableName) + ";");
+            tableStatements.addStatement("DROP TABLE " + (escape ? quote(joinTableName) : joinTableName) + ";");
         }
 
-        tableStatements.addTableStatement(sql);
+        tableStatements.addStatement(sql);
 
         if (dropForeignKeys) {
             List<ForeignKey> foreignKeys = new ArrayList<>();
@@ -416,13 +433,13 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
 
         PersistentProperty identity = entity.getIdentity();
 
-        TableStatements tableStatements = new TableStatements(tableName, true);
+        TableStatements tableStatements = new TableStatements(true);
         String schema = getSchemaName(entity);
         if (StringUtils.isNotEmpty(schema)) {
             if (escape) {
                 schema = quote(schema);
             }
-            tableStatements.addTableStatement("CREATE SCHEMA " + schema + ";");
+            tableStatements.addStatement("CREATE SCHEMA " + schema + ";");
         }
 
         Collection<Association> foreignKeyAssociations = getJoinTableAssociations(entity);
@@ -507,7 +524,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                     joinTableBuilder.append(';');
                 }
 
-                tableStatements.addTableStatement(joinTableBuilder.toString());
+                tableStatements.addStatement(joinTableBuilder.toString());
 
             }
         }
@@ -595,7 +612,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
             boolean isSequence = idGeneratorType == GeneratedValue.Type.SEQUENCE;
             final String generatedDefinition = identity.getAnnotationMetadata().stringValue(GeneratedValue.class, "definition").orElse(null);
             if (generatedDefinition != null) {
-                tableStatements.addTableStatement(generatedDefinition);
+                tableStatements.addStatement(generatedDefinition);
             } else if (isSequence) {
                 final boolean isSqlServer = dialect == Dialect.SQL_SERVER;
                 final String sequenceName = quote(unescapedTableName + SEQ_SUFFIX);
@@ -612,10 +629,10 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                         createSequenceStmt += " INCREMENT BY 1";
                     }
                 }
-                tableStatements.addTableStatement(createSequenceStmt);
+                tableStatements.addStatement(createSequenceStmt);
             }
         }
-        tableStatements.addTableStatement(builder.toString());
+        tableStatements.addStatement(builder.toString());
         addIndexes(entity, tableName, tableStatements);
         if (createForeignKeys) {
             addForeignKeys(entity, tableName, escape, true, foreignKeys, tableStatements);
@@ -626,7 +643,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     private void addIndexes(PersistentEntity entity, String tableName, TableStatements tableStatements) {
         final List<String> indexes = createIndexes(entity, tableName);
         if (CollectionUtils.isNotEmpty(indexes)) {
-            tableStatements.addTableStatement(indexes.toArray(new String[0]));
+            tableStatements.addStatement(indexes.toArray(new String[0]));
         }
     }
 
@@ -1995,34 +2012,6 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
 
         public String getReferencedColumnName() {
             return referencedColumnName;
-        }
-    }
-
-    /**
-     * Pushes statements with 'ALTER TABLE' to the bottom or top based on alterTableLowPriority flag. Used to prioritize when there are
-     * foreign key statements.
-     */
-    private static final class StatementsComparator implements Comparator<String> {
-
-        private final boolean alterTableLowPriority;
-
-        public StatementsComparator(boolean alterTableLowPriority) {
-            this.alterTableLowPriority = alterTableLowPriority;
-        }
-
-        @Override
-        public int compare(String o1, String o2) {
-            boolean alterTable1 = o1.startsWith(ALTER_TABLE);
-            boolean alterTable2 = o2.startsWith(ALTER_TABLE);
-            if (alterTable1 && alterTable2) {
-                return 0;
-            } else if (alterTable1) {
-                return alterTableLowPriority ? 1 : -1;
-            } else if (alterTable2) {
-                return alterTableLowPriority ? -1 : 1;
-            } else {
-                return 0;
-            }
         }
     }
 }
