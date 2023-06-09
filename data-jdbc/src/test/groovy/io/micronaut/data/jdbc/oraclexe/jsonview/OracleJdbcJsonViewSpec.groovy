@@ -202,6 +202,8 @@ class OracleJdbcJsonViewSpec extends Specification {
         def ivoneStudentView = new StudentView()
         def ivoneStudentName = "Ivone"
         ivoneStudentView.setName(ivoneStudentName)
+        ivoneStudentView.setAverageGrade(9.2)
+        ivoneStudentView.setStartDateTime(LocalDateTime.now().minusDays(90));
 
         def peterStudentView = new StudentView()
         def peterStudentName = "Peter"

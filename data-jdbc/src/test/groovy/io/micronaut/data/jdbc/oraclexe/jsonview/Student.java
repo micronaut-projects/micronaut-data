@@ -1,11 +1,12 @@
 package io.micronaut.data.jdbc.oraclexe.jsonview;
 
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.jdbc.annotation.JoinTable;
-import org.testcontainers.shaded.com.github.dockerjava.core.dockerfile.DockerfileStatement;
+import jakarta.validation.constraints.Null;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
@@ -17,14 +18,17 @@ public class Student {
     @GeneratedValue(GeneratedValue.Type.IDENTITY)
     private Long id;
     private String name;
+    @Nullable
     private Double averageGrade;
 
+
+    @Nullable
     private LocalDateTime startDateTime;
 
     private boolean active;
 
     @JoinTable(name = "TBL_STUDENT_CLASSES")
-    @Relation(Relation.Kind.MANY_TO_MANY)
+    @Relation(value = Relation.Kind.MANY_TO_MANY, mappedBy = "student")
     private List<Class> classes;
 
     @Relation(Relation.Kind.MANY_TO_ONE)
