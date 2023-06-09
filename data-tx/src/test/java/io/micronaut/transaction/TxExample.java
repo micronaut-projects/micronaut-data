@@ -38,7 +38,7 @@ public class TxExample {
         });
     }
 
-    @Transactional
+    @javax.transaction.Transactional
     Flux<String> doWorkFlux(String taskName) {
         return Flux.deferContextual(contextView -> {
             String txName = txManager.findTransactionStatus(contextView).get().getConnection();
