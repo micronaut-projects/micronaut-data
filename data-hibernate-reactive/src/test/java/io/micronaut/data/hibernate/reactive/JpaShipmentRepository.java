@@ -21,7 +21,7 @@ import io.micronaut.data.tck.entities.Shipment;
 import io.micronaut.data.tck.entities.ShipmentId;
 import reactor.core.publisher.Mono;
 
-import javax.transaction.Transactional;
+import jakarta.transaction.Transactional;
 import java.util.Collections;
 import java.util.function.Consumer;
 

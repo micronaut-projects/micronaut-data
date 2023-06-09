@@ -7,7 +7,7 @@ import io.micronaut.data.repository.reactive.ReactiveStreamsCrudRepository
 import org.reactivestreams.Publisher
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
-import javax.transaction.Transactional
+import jakarta.transaction.Transactional
 import jakarta.validation.Valid
 import jakarta.validation.constraints.NotNull
 

@@ -12,7 +12,7 @@ import spock.lang.Specification
 import spock.lang.Stepwise
 import spock.util.concurrent.AsyncConditions
 
-import javax.transaction.Transactional
+import jakarta.transaction.Transactional
 import java.sql.Connection
 import java.util.concurrent.atomic.AtomicInteger
 

@@ -5,7 +5,7 @@ import io.micronaut.context.annotation.Requires;
 import io.micronaut.transaction.annotation.TransactionalAdvice;
 import jakarta.inject.Singleton;
 
-import javax.transaction.Transactional;
+import jakarta.transaction.Transactional;
 
 @Requires(property = AbstractBookService.BOOK_REPOSITORY_CLASS_PROPERTY)
 @Singleton

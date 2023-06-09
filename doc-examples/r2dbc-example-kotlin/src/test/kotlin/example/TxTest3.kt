@@ -18,7 +18,7 @@ import kotlinx.coroutines.reactor.mono
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.*
 import java.util.*
-import javax.transaction.Transactional
+import jakarta.transaction.Transactional
 
 @MicronautTest(transactional = false)
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)

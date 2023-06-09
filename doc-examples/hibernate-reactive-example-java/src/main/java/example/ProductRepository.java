@@ -9,7 +9,7 @@ import io.micronaut.data.jpa.repository.criteria.Specification;
 import io.micronaut.data.repository.reactive.ReactorCrudRepository;
 import reactor.core.publisher.Flux;
 
-import javax.transaction.Transactional;
+import jakarta.transaction.Transactional;
 
 // tag::join[]
 // tag::async[]

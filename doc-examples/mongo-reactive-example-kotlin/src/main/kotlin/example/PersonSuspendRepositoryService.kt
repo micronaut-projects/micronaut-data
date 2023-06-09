@@ -13,7 +13,7 @@ import org.bson.types.ObjectId
 import org.slf4j.LoggerFactory
 import java.lang.Thread.currentThread
 import java.util.*
-import javax.transaction.Transactional
+import jakarta.transaction.Transactional
 
 @Singleton
 open class PersonSuspendRepositoryService(

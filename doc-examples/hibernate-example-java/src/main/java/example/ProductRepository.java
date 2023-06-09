@@ -10,7 +10,7 @@ import io.micronaut.data.repository.CrudRepository;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 
-import javax.transaction.Transactional;
+import jakarta.transaction.Transactional;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 

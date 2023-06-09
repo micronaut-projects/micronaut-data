@@ -7,7 +7,7 @@ import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.r2dbc.annotation.R2dbcRepository
 import io.micronaut.data.repository.GenericRepository
 import java.util.*
-import javax.transaction.Transactional
+import jakarta.transaction.Transactional
 
 @R2dbcRepository(dataSource = "custom", dialect = Dialect.MYSQL)
 interface ParentSuspendRepositoryForCustomDb : GenericRepository<Parent, Int> {

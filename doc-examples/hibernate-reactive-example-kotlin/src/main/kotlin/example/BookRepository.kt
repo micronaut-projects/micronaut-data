@@ -9,7 +9,7 @@ import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Slice
 import io.micronaut.data.repository.kotlin.CoroutineCrudRepository
 import java.util.function.Consumer
-import javax.transaction.Transactional
+import jakarta.transaction.Transactional
 
 // tag::repository[]
 @Repository // <1>

@@ -21,6 +21,7 @@ dependencies {
     annotationProcessor project(":data-processor")
     implementation("io.micronaut.data:micronaut-data-r2dbc")
     implementation("io.micronaut.sql:micronaut-jdbc-hikari")
+    implementation libs.jakarta.transaction.api
     implementation mnSerde.micronaut.serde.jackson
 
     runtimeOnly mnR2dbc.r2dbc.postgresql

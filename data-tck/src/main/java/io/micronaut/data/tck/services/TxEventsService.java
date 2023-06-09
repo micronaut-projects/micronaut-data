@@ -6,7 +6,7 @@ import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.transaction.annotation.TransactionalEventListener;
 import jakarta.inject.Singleton;
 
-import javax.transaction.Transactional;
+import jakarta.transaction.Transactional;
 import java.io.IOException;
 
 @Requires(property = AbstractBookService.BOOK_REPOSITORY_CLASS_PROPERTY)
