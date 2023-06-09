@@ -5,7 +5,7 @@ import io.micronaut.data.r2dbc.annotation.R2dbcRepository;
 import io.micronaut.data.tck.entities.Book;
 import io.micronaut.data.tck.repositories.BookRepository;
 
-import javax.transaction.Transactional;
+import jakarta.transaction.Transactional;
 import java.util.Optional;
 
 @R2dbcRepository(dialect = Dialect.H2)

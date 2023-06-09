@@ -6,7 +6,7 @@ import io.micronaut.data.mongodb.annotation.MongoRepository
 import io.micronaut.data.repository.GenericRepository
 import org.bson.types.ObjectId
 import java.util.*
-import javax.transaction.Transactional
+import jakarta.transaction.Transactional
 
 @MongoRepository(serverName = "custom")
 interface ParentSuspendRepositoryForCustomDb : GenericRepository<Parent, ObjectId> {

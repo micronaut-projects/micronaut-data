@@ -19,7 +19,7 @@ import jakarta.inject.Singleton;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import javax.transaction.Transactional;
+import jakarta.transaction.Transactional;
 
 @Singleton
 public class TxExample {
@@ -38,7 +38,7 @@ public class TxExample {
         });
     }
 
-    @Transactional
+    @javax.transaction.Transactional
     Flux<String> doWorkFlux(String taskName) {
         return Flux.deferContextual(contextView -> {
             String txName = txManager.findTransactionStatus(contextView).get().getConnection();

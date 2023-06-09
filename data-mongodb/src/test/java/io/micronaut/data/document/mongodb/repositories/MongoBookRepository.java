@@ -5,7 +5,7 @@ import io.micronaut.data.document.tck.repositories.AuthorRepository;
 import io.micronaut.data.document.tck.repositories.BookRepository;
 import io.micronaut.data.mongodb.annotation.MongoRepository;
 
-import javax.transaction.Transactional;
+import jakarta.transaction.Transactional;
 import java.util.Optional;
 
 @MongoRepository

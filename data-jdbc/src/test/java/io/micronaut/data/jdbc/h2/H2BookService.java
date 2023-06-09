@@ -21,7 +21,7 @@ import io.micronaut.data.tck.entities.Author;
 import io.micronaut.data.tck.entities.Book;
 import jakarta.inject.Singleton;
 
-import javax.transaction.Transactional;
+import jakarta.transaction.Transactional;
 import java.sql.ResultSet;
 import java.util.HashSet;
 import java.util.Set;

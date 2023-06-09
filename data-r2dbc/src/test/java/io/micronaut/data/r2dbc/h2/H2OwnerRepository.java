@@ -11,7 +11,7 @@ import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import javax.transaction.Transactional;
+import jakarta.transaction.Transactional;
 import java.util.Arrays;
 
 @R2dbcRepository(dialect = Dialect.H2)

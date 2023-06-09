@@ -5,7 +5,7 @@ import io.micronaut.core.reflect.ClassUtils;
 import io.micronaut.data.document.tck.entities.Book;
 import io.micronaut.data.document.tck.repositories.BookRepository;
 
-import javax.transaction.Transactional;
+import jakarta.transaction.Transactional;
 
 public abstract class AbstractBookService {
 

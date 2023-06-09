@@ -5,7 +5,7 @@ import io.micronaut.data.annotation.Join
 import io.micronaut.data.annotation.Repository
 import io.micronaut.data.repository.GenericRepository
 import java.util.*
-import javax.transaction.Transactional
+import jakarta.transaction.Transactional
 
 @Repository("custom")
 interface ParentSuspendRepositoryForCustomDb : GenericRepository<Parent, Int> {
