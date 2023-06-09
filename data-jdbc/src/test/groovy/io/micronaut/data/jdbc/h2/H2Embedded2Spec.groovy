@@ -16,6 +16,7 @@
 package io.micronaut.data.jdbc.h2
 
 import groovy.transform.EqualsAndHashCode
+import io.micronaut.context.annotation.Property
 import io.micronaut.core.annotation.Introspected
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.data.annotation.Embeddable
@@ -33,6 +34,7 @@ import static io.micronaut.data.model.query.builder.sql.Dialect.H2
 
 @MicronautTest
 @H2DBProperties
+@Property(name = "datasources.default.packages", value = "io.micronaut.data.jdbc.h2")
 class H2Embedded2Spec extends Specification {
 
     @Inject
@@ -45,6 +47,8 @@ class H2Embedded2Spec extends Specification {
             var found = repo.findById(saved.id).get()
         then:
             found.bar == new Bar("1", "2")
+        cleanup:
+            repo.deleteAll()
     }
 
     void partiallyFilledInnerCanBeRetrieved() {
@@ -53,6 +57,8 @@ class H2Embedded2Spec extends Specification {
             var found = repo.findById(saved.id).get()
         then:
             found.bar == new Bar("1", null)
+        cleanup:
+            repo.deleteAll()
     }
 
 }
