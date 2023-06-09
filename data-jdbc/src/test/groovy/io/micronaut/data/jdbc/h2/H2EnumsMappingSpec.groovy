@@ -23,7 +23,7 @@ import spock.lang.Specification
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
-import javax.transaction.Transactional
+import jakarta.transaction.Transactional
 
 @MicronautTest
 class H2EnumsMappingSpec extends Specification implements H2TestPropertyProvider {

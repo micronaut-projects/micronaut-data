@@ -4,7 +4,7 @@ import io.micronaut.context.ApplicationContext;
 import io.micronaut.transaction.annotation.TransactionalAdvice;
 import jakarta.inject.Singleton;
 
-import javax.transaction.Transactional;
+import jakarta.transaction.Transactional;
 
 @Singleton
 public class TxBookService extends AbstractBookService {

@@ -24,7 +24,7 @@ import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import spock.lang.Specification
 
-import javax.transaction.Transactional
+import jakarta.transaction.Transactional
 
 @MicronautTest(packages = "io.micronaut.data.tck.entities", transactional = false)
 class ReactiveTransactionalAnnotationSpec extends Specification implements PostgresHibernateReactiveProperties {

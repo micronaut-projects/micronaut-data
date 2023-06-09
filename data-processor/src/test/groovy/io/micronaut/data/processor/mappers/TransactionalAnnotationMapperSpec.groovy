@@ -28,9 +28,9 @@ package test;
 @jakarta.inject.Singleton
 class Test {
 
-    @javax.transaction.Transactional(rollbackOn = RuntimeException.class, dontRollbackOn=java.io.IOException.class)
+    @jakarta.transaction.Transactional(rollbackOn = RuntimeException.class, dontRollbackOn=java.io.IOException.class)
     void one() {
-    
+
     }
 }
 
@@ -52,7 +52,7 @@ class Test {
 
     @jakarta.transaction.Transactional(rollbackOn = RuntimeException.class, dontRollbackOn=java.io.IOException.class)
     void one() {
-    
+
     }
 }
 

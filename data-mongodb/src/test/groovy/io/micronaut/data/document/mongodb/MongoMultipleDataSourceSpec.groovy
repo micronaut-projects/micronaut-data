@@ -23,7 +23,7 @@ import org.testcontainers.containers.MongoDBContainer
 import org.testcontainers.utility.DockerImageName
 import spock.lang.Specification
 
-import javax.transaction.Transactional
+import jakarta.transaction.Transactional
 
 @Property(name = "spec.name", value = "MongoMultipleDataSourceSpec")
 @MicronautTest(transactional = false)

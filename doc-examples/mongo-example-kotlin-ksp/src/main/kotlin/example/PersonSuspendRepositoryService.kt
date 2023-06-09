@@ -54,7 +54,7 @@ open class PersonSuspendRepositoryService(
         parentSuspendRepositoryForCustomDb.save(p)
     }
 
-    @javax.transaction.Transactional
+    @jakarta.transaction.Transactional
     open suspend fun saveTwo(p1: Parent, p2: Parent) {
         saveOneMandatory(p1)
         saveOneMandatory(p2)

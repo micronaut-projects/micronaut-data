@@ -3,7 +3,7 @@ package example
 import reactor.core.publisher.Mono
 
 import jakarta.inject.Singleton
-import javax.transaction.Transactional
+import jakarta.transaction.Transactional
 
 @Singleton
 class AuthorService {
