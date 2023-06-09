@@ -3568,7 +3568,7 @@ class ProductManager(
 import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.transaction.annotation.TransactionalEventListener;
 import jakarta.inject.Singleton;
-import javax.transaction.Transactional;
+import jakarta.transaction.Transactional;
 
 @Singleton
 public class BookManager {
@@ -3609,7 +3609,7 @@ public class BookManager {
 import io.micronaut.context.event.ApplicationEventPublisher
 import io.micronaut.transaction.annotation.TransactionalEventListener
 import jakarta.inject.Singleton
-import javax.transaction.Transactional
+import jakarta.transaction.Transactional
 
 @Singleton
 class BookManager {
@@ -3650,7 +3650,7 @@ class BookManager {
 import io.micronaut.context.event.ApplicationEventPublisher
 import io.micronaut.transaction.annotation.TransactionalEventListener
 import jakarta.inject.Singleton
-import javax.transaction.Transactional
+import jakarta.transaction.Transactional
 
 @Singleton
 open class BookManager(
@@ -6395,7 +6395,7 @@ import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.model.*
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.repository.CrudRepository
-import javax.transaction.Transactional
+import jakarta.transaction.Transactional
 
 @JdbcRepository(dialect = Dialect.H2) // <b class="conum">(1)</b>
 interface BookRepository : CrudRepository&lt;Book, Long&gt; { // <b class="conum">(2)</b>
@@ -7620,7 +7620,7 @@ The dialect setting in configuration does <strong>not</strong> replace the need 
 
 
 <div class="paragraph">
-<p>Micronaut Data R2DBC features Reactive transaction management support whereby you can declare <code>javax.transaction.Transactional</code> on your methods and a reactive transaction will be initiated, for example:</p>
+<p>Micronaut Data R2DBC features Reactive transaction management support whereby you can declare <code>jakarta.transaction.Transactional</code> on your methods and a reactive transaction will be initiated, for example:</p>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
@@ -7629,7 +7629,7 @@ The dialect setting in configuration does <strong>not</strong> replace the need 
 import reactor.core.publisher.Mono;
 
 import jakarta.inject.Singleton;
-import javax.transaction.Transactional;
+import jakarta.transaction.Transactional;
 import java.util.Arrays;
 
 @Singleton
@@ -7664,7 +7664,7 @@ public class AuthorService {
 import reactor.core.publisher.Mono
 
 import jakarta.inject.Singleton
-import javax.transaction.Transactional
+import jakarta.transaction.Transactional
 
 @Singleton
 class AuthorService {
@@ -7697,7 +7697,7 @@ class AuthorService {
 
 import reactor.core.publisher.Mono
 import jakarta.inject.Singleton
-import javax.transaction.Transactional
+import jakarta.transaction.Transactional
 
 @Singleton
 open class AuthorService(
@@ -7980,7 +7980,7 @@ import io.micronaut.data.jdbc.runtime.JdbcOperations;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.repository.CrudRepository;
 
-import javax.transaction.Transactional;
+import jakarta.transaction.Transactional;
 import java.sql.ResultSet;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -8015,9 +8015,8 @@ import io.micronaut.data.jdbc.runtime.JdbcOperations
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.repository.CrudRepository
 
-import javax.transaction.Transactional
+import jakarta.transaction.Transactional
 import java.sql.ResultSet
-import java.util.List
 import java.util.stream.Collectors
 
 @JdbcRepository(dialect = Dialect.H2)
@@ -8049,9 +8048,8 @@ abstract class AbstractBookRepository implements CrudRepository&lt;Book, Long&gt
 import io.micronaut.data.annotation.Repository
 import io.micronaut.data.jdbc.runtime.JdbcOperations
 import io.micronaut.data.repository.CrudRepository
-import java.util.stream.Collectors
 
-import javax.transaction.Transactional
+import jakarta.transaction.Transactional
 import kotlin.streams.toList
 
 @Repository
