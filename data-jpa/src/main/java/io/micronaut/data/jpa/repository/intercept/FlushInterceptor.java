@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.jpa.repository.intercept;
 
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.data.intercept.DataInterceptor;
@@ -27,20 +28,24 @@ import io.micronaut.data.runtime.intercept.AbstractQueryInterceptor;
  * Interceptor for flushing.
  * @param <T>
  */
-@SuppressWarnings("unused")
+@Internal
 public class FlushInterceptor<T> extends AbstractQueryInterceptor<T, Void> implements DataInterceptor<T, Void> {
+
+    private final JpaRepositoryOperations jpaRepositoryOperations;
+
     /**
      * Default constructor.
      *
      * @param operations The operations
      */
-    protected FlushInterceptor(@NonNull RepositoryOperations operations) {
+    FlushInterceptor(@NonNull RepositoryOperations operations) {
         super(operations);
+        this.jpaRepositoryOperations = (JpaRepositoryOperations) operations;
     }
 
     @Override
     public Void intercept(RepositoryMethodKey methodKey, MethodInvocationContext<T, Void> context) {
-        ((JpaRepositoryOperations) operations).flush();
+        jpaRepositoryOperations.flush();
         return null;
     }
 }

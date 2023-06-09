@@ -88,8 +88,29 @@ abstract class AbstractHibernateQuerySpec extends AbstractQuerySpec {
             !found.isPresent()
     }
 
+    void "test merge"() {
+        given:
+            studentRepository.deleteAll()
+            def student = new Student("Denis")
+            student = studentRepository.save(student)
+        when:
+            Student newStudent = studentRepository.findById(student.id).get()
+        then:
+            newStudent
+        when:
+            newStudent.setName("Denis 2")
+            Student newStudent2 = studentRepository.merge(newStudent)
+        then:
+            newStudent2.name == "Denis 2"
+        when:
+            Student newStudent3 = studentRepository.findById(student.id).get()
+        then:
+            newStudent3.name == "Denis 2"
+    }
+
     void "test optimistic locking"() {
         given:
+            studentRepository.deleteAll()
             def student = new Student("Denis")
         when:
             studentRepository.save(student)
