@@ -8,7 +8,7 @@ import io.micronaut.data.repository.CrudRepository
 import io.reactivex.Maybe
 import io.reactivex.Single
 import java.util.concurrent.CompletableFuture
-import javax.transaction.Transactional
+import jakarta.transaction.Transactional
 
 // tag::join[]
 // tag::async[]

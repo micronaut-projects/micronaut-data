@@ -22,7 +22,7 @@ import java.lang.annotation.*;
 
 /**
  * Stereotype annotation for demarcating a read-only transaction. Since the
- * {@code javax.transaction.Transactional}
+ * {@code jakarta.transaction.Transactional}
  *
  * @author graemerocher
  * @since 1.0.0

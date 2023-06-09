@@ -22,7 +22,6 @@ dependencies {
     implementation "io.micronaut.validation:micronaut-validation"
     implementation "io.micronaut.sql:micronaut-jdbc-tomcat"
     implementation libs.jakarta.persistence.api
-    implementation libs.javax.transaction.api
     runtimeOnly "ch.qos.logback:logback-classic"
     runtimeOnly mnSql.h2
     runtimeOnly mnR2dbc.r2dbc.h2

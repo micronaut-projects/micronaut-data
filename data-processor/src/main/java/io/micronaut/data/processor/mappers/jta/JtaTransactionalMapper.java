@@ -37,7 +37,7 @@ public class JtaTransactionalMapper implements NamedAnnotationMapper {
     @NonNull
     @Override
     public String getName() {
-        return "javax.transaction.Transactional";
+        return "jakarta.transaction.Transactional";
     }
 
     @Override

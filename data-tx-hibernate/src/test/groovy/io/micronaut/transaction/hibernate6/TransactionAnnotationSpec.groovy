@@ -12,7 +12,7 @@ import spock.lang.Stepwise
 import jakarta.inject.Inject
 import jakarta.inject.Singleton
 import jakarta.persistence.EntityManager
-import javax.transaction.Transactional
+import jakarta.transaction.Transactional
 
 @MicronautTest(transactional = false, packages = "io.micronaut.data.tck.entities")
 @Stepwise

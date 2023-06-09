@@ -4,9 +4,8 @@ package example
 import io.micronaut.data.annotation.Repository
 import io.micronaut.data.jdbc.runtime.JdbcOperations
 import io.micronaut.data.repository.CrudRepository
-import java.util.stream.Collectors
 
-import javax.transaction.Transactional
+import jakarta.transaction.Transactional
 import kotlin.streams.toList
 
 @Repository
