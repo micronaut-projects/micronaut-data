@@ -95,7 +95,7 @@ public abstract class AbstractInternalTransaction<C> implements InternalTransact
     public void triggerBeforeCommit() {
         if (synchronizations != null) {
             for (TransactionSynchronization synchronization : synchronizations) {
-                synchronization.beforeCommit(getTransactionDefinition().isReadOnly());
+                synchronization.beforeCommit(getTransactionDefinition().isReadOnly().orElse(false));
             }
         }
     }

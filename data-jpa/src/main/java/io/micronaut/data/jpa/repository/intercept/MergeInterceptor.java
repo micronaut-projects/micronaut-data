@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 original authors
+ * Copyright 2017-2023 original authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,9 @@
  */
 package io.micronaut.data.jpa.repository.intercept;
 
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.aop.MethodInvocationContext;
+import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.intercept.DataInterceptor;
 import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.jpa.operations.JpaRepositoryOperations;
@@ -24,23 +25,30 @@ import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.runtime.intercept.AbstractQueryInterceptor;
 
 /**
- * Interceptor for flushing.
- * @param <T>
+ * Interceptor for JPA merge operation.
+ * @param <T> The entity type
+ *
+ * @author Denis Stepanov
+ * @since 4.0.0
  */
-@SuppressWarnings("unused")
-public class FlushInterceptor<T> extends AbstractQueryInterceptor<T, Void> implements DataInterceptor<T, Void> {
+@Internal
+public final class MergeInterceptor<T> extends AbstractQueryInterceptor<T, T> implements DataInterceptor<T, T> {
+
+    private final JpaRepositoryOperations jpaRepositoryOperations;
+
     /**
      * Default constructor.
      *
      * @param operations The operations
      */
-    protected FlushInterceptor(@NonNull RepositoryOperations operations) {
+    MergeInterceptor(@NonNull RepositoryOperations operations) {
         super(operations);
+        this.jpaRepositoryOperations = (JpaRepositoryOperations) operations;
     }
 
     @Override
-    public Void intercept(RepositoryMethodKey methodKey, MethodInvocationContext<T, Void> context) {
-        ((JpaRepositoryOperations) operations).flush();
-        return null;
+    public T intercept(RepositoryMethodKey methodKey, MethodInvocationContext<T, T> context) {
+        T entity = (T) context.getParameterValues()[0];
+        return jpaRepositoryOperations.merge(entity);
     }
 }

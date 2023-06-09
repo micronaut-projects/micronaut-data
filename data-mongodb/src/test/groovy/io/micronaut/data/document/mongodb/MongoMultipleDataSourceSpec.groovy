@@ -78,6 +78,7 @@ class MongoMultipleDataSourceSpec extends Specification implements TestPropertyP
         mongoDBContainer1.start()
         mongoDBContainer2.start()
         return [
+                "micronaut.data.mongodb.driver-type": "sync",
                 'mongodb.servers.xyz.uri': mongoDBContainer1.replicaSetUrl,
                 'mongodb.servers.other.uri': mongoDBContainer2.replicaSetUrl,
                 'mongodb.uuid-representation': UuidRepresentation.STANDARD.name(),

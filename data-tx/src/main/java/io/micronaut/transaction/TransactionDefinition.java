@@ -24,6 +24,7 @@ import io.micronaut.transaction.support.DefaultTransactionDefinition;
 import java.time.Duration;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Optional;
 
 /**
  * NOTICE: This is a fork of Spring's {@code PlatformTransactionManager} modernizing it
@@ -48,7 +49,6 @@ import java.util.Collections;
  * @author Juergen Hoeller
  * @author graemerocher
  * @since 08.05.2003
- * @see SynchronousTransactionManager#getTransaction(TransactionDefinition)
  */
 public interface TransactionDefinition {
     /**
@@ -73,8 +73,8 @@ public interface TransactionDefinition {
         }
 
         @Override
-        public boolean isReadOnly() {
-            return true;
+        public Optional<Boolean> isReadOnly() {
+            return Optional.of(Boolean.TRUE);
         }
     };
 
@@ -233,18 +233,13 @@ public interface TransactionDefinition {
          * @return The isolation
          */
         public static Isolation valueOf(int code) {
-            switch (code) {
-                case 1:
-                    return READ_UNCOMMITTED;
-                case 2:
-                    return READ_COMMITTED;
-                case 4:
-                    return REPEATABLE_READ;
-                case 8:
-                    return SERIALIZABLE;
-                default:
-                    return DEFAULT;
-            }
+            return switch (code) {
+                case 1 -> READ_UNCOMMITTED;
+                case 2 -> READ_COMMITTED;
+                case 4 -> REPEATABLE_READ;
+                case 8 -> SERIALIZABLE;
+                default -> DEFAULT;
+            };
         }
     }
 
@@ -285,8 +280,8 @@ public interface TransactionDefinition {
      * @see Isolation#DEFAULT
      */
     @NonNull
-    default Isolation getIsolationLevel() {
-        return Isolation.DEFAULT;
+    default Optional<Isolation> getIsolationLevel() {
+        return Optional.empty();
     }
 
     /**
@@ -301,8 +296,8 @@ public interface TransactionDefinition {
      * @return the transaction timeout
      */
     @NonNull
-    default Duration getTimeout() {
-        return TIMEOUT_DEFAULT;
+    default Optional<Duration> getTimeout() {
+        return Optional.empty();
     }
 
     /**
@@ -319,11 +314,9 @@ public interface TransactionDefinition {
      * <i>not</i> throw an exception when asked for a read-only transaction.
      * @return {@code true} if the transaction is to be optimized as read-only
      * ({@code false} by default)
-     * @see io.micronaut.transaction.support.TransactionSynchronization#beforeCommit(boolean)
-     * @see io.micronaut.transaction.support.TransactionSynchronizationManager#isCurrentTransactionReadOnly()
      */
-    default boolean isReadOnly() {
-        return false;
+    default Optional<Boolean> isReadOnly() {
+        return Optional.empty();
     }
 
     /**
@@ -333,7 +326,6 @@ public interface TransactionDefinition {
      * <p>In case of Spring's declarative transactions, the exposed name will be
      * the {@code fully-qualified class name + "." + method name} (by default).
      * @return the name of this transaction ({@code null} by default}
-     * @see io.micronaut.transaction.support.TransactionSynchronizationManager#getCurrentTransactionName()
      */
     @Nullable
     default String getName() {

@@ -18,11 +18,17 @@ package io.micronaut.data.runtime.operations;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.propagation.PropagatedContext;
 import io.micronaut.core.util.ArgumentUtils;
-import io.micronaut.data.model.runtime.*;
+import io.micronaut.data.model.Page;
+import io.micronaut.data.model.runtime.DeleteBatchOperation;
+import io.micronaut.data.model.runtime.DeleteOperation;
+import io.micronaut.data.model.runtime.InsertBatchOperation;
+import io.micronaut.data.model.runtime.InsertOperation;
+import io.micronaut.data.model.runtime.PagedQuery;
+import io.micronaut.data.model.runtime.PreparedQuery;
+import io.micronaut.data.model.runtime.UpdateBatchOperation;
+import io.micronaut.data.model.runtime.UpdateOperation;
 import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.operations.async.AsyncRepositoryOperations;
-import io.micronaut.data.exceptions.EmptyResultException;
-import io.micronaut.data.model.Page;
 
 import java.io.Serializable;
 import java.util.concurrent.CompletableFuture;
@@ -80,14 +86,7 @@ public class ExecutorAsyncOperations implements AsyncRepositoryOperations {
     @NonNull
     @Override
     public <T> CompletableFuture<T> findOne(@NonNull Class<T> type, @NonNull Serializable id) {
-        return supplyAsync(() -> {
-                    T r = datastore.findOne(type, id);
-                    if (r != null) {
-                        return r;
-                    } else {
-                        throw new EmptyResultException();
-                    }
-                }
+        return supplyAsync(() -> datastore.findOne(type, id)
         );
     }
 
@@ -99,27 +98,13 @@ public class ExecutorAsyncOperations implements AsyncRepositoryOperations {
     @NonNull
     @Override
     public <T, R> CompletableFuture<R> findOne(@NonNull PreparedQuery<T, R> preparedQuery) {
-        return supplyAsync(() -> {
-                    R r = datastore.findOne(preparedQuery);
-                    if (r != null) {
-                        return r;
-                    } else {
-                        throw new EmptyResultException();
-                    }
-                });
+        return supplyAsync(() -> datastore.findOne(preparedQuery));
     }
 
     @NonNull
     @Override
     public <T> CompletableFuture<T> findOptional(@NonNull Class<T> type, @NonNull Serializable id) {
-        return supplyAsync(() -> {
-                    T r = datastore.findOne(type, id);
-                    if (r != null) {
-                        return r;
-                    } else {
-                        throw new EmptyResultException();
-                    }
-                });
+        return supplyAsync(() -> datastore.findOne(type, id));
     }
 
     @NonNull

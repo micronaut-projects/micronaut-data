@@ -15,42 +15,37 @@
  */
 package io.micronaut.data.jpa.repository.intercept;
 
-import io.micronaut.aop.MethodInvocationContext;
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
+import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.data.intercept.DataInterceptor;
 import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.jpa.operations.JpaRepositoryOperations;
 import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.runtime.intercept.AbstractQueryInterceptor;
 
-import java.io.Serializable;
-import java.util.Arrays;
-
 /**
- * Interceptor for Load.
- *
- * @param <T> the entity type
- * @author mitchjust
+ * Interceptor for flushing.
+ * @param <T>
  */
-@SuppressWarnings("unused")
-public class LoadInterceptor<T> extends AbstractQueryInterceptor<T, T> implements DataInterceptor<T, T> {
+@Internal
+public class FlushInterceptor<T> extends AbstractQueryInterceptor<T, Void> implements DataInterceptor<T, Void> {
+
+    private final JpaRepositoryOperations jpaRepositoryOperations;
+
     /**
      * Default constructor.
      *
      * @param operations The operations
      */
-    protected LoadInterceptor(@NonNull RepositoryOperations operations) {
+    FlushInterceptor(@NonNull RepositoryOperations operations) {
         super(operations);
+        this.jpaRepositoryOperations = (JpaRepositoryOperations) operations;
     }
 
     @Override
-    public T intercept(RepositoryMethodKey methodKey, MethodInvocationContext<T, T> context) {
-        Serializable id = (Serializable) Arrays.stream(context.getParameterValues())
-                .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("id argument cannot be null"));
-
-        Class<T> returnType = context.getReturnType().getType();
-
-        return ((JpaRepositoryOperations) operations).load(returnType, id);
+    public Void intercept(RepositoryMethodKey methodKey, MethodInvocationContext<T, Void> context) {
+        jpaRepositoryOperations.flush();
+        return null;
     }
 }

@@ -180,14 +180,11 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
      * transaction definition doesn't specify a non-default value.
      *
      * @param definition the transaction definition
-     * @return the actual timeout to use
+     * @return the optional timeout to use
      * @see TransactionDefinition#getTimeout()
      */
-    protected Duration determineTimeout(TransactionDefinition definition) {
-        if (definition.getTimeout() != TransactionDefinition.TIMEOUT_DEFAULT) {
-            return definition.getTimeout();
-        }
-        return TransactionDefinition.TIMEOUT_DEFAULT;
+    protected Optional<Duration> determineTimeout(TransactionDefinition definition) {
+        return definition.getTimeout();
     }
 
     private ConnectionDefinition txConnectionDefinition(TransactionDefinition definition) {

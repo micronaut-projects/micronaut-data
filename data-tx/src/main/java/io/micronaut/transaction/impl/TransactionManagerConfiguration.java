@@ -16,12 +16,14 @@
 package io.micronaut.transaction.impl;
 
 import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.exceptions.InvalidTimeoutException;
 import io.micronaut.transaction.exceptions.UnexpectedRollbackException;
 
 import java.sql.Connection;
 import java.time.Duration;
+import java.util.Optional;
 
 /**
  * The transaction manager configuration.
@@ -31,7 +33,8 @@ import java.time.Duration;
  */
 public class TransactionManagerConfiguration {
 
-    private Duration defaultTimeout = TransactionDefinition.TIMEOUT_DEFAULT;
+    @Nullable
+    private Duration defaultTimeout;
 
     private boolean nestedTransactionAllowed = false;
 
@@ -71,8 +74,8 @@ public class TransactionManagerConfiguration {
      * @return The default timeout
      */
     @NonNull
-    public final Duration getDefaultTimeout() {
-        return this.defaultTimeout;
+    public final Optional<Duration> getDefaultTimeout() {
+        return Optional.ofNullable(defaultTimeout);
     }
 
     /**
@@ -225,11 +228,8 @@ public class TransactionManagerConfiguration {
      * @see TransactionDefinition#getTimeout()
      * @see #setDefaultTimeout
      */
-    public Duration determineTimeout(TransactionDefinition definition) {
-        if (definition.getTimeout() != TransactionDefinition.TIMEOUT_DEFAULT) {
-            return definition.getTimeout();
-        }
-        return getDefaultTimeout();
+    public Optional<Duration> determineTimeout(TransactionDefinition definition) {
+        return definition.getTimeout().or(this::getDefaultTimeout);
     }
 
     /**
@@ -237,8 +237,6 @@ public class TransactionManagerConfiguration {
      * (as indicated by {@link TransactionDefinition#isReadOnly()}
      * through an explicit statement on the transactional connection:
      * "SET TRANSACTION READ ONLY" as understood by Oracle, MySQL and Postgres.
-     * <p>The exact treatment, including any SQL statement executed on the connection,
-     * can be customized through through {@link #prepareTransactionalConnection}.
      * <p>This mode of read-only handling goes beyond the {@link Connection#setReadOnly}
      * hint that Spring applies by default. In contrast to that standard JDBC hint,
      * "SET TRANSACTION READ ONLY" enforces an isolation-level-like connection mode
