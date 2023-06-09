@@ -36,7 +36,6 @@ import io.micronaut.transaction.TransactionStatus;
 import io.micronaut.transaction.support.ExceptionUtil;
 import io.micronaut.transaction.sync.SynchronousTransactionOperationsFromReactiveTransactionOperations;
 
-import java.io.UncheckedIOException;
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Method;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -85,7 +84,6 @@ public class DefaultTestTransactionExecutionListener implements TestExecutionLis
         this.rollback = rollback;
         this.transactionMode = transactionMode;
     }
-
 
     @Override
     public Object interceptTest(TestMethodInvocationContext<Object> methodInvocationContext) {
