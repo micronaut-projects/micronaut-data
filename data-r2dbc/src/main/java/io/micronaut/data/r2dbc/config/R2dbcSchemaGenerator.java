@@ -43,6 +43,7 @@ import jakarta.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -136,7 +137,7 @@ public class R2dbcSchemaGenerator {
                 createForeignKeyStatements.addAll(Arrays.asList(ts.getForeignKeyStatements()));
             });
         } else {
-            createForeignKeyStatements = new ArrayList<>();
+            createForeignKeyStatements = Collections.emptyList();
             tableStatementsList.forEach(ts -> {
                 createStatements.addAll(Arrays.asList(ts.getStatements()));
             });
@@ -180,7 +181,7 @@ public class R2dbcSchemaGenerator {
                         dropForeignKeyStatements.addAll(Arrays.asList(ts.getForeignKeyStatements()));
                     });
                 } else {
-                    dropForeignKeyStatements = new ArrayList<>();
+                    dropForeignKeyStatements = Collections.emptyList();
                     tableStatementsList.forEach(ts -> {
                         dropStatements.addAll(Arrays.asList(ts.getStatements()));
                     });
