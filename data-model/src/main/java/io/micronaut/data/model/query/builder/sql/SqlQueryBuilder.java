@@ -51,6 +51,7 @@ import io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder;
 import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.QueryParameterBinding;
 import io.micronaut.data.model.query.builder.QueryResult;
+import io.micronaut.data.model.query.builder.TableStatements;
 
 import java.lang.annotation.Annotation;
 import java.math.BigInteger;
@@ -276,11 +277,11 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
      * SQL migration tool such as Flyway or Liquibase is recommended.
      *
      * @param entity The entity
-     * @return The tables for the give entity
+     * @return The table drop statements for the give entity
      */
     @Experimental
     public @NonNull
-    String[] buildDropTableStatements(@NonNull PersistentEntity entity) {
+    TableStatements buildDropTableStatements(@NonNull PersistentEntity entity) {
         return buildDropTableStatements(false, entity);
     }
 
@@ -290,16 +291,16 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
      *
      * @param dropForeignKeys whether to drop foreign keys when dropping tables
      * @param entity The entity
-     * @return The tables for the give entity
+     * @return The table drop statements for the give entity
      */
     @Experimental
     public @NonNull
-    String[] buildDropTableStatements(boolean dropForeignKeys, @NonNull PersistentEntity entity) {
+    TableStatements buildDropTableStatements(boolean dropForeignKeys, @NonNull PersistentEntity entity) {
         String tableName = getTableName(entity);
+        TableStatements tableStatements = new TableStatements(tableName, false);
         boolean escape = shouldEscape(entity);
         String sql = "DROP TABLE " + tableName;
         Collection<Association> foreignKeyAssociations = getJoinTableAssociations(entity);
-        List<String> dropStatements = new ArrayList<>();
         for (Association association : foreignKeyAssociations) {
             AnnotationMetadata associationMetadata = association.getAnnotationMetadata();
             NamingStrategy namingStrategy = getNamingStrategy(entity);
@@ -308,18 +309,18 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                     .orElseGet(() ->
                             getMappedName(namingStrategy, association)
                     );
-            dropStatements.add("DROP TABLE " + (escape ? quote(joinTableName) : joinTableName) + ";");
+            tableStatements.addTableStatement("DROP TABLE " + (escape ? quote(joinTableName) : joinTableName) + ";");
         }
 
-        dropStatements.add(sql);
+        tableStatements.addTableStatement(sql);
 
         if (dropForeignKeys) {
             List<ForeignKey> foreignKeys = new ArrayList<>();
             foreignKeys.addAll(getForeignKeys(entity));
-            addForeignKeys(entity, tableName, escape, false, foreignKeys, dropStatements);
+            addForeignKeys(entity, tableName, escape, false, foreignKeys, tableStatements);
         }
 
-        return dropStatements.toArray(new String[0]);
+        return tableStatements;
     }
 
     private List<ForeignKey> getForeignKeys(PersistentEntity entity) {
@@ -389,11 +390,11 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
      * SQL migration tool such as Flyway or Liquibase is recommended.
      *
      * @param entity The entity
-     * @return The tables for the give entity
+     * @return The table creation statements for the given entity
      */
     @Experimental
     public @NonNull
-    String[] buildCreateTableStatements(@NonNull PersistentEntity entity) {
+    TableStatements buildCreateTableStatements(@NonNull PersistentEntity entity) {
         return buildCreateTableStatements(false, entity);
     }
 
@@ -403,11 +404,11 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
      *
      * @param createForeignKeys whether to create foreign keys when creating tables
      * @param entity The entity
-     * @return The tables for the give entity
+     * @return The table creation statements for the given entity
      */
     @Experimental
     public @NonNull
-    String[] buildCreateTableStatements(boolean createForeignKeys, @NonNull PersistentEntity entity) {
+    TableStatements buildCreateTableStatements(boolean createForeignKeys, @NonNull PersistentEntity entity) {
         ArgumentUtils.requireNonNull("entity", entity);
         final String unescapedTableName = getUnescapedTableName(entity);
         String tableName = getTableName(entity);
@@ -415,13 +416,13 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
 
         PersistentProperty identity = entity.getIdentity();
 
-        List<String> createStatements = new ArrayList<>();
+        TableStatements tableStatements = new TableStatements(tableName, true);
         String schema = getSchemaName(entity);
         if (StringUtils.isNotEmpty(schema)) {
             if (escape) {
                 schema = quote(schema);
             }
-            createStatements.add("CREATE SCHEMA " + schema + ";");
+            tableStatements.addTableStatement("CREATE SCHEMA " + schema + ";");
         }
 
         Collection<Association> foreignKeyAssociations = getJoinTableAssociations(entity);
@@ -506,7 +507,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                     joinTableBuilder.append(';');
                 }
 
-                createStatements.add(joinTableBuilder.toString());
+                tableStatements.addTableStatement(joinTableBuilder.toString());
 
             }
         }
@@ -594,7 +595,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
             boolean isSequence = idGeneratorType == GeneratedValue.Type.SEQUENCE;
             final String generatedDefinition = identity.getAnnotationMetadata().stringValue(GeneratedValue.class, "definition").orElse(null);
             if (generatedDefinition != null) {
-                createStatements.add(generatedDefinition);
+                tableStatements.addTableStatement(generatedDefinition);
             } else if (isSequence) {
                 final boolean isSqlServer = dialect == Dialect.SQL_SERVER;
                 final String sequenceName = quote(unescapedTableName + SEQ_SUFFIX);
@@ -611,21 +612,21 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                         createSequenceStmt += " INCREMENT BY 1";
                     }
                 }
-                createStatements.add(createSequenceStmt);
+                tableStatements.addTableStatement(createSequenceStmt);
             }
         }
-        createStatements.add(builder.toString());
-        addIndexes(entity, tableName, createStatements);
+        tableStatements.addTableStatement(builder.toString());
+        addIndexes(entity, tableName, tableStatements);
         if (createForeignKeys) {
-            addForeignKeys(entity, tableName, escape, true, foreignKeys, createStatements);
+            addForeignKeys(entity, tableName, escape, true, foreignKeys, tableStatements);
         }
-        return createStatements.toArray(new String[0]);
+        return tableStatements;
     }
 
-    private void addIndexes(PersistentEntity entity, String tableName, List<String> createStatements) {
+    private void addIndexes(PersistentEntity entity, String tableName, TableStatements tableStatements) {
         final List<String> indexes = createIndexes(entity, tableName);
         if (CollectionUtils.isNotEmpty(indexes)) {
-            createStatements.addAll(indexes);
+            tableStatements.addTableStatement(indexes.toArray(new String[0]));
         }
     }
 
@@ -675,7 +676,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     }
 
     private void addForeignKeys(PersistentEntity entity, String tableName, boolean escape, boolean create,
-                                List<ForeignKey> foreignKeys, List<String> createStatements) {
+                                List<ForeignKey> foreignKeys, TableStatements tableStatements) {
         if (CollectionUtils.isEmpty(foreignKeys)) {
             return;
         }
@@ -694,7 +695,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
             if (dialect != Dialect.ORACLE) {
                 sb.append(";");
             }
-            createStatements.add(sb.toString());
+            tableStatements.addForeignKeyStatement(sb.toString());
         }
     }
 
