@@ -17,7 +17,7 @@ micronaut-mongo = "5.0.0-M4"
 micronaut-kotlin = "4.0.0-M4"
 micronaut-multitenancy = "5.0.0-M4"
 micronaut-validation = "4.0.0-M10"
-micronaut-logging = "1.0.0-M3"
+micronaut-logging = "1.0.0-M4"
 micronaut-flyway = "6.0.0-M7"
 
 groovy = "4.0.12"
