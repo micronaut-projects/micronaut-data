@@ -71,6 +71,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.StringJoiner;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -339,6 +340,15 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         return tableStatements;
     }
 
+    private void foreignKeysHandler(PersistentProperty prop, Consumer<String> consumer) {
+        traversePersistentProperties(prop, (associations, property) -> {
+            PersistentPropertyPath pp = PersistentPropertyPath.of(associations, property, "");
+            NamingStrategy ppNamingStrategy = getNamingStrategy(pp);
+            String column = getMappedName(ppNamingStrategy, pp.getAssociations(), pp.getProperty());
+            consumer.accept(column);
+        });
+    }
+
     private List<ForeignKey> getForeignKeys(PersistentEntity entity) {
         List<ForeignKey> foreignKeys = new ArrayList<>();
         for (PersistentProperty prop : entity.getPersistentProperties()) {
@@ -348,10 +358,16 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                 // TODO: Any other criteria for FK?
                 if (kind == Relation.Kind.MANY_TO_ONE || (kind == Relation.Kind.ONE_TO_ONE && !association.getAnnotationMetadata().stringValue(Relation.class, "mappedBy").isPresent())) {
                     String refTableName = getTableName(association.getAssociatedEntity());
-                    // TODO: Check if there is JoinColumns annotation present
-                    String refColumnName = association.getAssociatedEntity().getIdentity().getPersistedName();
-                    String columnName = prop.getPersistedName();
-                    foreignKeys.add(new ForeignKey(List.of(columnName), refTableName, List.of(refColumnName)));
+                    // TODO: Check if there is JoinColumns annotation present to override names
+                    // It's problematic since it's not checked during table creation
+                    List<String> refColumnNames = new ArrayList<>();
+                    foreignKeysHandler(association.getAssociatedEntity().getIdentity(), (refColumn) -> refColumnNames.add(refColumn));
+                    List<String> columnNames = new ArrayList<>();
+                    foreignKeysHandler(prop, (column) -> columnNames.add(column));
+                    if (columnNames.size() != refColumnNames.size()) {
+                        throw new IllegalStateException("Field " + prop.getName() + " in entity " + entity.getName() + " is not mapped to valid foreign key relation as number of key fields don't match.");
+                    }
+                    foreignKeys.add(new ForeignKey(columnNames, refTableName, refColumnNames));
                 }
             }
         }

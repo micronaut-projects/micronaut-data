@@ -2,6 +2,7 @@ package io.micronaut.data.jdbc.h2.many2many
 
 import groovy.transform.EqualsAndHashCode
 import io.micronaut.context.ApplicationContext
+import io.micronaut.context.annotation.Property
 import io.micronaut.core.annotation.AnnotationMetadata
 import io.micronaut.data.annotation.*
 import io.micronaut.data.jdbc.annotation.JdbcRepository
@@ -26,6 +27,7 @@ import jakarta.inject.Inject
 
 @MicronautTest
 @H2DBProperties
+@Property(name = "datasources.default.packages", value = "io.micronaut.data.jdbc.h2")
 class ManyToManyJoinTableSpec extends Specification implements H2TestPropertyProvider {
     @AutoCleanup
     @Shared
@@ -106,10 +108,21 @@ class ManyToManyJoinTableSpec extends Specification implements H2TestPropertyPro
             statements[1] == 'CREATE TABLE "m2m_student" ("id" BIGINT PRIMARY KEY AUTO_INCREMENT,"name" VARCHAR(255) NOT NULL);'
     }
 
+    void "test build create Entity With Fks And Title table"() {
+        when:
+        QueryBuilder encoder = new SqlQueryBuilder()
+        def statements = encoder.buildCreateTableStatements(true, getRuntimePersistentEntity(EntityWithFkAndTitle)).getAllStatements()
+
+        then:
+        statements.length == 2
+        statements[0] == 'CREATE TABLE "m2m_test_fks" ("id" BIGINT PRIMARY KEY AUTO_INCREMENT,"ref_entity_id_student_id" BIGINT NOT NULL,"ref_entity_id_course_id" BIGINT NOT NULL,"title" VARCHAR(255) NOT NULL);'
+        statements[1] == 'ALTER TABLE "m2m_test_fks" ADD CONSTRAINT FK_cht9sne9icrn3tpjsav4l61gb FOREIGN KEY("ref_entity_id_student_id", "ref_entity_id_course_id") REFERENCES "m2m_course_rating_ck"("xyz_student_id", "abc_course_id");'
+    }
+
     void "test build create CourseRatingCompositeKey table"() {
         when:
         QueryBuilder encoder = new SqlQueryBuilder()
-        def statements = encoder.buildCreateTableStatements(getRuntimePersistentEntity(CourseRatingCompositeKey)).getStatements()
+        def statements = encoder.buildCreateTableStatements(getRuntimePersistentEntity(CourseRatingCompositeKey)).getAllStatements()
 
         then:
         statements.length == 1
@@ -304,6 +317,16 @@ class CourseRatingCompositeKey {
     CourseRatingKey id
 
     int rating
+}
+
+@MappedEntity(value = "m2m_test_fks")
+class EntityWithFkAndTitle {
+    @Id
+    @GeneratedValue(value = GeneratedValue.Type.IDENTITY)
+    Long id;
+    @Relation(value = Relation.Kind.MANY_TO_ONE)
+    CourseRatingCompositeKey refEntity;
+    String title;
 }
 
 @EqualsAndHashCode
