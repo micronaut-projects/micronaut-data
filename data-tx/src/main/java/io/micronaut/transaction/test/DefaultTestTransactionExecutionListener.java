@@ -60,9 +60,9 @@ public class DefaultTestTransactionExecutionListener implements TestExecutionLis
     private final boolean rollback;
 
     /**
-     * @param transactionManager                       The transaction manager
-     * @param rollback                                 {@code true} if the transaction should be rollback
-     * @param transactionMode                          The transaction mode
+     * @param transactionManager The transaction manager
+     * @param rollback           {@code true} if the transaction should be rollback
+     * @param transactionMode    The transaction mode
      */
     protected DefaultTestTransactionExecutionListener(
         TransactionOperations<Object> transactionManager,
@@ -120,10 +120,6 @@ public class DefaultTestTransactionExecutionListener implements TestExecutionLis
                     return TestMethodInterceptor.super.interceptBeforeEach(methodInvocationContext);
                 } catch (Throwable e) {
                     throw new UncheckedException(e);
-                } finally {
-                    if (rollback) {
-                        status.setRollbackOnly();
-                    }
                 }
             });
         } catch (UncheckedException e) {
@@ -147,10 +143,6 @@ public class DefaultTestTransactionExecutionListener implements TestExecutionLis
                     return TestMethodInterceptor.super.interceptAfterEach(methodInvocationContext);
                 } catch (Throwable e) {
                     throw new UncheckedException(e);
-                } finally {
-                    if (rollback) {
-                        status.setRollbackOnly();
-                    }
                 }
             });
         } catch (UncheckedException e) {
