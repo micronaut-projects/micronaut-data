@@ -1,6 +1,7 @@
 package io.micronaut.data.r2dbc.oraclexe.jsonview;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.JsonView;
 import io.micronaut.data.annotation.JsonViewColumn;
@@ -11,6 +12,7 @@ import java.time.LocalDateTime;
 @JsonView(value = "CONTACT_VIEW", alias = "cv", table = "TBL_CONTACT", permissions = "INSERT UPDATE DELETE")
 public class ContactView {
     @Id
+    @GeneratedValue(GeneratedValue.Type.IDENTITY)
     private Long id;
     @JsonViewColumn(permissions = "UPDATE")
     private String name;

@@ -1,6 +1,7 @@
 package io.micronaut.data.r2dbc.oraclexe.jsonview;
 
 import io.micronaut.core.annotation.Nullable;
+import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
 
@@ -9,6 +10,7 @@ import java.time.LocalDateTime;
 @MappedEntity(value = "TBL_CONTACT", alias = "c")
 public class Contact {
     @Id
+    @GeneratedValue(GeneratedValue.Type.IDENTITY)
     private Long id;
     private String name;
     private int age;
