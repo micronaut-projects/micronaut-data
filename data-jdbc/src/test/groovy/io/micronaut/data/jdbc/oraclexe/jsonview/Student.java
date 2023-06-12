@@ -5,6 +5,7 @@ import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.Relation;
+import io.micronaut.data.jdbc.annotation.JoinColumn;
 import io.micronaut.data.jdbc.annotation.JoinTable;
 import jakarta.validation.constraints.Null;
 
@@ -27,7 +28,8 @@ public class Student {
 
     private boolean active;
 
-    @JoinTable(name = "TBL_STUDENT_CLASSES")
+    @JoinTable(name = "TBL_STUDENT_CLASSES", joinColumns = {@JoinColumn(name = "student_id")},
+        inverseJoinColumns = {@JoinColumn(name = "class_id")})
     @Relation(value = Relation.Kind.MANY_TO_MANY, mappedBy = "student")
     private List<Class> classes;
 

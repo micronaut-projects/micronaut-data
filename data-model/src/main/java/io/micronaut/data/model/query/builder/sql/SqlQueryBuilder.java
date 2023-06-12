@@ -349,9 +349,10 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                 // TODO: Any other criteria for FK?
                 if (kind == Relation.Kind.MANY_TO_ONE || (kind == Relation.Kind.ONE_TO_ONE && !association.getAnnotationMetadata().stringValue(Relation.class, "mappedBy").isPresent())) {
                     String refTableName = getTableName(association.getAssociatedEntity());
+                    // TODO: Check if there is JoinColumns annotation present
                     String refColumnName = association.getAssociatedEntity().getIdentity().getPersistedName();
                     String columnName = prop.getPersistedName();
-                    foreignKeys.add(new ForeignKey(columnName, refTableName, refColumnName));
+                    foreignKeys.add(new ForeignKey(List.of(columnName), refTableName, List.of(refColumnName)));
                 }
             }
         }
@@ -698,14 +699,14 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
             return;
         }
         for (ForeignKey foreignKey : foreignKeys) {
-            String fkIdentity = tableName + DOT + foreignKey.getColumnName() + " references " + foreignKey.getReferencedTable() + DOT + foreignKey.getReferencedColumnName();
+            String fields = "(" + foreignKey.getColumnNames().stream().map(c -> escape ? quote(c) : c).collect(Collectors.joining(", ")) + ")";
+            String referencingFields = "(" + foreignKey.getReferencedColumnNames().stream().map(c -> escape ? quote(c) : c).collect(Collectors.joining(", ")) + ")";
+            String fkIdentity = tableName + DOT + fields + " references " + foreignKey.getReferencedTable() + DOT + referencingFields;
             String fkName = "FK_" + hashedName(fkIdentity);
             StringBuilder sb = new StringBuilder(ALTER_TABLE).append(SPACE).append(tableName);
             if (create) {
-                sb.append(" ADD CONSTRAINT ").append(fkName).append(" FOREIGN KEY(");
-                sb.append(escape ? quote(foreignKey.getColumnName()) : foreignKey.getColumnName()).append(") REFERENCES ")
-                    .append(foreignKey.getReferencedTable()).append("(")
-                    .append(escape ? quote(foreignKey.getReferencedColumnName()) : foreignKey.getReferencedColumnName()).append(")");
+                sb.append(" ADD CONSTRAINT ").append(fkName).append(" FOREIGN KEY");
+                sb.append(fields).append(" REFERENCES ").append(foreignKey.getReferencedTable()).append(referencingFields);
             } else {
                 sb.append(" DROP CONSTRAINT ").append(fkName);
             }
@@ -1992,26 +1993,26 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     }
 
     private static class ForeignKey {
-        private final String columnName;
+        private final List<String> columnNames;
         private final String referencedTable;
-        private final String referencedColumnName;
+        private final List<String> referencedColumnNames;
 
-        public ForeignKey(String columnName, String referencedTable, String referencedColumnName) {
-               this.columnName = columnName;
+        public ForeignKey(List<String> columnNames, String referencedTable, List<String> referencedColumnNames) {
+               this.columnNames = columnNames;
                this.referencedTable = referencedTable;
-               this.referencedColumnName = referencedColumnName;
+               this.referencedColumnNames = referencedColumnNames;
         }
 
-        public String getColumnName() {
-            return columnName;
+        public List<String> getColumnNames() {
+            return columnNames;
         }
 
         public String getReferencedTable() {
             return referencedTable;
         }
 
-        public String getReferencedColumnName() {
-            return referencedColumnName;
+        public List<String> getReferencedColumnNames() {
+            return referencedColumnNames;
         }
     }
 }
