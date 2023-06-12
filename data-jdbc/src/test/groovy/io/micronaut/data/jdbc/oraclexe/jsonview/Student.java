@@ -5,7 +5,6 @@ import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.jdbc.annotation.JoinTable;
-import org.testcontainers.shaded.com.github.dockerjava.core.dockerfile.DockerfileStatement;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
