@@ -7,7 +7,6 @@ import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.jdbc.annotation.JoinColumn;
 import io.micronaut.data.jdbc.annotation.JoinTable;
-import jakarta.validation.constraints.Null;
 
 import java.time.LocalDateTime;
 import java.util.Collections;

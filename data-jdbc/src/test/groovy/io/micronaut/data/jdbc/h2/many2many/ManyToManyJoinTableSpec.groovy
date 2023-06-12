@@ -106,6 +106,16 @@ class ManyToManyJoinTableSpec extends Specification implements H2TestPropertyPro
             statements[1] == 'CREATE TABLE "m2m_student" ("id" BIGINT PRIMARY KEY AUTO_INCREMENT,"name" VARCHAR(255) NOT NULL);'
     }
 
+    void "test build create CourseRatingCompositeKey table"() {
+        when:
+        QueryBuilder encoder = new SqlQueryBuilder()
+        def statements = encoder.buildCreateTableStatements(getRuntimePersistentEntity(CourseRatingCompositeKey)).getStatements()
+
+        then:
+        statements.length == 1
+        statements[0] == 'CREATE TABLE "m2m_course_rating_ck" ("xyz_student_id" BIGINT NOT NULL,"abc_course_id" BIGINT NOT NULL,"rating" INT NOT NULL, PRIMARY KEY("xyz_student_id","abc_course_id"));'
+    }
+
     void "test build create CourseRating tables"() {
         when:
             QueryBuilder encoder = new SqlQueryBuilder()

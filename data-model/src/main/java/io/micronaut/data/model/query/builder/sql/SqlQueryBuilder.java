@@ -275,9 +275,8 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     public @NonNull
     String buildBatchDropTableStatement(boolean dropForeignKeys, @NonNull PersistentEntity... entities) {
         if (dropForeignKeys) {
-            int initialSize = 256;
-            List<String> createTableStatements = new ArrayList<>(initialSize);
-            List<String> foreignKeyStatements = new ArrayList<>(initialSize);
+            List<String> createTableStatements = new ArrayList<>(INITIAL_STATEMENT_LIST_SIZE);
+            List<String> foreignKeyStatements = new ArrayList<>(INITIAL_STATEMENT_LIST_SIZE);
             for (PersistentEntity entity : entities) {
                 TableStatements tableStatements = buildDropTableStatements(true, entity);
                 createTableStatements.addAll(Arrays.asList(tableStatements.getStatements()));
@@ -1992,6 +1991,9 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         }
     }
 
+    /**
+     * The foreign key model.
+     */
     private static class ForeignKey {
         private final List<String> columnNames;
         private final String referencedTable;
