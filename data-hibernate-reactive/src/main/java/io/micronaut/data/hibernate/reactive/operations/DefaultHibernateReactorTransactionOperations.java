@@ -22,7 +22,6 @@ import io.micronaut.data.connection.reactive.ReactorConnectionOperations;
 import io.micronaut.data.connection.ConnectionStatus;
 import io.micronaut.data.hibernate.conf.RequiresReactiveHibernate;
 import io.micronaut.transaction.TransactionDefinition;
-import io.micronaut.transaction.exceptions.NoTransactionException;
 import io.micronaut.transaction.exceptions.TransactionUsageException;
 import io.micronaut.transaction.reactive.ReactiveTransactionStatus;
 import io.micronaut.transaction.support.AbstractReactorTransactionOperations;
@@ -124,9 +123,6 @@ final class DefaultHibernateReactorTransactionOperations extends AbstractReactor
             LOG.debug("Transaction execution for Hibernate Reactive connection: {} and configuration {}.", txStatus.getConnection(), serverName);
         }
         TransactionDefinition definition = txStatus.getTransactionDefinition();
-        if (definition.getPropagationBehavior() == TransactionDefinition.Propagation.MANDATORY) {
-            return Flux.error(new NoTransactionException("Expected an existing transaction, but none was found in the Reactive context."));
-        }
         if (definition.getIsolationLevel().isPresent()) {
             return Flux.error(new TransactionUsageException("Isolation level not supported"));
         }
