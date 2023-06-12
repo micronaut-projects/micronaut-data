@@ -1,6 +1,5 @@
 package example
 
-import io.micronaut.transaction.annotation.Transactional
 import jakarta.inject.Singleton
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.delay

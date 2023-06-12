@@ -1,7 +1,6 @@
 package example
 
 import io.micronaut.transaction.TransactionExecution
-import io.micronaut.transaction.annotation.Transactional
 import io.micronaut.transaction.async.AsyncTransactionOperations
 import io.r2dbc.spi.Connection
 import jakarta.inject.Named

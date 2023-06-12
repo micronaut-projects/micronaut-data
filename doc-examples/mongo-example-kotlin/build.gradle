@@ -24,6 +24,7 @@ dependencies {
 
     implementation "io.micronaut:micronaut-http-client"
     implementation projects.dataMongodb
+    implementation projects.dataTx
     implementation mnMongo.mongo.driver
     implementation mnKotlin.micronaut.kotlin.runtime
 

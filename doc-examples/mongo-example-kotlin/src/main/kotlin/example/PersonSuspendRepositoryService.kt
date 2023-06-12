@@ -43,17 +43,17 @@ open class PersonSuspendRepositoryService(
         parentSuspendRepositoryForCustomDb.save(p)
     }
 
-    @@io.micronaut.transaction.annotation.Transactional("custom")
+    @io.micronaut.transaction.annotation.Transactional("custom")
     open suspend fun deleteAllForCustomDb2() {
         parentSuspendRepositoryForCustomDb.deleteAll()
     }
 
-    @@io.micronaut.transaction.annotation.Transactional("custom")
+    @io.micronaut.transaction.annotation.Transactional("custom")
     open suspend fun saveForCustomDb2(p: Parent) {
         parentSuspendRepositoryForCustomDb.save(p)
     }
 
-    @jakarta.transaction.Transactional
+    @Transactional
     open suspend fun saveTwo(p1: Parent, p2: Parent) {
         saveOneMandatory(p1)
         saveOneMandatory(p2)

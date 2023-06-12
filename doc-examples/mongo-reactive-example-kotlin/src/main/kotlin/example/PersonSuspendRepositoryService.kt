@@ -2,7 +2,6 @@ package example
 
 import com.mongodb.reactivestreams.client.ClientSession
 import io.micronaut.transaction.TransactionExecution
-import io.micronaut.transaction.annotation.Transactional
 import io.micronaut.transaction.async.AsyncTransactionOperations
 import jakarta.inject.Named
 import jakarta.inject.Singleton
