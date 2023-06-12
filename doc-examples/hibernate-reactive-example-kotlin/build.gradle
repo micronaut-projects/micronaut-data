@@ -15,7 +15,7 @@ micronaut {
 
 dependencies {
     kapt "io.micronaut.validation:micronaut-validation"
-    annotationProcessor projects.dataProcessor
+    kapt projects.dataProcessor
 
     implementation libs.kotlin.coroutines
     implementation libs.kotlin.coroutines.reactive
