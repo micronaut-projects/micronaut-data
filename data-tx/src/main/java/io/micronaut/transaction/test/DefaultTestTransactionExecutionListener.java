@@ -88,6 +88,9 @@ public class DefaultTestTransactionExecutionListener implements TestExecutionLis
     @Override
     public Object interceptTest(TestMethodInvocationContext<Object> methodInvocationContext) {
         // Not all testing frameworks supports intercepting the invocation
+        if (!methodInvocationContext.getTestContext().isSupportsTestMethodInterceptors()) {
+            throw new IllegalStateException("Test method interceptor was marked as not supported!");
+        }
         skipSynchronousTransactionManagerExecution = true;
         try {
             return transactionManager.execute(TransactionDefinition.DEFAULT, status -> {
@@ -139,8 +142,8 @@ public class DefaultTestTransactionExecutionListener implements TestExecutionLis
     @Override
     public void beforeTestExecution(TestContext testContext) {
         if (counter.getAndIncrement() == 0) {
-            if (skipSynchronousTransactionManagerExecution) {
-                // Already being executed
+            if (testContext.isSupportsTestMethodInterceptors()) {
+                // The test method interceptor should execute the transaction
                 return;
             }
             if (synchronousTransactionManager == null) {

@@ -1,5 +1,5 @@
 plugins {
-    id "io.micronaut.build.internal.data-native-example"
+    id "io.micronaut.build.internal.data-example"
 }
 
 application {
