@@ -104,7 +104,7 @@ public abstract class AbstractReactorTransactionOperations<C> implements Reactor
     }
 
     /**
-     * Execute the transaction with provided transaction status
+     * Execute the transaction with provided transaction status.
      *
      * @param transactionStatus The transaction status
      * @param definition The definition

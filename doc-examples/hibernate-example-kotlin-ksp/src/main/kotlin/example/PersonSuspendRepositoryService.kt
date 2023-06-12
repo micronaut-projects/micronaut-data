@@ -1,6 +1,6 @@
 package example
 
-import io.micronaut.transaction.annotation.TransactionalAdvice
+import io.micronaut.transaction.annotation.Transactional
 import jakarta.inject.Singleton
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.delay
@@ -89,7 +89,7 @@ open class PersonSuspendRepositoryService(private val parentSuspendRepository: P
         normalWithCustomDSTransactional2()
     }
 
-    @TransactionalAdvice("custom") // Create a new method because @Transactional is not repeatable
+    @io.micronaut.transaction.annotation.Transactional("custom") // Create a new method because @Transactional is not repeatable
     open fun normalWithCustomDSTransactional2() {
         saveOne()
         saveOneForCustomDb()
@@ -108,7 +108,7 @@ open class PersonSuspendRepositoryService(private val parentSuspendRepository: P
         coroutinesStoreWithCustomDBTransactional2()
     }
 
-    @TransactionalAdvice("custom") // Create a new method because @Transactional is not repeatable
+    @io.micronaut.transaction.annotation.Transactional("custom") // Create a new method because @Transactional is not repeatable
     open suspend fun coroutinesStoreWithCustomDBTransactional2() {
         saveOneSuspended()
         saveOneSuspendedForCustomDb()
@@ -120,7 +120,7 @@ open class PersonSuspendRepositoryService(private val parentSuspendRepository: P
         coroutinesGenericStoreWithCustomDb2()
     }
 
-    @TransactionalAdvice("custom") // Create a new method because @Transactional is not repeatable
+    @io.micronaut.transaction.annotation.Transactional("custom") // Create a new method because @Transactional is not repeatable
     open fun coroutinesGenericStoreWithCustomDb2() {
         saveOne()
         saveOneForCustomDb()

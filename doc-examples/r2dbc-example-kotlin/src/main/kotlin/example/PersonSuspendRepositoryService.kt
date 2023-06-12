@@ -1,7 +1,7 @@
 package example
 
 import io.micronaut.transaction.TransactionExecution
-import io.micronaut.transaction.annotation.TransactionalAdvice
+import io.micronaut.transaction.annotation.Transactional
 import io.micronaut.transaction.async.AsyncTransactionOperations
 import io.r2dbc.spi.Connection
 import jakarta.inject.Named
@@ -75,7 +75,7 @@ open class PersonSuspendRepositoryService(
         parentSuspendRepositoryForCustomDb.save(p)
     }
 
-    @TransactionalAdvice("custom")
+    @io.micronaut.transaction.annotation.Transactional("custom")
     open suspend fun deleteAllForCustomDb2(): TransactionExecution {
         val txStatus: TransactionExecution = getCustomTxStatus()
         if (txStatus.isCompleted || !txStatus.isNewTransaction) {
@@ -85,7 +85,7 @@ open class PersonSuspendRepositoryService(
         return txStatus
     }
 
-    @TransactionalAdvice("custom")
+    @io.micronaut.transaction.annotation.Transactional("custom")
     open suspend fun saveForCustomDb2(p: Parent): TransactionExecution {
         val txStatus: TransactionExecution = getCustomTxStatus()
         if (txStatus.isCompleted || !txStatus.isNewTransaction) {
@@ -141,7 +141,7 @@ open class PersonSuspendRepositoryService(
         coroutinesStoreWithCustomDBTransactional2()
     }
 
-    @TransactionalAdvice("custom") // Create a new method because @Transactional is not repeatable
+    @io.micronaut.transaction.annotation.Transactional("custom") // Create a new method because @Transactional is not repeatable
     open suspend fun coroutinesStoreWithCustomDBTransactional2() {
         saveOneSuspended()
         saveOneSuspendedForCustomDb()
