@@ -97,7 +97,6 @@ io.micronaut.data.r2dbc.connection
 io.micronaut.data.r2dbc.convert
 io.micronaut.data.r2dbc.mapper
 io.micronaut.data.r2dbc.operations
-io.micronaut.data.r2dbc.repository
 io.micronaut.data.r2dbc.transaction
 io.micronaut.data.repository
 io.micronaut.data.repository.async

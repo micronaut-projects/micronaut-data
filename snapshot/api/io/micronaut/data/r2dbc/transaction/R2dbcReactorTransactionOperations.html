@@ -103,16 +103,23 @@ extends <a href="../../../transaction/reactive/ReactorReactiveTransactionOperati
 <section class="method-summary" id="method-summary">
 <h2>Method Summary</h2>
 <div id="method-summary-table">
-<div class="table-tabs" role="tablist" aria-orientation="horizontal"><button id="method-summary-table-tab0" role="tab" aria-selected="true" aria-controls="method-summary-table.tabpanel" tabindex="0" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table', 3)" class="active-table-tab">All Methods</button><button id="method-summary-table-tab2" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab2', 3)" class="table-tab">Instance Methods</button><button id="method-summary-table-tab3" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab3', 3)" class="table-tab">Abstract Methods</button></div>
+<div class="table-tabs" role="tablist" aria-orientation="horizontal"><button id="method-summary-table-tab0" role="tab" aria-selected="true" aria-controls="method-summary-table.tabpanel" tabindex="0" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table', 3)" class="active-table-tab">All Methods</button><button id="method-summary-table-tab2" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab2', 3)" class="table-tab">Instance Methods</button><button id="method-summary-table-tab3" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab3', 3)" class="table-tab">Abstract Methods</button><button id="method-summary-table-tab5" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab5', 3)" class="table-tab">Default Methods</button></div>
 <div id="method-summary-table.tabpanel" role="tabpanel">
 <div class="summary-table three-column-summary" aria-labelledby="method-summary-table-tab0">
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>&lt;T&gt;&nbsp;@NonNull org.reactivestreams.Publisher&lt;T&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#withTransaction(io.micronaut.transaction.reactive.ReactiveTransactionStatus,io.micronaut.transaction.reactive.ReactiveTransactionOperations.TransactionalCallback)" class="member-name-link">withTransaction</a><wbr>(@NonNull <a href="../../../transaction/reactive/ReactiveTransactionStatus.html" title="interface in io.micronaut.transaction.reactive">ReactiveTransactionStatus</a>&lt;io.r2dbc.spi.Connection&gt;&nbsp;status,
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default &lt;T&gt;&nbsp;@NonNull org.reactivestreams.Publisher&lt;T&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#withTransaction(io.micronaut.transaction.reactive.ReactiveTransactionStatus,io.micronaut.transaction.reactive.ReactiveTransactionOperations.TransactionalCallback)" class="member-name-link">withTransaction</a><wbr>(@NonNull <a href="../../../transaction/reactive/ReactiveTransactionStatus.html" title="interface in io.micronaut.transaction.reactive">ReactiveTransactionStatus</a>&lt;io.r2dbc.spi.Connection&gt;&nbsp;status,
  @NonNull <a href="../../../transaction/reactive/ReactiveTransactionOperations.TransactionalCallback.html" title="interface in io.micronaut.transaction.reactive">ReactiveTransactionOperations.TransactionalCallback</a>&lt;io.r2dbc.spi.Connection,<wbr>T&gt;&nbsp;handler)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
+<div class="block">Execute the given handler with an existing transaction status.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>&lt;T&gt;&nbsp;@NonNull org.reactivestreams.Publisher&lt;T&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#withTransaction(io.micronaut.transaction.reactive.ReactiveTransactionStatus,io.micronaut.transaction.TransactionDefinition,io.micronaut.transaction.reactive.ReactiveTransactionOperations.TransactionalCallback)" class="member-name-link">withTransaction</a><wbr>(@NonNull <a href="../../../transaction/reactive/ReactiveTransactionStatus.html" title="interface in io.micronaut.transaction.reactive">ReactiveTransactionStatus</a>&lt;io.r2dbc.spi.Connection&gt;&nbsp;status,
+ @NonNull <a href="../../../transaction/TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition,
+ @NonNull <a href="../../../transaction/reactive/ReactiveTransactionOperations.TransactionalCallback.html" title="interface in io.micronaut.transaction.reactive">ReactiveTransactionOperations.TransactionalCallback</a>&lt;io.r2dbc.spi.Connection,<wbr>T&gt;&nbsp;handler)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Execute the given handler with an existing transaction status.</div>
 </div>
 </div>
@@ -133,10 +140,34 @@ extends <a href="../../../transaction/reactive/ReactorReactiveTransactionOperati
 <h2>Method Details</h2>
 <ul class="member-list">
 <li>
-<section class="detail" id="withTransaction(io.micronaut.transaction.reactive.ReactiveTransactionStatus,io.micronaut.transaction.reactive.ReactiveTransactionOperations.TransactionalCallback)">
+<section class="detail" id="withTransaction(io.micronaut.transaction.reactive.ReactiveTransactionStatus,io.micronaut.transaction.TransactionDefinition,io.micronaut.transaction.reactive.ReactiveTransactionOperations.TransactionalCallback)">
 <h3>withTransaction</h3>
 <div class="member-signature"><span class="annotations">@NonNull
 </span><span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type">@NonNull org.reactivestreams.Publisher&lt;T&gt;</span>&nbsp;<span class="element-name">withTransaction</span><wbr><span class="parameters">(@NonNull
+ @NonNull <a href="../../../transaction/reactive/ReactiveTransactionStatus.html" title="interface in io.micronaut.transaction.reactive">ReactiveTransactionStatus</a>&lt;io.r2dbc.spi.Connection&gt;&nbsp;status,
+ @NonNull
+ @NonNull <a href="../../../transaction/TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition,
+ @NonNull
+ @NonNull <a href="../../../transaction/reactive/ReactiveTransactionOperations.TransactionalCallback.html" title="interface in io.micronaut.transaction.reactive">ReactiveTransactionOperations.TransactionalCallback</a>&lt;io.r2dbc.spi.Connection,<wbr>T&gt;&nbsp;handler)</span></div>
+<div class="block">Execute the given handler with an existing transaction status.</div>
+<dl class="notes">
+<dt>Type Parameters:</dt>
+<dd><code>T</code> - The emitted type</dd>
+<dt>Parameters:</dt>
+<dd><code>status</code> - An existing in progress transaction status</dd>
+<dd><code>definition</code> - The transaction definition</dd>
+<dd><code>handler</code> - The handler</dd>
+<dt>Returns:</dt>
+<dd>A publisher that emits the result type</dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="withTransaction(io.micronaut.transaction.reactive.ReactiveTransactionStatus,io.micronaut.transaction.reactive.ReactiveTransactionOperations.TransactionalCallback)">
+<h3>withTransaction</h3>
+<div class="member-signature"><span class="annotations">@NonNull
+</span><span class="modifiers">default</span>&nbsp;<span class="type-parameters">&lt;T&gt;</span>
+<span class="return-type">@NonNull org.reactivestreams.Publisher&lt;T&gt;</span>&nbsp;<span class="element-name">withTransaction</span><wbr><span class="parameters">(@NonNull
  @NonNull <a href="../../../transaction/reactive/ReactiveTransactionStatus.html" title="interface in io.micronaut.transaction.reactive">ReactiveTransactionStatus</a>&lt;io.r2dbc.spi.Connection&gt;&nbsp;status,
  @NonNull
  @NonNull <a href="../../../transaction/reactive/ReactiveTransactionOperations.TransactionalCallback.html" title="interface in io.micronaut.transaction.reactive">ReactiveTransactionOperations.TransactionalCallback</a>&lt;io.r2dbc.spi.Connection,<wbr>T&gt;&nbsp;handler)</span></div>
