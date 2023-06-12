@@ -8,6 +8,7 @@ dependencies {
     annotationProcessor mn.micronaut.inject.java
     annotationProcessor mnValidation.micronaut.validation.processor
     annotationProcessor projects.dataProcessor
+    annotationProcessor mn.reactor
 
     implementation mnValidation.micronaut.validation
     implementation mn.micronaut.http.client
