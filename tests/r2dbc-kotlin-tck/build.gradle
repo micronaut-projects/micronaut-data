@@ -1,0 +1,46 @@
+import io.micronaut.testresources.buildtools.KnownModules
+
+plugins {
+    id "io.micronaut.test-resources"
+    id "io.micronaut.build.internal.data-kotlin-example"
+    id 'com.google.devtools.ksp'
+}
+
+application {
+    mainClass = "example.ApplicationKt"
+}
+
+micronaut {
+    version libs.versions.micronaut.platform.get()
+    runtime "netty"
+    testRuntime "junit5"
+    testResources {
+        additionalModules.add(KnownModules.R2DBC_MARIADB)
+        clientTimeout = 300
+        version = libs.versions.micronaut.testresources.get()
+    }
+}
+
+dependencies {
+    kapt projects.dataProcessor
+    ksp mn.micronaut.inject.kotlin
+
+    implementation projects.dataKotlinTck
+    implementation projects.dataR2dbc
+    implementation "io.micronaut.sql:micronaut-jdbc-hikari"
+    implementation libs.kotlin.coroutines
+    implementation libs.kotlin.coroutines.reactive
+    implementation libs.kotlin.coroutines.reactor
+    implementation mnSerde.micronaut.serde.support
+    implementation mnKotlin.micronaut.kotlin.runtime
+    implementation libs.jakarta.persistence.api
+
+    runtimeOnly mnR2dbc.r2dbc.mariadb
+    runtimeOnly mnSql.mariadb.java.client
+
+    testImplementation "io.micronaut:micronaut-http-client"
+    compileOnly mnSerde.micronaut.serde.api
+
+    testResourcesService mnSql.mariadb.java.client
+}
+

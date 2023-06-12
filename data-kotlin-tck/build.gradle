@@ -1,0 +1,27 @@
+plugins {
+    id "io.micronaut.build.internal.data-tck"
+    id "io.micronaut.build.internal.data-kotlin"
+    id 'com.google.devtools.ksp'
+}
+
+dependencies {
+    implementation platform(mn.micronaut.core.bom)
+    annotationProcessor platform(mn.micronaut.core.bom)
+    ksp platform(mn.micronaut.core.bom)
+
+    ksp mn.micronaut.inject.kotlin
+    ksp mnValidation.micronaut.validation.processor
+    ksp projects.dataProcessor
+
+    implementation projects.dataModel
+    implementation projects.dataTx
+
+    implementation mnValidation.micronaut.validation
+    implementation mn.micronaut.http.client
+    implementation mn.micronaut.http.server.netty
+    implementation mn.reactor
+    implementation mnTest.micronaut.test.junit5
+    implementation mnTest.micronaut.test.core
+    implementation mn.jackson.databind
+    implementation libs.jakarta.persistence.api
+}

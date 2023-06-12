@@ -1,0 +1,17 @@
+micronaut:
+  application:
+    name: example
+
+r2dbc:
+  datasources:
+
+    default:
+      db-type: mariadb
+      dialect: mysql
+      schema-generate: CREATE_DROP
+
+    custom:
+      db-type: mariadb
+      dialect: mysql
+      schema-generate: CREATE_DROP
+

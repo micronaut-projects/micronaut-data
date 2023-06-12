@@ -1,0 +1,7 @@
+package example
+
+import io.micronaut.data.annotation.Repository
+import io.micronaut.data.tck.repositories.PersonCustomDbCoroutineRepository
+
+@Repository
+interface HibernateReactivePersonCustomDbCoroutineRepository : PersonCustomDbCoroutineRepository

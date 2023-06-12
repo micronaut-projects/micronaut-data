@@ -49,6 +49,7 @@ include 'data-jpa'
 // Test Compatibility Kit
 include 'data-tck'
 include 'data-document-tck'
+include 'data-kotlin-tck'
 
 // implementations
 
@@ -116,10 +117,14 @@ include 'doc-examples:azure-cosmos-example-java'
 include 'doc-examples:azure-cosmos-example-groovy'
 include 'doc-examples:azure-cosmos-example-kotlin'
 
-// benchmarks
+// Benchmarks
 include 'benchmarks:benchmark-micronaut-data-jpa'
 include 'benchmarks:benchmark-micronaut-data-jdbc'
 include 'benchmarks:benchmark-micronaut-data-mongodb'
 include 'benchmarks:benchmark-spring-data'
 include 'benchmarks:benchmark-spring-data-jdbc'
 include 'benchmarks:benchmark-spring-data-mongodb'
+
+// Tests
+include 'tests:r2dbc-kotlin-tck'
+include 'tests:hibernate-reactive-kotlin-tck'

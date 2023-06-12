@@ -1,0 +1,47 @@
+import io.micronaut.testresources.buildtools.KnownModules
+
+plugins {
+    id "io.micronaut.test-resources"
+    id "io.micronaut.build.internal.data-kotlin-example"
+    id 'com.google.devtools.ksp'
+}
+
+application {
+    mainClass = "example.ApplicationKt"
+}
+
+micronaut {
+    version libs.versions.micronaut.platform.get()
+    runtime "netty"
+    testRuntime "junit5"
+    testResources {
+        inferClasspath = false
+        additionalModules.add(KnownModules.HIBERNATE_REACTIVE_MYSQL)
+        clientTimeout = 300
+        version = libs.versions.micronaut.testresources.get()
+    }
+}
+
+dependencies {
+    ksp mn.micronaut.inject.kotlin
+
+    implementation projects.dataKotlinTck
+    implementation projects.dataHibernateReactive
+
+    implementation libs.kotlin.coroutines
+    implementation libs.kotlin.coroutines.reactive
+    implementation libs.kotlin.coroutines.reactor
+
+    implementation mnKotlin.micronaut.kotlin.runtime
+    implementation libs.jakarta.persistence.api
+
+//    runtimeOnly mnSql.vertx.pg.client
+//
+//    testResourcesService mnSql.postgresql
+
+    runtimeOnly mnSql.vertx.mysql.client
+
+    // Testcontainers wait function needs the driver
+    testResourcesService mnSql.mysql.connector.java
+}
+

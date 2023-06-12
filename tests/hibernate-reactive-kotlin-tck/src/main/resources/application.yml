@@ -1,0 +1,23 @@
+micronaut:
+  application:
+    name: example
+
+jpa:
+  default:
+    reactive: true
+    properties:
+      hibernate:
+        hbm2ddl:
+          auto: create-drop
+        connection:
+          db-type: "mysql"
+        show_sql: true
+  custom:
+    reactive: true
+    properties:
+      hibernate:
+        hbm2ddl:
+          auto: create-drop
+        connection:
+          db-type: "mysql"
+        show_sql: true
