@@ -20,15 +20,6 @@ dependencies {
     implementation "io.micronaut.validation:micronaut-validation"
     implementation "io.micronaut.sql:micronaut-jdbc-tomcat"
     implementation libs.jakarta.persistence.api
-    implementation libs.javax.transaction.api
     runtimeOnly "ch.qos.logback:logback-classic"
     runtimeOnly "com.h2database:h2"
-}
-
-sourceSets {
-    generated {
-        java {
-            srcDirs = ["$build/generated/java"]
-        }
-    }
 }
