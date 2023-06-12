@@ -52,7 +52,6 @@ import io.micronaut.data.runtime.operations.ExecutorReactiveOperations;
 import io.micronaut.jdbc.spring.HibernatePresenceCondition;
 import io.micronaut.transaction.TransactionOperations;
 import jakarta.inject.Named;
-import jakarta.persistence.Query;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.graph.RootGraph;
@@ -62,6 +61,9 @@ import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.FlushModeType;
 import jakarta.persistence.Tuple;
 import jakarta.persistence.criteria.CriteriaQuery;
+import org.hibernate.query.CommonQueryContract;
+import org.hibernate.query.MutationQuery;
+import org.hibernate.query.Query;
 
 import javax.sql.DataSource;
 import java.io.Serializable;
@@ -86,7 +88,7 @@ import java.util.stream.Stream;
 @RequiresSyncHibernate
 @EachBean(DataSource.class)
 @TypeHint(HibernatePresenceCondition.class)
-final class HibernateJpaOperations extends AbstractHibernateOperations<Session, Query, Query>
+final class HibernateJpaOperations extends AbstractHibernateOperations<Session, CommonQueryContract, Query<?>>
     implements JpaRepositoryOperations, AsyncCapableRepository, ReactiveCapableRepository {
 
     private final SessionFactory sessionFactory;
@@ -132,24 +134,24 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
     }
 
     @Override
-    protected void setParameter(Query query, String parameterName, Object value) {
+    protected void setParameter(CommonQueryContract query, String parameterName, Object value) {
         query.setParameter(parameterName, value);
     }
 
     @Override
-    protected void setParameter(Query query, String parameterName, Object value, Argument argument) {
+    protected void setParameter(CommonQueryContract query, String parameterName, Object value, Argument<?> argument) {
         // How to provide type, if needed at all? Was needed prior to Hibernate 6
         query.setParameter(parameterName, value);
     }
 
     @Override
-    protected void setParameterList(Query query, String parameterName, Collection<Object> value) {
+    protected void setParameterList(CommonQueryContract query, String parameterName, Collection<Object> value) {
         // Passing collection as param like this as well, before Hibernate 6 there was other method to pass collection
         query.setParameter(parameterName, value);
     }
 
     @Override
-    protected void setParameterList(Query query, String parameterName, Collection<Object> value, Argument argument) {
+    protected void setParameterList(CommonQueryContract query, String parameterName, Collection<Object> value, Argument<?> argument) {
         if (value == null) {
             value = Collections.emptyList();
         }
@@ -158,7 +160,7 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
     }
 
     @Override
-    protected void setHint(Query query, String hintName, Object value) {
+    protected void setHint(Query<?> query, String hintName, Object value) {
         query.setHint(hintName, value);
     }
 
@@ -173,33 +175,27 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
     }
 
     @Override
-    protected Query createQuery(Session session, String query, Class<?> resultType) {
-        if (resultType == null) {
-            return session.createQuery(query);
-        }
+    protected Query<?> createQuery(Session session, String query, Class<?> resultType) {
         return session.createQuery(query, resultType);
     }
 
     @Override
-    protected Query createNativeQuery(Session session, String query, Class<?> resultType) {
-        if (resultType == null) {
-            return session.createNativeQuery(query);
-        }
+    protected Query<?> createNativeQuery(Session session, String query, Class<?> resultType) {
         return session.createNativeQuery(query, resultType);
     }
 
     @Override
-    protected Query createQuery(Session session, CriteriaQuery<?> criteriaQuery) {
+    protected Query<?> createQuery(Session session, CriteriaQuery<?> criteriaQuery) {
         return session.createQuery(criteriaQuery);
     }
 
     @Override
-    protected void setOffset(Query query, int offset) {
+    protected void setOffset(Query<?> query, int offset) {
         query.setFirstResult(offset);
     }
 
     @Override
-    protected void setMaxResults(Query query, int max) {
+    protected void setMaxResults(Query<?> query, int max) {
         query.setMaxResults(max);
     }
 
@@ -352,20 +348,18 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
         });
     }
 
-    @SuppressWarnings("ConstantConditions")
     @NonNull
     @Override
     public <T> Iterable<T> persistAll(@NonNull InsertBatchOperation<T> operation) {
         return executeWrite(session -> {
-            if (operation != null) {
-                for (T entity : operation) {
-                    session.persist(entity);
-                }
-                flushIfNecessary(session, operation.getAnnotationMetadata());
-                return operation;
-            } else {
+            if (operation == null) {
                 return Collections.emptyList();
             }
+            for (T entity : operation) {
+                session.persist(entity);
+            }
+            flushIfNecessary(session, operation.getAnnotationMetadata());
+            return operation;
         });
     }
 
@@ -392,7 +386,7 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
     public Optional<Number> executeUpdate(@NonNull PreparedQuery<?, Number> preparedQuery) {
         return executeWrite(session -> {
             String query = preparedQuery.getQuery();
-            Query q = session.createQuery(query);
+            MutationQuery q = session.createMutationQuery(query);
             bindParameters(q, preparedQuery);
             int numAffected = q.executeUpdate();
             flushIfNecessary(session, preparedQuery.getAnnotationMetadata(), true);
@@ -443,7 +437,7 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
     }
 
     private int executeEntityUpdate(Session session, StoredQuery<?, ?> storedQuery, Object entity) {
-        Query query = session.createQuery(storedQuery.getQuery());
+        MutationQuery query = session.createMutationQuery(storedQuery.getQuery());
         for (QueryParameterBinding queryParameterBinding : storedQuery.getQueryBindings()) {
             query.setParameter(queryParameterBinding.getRequiredName(), getParameterValue(queryParameterBinding.getRequiredPropertyPath(), entity));
         }
@@ -536,13 +530,13 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
         private List<R> result;
 
         @Override
-        protected void collectTuple(Query query, Function<Tuple, R> fn) {
+        protected void collectTuple(Query<?> query, Function<Tuple, R> fn) {
             result = ((List<Tuple>) query.getResultList()).stream().map(fn).toList();
         }
 
         @Override
-        protected void collect(Query query) {
-            result = query.getResultList();
+        protected void collect(Query<?> query) {
+            result = (List<R>) query.getResultList();
         }
     }
 
@@ -551,13 +545,13 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
         private Stream<R> result;
 
         @Override
-        protected void collectTuple(Query query, Function<Tuple, R> fn) {
+        protected void collectTuple(Query<?> query, Function<Tuple, R> fn) {
             result = ((Stream<Tuple>) query.getResultStream()).map(fn);
         }
 
         @Override
-        protected void collect(Query query) {
-            result = query.getResultStream();
+        protected void collect(Query<?> query) {
+            result = (Stream<R>) query.getResultStream();
         }
     }
 
@@ -566,7 +560,7 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
         private R result;
 
         @Override
-        protected void collectTuple(Query query, Function<Tuple, R> fn) {
+        protected void collectTuple(Query<?> query, Function<Tuple, R> fn) {
             Tuple tuple = (Tuple) query.getSingleResult();
             if (tuple != null) {
                 this.result = fn.apply(tuple);
@@ -574,7 +568,7 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
         }
 
         @Override
-        protected void collect(Query query) {
+        protected void collect(Query<?> query) {
             result = (R) query.getSingleResult();
         }
     }
@@ -589,23 +583,23 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
         }
 
         @Override
-        protected void collectTuple(Query query, Function<Tuple, R> fn) {
-            Tuple tuple = (Tuple) getFirst(query);
+        protected void collectTuple(Query<?> query, Function<Tuple, R> fn) {
+            Tuple tuple = getFirst(query);
             if (tuple != null) {
                 this.result = fn.apply(tuple);
             }
         }
 
         @Override
-        protected void collect(Query query) {
-            result = (R) getFirst(query);
+        protected void collect(Query<?> query) {
+            result = getFirst(query);
         }
 
-        private <T> T getFirst(Query q) {
+        private <T> T getFirst(Query<?> q) {
             if (limitOne) {
                 q.setMaxResults(1);
             }
-            Iterator<T> iterator = q.getResultList().iterator();
+            Iterator<T> iterator = (Iterator<T>) q.getResultList().iterator();
             if (iterator.hasNext()) {
                 return iterator.next();
             }
