@@ -1,0 +1,47 @@
+import io.micronaut.testresources.buildtools.KnownModules
+
+plugins {
+    id "io.micronaut.build.internal.data-module"
+    id 'io.micronaut.test-resources'
+}
+
+dependencies {
+    annotationProcessor mn.micronaut.inject.java
+    annotationProcessor libs.micronaut.docs
+
+    api libs.spring.data.commons
+    api projects.dataSpring
+    api mnSpring.spring.jdbc
+
+    implementation projects.dataConnectionJdbc
+    implementation projects.dataRuntime
+    implementation mnSpring.micronaut.spring
+    implementation mnSql.micronaut.jdbc
+
+    compileOnly mn.micronaut.http
+
+    testAnnotationProcessor mn.micronaut.inject.java
+    testAnnotationProcessor projects.dataProcessor
+
+    testImplementation mn.micronaut.inject.groovy
+    testImplementation projects.dataProcessor
+    testImplementation projects.dataJdbc
+    testImplementation projects.dataTck
+
+    testRuntimeOnly mnSql.h2
+    testRuntimeOnly mnSql.micronaut.jdbc.tomcat
+
+    testRuntimeOnly mnSql.postgresql
+    testResourcesService mnSql.postgresql
+}
+
+micronaut {
+    version libs.versions.micronaut.platform.get()
+    testResources {
+        enabled = true
+        inferClasspath = false
+        additionalModules.add(KnownModules.JDBC_POSTGRESQL)
+        clientTimeout = 300
+        version = libs.versions.micronaut.testresources.get()
+    }
+}

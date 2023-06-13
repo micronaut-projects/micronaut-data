@@ -53,7 +53,10 @@ tasks.register("testExamples") {
 }
 
 dependencies {
-    micronautBoms(platform("io.micronaut:micronaut-core-bom:$micronautVersion"))
+    micronautBoms(
+            platform("io.micronaut:micronaut-core-bom:$micronautVersion"),
+            platform(mnTest.micronaut.test.bom)
+    )
     testRuntimeOnly mnSerde.micronaut.serde.jackson
     runtimeOnly mn.snakeyaml
 }

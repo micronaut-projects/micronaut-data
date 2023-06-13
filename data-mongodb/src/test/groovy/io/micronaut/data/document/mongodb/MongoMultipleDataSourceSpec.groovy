@@ -15,7 +15,6 @@ import io.micronaut.data.mongodb.operations.MongoRepositoryOperations
 import io.micronaut.data.repository.CrudRepository
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import io.micronaut.test.support.TestPropertyProvider
-import io.micronaut.transaction.annotation.TransactionalAdvice
 import jakarta.inject.Inject
 import jakarta.inject.Named
 import org.bson.UuidRepresentation
@@ -103,13 +102,13 @@ class MongoMultipleDataSourceSpec extends Specification implements TestPropertyP
         }
 
         @Transactional
-        @TransactionalAdvice("other")
+        @io.micronaut.transaction.annotation.Transactional("other")
         void saveTwoOtherDb(Person one, Person two) {
             saveTwo(one, two)
         }
 
         @Transactional
-        @TransactionalAdvice(transactionManager = "other")
+        @io.micronaut.transaction.annotation.Transactional(transactionManager = "other")
         void saveTwoOtherDb2(Person one, Person two) {
             saveTwo(one, two)
         }

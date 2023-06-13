@@ -70,6 +70,7 @@ include 'data-azure-cosmos'
 
 // Spring compatibility
 include 'data-spring'
+include 'data-spring-jdbc'
 include 'data-spring-jpa'
 
 // documentation samples
@@ -115,6 +116,9 @@ include 'doc-examples:mongo-multitenancy-datasource-example-java'
 include 'doc-examples:azure-cosmos-example-java'
 include 'doc-examples:azure-cosmos-example-groovy'
 include 'doc-examples:azure-cosmos-example-kotlin'
+
+include 'doc-examples:jdbc-spring-tx-example-java'
+include 'doc-examples:hibernate-spring-tx-example-java'
 
 // benchmarks
 include 'benchmarks:benchmark-micronaut-data-jpa'

@@ -30,7 +30,7 @@ import java.lang.annotation.*;
 @Target({ElementType.METHOD, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
-@TransactionalAdvice(readOnly = true)
+@Transactional(readOnly = true)
 public @interface ReadOnly {
     /**
      * Alias for {@link #transactionManager}.
@@ -38,7 +38,7 @@ public @interface ReadOnly {
      * @return The transaction manager
      * @see #transactionManager
      */
-    @AliasFor(annotation = TransactionalAdvice.class, member = "value")
+    @AliasFor(annotation = Transactional.class, member = "value")
     String value() default "";
 
     /**
@@ -51,7 +51,7 @@ public @interface ReadOnly {
      * @return The transaction manager
      * @see #value
      */
-    @AliasFor(annotation = TransactionalAdvice.class, member = "value")
+    @AliasFor(annotation = Transactional.class, member = "value")
     String transactionManager() default "";
 
     /**
@@ -60,7 +60,7 @@ public @interface ReadOnly {
      *
      * @return The propagation
      */
-    @AliasFor(annotation = TransactionalAdvice.class, member = "propagation")
+    @AliasFor(annotation = Transactional.class, member = "propagation")
     TransactionDefinition.Propagation propagation() default TransactionDefinition.Propagation.REQUIRED;
 
     /**
@@ -69,7 +69,7 @@ public @interface ReadOnly {
      *
      * @return The isolation level
      */
-    @AliasFor(annotation = TransactionalAdvice.class, member = "isolation")
+    @AliasFor(annotation = Transactional.class, member = "isolation")
     TransactionDefinition.Isolation isolation() default TransactionDefinition.Isolation.DEFAULT;
 
     /**
@@ -78,13 +78,13 @@ public @interface ReadOnly {
      *
      * @return The timeout
      */
-    @AliasFor(annotation = TransactionalAdvice.class, member = "timeout")
+    @AliasFor(annotation = Transactional.class, member = "timeout")
     int timeout() default -1;
 
     /**
      * Defines the exceptions that will not result in a rollback.
      * @return The exception types that will not result in a rollback.
      */
-    @AliasFor(annotation = TransactionalAdvice.class, member = "noRollbackFor")
+    @AliasFor(annotation = Transactional.class, member = "noRollbackFor")
     Class<? extends Throwable>[] noRollbackFor() default {};
 }

@@ -18,17 +18,11 @@ package io.micronaut.data.r2dbc.transaction;
 import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.async.propagation.ReactorPropagation;
-import io.micronaut.core.propagation.PropagatedContextElement;
 import io.micronaut.data.connection.ConnectionStatus;
-import io.micronaut.data.r2dbc.connection.DefaultR2DbcReactorConnectionOperations;
+import io.micronaut.data.r2dbc.connection.DefaultR2dbcReactorConnectionOperations;
 import io.micronaut.transaction.TransactionDefinition;
-import io.micronaut.transaction.exceptions.NoTransactionException;
-import io.micronaut.transaction.exceptions.TransactionSystemException;
-import io.micronaut.transaction.exceptions.TransactionUsageException;
-import io.micronaut.transaction.reactive.ReactiveTransactionOperations;
 import io.micronaut.transaction.reactive.ReactiveTransactionStatus;
+import io.micronaut.transaction.support.AbstractReactorTransactionOperations;
 import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.ConnectionFactory;
 import io.r2dbc.spi.IsolationLevel;
@@ -36,15 +30,8 @@ import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
-import reactor.util.context.Context;
-import reactor.util.context.ContextView;
 
-import java.util.Objects;
-import java.util.Optional;
-import java.util.function.BiFunction;
-import java.util.function.Function;
-import java.util.function.Supplier;
+import java.time.Duration;
 
 /**
  * Defines an implementation of Micronaut Data's core interfaces for R2DBC.
@@ -55,170 +42,57 @@ import java.util.function.Supplier;
  */
 @EachBean(ConnectionFactory.class)
 @Internal
-final class DefaultR2dbcReactorTransactionOperations implements R2dbcReactorTransactionOperations {
+final class DefaultR2dbcReactorTransactionOperations extends AbstractReactorTransactionOperations<Connection> implements R2dbcReactorTransactionOperations {
 
     private static final Logger LOG = LoggerFactory.getLogger(DefaultR2dbcReactorTransactionOperations.class);
     private final String dataSourceName;
-    private final DefaultR2DbcReactorConnectionOperations connectionOperations;
 
     DefaultR2dbcReactorTransactionOperations(@Parameter String dataSourceName,
-                                             @Parameter DefaultR2DbcReactorConnectionOperations connectionOperations) {
+                                             @Parameter DefaultR2dbcReactorConnectionOperations connectionOperations) {
+        super(connectionOperations);
         this.dataSourceName = dataSourceName;
-        this.connectionOperations = connectionOperations;
-    }
-
-    @NonNull
-    @Override
-    public <T> Publisher<T> withTransaction(
-        @NonNull ReactiveTransactionStatus<Connection> status,
-        @NonNull TransactionalCallback<Connection, T> handler) {
-        Objects.requireNonNull(status, "Transaction status cannot be null");
-        Objects.requireNonNull(handler, "Callback handler cannot be null");
-        return Flux.defer(() -> {
-            try {
-                return handler.doInTransaction(status);
-            } catch (Exception e) {
-                return Flux.error(new TransactionSystemException("Error invoking doInTransaction handler: " + e.getMessage(), e));
-            }
-        }).contextWrite(context -> addTxStatus(context, status));
     }
 
     @Override
-    public Optional<ReactiveTransactionStatus<Connection>> findTransactionStatus(ContextView contextView) {
-        return ReactorPropagation.findAllContextElements(contextView, R2dbcTransactionPropagatedContext.class)
-            .filter(e -> e.transactionOperations == this)
-            .map(R2dbcTransactionPropagatedContext::status)
-            .findFirst();
-    }
-
-    @Override
-    public TransactionDefinition getTransactionDefinition(ContextView contextView) {
-        throw new IllegalStateException();
-    }
-
-    @Override
-    @NonNull
-    public <T> Flux<T> withTransaction(@NonNull TransactionDefinition definition,
-                                       @NonNull TransactionalCallback<Connection, T> handler) {
-        Objects.requireNonNull(definition, "Transaction definition cannot be null");
-        Objects.requireNonNull(handler, "Callback handler cannot be null");
-
-        return Flux.deferContextual(contextView -> {
-            TransactionDefinition.Propagation propagationBehavior = definition.getPropagationBehavior();
-            ReactiveTransactionStatus<Connection> transactionStatus = getTransactionStatus(contextView);
-            if (transactionStatus != null) {
-                // existing transaction, use it
-                if (propagationBehavior == TransactionDefinition.Propagation.NOT_SUPPORTED || propagationBehavior == TransactionDefinition.Propagation.NEVER) {
-                    return Flux.error(new TransactionUsageException("Found an existing transaction but propagation behaviour doesn't support it: " + propagationBehavior));
-                }
-                ReactiveTransactionStatus<Connection> existingTransaction = existingTransaction(transactionStatus, definition);
-                try {
-                    return Flux.from(handler.doInTransaction(existingTransaction))
-                        .contextWrite(ctx -> addTxStatus(ctx, existingTransaction));
-                } catch (Exception e) {
-                    return Flux.error(new TransactionSystemException("Error invoking doInTransaction handler: " + e.getMessage(), e));
-                }
-            } else {
-                if (propagationBehavior == TransactionDefinition.Propagation.MANDATORY) {
-                    return Flux.error(new NoTransactionException("Expected an existing transaction, but none was found in the Reactive context."));
-                }
-                return connectionOperations.withConnectionFluxWithCloseCallback(definition.getConnectionDefinition(), (connectionStatus, cancelCallback) -> {
-                        Connection connection = connectionStatus.getConnection();
-                        if (LOG.isDebugEnabled()) {
-                            LOG.debug("Transaction: {} begin for dataSource: {}", definition.getName(), dataSourceName);
-                        }
-                        DefaultReactiveTransactionStatus status = new DefaultReactiveTransactionStatus(definition, connectionStatus, true);
-                        Mono<Boolean> resourceSupplier;
-                        if (definition.getIsolationLevel().isPresent()) {
-                            IsolationLevel isolationLevel = getIsolationLevel(definition);
-                            if (LOG.isDebugEnabled()) {
-                                LOG.debug("Setting Isolation Level ({}) for transaction: {} for dataSource: {}", isolationLevel, definition.getName(), dataSourceName);
-                            }
-                            if (isolationLevel != null) {
-                                resourceSupplier = Flux.from(connection.setTransactionIsolationLevel(isolationLevel))
-                                    .thenMany(connection.beginTransaction())
-                                    .hasElements();
-                            } else {
-                                resourceSupplier = Flux.from(connection.beginTransaction()).hasElements();
-                            }
-                        } else {
-                            resourceSupplier = Flux.from(connection.beginTransaction()).hasElements();
-                        }
-
-                        Function<Boolean, Publisher<?>> onSuccess = ignore -> doCommit(status, cancelCallback);
-                        BiFunction<Boolean, Throwable, Publisher<?>> onException = (b, throwable) -> onException(status, definition, throwable, cancelCallback);
-
-                        return Flux.usingWhen(resourceSupplier,
-                            b -> {
-                                try {
-                                    return Flux.from(handler.doInTransaction(status))
-                                        .contextWrite(context -> addTxStatus(context, status));
-                                } catch (Exception e) {
-                                    return Flux.error(new TransactionSystemException("Error invoking doInTransaction handler: " + e.getMessage(), e));
-                                }
-                            },
-                            onSuccess,
-                            onException,
-                            onSuccess);
-                    }
-                );
-            }
-        });
-    }
-
-    private Flux<Void> onException(DefaultReactiveTransactionStatus status,
-                                   TransactionDefinition definition,
-                                   Throwable throwable,
-                                   Supplier<Publisher<Void>> cancelConnection) {
-        if (LOG.isWarnEnabled()) {
-            LOG.warn("Rolling back transaction: {} on error: {} for dataSource {}",
-                status.getTransactionDefinition().getName(), throwable.getMessage(), dataSourceName, throwable);
-        }
-        if (!definition.rollbackOn(throwable)) {
-            return doCommit(status, cancelConnection);
-        }
-        return rollback(status, cancelConnection)
-            .onErrorResume(rollbackError -> {
-                if (rollbackError != throwable && LOG.isWarnEnabled()) {
-                    LOG.warn("Error occurred during transaction: {} rollback failed with: {} for dataSource {}",
-                        status.getTransactionDefinition().getName(), rollbackError.getMessage(), dataSourceName, rollbackError);
-                }
-                return Mono.error(throwable);
-            });
-    }
-
-    private Flux<Void> rollback(DefaultReactiveTransactionStatus status, Supplier<Publisher<Void>> cancelConnection) {
-        return Flux.from(status.getConnection().rollbackTransaction()).as(flux -> finishTx(flux, status, cancelConnection));
-    }
-
-    private Flux<Void> doCommit(DefaultReactiveTransactionStatus status, Supplier<Publisher<Void>> cancelConnection) {
-        if (status.isRollbackOnly()) {
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("Rolling back transaction: {} for dataSource {}", status.getTransactionDefinition().getName(), dataSourceName);
-            }
-            return rollback(status, cancelConnection);
-        }
+    protected Publisher<Void> beginTransaction(ConnectionStatus<Connection> connectionStatus, TransactionDefinition definition) {
+        Connection connection = connectionStatus.getConnection();
         if (LOG.isDebugEnabled()) {
-            LOG.debug("Committing transaction: {} for dataSource {}", status.getTransactionDefinition().getName(), dataSourceName);
+            LOG.debug("Transaction begin for R2DBC connection: {} and configuration {}.", connection, dataSourceName);
         }
-        return Flux.from(status.getConnection().commitTransaction()).as(flux -> finishTx(flux, status, cancelConnection));
-
+        Flux<Void> result = Flux.empty();
+        if (definition.getTimeout().isPresent()) {
+            Duration timeout = definition.getTimeout().get();
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Setting statement timeout ({}) for transaction: {} for dataSource: {}", timeout, definition.getName(), dataSourceName);
+            }
+            result = result.thenMany(connection.setStatementTimeout(timeout));
+        }
+        if (definition.getIsolationLevel().isPresent()) {
+            IsolationLevel isolationLevel = getIsolationLevel(definition);
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Setting Isolation Level ({}) for transaction: {} for dataSource: {}", isolationLevel, definition.getName(), dataSourceName);
+            }
+            if (isolationLevel != null) {
+                result = result.thenMany(connection.setTransactionIsolationLevel(isolationLevel));
+            }
+        }
+        return result.thenMany(connection.beginTransaction());
     }
 
-    private Flux<Void> finishTx(Flux<Void> flux, DefaultReactiveTransactionStatus status, Supplier<Publisher<Void>> cancelConnection) {
-        return flux.hasElements()
-            .flatMapMany(ignore -> {
-                status.completed = true;
-                return cancelConnection.get();
-            });
+    @Override
+    protected Publisher<Void> commitTransaction(ConnectionStatus<Connection> connectionStatus, TransactionDefinition transactionDefinition) {
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Committing transaction for R2DBC connection: {} and configuration {}.", connectionStatus.getConnection(), dataSourceName);
+        }
+        return connectionStatus.getConnection().commitTransaction();
     }
 
-    @NonNull
-    private Context addTxStatus(@NonNull Context context, @NonNull ReactiveTransactionStatus<Connection> status) {
-        return ReactorPropagation.addContextElement(
-            context,
-            new R2dbcTransactionPropagatedContext(this, status)
-        );
+    @Override
+    protected Publisher<Void> rollbackTransaction(ConnectionStatus<Connection> connectionStatus, TransactionDefinition transactionDefinition) {
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Rolling back transaction for R2DBC connection: {} and configuration {}.", connectionStatus.getConnection(), dataSourceName);
+        }
+        return connectionStatus.getConnection().rollbackTransaction();
     }
 
     private IsolationLevel getIsolationLevel(TransactionDefinition definition) {
@@ -231,100 +105,10 @@ final class DefaultR2dbcReactorTransactionOperations implements R2dbcReactorTran
         }).orElse(null);
     }
 
-    private ReactiveTransactionStatus<Connection> existingTransaction(ReactiveTransactionStatus<Connection> existing, TransactionDefinition definition) {
-        return new ReactiveTransactionStatus<>() {
-            @Override
-            public Connection getConnection() {
-                return existing.getConnection();
-            }
-
-            @Override
-            public ConnectionStatus<Connection> getConnectionStatus() {
-                return existing.getConnectionStatus();
-            }
-
-            @Override
-            public boolean isNewTransaction() {
-                return false;
-            }
-
-            @Override
-            public void setRollbackOnly() {
-                existing.setRollbackOnly();
-            }
-
-            @Override
-            public boolean isRollbackOnly() {
-                return existing.isRollbackOnly();
-            }
-
-            @Override
-            public boolean isCompleted() {
-                return existing.isCompleted();
-            }
-
-            @Override
-            public TransactionDefinition getTransactionDefinition() {
-                return definition;
-            }
-        };
-    }
-
-    private record R2dbcTransactionPropagatedContext(
-        ReactiveTransactionOperations<?> transactionOperations,
-        ReactiveTransactionStatus<Connection> status)
-        implements PropagatedContextElement {
-    }
-
-    /**
-     * Represents the current reactive transaction status.
-     */
-    private static final class DefaultReactiveTransactionStatus implements ReactiveTransactionStatus<Connection> {
-        private final TransactionDefinition definition;
-        private final ConnectionStatus<Connection> connectionStatus;
-        private final boolean isNew;
-        private boolean rollbackOnly;
-        private boolean completed;
-
-        public DefaultReactiveTransactionStatus(TransactionDefinition definition, ConnectionStatus<Connection> connectionStatus, boolean isNew) {
-            this.definition = definition;
-            this.connectionStatus = connectionStatus;
-            this.isNew = isNew;
-        }
-
-        @Override
-        public Connection getConnection() {
-            return connectionStatus.getConnection();
-        }
-
-        @Override
-        public ConnectionStatus<Connection> getConnectionStatus() {
-            return connectionStatus;
-        }
-
-        @Override
-        public boolean isNewTransaction() {
-            return isNew;
-        }
-
-        @Override
-        public void setRollbackOnly() {
-            this.rollbackOnly = true;
-        }
-
-        @Override
-        public boolean isRollbackOnly() {
-            return rollbackOnly;
-        }
-
-        @Override
-        public boolean isCompleted() {
-            return completed;
-        }
-
-        @Override
-        public TransactionDefinition getTransactionDefinition() {
-            return definition;
-        }
+    @Override
+    public <T> Publisher<T> withTransaction(ReactiveTransactionStatus<Connection> status,
+                                            TransactionDefinition definition,
+                                            TransactionalCallback<Connection, T> handler) {
+        return withTransactionFlux(status, definition, handler);
     }
 }

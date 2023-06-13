@@ -21,7 +21,7 @@ import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.transaction.TransactionDefinition;
-import io.micronaut.transaction.annotation.TransactionalAdvice;
+import io.micronaut.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.util.Arrays;
@@ -47,7 +47,7 @@ public final class TransactionUtil {
      */
     @NonNull
     public static TransactionDefinition getTransactionDefinition(String name, AnnotationMetadataProvider annotationMetadataProvider) {
-        AnnotationValue<TransactionalAdvice> annotation = annotationMetadataProvider.getAnnotation(TransactionalAdvice.class);
+        AnnotationValue<Transactional> annotation = annotationMetadataProvider.getAnnotation(Transactional.class);
         if (annotation == null) {
             return TransactionDefinition.DEFAULT;
         }

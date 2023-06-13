@@ -94,7 +94,7 @@ final class DefaultHibernateReactiveRepositoryOperations extends AbstractHiberna
     }
 
     @Override
-    protected void setParameter(Stage.AbstractQuery query, String parameterName, Object value, Argument argument) {
+    protected void setParameter(Stage.AbstractQuery query, String parameterName, Object value, Argument<?> argument) {
         query.setParameter(parameterName, value);
     }
 
@@ -104,7 +104,7 @@ final class DefaultHibernateReactiveRepositoryOperations extends AbstractHiberna
     }
 
     @Override
-    protected void setParameterList(Stage.AbstractQuery query, String parameterName, Collection<Object> value, Argument argument) {
+    protected void setParameterList(Stage.AbstractQuery query, String parameterName, Collection<Object> value, Argument<?> argument) {
         query.setParameter(parameterName, value);
     }
 

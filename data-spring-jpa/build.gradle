@@ -15,7 +15,7 @@ dependencies {
         exclude group: 'io.micronaut.data'
     }
 
-    implementation projects.dataSpring
+    implementation projects.dataSpringJdbc
 
     testAnnotationProcessor mn.micronaut.inject.java
     testAnnotationProcessor projects.dataProcessor
@@ -24,13 +24,11 @@ dependencies {
     testImplementation projects.dataProcessor
     testImplementation projects.dataHibernateJpa
     testImplementation projects.dataTck
-    testRuntimeOnly mnSql.h2
-    testRuntimeOnly (mnSql.micronaut.hibernate.jpa.spring) {
-        exclude group: 'io.micronaut.data'
-    }
-    testRuntimeOnly mnSql.micronaut.jdbc.tomcat
 
+    testRuntimeOnly mnSql.h2
+    testRuntimeOnly mnSql.micronaut.jdbc.tomcat
     testRuntimeOnly mnSql.postgresql
+
     testResourcesService mnSql.postgresql
 }
 

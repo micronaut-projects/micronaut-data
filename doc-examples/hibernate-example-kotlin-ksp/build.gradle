@@ -15,7 +15,7 @@ dependencies {
     implementation "io.micronaut:micronaut-http-client"
     implementation mnKotlin.micronaut.kotlin.runtime
 
-    implementation project(":data-hibernate-jpa")
+    implementation projects.dataHibernateJpa
     implementation "io.micronaut.sql:micronaut-jdbc-tomcat"
 
     implementation libs.jakarta.persistence.api
