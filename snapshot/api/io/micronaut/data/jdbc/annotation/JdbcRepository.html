@@ -42,7 +42,7 @@ loadScripts(document, 'script');</script>
 <li>Summary:&nbsp;</li>
 <li>Field&nbsp;|&nbsp;</li>
 <li><a href="#annotation-interface-optional-element-summary">Optional</a>&nbsp;|&nbsp;</li>
-<li>Required</li>
+<li><a href="#annotation-interface-required-element-summary">Required</a></li>
 </ul>
 <ul class="sub-nav-list">
 <li>Detail:&nbsp;</li>
@@ -88,6 +88,21 @@ loadScripts(document, 'script');</script>
 </section>
 <section class="summary">
 <ul class="summary-list">
+<!-- =========== ANNOTATION INTERFACE REQUIRED MEMBER SUMMARY =========== -->
+<li>
+<section class="member-summary" id="annotation-interface-required-element-summary">
+<h2>Required Element Summary</h2>
+<div class="caption"><span>Required Elements</span></div>
+<div class="summary-table three-column-summary">
+<div class="table-header col-first">Modifier and Type</div>
+<div class="table-header col-second">Required Element</div>
+<div class="table-header col-last">Description</div>
+<div class="col-first even-row-color"><code><a href="../../model/query/builder/sql/Dialect.html" title="enum class in io.micronaut.data.model.query.builder.sql">Dialect</a></code></div>
+<div class="col-second even-row-color"><code><a href="#dialect()" class="member-name-link">dialect</a></code></div>
+<div class="col-last even-row-color">&nbsp;</div>
+</div>
+</section>
+</li>
 <!-- =========== ANNOTATION INTERFACE OPTIONAL MEMBER SUMMARY =========== -->
 <li>
 <section class="member-summary" id="annotation-interface-optional-element-summary">
@@ -99,12 +114,6 @@ loadScripts(document, 'script');</script>
 <div class="table-header col-last">Description</div>
 <div class="col-first even-row-color"><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
 <div class="col-second even-row-color"><code><a href="#dataSource()" class="member-name-link">dataSource</a></code></div>
-<div class="col-last even-row-color">&nbsp;</div>
-<div class="col-first odd-row-color"><code><a href="../../model/query/builder/sql/Dialect.html" title="enum class in io.micronaut.data.model.query.builder.sql">Dialect</a></code></div>
-<div class="col-second odd-row-color"><code><a href="#dialect()" class="member-name-link">dialect</a></code></div>
-<div class="col-last odd-row-color">&nbsp;</div>
-<div class="col-first even-row-color"><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color"><code><a href="#dialectName()" class="member-name-link">dialectName</a></code></div>
 <div class="col-last even-row-color">&nbsp;</div>
 <div class="col-first odd-row-color"><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
 <div class="col-second odd-row-color"><code><a href="#value()" class="member-name-link">value</a></code></div>
@@ -120,6 +129,25 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="member-details">
 <h2>Element Details</h2>
+<ul class="member-list">
+<li>
+<section class="detail" id="dialect()">
+<h3>dialect</h3>
+<div class="member-signature"><span class="annotations">@AliasFor(annotation=<a href="../../annotation/Repository.html" title="annotation interface in io.micronaut.data.annotation">Repository.class</a>,
+          member="dialect")
+</span><span class="return-type"><a href="../../model/query/builder/sql/Dialect.html" title="enum class in io.micronaut.data.model.query.builder.sql">Dialect</a></span>&nbsp;<span class="element-name">dialect</span></div>
+<dl class="notes">
+<dt>Returns:</dt>
+<dd>The dialect to use.</dd>
+</dl>
+</section>
+</li>
+</ul>
+</section>
+</li>
+<!-- ============ ANNOTATION INTERFACE MEMBER DETAIL =========== -->
+<li>
+<section class="member-details">
 <ul class="member-list">
 <li>
 <section class="detail" id="value()">
@@ -150,37 +178,6 @@ loadScripts(document, 'script');</script>
 <dl class="notes">
 <dt>Default:</dt>
 <dd>"default"</dd>
-</dl>
-</section>
-</li>
-<li>
-<section class="detail" id="dialect()">
-<h3>dialect</h3>
-<div class="member-signature"><span class="annotations">@AliasFor(annotation=<a href="../../annotation/Repository.html" title="annotation interface in io.micronaut.data.annotation">Repository.class</a>,
-          member="dialect")
-</span><span class="return-type"><a href="../../model/query/builder/sql/Dialect.html" title="enum class in io.micronaut.data.model.query.builder.sql">Dialect</a></span>&nbsp;<span class="element-name">dialect</span></div>
-<dl class="notes">
-<dt>Returns:</dt>
-<dd>The dialect to use.</dd>
-</dl>
-<dl class="notes">
-<dt>Default:</dt>
-<dd>ANSI</dd>
-</dl>
-</section>
-</li>
-<li>
-<section class="detail" id="dialectName()">
-<h3>dialectName</h3>
-<div class="member-signature"><span class="annotations">@AliasFor(annotation=<a href="../../annotation/Repository.html" title="annotation interface in io.micronaut.data.annotation">Repository.class</a>,member="dialect") @AliasFor(annotation=<a href="JdbcRepository.html" title="annotation interface in io.micronaut.data.jdbc.annotation">JdbcRepository.class</a>,member="dialect")
-</span><span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">dialectName</span></div>
-<dl class="notes">
-<dt>Returns:</dt>
-<dd>The dialect to use.</dd>
-</dl>
-<dl class="notes">
-<dt>Default:</dt>
-<dd>"ANSI"</dd>
 </dl>
 </section>
 </li>
