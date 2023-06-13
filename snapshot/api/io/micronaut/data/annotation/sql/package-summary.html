@@ -11,11 +11,15 @@
 <link rel="stylesheet" type="text/css" href="../../../../../script-dir/jquery-ui.min.css" title="Style">
 <link rel="stylesheet" type="text/css" href="../../../../../jquery-ui.overrides.css" title="Style">
 <script type="text/javascript" src="../../../../../script.js"></script>
-<script type="text/javascript" src="../../../../../script-dir/jquery-3.6.1.min.js"></script>
+<script type="text/javascript" src="../../../../../script-dir/jquery-3.6.0.min.js"></script>
 <script type="text/javascript" src="../../../../../script-dir/jquery-ui.min.js"></script>
 </head>
 <body class="package-declaration-page">
-<script type="text/javascript">var pathtoroot = "../../../../../";
+<script type="text/javascript">var evenRowColor = "even-row-color";
+var oddRowColor = "odd-row-color";
+var tableTab = "table-tab";
+var activeTableTab = "active-table-tab";
+var pathtoroot = "../../../../../";
 loadScripts(document, 'script');</script>
 <noscript>
 <div>JavaScript is disabled on your browser.</div>
@@ -92,13 +96,31 @@ loadScripts(document, 'script');</script>
 </li>
 <li>
 <div id="class-summary">
-<div class="caption"><span>Interfaces</span></div>
-<div class="summary-table two-column-summary">
+<div class="table-tabs" role="tablist" aria-orientation="horizontal"><button id="class-summary-tab0" role="tab" aria-selected="true" aria-controls="class-summary.tabpanel" tabindex="0" onkeydown="switchTab(event)" onclick="show('class-summary', 'class-summary', 2)" class="active-table-tab">All Classes and Interfaces</button><button id="class-summary-tab1" role="tab" aria-selected="false" aria-controls="class-summary.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('class-summary', 'class-summary-tab1', 2)" class="table-tab">Interfaces</button><button id="class-summary-tab7" role="tab" aria-selected="false" aria-controls="class-summary.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('class-summary', 'class-summary-tab7', 2)" class="table-tab">Annotation Interfaces</button></div>
+<div id="class-summary.tabpanel" role="tabpanel">
+<div class="summary-table two-column-summary" aria-labelledby="class-summary-tab0">
 <div class="table-header col-first">Class</div>
 <div class="table-header col-last">Description</div>
+<div class="col-first even-row-color class-summary class-summary-tab7"><a href="ColumnTransformer.html" title="annotation interface in io.micronaut.data.annotation.sql">ColumnTransformer</a></div>
+<div class="col-last even-row-color class-summary class-summary-tab7">
+<div class="block">Inspired by Hibernate's annotation of the same name.</div>
+</div>
+<div class="col-first odd-row-color class-summary class-summary-tab7"><a href="JoinColumn.html" title="annotation interface in io.micronaut.data.annotation.sql">JoinColumn</a></div>
+<div class="col-last odd-row-color class-summary class-summary-tab7">
+<div class="block">Subset of the JPA join column annotation.</div>
+</div>
+<div class="col-first even-row-color class-summary class-summary-tab7"><a href="JoinColumns.html" title="annotation interface in io.micronaut.data.annotation.sql">JoinColumns</a></div>
+<div class="col-last even-row-color class-summary class-summary-tab7">
+<div class="block">The repeatable container of @<a href="JoinColumn.html" title="annotation interface in io.micronaut.data.annotation.sql"><code>JoinColumn</code></a>.</div>
+</div>
+<div class="col-first odd-row-color class-summary class-summary-tab7"><a href="JoinTable.html" title="annotation interface in io.micronaut.data.annotation.sql">JoinTable</a></div>
+<div class="col-last odd-row-color class-summary class-summary-tab7">
+<div class="block">Subset of the JPA join table annotation allowing support for bidirectional and unidirectional one-to-many join fetches only.</div>
+</div>
 <div class="col-first even-row-color class-summary class-summary-tab1"><a href="SqlMembers.html" title="interface in io.micronaut.data.annotation.sql">SqlMembers</a></div>
 <div class="col-last even-row-color class-summary class-summary-tab1">
 <div class="block">Interface for meta annotation members specific to SQL.</div>
+</div>
 </div>
 </div>
 </div>
