@@ -57,6 +57,7 @@ include 'data-document-tck'
 include 'data-hibernate-jpa'
 include 'data-hibernate-reactive'
 include 'data-tx-hibernate'
+include 'data-connection-hibernate'
 
 // JDBC
 
