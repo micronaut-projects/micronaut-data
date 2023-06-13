@@ -78,7 +78,7 @@ public abstract class AbstractReactorConnectionOperations<C> implements ReactorC
 
     @NonNull
     @Override
-    public final <T> Flux<T> withConnectionFlux(@NonNull ConnectionDefinition definition,
+    public <T> Flux<T> withConnectionFlux(@NonNull ConnectionDefinition definition,
                                                 @NonNull Function<ConnectionStatus<C>, Flux<T>> callback) {
         Objects.requireNonNull(callback, "Callback cannot be null");
         return Flux.deferContextual(contextView -> {
@@ -114,7 +114,7 @@ public abstract class AbstractReactorConnectionOperations<C> implements ReactorC
 
     @NonNull
     @Override
-    public final <T> Mono<T> withConnectionMono(@NonNull ConnectionDefinition definition,
+    public <T> Mono<T> withConnectionMono(@NonNull ConnectionDefinition definition,
                                                 @NonNull Function<ConnectionStatus<C>, Mono<T>> callback) {
         Objects.requireNonNull(callback, "Callback cannot be null");
         return Mono.deferContextual(contextView -> {

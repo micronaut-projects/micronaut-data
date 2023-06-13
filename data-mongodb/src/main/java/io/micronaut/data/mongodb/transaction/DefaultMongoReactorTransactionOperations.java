@@ -24,7 +24,6 @@ import io.micronaut.data.connection.reactive.ReactorConnectionOperations;
 import io.micronaut.data.connection.ConnectionStatus;
 import io.micronaut.data.mongodb.conf.RequiresReactiveMongo;
 import io.micronaut.transaction.TransactionDefinition;
-import io.micronaut.transaction.exceptions.NoTransactionException;
 import io.micronaut.transaction.exceptions.TransactionUsageException;
 import io.micronaut.transaction.support.AbstractReactorTransactionOperations;
 import org.reactivestreams.Publisher;
@@ -63,9 +62,6 @@ final class DefaultMongoReactorTransactionOperations extends AbstractReactorTran
     protected Publisher<Void> beginTransaction(ConnectionStatus<ClientSession> connectionStatus, TransactionDefinition transactionDefinition) {
         if (LOG.isDebugEnabled()) {
             LOG.debug("Transaction begin for MongoDB connection: {} and configuration {}.", connectionStatus.getConnection(), serverName);
-        }
-        if (transactionDefinition.getPropagationBehavior() == TransactionDefinition.Propagation.MANDATORY) {
-            return Flux.error(new NoTransactionException("Expected an existing transaction, but none was found in the Reactive context."));
         }
         if (transactionDefinition.getIsolationLevel().isPresent()) {
             return Flux.error(new TransactionUsageException("Isolation level not supported"));
