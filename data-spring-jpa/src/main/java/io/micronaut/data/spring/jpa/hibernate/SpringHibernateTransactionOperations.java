@@ -16,6 +16,7 @@
 package io.micronaut.data.spring.jpa.hibernate;
 
 import io.micronaut.context.annotation.EachBean;
+import io.micronaut.context.annotation.Replaces;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.connection.ConnectionStatus;
@@ -42,6 +43,7 @@ import java.util.Optional;
  */
 @Requires(classes = HibernateTransactionManager.class, condition = SpringHibernateTransactionManagerCondition.class)
 @EachBean(HibernateTransactionManager.class)
+@Replaces(io.micronaut.transaction.hibernate.HibernateTransactionManager.class)
 @Internal
 public final class SpringHibernateTransactionOperations implements TransactionOperations<Session> {
 

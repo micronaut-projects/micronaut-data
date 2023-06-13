@@ -65,12 +65,6 @@ public @interface JdbcRepository {
      * @return The dialect to use.
      */
     @AliasFor(annotation = Repository.class, member = "dialect")
-    Dialect dialect() default Dialect.ANSI;
+    Dialect dialect();
 
-    /**
-     * @return The dialect to use.
-     */
-    @AliasFor(annotation = Repository.class, member = "dialect")
-    @AliasFor(annotation = JdbcRepository.class, member = "dialect")
-    String dialectName() default "ANSI";
 }

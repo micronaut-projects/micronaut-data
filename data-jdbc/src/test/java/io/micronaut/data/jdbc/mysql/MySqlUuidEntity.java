@@ -3,7 +3,7 @@ package io.micronaut.data.jdbc.mysql;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.TypeDef;
-import io.micronaut.data.jdbc.annotation.ColumnTransformer;
+import io.micronaut.data.annotation.sql.ColumnTransformer;
 import io.micronaut.data.model.DataType;
 
 import jakarta.persistence.Column;

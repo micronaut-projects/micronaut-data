@@ -17,7 +17,6 @@ package io.micronaut.data.connection.jdbc.advice;
 
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.context.BeanLocator;
-import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.event.BeanCreatedEvent;
 import io.micronaut.context.event.BeanCreatedEventListener;
 import io.micronaut.inject.BeanIdentifier;
@@ -34,7 +33,6 @@ import java.sql.Connection;
  * @since 1.0.1
  */
 @Singleton
-@Requires(missingBeans = io.micronaut.jdbc.spring.DataSourceTransactionManagerFactory.class)
 public final class ContextualAwareDataSource implements BeanCreatedEventListener<DataSource> {
     private final BeanLocator beanLocator;
 

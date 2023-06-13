@@ -1,6 +1,5 @@
 package example
 
-import io.micronaut.transaction.annotation.TransactionalAdvice
 import jakarta.inject.Singleton
 import jakarta.transaction.Transactional
 import kotlinx.coroutines.Dispatchers.IO
@@ -44,17 +43,17 @@ open class PersonSuspendRepositoryService(
         parentSuspendRepositoryForCustomDb.save(p)
     }
 
-    @TransactionalAdvice("custom")
+    @io.micronaut.transaction.annotation.Transactional("custom")
     open suspend fun deleteAllForCustomDb2() {
         parentSuspendRepositoryForCustomDb.deleteAll()
     }
 
-    @TransactionalAdvice("custom")
+    @io.micronaut.transaction.annotation.Transactional("custom")
     open suspend fun saveForCustomDb2(p: Parent) {
         parentSuspendRepositoryForCustomDb.save(p)
     }
 
-    @jakarta.transaction.Transactional
+    @Transactional
     open suspend fun saveTwo(p1: Parent, p2: Parent) {
         saveOneMandatory(p1)
         saveOneMandatory(p2)
@@ -112,7 +111,7 @@ open class PersonSuspendRepositoryService(
         normalWithCustomDSTransactional2()
     }
 
-    @TransactionalAdvice("custom") // Create a new method because @Transactional is not repeatable
+    @io.micronaut.transaction.annotation.Transactional("custom") // Create a new method because @Transactional is not repeatable
     open fun normalWithCustomDSTransactional2() {
         saveOne()
         saveOneForCustomDb()
@@ -131,7 +130,7 @@ open class PersonSuspendRepositoryService(
         coroutinesStoreWithCustomDBTransactional2()
     }
 
-    @TransactionalAdvice("custom") // Create a new method because @Transactional is not repeatable
+    @io.micronaut.transaction.annotation.Transactional("custom") // Create a new method because @Transactional is not repeatable
     open suspend fun coroutinesStoreWithCustomDBTransactional2() {
         saveOneSuspended()
         saveOneSuspendedForCustomDb()
@@ -143,7 +142,7 @@ open class PersonSuspendRepositoryService(
         coroutinesGenericStoreWithCustomDb2()
     }
 
-    @TransactionalAdvice("custom") // Create a new method because @Transactional is not repeatable
+    @io.micronaut.transaction.annotation.Transactional("custom") // Create a new method because @Transactional is not repeatable
     open fun coroutinesGenericStoreWithCustomDb2() {
         saveOne()
         saveOneForCustomDb()

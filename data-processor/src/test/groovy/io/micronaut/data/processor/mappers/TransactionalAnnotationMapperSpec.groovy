@@ -16,7 +16,7 @@
 package io.micronaut.data.processor.mappers
 
 import io.micronaut.annotation.processing.test.AbstractTypeElementSpec
-import io.micronaut.transaction.annotation.TransactionalAdvice
+import io.micronaut.transaction.annotation.Transactional
 
 class TransactionalAnnotationMapperSpec extends AbstractTypeElementSpec {
 
@@ -37,9 +37,9 @@ class Test {
 ''')
         expect:
         definition.getRequiredMethod("one")
-                .classValue(TransactionalAdvice, "noRollbackFor").get() == IOException
+                .classValue(Transactional, "noRollbackFor").get() == IOException
         definition.getRequiredMethod("one")
-                .classValue(TransactionalAdvice, "rollbackFor").get() == RuntimeException
+                .classValue(Transactional, "rollbackFor").get() == RuntimeException
     }
 
     void "test transactional mapper - jakarta"() {
@@ -59,8 +59,8 @@ class Test {
 ''')
         expect:
         definition.getRequiredMethod("one")
-                .classValue(TransactionalAdvice, "noRollbackFor").get() == IOException
+                .classValue(Transactional, "noRollbackFor").get() == IOException
         definition.getRequiredMethod("one")
-                .classValue(TransactionalAdvice, "rollbackFor").get() == RuntimeException
+                .classValue(Transactional, "rollbackFor").get() == RuntimeException
     }
 }
