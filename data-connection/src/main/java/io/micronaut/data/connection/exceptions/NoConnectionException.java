@@ -15,8 +15,6 @@
  */
 package io.micronaut.data.connection.exceptions;
 
-import io.micronaut.data.connection.annotation.Connectable;
-
 /**
  * Exception that occurs if no connection is present.
  *
@@ -38,7 +36,7 @@ public class NoConnectionException extends ConnectionException {
 
     /**
      * @param message The message
-     * @param cause The cause
+     * @param cause   The cause
      */
     public NoConnectionException(String message, Throwable cause) {
         super(message, cause);
@@ -49,7 +47,7 @@ public class NoConnectionException extends ConnectionException {
      */
     public static NoConnectionException notFoundInAdvice() {
         return new NoConnectionException("No current connection present. " +
-            "Consider declaring @" + Connectable.class.getName() +
+            "Consider declaring @Connectable" +
             " or @Transactional on the surrounding method");
     }
 }

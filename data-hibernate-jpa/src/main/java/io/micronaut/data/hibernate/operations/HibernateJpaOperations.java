@@ -21,7 +21,6 @@ import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
-import io.micronaut.core.annotation.TypeHint;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArgumentUtils;
@@ -49,7 +48,6 @@ import io.micronaut.data.operations.reactive.ReactiveRepositoryOperations;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.operations.ExecutorAsyncOperations;
 import io.micronaut.data.runtime.operations.ExecutorReactiveOperations;
-import io.micronaut.jdbc.spring.HibernatePresenceCondition;
 import io.micronaut.transaction.TransactionOperations;
 import jakarta.inject.Named;
 import org.hibernate.Session;
@@ -87,7 +85,6 @@ import java.util.stream.Stream;
  */
 @RequiresSyncHibernate
 @EachBean(DataSource.class)
-@TypeHint(HibernatePresenceCondition.class)
 final class HibernateJpaOperations extends AbstractHibernateOperations<Session, CommonQueryContract, Query<?>>
     implements JpaRepositoryOperations, AsyncCapableRepository, ReactiveCapableRepository {
 

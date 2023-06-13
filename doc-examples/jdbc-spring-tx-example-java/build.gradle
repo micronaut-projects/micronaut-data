@@ -1,0 +1,25 @@
+plugins {
+    id "io.micronaut.build.internal.data-example"
+}
+
+application {
+    mainClass = "example.Application"
+}
+
+micronaut {
+    version libs.versions.micronaut.platform.get()
+    runtime "netty"
+    testRuntime "junit5"
+}
+
+dependencies {
+    annotationProcessor projects.dataProcessor
+    implementation projects.dataJdbc
+    implementation projects.dataSpringJdbc
+    implementation "io.micronaut:micronaut-http-client"
+    implementation "io.micronaut.validation:micronaut-validation"
+    implementation "io.micronaut.sql:micronaut-jdbc-tomcat"
+    implementation libs.jakarta.persistence.api
+    runtimeOnly "ch.qos.logback:logback-classic"
+    runtimeOnly "com.h2database:h2"
+}

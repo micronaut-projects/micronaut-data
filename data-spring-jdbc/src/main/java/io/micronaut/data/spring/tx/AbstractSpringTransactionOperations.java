@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.spring.tx;
 
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.data.connection.ConnectionStatus;
@@ -39,6 +40,7 @@ import java.sql.Connection;
  * @author graemerocher
  * @since 1.0.0
  */
+@Internal
 public abstract class AbstractSpringTransactionOperations
     extends AbstractPropagatedStatusTransactionOperations<TransactionStatus<Connection>, Connection> {
 

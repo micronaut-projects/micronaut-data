@@ -36,8 +36,6 @@ import io.micronaut.transaction.TransactionStatus;
 import io.micronaut.transaction.support.ExceptionUtil;
 import io.micronaut.transaction.sync.SynchronousTransactionOperationsFromReactiveTransactionOperations;
 
-import java.lang.reflect.AnnotatedElement;
-import java.lang.reflect.Method;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -60,22 +58,16 @@ public class DefaultTestTransactionExecutionListener implements TestExecutionLis
     private final AtomicInteger counter = new AtomicInteger();
     private final AtomicInteger setupCounter = new AtomicInteger();
     private final boolean rollback;
-    private boolean skipSynchronousTransactionManagerExecution;
-    @Nullable
-    private final SpockMethodTransactionDefinitionProvider spockMethodTransactionDefinitionProvider;
 
     /**
-     * @param transactionManager                       The transaction manager
-     * @param rollback                                 {@code true} if the transaction should be rollback
-     * @param transactionMode                          The transaction mode
-     * @param spockMethodTransactionDefinitionProvider The spock method name extractor
+     * @param transactionManager The transaction manager
+     * @param rollback           {@code true} if the transaction should be rollback
+     * @param transactionMode    The transaction mode
      */
     protected DefaultTestTransactionExecutionListener(
         TransactionOperations<Object> transactionManager,
         @Property(name = AbstractMicronautExtension.TEST_ROLLBACK, defaultValue = "true") boolean rollback,
-        @Property(name = AbstractMicronautExtension.TEST_TRANSACTION_MODE, defaultValue = "SEPARATE_TRANSACTIONS") TransactionMode transactionMode,
-        @Nullable SpockMethodTransactionDefinitionProvider spockMethodTransactionDefinitionProvider) {
-        this.spockMethodTransactionDefinitionProvider = spockMethodTransactionDefinitionProvider;
+        @Property(name = AbstractMicronautExtension.TEST_TRANSACTION_MODE, defaultValue = "SEPARATE_TRANSACTIONS") TransactionMode transactionMode) {
         this.transactionManager = transactionManager;
         this.synchronousTransactionManager = transactionManager instanceof SynchronousTransactionManager<Object> syncTx ? syncTx : null;
         if (transactionMode == TransactionMode.SINGLE_TRANSACTION && transactionManager instanceof SynchronousTransactionOperationsFromReactiveTransactionOperations) {
@@ -86,21 +78,75 @@ public class DefaultTestTransactionExecutionListener implements TestExecutionLis
     }
 
     @Override
-    public Object interceptTest(TestMethodInvocationContext<Object> methodInvocationContext) {
+    public Object interceptTest(TestMethodInvocationContext<Object> methodInvocationContext) throws Throwable {
+        if (transactionMode == TransactionMode.SINGLE_TRANSACTION) {
+            return TestMethodInterceptor.super.interceptTest(methodInvocationContext);
+        }
         // Not all testing frameworks supports intercepting the invocation
-        skipSynchronousTransactionManagerExecution = true;
+        TestContext testContext = methodInvocationContext.getTestContext();
+        if (!testContext.isSupportsTestMethodInterceptors()) {
+            throw new IllegalStateException("Test method interceptor was marked as not supported!");
+        }
         try {
-            return transactionManager.execute(TransactionDefinition.DEFAULT, status -> {
+            return transactionManager.execute(TransactionDefinition.named(testContext.getTestName()), status -> {
                 try {
                     return TestMethodInterceptor.super.interceptTest(methodInvocationContext);
+                } catch (Throwable e) {
+                    throw new UncheckedException(e);
+                } finally {
+                    if (rollback) {
+                        status.setRollbackOnly();
+                    }
+                }
+            });
+        } catch (UncheckedException e) {
+            return ExceptionUtil.sneakyThrow(e.getCause());
+        }
+    }
+
+    @Override
+    public Object interceptBeforeEach(TestMethodInvocationContext<Object> methodInvocationContext) throws Throwable {
+        if (transactionMode == TransactionMode.SINGLE_TRANSACTION) {
+            return TestMethodInterceptor.super.interceptBeforeEach(methodInvocationContext);
+        }
+        // Not all testing frameworks supports intercepting the invocation
+        TestContext testContext = methodInvocationContext.getTestContext();
+        if (!testContext.isSupportsTestMethodInterceptors()) {
+            throw new IllegalStateException("Test method interceptor was marked as not supported!");
+        }
+        try {
+            return transactionManager.execute(TransactionDefinition.named(testContext.getTestName()), status -> {
+                try {
+                    return TestMethodInterceptor.super.interceptBeforeEach(methodInvocationContext);
                 } catch (Throwable e) {
                     throw new UncheckedException(e);
                 }
             });
         } catch (UncheckedException e) {
             return ExceptionUtil.sneakyThrow(e.getCause());
-        } finally {
-            skipSynchronousTransactionManagerExecution = false;
+        }
+    }
+
+    @Override
+    public Object interceptAfterEach(TestMethodInvocationContext<Object> methodInvocationContext) throws Throwable {
+        if (transactionMode == TransactionMode.SINGLE_TRANSACTION) {
+            return TestMethodInterceptor.super.interceptAfterEach(methodInvocationContext);
+        }
+        // Not all testing frameworks supports intercepting the invocation
+        TestContext testContext = methodInvocationContext.getTestContext();
+        if (!testContext.isSupportsTestMethodInterceptors()) {
+            throw new IllegalStateException("Test method interceptor was marked as not supported!");
+        }
+        try {
+            return transactionManager.execute(TransactionDefinition.named(testContext.getTestName()), status -> {
+                try {
+                    return TestMethodInterceptor.super.interceptAfterEach(methodInvocationContext);
+                } catch (Throwable e) {
+                    throw new UncheckedException(e);
+                }
+            });
+        } catch (UncheckedException e) {
+            return ExceptionUtil.sneakyThrow(e.getCause());
         }
     }
 
@@ -114,7 +160,7 @@ public class DefaultTestTransactionExecutionListener implements TestExecutionLis
         if (transactionMode.equals(TransactionMode.SINGLE_TRANSACTION)) {
             setupCounter.getAndIncrement();
         } else {
-            afterTestExecution(false);
+            afterTestExecution(testContext, false);
         }
     }
 
@@ -125,45 +171,35 @@ public class DefaultTestTransactionExecutionListener implements TestExecutionLis
 
     @Override
     public void afterCleanupTest(TestContext testContext) {
-        afterTestExecution(false);
+        afterTestExecution(testContext, false);
     }
 
     @Override
     public void afterTestExecution(TestContext testContext) {
-        if (transactionMode.equals(TransactionMode.SINGLE_TRANSACTION)) {
+        if (transactionMode == TransactionMode.SINGLE_TRANSACTION) {
             counter.addAndGet(-setupCounter.getAndSet(0));
         }
-        afterTestExecution(this.rollback);
+        afterTestExecution(testContext, rollback);
     }
 
     @Override
     public void beforeTestExecution(TestContext testContext) {
         if (counter.getAndIncrement() == 0) {
-            if (skipSynchronousTransactionManagerExecution) {
-                // Already being executed
+            if (transactionMode == TransactionMode.SEPARATE_TRANSACTIONS && testContext.isSupportsTestMethodInterceptors()) {
+                // The test method interceptor should execute the transaction
                 return;
             }
             if (synchronousTransactionManager == null) {
                 throw new IllegalStateException("Transaction manager doesn't support detached transaction and the testing framework doesn't support intercepting the test invocation!");
             }
-            TransactionDefinition definition;
-            AnnotatedElement annotatedElement = testContext.getTestMethod();
-            if (spockMethodTransactionDefinitionProvider != null) {
-                definition = spockMethodTransactionDefinitionProvider.provide(annotatedElement);
-            } else if (annotatedElement instanceof Method method) {
-                String name = method.getDeclaringClass().getSimpleName() + "." + method.getName();
-                definition = TransactionDefinition.named(name);
-            } else {
-                definition = TransactionDefinition.DEFAULT;
-            }
-            tx = synchronousTransactionManager.getTransaction(definition);
+            tx = synchronousTransactionManager.getTransaction(TransactionDefinition.named(testContext.getTestName()));
         }
     }
 
-    private void afterTestExecution(boolean rollback) {
+    private void afterTestExecution(TestContext testContext, boolean rollback) {
         if (counter.decrementAndGet() == 0) {
-            if (skipSynchronousTransactionManagerExecution) {
-                // Already being executed
+            if (transactionMode == TransactionMode.SEPARATE_TRANSACTIONS && testContext.isSupportsTestMethodInterceptors()) {
+                // The test method interceptor should execute the transaction
                 return;
             }
             if (synchronousTransactionManager == null) {

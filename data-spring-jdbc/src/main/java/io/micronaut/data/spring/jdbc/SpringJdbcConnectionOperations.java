@@ -18,6 +18,7 @@ package io.micronaut.data.spring.jdbc;
 import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Replaces;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.data.connection.jdbc.advice.DelegatingDataSource;
 import io.micronaut.data.connection.jdbc.operations.DefaultDataSourceConnectionOperations;
 import io.micronaut.data.connection.ConnectionDefinition;
 import io.micronaut.data.connection.ConnectionOperations;
@@ -49,7 +50,7 @@ public final class SpringJdbcConnectionOperations implements ConnectionOperation
     private final DataSource dataSource;
 
     public SpringJdbcConnectionOperations(DataSource dataSource) {
-        this.dataSource = dataSource;
+        this.dataSource = DelegatingDataSource.unwrapDataSource(dataSource);
     }
 
     @Override
