@@ -99,8 +99,8 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     /**
      * Annotation used to represent join tables.
      */
-    private static final String ANN_JOIN_TABLE = "io.micronaut.data.jdbc.annotation.JoinTable";
-    private static final String ANN_JOIN_COLUMNS = "io.micronaut.data.jdbc.annotation.JoinColumns";
+    private static final String ANN_JOIN_TABLE = "io.micronaut.data.annotation.sql.JoinTable";
+    private static final String ANN_JOIN_COLUMNS = "io.micronaut.data.annotation.sql.JoinColumns";
     private static final String BLANK_SPACE = " ";
     private static final String SEQ_SUFFIX = "_seq";
     private static final String INSERT_INTO = "INSERT INTO ";

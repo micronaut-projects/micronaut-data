@@ -13,9 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.jdbc.annotation;
+package io.micronaut.data.annotation.sql;
 
-import java.lang.annotation.Repeatable;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
@@ -24,35 +23,18 @@ import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 /**
- * Subset of the JPA join column annotation.
+ * The repeatable container of @{@link JoinColumn}.
  *
  * @author Denis Stepanov
  * @since 2.4.0
  */
 @Target({METHOD, FIELD})
 @Retention(RUNTIME)
-@Repeatable(JoinColumns.class)
-public @interface JoinColumn {
+public @interface JoinColumns {
 
     /**
-     * The name of the foreign column.
-     *
-     * @return The name of the foreign column
+     * @return The join columns that map the relationship.
      */
-    String name() default "";
-
-    /**
-     * The name of the column referenced by this foreign column.
-     *
-     * @return The referenced column name
-     */
-    String referencedColumnName() default "";
-
-    /**
-     * Used to define the mapping. For example in the case of SQL this would be the column definition. Example: BLOB NOT NULL.
-     *
-     * @return A string-based definition of the property type.
-     */
-    String columnDefinition() default "";
+    JoinColumn[] value();
 
 }
