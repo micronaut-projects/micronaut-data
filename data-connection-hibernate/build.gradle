@@ -9,11 +9,9 @@ dependencies {
     annotationProcessor mn.micronaut.inject.java
     annotationProcessor mn.micronaut.graal
 
-    api projects.dataTx
-    api projects.dataTxJdbc
-    api projects.dataConnectionHibernate
-
-    compileOnly mnSql.micronaut.hibernate.jpa
+    api mnSql.hibernate.core
+    api projects.dataConnection
+    compileOnly projects.dataConnectionJdbc
 
     testAnnotationProcessor mn.micronaut.inject.java
     testAnnotationProcessor projects.dataProcessor

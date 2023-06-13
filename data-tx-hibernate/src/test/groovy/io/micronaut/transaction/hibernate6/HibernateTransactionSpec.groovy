@@ -15,7 +15,8 @@
  */
 package io.micronaut.transaction.hibernate6
 
-import io.micronaut.data.hibernate.connection.HibernateConnectionOperations
+import io.micronaut.core.type.Argument
+import io.micronaut.data.connection.ConnectionOperations
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.tck.repositories.BookRepository
 import io.micronaut.data.tck.tests.AbstractTransactionSpec
@@ -24,6 +25,7 @@ import io.micronaut.transaction.TransactionOperations
 import io.micronaut.transaction.hibernate.HibernateTransactionManager
 import io.micronaut.transaction.hibernate6.micronaut.HibernateBookRepository
 import io.micronaut.transaction.hibernate6.micronaut.ReadOnlyTest
+import org.hibernate.Session
 import org.hibernate.resource.transaction.spi.TransactionStatus
 
 class HibernateTransactionSpec extends AbstractTransactionSpec implements TestResourcesDatabaseTestPropertyProvider {
@@ -54,7 +56,7 @@ class HibernateTransactionSpec extends AbstractTransactionSpec implements TestRe
 
     @Override
     protected Runnable getNoTxCheck() {
-        HibernateConnectionOperations connectionOperations = context.getBean(HibernateConnectionOperations)
+        ConnectionOperations<Session> connectionOperations = context.getBean(Argument.of(ConnectionOperations.class, Session.class))
         return new Runnable() {
             @Override
             void run() {

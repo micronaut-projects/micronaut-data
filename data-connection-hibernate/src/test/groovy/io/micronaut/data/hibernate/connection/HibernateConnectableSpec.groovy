@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 original authors
+ * Copyright 2017-2023 original authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package io.micronaut.data.hibernate.connection
 
-
 import io.micronaut.data.connection.ConnectionOperations
 import io.micronaut.data.connection.SynchronousConnectionManager
 import io.micronaut.data.tck.repositories.SimpleBookRepository
@@ -30,7 +29,7 @@ class HibernateConnectableSpec extends AbstractConnectableSpec {
 
     @Override
     Class<? extends SimpleBookRepository> getBookRepositoryClass() {
-        return SimpleBookRepositoryImpl.class
+        return HibernateBookRepositoryImpl.class
     }
 
     @Override
@@ -45,6 +44,10 @@ class HibernateConnectableSpec extends AbstractConnectableSpec {
 
     @Override
     Map<String, String> getProperties() {
-        return ["datasources.default.name": "mydb", 'jpa.default.properties.hibernate.hbm2ddl.auto': 'create-drop']
+        return [
+                "datasources.default.name"                     : "mydb",
+                "datasources.default.db-type"                  : "postgresql",
+                'jpa.default.properties.hibernate.hbm2ddl.auto': 'create-drop'
+        ]
     }
 }
