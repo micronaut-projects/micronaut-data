@@ -81,12 +81,5 @@ public @interface R2dbcRepository {
      * @return The dialect to use.
      */
     @AliasFor(annotation = Repository.class, member = "dialect")
-    Dialect dialect() default Dialect.ANSI;
-
-    /**
-     * @return The dialect to use.
-     */
-    @AliasFor(annotation = Repository.class, member = "dialect")
-    @AliasFor(member = "dialect")
-    String dialectName() default "ANSI";
+    Dialect dialect();
 }
