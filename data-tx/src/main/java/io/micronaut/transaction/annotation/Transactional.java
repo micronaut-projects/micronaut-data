@@ -18,17 +18,14 @@ package io.micronaut.transaction.annotation;
 import io.micronaut.aop.Around;
 import io.micronaut.context.annotation.AliasFor;
 import io.micronaut.context.annotation.Type;
-import io.micronaut.core.annotation.Internal;
 import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.interceptor.TransactionalInterceptor;
 
 import java.lang.annotation.*;
 
 /**
- * Meta annotation that other transactional annotations like Spring's and {@code jakarta.transaction.Transactional} map
- * to such as to enable transactional advice. Shouldn't be used directly.
- *
- * <p>This annotation is declared with a target of {@link ElementType#ANNOTATION_TYPE} so that is used only as a meta-annotation. In actual code you would use {@code jakarta.transaction.Transaction}</p>
+ * Micronaut alternative {@code jakarta.transaction.Transactional} annotation.
+ * Internally {@code jakarta.transaction.Transactional} it's `Javax` alternative is remapped to this annotation.
  *
  * @author graemerocher
  * @since 1.0
@@ -37,8 +34,7 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)
 @Around
 @Type(TransactionalInterceptor.class)
-@Internal
-public @interface TransactionalAdvice {
+public @interface Transactional {
     /**
      * Alias for {@link #transactionManager}.
      *
@@ -52,7 +48,7 @@ public @interface TransactionalAdvice {
      * A <em>qualifier</em> value for the specified transaction.
      * <p>May be used to determine the target transaction manager,
      * matching the qualifier value (or the bean name) of a specific
-     * {@link io.micronaut.transaction.SynchronousTransactionManager}
+     * {@link io.micronaut.transaction.TransactionOperations}
      * bean definition.
      *
      * @return The transaction manager

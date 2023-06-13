@@ -27,7 +27,7 @@ import io.micronaut.inject.ExecutableMethod;
 import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.TransactionOperations;
 import io.micronaut.transaction.TransactionOperationsRegistry;
-import io.micronaut.transaction.annotation.TransactionalAdvice;
+import io.micronaut.transaction.annotation.Transactional;
 import io.micronaut.transaction.async.AsyncTransactionOperations;
 import io.micronaut.transaction.reactive.ReactiveTransactionOperations;
 import io.micronaut.transaction.reactive.ReactorReactiveTransactionOperations;
@@ -41,7 +41,7 @@ import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Default implementation of {@link TransactionalAdvice}. Forked from the reflection based code in Spring.
+ * Default implementation of {@link Transactional}. Forked from the reflection based code in Spring.
  *
  * @author graemerocher
  * @author Denis stepanov
@@ -92,7 +92,7 @@ public final class TransactionalInterceptor implements MethodInterceptor<Object,
             ExecutableMethod<Object, Object> executableMethod = context.getExecutableMethod();
             final TransactionInvocation<?> transactionInvocation = transactionInvocationMap
                 .computeIfAbsent(new TenantExecutableMethod(tenantDataSourceName, executableMethod), ignore -> {
-                    final String dataSource = tenantDataSourceName == null ? executableMethod.stringValue(TransactionalAdvice.class).orElse(null) : tenantDataSourceName;
+                    final String dataSource = tenantDataSourceName == null ? executableMethod.stringValue(Transactional.class).orElse(null) : tenantDataSourceName;
                     final TransactionDefinition transactionDefinition = resolveTransactionDefinition(executableMethod);
 
                     switch (interceptedMethod.resultType()) {

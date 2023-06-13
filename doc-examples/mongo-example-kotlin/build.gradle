@@ -23,7 +23,8 @@ dependencies {
     implementation 'io.micronaut.reactor:micronaut-reactor'
 
     implementation "io.micronaut:micronaut-http-client"
-    implementation 'io.micronaut.data:micronaut-data-mongodb'
+    implementation projects.dataMongodb
+    implementation projects.dataTx
     implementation mnMongo.mongo.driver
     implementation mnKotlin.micronaut.kotlin.runtime
 
