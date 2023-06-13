@@ -16,7 +16,7 @@
 package io.micronaut.data.tck.jdbc.entities;
 
 import io.micronaut.core.annotation.Nullable;
-import io.micronaut.data.jdbc.annotation.ColumnTransformer;
+import io.micronaut.data.annotation.sql.ColumnTransformer;
 
 import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
