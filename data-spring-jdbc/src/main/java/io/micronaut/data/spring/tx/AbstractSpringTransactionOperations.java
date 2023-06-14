@@ -22,7 +22,6 @@ import io.micronaut.data.connection.ConnectionStatus;
 import io.micronaut.transaction.TransactionCallback;
 import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.TransactionStatus;
-import io.micronaut.transaction.exceptions.TransactionException;
 import io.micronaut.transaction.support.AbstractPropagatedStatusTransactionOperations;
 import io.micronaut.transaction.support.ExceptionUtil;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -147,16 +146,6 @@ public abstract class AbstractSpringTransactionOperations
             return transactionDefinition;
         }
 
-        @Override
-        public boolean hasSavepoint() {
-            return springStatus.hasSavepoint();
-        }
-
-        @Override
-        public void flush() {
-            springStatus.flush();
-        }
-
         @NonNull
         @Override
         public Object getTransaction() {
@@ -175,41 +164,11 @@ public abstract class AbstractSpringTransactionOperations
         }
 
         @Override
-        public Object createSavepoint() throws TransactionException {
-            return springStatus.createSavepoint();
-        }
-
-        @Override
-        public void rollbackToSavepoint(Object savepoint) throws TransactionException {
-            springStatus.rollbackToSavepoint(savepoint);
-        }
-
-        @Override
-        public void releaseSavepoint(Object savepoint) throws TransactionException {
-            springStatus.releaseSavepoint(savepoint);
-        }
-
-        @Override
         public void registerSynchronization(@NonNull io.micronaut.transaction.support.TransactionSynchronization synchronization) {
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
                 @Override
                 public int getOrder() {
                     return synchronization.getOrder();
-                }
-
-                @Override
-                public void suspend() {
-                    synchronization.suspend();
-                }
-
-                @Override
-                public void resume() {
-                    synchronization.resume();
-                }
-
-                @Override
-                public void flush() {
-                    synchronization.flush();
                 }
 
                 @Override

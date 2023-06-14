@@ -18,24 +18,18 @@ package io.micronaut.transaction.support;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.order.Ordered;
 
-import java.io.Flushable;
-
 /**
  * Interface for transaction synchronization callbacks.
- * Supported by AbstractPlatformTransactionManager.
  *
  * <p>TransactionSynchronization implementations can implement the Ordered interface
  * to influence their execution order. A synchronization that does not implement the
  * Ordered interface is appended to the end of the synchronization chain.
  *
- * <p>System synchronizations performed by Spring itself use specific order values,
- * allowing for fine-grained interaction with their execution order (if necessary).
- *
  * @author Juergen Hoeller
  * @since 02.06.2003
- * @see org.springframework.jdbc.datasource.DataSourceUtils#CONNECTION_SYNCHRONIZATION_ORDER
+ * @see io.micronaut.transaction.TransactionStatus#registerSynchronization(TransactionSynchronization)
  */
-public interface TransactionSynchronization extends Flushable, Ordered {
+public interface TransactionSynchronization extends Ordered {
 
     /**
      * Transaction synchronization status.
@@ -47,28 +41,6 @@ public interface TransactionSynchronization extends Flushable, Ordered {
         ROLLED_BACK,
         /** Completion status in case of heuristic mixed completion or system errors. */
         UNKNOWN
-    }
-
-    /**
-     * Suspend this synchronization.
-     * Supposed to unbind resources from TransactionSynchronizationManager if managing any.
-     */
-    default void suspend() {
-    }
-
-    /**
-     * Resume this synchronization.
-     */
-    default void resume() {
-    }
-
-    /**
-     * Flush the underlying session to the datastore, if applicable:
-     * for example, a Hibernate/JPA session.
-     * @see org.springframework.transaction.TransactionStatus#flush()
-     */
-    @Override
-    default void flush() {
     }
 
     /**
