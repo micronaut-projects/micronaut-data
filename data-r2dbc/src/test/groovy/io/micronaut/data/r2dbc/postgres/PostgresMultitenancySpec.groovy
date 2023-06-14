@@ -22,10 +22,4 @@ class PostgresMultitenancySpec extends AbstractR2dbcMultitenancySpec implements 
                 'dialect'        : 'POSTGRES'
         ]
     }
-
-    @Override
-    boolean supportsSchemaMultitenancy() {
-        // TODO: Remove this after changes for reactive context propagation
-        return false
-    }
 }
