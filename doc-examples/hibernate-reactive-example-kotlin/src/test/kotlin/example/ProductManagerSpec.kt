@@ -5,14 +5,12 @@ import jakarta.inject.Inject
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeAll
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 
-@Disabled("Introduce suspended TX manager for Kotlin")
 @MicronautTest(transactional = false)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-internal class ProductManagerSpec {
+internal class ProductManagerSpec : PostgresHibernateReactiveProperties {
     @Inject
     private lateinit var productManager: ProductManager
 
@@ -31,8 +29,8 @@ internal class ProductManagerSpec {
     @Test
     fun testProductManager() : Unit = runBlocking {
         val apple = manufacturerRepository.save("Apple")
-        productManager.save("VR", apple)
-        val (_, name) = productManager.find("VR")
+        productManager.save("VR", apple).block()
+        val (_, name) = productManager.find("VR").block()
         Assertions.assertEquals("VR", name)
     }
 }
