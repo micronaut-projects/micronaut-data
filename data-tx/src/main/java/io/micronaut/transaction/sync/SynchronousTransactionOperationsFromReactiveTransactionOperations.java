@@ -24,7 +24,6 @@ import io.micronaut.transaction.TransactionCallback;
 import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.TransactionOperations;
 import io.micronaut.transaction.TransactionStatus;
-import io.micronaut.transaction.exceptions.TransactionException;
 import io.micronaut.transaction.reactive.ReactiveTransactionStatus;
 import io.micronaut.transaction.reactive.ReactorReactiveTransactionOperations;
 import reactor.core.publisher.Mono;
@@ -99,21 +98,6 @@ public final class SynchronousTransactionOperationsFromReactiveTransactionOperat
         }
 
         @Override
-        public Object createSavepoint() throws TransactionException {
-            throw noSupported();
-        }
-
-        @Override
-        public void rollbackToSavepoint(Object savepoint) throws TransactionException {
-            throw noSupported();
-        }
-
-        @Override
-        public void releaseSavepoint(Object savepoint) throws TransactionException {
-            throw noSupported();
-        }
-
-        @Override
         public boolean isNewTransaction() {
             return transactionStatus.isNewTransaction();
         }
@@ -136,16 +120,6 @@ public final class SynchronousTransactionOperationsFromReactiveTransactionOperat
         @Override
         public TransactionDefinition getTransactionDefinition() {
             return transactionStatus.getTransactionDefinition();
-        }
-
-        @Override
-        public boolean hasSavepoint() {
-            throw noSupported();
-        }
-
-        @Override
-        public void flush() {
-            throw noSupported();
         }
 
         @Override
