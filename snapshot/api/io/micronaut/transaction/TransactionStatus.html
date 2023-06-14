@@ -78,7 +78,7 @@ loadScripts(document, 'script');</script>
 </dl>
 <dl class="notes">
 <dt>All Superinterfaces:</dt>
-<dd><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/Flushable.html" title="class or interface in java.io" class="external-link">Flushable</a></code>, <code><a href="SavepointManager.html" title="interface in io.micronaut.transaction">SavepointManager</a></code>, <code><a href="TransactionExecution.html" title="interface in io.micronaut.transaction">TransactionExecution</a></code></dd>
+<dd><code><a href="TransactionExecution.html" title="interface in io.micronaut.transaction">TransactionExecution</a></code></dd>
 </dl>
 <dl class="notes">
 <dt>All Known Subinterfaces:</dt>
@@ -90,31 +90,13 @@ loadScripts(document, 'script');</script>
 </dl>
 <hr>
 <div class="type-signature"><span class="modifiers">public interface </span><span class="element-name type-name-label">TransactionStatus&lt;T&gt;</span><span class="extends-implements">
-extends <a href="TransactionExecution.html" title="interface in io.micronaut.transaction">TransactionExecution</a>, <a href="SavepointManager.html" title="interface in io.micronaut.transaction">SavepointManager</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/Flushable.html" title="class or interface in java.io" class="external-link">Flushable</a></span></div>
-<div class="block">NOTICE: This is a fork of Spring's <code>TransactionStatus</code> modernizing it
- to use enums, Slf4j and decoupling from Spring.
- <p>
- Representation of the status of a transaction.
-
- <p>Transactional code can use this to retrieve status information,
- and to programmatically request a rollback (instead of throwing
- an exception that causes an implicit rollback).
-
- <p>Includes the <a href="SavepointManager.html" title="interface in io.micronaut.transaction"><code>SavepointManager</code></a> interface to provide access
- to savepoint management facilities. Note that savepoint management
- is only available if supported by the underlying transaction manager.</div>
+extends <a href="TransactionExecution.html" title="interface in io.micronaut.transaction">TransactionExecution</a></span></div>
+<div class="block">The transaction status.</div>
 <dl class="notes">
 <dt>Since:</dt>
-<dd>27.03.2003</dd>
+<dd>1.0.0</dd>
 <dt>Author:</dt>
-<dd>Juergen Hoeller</dd>
-<dt>See Also:</dt>
-<dd>
-<ul class="see-list-long">
-<li><a href="TransactionExecution.html#setRollbackOnly()"><code>TransactionExecution.setRollbackOnly()</code></a></li>
-<li><a href="SynchronousTransactionManager.html#getTransaction(io.micronaut.transaction.TransactionDefinition)"><code>SynchronousTransactionManager.getTransaction(io.micronaut.transaction.TransactionDefinition)</code></a></li>
-</ul>
-</dd>
+<dd>graemerocher, Denis Stepanov</dd>
 </dl>
 </section>
 <section class="summary">
@@ -130,27 +112,15 @@ extends <a href="TransactionExecution.html" title="interface in io.micronaut.tra
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#flush()" class="member-name-link">flush</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
-<div class="block">Flush the underlying session to the datastore, if applicable:
- for example, all affected Hibernate/JPA sessions.</div>
-</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default <a href="TransactionStatus.html" title="type parameter in TransactionStatus">T</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#getConnection()" class="member-name-link">getConnection</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>@NonNull <a href="../data/connection/ConnectionStatus.html" title="interface in io.micronaut.data.connection">ConnectionStatus</a>&lt;<a href="TransactionStatus.html" title="type parameter in TransactionStatus">T</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#getConnectionStatus()" class="member-name-link">getConnectionStatus</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>@Nullable <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#getTransaction()" class="member-name-link">getTransaction</a>()</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default <a href="TransactionStatus.html" title="type parameter in TransactionStatus">T</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#getConnection()" class="member-name-link">getConnection</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>@NonNull <a href="../data/connection/ConnectionStatus.html" title="interface in io.micronaut.data.connection">ConnectionStatus</a>&lt;<a href="TransactionStatus.html" title="type parameter in TransactionStatus">T</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#getConnectionStatus()" class="member-name-link">getConnectionStatus</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>boolean</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#hasSavepoint()" class="member-name-link">hasSavepoint</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
-<div class="block">Return whether this transaction internally carries a savepoint,
- that is, has been created as nested transaction based on a savepoint.</div>
-</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>@Nullable <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#getTransaction()" class="member-name-link">getTransaction</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default void</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#registerSynchronization(io.micronaut.transaction.support.TransactionSynchronization)" class="member-name-link">registerSynchronization</a><wbr>(@NonNull <a href="support/TransactionSynchronization.html" title="interface in io.micronaut.transaction.support">TransactionSynchronization</a>&nbsp;synchronization)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
@@ -159,9 +129,6 @@ extends <a href="TransactionExecution.html" title="interface in io.micronaut.tra
 </div>
 </div>
 </div>
-<div class="inherited-list">
-<h3 id="methods-inherited-from-class-io.micronaut.transaction.SavepointManager">Methods inherited from interface&nbsp;io.micronaut.transaction.<a href="SavepointManager.html" title="interface in io.micronaut.transaction">SavepointManager</a></h3>
-<code><a href="SavepointManager.html#createSavepoint()">createSavepoint</a>, <a href="SavepointManager.html#releaseSavepoint(java.lang.Object)">releaseSavepoint</a>, <a href="SavepointManager.html#rollbackToSavepoint(java.lang.Object)">rollbackToSavepoint</a></code></div>
 <div class="inherited-list">
 <h3 id="methods-inherited-from-class-io.micronaut.transaction.TransactionExecution">Methods inherited from interface&nbsp;io.micronaut.transaction.<a href="TransactionExecution.html" title="interface in io.micronaut.transaction">TransactionExecution</a></h3>
 <code><a href="TransactionExecution.html#getTransactionDefinition()">getTransactionDefinition</a>, <a href="TransactionExecution.html#isCompleted()">isCompleted</a>, <a href="TransactionExecution.html#isNewTransaction()">isNewTransaction</a>, <a href="TransactionExecution.html#isRollbackOnly()">isRollbackOnly</a>, <a href="TransactionExecution.html#setRollbackOnly()">setRollbackOnly</a></code></div>
@@ -177,53 +144,13 @@ extends <a href="TransactionExecution.html" title="interface in io.micronaut.tra
 <h2>Method Details</h2>
 <ul class="member-list">
 <li>
-<section class="detail" id="hasSavepoint()">
-<h3>hasSavepoint</h3>
-<div class="member-signature"><span class="return-type">boolean</span>&nbsp;<span class="element-name">hasSavepoint</span>()</div>
-<div class="block">Return whether this transaction internally carries a savepoint,
- that is, has been created as nested transaction based on a savepoint.
- <p>This method is mainly here for diagnostic purposes, alongside
- <a href="TransactionExecution.html#isNewTransaction()"><code>TransactionExecution.isNewTransaction()</code></a>. For programmatic handling of custom
- savepoints, use the operations provided by <a href="SavepointManager.html" title="interface in io.micronaut.transaction"><code>SavepointManager</code></a>.</div>
-<dl class="notes">
-<dt>Returns:</dt>
-<dd>Whether a save point is present</dd>
-<dt>See Also:</dt>
-<dd>
-<ul class="see-list-long">
-<li><a href="TransactionExecution.html#isNewTransaction()"><code>TransactionExecution.isNewTransaction()</code></a></li>
-<li><a href="SavepointManager.html#createSavepoint()"><code>SavepointManager.createSavepoint()</code></a></li>
-<li><a href="SavepointManager.html#rollbackToSavepoint(java.lang.Object)"><code>SavepointManager.rollbackToSavepoint(Object)</code></a></li>
-<li><a href="SavepointManager.html#releaseSavepoint(java.lang.Object)"><code>SavepointManager.releaseSavepoint(Object)</code></a></li>
-</ul>
-</dd>
-</dl>
-</section>
-</li>
-<li>
-<section class="detail" id="flush()">
-<h3>flush</h3>
-<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">flush</span>()</div>
-<div class="block">Flush the underlying session to the datastore, if applicable:
- for example, all affected Hibernate/JPA sessions.
- <p>This is effectively just a hint and may be a no-op if the underlying
- transaction manager does not have a flush concept. A flush signal may
- get applied to the primary resource or to transaction synchronizations,
- depending on the underlying resource.</div>
-<dl class="notes">
-<dt>Specified by:</dt>
-<dd><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/Flushable.html#flush()" title="class or interface in java.io" class="external-link">flush</a></code>&nbsp;in interface&nbsp;<code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/Flushable.html" title="class or interface in java.io" class="external-link">Flushable</a></code></dd>
-</dl>
-</section>
-</li>
-<li>
 <section class="detail" id="getTransaction()">
 <h3>getTransaction</h3>
 <div class="member-signature"><span class="annotations">@Nullable
 </span><span class="return-type">@Nullable <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></span>&nbsp;<span class="element-name">getTransaction</span>()</div>
 <dl class="notes">
 <dt>Returns:</dt>
-<dd>The underlying transaction object.</dd>
+<dd>The underlying transaction object if exists.</dd>
 </dl>
 </section>
 </li>

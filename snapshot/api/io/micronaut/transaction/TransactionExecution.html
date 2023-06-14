@@ -82,12 +82,10 @@ loadScripts(document, 'script');</script>
 </dl>
 <hr>
 <div class="type-signature"><span class="modifiers">public interface </span><span class="element-name type-name-label">TransactionExecution</span></div>
-<div class="block">NOTICE: This is a fork of Spring's <code>PlatformTransactionManager</code> modernizing it
- to use enums, Slf4j and decoupling from Spring.
-
- Common representation of the current state of a transaction.
+<div class="block">Common representation of the current state of a transaction.
  Serves as base interface for <a href="TransactionStatus.html" title="interface in io.micronaut.transaction"><code>TransactionStatus</code></a> as well as
- <a href="reactive/ReactiveTransactionStatus.html" title="interface in io.micronaut.transaction.reactive"><code>ReactiveTransactionStatus</code></a>.</div>
+ <a href="reactive/ReactiveTransactionStatus.html" title="interface in io.micronaut.transaction.reactive"><code>ReactiveTransactionStatus</code></a>.
+ Partially based on https://github.com/spring-projects/spring-framework/blob/main/spring-tx/src/main/java/org/springframework/transaction/TransactionExecution.java</div>
 <dl class="notes">
 <dt>Since:</dt>
 <dd>5.2</dd>
