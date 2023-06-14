@@ -116,6 +116,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     private static final String SEQ_SUFFIX = "_seq";
     private static final String INSERT_INTO = "INSERT INTO ";
     private static final String ALTER_TABLE = "ALTER TABLE";
+    private static final String MAPPED_BY = "mappedBy";
     private static final String JDBC_REPO_ANNOTATION = "io.micronaut.data.jdbc.annotation.JdbcRepository";
 
     private final Dialect dialect;
@@ -334,7 +335,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         if (dropForeignKeys) {
             List<ForeignKey> foreignKeys = new ArrayList<>();
             foreignKeys.addAll(getForeignKeys(entity));
-            addForeignKeys(entity, tableName, escape, false, foreignKeys, tableStatements);
+            addForeignKeys(tableName, escape, false, foreignKeys, tableStatements);
         }
 
         return tableStatements;
@@ -356,14 +357,14 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
             if (prop instanceof Association association) {
                 Relation.Kind kind = association.getKind();
                 // TODO: Any other criteria for FK?
-                if (kind == Relation.Kind.MANY_TO_ONE || (kind == Relation.Kind.ONE_TO_ONE && !association.getAnnotationMetadata().stringValue(Relation.class, "mappedBy").isPresent())) {
+                if (kind == Relation.Kind.MANY_TO_ONE || (kind == Relation.Kind.ONE_TO_ONE && !association.getAnnotationMetadata().stringValue(Relation.class, MAPPED_BY).isPresent())) {
                     String refTableName = getTableName(association.getAssociatedEntity());
                     // TODO: Check if there is JoinColumns annotation present to override names
                     // It's problematic since it's not checked during table creation
                     List<String> refColumnNames = new ArrayList<>();
-                    foreignKeysHandler(association.getAssociatedEntity().getIdentity(), (refColumn) -> refColumnNames.add(refColumn));
+                    foreignKeysHandler(association.getAssociatedEntity().getIdentity(), refColumnNames::add);
                     List<String> columnNames = new ArrayList<>();
-                    foreignKeysHandler(prop, (column) -> columnNames.add(column));
+                    foreignKeysHandler(prop, columnNames::add);
                     if (columnNames.size() != refColumnNames.size()) {
                         throw new IllegalStateException("Field " + prop.getName() + " in entity " + entity.getName() + " is not mapped to valid foreign key relation as number of key fields don't match.");
                     }
@@ -415,7 +416,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     public static boolean isForeignKeyWithJoinTable(@NonNull Association association) {
         return association.isForeignKey() &&
                 !association.getAnnotationMetadata()
-                        .stringValue(Relation.class, "mappedBy").isPresent();
+                        .stringValue(Relation.class, MAPPED_BY).isPresent();
     }
 
     /**
@@ -651,7 +652,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         tableStatements.addStatement(builder.toString());
         addIndexes(entity, tableName, tableStatements);
         if (createForeignKeys) {
-            addForeignKeys(entity, tableName, escape, true, foreignKeys, tableStatements);
+            addForeignKeys(tableName, escape, true, foreignKeys, tableStatements);
         }
         return tableStatements;
     }
@@ -708,7 +709,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         return indexBuilder.toString();
     }
 
-    private void addForeignKeys(PersistentEntity entity, String tableName, boolean escape, boolean create,
+    private void addForeignKeys(String tableName, boolean escape, boolean create,
                                 List<ForeignKey> foreignKeys, TableStatements tableStatements) {
         if (CollectionUtils.isEmpty(foreignKeys)) {
             return;
@@ -1565,7 +1566,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                            PersistentEntity associationOwner,
                            String currentJoinAlias) {
         final boolean escape = shouldEscape(associationOwner);
-        String mappedBy = association.getAnnotationMetadata().stringValue(Relation.class, "mappedBy").orElse(null);
+        String mappedBy = association.getAnnotationMetadata().stringValue(Relation.class, MAPPED_BY).orElse(null);
 
         if (association.getKind() == Relation.Kind.MANY_TO_MANY || association.isForeignKey() && StringUtils.isEmpty(mappedBy)) {
             PersistentProperty identity = associatedEntity.getIdentity();
@@ -1978,6 +1979,8 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
      */
     private static String hashedName(String s) {
         try {
+            // MD5 is used just to generate hash name
+            @SuppressWarnings({"java:S4790"})
             MessageDigest md = MessageDigest.getInstance("MD5");
             md.reset();
             md.update(s.getBytes());

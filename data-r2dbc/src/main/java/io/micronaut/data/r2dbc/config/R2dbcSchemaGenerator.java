@@ -138,9 +138,7 @@ public class R2dbcSchemaGenerator {
             });
         } else {
             createForeignKeyStatements = Collections.emptyList();
-            tableStatementsList.forEach(ts -> {
-                createStatements.addAll(Arrays.asList(ts.getStatements()));
-            });
+            tableStatementsList.forEach(ts -> createStatements.addAll(Arrays.asList(ts.getStatements())));
         }
         Flux<Void> createTablesFlow = Flux.fromIterable(createStatements)
             .concatMap(sql -> {
@@ -182,9 +180,7 @@ public class R2dbcSchemaGenerator {
                     });
                 } else {
                     dropForeignKeyStatements = Collections.emptyList();
-                    tableStatementsList.forEach(ts -> {
-                        dropStatements.addAll(Arrays.asList(ts.getStatements()));
-                    });
+                    tableStatementsList.forEach(ts -> dropStatements.addAll(Arrays.asList(ts.getStatements())));
                 }
                 return Flux.fromIterable(dropForeignKeyStatements)
                     .concatMap(foreignKeySql -> {

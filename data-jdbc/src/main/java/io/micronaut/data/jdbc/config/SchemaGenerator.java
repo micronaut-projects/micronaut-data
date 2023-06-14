@@ -183,14 +183,14 @@ public class SchemaGenerator {
                                         }
                                     } catch (SQLException e) {
                                         if (DataSettings.QUERY_LOG.isTraceEnabled()) {
-                                            DataSettings.QUERY_LOG.trace("Drop Foreign Key Unsuccessful: " + e.getMessage());
+                                            DataSettings.QUERY_LOG.trace("Drop Foreign Key Unsuccessful: {}", e.getMessage());
                                         }
                                     }
                                 }
                             }
                         } catch (Exception e) {
                             if (DataSettings.QUERY_LOG.isTraceEnabled()) {
-                                DataSettings.QUERY_LOG.trace("Creation of drop statements failed: " + e.getMessage());
+                                DataSettings.QUERY_LOG.trace("Creation of drop statements failed: {}", e.getMessage());
                             }
                         }
                     }
@@ -204,7 +204,7 @@ public class SchemaGenerator {
                             }
                         } catch (SQLException e) {
                             if (DataSettings.QUERY_LOG.isTraceEnabled()) {
-                                DataSettings.QUERY_LOG.trace("DROP Statement Unsuccessful: " + e.getMessage());
+                                DataSettings.QUERY_LOG.trace("DROP Statement Unsuccessful: {}", e.getMessage());
                             }
                         }
                     }
@@ -225,7 +225,7 @@ public class SchemaGenerator {
                                 }
                             } catch (SQLException e) {
                                 if (DataSettings.QUERY_LOG.isWarnEnabled()) {
-                                    DataSettings.QUERY_LOG.warn("CREATE Statement Unsuccessful: " + e.getMessage());
+                                    DataSettings.QUERY_LOG.warn("CREATE Statement Unsuccessful: {}", e.getMessage());
                                 }
                             }
                         }
@@ -241,7 +241,7 @@ public class SchemaGenerator {
                                 }
                             } catch (SQLException e) {
                                 if (DataSettings.QUERY_LOG.isWarnEnabled()) {
-                                    DataSettings.QUERY_LOG.warn("Foreign key statement unsuccessful: " + e.getMessage());
+                                    DataSettings.QUERY_LOG.warn("Foreign key statement unsuccessful: {}", e.getMessage());
                                 }
                             }
                         }
