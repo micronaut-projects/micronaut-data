@@ -31,7 +31,6 @@ micronautBuild {
     importMicronautCatalog("micronaut-multitenancy")
     importMicronautCatalog("micronaut-testresources")
     importMicronautCatalog("micronaut-validation")
-    importMicronautCatalog("micronaut-logging")
     importMicronautCatalog("micronaut-mongo")
     importMicronautCatalog("micronaut-flyway")
 }
