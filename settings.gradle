@@ -120,6 +120,8 @@ include 'doc-examples:azure-cosmos-example-kotlin'
 include 'doc-examples:jdbc-spring-tx-example-java'
 include 'doc-examples:hibernate-spring-tx-example-java'
 
+include 'doc-examples:jooq-r2dbc-postgres'
+
 // benchmarks
 include 'benchmarks:benchmark-micronaut-data-jpa'
 include 'benchmarks:benchmark-micronaut-data-jdbc'
