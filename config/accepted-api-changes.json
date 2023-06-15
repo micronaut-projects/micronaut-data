@@ -682,182 +682,182 @@
   {
     "type": "io.micronaut.data.cosmos.serde.$DefaultCustomConverterDeserializer$Definition$Reference",
     "member": "Field $ANNOTATION_METADATA",
-    "reason": "Field type has been moved"
+    "reason": "Internal class moved"
   },
   {
     "type": "io.micronaut.data.cosmos.serde.$DefaultCustomConverterDeserializer$Definition$Reference",
     "member": "Constructor io.micronaut.data.cosmos.serde.$DefaultCustomConverterDeserializer$Definition$Reference()",
-    "reason": "Super constructor param type(s) have been moved"
+    "reason": "Internal class moved"
   },
   {
     "type": "io.micronaut.data.cosmos.serde.$DefaultCustomConverterDeserializer$Definition$Reference",
     "member": "Implemented interface io.micronaut.core.annotation.AnnotationSource",
-    "reason": "Provide a human readable reason for the change\""
+    "reason": "Internal class moved"
   },
   {
     "type": "io.micronaut.data.cosmos.serde.$DefaultCustomConverterDeserializer$Definition$Reference",
     "member": "Implemented interface io.micronaut.inject.BeanContextConditional",
-    "reason": "Implemented interface has been moved"
+    "reason": "Internal class moved"
   },
   {
     "type": "io.micronaut.data.cosmos.serde.$DefaultCustomConverterDeserializer$Definition$Reference",
     "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadataProvider",
-    "reason": "Implemented interface has been moved"
+    "reason": "Internal class moved"
   },
   {
     "type": "io.micronaut.data.cosmos.serde.$DefaultCustomConverterDeserializer$Definition$Reference",
     "member": "Implemented interface io.micronaut.inject.BeanType",
-    "reason": "Implemented interface has been moved"
+    "reason": "Internal class moved"
   },
   {
     "type": "io.micronaut.data.cosmos.serde.$DefaultCustomConverterDeserializer$Definition$Reference",
     "member": "Implemented interface io.micronaut.inject.BeanDefinitionReference",
-    "reason": "Implemented interface has been moved"
+    "reason": "Internal class moved"
   },
   {
     "type": "io.micronaut.data.cosmos.serde.$DefaultCustomConverterSerializer$Definition$Reference",
     "member": "Field $ANNOTATION_METADATA",
-    "reason": "Field type has been moved"
+    "reason": "Internal class moved"
   },
   {
     "type": "io.micronaut.data.cosmos.serde.$DefaultCustomConverterSerializer$Definition$Reference",
     "member": "Constructor io.micronaut.data.cosmos.serde.$DefaultCustomConverterSerializer$Definition$Reference()",
-    "reason": "Super constructor param type(s) have been moved"
+    "reason": "Internal class moved"
   },
   {
     "type": "io.micronaut.data.cosmos.serde.$DefaultCustomConverterSerializer$Definition$Reference",
     "member": "Implemented interface io.micronaut.core.annotation.AnnotationSource",
-    "reason": "Implemented interface has been moved"
+    "reason": "Internal class moved"
   },
   {
     "type": "io.micronaut.data.cosmos.serde.$DefaultCustomConverterSerializer$Definition$Reference",
     "member": "Implemented interface io.micronaut.inject.BeanContextConditional",
-    "reason": "Implemented interface has been moved"
+    "reason": "Internal class moved"
   },
   {
     "type": "io.micronaut.data.cosmos.serde.$DefaultCustomConverterSerializer$Definition$Reference",
     "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadataProvider",
-    "reason": "Implemented interface has been moved"
+    "reason": "Internal class moved"
   },
   {
     "type": "io.micronaut.data.cosmos.serde.$DefaultCustomConverterSerializer$Definition$Reference",
     "member": "Implemented interface io.micronaut.inject.BeanType",
-    "reason": "Implemented interface has been moved"
+    "reason": "Internal class moved"
   },
   {
     "type": "io.micronaut.data.cosmos.serde.$DefaultCustomConverterSerializer$Definition$Reference",
     "member": "Implemented interface io.micronaut.inject.BeanDefinitionReference",
-    "reason": "Implemented interface has been moved"
+    "reason": "Internal class moved"
   },
   {
     "type": "io.micronaut.data.cosmos.serde.$DefaultIdDeserializer$Definition$Reference",
     "member": "Field $ANNOTATION_METADATA",
-    "reason": "Field type has been moved"
+    "reason": "Internal class moved"
   },
   {
     "type": "io.micronaut.data.cosmos.serde.$DefaultIdDeserializer$Definition$Reference",
     "member": "Constructor io.micronaut.data.cosmos.serde.$DefaultIdDeserializer$Definition$Reference()",
-    "reason": "Super constructor param type(s) have been moved"
+    "reason": "Internal class moved"
   },
   {
     "type": "io.micronaut.data.cosmos.serde.$DefaultIdDeserializer$Definition$Reference",
     "member": "Implemented interface io.micronaut.core.annotation.AnnotationSource",
-    "reason": "Implemented interface has been moved"
+    "reason": "Internal class moved"
   },
   {
     "type": "io.micronaut.data.cosmos.serde.$DefaultIdDeserializer$Definition$Reference",
     "member": "Implemented interface io.micronaut.inject.BeanContextConditional",
-    "reason": "Implemented interface has been moved"
+    "reason": "Internal class moved"
   },
   {
     "type": "io.micronaut.data.cosmos.serde.$DefaultIdDeserializer$Definition$Reference",
     "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadataProvider",
-    "reason": "Implemented interface has been moved"
+    "reason": "Internal class moved"
   },
   {
     "type": "io.micronaut.data.cosmos.serde.$DefaultIdDeserializer$Definition$Reference",
     "member": "Implemented interface io.micronaut.inject.BeanType",
-    "reason": "Implemented interface has been moved"
+    "reason": "Internal class moved"
   },
   {
     "type": "io.micronaut.data.cosmos.serde.$DefaultIdDeserializer$Definition$Reference",
     "member": "Implemented interface io.micronaut.inject.BeanDefinitionReference",
-    "reason": "Implemented interface has been moved"
+    "reason": "Internal class moved"
   },
   {
     "type": "io.micronaut.data.cosmos.serde.$DefaultIdPropertyNamingStrategy$Definition$Reference",
     "member": "Field $ANNOTATION_METADATA",
-    "reason": "Field type has been moved"
+    "reason": "Internal class moved"
   },
   {
     "type": "io.micronaut.data.cosmos.serde.$DefaultIdPropertyNamingStrategy$Definition$Reference",
     "member": "Constructor io.micronaut.data.cosmos.serde.$DefaultIdPropertyNamingStrategy$Definition$Reference()",
-    "reason": "Super constructor param type(s) have been moved"
+    "reason": "Internal class moved"
   },
   {
     "type": "io.micronaut.data.cosmos.serde.$DefaultIdPropertyNamingStrategy$Definition$Reference",
     "member": "Implemented interface io.micronaut.core.annotation.AnnotationSource",
-    "reason": "Implemented interface has been moved"
+    "reason": "Internal class moved"
   },
   {
     "type": "io.micronaut.data.cosmos.serde.$DefaultIdPropertyNamingStrategy$Definition$Reference",
     "member": "Implemented interface io.micronaut.inject.BeanContextConditional",
-    "reason": "Implemented interface has been moved"
+    "reason": "Internal class moved"
   },
   {
     "type": "io.micronaut.data.cosmos.serde.$DefaultIdPropertyNamingStrategy$Definition$Reference",
     "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadataProvider",
-    "reason": "Implemented interface has been moved"
+    "reason": "Internal class moved"
   },
   {
     "type": "io.micronaut.data.cosmos.serde.$DefaultIdPropertyNamingStrategy$Definition$Reference",
     "member": "Implemented interface io.micronaut.inject.BeanType",
-    "reason": "Implemented interface has been moved"
+    "reason": "Internal class moved"
   },
   {
     "type": "io.micronaut.data.cosmos.serde.$DefaultIdPropertyNamingStrategy$Definition$Reference",
     "member": "Implemented interface io.micronaut.inject.BeanDefinitionReference",
-    "reason": "Implemented interface has been moved"
+    "reason": "Internal class moved"
   },
   {
     "type": "io.micronaut.data.cosmos.serde.$DefaultIdSerializer$Definition$Reference",
     "member": "Field $ANNOTATION_METADATA",
-    "reason": "Field type has been moved"
+    "reason": "Internal class moved"
   },
   {
     "type": "io.micronaut.data.cosmos.serde.$DefaultIdSerializer$Definition$Reference",
     "member": "Constructor io.micronaut.data.cosmos.serde.$DefaultIdSerializer$Definition$Reference()",
-    "reason": "Super constructor param type(s) have been moved"
+    "reason": "Internal class moved"
   },
   {
     "type": "io.micronaut.data.cosmos.serde.$DefaultIdSerializer$Definition$Reference",
     "member": "Implemented interface io.micronaut.core.annotation.AnnotationSource",
-    "reason": "Implemented interface has been moved"
+    "reason": "Internal class moved"
   },
   {
     "type": "io.micronaut.data.cosmos.serde.$DefaultIdSerializer$Definition$Reference",
     "member": "Implemented interface io.micronaut.inject.BeanContextConditional",
-    "reason": "Implemented interface has been moved"
+    "reason": "Internal class moved"
   },
   {
     "type": "io.micronaut.data.cosmos.serde.$DefaultIdSerializer$Definition$Reference",
     "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadataProvider",
-    "reason": "Implemented interface has been moved"
+    "reason": "Internal class moved"
   },
   {
     "type": "io.micronaut.data.cosmos.serde.$DefaultIdSerializer$Definition$Reference",
     "member": "Implemented interface io.micronaut.inject.BeanType",
-    "reason": "Implemented interface has been moved"
+    "reason": "Internal class moved"
   },
   {
     "type": "io.micronaut.data.cosmos.serde.$DefaultIdSerializer$Definition$Reference",
     "member": "Implemented interface io.micronaut.inject.BeanDefinitionReference",
-    "reason": "Implemented interface has been moved"
+    "reason": "Internal class moved"
   },
   {
     "type": "io.micronaut.data.cosmos.serde.$DefaultManyRelationSerializer$Definition$Reference",
     "member": "Field $ANNOTATION_METADATA",
-    "reason": "Field type has been moved"
+    "reason": "Internal class moved"
   },
   {
     "type": "io.micronaut.data.cosmos.operations.DefaultReactiveCosmosRepositoryOperations",
@@ -867,151 +867,571 @@
   {
     "type": "io.micronaut.data.cosmos.serde.$DefaultManyRelationSerializer$Definition$Reference",
     "member": "Constructor io.micronaut.data.cosmos.serde.$DefaultManyRelationSerializer$Definition$Reference()",
-    "reason": "Super constructor param type(s) have been moved"
+    "reason": "Internal class moved"
   },
   {
     "type": "io.micronaut.data.cosmos.serde.$DefaultManyRelationSerializer$Definition$Reference",
     "member": "Implemented interface io.micronaut.core.annotation.AnnotationSource",
-    "reason": "Implemented interface has been moved"
+    "reason": "Internal class moved"
   },
   {
     "type": "io.micronaut.data.cosmos.serde.$DefaultManyRelationSerializer$Definition$Reference",
     "member": "Implemented interface io.micronaut.inject.BeanContextConditional",
-    "reason": "Implemented interface has been moved"
+    "reason": "Internal class moved"
   },
   {
     "type": "io.micronaut.data.cosmos.serde.$DefaultManyRelationSerializer$Definition$Reference",
     "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadataProvider",
-    "reason": "Implemented interface has been moved"
+    "reason": "Internal class moved"
   },
   {
     "type": "io.micronaut.data.cosmos.serde.$DefaultManyRelationSerializer$Definition$Reference",
     "member": "Implemented interface io.micronaut.inject.BeanType",
-    "reason": "Implemented interface has been moved"
+    "reason": "Internal class moved"
   },
   {
     "type": "io.micronaut.data.cosmos.serde.$DefaultManyRelationSerializer$Definition$Reference",
     "member": "Implemented interface io.micronaut.inject.BeanDefinitionReference",
-    "reason": "Implemented interface has been moved"
+    "reason": "Internal class moved"
   },
   {
     "type": "io.micronaut.data.cosmos.serde.$DefaultOneRelationDeserializer$Definition$Reference",
     "member": "Field $ANNOTATION_METADATA",
-    "reason": "Field type has been moved"
+    "reason": "Internal class moved"
   },
   {
     "type": "io.micronaut.data.cosmos.serde.$DefaultOneRelationDeserializer$Definition$Reference",
     "member": "Constructor io.micronaut.data.cosmos.serde.$DefaultOneRelationDeserializer$Definition$Reference()",
-    "reason": "Super constructor param type(s) have been moved"
+    "reason": "Internal class moved"
   },
   {
     "type": "io.micronaut.data.cosmos.serde.$DefaultOneRelationDeserializer$Definition$Reference",
     "member": "Implemented interface io.micronaut.core.annotation.AnnotationSource",
-    "reason": "Implemented interface has been moved"
+    "reason": "Internal class moved"
   },
   {
     "type": "io.micronaut.data.cosmos.serde.$DefaultOneRelationDeserializer$Definition$Reference",
     "member": "Implemented interface io.micronaut.inject.BeanContextConditional",
-    "reason": "Implemented interface has been moved"
+    "reason": "Internal class moved"
   },
   {
     "type": "io.micronaut.data.cosmos.serde.$DefaultOneRelationDeserializer$Definition$Reference",
     "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadataProvider",
-    "reason": "Implemented interface has been moved"
+    "reason": "Internal class moved"
   },
   {
     "type": "io.micronaut.data.cosmos.serde.$DefaultOneRelationDeserializer$Definition$Reference",
     "member": "Implemented interface io.micronaut.inject.BeanType",
-    "reason": "Implemented interface has been moved"
+    "reason": "Internal class moved"
   },
   {
     "type": "io.micronaut.data.cosmos.serde.$DefaultOneRelationDeserializer$Definition$Reference",
     "member": "Implemented interface io.micronaut.inject.BeanDefinitionReference",
-    "reason": "Implemented interface has been moved"
+    "reason": "Internal class moved"
   },
   {
     "type": "io.micronaut.data.cosmos.serde.$DefaultOneRelationSerializer$Definition$Reference",
     "member": "Field $ANNOTATION_METADATA",
-    "reason": "Field type has been moved"
+    "reason": "Internal class moved"
   },
   {
     "type": "io.micronaut.data.cosmos.serde.$DefaultOneRelationSerializer$Definition$Reference",
     "member": "Constructor io.micronaut.data.cosmos.serde.$DefaultOneRelationSerializer$Definition$Reference()",
-    "reason": "Super constructor param type(s) have been moved"
+    "reason": "Internal class moved"
   },
   {
     "type": "io.micronaut.data.cosmos.serde.$DefaultOneRelationSerializer$Definition$Reference",
     "member": "Implemented interface io.micronaut.core.annotation.AnnotationSource",
-    "reason": "Implemented interface has been moved"
+    "reason": "Internal class moved"
   },
   {
     "type": "io.micronaut.data.cosmos.serde.$DefaultOneRelationSerializer$Definition$Reference",
     "member": "Implemented interface io.micronaut.inject.BeanContextConditional",
-    "reason": "Implemented interface has been moved"
+    "reason": "Internal class moved"
   },
   {
     "type": "io.micronaut.data.cosmos.serde.$DefaultOneRelationSerializer$Definition$Reference",
     "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadataProvider",
-    "reason": "Implemented interface has been moved"
+    "reason": "Internal class moved"
   },
   {
     "type": "io.micronaut.data.cosmos.serde.$DefaultOneRelationSerializer$Definition$Reference",
     "member": "Implemented interface io.micronaut.inject.BeanType",
-    "reason": "Implemented interface has been moved"
+    "reason": "Internal class moved"
   },
   {
     "type": "io.micronaut.data.cosmos.serde.$DefaultOneRelationSerializer$Definition$Reference",
     "member": "Implemented interface io.micronaut.inject.BeanDefinitionReference",
-    "reason": "Implemented interface has been moved"
+    "reason": "Internal class moved"
   },
   {
     "type": "io.micronaut.data.document.processor.mapper.EmbeddableMapper",
     "member": "Implemented interface io.micronaut.inject.annotation.TypedAnnotationMapper",
-    "reason": "Implemented interface has been moved"
+    "reason": "Internal class moved"
   },
   {
     "type": "io.micronaut.data.document.processor.mapper.EmbeddableMapper",
     "member": "Implemented interface io.micronaut.inject.annotation.AnnotationMapper",
-    "reason": "Implemented interface has been moved"
+    "reason": "Internal class moved"
   },
   {
     "type": "io.micronaut.data.document.processor.mapper.MappedEntityMapper",
     "member": "Implemented interface io.micronaut.inject.annotation.TypedAnnotationMapper",
-    "reason": "Implemented interface has been moved"
+    "reason": "Internal class moved"
   },
   {
     "type": "io.micronaut.data.document.processor.mapper.MappedEntityMapper",
     "member": "Implemented interface io.micronaut.inject.annotation.AnnotationMapper",
-    "reason": "Implemented interface has been moved"
+    "reason": "Internal class moved"
   },
   {
     "type": "io.micronaut.data.document.processor.mapper.MappedIdMapper",
     "member": "Implemented interface io.micronaut.inject.annotation.TypedAnnotationMapper",
-    "reason": "Implemented interface has been moved"
+    "reason": "Internal class moved"
   },
   {
     "type": "io.micronaut.data.document.processor.mapper.MappedIdMapper",
     "member": "Implemented interface io.micronaut.inject.annotation.AnnotationMapper",
-    "reason": "Implemented interface has been moved"
+    "reason": "Internal class moved"
   },
   {
     "type": "io.micronaut.data.document.processor.mapper.MappedPropertyMapper",
     "member": "Implemented interface io.micronaut.inject.annotation.TypedAnnotationMapper",
-    "reason": "Implemented interface has been moved"
+    "reason": "Internal class moved"
   },
   {
     "type": "io.micronaut.data.document.processor.mapper.MappedPropertyMapper",
     "member": "Implemented interface io.micronaut.inject.annotation.AnnotationMapper",
-    "reason": "Implemented interface has been moved"
+    "reason": "Internal class moved"
   },
   {
     "type": "io.micronaut.data.document.processor.mapper.MappedRelationMapper",
     "member": "Implemented interface io.micronaut.inject.annotation.TypedAnnotationMapper",
-    "reason": "Implemented interface has been moved"
+    "reason": "Internal class moved"
   },
   {
     "type": "io.micronaut.data.document.processor.mapper.MappedRelationMapper",
     "member": "Implemented interface io.micronaut.inject.annotation.AnnotationMapper",
-    "reason": "Implemented interface has been moved"
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.hibernate.operations.$HibernateJpaOperations$ReflectConfig",
+    "member": "Field $ANNOTATION_METADATA",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.hibernate.operations.$HibernateJpaOperations$ReflectConfig",
+    "member": "Constructor io.micronaut.data.hibernate.operations.$HibernateJpaOperations$ReflectConfig()",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.hibernate.operations.$HibernateJpaOperations$ReflectConfig",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationSource",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.hibernate.operations.$HibernateJpaOperations$ReflectConfig",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadataProvider",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.hibernate.operations.$HibernateJpaOperations$ReflectConfig",
+    "member": "Implemented interface io.micronaut.core.graal.GraalReflectionConfigurer",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.jpa.annotation.EntityGraph",
+    "member": "Implemented interface java.lang.annotation.Annotation",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.jpa.operations.JpaRepositoryOperations",
+    "member": "Implemented interface io.micronaut.data.operations.RepositoryOperations",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.jpa.operations.JpaRepositoryOperations",
+    "member": "Implemented interface io.micronaut.data.operations.PrimaryRepositoryOperations",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.jpa.operations.JpaRepositoryOperations",
+    "member": "Implemented interface io.micronaut.data.operations.HintsCapableRepository",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.jpa.operations.JpaRepositoryOperations",
+    "member": "Implemented interface io.micronaut.context.ApplicationContextProvider",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.jpa.repository.intercept.$AbstractSpecificationInterceptor$IntrospectionRef",
+    "member": "Field $ANNOTATION_METADATA",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.jpa.repository.intercept.$AbstractSpecificationInterceptor$IntrospectionRef",
+    "member": "Constructor io.micronaut.data.jpa.repository.intercept.$AbstractSpecificationInterceptor$IntrospectionRef()",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.jpa.repository.intercept.$AbstractSpecificationInterceptor$IntrospectionRef",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationSource",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.jpa.repository.intercept.$AbstractSpecificationInterceptor$IntrospectionRef",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadataProvider",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.jpa.repository.intercept.$AbstractSpecificationInterceptor$IntrospectionRef",
+    "member": "Implemented interface io.micronaut.core.naming.Named",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.jpa.repository.intercept.$AbstractSpecificationInterceptor$IntrospectionRef",
+    "member": "Implemented interface io.micronaut.core.beans.BeanIntrospectionReference",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.jpa.repository.intercept.$CountSpecificationInterceptor$IntrospectionRef",
+    "member": "Field $ANNOTATION_METADATA",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.jpa.repository.intercept.$CountSpecificationInterceptor$IntrospectionRef",
+    "member": "Constructor io.micronaut.data.jpa.repository.intercept.$CountSpecificationInterceptor$IntrospectionRef()",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.jpa.repository.intercept.$CountSpecificationInterceptor$IntrospectionRef",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationSource",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.jpa.repository.intercept.$CountSpecificationInterceptor$IntrospectionRef",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadataProvider",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.jpa.repository.intercept.$CountSpecificationInterceptor$IntrospectionRef",
+    "member": "Implemented interface io.micronaut.core.naming.Named",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.jpa.repository.intercept.$CountSpecificationInterceptor$IntrospectionRef",
+    "member": "Implemented interface io.micronaut.core.beans.BeanIntrospectionReference",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.jpa.repository.intercept.$FindAllSpecificationInterceptor$IntrospectionRef",
+    "member": "Field $ANNOTATION_METADATA",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.jpa.repository.intercept.$FindAllSpecificationInterceptor$IntrospectionRef",
+    "member": "Constructor io.micronaut.data.jpa.repository.intercept.$FindAllSpecificationInterceptor$IntrospectionRef()",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.jpa.repository.intercept.$FindAllSpecificationInterceptor$IntrospectionRef",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationSource",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.jpa.repository.intercept.$FindAllSpecificationInterceptor$IntrospectionRef",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadataProvider",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.jpa.repository.intercept.$FindAllSpecificationInterceptor$IntrospectionRef",
+    "member": "Implemented interface io.micronaut.core.naming.Named",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.jpa.repository.intercept.$FindAllSpecificationInterceptor$IntrospectionRef",
+    "member": "Implemented interface io.micronaut.core.beans.BeanIntrospectionReference",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.jpa.repository.intercept.$FindOneSpecificationInterceptor$IntrospectionRef",
+    "member": "Field $ANNOTATION_METADATA",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.jpa.repository.intercept.$FindOneSpecificationInterceptor$IntrospectionRef",
+    "member": "Constructor io.micronaut.data.jpa.repository.intercept.$FindOneSpecificationInterceptor$IntrospectionRef()",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.jpa.repository.intercept.$FindOneSpecificationInterceptor$IntrospectionRef",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationSource",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.jpa.repository.intercept.$FindOneSpecificationInterceptor$IntrospectionRef",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadataProvider",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.jpa.repository.intercept.$FindOneSpecificationInterceptor$IntrospectionRef",
+    "member": "Implemented interface io.micronaut.core.naming.Named",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.jpa.repository.intercept.$FindOneSpecificationInterceptor$IntrospectionRef",
+    "member": "Implemented interface io.micronaut.core.beans.BeanIntrospectionReference",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.jpa.repository.intercept.$FindPageSpecificationInterceptor$IntrospectionRef",
+    "member": "Field $ANNOTATION_METADATA",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.jpa.repository.intercept.$FindPageSpecificationInterceptor$IntrospectionRef",
+    "member": "Constructor io.micronaut.data.jpa.repository.intercept.$FindPageSpecificationInterceptor$IntrospectionRef()",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.jpa.repository.intercept.$FindPageSpecificationInterceptor$IntrospectionRef",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationSource",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.jpa.repository.intercept.$FindPageSpecificationInterceptor$IntrospectionRef",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadataProvider",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.jpa.repository.intercept.$FindPageSpecificationInterceptor$IntrospectionRef",
+    "member": "Implemented interface io.micronaut.core.naming.Named",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.jpa.repository.intercept.$FindPageSpecificationInterceptor$IntrospectionRef",
+    "member": "Implemented interface io.micronaut.core.beans.BeanIntrospectionReference",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.jpa.repository.intercept.$FlushInterceptor$IntrospectionRef",
+    "member": "Field $ANNOTATION_METADATA",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.jpa.repository.intercept.$FlushInterceptor$IntrospectionRef",
+    "member": "Constructor io.micronaut.data.jpa.repository.intercept.$FlushInterceptor$IntrospectionRef()",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.jpa.repository.intercept.$FlushInterceptor$IntrospectionRef",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationSource",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.jpa.repository.intercept.$FlushInterceptor$IntrospectionRef",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadataProvider",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.jpa.repository.intercept.$FlushInterceptor$IntrospectionRef",
+    "member": "Implemented interface io.micronaut.core.naming.Named",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.jpa.repository.intercept.$FlushInterceptor$IntrospectionRef",
+    "member": "Implemented interface io.micronaut.core.beans.BeanIntrospectionReference",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.jpa.repository.intercept.$LoadInterceptor$IntrospectionRef",
+    "member": "Field $ANNOTATION_METADATA",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.jpa.repository.intercept.$LoadInterceptor$IntrospectionRef",
+    "member": "Constructor io.micronaut.data.jpa.repository.intercept.$LoadInterceptor$IntrospectionRef()",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.jpa.repository.intercept.$LoadInterceptor$IntrospectionRef",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationSource",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.jpa.repository.intercept.$LoadInterceptor$IntrospectionRef",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadataProvider",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.jpa.repository.intercept.$LoadInterceptor$IntrospectionRef",
+    "member": "Implemented interface io.micronaut.core.naming.Named",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.jpa.repository.intercept.$LoadInterceptor$IntrospectionRef",
+    "member": "Implemented interface io.micronaut.core.beans.BeanIntrospectionReference",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.jpa.repository.intercept.AbstractSpecificationInterceptor",
+    "member": "Constructor io.micronaut.data.jpa.repository.intercept.AbstractSpecificationInterceptor(io.micronaut.data.operations.RepositoryOperations)",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.jpa.repository.intercept.AbstractSpecificationInterceptor",
+    "member": "Implemented interface io.micronaut.data.intercept.DataInterceptor",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.jpa.repository.intercept.FlushInterceptor",
+    "member": "Constructor io.micronaut.data.jpa.repository.intercept.FlushInterceptor(io.micronaut.data.operations.RepositoryOperations)",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.jpa.repository.intercept.FlushInterceptor",
+    "member": "Implemented interface io.micronaut.data.intercept.DataInterceptor",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.jpa.repository.intercept.LoadInterceptor",
+    "member": "Constructor io.micronaut.data.jpa.repository.intercept.LoadInterceptor(io.micronaut.data.operations.RepositoryOperations)",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.jpa.repository.intercept.LoadInterceptor",
+    "member": "Implemented interface io.micronaut.data.intercept.DataInterceptor",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.jpa.repository.JpaRepository",
+    "member": "Implemented interface io.micronaut.data.repository.CrudRepository",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.jpa.repository.JpaRepository",
+    "member": "Implemented interface io.micronaut.data.repository.PageableRepository",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.jpa.repository.JpaRepository",
+    "member": "Implemented interface io.micronaut.data.repository.GenericRepository",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.hibernate.reactive.operations.$HibernateRepositoryOperationsFactory$BuildAsyncTransactionOperations2$Definition$Reference",
+    "member": "Field $ANNOTATION_METADATA",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.hibernate.reactive.operations.$HibernateRepositoryOperationsFactory$BuildAsyncTransactionOperations2$Definition$Reference",
+    "member": "Constructor io.micronaut.data.hibernate.reactive.operations.$HibernateRepositoryOperationsFactory$BuildAsyncTransactionOperations2$Definition$Reference()",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.hibernate.reactive.operations.$HibernateRepositoryOperationsFactory$BuildAsyncTransactionOperations2$Definition$Reference",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationSource",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.hibernate.reactive.operations.$HibernateRepositoryOperationsFactory$BuildAsyncTransactionOperations2$Definition$Reference",
+    "member": "Implemented interface io.micronaut.inject.BeanContextConditional",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.hibernate.reactive.operations.$HibernateRepositoryOperationsFactory$BuildAsyncTransactionOperations2$Definition$Reference",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadataProvider",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.hibernate.reactive.operations.$HibernateRepositoryOperationsFactory$BuildAsyncTransactionOperations2$Definition$Reference",
+    "member": "Implemented interface io.micronaut.inject.BeanType",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.hibernate.reactive.operations.$HibernateRepositoryOperationsFactory$BuildAsyncTransactionOperations2$Definition$Reference",
+    "member": "Implemented interface io.micronaut.inject.BeanDefinitionReference",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.hibernate.reactive.operations.$HibernateRepositoryOperationsFactory$Operations0$Definition$Reference",
+    "member": "Field $ANNOTATION_METADATA",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.hibernate.reactive.operations.$HibernateRepositoryOperationsFactory$Operations0$Definition$Reference",
+    "member": "Constructor io.micronaut.data.hibernate.reactive.operations.$HibernateRepositoryOperationsFactory$Operations0$Definition$Reference()",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.hibernate.reactive.operations.$HibernateRepositoryOperationsFactory$Operations0$Definition$Reference",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationSource",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.hibernate.reactive.operations.$HibernateRepositoryOperationsFactory$Operations0$Definition$Reference",
+    "member": "Implemented interface io.micronaut.inject.BeanContextConditional",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.hibernate.reactive.operations.$HibernateRepositoryOperationsFactory$Operations0$Definition$Reference",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadataProvider",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.hibernate.reactive.operations.$HibernateRepositoryOperationsFactory$Operations0$Definition$Reference",
+    "member": "Implemented interface io.micronaut.inject.BeanType",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.hibernate.reactive.operations.$HibernateRepositoryOperationsFactory$Operations0$Definition$Reference",
+    "member": "Implemented interface io.micronaut.inject.BeanDefinitionReference",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.hibernate.reactive.operations.$HibernateRepositoryOperationsFactory$ReactiveRepositoryOperations1$Definition$Reference",
+    "member": "Field $ANNOTATION_METADATA",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.hibernate.reactive.operations.$HibernateRepositoryOperationsFactory$ReactiveRepositoryOperations1$Definition$Reference",
+    "member": "Constructor io.micronaut.data.hibernate.reactive.operations.$HibernateRepositoryOperationsFactory$ReactiveRepositoryOperations1$Definition$Reference()",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.hibernate.reactive.operations.$HibernateRepositoryOperationsFactory$ReactiveRepositoryOperations1$Definition$Reference",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationSource",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.hibernate.reactive.operations.$HibernateRepositoryOperationsFactory$ReactiveRepositoryOperations1$Definition$Reference",
+    "member": "Implemented interface io.micronaut.inject.BeanContextConditional",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.hibernate.reactive.operations.$HibernateRepositoryOperationsFactory$ReactiveRepositoryOperations1$Definition$Reference",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadataProvider",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.hibernate.reactive.operations.$HibernateRepositoryOperationsFactory$ReactiveRepositoryOperations1$Definition$Reference",
+    "member": "Implemented interface io.micronaut.inject.BeanType",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.hibernate.reactive.operations.$HibernateRepositoryOperationsFactory$ReactiveRepositoryOperations1$Definition$Reference",
+    "member": "Implemented interface io.micronaut.inject.BeanDefinitionReference",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.hibernate.reactive.operations.HibernateReactorRepositoryOperations",
+    "member": "Implemented interface io.micronaut.transaction.reactive.ReactiveTransactionOperations",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.hibernate.reactive.operations.HibernateReactorRepositoryOperations",
+    "member": "Implemented interface io.micronaut.transaction.reactive.ReactorReactiveTransactionOperations",
+    "reason": "Internal class moved"
   }
 ]
