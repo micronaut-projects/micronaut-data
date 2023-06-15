@@ -1433,5 +1433,25 @@
     "type": "io.micronaut.data.hibernate.reactive.operations.HibernateReactorRepositoryOperations",
     "member": "Implemented interface io.micronaut.transaction.reactive.ReactorReactiveTransactionOperations",
     "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.jdbc.annotation.ColumnTransformer",
+    "member": "Implemented interface java.lang.annotation.Annotation",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.jdbc.annotation.JoinColumn",
+    "member": "Implemented interface java.lang.annotation.Annotation",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.jdbc.annotation.JoinColumns",
+    "member": "Implemented interface java.lang.annotation.Annotation",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.jdbc.annotation.JoinTable",
+    "member": "Implemented interface java.lang.annotation.Annotation",
+    "reason": "Internal class moved"
   }
 ]
