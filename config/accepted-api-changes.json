@@ -1453,5 +1453,200 @@
     "type": "io.micronaut.data.jdbc.annotation.JoinTable",
     "member": "Implemented interface java.lang.annotation.Annotation",
     "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.mongodb.conf.$MongoDataConfiguration$NotReactiveDriverSelectedCondition$IntrospectionRef",
+    "member": "Field $ANNOTATION_METADATA",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.mongodb.conf.$MongoDataConfiguration$NotReactiveDriverSelectedCondition$IntrospectionRef",
+    "member": "Constructor io.micronaut.data.mongodb.conf.$MongoDataConfiguration$NotReactiveDriverSelectedCondition$IntrospectionRef()",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.mongodb.conf.$MongoDataConfiguration$NotReactiveDriverSelectedCondition$IntrospectionRef",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationSource",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.mongodb.conf.$MongoDataConfiguration$NotReactiveDriverSelectedCondition$IntrospectionRef",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadataProvider",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.mongodb.conf.$MongoDataConfiguration$NotReactiveDriverSelectedCondition$IntrospectionRef",
+    "member": "Implemented interface io.micronaut.core.naming.Named",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.mongodb.conf.$MongoDataConfiguration$NotReactiveDriverSelectedCondition$IntrospectionRef",
+    "member": "Implemented interface io.micronaut.core.beans.BeanIntrospectionReference",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.mongodb.conf.$MongoDataConfiguration$NotSyncDriverSelectedCondition$IntrospectionRef",
+    "member": "Field $ANNOTATION_METADATA",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.mongodb.conf.$MongoDataConfiguration$NotSyncDriverSelectedCondition$IntrospectionRef",
+    "member": "Constructor io.micronaut.data.mongodb.conf.$MongoDataConfiguration$NotSyncDriverSelectedCondition$IntrospectionRef()",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.mongodb.conf.$MongoDataConfiguration$NotSyncDriverSelectedCondition$IntrospectionRef",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationSource",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.mongodb.conf.$MongoDataConfiguration$NotSyncDriverSelectedCondition$IntrospectionRef",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadataProvider",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.mongodb.conf.$MongoDataConfiguration$NotSyncDriverSelectedCondition$IntrospectionRef",
+    "member": "Implemented interface io.micronaut.core.naming.Named",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.mongodb.conf.$MongoDataConfiguration$NotSyncDriverSelectedCondition$IntrospectionRef",
+    "member": "Implemented interface io.micronaut.core.beans.BeanIntrospectionReference",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.mongodb.operations.MongoReactorRepositoryOperations",
+    "member": "Implemented interface io.micronaut.transaction.reactive.ReactiveTransactionOperations",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.mongodb.operations.MongoReactorRepositoryOperations",
+    "member": "Implemented interface io.micronaut.transaction.reactive.ReactorReactiveTransactionOperations",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.mongodb.transaction.$MongoSynchronousTransactionManagerImpl$Definition$Reference",
+    "member": "Field $ANNOTATION_METADATA",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.mongodb.transaction.$MongoSynchronousTransactionManagerImpl$Definition$Reference",
+    "member": "Constructor io.micronaut.data.mongodb.transaction.$MongoSynchronousTransactionManagerImpl$Definition$Reference()",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.mongodb.transaction.$MongoSynchronousTransactionManagerImpl$Definition$Reference",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationSource",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.mongodb.transaction.$MongoSynchronousTransactionManagerImpl$Definition$Reference",
+    "member": "Implemented interface io.micronaut.inject.BeanContextConditional",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.mongodb.transaction.$MongoSynchronousTransactionManagerImpl$Definition$Reference",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadataProvider",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.mongodb.transaction.$MongoSynchronousTransactionManagerImpl$Definition$Reference",
+    "member": "Implemented interface io.micronaut.inject.BeanType",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.mongodb.transaction.$MongoSynchronousTransactionManagerImpl$Definition$Reference",
+    "member": "Implemented interface io.micronaut.inject.BeanDefinitionReference",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.mongodb.transaction.$TransactionalClientSession$Intercepted$Definition$Reference",
+    "member": "Field $ANNOTATION_METADATA",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.mongodb.transaction.$TransactionalClientSession$Intercepted$Definition$Reference",
+    "member": "Constructor io.micronaut.data.mongodb.transaction.$TransactionalClientSession$Intercepted$Definition$Reference()",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.mongodb.transaction.$TransactionalClientSession$Intercepted$Definition$Reference",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationSource",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.mongodb.transaction.$TransactionalClientSession$Intercepted$Definition$Reference",
+    "member": "Implemented interface io.micronaut.inject.BeanContextConditional",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.mongodb.transaction.$TransactionalClientSession$Intercepted$Definition$Reference",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadataProvider",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.mongodb.transaction.$TransactionalClientSession$Intercepted$Definition$Reference",
+    "member": "Implemented interface io.micronaut.inject.AdvisedBeanType",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.mongodb.transaction.$TransactionalClientSession$Intercepted$Definition$Reference",
+    "member": "Implemented interface io.micronaut.inject.BeanType",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.mongodb.transaction.$TransactionalClientSession$Intercepted$Definition$Reference",
+    "member": "Implemented interface io.micronaut.inject.BeanDefinitionReference",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.mongodb.transaction.$TransactionalClientSessionInterceptor$Definition$Reference",
+    "member": "Field $ANNOTATION_METADATA",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.mongodb.transaction.$TransactionalClientSessionInterceptor$Definition$Reference",
+    "member": "Constructor io.micronaut.data.mongodb.transaction.$TransactionalClientSessionInterceptor$Definition$Reference()",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.mongodb.transaction.$TransactionalClientSessionInterceptor$Definition$Reference",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationSource",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.mongodb.transaction.$TransactionalClientSessionInterceptor$Definition$Reference",
+    "member": "Implemented interface io.micronaut.inject.BeanContextConditional",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.mongodb.transaction.$TransactionalClientSessionInterceptor$Definition$Reference",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadataProvider",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.mongodb.transaction.$TransactionalClientSessionInterceptor$Definition$Reference",
+    "member": "Implemented interface io.micronaut.inject.BeanType",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.mongodb.transaction.$TransactionalClientSessionInterceptor$Definition$Reference",
+    "member": "Implemented interface io.micronaut.inject.BeanDefinitionReference",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.mongodb.transaction.TransactionalClientSessionInterceptor",
+    "member": "Implemented interface io.micronaut.aop.Interceptor",
+    "reason": "Provide a human readable reason for the change"
+  },
+  {
+    "type": "io.micronaut.data.mongodb.transaction.TransactionalClientSessionInterceptor",
+    "member": "Implemented interface io.micronaut.aop.MethodInterceptor",
+    "reason": "Provide a human readable reason for the change"
+  },
+  {
+    "type": "io.micronaut.data.mongodb.transaction.TransactionalClientSessionInterceptor",
+    "member": "Implemented interface io.micronaut.core.order.Ordered",
+    "reason": "Provide a human readable reason for the change"
   }
 ]
