@@ -14,7 +14,7 @@ micronaut {
 
 micronautBuild {
     binaryCompatibility {
-        enabled = false
+        enabled = true
     }
 }
 dependencies {

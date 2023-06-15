@@ -678,5 +678,290 @@
     "type": "io.micronaut.transaction.support.DefaultTransactionDefinition",
     "member": "Field PREFIX_ISOLATION",
     "reason": "Removed deprecated members for Micronaut 4"
+  },
+  {
+    "type": "io.micronaut.data.cosmos.serde.$DefaultCustomConverterDeserializer$Definition$Reference",
+    "member": "Field $ANNOTATION_METADATA",
+    "reason": "Field has been removed"
+  },
+  {
+    "type": "io.micronaut.data.cosmos.serde.$DefaultCustomConverterDeserializer$Definition$Reference",
+    "member": "Constructor io.micronaut.data.cosmos.serde.$DefaultCustomConverterDeserializer$Definition$Reference()",
+    "reason": "Constructor has been removed"
+  },
+  {
+    "type": "io.micronaut.data.cosmos.serde.$DefaultCustomConverterDeserializer$Definition$Reference",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationSource",
+    "reason": "Provide a human readable reason for the change\""
+  },
+  {
+    "type": "io.micronaut.data.cosmos.serde.$DefaultCustomConverterDeserializer$Definition$Reference",
+    "member": "Implemented interface io.micronaut.inject.BeanContextConditional",
+    "reason": "Interface has been removed"
+  },
+  {
+    "type": "io.micronaut.data.cosmos.serde.$DefaultCustomConverterDeserializer$Definition$Reference",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadataProvider",
+    "reason": "Interface has been removed"
+  },
+  {
+    "type": "io.micronaut.data.cosmos.serde.$DefaultCustomConverterDeserializer$Definition$Reference",
+    "member": "Implemented interface io.micronaut.inject.BeanType",
+    "reason": "Interface has been removed"
+  },
+  {
+    "type": "io.micronaut.data.cosmos.serde.$DefaultCustomConverterDeserializer$Definition$Reference",
+    "member": "Implemented interface io.micronaut.inject.BeanDefinitionReference",
+    "reason": "Interface has been removed"
+  },
+  {
+    "type": "io.micronaut.data.cosmos.serde.$DefaultCustomConverterSerializer$Definition$Reference",
+    "member": "Field $ANNOTATION_METADATA",
+    "reason": "Field has been removed"
+  },
+  {
+    "type": "io.micronaut.data.cosmos.serde.$DefaultCustomConverterSerializer$Definition$Reference",
+    "member": "Constructor io.micronaut.data.cosmos.serde.$DefaultCustomConverterSerializer$Definition$Reference()",
+    "reason": "Constructor has been removed"
+  },
+  {
+    "type": "io.micronaut.data.cosmos.serde.$DefaultCustomConverterSerializer$Definition$Reference",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationSource",
+    "reason": "Interface has been removed"
+  },
+  {
+    "type": "io.micronaut.data.cosmos.serde.$DefaultCustomConverterSerializer$Definition$Reference",
+    "member": "Implemented interface io.micronaut.inject.BeanContextConditional",
+    "reason": "Interface has been removed"
+  },
+  {
+    "type": "io.micronaut.data.cosmos.serde.$DefaultCustomConverterSerializer$Definition$Reference",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadataProvider",
+    "reason": "Interface has been removed"
+  },
+  {
+    "type": "io.micronaut.data.cosmos.serde.$DefaultCustomConverterSerializer$Definition$Reference",
+    "member": "Implemented interface io.micronaut.inject.BeanType",
+    "reason": "Interface has been removed"
+  },
+  {
+    "type": "io.micronaut.data.cosmos.serde.$DefaultCustomConverterSerializer$Definition$Reference",
+    "member": "Implemented interface io.micronaut.inject.BeanDefinitionReference",
+    "reason": "Interface has been removed"
+  },
+  {
+    "type": "io.micronaut.data.cosmos.serde.$DefaultIdDeserializer$Definition$Reference",
+    "member": "Field $ANNOTATION_METADATA",
+    "reason": "Field has been removed"
+  },
+  {
+    "type": "io.micronaut.data.cosmos.serde.$DefaultIdDeserializer$Definition$Reference",
+    "member": "Constructor io.micronaut.data.cosmos.serde.$DefaultIdDeserializer$Definition$Reference()",
+    "reason": "Constructor has been removed"
+  },
+  {
+    "type": "io.micronaut.data.cosmos.serde.$DefaultIdDeserializer$Definition$Reference",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationSource",
+    "reason": "Interface has been removed"
+  },
+  {
+    "type": "io.micronaut.data.cosmos.serde.$DefaultIdDeserializer$Definition$Reference",
+    "member": "Implemented interface io.micronaut.inject.BeanContextConditional",
+    "reason": "Interface has been removed"
+  },
+  {
+    "type": "io.micronaut.data.cosmos.serde.$DefaultIdDeserializer$Definition$Reference",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadataProvider",
+    "reason": "Interface has been removed"
+  },
+  {
+    "type": "io.micronaut.data.cosmos.serde.$DefaultIdDeserializer$Definition$Reference",
+    "member": "Implemented interface io.micronaut.inject.BeanType",
+    "reason": "Interface has been removed"
+  },
+  {
+    "type": "io.micronaut.data.cosmos.serde.$DefaultIdDeserializer$Definition$Reference",
+    "member": "Implemented interface io.micronaut.inject.BeanDefinitionReference",
+    "reason": "Interface has been removed"
+  },
+  {
+    "type": "io.micronaut.data.cosmos.serde.$DefaultIdPropertyNamingStrategy$Definition$Reference",
+    "member": "Field $ANNOTATION_METADATA",
+    "reason": "Field has been removed"
+  },
+  {
+    "type": "io.micronaut.data.cosmos.serde.$DefaultIdPropertyNamingStrategy$Definition$Reference",
+    "member": "Constructor io.micronaut.data.cosmos.serde.$DefaultIdPropertyNamingStrategy$Definition$Reference()",
+    "reason": "Constructor has been removed"
+  },
+  {
+    "type": "io.micronaut.data.cosmos.serde.$DefaultIdPropertyNamingStrategy$Definition$Reference",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationSource",
+    "reason": "Interface has been removed"
+  },
+  {
+    "type": "io.micronaut.data.cosmos.serde.$DefaultIdPropertyNamingStrategy$Definition$Reference",
+    "member": "Implemented interface io.micronaut.inject.BeanContextConditional",
+    "reason": "Interface has been removed"
+  },
+  {
+    "type": "io.micronaut.data.cosmos.serde.$DefaultIdPropertyNamingStrategy$Definition$Reference",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadataProvider",
+    "reason": "Interface has been removed"
+  },
+  {
+    "type": "io.micronaut.data.cosmos.serde.$DefaultIdPropertyNamingStrategy$Definition$Reference",
+    "member": "Implemented interface io.micronaut.inject.BeanType",
+    "reason": "Interface has been removed"
+  },
+  {
+    "type": "io.micronaut.data.cosmos.serde.$DefaultIdPropertyNamingStrategy$Definition$Reference",
+    "member": "Implemented interface io.micronaut.inject.BeanDefinitionReference",
+    "reason": "Interface has been removed"
+  },
+  {
+    "type": "io.micronaut.data.cosmos.serde.$DefaultIdSerializer$Definition$Reference",
+    "member": "Field $ANNOTATION_METADATA",
+    "reason": "Field has been removed"
+  },
+  {
+    "type": "io.micronaut.data.cosmos.serde.$DefaultIdSerializer$Definition$Reference",
+    "member": "Constructor io.micronaut.data.cosmos.serde.$DefaultIdSerializer$Definition$Reference()",
+    "reason": "Constructor has been removed"
+  },
+  {
+    "type": "io.micronaut.data.cosmos.serde.$DefaultIdSerializer$Definition$Reference",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationSource",
+    "reason": "Interface has been removed"
+  },
+  {
+    "type": "io.micronaut.data.cosmos.serde.$DefaultIdSerializer$Definition$Reference",
+    "member": "Implemented interface io.micronaut.inject.BeanContextConditional",
+    "reason": "Interface has been removed"
+  },
+  {
+    "type": "io.micronaut.data.cosmos.serde.$DefaultIdSerializer$Definition$Reference",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadataProvider",
+    "reason": "Interface has been removed"
+  },
+  {
+    "type": "io.micronaut.data.cosmos.serde.$DefaultIdSerializer$Definition$Reference",
+    "member": "Implemented interface io.micronaut.inject.BeanType",
+    "reason": "Interface has been removed"
+  },
+  {
+    "type": "io.micronaut.data.cosmos.serde.$DefaultIdSerializer$Definition$Reference",
+    "member": "Implemented interface io.micronaut.inject.BeanDefinitionReference",
+    "reason": "Interface has been removed"
+  },
+  {
+    "type": "io.micronaut.data.cosmos.serde.$DefaultManyRelationSerializer$Definition$Reference",
+    "member": "Field $ANNOTATION_METADATA",
+    "reason": "Field has been removed"
+  },
+  {
+    "type": "io.micronaut.data.cosmos.operations.DefaultReactiveCosmosRepositoryOperations",
+    "member": "Constructor io.micronaut.data.cosmos.operations.DefaultReactiveCosmosRepositoryOperations(java.util.List,io.micronaut.data.runtime.date.DateTimeProvider,io.micronaut.data.model.runtime.RuntimeEntityRegistry,io.micronaut.data.runtime.convert.DataConversionService,io.micronaut.data.model.runtime.AttributeConverterRegistry,com.azure.cosmos.CosmosAsyncClient,io.micronaut.data.cosmos.operations.CosmosSerde,io.micronaut.data.cosmos.operations.CosmosDiagnosticsProcessor,io.micronaut.data.cosmos.config.CosmosDatabaseConfiguration)",
+    "reason": "Constructor has been changed"
+  },
+  {
+    "type": "io.micronaut.data.cosmos.serde.$DefaultManyRelationSerializer$Definition$Reference",
+    "member": "Constructor io.micronaut.data.cosmos.serde.$DefaultManyRelationSerializer$Definition$Reference()",
+    "reason": "Constructor has been removed"
+  },
+  {
+    "type": "io.micronaut.data.cosmos.serde.$DefaultManyRelationSerializer$Definition$Reference",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationSource",
+    "reason": "Interface has been removed"
+  },
+  {
+    "type": "io.micronaut.data.cosmos.serde.$DefaultManyRelationSerializer$Definition$Reference",
+    "member": "Implemented interface io.micronaut.inject.BeanContextConditional",
+    "reason": "Interface has been removed"
+  },
+  {
+    "type": "io.micronaut.data.cosmos.serde.$DefaultManyRelationSerializer$Definition$Reference",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadataProvider",
+    "reason": "Interface has been removed"
+  },
+  {
+    "type": "io.micronaut.data.cosmos.serde.$DefaultManyRelationSerializer$Definition$Reference",
+    "member": "Implemented interface io.micronaut.inject.BeanType",
+    "reason": "Interface has been removed"
+  },
+  {
+    "type": "io.micronaut.data.cosmos.serde.$DefaultManyRelationSerializer$Definition$Reference",
+    "member": "Implemented interface io.micronaut.inject.BeanDefinitionReference",
+    "reason": "Interface has been removed"
+  },
+  {
+    "type": "io.micronaut.data.cosmos.serde.$DefaultOneRelationDeserializer$Definition$Reference",
+    "member": "Field $ANNOTATION_METADATA",
+    "reason": "Field has been removed"
+  },
+  {
+    "type": "io.micronaut.data.cosmos.serde.$DefaultOneRelationDeserializer$Definition$Reference",
+    "member": "Constructor io.micronaut.data.cosmos.serde.$DefaultOneRelationDeserializer$Definition$Reference()",
+    "reason": "Constructor has been removed"
+  },
+  {
+    "type": "io.micronaut.data.cosmos.serde.$DefaultOneRelationDeserializer$Definition$Reference",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationSource",
+    "reason": "Interface has been removed"
+  },
+  {
+    "type": "io.micronaut.data.cosmos.serde.$DefaultOneRelationDeserializer$Definition$Reference",
+    "member": "Implemented interface io.micronaut.inject.BeanContextConditional",
+    "reason": "Interface has been removed"
+  },
+  {
+    "type": "io.micronaut.data.cosmos.serde.$DefaultOneRelationDeserializer$Definition$Reference",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadataProvider",
+    "reason": "Interface has been removed"
+  },
+  {
+    "type": "io.micronaut.data.cosmos.serde.$DefaultOneRelationDeserializer$Definition$Reference",
+    "member": "Implemented interface io.micronaut.inject.BeanType",
+    "reason": "Interface has been removed"
+  },
+  {
+    "type": "io.micronaut.data.cosmos.serde.$DefaultOneRelationDeserializer$Definition$Reference",
+    "member": "Implemented interface io.micronaut.inject.BeanDefinitionReference",
+    "reason": "Interface has been removed"
+  },
+  {
+    "type": "io.micronaut.data.cosmos.serde.$DefaultOneRelationSerializer$Definition$Reference",
+    "member": "Field $ANNOTATION_METADATA",
+    "reason": "Field has been removed"
+  },
+  {
+    "type": "io.micronaut.data.cosmos.serde.$DefaultOneRelationSerializer$Definition$Reference",
+    "member": "Constructor io.micronaut.data.cosmos.serde.$DefaultOneRelationSerializer$Definition$Reference()",
+    "reason": "Constructor has been removed"
+  },
+  {
+    "type": "io.micronaut.data.cosmos.serde.$DefaultOneRelationSerializer$Definition$Reference",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationSource",
+    "reason": "Interface has been removed"
+  },
+  {
+    "type": "io.micronaut.data.cosmos.serde.$DefaultOneRelationSerializer$Definition$Reference",
+    "member": "Implemented interface io.micronaut.inject.BeanContextConditional",
+    "reason": "Interface has been removed"
+  },
+  {
+    "type": "io.micronaut.data.cosmos.serde.$DefaultOneRelationSerializer$Definition$Reference",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadataProvider",
+    "reason": "Interface has been removed"
+  },
+  {
+    "type": "io.micronaut.data.cosmos.serde.$DefaultOneRelationSerializer$Definition$Reference",
+    "member": "Implemented interface io.micronaut.inject.BeanType",
+    "reason": "Interface has been removed"
+  },
+  {
+    "type": "io.micronaut.data.cosmos.serde.$DefaultOneRelationSerializer$Definition$Reference",
+    "member": "Implemented interface io.micronaut.inject.BeanDefinitionReference",
+    "reason": "Interface has been removed"
   }
 ]
