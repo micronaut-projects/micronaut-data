@@ -2723,5 +2723,1105 @@
     "type": "io.micronaut.transaction.TransactionStatus",
     "member": "Implemented interface java.io.Flushable",
     "reason": "Does not implement interface java.io.Flushable in new version"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jakarta.ColumnAnnotationMapper",
+    "member": "Implemented interface io.micronaut.core.naming.Named",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jakarta.ColumnAnnotationMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.AnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jakarta.ColumnAnnotationMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.NamedAnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jakarta.ConvertAnnotationMapper",
+    "member": "Implemented interface io.micronaut.core.naming.Named",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jakarta.ConvertAnnotationMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.AnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jakarta.ConvertAnnotationMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.NamedAnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jakarta.ConverterAnnotationMapper",
+    "member": "Implemented interface io.micronaut.core.naming.Named",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jakarta.ConverterAnnotationMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.AnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jakarta.ConverterAnnotationMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.NamedAnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jakarta.EmbeddableAnnotationMapper",
+    "member": "Implemented interface io.micronaut.core.naming.Named",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jakarta.EmbeddableAnnotationMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.AnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jakarta.EmbeddableAnnotationMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.NamedAnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jakarta.EmbeddedAnnotationMapper",
+    "member": "Implemented interface io.micronaut.core.naming.Named",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jakarta.EmbeddedAnnotationMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.AnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jakarta.EmbeddedAnnotationMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.NamedAnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jakarta.EmbeddedIdAnnotationMapper",
+    "member": "Implemented interface io.micronaut.core.naming.Named",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jakarta.EmbeddedIdAnnotationMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.AnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jakarta.EmbeddedIdAnnotationMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.NamedAnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jakarta.EntityAnnotationMapper",
+    "member": "Implemented interface io.micronaut.core.naming.Named",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jakarta.EntityAnnotationMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.AnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jakarta.EntityAnnotationMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.NamedAnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jakarta.EnumeratedAnnotationMapper",
+    "member": "Implemented interface io.micronaut.core.naming.Named",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jakarta.EnumeratedAnnotationMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.AnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jakarta.EnumeratedAnnotationMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.NamedAnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jakarta.event.PostLoadAnnotationMapper",
+    "member": "Implemented interface io.micronaut.core.naming.Named",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jakarta.event.PostLoadAnnotationMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.AnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jakarta.event.PostLoadAnnotationMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.NamedAnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jakarta.event.PostPersistAnnotationMapper",
+    "member": "Implemented interface io.micronaut.core.naming.Named",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jakarta.event.PostPersistAnnotationMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.AnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jakarta.event.PostPersistAnnotationMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.NamedAnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jakarta.event.PostRemoveAnnotationMapper",
+    "member": "Implemented interface io.micronaut.core.naming.Named",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jakarta.event.PostRemoveAnnotationMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.AnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jakarta.event.PostRemoveAnnotationMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.NamedAnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jakarta.event.PostUpdateAnnotationMapper",
+    "member": "Implemented interface io.micronaut.core.naming.Named",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jakarta.event.PostUpdateAnnotationMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.AnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jakarta.event.PostUpdateAnnotationMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.NamedAnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jakarta.event.PrePersistAnnotationMapper",
+    "member": "Implemented interface io.micronaut.core.naming.Named",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jakarta.event.PrePersistAnnotationMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.AnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jakarta.event.PrePersistAnnotationMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.NamedAnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jakarta.event.PreRemoveAnnotationMapper",
+    "member": "Implemented interface io.micronaut.core.naming.Named",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jakarta.event.PreRemoveAnnotationMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.AnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jakarta.event.PreRemoveAnnotationMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.NamedAnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jakarta.event.PreUpdateAnnotationMapper",
+    "member": "Implemented interface io.micronaut.core.naming.Named",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jakarta.event.PreUpdateAnnotationMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.AnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jakarta.event.PreUpdateAnnotationMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.NamedAnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jakarta.GeneratedValueMapper",
+    "member": "Implemented interface io.micronaut.core.naming.Named",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jakarta.GeneratedValueMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.AnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jakarta.GeneratedValueMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.NamedAnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jakarta.IdAnnotationMapper",
+    "member": "Implemented interface io.micronaut.core.naming.Named",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jakarta.IdAnnotationMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.AnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jakarta.IdAnnotationMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.NamedAnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jakarta.IndexAnnotationMapper",
+    "member": "Implemented interface io.micronaut.core.naming.Named",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jakarta.IndexAnnotationMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.AnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jakarta.IndexAnnotationMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.NamedAnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jakarta.JoinColumnAnnotationMapper",
+    "member": "Implemented interface io.micronaut.core.naming.Named",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jakarta.JoinColumnAnnotationMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.AnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jakarta.JoinColumnAnnotationMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.NamedAnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jakarta.JoinTableAnnotationMapper",
+    "member": "Implemented interface io.micronaut.core.naming.Named",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jakarta.JoinTableAnnotationMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.AnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jakarta.JoinTableAnnotationMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.NamedAnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jakarta.ManyToManyMapper",
+    "member": "Implemented interface io.micronaut.core.naming.Named",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jakarta.ManyToManyMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.AnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jakarta.ManyToManyMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.NamedAnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jakarta.ManyToOneMapper",
+    "member": "Implemented interface io.micronaut.core.naming.Named",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jakarta.ManyToOneMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.AnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jakarta.ManyToOneMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.NamedAnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jakarta.OneToManyMapper",
+    "member": "Implemented interface io.micronaut.core.naming.Named",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jakarta.OneToManyMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.AnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jakarta.OneToManyMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.NamedAnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jakarta.OneToOneMapper",
+    "member": "Implemented interface io.micronaut.core.naming.Named",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jakarta.OneToOneMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.AnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jakarta.OneToOneMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.NamedAnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jakarta.StaticMetamodelAnnotationMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.AnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jakarta.TableAnnotationMapper",
+    "member": "Implemented interface io.micronaut.core.naming.Named",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jakarta.TableAnnotationMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.AnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jakarta.TableAnnotationMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.NamedAnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jakarta.TransientAnnotationMapper",
+    "member": "Implemented interface io.micronaut.core.naming.Named",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jakarta.TransientAnnotationMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.AnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jakarta.TransientAnnotationMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.NamedAnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jakarta.VersionAnnotationMapper",
+    "member": "Implemented interface io.micronaut.core.naming.Named",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jakarta.VersionAnnotationMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.AnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jakarta.VersionAnnotationMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.NamedAnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jx.ColumnAnnotationMapper",
+    "member": "Implemented interface io.micronaut.core.naming.Named",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jx.ColumnAnnotationMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.AnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jx.ColumnAnnotationMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.NamedAnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jx.ConvertAnnotationMapper",
+    "member": "Implemented interface io.micronaut.core.naming.Named",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jx.ConvertAnnotationMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.AnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jx.ConvertAnnotationMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.NamedAnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jx.ConverterAnnotationMapper",
+    "member": "Implemented interface io.micronaut.core.naming.Named",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jx.ConverterAnnotationMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.AnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jx.ConverterAnnotationMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.NamedAnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jx.EmbeddableAnnotationMapper",
+    "member": "Implemented interface io.micronaut.core.naming.Named",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jx.EmbeddableAnnotationMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.AnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jx.EmbeddableAnnotationMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.NamedAnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jx.EmbeddedAnnotationMapper",
+    "member": "Implemented interface io.micronaut.core.naming.Named",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jx.EmbeddedAnnotationMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.AnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jx.EmbeddedAnnotationMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.NamedAnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jx.EmbeddedIdAnnotationMapper",
+    "member": "Implemented interface io.micronaut.core.naming.Named",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jx.EmbeddedIdAnnotationMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.AnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jx.EmbeddedIdAnnotationMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.NamedAnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jx.EntityAnnotationMapper",
+    "member": "Implemented interface io.micronaut.core.naming.Named",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jx.EntityAnnotationMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.AnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jx.EntityAnnotationMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.NamedAnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jx.EnumeratedAnnotationMapper",
+    "member": "Implemented interface io.micronaut.core.naming.Named",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jx.EnumeratedAnnotationMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.AnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jx.EnumeratedAnnotationMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.NamedAnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jx.event.PostLoadAnnotationMapper",
+    "member": "Implemented interface io.micronaut.core.naming.Named",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jx.event.PostLoadAnnotationMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.AnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jx.event.PostLoadAnnotationMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.NamedAnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jx.event.PostPersistAnnotationMapper",
+    "member": "Implemented interface io.micronaut.core.naming.Named",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jx.event.PostPersistAnnotationMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.AnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jx.event.PostPersistAnnotationMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.NamedAnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jx.event.PostRemoveAnnotationMapper",
+    "member": "Implemented interface io.micronaut.core.naming.Named",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jx.event.PostRemoveAnnotationMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.AnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jx.event.PostRemoveAnnotationMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.NamedAnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jx.event.PostUpdateAnnotationMapper",
+    "member": "Implemented interface io.micronaut.core.naming.Named",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jx.event.PostUpdateAnnotationMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.AnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jx.event.PostUpdateAnnotationMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.NamedAnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jx.event.PrePersistAnnotationMapper",
+    "member": "Implemented interface io.micronaut.core.naming.Named",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jx.event.PrePersistAnnotationMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.AnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jx.event.PrePersistAnnotationMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.NamedAnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jx.event.PreRemoveAnnotationMapper",
+    "member": "Implemented interface io.micronaut.core.naming.Named",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jx.event.PreRemoveAnnotationMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.AnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jx.event.PreRemoveAnnotationMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.NamedAnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jx.event.PreUpdateAnnotationMapper",
+    "member": "Implemented interface io.micronaut.core.naming.Named",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jx.event.PreUpdateAnnotationMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.AnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jx.event.PreUpdateAnnotationMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.NamedAnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jx.GeneratedValueMapper",
+    "member": "Implemented interface io.micronaut.core.naming.Named",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jx.GeneratedValueMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.AnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jx.GeneratedValueMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.NamedAnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jx.TransientAnnotationMapper",
+    "member": "Implemented interface io.micronaut.core.naming.Named",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jx.TransientAnnotationMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.AnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jx.TransientAnnotationMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.NamedAnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jx.VersionAnnotationMapper",
+    "member": "Implemented interface io.micronaut.core.naming.Named",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jx.VersionAnnotationMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.AnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jx.VersionAnnotationMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.NamedAnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jta.JakartaTransactionalMapper",
+    "member": "Implemented interface io.micronaut.core.naming.Named",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jta.JakartaTransactionalMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.AnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jta.JakartaTransactionalMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.NamedAnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jta.JtaTransactionalMapper",
+    "member": "Implemented interface io.micronaut.core.naming.Named",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jta.JtaTransactionalMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.AnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jta.JtaTransactionalMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.NamedAnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.MappedEntityMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.TypedAnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.MappedEntityMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.AnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.spring.SpringCreatedDateMapper",
+    "member": "Implemented interface io.micronaut.core.naming.Named",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.spring.SpringCreatedDateMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.AnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.spring.SpringCreatedDateMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.NamedAnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.spring.SpringIdMapper",
+    "member": "Implemented interface io.micronaut.core.naming.Named",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.spring.SpringIdMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.AnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.spring.SpringIdMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.NamedAnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.spring.SpringLastModifiedDateMapper",
+    "member": "Implemented interface io.micronaut.core.naming.Named",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.spring.SpringLastModifiedDateMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.AnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.spring.SpringLastModifiedDateMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.NamedAnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.spring.SpringPersistenceConstructorMapper",
+    "member": "Implemented interface io.micronaut.core.naming.Named",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.spring.SpringPersistenceConstructorMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.AnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.spring.SpringPersistenceConstructorMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.NamedAnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.spring.SpringPersistentAnnotationMapper",
+    "member": "Implemented interface io.micronaut.core.naming.Named",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.spring.SpringPersistentAnnotationMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.AnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.spring.SpringPersistentAnnotationMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.NamedAnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.spring.SpringRepositoryMapper",
+    "member": "Implemented interface io.micronaut.core.naming.Named",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.spring.SpringRepositoryMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.AnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.spring.SpringRepositoryMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.NamedAnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.spring.SpringTransactionalEventListenerMapper",
+    "member": "Implemented interface io.micronaut.core.naming.Named",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.spring.SpringTransactionalEventListenerMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.AnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.spring.SpringTransactionalEventListenerMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.NamedAnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jx.IdAnnotationMapper",
+    "member": "Implemented interface io.micronaut.core.naming.Named",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jx.IdAnnotationMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.AnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jx.IdAnnotationMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.NamedAnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jx.IndexAnnotationMapper",
+    "member": "Implemented interface io.micronaut.core.naming.Named",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jx.IndexAnnotationMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.AnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jx.IndexAnnotationMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.NamedAnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jx.JoinColumnAnnotationMapper",
+    "member": "Implemented interface io.micronaut.core.naming.Named",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jx.JoinColumnAnnotationMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.AnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jx.JoinColumnAnnotationMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.NamedAnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jx.JoinTableAnnotationMapper",
+    "member": "Implemented interface io.micronaut.core.naming.Named",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jx.JoinTableAnnotationMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.AnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jx.JoinTableAnnotationMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.NamedAnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jx.ManyToManyMapper",
+    "member": "Implemented interface io.micronaut.core.naming.Named",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jx.ManyToManyMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.AnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jx.ManyToManyMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.NamedAnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jx.ManyToOneMapper",
+    "member": "Implemented interface io.micronaut.core.naming.Named",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jx.ManyToOneMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.AnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jx.ManyToOneMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.NamedAnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jx.OneToManyMapper",
+    "member": "Implemented interface io.micronaut.core.naming.Named",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jx.OneToManyMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.AnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jx.OneToManyMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.NamedAnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jx.OneToOneMapper",
+    "member": "Implemented interface io.micronaut.core.naming.Named",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jx.OneToOneMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.AnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jx.OneToOneMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.NamedAnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jx.TableAnnotationMapper",
+    "member": "Implemented interface io.micronaut.core.naming.Named",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jx.TableAnnotationMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.AnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.jpa.jx.TableAnnotationMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.NamedAnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.visitors.EmbeddableVisitor",
+    "member": "Implemented interface io.micronaut.inject.visitor.TypeElementVisitor",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.visitors.EmbeddableVisitor",
+    "member": "Implemented interface io.micronaut.core.order.Ordered",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.visitors.EmbeddableVisitor",
+    "member": "Implemented interface io.micronaut.core.util.Toggleable",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.visitors.EntityEventVisitor",
+    "member": "Implemented interface io.micronaut.inject.visitor.TypeElementVisitor",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.visitors.EntityEventVisitor",
+    "member": "Implemented interface io.micronaut.core.order.Ordered",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.visitors.EntityEventVisitor",
+    "member": "Implemented interface io.micronaut.core.util.Toggleable",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.visitors.finders.FindersUtils$DynamicClassElement",
+    "member": "Implemented interface io.micronaut.inject.ast.Element",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.visitors.finders.FindersUtils$DynamicClassElement",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationSource",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.visitors.finders.FindersUtils$DynamicClassElement",
+    "member": "Implemented interface io.micronaut.inject.ast.TypedElement",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.visitors.finders.FindersUtils$DynamicClassElement",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadataProvider",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.visitors.finders.FindersUtils$DynamicClassElement",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadataDelegate",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.visitors.finders.FindersUtils$DynamicClassElement",
+    "member": "Implemented interface io.micronaut.core.naming.Named",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.visitors.finders.FindersUtils$DynamicClassElement",
+    "member": "Implemented interface io.micronaut.core.naming.Described",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.visitors.finders.FindersUtils$DynamicClassElement",
+    "member": "Implemented interface io.micronaut.inject.ast.ClassElement",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.visitors.finders.FindersUtils$DynamicClassElement",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadata",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.visitors.finders.FindersUtils$DynamicClassElement",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotatedElement",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.visitors.MappedEntityVisitor",
+    "member": "Implemented interface io.micronaut.inject.visitor.TypeElementVisitor",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.visitors.MappedEntityVisitor",
+    "member": "Implemented interface io.micronaut.core.order.Ordered",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.visitors.MappedEntityVisitor",
+    "member": "Implemented interface io.micronaut.core.util.Toggleable",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.spring.SpringTransactionalMapper",
+    "member": "Implemented interface io.micronaut.core.naming.Named",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.spring.SpringTransactionalMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.AnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.spring.SpringTransactionalMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.NamedAnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.spring.SpringTransientMapper",
+    "member": "Implemented interface io.micronaut.core.naming.Named",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.spring.SpringTransientMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.AnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.spring.SpringTransientMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.NamedAnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.spring.SpringVersionMapper",
+    "member": "Implemented interface io.micronaut.core.naming.Named",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.spring.SpringVersionMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.AnnotationMapper",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.processor.mappers.spring.SpringVersionMapper",
+    "member": "Implemented interface io.micronaut.inject.annotation.NamedAnnotationMapper",
+    "reason": "Internal class moved"
   }
 ]
