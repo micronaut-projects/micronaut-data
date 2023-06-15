@@ -12,11 +12,6 @@ micronaut {
     }
 }
 
-micronautBuild {
-    binaryCompatibility {
-        enabled = true
-    }
-}
 dependencies {
     annotationProcessor projects.dataDocumentProcessor
     annotationProcessor mn.micronaut.inject.java
