@@ -15,7 +15,7 @@ micronaut {
 dependencies {
     annotationProcessor project(":data-processor")
     annotationProcessor "io.micronaut.validation:micronaut-validation"
-    annotationProcessor libs.hibernate.jpamodelgen
+    annotationProcessor mnSql.hibernate.jpamodelgen
     compileOnly mnSerde.micronaut.serde.api
     implementation "io.micronaut:micronaut-http-client"
     implementation 'io.micronaut.rxjava2:micronaut-rxjava2'
