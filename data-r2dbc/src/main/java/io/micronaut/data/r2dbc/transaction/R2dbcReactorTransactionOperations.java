@@ -16,6 +16,7 @@
 package io.micronaut.data.r2dbc.transaction;
 
 import io.micronaut.core.annotation.NonNull;
+import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.reactive.ReactiveTransactionStatus;
 import io.micronaut.transaction.reactive.ReactorReactiveTransactionOperations;
 import io.r2dbc.spi.Connection;
@@ -33,13 +34,28 @@ public interface R2dbcReactorTransactionOperations extends ReactorReactiveTransa
     /**
      * Execute the given handler with an existing transaction status.
      *
+     * @param status     An existing in progress transaction status
+     * @param definition The transaction definition
+     * @param handler    The handler
+     * @param <T>        The emitted type
+     * @return A publisher that emits the result type
+     */
+    @NonNull <T> Publisher<T> withTransaction(@NonNull ReactiveTransactionStatus<Connection> status,
+                                              @NonNull TransactionDefinition definition,
+                                              @NonNull TransactionalCallback<Connection, T> handler);
+
+    /**
+     * Execute the given handler with an existing transaction status.
+     *
      * @param status  An existing in progress transaction status
      * @param handler The handler
      * @param <T>     The emitted type
      * @return A publisher that emits the result type
      */
     @NonNull
-    <T> Publisher<T> withTransaction(@NonNull ReactiveTransactionStatus<Connection> status,
-                                     @NonNull TransactionalCallback<Connection, T> handler);
+    default <T> Publisher<T> withTransaction(@NonNull ReactiveTransactionStatus<Connection> status,
+                                             @NonNull TransactionalCallback<Connection, T> handler) {
+        return withTransaction(status, TransactionDefinition.DEFAULT, handler);
+    }
 
 }

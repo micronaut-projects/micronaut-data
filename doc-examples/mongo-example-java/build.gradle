@@ -17,8 +17,6 @@ micronaut {
 }
 
 dependencies {
-    micronautBoms(platform("io.micronaut:micronaut-core-bom:$micronautVersion"))
-
     annotationProcessor projects.dataDocumentProcessor
 
     implementation 'io.micronaut.rxjava2:micronaut-rxjava2'

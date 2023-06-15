@@ -27,7 +27,7 @@ import io.micronaut.data.tck.entities.Person;
 import io.micronaut.data.tck.repositories.PersonRepository;
 import org.reactivestreams.Publisher;
 
-import javax.transaction.Transactional;
+import jakarta.transaction.Transactional;
 import java.util.List;
 
 @Repository

@@ -21,12 +21,12 @@ dependencies {
     implementation 'io.micronaut.reactor:micronaut-reactor'
     implementation "io.micronaut:micronaut-http-client"
     implementation projects.dataMongodb
+    implementation projects.dataTx
     implementation mnMongo.mongo.reactive
     implementation mnKotlin.micronaut.kotlin.runtime
 
-    compileOnly libs.javax.persistence.api
     implementation libs.jakarta.persistence.api
-    implementation libs.javax.transaction.api
+    implementation libs.jakarta.transaction.api
     implementation libs.kotlin.coroutines
     implementation libs.kotlin.coroutines.reactive
 

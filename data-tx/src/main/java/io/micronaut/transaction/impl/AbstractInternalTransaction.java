@@ -17,7 +17,6 @@ package io.micronaut.transaction.impl;
 
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.order.OrderUtil;
-import io.micronaut.transaction.exceptions.TransactionException;
 import io.micronaut.transaction.support.TransactionSynchronization;
 
 import java.util.ArrayList;
@@ -36,7 +35,7 @@ public abstract class AbstractInternalTransaction<C> implements InternalTransact
     private boolean globalRollbackOnly = false;
     private boolean completed = false;
 
-    private List<TransactionSynchronization> synchronizations;
+    protected List<TransactionSynchronization> synchronizations;
 
     /**
      * Set global rollback only.
@@ -68,27 +67,6 @@ public abstract class AbstractInternalTransaction<C> implements InternalTransact
     @Override
     public boolean isCompleted() {
         return completed;
-    }
-
-    @Override
-    public boolean hasSavepoint() {
-        return false;
-    }
-
-    public void releaseHeldSavepoint() throws TransactionException {
-    }
-
-    @Override
-    public Object createSavepoint() throws TransactionException {
-        return null;
-    }
-
-    @Override
-    public void rollbackToSavepoint(Object savepoint) throws TransactionException {
-    }
-
-    @Override
-    public void releaseSavepoint(Object savepoint) throws TransactionException {
     }
 
     @Override
@@ -130,15 +108,6 @@ public abstract class AbstractInternalTransaction<C> implements InternalTransact
 
     @Override
     public void cleanupAfterCompletion() {
-    }
-
-    @Override
-    public void flush() {
-        if (synchronizations != null) {
-            for (TransactionSynchronization synchronization : synchronizations) {
-                synchronization.flush();
-            }
-        }
     }
 
     @Override

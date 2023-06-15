@@ -99,34 +99,47 @@ public abstract class AbstractReactorTransactionOperations<C> implements Reactor
 
         return Flux.deferContextual(contextView -> {
             ReactiveTransactionStatus<C> transactionStatus = getTransactionStatus(contextView);
-            TransactionDefinition.Propagation propagationBehavior = definition.getPropagationBehavior();
-            if (transactionStatus != null) {
-                if (propagationBehavior == TransactionDefinition.Propagation.NOT_SUPPORTED || propagationBehavior == TransactionDefinition.Propagation.NEVER) {
-                    return Flux.error(propagationNotSupported(propagationBehavior));
-                }
-                if (propagationBehavior == TransactionDefinition.Propagation.REQUIRES_NEW) {
-                    return connectionOperations.withConnectionFlux(definition.getConnectionDefinition(), connectionStatus ->
-                        executeTransactionFlux(
-                            new DefaultReactiveTransactionStatus<>(connectionStatus, true, definition),
-                            handler
-                        )
-                    );
-                }
-                return executeCallbackFlux(
-                    existingTransaction(transactionStatus, definition),
-                    handler
+            return withTransactionFlux(transactionStatus, definition, handler);
+        });
+    }
+
+    /**
+     * Execute the transaction with provided transaction status.
+     *
+     * @param transactionStatus The transaction status
+     * @param definition The definition
+     * @param handler The handler
+     * @param <T> The transaction type
+     * @return The published result
+     */
+    protected  <T> Flux<T> withTransactionFlux(ReactiveTransactionStatus<C> transactionStatus, TransactionDefinition definition, TransactionalCallback<C, T> handler) {
+        TransactionDefinition.Propagation propagationBehavior = definition.getPropagationBehavior();
+        if (transactionStatus != null) {
+            if (propagationBehavior == TransactionDefinition.Propagation.NOT_SUPPORTED || propagationBehavior == TransactionDefinition.Propagation.NEVER) {
+                return Flux.error(propagationNotSupported(propagationBehavior));
+            }
+            if (propagationBehavior == TransactionDefinition.Propagation.REQUIRES_NEW) {
+                return connectionOperations.withConnectionFlux(definition.getConnectionDefinition(), connectionStatus ->
+                    executeTransactionFlux(
+                        new DefaultReactiveTransactionStatus<>(connectionStatus, true, definition),
+                        handler
+                    )
                 );
             }
-            if (propagationBehavior == TransactionDefinition.Propagation.MANDATORY) {
-                return Flux.error(expectedTransaction());
-            }
-            return connectionOperations.withConnectionFlux(definition.getConnectionDefinition(), connectionStatus ->
-                executeTransactionFlux(
-                    new DefaultReactiveTransactionStatus<>(connectionStatus, true, definition),
-                    handler
-                )
+            return executeCallbackFlux(
+                existingTransaction(transactionStatus, definition),
+                handler
             );
-        });
+        }
+        if (propagationBehavior == TransactionDefinition.Propagation.MANDATORY) {
+            return Flux.error(expectedTransaction());
+        }
+        return connectionOperations.withConnectionFlux(definition.getConnectionDefinition(), connectionStatus ->
+            executeTransactionFlux(
+                new DefaultReactiveTransactionStatus<>(connectionStatus, true, definition),
+                handler
+            )
+        );
     }
 
     @Override

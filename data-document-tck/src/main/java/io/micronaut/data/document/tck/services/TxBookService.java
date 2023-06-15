@@ -1,10 +1,8 @@
 package io.micronaut.data.document.tck.services;
 
 import io.micronaut.context.ApplicationContext;
-import io.micronaut.transaction.annotation.TransactionalAdvice;
+import io.micronaut.transaction.annotation.Transactional;
 import jakarta.inject.Singleton;
-
-import javax.transaction.Transactional;
 
 @Singleton
 public class TxBookService extends AbstractBookService {
@@ -13,56 +11,56 @@ public class TxBookService extends AbstractBookService {
         super(beanContext);
     }
 
-    @TransactionalAdvice(readOnly = true)
+    @Transactional(readOnly = true)
     public void bookAddedInReadOnlyTransaction() {
         bookRepository.save(newBook("MandatoryBook"));
     }
 
-    @TransactionalAdvice(readOnly = true)
+    @Transactional(readOnly = true)
     public void readOnlyTxCallingAddingBookInAnotherTransaction() {
         bookRepository.save(newBook("MandatoryBook"));
     }
 
-    @Transactional
+    @jakarta.transaction.Transactional
     protected void addBook() {
         bookRepository.save(newBook("MandatoryBook"));
     }
 
-    @Transactional
+    @jakarta.transaction.Transactional
     public void bookAddedInMandatoryTransaction() {
         mandatoryTransaction();
     }
 
-    @Transactional(Transactional.TxType.NOT_SUPPORTED)
+    @jakarta.transaction.Transactional(jakarta.transaction.Transactional.TxType.NOT_SUPPORTED)
     public void bookAddedInNoSupportedPropagation(Runnable noTxCheck) {
         bookRepository.save(newBook("MandatoryBook"));
         noTxCheck.run();
     }
 
-    @Transactional(Transactional.TxType.NEVER)
+    @jakarta.transaction.Transactional(jakarta.transaction.Transactional.TxType.NEVER)
     public void bookAddedInNeverPropagation(Runnable noTxCheck) {
         bookRepository.save(newBook("MandatoryBook"));
         noTxCheck.run();
     }
 
-    @Transactional
+    @jakarta.transaction.Transactional
     public void bookAddedInInnerNeverPropagation(Runnable noTxCheck) {
         bookAddedInNeverPropagation(noTxCheck);
     }
 
-    @Transactional(Transactional.TxType.NOT_SUPPORTED)
+    @jakarta.transaction.Transactional(jakarta.transaction.Transactional.TxType.NOT_SUPPORTED)
     public void bookAddedInNoSupportedPropagationAndFailed(Runnable noTxCheck) {
         bookRepository.save(newBook("MandatoryBook"));
         noTxCheck.run();
         throw new IllegalStateException("Big fail!");
     }
 
-    @Transactional
+    @jakarta.transaction.Transactional
     public void bookAddedInInnerNoSupportedPropagation(Runnable noTxCheck) {
         bookAddedInNoSupportedPropagation(noTxCheck);
     }
 
-    @Transactional
+    @jakarta.transaction.Transactional
     public void bookAddedInInnerNoSupportedPropagationFailedAndExceptionSuppressed(Runnable noTxCheck) {
         try {
             bookAddedInNoSupportedPropagationAndFailed(noTxCheck);
@@ -71,38 +69,38 @@ public class TxBookService extends AbstractBookService {
         }
     }
 
-    @Transactional(Transactional.TxType.MANDATORY)
+    @jakarta.transaction.Transactional(jakarta.transaction.Transactional.TxType.MANDATORY)
     public void mandatoryTransaction() {
         bookRepository.save(newBook("MandatoryBook"));
     }
 
-    @Transactional
+    @jakarta.transaction.Transactional
     public void checkInTransaction(Runnable runnable) {
         runnable.run();
     }
 
-    @Transactional
+    @jakarta.transaction.Transactional
     public void bookIsAddedInTxMethod() {
         bookRepository.save(newBook("Toys"));
     }
 
-    @Transactional
+    @jakarta.transaction.Transactional
     public void bookIsAddedInAnotherRequiresNewTx() {
         addBookRequiresNew();
     }
 
-    @Transactional
+    @jakarta.transaction.Transactional
     public void bookIsAddedInAnotherRequiresNewTxWhichIsFailing() {
         addBookRequiresNewFailing();
     }
 
-    @Transactional
+    @jakarta.transaction.Transactional
     public void bookIsAddedAndAnotherRequiresNewTxIsFailing() {
         bookRepository.save(newBook("Book1"));
         transactionRequiresNewFailing();
     }
 
-    @Transactional
+    @jakarta.transaction.Transactional
     public void innerTransactionHasSuppressedException() {
         try {
             transactionFailing();
@@ -112,7 +110,7 @@ public class TxBookService extends AbstractBookService {
         bookRepository.save(newBook("Book1"));
     }
 
-    @Transactional
+    @jakarta.transaction.Transactional
     public void innerRequiresNewTransactionHasSuppressedException() {
         try {
             transactionRequiresNewFailing();
@@ -122,23 +120,23 @@ public class TxBookService extends AbstractBookService {
         bookRepository.save(newBook("Book1"));
     }
 
-    @Transactional(Transactional.TxType.REQUIRES_NEW)
+    @jakarta.transaction.Transactional(jakarta.transaction.Transactional.TxType.REQUIRES_NEW)
     protected void addBookRequiresNew() {
         bookRepository.save(newBook("Book1"));
     }
 
-    @Transactional(Transactional.TxType.REQUIRES_NEW)
+    @jakarta.transaction.Transactional(jakarta.transaction.Transactional.TxType.REQUIRES_NEW)
     protected void addBookRequiresNewFailing() {
         bookRepository.save(newBook("Book2"));
         throw new IllegalStateException("Big fail!");
     }
 
-    @Transactional(Transactional.TxType.REQUIRES_NEW)
+    @jakarta.transaction.Transactional(jakarta.transaction.Transactional.TxType.REQUIRES_NEW)
     protected void transactionRequiresNewFailing() {
         throw new IllegalStateException("Big fail!");
     }
 
-    @Transactional
+    @jakarta.transaction.Transactional
     protected void transactionFailing() {
         throw new IllegalStateException("Big fail!");
     }

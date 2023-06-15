@@ -105,6 +105,11 @@ final class DefaultHibernateReactiveSynchronousRepositoryOperations implements B
     }
 
     @Override
+    public <T> T merge(T entity) {
+        return notSupported();
+    }
+
+    @Override
     public void flush() {
         notSupported();
     }

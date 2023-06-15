@@ -94,6 +94,8 @@ import io.micronaut.transaction.reactive.ReactiveTransactionStatus;
 import io.micronaut.transaction.support.TransactionUtil;
 import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.ConnectionFactory;
+import io.r2dbc.spi.Parameters;
+import io.r2dbc.spi.R2dbcType;
 import io.r2dbc.spi.Result;
 import io.r2dbc.spi.Row;
 import io.r2dbc.spi.Statement;
@@ -396,24 +398,12 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
     }
 
     private static <T> Mono<T> executeAndMapEachRowSingle(Statement statement, Dialect dialect, Function<Row, T> mapper) {
-        return executeAndMapEachRow(statement, mapper).onErrorResume(throwable -> {
-            if (throwable.getCause() instanceof SQLException sqlException) {
-                Throwable newThrowable = handleSqlException(sqlException, dialect);
-                return Mono.error(newThrowable);
-            }
-            return Mono.error(throwable);
-        }).as(DefaultR2dbcRepositoryOperations::toSingleResult);
+        return executeAndMapEachRow(statement, mapper).onErrorResume(errorHandler(dialect)).as(DefaultR2dbcRepositoryOperations::toSingleResult);
     }
 
     private static Mono<Number> executeAndGetRowsUpdatedSingle(Statement statement, Dialect dialect) {
         return executeAndGetRowsUpdated(statement)
-            .onErrorResume(throwable -> {
-                if (throwable.getCause() instanceof SQLException sqlException) {
-                    Throwable newThrowable = handleSqlException(sqlException, dialect);
-                    return Mono.error(newThrowable);
-                }
-                return Mono.error(throwable);
-            })
+            .onErrorResume(errorHandler(dialect))
             .as(DefaultR2dbcRepositoryOperations::toSingleResult);
     }
 
@@ -421,6 +411,16 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         return Flux.from(statement.execute())
             .flatMap(Result::getRowsUpdated)
             .map((Number n) -> n.longValue());
+    }
+
+    private static <T> Function<? super Throwable, ? extends Publisher<? extends T>> errorHandler(Dialect dialect) {
+        return throwable -> {
+            if (throwable.getCause() instanceof SQLException sqlException) {
+                Throwable newThrowable = handleSqlException(sqlException, dialect);
+                return Mono.error(newThrowable);
+            }
+            return Mono.error(throwable);
+        };
     }
 
     /**
@@ -1007,7 +1007,11 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             LOG.debug(storedQuery.getQuery());
             Statement statement = connection.createStatement(storedQuery.getQuery());
             if (hasGeneratedId) {
-                return statement.returnGeneratedValues(persistentEntity.getIdentity().getPersistedName());
+                if (isJsonEntityGeneratedId(storedQuery, persistentEntity)) {
+                    return statement.bind(storedQuery.getQueryBindings().size(), Parameters.out(R2dbcType.NUMERIC));
+                } else {
+                    return statement.returnGeneratedValues(persistentEntity.getIdentity().getPersistedName());
+                }
             }
             return statement;
         }
@@ -1035,12 +1039,18 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                         return Mono.just(d);
                     }
                     RuntimePersistentProperty<T> identity = persistentEntity.getIdentity();
-                    return executeAndMapEachRowSingle(statement, ctx.dialect, row -> columnIndexResultSetReader.readDynamic(row, 0, identity.getDataType()))
-                        .map(id -> {
-                            BeanProperty<T, Object> property = identity.getProperty();
-                            d.entity = updateEntityId(property, d.entity, id);
-                            return d;
-                        });
+                    Function<Object, Data> idMapper = id -> {
+                        BeanProperty<T, Object> property = identity.getProperty();
+                        d.entity = updateEntityId(property, d.entity, id);
+                        return d;
+                    };
+                    if (isJsonEntityGeneratedId(storedQuery, persistentEntity)) {
+                        return Flux.from(statement.execute()).flatMap(result -> Flux.from(result.map(outParameters -> outParameters.get(0, Object.class))))
+                            .onErrorResume(errorHandler(ctx.dialect)).map(idMapper).last();
+                    } else {
+                        return executeAndMapEachRowSingle(statement, ctx.dialect, row -> columnIndexResultSetReader.readDynamic(row, 0, identity.getDataType()))
+                            .map(idMapper);
+                    }
                 });
             } else {
                 data = data.flatMap(d -> {
@@ -1118,8 +1128,12 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             }
             Statement statement;
             if (hasGeneratedId) {
-                statement = ctx.connection.createStatement(storedQuery.getQuery())
-                    .returnGeneratedValues(persistentEntity.getIdentity().getPersistedName());
+                statement = ctx.connection.createStatement(storedQuery.getQuery());
+                if (isJsonEntityGeneratedId(storedQuery, persistentEntity)) {
+                    statement.bind(storedQuery.getQueryBindings().size(), Parameters.out(R2dbcType.NUMERIC));
+                } else {
+                    statement.returnGeneratedValues(persistentEntity.getIdentity().getPersistedName());
+                }
             } else {
                 statement = ctx.connection.createStatement(storedQuery.getQuery());
             }
@@ -1131,8 +1145,13 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                         if (notVetoedEntities.isEmpty()) {
                             return Mono.just(notVetoedEntities);
                         }
-                        Mono<List<Object>> ids = executeAndMapEachRow(statement, row -> columnIndexResultSetReader.readDynamic(row, 0, persistentEntity.getIdentity().getDataType())
-                        ).collectList();
+                        Function<Row, Object> idMapper;
+                        if (isJsonEntityGeneratedId(storedQuery, persistentEntity)) {
+                            idMapper = row -> row.get(0, Object.class);
+                        } else {
+                            idMapper = row -> columnIndexResultSetReader.readDynamic(row, 0, persistentEntity.getIdentity().getDataType());
+                        }
+                        Mono<List<Object>> ids = executeAndMapEachRow(statement, idMapper).collectList();
 
                         return ids.flatMap(idList -> {
                             Iterator<Object> iterator = idList.iterator();

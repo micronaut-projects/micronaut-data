@@ -15,7 +15,6 @@ import io.micronaut.data.mongodb.operations.MongoRepositoryOperations
 import io.micronaut.data.repository.CrudRepository
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import io.micronaut.test.support.TestPropertyProvider
-import io.micronaut.transaction.annotation.TransactionalAdvice
 import jakarta.inject.Inject
 import jakarta.inject.Named
 import org.bson.UuidRepresentation
@@ -23,7 +22,7 @@ import org.testcontainers.containers.MongoDBContainer
 import org.testcontainers.utility.DockerImageName
 import spock.lang.Specification
 
-import javax.transaction.Transactional
+import jakarta.transaction.Transactional
 
 @Property(name = "spec.name", value = "MongoMultipleDataSourceSpec")
 @MicronautTest(transactional = false)
@@ -78,6 +77,7 @@ class MongoMultipleDataSourceSpec extends Specification implements TestPropertyP
         mongoDBContainer1.start()
         mongoDBContainer2.start()
         return [
+                "micronaut.data.mongodb.driver-type": "sync",
                 'mongodb.servers.xyz.uri': mongoDBContainer1.replicaSetUrl,
                 'mongodb.servers.other.uri': mongoDBContainer2.replicaSetUrl,
                 'mongodb.uuid-representation': UuidRepresentation.STANDARD.name(),
@@ -102,13 +102,13 @@ class MongoMultipleDataSourceSpec extends Specification implements TestPropertyP
         }
 
         @Transactional
-        @TransactionalAdvice("other")
+        @io.micronaut.transaction.annotation.Transactional("other")
         void saveTwoOtherDb(Person one, Person two) {
             saveTwo(one, two)
         }
 
         @Transactional
-        @TransactionalAdvice(transactionManager = "other")
+        @io.micronaut.transaction.annotation.Transactional(transactionManager = "other")
         void saveTwoOtherDb2(Person one, Person two) {
             saveTwo(one, two)
         }

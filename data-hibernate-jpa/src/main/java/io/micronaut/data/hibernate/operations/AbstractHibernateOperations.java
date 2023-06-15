@@ -178,7 +178,7 @@ public abstract class AbstractHibernateOperations<S, Q, P extends Q> implements 
      * @param value         The value
      * @param argument      The argument
      */
-    protected abstract void setParameter(Q query, String parameterName, Object value, Argument argument);
+    protected abstract void setParameter(Q query, String parameterName, Object value, Argument<?> argument);
 
     /**
      * Sets a list parameter into query.
@@ -197,7 +197,7 @@ public abstract class AbstractHibernateOperations<S, Q, P extends Q> implements 
      * @param value         The value
      * @param argument      The argument
      */
-    protected abstract void setParameterList(Q query, String parameterName, Collection<Object> value, Argument argument);
+    protected abstract void setParameterList(Q query, String parameterName, Collection<Object> value, Argument<?> argument);
 
     /**
      * Sets a hint.
@@ -445,8 +445,7 @@ public abstract class AbstractHibernateOperations<S, Q, P extends Q> implements 
                     if (graphName != null) {
                         jakarta.persistence.EntityGraph<?> entityGraph = getEntityGraph(session, preparedQuery.getRootEntity(), graphName);
                         setHint(q, hintName, entityGraph);
-                    } else if (value instanceof String[]) {
-                        String[] pathsDefinitions = (String[]) value;
+                    } else if (value instanceof String[] pathsDefinitions) {
                         if (ArrayUtils.isNotEmpty(pathsDefinitions)) {
                             RootGraph<T> entityGraph = createGraph(pathsDefinitions, session, preparedQuery.getRootEntity());
                             setHint(q, hintName, entityGraph);
@@ -466,7 +465,7 @@ public abstract class AbstractHibernateOperations<S, Q, P extends Q> implements 
      * @param paths      Array of paths to add to the EntityGraph
      * @param session    The hibernate session
      * @param rootEntity The root entity class
-     * @param <T>
+     * @param <T>        The entity type
      * @return A RootGraph created from the paths
      */
     private <T> RootGraph<T> createGraph(@NonNull String[] paths, @NonNull S session, @NonNull Class<T> rootEntity) {
@@ -568,14 +567,10 @@ public abstract class AbstractHibernateOperations<S, Q, P extends Q> implements 
         for (Sort.Order order : sort.getOrderBy()) {
             Path<String> path = root.get(order.getProperty());
             Expression expression = order.isIgnoreCase() ? builder.lower(path) : path;
-            switch (order.getDirection()) {
-
-                case DESC:
-                    orders.add(builder.desc(expression));
-                    continue;
-                default:
-                case ASC:
-                    orders.add(builder.asc(expression));
+            if (order.getDirection() == Sort.Order.Direction.DESC) {
+                orders.add(builder.desc(expression));
+            } else {
+                orders.add(builder.asc(expression));
             }
         }
         criteriaQuery.orderBy(orders);

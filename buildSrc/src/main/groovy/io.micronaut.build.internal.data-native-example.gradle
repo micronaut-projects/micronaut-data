@@ -15,6 +15,10 @@ tasks.register("testExamples") {
 }
 
 dependencies {
+    micronautBoms(
+            platform("io.micronaut:micronaut-core-bom:$micronautVersion"),
+            platform(mnTest.micronaut.test.bom)
+    )
     testRuntimeOnly mnSerde.micronaut.serde.jackson
     runtimeOnly mn.snakeyaml
 }
@@ -28,5 +32,7 @@ graalvmNative {
     testSupport = true
     metadataRepository {
         enabled = true
+        version = "0.3.2"
     }
 }
+

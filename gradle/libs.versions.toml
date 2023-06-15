@@ -1,31 +1,30 @@
 [versions]
 micronaut = "4.0.0-M7"
-micronaut-platform = "4.0.0-M2"
+micronaut-platform = "4.0.0-M3"
 micronaut-docs = "2.0.0"
 micronaut-gradle-plugin = "4.0.0-M4"
-micronaut-testresources = "2.0.0-M9"
+micronaut-testresources = "2.0.0-M10"
 
-micronaut-azure = "5.0.0-M4"
-micronaut-reactor = "3.0.0-M5"
-micronaut-rxjava2 = "2.0.0-M4"
-micronaut-r2dbc = "5.0.0-M9"
-micronaut-serde = "2.0.0-M9"
-micronaut-sql = "5.0.0-M8"
-micronaut-spring = "5.0.0-M3"
-micronaut-test = "4.0.0-M6"
-micronaut-mongo = "5.0.0-M3"
-micronaut-kotlin = "4.0.0-M4"
-micronaut-multitenancy = "5.0.0-M4"
-micronaut-validation = "4.0.0-M9"
-micronaut-logging = "1.0.0-M3"
-micronaut-flyway = "6.0.0-M5"
+micronaut-azure = "5.0.0-M5"
+micronaut-reactor = "3.0.0-M6"
+micronaut-rxjava2 = "2.0.0-M5"
+micronaut-r2dbc = "5.0.0-M10"
+micronaut-serde = "2.0.0-M10"
+micronaut-sql = "5.0.0-M10"
+micronaut-spring = "5.0.0-M4"
+micronaut-test = "4.0.0-M7"
+micronaut-mongo = "5.0.0-M4"
+micronaut-kotlin = "4.0.0-M5"
+micronaut-multitenancy = "5.0.0-M5"
+micronaut-validation = "4.0.0-M10"
+micronaut-logging = "1.0.0-M4"
+micronaut-flyway = "6.0.0-M7"
 
 groovy = "4.0.12"
 
 javax-persistence = "2.2"
 jakarta-persistence = "3.1.0"
 jakarta-javax-persistence = "3.1.0"
-javax-transaction = "1.3"
 jakarta-transaction = "2.0.1"
 
 hibernate = "6.2.4.Final"
@@ -37,7 +36,6 @@ spring-data = "3.1.0"
 
 # Need to leave it here because micronaut-sql uses older version. When it's upgraded there then we can remove this declaration here
 oracle-jdbc-driver = "23.2.0.0"
-oracle-flyway = "9.19.3"
 
 # Testing and benchmarking
 
@@ -48,7 +46,7 @@ jmh = "1.36"
 
 # Gradle plugins
 
-ksp-gradle-plugin = "1.8.21-1.0.11"
+ksp-gradle-plugin = "1.8.22-1.0.11"
 kotlin-gradle-plugin = "1.8.22"
 jmh-gradle-plugin = "0.7.1"
 spring-boot-gradle-plugin = "3.1.0"
@@ -92,7 +90,6 @@ kotlin-coroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", 
 kotlin-coroutines-reactor = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-reactor", version.ref = "kotlin-coroutines" }
 kotlin-coroutines-reactive = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-reactive", version.ref = "kotlin-coroutines" }
 
-javax-transaction-api = { module = "javax.transaction:javax.transaction-api", version.ref = "javax-transaction" }
 jakarta-transaction-api = { module = "jakarta.transaction:jakarta.transaction-api", version.ref = "jakarta-transaction" }
 
 javax-persistence-api = { module = "javax.persistence:javax.persistence-api", version.ref = "javax-persistence" }
@@ -102,7 +99,6 @@ jakarta-persistence-api2 = { module = "jakarta.persistence:jakarta.persistence-a
 # JPA
 
 hibernate-jpamodelgen = { module = "org.hibernate.orm:hibernate-jpamodelgen", version.ref = "hibernate" }
-hibernate-jpamodelgen-jakarta = { module = "org.hibernate.orm:hibernate-jpamodelgen-jakarta", version.ref = "hibernate-jpamodelgen-jakarta" }
 
 spring-data-jpa = { module = "org.springframework.data:spring-data-jpa", version.ref = "spring-data" }
 spring-data-commons = { module = "org.springframework.data:spring-data-commons", version.ref = "spring-data" }
@@ -110,7 +106,6 @@ spring-data-commons = { module = "org.springframework.data:spring-data-commons",
 # JDBC
 
 drivers-jdbc-oracle = { module = "com.oracle.database.jdbc:ojdbc8", version.ref = "oracle-jdbc-driver" }
-flyway-oracle = { module = "org.flywaydb:flyway-database-oracle", version.ref = "oracle-flyway" }
 
 # AZURE COSMOS
 

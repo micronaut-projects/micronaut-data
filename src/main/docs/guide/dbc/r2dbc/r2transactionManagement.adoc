@@ -1,4 +1,4 @@
-Micronaut Data R2DBC features Reactive transaction management support whereby you can declare `javax.transaction.Transactional` on your methods and a reactive transaction will be initiated, for example:
+Micronaut Data R2DBC features Reactive transaction management support whereby you can declare `jakarta.transaction.Transactional` on your methods and a reactive transaction will be initiated, for example:
 
 snippet::example.AuthorService[project-base="doc-examples/r2dbc-example", source="main", indent="0"]
 

@@ -15,7 +15,6 @@ dependencies {
     testImplementation mn.micronaut.inject.groovy.test
 	testImplementation mn.micronaut.inject.java.test
 	testImplementation libs.javax.persistence.api
-	testImplementation libs.javax.transaction.api
 	testImplementation libs.jakarta.transaction.api
 	testImplementation libs.spring.data.jpa
 	testImplementation projects.dataTck

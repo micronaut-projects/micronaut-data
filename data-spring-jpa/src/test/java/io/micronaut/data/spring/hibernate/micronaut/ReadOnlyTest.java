@@ -2,9 +2,8 @@ package io.micronaut.data.spring.hibernate.micronaut;
 
 import io.micronaut.data.tck.entities.Book;
 import io.micronaut.transaction.annotation.ReadOnly;
-import io.micronaut.transaction.annotation.TransactionalAdvice;
+import io.micronaut.transaction.annotation.Transactional;
 import jakarta.inject.Singleton;
-import jakarta.transaction.Transactional;
 
 @Singleton
 public class ReadOnlyTest {
@@ -15,7 +14,7 @@ public class ReadOnlyTest {
         this.bookRepository = bookRepository;
     }
 
-    @Transactional
+    @jakarta.transaction.Transactional
     public Long createBook() {
         Book book = new Book();
         book.setTitle("New book");
@@ -24,7 +23,7 @@ public class ReadOnlyTest {
         return book.getId();
     }
 
-    @Transactional
+    @jakarta.transaction.Transactional
     public Book findBook(Long bookId) {
         return bookRepository.findById(bookId).get();
     }
@@ -35,7 +34,7 @@ public class ReadOnlyTest {
         book.setTitle("Xyz");
     }
 
-    @TransactionalAdvice(readOnly = true)
+    @Transactional(readOnly = true)
     public void bookIsNotUpdated2(Long bookId) {
         Book book = bookRepository.findById(bookId).get();
         book.setTitle("Xyz");
@@ -57,7 +56,7 @@ public class ReadOnlyTest {
         book.setTitle("Xyz");
     }
 
-    @Transactional
+    @jakarta.transaction.Transactional
     public void bookIsUpdated(Long bookId) {
         Book book = bookRepository.findById(bookId).get();
         book.setTitle("Xyz");

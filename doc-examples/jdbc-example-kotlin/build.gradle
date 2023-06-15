@@ -27,7 +27,6 @@ dependencies {
     implementation project(":data-jdbc")
     implementation "io.micronaut.sql:micronaut-jdbc-tomcat"
     implementation libs.jakarta.persistence.api
-    implementation libs.javax.transaction.api
     implementation libs.kotlin.coroutines
     implementation libs.kotlin.coroutines.reactive
 

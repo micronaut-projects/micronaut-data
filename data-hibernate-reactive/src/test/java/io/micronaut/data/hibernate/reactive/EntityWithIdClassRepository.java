@@ -7,7 +7,7 @@ import io.micronaut.data.tck.entities.EntityWithIdClass;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import javax.transaction.Transactional;
+import jakarta.transaction.Transactional;
 
 @Repository
 public interface EntityWithIdClassRepository extends ReactorCrudRepository<EntityWithIdClass, EntityIdClass> {

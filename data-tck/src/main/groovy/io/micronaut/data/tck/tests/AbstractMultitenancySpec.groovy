@@ -36,7 +36,7 @@ import io.micronaut.scheduling.annotation.ExecuteOn
 import io.micronaut.test.support.TestPropertyProviderFactory
 import spock.lang.Specification
 
-import javax.transaction.Transactional
+import jakarta.transaction.Transactional
 
 abstract class AbstractMultitenancySpec extends Specification {
 

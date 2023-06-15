@@ -41,7 +41,7 @@ public class SpringTransactionalMapper implements NamedAnnotationMapper {
     @Override
     public List<AnnotationValue<?>> map(AnnotationValue<Annotation> annotation, VisitorContext visitorContext) {
         AnnotationValueBuilder<Annotation> builder =
-                AnnotationValue.builder("io.micronaut.transaction.annotation.TransactionalAdvice");
+                AnnotationValue.builder("io.micronaut.transaction.annotation.Transactional");
         annotation.stringValue().ifPresent(s -> {
             builder.value(s);
             builder.member("transactionManager", s);

@@ -19,12 +19,10 @@ package io.micronaut.transaction;
 import io.micronaut.core.annotation.NonNull;
 
 /**
- * NOTICE: This is a fork of Spring's {@code PlatformTransactionManager} modernizing it
- * to use enums, Slf4j and decoupling from Spring.
- *
  * Common representation of the current state of a transaction.
  * Serves as base interface for {@link TransactionStatus} as well as
  * {@link io.micronaut.transaction.reactive.ReactiveTransactionStatus}.
+ * Partially based on https://github.com/spring-projects/spring-framework/blob/main/spring-tx/src/main/java/org/springframework/transaction/TransactionExecution.java
  *
  * @author Juergen Hoeller
  * @author graemerocher

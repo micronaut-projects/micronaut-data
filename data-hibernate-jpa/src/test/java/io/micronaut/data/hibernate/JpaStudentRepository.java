@@ -18,11 +18,12 @@ package io.micronaut.data.hibernate;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.annotation.Version;
+import io.micronaut.data.jpa.repository.JpaRepository;
 import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.data.tck.entities.Student;
 
 @Repository
-public interface JpaStudentRepository extends CrudRepository<Student, Long> {
+public interface JpaStudentRepository extends JpaRepository<Student, Long> {
 
     void updateStudentName(@Id Long id, @Version Long version, String name);
 

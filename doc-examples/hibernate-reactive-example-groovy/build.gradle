@@ -14,7 +14,7 @@ micronaut {
 }
 
 dependencies {
-    annotationProcessor projects.dataProcessor
+    compileOnly projects.dataProcessor // because it's Groovy
     implementation "io.micronaut:micronaut-http-client"
     implementation projects.dataHibernateReactive
     implementation "io.micronaut.reactor:micronaut-reactor"

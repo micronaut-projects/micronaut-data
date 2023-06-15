@@ -74,7 +74,7 @@ dependencies {
     testRuntimeOnly mnSerde.micronaut.serde.oracle.jdbc.json
 
     testRuntimeOnly mnFlyway.micronaut.flyway
-    testRuntimeOnly libs.flyway.oracle
+    testRuntimeOnly mnFlyway.flyway.oracle
 }
 
 micronaut {
