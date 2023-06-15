@@ -67,6 +67,13 @@ micronaut {
     }
 }
 
+micronautBuild {
+    // New module in 4.0
+    binaryCompatibility {
+        enabled = false
+    }
+}
+
 tasks.withType(Test).configureEach {
     jvmArgs '-Xmx1024m'
     systemProperty "oracle.jdbc.timezoneAsRegion", "false"
