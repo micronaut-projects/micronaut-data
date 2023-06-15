@@ -2078,5 +2078,75 @@
     "type": "io.micronaut.transaction.jpa.EntityManagerHolder",
     "member": "Implemented interface io.micronaut.transaction.support.ResourceHolder",
     "reason": "The class has been removed"
+  },
+  {
+    "type": "io.micronaut.transaction.interceptor.$CoroutineTxHelper$Definition$Reference",
+    "member": "Field $ANNOTATION_METADATA",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.transaction.interceptor.$CoroutineTxHelper$Definition$Reference",
+    "member": "Constructor io.micronaut.transaction.interceptor.$CoroutineTxHelper$Definition$Reference()",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.transaction.interceptor.$CoroutineTxHelper$Definition$Reference",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationSource",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.transaction.interceptor.$CoroutineTxHelper$Definition$Reference",
+    "member": "Implemented interface io.micronaut.inject.BeanContextConditional",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.transaction.interceptor.$CoroutineTxHelper$Definition$Reference",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadataProvider",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.transaction.interceptor.$CoroutineTxHelper$Definition$Reference",
+    "member": "Implemented interface io.micronaut.inject.BeanType",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.transaction.interceptor.$CoroutineTxHelper$Definition$Reference",
+    "member": "Implemented interface io.micronaut.inject.BeanDefinitionReference",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.transaction.interceptor.$ReactorCoroutineTxHelper$Definition$Reference",
+    "member": "Field $ANNOTATION_METADATA",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.transaction.interceptor.$ReactorCoroutineTxHelper$Definition$Reference",
+    "member": "Constructor io.micronaut.transaction.interceptor.$ReactorCoroutineTxHelper$Definition$Reference()",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.transaction.interceptor.$ReactorCoroutineTxHelper$Definition$Reference",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationSource",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.transaction.interceptor.$ReactorCoroutineTxHelper$Definition$Reference",
+    "member": "Implemented interface io.micronaut.inject.BeanContextConditional",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.transaction.interceptor.$ReactorCoroutineTxHelper$Definition$Reference",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadataProvider",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.transaction.interceptor.$ReactorCoroutineTxHelper$Definition$Reference",
+    "member": "Implemented interface io.micronaut.inject.BeanType",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.transaction.interceptor.$ReactorCoroutineTxHelper$Definition$Reference",
+    "member": "Implemented interface io.micronaut.inject.BeanDefinitionReference",
+    "reason": "Internal class moved"
   }
 ]
