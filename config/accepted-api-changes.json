@@ -1637,16 +1637,446 @@
   {
     "type": "io.micronaut.data.mongodb.transaction.TransactionalClientSessionInterceptor",
     "member": "Implemented interface io.micronaut.aop.Interceptor",
-    "reason": "Provide a human readable reason for the change"
+    "reason": "Internal class moved"
   },
   {
     "type": "io.micronaut.data.mongodb.transaction.TransactionalClientSessionInterceptor",
     "member": "Implemented interface io.micronaut.aop.MethodInterceptor",
-    "reason": "Provide a human readable reason for the change"
+    "reason": "Internal class moved"
   },
   {
     "type": "io.micronaut.data.mongodb.transaction.TransactionalClientSessionInterceptor",
     "member": "Implemented interface io.micronaut.core.order.Ordered",
-    "reason": "Provide a human readable reason for the change"
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.annotation.MappedProperty",
+    "member": "Field EMBEDDED_PROPERTIES",
+    "reason": "Field has been removed"
+  },
+  {
+    "type": "io.micronaut.data.spring.hibernate.$SpringHibernateTransactionOperations$Definition$Reference",
+    "member": "Field $ANNOTATION_METADATA",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.spring.hibernate.$SpringHibernateTransactionOperations$Definition$Reference",
+    "member": "Constructor io.micronaut.data.spring.hibernate.$SpringHibernateTransactionOperations$Definition$Reference()",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.spring.hibernate.$SpringHibernateTransactionOperations$Definition$Reference",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationSource",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.spring.hibernate.$SpringHibernateTransactionOperations$Definition$Reference",
+    "member": "Implemented interface io.micronaut.inject.BeanContextConditional",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.spring.hibernate.$SpringHibernateTransactionOperations$Definition$Reference",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadataProvider",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.spring.hibernate.$SpringHibernateTransactionOperations$Definition$Reference",
+    "member": "Implemented interface io.micronaut.inject.BeanType",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.spring.hibernate.$SpringHibernateTransactionOperations$Definition$Reference",
+    "member": "Implemented interface io.micronaut.inject.BeanDefinitionReference",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.spring.jdbc.$SpringJdbcTransactionOperations$Definition$Reference",
+    "member": "Field $ANNOTATION_METADATA",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.spring.jdbc.$SpringJdbcTransactionOperations$Definition$Reference",
+    "member": "Constructor io.micronaut.data.spring.jdbc.$SpringJdbcTransactionOperations$Definition$Reference()",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.spring.jdbc.$SpringJdbcTransactionOperations$Definition$Reference",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationSource",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.spring.jdbc.$SpringJdbcTransactionOperations$Definition$Reference",
+    "member": "Implemented interface io.micronaut.inject.BeanContextConditional",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.spring.jdbc.$SpringJdbcTransactionOperations$Definition$Reference",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadataProvider",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.spring.jdbc.$SpringJdbcTransactionOperations$Definition$Reference",
+    "member": "Implemented interface io.micronaut.inject.BeanType",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.spring.jdbc.$SpringJdbcTransactionOperations$Definition$Reference",
+    "member": "Implemented interface io.micronaut.inject.BeanDefinitionReference",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.spring.jdbc.SpringJdbcTransactionOperations",
+    "member": "Constructor io.micronaut.data.spring.jdbc.SpringJdbcTransactionOperations(org.springframework.jdbc.datasource.DataSourceTransactionManager)",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.spring.jdbc.SpringJdbcTransactionOperations",
+    "member": "Implemented interface io.micronaut.transaction.TransactionOperations",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.spring.runtime.http.SpringPageableRequestArgumentBinder",
+    "member": "Implemented interface io.micronaut.http.bind.binders.RequestArgumentBinder",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.spring.runtime.http.SpringPageableRequestArgumentBinder",
+    "member": "Implemented interface io.micronaut.http.bind.binders.TypedRequestArgumentBinder",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.spring.runtime.http.SpringPageableRequestArgumentBinder",
+    "member": "Implemented interface io.micronaut.core.bind.TypeArgumentBinder",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.spring.runtime.http.SpringPageableRequestArgumentBinder",
+    "member": "Implemented interface io.micronaut.core.bind.ArgumentBinder",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.spring.tx.$TransactionAwareDataSourceListenerReplacement$Definition$Reference",
+    "member": "Field $ANNOTATION_METADATA",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.spring.tx.$TransactionAwareDataSourceListenerReplacement$Definition$Reference",
+    "member": "Constructor io.micronaut.data.spring.tx.$TransactionAwareDataSourceListenerReplacement$Definition$Reference()",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.spring.tx.$TransactionAwareDataSourceListenerReplacement$Definition$Reference",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationSource",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.spring.tx.$TransactionAwareDataSourceListenerReplacement$Definition$Reference",
+    "member": "Implemented interface io.micronaut.inject.BeanContextConditional",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.spring.tx.$TransactionAwareDataSourceListenerReplacement$Definition$Reference",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadataProvider",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.spring.tx.$TransactionAwareDataSourceListenerReplacement$Definition$Reference",
+    "member": "Implemented interface io.micronaut.inject.BeanType",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.spring.tx.$TransactionAwareDataSourceListenerReplacement$Definition$Reference",
+    "member": "Implemented interface io.micronaut.inject.BeanDefinitionReference",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.r2dbc.operations.BlockingReactorRepositoryOperations",
+    "member": "Implemented interface io.micronaut.data.operations.RepositoryOperations",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.r2dbc.operations.BlockingReactorRepositoryOperations",
+    "member": "Implemented interface io.micronaut.data.operations.reactive.ReactiveCapableRepository",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.r2dbc.operations.BlockingReactorRepositoryOperations",
+    "member": "Implemented interface io.micronaut.data.operations.HintsCapableRepository",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.r2dbc.operations.BlockingReactorRepositoryOperations",
+    "member": "Implemented interface io.micronaut.context.ApplicationContextProvider",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.r2dbc.operations.BlockingReactorRepositoryOperations",
+    "member": "Implemented interface io.micronaut.data.operations.reactive.BlockingReactorRepositoryOperations",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.r2dbc.operations.BlockingReactorRepositoryOperations",
+    "member": "Implemented interface io.micronaut.data.operations.reactive.ReactorReactiveCapableRepository",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.r2dbc.operations.R2dbcOperations",
+    "member": "Implemented interface io.micronaut.transaction.reactive.ReactiveTransactionOperations",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.r2dbc.repository.ReactorCrudRepository",
+    "member": "Implemented interface io.micronaut.data.repository.reactive.ReactorCrudRepository",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.r2dbc.repository.ReactorCrudRepository",
+    "member": "Implemented interface io.micronaut.data.repository.reactive.ReactiveStreamsCrudRepository",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.r2dbc.repository.ReactorCrudRepository",
+    "member": "Implemented interface io.micronaut.data.repository.GenericRepository",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.runtime.mapper.DTOMapper",
+    "member": "Constructor io.micronaut.data.runtime.mapper.DTOMapper(io.micronaut.data.model.runtime.RuntimePersistentEntity,io.micronaut.data.runtime.mapper.ResultReader,io.micronaut.http.codec.MediaTypeCodec,io.micronaut.data.runtime.convert.DataConversionService)",
+    "reason": "Constructor had been changed, MediaTypeCodec no longer used in DTOMapper"
+  },
+  {
+    "type": "io.micronaut.data.runtime.mapper.DTOMapper",
+    "member": "Constructor io.micronaut.data.runtime.mapper.DTOMapper(io.micronaut.data.model.runtime.RuntimePersistentEntity,io.micronaut.data.model.runtime.RuntimePersistentEntity,io.micronaut.data.runtime.mapper.ResultReader,io.micronaut.http.codec.MediaTypeCodec,io.micronaut.data.runtime.convert.DataConversionService)",
+    "reason": "Constructor had been changed, MediaTypeCodec no longer used in DTOMapper"
+  },
+  {
+    "type": "io.micronaut.data.runtime.mapper.sql.SqlDTOMapper",
+    "member": "Constructor io.micronaut.data.runtime.mapper.sql.SqlDTOMapper(io.micronaut.data.model.runtime.RuntimePersistentEntity,io.micronaut.data.model.runtime.RuntimePersistentEntity,io.micronaut.data.runtime.mapper.ResultReader,io.micronaut.http.codec.MediaTypeCodec,io.micronaut.data.runtime.convert.DataConversionService)",
+    "reason": "Constructor had been changed, MediaTypeCodec no longer used in SqlDTOMapper"
+  },
+  {
+    "type": "io.micronaut.data.runtime.mapper.sql.SqlDTOMapper",
+    "member": "Constructor io.micronaut.data.runtime.mapper.sql.SqlDTOMapper(io.micronaut.data.model.runtime.RuntimePersistentEntity,io.micronaut.data.runtime.mapper.ResultReader,io.micronaut.http.codec.MediaTypeCodec,io.micronaut.data.runtime.convert.DataConversionService)",
+    "reason": "Constructor had been changed, MediaTypeCodec no longer used in SqlDTOMapper"
+  },
+  {
+    "type": "io.micronaut.data.spring.jpa.$MicronautCurrentSessionContextClassProvider$Definition$Reference",
+    "member": "Field $ANNOTATION_METADATA",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.spring.jpa.$MicronautCurrentSessionContextClassProvider$Definition$Reference",
+    "member": "Constructor io.micronaut.data.spring.jpa.$MicronautCurrentSessionContextClassProvider$Definition$Reference()",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.spring.jpa.$MicronautCurrentSessionContextClassProvider$Definition$Reference",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationSource",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.spring.jpa.$MicronautCurrentSessionContextClassProvider$Definition$Reference",
+    "member": "Implemented interface io.micronaut.inject.BeanContextConditional",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.spring.jpa.$MicronautCurrentSessionContextClassProvider$Definition$Reference",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadataProvider",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.spring.jpa.$MicronautCurrentSessionContextClassProvider$Definition$Reference",
+    "member": "Implemented interface io.micronaut.inject.BeanType",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.spring.jpa.$MicronautCurrentSessionContextClassProvider$Definition$Reference",
+    "member": "Implemented interface io.micronaut.inject.BeanDefinitionReference",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.data.spring.jpa.MicronautCurrentSessionContextClassProvider",
+    "member": "Constructor io.micronaut.data.spring.jpa.MicronautCurrentSessionContextClassProvider()",
+    "reason": "Constructor has been removed"
+  },
+  {
+    "type": "io.micronaut.data.spring.jpa.MicronautCurrentSessionContextClassProvider",
+    "member": "Implemented interface io.micronaut.configuration.hibernate.jpa.HibernateCurrentSessionContextClassProvider",
+    "reason": "Interface has been removed"
+  },
+  {
+    "type": "io.micronaut.transaction.hibernate5.$HibernateTransactionManager$Definition$Reference",
+    "member": "Field $ANNOTATION_METADATA",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.transaction.hibernate5.$HibernateTransactionManager$Definition$Reference",
+    "member": "Constructor io.micronaut.transaction.hibernate5.$HibernateTransactionManager$Definition$Reference()",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.transaction.hibernate5.$HibernateTransactionManager$Definition$Reference",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationSource",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.transaction.hibernate5.$HibernateTransactionManager$Definition$Reference",
+    "member": "Implemented interface io.micronaut.inject.BeanContextConditional",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.transaction.hibernate5.$HibernateTransactionManager$Definition$Reference",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadataProvider",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.transaction.hibernate5.$HibernateTransactionManager$Definition$Reference",
+    "member": "Implemented interface io.micronaut.inject.BeanType",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.transaction.hibernate5.$HibernateTransactionManager$Definition$Reference",
+    "member": "Implemented interface io.micronaut.inject.BeanDefinitionReference",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.transaction.hibernate5.$HibernateTransactionManager$ReflectConfig",
+    "member": "Field $ANNOTATION_METADATA",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.transaction.hibernate5.$HibernateTransactionManager$ReflectConfig",
+    "member": "Constructor io.micronaut.transaction.hibernate5.$HibernateTransactionManager$ReflectConfig()",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.transaction.hibernate5.$HibernateTransactionManager$ReflectConfig",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationSource",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.transaction.hibernate5.$HibernateTransactionManager$ReflectConfig",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadataProvider",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.transaction.hibernate5.$HibernateTransactionManager$ReflectConfig",
+    "member": "Implemented interface io.micronaut.core.graal.GraalReflectionConfigurer",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.transaction.hibernate5.$MicronautSessionContext$ReflectConfig",
+    "member": "Field $ANNOTATION_METADATA",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.transaction.hibernate5.$MicronautSessionContext$ReflectConfig",
+    "member": "Constructor io.micronaut.transaction.hibernate5.$MicronautSessionContext$ReflectConfig()",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.transaction.hibernate5.$MicronautSessionContext$ReflectConfig",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationSource",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.transaction.hibernate5.$MicronautSessionContext$ReflectConfig",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadataProvider",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.transaction.hibernate5.$MicronautSessionContext$ReflectConfig",
+    "member": "Implemented interface io.micronaut.core.graal.GraalReflectionConfigurer",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.transaction.hibernate5.HibernateTransactionManager",
+    "member": "Constructor io.micronaut.transaction.hibernate5.HibernateTransactionManager(org.hibernate.SessionFactory,javax.sql.DataSource,org.hibernate.Interceptor,java.lang.String)",
+    "reason": "Constructor has changed and package renamed to hibernate"
+  },
+  {
+    "type": "io.micronaut.transaction.hibernate5.HibernateTransactionManager",
+    "member": "Constructor io.micronaut.transaction.hibernate5.HibernateTransactionManager(org.hibernate.SessionFactory,javax.sql.DataSource,org.hibernate.Interceptor)",
+    "reason": "Constructor has changed and package renamed"
+  },
+  {
+    "type": "io.micronaut.transaction.hibernate5.HibernateTransactionManager",
+    "member": "Implemented interface io.micronaut.transaction.TransactionOperations",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.transaction.hibernate5.HibernateTransactionManager",
+    "member": "Implemented interface io.micronaut.transaction.support.TransactionStateOperations",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.transaction.hibernate5.HibernateTransactionManager",
+    "member": "Implemented interface io.micronaut.transaction.support.ResourceTransactionManager",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.transaction.hibernate5.HibernateTransactionManager",
+    "member": "Implemented interface io.micronaut.transaction.SynchronousTransactionManager",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.transaction.hibernate5.HibernateTransactionManager",
+    "member": "Implemented interface io.micronaut.transaction.TransactionManager",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.transaction.hibernate5.HibernateTransactionManager",
+    "member": "Implemented interface io.micronaut.transaction.support.SynchronousTransactionStateManager",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.transaction.hibernate5.HibernateTransactionManager",
+    "member": "Implemented interface java.io.Serializable",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.transaction.hibernate5.MicronautSessionContext",
+    "member": "Constructor io.micronaut.transaction.hibernate5.MicronautSessionContext(org.hibernate.engine.spi.SessionFactoryImplementor)",
+    "reason": "Class has been moved to different package"
+  },
+  {
+    "type": "io.micronaut.transaction.hibernate5.MicronautSessionContext",
+    "member": "Implemented interface org.hibernate.context.spi.CurrentSessionContext",
+    "reason": "Interface has been removed"
+  },
+  {
+    "type": "io.micronaut.transaction.hibernate5.MicronautSessionContext",
+    "member": "Implemented interface java.io.Serializable",
+    "reason": "Interface has been removed"
+  },
+  {
+    "type": "io.micronaut.transaction.hibernate5.SessionFactoryUtils",
+    "member": "Field SESSION_SYNCHRONIZATION_ORDER",
+    "reason": "The class has been removed"
+  },
+  {
+    "type": "io.micronaut.transaction.hibernate5.SessionFactoryUtils",
+    "member": "Constructor io.micronaut.transaction.hibernate5.SessionFactoryUtils()",
+    "reason": "The class has been removed"
+  },
+  {
+    "type": "io.micronaut.transaction.hibernate5.SessionHolder",
+    "member": "Constructor io.micronaut.transaction.hibernate5.SessionHolder(org.hibernate.Session)",
+    "reason": "The class has been removed"
+  },
+  {
+    "type": "io.micronaut.transaction.hibernate5.SessionHolder",
+    "member": "Implemented interface io.micronaut.transaction.support.ResourceHolder",
+    "reason": "The class has been removed"
+  },
+  {
+    "type": "io.micronaut.transaction.jpa.EntityManagerHolder",
+    "member": "Constructor io.micronaut.transaction.jpa.EntityManagerHolder(javax.persistence.EntityManager)",
+    "reason": "The class has been removed"
+  },
+  {
+    "type": "io.micronaut.transaction.jpa.EntityManagerHolder",
+    "member": "Implemented interface io.micronaut.transaction.support.ResourceHolder",
+    "reason": "The class has been removed"
   }
 ]
