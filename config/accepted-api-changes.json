@@ -2052,32 +2052,32 @@
   {
     "type": "io.micronaut.transaction.hibernate5.SessionFactoryUtils",
     "member": "Field SESSION_SYNCHRONIZATION_ORDER",
-    "reason": "The class has been removed"
+    "reason": "Class has been removed"
   },
   {
     "type": "io.micronaut.transaction.hibernate5.SessionFactoryUtils",
     "member": "Constructor io.micronaut.transaction.hibernate5.SessionFactoryUtils()",
-    "reason": "The class has been removed"
+    "reason": "Class has been removed"
   },
   {
     "type": "io.micronaut.transaction.hibernate5.SessionHolder",
     "member": "Constructor io.micronaut.transaction.hibernate5.SessionHolder(org.hibernate.Session)",
-    "reason": "The class has been removed"
+    "reason": "Class has been removed"
   },
   {
     "type": "io.micronaut.transaction.hibernate5.SessionHolder",
     "member": "Implemented interface io.micronaut.transaction.support.ResourceHolder",
-    "reason": "The class has been removed"
+    "reason": "Class has been removed"
   },
   {
     "type": "io.micronaut.transaction.jpa.EntityManagerHolder",
     "member": "Constructor io.micronaut.transaction.jpa.EntityManagerHolder(javax.persistence.EntityManager)",
-    "reason": "The class has been removed"
+    "reason": "Class has been removed"
   },
   {
     "type": "io.micronaut.transaction.jpa.EntityManagerHolder",
     "member": "Implemented interface io.micronaut.transaction.support.ResourceHolder",
-    "reason": "The class has been removed"
+    "reason": "Class has been removed"
   },
   {
     "type": "io.micronaut.transaction.interceptor.$CoroutineTxHelper$Definition$Reference",
@@ -2148,5 +2148,580 @@
     "type": "io.micronaut.transaction.interceptor.$ReactorCoroutineTxHelper$Definition$Reference",
     "member": "Implemented interface io.micronaut.inject.BeanDefinitionReference",
     "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.transaction.interceptor.$TxCompletionStageDataIntroductionHelper$Definition$Reference",
+    "member": "Field $ANNOTATION_METADATA",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.transaction.interceptor.$TxCompletionStageDataIntroductionHelper$Definition$Reference",
+    "member": "Constructor io.micronaut.transaction.interceptor.$TxCompletionStageDataIntroductionHelper$Definition$Reference()",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.transaction.interceptor.$TxCompletionStageDataIntroductionHelper$Definition$Reference",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationSource",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.transaction.interceptor.$TxCompletionStageDataIntroductionHelper$Definition$Reference",
+    "member": "Implemented interface io.micronaut.inject.BeanContextConditional",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.transaction.interceptor.$TxCompletionStageDataIntroductionHelper$Definition$Reference",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadataProvider",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.transaction.interceptor.$TxCompletionStageDataIntroductionHelper$Definition$Reference",
+    "member": "Implemented interface io.micronaut.inject.BeanType",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.transaction.interceptor.$TxCompletionStageDataIntroductionHelper$Definition$Reference",
+    "member": "Implemented interface io.micronaut.inject.BeanDefinitionReference",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.transaction.interceptor.CoroutineTxHelper",
+    "member": "Constructor io.micronaut.transaction.interceptor.CoroutineTxHelper()",
+    "reason": "Constructor has been removed"
+  },
+  {
+    "type": "io.micronaut.transaction.interceptor.TxSynchronousContext$Key",
+    "member": "Constructor io.micronaut.transaction.interceptor.TxSynchronousContext$Key(kotlin.jvm.internal.DefaultConstructorMarker)",
+    "reason": "Constructor has been removed"
+  },
+  {
+    "type": "io.micronaut.transaction.interceptor.TxSynchronousContext$Key",
+    "member": "Implemented interface kotlin.coroutines.CoroutineContext$Key",
+    "reason": "Interface has been removed"
+  },
+  {
+    "type": "io.micronaut.transaction.jdbc.$DataSourceTransactionManager$Definition$Reference",
+    "member": "Field $ANNOTATION_METADATA",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.transaction.jdbc.$DataSourceTransactionManager$Definition$Reference",
+    "member": "Constructor io.micronaut.transaction.jdbc.$DataSourceTransactionManager$Definition$Reference()",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.transaction.jdbc.$DataSourceTransactionManager$Definition$Reference",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationSource",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.transaction.jdbc.$DataSourceTransactionManager$Definition$Reference",
+    "member": "Implemented interface io.micronaut.inject.BeanContextConditional",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.transaction.jdbc.$DataSourceTransactionManager$Definition$Reference",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadataProvider",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.transaction.jdbc.$DataSourceTransactionManager$Definition$Reference",
+    "member": "Implemented interface io.micronaut.inject.BeanType",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.transaction.jdbc.$DataSourceTransactionManager$Definition$Reference",
+    "member": "Implemented interface io.micronaut.inject.BeanDefinitionReference",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.transaction.jdbc.$DelegatingDataSourceResolver$Definition$Reference",
+    "member": "Field $ANNOTATION_METADATA",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.transaction.jdbc.$DelegatingDataSourceResolver$Definition$Reference",
+    "member": "Constructor io.micronaut.transaction.jdbc.$DelegatingDataSourceResolver$Definition$Reference()",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.transaction.jdbc.$DelegatingDataSourceResolver$Definition$Reference",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationSource",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.transaction.jdbc.$DelegatingDataSourceResolver$Definition$Reference",
+    "member": "Implemented interface io.micronaut.inject.BeanContextConditional",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.transaction.jdbc.$DelegatingDataSourceResolver$Definition$Reference",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadataProvider",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.transaction.jdbc.$DelegatingDataSourceResolver$Definition$Reference",
+    "member": "Implemented interface io.micronaut.inject.BeanType",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.transaction.jdbc.$DelegatingDataSourceResolver$Definition$Reference",
+    "member": "Implemented interface io.micronaut.inject.BeanDefinitionReference",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.transaction.jdbc.DataSourceTransactionManager",
+    "member": "Constructor io.micronaut.transaction.jdbc.DataSourceTransactionManager(javax.sql.DataSource)",
+    "reason": "Moved to data-tx-jdbc module"
+  },
+  {
+    "type": "io.micronaut.transaction.jdbc.DataSourceTransactionManager",
+    "member": "Implemented interface io.micronaut.transaction.TransactionOperations",
+    "reason": "Moved to data-tx-jdbc module"
+  },
+  {
+    "type": "io.micronaut.transaction.jdbc.DataSourceTransactionManager",
+    "member": "Implemented interface io.micronaut.transaction.support.TransactionStateOperations",
+    "reason": "Moved to data-tx-jdbc module"
+  },
+  {
+    "type": "io.micronaut.transaction.jdbc.DataSourceTransactionManager",
+    "member": "Implemented interface io.micronaut.transaction.support.ResourceTransactionManager",
+    "reason": "Moved to data-tx-jdbc module"
+  },
+  {
+    "type": "io.micronaut.transaction.jdbc.DataSourceTransactionManager",
+    "member": "Implemented interface io.micronaut.transaction.SynchronousTransactionManager",
+    "reason": "Moved to data-tx-jdbc module"
+  },
+  {
+    "type": "io.micronaut.transaction.jdbc.DataSourceTransactionManager",
+    "member": "Implemented interface io.micronaut.transaction.TransactionManager",
+    "reason": "Moved to data-tx-jdbc module"
+  },
+  {
+    "type": "io.micronaut.transaction.jdbc.DataSourceTransactionManager",
+    "member": "Implemented interface io.micronaut.transaction.support.SynchronousTransactionStateManager",
+    "reason": "Moved to data-tx-jdbc module"
+  },
+  {
+    "type": "io.micronaut.transaction.jdbc.DataSourceTransactionManager",
+    "member": "Implemented interface java.io.Serializable",
+    "reason": "Moved to data-tx-jdbc module"
+  },
+  {
+    "type": "io.micronaut.transaction.jdbc.DataSourceUtils",
+    "member": "Field CONNECTION_SYNCHRONIZATION_ORDER",
+    "reason": "Class has been removed"
+  },
+  {
+    "type": "io.micronaut.transaction.jdbc.DataSourceUtils",
+    "member": "Constructor io.micronaut.transaction.jdbc.DataSourceUtils()",
+    "reason": "Class has been removed"
+  },
+  {
+    "type": "io.micronaut.transaction.jdbc.DelegatingDataSource",
+    "member": "Constructor io.micronaut.transaction.jdbc.DelegatingDataSource(javax.sql.DataSource)",
+    "reason": "Moved to data-connection-jdbc module"
+  },
+  {
+    "type": "io.micronaut.transaction.jdbc.DelegatingDataSource",
+    "member": "Implemented interface java.sql.Wrapper",
+    "reason": "Moved to data-connection-jdbc module"
+  },
+  {
+    "type": "io.micronaut.transaction.jdbc.DelegatingDataSource",
+    "member": "Implemented interface javax.sql.DataSource",
+    "reason": "Moved to data-connection-jdbc module"
+  },
+  {
+    "type": "io.micronaut.transaction.jdbc.DelegatingDataSource",
+    "member": "Implemented interface javax.sql.CommonDataSource",
+    "reason": "Moved to data-connection-jdbc module"
+  },
+  {
+    "type": "io.micronaut.transaction.jdbc.DelegatingDataSourceResolver",
+    "member": "Constructor io.micronaut.transaction.jdbc.DelegatingDataSourceResolver()",
+    "reason": "Moved to data-connection-jdbc module"
+  },
+  {
+    "type": "io.micronaut.transaction.jdbc.$TransactionalConnection$Intercepted$Definition$Reference",
+    "member": "Field $ANNOTATION_METADATA",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.transaction.jdbc.$TransactionalConnection$Intercepted$Definition$Reference",
+    "member": "Constructor io.micronaut.transaction.jdbc.$TransactionalConnection$Intercepted$Definition$Reference()",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.transaction.jdbc.$TransactionalConnection$Intercepted$Definition$Reference",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationSource",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.transaction.jdbc.$TransactionalConnection$Intercepted$Definition$Reference",
+    "member": "Implemented interface io.micronaut.inject.BeanContextConditional",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.transaction.jdbc.$TransactionalConnection$Intercepted$Definition$Reference",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadataProvider",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.transaction.jdbc.$TransactionalConnection$Intercepted$Definition$Reference",
+    "member": "Implemented interface io.micronaut.inject.AdvisedBeanType",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.transaction.jdbc.$TransactionalConnection$Intercepted$Definition$Reference",
+    "member": "Implemented interface io.micronaut.inject.BeanType",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.transaction.jdbc.$TransactionalConnection$Intercepted$Definition$Reference",
+    "member": "Implemented interface io.micronaut.inject.BeanDefinitionReference",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.transaction.jdbc.$TransactionalConnectionInterceptor$Definition$Reference",
+    "member": "Field $ANNOTATION_METADATA",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.transaction.jdbc.$TransactionalConnectionInterceptor$Definition$Reference",
+    "member": "Constructor io.micronaut.transaction.jdbc.$TransactionalConnectionInterceptor$Definition$Reference()",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.transaction.jdbc.$TransactionalConnectionInterceptor$Definition$Reference",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationSource",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.transaction.jdbc.$TransactionalConnectionInterceptor$Definition$Reference",
+    "member": "Implemented interface io.micronaut.inject.BeanContextConditional",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.transaction.jdbc.$TransactionalConnectionInterceptor$Definition$Reference",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadataProvider",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.transaction.jdbc.$TransactionalConnectionInterceptor$Definition$Reference",
+    "member": "Implemented interface io.micronaut.inject.BeanType",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.transaction.jdbc.$TransactionalConnectionInterceptor$Definition$Reference",
+    "member": "Implemented interface io.micronaut.inject.BeanDefinitionReference",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.transaction.jdbc.$TransactionAwareDataSource$Definition$Reference",
+    "member": "Field $ANNOTATION_METADATA",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.transaction.jdbc.$TransactionAwareDataSource$Definition$Reference",
+    "member": "Constructor io.micronaut.transaction.jdbc.$TransactionAwareDataSource$Definition$Reference()",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.transaction.jdbc.$TransactionAwareDataSource$Definition$Reference",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationSource",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.transaction.jdbc.$TransactionAwareDataSource$Definition$Reference",
+    "member": "Implemented interface io.micronaut.inject.BeanContextConditional",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.transaction.jdbc.$TransactionAwareDataSource$Definition$Reference",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadataProvider",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.transaction.jdbc.$TransactionAwareDataSource$Definition$Reference",
+    "member": "Implemented interface io.micronaut.inject.BeanType",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.transaction.jdbc.$TransactionAwareDataSource$Definition$Reference",
+    "member": "Implemented interface io.micronaut.inject.BeanDefinitionReference",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.transaction.jdbc.ConnectionHolder",
+    "member": "Field SAVEPOINT_NAME_PREFIX",
+    "reason": "Class has been removed"
+  },
+  {
+    "type": "io.micronaut.transaction.jdbc.ConnectionHolder",
+    "member": "Field SAVEPOINT_NAME_PREFIX",
+    "reason": "Class has been removed"
+  },
+  {
+    "type": "io.micronaut.transaction.jdbc.ConnectionHolder",
+    "member": "Constructor io.micronaut.transaction.jdbc.ConnectionHolder(io.micronaut.transaction.jdbc.ConnectionHandle)",
+    "reason": "Class has been removed"
+  },
+  {
+    "type": "io.micronaut.transaction.jdbc.ConnectionHolder",
+    "member": "Constructor io.micronaut.transaction.jdbc.ConnectionHolder(java.sql.Connection)",
+    "reason": "Class has been removed"
+  },
+  {
+    "type": "io.micronaut.transaction.jdbc.ConnectionHolder",
+    "member": "Constructor io.micronaut.transaction.jdbc.ConnectionHolder(java.sql.Connection,boolean)",
+    "reason": "Class has been removed"
+  },
+  {
+    "type": "io.micronaut.transaction.jdbc.ConnectionHolder",
+    "member": "Implemented interface io.micronaut.transaction.support.ResourceHolder",
+    "reason": "Class has been removed"
+  },
+  {
+    "type": "io.micronaut.transaction.jdbc.exceptions.CannotGetJdbcConnectionException",
+    "member": "Constructor io.micronaut.transaction.jdbc.exceptions.CannotGetJdbcConnectionException(java.lang.String,java.lang.Throwable)",
+    "reason": "Moved to data-tx-jdbc module"
+  },
+  {
+    "type": "io.micronaut.transaction.jdbc.exceptions.CannotGetJdbcConnectionException",
+    "member": "Constructor io.micronaut.transaction.jdbc.exceptions.CannotGetJdbcConnectionException(java.lang.String)",
+    "reason": "Moved to data-tx-jdbc module"
+  },
+  {
+    "type": "io.micronaut.transaction.jdbc.exceptions.CannotGetJdbcConnectionException",
+    "member": "Implemented interface java.io.Serializable",
+    "reason": "Moved to data-tx-jdbc module"
+  },
+  {
+    "type": "io.micronaut.transaction.reactive.ReactiveTransactionStatus",
+    "member": "Field STATUS",
+    "reason": "Field has been removed"
+  },
+  {
+    "type": "io.micronaut.transaction.reactive.ReactiveTransactionStatus",
+    "member": "Field ATTRIBUTE",
+    "reason": "Field has been removed"
+  },
+  {
+    "type": "io.micronaut.transaction.reactive.ReactorReactiveTransactionOperations",
+    "member": "Field TRANSACTION_DEFINITION_KEY_PREFIX",
+    "reason": "Field has been removed"
+  },
+  {
+    "type": "io.micronaut.transaction.reactive.ReactorReactiveTransactionOperations",
+    "member": "Field TRANSACTION_STATUS_KEY_PREFIX",
+    "reason": "Field has been removed"
+  },
+  {
+    "type": "io.micronaut.transaction.support.AbstractTransactionStatus",
+    "member": "Constructor io.micronaut.transaction.support.AbstractTransactionStatus()",
+    "reason": "Class has been removed"
+  },
+  {
+    "type": "io.micronaut.transaction.support.AbstractTransactionStatus",
+    "member": "Implemented interface io.micronaut.transaction.TransactionExecution",
+    "reason": "Class has been removed"
+  },
+  {
+    "type": "io.micronaut.transaction.support.AbstractTransactionStatus",
+    "member": "Implemented interface io.micronaut.transaction.SavepointManager",
+    "reason": "Class has been removed"
+  },
+  {
+    "type": "io.micronaut.transaction.support.AbstractTransactionStatus",
+    "member": "Implemented interface io.micronaut.transaction.TransactionStatus",
+    "reason": "Class has been removed"
+  },
+  {
+    "type": "io.micronaut.transaction.support.AbstractTransactionStatus",
+    "member": "Implemented interface java.io.Flushable",
+    "reason": "Class has been removed"
+  },
+  {
+    "type": "io.micronaut.transaction.jdbc.SimpleConnectionHandle",
+    "member": "Constructor io.micronaut.transaction.jdbc.SimpleConnectionHandle(java.sql.Connection)",
+    "reason": "Class has been removed"
+  },
+  {
+    "type": "io.micronaut.transaction.jdbc.SimpleConnectionHandle",
+    "member": "Implemented interface io.micronaut.transaction.jdbc.ConnectionHandle",
+    "reason": "Class has been removed"
+  },
+  {
+    "type": "io.micronaut.transaction.jdbc.TransactionalConnectionInterceptor",
+    "member": "Implemented interface io.micronaut.aop.Interceptor",
+    "reason": "Interface has been removed"
+  },
+  {
+    "type": "io.micronaut.transaction.jdbc.TransactionalConnectionInterceptor",
+    "member": "Implemented interface io.micronaut.aop.MethodInterceptor",
+    "reason": "Interface has been removed"
+  },
+  {
+    "type": "io.micronaut.transaction.jdbc.TransactionalConnectionInterceptor",
+    "member": "Implemented interface io.micronaut.core.order.Ordered",
+    "reason": "Interface has been removed"
+  },
+  {
+    "type": "io.micronaut.transaction.jdbc.TransactionAwareDataSource",
+    "member": "Constructor io.micronaut.transaction.jdbc.TransactionAwareDataSource(io.micronaut.context.BeanLocator)",
+    "reason": "Class has been removed"
+  },
+  {
+    "type": "io.micronaut.transaction.jdbc.TransactionAwareDataSource",
+    "member": "Implemented interface java.util.EventListener",
+    "reason": "Class has been removed"
+  },
+  {
+    "type": "io.micronaut.transaction.jdbc.TransactionAwareDataSource",
+    "member": "Implemented interface io.micronaut.context.event.BeanCreatedEventListener",
+    "reason": "Class has been removed"
+  },
+  {
+    "type": "io.micronaut.transaction.support.DefaultTransactionStatus",
+    "member": "Constructor io.micronaut.transaction.support.DefaultTransactionStatus(java.lang.Object,java.util.function.Supplier,boolean,boolean,boolean,boolean,java.lang.Object)",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.transaction.support.DefaultTransactionStatus",
+    "member": "Implemented interface io.micronaut.transaction.TransactionExecution",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.transaction.support.DefaultTransactionStatus",
+    "member": "Implemented interface io.micronaut.transaction.SavepointManager",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.transaction.support.DefaultTransactionStatus",
+    "member": "Implemented interface io.micronaut.transaction.TransactionStatus",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.transaction.support.DefaultTransactionStatus",
+    "member": "Implemented interface java.io.Flushable",
+    "reason": "Does not implement interface java.io.Flushable in new version"
+  },
+  {
+    "type": "io.micronaut.transaction.support.ResourceHolderSupport",
+    "member": "Constructor io.micronaut.transaction.support.ResourceHolderSupport()",
+    "reason": "Class has been removed"
+  },
+  {
+    "type": "io.micronaut.transaction.support.ResourceHolderSupport",
+    "member": "Implemented interface io.micronaut.transaction.support.ResourceHolder",
+    "reason": "Class has been removed"
+  },
+  {
+    "type": "io.micronaut.transaction.support.ResourceTransactionManager",
+    "member": "Implemented interface io.micronaut.transaction.TransactionOperations",
+    "reason": "Interface has been removed"
+  },
+  {
+    "type": "io.micronaut.transaction.support.ResourceTransactionManager",
+    "member": "Implemented interface io.micronaut.transaction.SynchronousTransactionManager",
+    "reason": "Interface has been removed"
+  },
+  {
+    "type": "io.micronaut.transaction.support.ResourceTransactionManager",
+    "member": "Implemented interface io.micronaut.transaction.TransactionManager",
+    "reason": "Interface has been removed"
+  },
+  {
+    "type": "io.micronaut.transaction.support.SmartTransactionObject",
+    "member": "Implemented interface java.io.Flushable",
+    "reason": "Class has been removed"
+  },
+  {
+    "type": "io.micronaut.transaction.support.TransactionSynchronization",
+    "member": "Implemented interface java.io.Flushable",
+    "reason": "Does not implement interface java.io.Flushable in new version"
+  },
+  {
+    "type": "io.micronaut.transaction.support.TransactionSynchronizationAdapter",
+    "member": "Constructor io.micronaut.transaction.support.TransactionSynchronizationAdapter()",
+    "reason": "Class has been removed"
+  },
+  {
+    "type": "io.micronaut.transaction.support.TransactionSynchronizationAdapter",
+    "member": "Implemented interface io.micronaut.transaction.support.TransactionSynchronization",
+    "reason": "Class has been removed"
+  },
+  {
+    "type": "io.micronaut.transaction.support.TransactionSynchronizationAdapter",
+    "member": "Implemented interface io.micronaut.core.order.Ordered",
+    "reason": "Class has been removed"
+  },
+  {
+    "type": "io.micronaut.transaction.support.TransactionSynchronizationAdapter",
+    "member": "Implemented interface java.io.Flushable",
+    "reason": "Class has been removed"
+  },
+  {
+    "type": "io.micronaut.transaction.support.TransactionSynchronizationManager",
+    "member": "Field DEFAULT_STATE_KEY",
+    "reason": "Class has been removed"
+  },
+  {
+    "type": "io.micronaut.transaction.support.TransactionSynchronizationManager",
+    "member": "Constructor io.micronaut.transaction.support.TransactionSynchronizationManager()",
+    "reason": "Class has been removed"
+  },
+  {
+    "type": "io.micronaut.transaction.support.TransactionSynchronizationManager$TransactionSynchronizationStateOp",
+    "member": "Implemented interface java.lang.AutoCloseable",
+    "reason": "Class has been removed"
+  },
+  {
+    "type": "io.micronaut.transaction.test.$SpockMethodTransactionDefinitionProvider$Definition$Reference",
+    "member": "Field $ANNOTATION_METADATA",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.transaction.test.$SpockMethodTransactionDefinitionProvider$Definition$Reference",
+    "member": "Constructor io.micronaut.transaction.test.$SpockMethodTransactionDefinitionProvider$Definition$Reference()",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.transaction.test.$SpockMethodTransactionDefinitionProvider$Definition$Reference",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationSource",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.transaction.test.$SpockMethodTransactionDefinitionProvider$Definition$Reference",
+    "member": "Implemented interface io.micronaut.inject.BeanContextConditional",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.transaction.test.$SpockMethodTransactionDefinitionProvider$Definition$Reference",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadataProvider",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.transaction.test.$SpockMethodTransactionDefinitionProvider$Definition$Reference",
+    "member": "Implemented interface io.micronaut.inject.BeanType",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.transaction.test.$SpockMethodTransactionDefinitionProvider$Definition$Reference",
+    "member": "Implemented interface io.micronaut.inject.BeanDefinitionReference",
+    "reason": "Internal class moved"
+  },
+  {
+    "type": "io.micronaut.transaction.TransactionStatus",
+    "member": "Implemented interface io.micronaut.transaction.SavepointManager",
+    "reason": "Does not implement interface io.micronaut.transaction.SavepointManager in new version"
+  },
+  {
+    "type": "io.micronaut.transaction.TransactionStatus",
+    "member": "Implemented interface java.io.Flushable",
+    "reason": "Does not implement interface java.io.Flushable in new version"
   }
 ]
