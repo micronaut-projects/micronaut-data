@@ -30,8 +30,6 @@ dependencies {
     testImplementation mnReactor.micronaut.reactor
     testImplementation projects.dataTck
     testImplementation libs.groovy.sql
-    testImplementation platform(libs.testcontainers.bom)
-    testImplementation libs.testcontainers.postgresql
 
     testRuntimeOnly mnSql.h2
     testRuntimeOnly mnSql.postgresql

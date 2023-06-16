@@ -23,9 +23,3 @@ dependencies {
     runtimeOnly "ch.qos.logback:logback-classic"
     runtimeOnly "com.h2database:h2"
 }
-
-graalvmNative {
-    metadataRepository {
-        version = "0.3.1"
-    }
-}

@@ -31,7 +31,6 @@ micronautBuild {
     importMicronautCatalog("micronaut-multitenancy")
     importMicronautCatalog("micronaut-testresources")
     importMicronautCatalog("micronaut-validation")
-    importMicronautCatalog("micronaut-logging")
     importMicronautCatalog("micronaut-mongo")
     importMicronautCatalog("micronaut-flyway")
 }
@@ -120,6 +119,8 @@ include 'doc-examples:azure-cosmos-example-kotlin'
 
 include 'doc-examples:jdbc-spring-tx-example-java'
 include 'doc-examples:hibernate-spring-tx-example-java'
+
+include 'doc-examples:jooq-r2dbc-postgres'
 
 // benchmarks
 include 'benchmarks:benchmark-micronaut-data-jpa'

@@ -1,16 +1,16 @@
 [versions]
-micronaut = "4.0.0-M7"
+micronaut = "4.0.0-RC1"
 micronaut-platform = "4.0.0-M3"
 micronaut-docs = "2.0.0"
 micronaut-gradle-plugin = "4.0.0-M4"
-micronaut-testresources = "2.0.0-M9"
+micronaut-testresources = "2.0.0-M10"
 
 micronaut-azure = "5.0.0-M5"
 micronaut-reactor = "3.0.0-M6"
 micronaut-rxjava2 = "2.0.0-M5"
 micronaut-r2dbc = "5.0.0-M10"
-micronaut-serde = "2.0.0-M10"
-micronaut-sql = "5.0.0-M9"
+micronaut-serde = "2.0.0-M11"
+micronaut-sql = "5.0.0-M11"
 micronaut-spring = "5.0.0-M4"
 micronaut-test = "4.0.0-M7"
 micronaut-mongo = "5.0.0-M4"
@@ -26,9 +26,6 @@ javax-persistence = "2.2"
 jakarta-persistence = "3.1.0"
 jakarta-javax-persistence = "3.1.0"
 jakarta-transaction = "2.0.1"
-
-hibernate = "6.2.4.Final"
-hibernate-jpamodelgen-jakarta = "6.0.0.Alpha9"
 
 spring-data = "3.1.0"
 
@@ -97,8 +94,6 @@ jakarta-persistence-api = { module = "jakarta.persistence:jakarta.persistence-ap
 jakarta-persistence-api2 = { module = "jakarta.persistence:jakarta.persistence-api", version.ref = "jakarta-javax-persistence" }
 
 # JPA
-
-hibernate-jpamodelgen = { module = "org.hibernate.orm:hibernate-jpamodelgen", version.ref = "hibernate" }
 
 spring-data-jpa = { module = "org.springframework.data:spring-data-jpa", version.ref = "spring-data" }
 spring-data-commons = { module = "org.springframework.data:spring-data-commons", version.ref = "spring-data" }

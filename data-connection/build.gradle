@@ -8,9 +8,15 @@ dependencies {
     annotationProcessor mn.micronaut.graal
     annotationProcessor libs.micronaut.docs
 
-//    api projects.dataRuntime
     implementation mn.reactor
     implementation mn.micronaut.aop
     implementation mn.micronaut.context.propagation
     implementation mn.micronaut.core.reactive
+}
+
+micronautBuild {
+    // New module in 4.0
+    binaryCompatibility {
+        enabled = false
+    }
 }

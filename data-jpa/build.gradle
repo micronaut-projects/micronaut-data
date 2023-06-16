@@ -10,3 +10,10 @@ dependencies {
     api projects.dataModel
     api libs.jakarta.persistence.api
 }
+
+micronautBuild {
+    // New module in 4.0
+    binaryCompatibility {
+        enabled = false
+    }
+}
