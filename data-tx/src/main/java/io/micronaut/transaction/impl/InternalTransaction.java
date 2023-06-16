@@ -64,7 +64,5 @@ public interface InternalTransaction<T> extends TransactionStatus<T> {
 
     void triggerAfterCompletion(TransactionSynchronization.Status status);
 
-    void releaseHeldSavepoint();
-
     void cleanupAfterCompletion();
 }

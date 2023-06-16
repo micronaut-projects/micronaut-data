@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.jdbc.annotation;
+package io.micronaut.data.annotation.sql;
 
 import io.micronaut.context.annotation.AliasFor;
 import io.micronaut.data.annotation.DataTransformer;

@@ -78,10 +78,6 @@ public final class SpringHibernateTransactionOperations implements TransactionOp
     @Override
     public <R> R execute(TransactionDefinition definition, TransactionCallback<Session, R> callback) {
         return transactionOperations.execute(definition, status -> callback.call(new TransactionStatus<>() {
-            @Override
-            public boolean hasSavepoint() {
-                return status.hasSavepoint();
-            }
 
             @Override
             public Object getTransaction() {
@@ -96,21 +92,6 @@ public final class SpringHibernateTransactionOperations implements TransactionOp
             @Override
             public ConnectionStatus<Session> getConnectionStatus() {
                 throw new IllegalStateException("Connection status is not supported for Spring Hibernate TX manager!");
-            }
-
-            @Override
-            public Object createSavepoint() throws TransactionException {
-                return status.createSavepoint();
-            }
-
-            @Override
-            public void rollbackToSavepoint(Object savepoint) throws TransactionException {
-                status.releaseSavepoint(savepoint);
-            }
-
-            @Override
-            public void releaseSavepoint(Object savepoint) throws TransactionException {
-                status.releaseSavepoint(savepoint);
             }
 
             @Override

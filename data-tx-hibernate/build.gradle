@@ -11,11 +11,8 @@ dependencies {
 
     api projects.dataTx
     api projects.dataTxJdbc
-    api mnSql.hibernate.core
+    api projects.dataConnectionHibernate
 
-    implementation mn.micronaut.inject
-
-    compileOnly mnSpring.spring.orm
     compileOnly mnSql.micronaut.hibernate.jpa
 
     testAnnotationProcessor mn.micronaut.inject.java

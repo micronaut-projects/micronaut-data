@@ -1,8 +1,11 @@
+import io.micronaut.testresources.buildtools.KnownModules
+
 plugins {
     id "org.jetbrains.kotlin.jvm"
     id "org.jetbrains.kotlin.kapt"
     id "org.jetbrains.kotlin.plugin.allopen"
     id "io.micronaut.build.internal.data-kotlin-example"
+    id "io.micronaut.test-resources"
 }
 
 application {
@@ -13,13 +16,20 @@ micronaut {
     version libs.versions.micronaut.platform.get()
     runtime "netty"
     testRuntime "junit5"
+    testResources {
+        enabled = true
+        inferClasspath = false
+        additionalModules.add(KnownModules.MONGODB)
+        clientTimeout = 300
+        version = libs.versions.micronaut.testresources.get()
+    }
 }
 
 dependencies {
     kapt projects.dataDocumentProcessor
 
-    implementation 'io.micronaut.reactor:micronaut-reactor'
-    implementation "io.micronaut:micronaut-http-client"
+    implementation mnReactor.micronaut.reactor
+    implementation mn.micronaut.http.client
     implementation projects.dataMongodb
     implementation projects.dataTx
     implementation mnMongo.mongo.reactive
@@ -30,7 +40,5 @@ dependencies {
     implementation libs.kotlin.coroutines
     implementation libs.kotlin.coroutines.reactive
 
-    runtimeOnly "ch.qos.logback:logback-classic"
-
-    testImplementation "org.testcontainers:mongodb"
+    runtimeOnly mnLogging.logback.classic
 }

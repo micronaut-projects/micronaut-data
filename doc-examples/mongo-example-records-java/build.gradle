@@ -27,6 +27,4 @@ dependencies {
     implementation libs.jakarta.transaction.api
 
     runtimeOnly "ch.qos.logback:logback-classic"
-
-    testImplementation "org.testcontainers:mongodb"
 }

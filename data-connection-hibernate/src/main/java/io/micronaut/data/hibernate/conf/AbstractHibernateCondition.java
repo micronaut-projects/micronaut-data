@@ -24,7 +24,7 @@ import io.micronaut.core.naming.Named;
 import io.micronaut.inject.BeanDefinition;
 
 /**
- * Abstract transaction manager condition.
+ * Abstract Hibernate sync/reactive condition.
  *
  * @author Denis Stepanov
  * @since 4.0.0

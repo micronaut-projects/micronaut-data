@@ -19,7 +19,6 @@ import io.micronaut.core.annotation.AnnotationClassValue;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.reflect.InstantiationUtils;
 import io.micronaut.data.annotation.Index;
 import io.micronaut.data.annotation.Indexes;
 import io.micronaut.data.annotation.MappedEntity;
@@ -28,8 +27,6 @@ import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.annotation.TypeDef;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.PersistentProperty;
-import io.micronaut.data.model.naming.NamingStrategies;
-import io.micronaut.data.model.naming.NamingStrategy;
 import io.micronaut.data.model.runtime.convert.AttributeConverter;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.SourcePersistentProperty;
@@ -100,7 +97,6 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
 
     @Override
     public void visitClass(ClassElement element, VisitorContext context) {
-        NamingStrategy namingStrategy = resolveNamingStrategy(element);
         SourcePersistentEntity entity = entityResolver.apply(element);
         Map<String, DataType> dataTypes = getConfiguredDataTypes(element);
         Map<String, String> dataConverters = getConfiguredDataConverters(element);
@@ -116,26 +112,25 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
         }
 
         for (PersistentProperty property : properties) {
-            computeMappingDefaults(namingStrategy, property, dataTypes, dataConverters, context);
+            computeMappingDefaults(property, dataTypes, dataConverters, context);
         }
         SourcePersistentProperty identity = entity.getIdentity();
         if (identity != null) {
-            computeMappingDefaults(namingStrategy, identity, dataTypes, dataConverters, context);
+            computeMappingDefaults(identity, dataTypes, dataConverters, context);
         }
         SourcePersistentProperty[] compositeIdentities = entity.getCompositeIdentity();
         if (compositeIdentities != null) {
             for (SourcePersistentProperty compositeIdentity : compositeIdentities) {
-                computeMappingDefaults(namingStrategy, compositeIdentity, dataTypes, dataConverters, context);
+                computeMappingDefaults(compositeIdentity, dataTypes, dataConverters, context);
             }
         }
         SourcePersistentProperty version = entity.getVersion();
         if (version != null) {
-            computeMappingDefaults(namingStrategy, version, dataTypes, dataConverters, context);
+            computeMappingDefaults(version, dataTypes, dataConverters, context);
         }
     }
 
     private void computeMappingDefaults(
-            NamingStrategy namingStrategy,
             PersistentProperty property,
             Map<String, DataType> dataTypes,
             Map<String, String> dataConverters,
@@ -210,20 +205,6 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
             String finalConverter = converter;
             propertyElement.annotate(MappedProperty.class, builder -> builder.member("converter", new AnnotationClassValue<>(finalConverter)));
         }
-    }
-
-    private NamingStrategy resolveNamingStrategy(ClassElement element) {
-        return element.stringValue(MappedEntity.class, "namingStrategy")
-                .flatMap(new Function<String, Optional<NamingStrategy>>() {
-                    @Override
-                    public Optional<NamingStrategy> apply(String s) {
-                        Object o = InstantiationUtils.tryInstantiate(s, getClass().getClassLoader()).orElse(null);
-                        if (o instanceof NamingStrategy) {
-                            return Optional.of((NamingStrategy) o);
-                        }
-                        return Optional.empty();
-                    }
-                }).orElseGet(NamingStrategies.UnderScoreSeparatedLowerCase::new);
     }
 
     private DataType getDataTypeFromConverter(ClassElement type, String converter, Map<String, DataType> dataTypes, VisitorContext context) {

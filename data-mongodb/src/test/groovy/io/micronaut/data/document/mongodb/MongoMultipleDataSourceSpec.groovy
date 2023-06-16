@@ -18,8 +18,6 @@ import io.micronaut.test.support.TestPropertyProvider
 import jakarta.inject.Inject
 import jakarta.inject.Named
 import org.bson.UuidRepresentation
-import org.testcontainers.containers.MongoDBContainer
-import org.testcontainers.utility.DockerImageName
 import spock.lang.Specification
 
 import jakarta.transaction.Transactional
@@ -62,24 +60,10 @@ class MongoMultipleDataSourceSpec extends Specification implements TestPropertyP
             otherPersonRepository.count() == 5
     }
 
-    static MongoDBContainer mongoDBContainer1
-    static MongoDBContainer mongoDBContainer2
-
-    def cleanupSpec() {
-        mongoDBContainer1.stop()
-        mongoDBContainer2.stop()
-    }
-
     @Override
     Map<String, String> getProperties() {
-        mongoDBContainer1 = new MongoDBContainer(DockerImageName.parse("mongo").withTag("5"))
-        mongoDBContainer2 = new MongoDBContainer(DockerImageName.parse("mongo").withTag("5"))
-        mongoDBContainer1.start()
-        mongoDBContainer2.start()
         return [
                 "micronaut.data.mongodb.driver-type": "sync",
-                'mongodb.servers.xyz.uri': mongoDBContainer1.replicaSetUrl,
-                'mongodb.servers.other.uri': mongoDBContainer2.replicaSetUrl,
                 'mongodb.uuid-representation': UuidRepresentation.STANDARD.name(),
                 'mongodb.servers.xyz.package-names': ['io.micronaut.data'],
                 'mongodb.servers.other.package-names': ['io.micronaut.data']

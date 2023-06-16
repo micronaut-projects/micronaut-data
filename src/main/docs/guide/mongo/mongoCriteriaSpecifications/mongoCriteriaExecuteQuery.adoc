@@ -1,4 +1,4 @@
-To find an entity or multiple entities you can use one of the following methods from api:data.repository.JpaSpecificationExecutor[] interface:
+To find an entity or multiple entities you can use one of the following methods from api:data.jpa.repository.JpaSpecificationExecutor[] interface:
 
 snippet::example.PersonRepository[project-base="doc-examples/mongo-example",source="main" tags="find",indent="0"]
 

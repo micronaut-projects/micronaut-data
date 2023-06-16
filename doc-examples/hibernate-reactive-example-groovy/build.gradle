@@ -1,6 +1,9 @@
+import io.micronaut.testresources.buildtools.KnownModules
+
 plugins {
     id "groovy"
     id "io.micronaut.build.internal.data-example"
+    id "io.micronaut.test-resources"
 }
 
 application {
@@ -11,16 +14,24 @@ micronaut {
     version libs.versions.micronaut.platform.get()
     runtime "netty"
     testRuntime "spock"
+    testResources {
+        enabled = true
+        inferClasspath = false
+        additionalModules.add(KnownModules.HIBERNATE_REACTIVE_POSTGRESQL)
+        clientTimeout = 300
+        version = libs.versions.micronaut.testresources.get()
+    }
 }
 
 dependencies {
     compileOnly projects.dataProcessor // because it's Groovy
-    implementation "io.micronaut:micronaut-http-client"
+    implementation mn.micronaut.http.validation
     implementation projects.dataHibernateReactive
-    implementation "io.micronaut.reactor:micronaut-reactor"
-    runtimeOnly "ch.qos.logback:logback-classic"
+    implementation mnReactor.micronaut.reactor
+    runtimeOnly mnLogging.logback.classic
     runtimeOnly mnSql.vertx.pg.client
 
-    testImplementation platform(libs.testcontainers.bom)
-    testImplementation libs.testcontainers.postgresql
+    testResourcesService mnSql.postgresql
+    // See https://github.com/eclipse-vertx/vertx-sql-client/issues/1059
+    testRuntimeOnly "com.ongres.scram:client:2.1"
 }
