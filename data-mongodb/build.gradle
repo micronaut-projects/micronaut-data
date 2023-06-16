@@ -49,11 +49,8 @@ dependencies {
     testImplementation mnReactor.micronaut.reactor
     testImplementation libs.jakarta.persistence.api
     testImplementation mnValidation.micronaut.validation
-    testImplementation platform(libs.testcontainers.bom)
-
-    // Remove after https://github.com/micronaut-projects/micronaut-test-resources/issues/142
-    testImplementation libs.testcontainers.spock
-    testImplementation libs.testcontainers.mongodb
 
     testCompileOnly mn.micronaut.inject.groovy
+
+    testImplementation "com.fasterxml.jackson.core:jackson-annotations"
 }
