@@ -24,18 +24,18 @@ micronaut {
 }
 
 dependencies {
-    kapt "io.micronaut.validation:micronaut-validation"
+    kapt mnValidation.micronaut.validation
     kapt projects.dataProcessor
 
     implementation libs.kotlin.coroutines
     implementation libs.kotlin.coroutines.reactive
     implementation libs.kotlin.coroutines.reactor
-    implementation "io.micronaut:micronaut-http-client"
+    implementation mn.micronaut.http.client
     implementation projects.dataHibernateReactive
-    implementation "io.micronaut.reactor:micronaut-reactor"
+    implementation mnReactor.micronaut.reactor
     implementation mnKotlin.micronaut.kotlin.runtime
 
-    runtimeOnly "ch.qos.logback:logback-classic"
+    runtimeOnly mnLogging.logback.classic
     runtimeOnly mnSql.vertx.pg.client
 
     testResourcesService mnSql.postgresql
