@@ -1,6 +1,9 @@
+import io.micronaut.testresources.buildtools.KnownModules
+
 plugins {
     id "org.jetbrains.kotlin.plugin.jpa"
     id "io.micronaut.build.internal.data-kotlin-example"
+    id "io.micronaut.test-resources"
 }
 
 application {
@@ -11,6 +14,13 @@ micronaut {
     version libs.versions.micronaut.platform.get()
     runtime "netty"
     testRuntime "junit5"
+    testResources {
+        enabled = true
+        inferClasspath = false
+        additionalModules.add(KnownModules.HIBERNATE_REACTIVE_POSTGRESQL)
+        clientTimeout = 300
+        version = libs.versions.micronaut.testresources.get()
+    }
 }
 
 dependencies {
@@ -28,6 +38,7 @@ dependencies {
     runtimeOnly "ch.qos.logback:logback-classic"
     runtimeOnly mnSql.vertx.pg.client
 
-    testImplementation platform(libs.testcontainers.bom)
-    testImplementation libs.testcontainers.postgresql
+    testResourcesService mnSql.postgresql
+    // See https://github.com/eclipse-vertx/vertx-sql-client/issues/1059
+    testRuntimeOnly "com.ongres.scram:client:2.1"
 }
