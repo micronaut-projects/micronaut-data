@@ -7,7 +7,6 @@ abstract class AbstractMongoSpec : TestPropertyProvider {
 
     override fun getProperties(): Map<String, String> {
         return mapOf(
-                "mongodb" to "",
                 "mongodb.uuid-representation" to UuidRepresentation.STANDARD.name
         )
     }
