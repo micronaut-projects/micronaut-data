@@ -16,23 +16,22 @@ micronaut {
 }
 
 dependencies {
-    kapt project(":data-processor")
+    kapt projects.dataProcessor
 
-    implementation 'io.micronaut.rxjava2:micronaut-rxjava2'
-    implementation 'io.micronaut.reactor:micronaut-reactor'
+    implementation mnRxjava2.micronaut.rxjava2
+    implementation mnReactor.micronaut.reactor
     implementation mnSerde.micronaut.serde.support
     implementation mnKotlin.micronaut.kotlin.runtime
 
-    implementation "io.micronaut:micronaut-http-client"
-    implementation project(":data-jdbc")
-    implementation "io.micronaut.sql:micronaut-jdbc-tomcat"
+    implementation mn.micronaut.http.client
+    implementation projects.dataJdbc
     implementation libs.jakarta.persistence.api
     implementation libs.kotlin.coroutines
     implementation libs.kotlin.coroutines.reactive
 
-    runtimeOnly "ch.qos.logback:logback-classic"
-    runtimeOnly "com.h2database:h2"
+    runtimeOnly mnSql.micronaut.jdbc.tomcat
+    runtimeOnly mnLogging.logback.classic
+    runtimeOnly mnSql.h2
 
-    testImplementation "io.micronaut.test:micronaut-test-kotest5"
-
+    testImplementation mnTest.micronaut.test.kotest5
 }

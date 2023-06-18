@@ -14,17 +14,16 @@ micronaut {
 }
 
 dependencies {
-    compileOnly project(":data-processor")
-    compileOnly 'io.micronaut.validation:micronaut-validation-processor'
+    compileOnly projects.dataProcessor
+    compileOnly mnValidation.micronaut.validation.processor
 
     implementation projects.dataModel
     implementation mnValidation.micronaut.validation
-    implementation project(":data-hibernate-jpa")
-    implementation "io.micronaut:micronaut-http-client"
-    implementation 'io.micronaut.rxjava2:micronaut-rxjava2'
-    implementation "io.micronaut.sql:micronaut-jdbc-tomcat"
-    implementation 'io.micronaut.validation:micronaut-validation'
+    implementation projects.dataHibernateJpa
+    implementation mn.micronaut.http.client
+    implementation mnRxjava2.micronaut.rxjava2
 
-    runtimeOnly "ch.qos.logback:logback-classic"
-    runtimeOnly "com.h2database:h2"
+    runtimeOnly mnSql.micronaut.jdbc.tomcat
+    runtimeOnly mnLogging.logback.classic
+    runtimeOnly mnSql.h2
 }

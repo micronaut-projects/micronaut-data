@@ -17,22 +17,17 @@ micronaut {
 }
 
 dependencies {
-    implementation mnMultitenancy.micronaut.multitenancy
     annotationProcessor projects.dataDocumentProcessor
 
-    implementation 'io.micronaut.reactor:micronaut-reactor'
-    implementation 'io.micronaut:micronaut-http-client'
-//    implementation 'io.micronaut.data:micronaut-data-jdbc'
+    implementation mnMultitenancy.micronaut.multitenancy
+    implementation mnReactor.micronaut.reactor
+    implementation mn.micronaut.http.client
     implementation projects.dataJdbc
     implementation mnSerde.micronaut.serde.jackson
-
     implementation libs.jakarta.persistence.api
     implementation libs.jakarta.transaction.api
 
-    runtimeOnly "io.micronaut.sql:micronaut-jdbc-tomcat"
-    runtimeOnly "com.h2database:h2"
-
-    testImplementation "io.micronaut:micronaut-http-client"
-
-    runtimeOnly "ch.qos.logback:logback-classic"
+    runtimeOnly mnSql.micronaut.jdbc.tomcat
+    runtimeOnly mnSql.h2
+    runtimeOnly mnLogging.logback.classic
 }
