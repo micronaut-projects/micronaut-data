@@ -10,8 +10,8 @@ version "0.1"
 group "example"
 
 dependencies {
-    testImplementation "org.junit.jupiter:junit-jupiter-api"
-    testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine"
+    testImplementation libs.jupiter.api
+    testRuntimeOnly libs.jupiter.engine
 
     jmh libs.jmh.core
     jmh libs.jmh.annprocess
