@@ -51,6 +51,5 @@ dependencies {
     testImplementation mnValidation.micronaut.validation
 
     testCompileOnly mn.micronaut.inject.groovy
-
-    testImplementation "com.fasterxml.jackson.core:jackson-annotations"
+    testCompileOnly mn.jackson.annotations
 }

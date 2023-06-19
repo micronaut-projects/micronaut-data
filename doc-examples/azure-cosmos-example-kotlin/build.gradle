@@ -26,7 +26,7 @@ dependencies {
     implementation libs.kotlin.coroutines.reactive
     implementation mnKotlin.micronaut.kotlin.runtime
 
-    runtimeOnly "ch.qos.logback:logback-classic"
+    runtimeOnly mnLogging.logback.classic
 
-    testImplementation "org.testcontainers:azure"
+    testImplementation libs.testcontainers.azure
 }

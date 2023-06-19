@@ -35,8 +35,8 @@ dependencies {
     compileOnly libs.javax.persistence.api
     implementation libs.jakarta.persistence.api
     implementation libs.jakarta.transaction.api
-    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core"
-    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-reactive"
+    implementation libs.kotlin.coroutines
+    implementation libs.kotlin.coroutines.reactive
 
     runtimeOnly mnLogging.logback.classic
 }

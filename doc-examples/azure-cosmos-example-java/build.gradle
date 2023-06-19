@@ -21,7 +21,7 @@ dependencies {
     compileOnly libs.javax.persistence.api
     implementation libs.jakarta.persistence.api
 
-    runtimeOnly "ch.qos.logback:logback-classic"
+    runtimeOnly mnLogging.logback.classic
 
-    testImplementation "org.testcontainers:azure"
+    testImplementation libs.testcontainers.azure
 }

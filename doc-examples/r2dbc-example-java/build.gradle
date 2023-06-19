@@ -1,3 +1,5 @@
+import io.micronaut.testresources.buildtools.KnownModules
+
 plugins {
     id "io.micronaut.build.internal.data-native-example"
 }
@@ -13,14 +15,15 @@ micronaut {
     testResources {
         clientTimeout = 300
         version = libs.versions.micronaut.testresources.get()
+        additionalModules.add(KnownModules.R2DBC_POSTGRESQL)
     }
 }
 
 dependencies {
-    annotationProcessor("io.micronaut:micronaut-graal")
-    annotationProcessor project(":data-processor")
-    implementation("io.micronaut.data:micronaut-data-r2dbc")
-    implementation("io.micronaut.sql:micronaut-jdbc-hikari")
+    annotationProcessor mn.micronaut.graal
+    annotationProcessor projects.dataProcessor
+    implementation projects.dataR2dbc
+    implementation mnSql.micronaut.jdbc.hikari
     implementation libs.jakarta.transaction.api
     implementation mnSerde.micronaut.serde.jackson
 
@@ -29,5 +32,5 @@ dependencies {
     runtimeOnly mn.snakeyaml
     testRuntimeOnly mnSerde.micronaut.serde.jackson
 
-    testImplementation "io.micronaut:micronaut-http-client"
+    testImplementation mn.micronaut.http.client
 }

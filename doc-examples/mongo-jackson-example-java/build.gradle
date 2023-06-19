@@ -35,5 +35,4 @@ dependencies {
     implementation mnMongo.mongo.driver
 
     runtimeOnly mnLogging.logback.classic
-
 }

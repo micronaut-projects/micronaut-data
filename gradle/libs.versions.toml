@@ -109,6 +109,7 @@ micronaut-azure-cosmos = { module = "io.micronaut.azure:micronaut-azure-cosmos",
 # Test
 
 jupiter-engine = { module = 'org.junit.jupiter:junit-jupiter-engine' }
+jupiter-api = { module = 'org.junit.jupiter:junit-jupiter-api' }
 groovy-sql = { module = "org.apache.groovy:groovy-sql" }
 groovy-dateutil = { module = "org.apache.groovy:groovy-dateutil", version.ref = "groovy" }
 
