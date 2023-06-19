@@ -93,7 +93,7 @@ final class DataSerdeRegistry implements SerdeRegistry {
                              MongoDataConfiguration mongoDataConfiguration,
                              ConversionService conversionService) {
         ObjectSerializer objectSerializer = new ObjectSerializer(introspections, serializationConfiguration, beanContext);
-        ObjectDeserializer objectDeserializer = new ObjectDeserializer(introspections, deserializationConfiguration);
+        ObjectDeserializer objectDeserializer = new ObjectDeserializer(introspections, deserializationConfiguration, null);
         this.defaultSerdeRegistry = new DefaultSerdeRegistry(beanContext, objectSerializer, objectDeserializer, objectArraySerde, introspections, conversionService);
         this.runtimeEntityRegistry = runtimeEntityRegistry;
         this.attributeConverterRegistry = attributeConverterRegistry;

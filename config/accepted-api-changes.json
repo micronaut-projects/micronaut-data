@@ -33,5 +33,20 @@
     "type": "io.micronaut.transaction.TransactionStatus",
     "member": "Implemented interface java.io.Flushable",
     "reason": "No longer implements java.io.Flushable"
+  },
+  {
+    "type": "io.micronaut.data.mongodb.transaction.MongoSynchronousTransactionManager",
+    "member": "Implemented interface io.micronaut.transaction.TransactionOperations",
+    "reason": "Interface has been removed"
+  },
+  {
+    "type": "io.micronaut.data.mongodb.transaction.MongoSynchronousTransactionManager",
+    "member": "Implemented interface io.micronaut.transaction.SynchronousTransactionManager",
+    "reason": "Interface has been removed"
+  },
+  {
+    "type": "io.micronaut.data.mongodb.transaction.MongoSynchronousTransactionManager",
+    "member": "Implemented interface io.micronaut.transaction.TransactionManager",
+    "reason": "Interface has been removed"
   }
 ]

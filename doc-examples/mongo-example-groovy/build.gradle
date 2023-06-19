@@ -1,3 +1,5 @@
+import io.micronaut.testresources.buildtools.KnownModules
+
 plugins {
     id "groovy"
     id "io.micronaut.build.internal.data-example"
@@ -13,6 +15,9 @@ micronaut {
     runtime "netty"
     testRuntime "spock"
     testResources {
+        enabled = true
+        inferClasspath = false
+        additionalModules.add(KnownModules.MONGODB)
         clientTimeout = 300
         version = libs.versions.micronaut.testresources.get()
     }
@@ -22,13 +27,13 @@ dependencies {
     compileOnly projects.dataProcessor // Override app plugin version
     compileOnly projects.dataDocumentProcessor
 
-    implementation 'io.micronaut.reactor:micronaut-reactor'
-    implementation "io.micronaut:micronaut-http-client"
-    implementation 'io.micronaut.data:micronaut-data-mongodb'
+    implementation mnReactor.micronaut.reactor
+    implementation mn.micronaut.http.client
+    implementation projects.dataMongodb
     implementation mnMongo.mongo.driver
 
     implementation libs.jakarta.persistence.api
     implementation libs.jakarta.transaction.api
 
-    runtimeOnly "ch.qos.logback:logback-classic"
+    runtimeOnly mnLogging.logback.classic
 }

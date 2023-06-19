@@ -2,30 +2,34 @@
 package example;
 
 import com.mongodb.client.ClientSession;
+import com.mongodb.client.MongoClient;
 import com.mongodb.client.model.Filters;
 import io.micronaut.data.mongodb.operations.MongoDatabaseNameProvider;
-import io.micronaut.data.mongodb.transaction.MongoSynchronousTransactionManager;
+import io.micronaut.data.mongodb.transaction.MongoTransactionOperations;
 import jakarta.inject.Singleton;
 
 @Singleton
 public class ProductManager {
 
     private final ClientSession clientSession;
+    private final MongoClient mongoClient;
     private final MongoDatabaseNameProvider mongoDatabaseNameProvider;
-    private final MongoSynchronousTransactionManager transactionManager;
+    private final MongoTransactionOperations mongoTransactionOperations;
 
     public ProductManager(ClientSession clientSession,
+                          MongoClient mongoClient,
                           MongoDatabaseNameProvider mongoDatabaseNameProvider,
-                          MongoSynchronousTransactionManager transactionManager) { // <1>
+                          MongoTransactionOperations mongoTransactionOperations) { // <1>
         this.clientSession = clientSession;
+        this.mongoClient = mongoClient;
         this.mongoDatabaseNameProvider = mongoDatabaseNameProvider;
-        this.transactionManager = transactionManager;
+        this.mongoTransactionOperations = mongoTransactionOperations;
     }
 
     Product save(String name, Manufacturer manufacturer) {
-        return transactionManager.executeWrite(status -> { // <2>
+        return mongoTransactionOperations.executeWrite(status -> { // <2>
             final Product product = new Product(name, manufacturer);
-            transactionManager.getClient()
+            mongoClient
                 .getDatabase(mongoDatabaseNameProvider.provide(Product.class))
                 .getCollection("product", Product.class)
                 .insertOne(clientSession, product);
@@ -34,8 +38,8 @@ public class ProductManager {
     }
 
     Product find(String name) {
-        return transactionManager.executeRead(status -> { // <3>
-            return transactionManager.getClient()
+        return mongoTransactionOperations.executeRead(status -> { // <3>
+            return mongoClient
                 .getDatabase(mongoDatabaseNameProvider.provide(Product.class))
                 .getCollection("product", Product.class)
                 .find(clientSession, Filters.eq("name", name)).first();
