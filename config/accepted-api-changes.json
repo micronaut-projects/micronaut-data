@@ -1,37 +1,3 @@
 [
-  {
-    "type": "io.micronaut.transaction.impl.AbstractInternalTransaction",
-    "member": "Implemented interface io.micronaut.transaction.SavepointManager",
-    "reason": "No longer implements io.micronaut.transaction.SavepointManager"
-  },
-  {
-    "type": "io.micronaut.transaction.impl.AbstractInternalTransaction",
-    "member": "Implemented interface java.io.Flushable",
-    "reason": "No longer implements java.io.Flushable"
-  },
-  {
-    "type": "io.micronaut.transaction.impl.InternalTransaction",
-    "member": "Implemented interface io.micronaut.transaction.SavepointManager",
-    "reason": "No longer implements io.micronaut.transaction.SavepointManager"
-  },
-  {
-    "type": "io.micronaut.transaction.impl.InternalTransaction",
-    "member": "Implemented interface java.io.Flushable",
-    "reason": "No longer implements java.io.Flushable"
-  },
-  {
-    "type": "io.micronaut.transaction.support.TransactionSynchronization",
-    "member": "Implemented interface java.io.Flushable",
-    "reason": "No longer implements java.io.Flushable"
-  },
-  {
-    "type": "io.micronaut.transaction.TransactionStatus",
-    "member": "Implemented interface io.micronaut.transaction.SavepointManager",
-    "reason": "No longer implements io.micronaut.transaction.SavepointManager"
-  },
-  {
-    "type": "io.micronaut.transaction.TransactionStatus",
-    "member": "Implemented interface java.io.Flushable",
-    "reason": "No longer implements java.io.Flushable"
-  }
+
 ]

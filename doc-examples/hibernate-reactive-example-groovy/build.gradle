@@ -24,14 +24,13 @@ micronaut {
 }
 
 dependencies {
-    compileOnly projects.dataProcessor // because it's Groovy
+    compileOnly projects.micronautDataProcessor // because it's Groovy
     implementation mn.micronaut.http.validation
-    implementation projects.dataHibernateReactive
+    implementation projects.micronautDataHibernateReactive
     implementation mnReactor.micronaut.reactor
     runtimeOnly mnLogging.logback.classic
     runtimeOnly mnSql.vertx.pg.client
 
     testResourcesService mnSql.postgresql
-    // See https://github.com/eclipse-vertx/vertx-sql-client/issues/1059
-    testRuntimeOnly "com.ongres.scram:client:2.1"
+    testRuntimeOnly mnSql.ongres.scram.client
 }

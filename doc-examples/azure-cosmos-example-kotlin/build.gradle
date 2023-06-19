@@ -16,17 +16,17 @@ micronaut {
 }
 
 dependencies {
-    kapt projects.dataDocumentProcessor
-
-    implementation projects.dataAzureCosmos
+    kapt projects.micronautDataDocumentProcessor
 
     compileOnly libs.javax.persistence.api
+
+    implementation projects.micronautDataAzureCosmos
     implementation libs.jakarta.persistence.api
     implementation libs.kotlin.coroutines
     implementation libs.kotlin.coroutines.reactive
     implementation mnKotlin.micronaut.kotlin.runtime
 
-    runtimeOnly "ch.qos.logback:logback-classic"
+    runtimeOnly mnLogging.logback.classic
 
-    testImplementation "org.testcontainers:azure"
+    testImplementation libs.testcontainers.azure
 }

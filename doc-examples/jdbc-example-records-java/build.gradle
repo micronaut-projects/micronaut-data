@@ -13,13 +13,15 @@ micronaut {
 }
 
 dependencies {
-    annotationProcessor project(":data-processor")
-    annotationProcessor "io.micronaut.validation:micronaut-validation"
-    implementation project(":data-jdbc")
-    implementation "io.micronaut:micronaut-http-client"
-    implementation "io.micronaut.validation:micronaut-validation"
-    implementation "io.micronaut.sql:micronaut-jdbc-tomcat"
+    annotationProcessor projects.micronautDataProcessor
+    annotationProcessor mnValidation.micronaut.validation
+
+    implementation projects.micronautDataJdbc
+    implementation mn.micronaut.http.client
+    implementation mnValidation.micronaut.validation
     implementation libs.jakarta.persistence.api
-    runtimeOnly "ch.qos.logback:logback-classic"
-    runtimeOnly "com.h2database:h2"
+
+    runtimeOnly mnSql.micronaut.jdbc.tomcat
+    runtimeOnly mnLogging.logback.classic
+    runtimeOnly mnSql.h2
 }

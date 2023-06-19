@@ -6,10 +6,10 @@ dependencies {
     annotationProcessor mn.micronaut.inject.java
     annotationProcessor mn.micronaut.graal
 
-    api projects.dataRuntime
-    api projects.dataModel
-    api projects.dataTxHibernate
-    api projects.dataJpa
+    api projects.micronautDataRuntime
+    api projects.micronautDataModel
+    api projects.micronautDataTxHibernate
+    api projects.micronautDataJpa
     api mnSql.hibernate.core
 
     implementation (mnSql.micronaut.hibernate.jpa) {
@@ -20,15 +20,15 @@ dependencies {
     testAnnotationProcessor mn.micronaut.inject.java
     testAnnotationProcessor mnValidation.micronaut.validation.processor
 
-    testAnnotationProcessor projects.dataProcessor
+    testAnnotationProcessor projects.micronautDataProcessor
     testImplementation mnValidation.micronaut.validation
     testImplementation mnValidation.micronaut.validation.processor
 
     testImplementation mn.micronaut.inject.groovy
-    testImplementation projects.dataProcessor
+    testImplementation projects.micronautDataProcessor
     testImplementation mnRxjava2.micronaut.rxjava2
     testImplementation mnReactor.micronaut.reactor
-    testImplementation projects.dataTck
+    testImplementation projects.micronautDataTck
     testImplementation libs.groovy.sql
 
     testRuntimeOnly mnSql.h2

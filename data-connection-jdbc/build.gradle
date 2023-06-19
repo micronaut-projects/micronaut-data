@@ -10,14 +10,14 @@ dependencies {
     annotationProcessor mn.micronaut.graal
     annotationProcessor libs.micronaut.docs
 
-    api projects.dataConnection
+    api projects.micronautDataConnection
     implementation mnSql.micronaut.jdbc
     implementation mn.micronaut.aop
 
     testAnnotationProcessor mn.micronaut.inject.java
 
-    testImplementation projects.dataRuntime
-    testImplementation projects.dataTck
+    testImplementation projects.micronautDataRuntime
+    testImplementation projects.micronautDataTck
 
     testImplementation mnReactor.micronaut.reactor
 
@@ -58,10 +58,6 @@ micronaut {
         enabled = true
         inferClasspath = false
         additionalModules.add(KnownModules.JDBC_POSTGRESQL)
-        additionalModules.add(KnownModules.JDBC_MYSQL)
-        additionalModules.add(KnownModules.JDBC_MARIADB)
-        additionalModules.add(KnownModules.JDBC_ORACLE_XE)
-        additionalModules.add(KnownModules.JDBC_MSSQL)
         clientTimeout = 300
         version = libs.versions.micronaut.testresources.get()
     }
@@ -77,9 +73,4 @@ micronautBuild {
 tasks.withType(Test).configureEach {
     jvmArgs '-Xmx1024m'
     systemProperty "oracle.jdbc.timezoneAsRegion", "false"
-
-    if (micronautBuild.environment.githubAction.get()) {
-        // Let some of the checks tests first so the test containers don't eat all the memory
-        mustRunAfter ":data-jdbc:test"
-    }
 }

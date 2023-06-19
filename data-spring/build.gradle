@@ -9,7 +9,7 @@ dependencies {
 
     api libs.spring.data.commons
 
-    implementation projects.dataRuntime
+    implementation projects.micronautDataRuntime
     implementation mnSpring.micronaut.spring
 
     compileOnly mn.micronaut.http

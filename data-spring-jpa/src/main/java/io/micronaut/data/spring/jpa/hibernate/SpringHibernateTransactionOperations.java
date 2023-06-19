@@ -25,7 +25,6 @@ import io.micronaut.transaction.TransactionCallback;
 import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.TransactionOperations;
 import io.micronaut.transaction.TransactionStatus;
-import io.micronaut.transaction.exceptions.TransactionException;
 import io.micronaut.transaction.support.TransactionSynchronization;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;

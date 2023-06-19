@@ -26,12 +26,12 @@ micronaut {
 }
 
 dependencies {
-    kapt projects.dataDocumentProcessor
+    kapt projects.micronautDataDocumentProcessor
 
     implementation mnReactor.micronaut.reactor
     implementation mn.micronaut.http.client
-    implementation projects.dataMongodb
-    implementation projects.dataTx
+    implementation projects.micronautDataMongodb
+    implementation projects.micronautDataTx
     implementation mnMongo.mongo.reactive
     implementation mnKotlin.micronaut.kotlin.runtime
 

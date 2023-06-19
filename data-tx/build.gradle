@@ -6,7 +6,7 @@ dependencies {
     annotationProcessor mn.micronaut.inject.java
 
     api libs.jakarta.transaction.api
-    api projects.dataConnection
+    api projects.micronautDataConnection
 
     implementation mn.micronaut.inject
     implementation mn.micronaut.aop
@@ -22,9 +22,9 @@ dependencies {
     compileOnly libs.kotlin.coroutines.reactor
 
     testAnnotationProcessor mn.micronaut.inject.java
-    testAnnotationProcessor projects.dataProcessor
+    testAnnotationProcessor projects.micronautDataProcessor
 
-    testImplementation projects.dataProcessor
+    testImplementation projects.micronautDataProcessor
     testImplementation mn.jackson.databind
     testImplementation mnSql.micronaut.jdbc
     testImplementation mnReactor.micronaut.reactor
@@ -33,8 +33,8 @@ dependencies {
     testRuntimeOnly mnSql.h2
     testRuntimeOnly mnSql.micronaut.jdbc.tomcat
 
-    testImplementation("org.junit.jupiter:junit-jupiter-api")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
+    testImplementation(libs.jupiter.api)
+    testRuntimeOnly(libs.jupiter.engine)
 
     testImplementation "javax.transaction:javax.transaction-api:1.3"
 }

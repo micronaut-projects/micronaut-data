@@ -16,21 +16,18 @@ dependencies {
     implementation mnSql.micronaut.jooq
     implementation mnR2dbc.r2dbc.postgresql
     implementation mnR2dbc.r2dbc.pool
-
     implementation mnReactor.micronaut.reactor
     implementation mn.micronaut.http
     implementation mn.micronaut.runtime
-
-    implementation projects.dataTx
-    implementation projects.dataR2dbc
-
+    implementation projects.micronautDataTx
+    implementation projects.micronautDataR2dbc
     implementation mnSerde.micronaut.serde.jackson
 
     testImplementation mn.micronaut.http.client
     testImplementation mnSerde.micronaut.serde.jackson
 
-    implementation mn.snakeyaml
-    implementation mnLogging.logback.classic
+    runtimeOnly mn.snakeyaml
+    runtimeOnly mnLogging.logback.classic
 }
 
 micronaut {

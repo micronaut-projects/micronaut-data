@@ -14,17 +14,18 @@ micronaut {
 }
 
 dependencies {
-    implementation 'io.micronaut.rxjava2:micronaut-rxjava2'
-    implementation "io.micronaut:micronaut-http-client"
-    implementation projects.dataHibernateJpa
-    implementation projects.dataTx
-    implementation "io.micronaut.sql:micronaut-jdbc-tomcat"
+    implementation mnRxjava2.micronaut.rxjava2
+    implementation mn.micronaut.http.client
+    implementation projects.micronautDataHibernateJpa
+    implementation projects.micronautDataTx
     implementation mnKotlin.micronaut.kotlin.runtime
-    implementation 'io.micronaut.validation:micronaut-validation'
+    implementation mnValidation.micronaut.validation
     implementation libs.kotlin.coroutines
 
-    kapt "io.micronaut.validation:micronaut-validation"
-    kapt projects.dataProcessor
-    runtimeOnly "ch.qos.logback:logback-classic"
-    runtimeOnly "com.h2database:h2"
+    kapt mnValidation.micronaut.validation
+    kapt projects.micronautDataProcessor
+
+    runtimeOnly mnSql.micronaut.jdbc.tomcat
+    runtimeOnly mnLogging.logback.classic
+    runtimeOnly mnSql.h2
 }

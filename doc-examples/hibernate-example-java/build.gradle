@@ -13,18 +13,17 @@ micronaut {
 }
 
 dependencies {
-    annotationProcessor project(":data-processor")
-    annotationProcessor "io.micronaut.validation:micronaut-validation"
+    annotationProcessor projects.micronautDataProcessor
+    annotationProcessor mnValidation.micronaut.validation
     annotationProcessor mnSql.hibernate.jpamodelgen
     compileOnly mnSerde.micronaut.serde.api
-    implementation "io.micronaut:micronaut-http-client"
-    implementation 'io.micronaut.rxjava2:micronaut-rxjava2'
-    implementation mnSql.tomcat.jdbc
+    implementation mn.micronaut.http.client
+    implementation mnRxjava2.micronaut.rxjava2
     implementation mnSql.micronaut.hibernate.jpa
-    implementation project(":data-hibernate-jpa")
+    implementation projects.micronautDataHibernateJpa
 
-    implementation "io.micronaut.sql:micronaut-jdbc-tomcat"
-    runtimeOnly "ch.qos.logback:logback-classic"
-    runtimeOnly "com.h2database:h2"
-    runtimeOnly 'io.micronaut.validation:micronaut-validation'
+    runtimeOnly mnSql.micronaut.jdbc.tomcat
+    runtimeOnly mnLogging.logback.classic
+    runtimeOnly mnSql.h2
+    runtimeOnly mnValidation.micronaut.validation
 }

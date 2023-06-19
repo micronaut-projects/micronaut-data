@@ -24,14 +24,13 @@ micronaut {
 }
 
 dependencies {
-    annotationProcessor projects.dataProcessor
+    annotationProcessor projects.micronautDataProcessor
     implementation mnReactor.micronaut.reactor
     implementation mn.micronaut.http.client
-    implementation projects.dataHibernateReactive
+    implementation projects.micronautDataHibernateReactive
     runtimeOnly mnLogging.logback.classic
     runtimeOnly mnSql.micronaut.jdbc.tomcat
     runtimeOnly mnSql.mysql.connector.java
-
     runtimeOnly mnSql.vertx.mysql.client
     testResourcesService mnSql.mysql.connector.java
 }
