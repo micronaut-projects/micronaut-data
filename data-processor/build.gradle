@@ -3,7 +3,7 @@ plugins {
 }
 
 dependencies {
-	api projects.dataModel
+	api projects.micronautDataModel
 	api libs.jakarta.persistence.api
 
 	compileOnly mn.micronaut.core.processor
@@ -17,7 +17,7 @@ dependencies {
 	testImplementation libs.javax.persistence.api
 	testImplementation libs.jakarta.transaction.api
 	testImplementation libs.spring.data.jpa
-	testImplementation projects.dataTck
-	testImplementation projects.dataTx
-	testImplementation projects.dataJdbc
+	testImplementation projects.micronautDataTck
+	testImplementation projects.micronautDataTx
+	testImplementation projects.micronautDataJdbc
 }

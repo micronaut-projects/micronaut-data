@@ -6,8 +6,8 @@ dependencies {
     annotationProcessor mn.micronaut.inject.java
     annotationProcessor mn.micronaut.graal
 
-    api projects.dataRuntime
-    api projects.dataModel
+    api projects.micronautDataRuntime
+    api projects.micronautDataModel
     api libs.jakarta.persistence.api
 }
 

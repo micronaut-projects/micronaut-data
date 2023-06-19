@@ -9,7 +9,7 @@ dependencies {
     annotationProcessor mn.micronaut.inject.java
     annotationProcessor mn.micronaut.graal
 
-    api projects.dataHibernateJpa
+    api projects.micronautDataHibernateJpa
     api (mnSql.micronaut.hibernate.reactive) {
         exclude group: 'io.smallrye.reactive', module: 'mutiny'
     }
@@ -17,13 +17,13 @@ dependencies {
     implementation mnReactor.micronaut.reactor
 
     testAnnotationProcessor mn.micronaut.inject.java
-    testAnnotationProcessor projects.dataProcessor
+    testAnnotationProcessor projects.micronautDataProcessor
 
     testImplementation mn.micronaut.inject.groovy
-    testImplementation projects.dataProcessor
+    testImplementation projects.micronautDataProcessor
     testImplementation mnRxjava2.micronaut.rxjava2
     testImplementation mnReactor.micronaut.reactor
-    testImplementation projects.dataTck
+    testImplementation projects.micronautDataTck
     testImplementation libs.groovy.sql
 
     testRuntimeOnly mnSql.vertx.pg.client
@@ -34,7 +34,7 @@ dependencies {
     testResourcesService mnSql.postgresql
 
     // See https://github.com/eclipse-vertx/vertx-sql-client/issues/1059
-    testRuntimeOnly "com.ongres.scram:client:2.1"
+    testRuntimeOnly mnSql.ongres.scram.client
 }
 
 micronaut {

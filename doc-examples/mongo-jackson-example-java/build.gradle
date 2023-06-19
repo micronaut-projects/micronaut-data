@@ -1,3 +1,5 @@
+import io.micronaut.testresources.buildtools.KnownModules
+
 plugins {
     id "io.micronaut.build.internal.data-native-example"
 }
@@ -11,24 +13,26 @@ micronaut {
     runtime "netty"
     testRuntime "junit5"
     testResources {
+        enabled = true
+        inferClasspath = false
+        additionalModules.add(KnownModules.MONGODB)
         clientTimeout = 300
         version = libs.versions.micronaut.testresources.get()
     }
 }
 
 dependencies {
-    annotationProcessor projects.dataDocumentProcessor
+    annotationProcessor projects.micronautDataDocumentProcessor
 
-    implementation 'io.micronaut.rxjava2:micronaut-rxjava2'
-    implementation 'io.micronaut.reactor:micronaut-reactor'
+    implementation mnRxjava2.micronaut.rxjava2
+    implementation mnReactor.micronaut.reactor
 
-    implementation 'io.micronaut:micronaut-jackson-databind'
-    implementation 'io.micronaut.serde:micronaut-serde-jackson'
+    implementation mn.micronaut.jackson.databind
+    implementation mnSerde.micronaut.serde.jackson
 
-    implementation 'io.micronaut:micronaut-http-client'
-    implementation 'io.micronaut.data:micronaut-data-mongodb'
+    implementation mn.micronaut.http.client
+    implementation projects.micronautDataMongodb
     implementation mnMongo.mongo.driver
 
-    runtimeOnly "ch.qos.logback:logback-classic"
-
+    runtimeOnly mnLogging.logback.classic
 }

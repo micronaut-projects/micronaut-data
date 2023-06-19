@@ -10,24 +10,24 @@ dependencies {
     annotationProcessor mn.micronaut.graal
     annotationProcessor libs.micronaut.docs
 
-    api projects.dataRuntime
-    api projects.dataTxJdbc
-    api projects.dataConnectionJdbc
+    api projects.micronautDataRuntime
+    api projects.micronautDataTxJdbc
+    api projects.micronautDataConnectionJdbc
 
     implementation mn.micronaut.json.core
     compileOnly mnSerde.micronaut.serde.oracle.jdbc.json
     implementation mnSql.micronaut.jdbc
 
     compileOnly mnRxjava2.micronaut.rxjava2
-    compileOnly projects.dataHibernateJpa
+    compileOnly projects.micronautDataHibernateJpa
     compileOnly libs.drivers.jdbc.oracle
 
     testAnnotationProcessor mn.micronaut.inject.java
-    testAnnotationProcessor projects.dataProcessor
+    testAnnotationProcessor projects.micronautDataProcessor
     testAnnotationProcessor mnValidation.micronaut.validation.processor
 
-    testImplementation projects.dataTck
-    testImplementation projects.dataProcessor
+    testImplementation projects.micronautDataTck
+    testImplementation projects.micronautDataProcessor
     testImplementation mnRxjava2.micronaut.rxjava2
     testImplementation mnReactor.micronaut.reactor
     testImplementation libs.jackson.databind
@@ -65,14 +65,10 @@ dependencies {
     testResourcesService mnSql.postgresql
     testResourcesService mnSql.mssql.jdbc
 
-    // Needed for H2EagerContextSpec
-    testImplementation("org.jetbrains.kotlin:kotlin-reflect:1.8.22")
     testImplementation mnSerde.micronaut.serde.support
-
     testImplementation mnTestResources.micronaut.test.resources.extensions.junit.platform
 
     testRuntimeOnly mnSerde.micronaut.serde.oracle.jdbc.json
-
     testRuntimeOnly mnFlyway.micronaut.flyway
     testRuntimeOnly mnFlyway.flyway.oracle
 }
@@ -95,20 +91,6 @@ micronaut {
 tasks.withType(Test).configureEach {
     jvmArgs '-Xmx1024m'
     systemProperty "oracle.jdbc.timezoneAsRegion", "false"
-
-    if (micronautBuild.environment.githubAction.get()) {
-        // Let some of the checks tests first so the test containers don't eat all the memory
-        mustRunAfter ":data-processor:test"
-        mustRunAfter ":data-document-processor:test"
-        mustRunAfter ":data-hibernate-jpa:test"
-        mustRunAfter ":data-hibernate-reactive:test"
-        mustRunAfter ":data-mongodb:test"
-        mustRunAfter ":data-azure-cosmos:test"
-    }
-}
-
-tasks.named("internalStartTestResourcesService") {
-    //debugServer = true
 }
 
 micronautBuild {

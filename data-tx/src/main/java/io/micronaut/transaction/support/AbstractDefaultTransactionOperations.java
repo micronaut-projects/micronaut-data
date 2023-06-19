@@ -22,8 +22,6 @@ import io.micronaut.data.connection.SynchronousConnectionManager;
 import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.impl.DefaultTransactionStatus;
 
-import java.util.function.Function;
-
 /**
  * Abstract default transaction operations.
  *
@@ -40,7 +38,7 @@ public abstract class AbstractDefaultTransactionOperations<C> extends AbstractTr
 
     @Override
     protected DefaultTransactionStatus<C> createNewTransactionStatus(ConnectionStatus<C> connectionStatus, TransactionDefinition definition) {
-        return DefaultTransactionStatus.newTx(connectionStatus, definition, transactionSupplier());
+        return DefaultTransactionStatus.newTx(connectionStatus, definition);
     }
 
     @Override
@@ -50,13 +48,6 @@ public abstract class AbstractDefaultTransactionOperations<C> extends AbstractTr
 
     @Override
     protected DefaultTransactionStatus<C> createNoTxTransactionStatus(ConnectionStatus<C> connectionStatus, TransactionDefinition definition) {
-        return DefaultTransactionStatus.noTx(connectionStatus, definition, transactionSupplier());
-    }
-
-    /**
-     * @return The transaction object supplier
-     */
-    protected Function<DefaultTransactionStatus<C>, Object> transactionSupplier() {
-        return null;
+        return DefaultTransactionStatus.noTx(connectionStatus, definition);
     }
 }

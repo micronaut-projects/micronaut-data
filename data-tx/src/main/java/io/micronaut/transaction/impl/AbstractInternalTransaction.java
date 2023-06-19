@@ -31,11 +31,10 @@ import java.util.List;
  */
 public abstract class AbstractInternalTransaction<C> implements InternalTransaction<C> {
 
+    protected List<TransactionSynchronization> synchronizations;
     private boolean manualRollbackOnly = false;
     private boolean globalRollbackOnly = false;
     private boolean completed = false;
-
-    protected List<TransactionSynchronization> synchronizations;
 
     /**
      * Set global rollback only.

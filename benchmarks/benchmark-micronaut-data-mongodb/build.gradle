@@ -3,8 +3,8 @@ plugins {
 }
 
 dependencies {
-    annotationProcessor projects.dataDocumentProcessor
-    implementation projects.dataMongodb
+    annotationProcessor projects.micronautDataDocumentProcessor
+    implementation projects.micronautDataMongodb
     implementation mnMongo.mongo.driver
     testImplementation platform(libs.testcontainers.bom)
     testImplementation libs.testcontainers.mongodb

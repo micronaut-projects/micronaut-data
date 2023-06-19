@@ -1,5 +1,4 @@
 plugins {
-
     id "io.micronaut.build.internal.data-native-example"
 }
 
@@ -14,12 +13,12 @@ micronaut {
 }
 
 dependencies {
-    annotationProcessor project(":data-processor")
-    annotationProcessor "io.micronaut.validation:micronaut-validation"
-    implementation project(":data-hibernate-jpa")
-    implementation project(":data-jdbc")
+    annotationProcessor projects.micronautDataProcessor
+    annotationProcessor mnValidation.micronaut.validation
+    implementation projects.micronautDataHibernateJpa
+    implementation projects.micronautDataJdbc
 
-    implementation "io.micronaut.sql:micronaut-jdbc-tomcat"
-    runtimeOnly "ch.qos.logback:logback-classic"
-    runtimeOnly "com.h2database:h2"
+    runtimeOnly mnSql.micronaut.jdbc.tomcat
+    runtimeOnly mnLogging.logback.classic
+    runtimeOnly mnSql.h2
 }

@@ -14,14 +14,13 @@ micronaut {
 }
 
 dependencies {
-    compileOnly projects.dataDocumentProcessor
-
-    implementation projects.dataAzureCosmos
-
+    compileOnly projects.micronautDataDocumentProcessor
     compileOnly libs.javax.persistence.api
+
+    implementation projects.micronautDataAzureCosmos
     implementation libs.jakarta.persistence.api
 
-    runtimeOnly "ch.qos.logback:logback-classic"
+    runtimeOnly mnLogging.logback.classic
 
-    testImplementation "org.testcontainers:azure"
+    testImplementation libs.testcontainers.azure
 }

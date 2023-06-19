@@ -9,21 +9,21 @@ dependencies {
     annotationProcessor mn.micronaut.inject.java
     annotationProcessor libs.micronaut.docs
 
-    api projects.dataHibernateJpa
+    api projects.micronautDataHibernateJpa
     api libs.spring.data.jpa
     api (mnSql.micronaut.hibernate.jpa) {
         exclude group: 'io.micronaut.data'
     }
 
-    implementation projects.dataSpringJdbc
+    implementation projects.micronautDataSpringJdbc
 
     testAnnotationProcessor mn.micronaut.inject.java
-    testAnnotationProcessor projects.dataProcessor
+    testAnnotationProcessor projects.micronautDataProcessor
 
     testImplementation mn.micronaut.inject.groovy
-    testImplementation projects.dataProcessor
-    testImplementation projects.dataHibernateJpa
-    testImplementation projects.dataTck
+    testImplementation projects.micronautDataProcessor
+    testImplementation projects.micronautDataHibernateJpa
+    testImplementation projects.micronautDataTck
 
     testRuntimeOnly mnSql.h2
     testRuntimeOnly mnSql.micronaut.jdbc.tomcat

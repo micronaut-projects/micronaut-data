@@ -8,21 +8,19 @@ application {
 }
 
 dependencies {
-    ksp projects.dataProcessor
-    implementation 'io.micronaut.rxjava2:micronaut-rxjava2'
-    implementation 'io.micronaut.reactor:micronaut-reactor'
+    ksp projects.micronautDataProcessor
 
-    implementation "io.micronaut:micronaut-http-client"
+    implementation mnRxjava2.micronaut.rxjava2
+    implementation mnReactor.micronaut.reactor
+    implementation mn.micronaut.http.client
+    implementation projects.micronautDataHibernateJpa
     implementation mnKotlin.micronaut.kotlin.runtime
-
-    implementation projects.dataHibernateJpa
-    implementation "io.micronaut.sql:micronaut-jdbc-tomcat"
-
     implementation libs.jakarta.persistence.api
     implementation libs.jakarta.transaction.api
-    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core"
-    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-reactive"
+    implementation libs.kotlin.coroutines
+    implementation libs.kotlin.coroutines.reactive
 
-    runtimeOnly "com.h2database:h2"
-    runtimeOnly "ch.qos.logback:logback-classic"
+    runtimeOnly mnSql.micronaut.jdbc.tomcat
+    runtimeOnly mnSql.h2
+    runtimeOnly mnLogging.logback.classic
 }

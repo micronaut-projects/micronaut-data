@@ -6,8 +6,8 @@ dependencies {
     annotationProcessor mn.micronaut.inject.java
 
     api libs.jakarta.transaction.api
-    api projects.dataTx
-    api projects.dataConnectionJdbc
+    api projects.micronautDataTx
+    api projects.micronautDataConnectionJdbc
 
     implementation mn.micronaut.inject
     implementation mn.micronaut.aop
@@ -15,9 +15,9 @@ dependencies {
     compileOnly mnSql.micronaut.jdbc
 
     testAnnotationProcessor mn.micronaut.inject.java
-    testAnnotationProcessor projects.dataProcessor
+    testAnnotationProcessor projects.micronautDataProcessor
 
-    testImplementation projects.dataProcessor
+    testImplementation projects.micronautDataProcessor
     testImplementation mn.micronaut.inject.java.test
     testImplementation mn.jackson.databind
     testImplementation mnSql.micronaut.jdbc
